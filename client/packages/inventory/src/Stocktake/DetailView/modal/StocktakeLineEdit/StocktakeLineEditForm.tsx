@@ -6,39 +6,24 @@ import {
   Grid,
   useTranslation,
   BasicTextInput,
+  ModalMode,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system';
-import { StocktakeController, StocktakeItem } from '../../../../types';
-import { ModalMode } from '../../DetailView';
-
-const itemToStocktakeItem = (item: Item): StocktakeItem => {
-  return {
-    id: item.id,
-    itemCode: () => item.code,
-    itemName: () => item.name,
-    expiryDate: () => '',
-    countedNumPacks: () => '',
-    snapshotNumPacks: () => '',
-    lines: [],
-    batch: () => '',
-    upsertLine: () => {},
-  };
-};
+import { useStocktakeRows } from 'packages/inventory/src/Stocktake/api';
 
 interface InboundLineEditProps {
-  item: StocktakeItem | null;
-  mode: ModalMode;
-  onChangeItem: (item: StocktakeItem) => void;
-  draft: StocktakeController;
+  item: Item | null;
+  mode: ModalMode | null;
+  onChangeItem: (item: Item | null) => void;
 }
 
 export const StocktakeLineEditForm: FC<InboundLineEditProps> = ({
   item,
   mode,
   onChangeItem,
-  draft,
 }) => {
   const t = useTranslation(['common', 'inventory']);
+  const { items } = useStocktakeRows();
 
   return (
     <>
@@ -47,23 +32,13 @@ export const StocktakeLineEditForm: FC<InboundLineEditProps> = ({
         <Grid item flex={1}>
           <ItemSearchInput
             disabled={mode === ModalMode.Update}
-            currentItem={{
-              id: item?.id ?? '',
-              name: item?.itemName() ?? '',
-              code: item?.itemCode() ?? '',
-              isVisible: true,
-              availableBatches: [],
-              unitName: '',
-              availableQuantity: 0,
-            }}
-            onChange={(newItem: Item | null) =>
-              newItem && onChangeItem(itemToStocktakeItem(newItem))
-            }
+            currentItem={item}
+            onChange={onChangeItem}
             extraFilter={item => {
-              const itemAlreadyInShipment = draft.lines.some(
-                ({ id, isDeleted }) => id === item.id && !isDeleted
+              const itemAlreadyInStocktake = items?.some(
+                ({ itemId }) => item.id === itemId
               );
-              return !itemAlreadyInShipment;
+              return !itemAlreadyInStocktake;
             }}
           />
         </Grid>
@@ -75,7 +50,7 @@ export const StocktakeLineEditForm: FC<InboundLineEditProps> = ({
             <BasicTextInput
               disabled
               sx={{ width: 150 }}
-              value={item.itemCode()}
+              value={item.code ?? ''}
             />
           </Grid>
         </ModalRow>

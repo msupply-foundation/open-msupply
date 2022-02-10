@@ -4,14 +4,12 @@ import React, { useEffect } from 'react';
 import {
   Box,
   CircularProgress,
-  Collapse,
   TableBody,
   TableHead,
   TableContainer,
   Table as MuiTable,
   Typography,
 } from '@mui/material';
-import { TransitionGroup } from 'react-transition-group';
 
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
@@ -21,7 +19,7 @@ import { DomainObject } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
-export const DataTable = <T extends DomainObject>({
+export const DataTableComponent = <T extends DomainObject>({
   columns,
   data = [],
   isLoading = false,
@@ -81,7 +79,7 @@ export const DataTable = <T extends DomainObject>({
       <MuiTable>
         <TableHead
           sx={{
-            backgroundColor: dense ? 'transparent' : 'background.white',
+            backgroundColor: 'background.white',
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
@@ -102,24 +100,19 @@ export const DataTable = <T extends DomainObject>({
           </HeaderRow>
         </TableHead>
         <TableBody sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <TransitionGroup>
-            {data.map((row, idx) => {
-              return (
-                <Collapse key={row.id}>
-                  <DataRow
-                    rows={data}
-                    ExpandContent={ExpandContent}
-                    rowIndex={idx}
-                    columns={columns}
-                    onClick={onRowClick}
-                    rowData={row}
-                    rowKey={String(idx)}
-                    dense={dense}
-                  />
-                </Collapse>
-              );
-            })}
-          </TransitionGroup>
+          {data.map((row, idx) => (
+            <DataRow
+              key={row.id}
+              rows={data}
+              ExpandContent={ExpandContent}
+              rowIndex={idx}
+              columns={columns}
+              onClick={onRowClick}
+              rowData={row}
+              rowKey={String(idx)}
+              dense={dense}
+            />
+          ))}
         </TableBody>
       </MuiTable>
       <Box
@@ -146,3 +139,12 @@ export const DataTable = <T extends DomainObject>({
     </TableContainer>
   );
 };
+
+// This is a hack!
+// https://github.com/DefinitelyTyped/DefinitelyTyped/issues/37087
+// Using generic types while using `react.memo` doesn't work well.
+// There are a few alternatives for some situations. However they didn't
+// work for this one!
+export const DataTable = React.memo(
+  DataTableComponent
+) as typeof DataTableComponent;

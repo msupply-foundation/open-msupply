@@ -5,6 +5,7 @@ export * from './testing';
 export * from './debounce';
 export * from './dateFunctions';
 export * from './arrays';
+export * from './regex';
 
 export type UUID = string;
 

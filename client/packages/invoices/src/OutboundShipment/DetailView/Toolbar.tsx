@@ -6,43 +6,22 @@ import {
   BasicTextInput,
   Grid,
   DropdownMenu,
-  DropdownMenuItem,
-  DeleteIcon,
   useTranslation,
-  useNotification,
-  useTableStore,
+  useBufferState,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { OutboundShipment, OutboundShipmentSummaryItem } from '../../types';
-import { isInvoiceEditable } from '../../utils';
+import { NameSearchInput } from '@openmsupply-client/system';
+import { useOutboundFields, useIsOutboundDisabled } from '../api';
 
-interface ToolbarProps {
-  draft: OutboundShipment;
-}
+export const Toolbar: FC = () => {
+  const { otherParty, theirReference, update } = useOutboundFields([
+    'otherParty',
+    'theirReference',
+  ]);
+  const [theirReferenceBuffer, setTheirReferenceBuffer] =
+    useBufferState(theirReference);
 
-export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+  const isDisabled = useIsOutboundDisabled();
   const t = useTranslation('distribution');
-  const { success, info } = useNotification();
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => draft.items.find(({ id }) => selectedId === id))
-      .filter(Boolean) as OutboundShipmentSummaryItem[],
-  }));
-
-  const deleteAction = () => {
-    if (selectedRows && selectedRows?.length > 0) {
-      selectedRows.forEach(item =>
-        Object.values(item.batches).forEach(line => draft.deleteLine?.(line))
-      );
-      const successSnack = success(`Deleted ${selectedRows?.length} lines`);
-      successSnack();
-    } else {
-      const infoSnack = info(t('label.select-rows-to-delete-them'));
-      infoSnack();
-    }
-  };
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -55,16 +34,16 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
       >
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
-            {draft.otherParty && (
+            {otherParty && (
               <InputWithLabelRow
                 label={t('label.customer-name')}
                 Input={
                   <NameSearchInput
                     type="customer"
-                    disabled={!isInvoiceEditable(draft)}
-                    value={draft.otherParty}
-                    onChange={name => {
-                      draft.update?.('otherParty', name);
+                    disabled={isDisabled}
+                    value={otherParty}
+                    onChange={otherParty => {
+                      update({ otherParty });
                     }}
                   />
                 }
@@ -74,25 +53,23 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               label={t('label.customer-ref')}
               Input={
                 <BasicTextInput
-                  disabled={!isInvoiceEditable(draft)}
+                  disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={draft?.theirReference ?? ''}
+                  value={theirReferenceBuffer ?? ''}
                   onChange={event => {
-                    draft.update?.('theirReference', event.target.value);
+                    setTheirReferenceBuffer(event.target.value);
+                    update({ theirReference: event.target.value });
                   }}
                 />
               }
             />
           </Box>
         </Grid>
-        <DropdownMenu
-          disabled={!isInvoiceEditable(draft)}
-          label={t('label.select')}
-        >
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+        <DropdownMenu disabled={isDisabled} label={t('label.select')}>
+          {/* <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
             {t('button.delete-lines')}
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenu>
       </Grid>
     </AppBarContentPortal>

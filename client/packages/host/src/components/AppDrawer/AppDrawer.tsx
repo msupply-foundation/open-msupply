@@ -7,7 +7,6 @@ import {
   Divider,
   ExternalNavLink,
   List,
-  MSupplyGuy,
   PowerIcon,
   RadioIcon,
   ReportsIcon,
@@ -19,6 +18,7 @@ import {
   useTranslation,
   AppNavLink,
   useIsMediumScreen,
+  useLocalStorage,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -27,6 +27,7 @@ import {
   InventoryNav,
   ReplenishmentNav,
 } from '../Navigation';
+import { AppDrawerIcon } from './AppDrawerIcon';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -56,7 +57,6 @@ const UpperListContainer = styled(Box)({
 });
 
 const StyledDivider = styled(Divider)({
-  backgroundColor: '#555770',
   marginLeft: 8,
   width: 152,
 });
@@ -64,7 +64,7 @@ const StyledDivider = styled(Divider)({
 const drawerWidth = 240;
 
 const getDrawerCommonStyles = (theme: Theme) => ({
-  backgroundColor: theme.palette.background.menu,
+  backgroundColor: theme.palette.background.drawer,
   overflow: 'hidden',
 });
 
@@ -96,10 +96,16 @@ const StyledDrawer = styled(Box, {
   display: 'flex',
   flexDirection: 'column',
   height: '100vh',
-  borderRadius: 8,
+  borderRadius: '0 8px 8px 0',
   overflow: 'hidden',
   boxShadow: theme.shadows[7],
   zIndex: theme.zIndex.drawer,
+  '& .MuiSvgIcon-root': {
+    color: theme.mixins.drawer?.iconColor,
+  },
+  '& .navLinkText .MuiTypography-root': {
+    color: theme.mixins.drawer?.textColor,
+  },
   ...(isOpen && {
     ...openedMixin(theme),
     '& .MuiDrawer-paper': openedMixin(theme),
@@ -142,8 +148,10 @@ const StyledDrawer = styled(Box, {
 export const AppDrawer: React.FC = () => {
   const t = useTranslation('app');
   const isMediumScreen = useIsMediumScreen();
-
   const drawer = useDrawer();
+  const [, setAuthToken] = useLocalStorage('/authentication/token');
+
+  const onLogout = () => setAuthToken('');
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -163,7 +171,7 @@ export const AppDrawer: React.FC = () => {
             drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
           )}
           onClick={drawer.toggle}
-          icon={<MSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />}
+          icon={<AppDrawerIcon />}
         />
       </ToolbarIconContainer>
       <UpperListContainer>
@@ -203,7 +211,7 @@ export const AppDrawer: React.FC = () => {
       </UpperListContainer>
       <LowerListContainer>
         <List>
-          {drawer.isOpen && <StyledDivider />}
+          {drawer.isOpen && <StyledDivider color="drawerDivider" />}
           <AppNavLink
             to={AppRoute.Sync}
             icon={<RadioIcon fontSize="small" color="primary" />}
@@ -221,9 +229,10 @@ export const AppDrawer: React.FC = () => {
             text={t('admin')}
           />
           <AppNavLink
-            to={AppRoute.Logout}
+            to={AppRoute.Login}
             icon={<PowerIcon fontSize="small" color="primary" />}
             text={t('logout')}
+            onClick={onLogout}
           />
         </List>
       </LowerListContainer>

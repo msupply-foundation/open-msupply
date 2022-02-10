@@ -21,13 +21,13 @@ import { Location } from '@openmsupply-client/system';
  */
 
 export interface InvoiceLine
-  extends Omit<InvoiceLineNode, 'item' | 'type' | 'location' | 'expiryDate'>,
+  extends Omit<InvoiceLineNode, 'item' | 'type' | 'location'>,
     DomainObject {
   stockLine?: StockLine;
   stockLineId: string;
+  unitName?: string;
   invoiceId: string;
   location?: Location;
-  expiryDate?: Date | null;
 }
 
 export interface InvoiceRow
@@ -61,6 +61,13 @@ export interface Invoice
 
 export interface BatchRow extends StockLine {
   numberOfPacks: number;
+}
+
+export interface DraftOutboundLine
+  extends InvoiceLine,
+    Omit<StockLine, 'expiryDate' | 'location'> {
+  isCreated: boolean;
+  isUpdated: boolean;
 }
 
 export interface InvoiceStatusLog {
@@ -135,7 +142,7 @@ export type OutboundShipmentSummaryItem = {
   unitQuantity: number;
   numberOfPacks: number;
   locationName?: string | null;
-  itemUnit?: string;
+  unitName?: string;
   batch?: string | null;
   batches: Record<string, OutboundShipmentRow>;
   sellPricePerPack?: number | undefined;
@@ -157,6 +164,12 @@ export interface OutboundShipment extends Omit<Invoice, 'lines'> {
 }
 
 export type InboundShipmentItem = {
+  id: string;
+  itemId: string;
+  lines: [InvoiceLine, ...InvoiceLine[]];
+};
+
+export type InvoiceItem = {
   id: string;
   itemId: string;
   lines: [InvoiceLine, ...InvoiceLine[]];

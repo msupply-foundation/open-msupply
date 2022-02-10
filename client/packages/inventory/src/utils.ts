@@ -1,56 +1,9 @@
 import {
   StocktakeNodeStatus,
   useTranslation,
+  Item,
 } from '@openmsupply-client/common';
-import {
-  StocktakeItem,
-  StocktakeLine,
-  StocktakeController,
-  StocktakeRow,
-} from './types';
-
-export const placeholderStocktake: StocktakeController = {
-  id: '',
-  comment: '',
-  description: '',
-  lines: [],
-  status: StocktakeNodeStatus.Suggested,
-  stocktakeDatetime: null,
-  stocktakeNumber: 0,
-  enteredByName: '',
-  entryDatetime: new Date(),
-  onHold: false,
-  update: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  updateStocktakeDatetime: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  updateOnHold: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  updateStatus: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  sortBy: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-  upsertItem: () => {
-    throw new Error("Placeholder updater triggered - this shouldn't happen!");
-  },
-};
-
-export const isStocktakeEditable = (
-  stocktake: StocktakeController
-): boolean => {
-  return stocktake.status !== 'FINALISED';
-};
-
-export const flattenStocktakeItems = (
-  summaryItems: StocktakeItem[]
-): StocktakeLine[] => {
-  return summaryItems.map(({ lines }) => Object.values(lines)).flat();
-};
+import { StocktakeRow } from './types';
 
 export const getStocktakeStatuses = (): StocktakeNodeStatus[] => [
   StocktakeNodeStatus.Suggested,
@@ -86,3 +39,26 @@ export const getStocktakeTranslator =
 
 export const canDeleteStocktake = (row: StocktakeRow): boolean =>
   row.status === StocktakeNodeStatus.Suggested;
+
+export const toItem = (line: ItemLike): Item => ({
+  id: 'lines' in line ? line.lines[0].itemId : line.itemId,
+  name: 'lines' in line ? line.lines[0].itemName : line.itemName,
+  code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
+  isVisible: true,
+  availableBatches: [],
+  availableQuantity: 0,
+  unitName: '',
+});
+
+type ItemLike = ItemLikeLine | ItemLikeAggregate;
+
+interface ItemLikeLine {
+  itemId: string;
+  itemName: string;
+  itemCode: string;
+}
+
+interface ItemLikeAggregate {
+  itemId: string;
+  lines: [ItemLikeLine, ...ItemLikeLine[]];
+}

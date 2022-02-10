@@ -12,6 +12,7 @@ import {
   Stocktake,
   StocktakeLine,
   Location,
+  Store,
 } from './types';
 import {
   randomName,
@@ -733,13 +734,13 @@ export const createStocktakeLine = (
     batch: stockLine?.batch,
     costPricePerPack: stockLine?.costPricePerPack,
     sellPricePerPack: stockLine?.sellPricePerPack,
-    countedNumPacks: stockLine?.totalNumberOfPacks,
+    countedNumberOfPacks: stockLine?.totalNumberOfPacks,
     expiryDate: stockLine?.expiryDate,
     itemId: item.id,
     itemCode: item.code,
     itemName: item.name,
-    snapshotNumPacks: stockLine?.totalNumberOfPacks,
-    snapshotPackSize: stockLine?.packSize,
+    snapshotNumberOfPacks: stockLine?.totalNumberOfPacks,
+    packSize: stockLine?.packSize,
     stocktakeId,
     stockLineId: stockLine?.id,
   };
@@ -760,10 +761,20 @@ const createStocktakeLines = (): StocktakeLine[] => {
     .flat();
 };
 
+export const createStores = (
+  numberToCreate = randomInteger({ min: 10, max: 100 })
+): Store[] =>
+  Array.from({ length: numberToCreate }).map(() => ({
+    id: `${faker.datatype.uuid()}`,
+    code: faker.company.companyName(),
+    nameId: '',
+  }));
+
 export const removeElement = (source: any[], idx: number): void => {
   source = source.splice(idx, 1);
 };
 
+export let StoreData = createStores();
 export let NameData = [...createCustomers(), ...createSuppliers()];
 export let ItemData = createItems();
 export let InvoiceData = createInvoices(NameData);

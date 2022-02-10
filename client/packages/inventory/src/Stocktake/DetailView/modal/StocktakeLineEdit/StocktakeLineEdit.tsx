@@ -1,12 +1,7 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useState } from 'react';
 import {
-  StocktakeController,
-  StocktakeItem,
-  StocktakeLine,
-} from '../../../../types';
-import { ModalMode } from '../../DetailView';
-import { StocktakeLineEditForm } from './StocktakeLineEditForm';
-import {
+  BasicSpinner,
+  useDialog,
   Divider,
   TableContainer,
   TabContext,
@@ -17,19 +12,21 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   Box,
-  StockLine,
+  Item,
+  ModalMode,
+  useNotification,
+  DialogButton,
 } from '@openmsupply-client/common';
 import { BatchTable, PricingTable } from './StocktakeLineEditTables';
 import { StocktakeLinePanel } from './StocktakeLinePanel';
-import { createStocktakeRow, wrapStocktakeItem } from './utils';
-import { useStockLines } from '@openmsupply-client/system';
-import { createStocktakeItem } from '../../reducer';
+import { StocktakeLineEditForm } from './StocktakeLineEditForm';
+import { useStocktakeLineEdit } from './hooks';
 
 interface StocktakeLineEditProps {
-  item: StocktakeItem | null;
-  onChangeItem: (item: StocktakeItem | null) => void;
-  mode: ModalMode;
-  draft: StocktakeController;
+  item: Item | null;
+  mode: ModalMode | null;
+  onClose: () => void;
+  isOpen: boolean;
 }
 
 enum Tabs {
@@ -37,136 +34,124 @@ enum Tabs {
   Pricing = 'Pricing',
 }
 
-const createStocktakeLine = (
-  item: StocktakeItem,
-  stockLine: StockLine,
-  countThisLine = true
-): StocktakeLine => {
-  return {
-    stockLineId: stockLine.id,
-    itemCode: item.itemCode(),
-    itemName: item.itemName(),
-    countThisLine,
-    ...stockLine,
-  };
-};
-
 export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   item,
-  draft,
-  onChangeItem,
   mode,
+  onClose,
+  isOpen,
 }) => {
-  const [currentTab, setCurrentTab] = React.useState<Tabs>(Tabs.Batch);
+  const { error } = useNotification();
+  const { Modal } = useDialog({ onClose, isOpen });
+  const [currentItem, setCurrentItem] = useState(item);
+  const [currentTab, setCurrentTab] = useState(Tabs.Batch);
   const isMediumScreen = useIsMediumScreen();
   const t = useTranslation(['common', 'inventory']);
 
-  const [wrappedStocktakeItem, setWrappedStocktakeItem] =
-    React.useState<StocktakeItem | null>(
-      item ? wrapStocktakeItem(item, onChangeItem) : null
-    );
-
-  React.useEffect(() => {
-    setWrappedStocktakeItem(
-      item ? wrapStocktakeItem(item, onChangeItem) : null
-    );
-  }, [item]);
-
-  const onAddBatch = (seed?: StocktakeLine) => {
-    if (wrappedStocktakeItem) {
-      wrappedStocktakeItem.upsertLine?.(
-        createStocktakeRow(wrappedStocktakeItem, seed)
-      );
-    }
-  };
-
-  const { data } = useStockLines(item?.itemCode() ?? '');
-
-  useEffect(() => {
-    if (wrappedStocktakeItem) {
-      if (data && data.length > 0) {
-        const uncountedLines = data.filter(({ id }) => {
-          return (
-            wrappedStocktakeItem.lines.find(
-              ({ stockLineId }) => id === stockLineId
-            ) === undefined
-          );
-        });
-
-        const stocktakeRows: StocktakeLine[] = uncountedLines.map(line =>
-          createStocktakeRow(
-            wrappedStocktakeItem,
-            createStocktakeLine(
-              wrappedStocktakeItem,
-              line,
-              mode === ModalMode.Create
-            )
-          )
-        );
-
-        const updated = createStocktakeItem(wrappedStocktakeItem.id, [
-          ...wrappedStocktakeItem.lines,
-          ...stocktakeRows,
-        ]);
-
-        onChangeItem(updated);
-      }
-    }
-  }, [wrappedStocktakeItem?.id, data]);
+  const { draftLines, update, addLine, isLoading, save, nextItem } =
+    useStocktakeLineEdit(currentItem);
 
   return (
-    <>
-      <StocktakeLineEditForm
-        item={item}
-        onChangeItem={onChangeItem}
-        mode={mode}
-        draft={draft}
-      />
-      <Divider margin={5} />
-      {item ? (
-        <TabContext value={currentTab}>
-          <Box flex={1} display="flex" justifyContent="space-between">
-            <Box flex={1} />
-            <Box flex={1}>
-              <TabList
-                value={currentTab}
-                centered
-                onChange={(_, v) => setCurrentTab(v)}
-              >
-                <Tab value={Tabs.Batch} label={Tabs.Batch} />
-                <Tab value={Tabs.Pricing} label={Tabs.Pricing} />
-              </TabList>
-            </Box>
-            <Box flex={1} justifyContent="flex-end" display="flex">
-              <ButtonWithIcon
-                color="primary"
-                variant="outlined"
-                onClick={() => onAddBatch()}
-                label={t('label.add-batch', { ns: 'inventory' })}
-                Icon={<PlusCircleIcon />}
-              />
-            </Box>
-          </Box>
+    <Modal
+      title={
+        mode === ModalMode.Create
+          ? t('heading.add-item')
+          : t('heading.edit-item')
+      }
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      nextButton={
+        <DialogButton
+          variant="next"
+          onClick={async () => {
+            try {
+              await save(draftLines);
+              if (nextItem) setCurrentItem(nextItem);
+              else onClose();
 
-          <TableContainer>
-            <StocktakeLinePanel
-              batches={wrappedStocktakeItem?.lines ?? []}
-              value={Tabs.Batch}
-            >
-              <BatchTable batches={wrappedStocktakeItem?.lines ?? []} />
-            </StocktakeLinePanel>
+              // Returning true here triggers the slide animation
+              return true;
+            } catch (e) {
+              //
+            }
+          }}
+          disabled={mode !== ModalMode.Update}
+        />
+      }
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={async () => {
+            try {
+              await save(draftLines);
+              onClose();
+            } catch (e) {
+              error(t('error.cant-save'))();
+            }
+          }}
+        />
+      }
+      height={600}
+      width={1024}
+    >
+      {!isLoading ? (
+        <>
+          <StocktakeLineEditForm
+            item={currentItem}
+            onChangeItem={setCurrentItem}
+            mode={mode}
+          />
+          <Divider margin={5} />
+          {currentItem ? (
+            <TabContext value={currentTab}>
+              <Box flex={1} display="flex" justifyContent="space-between">
+                <Box flex={1} />
+                <Box flex={1}>
+                  <TabList
+                    value={currentTab}
+                    centered
+                    onChange={(_, v) => setCurrentTab(v)}
+                  >
+                    <Tab value={Tabs.Batch} label={Tabs.Batch} />
+                    <Tab value={Tabs.Pricing} label={Tabs.Pricing} />
+                  </TabList>
+                </Box>
+                <Box flex={1} justifyContent="flex-end" display="flex">
+                  <ButtonWithIcon
+                    color="primary"
+                    variant="outlined"
+                    onClick={addLine}
+                    label={t('label.add-batch', { ns: 'inventory' })}
+                    Icon={<PlusCircleIcon />}
+                  />
+                </Box>
+              </Box>
 
-            <StocktakeLinePanel
-              batches={wrappedStocktakeItem?.lines ?? []}
-              value={Tabs.Pricing}
-            >
-              <PricingTable batches={wrappedStocktakeItem?.lines ?? []} />
-            </StocktakeLinePanel>
-          </TableContainer>
-        </TabContext>
+              <TableContainer>
+                <StocktakeLinePanel
+                  batches={draftLines}
+                  update={update}
+                  value={Tabs.Batch}
+                >
+                  <BatchTable batches={draftLines} update={update} />
+                </StocktakeLinePanel>
+
+                <StocktakeLinePanel
+                  batches={draftLines}
+                  update={update}
+                  value={Tabs.Pricing}
+                >
+                  <PricingTable batches={draftLines} update={update} />
+                </StocktakeLinePanel>
+              </TableContainer>
+            </TabContext>
+          ) : (
+            <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
+          )}
+        </>
       ) : (
-        <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
+        <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
+          <BasicSpinner messageKey="saving" />
+        </Box>
       )}
-    </>
+    </Modal>
   );
 };

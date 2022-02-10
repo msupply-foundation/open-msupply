@@ -31,7 +31,7 @@ const getColumnWidths = <T extends DomainObject>(
   const minWidth = column.minWidth || column.width || defaultWidth;
   const width = column.width || defaultWidth;
 
-  return { minWidth, width };
+  return { minWidth, width, maxWidth: column.maxWidth };
 };
 
 const getSortType = (column: { format?: ColumnFormat }) => {
@@ -133,7 +133,7 @@ interface ColumnOptions<T extends DomainObject> {
   sortBy?: SortBy<T>;
 }
 
-type ColumnDescription<T extends DomainObject> =
+export type ColumnDescription<T extends DomainObject> =
   | ColumnDefinition<T>
   | ColumnKey
   | [ColumnKey | ColumnDefinition<T>, Omit<ColumnDefinition<T>, 'key'>]

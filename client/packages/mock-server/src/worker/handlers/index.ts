@@ -5,6 +5,8 @@ import { ItemHandlers } from './item';
 import { StocktakeHandlers } from './stocktake';
 import { ExperimentalHandlers } from './experimental';
 import { LocationHandlers } from './location';
+import { StoreHandlers } from './store';
+import { AuthHandlers } from './authentication';
 
 // Checking for not equal to production instead of
 // checking for development, as jest sets this to
@@ -24,6 +26,8 @@ const supported = [
   ...NameHandlers,
   ...ItemHandlers,
   ...LocationHandlers,
+  ...StoreHandlers,
+  ...AuthHandlers,
 ];
 
 const DevHandlers = [...unsupported, ...supported];

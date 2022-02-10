@@ -126,12 +126,12 @@ type StocktakeLineNode {
   itemCode: String!
   batch: String
   expiryDate: NaiveDate
-  snapshotNumPacks: Int
-  snapshotPackSize: Int
-  countedNumPacks: Int
+  packSize: Int
+  stockLineId: String
+  snapshotNumberOfPacks: Int
+  countedNumberOfPacks: Int
   sellPricePerPack: Float
   costPricePerPack: Float
-  stockLineId: String
 }
 
 input UpdateStocktakeLineInput {

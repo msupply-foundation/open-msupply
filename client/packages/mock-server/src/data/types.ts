@@ -2,6 +2,7 @@ import {
   StockLineConnector,
   InvoiceSortInput,
   InvoiceFilterInput,
+  StoreNode,
 } from '@openmsupply-client/common/src/types/schema';
 import {
   InvoiceLineNode,
@@ -27,10 +28,13 @@ import {
 
 export { ItemSortFieldInput, RequisitionListParameters, ItemsResponse };
 
-export interface Store {
+export interface Store extends Omit<StoreNode, '__typename'> {
   id: string;
   code: string;
   nameId: string;
+}
+export interface ResolvedStore extends Store {
+  __typename: 'StoreNode';
 }
 
 export type Location = Omit<LocationNode, 'stock'>;

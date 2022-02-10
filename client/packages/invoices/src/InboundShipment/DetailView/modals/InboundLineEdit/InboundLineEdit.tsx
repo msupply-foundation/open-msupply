@@ -31,7 +31,7 @@ import { InboundLineEditPanel } from './InboundLineEditPanel';
 
 interface InboundLineEditProps {
   item: Item | null;
-  mode: ModalMode;
+  mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -213,7 +213,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
       width={1024}
     >
       {isLoading ? (
-        <BasicSpinner />
+        <BasicSpinner messageKey="saving" />
       ) : (
         <>
           <InboundLineEditForm

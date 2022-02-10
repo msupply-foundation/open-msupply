@@ -7,6 +7,7 @@ import {
   ItemNode,
   Item,
 } from '@openmsupply-client/common';
+import { ItemLike } from './types';
 
 export const itemsGuard = (
   itemsQuery: ItemsWithStockLinesQuery
@@ -61,3 +62,13 @@ export const mapItemNodes = (
 
   return { nodes, totalCount };
 };
+
+export const toItem = (line: ItemLike): Item => ({
+  id: 'lines' in line ? line.lines[0].itemId : line.itemId,
+  name: 'lines' in line ? line.lines[0].itemName : line.itemName,
+  code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
+  isVisible: true,
+  availableBatches: [],
+  availableQuantity: 0,
+  unitName: '',
+});

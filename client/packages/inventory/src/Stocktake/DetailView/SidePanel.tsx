@@ -7,81 +7,79 @@ import {
   DetailPanelPortal,
   DetailPanelSection,
   PanelLabel,
-  TextArea,
+  BufferedTextArea,
+  useBufferState,
   useNotification,
   useTranslation,
   PanelRow,
   PanelField,
   useFormatDate,
 } from '@openmsupply-client/common';
-import { isStocktakeEditable } from '../../utils';
-import { StocktakeController } from '../../types';
 
-interface SidePanelProps {
-  draft: StocktakeController;
-}
+import {
+  useIsStocktakeDisabled,
+  useStocktake,
+  useStocktakeFields,
+} from '../api';
 
-const AdditionalInfoSection: FC<SidePanelProps> = ({ draft }) => {
+const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
   const d = useFormatDate();
+
+  const { enteredByName, entryDatetime, comment, update } = useStocktakeFields([
+    'enteredByName',
+    'entryDatetime',
+    'comment',
+  ]);
+  const [bufferedComment, setBufferedComment] = useBufferState(comment);
+  const isDisabled = useIsStocktakeDisabled();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          <PanelField>{draft.enteredByName}</PanelField>
+          <PanelField>{enteredByName}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.entered')}</PanelLabel>
-          <PanelField>{d(new Date(draft.entryDatetime))}</PanelField>
+          <PanelField>{d(new Date(entryDatetime))}</PanelField>
         </PanelRow>
         <PanelLabel>{t('heading.comment')}</PanelLabel>
-        <TextArea
-          disabled={!isStocktakeEditable(draft)}
-          onChange={e => draft.update('comment', e.target.value)}
-          value={draft.comment}
+        <BufferedTextArea
+          disabled={isDisabled}
+          onChange={e => {
+            setBufferedComment(e.target.value);
+            update({ comment: e.target.value });
+          }}
+          value={bufferedComment}
         />
       </Grid>
     </DetailPanelSection>
   );
 };
 
-export const SidePanel: FC<SidePanelProps> = ({ draft }) => {
+export const SidePanel: FC = () => {
   const { success } = useNotification();
   const t = useTranslation(['inventory', 'common']);
+  const { data } = useStocktake();
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(draft, null, 4) ?? '');
+    navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');
     success('Copied to clipboard successfully')();
   };
 
   return (
     <DetailPanelPortal
       Actions={
-        <>
-          {!process.env['NODE_ENV'] ||
-            (process.env['NODE_ENV'] === 'development' && (
-              <DetailPanelAction
-                icon={<CopyIcon />}
-                title={t('dev.log-draft')}
-                onClick={() => {
-                  console.table(draft);
-                  draft.lines.forEach(item => {
-                    console.table(item);
-                  });
-                }}
-              />
-            ))}
-          <DetailPanelAction
-            icon={<CopyIcon />}
-            title={t('link.copy-to-clipboard')}
-            onClick={copyToClipboard}
-          />
-        </>
+        <DetailPanelAction
+          icon={<CopyIcon />}
+          title={t('link.copy-to-clipboard')}
+          onClick={copyToClipboard}
+        />
       }
     >
-      <AdditionalInfoSection draft={draft} />
+      <AdditionalInfoSection />
     </DetailPanelPortal>
   );
 };
