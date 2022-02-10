@@ -68,9 +68,14 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
     // in the set of options, or the only option if there is only
     // one.
     if (selected) return;
-    const selectedPackSize = ifTheSameElseDefault(options, 'value', -1);
+    const selectedPackSize = ifTheSameElseDefault(
+      lines.filter(({ numberOfPacks }) => numberOfPacks > 0),
+      'packSize',
+      -1
+    );
+
     setPackSize(selectedPackSize);
-  }, [options, setPackSize, selected]);
+  }, [setPackSize, selected, lines]);
 
   return { selected, setPackSize, options, packSizes };
 };
