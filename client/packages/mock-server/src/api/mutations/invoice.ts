@@ -49,7 +49,16 @@ export const InvoiceMutation = {
           input.id,
           invoiceNumber,
           otherPartyName,
-          InvoiceNodeType.OutboundShipment
+          InvoiceNodeType.OutboundShipment,
+          {
+            status: InvoiceNodeStatus.New,
+            allocatedDatetime: null,
+            pickedDatetime: null,
+            shippedDatetime: null,
+            deliveredDatetime: null,
+            verifiedDatetime: null,
+            comment: null,
+          }
         )
       );
 
@@ -60,6 +69,7 @@ export const InvoiceMutation = {
         ...invoice,
         ...getStatusTime(invoice.status),
       });
+
       const resolvedInvoice = ResolverService.invoice.byId(updated.id);
 
       return resolvedInvoice;

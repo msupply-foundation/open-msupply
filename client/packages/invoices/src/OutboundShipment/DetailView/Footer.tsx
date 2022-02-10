@@ -116,8 +116,8 @@ export const Footer: FC = () => {
                   variant="contained"
                   color="secondary"
                   onClick={async () => {
-                    success('Saved invoice! 🥳 ')();
                     await update({ status: getNextOutboundStatus(status) });
+                    success('Saved invoice! 🥳 ')();
                   }}
                 />
               )}

@@ -564,11 +564,11 @@ export const update = {
         (invoice?.status as unknown as InvoiceNodeStatus) ??
         existingInvoice.status,
       otherPartyId: invoice?.otherPartyId ?? existingInvoice.otherPartyId,
-      // allocatedDatetime:
-      //   invoice?.allocatedDatetime ?? existingInvoice.allocatedDatetime,
-      // shippedDatetime:
-      //   invoice?.shippedDatetime ?? existingInvoice.shippedDatetime,
-      // pickedDatetime: invoice?.pickedDatetime ?? existingInvoice.pickedDatetime,
+      allocatedDatetime:
+        invoice?.allocatedDatetime ?? existingInvoice.allocatedDatetime,
+      shippedDatetime:
+        invoice?.shippedDatetime ?? existingInvoice.shippedDatetime,
+      pickedDatetime: invoice?.pickedDatetime ?? existingInvoice.pickedDatetime,
     };
     InvoiceData[idx] = newInvoice;
     return newInvoice;
