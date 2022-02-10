@@ -13,7 +13,8 @@
     "storybook": "start-storybook -s ./packages/host/public  -p 6006",
     "build-storybook": "build-storybook -s ./packages/host/public ",
     "generate": "graphql-codegen --config codegen.yml",
-    "android:build-remote_server": "cd android && ./build_remote_server_libs.sh"
+    "android:build-remote_server": "cd ./packages/android && ./build_remote_server_libs.sh",
+    "android:build": "cd ./packages/android && ./gradlew assembleRelease"
   },
   "workspaces": {
     "packages": [
@@ -21,7 +22,6 @@
     ]
   },
   "devDependencies": {
-    "@capacitor/cli": "^3.3.4",
     "@graphql-codegen/cli": "^2.3.0",
     "@graphql-codegen/typescript": "^2.4.1",
     "@graphql-codegen/typescript-graphql-request": "^4.3.2",
@@ -67,8 +67,6 @@
     ]
   },
   "dependencies": {
-    "@capacitor/android": "^3.3.4",
-    "@capacitor/core": "^3.3.4",
     "@types/react-dom": "^17.0.9",
     "graphql": "16.0.0",
     "lerna": "^4.0.0"

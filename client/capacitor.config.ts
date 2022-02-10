@@ -5,6 +5,9 @@ const config: CapacitorConfig = {
   appName: 'openmsupply-client',
   webDir: 'packages/host/dist',
   bundledWebRuntime: false,
+  android: {
+    path: 'packages/android',
+  },
 };
 
 export default config;
