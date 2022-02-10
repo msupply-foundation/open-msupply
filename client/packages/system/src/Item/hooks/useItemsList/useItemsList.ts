@@ -23,8 +23,9 @@ export const useItemsList = (initialListParameters: {
 }> => {
   const queryClient = useQueryClient();
   const { api } = useOmSupplyApi();
-  const { filterBy, filter, queryParams, first, offset, sortBy } =
-    useQueryParams(initialListParameters);
+  const { filterBy, filter, queryParams, offset, sortBy } = useQueryParams(
+    initialListParameters
+  );
 
   const queryState = useQuery(
     ['items', 'list', queryParams],
@@ -32,7 +33,8 @@ export const useItemsList = (initialListParameters: {
       const result = await api.itemsWithStockLines({
         key: getItemSortField(sortBy.key),
         filter: filterBy,
-        first,
+        // TODO: Properly paginate results.
+        first: 1000,
         offset,
       });
 
