@@ -18,7 +18,6 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
-import { isInboundEditable } from '../../utils';
 import { InvoiceLine, InboundShipmentItem } from '../../types';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -44,12 +43,9 @@ export const DetailView: FC = () => {
     >
       {draft ? (
         <TableProvider createStore={createTableStore}>
-          <AppBarButtons
-            isDisabled={!isInboundEditable(draft)}
-            onAddItem={() => onOpen()}
-          />
+          <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar draft={draft} />
+          <Toolbar />
 
           <GeneralTab onRowClick={onRowClick} />
 
