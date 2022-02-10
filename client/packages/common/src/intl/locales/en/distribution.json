@@ -29,5 +29,6 @@
   "message.deleted-invoices": "Deleted {{number}} invoices",
   "message.deleted-requisitions": "Deleted {{number}} requisitions",
   "message.select-rows-to-delete": "Select rows to delete",
-  "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list"
+  "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",
+  "message.deleted-lines": "Deleted {{number}} lines"
 }
