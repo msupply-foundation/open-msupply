@@ -98,12 +98,29 @@ You can also specify multiple namespaces when using the hook:
 
 ## Android App
 
+### Pre requisites
+
+This is using capacitor, and the `cordova-android` plugin. These are in `package.json`, so you'll install when you `yarn install`.
+However, capacitor would also like you to
+
+```
+npx cap sync
+```
+
+after the cordova plugin is installed.. this will create the `./packages/android/capacitor-cordova-android-plugins` dir, which you'll need.
+
 ### Build the remote server lib
 
 The Android app needs the remote server build as a shared lib.
 
 Make sure the Android NDK is installed and the env var `NDK_HOME` is set, for example to `~Android/Sdk/ndk/22.1.7171670`.
 Currently the build script requires the Android API 26, make sure this version is installed.
+
+For Mac OS, the version of NDK installed by Android Studio does not have all of the required linkers prebuilt: instead use:
+
+`~/Library/Android/sdk/tools/bin/sdkmanager "ndk-bundle"`
+
+and set the `NDK_HOME` to `$ANDROID_SDK_ROOT/ndk-bundle`
 
 The remote server source code should be located in the `../remote-server` directory.
 If not clone it by doing:
@@ -113,6 +130,10 @@ cd ..
 git clone git@github.com:openmsupply/remote-server.git
 ```
 
+You may need to install `armv7` i.e. `rustup target add armv7-linux-androideabi`
+
+For Mac OS, you may have an error: `fatal error: 'stdio.h' file not found`. If so, specify a location for the headers using the`CPATH`env var, for example`/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/`or`/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/`
+
 ```
 yarn android:build-remote_server
 ```
@@ -120,6 +141,7 @@ yarn android:build-remote_server
 #### Unsolved issue that will hopefully be fixed at some point:
 
 1. The x86 target seem to be broken and crashes when loading the server lib
+2. On Mac OS the `armv7-linux-androideabi` target fails to build, you may need to comment out from the makefile and build script
 
 ### Run the Android app
 
@@ -128,7 +150,7 @@ In `packages/host/public/config.js` change `API_URL` to `API_URL: 'http://localh
 After building the web app the output needs to be copied to the android project:
 
 ```
-npm run build
+yarn build
 npx cap copy
 ```
 
@@ -146,6 +168,8 @@ Enable clear text traffic in `android/app/src/main/AndroidManifest.xml`:
 ```
 
 Open the `android` folder in Android studio and start the app.
+
+To build an .apk, run the command `yarn android:build`
 
 ### Java bits
 
