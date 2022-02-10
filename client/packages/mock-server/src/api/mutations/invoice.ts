@@ -20,8 +20,14 @@ const getStatusTime = (status: string | undefined | null) => {
     case 'SHIPPED': {
       return { shippedDatetime: new Date().toISOString() };
     }
+    case 'DELIVERED': {
+      return { deliveredDatetime: new Date().toISOString() };
+    }
     case 'PICKED': {
       return { pickedDatetime: new Date().toISOString() };
+    }
+    case 'VERIFIED': {
+      return { verifiedDatetime: new Date().toISOString() };
     }
   }
 
