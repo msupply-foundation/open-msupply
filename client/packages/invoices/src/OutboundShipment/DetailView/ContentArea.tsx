@@ -30,7 +30,7 @@ const Expand: FC<{
     'sellPricePerUnit',
   ]);
 
-  if ('lines' in rowData) {
+  if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={columns} />;
   } else {
     return null;
