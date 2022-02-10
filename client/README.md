@@ -171,6 +171,9 @@ Open the `android` folder in Android studio and start the app.
 
 To build an .apk, run the command `yarn android:build`
 
+Currently the remote-server doesn't create a sqlite DB file on first startup.
+For this reason this step needs to be done manually, i.e. create and migrate the db file locally and then copy the file to the app folder on the device (using adb or AndroidStudio).
+
 ### Java bits
 
 The remote server is started and stopped in: `android/app/src/main/java/org/openmsupply/client/MainActivity.java`
