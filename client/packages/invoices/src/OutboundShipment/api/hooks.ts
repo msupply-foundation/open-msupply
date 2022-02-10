@@ -1,5 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import {
+  useTranslation,
+  useNotification,
   useQueryClient,
   InvoiceNodeStatus,
   useQuerySelector,
@@ -16,6 +18,7 @@ import {
   useMutation,
   UseMutationResult,
   DeleteOutboundShipmentLinesMutation,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
 import { OutboundApi } from './api';
@@ -180,4 +183,55 @@ export const useDeleteInboundLine = (): UseMutationResult<
       queryClient.invalidateQueries(['invoice', id]);
     },
   });
+};
+
+export const useDeleteSelectedLines = (): {
+  onDelete: () => Promise<void>;
+} => {
+  const { success, info } = useNotification();
+  const { items, lines } = useOutboundRows();
+  const { mutate } = useDeleteInboundLine();
+  const t = useTranslation('distribution');
+
+  const { selectedRows } = useTableStore(state => {
+    const { isGrouped } = state;
+
+    if (isGrouped) {
+      return {
+        selectedRows: (
+          Object.keys(state.rowState)
+            .filter(id => state.rowState[id]?.isSelected)
+            .map(selectedId => items?.find(({ id }) => selectedId === id))
+            .filter(Boolean) as InvoiceItem[]
+        )
+          .map(({ lines }) => lines)
+          .flat()
+          .map(({ id }) => id),
+      };
+    } else {
+      return {
+        selectedRows: (
+          Object.keys(state.rowState)
+            .filter(id => state.rowState[id]?.isSelected)
+            .map(selectedId => lines.find(({ id }) => selectedId === id))
+            .filter(Boolean) as InvoiceLine[]
+        ).map(({ id }) => id),
+      };
+    }
+  });
+
+  const onDelete = async () => {
+    if (selectedRows && selectedRows?.length > 0) {
+      const number = selectedRows?.length;
+      const onSuccess = success(t('message.deleted-lines', { number }));
+      mutate(selectedRows, {
+        onSuccess,
+      });
+    } else {
+      const infoSnack = info(t('label.select-rows-to-delete-them'));
+      infoSnack();
+    }
+  };
+
+  return { onDelete };
 };
