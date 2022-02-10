@@ -47,7 +47,7 @@ export const GeneralTab: FC<
   );
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" display="flex" flex={1}>
       {rows?.length !== 0 && (
         <Box style={{ padding: 5, marginInlineStart: 15 }}>
           <Switch

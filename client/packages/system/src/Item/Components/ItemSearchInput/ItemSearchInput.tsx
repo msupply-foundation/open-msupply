@@ -107,6 +107,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
         onChange(item);
       }}
       options={defaultOptionMapper(options, 'name')}
+      getOptionLabel={option => `${option.code}     ${option.name}`}
       renderOption={getOptionRenderer(t('label.units'), formatNumber)}
       width="100%"
       isOptionEqualToValue={(option, value) => option?.id === value?.id}

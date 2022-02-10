@@ -1,6 +1,3 @@
-import { InboundShipmentItem } from './../../types';
-import { toItem } from './DetailView';
-import { DraftInboundLine } from './modals/InboundLineEdit/InboundLineEdit';
 import { useCallback } from 'react';
 import {
   LocationResponse,
@@ -12,7 +9,6 @@ import {
   UpdateInboundShipmentMutation,
   useParams,
   useOmSupplyApi,
-  Column,
   useQueryClient,
   useMutation,
   InvoiceLineConnector,
@@ -35,9 +31,11 @@ import {
   getDataSorter,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { Location } from '@openmsupply-client/system';
+import { Location, toItem } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
 import { inboundLinesToSummaryItems } from '../../utils';
+import { InboundShipmentItem } from './../../types';
+import { DraftInboundLine } from './modals/InboundLineEdit';
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
@@ -190,17 +188,12 @@ export const getInboundShipmentDetailViewApi = (
       const stockLine = line.stockLine
         ? stockLineGuard(line.stockLine)
         : undefined;
-
-      const expiryDate = line.expiryDate
-        ? new Date(line.expiryDate)
-        : undefined;
       const location = line.location ? locationGuard(line.location) : undefined;
 
       return {
         ...line,
         stockLine,
         location,
-        expiryDate,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
       };
@@ -392,12 +385,7 @@ export const useInboundItems = () => {
   const { sortBy, onChangeSortBy } = useSortBy<InboundShipmentItem>({
     key: 'itemName',
   });
-  const onSort = (column: Column<InboundShipmentItem>) => {
-    onChangeSortBy({
-      key: column.key,
-      isDesc: sortBy.key === column.key ? !sortBy.isDesc : false,
-    });
-  };
+
   const selectItems = useCallback((invoice: Invoice) => {
     return inboundLinesToSummaryItems(invoice.lines).sort(
       getDataSorter(sortBy.key as keyof InboundShipmentItem, !!sortBy.isDesc)
@@ -406,7 +394,7 @@ export const useInboundItems = () => {
 
   const { data } = useInboundShipmentSelector(selectItems);
 
-  return { data, sortBy, onSort };
+  return { data, sortBy, onSort: onChangeSortBy };
 };
 
 export const useNextItem = (currentItemId: string): Item | null => {
@@ -431,7 +419,7 @@ export const useSaveInboundLines = () => {
 };
 
 export const useDraftInbound = () => {
-  const { data } = useInboundShipment();
+  const { data, isLoading } = useInboundShipment();
 
   const { mutateAsync: optimisticUpdate } = useOptimisticInboundUpdate();
 
@@ -443,6 +431,7 @@ export const useDraftInbound = () => {
   return {
     updateInvoice,
     draft: data,
+    isLoading,
   };
 };
 

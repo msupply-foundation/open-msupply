@@ -4,6 +4,12 @@ import {
   useColumns,
   NumberInputCell,
   CurrencyInputCell,
+  getExpiryDateInputColumn,
+  TextInputCell,
+  ColumnDescription,
+  useTheme,
+  Theme,
+  alpha,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './InboundLineEdit';
 import { getLocationInputColumn } from '@openmsupply-client/system';
@@ -13,12 +19,42 @@ interface TableProps {
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }
 
+const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
+const getBatchColumn = (
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
+  theme: Theme
+): ColumnDescription<DraftInboundLine> => [
+  'batch',
+  {
+    width: 150,
+    maxWidth: 150,
+    Cell: TextInputCell,
+    setter: updateDraftLine,
+    backgroundColor: alpha(theme.palette.background.menu, 0.4),
+  },
+];
+const getExpiryColumn = (
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
+  theme: Theme
+): ColumnDescription<DraftInboundLine> => [
+  expiryInputColumn,
+  {
+    width: 150,
+    maxWidth: 150,
+    setter: updateDraftLine,
+    backgroundColor: alpha(theme.palette.background.menu, 0.4),
+  },
+];
+
 export const QuantityTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
 }) => {
+  const theme = useTheme();
   const columns = useColumns<DraftInboundLine>(
     [
+      getBatchColumn(updateDraftLine, theme),
+      getExpiryColumn(updateDraftLine, theme),
       [
         'numberOfPacks',
         {
@@ -54,8 +90,11 @@ export const PricingTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
 }) => {
+  const theme = useTheme();
   const columns = useColumns<DraftInboundLine>(
     [
+      getBatchColumn(updateDraftLine, theme),
+      getExpiryColumn(updateDraftLine, theme),
       [
         'sellPricePerPack',
         { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
@@ -96,8 +135,13 @@ export const LocationTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
 }) => {
-  const columns = useColumns(
-    [[getLocationInputColumn(), { setter: updateDraftLine }]],
+  const theme = useTheme();
+  const columns = useColumns<DraftInboundLine>(
+    [
+      getBatchColumn(updateDraftLine, theme),
+      getExpiryColumn(updateDraftLine, theme),
+      [getLocationInputColumn(), { setter: updateDraftLine }],
+    ],
     {},
     [updateDraftLine]
   );

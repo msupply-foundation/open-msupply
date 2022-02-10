@@ -30,6 +30,14 @@ export type Scalars = {
    * * `2000-02-24`
    */
   NaiveDate: string;
+  /**
+   * ISO 8601 combined date and time without timezone.
+   *
+   * # Examples
+   *
+   * * `2015-07-01T08:59:60.123`,
+   */
+  NaiveDateTime: any;
 };
 
 export type AccessDenied = LogoutErrorInterface & {
@@ -367,8 +375,27 @@ export type DeleteOutboundShipmentServiceLineResponseWithId = {
   response: DeleteOutboundShipmentServiceLineResponse;
 };
 
+export type DeleteOutboundShipmentUnallocatedLineError = {
+  __typename?: 'DeleteOutboundShipmentUnallocatedLineError';
+  error: DeleteOutboundShipmentUnallocatedLineErrorInterface;
+};
+
+export type DeleteOutboundShipmentUnallocatedLineErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type DeleteOutboundShipmentUnallocatedLineInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteOutboundShipmentUnallocatedLineResponse = DeleteOutboundShipmentUnallocatedLineError | DeleteResponse;
+
 export type DeleteResponse = {
   __typename?: 'DeleteResponse';
+  id: Scalars['String'];
+};
+
+export type DeleteStockTakeInput = {
   id: Scalars['String'];
 };
 
@@ -376,7 +403,20 @@ export type DeleteStockTakeLineInput = {
   id: Scalars['String'];
 };
 
-export type DeleteStockTakeLineResponse = DeleteResponse;
+export type DeleteStockTakeLineNode = {
+  __typename?: 'DeleteStockTakeLineNode';
+  id: Scalars['String'];
+};
+
+export type DeleteStockTakeLineResponse = DeleteStockTakeLineNode;
+
+export type DeleteStockTakeNode = {
+  __typename?: 'DeleteStockTakeNode';
+  /** The id of the deleted stock take */
+  id: Scalars['String'];
+};
+
+export type DeleteStockTakeResponse = DeleteStockTakeNode;
 
 export type DeleteStocktakeInput = {
   id: Scalars['String'];
@@ -450,6 +490,12 @@ export type EqualFilterInvoiceTypeInput = {
   notEqualTo?: InputMaybe<InvoiceNodeType>;
 };
 
+export type EqualFilterStockTakeStatusInput = {
+  equalAny?: InputMaybe<Array<StockTakeNodeStatus>>;
+  equalTo?: InputMaybe<StockTakeNodeStatus>;
+  notEqualTo?: InputMaybe<StockTakeNodeStatus>;
+};
+
 export type EqualFilterStringInput = {
   equalAny?: InputMaybe<Array<Scalars['String']>>;
   equalTo?: InputMaybe<Scalars['String']>;
@@ -464,7 +510,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename?: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
@@ -695,7 +741,11 @@ export type InsertOutboundShipmentServiceLineResponseWithId = {
 
 export type InsertOutboundShipmentUnallocatedLineError = {
   __typename?: 'InsertOutboundShipmentUnallocatedLineError';
-  error: InsertOutboundShipmentUnallocatedLineInterface;
+  error: InsertOutboundShipmentUnallocatedLineErrorInterface;
+};
+
+export type InsertOutboundShipmentUnallocatedLineErrorInterface = {
+  description: Scalars['String'];
 };
 
 export type InsertOutboundShipmentUnallocatedLineInput = {
@@ -705,11 +755,34 @@ export type InsertOutboundShipmentUnallocatedLineInput = {
   quantity: Scalars['Int'];
 };
 
-export type InsertOutboundShipmentUnallocatedLineInterface = {
-  description: Scalars['String'];
+export type InsertOutboundShipmentUnallocatedLineResponse = InsertOutboundShipmentUnallocatedLineError | InvoiceLineNode;
+
+export type InsertStockTakeInput = {
+  comment?: InputMaybe<Scalars['String']>;
+  createdDatetime: Scalars['NaiveDateTime'];
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
 };
 
-export type InsertOutboundShipmentUnallocatedLineResponse = InsertOutboundShipmentUnallocatedLineError | InvoiceLineNode;
+export type InsertStockTakeLineInput = {
+  batch?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
+  costPricePerPack?: InputMaybe<Scalars['Float']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  itemId?: InputMaybe<Scalars['String']>;
+  locationId?: InputMaybe<Scalars['String']>;
+  note?: InputMaybe<Scalars['String']>;
+  packSize?: InputMaybe<Scalars['Int']>;
+  sellPricePerPack?: InputMaybe<Scalars['Float']>;
+  stockLineId?: InputMaybe<Scalars['String']>;
+  stockTakeId: Scalars['String'];
+};
+
+export type InsertStockTakeLineResponse = StockTakeLineNode;
+
+export type InsertStockTakeResponse = StockTakeNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']>;
@@ -923,6 +996,7 @@ export type InvoiceNode = {
   otherParty: NameResponse;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
+  otherPartyStore?: Maybe<StoreNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']>;
   pricing: InvoicePriceResponse;
   shippedDatetime?: Maybe<Scalars['DateTime']>;
@@ -1228,6 +1302,8 @@ export type Mutations = {
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
+  deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  deleteStockTake: DeleteStockTakeResponse;
   deleteStockTakeLine: DeleteStockTakeLineResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteSupplierRequisition: DeleteSupplierRequisitionResponse;
@@ -1241,6 +1317,8 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertStockTake: InsertStockTakeResponse;
+  insertStockTakeLine: InsertStockTakeLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertSupplierRequisition: InsertSupplierRequisitionResponse;
   insertSupplierRequisitionLine: InsertSupplierRequisitionLineResponse;
@@ -1253,6 +1331,9 @@ export type Mutations = {
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
+  updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
+  updateStockTake: UpdateStockTakeResponse;
+  updateStockTakeLine: UpdateStockTakeLineResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateSupplierRequisition: UpdateSupplierRequisitionResponse;
   updateSupplierRequisitionLine: UpdateSupplierRequisitionLineResponse;
@@ -1352,6 +1433,17 @@ export type MutationsDeleteOutboundShipmentServiceLineArgs = {
 };
 
 
+export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
+  input: DeleteOutboundShipmentUnallocatedLineInput;
+};
+
+
+export type MutationsDeleteStockTakeArgs = {
+  input: DeleteStockTakeInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
 export type MutationsDeleteStockTakeLineArgs = {
   input: DeleteStockTakeLineInput;
   storeId?: InputMaybe<Scalars['String']>;
@@ -1418,6 +1510,18 @@ export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
 };
 
 
+export type MutationsInsertStockTakeArgs = {
+  input: InsertStockTakeInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
+export type MutationsInsertStockTakeLineArgs = {
+  input: InsertStockTakeLineInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
 export type MutationsInsertStocktakeArgs = {
   input: InsertStocktakeInput;
 };
@@ -1478,6 +1582,23 @@ export type MutationsUpdateOutboundShipmentServiceLineArgs = {
 };
 
 
+export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
+  input: UpdateOutboundShipmentUnallocatedLineInput;
+};
+
+
+export type MutationsUpdateStockTakeArgs = {
+  input: UpdateStockTakeInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
+export type MutationsUpdateStockTakeLineArgs = {
+  input: UpdateStockTakeLineInput;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
 export type MutationsUpdateStocktakeArgs = {
   input: UpdateStocktakeInput;
 };
@@ -1501,6 +1622,7 @@ export type NameConnector = {
 export type NameFilterInput = {
   /** Filter by code */
   code?: InputMaybe<SimpleStringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
   /** Filter by supplier property */
@@ -1516,6 +1638,7 @@ export type NameNode = {
   isCustomer: Scalars['Boolean'];
   isSupplier: Scalars['Boolean'];
   name: Scalars['String'];
+  store?: Maybe<StoreNode>;
 };
 
 export type NameResponse = NameNode | NodeError;
@@ -1635,6 +1758,7 @@ export type Queries = {
    */
   authToken: AuthTokenResponse;
   invoice: InvoiceResponse;
+  invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
   /** Query omSupply "item" entries */
@@ -1655,6 +1779,7 @@ export type Queries = {
   requisition: RequisitionResponse;
   requisitions: RequisitionsResponse;
   stockCounts: StockCounts;
+  stockTakes: StockTakesResponse;
   stocktake: StocktakeResponse;
   stocktakes: StocktakesResponse;
   stores: StoresResponse;
@@ -1669,6 +1794,12 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesInvoiceArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueriesInvoiceByNumberArgs = {
+  invoiceNumber: Scalars['Int'];
+  type: InvoiceNodeType;
 };
 
 
@@ -1728,6 +1859,14 @@ export type QueriesStockCountsArgs = {
 };
 
 
+export type QueriesStockTakesArgs = {
+  filter?: InputMaybe<StockTakeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StockTakeSortInput>>;
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+
 export type QueriesStocktakeArgs = {
   id: Scalars['String'];
 };
@@ -1764,6 +1903,11 @@ export type RecordAlreadyExist = InsertInboundShipmentErrorInterface & InsertInb
 
 export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateLocationErrorInterface & {
   __typename?: 'RecordBelongsToAnotherStore';
+  description: Scalars['String'];
+};
+
+export type RecordDoesNotExist = DeleteOutboundShipmentUnallocatedLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & {
+  __typename?: 'RecordDoesNotExist';
   description: Scalars['String'];
 };
 
@@ -1894,6 +2038,12 @@ export type SimpleStringFilterInput = {
   like?: InputMaybe<Scalars['String']>;
 };
 
+export type SnapshotCountCurrentCountMismatch = UpdateStockTakeErrorInterface & {
+  __typename?: 'SnapshotCountCurrentCountMismatch';
+  description: Scalars['String'];
+  lines: StockTakeLineConnector;
+};
+
 export type StockCounts = {
   __typename?: 'StockCounts';
   expired: Scalars['Int'];
@@ -1946,6 +2096,83 @@ export type StockLineResponse = NodeError | StockLineNode;
 
 export type StockLinesResponse = ConnectorError | StockLineConnector;
 
+export type StockTakeConnector = {
+  __typename?: 'StockTakeConnector';
+  nodes: Array<StockTakeNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StockTakeFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterStockTakeStatusInput>;
+  stockTakeNumber?: InputMaybe<EqualFilterBigNumberInput>;
+};
+
+export type StockTakeLineConnector = {
+  __typename?: 'StockTakeLineConnector';
+  nodes: Array<StockTakeLineNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StockTakeLineNode = {
+  __typename?: 'StockTakeLineNode';
+  batch?: Maybe<Scalars['String']>;
+  comment?: Maybe<Scalars['String']>;
+  costPricePerPack?: Maybe<Scalars['Float']>;
+  countedNumberOfPacks?: Maybe<Scalars['Int']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String'];
+  location?: Maybe<LocationNode>;
+  note?: Maybe<Scalars['String']>;
+  packSize?: Maybe<Scalars['Int']>;
+  sellPricePerPack?: Maybe<Scalars['Float']>;
+  snapshotNumberOfPacks: Scalars['Int'];
+  stockLine?: Maybe<StockLineNode>;
+  stockTakeId: Scalars['String'];
+};
+
+export type StockTakeNode = {
+  __typename?: 'StockTakeNode';
+  comment?: Maybe<Scalars['String']>;
+  createdDatetime: Scalars['NaiveDateTime'];
+  description?: Maybe<Scalars['String']>;
+  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']>;
+  id: Scalars['String'];
+  inventoryAdjustment?: Maybe<InvoiceNode>;
+  inventoryAdjustmentId?: Maybe<Scalars['String']>;
+  lines: StockTakeLineConnector;
+  status: StockTakeNodeStatus;
+  stockTakeNumber: Scalars['Int'];
+  storeId: Scalars['String'];
+};
+
+export enum StockTakeNodeStatus {
+  Finalised = 'FINALISED',
+  New = 'NEW'
+}
+
+export enum StockTakeSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  FinalisedDatetime = 'finalisedDatetime',
+  Status = 'status'
+}
+
+export type StockTakeSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: StockTakeSortFieldInput;
+};
+
+export type StockTakesResponse = StockTakeConnector;
+
 export type StocktakeConnector = {
   __typename?: 'StocktakeConnector';
   nodes: Array<StocktakeNode>;
@@ -1966,15 +2193,15 @@ export type StocktakeLineNode = {
   __typename?: 'StocktakeLineNode';
   batch?: Maybe<Scalars['String']>;
   costPricePerPack?: Maybe<Scalars['Float']>;
-  countedNumPacks?: Maybe<Scalars['Int']>;
+  countedNumberOfPacks?: Maybe<Scalars['Int']>;
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   itemCode: Scalars['String'];
   itemId: Scalars['String'];
   itemName: Scalars['String'];
+  packSize?: Maybe<Scalars['Int']>;
   sellPricePerPack?: Maybe<Scalars['Float']>;
-  snapshotNumPacks?: Maybe<Scalars['Int']>;
-  snapshotPackSize?: Maybe<Scalars['Int']>;
+  snapshotNumberOfPacks?: Maybe<Scalars['Int']>;
   stockLineId?: Maybe<Scalars['String']>;
 };
 
@@ -2053,12 +2280,12 @@ export type TokenExpired = RefreshTokenErrorInterface & {
   description: Scalars['String'];
 };
 
-export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnallocatedLineInterface & {
+export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnallocatedLineErrorInterface & {
   __typename?: 'UnallocatedLineForItemAlreadyExists';
   description: Scalars['String'];
 };
 
-export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUnallocatedLineInterface & {
+export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUnallocatedLineErrorInterface & {
   __typename?: 'UnallocatedLinesOnlyEditableInNewInvoice';
   description: Scalars['String'];
 };
@@ -2308,6 +2535,56 @@ export enum UpdateOutboundShipmentStatusInput {
   Shipped = 'SHIPPED'
 }
 
+export type UpdateOutboundShipmentUnallocatedLineError = {
+  __typename?: 'UpdateOutboundShipmentUnallocatedLineError';
+  error: UpdateOutboundShipmentUnallocatedLineErrorInterface;
+};
+
+export type UpdateOutboundShipmentUnallocatedLineErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type UpdateOutboundShipmentUnallocatedLineInput = {
+  id: Scalars['String'];
+  quantity: Scalars['Int'];
+};
+
+export type UpdateOutboundShipmentUnallocatedLineResponse = InvoiceLineNode | UpdateOutboundShipmentUnallocatedLineError;
+
+export type UpdateStockTakeError = {
+  __typename?: 'UpdateStockTakeError';
+  error: UpdateStockTakeErrorInterface;
+};
+
+export type UpdateStockTakeErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type UpdateStockTakeInput = {
+  comment?: InputMaybe<Scalars['String']>;
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
+  status?: InputMaybe<StockTakeNodeStatus>;
+};
+
+export type UpdateStockTakeLineInput = {
+  batch?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
+  costPricePerPack?: InputMaybe<Scalars['Float']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  locationId?: InputMaybe<Scalars['String']>;
+  note?: InputMaybe<Scalars['String']>;
+  packSize?: InputMaybe<Scalars['Int']>;
+  sellPricePerPack?: InputMaybe<Scalars['Float']>;
+  snapshotNumberOfPacks?: InputMaybe<Scalars['Int']>;
+};
+
+export type UpdateStockTakeLineResponse = StockTakeLineNode;
+
+export type UpdateStockTakeResponse = StockTakeNode | UpdateStockTakeError;
+
 export type UpdateStocktakeInput = {
   comment?: InputMaybe<Scalars['String']>;
   description?: InputMaybe<Scalars['String']>;
@@ -2430,24 +2707,30 @@ export type InvoiceQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, invoiceNumber: number, color?: string | null | undefined, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: InvoiceLineNodeType, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, invoiceId: string, locationName?: string | null | undefined, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null | undefined, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename?: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, invoiceNumber: number, color?: string | null | undefined, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: InvoiceLineNodeType, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, invoiceId: string, locationName?: string | null | undefined, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null | undefined, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type StocktakeQueryVariables = Exact<{
   stocktakeId: Scalars['String'];
 }>;
 
 
-export type StocktakeQuery = { __typename?: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null | undefined, stocktakeDatetime?: string | null | undefined, status: StocktakeNodeStatus, description?: string | null | undefined, entryDatetime: string, enteredByName: string, onHold: boolean, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StocktakeLineConnector', totalCount: number, nodes?: Array<{ __typename: 'StocktakeLineNode', batch?: string | null | undefined, itemCode: string, itemName: string, itemId: string, id: string, expiryDate?: string | null | undefined, snapshotNumPacks?: number | null | undefined, snapshotPackSize?: number | null | undefined, countedNumPacks?: number | null | undefined, sellPricePerPack?: number | null | undefined, costPricePerPack?: number | null | undefined }> | null | undefined } } };
+export type StocktakeQuery = { __typename?: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null | undefined, stocktakeDatetime?: string | null | undefined, status: StocktakeNodeStatus, description?: string | null | undefined, entryDatetime: string, enteredByName: string, onHold: boolean, lines: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StocktakeLineConnector', totalCount: number, nodes?: Array<{ __typename: 'StocktakeLineNode', batch?: string | null | undefined, itemCode: string, itemName: string, itemId: string, id: string, expiryDate?: string | null | undefined, packSize?: number | null | undefined, snapshotNumberOfPacks?: number | null | undefined, countedNumberOfPacks?: number | null | undefined, sellPricePerPack?: number | null | undefined, costPricePerPack?: number | null | undefined }> | null | undefined } } };
 
-export type UpsertStocktakeMutationVariables = Exact<{
-  deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput> | DeleteStocktakeLineInput>;
-  insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput> | InsertStocktakeLineInput>;
-  updateStocktakeLines?: InputMaybe<Array<UpdateStocktakeLineInput> | UpdateStocktakeLineInput>;
-  updateStocktakes?: InputMaybe<Array<UpdateStocktakeInput> | UpdateStocktakeInput>;
+export type UpdateStocktakeMutationVariables = Exact<{
+  input: UpdateStocktakeInput;
 }>;
 
 
-export type UpsertStocktakeMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', updateStocktakes?: Array<{ __typename: 'UpdateStocktakeResponseWithId', id: string }> | null | undefined, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null | undefined, deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null | undefined, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null | undefined } };
+export type UpdateStocktakeMutation = { __typename?: 'Mutations', updateStocktake: { __typename?: 'NodeError' } | { __typename: 'StocktakeNode', id: string } };
+
+export type UpsertStocktakeLinesMutationVariables = Exact<{
+  deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput> | DeleteStocktakeLineInput>;
+  insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput> | InsertStocktakeLineInput>;
+  updateStocktakeLines?: InputMaybe<Array<UpdateStocktakeLineInput> | UpdateStocktakeLineInput>;
+}>;
+
+
+export type UpsertStocktakeLinesMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', updateStocktakes?: Array<{ __typename: 'UpdateStocktakeResponseWithId', id: string }> | null | undefined, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null | undefined, deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null | undefined, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null | undefined } };
 
 export type StocktakesQueryVariables = Exact<{
   params?: InputMaybe<StocktakeListParameters>;
@@ -2462,13 +2745,6 @@ export type DeleteStocktakesMutationVariables = Exact<{
 
 
 export type DeleteStocktakesMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null | undefined } };
-
-export type UpdateStocktakeMutationVariables = Exact<{
-  input: UpdateStocktakeInput;
-}>;
-
-
-export type UpdateStocktakeMutation = { __typename?: 'Mutations', updateStocktake: { __typename?: 'NodeError' } | { __typename: 'StocktakeNode', id: string } };
 
 export type InsertStocktakeMutationVariables = Exact<{
   input: InsertStocktakeInput;
@@ -2704,6 +2980,23 @@ export type UpdateLocationMutationVariables = Exact<{
 
 export type UpdateLocationMutation = { __typename?: 'Mutations', updateLocation: { __typename?: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: UniqueValueKey } } };
 
+export type StoresQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  filter?: InputMaybe<StoreFilterInput>;
+}>;
+
+
+export type StoresQuery = { __typename?: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename?: 'StoreNode', code: string, id: string }> } };
+
+export type AuthTokenQueryVariables = Exact<{
+  username: Scalars['String'];
+  password: Scalars['String'];
+}>;
+
+
+export type AuthTokenQuery = { __typename?: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'UserNameDoesNotExist', description: string } } };
+
 
 export const InvoiceDocument = gql`
     query invoice($id: String!) {
@@ -2847,10 +3140,12 @@ export const InvoiceDocument = gql`
             }
             item {
               ... on ItemNode {
+                __typename
                 id
                 name
                 code
                 isVisible
+                unitName
                 availableBatches {
                   ... on StockLineConnector {
                     totalCount
@@ -2993,9 +3288,9 @@ export const StocktakeDocument = gql`
             itemId
             id
             expiryDate
-            snapshotNumPacks
-            snapshotPackSize
-            countedNumPacks
+            packSize
+            snapshotNumberOfPacks
+            countedNumberOfPacks
             sellPricePerPack
             costPricePerPack
           }
@@ -3006,13 +3301,22 @@ export const StocktakeDocument = gql`
   }
 }
     `;
-export const UpsertStocktakeDocument = gql`
-    mutation upsertStocktake($deleteStocktakeLines: [DeleteStocktakeLineInput!], $insertStocktakeLines: [InsertStocktakeLineInput!], $updateStocktakeLines: [UpdateStocktakeLineInput!], $updateStocktakes: [UpdateStocktakeInput!]) {
+export const UpdateStocktakeDocument = gql`
+    mutation updateStocktake($input: UpdateStocktakeInput!) {
+  updateStocktake(input: $input) {
+    ... on StocktakeNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
+export const UpsertStocktakeLinesDocument = gql`
+    mutation upsertStocktakeLines($deleteStocktakeLines: [DeleteStocktakeLineInput!], $insertStocktakeLines: [InsertStocktakeLineInput!], $updateStocktakeLines: [UpdateStocktakeLineInput!]) {
   batchStocktake(
     deleteStocktakeLines: $deleteStocktakeLines
     insertStocktakeLines: $insertStocktakeLines
     updateStocktakeLines: $updateStocktakeLines
-    updateStocktakes: $updateStocktakes
   ) {
     __typename
     updateStocktakes {
@@ -3057,16 +3361,6 @@ export const DeleteStocktakesDocument = gql`
   batchStocktake(deleteStocktakes: $ids) {
     __typename
     deleteStocktakes {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const UpdateStocktakeDocument = gql`
-    mutation updateStocktake($input: UpdateStocktakeInput!) {
-  updateStocktake(input: $input) {
-    ... on StocktakeNode {
       __typename
       id
     }
@@ -3974,6 +4268,54 @@ export const UpdateLocationDocument = gql`
   }
 }
     `;
+export const StoresDocument = gql`
+    query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
+  stores(page: {first: $first, offset: $offset}, filter: $filter) {
+    ... on StoreConnector {
+      __typename
+      nodes {
+        code
+        id
+      }
+      totalCount
+    }
+  }
+}
+    `;
+export const AuthTokenDocument = gql`
+    query authToken($username: String!, $password: String!) {
+  authToken(password: $password, username: $username) {
+    ... on AuthToken {
+      __typename
+      token
+    }
+    ... on AuthTokenError {
+      __typename
+      error {
+        ... on UserNameDoesNotExist {
+          __typename
+          description
+        }
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+        description
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -3988,17 +4330,17 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     stocktake(variables: StocktakeQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StocktakeQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StocktakeQuery>(StocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktake');
     },
-    upsertStocktake(variables?: UpsertStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertStocktakeMutation>(UpsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertStocktake');
+    updateStocktake(variables: UpdateStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateStocktakeMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStocktakeMutation>(UpdateStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStocktake');
+    },
+    upsertStocktakeLines(variables?: UpsertStocktakeLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertStocktakeLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertStocktakeLinesMutation>(UpsertStocktakeLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertStocktakeLines');
     },
     stocktakes(variables?: StocktakesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StocktakesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StocktakesQuery>(StocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakes');
     },
     deleteStocktakes(variables?: DeleteStocktakesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteStocktakesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteStocktakesMutation>(DeleteStocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteStocktakes');
-    },
-    updateStocktake(variables: UpdateStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStocktakeMutation>(UpdateStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStocktake');
     },
     insertStocktake(variables: InsertStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertStocktakeMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertStocktakeMutation>(InsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStocktake');
@@ -4086,6 +4428,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateLocation(variables: UpdateLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateLocationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateLocationMutation>(UpdateLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLocation');
+    },
+    stores(variables?: StoresQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StoresQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<StoresQuery>(StoresDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stores');
+    },
+    authToken(variables: AuthTokenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AuthTokenQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AuthTokenQuery>(AuthTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'authToken');
     }
   };
 }
@@ -4129,16 +4477,33 @@ export const mockStocktakeQuery = (resolver: ResponseResolver<GraphQLRequest<Sto
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockUpsertStocktakeMutation((req, res, ctx) => {
- *   const { deleteStocktakeLines, insertStocktakeLines, updateStocktakeLines, updateStocktakes } = req.variables;
+ * mockUpdateStocktakeMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateStocktake })
+ *   )
+ * })
+ */
+export const mockUpdateStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateStocktakeMutationVariables>, GraphQLContext<UpdateStocktakeMutation>, any>) =>
+  graphql.mutation<UpdateStocktakeMutation, UpdateStocktakeMutationVariables>(
+    'updateStocktake',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpsertStocktakeLinesMutation((req, res, ctx) => {
+ *   const { deleteStocktakeLines, insertStocktakeLines, updateStocktakeLines } = req.variables;
  *   return res(
  *     ctx.data({ batchStocktake })
  *   )
  * })
  */
-export const mockUpsertStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertStocktakeMutationVariables>, GraphQLContext<UpsertStocktakeMutation>, any>) =>
-  graphql.mutation<UpsertStocktakeMutation, UpsertStocktakeMutationVariables>(
-    'upsertStocktake',
+export const mockUpsertStocktakeLinesMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertStocktakeLinesMutationVariables>, GraphQLContext<UpsertStocktakeLinesMutation>, any>) =>
+  graphql.mutation<UpsertStocktakeLinesMutation, UpsertStocktakeLinesMutationVariables>(
+    'upsertStocktakeLines',
     resolver
   )
 
@@ -4173,23 +4538,6 @@ export const mockStocktakesQuery = (resolver: ResponseResolver<GraphQLRequest<St
 export const mockDeleteStocktakesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteStocktakesMutationVariables>, GraphQLContext<DeleteStocktakesMutation>, any>) =>
   graphql.mutation<DeleteStocktakesMutation, DeleteStocktakesMutationVariables>(
     'deleteStocktakes',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateStocktakeMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ updateStocktake })
- *   )
- * })
- */
-export const mockUpdateStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateStocktakeMutationVariables>, GraphQLContext<UpdateStocktakeMutation>, any>) =>
-  graphql.mutation<UpdateStocktakeMutation, UpdateStocktakeMutationVariables>(
-    'updateStocktake',
     resolver
   )
 
@@ -4683,5 +5031,39 @@ export const mockInsertLocationMutation = (resolver: ResponseResolver<GraphQLReq
 export const mockUpdateLocationMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLocationMutationVariables>, GraphQLContext<UpdateLocationMutation>, any>) =>
   graphql.mutation<UpdateLocationMutation, UpdateLocationMutationVariables>(
     'updateLocation',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockStoresQuery((req, res, ctx) => {
+ *   const { first, offset, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ stores })
+ *   )
+ * })
+ */
+export const mockStoresQuery = (resolver: ResponseResolver<GraphQLRequest<StoresQueryVariables>, GraphQLContext<StoresQuery>, any>) =>
+  graphql.query<StoresQuery, StoresQueryVariables>(
+    'stores',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAuthTokenQuery((req, res, ctx) => {
+ *   const { username, password } = req.variables;
+ *   return res(
+ *     ctx.data({ authToken })
+ *   )
+ * })
+ */
+export const mockAuthTokenQuery = (resolver: ResponseResolver<GraphQLRequest<AuthTokenQueryVariables>, GraphQLContext<AuthTokenQuery>, any>) =>
+  graphql.query<AuthTokenQuery, AuthTokenQueryVariables>(
+    'authToken',
     resolver
   )

@@ -30,7 +30,7 @@ Generic utility types.
 
 #### ui
 
-omSupply styled generic UI components.
+omSupply styled generic UI components. Have a look at storybook for a demo & example usage of the various components
 
 #### utils
 
@@ -43,7 +43,7 @@ The intention is that most of the time we'll be working in domain specific packa
 
 ### Gotchas
 
-- Code here might be used by anyone in any package. Changes can therefore potentially effect a lot!
+- Code here might be used by anyone in any package. Changes can therefore potentially affect a lot!
   - Generic - Try to make code here generic enough (but not too much..!) so that it can be extended and utilise for other use cases.
   - Tests - we can try to limit breaking changes by having a lot of tests for this part of the code base
   - Simple & Directed - Try to break the solution down into smaller steps. It's much easier to share code when the steps are broken up. That way, instead of changing the solution, change a step1

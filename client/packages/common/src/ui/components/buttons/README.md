@@ -16,7 +16,6 @@ The intention is once a button is added somewhere in the UI, no team member shou
     - Disabling
     - RTL Support
     - Easy adding of margin/padding (often needed for buttons especially!)
-    - 
 
 
 ### Future considerations

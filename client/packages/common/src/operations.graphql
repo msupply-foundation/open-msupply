@@ -150,10 +150,12 @@ query invoice($id: String!) {
             }
             item {
               ... on ItemNode {
+                __typename
                 id
                 name
                 code
                 isVisible
+                unitName
                 availableBatches {
                   ... on StockLineConnector {
                     totalCount
@@ -299,9 +301,9 @@ query stocktake($stocktakeId: String!) {
             itemId
             id
             expiryDate
-            snapshotNumPacks
-            snapshotPackSize
-            countedNumPacks
+            packSize
+            snapshotNumberOfPacks
+            countedNumberOfPacks
             sellPricePerPack
             costPricePerPack
           }
@@ -312,17 +314,24 @@ query stocktake($stocktakeId: String!) {
   }
 }
 
-mutation upsertStocktake(
+mutation updateStocktake($input: UpdateStocktakeInput!) {
+  updateStocktake(input: $input) {
+    ... on StocktakeNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation upsertStocktakeLines(
   $deleteStocktakeLines: [DeleteStocktakeLineInput!]
   $insertStocktakeLines: [InsertStocktakeLineInput!]
   $updateStocktakeLines: [UpdateStocktakeLineInput!]
-  $updateStocktakes: [UpdateStocktakeInput!]
 ) {
   batchStocktake(
     deleteStocktakeLines: $deleteStocktakeLines
     insertStocktakeLines: $insertStocktakeLines
     updateStocktakeLines: $updateStocktakeLines
-    updateStocktakes: $updateStocktakes
   ) {
     __typename
     updateStocktakes {
@@ -1341,6 +1350,52 @@ mutation updateLocation($input: UpdateLocationInput!) {
       name
       onHold
       code
+    }
+  }
+}
+
+query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
+  stores(page: { first: $first, offset: $offset }, filter: $filter) {
+    ... on StoreConnector {
+      __typename
+      nodes {
+        code
+        id
+      }
+      totalCount
+    }
+  }
+}
+
+query authToken($username: String!, $password: String!) {
+  authToken(password: $password, username: $username) {
+    ... on AuthToken {
+      __typename
+      token
+    }
+    ... on AuthTokenError {
+      __typename
+      error {
+        ... on UserNameDoesNotExist {
+          __typename
+          description
+        }
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+        description
+      }
     }
   }
 }
