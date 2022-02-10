@@ -14,6 +14,8 @@ import {
   getDataSorter,
   useSortBy,
   useMutation,
+  UseMutationResult,
+  DeleteOutboundShipmentLinesMutation,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
 import { OutboundApi } from './api';
@@ -138,6 +140,44 @@ export const useSaveOutboundLines = () => {
   return useMutation(OutboundApi.updateLines(api), {
     onSuccess: () => {
       queryClient.invalidateQueries(queryKey);
+    },
+  });
+};
+
+export const useDeleteInboundLine = (): UseMutationResult<
+  DeleteOutboundShipmentLinesMutation,
+  unknown,
+  string[],
+  { previous?: Invoice; ids: string[] }
+> => {
+  // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
+  // input object should not require the invoice ID. Waiting for an API change.
+  const { id = '' } = useParams();
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  const mutation = OutboundApi.deleteLines(api, id);
+  return useMutation(mutation, {
+    onMutate: async (ids: string[]) => {
+      await queryClient.cancelQueries(['invoice', id]);
+
+      const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
+
+      if (previous) {
+        queryClient.setQueryData<Invoice>(['invoice', id], {
+          ...previous,
+          lines: previous.lines.filter(
+            ({ id: lineId }) => !ids.includes(lineId)
+          ),
+        });
+      }
+
+      return { previous, ids };
+    },
+    onError: (_, __, context) => {
+      queryClient.setQueryData(['invoice', id], context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['invoice', id]);
     },
   });
 };

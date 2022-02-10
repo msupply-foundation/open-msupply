@@ -231,6 +231,20 @@ export const onUpdate =
     throw new Error(':shrug');
   };
 
+const getCreateDeleteOutboundLineInput =
+  (invoiceId: string) =>
+  (id: string): DeleteOutboundShipmentLineInput => {
+    return { id, invoiceId };
+  };
+
+export const getDeleteOutboundLinesQuery =
+  (api: OmSupplyApi, invoiceId: string) => (ids: string[]) => {
+    const createDeleteLineInput = getCreateDeleteOutboundLineInput(invoiceId);
+    return api.deleteInboundShipmentLines({
+      input: ids.map(createDeleteLineInput),
+    });
+  };
+
 interface Api<ReadType, UpdateType> {
   onRead: (id: string) => Promise<ReadType>;
   onUpdate: (val: UpdateType) => Promise<UpdateType>;
