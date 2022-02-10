@@ -27,7 +27,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   return (
     <>
       <ModalRow>
-        <ModalLabel label={t('label.item')} />
+        <ModalLabel label={t('label.item')} justifyContent="flex-end" />
         <Grid item flex={1}>
           <ItemSearchInput
             disabled={disabled}
@@ -46,23 +46,13 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
       </ModalRow>
 
       {item && (
-        <ModalRow>
-          <Grid style={{ display: 'flex', marginTop: 10 }} flex={1}>
-            <ModalLabel label={t('label.code')} />
-            <BasicTextInput disabled sx={{ width: 150 }} value={item.code} />
-          </Grid>
-          <Grid
-            style={{ display: 'flex', marginTop: 10 }}
-            justifyContent="flex-end"
-            flex={1}
-          >
-            <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-            <BasicTextInput
-              disabled
-              sx={{ width: 150 }}
-              value={item.unitName}
-            />
-          </Grid>
+        <ModalRow margin={3}>
+          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
+          <BasicTextInput
+            disabled
+            sx={{ width: 150 }}
+            value={item.unitName ?? ''}
+          />
         </ModalRow>
       )}
     </>

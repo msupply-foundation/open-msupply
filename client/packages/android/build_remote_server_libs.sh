@@ -2,7 +2,7 @@
 set -e
 
 # Path the the remote server dir
-REMOTE_SERVER_DIR="../../remote-server"
+REMOTE_SERVER_DIR="../../../remote-server"
 # The dir where the android project is:
 ANDROID_DIR="."
 

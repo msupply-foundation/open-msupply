@@ -98,6 +98,7 @@ declare module '@mui/material/styles/createPalette' {
 
 declare module '@mui/material/styles/createTypography' {
   interface Typography {
+    login: CSSProperties;
     th: CSSProperties;
   }
 }
@@ -190,8 +191,9 @@ export const themeOptions = {
       lineHeight: 1.71,
       color: '#1c1c28',
     },
-    body2: { color: '#fafafa', fontSize: 20, fontWeight: 600 },
+    body2: { color: '#555770', fontSize: 12, fontWeight: 500 },
     fontFamily: 'InterVariable',
+    login: { color: '#fafafa', fontSize: 20, fontWeight: 600 },
     th: { color: '#1c1c28', fontSize: 14, fontWeight: 700 },
     h6: {
       fontFamily: 'InterVariable',
