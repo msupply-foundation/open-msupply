@@ -21,6 +21,11 @@ interface LoginForm {
   setStore: (store?: Store) => void;
   setUsername: (username: string) => void;
 }
+
+interface State {
+  from?: Location;
+}
+
 export const useLoginFormState = create<LoginForm>(set => ({
   isLoggingIn: false,
   password: '',
@@ -69,7 +74,8 @@ export const useLoginForm = (
     if (store) setHostStore(store);
     // navigate back, if redirected by the <RequireAuthentication /> component
     // or to the dashboard as a default
-    const from = location.state?.from?.pathname || `/${AppRoute.Dashboard}`;
+    const state = location.state as State | undefined;
+    const from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
     navigate(from, { replace: true });
   };
 

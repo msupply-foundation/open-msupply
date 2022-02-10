@@ -21,11 +21,11 @@ export const ModalLabel: React.FC<ModalLabelProps> = ({
     xs={2}
     alignItems="center"
     justifyContent={justifyContent}
-    flexBasis={0}
     sx={{
       alignItems: 'center',
       display: 'flex',
       minWidth: '80px',
+      '&.MuiGrid-root': { flexBasis: 0 },
     }}
   >
     <InputLabel sx={labelStyle}>{label}</InputLabel>

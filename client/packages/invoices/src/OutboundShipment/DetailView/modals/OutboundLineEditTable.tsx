@@ -105,6 +105,7 @@ const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
       borderBottomWidth: 0,
       color: 'inherit',
       fontSize: '12px',
+      fontWeight: 'normal',
       padding: '0 8px',
       whiteSpace: 'nowrap',
       ...sx,

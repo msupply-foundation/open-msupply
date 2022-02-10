@@ -70,5 +70,7 @@ export const toItem = (line: ItemLike): Item => ({
   isVisible: true,
   availableBatches: [],
   availableQuantity: 0,
-  unitName: '',
+  unitName:
+    ('lines' in line ? line.lines[0].item?.unitName : line.item?.unitName) ??
+    '',
 });

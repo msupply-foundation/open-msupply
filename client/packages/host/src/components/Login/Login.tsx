@@ -17,18 +17,19 @@ import { LoginTextInput } from './LoginTextInput';
 import { useStores } from '@openmsupply-client/system';
 import { useLoginForm } from './hooks';
 
-const StoreAutocompleteInput: React.FC<AutocompleteRenderInputParams> =
-  props => {
-    const t = useTranslation('app');
-    return (
-      <LoginTextInput
-        {...props}
-        InputProps={{ ...props.InputProps }}
-        style={{ width: 282 }}
-        label={t('heading.store')}
-      />
-    );
-  };
+const StoreAutocompleteInput: React.FC<
+  AutocompleteRenderInputParams
+> = props => {
+  const t = useTranslation('app');
+  return (
+    <LoginTextInput
+      {...props}
+      InputProps={{ ...props.InputProps }}
+      style={{ width: 282 }}
+      label={t('heading.store')}
+    />
+  );
+};
 
 const storeSorter = (a: Store, b: Store) => {
   if (a.code < b.code) return -1;
@@ -86,7 +87,7 @@ export const Login: React.FC = ({}) => {
         <Box>
           <Typography
             sx={{
-              color: theme => theme.typography.body2.color,
+              color: theme => theme.typography.login.color,
               fontSize: '64px',
               fontWeight: 'bold',
               lineHeight: 'normal',
@@ -99,9 +100,9 @@ export const Login: React.FC = ({}) => {
         <Box style={{ marginTop: 45 }}>
           <Typography
             sx={{
-              fontSize: theme => theme.typography.body2.fontSize,
-              color: theme => theme.typography.body2.color,
-              fontWeight: theme => theme.typography.body2.fontWeight,
+              fontSize: theme => theme.typography.login.fontSize,
+              color: theme => theme.typography.login.color,
+              fontWeight: theme => theme.typography.login.fontWeight,
             }}
           >
             {t('login.body')}

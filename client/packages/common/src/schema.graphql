@@ -414,6 +414,7 @@ type InvoiceLineNode {
   locationId: String
   location: LocationResponse
   stockLine: StockLineResponse
+  item: ItemNode
 }
 
 union InvoiceLineResponse = NodeError | InvoiceLineNode
