@@ -65,6 +65,27 @@ const multiplePackSizeLines: DraftOutboundLine[] = [
   }),
 ];
 
+const multipleWithOneAssigned: DraftOutboundLine[] = [
+  createDraftOutboundLine({
+    invoiceId: '',
+    stockLine: {
+      packSize: 1,
+      totalNumberOfPacks: 1,
+      availableNumberOfPacks: 1,
+    },
+    invoiceLine: { numberOfPacks: 1 },
+  }),
+  createDraftOutboundLine({
+    invoiceId: '',
+    stockLine: {
+      packSize: 2,
+      totalNumberOfPacks: 0,
+      availableNumberOfPacks: 0,
+    },
+    invoiceLine: { numberOfPacks: 0 },
+  }),
+];
+
 describe('usePackSizeController', () => {
   it('returns the correct distinct pack sizes of available batches', () => {
     const { result } = renderHook(() =>
@@ -155,5 +176,13 @@ describe('usePackSizeController', () => {
     const { result } = renderHook(() => usePackSizeController([]));
 
     expect(result.current.selected).toEqual(undefined);
+  });
+
+  it('has an initial value of the unique pack size with assigned packs, not any', () => {
+    const { result } = renderHook(() =>
+      usePackSizeController(multipleWithOneAssigned)
+    );
+
+    expect(result.current.selected).toEqual({ label: '1', value: 1 });
   });
 });
