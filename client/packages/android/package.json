@@ -1,0 +1,13 @@
+{
+  "name": "@openmsupply-client/android",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "@capacitor/android": "^3.4.1",
+    "@capacitor/cli": "^3.4.1",
+    "@capacitor/core": "^3.4.1",
+    "cordova-android": "^10.1.1"
+  },
+  "scripts": {},
+  "dependencies": {}
+}
