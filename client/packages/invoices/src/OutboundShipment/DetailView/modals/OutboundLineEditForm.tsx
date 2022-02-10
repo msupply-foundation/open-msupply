@@ -51,9 +51,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
             disabled={disabled}
             currentItem={item}
             onChange={onChangeItem}
-            extraFilter={item => {
-              return !items?.some(({ id }) => id === item.id);
-            }}
+            extraFilter={item => !items?.some(({ id }) => id === item.id)}
           />
         </Grid>
       </ModalRow>
