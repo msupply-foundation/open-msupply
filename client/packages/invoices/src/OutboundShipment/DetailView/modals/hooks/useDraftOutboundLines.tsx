@@ -52,7 +52,7 @@ const createDraftOutboundLine = ({
   invoiceId,
   stockLineId: stockLine.id,
   location: invoiceLine?.location,
-  expiryDate: invoiceLine?.expiryDate,
+  expiryDate: invoiceLine?.expiryDate || stockLine?.expiryDate,
 
   // TODO: When small changes to the API don't take weeks: Add itemCode and itemName
   // to StockLineNode so these are accurate. These currently aren't actually

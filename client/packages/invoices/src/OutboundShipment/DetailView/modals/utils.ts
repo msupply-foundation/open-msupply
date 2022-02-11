@@ -1,4 +1,4 @@
-import { InvoiceNodeStatus } from '@openmsupply-client/common';
+import { InvoiceNodeStatus, isExpired } from '@openmsupply-client/common';
 import { DraftOutboundLine } from './../../../types';
 
 export const sortByExpiry = (a: DraftOutboundLine, b: DraftOutboundLine) => {
@@ -110,10 +110,11 @@ export const allocateQuantities =
     }));
     const validBatches = newDraftOutboundLines
       .filter(
-        ({ packSize, onHold, availableNumberOfPacks }) =>
+        ({ expiryDate, packSize, onHold, availableNumberOfPacks }) =>
           (issuePackSize ? packSize === issuePackSize : true) &&
           availableNumberOfPacks > 0 &&
-          !onHold
+          !onHold &&
+          !(!!expiryDate && isExpired(new Date(expiryDate)))
       )
       .sort(sortByExpiry);
 
