@@ -10,7 +10,7 @@ import { InvoiceLine, DraftOutboundLine } from '../../../../types';
 import { sortByExpiry, issueStock } from '../utils';
 import { useOutboundLines } from '../../../api';
 
-const createPlaceholderRow = (invoiceId: string): DraftOutboundLine => ({
+export const createPlaceholderRow = (invoiceId: string): DraftOutboundLine => ({
   availableNumberOfPacks: 0,
   batch: 'Placeholder',
   costPricePerPack: 0,
