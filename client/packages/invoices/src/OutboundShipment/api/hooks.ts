@@ -53,6 +53,7 @@ export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
 export const useIsOutboundDisabled = (): boolean => {
   const { status } = useOutboundFields('status');
   return (
+    status === InvoiceNodeStatus.Shipped ||
     status === InvoiceNodeStatus.Verified ||
     status === InvoiceNodeStatus.Delivered
   );
