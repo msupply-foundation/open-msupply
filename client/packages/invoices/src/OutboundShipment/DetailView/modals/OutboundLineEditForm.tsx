@@ -39,7 +39,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   const t = useTranslation(['distribution', 'common']);
   const quantity =
     allocatedQuantity /
-    Math.abs(Number(packSizeController.selected.value || 1));
+    Math.abs(Number(packSizeController.selected?.value || 1));
   const { items } = useOutboundRows();
 
   return (
@@ -51,7 +51,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
             disabled={disabled}
             currentItem={item}
             onChange={onChangeItem}
-            extraFilter={item => !!items?.some(({ id }) => id === item.id)}
+            extraFilter={item => !items?.some(({ id }) => id === item.id)}
           />
         </Grid>
       </ModalRow>
@@ -91,9 +91,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
               onChange={event => {
                 onChangeQuantity(
                   Number(event.target.value),
-                  packSizeController.selected.value === -1
+                  packSizeController.selected?.value === -1
                     ? null
-                    : Number(packSizeController.selected.value)
+                    : Number(packSizeController.selected?.value)
                 );
               }}
             />
@@ -108,7 +108,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
               style={{ minWidth: 125 }}
             >
               <InputLabel sx={{ fontSize: '12px' }}>
-                {packSizeController.selected.value === -1
+                {packSizeController.selected?.value === -1
                   ? t('label.packs-of')
                   : t('label.units-in-pack-size-of')}
               </InputLabel>
@@ -120,7 +120,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
               <Select
                 sx={{ width: 110 }}
                 options={packSizeController.options}
-                value={packSizeController.selected.value}
+                value={packSizeController.selected?.value ?? ''}
                 onChange={e => {
                   const { value } = e.target;
                   const packSize = Number(value);

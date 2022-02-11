@@ -8,11 +8,18 @@ import {
   DropdownMenu,
   useTranslation,
   useBufferState,
+  DropdownMenuItem,
+  DeleteIcon,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system';
-import { useOutboundFields, useIsOutboundDisabled } from '../api';
+import {
+  useOutboundFields,
+  useIsOutboundDisabled,
+  useDeleteSelectedLines,
+} from '../api';
 
 export const Toolbar: FC = () => {
+  const { onDelete } = useDeleteSelectedLines();
   const { otherParty, theirReference, update } = useOutboundFields([
     'otherParty',
     'theirReference',
@@ -67,9 +74,9 @@ export const Toolbar: FC = () => {
           </Box>
         </Grid>
         <DropdownMenu disabled={isDisabled} label={t('label.select')}>
-          {/* <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines')}
-          </DropdownMenuItem> */}
+          </DropdownMenuItem>
         </DropdownMenu>
       </Grid>
     </AppBarContentPortal>
