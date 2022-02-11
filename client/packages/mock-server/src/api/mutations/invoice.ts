@@ -20,8 +20,14 @@ const getStatusTime = (status: string | undefined | null) => {
     case 'SHIPPED': {
       return { shippedDatetime: new Date().toISOString() };
     }
+    case 'DELIVERED': {
+      return { deliveredDatetime: new Date().toISOString() };
+    }
     case 'PICKED': {
       return { pickedDatetime: new Date().toISOString() };
+    }
+    case 'VERIFIED': {
+      return { verifiedDatetime: new Date().toISOString() };
     }
   }
 
@@ -49,7 +55,16 @@ export const InvoiceMutation = {
           input.id,
           invoiceNumber,
           otherPartyName,
-          InvoiceNodeType.OutboundShipment
+          InvoiceNodeType.OutboundShipment,
+          {
+            status: InvoiceNodeStatus.New,
+            allocatedDatetime: null,
+            pickedDatetime: null,
+            shippedDatetime: null,
+            deliveredDatetime: null,
+            verifiedDatetime: null,
+            comment: null,
+          }
         )
       );
 
@@ -60,6 +75,7 @@ export const InvoiceMutation = {
         ...invoice,
         ...getStatusTime(invoice.status),
       });
+
       const resolvedInvoice = ResolverService.invoice.byId(updated.id);
 
       return resolvedInvoice;

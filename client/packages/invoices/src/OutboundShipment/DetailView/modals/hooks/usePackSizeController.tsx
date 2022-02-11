@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   useTranslation,
   ifTheSameElseDefault,
@@ -20,10 +20,11 @@ const distinctSortedPackSizes = (lines: DraftOutboundLine[]): number[] =>
     )
   );
 
-const usePackSizeOptions = (
-  packSizes: number[]
-): { label: string; value: number }[] => {
+const usePackSizes = (
+  lines: DraftOutboundLine[]
+): { options: { label: string; value: number }[]; packSizes: number[] } => {
   const t = useTranslation('distribution');
+  const packSizes = useMemo(() => distinctSortedPackSizes(lines), [lines]);
 
   const options = useMemo(() => {
     const anySize: { label: string; value: number }[] = [];
@@ -38,48 +39,43 @@ const usePackSizeOptions = (
     );
   }, [packSizes]);
 
-  return options;
+  return { options, packSizes };
 };
 
 export const usePackSizeController = (lines: DraftOutboundLine[]) => {
-  const packSizes = useMemo(() => distinctSortedPackSizes(lines), [lines]);
-  const options = usePackSizeOptions(packSizes);
+  const { options, packSizes } = usePackSizes(lines);
 
-  const [selected, setSelected] = useState({ label: '', value: -1 });
+  const [selected, setSelected] = useState<
+    | {
+        label: string;
+        value: number;
+      }
+    | undefined
+  >();
 
-  const setPackSize = (newValue: number) => {
-    const packSizeOption = options.find(({ value }) => value === newValue);
-    if (!packSizeOption) return;
-    setSelected(packSizeOption);
-  };
+  const setPackSize = useCallback(
+    (newValue: number) => {
+      const packSizeOption = options.find(({ value }) => value === newValue);
+      if (!packSizeOption) return;
+      setSelected(packSizeOption);
+    },
+    [options, setSelected]
+  );
 
   useEffect(() => {
-    if (selected.value !== 0) return;
-    if (packSizes.length < 1) return;
-    if (!lines?.length) return;
-
+    // When selected is null, set a default value - either
+    // 'any' when there are multiple unique pack sizes
+    // in the set of options, or the only option if there is only
+    // one.
+    if (selected) return;
     const selectedPackSize = ifTheSameElseDefault(
-      lines.filter(batch => batch.numberOfPacks > 0),
+      lines.filter(({ numberOfPacks }) => numberOfPacks > 0),
       'packSize',
-      0
+      -1
     );
 
-    const defaultPackSize = (selectedPackSize === 0
-      ? options[0]
-      : options.find(option => option.value === selectedPackSize)) ?? {
-      label: '',
-      value: '',
-    };
+    setPackSize(selectedPackSize);
+  }, [setPackSize, selected, lines]);
 
-    if (defaultPackSize.value && typeof defaultPackSize.value == 'number') {
-      setPackSize(defaultPackSize.value);
-    }
-    if (packSizes.length === 0) {
-      setSelected({ label: '', value: 0 });
-    }
-  }, [packSizes, lines, options, setPackSize]);
-
-  const reset = () => setSelected({ label: '', value: 0 });
-
-  return { selected, setPackSize, options, reset };
+  return { selected, setPackSize, options, packSizes };
 };

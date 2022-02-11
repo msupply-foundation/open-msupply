@@ -103,7 +103,9 @@ const itemGuard = (item: ItemResponse): ItemNode => {
   throw new Error('Unknown');
 };
 
-const getPatchStatus = (patch: Partial<Invoice>) => {
+const getPatchStatus = (
+  patch: Partial<Invoice>
+): UpdateInboundShipmentStatusInput | undefined => {
   switch (patch.status) {
     case InvoiceNodeStatus.Verified:
       return UpdateInboundShipmentStatusInput.Verified;
@@ -373,7 +375,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
 
 export const useIsInboundEditable = (): boolean => {
   const { status } = useInboundFields('status');
-  return status === 'NEW' || status === 'ALLOCATED';
+  return status === 'NEW' || status === 'SHIPPED' || status === 'DELIVERED';
 };
 
 export const useInboundLines = (itemId?: string): InvoiceLine[] => {

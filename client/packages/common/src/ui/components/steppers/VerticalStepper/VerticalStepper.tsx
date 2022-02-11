@@ -136,10 +136,10 @@ export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => (
                 justifyContent="space-between"
               >
                 <Typography
+                  color="text.primary"
                   variant="body2"
                   lineHeight={0}
                   fontSize="12px"
-                  fontWeight="bold"
                 >
                   {step.label}
                 </Typography>
