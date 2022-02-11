@@ -32,7 +32,6 @@
     "lodash": "^4.17.21",
     "notistack": "^2.0.3",
     "react-currency-input-field": "^3.6.0",
-    "react-hook-form": "^7.22.0",
     "react-i18next": "^11.15.1",
     "react-query": "^3.34.12",
     "react-router-dom": "^6.1.1",

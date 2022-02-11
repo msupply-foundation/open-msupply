@@ -1,4 +1,5 @@
 // "import type" ensures en messages aren't bundled by default
+import { TypeOptions } from 'react-i18next';
 import * as app from './en/app.json';
 import * as common from './en/common.json';
 import * as dashboard from './en/dashboard.json';
@@ -6,10 +7,25 @@ import * as distribution from './en/distribution.json';
 import * as inventory from './en/inventory.json';
 import * as replenishment from './en/replenishment.json';
 
+// Normalize single namespace
+type WithOrWithoutPlural<K> = TypeOptions['jsonFormat'] extends 'v4'
+  ? K extends unknown
+    ? K extends `${infer B}_${
+        | 'zero'
+        | 'one'
+        | 'two'
+        | 'few'
+        | 'many'
+        | 'other'}`
+      ? B | K
+      : K
+    : never
+  : K;
+
 export type LocaleKey =
-  | keyof typeof app
-  | keyof typeof dashboard
-  | keyof typeof common
-  | keyof typeof distribution
-  | keyof typeof replenishment
-  | keyof typeof inventory;
+  | WithOrWithoutPlural<keyof typeof app>
+  | WithOrWithoutPlural<keyof typeof dashboard>
+  | WithOrWithoutPlural<keyof typeof common>
+  | WithOrWithoutPlural<keyof typeof distribution>
+  | WithOrWithoutPlural<keyof typeof replenishment>
+  | WithOrWithoutPlural<keyof typeof inventory>;

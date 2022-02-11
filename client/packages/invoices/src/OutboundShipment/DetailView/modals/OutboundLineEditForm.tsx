@@ -109,8 +109,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
             >
               <InputLabel sx={{ fontSize: '12px' }}>
                 {packSizeController.selected.value === -1
-                  ? t('label.packs-of')
-                  : t('label.units-in-pack-size-of')}
+                  ? t('label.packs-of', { count: quantity })
+                  : t('label.units-in-pack-size-of', { count: quantity })}
               </InputLabel>
             </Grid>
 
