@@ -8,6 +8,7 @@
       "decorators": true
     }
   },
+  "sourceMaps": "inline",
   "module": {
     "type": "commonjs"
   }
