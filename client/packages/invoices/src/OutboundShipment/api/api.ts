@@ -1,7 +1,6 @@
 import { DraftOutboundLine } from './../../types';
 import {
-  //   DeleteOutboundShipmentLineInput,
-
+  DeleteOutboundShipmentLineInput,
   RecordPatch,
   OmSupplyApi,
   UpdateOutboundShipmentInput,
@@ -112,6 +111,12 @@ const invoiceToInput = (
   theirReference: patch.theirReference,
 });
 
+const getCreateDeleteOutboundLineInput =
+  (invoiceId: string) =>
+  (id: string): DeleteOutboundShipmentLineInput => {
+    return { id, invoiceId };
+  };
+
 const createInsertOutboundLineInput = (
   line: DraftOutboundLine
 ): InsertOutboundShipmentLineInput => {
@@ -210,5 +215,12 @@ export const OutboundApi = {
       const result = await api.upsertOutboundShipment(input);
 
       return result;
+    },
+  deleteLines:
+    (api: OmSupplyApi, invoiceId: string) => async (ids: string[]) => {
+      const createDeleteLineInput = getCreateDeleteOutboundLineInput(invoiceId);
+      return api.deleteOutboundShipmentLines({
+        input: ids.map(createDeleteLineInput),
+      });
     },
 };

@@ -9,15 +9,17 @@ export const useNextItem = (
   const disabled = true;
 
   const { items } = useOutboundRows();
+
   if (!items || !currentItemId) return { next, disabled };
 
   const numberOfItems = items.length;
   const currentIdx = items.findIndex(({ itemId }) => itemId === currentItemId);
-  const nextItem = items[(currentIdx + 1) % numberOfItems];
+  const nextIdx = currentIdx + 1;
+  const nextItem = items[nextIdx];
 
-  if (currentIdx === -1 || currentIdx === numberOfItems - 1 || !nextItem) {
+  if (currentIdx === -1 || !nextItem) {
     return { next, disabled };
   }
 
-  return { next: toItem(nextItem), disabled: false };
+  return { next: toItem(nextItem), disabled: currentIdx === numberOfItems - 1 };
 };

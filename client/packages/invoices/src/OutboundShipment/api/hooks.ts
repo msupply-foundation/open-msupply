@@ -1,5 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import {
+  useTranslation,
+  useNotification,
   useQueryClient,
   InvoiceNodeStatus,
   useQuerySelector,
@@ -14,6 +16,9 @@ import {
   getDataSorter,
   useSortBy,
   useMutation,
+  UseMutationResult,
+  DeleteOutboundShipmentLinesMutation,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
 import { OutboundApi } from './api';
@@ -48,6 +53,7 @@ export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
 export const useIsOutboundDisabled = (): boolean => {
   const { status } = useOutboundFields('status');
   return (
+    status === InvoiceNodeStatus.Shipped ||
     status === InvoiceNodeStatus.Verified ||
     status === InvoiceNodeStatus.Delivered
   );
@@ -140,4 +146,93 @@ export const useSaveOutboundLines = () => {
       queryClient.invalidateQueries(queryKey);
     },
   });
+};
+
+export const useDeleteInboundLine = (): UseMutationResult<
+  DeleteOutboundShipmentLinesMutation,
+  unknown,
+  string[],
+  { previous?: Invoice; ids: string[] }
+> => {
+  // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
+  // input object should not require the invoice ID. Waiting for an API change.
+  const { id = '' } = useParams();
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  const mutation = OutboundApi.deleteLines(api, id);
+  return useMutation(mutation, {
+    onMutate: async (ids: string[]) => {
+      await queryClient.cancelQueries(['invoice', id]);
+
+      const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
+
+      if (previous) {
+        queryClient.setQueryData<Invoice>(['invoice', id], {
+          ...previous,
+          lines: previous.lines.filter(
+            ({ id: lineId }) => !ids.includes(lineId)
+          ),
+        });
+      }
+
+      return { previous, ids };
+    },
+    onError: (_, __, context) => {
+      queryClient.setQueryData(['invoice', id], context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['invoice', id]);
+    },
+  });
+};
+
+export const useDeleteSelectedLines = (): {
+  onDelete: () => Promise<void>;
+} => {
+  const { success, info } = useNotification();
+  const { items, lines } = useOutboundRows();
+  const { mutate } = useDeleteInboundLine();
+  const t = useTranslation('distribution');
+
+  const { selectedRows } = useTableStore(state => {
+    const { isGrouped } = state;
+
+    if (isGrouped) {
+      return {
+        selectedRows: (
+          Object.keys(state.rowState)
+            .filter(id => state.rowState[id]?.isSelected)
+            .map(selectedId => items?.find(({ id }) => selectedId === id))
+            .filter(Boolean) as InvoiceItem[]
+        )
+          .map(({ lines }) => lines)
+          .flat()
+          .map(({ id }) => id),
+      };
+    } else {
+      return {
+        selectedRows: (
+          Object.keys(state.rowState)
+            .filter(id => state.rowState[id]?.isSelected)
+            .map(selectedId => lines.find(({ id }) => selectedId === id))
+            .filter(Boolean) as InvoiceLine[]
+        ).map(({ id }) => id),
+      };
+    }
+  });
+
+  const onDelete = async () => {
+    if (selectedRows && selectedRows?.length > 0) {
+      const number = selectedRows?.length;
+      const onSuccess = success(t('message.deleted-lines', { number }));
+      mutate(selectedRows, {
+        onSuccess,
+      });
+    } else {
+      const infoSnack = info(t('label.select-rows-to-delete-them'));
+      infoSnack();
+    }
+  };
+
+  return { onDelete };
 };

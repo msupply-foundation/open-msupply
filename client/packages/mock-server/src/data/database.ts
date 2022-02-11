@@ -547,8 +547,10 @@ export const update = {
   invoice: (
     invoice: (UpdateOutboundShipmentInput | UpdateInboundShipmentInput) & {
       allocatedDatetime?: string;
+      deliveredDatetime?: string;
       shippedDatetime?: string;
       pickedDatetime?: string;
+      verifiedDatetime?: string;
     }
   ): Invoice => {
     const idx = InvoiceData.findIndex(getFilter(invoice.id, 'id'));
@@ -564,11 +566,15 @@ export const update = {
         (invoice?.status as unknown as InvoiceNodeStatus) ??
         existingInvoice.status,
       otherPartyId: invoice?.otherPartyId ?? existingInvoice.otherPartyId,
-      // allocatedDatetime:
-      //   invoice?.allocatedDatetime ?? existingInvoice.allocatedDatetime,
-      // shippedDatetime:
-      //   invoice?.shippedDatetime ?? existingInvoice.shippedDatetime,
-      // pickedDatetime: invoice?.pickedDatetime ?? existingInvoice.pickedDatetime,
+      allocatedDatetime:
+        invoice?.allocatedDatetime ?? existingInvoice.allocatedDatetime,
+      deliveredDatetime:
+        invoice?.deliveredDatetime ?? existingInvoice.deliveredDatetime,
+      shippedDatetime:
+        invoice?.shippedDatetime ?? existingInvoice.shippedDatetime,
+      verifiedDatetime:
+        invoice?.verifiedDatetime ?? existingInvoice.verifiedDatetime,
+      pickedDatetime: invoice?.pickedDatetime ?? existingInvoice.pickedDatetime,
     };
     InvoiceData[idx] = newInvoice;
     return newInvoice;

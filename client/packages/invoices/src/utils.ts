@@ -2,7 +2,6 @@ import {
   LocaleKey,
   InvoiceNodeStatus,
   useTranslation,
-  InvoiceNodeType,
   groupBy,
 } from '@openmsupply-client/common';
 import {
@@ -14,64 +13,6 @@ import {
   InvoiceLine,
   InvoiceRow,
 } from './types';
-
-export const placeholderInvoice: Invoice = {
-  id: '',
-  otherPartyName: '',
-  comment: '',
-  theirReference: '',
-  status: InvoiceNodeStatus.New,
-  type: InvoiceNodeType.OutboundShipment,
-  createdDatetime: '',
-  allocatedDatetime: '',
-  shippedDatetime: '',
-  pickedDatetime: '',
-  deliveredDatetime: '',
-  invoiceNumber: 0,
-  onHold: false,
-  otherParty: undefined,
-  otherPartyId: '',
-  lines: [],
-  pricing: {
-    totalAfterTax: 0,
-    //  subtotal: 0,
-    //   taxPercentage: 0
-  },
-};
-
-export const placeholderOutboundShipment: OutboundShipment = {
-  id: '',
-  otherPartyName: '',
-  comment: '',
-  theirReference: '',
-  status: InvoiceNodeStatus.New,
-  type: InvoiceNodeType.OutboundShipment,
-  createdDatetime: '',
-  allocatedDatetime: '',
-  shippedDatetime: '',
-  pickedDatetime: '',
-  deliveredDatetime: '',
-  invoiceNumber: 0,
-  onHold: false,
-  otherParty: undefined,
-  otherPartyId: '',
-  items: [],
-  pricing: {
-    totalAfterTax: 0,
-    //  subtotal: 0,
-    //   taxPercentage: 0
-  },
-
-  // color: 'grey',
-  // purchaseOrderNumber: undefined,
-  // goodsReceiptNumber: undefined,
-  // requisitionNumber: undefined,
-  // inboundShipmentNumber: undefined,
-  // transportReference: undefined,
-  // shippingMethod: undefined,
-  // enteredByName: '',
-  // donorName: '',
-};
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -89,6 +30,12 @@ export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Verified,
 ];
+
+export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
+  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Delivered,
+  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Delivered,
+  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Verified,
+};
 
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
@@ -116,14 +63,8 @@ export const getNextOutboundStatus = (
 export const getNextInboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus => {
-  const currentStatusIdx = inboundStatuses.findIndex(
-    status => currentStatus === status
-  );
-
-  const nextStatus = inboundStatuses[currentStatusIdx + 1];
-
+  const nextStatus = nextStatusMap[currentStatus];
   if (!nextStatus) throw new Error('Could not find the next status');
-
   return nextStatus;
 };
 
