@@ -53,7 +53,7 @@ export const createDraftOutboundLine = ({
   invoiceId,
   stockLineId: stockLine?.id ?? '',
   location: invoiceLine?.location,
-  expiryDate: invoiceLine?.expiryDate,
+  expiryDate: invoiceLine?.expiryDate || stockLine?.expiryDate,
   costPricePerPack: stockLine?.costPricePerPack ?? 0,
   sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
   itemId: stockLine?.itemId ?? '',

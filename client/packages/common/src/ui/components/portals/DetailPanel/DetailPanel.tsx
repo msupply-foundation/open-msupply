@@ -1,5 +1,6 @@
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
-import { Box, Grid, Theme, Typography, styled, Portal } from '@mui/material';
+import { Box, Grid, Theme, Typography, styled } from '@mui/material';
+import { Portal } from '@mui/base';
 import {
   useDetailPanelStore,
   useHostContext,

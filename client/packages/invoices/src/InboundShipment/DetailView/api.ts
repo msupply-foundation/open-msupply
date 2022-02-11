@@ -30,6 +30,8 @@ import {
   useSortBy,
   getDataSorter,
   useDebounceCallback,
+  ItemNode,
+  ItemResponse,
 } from '@openmsupply-client/common';
 import { Location, toItem } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
@@ -88,6 +90,14 @@ const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
 const locationGuard = (location: LocationResponse): Location => {
   if (location.__typename === 'LocationNode') {
     return location;
+  }
+
+  throw new Error('Unknown');
+};
+
+const itemGuard = (item: ItemResponse): ItemNode => {
+  if (item.__typename === 'ItemNode') {
+    return item;
   }
 
   throw new Error('Unknown');
@@ -191,6 +201,7 @@ export const getInboundShipmentDetailViewApi = (
         ? stockLineGuard(line.stockLine)
         : undefined;
       const location = line.location ? locationGuard(line.location) : undefined;
+      const item = line.item ? itemGuard(line.item) : undefined;
 
       return {
         ...line,
@@ -198,6 +209,7 @@ export const getInboundShipmentDetailViewApi = (
         location,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
+        unitName: item?.unitName ?? '',
       };
     });
 

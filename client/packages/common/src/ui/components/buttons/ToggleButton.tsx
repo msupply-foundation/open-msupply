@@ -27,6 +27,7 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
     sx={{
       backgroundColor: 'white',
       '&.Mui-selected': { backgroundColor: 'white' },
+      '& .MuiSvgIcon-root': { width: '15px', height: '15px' },
       boxShadow: theme => theme.shadows[1],
       borderRadius: '24px',
       height: '40px',
@@ -47,8 +48,6 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
       }}
       checked={selected}
     />
-    <Typography sx={{ fontSize: '12px' }} variant="body2">
-      {label}
-    </Typography>
+    <Typography variant="body2">{label}</Typography>
   </MuiToggleButton>
 );

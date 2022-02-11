@@ -1,4 +1,5 @@
-import { Box, BoxProps, Portal } from '@mui/material';
+import { Box, BoxProps } from '@mui/material';
+import { Portal } from '@mui/base';
 import { styled } from '@mui/material/styles';
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
 import { useHostContext } from '@common/hooks';
