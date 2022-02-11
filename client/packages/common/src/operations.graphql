@@ -169,6 +169,7 @@ query invoice($id: String!) {
                       sellPricePerPack
                       storeId
                       totalNumberOfPacks
+                      expiryDate
                     }
                   }
                   ... on ConnectorError {
