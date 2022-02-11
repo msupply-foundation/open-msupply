@@ -18,15 +18,12 @@ import {
   useInboundFields,
   useInboundItems,
   useInboundLines,
+  useIsInboundEditable,
 } from './api';
-import { InboundShipmentItem, Invoice, InvoiceLine } from '../../types';
-import { isInboundEditable } from '../../utils';
+import { InboundShipmentItem, InvoiceLine } from '../../types';
 
-interface ToolbarProps {
-  draft: Invoice;
-}
-
-export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
+export const Toolbar: FC = () => {
+  const isEditable = useIsInboundEditable();
   const { data } = useInboundItems();
   const lines = useInboundLines();
 
@@ -97,7 +94,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
                 Input={
                   <NameSearchInput
                     type="supplier"
-                    disabled={!isInboundEditable(draft)}
+                    disabled={!isEditable}
                     value={otherParty}
                     onChange={name => {
                       update({ otherParty: name });
@@ -110,7 +107,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
               label={t('label.supplier-ref')}
               Input={
                 <BufferedTextInput
-                  disabled={!isInboundEditable(draft)}
+                  disabled={!isEditable}
                   size="small"
                   sx={{ width: 250 }}
                   value={theirReference ?? ''}
@@ -122,10 +119,7 @@ export const Toolbar: FC<ToolbarProps> = ({ draft }) => {
             />
           </Box>
         </Grid>
-        <DropdownMenu
-          disabled={!isInboundEditable(draft)}
-          label={t('label.select')}
-        >
+        <DropdownMenu disabled={!isEditable} label={t('label.select')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>

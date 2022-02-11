@@ -15,6 +15,7 @@ import {
   getNextInboundStatusButtonTranslation,
   getStatusTranslator,
   inboundStatuses,
+  getNextInboundStatus,
 } from '../../utils';
 import { Invoice } from '../../types';
 import {
@@ -47,10 +48,10 @@ const createStatusLog = (invoice: Invoice) => {
     statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
   if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.deliveredDatetime;
+    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
   }
   if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.verifiedDatetime;
+    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }
 
   return statusLog;
@@ -95,30 +96,28 @@ export const Footer: FC = () => {
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
               {isEditable && (
-                <>
-                  <ButtonWithIcon
-                    shrinkThreshold="lg"
-                    disabled={onHoldBuffer}
-                    Icon={<ArrowRightIcon />}
-                    label={t('button.save-and-confirm-status', {
-                      status: t(getNextInboundStatusButtonTranslation(status)),
-                    })}
-                    sx={{ fontSize: '12px' }}
-                    variant="contained"
-                    color="secondary"
-                    onClick={async () => {
-                      update(
-                        {
-                          onHold: onHoldBuffer,
-                          status: InvoiceNodeStatus.Verified,
-                        },
-                        {
-                          onSuccess: success('Saved invoice! 🥳'),
-                        }
-                      );
-                    }}
-                  />
-                </>
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  disabled={onHoldBuffer}
+                  Icon={<ArrowRightIcon />}
+                  label={t('button.save-and-confirm-status', {
+                    status: t(getNextInboundStatusButtonTranslation(status)),
+                  })}
+                  sx={{ fontSize: '12px' }}
+                  variant="contained"
+                  color="secondary"
+                  onClick={async () => {
+                    update(
+                      {
+                        onHold: onHoldBuffer,
+                        status: getNextInboundStatus(status),
+                      },
+                      {
+                        onSuccess: success('Saved invoice! 🥳'),
+                      }
+                    );
+                  }}
+                />
               )}
             </Box>
           </Box>
