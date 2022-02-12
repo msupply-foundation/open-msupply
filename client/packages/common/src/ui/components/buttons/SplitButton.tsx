@@ -1,6 +1,6 @@
 import React from 'react';
-import Button from '@mui/material/Button';
-import ButtonGroup, { ButtonGroupProps } from '@mui/material/ButtonGroup';
+
+import ButtonGroup from '@mui/material/ButtonGroup';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Grow from '@mui/material/Grow';
 import Paper from '@mui/material/Paper';
@@ -8,6 +8,8 @@ import Popper from '@mui/material/Popper';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
 import { ChevronDownIcon } from '../../icons';
+import { ButtonWithIcon, ButtonWithIconProps } from './standard/ButtonWithIcon';
+import { ShrinkableBaseButton } from '@common/components';
 
 interface SplitButtonOption {
   label: string;
@@ -16,19 +18,21 @@ interface SplitButtonOption {
 }
 
 interface SplitButtonProps {
-  color?: ButtonGroupProps['color'];
+  color?: ButtonWithIconProps['color'];
   ariaLabel?: string;
   ariaControlLabel?: string;
   options: SplitButtonOption[];
   onClick: (option: SplitButtonOption) => void;
+  Icon?: ButtonWithIconProps['Icon'];
 }
 
 export const SplitButton = ({
-  color = 'primary',
+  color = 'secondary',
   ariaLabel,
   ariaControlLabel,
   options,
   onClick,
+  Icon = null,
 }: SplitButtonProps) => {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
@@ -38,15 +42,13 @@ export const SplitButton = ({
     <>
       <ButtonGroup
         color={color}
-        variant="contained"
+        variant="outlined"
         ref={anchorRef}
         aria-label={ariaLabel}
       >
-        <Button
-          sx={{
-            borderTopLeftRadius: '24px',
-            borderBottomLeftRadius: '24px',
-          }}
+        <ButtonWithIcon
+          color={color}
+          sx={{ borderTopRightRadius: '0px', borderBottomRightRadius: '0px' }}
           onClick={() => {
             const selectedOption = options[selectedIndex];
             if (!selectedOption) {
@@ -55,10 +57,13 @@ export const SplitButton = ({
 
             onClick(selectedOption);
           }}
-        >
-          {options[selectedIndex]?.label}
-        </Button>
-        <Button
+          label={options[selectedIndex]?.label ?? ''}
+          Icon={Icon}
+        />
+
+        <ShrinkableBaseButton
+          shrink
+          color={color}
           size="small"
           aria-controls={open ? ariaControlLabel : undefined}
           aria-expanded={open ? 'true' : undefined}
@@ -67,10 +72,10 @@ export const SplitButton = ({
           onClick={() => {
             setOpen(prevOpen => !prevOpen);
           }}
-          sx={{ borderTopRightRadius: '24px', borderBottomRightRadius: '24px' }}
+          sx={{ borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' }}
         >
           <ChevronDownIcon />
-        </Button>
+        </ShrinkableBaseButton>
       </ButtonGroup>
 
       <Popper
