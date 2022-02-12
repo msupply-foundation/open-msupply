@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
 import { FlatButton } from './FlatButton';
+import { SplitButton } from './SplitButton';
 import { BookIcon, TruckIcon } from '@common/icons';
 import { BaseButton, ButtonWithIcon } from '.';
 import { DialogButton, IconButton } from '../buttons';
@@ -170,6 +171,17 @@ const Template: Story = () => {
           <ColorSelectButton
             color={color.hex}
             onChange={newColor => setColor(newColor)}
+          />
+        </Wrapper>
+
+        <Wrapper text="Split button">
+          <SplitButton
+            options={[
+              { label: 'Create a merge commit' },
+              { label: 'Squash and merge' },
+              { label: 'Rebase and merge' },
+            ]}
+            onClick={option => alert(JSON.stringify(option))}
           />
         </Wrapper>
       </Grid>
