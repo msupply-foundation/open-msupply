@@ -9,12 +9,6 @@ import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
 import { ChevronDownIcon } from '../../icons';
 
-const ops = [
-  { label: 'Create a merge commit' },
-  { label: 'Squash and merge' },
-  { label: 'Rebase and merge' },
-];
-
 interface SplitButtonOption {
   label: string;
   value?: string;
@@ -33,7 +27,7 @@ export const SplitButton = ({
   color = 'primary',
   ariaLabel,
   ariaControlLabel,
-  options = ops,
+  options,
   onClick,
 }: SplitButtonProps) => {
   const [open, setOpen] = React.useState(false);
