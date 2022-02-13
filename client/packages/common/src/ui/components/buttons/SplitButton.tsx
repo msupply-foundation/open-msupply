@@ -96,7 +96,6 @@ export const SplitButton = ({
         >
           {options.map((option, index) => (
             <MenuItem
-              sx={{ zIndex: 1000000000 }}
               key={option.label}
               disabled={option?.isDisabled}
               selected={index === selectedIndex}
