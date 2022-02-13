@@ -298,6 +298,13 @@ table! {
     }
 }
 
+table! {
+    key_value_store (id) {
+        id -> crate::schema::key_value_store::KeyValueTypeMapping,
+        value_string -> Nullable<Text>,
+    }
+}
+
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
