@@ -1,11 +1,7 @@
 import React from 'react';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import ClickAwayListener from '@mui/material/ClickAwayListener';
-import Grow from '@mui/material/Grow';
-import Paper from '@mui/material/Paper';
-import Popper from '@mui/material/Popper';
+import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import MenuList from '@mui/material/MenuList';
 import { ChevronDownIcon } from '../../icons';
 import { ButtonWithIcon, ButtonWithIconProps } from './standard/ButtonWithIcon';
 import { ShrinkableBaseButton } from '@common/components';
@@ -35,20 +31,15 @@ export const SplitButton = ({
   Icon = null,
   isDisabled = false,
 }: SplitButtonProps) => {
-  const [open, setOpen] = React.useState(false);
-  const anchorRef = React.useRef<HTMLDivElement>(null);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
 
   const buttonLabel = options[selectedIndex]?.label ?? '';
+  const open = !!anchorEl;
 
   return (
     <>
-      <ButtonGroup
-        color={color}
-        variant="outlined"
-        ref={anchorRef}
-        aria-label={ariaLabel}
-      >
+      <ButtonGroup color={color} variant="outlined" aria-label={ariaLabel}>
         <ButtonWithIcon
           color={color}
           disabled={isDisabled}
@@ -78,8 +69,8 @@ export const SplitButton = ({
           aria-expanded={open ? 'true' : undefined}
           aria-label={ariaLabel}
           aria-haspopup="menu"
-          onClick={() => {
-            setOpen(prevOpen => !prevOpen);
+          onClick={e => {
+            setAnchorEl(e.currentTarget);
           }}
           sx={{
             borderRadius: 0,
@@ -89,56 +80,36 @@ export const SplitButton = ({
         >
           <ChevronDownIcon />
         </ShrinkableBaseButton>
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={() => setAnchorEl(null)}
+          elevation={5}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+        >
+          {options.map((option, index) => (
+            <MenuItem
+              sx={{ zIndex: 1000000000 }}
+              key={option.label}
+              disabled={option?.isDisabled}
+              selected={index === selectedIndex}
+              onClick={() => {
+                setSelectedIndex(index);
+                setAnchorEl(null);
+              }}
+            >
+              {option.label}
+            </MenuItem>
+          ))}
+        </Menu>
       </ButtonGroup>
-
-      <Popper
-        open={open}
-        anchorEl={anchorRef.current}
-        role={'menu'}
-        transition
-        disablePortal
-      >
-        {({ TransitionProps, placement }) => (
-          <Grow
-            {...TransitionProps}
-            style={{
-              transformOrigin:
-                placement === 'bottom' ? 'center top' : 'center bottom',
-            }}
-          >
-            <Paper elevation={5}>
-              <ClickAwayListener
-                onClickAway={event => {
-                  if (
-                    anchorRef.current &&
-                    anchorRef.current.contains(event.target as HTMLElement)
-                  ) {
-                    return;
-                  }
-
-                  setOpen(false);
-                }}
-              >
-                <MenuList>
-                  {options.map((option, index) => (
-                    <MenuItem
-                      key={option.label}
-                      disabled={option?.isDisabled}
-                      selected={index === selectedIndex}
-                      onClick={() => {
-                        setSelectedIndex(index);
-                        setOpen(false);
-                      }}
-                    >
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Grow>
-        )}
-      </Popper>
     </>
   );
 };
