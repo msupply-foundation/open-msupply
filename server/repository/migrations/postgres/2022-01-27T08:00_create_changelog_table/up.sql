@@ -29,7 +29,8 @@ CREATE VIEW changelog_deduped AS
     FROM changelog t1
     WHERE t1.id = (SELECT max(t2.id) 
                     from changelog t2
-                    where t2.row_id = t1.row_id);
+                    where t2.row_id = t1.row_id)
+    ORDER BY t1.id;
 
 -- Helper trigger function for updating the changelog when a row has been mutated.
 -- This function should be used in table triggers.
