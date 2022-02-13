@@ -332,17 +332,17 @@ mod repository_test {
             mock_stock_take_no_line_a, mock_stock_take_no_line_b, MockDataInserts,
         },
         schema::{
-            ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, NumberRowType,
-            RequisitionRowStatus,
+            ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, KeyValueType,
+            NumberRowType, RequisitionRowStatus,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, MasterListLineRepository,
-        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
-        NameQueryRepository, NameRepository, NumberRowRepository, OutboundShipmentRepository,
-        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
-        StockLineRepository, StockLineRowRepository, StockTakeRowRepository, StoreRowRepository,
-        UserAccountRepository,
+        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, KeyValueStoreRepository,
+        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
+        MasterListRowRepository, NameQueryRepository, NameRepository, NumberRowRepository,
+        OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineRepository, StockLineRowRepository,
+        StockTakeRowRepository, StoreRowRepository, UserAccountRepository,
     };
     use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
@@ -1272,5 +1272,29 @@ mod repository_test {
                 })
                 .collect::<Vec<Id>>()
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_key_value_store() {
+        let (_, connection, _, _) =
+            test_db::setup_all("key_value_store", MockDataInserts::none()).await;
+
+        let repo = KeyValueStoreRepository::new(&connection);
+
+        // access a non-existing row
+        let result = repo.get_string(KeyValueType::CentralSyncState).unwrap();
+        assert_eq!(result, None);
+
+        // write a value
+        repo.set_string(KeyValueType::CentralSyncState, Some("test".to_string()))
+            .unwrap();
+        let result = repo.get_string(KeyValueType::CentralSyncState).unwrap();
+        assert_eq!(result, Some("test".to_string()));
+
+        // unset a value
+        repo.set_string(KeyValueType::CentralSyncState, None)
+            .unwrap();
+        let result = repo.get_string(KeyValueType::CentralSyncState).unwrap();
+        assert_eq!(result, None);
     }
 }
