@@ -1,5 +1,4 @@
 import React from 'react';
-
 import ButtonGroup from '@mui/material/ButtonGroup';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Grow from '@mui/material/Grow';
@@ -24,6 +23,7 @@ interface SplitButtonProps {
   options: SplitButtonOption[];
   onClick: (option: SplitButtonOption) => void;
   Icon?: ButtonWithIconProps['Icon'];
+  isDisabled?: boolean;
 }
 
 export const SplitButton = ({
@@ -33,10 +33,13 @@ export const SplitButton = ({
   options,
   onClick,
   Icon = null,
+  isDisabled = false,
 }: SplitButtonProps) => {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
-  const [selectedIndex, setSelectedIndex] = React.useState(1);
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+  const buttonLabel = options[selectedIndex]?.label ?? '';
 
   return (
     <>
@@ -48,7 +51,12 @@ export const SplitButton = ({
       >
         <ButtonWithIcon
           color={color}
-          sx={{ borderTopRightRadius: '0px', borderBottomRightRadius: '0px' }}
+          disabled={isDisabled}
+          sx={{
+            borderRadius: 0,
+            borderStartStartRadius: '24px',
+            borderEndStartRadius: '24px',
+          }}
           onClick={() => {
             const selectedOption = options[selectedIndex];
             if (!selectedOption) {
@@ -57,12 +65,13 @@ export const SplitButton = ({
 
             onClick(selectedOption);
           }}
-          label={options[selectedIndex]?.label ?? ''}
+          label={buttonLabel}
           Icon={Icon}
         />
 
         <ShrinkableBaseButton
           shrink
+          disabled={isDisabled}
           color={color}
           size="small"
           aria-controls={open ? ariaControlLabel : undefined}
@@ -72,7 +81,11 @@ export const SplitButton = ({
           onClick={() => {
             setOpen(prevOpen => !prevOpen);
           }}
-          sx={{ borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' }}
+          sx={{
+            borderRadius: 0,
+            borderStartEndRadius: '24px',
+            borderEndEndRadius: '24px',
+          }}
         >
           <ChevronDownIcon />
         </ShrinkableBaseButton>
