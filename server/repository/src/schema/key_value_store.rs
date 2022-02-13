@@ -4,7 +4,7 @@ use diesel_derive_enum::DbEnum;
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyValueType {
-    CentralSyncState,
+    CentralSyncPullCursor,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]

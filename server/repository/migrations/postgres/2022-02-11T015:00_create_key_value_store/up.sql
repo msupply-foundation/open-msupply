@@ -1,6 +1,6 @@
 CREATE TYPE key_type AS ENUM (
-    -- e.g. if the initial central server sync has been performed
-    'CENTRAL_SYNC_STATE'
+    -- Cursor for pulling central records from the central server
+    'CENTRAL_SYNC_PULL_CURSOR'
 );
 
 -- key value store, e.g. to store local server state
