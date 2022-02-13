@@ -7,8 +7,9 @@ use crate::{
     },
 };
 use repository::{
-    schema::CentralSyncBufferRow, CentralSyncBufferRepository, CentralSyncCursorRepository,
-    NameStoreJoinRepository, RepositoryError, StorageConnectionManager,
+    schema::{CentralSyncBufferRow, KeyValueType},
+    CentralSyncBufferRepository, KeyValueStoreRepository, NameStoreJoinRepository, RepositoryError,
+    StorageConnection, StorageConnectionManager, TransactionError,
 };
 
 use log::info;
@@ -74,23 +75,19 @@ impl Synchroniser {
         })
     }
 
-    pub async fn pull_central_records(
+    async fn pull_central_records(
         &mut self,
         connection_manager: &StorageConnectionManager,
     ) -> Result<(), CentralSyncError> {
         let connection = connection_manager
             .connection()
             .map_err(|source| CentralSyncError::DBConnectionError { source })?;
-        let central_sync_cursor_repository = CentralSyncCursorRepository::new(&connection);
-        let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
+        let central_sync_cursor = CentralSyncPullCursor::new(&connection);
 
-        let mut cursor: u32 = central_sync_cursor_repository
-            .get_cursor()
-            .await
-            .unwrap_or_else(|_| {
-                info!("Initialising new central sync cursor...");
-                0
-            });
+        let mut cursor: u32 = central_sync_cursor.get_cursor().await.unwrap_or_else(|_| {
+            info!("Initialising new central sync cursor...");
+            0
+        });
 
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
@@ -118,8 +115,7 @@ impl Synchroniser {
             );
 
             for central_sync_record in central_sync_records {
-                central_sync_buffer_repository
-                    .insert_one_and_update_cursor(&central_sync_record)
+                Synchroniser::insert_one_and_update_cursor(&connection, &central_sync_record)
                     .await
                     .map_err(
                         |source| CentralSyncError::UpdateCentralSyncBufferRecordsError { source },
@@ -127,7 +123,7 @@ impl Synchroniser {
             }
             info!("Successfully inserted central sync records into central sync buffer");
 
-            cursor = central_sync_cursor_repository
+            cursor = central_sync_cursor
                 .get_cursor()
                 .await
                 .map_err(|source| CentralSyncError::GetCentralSyncCursorRecordError { source })?;
@@ -137,6 +133,27 @@ impl Synchroniser {
                 break;
             }
         })
+    }
+
+    /// insert row and update cursor in a single transaction
+    async fn insert_one_and_update_cursor(
+        connection: &StorageConnection,
+        central_sync_buffer_row: &CentralSyncBufferRow,
+    ) -> Result<(), RepositoryError> {
+        let cursor = central_sync_buffer_row.id as u32;
+        // note: if already in a transaction this creates a safepoint:
+        let result: Result<(), TransactionError<RepositoryError>> = connection
+            .transaction(|con| async move {
+                CentralSyncBufferRepository::new(con)
+                    .insert_one(central_sync_buffer_row)
+                    .await?;
+                CentralSyncPullCursor::new(con)
+                    .update_cursor(cursor)
+                    .await?;
+                Ok(())
+            })
+            .await;
+        Ok(result?)
     }
 
     // Hacky method for pulling from sync_queue.
@@ -244,6 +261,7 @@ impl Synchroniser {
     //     });
     // }
 
+    /// Sync must not be called concurrently (e.g. sync cursors are fetched/updated without DB tx)
     pub async fn sync(
         &mut self,
         connection_manager: &StorageConnectionManager,
@@ -284,6 +302,35 @@ fn central_sync_batch_records_to_buffer_rows(
         })
         .collect();
     central_sync_records
+}
+
+struct CentralSyncPullCursor<'a> {
+    key_value_store: KeyValueStoreRepository<'a>,
+}
+
+impl<'a> CentralSyncPullCursor<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        CentralSyncPullCursor {
+            key_value_store: KeyValueStoreRepository::new(connection),
+        }
+    }
+
+    pub async fn get_cursor(&self) -> Result<u32, RepositoryError> {
+        let value = self
+            .key_value_store
+            .get_string(KeyValueType::CentralSyncPullCursor)?;
+        let cursor = value
+            .and_then(|value| value.parse::<u32>().ok())
+            .unwrap_or(0);
+        Ok(cursor)
+    }
+
+    pub async fn update_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {
+        self.key_value_store.set_string(
+            KeyValueType::CentralSyncPullCursor,
+            Some(format!("{}", cursor)),
+        )
+    }
 }
 
 #[cfg(test)]
