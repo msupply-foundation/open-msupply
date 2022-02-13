@@ -39,7 +39,7 @@ pub struct RequisitionAndItemId {
     pub item_id: String,
 }
 
-fn extract_unique_requisition_and_item_id(
+fn extract_unique_requisition_and_item_ids(
     requisition_and_item_ids: &[RequisitionAndItemId],
 ) -> (Vec<String>, Vec<String>) {
     let mut requisition_ids: HashSet<String> = HashSet::new();
