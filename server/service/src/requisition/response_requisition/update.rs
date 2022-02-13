@@ -1,7 +1,7 @@
 use crate::{
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
-    sync_processor::process_records,
+    sync_processor::{process_records, Record},
 };
 use chrono::Utc;
 use repository::{
