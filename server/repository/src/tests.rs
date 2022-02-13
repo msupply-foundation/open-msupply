@@ -867,21 +867,17 @@ mod repository_test {
         let central_sync_buffer_row_a = data::central_sync_buffer_row_a();
         let central_sync_buffer_row_b = data::central_sync_buffer_row_b();
 
-        // `insert_one` inserts valid sync buffer row.
-        repo.insert_one(&central_sync_buffer_row_a).await.unwrap();
-        let result = repo.pop_one().await.unwrap();
-        assert_eq!(central_sync_buffer_row_a, result);
-
-        // `pop` returns buffered records in FIFO order.
+        // `insert_one` inserts some sync entries
         repo.insert_one(&central_sync_buffer_row_a).await.unwrap();
         repo.insert_one(&central_sync_buffer_row_b).await.unwrap();
-        let result = repo.pop_one().await.unwrap();
-        assert_eq!(central_sync_buffer_row_a, result);
 
         // `remove_all` removes all buffered records.
         repo.remove_all().await.unwrap();
-        let result = repo.pop_one().await;
-        assert!(result.is_err());
+        let result = repo
+            .get_sync_entries(&central_sync_buffer_row_a.table_name)
+            .await
+            .unwrap();
+        assert!(result.is_empty());
     }
 
     #[actix_rt::test]
@@ -1282,19 +1278,28 @@ mod repository_test {
         let repo = KeyValueStoreRepository::new(&connection);
 
         // access a non-existing row
-        let result = repo.get_string(KeyValueType::CentralSyncState).unwrap();
+        let result = repo
+            .get_string(KeyValueType::CentralSyncPullCursor)
+            .unwrap();
         assert_eq!(result, None);
 
         // write a value
-        repo.set_string(KeyValueType::CentralSyncState, Some("test".to_string()))
+        repo.set_string(
+            KeyValueType::CentralSyncPullCursor,
+            Some("test".to_string()),
+        )
+        .unwrap();
+        let result = repo
+            .get_string(KeyValueType::CentralSyncPullCursor)
             .unwrap();
-        let result = repo.get_string(KeyValueType::CentralSyncState).unwrap();
         assert_eq!(result, Some("test".to_string()));
 
         // unset a value
-        repo.set_string(KeyValueType::CentralSyncState, None)
+        repo.set_string(KeyValueType::CentralSyncPullCursor, None)
             .unwrap();
-        let result = repo.get_string(KeyValueType::CentralSyncState).unwrap();
+        let result = repo
+            .get_string(KeyValueType::CentralSyncPullCursor)
+            .unwrap();
         assert_eq!(result, None);
     }
 }
