@@ -868,6 +868,7 @@ query itemsWithStockLines(
               onHold
               note
               storeId
+              locationName
             }
             totalCount
           }

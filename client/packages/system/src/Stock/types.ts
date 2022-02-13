@@ -9,4 +9,5 @@ export interface StockRow extends ObjectWithStringKeys {
   expiryDate: Date | null;
   packSize: number;
   numberOfPacks: number;
+  locationName: string;
 }
