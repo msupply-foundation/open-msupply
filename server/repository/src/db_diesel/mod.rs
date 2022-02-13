@@ -1,7 +1,6 @@
 use crate::repository_error::RepositoryError;
 
 mod central_sync_buffer;
-mod central_sync_cursor;
 mod changelog_row;
 mod invoice;
 mod invoice_line;
@@ -36,7 +35,6 @@ mod unit_row;
 mod user_account;
 
 pub use central_sync_buffer::CentralSyncBufferRepository;
-pub use central_sync_cursor::CentralSyncCursorRepository;
 pub use changelog_row::*;
 pub use invoice::{InvoiceRepository, OutboundShipmentRepository};
 pub use invoice_line::{InvoiceLineFilter, InvoiceLineRepository};
