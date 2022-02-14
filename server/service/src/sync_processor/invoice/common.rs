@@ -49,7 +49,7 @@ pub fn generate_and_integrate_linked_invoice(
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), ProcessRecordError> {
     let invoice_row = generate_linked_invoice(connection, &source_invoice, record_for_processing)?;
     let (lines_to_delete, invoice_line_rows) =
-        re_generate_linked_invoice_lines(connection, &invoice_row, &source_invoice)?;
+        regenerate_linked_invoice_lines(connection, &invoice_row, &source_invoice)?;
 
     InvoiceRepository::new(connection).upsert_one(&invoice_row)?;
 
@@ -153,7 +153,7 @@ pub fn find_delete_lines(
     Ok(result_lines)
 }
 
-pub fn re_generate_linked_invoice_lines(
+pub fn regenerate_linked_invoice_lines(
     connection: &StorageConnection,
     linked_invoice: &InvoiceRow,
     source_invoice: &InvoiceRow,
