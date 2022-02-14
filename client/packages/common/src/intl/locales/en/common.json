@@ -127,5 +127,7 @@
   "label.counted-num-of-packs": "Counted # of Packs",
   "label.snapshot-num-of-packs": "Snapshot # of Packs",
   "label.count-this-line": "Count this line",
-  "label.unit-price": "Unit Price"
+  "label.unit-price": "Unit Price",
+  "aria.split-button": "Split button",
+  "aria.split-button-controls": "Split button menu"
 }

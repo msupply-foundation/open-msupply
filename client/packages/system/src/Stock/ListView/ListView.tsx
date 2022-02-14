@@ -41,6 +41,7 @@ export const StockListView: FC = () => {
       'itemName',
       'batch',
       'expiryDate',
+      'locationName',
       'itemUnit',
       'packSize',
       'numberOfPacks',

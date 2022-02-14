@@ -89,7 +89,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   expiryDate: {
     key: 'expiryDate',
     label: 'label.expiry',
-    width: 200,
+    width: 100,
     formatter: dateString =>
       dateString ? formatExpiryDate(new Date(dateString as string)) || '' : '',
   },
@@ -220,7 +220,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   locationName: {
     label: 'label.location',
     key: 'locationName',
-    width: 100,
+    width: 75,
   },
   unitQuantity: {
     label: 'label.unit-quantity',
@@ -231,7 +231,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   itemUnit: {
     label: 'label.unit',
     key: 'unit',
-    width: 50,
+    width: 75,
   },
   lineTotal: {
     label: 'label.line-total',
