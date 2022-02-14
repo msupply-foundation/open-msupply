@@ -14,6 +14,7 @@ import {
   useTranslation,
   ReadOnlyInput,
   InvoiceNodeStatus,
+  Box,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController } from './hooks';
@@ -156,7 +157,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   });
 
   return (
-    <>
+    <Box height={400}>
       <Divider margin={10} />
       <TableContainer sx={{ height: 375, overflowX: 'hidden' }}>
         <Table style={{ borderCollapse: 'separate', borderSpacing: '0 4px' }}>
@@ -207,6 +208,6 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
-    </>
+    </Box>
   );
 };

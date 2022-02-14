@@ -10,12 +10,15 @@ import { InvoiceLine, DraftOutboundLine } from '../../../../types';
 import { sortByExpiry, issueStock } from '../utils';
 import { useOutboundLines } from '../../../api';
 
-export const createPlaceholderRow = (invoiceId: string): DraftOutboundLine => ({
+export const createPlaceholderRow = (
+  invoiceId: string,
+  itemId = ''
+): DraftOutboundLine => ({
   availableNumberOfPacks: 0,
   batch: 'Placeholder',
   costPricePerPack: 0,
   id: 'placeholder',
-  itemId: 'placeholder',
+  itemId,
   onHold: false,
   packSize: 1,
   sellPricePerPack: 0,
@@ -114,14 +117,14 @@ export const useDraftOutboundLines = (
         })
         .sort(sortByExpiry);
 
-      rows.push(createPlaceholderRow(invoiceId));
+      rows.push(createPlaceholderRow(invoiceId, item?.id));
       return rows;
     });
   }, [data, lines, item]);
 
   useEffect(() => {
     if (draftOutboundLines?.length === 0) {
-      draftOutboundLines.push(createPlaceholderRow(invoiceId));
+      draftOutboundLines.push(createPlaceholderRow(invoiceId, item?.id));
     }
   }, [draftOutboundLines]);
 

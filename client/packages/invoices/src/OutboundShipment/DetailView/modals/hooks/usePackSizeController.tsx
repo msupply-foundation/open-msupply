@@ -53,6 +53,11 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
     | undefined
   >();
 
+  const itemId = ifTheSameElseDefault(lines, 'itemId', '');
+  useEffect(() => {
+    setSelected(undefined);
+  }, [itemId]);
+
   const setPackSize = useCallback(
     (newValue: number) => {
       const packSizeOption = options.find(({ value }) => value === newValue);
@@ -67,6 +72,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
     // 'any' when there are multiple unique pack sizes
     // in the set of options, or the only option if there is only
     // one.
+
     if (selected) return;
     const selectedPackSize = ifTheSameElseDefault(
       lines.filter(({ numberOfPacks }) => numberOfPacks > 0),

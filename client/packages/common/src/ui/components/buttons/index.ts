@@ -5,3 +5,4 @@ export * from './IconButton';
 export * from './ToggleButton';
 export * from './ColorSelectButton';
 export * from './LoadingButton';
+export * from './SplitButton';
