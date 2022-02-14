@@ -31,6 +31,22 @@ export const InventoryNav: FC = () => {
             end
             expandOnHover
             to={RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.Locations)
+              .build()}
+            text={t('locations')}
+          />
+          <AppNavLink
+            end
+            expandOnHover
+            to={RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.MasterLists)
+              .build()}
+            text={t('master-lists')}
+          />
+          <AppNavLink
+            end
+            expandOnHover
+            to={RouteBuilder.create(AppRoute.Inventory)
               .addPart(AppRoute.Stock)
               .build()}
             text={t('stock')}
@@ -39,17 +55,9 @@ export const InventoryNav: FC = () => {
             end
             expandOnHover
             to={RouteBuilder.create(AppRoute.Inventory)
-              .addPart(AppRoute.Stocktake)
+              .addPart(AppRoute.Stocktakes)
               .build()}
-            text={t('stocktake')}
-          />
-          <AppNavLink
-            end
-            expandOnHover
-            to={RouteBuilder.create(AppRoute.Inventory)
-              .addPart(AppRoute.Locations)
-              .build()}
-            text={t('locations')}
+            text={t('stocktakes')}
           />
         </List>
       </Collapse>
