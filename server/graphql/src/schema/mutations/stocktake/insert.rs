@@ -53,12 +53,13 @@ pub fn do_insert_stocktake(
     input: InsertStocktakeInput,
 ) -> Result<InsertStocktakeResponse> {
     let service = &service_provider.stocktake_service;
+    let id = input.id.clone();
     match service.insert_stocktake(&service_ctx, store_id, to_domain(input)) {
         Ok(stocktake) => Ok(InsertStocktakeResponse::Response(StocktakeNode {
             stocktake,
         })),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("Insert stocktake {}: {:#?}", id, err);
             let graphql_error = match err {
                 ServiceError::DatabaseError(err) => err.into(),
                 ServiceError::InternalError(err) => StandardGraphqlError::InternalError(err),
