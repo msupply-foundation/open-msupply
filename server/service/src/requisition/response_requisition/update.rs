@@ -29,6 +29,7 @@ pub enum UpdateResponseRequisitionError {
     CannotEditRequisition,
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
+    // TODO https://github.com/openmsupply/remote-server/issues/760
     DatabaseError(RepositoryError),
 }
 
