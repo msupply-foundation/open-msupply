@@ -1,15 +1,23 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { ComponentMeta } from '@storybook/react';
-import { SplitButton } from './SplitButton';
+import { SplitButton, SplitButtonOption } from './SplitButton';
 
-const ops = [
-  { label: 'Create a merge commit' },
-  { label: 'Squash and merge' },
-  { label: 'Rebase and merge' },
+const ops: [
+  SplitButtonOption<string>,
+  SplitButtonOption<string>,
+  SplitButtonOption<string>
+] = [
+  { label: 'Create a merge commit', value: 'createAndMerge' },
+  { label: 'Squash and merge', value: 'squashAndMerge' },
+  { label: 'Rebase and merge', value: 'rebaseAndMerge' },
 ];
 
 const Template = () => {
+  const [selectedOption, setSelectedOption] = React.useState<
+    SplitButtonOption<string>
+  >(ops[0]);
+
   return (
     <Box>
       <SplitButton
@@ -17,6 +25,8 @@ const Template = () => {
         ariaControlLabel="open split button menu"
         options={ops}
         onClick={option => alert(JSON.stringify(option))}
+        selectedOption={selectedOption}
+        onSelectOption={setSelectedOption}
       />
     </Box>
   );
