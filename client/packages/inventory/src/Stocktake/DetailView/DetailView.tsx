@@ -58,7 +58,7 @@ export const DetailView: FC = () => {
       onOk={() =>
         navigate(
           RouteBuilder.create(AppRoute.Inventory)
-            .addPart(AppRoute.Stocktake)
+            .addPart(AppRoute.Stocktakes)
             .build()
         )
       }
