@@ -1,72 +1,60 @@
-use crate::sync_processor::{
-    ProcessRecord, ProcessRecordError, ProcessRecordResult, Record, RecordForProcessing,
-};
+use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing};
 use repository::{
-    schema::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceRepository,
+    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    InvoiceRepository, StorageConnection,
 };
 
-pub struct UpdateOutboundShipmentStatusProcessor {}
+#[derive(Debug)]
+pub struct UpdateOutboundShipmentStatusProcessorResult {
+    updated_linked_invoice: InvoiceRow,
+}
 
-impl ProcessRecord for UpdateOutboundShipmentStatusProcessor {
-    fn name(&self) -> String {
-        "Update outbound shipment status".to_string()
-    }
-
-    fn can_execute(&self, record_for_processing: &RecordForProcessing) -> bool {
-        if let Record::InvoiceRow(source_invoice) = &record_for_processing.record {
-            pub use InvoiceRowStatus::*;
-            if !record_for_processing.is_other_party_active_on_site {
-                return false;
-            }
-
-            if source_invoice.r#type != InvoiceRowType::InboundShipment {
-                return false;
-            }
-
-            if let Some(Record::InvoiceRow(linked_invoice)) = &record_for_processing.linked_record {
-                if linked_invoice.status == Verified {
-                    return false;
-                }
-
-                if source_invoice.status != Delivered && source_invoice.status != Verified {
-                    return false;
-                }
-
-                if linked_invoice.status == source_invoice.status {
-                    return false;
-                }
-
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn process_record(
-        &self,
-        connection: &repository::StorageConnection,
-        record_for_processing: &RecordForProcessing,
-    ) -> Result<ProcessRecordResult, ProcessRecordError> {
+// Update outbound shipment status
+pub fn update_outbound_shipment_status_processor(
+    connection: &StorageConnection,
+    record_for_processing: &RecordForProcessing,
+) -> Result<Option<UpdateOutboundShipmentStatusProcessorResult>, ProcessRecordError> {
+    // Check can execute
+    let (source_invoice, linked_invoice) =
         if let (Record::InvoiceRow(source_invoice), Some(Record::InvoiceRow(linked_invoice))) = (
             &record_for_processing.record,
             &record_for_processing.linked_record,
         ) {
-            let mut update_linked_invoice = linked_invoice.clone();
-            update_linked_invoice.status = source_invoice.status.clone();
-            update_linked_invoice.delivered_datetime = source_invoice.delivered_datetime.clone();
-            update_linked_invoice.verified_datetime = source_invoice.verified_datetime.clone();
+            pub use InvoiceRowStatus::*;
+            if !record_for_processing.is_other_party_active_on_site {
+                return Ok(None);
+            }
 
-            InvoiceRepository::new(connection).upsert_one(&update_linked_invoice)?;
+            if source_invoice.r#type != InvoiceRowType::InboundShipment {
+                return Ok(None);
+            }
 
-            let result = ProcessRecordResult::Success(format!(
-                "updated invoice status {:#?}",
-                update_linked_invoice
-            ));
-            return Ok(result);
-        }
+            if linked_invoice.status == Verified {
+                return Ok(None);
+            }
 
-        Ok(ProcessRecordResult::ConditionNotMetInProcessor)
-    }
+            if source_invoice.status != Delivered && source_invoice.status != Verified {
+                return Ok(None);
+            }
+
+            if linked_invoice.status == source_invoice.status {
+                return Ok(None);
+            }
+
+            (source_invoice, linked_invoice)
+        } else {
+            return Ok(None);
+        };
+
+    // Execute
+    let mut updated_linked_invoice = linked_invoice.clone();
+    updated_linked_invoice.status = source_invoice.status.clone();
+    updated_linked_invoice.delivered_datetime = source_invoice.delivered_datetime.clone();
+    updated_linked_invoice.verified_datetime = source_invoice.verified_datetime.clone();
+
+    InvoiceRepository::new(connection).upsert_one(&updated_linked_invoice)?;
+
+    Ok(Some(UpdateOutboundShipmentStatusProcessorResult {
+        updated_linked_invoice,
+    }))
 }
