@@ -1,7 +1,6 @@
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
-use service::current_store_id;
 use service::invoice::get_invoices;
 
 use async_graphql::{Context, Object, Result};
@@ -33,9 +32,9 @@ pub mod stock_counts;
 pub use self::stock_counts::*;
 pub mod store;
 use self::store::{stores, StoreFilterInput, StoresResponse};
-pub mod stock_take;
-pub use self::stock_take::*;
-pub use self::stock_take_line::*;
+pub mod stocktake;
+pub use self::stocktake::*;
+pub use self::stocktake_line::*;
 
 #[Object]
 impl Queries {
@@ -193,19 +192,24 @@ impl Queries {
         stock_counts(timezone_offset, days_till_expired)
     }
 
-    pub async fn stock_takes(
+    pub async fn stocktake(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
+        id: String,
+    ) -> Result<StocktakeResponse> {
+        stocktake(ctx, &store_id, &id)
+    }
+
+    pub async fn stocktakes(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
         page: Option<PaginationInput>,
-        filter: Option<StockTakeFilterInput>,
-        sort: Option<Vec<StockTakeSortInput>>,
-    ) -> Result<StockTakesResponse> {
-        // TODO remove and make store_id parameter required
-        let store_id = store_id.unwrap_or(current_store_id(
-            &ctx.get_connection_manager().connection()?,
-        )?);
-        stock_takes(ctx, &store_id, page, filter, sort)
+        filter: Option<StocktakeFilterInput>,
+        sort: Option<Vec<StocktakeSortInput>>,
+    ) -> Result<StocktakesResponse> {
+        stocktakes(ctx, &store_id, page, filter, sort)
     }
 
     pub async fn requisition(

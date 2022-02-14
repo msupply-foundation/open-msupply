@@ -8,7 +8,7 @@ pub enum NumberRowType {
     InboundShipment,
     OutboundShipment,
     InventoryAdjustment,
-    StockTake,
+    Stocktake,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
