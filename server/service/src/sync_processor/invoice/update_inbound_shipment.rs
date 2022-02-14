@@ -5,7 +5,7 @@ use repository::{
 
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing};
 
-use super::common::re_generate_linked_invoice_lines;
+use super::common::regenerate_linked_invoice_lines;
 
 #[derive(Debug)]
 pub struct UpdateInboundShipmentProcessorResult {
@@ -50,7 +50,7 @@ pub fn update_inbound_shipment_processor(
 
     // Execute
     let (deleted_invoice_lines, new_invoice_lines) =
-        re_generate_linked_invoice_lines(connection, &linked_invoice, &source_invoice)?;
+        regenerate_linked_invoice_lines(connection, &linked_invoice, &source_invoice)?;
 
     let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
