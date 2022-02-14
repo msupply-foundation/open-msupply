@@ -350,6 +350,7 @@ mod repository_test {
         stock_line::StockLineFilter,
         DateFilter, EqualFilter, Pagination, SimpleStringFilter,
     };
+    use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -1214,11 +1215,11 @@ mod repository_test {
 
         assert_eq!(
             item_stats[0].average_monthly_consumption(),
-            ((40 + 4 + 3) as f64 / (3 * 30) as f64 * 30 as f64) as i32
+            ((40 + 4 + 3) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
         );
         assert_eq!(
             item_stats[1].average_monthly_consumption(),
-            ((15) as f64 / (3 * 30) as f64 * 30 as f64) as i32
+            ((15) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
         );
 
         // Reduce to looking back 10 days
@@ -1237,7 +1238,7 @@ mod repository_test {
 
         assert_eq!(
             item_stats[0].average_monthly_consumption(),
-            ((40 + 4) as f64 / (10) as f64 * 30 as f64) as i32
+            ((40 + 4) as f64 / (10) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
         );
         // No invoice lines check
         assert_eq!(item_stats[1].average_monthly_consumption(), 0);
@@ -1253,11 +1254,11 @@ mod repository_test {
 
         assert_eq!(
             item_stats[0].average_monthly_consumption(),
-            ((20000) as f64 / (3 * 30) as f64 * 30 as f64) as i32
+            ((20000) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
         );
         assert_eq!(
             item_stats[1].average_monthly_consumption(),
-            ((300) as f64 / (3 * 30) as f64 * 30 as f64) as i32
+            ((300) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
         );
     }
 }

@@ -11,6 +11,7 @@ use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
 use domain::EqualFilter;
 use std::collections::HashMap;
+use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ItemStatsFilter {
@@ -139,7 +140,8 @@ impl ItemStats {
             total_consumption += row.consumption_quantity
         }
 
-        (total_consumption as f64 / number_of_days_since_look_back as f64 * 30 as f64) as i32
+        (total_consumption as f64 / number_of_days_since_look_back as f64
+            * NUMBER_OF_DAYS_IN_A_MONTH) as i32
     }
 
     pub fn stock_on_hand(&self) -> i32 {
