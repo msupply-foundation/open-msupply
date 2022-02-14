@@ -106,6 +106,7 @@ pub fn generate(
     }: UpdateResponseRequisition,
 ) -> RequisitionRow {
     RequisitionRow {
+        // Only finalised status is available in UpdateResponseRequstionStatus
         status: if update_status.is_some() {
             RequisitionRowStatus::Finalised
         } else {
