@@ -94,7 +94,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           }}
         />
       }
-      height={600}
+      height={700}
       width={900}
     >
       <Grid container gap={0.5}>
@@ -118,7 +118,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
             <Box
               display="flex"
               flex={1}
-              height={300}
+              height={400}
               justifyContent="center"
               alignItems="center"
             >

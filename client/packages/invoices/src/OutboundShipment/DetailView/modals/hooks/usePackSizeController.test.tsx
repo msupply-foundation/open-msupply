@@ -8,6 +8,7 @@ const singlePackSizeLines: DraftOutboundLine[] = [
   createDraftOutboundLine({
     invoiceId: '',
     stockLine: {
+      itemId: '1',
       packSize: 1,
       totalNumberOfPacks: 1,
       availableNumberOfPacks: 1,
@@ -17,6 +18,7 @@ const singlePackSizeLines: DraftOutboundLine[] = [
   createDraftOutboundLine({
     invoiceId: '',
     stockLine: {
+      itemId: '1',
       packSize: 1,
       totalNumberOfPacks: 1,
       availableNumberOfPacks: 1,
@@ -29,6 +31,7 @@ const multiplePackSizeLines: DraftOutboundLine[] = [
   createDraftOutboundLine({
     invoiceId: '',
     stockLine: {
+      itemId: '2',
       packSize: 1,
       totalNumberOfPacks: 1,
       availableNumberOfPacks: 1,
@@ -38,6 +41,7 @@ const multiplePackSizeLines: DraftOutboundLine[] = [
   createDraftOutboundLine({
     invoiceId: '',
     stockLine: {
+      itemId: '2',
       packSize: 2,
       totalNumberOfPacks: 1,
       availableNumberOfPacks: 1,
@@ -47,6 +51,7 @@ const multiplePackSizeLines: DraftOutboundLine[] = [
   createDraftOutboundLine({
     invoiceId: '',
     stockLine: {
+      itemId: '2',
       packSize: 3,
       totalNumberOfPacks: 0,
       availableNumberOfPacks: 0,
@@ -56,6 +61,7 @@ const multiplePackSizeLines: DraftOutboundLine[] = [
   createDraftOutboundLine({
     invoiceId: '',
     stockLine: {
+      itemId: '2',
       packSize: 4,
       totalNumberOfPacks: 1,
       availableNumberOfPacks: 1,
@@ -69,6 +75,7 @@ const multipleWithOneAssigned: DraftOutboundLine[] = [
   createDraftOutboundLine({
     invoiceId: '',
     stockLine: {
+      itemId: '3',
       packSize: 1,
       totalNumberOfPacks: 1,
       availableNumberOfPacks: 1,
@@ -78,6 +85,7 @@ const multipleWithOneAssigned: DraftOutboundLine[] = [
   createDraftOutboundLine({
     invoiceId: '',
     stockLine: {
+      itemId: '3',
       packSize: 2,
       totalNumberOfPacks: 0,
       availableNumberOfPacks: 0,
@@ -170,6 +178,38 @@ describe('usePackSizeController', () => {
       label: '1',
       value: 1,
     });
+  });
+
+  it('has an initial value of undefined when the array is empty', () => {
+    const { result } = renderHook(() => usePackSizeController([]));
+
+    expect(result.current.selected).toEqual(undefined);
+  });
+
+  it('has an initial value of the unique pack size with assigned packs, not any', () => {
+    const { result } = renderHook(() =>
+      usePackSizeController(multipleWithOneAssigned)
+    );
+
+    expect(result.current.selected).toEqual({ label: '1', value: 1 });
+  });
+
+  it('resets the selected if the set of lines changes to a set with a different itemID', async () => {
+    const { result, rerender } = renderHook(
+      ({ lines }) => usePackSizeController(lines),
+      {
+        initialProps: { lines: singlePackSizeLines },
+      }
+    );
+
+    expect(result.current.selected).toEqual({
+      label: '1',
+      value: 1,
+    });
+
+    rerender({ lines: multiplePackSizeLines });
+
+    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
   });
 
   it('has an initial value of undefined when the array is empty', () => {
