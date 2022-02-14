@@ -55,7 +55,7 @@ pub fn do_delete_stocktake_line(
             DeleteStocktakeLineNode { id },
         )),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("Delete stocktake line {}: {:#?}", input.id, err);
             let graphql_error = match err {
                 DeleteStocktakeLineError::DatabaseError(err) => err.into(),
                 DeleteStocktakeLineError::InternalError(err) => {
