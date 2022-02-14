@@ -36,7 +36,7 @@ pub fn insert_stocktake(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::InsertStocktake,
+            resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;
