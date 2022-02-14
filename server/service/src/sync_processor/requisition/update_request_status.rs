@@ -17,33 +17,32 @@ pub fn update_requisition_status_processor(
     record_for_processing: &RecordForProcessing,
 ) -> Result<Option<UpdateRequisitionStatusProcessorResult>, ProcessRecordError> {
     // Check can execute
-    let linked_requisition = if let (
-        Record::RequisitionRow(source_requisition),
-        Some(Record::RequisitionRow(linked_requisition)),
-    ) = (
+    let (source_requisition, linked_requisition) = match (
         &record_for_processing.record,
         &record_for_processing.linked_record,
     ) {
-        if !record_for_processing.is_other_party_active_on_site {
-            return Ok(None);
-        }
-
-        if source_requisition.r#type != RequisitionRowType::Response {
-            return Ok(None);
-        }
-
-        if linked_requisition.status == RequisitionRowStatus::Finalised {
-            return Ok(None);
-        }
-
-        if source_requisition.status != RequisitionRowStatus::Finalised {
-            return Ok(None);
-        }
-
-        linked_requisition
-    } else {
-        return Ok(None);
+        (
+            Record::RequisitionRow(source_requisition),
+            Some(Record::RequisitionRow(linked_requisition)),
+        ) => (source_requisition, linked_requisition),
+        (_, _) => return Ok(None),
     };
+
+    if !record_for_processing.is_other_party_active_on_site {
+        return Ok(None);
+    }
+
+    if source_requisition.r#type != RequisitionRowType::Response {
+        return Ok(None);
+    }
+
+    if linked_requisition.status == RequisitionRowStatus::Finalised {
+        return Ok(None);
+    }
+
+    if source_requisition.status != RequisitionRowStatus::Finalised {
+        return Ok(None);
+    }
 
     // Execute
     let mut updated_linked_requisition = linked_requisition.clone();

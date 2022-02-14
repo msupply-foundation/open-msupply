@@ -20,33 +20,33 @@ pub fn update_inbound_shipment_processor(
     record_for_processing: &RecordForProcessing,
 ) -> Result<Option<UpdateInboundShipmentProcessorResult>, ProcessRecordError> {
     // Check can execute
-    let (source_invoice, linked_invoice) =
-        if let (Record::InvoiceRow(source_invoice), Some(Record::InvoiceRow(linked_invoice))) = (
-            &record_for_processing.record,
-            &record_for_processing.linked_record,
-        ) {
-            if !record_for_processing.is_other_party_active_on_site {
-                return Ok(None);
-            }
-
-            if source_invoice.r#type != InvoiceRowType::OutboundShipment {
-                return Ok(None);
-            }
-
-            if linked_invoice.status != InvoiceRowStatus::Picked {
-                return Ok(None);
-            }
-
-            if source_invoice.status != InvoiceRowStatus::Picked
-                && source_invoice.status != InvoiceRowStatus::Shipped
-            {
-                return Ok(None);
-            }
-
+    let (source_invoice, linked_invoice) = match (
+        &record_for_processing.record,
+        &record_for_processing.linked_record,
+    ) {
+        (Record::InvoiceRow(source_invoice), Some(Record::InvoiceRow(linked_invoice))) => {
             (source_invoice, linked_invoice)
-        } else {
-            return Ok(None);
-        };
+        }
+        (_, _) => return Ok(None),
+    };
+
+    if !record_for_processing.is_other_party_active_on_site {
+        return Ok(None);
+    }
+
+    if source_invoice.r#type != InvoiceRowType::OutboundShipment {
+        return Ok(None);
+    }
+
+    if linked_invoice.status != InvoiceRowStatus::Picked {
+        return Ok(None);
+    }
+
+    if source_invoice.status != InvoiceRowStatus::Picked
+        && source_invoice.status != InvoiceRowStatus::Shipped
+    {
+        return Ok(None);
+    }
 
     // Execute
     let (deleted_invoice_lines, new_invoice_lines) =

@@ -18,20 +18,18 @@ pub fn create_invoice_processor(
     record_for_processing: &RecordForProcessing,
 ) -> Result<Option<CreateInvoiceProcessoResult>, ProcessRecordError> {
     // Check can execute
-    let source_invoice =
-        if let (Record::InvoiceRow(source_invoice),) = (&record_for_processing.record,) {
-            if !can_create_inbound_invoice(&source_invoice, record_for_processing) {
-                return Ok(None);
-            }
+    let source_invoice = match &record_for_processing.record {
+        Record::InvoiceRow(source_invoice) => source_invoice,
+        _ => return Ok(None),
+    };
 
-            if record_for_processing.is_active_record_on_site {
-                return Ok(None);
-            }
+    if !can_create_inbound_invoice(&source_invoice, record_for_processing) {
+        return Ok(None);
+    }
 
-            source_invoice
-        } else {
-            return Ok(None);
-        };
+    if record_for_processing.is_active_record_on_site {
+        return Ok(None);
+    }
 
     // Execute
     let (new_invoice, new_invoice_lines) =
