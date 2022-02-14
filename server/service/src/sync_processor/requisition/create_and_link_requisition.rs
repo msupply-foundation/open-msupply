@@ -18,20 +18,18 @@ pub fn create_and_link_requisition_processor(
     record_for_processing: &RecordForProcessing,
 ) -> Result<Option<CreateAndLinkeRequisitionProcessorResult>, ProcessRecordError> {
     // Check can execute
-    let source_requisition =
-        if let Record::RequisitionRow(source_requisition) = &record_for_processing.record {
-            if !can_create_response_requisition(&source_requisition, record_for_processing) {
-                return Ok(None);
-            }
+    let source_requisition = match &record_for_processing.record {
+        Record::RequisitionRow(source_requisition) => source_requisition,
+        _ => return Ok(None),
+    };
 
-            if !record_for_processing.is_active_record_on_site {
-                return Ok(None);
-            }
+    if !can_create_response_requisition(&source_requisition, record_for_processing) {
+        return Ok(None);
+    }
 
-            source_requisition
-        } else {
-            return Ok(None);
-        };
+    if !record_for_processing.is_active_record_on_site {
+        return Ok(None);
+    }
 
     // Execute
     let (new_requisition, new_requsition_lines) = generate_and_integrate_linked_requisition(

@@ -15,36 +15,36 @@ pub fn update_outbound_shipment_status_processor(
     record_for_processing: &RecordForProcessing,
 ) -> Result<Option<UpdateOutboundShipmentStatusProcessorResult>, ProcessRecordError> {
     // Check can execute
-    let (source_invoice, linked_invoice) =
-        if let (Record::InvoiceRow(source_invoice), Some(Record::InvoiceRow(linked_invoice))) = (
-            &record_for_processing.record,
-            &record_for_processing.linked_record,
-        ) {
-            pub use InvoiceRowStatus::*;
-            if !record_for_processing.is_other_party_active_on_site {
-                return Ok(None);
-            }
-
-            if source_invoice.r#type != InvoiceRowType::InboundShipment {
-                return Ok(None);
-            }
-
-            if linked_invoice.status == Verified {
-                return Ok(None);
-            }
-
-            if source_invoice.status != Delivered && source_invoice.status != Verified {
-                return Ok(None);
-            }
-
-            if linked_invoice.status == source_invoice.status {
-                return Ok(None);
-            }
-
+    let (source_invoice, linked_invoice) = match (
+        &record_for_processing.record,
+        &record_for_processing.linked_record,
+    ) {
+        (Record::InvoiceRow(source_invoice), Some(Record::InvoiceRow(linked_invoice))) => {
             (source_invoice, linked_invoice)
-        } else {
-            return Ok(None);
-        };
+        }
+        (_, _) => return Ok(None),
+    };
+
+    pub use InvoiceRowStatus::*;
+    if !record_for_processing.is_other_party_active_on_site {
+        return Ok(None);
+    }
+
+    if source_invoice.r#type != InvoiceRowType::InboundShipment {
+        return Ok(None);
+    }
+
+    if linked_invoice.status == Verified {
+        return Ok(None);
+    }
+
+    if source_invoice.status != Delivered && source_invoice.status != Verified {
+        return Ok(None);
+    }
+
+    if linked_invoice.status == source_invoice.status {
+        return Ok(None);
+    }
 
     // Execute
     let mut updated_linked_invoice = linked_invoice.clone();
