@@ -4,7 +4,7 @@ pub mod inbound_shipment;
 pub mod location;
 pub mod outbound_shipment;
 pub mod requisition;
-pub mod stock_take;
+pub mod stocktake;
 pub mod tax_update_input;
 pub mod user_register;
 
@@ -14,21 +14,22 @@ use self::{
         DeleteLocationResponse, InsertLocationInput, InsertLocationResponse, UpdateLocationInput,
         UpdateLocationResponse,
     },
-    stock_take::{
-        delete::{delete_stock_take, DeleteStockTakeInput, DeleteStockTakeResponse},
-        insert::{insert_stock_take, InsertStockTakeInput, InsertStockTakeResponse},
+    stocktake::{
+        batch::{batch_stocktake, BatchStocktakeInput, BatchStocktakeResponse},
+        delete::{delete_stocktake, DeleteStocktakeInput, DeleteStocktakeResponse},
+        insert::{insert_stocktake, InsertStocktakeInput, InsertStocktakeResponse},
         line::{
             delete::{
-                delete_stock_take_line, DeleteStockTakeLineInput, DeleteStockTakeLineResponse,
+                delete_stocktake_line, DeleteStocktakeLineInput, DeleteStocktakeLineResponse,
             },
             insert::{
-                insert_stock_take_line, InsertStockTakeLineInput, InsertStockTakeLineResponse,
+                insert_stocktake_line, InsertStocktakeLineInput, InsertStocktakeLineResponse,
             },
             update::{
-                update_stock_take_line, UpdateStockTakeLineInput, UpdateStockTakeLineResponse,
+                update_stocktake_line, UpdateStocktakeLineInput, UpdateStocktakeLineResponse,
             },
         },
-        update::{update_stock_take, UpdateStockTakeInput, UpdateStockTakeResponse},
+        update::{update_stocktake, UpdateStocktakeInput, UpdateStocktakeResponse},
     },
 };
 
@@ -291,82 +292,91 @@ impl Mutations {
         )
     }
 
-    async fn insert_stock_take(
+    async fn insert_stocktake(
         &self,
         ctx: &Context<'_>,
         store_id: Option<String>,
-        input: InsertStockTakeInput,
-    ) -> Result<InsertStockTakeResponse> {
+        input: InsertStocktakeInput,
+    ) -> Result<InsertStocktakeResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
         )?);
-        insert_stock_take(ctx, &store_id, input)
+        insert_stocktake(ctx, &store_id, input)
     }
 
-    async fn update_stock_take(
+    async fn update_stocktake(
         &self,
         ctx: &Context<'_>,
         store_id: Option<String>,
-        input: UpdateStockTakeInput,
-    ) -> Result<UpdateStockTakeResponse> {
+        input: UpdateStocktakeInput,
+    ) -> Result<UpdateStocktakeResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
         )?);
-        update_stock_take(ctx, &store_id, input)
+        update_stocktake(ctx, &store_id, input)
     }
 
-    async fn delete_stock_take(
+    async fn delete_stocktake(
         &self,
         ctx: &Context<'_>,
         store_id: Option<String>,
-        input: DeleteStockTakeInput,
-    ) -> Result<DeleteStockTakeResponse> {
+        input: DeleteStocktakeInput,
+    ) -> Result<DeleteStocktakeResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
         )?);
-        delete_stock_take(ctx, &store_id, input)
+        delete_stocktake(ctx, &store_id, input)
     }
 
-    async fn insert_stock_take_line(
+    async fn insert_stocktake_line(
         &self,
         ctx: &Context<'_>,
         store_id: Option<String>,
-        input: InsertStockTakeLineInput,
-    ) -> Result<InsertStockTakeLineResponse> {
+        input: InsertStocktakeLineInput,
+    ) -> Result<InsertStocktakeLineResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
         )?);
-        insert_stock_take_line(ctx, &store_id, input)
+        insert_stocktake_line(ctx, &store_id, input)
     }
 
-    async fn update_stock_take_line(
+    async fn update_stocktake_line(
         &self,
         ctx: &Context<'_>,
         store_id: Option<String>,
-        input: UpdateStockTakeLineInput,
-    ) -> Result<UpdateStockTakeLineResponse> {
+        input: UpdateStocktakeLineInput,
+    ) -> Result<UpdateStocktakeLineResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
         )?);
-        update_stock_take_line(ctx, &store_id, input)
+        update_stocktake_line(ctx, &store_id, input)
     }
 
-    async fn delete_stock_take_line(
+    async fn delete_stocktake_line(
         &self,
         ctx: &Context<'_>,
         store_id: Option<String>,
-        input: DeleteStockTakeLineInput,
-    ) -> Result<DeleteStockTakeLineResponse> {
+        input: DeleteStocktakeLineInput,
+    ) -> Result<DeleteStocktakeLineResponse> {
         // TODO remove and make store_id parameter required
         let store_id = store_id.unwrap_or(current_store_id(
             &ctx.get_connection_manager().connection()?,
         )?);
-        delete_stock_take_line(ctx, &store_id, &input)
+        delete_stocktake_line(ctx, &store_id, input)
+    }
+
+    async fn batch_stocktake(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: BatchStocktakeInput,
+    ) -> Result<BatchStocktakeResponse> {
+        batch_stocktake(ctx, &store_id, input)
     }
 
     async fn insert_request_requisition(
@@ -697,10 +707,6 @@ impl InvoiceLineBelongsToAnotherInvoice {
 #[graphql(concrete(
     name = "DeleteOutboundShipmentServiceLineResponseWithId",
     params(DeleteOutboundShipmentServiceLineResponse)
-))]
-#[graphql(concrete(
-    name = "DeleteStockTakeLineResponseWithId",
-    params(DeleteStockTakeLineResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,

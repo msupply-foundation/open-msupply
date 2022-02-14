@@ -14,9 +14,10 @@ use crate::{
     permission_validation::{ValidationService, ValidationServiceTrait},
     permissions::{PermissionService, PermissionServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
-    stock_take::{StockTakeService, StockTakeServiceTrait},
-    stock_take_line::{StockTakeLineService, StockTakeLineServiceTrait},
-    store::{StoreService, StoreServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    stocktake::{StocktakeService, StocktakeServiceTrait},
+    stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
+    store::{StoreService, StoreServiceTrait},
 };
 
 pub struct ServiceProvider {
@@ -27,8 +28,8 @@ pub struct ServiceProvider {
     pub location_service: Box<dyn LocationServiceTrait>,
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
-    pub stock_take_service: Box<dyn StockTakeServiceTrait>,
-    pub stock_take_line_service: Box<dyn StockTakeLineServiceTrait>,
+    pub stocktake_service: Box<dyn StocktakeServiceTrait>,
+    pub stocktake_line_service: Box<dyn StocktakeLineServiceTrait>,
     pub store_service: Box<dyn StoreServiceTrait>,
     pub outbound_shipment_line: Box<dyn OutboundShipmentLineServiceTrait>,
     pub requisition_service: Box<dyn RequisitionServiceTrait>,
@@ -56,8 +57,8 @@ impl ServiceProvider {
             invoice_count_service: Box::new(InvoiceCountService {}),
             invoice_service: Box::new(InvoiceService {}),
             stock_expiry_count_service: Box::new(StockExpiryServiceCount {}),
-            stock_take_service: Box::new(StockTakeService {}),
-            stock_take_line_service: Box::new(StockTakeLineService {}),
+            stocktake_service: Box::new(StocktakeService {}),
+            stocktake_line_service: Box::new(StocktakeLineService {}),
             requisition_service: Box::new(RequisitionService {}),
             requisition_line_service: Box::new(RequisitionLineService {}),
         }

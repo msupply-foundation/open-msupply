@@ -38,13 +38,14 @@ mod outbound_shipment_line_update;
 mod outbound_shipment_update;
 mod pagination;
 mod requisition;
-mod stock_take_delete;
-mod stock_take_insert;
-mod stock_take_line_delete;
-mod stock_take_line_insert;
-mod stock_take_line_update;
-mod stock_take_query;
-mod stock_take_update;
+mod stocktake_batch;
+mod stocktake_delete;
+mod stocktake_insert;
+mod stocktake_line_delete;
+mod stocktake_line_insert;
+mod stocktake_line_update;
+mod stocktake_query;
+mod stocktake_update;
 mod unallocated_line;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
