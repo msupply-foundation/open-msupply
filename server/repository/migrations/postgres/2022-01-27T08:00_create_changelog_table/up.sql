@@ -1,5 +1,5 @@
 CREATE TYPE changelog_table_name AS ENUM (
-    'stock_take'
+    'stocktake'
 );
 
 CREATE TYPE row_action_type AS ENUM (
