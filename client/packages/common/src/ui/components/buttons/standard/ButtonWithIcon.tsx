@@ -3,7 +3,7 @@ import { ButtonProps, Tooltip } from '@mui/material';
 import { ShrinkableBaseButton } from './ShrinkableBaseButton';
 import { useIsScreen } from '@common/hooks';
 
-interface ButtonWithIconProps extends ButtonProps {
+export interface ButtonWithIconProps extends ButtonProps {
   Icon: React.ReactNode;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   label: string;
