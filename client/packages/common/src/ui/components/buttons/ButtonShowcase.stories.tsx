@@ -11,6 +11,17 @@ import { ToggleButton } from './ToggleButton';
 import { ColorSelectButton } from './ColorSelectButton';
 import { useTranslation } from '@common/intl';
 import { StoryProvider } from '../../../utils/testing';
+import { SplitButtonOption } from '@common/components';
+
+const ops: [
+  SplitButtonOption<string>,
+  SplitButtonOption<string>,
+  SplitButtonOption<string>
+] = [
+  { label: 'Create a merge commit', value: 'createAndMerge' },
+  { label: 'Squash and merge', value: 'squashAndMerge' },
+  { label: 'Rebase and merge', value: 'rebaseAndMerge' },
+];
 
 const getOnClick = (someText: string) => () => {
   alert(someText);
@@ -45,6 +56,9 @@ const Template: Story = () => {
     hex: '#8f90a6',
     name: 'grey',
   });
+  const [selectedOption, setSelectedOption] = React.useState<
+    SplitButtonOption<string>
+  >(ops[0]);
 
   return (
     <StoryProvider locale="en">
@@ -176,12 +190,10 @@ const Template: Story = () => {
 
         <Wrapper text="Split button">
           <SplitButton
-            options={[
-              { label: 'Create a merge commit' },
-              { label: 'Squash and merge' },
-              { label: 'Rebase and merge' },
-            ]}
+            options={ops}
             onClick={option => alert(JSON.stringify(option))}
+            selectedOption={selectedOption}
+            onSelectOption={setSelectedOption}
           />
         </Wrapper>
       </Grid>
