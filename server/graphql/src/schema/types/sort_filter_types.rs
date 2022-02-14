@@ -1,8 +1,8 @@
-use crate::schema::queries::{ItemSortFieldInput, NameSortFieldInput, StockTakeSortFieldInput};
+use crate::schema::queries::{ItemSortFieldInput, NameSortFieldInput, StocktakeSortFieldInput};
 
 use super::{
     InvoiceNodeStatus, InvoiceNodeType, InvoiceSortFieldInput, LocationSortFieldInput,
-    RequisitionNodeStatus, RequisitionNodeType, StockTakeNodeStatus,
+    RequisitionNodeStatus, RequisitionNodeType, StocktakeNodeStatus,
 };
 
 use domain::{
@@ -18,7 +18,7 @@ use chrono::{DateTime, Utc};
 #[graphql(concrete(name = "ItemSortInput", params(ItemSortFieldInput)))]
 #[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
 #[graphql(concrete(name = "LocationSortInput", params(LocationSortFieldInput)))]
-#[graphql(concrete(name = "StockTakeSortInput", params(StockTakeSortFieldInput)))]
+#[graphql(concrete(name = "StocktakeSortInput", params(StocktakeSortFieldInput)))]
 pub struct SortInput<T: InputType> {
     /// Sort query result by `key`
     pub key: T,
@@ -84,7 +84,7 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
     params(RequisitionNodeStatus)
 ))]
 #[graphql(concrete(name = "EqualFilterRequisitionTypeInput", params(RequisitionNodeType)))]
-#[graphql(concrete(name = "EqualFilterStockTakeStatusInput", params(StockTakeNodeStatus)))]
+#[graphql(concrete(name = "EqualFilterStocktakeStatusInput", params(StocktakeNodeStatus)))]
 pub struct EqualFilterInput<T: InputType> {
     pub equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
