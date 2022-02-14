@@ -73,8 +73,8 @@ pub fn generate_linked_invoice(
     let store_id = record_for_processing
         .other_party_store
         .clone()
-        .ok_or(ProcessRecordError::StringError(
-            "other party store is not found".to_string(),
+        .ok_or(ProcessRecordError::OtherPartyStoreIsNotFound(
+            record_for_processing.clone(),
         ))?
         .id;
 

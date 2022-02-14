@@ -1,55 +1,52 @@
 use super::common::{can_create_response_requisition, generate_and_integrate_linked_requisition};
-use crate::sync_processor::{
-    ProcessRecord, ProcessRecordError, ProcessRecordResult, Record, RecordForProcessing,
+use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing};
+use repository::{
+    schema::{RequisitionLineRow, RequisitionRow},
+    RequisitionRowRepository, StorageConnection,
 };
-use repository::RequisitionRowRepository;
 
-pub struct CreateAndLinkRequistionProcessor {}
+#[derive(Debug)]
+pub struct CreateAndLinkeRequisitionProcessorResult {
+    new_requisition: RequisitionRow,
+    new_requsition_lines: Vec<RequisitionLineRow>,
+    updated_source_requisition: RequisitionRow,
+}
 
-impl ProcessRecord for CreateAndLinkRequistionProcessor {
-    fn name(&self) -> String {
-        "Create linked requisition (linking source requisition)".to_string()
-    }
-
-    fn can_execute(&self, record_for_processing: &RecordForProcessing) -> bool {
+// Create linked requisition (linking source requisition)
+pub fn create_and_link_requisition_processor(
+    connection: &StorageConnection,
+    record_for_processing: &RecordForProcessing,
+) -> Result<Option<CreateAndLinkeRequisitionProcessorResult>, ProcessRecordError> {
+    // Check can execute
+    let source_requisition =
         if let Record::RequisitionRow(source_requisition) = &record_for_processing.record {
             if !can_create_response_requisition(&source_requisition, record_for_processing) {
-                return false;
+                return Ok(None);
             }
 
             if !record_for_processing.is_active_record_on_site {
-                return false;
+                return Ok(None);
             }
 
-            return true;
-        }
+            source_requisition
+        } else {
+            return Ok(None);
+        };
 
-        false
-    }
+    // Execute
+    let (new_requisition, new_requsition_lines) = generate_and_integrate_linked_requisition(
+        connection,
+        &source_requisition,
+        record_for_processing,
+    )?;
 
-    fn process_record(
-        &self,
-        connection: &repository::StorageConnection,
-        record_for_processing: &RecordForProcessing,
-    ) -> Result<ProcessRecordResult, ProcessRecordError> {
-        if let Record::RequisitionRow(source) = &record_for_processing.record {
-            let (requisition_row, requisition_line_rows) =
-                generate_and_integrate_linked_requisition(
-                    connection,
-                    &source,
-                    record_for_processing,
-                )?;
+    let mut updated_source_requisition = source_requisition.clone();
+    updated_source_requisition.linked_requisition_id = Some(new_requisition.id.clone());
+    RequisitionRowRepository::new(connection).upsert_one(&updated_source_requisition)?;
 
-            let mut update_source = source.clone();
-            update_source.linked_requisition_id = Some(requisition_row.id.clone());
-            RequisitionRowRepository::new(connection).upsert_one(&update_source)?;
-
-            let result = ProcessRecordResult::Success(format!(
-                "generated: {:#?}\n{:#?}\nand linking{:#?}\nfrom {:#?}",
-                requisition_row, requisition_line_rows, update_source, record_for_processing
-            ));
-            return Ok(result);
-        }
-        Ok(ProcessRecordResult::ConditionNotMetInProcessor)
-    }
+    Ok(Some(CreateAndLinkeRequisitionProcessorResult {
+        new_requisition,
+        new_requsition_lines,
+        updated_source_requisition,
+    }))
 }
