@@ -48,7 +48,6 @@ async fn main() -> std::io::Result<()> {
         // TODO: disable once frontend supports auth!
         debug_no_access_control: true,
     });
-    println!("{:#?}", settings.database);
     let connection_manager = get_storage_connection_manager(&settings.database);
     let service_provider = ServiceProvider::new(connection_manager.clone());
     let service_provider_data = Data::new(service_provider);
