@@ -61,7 +61,7 @@ pub fn update_stocktake(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::UpdateStocktake,
+            resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;

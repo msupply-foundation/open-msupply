@@ -99,7 +99,7 @@ pub fn batch_stocktake(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::BatchStocktake,
+            resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;
