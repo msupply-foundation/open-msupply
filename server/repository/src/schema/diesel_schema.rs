@@ -280,6 +280,31 @@ table! {
     }
 }
 
+table! {
+    changelog (id) {
+        id -> BigInt,
+        table_name -> crate::schema::changelog::ChangelogTableNameMapping,
+        row_id -> Text,
+        row_action -> crate::schema::changelog::ChangelogActionMapping,
+    }
+}
+
+table! {
+    changelog_deduped (id) {
+        id -> BigInt,
+        table_name -> crate::schema::changelog::ChangelogTableNameMapping,
+        row_id -> Text,
+        row_action -> crate::schema::changelog::ChangelogActionMapping,
+    }
+}
+
+table! {
+    key_value_store (id) {
+        id -> crate::schema::key_value_store::KeyValueTypeMapping,
+        value_string -> Nullable<Text>,
+    }
+}
+
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));

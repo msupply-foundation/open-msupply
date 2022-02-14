@@ -1,10 +1,11 @@
 mod central_sync_buffer;
-mod central_sync_cursor;
+mod changelog;
 mod invoice;
 mod invoice_line;
 mod invoice_stats;
 mod item;
 mod item_is_visible;
+mod key_value_store;
 mod location;
 mod master_list;
 mod master_list_line;
@@ -40,12 +41,13 @@ pub enum DatabaseRow {
 }
 
 pub use central_sync_buffer::CentralSyncBufferRow;
-pub use central_sync_cursor::CentralSyncCursorRow;
+pub use changelog::*;
 pub use invoice::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 pub use invoice_line::{InvoiceLineRow, InvoiceLineRowType};
 pub use invoice_stats::InvoiceStatsRow;
 pub use item::{ItemRow, ItemRowType};
 pub use item_is_visible::ItemIsVisibleRow;
+pub use key_value_store::*;
 pub use location::LocationRow;
 pub use master_list::MasterListRow;
 pub use master_list_line::MasterListLineRow;

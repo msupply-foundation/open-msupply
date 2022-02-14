@@ -119,6 +119,8 @@ pub fn get_default_pagination(
     Ok(result)
 }
 
+// TODO move the following methods to util
+
 pub fn i32_to_u32(num: i32) -> u32 {
     num.try_into().unwrap_or(0)
 }

@@ -1,13 +1,14 @@
 use crate::repository_error::RepositoryError;
 
 mod central_sync_buffer;
-mod central_sync_cursor;
+mod changelog_row;
 mod invoice;
 mod invoice_line;
 mod invoice_line_row;
 mod invoice_query;
 mod item;
 mod item_query;
+mod key_value_store;
 mod location;
 mod location_row;
 mod master_list;
@@ -34,13 +35,14 @@ mod unit_row;
 mod user_account;
 
 pub use central_sync_buffer::CentralSyncBufferRepository;
-pub use central_sync_cursor::CentralSyncCursorRepository;
+pub use changelog_row::*;
 pub use invoice::{InvoiceRepository, OutboundShipmentRepository};
 pub use invoice_line::{InvoiceLineFilter, InvoiceLineRepository};
 pub use invoice_line_row::InvoiceLineRowRepository;
 pub use invoice_query::InvoiceQueryRepository;
 pub use item::ItemRepository;
 pub use item_query::{ItemFilter, ItemQueryRepository};
+pub use key_value_store::*;
 pub use location::{to_domain as location_to_domain, LocationRepository};
 pub use location_row::LocationRowRepository;
 pub use master_list::{MasterList, MasterListRepository};
