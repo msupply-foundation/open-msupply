@@ -86,7 +86,6 @@ pub fn to_domain(
                 stock_info_row.item_id.clone(),
                 ItemStats {
                     consumption_rows: Vec::new(),
-
                     item_id: stock_info_row.item_id.clone(),
                     stock_info_row,
                     look_back_datetime,
@@ -97,6 +96,8 @@ pub fn to_domain(
 
     for consumption_row in consumption_rows.into_iter() {
         map.entry(consumption_row.item_id.clone())
+            // Technicallly, there will always be matching record already in the HashMap
+            // since stock_info view should return same item/stores as consumption view
             .or_insert(ItemStats {
                 consumption_rows: Vec::new(),
                 item_id: consumption_row.item_id.clone(),
