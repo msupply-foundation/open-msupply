@@ -1,26 +1,24 @@
 import React, { FC } from 'react';
 import {
   Box,
-  ArrowRightIcon,
   ButtonWithIcon,
   StatusCrumbs,
   ToggleButton,
   XCircleIcon,
   useTranslation,
-  useNotification,
   AppFooterPortal,
   InvoiceNodeStatus,
   useNavigate,
   useBufferState,
 } from '@openmsupply-client/common';
+import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import {
-  getNextOutboundStatus,
-  getNextOutboundStatusButtonTranslation,
-  getStatusTranslator,
-  outboundStatuses,
-} from '../../utils';
-import { useIsOutboundDisabled, useOutbound, useOutboundFields } from '../api';
-import { Invoice } from '../../types';
+  useIsOutboundDisabled,
+  useOutbound,
+  useOutboundFields,
+} from '../../api';
+import { Invoice } from '../../../types';
+import { StatusChangeButton } from './StatusChangeButton';
 
 const createStatusLog = (invoice: Invoice) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
@@ -59,11 +57,9 @@ const createStatusLog = (invoice: Invoice) => {
 export const Footer: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('distribution');
-  const { success } = useNotification();
-
   const { data } = useOutbound();
   const isDisabled = useIsOutboundDisabled();
-  const { onHold, status, update } = useOutboundFields(['onHold', 'status']);
+  const { onHold, update } = useOutboundFields('onHold');
   const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
   return (
@@ -104,23 +100,7 @@ export const Footer: FC = () => {
                 onClick={() => navigate(-1)}
               />
 
-              {!isDisabled && (
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  disabled={!!onHold}
-                  Icon={<ArrowRightIcon />}
-                  label={t('button.save-and-confirm-status', {
-                    status: t(getNextOutboundStatusButtonTranslation(status)),
-                  })}
-                  sx={{ fontSize: '12px' }}
-                  variant="contained"
-                  color="secondary"
-                  onClick={async () => {
-                    await update({ status: getNextOutboundStatus(status) });
-                    success('Saved invoice! 🥳 ')();
-                  }}
-                />
-              )}
+              <StatusChangeButton />
             </Box>
           </Box>
         )

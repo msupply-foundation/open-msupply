@@ -46,6 +46,10 @@ const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   VERIFIED: 'label.verified',
 };
 
+export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
+  return statusTranslation[status];
+};
+
 export const getNextOutboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus => {
