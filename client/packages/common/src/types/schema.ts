@@ -561,7 +561,7 @@ export type InsertCustomerRequisitionLineResponse = NodeError | RequisitionLineN
 export type InsertCustomerRequisitionLineResponseWithId = {
   __typename?: 'InsertCustomerRequisitionLineResponseWithId';
   id: Scalars['String'];
-  response?: Maybe<InsertSupplierRequisitionLineResponse>;
+  response?: Maybe<InsertCustomerRequisitionLineResponse>;
 };
 
 export type InsertCustomerRequisitionResponse = NodeError | RequisitionNode;
@@ -2932,7 +2932,7 @@ export type DeleteOutboundShipmentLinesMutationVariables = Exact<{
 }>;
 
 
-export type DeleteOutboundShipmentLinesMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename?: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename?: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename?: 'NotAnOutboundShipment', description: string } | { __typename?: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null | undefined } };
+export type DeleteOutboundShipmentLinesMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename?: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename?: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename?: 'NotAnOutboundShipment', description: string } | { __typename?: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null } };
 
 export type UpsertInboundShipmentMutationVariables = Exact<{
   deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput> | DeleteInboundShipmentLineInput>;
