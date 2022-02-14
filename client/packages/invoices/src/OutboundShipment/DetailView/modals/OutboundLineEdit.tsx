@@ -62,11 +62,13 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     return true;
   };
 
-  const onAllocate = allocateQuantities(
-    status,
-    draftOutboundLines,
-    setDraftOutboundLines
-  );
+  const onAllocate = (newVal: number, packSize: number | null) => {
+    const newAllocateQuantities = allocateQuantities(
+      status,
+      draftOutboundLines
+    )(newVal, packSize);
+    setDraftOutboundLines(newAllocateQuantities ?? draftOutboundLines);
+  };
 
   return (
     <Modal

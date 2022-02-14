@@ -75,13 +75,7 @@ export const issueStock = (
 };
 
 export const allocateQuantities =
-  (
-    status: InvoiceNodeStatus,
-    draftOutboundLines: DraftOutboundLine[],
-    setDraftOutboundLines: React.Dispatch<
-      React.SetStateAction<DraftOutboundLine[]>
-    >
-  ) =>
+  (status: InvoiceNodeStatus, draftOutboundLines: DraftOutboundLine[]) =>
   (newValue: number, issuePackSize: number | null) => {
     // if invalid quantity entered, don't allocate
     if (newValue < 0 || Number.isNaN(newValue)) {
@@ -91,12 +85,10 @@ export const allocateQuantities =
     // If there is only one batch row, then it is the placeholder.
     // Assign all of the new value and short circuit.
     if (draftOutboundLines.length === 1) {
-      setDraftOutboundLines(
-        issueStock(
-          draftOutboundLines,
-          'placeholder',
-          newValue * (issuePackSize || 1)
-        )
+      return issueStock(
+        draftOutboundLines,
+        'placeholder',
+        newValue * (issuePackSize || 1)
       );
     }
 
@@ -179,10 +171,9 @@ export const allocateQuantities =
 
       newDraftOutboundLines[placeholderIdx] = {
         ...placeholder,
-        numberOfPacks:
-          placeholder.numberOfPacks + toAllocate * (issuePackSize || 1),
+        numberOfPacks: placeholder.numberOfPacks + toAllocate,
       };
     }
 
-    setDraftOutboundLines(newDraftOutboundLines);
+    return newDraftOutboundLines;
   };
