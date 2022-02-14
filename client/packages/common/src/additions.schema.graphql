@@ -502,7 +502,7 @@ type InsertSupplierRequisitionLineResponseWithId {
 union InsertCustomerRequisitionLineResponse = NodeError | RequisitionLineNode
 type InsertCustomerRequisitionLineResponseWithId {
   id: String!
-  response: InsertSupplierRequisitionLineResponse
+  response: InsertCustomerRequisitionLineResponse
 }
 
 union DeleteSupplierRequisitionResponse = NodeError | DeleteResponse

@@ -561,7 +561,7 @@ export type InsertCustomerRequisitionLineResponse = NodeError | RequisitionLineN
 export type InsertCustomerRequisitionLineResponseWithId = {
   __typename?: 'InsertCustomerRequisitionLineResponseWithId';
   id: Scalars['String'];
-  response?: Maybe<InsertSupplierRequisitionLineResponse>;
+  response?: Maybe<InsertCustomerRequisitionLineResponse>;
 };
 
 export type InsertCustomerRequisitionResponse = NodeError | RequisitionNode;
