@@ -34,7 +34,7 @@ pub enum InsertRequestRequisitionLineError {
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
-    ProblemCreatingRequisitionLine,
+    CannotFindItemStatusForRequisitionLine,
     NewlyCreatedRequisitionLineDoesNotExist,
     DatabaseError(RepositoryError),
 }
@@ -111,7 +111,7 @@ fn generate(
     let mut new_requisition_line =
         generate_requisition_lines(connection, store_id, &requisition_row, vec![item_id])?
             .pop()
-            .ok_or(OutError::ProblemCreatingRequisitionLine)?;
+            .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
     new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0) as i32;
     new_requisition_line.id = id;
