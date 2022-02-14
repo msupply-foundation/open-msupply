@@ -1,7 +1,6 @@
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
-use service::current_store_id;
 use service::invoice::get_invoices;
 
 use async_graphql::{Context, Object, Result};
@@ -198,7 +197,7 @@ impl Queries {
         ctx: &Context<'_>,
         store_id: String,
         id: String,
-    ) -> Result<Option<StocktakeNode>> {
+    ) -> Result<StocktakeResponse> {
         stocktake(ctx, &store_id, &id)
     }
 

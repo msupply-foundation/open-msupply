@@ -8,6 +8,10 @@ use service::permission_validation::Resource;
 use service::permission_validation::ResourceAccessRequest;
 use service::ListError;
 
+use crate::schema::types::ErrorWrapper;
+use crate::schema::types::NodeError;
+use crate::schema::types::NodeErrorInterface;
+use crate::schema::types::RecordNotFound;
 use crate::schema::types::StocktakeNode;
 use crate::schema::types::StocktakeNodeStatus;
 use crate::schema::types::{
@@ -118,7 +122,13 @@ pub fn stocktakes(
     }
 }
 
-pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Option<StocktakeNode>> {
+#[derive(Union)]
+pub enum StocktakeResponse {
+    Response(StocktakeNode),
+    Error(NodeError),
+}
+
+pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<StocktakeResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -138,10 +148,16 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Option<S
         Some(StocktakeFilter::new().id(EqualFilter::equal_to(id))),
         None,
     ) {
-        Ok(mut stocktakes) => Ok(stocktakes
-            .rows
-            .pop()
-            .map(|stocktake| StocktakeNode { stocktake })),
+        Ok(mut stocktakes) => {
+            let result = match stocktakes.rows.pop() {
+                Some(stocktake) => StocktakeResponse::Response(StocktakeNode { stocktake }),
+                None => StocktakeResponse::Error(ErrorWrapper {
+                    error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
+                }),
+            };
+            Ok(result)
+        }
+
         Err(err) => {
             let formatted_error = format!("{:#?}", err);
             let graphql_error = match err {
