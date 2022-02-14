@@ -45,6 +45,7 @@ const onRead =
             expiryDate: batch.expiryDate ? new Date(batch.expiryDate) : null,
             packSize: batch.packSize,
             numberOfPacks: batch.totalNumberOfPacks,
+            locationName: batch.locationName ?? '',
           })
         );
     });
