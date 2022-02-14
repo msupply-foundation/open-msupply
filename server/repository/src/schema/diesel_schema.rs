@@ -246,13 +246,13 @@ table! {
 }
 
 table! {
-    stock_take (id) {
+    stocktake (id) {
         id -> Text,
         store_id -> Text,
-        stock_take_number -> BigInt,
+        stocktake_number -> BigInt,
         comment	-> Nullable<Text>,
         description -> Nullable<Text>,
-        status -> crate::schema::stock_take::StockTakeStatusMapping,
+        status -> crate::schema::stocktake::StocktakeStatusMapping,
         created_datetime -> Timestamp,
         finalised_datetime -> Nullable<Timestamp>,
         inventory_adjustment_id -> Nullable<Text>,
@@ -260,9 +260,9 @@ table! {
 }
 
 table! {
-    stock_take_line (id) {
+    stocktake_line (id) {
         id -> Text,
-        stock_take_id -> Text,
+        stocktake_id -> Text,
         stock_line_id -> Nullable<Text>,
         location_id	-> Nullable<Text>,
         comment	-> Nullable<Text>,
@@ -304,9 +304,9 @@ joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name (name_id));
 joinable!(item_is_visible -> item (id));
 joinable!(location -> store (store_id));
-joinable!(stock_take_line -> location (location_id));
-joinable!(stock_take_line -> stock_take (stock_take_id));
-joinable!(stock_take_line -> stock_line (stock_line_id));
+joinable!(stocktake_line -> location (location_id));
+joinable!(stocktake_line -> stocktake (stocktake_id));
+joinable!(stocktake_line -> stock_line (stock_line_id));
 
 allow_tables_to_appear_in_same_query!(
     unit,
@@ -328,6 +328,6 @@ allow_tables_to_appear_in_same_query!(
     master_list_line,
     master_list_name_join,
     item_is_visible,
-    stock_take,
-    stock_take_line,
+    stocktake,
+    stocktake_line,
 );
