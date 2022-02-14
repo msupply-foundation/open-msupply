@@ -19,9 +19,12 @@ mod graphql {
           batchStocktake(storeId: $storeId, input: $input) {
             __typename
             ... on BatchStocktakeResponses {                    
-              insertStocktake {
-                ... on StocktakeNode {
-                  id
+              insertStocktakes {
+                id
+                response {
+                  ... on StocktakeNode {
+                    id
+                  }
                 }
               }
               insertStocktakeLines {
@@ -40,9 +43,12 @@ mod graphql {
                   }
                 }
               }
-              updateStocktake {
-                ... on StocktakeNode {
-                  id
+              updateStocktakes {
+                id
+                response {
+                  ... on StocktakeNode {
+                    id
+                  }
                 }
               }
             }
@@ -55,14 +61,17 @@ mod graphql {
                   }
                 }
               }
-              updateStocktake {
-                __typename
-                ... on StocktakeNode {
-                  id
-                }
-                ... on UpdateStocktakeError {
+              updateStocktakes {
+                id
+                response {
                   __typename
-                }            
+                  ... on StocktakeNode {
+                    id
+                  }
+                  ... on UpdateStocktakeError {
+                    __typename
+                  }
+                }        
               }
             }
           }
@@ -76,10 +85,12 @@ mod graphql {
         let variables = Some(json!({
             "storeId": store.id,
             "input": {
-              "insertStocktake": {
-                "id": "batch_stocktake_1",
-                "createdDatetime": "2022-02-09T15:16:00",
-              },
+              "insertStocktakes": [
+                {
+                  "id": "batch_stocktake_1",
+                  "createdDatetime": "2022-02-09T15:16:00",
+                },
+              ],
               "insertStocktakeLines": [
                 {
                   "id": "batch_stocktake_line_1",
@@ -97,9 +108,11 @@ mod graphql {
         let expected = json!({
           "batchStocktake": {
               "__typename": "BatchStocktakeResponses",
-              "insertStocktake": {
-                "id": "batch_stocktake_1",
-              },
+              "insertStocktakes": [
+                {
+                  "id": "batch_stocktake_1",
+                }
+              ],
               "insertStocktakeLines": [
                 {
                   "id": "batch_stocktake_line_1",
@@ -130,10 +143,12 @@ mod graphql {
                   "snapshotNumberOfPacks": stock_line_a.total_number_of_packs + 1,
                 },
               ],
-              "updateStocktake": {
-                "id": "batch_stocktake_1",
-                "status": "FINALISED"
-              }
+              "updateStocktakes": [
+                {
+                  "id": "batch_stocktake_1",
+                  "status": "FINALISED"
+                }
+              ]
             }
         }));
         let expected = json!({
@@ -147,9 +162,14 @@ mod graphql {
                   }
                 },
               ],
-              "updateStocktake": {
-                "__typename": "UpdateStocktakeError",
-              },
+              "updateStocktakes": [
+                {
+                  "id": "batch_stocktake_1",
+                  "response": {
+                    "__typename": "UpdateStocktakeError",
+                  },
+                }
+              ]
             }
           }
         );

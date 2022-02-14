@@ -34,7 +34,7 @@ pub fn delete_stocktake(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::DeleteStocktake,
+            resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -56,7 +56,7 @@ pub fn do_delete_stocktake(
             id: stocktake_id,
         })),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("Delete stocktake {}: {:#?}", input.id, err);
             let graphql_error = match err {
                 ServiceError::DatabaseError(err) => err.into(),
                 ServiceError::InvalidStore => StandardGraphqlError::BadUserInput(formatted_error),

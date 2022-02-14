@@ -1,7 +1,6 @@
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
-use service::current_store_id;
 use service::invoice::get_invoices;
 
 use async_graphql::{Context, Object, Result};
@@ -193,18 +192,23 @@ impl Queries {
         stock_counts(timezone_offset, days_till_expired)
     }
 
+    pub async fn stocktake(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<StocktakeResponse> {
+        stocktake(ctx, &store_id, &id)
+    }
+
     pub async fn stocktakes(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         page: Option<PaginationInput>,
         filter: Option<StocktakeFilterInput>,
         sort: Option<Vec<StocktakeSortInput>>,
     ) -> Result<StocktakesResponse> {
-        // TODO remove and make store_id parameter required
-        let store_id = store_id.unwrap_or(current_store_id(
-            &ctx.get_connection_manager().connection()?,
-        )?);
         stocktakes(ctx, &store_id, page, filter, sort)
     }
 

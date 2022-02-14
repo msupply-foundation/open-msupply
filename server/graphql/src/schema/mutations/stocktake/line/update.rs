@@ -43,7 +43,7 @@ pub fn update_stocktake_line(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::UpdateStocktakeLine,
+            resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -60,12 +60,13 @@ pub fn do_update_stocktake_line(
     input: UpdateStocktakeLineInput,
 ) -> Result<UpdateStocktakeLineResponse> {
     let service = &service_provider.stocktake_line_service;
+    let id = input.id.clone();
     match service.update_stocktake_line(&service_ctx, store_id, to_domain(input)) {
         Ok(line) => Ok(UpdateStocktakeLineResponse::Response(StocktakeLineNode {
             line,
         })),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("Update stocktake line {}: {:#?}", id, err);
             let graphql_error = match err {
                 UpdateStocktakeLineError::DatabaseError(err) => err.into(),
                 UpdateStocktakeLineError::InternalError(err) => {

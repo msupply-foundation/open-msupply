@@ -61,7 +61,7 @@ pub fn update_stocktake(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::UpdateStocktake,
+            resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -78,18 +78,19 @@ pub fn do_update_stocktake(
     input: UpdateStocktakeInput,
 ) -> Result<UpdateStocktakeResponse> {
     let service = &service_provider.stocktake_service;
+    let id = input.id.clone();
     match service.update_stocktake(&service_ctx, store_id, to_domain(input)) {
         Ok(stocktake) => Ok(UpdateStocktakeResponse::Response(StocktakeNode {
             stocktake,
         })),
         Err(err) => Ok(UpdateStocktakeResponse::Error(UpdateStocktakeError {
-            error: map_error(err)?,
+            error: map_error(err, &id)?,
         })),
     }
 }
 
-fn map_error(err: ServiceError) -> Result<UpdateStocktakeErrorInterface> {
-    let formatted_error = format!("{:#?}", err);
+fn map_error(err: ServiceError, id: &str) -> Result<UpdateStocktakeErrorInterface> {
+    let formatted_error = format!("Update stocktake {}: {:#?}", id, err);
     let graphql_error = match err {
         ServiceError::SnapshotCountCurrentCountMismatch(lines) => {
             return Ok(
