@@ -45,7 +45,7 @@ pub fn insert_stocktake_line(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::InsertStocktakeLine,
+            resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -63,12 +63,13 @@ pub fn do_insert_stocktake_line(
     input: InsertStocktakeLineInput,
 ) -> Result<InsertStocktakeLineResponse> {
     let service = &service_provider.stocktake_line_service;
+    let id = input.id.clone();
     match service.insert_stocktake_line(&service_ctx, store_id, to_domain(input)) {
         Ok(line) => Ok(InsertStocktakeLineResponse::Response(StocktakeLineNode {
             line,
         })),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("Insert stocktake line {}: {:#?}", id, err);
             let graphql_error = match err {
                 InsertStocktakeLineError::DatabaseError(err) => err.into(),
                 InsertStocktakeLineError::InternalError(err) => {

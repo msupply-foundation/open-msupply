@@ -25,6 +25,18 @@ use super::{
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
+    name = "InsertStocktakeResponseWithId",
+    params(InsertStocktakeResponse)
+))]
+#[graphql(concrete(
+    name = "UpdateStocktakeResponseWithId",
+    params(UpdateStocktakeResponse)
+))]
+#[graphql(concrete(
+    name = "DeleteStocktakeResponseWithId",
+    params(DeleteStocktakeResponse)
+))]
+#[graphql(concrete(
     name = "InsertStocktakeLineResponseWithId",
     params(InsertStocktakeLineResponse)
 ))]
@@ -43,33 +55,33 @@ pub struct MutationWithId<T: OutputType> {
 
 #[derive(InputObject)]
 pub struct BatchStocktakeInput {
-    pub insert_stocktake: Option<InsertStocktakeInput>,
+    pub insert_stocktakes: Option<Vec<InsertStocktakeInput>>,
     pub insert_stocktake_lines: Option<Vec<InsertStocktakeLineInput>>,
     pub update_stocktake_lines: Option<Vec<UpdateStocktakeLineInput>>,
     pub delete_stocktake_lines: Option<Vec<DeleteStocktakeLineInput>>,
-    pub update_stocktake: Option<UpdateStocktakeInput>,
-    pub delete_stocktake: Option<DeleteStocktakeInput>,
+    pub update_stocktakes: Option<Vec<UpdateStocktakeInput>>,
+    pub delete_stocktakes: Option<Vec<DeleteStocktakeInput>>,
 }
 
 #[derive(SimpleObject)]
 pub struct BatchStocktakeResponses {
-    insert_stocktake: Option<InsertStocktakeResponse>,
+    insert_stocktakes: Option<Vec<MutationWithId<InsertStocktakeResponse>>>,
     insert_stocktake_lines: Option<Vec<MutationWithId<InsertStocktakeLineResponse>>>,
     update_stocktake_lines: Option<Vec<MutationWithId<UpdateStocktakeLineResponse>>>,
     delete_stocktake_lines: Option<Vec<MutationWithId<DeleteStocktakeLineResponse>>>,
-    update_stocktake: Option<UpdateStocktakeResponse>,
-    delete_stocktake: Option<DeleteStocktakeResponse>,
+    update_stocktakes: Option<Vec<MutationWithId<UpdateStocktakeResponse>>>,
+    delete_stocktakes: Option<Vec<MutationWithId<DeleteStocktakeResponse>>>,
 }
 
 // Same as BatchStocktakeResponses but GQL needs an extra type for it
 #[derive(SimpleObject)]
 pub struct BatchStocktakeResponsesWithErrors {
-    insert_stocktake: Option<InsertStocktakeResponse>,
+    insert_stocktakes: Option<Vec<MutationWithId<InsertStocktakeResponse>>>,
     insert_stocktake_lines: Option<Vec<MutationWithId<InsertStocktakeLineResponse>>>,
     update_stocktake_lines: Option<Vec<MutationWithId<UpdateStocktakeLineResponse>>>,
     delete_stocktake_lines: Option<Vec<MutationWithId<DeleteStocktakeLineResponse>>>,
-    update_stocktake: Option<UpdateStocktakeResponse>,
-    delete_stocktake: Option<DeleteStocktakeResponse>,
+    update_stocktakes: Option<Vec<MutationWithId<UpdateStocktakeResponse>>>,
+    delete_stocktakes: Option<Vec<MutationWithId<DeleteStocktakeResponse>>>,
 }
 
 #[derive(Union)]
@@ -87,7 +99,7 @@ pub fn batch_stocktake(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::BatchStocktake,
+            resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -118,12 +130,12 @@ pub fn batch_stocktake(
                 BatchError::Standard(err) => return Err(err),
                 BatchError::Structured(response) => {
                     BatchStocktakeResponse::Error(BatchStocktakeResponsesWithErrors {
-                        insert_stocktake: response.insert_stocktake,
+                        insert_stocktakes: response.insert_stocktakes,
                         insert_stocktake_lines: response.insert_stocktake_lines,
                         update_stocktake_lines: response.update_stocktake_lines,
                         delete_stocktake_lines: response.delete_stocktake_lines,
-                        update_stocktake: response.update_stocktake,
-                        delete_stocktake: response.delete_stocktake,
+                        update_stocktakes: response.update_stocktakes,
+                        delete_stocktakes: response.delete_stocktakes,
                     })
                 }
             },
@@ -145,15 +157,20 @@ fn apply_batch(
     store_id: &str,
     input: BatchStocktakeInput,
 ) -> Result<BatchStocktakeResponses> {
-    let insert_stocktake = match input.insert_stocktake {
-        Some(input) => Some(do_insert_stocktake(
-            service_ctx,
-            service_provider,
-            store_id,
-            input,
-        )?),
+    let insert_stocktakes = match input.insert_stocktakes {
+        Some(input) => {
+            let mut list = Vec::<MutationWithId<InsertStocktakeResponse>>::new();
+            for input in input {
+                list.push(MutationWithId {
+                    id: input.id.clone(),
+                    response: do_insert_stocktake(service_ctx, service_provider, store_id, input)?,
+                });
+            }
+            Some(list)
+        }
         None => None,
     };
+
     let insert_stocktake_lines = match input.insert_stocktake_lines {
         Some(input) => {
             let mut list = Vec::<MutationWithId<InsertStocktakeLineResponse>>::new();
@@ -208,49 +225,74 @@ fn apply_batch(
         }
         None => None,
     };
-    let update_stocktake = match input.update_stocktake {
-        Some(input) => Some(do_update_stocktake(
-            service_ctx,
-            service_provider,
-            store_id,
-            input,
-        )?),
+
+    let update_stocktakes = match input.update_stocktakes {
+        Some(input) => {
+            let mut list = Vec::<MutationWithId<UpdateStocktakeResponse>>::new();
+            for input in input {
+                list.push(MutationWithId {
+                    id: input.id.clone(),
+                    response: do_update_stocktake(service_ctx, service_provider, store_id, input)?,
+                });
+            }
+            Some(list)
+        }
         None => None,
     };
-    let delete_stocktake = match input.delete_stocktake {
-        Some(input) => Some(do_delete_stocktake(
-            service_ctx,
-            service_provider,
-            store_id,
-            input,
-        )?),
+
+    let delete_stocktakes = match input.delete_stocktakes {
+        Some(input) => {
+            let mut list = Vec::<MutationWithId<DeleteStocktakeResponse>>::new();
+            for input in input {
+                list.push(MutationWithId {
+                    id: input.id.clone(),
+                    response: do_delete_stocktake(service_ctx, service_provider, store_id, input)?,
+                });
+            }
+            Some(list)
+        }
         None => None,
     };
 
     let response = BatchStocktakeResponses {
-        insert_stocktake,
+        insert_stocktakes,
         insert_stocktake_lines,
         update_stocktake_lines,
         delete_stocktake_lines,
-        update_stocktake,
-        delete_stocktake,
+        update_stocktakes,
+        delete_stocktakes,
     };
     Ok(response)
 }
 
 fn has_no_errors(response: &BatchStocktakeResponses) -> bool {
-    if let Some(response) = &response.insert_stocktake {
-        if !matches!(response, InsertStocktakeResponse::Response(_)) {
+    if let Some(responses) = &response.insert_stocktakes {
+        if !responses.iter().all(|mutation_with_id| {
+            matches!(
+                mutation_with_id.response,
+                InsertStocktakeResponse::Response(_)
+            )
+        }) {
             return false;
         }
     }
-    if let Some(response) = &response.update_stocktake {
-        if !matches!(response, UpdateStocktakeResponse::Response(_)) {
+    if let Some(responses) = &response.update_stocktakes {
+        if !responses.iter().all(|mutation_with_id| {
+            matches!(
+                mutation_with_id.response,
+                UpdateStocktakeResponse::Response(_)
+            )
+        }) {
             return false;
         }
     }
-    if let Some(response) = &response.delete_stocktake {
-        if !matches!(response, DeleteStocktakeResponse::Response(_)) {
+    if let Some(responses) = &response.delete_stocktakes {
+        if !responses.iter().all(|mutation_with_id| {
+            matches!(
+                mutation_with_id.response,
+                DeleteStocktakeResponse::Response(_)
+            )
+        }) {
             return false;
         }
     }
