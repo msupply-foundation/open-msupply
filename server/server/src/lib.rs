@@ -11,7 +11,7 @@ use graphql::{
     loader::{get_loaders, LoaderRegistry},
 };
 use log::{error, info, warn};
-use repository::get_storage_connection_manager;
+use repository::{get_storage_connection_manager, run_db_migrations};
 use service::{auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket};
 
 use actix_cors::Cors;
@@ -46,6 +46,18 @@ pub async fn start_server(
         debug_no_access_control: true,
     });
 
+    let connection_manager = get_storage_connection_manager(&settings.database);
+
+    info!("Run DB migrations...");
+    match run_db_migrations(&connection_manager.connection().unwrap()) {
+        Ok(_) => info!("DB migrations succeeded"),
+        Err(err) => {
+            let msg = format!("Failed to run DB migrations: {}", err);
+            error!("{}", msg);
+            panic!("{}", msg);
+        }
+    };
+
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
         sync::get_sync_actors();
 
@@ -53,7 +65,6 @@ pub async fn start_server(
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
 
-    let connection_manager = get_storage_connection_manager(&settings.database);
     let connection_manager_data_app = Data::new(connection_manager.clone());
     let connection_manager_data_sync = connection_manager_data_app.clone();
 
