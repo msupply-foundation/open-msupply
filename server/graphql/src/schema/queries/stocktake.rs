@@ -21,6 +21,7 @@ use crate::schema::types::{
     },
     PaginationInput,
 };
+use crate::standard_graphql_error::list_error_to_gql_err;
 use crate::standard_graphql_error::validate_auth;
 use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
@@ -158,14 +159,44 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
             Ok(result)
         }
 
-        Err(err) => {
-            let formatted_error = format!("{:#?}", err);
-            let graphql_error = match err {
-                ListError::DatabaseError(err) => err.into(),
-                ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(formatted_error),
-                ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(formatted_error),
+        Err(err) => Err(list_error_to_gql_err(err)),
+    }
+}
+
+pub fn stocktake_by_number(
+    ctx: &Context<'_>,
+    store_id: &str,
+    stocktake_number: i64,
+) -> Result<StocktakeResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryStocktake,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context()?;
+    let service = &service_provider.stocktake_service;
+
+    match service.get_stocktakes(
+        &service_ctx,
+        store_id,
+        None,
+        Some(StocktakeFilter::new().stocktake_number(EqualFilter::equal_to_i64(stocktake_number))),
+        None,
+    ) {
+        Ok(mut stocktakes) => {
+            let result = match stocktakes.rows.pop() {
+                Some(stocktake) => StocktakeResponse::Response(StocktakeNode { stocktake }),
+                None => StocktakeResponse::Error(ErrorWrapper {
+                    error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
+                }),
             };
-            Err(graphql_error.extend())
+            Ok(result)
         }
+
+        Err(err) => Err(list_error_to_gql_err(err)),
     }
 }

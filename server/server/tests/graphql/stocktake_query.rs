@@ -3,7 +3,7 @@ mod graphql {
     use chrono::NaiveDate;
     use domain::PaginationOption;
     use repository::{
-        mock::MockDataInserts,
+        mock::{mock_stocktake_a, MockDataInserts},
         schema::{StocktakeRow, StocktakeStatus},
         Stocktake, StocktakeFilter, StocktakeSort, StorageConnectionManager,
     };
@@ -50,14 +50,14 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_stocktake_query() {
+    async fn test_graphql_stocktakes_query() {
         let (_, _, connection_manager, settings) = setup_all(
-            "omsupply-database-gql-stocktake_query",
+            "omsupply-database-gql-stocktakes_query",
             MockDataInserts::all(),
         )
         .await;
 
-        let query = r#"query QueryStocktake($storeId: String, $page: PaginationInput!, $filter: StocktakeFilterInput, $sort: [StocktakeSortInput]) {
+        let query = r#"query QueryStocktakes($storeId: String, $page: PaginationInput!, $filter: StocktakeFilterInput, $sort: [StocktakeSortInput]) {
             stocktakes(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {
                 ... on StocktakeConnector {
                     totalCount
@@ -126,5 +126,61 @@ mod graphql {
             &expected,
             Some(service_provider(test_service, &connection_manager))
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_stocktake_query() {
+        let (_, _, _, settings) = setup_all(
+            "omsupply-database-gql-stocktake_query",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let query = r#"query QueryStocktake($storeId: String, $id: String) {
+            stocktake(storeId: $storeId, id: $id) {
+                ... on StocktakeNode {
+                    id
+                }
+            }
+        }"#;
+        let expected_stocktake = mock_stocktake_a();
+        let variables = Some(json!({
+            "storeId": expected_stocktake.store_id,
+            "id": expected_stocktake.id,
+        }));
+        let expected = json!({
+            "stocktake": {
+                "id": expected_stocktake.id
+            }
+        });
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_stocktake_by_number_query() {
+        let (_, _, _, settings) = setup_all(
+            "omsupply-database-gql-stocktake_by_number_query",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let query = r#"query QueryStocktakeByNumber($storeId: String, $stocktakeNumber: String) {
+            stocktakeByNumber(storeId: $storeId, stocktakeNumber: $stocktakeNumber) {
+                ... on StocktakeNode {
+                    stocktakeNumber
+                }
+            }
+        }"#;
+        let expected_stocktake = mock_stocktake_a();
+        let variables = Some(json!({
+            "storeId": expected_stocktake.store_id,
+            "stocktakeNumber": expected_stocktake.stocktake_number,
+        }));
+        let expected = json!({
+          "stocktakeByNumber": {
+            "stocktakeNumber": expected_stocktake.stocktake_number
+          }
+        });
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
     }
 }

@@ -201,6 +201,15 @@ impl Queries {
         stocktake(ctx, &store_id, &id)
     }
 
+    pub async fn stocktake_by_number(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        stocktake_number: i64,
+    ) -> Result<StocktakeResponse> {
+        stocktake_by_number(ctx, &store_id, stocktake_number)
+    }
+
     pub async fn stocktakes(
         &self,
         ctx: &Context<'_>,
