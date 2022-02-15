@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use crate::schema::{
     mutations::{
         CannotEditInvoice, ForeignKey, ForeignKeyError, InvoiceDoesNotBelongToCurrentStore,
-        NotAnInboundShipment,
+        InvoiceLineBelongsToAnotherInvoice, NotAnInboundShipment,
     },
     types::{
         get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
@@ -15,7 +15,7 @@ use domain::inbound_shipment::UpdateInboundShipmentLine;
 use repository::StorageConnectionManager;
 use service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError};
 
-use super::{BatchIsReserved, InvoiceLineBelongsToAnotherInvoice};
+use super::BatchIsReserved;
 
 #[derive(InputObject)]
 pub struct UpdateInboundShipmentLineInput {

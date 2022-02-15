@@ -30,12 +30,12 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    let filfulments = get_remaining_fulfilments(connection, &requisition_row.id)?;
-    if filfulments.len() == 0 {
+    let fulfilment = get_remaining_fulfilments(connection, &requisition_row.id)?;
+    if fulfilment.len() == 0 {
         return Err(OutError::NothingRemainingToSupply);
     }
 
-    Ok((requisition_row, filfulments))
+    Ok((requisition_row, fulfilment))
 }
 
 pub fn get_remaining_fulfilments(

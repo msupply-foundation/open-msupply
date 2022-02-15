@@ -116,7 +116,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
         ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::ProblemCreatingRequisitionLine => InternalError(formatted_error),
+        ServiceError::CannotFindItemStatusForRequisitionLine => InternalError(formatted_error),
         ServiceError::NewlyCreatedRequisitionLineDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
