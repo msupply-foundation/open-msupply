@@ -320,26 +320,32 @@ mod repository_test {
         }
     }
 
+    use std::convert::TryInto;
+
     use crate::{
         database_settings::get_storage_connection_manager,
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_item_stats_item1, mock_item_stats_item2,
             mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
-            mock_request_draft_requisition, mock_request_draft_requisition2,
-            mock_test_master_list_name1, mock_test_master_list_name2,
+            mock_request_draft_requisition, mock_request_draft_requisition2, mock_stocktake_a,
+            mock_stocktake_b, mock_test_master_list_name1, mock_test_master_list_name2,
             mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
-            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
+            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts, mock_stocktake_no_line_a, mock_stocktake_no_line_b,
         },
-        schema::{InvoiceStatsRow, NumberRowType, RequisitionRowStatus},
-        test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
-        InvoiceRepository, ItemRepository, ItemStatsFilter, ItemStatsRepository,
-        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
-        NumberRowRepository, OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
+        schema::{
+            ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, KeyValueType,
+            NumberRowType, RequisitionRowStatus,
+        },
+        test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
+        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, ItemStatsFilter,
+        ItemStatsRepository, KeyValueStoreRepository, MasterListLineRepository,
+        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
+        MasterListRowRepository, NameQueryRepository, NameRepository, NumberRowRepository,
+        OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
-        RequisitionRowRepository, StockLineRepository, StockLineRowRepository, StoreRowRepository,
-        UserAccountRepository,
+        RequisitionRowRepository, StockLineRepository, StockLineRowRepository,
+        StocktakeRowRepository, StoreRowRepository, UserAccountRepository,
     };
     use chrono::{Duration, Utc};
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
@@ -947,21 +953,17 @@ mod repository_test {
         let central_sync_buffer_row_a = data::central_sync_buffer_row_a();
         let central_sync_buffer_row_b = data::central_sync_buffer_row_b();
 
-        // `insert_one` inserts valid sync buffer row.
-        repo.insert_one(&central_sync_buffer_row_a).await.unwrap();
-        let result = repo.pop_one().await.unwrap();
-        assert_eq!(central_sync_buffer_row_a, result);
-
-        // `pop` returns buffered records in FIFO order.
+        // `insert_one` inserts some sync entries
         repo.insert_one(&central_sync_buffer_row_a).await.unwrap();
         repo.insert_one(&central_sync_buffer_row_b).await.unwrap();
-        let result = repo.pop_one().await.unwrap();
-        assert_eq!(central_sync_buffer_row_a, result);
 
         // `remove_all` removes all buffered records.
         repo.remove_all().await.unwrap();
-        let result = repo.pop_one().await;
-        assert!(result.is_err());
+        let result = repo
+            .get_sync_entries(&central_sync_buffer_row_a.table_name)
+            .await
+            .unwrap();
+        assert!(result.is_empty());
     }
 
     #[actix_rt::test]
@@ -989,6 +991,165 @@ mod repository_test {
             .unwrap();
         assert_eq!(result, None);
     }
+
+    #[actix_rt::test]
+    async fn test_changelog() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_changelog", MockDataInserts::none().names().stores()).await;
+
+        // use stock take entries to populate the changelog (via the trigger)
+        let stocktake_repo = StocktakeRowRepository::new(&connection);
+        let repo = ChangelogRepository::new(&connection);
+
+        // single entry:
+        let stocktake_a = mock_stocktake_a();
+        stocktake_repo.upsert_one(&stocktake_a).unwrap();
+        let mut result = repo.changelogs(0, 10).unwrap();
+        assert_eq!(1, result.len());
+        let log_entry = result.pop().unwrap();
+        assert_eq!(
+            log_entry,
+            ChangelogRow {
+                id: 1,
+                table_name: ChangelogTableName::Stocktake,
+                row_id: stocktake_a.id.clone(),
+                row_action: ChangelogAction::Upsert,
+            }
+        );
+
+        // querying from the first entry should give the same result:
+        assert_eq!(
+            repo.changelogs(0, 10).unwrap(),
+            repo.changelogs(1, 10).unwrap()
+        );
+
+        // update the entry
+        let mut stocktake_a_update = mock_stocktake_a();
+        stocktake_a_update.comment = Some("updated".to_string());
+        stocktake_repo.upsert_one(&stocktake_a_update).unwrap();
+        let mut result = repo.changelogs((log_entry.id + 1) as u64, 10).unwrap();
+        assert_eq!(1, result.len());
+        let log_entry = result.pop().unwrap();
+        assert_eq!(
+            log_entry,
+            ChangelogRow {
+                id: 2,
+                table_name: ChangelogTableName::Stocktake,
+                row_id: stocktake_a.id.clone(),
+                row_action: ChangelogAction::Upsert,
+            }
+        );
+
+        // query the full list from cursor=0
+        let mut result = repo.changelogs(0, 10).unwrap();
+        assert_eq!(1, result.len());
+        let log_entry = result.pop().unwrap();
+        assert_eq!(
+            log_entry,
+            ChangelogRow {
+                id: 2,
+                table_name: ChangelogTableName::Stocktake,
+                row_id: stocktake_a.id.clone(),
+                row_action: ChangelogAction::Upsert,
+            }
+        );
+
+        // add another entry
+        let stocktake_b = mock_stocktake_b();
+        stocktake_repo.upsert_one(&stocktake_b).unwrap();
+        let result = repo.changelogs(0, 10).unwrap();
+        assert_eq!(2, result.len());
+        assert_eq!(
+            result,
+            vec![
+                ChangelogRow {
+                    id: 2,
+                    table_name: ChangelogTableName::Stocktake,
+                    row_id: stocktake_a.id.clone(),
+                    row_action: ChangelogAction::Upsert,
+                },
+                ChangelogRow {
+                    id: 3,
+                    table_name: ChangelogTableName::Stocktake,
+                    row_id: stocktake_b.id.clone(),
+                    row_action: ChangelogAction::Upsert,
+                }
+            ]
+        );
+
+        // delete an entry
+        stocktake_repo.delete(&stocktake_b.id).unwrap();
+        let result = repo.changelogs(0, 10).unwrap();
+        assert_eq!(2, result.len());
+        assert_eq!(
+            result,
+            vec![
+                ChangelogRow {
+                    id: 2,
+                    table_name: ChangelogTableName::Stocktake,
+                    row_id: stocktake_a.id.clone(),
+                    row_action: ChangelogAction::Upsert,
+                },
+                ChangelogRow {
+                    id: 4,
+                    table_name: ChangelogTableName::Stocktake,
+                    row_id: stocktake_b.id.clone(),
+                    row_action: ChangelogAction::Delete,
+                }
+            ]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_changelog_iteration() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_changelog_2", MockDataInserts::none().names().stores()).await;
+
+        // use stock take entries to populate the changelog (via the trigger)
+        let stocktake_repo = StocktakeRowRepository::new(&connection);
+        let repo = ChangelogRepository::new(&connection);
+
+        let stocktake_a = mock_stocktake_a();
+        let stocktake_b = mock_stocktake_no_line_a();
+        let stocktake_c = mock_stocktake_no_line_b();
+        let stocktake_d = mock_stocktake_b();
+
+        stocktake_repo.upsert_one(&stocktake_a).unwrap();
+        stocktake_repo.upsert_one(&stocktake_b).unwrap();
+        stocktake_repo.upsert_one(&stocktake_c).unwrap();
+        stocktake_repo.upsert_one(&stocktake_d).unwrap();
+        stocktake_repo.delete(&stocktake_b.id).unwrap();
+        stocktake_repo.upsert_one(&stocktake_c).unwrap();
+        stocktake_repo.upsert_one(&stocktake_a).unwrap();
+        stocktake_repo.upsert_one(&stocktake_c).unwrap();
+        stocktake_repo.delete(&stocktake_c.id).unwrap();
+
+        // test iterating through the change log
+        let changelogs = repo.changelogs(0, 3).unwrap();
+        let latest_id: u64 = changelogs.last().unwrap().id.try_into().unwrap();
+        assert_eq!(
+            changelogs
+                .into_iter()
+                .map(|it| it.row_id)
+                .collect::<Vec<String>>(),
+            vec![stocktake_d.id, stocktake_b.id, stocktake_a.id]
+        );
+
+        let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
+        let latest_id: u64 = changelogs.last().unwrap().id.try_into().unwrap();
+
+        assert_eq!(
+            changelogs
+                .into_iter()
+                .map(|it| it.row_id)
+                .collect::<Vec<String>>(),
+            vec![stocktake_c.id]
+        );
+
+        let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
+        assert_eq!(changelogs.len(), 0);
+    }
+
     #[actix_rt::test]
     async fn test_master_list_line_repository_filter() {
         let (_, connection, _, _) = test_db::setup_all(
@@ -1260,5 +1421,38 @@ mod repository_test {
             item_stats[1].average_monthly_consumption(),
             ((300) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_key_value_store() {
+        let (_, connection, _, _) =
+            test_db::setup_all("key_value_store", MockDataInserts::none()).await;
+
+        let repo = KeyValueStoreRepository::new(&connection);
+
+        // access a non-existing row
+        let result = repo
+            .get_string(KeyValueType::CentralSyncPullCursor)
+            .unwrap();
+        assert_eq!(result, None);
+
+        // write a value
+        repo.set_string(
+            KeyValueType::CentralSyncPullCursor,
+            Some("test".to_string()),
+        )
+        .unwrap();
+        let result = repo
+            .get_string(KeyValueType::CentralSyncPullCursor)
+            .unwrap();
+        assert_eq!(result, Some("test".to_string()));
+
+        // unset a value
+        repo.set_string(KeyValueType::CentralSyncPullCursor, None)
+            .unwrap();
+        let result = repo
+            .get_string(KeyValueType::CentralSyncPullCursor)
+            .unwrap();
+        assert_eq!(result, None);
     }
 }

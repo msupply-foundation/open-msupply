@@ -5,10 +5,8 @@ use service::location::update::UpdateLocationError as InError;
 
 use crate::{
     schema::{
-        mutations::{
-            error::DatabaseError, RecordBelongsToAnotherStore, UniqueValueKey, UniqueValueViolation,
-        },
-        types::{InternalError, LocationNode, RecordNotFound},
+        mutations::{RecordBelongsToAnotherStore, UniqueValueKey, UniqueValueViolation},
+        types::{InternalError, LocationNode, RecordNotFound, DatabaseError},
     },
     ContextExt,
 };

@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS changelog CASCADE;
+DROP VIEW IF EXISTS changelog_deduped CASCADE;
