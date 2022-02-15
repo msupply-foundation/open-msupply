@@ -14,35 +14,59 @@ const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
   getButtonLabel: (status: InvoiceNodeStatus) => string
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: SplitButtonOption<InvoiceNodeStatus>[] = [];
+  const options: [
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>
+  ] = [
+    {
+      value: InvoiceNodeStatus.New,
+      label: getButtonLabel(InvoiceNodeStatus.New),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Allocated,
+      label: getButtonLabel(InvoiceNodeStatus.Allocated),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Picked,
+      label: getButtonLabel(InvoiceNodeStatus.Picked),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Shipped,
+      label: getButtonLabel(InvoiceNodeStatus.Shipped),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Delivered,
+      label: getButtonLabel(InvoiceNodeStatus.Delivered),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Verified,
+      label: getButtonLabel(InvoiceNodeStatus.Verified),
+      isDisabled: true,
+    },
+  ];
 
-  // If the status is "New", "Allocated" or "Picked" then add
-  // shipped to the set of options.
-  if (
-    currentStatus === InvoiceNodeStatus.New ||
-    currentStatus === InvoiceNodeStatus.Allocated ||
-    currentStatus === InvoiceNodeStatus.Picked
-  ) {
-    const value = InvoiceNodeStatus.Shipped;
-    const label = getButtonLabel(value);
-    options.push({ value, label });
-  }
-
-  // If the status is "New" or "Allocated" then add picked to the set of options.
-  if (
-    currentStatus === InvoiceNodeStatus.New ||
-    currentStatus === InvoiceNodeStatus.Allocated
-  ) {
-    const value = InvoiceNodeStatus.Picked;
-    const label = getButtonLabel(value);
-    options.push({ value, label });
-  }
-
-  // If the status is "New" then add "Allocated" to the set of options.
   if (currentStatus === InvoiceNodeStatus.New) {
-    const value = InvoiceNodeStatus.Allocated;
-    const label = getButtonLabel(value);
-    options.push({ value, label });
+    options[1].isDisabled = false;
+    options[2].isDisabled = false;
+    options[3].isDisabled = false;
+  }
+
+  if (currentStatus === InvoiceNodeStatus.Allocated) {
+    options[2].isDisabled = false;
+    options[3].isDisabled = false;
+  }
+
+  if (currentStatus === InvoiceNodeStatus.Picked) {
+    options[3].isDisabled = false;
   }
 
   return options;
