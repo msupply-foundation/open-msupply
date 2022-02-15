@@ -8,6 +8,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TableProvider, createTableStore } from '../ui/layout/tables';
 import { IntlTestProvider, OmSupplyApiProvider } from '..';
 import { Environment } from '@openmsupply-client/config';
+import { ConfirmationModalProvider } from '../ui/components/modals';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,7 +60,9 @@ export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
       <SnackbarProvider maxSnack={3}>
         <IntlTestProvider locale="en">
           <TableProvider createStore={createTableStore}>
-            <AppThemeProvider>{children}</AppThemeProvider>
+            <AppThemeProvider>
+              <ConfirmationModalProvider>{children}</ConfirmationModalProvider>
+            </AppThemeProvider>
           </TableProvider>
         </IntlTestProvider>
       </SnackbarProvider>

@@ -15,6 +15,7 @@ import {
   OmSupplyApiProvider,
   IntlProvider,
   RandomLoader,
+  ConfirmationModalProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Login, Viewport } from './components';
@@ -37,19 +38,21 @@ const Host: FC = () => (
           <QueryClientProvider client={queryClient}>
             <OmSupplyApiProvider url={Environment.API_URL}>
               <AppThemeProvider>
-                <BrowserRouter>
-                  <Viewport>
-                    <Box display="flex" style={{ minHeight: '100%' }}>
-                      <Routes>
-                        <Route
-                          path={RouteBuilder.create(AppRoute.Login).build()}
-                          element={<Login />}
-                        />
-                        <Route path="*" element={<Site />} />
-                      </Routes>
-                    </Box>
-                  </Viewport>
-                </BrowserRouter>
+                <ConfirmationModalProvider>
+                  <BrowserRouter>
+                    <Viewport>
+                      <Box display="flex" style={{ minHeight: '100%' }}>
+                        <Routes>
+                          <Route
+                            path={RouteBuilder.create(AppRoute.Login).build()}
+                            element={<Login />}
+                          />
+                          <Route path="*" element={<Site />} />
+                        </Routes>
+                      </Box>
+                    </Viewport>
+                  </BrowserRouter>
+                </ConfirmationModalProvider>
               </AppThemeProvider>
               <ReactQueryDevtools initialIsOpen />
             </OmSupplyApiProvider>

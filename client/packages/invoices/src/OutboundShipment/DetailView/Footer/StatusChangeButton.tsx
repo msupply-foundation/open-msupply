@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   ArrowRightIcon,
   useTranslation,
@@ -6,6 +6,7 @@ import {
   InvoiceNodeStatus,
   SplitButton,
   SplitButtonOption,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
 import { useIsOutboundDisabled, useOutboundFields } from '../../api';
@@ -72,35 +73,73 @@ const getStatusOptions = (
   return options;
 };
 
-export const StatusChangeButton = () => {
-  const { success } = useNotification();
-  const isDisabled = useIsOutboundDisabled();
-  const { status, update } = useOutboundFields('status');
-  const t = useTranslation('distribution');
+const getNextStatusOption = (
+  status: InvoiceNodeStatus,
+  options: SplitButtonOption<InvoiceNodeStatus>[]
+): SplitButtonOption<InvoiceNodeStatus> | null => {
+  if (!status) return options[0] ?? null;
 
-  const getButtonLabel = (invoiceStatus: InvoiceNodeStatus): string => {
+  const nextStatus = getNextOutboundStatus(status);
+  const nextStatusOption = options.find(o => o.value === nextStatus);
+  return nextStatusOption || null;
+};
+
+const getButtonLabel =
+  (t: ReturnType<typeof useTranslation>) =>
+  (invoiceStatus: InvoiceNodeStatus): string => {
     return t('button.save-and-confirm-status', {
       status: t(getStatusTranslation(invoiceStatus)),
     });
   };
 
-  const options = getStatusOptions(status, getButtonLabel);
+const useStatusChangeButton = () => {
+  const { status, update } = useOutboundFields('status');
+  const { success, error } = useNotification();
+  const t = useTranslation('distribution');
 
-  const getNextStatusOption =
-    (): SplitButtonOption<InvoiceNodeStatus> | null => {
-      if (!status) return options[0] ?? null;
-
-      const nextStatus = getNextOutboundStatus(status);
-      const nextStatusOption = options.find(o => o.value === nextStatus);
-      return nextStatusOption || null;
-    };
+  const options = useMemo(
+    () => getStatusOptions(status, getButtonLabel(t)),
+    [status, getButtonLabel, t]
+  );
 
   const [selectedOption, setSelectedOption] =
-    useState<SplitButtonOption<InvoiceNodeStatus> | null>(getNextStatusOption);
+    useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
+      getNextStatusOption(status, options)
+    );
 
+  const onConfirmStatusChange = async () => {
+    if (!selectedOption) return null;
+    try {
+      await update({ status: selectedOption.value });
+      success(t('message.shipment-saved'))();
+    } catch (e) {
+      error(t('message.error-saving-shipment'))();
+    }
+  };
+
+  const onGetConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('message.confirm-status-as', {
+      status: selectedOption?.value
+        ? getStatusTranslation(selectedOption?.value)
+        : '',
+    }),
+    onConfirm: onConfirmStatusChange,
+  });
+
+  // When the status of the invoice changes (after an update), set the selected option to the next status.
+  // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(getNextStatusOption);
-  }, [status]);
+    setSelectedOption(() => getNextStatusOption(status, options));
+  }, [status, options]);
+
+  return { options, selectedOption, setSelectedOption, onGetConfirmation };
+};
+
+export const StatusChangeButton = () => {
+  const { options, selectedOption, setSelectedOption, onGetConfirmation } =
+    useStatusChangeButton();
+  const isDisabled = useIsOutboundDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -111,12 +150,7 @@ export const StatusChangeButton = () => {
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={async ({ value }) => {
-        if (!value) return;
-
-        await update({ status: value });
-        success('Saved invoice! 🥳 ')();
-      }}
+      onClick={onGetConfirmation}
     />
   );
 };
