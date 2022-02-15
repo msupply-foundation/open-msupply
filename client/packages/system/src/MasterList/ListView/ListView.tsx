@@ -29,7 +29,7 @@ export const MasterListListView: FC = () => {
     ['master-list', 'list'],
     getMasterListListViewApi(api)
   );
-  console.info('filter', filter);
+
   const navigate = useNavigate();
   const columns = useColumns<MasterListRow>(
     ['code', 'name', 'description'],

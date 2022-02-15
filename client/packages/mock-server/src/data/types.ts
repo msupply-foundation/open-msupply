@@ -3,6 +3,8 @@ import {
   InvoiceSortInput,
   InvoiceFilterInput,
   StoreNode,
+  MasterListNode,
+  MasterListLineNode,
 } from '@openmsupply-client/common/src/types/schema';
 import {
   InvoiceLineNode,
@@ -194,4 +196,21 @@ export interface StocktakeLine extends Omit<StocktakeLineNode, '__typename'> {
 
 export interface ResolvedStocktakeLine extends StocktakeLine {
   __typename: 'StocktakeLineNode';
+}
+
+export interface MasterListLine
+  extends Omit<MasterListLineNode, '__typename' | 'item'> {
+  masterListId: string;
+}
+
+export interface ResolvedMasterListLine extends MasterListLine {
+  __typename: 'MasterListLineNode';
+  item: ItemNode;
+}
+
+export type MasterList = Omit<MasterListNode, '__typename' | 'lines'>;
+
+export interface ResolvedMasterList extends MasterList {
+  __typename: 'MasterListNode';
+  lines: ListResponse<ResolvedMasterListLine, 'MasterListLineConnector'>;
 }
