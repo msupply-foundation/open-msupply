@@ -1,19 +1,11 @@
 mod actor;
-mod central;
-mod connection;
-mod credentials;
-mod remote;
-mod server;
+mod sync_api_credentials;
+mod sync_api_v3;
+mod sync_api_v5;
 mod synchroniser;
 mod translation;
 
-pub use self::server::SyncServer;
 pub use actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor};
-pub use central::CentralSyncBatch;
-pub use connection::{SyncConnection, SyncConnectionError};
-pub use credentials::SyncCredentials;
-pub use remote::{
-    RemoteSyncAcknowledgement, RemoteSyncBatch, RemoteSyncRecord, RemoteSyncRecordAction,
-    RemoteSyncRecordData,
-};
+pub use sync_api_credentials::SyncCredentials;
+pub use sync_api_v5::{SyncApiV5, SyncConnectionError};
 pub use synchroniser::{CentralSyncError, RemoteSyncError, SyncError, Synchroniser};
