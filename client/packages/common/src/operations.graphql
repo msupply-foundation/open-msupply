@@ -1394,3 +1394,107 @@ query authToken($username: String!, $password: String!) {
     }
   }
 }
+
+query masterLists(
+  $first: Int
+  $offset: Int
+  $key: MasterListSortFieldInput!
+  $desc: Boolean
+  $filter: MasterListFilterInput
+) {
+  masterLists(
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on MasterListConnector {
+      __typename
+      nodes {
+        name
+        code
+        lines {
+          nodes {
+            id
+            itemId
+            item {
+              code
+              id
+              unitName
+              name
+              isVisible
+              availableBatches {
+                ... on ConnectorError {
+                  __typename
+                  error {
+                    ... on PaginationError {
+                      __typename
+                      description
+                      rangeError {
+                        description
+                        min
+                        max
+                        field
+                      }
+                    }
+                    ... on DatabaseError {
+                      __typename
+                      description
+                      fullError
+                    }
+                    description
+                  }
+                }
+                ... on StockLineConnector {
+                  __typename
+                  nodes {
+                    __typename
+                    availableNumberOfPacks
+                    batch
+                    costPricePerPack
+                    expiryDate
+                    itemId
+                    id
+                    totalNumberOfPacks
+                    storeId
+                    sellPricePerPack
+                    packSize
+                    onHold
+                    note
+                    locationName
+                  }
+                  totalCount
+                }
+              }
+            }
+          }
+          totalCount
+        }
+        code
+        description
+        id
+      }
+      totalCount
+    }
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            field
+            min
+            max
+            description
+          }
+        }
+      }
+    }
+  }
+}

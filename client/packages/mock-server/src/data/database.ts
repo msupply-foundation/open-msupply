@@ -46,6 +46,8 @@ import {
   StocktakeLine,
   Location,
   Store,
+  MasterListLine,
+  MasterList,
 } from './types';
 import {
   LocationData,
@@ -62,6 +64,8 @@ import {
   StocktakeLineData,
   createStocktakeLine,
   StoreData,
+  MasterListData,
+  MasterListLineData,
 } from './data';
 
 import {
@@ -443,6 +447,41 @@ const requisitionLine = {
   },
 };
 
+export const masterListLine = {
+  get: {
+    byId: (id: string): MasterListLine => {
+      const masterListLine = MasterListLineData.find(getFilter(id, 'id'));
+      if (!masterListLine) {
+        throw new Error(`Could not find masterListLine line with id: ${id}`);
+      }
+
+      return {
+        ...masterListLine,
+      };
+    },
+    byMasterListId: (masterListId: string): MasterListLine[] => {
+      const lines = MasterListLineData.filter(
+        getFilter(masterListId, 'masterListId')
+      );
+
+      return [...lines];
+    },
+  },
+};
+
+export const masterList = {
+  get: {
+    byId: (id: string): MasterList => {
+      const masterList = MasterListData.find(getFilter(id, 'id'));
+      if (!masterList) {
+        throw new Error('MasterList not found');
+      }
+      return masterList;
+    },
+
+    list: (): MasterList[] => [...MasterListData],
+  },
+};
 export const get = {
   id: {
     item: (id: string): number => ItemData.findIndex(getFilter(id, 'id')),
@@ -470,6 +509,10 @@ export const get = {
       ({
         ...InvoiceLineData.find(getFilter(id, 'id')),
       } as InvoiceLine),
+    masterlist: (id: string): MasterList =>
+      ({ ...MasterListData.find(getFilter(id, 'id')) } as MasterList),
+    masterlistLine: (id: string): MasterListLine =>
+      ({ ...MasterListLineData.find(getFilter(id, 'id')) } as MasterListLine),
     name: (id: string): Name =>
       ({
         ...NameData.find(getFilter(id, 'id')),
@@ -705,4 +748,6 @@ export const db = {
   stocktake,
   stocktakeLine,
   location,
+  masterListLine,
+  masterList,
 };

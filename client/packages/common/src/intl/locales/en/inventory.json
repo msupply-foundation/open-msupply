@@ -20,5 +20,6 @@
   "message.select-rows-to-delete": "Select rows to delete",
   "messages.click-to-return": "Unable to find a stocktake with that ID. Click OK to return to the stocktake list",
   "messages.deleted-stocktakes": "Deleted {{number}} stocktakes",
-  "placeholder.enter-an-item-code-or-name": "Enter item code or name"
+  "placeholder.enter-an-item-code-or-name": "Enter item code or name",
+  "placeholder.search-by-name": "Search by name"
 }
