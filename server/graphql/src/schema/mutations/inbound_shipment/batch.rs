@@ -31,14 +31,19 @@ pub struct BatchInboundShipmentResponse {
     delete_inbound_shipments: Option<Vec<MutationWithId<DeleteInboundShipmentResponse>>>,
 }
 
+#[derive(InputObject)]
+pub struct BatchInboundShipmentInput {
+    pub insert_inbound_shipments: Option<Vec<InsertInboundShipmentInput>>,
+    pub insert_inbound_shipment_lines: Option<Vec<InsertInboundShipmentLineInput>>,
+    pub update_inbound_shipment_lines: Option<Vec<UpdateInboundShipmentLineInput>>,
+    pub delete_inbound_shipment_lines: Option<Vec<DeleteInboundShipmentLineInput>>,
+    pub update_inbound_shipments: Option<Vec<UpdateInboundShipmentInput>>,
+    pub delete_inbound_shipments: Option<Vec<DeleteInboundShipmentInput>>,
+}
+
 pub fn get_batch_inbound_shipment_response(
     connection_manager: &StorageConnectionManager,
-    insert_inbound_shipments: Option<Vec<InsertInboundShipmentInput>>,
-    insert_inbound_shipment_lines: Option<Vec<InsertInboundShipmentLineInput>>,
-    update_inbound_shipment_lines: Option<Vec<UpdateInboundShipmentLineInput>>,
-    delete_inbound_shipment_lines: Option<Vec<DeleteInboundShipmentLineInput>>,
-    update_inbound_shipments: Option<Vec<UpdateInboundShipmentInput>>,
-    delete_inbound_shipments: Option<Vec<DeleteInboundShipmentInput>>,
+    input: BatchInboundShipmentInput,
 ) -> BatchInboundShipmentResponse {
     let mut result = BatchInboundShipmentResponse {
         insert_inbound_shipments: None,
@@ -49,7 +54,7 @@ pub fn get_batch_inbound_shipment_response(
         delete_inbound_shipments: None,
     };
 
-    if let Some(inputs) = insert_inbound_shipments {
+    if let Some(inputs) = input.insert_inbound_shipments {
         let (has_errors, responses) = do_insert_inbound_shipments(connection_manager, inputs);
         result.insert_inbound_shipments = Some(responses);
         if has_errors {
@@ -57,7 +62,7 @@ pub fn get_batch_inbound_shipment_response(
         }
     }
 
-    if let Some(inputs) = insert_inbound_shipment_lines {
+    if let Some(inputs) = input.insert_inbound_shipment_lines {
         let (has_errors, responses) = do_insert_inbound_shipment_lines(connection_manager, inputs);
         result.insert_inbound_shipment_lines = Some(responses);
         if has_errors {
@@ -65,7 +70,7 @@ pub fn get_batch_inbound_shipment_response(
         }
     }
 
-    if let Some(inputs) = update_inbound_shipment_lines {
+    if let Some(inputs) = input.update_inbound_shipment_lines {
         let (has_errors, responses) = do_update_inbound_shipment_lines(connection_manager, inputs);
         result.update_inbound_shipment_lines = Some(responses);
         if has_errors {
@@ -73,7 +78,7 @@ pub fn get_batch_inbound_shipment_response(
         }
     }
 
-    if let Some(inputs) = delete_inbound_shipment_lines {
+    if let Some(inputs) = input.delete_inbound_shipment_lines {
         let (has_errors, responses) = do_delete_inbound_shipment_lines(connection_manager, inputs);
         result.delete_inbound_shipment_lines = Some(responses);
         if has_errors {
@@ -81,7 +86,7 @@ pub fn get_batch_inbound_shipment_response(
         }
     }
 
-    if let Some(inputs) = update_inbound_shipments {
+    if let Some(inputs) = input.update_inbound_shipments {
         let (has_errors, responses) = do_update_inbound_shipments(connection_manager, inputs);
         result.update_inbound_shipments = Some(responses);
         if has_errors {
@@ -89,7 +94,7 @@ pub fn get_batch_inbound_shipment_response(
         }
     }
 
-    if let Some(inputs) = delete_inbound_shipments {
+    if let Some(inputs) = input.delete_inbound_shipments {
         let (has_errors, responses) = do_delete_inbound_shipments(connection_manager, inputs);
         result.delete_inbound_shipments = Some(responses);
         if has_errors {

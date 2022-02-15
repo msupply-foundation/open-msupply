@@ -19,11 +19,9 @@ pub enum PermissionDSL {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Resource {
     RouteMe,
-    // stock take
-    QueryStockTakes,
-    InsertStockTake,
-    UpdateStockTake,
-    DeleteStockTake,
+    // stocktake
+    QueryStocktake,
+    MutateStocktake,
     // requisition
     QueryRequisition,
     EditRequisition,
@@ -44,11 +42,9 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
     // me
     map.insert(Resource::RouteMe, PermissionDSL::HasApiRole(ApiRole::User));
-    // stock take
-    map.insert(Resource::QueryStockTakes, default());
-    map.insert(Resource::InsertStockTake, default());
-    map.insert(Resource::UpdateStockTake, default());
-    map.insert(Resource::DeleteStockTake, default());
+    // stocktake
+    map.insert(Resource::QueryStocktake, default());
+    map.insert(Resource::MutateStocktake, default());
     // requisition
     map.insert(Resource::QueryRequisition, default());
     map.insert(Resource::EditRequisition, default());
@@ -56,7 +52,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::InsertStockTakeLine, default());
     map.insert(Resource::UpdateStockTakeLine, default());
     map.insert(Resource::DeleteStockTakeLine, default());
-
     map
 }
 

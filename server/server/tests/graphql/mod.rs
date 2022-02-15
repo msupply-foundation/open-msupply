@@ -39,13 +39,14 @@ mod outbound_shipment_line_update;
 mod outbound_shipment_update;
 mod pagination;
 mod requisition;
-mod stock_take_delete;
-mod stock_take_insert;
-mod stock_take_line_delete;
-mod stock_take_line_insert;
-mod stock_take_line_update;
-mod stock_take_query;
-mod stock_take_update;
+mod stocktake_batch;
+mod stocktake_delete;
+mod stocktake_insert;
+mod stocktake_line_delete;
+mod stocktake_line_insert;
+mod stocktake_line_update;
+mod stocktake_query;
+mod stocktake_update;
 mod unallocated_line;
 
 pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
@@ -183,6 +184,15 @@ macro_rules! assert_graphql_query {
         )
         .await;
 
+        match actual.get("errors").and_then(serde_json::Value::as_array) {
+            Some(errors) => {
+                if !errors.is_empty() {
+                    panic!("Request failed with standard error(s): {}",
+                        serde_json::to_string_pretty(errors).unwrap());
+                }
+            },
+            None => {}
+        }
         let expected = serde_json::json!(
             {
                 "data": $expected_inner,
