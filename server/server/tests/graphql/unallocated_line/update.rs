@@ -108,8 +108,13 @@ mod graphql {
         // LineIsNotUnallocatedLine
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineIsNotUnallocatedLine)));
         let expected_message = "Bad user input";
-        let expected_extensions =
-            json!({ "details": format!("{:#?}", ServiceError::LineIsNotUnallocatedLine) });
+        let expected_extensions = json!({
+            "details":
+                format!(
+                    "Update unallocated line n/a: {:#?}",
+                    ServiceError::LineIsNotUnallocatedLine
+                )
+        });
         assert_standard_graphql_error!(
             &settings,
             &mutation,
