@@ -1,6 +1,5 @@
 use crate::schema::{
     mutations::{
-        error::DatabaseError,
         outbound_shipment::{
             CannotChangeStatusOfInvoiceOnHold, InvoiceLineHasNoStockLineError,
             NotAnOutboundShipmentError,
@@ -9,7 +8,7 @@ use crate::schema::{
     },
     queries::invoice::*,
     types::{
-        Connector, ErrorWrapper, InvoiceLineNode, InvoiceNode, NameNode, NodeError, RecordNotFound,
+        Connector, ErrorWrapper, InvoiceLineNode, InvoiceNode, NameNode, NodeError, RecordNotFound, DatabaseError,
     },
 };
 use domain::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus};

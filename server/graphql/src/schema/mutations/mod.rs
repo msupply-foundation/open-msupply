@@ -1,5 +1,3 @@
-mod error;
-
 pub mod inbound_shipment;
 pub mod location;
 pub mod outbound_shipment;
