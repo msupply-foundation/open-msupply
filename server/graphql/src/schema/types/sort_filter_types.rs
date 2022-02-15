@@ -96,6 +96,22 @@ pub type EqualFilterStringInput = EqualFilterInput<String>;
 pub type EqualFilterNumberInput = EqualFilterInput<i32>;
 pub type EqualFilterBigNumberInput = EqualFilterInput<i64>;
 
+impl<I: InputType> EqualFilterInput<I> {
+    pub fn map_to_domain<F, T>(self, to_domain: F) -> EqualFilter<T>
+    where
+        F: Fn(I) -> T,
+    {
+        EqualFilter {
+            equal_to: self.equal_to.map(&to_domain),
+            not_equal_to: self.not_equal_to.map(&to_domain),
+            equal_any: self
+                .equal_any
+                .map(|inputs| inputs.into_iter().map(&to_domain).collect()),
+            not_equal_all: None,
+        }
+    }
+}
+
 impl<T> From<EqualFilterInput<T>> for EqualFilter<T>
 where
     T: InputType,
@@ -111,6 +127,7 @@ where
             equal_to,
             equal_any,
             not_equal_to,
+            not_equal_all: None,
         }
     }
 }
@@ -127,6 +144,7 @@ impl From<EqualFilterInput<InvoiceNodeType>> for EqualFilter<InvoiceType> {
             equal_to: equal_to.map(InvoiceType::from),
             equal_any: equal_any.map(|types| types.into_iter().map(InvoiceType::from).collect()),
             not_equal_to: not_equal_to.map(InvoiceType::from),
+            not_equal_all: None,
         }
     }
 }
@@ -143,6 +161,7 @@ impl From<EqualFilterInput<InvoiceNodeStatus>> for EqualFilter<InvoiceStatus> {
             equal_to: equal_to.map(InvoiceStatus::from),
             equal_any: equal_any.map(|types| types.into_iter().map(InvoiceStatus::from).collect()),
             not_equal_to: not_equal_to.map(InvoiceStatus::from),
+            not_equal_all: None,
         }
     }
 }

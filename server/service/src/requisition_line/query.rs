@@ -1,5 +1,7 @@
-use domain::PaginationOption;
-use repository::{RequisitionLine, RequisitionLineFilter, RequisitionLineRepository};
+use domain::{EqualFilter, PaginationOption};
+use repository::{
+    RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
@@ -19,6 +21,16 @@ pub fn get_requisition_lines(
         rows: repository.query(pagination, filter.clone())?,
         count: i64_to_u32(repository.count(filter)?),
     })
+}
+
+pub fn get_requisition_line(
+    ctx: &ServiceContext,
+    id: &str,
+) -> Result<Option<RequisitionLine>, RepositoryError> {
+    let mut result = RequisitionLineRepository::new(&ctx.connection)
+        .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to(id)))?;
+
+    Ok(result.pop())
 }
 
 #[cfg(test)]

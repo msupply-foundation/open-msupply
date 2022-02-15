@@ -29,6 +29,10 @@ macro_rules! apply_equal_filter {
             if let Some(value) = equal_filter.equal_any {
                 $query = $query.filter($dsl_field.eq_any(value));
             }
+
+            if let Some(value) = equal_filter.not_equal_all {
+                $query = $query.filter($dsl_field.ne_all(value));
+            }
         }
     }};
 }

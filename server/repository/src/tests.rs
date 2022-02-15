@@ -326,32 +326,37 @@ mod repository_test {
         database_settings::get_storage_connection_manager,
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
-            mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
-            mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
-            mock_request_draft_requisition2, mock_stocktake_a, mock_stocktake_b,
-            mock_stocktake_no_line_a, mock_stocktake_no_line_b, MockDataInserts,
+            mock_inbound_shipment_number_store_a, mock_item_stats_item1, mock_item_stats_item2,
+            mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
+            mock_request_draft_requisition, mock_request_draft_requisition2, mock_stocktake_a,
+            mock_stocktake_b, mock_test_master_list_name1, mock_test_master_list_name2,
+            mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
+            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts, mock_stocktake_no_line_a, mock_stocktake_no_line_b,
         },
         schema::{
             ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, KeyValueType,
             NumberRowType, RequisitionRowStatus,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, KeyValueStoreRepository,
-        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
+        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, ItemStatsFilter,
+        ItemStatsRepository, KeyValueStoreRepository, MasterListLineRepository,
+        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
         MasterListRowRepository, NameQueryRepository, NameRepository, NumberRowRepository,
         OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
         RequisitionRowRepository, StockLineRepository, StockLineRowRepository,
         StocktakeRowRepository, StoreRowRepository, UserAccountRepository,
     };
-    use chrono::Duration;
+    use chrono::{Duration, Utc};
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
     use domain::{
+        master_list::MasterListFilter,
         master_list_line::MasterListLineFilter,
         name::{NameFilter, NameSort, NameSortField},
         stock_line::StockLineFilter,
         DateFilter, EqualFilter, Pagination, SimpleStringFilter,
     };
+    use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -619,8 +624,8 @@ mod repository_test {
     }
 
     #[actix_rt::test]
-    async fn test_master_list_repository() {
-        let settings = test_db::get_test_db_settings("omsupply-database-master-list-repository");
+    async fn test_master_list_row_repository() {
+        let settings = test_db::get_test_db_settings("test_master_list_row_repository");
         test_db::setup(&settings).await;
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
@@ -642,6 +647,87 @@ mod repository_test {
             .await
             .unwrap();
         assert_eq!(master_list_upsert_1, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_master_list_repository() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_master_list_repository", MockDataInserts::all()).await;
+
+        let repo = MasterListRepository::new(&connection);
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name_id(EqualFilter::equal_to(&mock_test_master_list_name1().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name_id(EqualFilter::equal_to(&mock_test_master_list_name2().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter2().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_store_id(EqualFilter::equal_to(&mock_test_master_list_store1().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter2().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name(SimpleStringFilter::like("test_master_list_name")),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter2().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        )
     }
 
     #[actix_rt::test]
@@ -1247,6 +1333,7 @@ mod repository_test {
                         equal_to: Some(99),
                         not_equal_to: None,
                         equal_any: None,
+                        not_equal_all: None,
                     }),
             )
             .unwrap();
@@ -1267,6 +1354,72 @@ mod repository_test {
                     id: requisition_line.requisition_line_row.id
                 })
                 .collect::<Vec<Id>>()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_item_stats_repository() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_item_stats_repository", MockDataInserts::all()).await;
+
+        let repo = ItemStatsRepository::new(&connection);
+        let item_ids = vec![mock_item_stats_item1().id, mock_item_stats_item2().id];
+        let filter = Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids)));
+
+        // Store a normal default look back (3 * 30 days)
+        let mut item_stats = repo.query("store_a", None, filter.clone()).unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+        assert_eq!(item_stats[0].stock_on_hand(), 210);
+        assert_eq!(item_stats[1].stock_on_hand(), 22);
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption(),
+            ((40 + 4 + 3) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
+        );
+        assert_eq!(
+            item_stats[1].average_monthly_consumption(),
+            ((15) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
+        );
+
+        // Reduce to looking back 10 days
+        let mut item_stats = repo
+            .query(
+                "store_a",
+                Some(Utc::now().naive_utc() - Duration::days(10)),
+                filter.clone(),
+            )
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+        assert_eq!(item_stats[0].stock_on_hand(), 210);
+        assert_eq!(item_stats[1].stock_on_hand(), 22);
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption(),
+            ((40 + 4) as f64 / (10) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
+        );
+        // No invoice lines check
+        assert_eq!(item_stats[1].average_monthly_consumption(), 0);
+
+        // Store b normal default look back (3 * 30 days)
+        let mut item_stats = repo.query("store_b", None, filter.clone()).unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+        assert_eq!(item_stats[0].stock_on_hand(), 10);
+        // No stock line check
+        assert_eq!(item_stats[1].stock_on_hand(), 0);
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption(),
+            ((20000) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
+        );
+        assert_eq!(
+            item_stats[1].average_monthly_consumption(),
+            ((300) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
         );
     }
 

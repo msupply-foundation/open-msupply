@@ -9,7 +9,7 @@ mod requisition_row;
 pub use self::requisition::*;
 pub use self::requisition_row::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RequisitionFilter {
     pub id: Option<EqualFilter<String>>,
     pub requisition_number: Option<EqualFilter<i64>>,
@@ -26,6 +26,7 @@ pub struct RequisitionFilter {
     pub store_id: Option<EqualFilter<String>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum RequisitionSortField {
     RequisitionNumber,
     Type,
@@ -99,6 +100,7 @@ impl RequisitionRowStatus {
             equal_to: Some(self.clone()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 }
@@ -109,6 +111,7 @@ impl RequisitionRowType {
             equal_to: Some(self.clone()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 }

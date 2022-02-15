@@ -9,6 +9,7 @@ use crate::{
     },
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{OutboundShipmentLineService, OutboundShipmentLineServiceTrait},
+    item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     permission_validation::{ValidationService, ValidationServiceTrait},
@@ -37,6 +38,8 @@ pub struct ServiceProvider {
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
+    // Stock stats
+    pub item_stats_service: Box<dyn ItemStatsServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -61,6 +64,7 @@ impl ServiceProvider {
             stocktake_line_service: Box::new(StocktakeLineService {}),
             requisition_service: Box::new(RequisitionService {}),
             requisition_line_service: Box::new(RequisitionLineService {}),
+            item_stats_service: Box::new(ItemStatsService {}),
         }
     }
 

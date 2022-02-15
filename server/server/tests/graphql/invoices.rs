@@ -123,7 +123,7 @@ mod graphql {
     }
 
     macro_rules! sort_test {
-        ($key:expr, $field:ident, $gql_field:expr, $invoices:expr, $desc:expr) => {{
+        ($key:expr, $field:ident, $gql_field:expr, $invoices:expr, $desc:expr, $to_lowercase:expr) => {{
             let query = r#"query Invoices($sort: [InvoiceSortInput]) {
                 invoices(sort: $sort){
                     ... on InvoiceConnector {
@@ -142,9 +142,25 @@ mod graphql {
               }));
 
               if $desc {
-                $invoices.sort_by(|b, a| a.$field.cmp(&b.$field));
+                $invoices.sort_by(|b, a| {
+                    if $to_lowercase {
+                        let a = &format!("{}", a.$field).to_lowercase();
+                        let b = &format!("{}", b.$field).to_lowercase();
+                        a.cmp(b)
+                    } else {
+                        a.$field.cmp(&b.$field)
+                    }
+                });
               } else {
-                $invoices.sort_by(|a, b| a.$field.cmp(&b.$field));
+                $invoices.sort_by(|a, b| {
+                    if $to_lowercase {
+                        let a = &format!("{}", a.$field).to_lowercase();
+                        let b = &format!("{}", b.$field).to_lowercase();
+                        a.cmp(b)
+                    } else {
+                        a.$field.cmp(&b.$field)
+                    }
+                });
               }
 
               let expected = json!({
@@ -177,7 +193,8 @@ mod graphql {
             invoice_number,
             "invoiceNumber",
             invoices,
-            true
+            true,
+            false
         );
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
         let (query, variables, expected) = sort_test!(
@@ -185,6 +202,7 @@ mod graphql {
             invoice_number,
             "invoiceNumber",
             invoices,
+            false,
             false
         );
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
@@ -194,6 +212,7 @@ mod graphql {
             other_party_name,
             "otherPartyName",
             invoices,
+            true,
             true
         );
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
@@ -202,7 +221,8 @@ mod graphql {
             other_party_name,
             "otherPartyName",
             invoices,
-            false
+            false,
+            true
         );
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
     }

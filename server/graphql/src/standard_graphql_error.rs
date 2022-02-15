@@ -43,6 +43,22 @@ impl From<RepositoryError> for StandardGraphqlError {
     }
 }
 
+impl StandardGraphqlError {
+    pub fn from_list_error(error: ListError) -> async_graphql::Error {
+        let formatted_error = format!("{:#?}", error);
+        let graphql_error = match error {
+            ListError::DatabaseError(error) => error.into(),
+            ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(formatted_error),
+            ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(formatted_error),
+        };
+        graphql_error.extend()
+    }
+
+    pub fn from_repository_error(error: RepositoryError) -> async_graphql::Error {
+        StandardGraphqlError::from(error).extend()
+    }
+}
+
 /// Validates current user is authenticated and authorized
 pub fn validate_auth(
     ctx: &Context<'_>,

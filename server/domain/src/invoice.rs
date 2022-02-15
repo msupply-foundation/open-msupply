@@ -36,6 +36,7 @@ pub struct Invoice {
     pub delivered_datetime: Option<NaiveDateTime>,
     pub verified_datetime: Option<NaiveDateTime>,
     pub colour: Option<String>,
+    pub requisition_id: Option<String>,
 }
 #[derive(Clone)]
 pub struct InvoiceFilter {
@@ -53,6 +54,7 @@ pub struct InvoiceFilter {
     pub shipped_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
+    pub requisition_id: Option<EqualFilter<String>>,
 }
 
 impl InvoiceFilter {
@@ -72,6 +74,7 @@ impl InvoiceFilter {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
+            requisition_id: None,
         }
     }
 
@@ -124,6 +127,11 @@ impl InvoiceFilter {
         self.verified_datetime = Some(filter);
         self
     }
+
+    pub fn requisition_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.requisition_id = Some(filter);
+        self
+    }
 }
 
 pub enum InvoiceSortField {
@@ -148,6 +156,7 @@ impl InvoiceStatus {
             equal_to: Some(self.clone()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -156,6 +165,7 @@ impl InvoiceStatus {
             equal_to: None,
             not_equal_to: Some(self.clone()),
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -164,6 +174,7 @@ impl InvoiceStatus {
             equal_to: None,
             not_equal_to: None,
             equal_any: Some(value),
+            not_equal_all: None,
         }
     }
 }
@@ -174,6 +185,7 @@ impl InvoiceType {
             equal_to: Some(self.clone()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -182,6 +194,7 @@ impl InvoiceType {
             equal_to: None,
             not_equal_to: Some(self.clone()),
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -190,6 +203,7 @@ impl InvoiceType {
             equal_to: None,
             not_equal_to: None,
             equal_any: Some(value),
+            not_equal_all: None,
         }
     }
 }

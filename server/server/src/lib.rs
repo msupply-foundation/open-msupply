@@ -8,7 +8,7 @@ use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
 
 use graphql::{
     config as graphql_config,
-    loader::{get_loaders, LoaderMap, LoaderRegistry},
+    loader::{get_loaders, LoaderRegistry},
 };
 use log::{error, info, warn};
 use repository::get_storage_connection_manager;
@@ -45,9 +45,7 @@ pub async fn start_server(
         // TODO: disable once frontend supports auth!
         debug_no_access_control: true,
     });
-    let connection_manager = get_storage_connection_manager(&settings.database);
-    let loaders: LoaderMap = get_loaders(&connection_manager).await;
-    let service_provider = ServiceProvider::new(connection_manager.clone());
+
     let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
         sync::get_sync_actors();
 
@@ -55,10 +53,16 @@ pub async fn start_server(
         sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
     };
 
-    let connection_manager_data_app = Data::new(connection_manager);
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let connection_manager_data_app = Data::new(connection_manager.clone());
     let connection_manager_data_sync = connection_manager_data_app.clone();
-    let loader_registry_data = Data::new(LoaderRegistry { loaders });
+
+    let service_provider = ServiceProvider::new(connection_manager.clone());
     let service_provider_data = Data::new(service_provider);
+
+    let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
+    let loader_registry_data = Data::new(LoaderRegistry { loaders });
+
     let actor_registry_data = Data::new(actor_registry);
 
     let mut http_server = HttpServer::new(move || {

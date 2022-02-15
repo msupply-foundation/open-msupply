@@ -1,5 +1,6 @@
 use std::{collections::HashMap, ops::Index};
 
+mod common;
 mod full_invoice;
 mod full_master_list;
 mod invoice;
@@ -14,9 +15,12 @@ mod stocktake;
 mod stocktake_line;
 mod store;
 mod test_invoice_count_service;
+mod test_item_stats_repository;
+mod test_master_list_repository;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
 mod test_requisition_line_repository;
+mod test_requisition_queries;
 mod test_requisition_repository;
 mod test_requisition_service;
 mod test_stocktake;
@@ -25,13 +29,14 @@ mod test_unallocated_line;
 mod unit;
 mod user_account;
 
+use common::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
 pub use location::*;
-pub use name::{mock_name_store_a, mock_name_store_b, mock_names};
+pub use name::*;
 pub use name_store_join::mock_name_store_joins;
 pub use number::*;
 pub use stock_line::*;
@@ -39,9 +44,12 @@ pub use stocktake::*;
 pub use stocktake_line::*;
 pub use store::*;
 pub use test_invoice_count_service::*;
+pub use test_item_stats_repository::*;
+pub use test_master_list_repository::*;
 pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
 pub use test_requisition_line_repository::*;
+pub use test_requisition_queries::*;
 pub use test_requisition_repository::*;
 pub use test_requisition_service::*;
 pub use test_stocktake::*;
@@ -55,10 +63,7 @@ use crate::{
     StocktakeLineRowRepository, StocktakeRowRepository,
 };
 
-use self::{
-    full_invoice::{insert_full_mock_invoice, FullMockInvoice},
-    unit::mock_units,
-};
+use self::unit::mock_units;
 
 use super::{
     db_diesel::{
@@ -76,11 +81,12 @@ pub struct MockData {
     pub items: Vec<ItemRow>,
     pub locations: Vec<LocationRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
+    pub full_requisitions: Vec<FullMockRequisition>,
     pub invoices: Vec<InvoiceRow>,
     pub stock_lines: Vec<StockLineRow>,
     pub invoice_lines: Vec<InvoiceLineRow>,
     pub full_invoices: HashMap<String, FullMockInvoice>,
-    pub full_master_list: HashMap<String, FullMockMasterList>,
+    pub full_master_lists: Vec<FullMockMasterList>,
     pub numbers: Vec<NumberRow>,
     pub requisitions: Vec<RequisitionRow>,
     pub requisition_lines: Vec<RequisitionLineRow>,
@@ -95,11 +101,12 @@ pub struct MockDataInserts {
     pub items: bool,
     pub locations: bool,
     pub name_store_joins: bool,
+    pub full_requisitions: bool,
     pub invoices: bool,
     pub stock_lines: bool,
     pub invoice_lines: bool,
     pub full_invoices: bool,
-    pub full_master_list: bool,
+    pub full_master_lists: bool,
     pub numbers: bool,
     pub requisitions: bool,
     pub requisition_lines: bool,
@@ -116,11 +123,12 @@ impl MockDataInserts {
             items: true,
             locations: true,
             name_store_joins: true,
+            full_requisitions: true,
             invoices: true,
             stock_lines: true,
             invoice_lines: true,
             full_invoices: true,
-            full_master_list: true,
+            full_master_lists: true,
             numbers: true,
             requisitions: true,
             requisition_lines: true,
@@ -137,11 +145,12 @@ impl MockDataInserts {
             items: false,
             locations: false,
             name_store_joins: false,
+            full_requisitions: false,
             invoices: false,
             stock_lines: false,
             invoice_lines: false,
             full_invoices: false,
-            full_master_list: false,
+            full_master_lists: false,
             numbers: false,
             requisitions: false,
             requisition_lines: false,
@@ -201,7 +210,7 @@ impl MockDataInserts {
     }
 
     pub fn full_master_list(mut self) -> Self {
-        self.full_master_list = true;
+        self.full_master_lists = true;
         self
     }
 
@@ -257,11 +266,12 @@ fn all_mock_data() -> MockDataCollection {
             items: mock_items(),
             locations: mock_locations(),
             name_store_joins: mock_name_store_joins(),
+            full_requisitions: vec![],
             invoices: mock_invoices(),
             stock_lines: mock_stock_lines(),
             invoice_lines: mock_invoice_lines(),
             full_invoices: mock_full_invoices(),
-            full_master_list: mock_full_master_list(),
+            full_master_lists: mock_full_master_lists(),
             numbers: mock_numbers(),
             stocktakes: mock_stocktake_data(),
             stocktake_lines: mock_stocktake_line_data(),
@@ -290,9 +300,22 @@ fn all_mock_data() -> MockDataCollection {
         mock_test_requisition_line_repository(),
     );
     data.insert(
+        "mock_test_item_stats_repository",
+        mock_test_item_stats_repository(),
+    );
+    data.insert(
         "mock_test_requisition_service",
         mock_test_requisition_service(),
     );
+    data.insert(
+        "mock_test_requisition_queries",
+        mock_test_requisition_queries(),
+    );
+    data.insert(
+        "mock_test_master_list_repository",
+        mock_test_master_list_repository(),
+    );
+
     data
 }
 
@@ -344,6 +367,12 @@ pub async fn insert_mock_data(
             }
         }
 
+        if inserts.full_requisitions {
+            for row in mock_data.full_requisitions.iter() {
+                insert_full_mock_requisition(&row, connection)
+            }
+        }
+
         if inserts.invoices {
             let repo = InvoiceRepository::new(connection);
             for row in &mock_data.invoices {
@@ -371,8 +400,8 @@ pub async fn insert_mock_data(
             }
         }
 
-        if inserts.full_master_list {
-            for row in mock_data.full_master_list.values() {
+        if inserts.full_master_lists {
+            for row in mock_data.full_master_lists.iter() {
                 insert_full_mock_master_list(row, connection)
             }
         }

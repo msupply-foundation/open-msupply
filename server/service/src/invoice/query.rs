@@ -50,11 +50,7 @@ pub fn get_invoice_by_number(
 ) -> Result<Option<Invoice>, RepositoryError> {
     let mut result = InvoiceQueryRepository::new(&ctx.connection).query_by_filter(
         InvoiceFilter::new()
-            .invoice_number(EqualFilter {
-                equal_to: Some(invoice_number as i64),
-                not_equal_to: None,
-                equal_any: None,
-            })
+            .invoice_number(EqualFilter::equal_to_i64(invoice_number as i64))
             .r#type(r#type.equal_to()),
     )?;
 

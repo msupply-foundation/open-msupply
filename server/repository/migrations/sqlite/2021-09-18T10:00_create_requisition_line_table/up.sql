@@ -7,8 +7,6 @@ CREATE TABLE requisition_line (
     requested_quantity INTEGER NOT NULL,
     calculated_quantity INTEGER NOT NULL,
     supply_quantity INTEGER NOT NULL,
-    request_stock_on_hand INTEGER NOT NULL,
-    request_average_monthly_consumption INTEGER NOT NULL,
-    response_stock_on_hand INTEGER NOT NULL,
-    response_average_monthly_consumption INTEGER NOT NULL
+    stock_on_hand INTEGER NOT NULL,
+    average_monthly_consumption INTEGER NOT NULL
 )

@@ -99,10 +99,8 @@ table! {
         requested_quantity -> Integer,
         calculated_quantity -> Integer,
         supply_quantity -> Integer,
-        request_stock_on_hand -> Integer ,
-        request_average_monthly_consumption -> Integer,
-        response_stock_on_hand -> Integer,
-        response_average_monthly_consumption -> Integer,
+        stock_on_hand -> Integer ,
+        average_monthly_consumption -> Integer,
     }
 }
 
@@ -295,6 +293,25 @@ table! {
         table_name -> crate::schema::changelog::ChangelogTableNameMapping,
         row_id -> Text,
         row_action -> crate::schema::changelog::ChangelogActionMapping,
+    }
+}
+
+table! {
+    consumption (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        consumption_quantity -> Integer,
+        consumption_datetime -> Nullable<Timestamp>,
+    }
+}
+
+table! {
+    stock_info (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        stock_on_hand -> BigInt,
     }
 }
 

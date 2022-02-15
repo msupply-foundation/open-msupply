@@ -190,34 +190,18 @@ mod graphql {
         let test_service = TestService(Box::new(|_, filter, _| {
             assert_eq!(
                 filter,
-                Some(MasterListFilter {
-                    id: Some(EqualFilter {
-                        equal_to: Some("test_id_filter".to_owned()),
-                        not_equal_to: None,
-                        equal_any: None
-                    }),
-                    name: Some(SimpleStringFilter {
-                        equal_to: Some("name_filter".to_owned()),
-                        like: None
-                    }),
-                    code: Some(SimpleStringFilter {
-                        equal_to: Some("code_filter".to_owned()),
-                        like: None
-                    }),
-                    description: Some(SimpleStringFilter {
-                        equal_to: Some("description_filter_1".to_owned()),
-                        like: Some("description_filter_2".to_owned()),
-                    }),
-                    exists_for_name: Some(SimpleStringFilter {
-                        equal_to: None,
-                        like: Some("exists_for_name_filter".to_owned()),
-                    }),
-                    exists_for_name_id: Some(EqualFilter {
-                        equal_to: None,
-                        not_equal_to: Some("test_name_id_filter".to_owned()),
-                        equal_any: None
-                    })
-                })
+                Some(
+                    MasterListFilter::new()
+                        .id(EqualFilter::equal_to("test_id_filter"))
+                        .name(SimpleStringFilter::equal_to("name_filter"))
+                        .code(SimpleStringFilter::equal_to("code_filter"))
+                        .description(SimpleStringFilter {
+                            equal_to: Some("description_filter_1".to_owned()),
+                            like: Some("description_filter_2".to_owned()),
+                        })
+                        .exists_for_name(SimpleStringFilter::like("exists_for_name_filter"))
+                        .exists_for_name_id(EqualFilter::not_equal_to("test_name_id_filter"))
+                )
             );
             Ok(ListResult::empty())
         }));

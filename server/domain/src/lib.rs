@@ -39,6 +39,7 @@ pub struct EqualFilter<T> {
     pub equal_to: Option<T>,
     pub not_equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
+    pub not_equal_all: Option<Vec<T>>,
 }
 
 impl EqualFilter<i64> {
@@ -47,6 +48,7 @@ impl EqualFilter<i64> {
             equal_to: Some(value),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 }
@@ -57,6 +59,7 @@ impl EqualFilter<String> {
             equal_to: Some(value.to_owned()),
             not_equal_to: None,
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -65,6 +68,7 @@ impl EqualFilter<String> {
             equal_to: None,
             not_equal_to: Some(value.to_owned()),
             equal_any: None,
+            not_equal_all: None,
         }
     }
 
@@ -73,11 +77,21 @@ impl EqualFilter<String> {
             equal_to: None,
             not_equal_to: None,
             equal_any: Some(value),
+            not_equal_all: None,
+        }
+    }
+
+    pub fn not_equal_all(value: Vec<String>) -> Self {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: Some(value),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
     pub before_or_equal_to: Option<NaiveDateTime>,
@@ -90,6 +104,30 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: Some(from),
             before_or_equal_to: Some(to),
+        }
+    }
+
+    pub fn equal_to(value: NaiveDateTime) -> Self {
+        DatetimeFilter {
+            equal_to: Some(value.to_owned()),
+            after_or_equal_to: None,
+            before_or_equal_to: None,
+        }
+    }
+
+    pub fn after_or_equal_to(value: NaiveDateTime) -> Self {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: Some(value.to_owned()),
+            before_or_equal_to: None,
+        }
+    }
+
+    pub fn before_or_equal_to(value: NaiveDateTime) -> Self {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: None,
+            before_or_equal_to: Some(value),
         }
     }
 }

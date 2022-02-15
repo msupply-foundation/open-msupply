@@ -23,6 +23,7 @@ mod inbound_shipment_update;
 mod invoice_by_number;
 mod invoice_query;
 mod invoices;
+mod item_stats;
 mod items;
 mod location_delete;
 mod location_insert;
@@ -54,12 +55,13 @@ where
     OUT: DeserializeOwned,
 {
     let connection_manager = get_storage_connection_manager(&settings.database);
-    let loaders = get_loaders(&connection_manager).await;
-
     let connection_manager_data = actix_web::web::Data::new(connection_manager.clone());
-    let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
+
     let service_provider_data =
         actix_web::web::Data::new(ServiceProvider::new(connection_manager.clone()));
+
+    let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
+    let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
 
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
@@ -106,14 +108,15 @@ async fn run_gql_query(
     service_provider_override: Option<ServiceProvider>,
 ) -> serde_json::Value {
     let connection_manager = get_storage_connection_manager(&settings.database);
-    let loaders = get_loaders(&connection_manager).await;
-
     let connection_manager_data = actix_web::web::Data::new(connection_manager.clone());
-    let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
+
     let service_provider_data = actix_web::web::Data::new(match service_provider_override {
         Some(service_provider) => service_provider,
         None => ServiceProvider::new(connection_manager.clone()),
     });
+
+    let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
+    let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
 
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),

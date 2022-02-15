@@ -1,4 +1,6 @@
+use actix_web::web::Data;
 use anymap::{any::Any, Map};
+use service::service_provider::ServiceProvider;
 
 use crate::loader::{InvoiceLineLoader, InvoiceLoader, ItemLoader, StoreLoader, UserAccountLoader};
 
@@ -7,9 +9,11 @@ use repository::StorageConnectionManager;
 use async_graphql::dataloader::DataLoader;
 
 use super::{
-    name::NameByIdLoader, InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader,
-    LocationByIdLoader, MasterListLineByMasterListId, StockLineByIdLoader, StockLineByItemIdLoader,
-    StockLineByLocationIdLoader, StocktakeLineByStocktakeIdLoader,
+    invoice::InvoiceByRequisitionIdLoader, name::NameByIdLoader, InvoiceLineForRequisitionLine,
+    InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, ItemsStatsForItemLoader,
+    LinkedRequisitionLineLoader, LocationByIdLoader, MasterListLineByMasterListId,
+    RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader, StockLineByIdLoader,
+    StockLineByItemIdLoader, StockLineByLocationIdLoader, StocktakeLineByStocktakeIdLoader,
 };
 
 pub type LoaderMap = Map<AnyLoader>;
@@ -28,7 +32,10 @@ impl LoaderRegistry {
     }
 }
 
-pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> LoaderMap {
+pub async fn get_loaders(
+    connection_manager: &StorageConnectionManager,
+    service_provider: Data<ServiceProvider>,
+) -> LoaderMap {
     let mut loaders: LoaderMap = LoaderMap::new();
 
     let item_loader = DataLoader::new(ItemLoader {
@@ -47,11 +54,19 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
         connection_manager: connection_manager.clone(),
     });
 
+    let invoice_by_requisition_id_loader = DataLoader::new(InvoiceByRequisitionIdLoader {
+        connection_manager: connection_manager.clone(),
+    });
+
     let invoice_line_loader = DataLoader::new(InvoiceLineLoader {
         connection_manager: connection_manager.clone(),
     });
 
     let invoice_line_query_loader = DataLoader::new(InvoiceLineQueryLoader {
+        connection_manager: connection_manager.clone(),
+    });
+
+    let invoice_line_for_requisition_line = DataLoader::new(InvoiceLineForRequisitionLine {
         connection_manager: connection_manager.clone(),
     });
 
@@ -91,20 +106,44 @@ pub async fn get_loaders(connection_manager: &StorageConnectionManager) -> Loade
         connection_manager: connection_manager.clone(),
     });
 
+    let requisitions_by_id_loader = DataLoader::new(RequisitionsByIdLoader {
+        service_provider: service_provider.clone(),
+    });
+
+    let requisition_line_by_requisition_id_loader =
+        DataLoader::new(RequisitionLinesByRequisitionIdLoader {
+            service_provider: service_provider.clone(),
+        });
+
+    let requisition_line_by_linked_requisition_line_id_loader =
+        DataLoader::new(LinkedRequisitionLineLoader {
+            service_provider: service_provider.clone(),
+        });
+
+    let item_stats_for_item_loader = DataLoader::new(ItemsStatsForItemLoader {
+        service_provider: service_provider.clone(),
+    });
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_loader);
     loaders.insert(invoice_loader);
     loaders.insert(invoice_query_loader);
+    loaders.insert(invoice_by_requisition_id_loader);
     loaders.insert(invoice_line_loader);
     loaders.insert(invoice_line_query_loader);
     loaders.insert(invoice_line_stats_loader);
+    loaders.insert(invoice_line_for_requisition_line);
     loaders.insert(stock_line_by_item_id_loader);
     loaders.insert(stock_line_by_location_id_loader);
     loaders.insert(stock_line_by_id_loader);
     loaders.insert(user_account_loader);
     loaders.insert(location_by_id_loader);
     loaders.insert(master_list_line_by_master_list_id);
+    loaders.insert(requisitions_by_id_loader);
+    loaders.insert(requisition_line_by_requisition_id_loader);
+    loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
+    loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
 
     loaders

@@ -1,9 +1,14 @@
-use crate::{loader::StockLineByItemIdLoader, ContextExt};
+use crate::{
+    loader::{ItemStatsLoaderInput, ItemsStatsForItemLoader, StockLineByItemIdLoader},
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::NaiveDateTime;
 use domain::item::Item;
 
-use super::{InternalError, ItemStats, StockLinesResponse};
+use super::{InternalError, ItemStatsNode, StockLinesResponse};
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
@@ -32,8 +37,29 @@ impl ItemNode {
         &self.item.unit_name
     }
 
-    pub async fn stats(&self) -> Result<ItemStats> {
-        todo!()
+    pub async fn stats(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        look_back_datetime: Option<NaiveDateTime>,
+    ) -> Result<ItemStatsNode> {
+        let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
+        let result = loader
+            .load_one(ItemStatsLoaderInput {
+                store_id: store_id.clone(),
+                look_back_datetime,
+                item_id: (&self.item.id).clone(),
+            })
+            .await?
+            .ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find item stats for item {} and store {}",
+                    &self.item.id, store_id
+                ))
+                .extend(),
+            )?;
+
+        Ok(ItemStatsNode::from_domain(result))
     }
 
     async fn available_batches(&self, ctx: &Context<'_>) -> StockLinesResponse {

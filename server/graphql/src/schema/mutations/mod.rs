@@ -33,7 +33,7 @@ use self::{
 
 use super::{
     queries::invoice::*,
-    types::{Connector, InvoiceLineNode},
+    types::{Connector, InvoiceLineNode, NameNode},
 };
 use crate::ContextExt;
 use async_graphql::*;
@@ -346,114 +346,114 @@ impl Mutations {
     async fn insert_request_requisition(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::InsertInput,
     ) -> Result<request_requisition::InsertResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::insert(ctx, store_id, input)
+        request_requisition::insert(ctx, &store_id, input)
     }
 
     async fn update_request_requisition(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::UpdateInput,
     ) -> Result<request_requisition::UpdateResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::update(ctx, store_id, input)
+        request_requisition::update(ctx, &store_id, input)
     }
 
     async fn delete_request_requisition(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::DeleteInput,
     ) -> Result<request_requisition::DeleteResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::delete(ctx, store_id, input)
+        request_requisition::delete(ctx, &store_id, input)
     }
 
     /// Set requested for each line in request requisition to calculated
     async fn use_calculated_quantity(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::UseCalculatedQuantityInput,
     ) -> Result<request_requisition::UseCalculatedQuantityResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::use_calculated_quantity(ctx, store_id, input)
+        request_requisition::use_calculated_quantity(ctx, &store_id, input)
     }
 
-    /// Add requistion lines from master item master list
+    /// Add requisition lines from master item master list
     async fn add_from_master_list(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::AddFromMasterListInput,
     ) -> Result<request_requisition::AddFromMasterListResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::add_from_master_list(ctx, store_id, input)
+        request_requisition::add_from_master_list(ctx, &store_id, input)
     }
 
     async fn insert_request_requisition_line(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::line::InsertInput,
     ) -> Result<request_requisition::line::InsertResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::line::insert(ctx, store_id, input)
+        request_requisition::line::insert(ctx, &store_id, input)
     }
 
     async fn update_request_requisition_line(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::line::UpdateInput,
     ) -> Result<request_requisition::line::UpdateResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::line::update(ctx, store_id, input)
+        request_requisition::line::update(ctx, &store_id, input)
     }
 
     async fn delete_request_requisition_line(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: request_requisition::line::DeleteInput,
     ) -> Result<request_requisition::line::DeleteResponse> {
         // TODO remove and make store_id parameter required
-        request_requisition::line::delete(ctx, store_id, input)
+        request_requisition::line::delete(ctx, &store_id, input)
     }
 
     async fn update_response_requisition(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: response_requisition::UpdateInput,
     ) -> Result<response_requisition::UpdateResponse> {
         // TODO remove and make store_id parameter required
-        response_requisition::update(ctx, store_id, input)
+        response_requisition::update(ctx, &store_id, input)
     }
 
     async fn update_response_requisition_line(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: response_requisition::line::UpdateInput,
     ) -> Result<response_requisition::line::UpdateResponse> {
         // TODO remove and make store_id parameter required
-        response_requisition::line::update(ctx, store_id, input)
+        response_requisition::line::update(ctx, &store_id, input)
     }
 
     /// Set supply quantity to requested quantity
     async fn supply_requested_quantity(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: response_requisition::SupplyRequestedQuantityInput,
     ) -> Result<response_requisition::SupplyRequestedQuantityResponse> {
         // TODO remove and make store_id parameter required
-        response_requisition::supply_requested_quantity(ctx, store_id, input)
+        response_requisition::supply_requested_quantity(ctx, &store_id, input)
     }
 
     /// Create shipment for response requisition
@@ -463,11 +463,11 @@ impl Mutations {
     async fn create_requisition_shipment(
         &self,
         ctx: &Context<'_>,
-        store_id: Option<String>,
+        store_id: String,
         input: response_requisition::CreateRequisitionShipmentInput,
     ) -> Result<response_requisition::CreateRequisitionShipmentResponse> {
         // TODO remove and make store_id parameter required
-        response_requisition::create_requisition_shipment(ctx, store_id, input)
+        response_requisition::create_requisition_shipment(ctx, &store_id, input)
     }
 }
 
@@ -608,6 +608,18 @@ impl InvoiceLineBelongsToAnotherInvoice {
         let connection_manager = ctx.get_connection_manager();
 
         get_invoice(connection_manager, self.0.clone())
+    }
+}
+
+pub struct OtherPartyNotASupplier(NameNode);
+#[Object]
+impl OtherPartyNotASupplier {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not a supplier"
+    }
+
+    pub async fn other_party(&self) -> &NameNode {
+        &self.0
     }
 }
 

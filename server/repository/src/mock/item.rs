@@ -29,6 +29,37 @@ pub fn mock_item_c() -> ItemRow {
         r#type: ItemType::Stock,
     }
 }
+pub fn mock_item_d() -> ItemRow {
+    ItemRow {
+        id: String::from("item_d"),
+        name: String::from("Item E"),
+        code: String::from("item_d_code"),
+        unit_id: None,
+        r#type: ItemType::Stock,
+    }
+}
+
+pub fn mock_item_e() -> ItemRow {
+    let id = "item_e".to_string();
+    ItemRow {
+        id: id.clone(),
+        name: id.clone(),
+        code: id.clone(),
+        unit_id: None,
+        r#type: ItemType::Stock,
+    }
+}
+
+pub fn mock_item_f() -> ItemRow {
+    let id = "item_f".to_string();
+    ItemRow {
+        id: id.clone(),
+        name: id.clone(),
+        code: id.clone(),
+        unit_id: None,
+        r#type: ItemType::Stock,
+    }
+}
 
 pub fn item_query_test1() -> ItemRow {
     ItemRow {
@@ -65,6 +96,9 @@ pub fn mock_items() -> Vec<ItemRow> {
         mock_item_a(),
         mock_item_b(),
         mock_item_c(),
+        mock_item_d(),
+        mock_item_e(),
+        mock_item_f(),
         item_query_test1(),
         item_query_test2(),
         mock_item_service_item(),
