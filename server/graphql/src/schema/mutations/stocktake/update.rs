@@ -1,5 +1,5 @@
 use crate::{
-    schema::types::StocktakeLineConnector,
+    schema::types::{StocktakeLineConnector, StocktakeNode, StocktakeNodeStatus},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -13,8 +13,6 @@ use service::{
         UpdateStocktakeError as ServiceError, UpdateStocktakeInput as UpdateStocktake,
     },
 };
-
-use super::{StocktakeNode, StocktakeNodeStatus};
 
 #[derive(InputObject)]
 pub struct UpdateStocktakeInput {
