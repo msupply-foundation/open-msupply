@@ -9,6 +9,7 @@ pub enum NumberRowType {
     OutboundShipment,
     InventoryAdjustment,
     RequestRequisition,
+    ResponseRequisition,
     Stocktake,
 }
 
