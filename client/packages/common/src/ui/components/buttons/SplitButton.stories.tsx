@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { ComponentMeta } from '@storybook/react';
 import { SplitButton, SplitButtonOption } from './SplitButton';
+import { useI18N } from '@common/intl';
 
 const ops: [
   SplitButtonOption<string>,
@@ -13,8 +14,8 @@ const ops: [
   { label: 'Rebase and merge', value: 'rebaseAndMerge' },
 ];
 
-const Template = () => {
-  const [selectedOption, setSelectedOption] = React.useState<
+const BasicComponent = () => {
+  const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
   >(ops[0]);
 
@@ -32,7 +33,53 @@ const Template = () => {
   );
 };
 
-export const Primary = Template.bind({});
+const IsDisabledComponent = () => {
+  ops[1].isDisabled = true;
+  const [selectedOption, setSelectedOption] = useState<
+    SplitButtonOption<string>
+  >(ops[0]);
+
+  return (
+    <Box>
+      <SplitButton
+        ariaLabel="Split button"
+        ariaControlLabel="open split button menu"
+        options={ops}
+        onClick={option => alert(JSON.stringify(option))}
+        selectedOption={selectedOption}
+        onSelectOption={setSelectedOption}
+      />
+    </Box>
+  );
+};
+
+const RTLComponent = () => {
+  const [selectedOption, setSelectedOption] = useState<
+    SplitButtonOption<string>
+  >(ops[0]);
+  const i18n = useI18N();
+
+  useEffect(() => {
+    i18n.changeLanguage('ar');
+  }, [i18n]);
+
+  return (
+    <Box>
+      <SplitButton
+        ariaLabel="Split button"
+        ariaControlLabel="open split button menu"
+        options={ops}
+        onClick={option => alert(JSON.stringify(option))}
+        selectedOption={selectedOption}
+        onSelectOption={setSelectedOption}
+      />
+    </Box>
+  );
+};
+
+export const Basic = BasicComponent.bind({});
+export const IsDisabled = IsDisabledComponent.bind({});
+export const RTL = RTLComponent.bind({});
 
 export default {
   title: 'Buttons/SplitButton',
