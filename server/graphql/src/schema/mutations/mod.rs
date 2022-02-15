@@ -33,7 +33,7 @@ use self::{
 
 use super::{
     queries::invoice::*,
-    types::{Connector, InvoiceLineNode},
+    types::{Connector, InvoiceLineNode, NameNode},
 };
 use crate::ContextExt;
 use async_graphql::*;
@@ -608,6 +608,18 @@ impl InvoiceLineBelongsToAnotherInvoice {
         let connection_manager = ctx.get_connection_manager();
 
         get_invoice(connection_manager, self.0.clone())
+    }
+}
+
+pub struct OtherPartyNotASupplier(NameNode);
+#[Object]
+impl OtherPartyNotASupplier {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not a supplier"
+    }
+
+    pub async fn other_party(&self) -> &NameNode {
+        &self.0
     }
 }
 

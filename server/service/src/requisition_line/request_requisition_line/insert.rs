@@ -7,7 +7,7 @@ use crate::{
         query::get_requisition_line,
     },
     service_provider::ServiceContext,
-    stock_take_line::validate::check_item_exists,
+    stocktake_line::validate::check_item_exists,
 };
 
 use repository::{

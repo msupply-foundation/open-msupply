@@ -1,5 +1,5 @@
 use crate::{
-    schema::types::RequisitionNode,
+    schema::{mutations::OtherPartyNotASupplier, types::{RequisitionNode, NameNode}},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -98,9 +98,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::OtherPartyNotASupplier => {
+        ServiceError::OtherPartyNotASupplier(name) => {
             return Ok(InsertErrorInterface::OtherPartyNotASupplier(
-                OtherPartyNotASupplier {},
+                OtherPartyNotASupplier(NameNode { name }),
             ))
         }
         // Standard Graphql Errors
@@ -113,12 +113,4 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     };
 
     Err(graphql_error.extend())
-}
-
-pub struct OtherPartyNotASupplier;
-#[Object]
-impl OtherPartyNotASupplier {
-    pub async fn description(&self) -> &'static str {
-        "Other party name is not a supplier"
-    }
 }
