@@ -181,7 +181,7 @@ macro_rules! assert_graphql_query {
         )
         .await;
 
-        match actual["errors"].as_array() {
+        match actual.get("errors").and_then(serde_json::Value::as_array) {
             Some(errors) => {
                 if !errors.is_empty() {
                     panic!("Request failed with standard error(s): {}",
