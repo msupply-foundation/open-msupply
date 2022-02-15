@@ -1,4 +1,6 @@
-use domain::{invoice::InvoiceFilter, name::NameFilter, EqualFilter};
+use domain::{
+    inbound_shipment::UpdateInboundShipment, invoice::InvoiceFilter, name::NameFilter, EqualFilter,
+};
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
     InvoiceQueryRepository, InvoiceRepository, NameQueryRepository, NameRepository,
@@ -8,24 +10,31 @@ use repository::{
 
 use self::{
     invoice::{
-        create_and_link_invoice::{
-            create_and_line_invoice_processor, CreateAndLinkInvoiceProcessoResult,
+        create_and_link_inbound_shipment::{
+            create_and_line_invoice_processor, CreateAndLinkInvoiceProcessoResult, CreateAndLinkInboundShipmentProcessor,
         },
-        create_invoice::{create_invoice_processor, CreateInvoiceProcessoResult},
+        create_inbound_shipment::{
+            create_invoice_processor, CreateInboundShipmentProcessor, CreateInvoiceProcessoResult,
+        },
         update_inbound_shipment::{
-            update_inbound_shipment_processor, UpdateInboundShipmentProcessorResult,
+            update_inbound_shipment_processor, UpdateInboundShipmentProcessorResult, UpdateInboundShipmentProcessor,
         },
         update_outbound_shipment_status::{
-            update_outbound_shipment_status_processor, UpdateOutboundShipmentStatusProcessorResult,
+            update_outbound_shipment_status_processor, UpdateOutboundShipmentStatusProcessorResult, UpdateOutboundShipmentStatusProcessor,
         },
     },
     requisition::{
-        create_and_link_requisition::{
-            create_and_link_requisition_processor, CreateAndLinkeRequisitionProcessorResult,
+        create_and_link_response_requisition::{
+            create_and_link_requisition_processor, CreateAndLinkResponseRequisitionProcessor,
+            CreateAndLinkeRequisitionProcessorResult,
         },
-        create_requisition::{create_requisition_processor, CreateRequisitionProcessorResult},
-        update_request_status::{
-            update_requisition_status_processor, UpdateRequisitionStatusProcessorResult,
+        create_response_requisition::{
+            create_requisition_processor, CreateRequisitionProcessor,
+            CreateRequisitionProcessorResult, CreateResponseRequisitionProcessor,
+        },
+        update_request_requisition_status::{
+            update_requisition_status_processor, UpdateRequestRequisitionStatusProcessor,
+            UpdateRequisitionStatusProcessorResult,
         },
     },
 };
@@ -57,17 +66,10 @@ pub enum ProcessRecordError {
     CannotFindStatsForItemAndStore { store_id: String, item_id: String },
     DatabaseError(RepositoryError),
 }
-
 #[derive(Debug)]
 pub enum ProcessRecordResult {
-    CreateAndLinkeRequisitionProcessorResult(CreateAndLinkeRequisitionProcessorResult),
-    UpdateRequisitionStatusProcessorResult(UpdateRequisitionStatusProcessorResult),
-    CreateRequisitionProcessorResult(CreateRequisitionProcessorResult),
-    CreateInvoiceProcessoResult(CreateInvoiceProcessoResult),
-    CreateAndLinkInvoiceProcessoResult(CreateAndLinkInvoiceProcessoResult),
-    UpdateInboundShipmentProcessorResult(UpdateInboundShipmentProcessorResult),
-    UpdateOutboundShipmentStatusProcessorResult(UpdateOutboundShipmentStatusProcessorResult),
-    NoProcessorMatched,
+    ProcessRecordResult(String),
+    ProcessorNotMatched,
 }
 
 #[derive(Debug)]
@@ -80,6 +82,18 @@ pub fn process_records(
     connection: &StorageConnection,
     records: Vec<Record>,
 ) -> Result<Vec<ProcessRecordResultSet>, ProcessRecordError> {
+    let processors: Vec<Box<dyn SyncProcessor>> = vec![
+        // Requisitions
+        Box::new(CreateResponseRequisitionProcessor { connection }),
+        Box::new(CreateAndLinkResponseRequisitionProcessor { connection }),
+        Box::new(CreateAndLinkResponseRequisitionProcessor { connection }),
+        Box::new(UpdateRequestRequisitionStatusProcessor { connection }),
+        // Shipments
+        Box::new(CreateInboundShipmentProcessor { connection }),
+        Box::new(CreateAndLinkInboundShipmentProcessor { connection }),
+        Box::new(UpdateInboundShipmentProcessor { connection }),
+        Box::new(UpdateOutboundShipmentStatusProcessor { connection }),
+    ];
     // TODO transaction
     let mut results = Vec::new();
 
@@ -101,82 +115,36 @@ pub fn process_records(
             record,
         };
 
-        // Run through processors
+        // Iterate over processors
+        let mut processor_matched = false;
 
-        // Requisitions
-        if let Some(result) = create_requisition_processor(connection, &record_for_processing)? {
-            results.push(ProcessRecordResultSet {
-                result: ProcessRecordResult::CreateRequisitionProcessorResult(result),
-                record: record_for_processing,
-            });
-            continue;
+        for processor in processors {
+            if let Some(result) = processor.try_process_record(&record_for_processing)? {
+                results.push(ProcessRecordResultSet {
+                    result: ProcessRecordResult::ProcessRecordResult(result),
+                    record: record_for_processing,
+                });
+                processor_matched = true;
+                break;
+            }
         }
 
-        if let Some(result) =
-            create_and_link_requisition_processor(connection, &record_for_processing)?
-        {
+        if !processor_matched {
             results.push(ProcessRecordResultSet {
-                result: ProcessRecordResult::CreateAndLinkeRequisitionProcessorResult(result),
+                result: ProcessRecordResult::ProcessorNotMatched,
                 record: record_for_processing,
-            });
-            continue;
+            })
         }
-
-        if let Some(result) =
-            update_requisition_status_processor(connection, &record_for_processing)?
-        {
-            results.push(ProcessRecordResultSet {
-                result: ProcessRecordResult::UpdateRequisitionStatusProcessorResult(result),
-                record: record_for_processing,
-            });
-            continue;
-        }
-
-        // Invoices
-        if let Some(result) = create_invoice_processor(connection, &record_for_processing)? {
-            results.push(ProcessRecordResultSet {
-                result: ProcessRecordResult::CreateInvoiceProcessoResult(result),
-                record: record_for_processing,
-            });
-            continue;
-        }
-
-        if let Some(result) = create_and_line_invoice_processor(connection, &record_for_processing)?
-        {
-            results.push(ProcessRecordResultSet {
-                result: ProcessRecordResult::CreateAndLinkInvoiceProcessoResult(result),
-                record: record_for_processing,
-            });
-            continue;
-        }
-
-        if let Some(result) = update_inbound_shipment_processor(connection, &record_for_processing)?
-        {
-            results.push(ProcessRecordResultSet {
-                result: ProcessRecordResult::UpdateInboundShipmentProcessorResult(result),
-                record: record_for_processing,
-            });
-            continue;
-        }
-
-        if let Some(result) =
-            update_outbound_shipment_status_processor(connection, &record_for_processing)?
-        {
-            results.push(ProcessRecordResultSet {
-                result: ProcessRecordResult::UpdateOutboundShipmentStatusProcessorResult(result),
-                record: record_for_processing,
-            });
-            continue;
-        }
-
-        // No processors matched
-        results.push(ProcessRecordResultSet {
-            result: ProcessRecordResult::NoProcessorMatched,
-            record: record_for_processing,
-        });
     }
 
     Ok(results)
+}
+
+pub trait SyncProcessor {
+    fn try_process_record(
+        &self,
+        record_for_processing: &RecordForProcessing,
+    ) -> Result<Option<String>, ProcessRecordError>;
 }
 
 fn get_other_party_store(
