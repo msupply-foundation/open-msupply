@@ -34,6 +34,7 @@ pub enum InsertRequestRequisitionLineError {
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
+    // Should never happen
     CannotFindItemStatusForRequisitionLine,
     NewlyCreatedRequisitionLineDoesNotExist,
     DatabaseError(RepositoryError),
