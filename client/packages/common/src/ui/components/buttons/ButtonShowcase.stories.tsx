@@ -10,7 +10,17 @@ import { Color } from '../menus';
 import { ToggleButton } from './ToggleButton';
 import { ColorSelectButton } from './ColorSelectButton';
 import { useTranslation } from '@common/intl';
-import { StoryProvider } from '../../../utils/testing';
+import { SplitButtonOption } from '@common/components';
+
+const ops: [
+  SplitButtonOption<string>,
+  SplitButtonOption<string>,
+  SplitButtonOption<string>
+] = [
+  { label: 'Create a merge commit', value: 'createAndMerge' },
+  { label: 'Squash and merge', value: 'squashAndMerge' },
+  { label: 'Rebase and merge', value: 'rebaseAndMerge' },
+];
 
 const getOnClick = (someText: string) => () => {
   alert(someText);
@@ -38,91 +48,54 @@ const Wrapper: FC<{ text: string }> = ({ children, text }) => {
   );
 };
 
-const Template: Story = () => {
+const Template: Story<{ color: 'primary' | 'secondary' }> = ({ color }) => {
   const t = useTranslation(['app', 'common']);
   const [selected, setSelected] = useState(false);
-  const [color, setColor] = useState<Color>({
+  const [selectedColor, setColor] = useState<Color>({
     hex: '#8f90a6',
     name: 'grey',
   });
+  const [selectedOption, setSelectedOption] = React.useState<
+    SplitButtonOption<string>
+  >(ops[0]);
 
   return (
-    <StoryProvider locale="en">
+    <>
       <Grid container gap={2}>
-        <Wrapper text="Base Button: Outlined variant, primary color">
+        <Wrapper text="Base Button: Outlined variant">
           <BaseButton
             variant="outlined"
-            color="primary"
+            color={color}
             onClick={getOnClick('Base button')}
           >
             Base Button
           </BaseButton>
         </Wrapper>
 
-        <Wrapper text="Base Button: Outlined variant, secondary color">
-          <BaseButton
-            variant="outlined"
-            color="secondary"
-            onClick={getOnClick('Base button')}
-          >
-            Base Button
-          </BaseButton>
-        </Wrapper>
-
-        <Wrapper text="Base Button: Contained variant, primary color">
+        <Wrapper text="Base Button: Contained variant">
           <BaseButton
             variant="contained"
-            color="primary"
+            color={color}
             onClick={getOnClick('Base button')}
           >
             Base Button
           </BaseButton>
         </Wrapper>
 
-        <Wrapper text="Base Button: Contained variant, secondary color">
-          <BaseButton
-            variant="contained"
-            color="secondary"
-            onClick={getOnClick('Base button')}
-          >
-            Base Button
-          </BaseButton>
-        </Wrapper>
-
-        <Wrapper text="Button with Icon, contained & primary">
+        <Wrapper text="Button with Icon, contained">
           <ButtonWithIcon
             variant="contained"
-            color="primary"
+            color={color}
             Icon={<TruckIcon />}
             label={t('distribution')}
             onClick={getOnClick('With Icon!')}
           />
         </Wrapper>
 
-        <Wrapper text="Button with Icon, contained & secondary">
-          <ButtonWithIcon
-            variant="contained"
-            color="secondary"
-            Icon={<TruckIcon />}
-            label={t('distribution')}
-            onClick={getOnClick('With Icon!')}
-          />
-        </Wrapper>
-
-        <Wrapper text="Button with Icon, outlined & primary">
+        <Wrapper text="Button with Icon, outlined">
           <ButtonWithIcon
             variant="outlined"
-            color="primary"
-            Icon={<TruckIcon />}
-            label={t('distribution')}
-            onClick={getOnClick('With Icon!')}
-          />
-        </Wrapper>
-
-        <Wrapper text="Button with Icon, outlined & secondary">
-          <ButtonWithIcon
-            variant="outlined"
-            color="secondary"
+            color={color}
             Icon={<TruckIcon />}
             label={t('distribution')}
             onClick={getOnClick('With Icon!')}
@@ -143,6 +116,7 @@ const Template: Story = () => {
 
         <Wrapper text="Flat button">
           <FlatButton
+            color={color}
             startIcon={<BookIcon />}
             label="Docs"
             onClick={() => console.info('clicked')}
@@ -167,30 +141,31 @@ const Template: Story = () => {
         </Wrapper>
 
         <Wrapper text="Color select">
-          <Typography>Selected color: {JSON.stringify(color)}</Typography>
+          <Typography>
+            Selected color: {JSON.stringify(selectedColor)}
+          </Typography>
           <ColorSelectButton
-            color={color.hex}
+            color={selectedColor.hex}
             onChange={newColor => setColor(newColor)}
           />
         </Wrapper>
 
         <Wrapper text="Split button">
           <SplitButton
-            options={[
-              { label: 'Create a merge commit' },
-              { label: 'Squash and merge' },
-              { label: 'Rebase and merge' },
-            ]}
+            color={color}
+            options={ops}
             onClick={option => alert(JSON.stringify(option))}
+            selectedOption={selectedOption}
+            onSelectOption={setSelectedOption}
           />
         </Wrapper>
       </Grid>
-    </StoryProvider>
+    </>
   );
 };
 
-export const Primary = Template.bind({});
-export const Secondary = Template.bind({});
+export const Primary = Template.bind({}, { color: 'primary' });
+export const Secondary = Template.bind({}, { color: 'secondary' });
 
 export default {
   title: 'Buttons/ButtonShowcase',
