@@ -241,53 +241,19 @@ impl Mutations {
     async fn batch_inbound_shipment(
         &self,
         ctx: &Context<'_>,
-        insert_inbound_shipments: Option<Vec<InsertInboundShipmentInput>>,
-        insert_inbound_shipment_lines: Option<Vec<InsertInboundShipmentLineInput>>,
-        update_inbound_shipment_lines: Option<Vec<UpdateInboundShipmentLineInput>>,
-        delete_inbound_shipment_lines: Option<Vec<DeleteInboundShipmentLineInput>>,
-        update_inbound_shipments: Option<Vec<UpdateInboundShipmentInput>>,
-        delete_inbound_shipments: Option<Vec<DeleteInboundShipmentInput>>,
+        input: BatchInboundShipmentInput,
     ) -> BatchInboundShipmentResponse {
         let connection_manager = ctx.get_connection_manager();
 
-        get_batch_inbound_shipment_response(
-            connection_manager,
-            insert_inbound_shipments,
-            insert_inbound_shipment_lines,
-            update_inbound_shipment_lines,
-            delete_inbound_shipment_lines,
-            update_inbound_shipments,
-            delete_inbound_shipments,
-        )
+        get_batch_inbound_shipment_response(connection_manager, input)
     }
 
     async fn batch_outbound_shipment(
         &self,
         ctx: &Context<'_>,
-        insert_outbound_shipments: Option<Vec<InsertOutboundShipmentInput>>,
-        insert_outbound_shipment_lines: Option<Vec<InsertOutboundShipmentLineInput>>,
-        update_outbound_shipment_lines: Option<Vec<UpdateOutboundShipmentLineInput>>,
-        delete_outbound_shipment_lines: Option<Vec<DeleteOutboundShipmentLineInput>>,
-        insert_outbound_shipment_service_lines: Option<Vec<InsertOutboundShipmentServiceLineInput>>,
-        update_outbound_shipment_service_lines: Option<Vec<UpdateOutboundShipmentServiceLineInput>>,
-        delete_outbound_shipment_service_lines: Option<Vec<DeleteOutboundShipmentServiceLineInput>>,
-        update_outbound_shipments: Option<Vec<UpdateOutboundShipmentInput>>,
-        delete_outbound_shipments: Option<Vec<String>>,
-    ) -> BatchOutboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
-
-        get_batch_outbound_shipment_response(
-            connection_manager,
-            insert_outbound_shipments,
-            insert_outbound_shipment_lines,
-            update_outbound_shipment_lines,
-            delete_outbound_shipment_lines,
-            insert_outbound_shipment_service_lines,
-            update_outbound_shipment_service_lines,
-            delete_outbound_shipment_service_lines,
-            update_outbound_shipments,
-            delete_outbound_shipments,
-        )
+        input: BatchOutboundShipmentInput,
+    ) -> Result<BatchOutboundShipmentResponse> {
+        get_batch_outbound_shipment_response(ctx, input)
     }
 
     async fn insert_stocktake(
@@ -705,6 +671,18 @@ impl InvoiceLineBelongsToAnotherInvoice {
 #[graphql(concrete(
     name = "DeleteOutboundShipmentServiceLineResponseWithId",
     params(DeleteOutboundShipmentServiceLineResponse)
+))]
+#[graphql(concrete(
+    name = "InsertOutboundShipmentUnallocatedLineResponseWithId",
+    params(outbound_shipment::unallocated_line::InsertResponse)
+))]
+#[graphql(concrete(
+    name = "UpdateOutboundShipmentUnallocatedLineResponseWithId",
+    params(outbound_shipment::unallocated_line::UpdateResponse)
+))]
+#[graphql(concrete(
+    name = "DeleteOutboundShipmentUnallocatedLineResponseWithId",
+    params(outbound_shipment::unallocated_line::DeleteResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
