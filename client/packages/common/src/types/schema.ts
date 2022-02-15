@@ -3013,7 +3013,7 @@ export type MasterListsQueryVariables = Exact<{
 }>;
 
 
-export type MasterListsQuery = { __typename?: 'Queries', masterLists: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', field: RangeField, min?: number | null, max?: number | null, description: string } } } | { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename?: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListLineNode', id: string, itemId: string, item: { __typename?: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, min?: number | null, max?: number | null, field: RangeField } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, locationId?: string | null, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null }> } } }> } }> } };
+export type MasterListsQuery = { __typename?: 'Queries', masterLists: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', field: RangeField, min?: number | null, max?: number | null, description: string } } } | { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename?: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListLineNode', id: string, itemId: string, item: { __typename?: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, min?: number | null, max?: number | null, field: RangeField } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
 
 
 export const InvoiceDocument = gql`
@@ -4403,37 +4403,13 @@ export const MasterListsDocument = gql`
                 ... on StockLineConnector {
                   __typename
                   nodes {
+                    __typename
                     availableNumberOfPacks
                     batch
                     costPricePerPack
                     expiryDate
                     itemId
                     id
-                    location {
-                      ... on NodeError {
-                        __typename
-                        error {
-                          ... on RecordNotFound {
-                            __typename
-                            description
-                          }
-                          ... on DatabaseError {
-                            __typename
-                            description
-                            fullError
-                          }
-                          description
-                        }
-                      }
-                      ... on LocationNode {
-                        __typename
-                        id
-                        name
-                        code
-                        onHold
-                      }
-                    }
-                    locationId
                     totalNumberOfPacks
                     storeId
                     sellPricePerPack

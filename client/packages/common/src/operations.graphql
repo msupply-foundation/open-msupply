@@ -1447,37 +1447,13 @@ query masterLists(
                 ... on StockLineConnector {
                   __typename
                   nodes {
+                    __typename
                     availableNumberOfPacks
                     batch
                     costPricePerPack
                     expiryDate
                     itemId
                     id
-                    location {
-                      ... on NodeError {
-                        __typename
-                        error {
-                          ... on RecordNotFound {
-                            __typename
-                            description
-                          }
-                          ... on DatabaseError {
-                            __typename
-                            description
-                            fullError
-                          }
-                          description
-                        }
-                      }
-                      ... on LocationNode {
-                        __typename
-                        id
-                        name
-                        code
-                        onHold
-                      }
-                    }
-                    locationId
                     totalNumberOfPacks
                     storeId
                     sellPricePerPack

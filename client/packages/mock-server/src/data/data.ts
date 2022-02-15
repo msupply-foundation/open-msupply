@@ -13,6 +13,8 @@ import {
   StocktakeLine,
   Location,
   Store,
+  MasterListLine,
+  MasterList,
 } from './types';
 import {
   randomName,
@@ -324,6 +326,7 @@ export const createInvoice = (
 };
 const getStocktakes = (stocktakes = StocktakeData) => stocktakes;
 const getStockLines = (stockLines = StockLineData) => stockLines;
+const getMasterLists = (masterLists = MasterListData) => masterLists;
 
 const getCustomers = (names = NameData) =>
   names.filter(({ isSupplier }) => isSupplier);
@@ -747,15 +750,50 @@ export const createStocktakeLine = (
 };
 
 const createStocktakeLines = (): StocktakeLine[] => {
-  const stocktake = getStocktakes();
+  const stocktakes = getStocktakes();
+
+  return stocktakes
+    .map(stocktake => {
+      const itemsSubset = takeRandomSubsetFrom(ItemData, 50);
+      return itemsSubset.map(item => createStocktakeLine(stocktake.id, item));
+    })
+    .flat();
+};
+
+const createMasterList = (n: number): MasterList => ({
+  id: faker.datatype.uuid(),
+  code: `LIST${n}`,
+  description: faker.company.catchPhrase(),
+  name: `Master List ${n}`,
+});
+
+const createMasterLists = (): MasterList[] => {
+  return Array.from({ length: faker.datatype.number({ min: 0, max: 50 }) }).map(
+    (_, idx) => {
+      return createMasterList(idx);
+    }
+  );
+};
+
+export const createMasterListLine = (
+  masterListId: string,
+  item: Item
+): MasterListLine => ({
+  id: faker.datatype.uuid(),
+  masterListId,
+  itemId: item.id,
+});
+
+const createMasterListLines = (): MasterListLine[] => {
+  const masterLists = getMasterLists();
   const stockLines = getStockLines();
 
-  return stocktake
-    .map(stocktake => {
-      const stockLineSubset = takeRandomSubsetFrom(stockLines, 100);
+  return masterLists
+    .map(masterList => {
+      const stockLineSubset = takeRandomSubsetFrom(stockLines, 10);
       return stockLineSubset.map(seed => {
         const item = getItem(seed.itemId);
-        return createStocktakeLine(stocktake.id, item, seed);
+        return createMasterListLine(masterList.id, item);
       });
     })
     .flat();
@@ -793,3 +831,6 @@ export let RequisitionLineData = [
 
 export let StocktakeData = createStocktakes();
 export let StocktakeLineData = createStocktakeLines();
+
+export let MasterListData = createMasterLists();
+export let MasterListLineData = createMasterListLines();

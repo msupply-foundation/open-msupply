@@ -10,6 +10,7 @@ import { statisticsResolver } from './statistics';
 import { StocktakeResolver } from './stocktake';
 import { locationResolver } from './location';
 import { storeResolver } from './store';
+import { MasterListResolver } from './masterList';
 
 export const ResolverService = {
   invoice: invoiceResolver,
@@ -18,6 +19,7 @@ export const ResolverService = {
   requisitionLine: requisitionLineResolver,
   invoiceLine: invoiceLineResolver,
   requisition: requisitionResolver,
+  masterList: MasterListResolver,
   name: nameResolver,
   statistics: statisticsResolver,
   stocktake: StocktakeResolver,
