@@ -62,7 +62,7 @@ const Template: Story<{ color: 'primary' | 'secondary' }> = ({ color }) => {
   return (
     <>
       <Grid container gap={2}>
-        <Wrapper text="Base Button: Outlined variant, primary color">
+        <Wrapper text="Base Button: Outlined variant">
           <BaseButton
             variant="outlined"
             color={color}
@@ -72,7 +72,7 @@ const Template: Story<{ color: 'primary' | 'secondary' }> = ({ color }) => {
           </BaseButton>
         </Wrapper>
 
-        <Wrapper text="Base Button: Contained variant, primary color">
+        <Wrapper text="Base Button: Contained variant">
           <BaseButton
             variant="contained"
             color={color}
@@ -82,7 +82,7 @@ const Template: Story<{ color: 'primary' | 'secondary' }> = ({ color }) => {
           </BaseButton>
         </Wrapper>
 
-        <Wrapper text="Button with Icon, contained & primary">
+        <Wrapper text="Button with Icon, contained">
           <ButtonWithIcon
             variant="contained"
             color={color}
@@ -92,7 +92,7 @@ const Template: Story<{ color: 'primary' | 'secondary' }> = ({ color }) => {
           />
         </Wrapper>
 
-        <Wrapper text="Button with Icon, outlined & primary">
+        <Wrapper text="Button with Icon, outlined">
           <ButtonWithIcon
             variant="outlined"
             color={color}
