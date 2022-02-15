@@ -4,6 +4,7 @@ import { Story } from '@storybook/react';
 import { ConfirmationModal } from './ConfirmationModal';
 import { BaseButton } from '../../buttons';
 import { useToggle } from '../../../../hooks';
+import { useConfirmationModal } from '@common/components';
 
 export default {
   title: 'Modals/ConfirmationModal',
@@ -51,5 +52,16 @@ const Loading: Story = () => {
   );
 };
 
+const UseConfirmationModalHook: Story = () => {
+  const getConfirmation = useConfirmationModal({
+    title: 'Are you sure?',
+    message: 'This will delete all your data.',
+    onConfirm: () => alert('confirmed!'),
+  });
+
+  return <BaseButton onClick={getConfirmation}>Open Modal</BaseButton>;
+};
+
 export const Primary = Template.bind({});
 export const WithAsyncConfirmation = Loading.bind({});
+export const WithContextAndHook = UseConfirmationModalHook.bind({});

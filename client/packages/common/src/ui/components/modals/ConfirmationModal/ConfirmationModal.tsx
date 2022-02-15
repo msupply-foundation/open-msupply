@@ -74,6 +74,7 @@ export const ConfirmationModal = ({
                   await result;
                   setLoading(false);
                 }
+                onCancel();
               }}
             >
               OK
