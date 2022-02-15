@@ -1,6 +1,4 @@
-use domain::{
-    inbound_shipment::UpdateInboundShipment, invoice::InvoiceFilter, name::NameFilter, EqualFilter,
-};
+use domain::{invoice::InvoiceFilter, name::NameFilter, EqualFilter};
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
     InvoiceQueryRepository, InvoiceRepository, NameQueryRepository, NameRepository,
@@ -10,32 +8,15 @@ use repository::{
 
 use self::{
     invoice::{
-        create_and_link_inbound_shipment::{
-            create_and_line_invoice_processor, CreateAndLinkInvoiceProcessoResult, CreateAndLinkInboundShipmentProcessor,
-        },
-        create_inbound_shipment::{
-            create_invoice_processor, CreateInboundShipmentProcessor, CreateInvoiceProcessoResult,
-        },
-        update_inbound_shipment::{
-            update_inbound_shipment_processor, UpdateInboundShipmentProcessorResult, UpdateInboundShipmentProcessor,
-        },
-        update_outbound_shipment_status::{
-            update_outbound_shipment_status_processor, UpdateOutboundShipmentStatusProcessorResult, UpdateOutboundShipmentStatusProcessor,
-        },
+        create_and_link_inbound_shipment::CreateAndLinkInboundShipmentProcessor,
+        create_inbound_shipment::CreateInboundShipmentProcessor,
+        update_inbound_shipment::UpdateInboundShipmentProcessor,
+        update_outbound_shipment_status::UpdateOutboundShipmentStatusProcessor,
     },
     requisition::{
-        create_and_link_response_requisition::{
-            create_and_link_requisition_processor, CreateAndLinkResponseRequisitionProcessor,
-            CreateAndLinkeRequisitionProcessorResult,
-        },
-        create_response_requisition::{
-            create_requisition_processor, CreateRequisitionProcessor,
-            CreateRequisitionProcessorResult, CreateResponseRequisitionProcessor,
-        },
-        update_request_requisition_status::{
-            update_requisition_status_processor, UpdateRequestRequisitionStatusProcessor,
-            UpdateRequisitionStatusProcessorResult,
-        },
+        create_and_link_response_requisition::CreateAndLinkResponseRequisitionProcessor,
+        create_response_requisition::CreateResponseRequisitionProcessor,
+        update_request_requisition_status::UpdateRequestRequisitionStatusProcessor,
     },
 };
 
@@ -118,11 +99,11 @@ pub fn process_records(
         // Iterate over processors
         let mut processor_matched = false;
 
-        for processor in processors {
+        for processor in processors.iter() {
             if let Some(result) = processor.try_process_record(&record_for_processing)? {
                 results.push(ProcessRecordResultSet {
                     result: ProcessRecordResult::ProcessRecordResult(result),
-                    record: record_for_processing,
+                    record: record_for_processing.clone(),
                 });
                 processor_matched = true;
                 break;
