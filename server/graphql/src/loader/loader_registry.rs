@@ -13,7 +13,7 @@ use super::{
     InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, ItemsStatsForItemLoader,
     LinkedRequisitionLineLoader, LocationByIdLoader, MasterListLineByMasterListId,
     RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader, StockLineByIdLoader,
-    StockLineByItemIdLoader, StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
+    StockLineByItemIdLoader, StockLineByLocationIdLoader, StocktakeLineByStocktakeIdLoader,
 };
 
 pub type LoaderMap = Map<AnyLoader>;
@@ -140,7 +140,6 @@ pub async fn get_loaders(
     loaders.insert(user_account_loader);
     loaders.insert(location_by_id_loader);
     loaders.insert(master_list_line_by_master_list_id);
-    loaders.insert(stock_take_line_loader);
     loaders.insert(requisitions_by_id_loader);
     loaders.insert(requisition_line_by_requisition_id_loader);
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);

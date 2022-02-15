@@ -28,7 +28,7 @@ pub struct InsertRequestRequisition {
 
 pub enum InsertRequestRequisitionError {
     RequisitionAlreadyExists,
-    OtherPartyNotASupplier,
+    OtherPartyNotASupplier(Name),
     OtherPartyDoesNotExist,
     OtherPartyIsThisStore,
     OtherPartyIsNotAStore,
@@ -71,7 +71,7 @@ fn validate(
         .ok_or(OutError::OtherPartyDoesNotExist)?;
 
     if !other_party.is_supplier {
-        return Err(OutError::OtherPartyNotASupplier);
+        return Err(OutError::OtherPartyNotASupplier(other_party));
     }
 
     let other_party_store_id = other_party
@@ -140,10 +140,11 @@ pub fn check_other_party_exists(
 #[cfg(test)]
 mod test_insert {
     use chrono::Utc;
+    use domain::name::Name;
     use repository::{
         mock::{
             mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
-            MockDataInserts,
+            MockDataInserts, mock_store_b,
         },
         schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
         test_db::setup_all,
@@ -184,6 +185,7 @@ mod test_insert {
             Err(ServiceError::RequisitionAlreadyExists)
         );
 
+        let name_store_b = mock_name_store_b();
         // OtherPartyNotASupplier
         assert_eq!(
             service.insert_request_requisition(
@@ -191,7 +193,7 @@ mod test_insert {
                 "store_a",
                 InsertRequestRequisition {
                     id: "new_request_requisition".to_owned(),
-                    other_party_id: mock_name_store_b().id,
+                    other_party_id: name_store_b.id.clone(),
                     colour: None,
                     their_reference: None,
                     comment: None,
@@ -199,7 +201,14 @@ mod test_insert {
                     threshold_months_of_stock: 0.5,
                 },
             ),
-            Err(ServiceError::OtherPartyNotASupplier)
+            Err(ServiceError::OtherPartyNotASupplier(Name {
+                id: name_store_b.id,
+                name: name_store_b.name,
+                code: name_store_b.code,
+                store_id: Some(mock_store_b().id),
+                is_customer: true,
+                is_supplier: false
+            }))
         );
 
         // OtherPartyDoesNotExist
@@ -218,24 +227,6 @@ mod test_insert {
                 },
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
-        );
-
-        // OtherPartyNotASupplier
-        assert_eq!(
-            service.insert_request_requisition(
-                &context,
-                "store_a",
-                InsertRequestRequisition {
-                    id: "new_request_requisition".to_owned(),
-                    other_party_id: mock_name_store_b().id,
-                    colour: None,
-                    their_reference: None,
-                    comment: None,
-                    max_months_of_stock: 1.0,
-                    threshold_months_of_stock: 0.5,
-                },
-            ),
-            Err(ServiceError::OtherPartyNotASupplier)
         );
 
         // OtherPartyIsNotAStore

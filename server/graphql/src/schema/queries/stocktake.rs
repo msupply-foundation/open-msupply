@@ -53,13 +53,7 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             id: f.id.map(EqualFilter::from),
             store_id: None,
             stocktake_number: f.stocktake_number.map(EqualFilter::from),
-            status: f.status.map(|status| EqualFilter {
-                equal_to: status.equal_to.map(StocktakeStatus::from),
-                equal_any: status
-                    .equal_any
-                    .map(|types| types.into_iter().map(StocktakeStatus::from).collect()),
-                not_equal_to: status.not_equal_to.map(StocktakeStatus::from),
-            }),
+            status: f.status.map(|t| t.map_to_domain(StocktakeStatus::from)),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
         }

@@ -1,4 +1,3 @@
-use crate::schema::types::NameNode;
 use async_graphql::*;
 
 pub mod delete;
@@ -15,19 +14,6 @@ pub use self::line::*;
 
 pub mod batch;
 pub use self::batch::*;
-
-pub struct OtherPartyNotASupplier(NameNode);
-#[Object]
-impl OtherPartyNotASupplier {
-    pub async fn description(&self) -> &'static str {
-        "Other party name is not a supplier"
-    }
-
-    pub async fn other_party(&self) -> &NameNode {
-        &self.0
-    }
-}
-
 pub struct PackSizeAboveZero;
 #[Object]
 impl PackSizeAboveZero {

@@ -4,7 +4,7 @@ use crate::schema::{
     mutations::{
         outbound_shipment::CannotChangeStatusOfInvoiceOnHold, CannotEditInvoice,
         CannotReverseInvoiceStatus, ForeignKey, ForeignKeyError,
-        InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
+        InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment, OtherPartyNotASupplier,
     },
     queries::invoice::*,
     types::{DatabaseError, ErrorWrapper, InvoiceNode, NameNode, NodeError, RecordNotFound},
@@ -12,8 +12,6 @@ use crate::schema::{
 use domain::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus};
 use repository::StorageConnectionManager;
 use service::invoice::{update_inbound_shipment, UpdateInboundShipmentError};
-
-use super::OtherPartyNotASupplier;
 
 #[derive(InputObject)]
 pub struct UpdateInboundShipmentInput {
