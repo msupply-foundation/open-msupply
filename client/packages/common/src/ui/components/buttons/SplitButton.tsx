@@ -35,7 +35,6 @@ export const SplitButton = <T,>({
   selectedOption,
   onSelectOption,
 }: SplitButtonProps<T>) => {
-  console.log(selectedOption);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const buttonLabel = selectedOption.label;
   const open = !!anchorEl;
