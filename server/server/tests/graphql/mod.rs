@@ -181,6 +181,15 @@ macro_rules! assert_graphql_query {
         )
         .await;
 
+        match actual["errors"].as_array() {
+            Some(errors) => {
+                if !errors.is_empty() {
+                    panic!("Request failed with standard error(s): {}",
+                        serde_json::to_string_pretty(errors).unwrap());
+                }
+            },
+            None => {}
+        }
         let expected = serde_json::json!(
             {
                 "data": $expected_inner,
