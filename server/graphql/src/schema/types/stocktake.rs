@@ -1,6 +1,6 @@
 use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::NaiveDateTime;
-use repository::schema::StocktakeRow;
+use repository::schema::{StocktakeRow, StocktakeStatus};
 use serde::Serialize;
 
 use crate::{
@@ -88,5 +88,21 @@ impl StocktakeNode {
         };
 
         Ok(result)
+    }
+}
+
+impl StocktakeNodeStatus {
+    pub fn to_domain(&self) -> StocktakeStatus {
+        match self {
+            StocktakeNodeStatus::New => StocktakeStatus::New,
+            StocktakeNodeStatus::Finalised => StocktakeStatus::Finalised,
+        }
+    }
+
+    pub fn from_domain(status: &StocktakeStatus) -> StocktakeNodeStatus {
+        match status {
+            StocktakeStatus::New => StocktakeNodeStatus::New,
+            StocktakeStatus::Finalised => StocktakeNodeStatus::Finalised,
+        }
     }
 }

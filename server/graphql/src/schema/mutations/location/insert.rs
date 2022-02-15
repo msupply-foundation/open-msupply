@@ -5,10 +5,8 @@ use service::location::insert::InsertLocationError as InError;
 
 use crate::{
     schema::{
-        mutations::{
-            error::DatabaseError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
-        },
-        types::{InternalError, LocationNode},
+        mutations::{RecordAlreadyExist, UniqueValueKey, UniqueValueViolation},
+        types::{DatabaseError, InternalError, LocationNode},
     },
     ContextExt,
 };
