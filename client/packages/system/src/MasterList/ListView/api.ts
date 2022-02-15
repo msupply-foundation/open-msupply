@@ -13,11 +13,7 @@ const masterListsGuard = (masterListsQuery: MasterListsQuery) => {
     return masterListsQuery.masterLists;
   }
 
-  if (masterListsQuery.masterLists.__typename === 'ConnectorError') {
-    throw new Error(masterListsQuery.masterLists.error.description);
-  }
-
-  throw new Error('oh dear');
+  throw new Error(masterListsQuery.masterLists.error.description);
 };
 
 const getMasterListSortField = (
