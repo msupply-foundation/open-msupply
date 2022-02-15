@@ -7,8 +7,8 @@ import {
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
-const stocktakesRoute = RouteBuilder.create(AppRoute.Stocktake).build();
-const stocktakeRoute = RouteBuilder.create(AppRoute.Stocktake)
+const stocktakesRoute = RouteBuilder.create(AppRoute.Stocktakes).build();
+const stocktakeRoute = RouteBuilder.create(AppRoute.Stocktakes)
   .addPart(':id')
   .build();
 

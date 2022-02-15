@@ -220,7 +220,7 @@ export const CommandK: FC = ({ children }) => {
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Inventory)
-            .addPart(AppRoute.Stocktake)
+            .addPart(AppRoute.Stocktakes)
             .build()
         ),
     },
@@ -233,6 +233,18 @@ export const CommandK: FC = ({ children }) => {
         navigate(
           RouteBuilder.create(AppRoute.Inventory)
             .addPart(AppRoute.Locations)
+            .build()
+        ),
+    },
+    {
+      id: 'navigation:master-lists',
+      name: `${t('cmdk.goto-master-lists')} (g+m)`,
+      shortcut: ['g', 'm'],
+      keywords: 'master lists',
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.MasterLists)
             .build()
         ),
     },

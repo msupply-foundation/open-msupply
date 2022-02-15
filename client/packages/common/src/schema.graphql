@@ -1119,3 +1119,51 @@ type StoreConnector {
   nodes: [StoreNode!]!
   totalCount: Int!
 }
+
+
+type MasterListLineNode {
+  id: String!
+  itemId: String!
+  item: ItemNode!
+}
+
+type MasterListNode {
+  Id: String!
+  name: String!
+  code: String!
+  description: String!
+  lines: MasterListLineConnector!
+}
+
+type MasterListConnector {
+  totalCount: Int!
+  nodes: [MasterListNode!]!
+}
+
+type MasterListLineConnector {
+  totalCount: Int!
+  nodes: [MasterListLineNode!]!
+}
+
+type MasterListFilterInput {
+  id: EqualFilterStringInput
+  name: SimpleStringFilterInput
+  code: SimpleStringFilterInput
+  description: SimpleStringFilterInput
+  existsForName: SimpleStringFilterInput
+  existsForNameId: EqualFilterStringInput
+}
+
+type MasterListSortInput {
+  key: MasterListSortFieldInput!
+  desc: Boolean
+}
+
+enum MasterListSortFieldInput {
+  name
+  code
+  description
+}
+
+union MasterListsResponse = ConnectorError | MasterListConnector
+
