@@ -1,3 +1,4 @@
+import { ItemStatsNode } from './../../../common/src/types/schema';
 import {
   StockLineConnector,
   InvoiceSortInput,
@@ -20,7 +21,6 @@ import {
   ItemSortInput,
   NameSortInput,
   NameFilterInput,
-  RequisitionListParameters,
   ItemsResponse,
   NameNode,
   StocktakeNode,
@@ -28,7 +28,7 @@ import {
   InvoicePricingNode,
 } from '@openmsupply-client/common/src/types/schema';
 
-export { ItemSortFieldInput, RequisitionListParameters, ItemsResponse };
+export { ItemSortFieldInput, ItemsResponse };
 
 export interface Store extends Omit<StoreNode, '__typename'> {
   id: string;
@@ -45,12 +45,16 @@ export type ResolvedLocation = LocationNode & {
   __typename: 'LocationNode';
 };
 
-export type Item = Omit<ItemNode, 'availableBatches' | 'availableQuantity'>;
+export type Item = Omit<
+  ItemNode,
+  'availableBatches' | 'availableQuantity' | 'stats'
+>;
 
 export interface ResolvedItem extends Item {
   __typename: 'ItemNode';
   availableBatches: Required<StockLineConnector>;
   availableQuantity: number;
+  stats: ItemStatsNode;
 }
 
 export interface Name extends Omit<NameNode, '__typename'> {
@@ -145,7 +149,12 @@ export interface ResolvedStockCounts extends StockCounts {
 export interface Requisition
   extends Omit<
     RequisitionNode,
-    '__typename' | 'lines' | 'otherParty' | 'otherPartyName'
+    | '__typename'
+    | 'lines'
+    | 'otherParty'
+    | 'otherPartyName'
+    | 'shipments'
+    | 'requestRequisition'
   > {
   otherPartyId: string;
 }
@@ -158,7 +167,14 @@ export interface ResolvedRequisition extends Requisition {
 }
 
 export interface RequisitionLine
-  extends Omit<RequisitionLineNode, '__typename'> {
+  extends Omit<
+    RequisitionLineNode,
+    | '__typename'
+    | 'itemStats'
+    | 'inboundShipmentLines'
+    | 'item'
+    | 'outboundShipmentLines'
+  > {
   requisitionId: string;
 }
 
@@ -184,13 +200,20 @@ export type NameListParameters = {
   sort?: Array<NameSortInput> | null;
 };
 
-export type Stocktake = Omit<StocktakeNode, '__typename' | 'lines'>;
+export type Stocktake = Omit<
+  StocktakeNode,
+  '__typename' | 'lines' | 'inventoryAdjustment'
+>;
 export interface ResolvedStocktake extends Stocktake {
   __typename: 'StocktakeNode';
   lines: ListResponse<ResolvedStocktakeLine, 'StocktakeLineConnector'>;
 }
 
-export interface StocktakeLine extends Omit<StocktakeLineNode, '__typename'> {
+export interface StocktakeLine
+  extends Omit<
+    StocktakeLineNode,
+    '__typename' | 'item' | 'stockLine' | 'location'
+  > {
   stocktakeId: string;
 }
 

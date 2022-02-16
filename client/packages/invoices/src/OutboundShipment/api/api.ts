@@ -103,7 +103,7 @@ const invoiceToInput = (
   patch: RecordPatch<Invoice>
 ): UpdateOutboundShipmentInput => ({
   id: patch.id,
-  color: patch.color,
+  colour: patch.colour,
   comment: patch.comment,
   status: getPatchStatus(patch),
   onHold: patch.onHold,
@@ -150,6 +150,9 @@ export const OutboundApi = {
         const result = await api.invoice({ id });
 
         const invoice = invoiceGuard(result);
+        // TODO:
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         const lineNodes = linesGuard(invoice.lines);
         const lines: InvoiceLine[] = lineNodes.map(line => {
           const stockLine = line.stockLine
@@ -182,7 +185,9 @@ export const OutboundApi = {
     (api: OmSupplyApi) =>
     async (patch: RecordPatch<Invoice>): Promise<RecordPatch<Invoice>> => {
       const result = await api.upsertOutboundShipment({
-        updateOutboundShipments: [invoiceToInput(patch)],
+        input: {
+          updateOutboundShipments: [invoiceToInput(patch)],
+        },
       });
 
       const { batchOutboundShipment } = result;
@@ -212,7 +217,7 @@ export const OutboundApi = {
           .map(createUpdateOutboundLineInput),
       };
 
-      const result = await api.upsertOutboundShipment(input);
+      const result = await api.upsertOutboundShipment({ input });
 
       return result;
     },
@@ -220,7 +225,7 @@ export const OutboundApi = {
     (api: OmSupplyApi, invoiceId: string) => async (ids: string[]) => {
       const createDeleteLineInput = getCreateDeleteOutboundLineInput(invoiceId);
       return api.deleteOutboundShipmentLines({
-        input: ids.map(createDeleteLineInput),
+        deleteOutboundShipmentLines: ids.map(createDeleteLineInput),
       });
     },
 };

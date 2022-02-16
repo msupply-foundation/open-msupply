@@ -6,7 +6,7 @@ import {
   mockDeleteOutboundShipmentsMutation,
   mockInsertInboundShipmentMutation,
   mockInsertOutboundShipmentMutation,
-  mockUpsertInboundShipmentMutation,
+  // mockUpsertInboundShipmentMutation,
   mockUpsertOutboundShipmentMutation,
   DeleteInboundShipmentInput,
   BatchInboundShipmentInput,
@@ -41,13 +41,14 @@ const deleteOutboundShipmentLines = mockDeleteOutboundShipmentLinesMutation(
   (req, res, ctx) => {
     const { variables } = req;
 
-    if (Array.isArray(variables.input)) {
-      variables.input.map(input =>
-        MutationService.invoiceLine.outbound.remove(input)
+    if (Array.isArray(variables.deleteOutboundShipmentLines)) {
+      variables.deleteOutboundShipmentLines.map(
+        (input: DeleteOutboundShipmentLineInput) =>
+          MutationService.invoiceLine.outbound.remove(input)
       );
     } else {
       MutationService.invoiceLine.outbound.remove(
-        variables.input as DeleteOutboundShipmentLineInput
+        variables.deleteOutboundShipmentLines
       );
     }
 
@@ -106,7 +107,7 @@ const updateInboundShipmentMutation = mockUpdateInboundShipmentMutation(
 
 const deleteInboundShipmentsMutation = mockDeleteInboundShipmentsMutation(
   (req, res, ctx) => {
-    const { ids } = req.variables;
+    const { deleteInboundShipments: ids } = req.variables;
     const deleteInboundShipments: DeleteInboundShipmentInput[] = Array.isArray(
       ids
     )
@@ -130,7 +131,11 @@ const deleteInboundShipmentsMutation = mockDeleteInboundShipmentsMutation(
               // The type for DeleteInboundShipmentResponseWithId has an optional
               // typename for some unknown reason, so re-add the typename to keep typescript happy.
               __typename: 'DeleteInboundShipmentResponseWithId',
-              ...response,
+              id: response.id,
+              response: {
+                id: response.id,
+              },
+              // ...response,
             })) ?? [],
         },
       })
@@ -140,7 +145,7 @@ const deleteInboundShipmentsMutation = mockDeleteInboundShipmentsMutation(
 
 const deleteOutboundShipmentsMutation = mockDeleteOutboundShipmentsMutation(
   (req, res, ctx) => {
-    const { ids } = req.variables;
+    const { deleteOutboundShipments: ids } = req.variables;
     const deleteOutboundShipments: string[] = Array.isArray(ids)
       ? ids
       : ids
@@ -199,102 +204,135 @@ const insertOutboundShipmentMutation = mockInsertOutboundShipmentMutation(
   }
 );
 
-const upsertInboundShipmentMutation = mockUpsertInboundShipmentMutation(
-  (req, res, ctx) => {
-    // This whole thing is a little unfortunate.
-    // The variables can technically be arrays or a single object as is just normal
-    // for graphql (If the array is a single element in variables, you can just send the
-    // single element) - generally your graphql server framework (i.e. apollo) will parse this
-    // into an array for you - so i've manually parsed it here.
-    // Then, the graphql code gen types generally have `__typename` as an optional field as it's
-    // not always queried for - but in the types returned by queries, when you specify the type name,
-    // it becomes mandatory to have this in the response, so we have to manually add it.
-    const params = {
-      ...req.variables,
-      deleteInboundShipmentLines: Array.isArray(
-        req.variables.deleteInboundShipmentLines
-      )
-        ? req.variables.deleteInboundShipmentLines
-        : req.variables.deleteInboundShipmentLines
-        ? [req.variables.deleteInboundShipmentLines]
-        : [],
-      insertInboundShipmentLines: Array.isArray(
-        req.variables.insertInboundShipmentLines
-      )
-        ? req.variables.insertInboundShipmentLines
-        : req.variables.insertInboundShipmentLines
-        ? [req.variables.insertInboundShipmentLines]
-        : [],
-      updateInboundShipmentLines: Array.isArray(
-        req.variables.updateInboundShipmentLines
-      )
-        ? req.variables.updateInboundShipmentLines
-        : req.variables.updateInboundShipmentLines
-        ? [req.variables.updateInboundShipmentLines]
-        : [],
-      updateInboundShipments: Array.isArray(
-        req.variables.updateInboundShipments
-      )
-        ? req.variables.updateInboundShipments
-        : req.variables.updateInboundShipments
-        ? [req.variables.updateInboundShipments]
-        : [],
-    };
+// const upsertInboundShipmentMutation = mockUpsertInboundShipmentMutation(
+//   (
+//     req: {
+//       variables: {
+//         deleteInboundShipmentLines: any;
+//         insertInboundShipmentLines: any;
+//         updateInboundShipmentLines: any;
+//         updateInboundShipments: any;
+//       };
+//     },
+//     res: (arg0: any) => any,
+//     ctx: {
+//       data: (arg0: {
+//         batchInboundShipment: {
+//           __typename: string;
+//           updateInboundShipments: {
+//             __typename: 'UpdateInboundShipmentResponseWithId';
+//             id: string;
+//           }[];
+//           insertInboundShipmentLines: {
+//             __typename: 'InsertInboundShipmentLineResponseWithId';
+//             id: string;
+//           }[];
+//           deleteInboundShipmentLines: {
+//             __typename: 'DeleteInboundShipmentLineResponseWithId';
+//             id: string;
+//           }[];
+//           updateInboundShipmentLines: {
+//             __typename: 'UpdateInboundShipmentLineResponseWithId';
+//             id: string;
+//           }[];
+//         };
+//       }) => any;
+//     }
+//   ) => {
+//     // This whole thing is a little unfortunate.
+//     // The variables can technically be arrays or a single object as is just normal
+//     // for graphql (If the array is a single element in variables, you can just send the
+//     // single element) - generally your graphql server framework (i.e. apollo) will parse this
+//     // into an array for you - so i've manually parsed it here.
+//     // Then, the graphql code gen types generally have `__typename` as an optional field as it's
+//     // not always queried for - but in the types returned by queries, when you specify the type name,
+//     // it becomes mandatory to have this in the response, so we have to manually add it.
+//     const params = {
+//       ...req.variables,
+//       deleteInboundShipmentLines: Array.isArray(
+//         req.variables.deleteInboundShipmentLines
+//       )
+//         ? req.variables.deleteInboundShipmentLines
+//         : req.variables.deleteInboundShipmentLines
+//         ? [req.variables.deleteInboundShipmentLines]
+//         : [],
+//       insertInboundShipmentLines: Array.isArray(
+//         req.variables.insertInboundShipmentLines
+//       )
+//         ? req.variables.insertInboundShipmentLines
+//         : req.variables.insertInboundShipmentLines
+//         ? [req.variables.insertInboundShipmentLines]
+//         : [],
+//       updateInboundShipmentLines: Array.isArray(
+//         req.variables.updateInboundShipmentLines
+//       )
+//         ? req.variables.updateInboundShipmentLines
+//         : req.variables.updateInboundShipmentLines
+//         ? [req.variables.updateInboundShipmentLines]
+//         : [],
+//       updateInboundShipments: Array.isArray(
+//         req.variables.updateInboundShipments
+//       )
+//         ? req.variables.updateInboundShipments
+//         : req.variables.updateInboundShipments
+//         ? [req.variables.updateInboundShipments]
+//         : [],
+//     };
 
-    const response = InvoiceSchema.MutationResolvers.batchInboundShipment(
-      null,
-      params
-    );
+//     const response = InvoiceSchema.MutationResolvers.batchInboundShipment(
+//       null,
+//       params
+//     );
 
-    const updateInboundShipments: {
-      __typename: 'UpdateInboundShipmentResponseWithId';
-      id: string;
-    }[] =
-      response.updateInboundShipments?.map?.(r => ({
-        __typename: 'UpdateInboundShipmentResponseWithId',
-        id: r.id,
-      })) ?? [];
+//     const updateInboundShipments: {
+//       __typename: 'UpdateInboundShipmentResponseWithId';
+//       id: string;
+//     }[] =
+//       response.updateInboundShipments?.map?.(r => ({
+//         __typename: 'UpdateInboundShipmentResponseWithId',
+//         id: r.id,
+//       })) ?? [];
 
-    const insertInboundShipmentLines: {
-      __typename: 'InsertInboundShipmentLineResponseWithId';
-      id: string;
-    }[] =
-      response.insertInboundShipmentLines?.map?.(r => ({
-        __typename: 'InsertInboundShipmentLineResponseWithId',
-        id: r.id,
-      })) ?? [];
+//     const insertInboundShipmentLines: {
+//       __typename: 'InsertInboundShipmentLineResponseWithId';
+//       id: string;
+//     }[] =
+//       response.insertInboundShipmentLines?.map?.(r => ({
+//         __typename: 'InsertInboundShipmentLineResponseWithId',
+//         id: r.id,
+//       })) ?? [];
 
-    const deleteInboundShipmentLines: {
-      __typename: 'DeleteInboundShipmentLineResponseWithId';
-      id: string;
-    }[] =
-      response.deleteInboundShipmentLines?.map?.(r => ({
-        __typename: 'DeleteInboundShipmentLineResponseWithId',
-        id: r.id,
-      })) ?? [];
+//     const deleteInboundShipmentLines: {
+//       __typename: 'DeleteInboundShipmentLineResponseWithId';
+//       id: string;
+//     }[] =
+//       response.deleteInboundShipmentLines?.map?.(r => ({
+//         __typename: 'DeleteInboundShipmentLineResponseWithId',
+//         id: r.id,
+//       })) ?? [];
 
-    const updateInboundShipmentLines: {
-      __typename: 'UpdateInboundShipmentLineResponseWithId';
-      id: string;
-    }[] =
-      response.updateInboundShipmentLines?.map?.(r => ({
-        __typename: 'UpdateInboundShipmentLineResponseWithId',
-        id: r.id,
-      })) ?? [];
+//     const updateInboundShipmentLines: {
+//       __typename: 'UpdateInboundShipmentLineResponseWithId';
+//       id: string;
+//     }[] =
+//       response.updateInboundShipmentLines?.map?.(r => ({
+//         __typename: 'UpdateInboundShipmentLineResponseWithId',
+//         id: r.id,
+//       })) ?? [];
 
-    return res(
-      ctx.data({
-        batchInboundShipment: {
-          __typename: 'BatchInboundShipmentResponse',
-          updateInboundShipments,
-          insertInboundShipmentLines,
-          deleteInboundShipmentLines,
-          updateInboundShipmentLines,
-        },
-      })
-    );
-  }
-);
+//     return res(
+//       ctx.data({
+//         batchInboundShipment: {
+//           __typename: 'BatchInboundShipmentResponse',
+//           updateInboundShipments,
+//           insertInboundShipmentLines,
+//           deleteInboundShipmentLines,
+//           updateInboundShipmentLines,
+//         },
+//       })
+//     );
+//   }
+// );
 
 const upsertOutboundShipmentMutation = mockUpsertOutboundShipmentMutation(
   (req, res, ctx) => {
@@ -306,35 +344,36 @@ const upsertOutboundShipmentMutation = mockUpsertOutboundShipmentMutation(
     // Then, the graphql code gen types generally have `__typename` as an optional field as it's
     // not always queried for - but in the types returned by queries, when you specify the type name,
     // it becomes mandatory to have this in the response, so we have to manually add it.
+    console.log('req.variables.input', req.variables);
     const params = {
       ...req.variables,
       deleteOutboundShipmentLines: Array.isArray(
-        req.variables.deleteOutboundShipmentLines
+        req.variables.input?.deleteOutboundShipmentLines
       )
-        ? req.variables.deleteOutboundShipmentLines
-        : req.variables.deleteOutboundShipmentLines
-        ? [req.variables.deleteOutboundShipmentLines]
+        ? req.variables.input?.deleteOutboundShipmentLines
+        : req.variables.input?.deleteOutboundShipmentLines
+        ? [req.variables.input?.deleteOutboundShipmentLines]
         : [],
       insertOutboundShipmentLines: Array.isArray(
-        req.variables.insertOutboundShipmentLines
+        req.variables.input?.insertOutboundShipmentLines
       )
-        ? req.variables.insertOutboundShipmentLines
-        : req.variables.insertOutboundShipmentLines
-        ? [req.variables.insertOutboundShipmentLines]
+        ? req.variables.input?.insertOutboundShipmentLines
+        : req.variables.input?.insertOutboundShipmentLines
+        ? [req.variables.input?.insertOutboundShipmentLines]
         : [],
       updateOutboundShipmentLines: Array.isArray(
-        req.variables.updateOutboundShipmentLines
+        req.variables.input?.updateOutboundShipmentLines
       )
-        ? req.variables.updateOutboundShipmentLines
-        : req.variables.updateOutboundShipmentLines
-        ? [req.variables.updateOutboundShipmentLines]
+        ? req.variables.input?.updateOutboundShipmentLines
+        : req.variables.input?.updateOutboundShipmentLines
+        ? [req.variables.input?.updateOutboundShipmentLines]
         : [],
       updateOutboundShipments: Array.isArray(
-        req.variables.updateOutboundShipments
+        req.variables.input?.updateOutboundShipments
       )
-        ? req.variables.updateOutboundShipments
-        : req.variables.updateOutboundShipments
-        ? [req.variables.updateOutboundShipments]
+        ? req.variables.input?.updateOutboundShipments
+        : req.variables.input?.updateOutboundShipments
+        ? [req.variables.input?.updateOutboundShipments]
         : [],
     };
 
@@ -400,7 +439,7 @@ export const InvoiceHandlers = [
   deleteOutboundShipmentsMutation,
   insertInboundShipmentMutation,
   insertOutboundShipmentMutation,
-  upsertInboundShipmentMutation,
+  // upsertInboundShipmentMutation,
   upsertOutboundShipmentMutation,
   updateInboundShipmentMutation,
   deleteInboundShipmentLines,

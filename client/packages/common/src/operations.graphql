@@ -34,7 +34,7 @@ query invoice($id: String!) {
       # purchaseOrderNumber
       # inboundShipmentNumber
       # goodsReceiptNumber
-      color
+      colour
 
       onHold
 
@@ -268,37 +268,31 @@ query invoice($id: String!) {
   }
 }
 
-query stocktake($stocktakeId: String!) {
-  stocktake(id: $stocktakeId) {
+query stocktake($stocktakeId: String!, $storeId: String!) {
+  stocktake(id: $stocktakeId, storeId: $storeId) {
     __typename
     ... on StocktakeNode {
       __typename
       id
       stocktakeNumber
       comment
-      stocktakeDatetime
+      createdDatetime
+      # stocktakeDatetime
       status
       description
-      entryDatetime
-      enteredByName
-      onHold
+      # entryDatetime
+      # enteredByName
+      # onHold
       lines {
         __typename
-
-        ... on ConnectorError {
-          __typename
-          error {
-            description
-          }
-        }
 
         ... on StocktakeLineConnector {
           __typename
           nodes {
             __typename
             batch
-            itemCode
-            itemName
+            # itemCode
+            # itemName
             itemId
             id
             expiryDate
@@ -325,61 +319,60 @@ mutation updateStocktake($input: UpdateStocktakeInput!) {
 }
 
 mutation upsertStocktakeLines(
+  $storeId: String!
   $deleteStocktakeLines: [DeleteStocktakeLineInput!]
-  $insertStocktakeLines: [InsertStocktakeLineInput!]
   $updateStocktakeLines: [UpdateStocktakeLineInput!]
+  $insertStocktakeLines: [InsertStocktakeLineInput!]
 ) {
   batchStocktake(
-    deleteStocktakeLines: $deleteStocktakeLines
-    insertStocktakeLines: $insertStocktakeLines
-    updateStocktakeLines: $updateStocktakeLines
+    storeId: $storeId
+    input: {
+      deleteStocktakeLines: $deleteStocktakeLines
+      updateStocktakeLines: $updateStocktakeLines
+      insertStocktakeLines: $insertStocktakeLines
+    }
   ) {
     __typename
-    updateStocktakes {
+    ... on BatchStocktakeResponses {
       __typename
-      id
-    }
-
-    insertStocktakeLines {
-      __typename
-      id
-    }
-
-    deleteStocktakeLines {
-      __typename
-      id
-    }
-
-    updateStocktakeLines {
-      __typename
-      id
-    }
-  }
-}
-
-query stocktakes($params: StocktakeListParameters) {
-  stocktakes(params: $params) {
-    __typename
-    ... on StocktakeConnector {
-      nodes {
+      deleteStocktakeLines {
         id
-        comment
-        description
-        stocktakeDatetime
-        stocktakeNumber
-        status
       }
-      totalCount
+      insertStocktakeLines {
+        id
+      }
+      updateStocktakeLines {
+        id
+      }
     }
   }
 }
 
-mutation deleteStocktakes($ids: [DeleteStocktakeInput!]) {
-  batchStocktake(deleteStocktakes: $ids) {
+# query stocktakes($params: StocktakeListParameters) {
+#   stocktakes(params: $params) {
+#     __typename
+#     ... on StocktakeConnector {
+#       nodes {
+#         id
+#         comment
+#         description
+#         stocktakeDatetime
+#         stocktakeNumber
+#         status
+#       }
+#       totalCount
+#     }
+#   }
+# }
+
+mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
+  batchStocktake(storeId: $storeId, input: { deleteStocktakes: $ids }) {
     __typename
-    deleteStocktakes {
-      __typename
-      id
+    ... on BatchStocktakeResponses {
+      deleteStocktakes {
+        __typename
+        id
+      }
     }
   }
 }
@@ -402,152 +395,154 @@ mutation insertStocktake($input: InsertStocktakeInput!) {
   }
 }
 
-query requisitions($params: RequisitionListParameters) {
-  requisitions(params: $params) {
+# query requisitions($params: RequisitionListParameters) {
+#   requisitions(params: $params) {
+#     __typename
+#     ... on RequisitionConnector {
+#       nodes {
+#         id
+#         comment
+#         orderDate
+#         theirReference
+#         requisitionNumber
+#         status
+#         otherPartyName
+#         otherPartyId
+#         colour
+#       }
+#       totalCount
+#     }
+
+#     ... on ConnectorError {
+#       __typename
+#       error {
+#         description
+#         ... on DatabaseError {
+#           __typename
+#           description
+#           fullError
+#         }
+#       }
+#     }
+#   }
+# }
+
+# mutation deleteSupplierRequisitions($ids: [DeleteSupplierRequisitionInput!]) {
+#   batchSupplierRequisition(deleteSupplierRequisitions: $ids) {
+#     __typename
+#     deleteSupplierRequisitions {
+#       __typename
+#       id
+#     }
+#   }
+# }
+
+mutation updateSupplierRequisition(
+  $storeId: String!
+  $input: UpdateRequestRequisitionInput!
+) {
+  updateRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertSupplierRequisition(
+  $storeId: String!
+  $input: InsertRequestRequisitionInput!
+) {
+  insertRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+# mutation deleteCustomerRequisitions($ids: [DeleteRequestRequisitionInput!]) {
+#   batchRequestRequisition(deleteCustomerRequisitions: $ids) {
+#     __typename
+#     deleteRequestRequisitions {
+#       __typename
+#       id
+#     }
+#   }
+# }
+
+mutation updateCustomerRequisition(
+  $storeId: String!
+  $input: UpdateRequestRequisitionInput!
+) {
+  updateRequestRequisition(storeId: $storeId, input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertCustomerRequisition(
+  $storeId: String!
+  $input: InsertRequestRequisitionInput!
+) {
+  insertRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+query requisition($storeId: String!, $id: String!) {
+  requisition(id: $id, storeId: $storeId) {
     __typename
-    ... on RequisitionConnector {
-      nodes {
-        id
-        comment
-        orderDate
-        theirReference
-        requisitionNumber
-        status
-        otherPartyName
-        otherPartyId
-        color
-      }
-      totalCount
-    }
-
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-      }
-    }
-  }
-}
-
-mutation deleteSupplierRequisitions($ids: [DeleteSupplierRequisitionInput!]) {
-  batchSupplierRequisition(deleteSupplierRequisitions: $ids) {
-    __typename
-    deleteSupplierRequisitions {
-      __typename
-      id
-    }
-  }
-}
-
-mutation updateSupplierRequisition($input: UpdateSupplierRequisitionInput!) {
-  updateSupplierRequisition(input: $input) {
     ... on RequisitionNode {
       __typename
       id
-    }
-  }
-}
-
-mutation insertSupplierRequisition($input: InsertSupplierRequisitionInput!) {
-  insertSupplierRequisition(input: $input) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-
-mutation deleteCustomerRequisitions($ids: [DeleteCustomerRequisitionInput!]) {
-  batchCustomerRequisition(deleteCustomerRequisitions: $ids) {
-    __typename
-    deleteCustomerRequisitions {
-      __typename
-      id
-    }
-  }
-}
-
-mutation updateCustomerRequisition($input: UpdateCustomerRequisitionInput!) {
-  updateCustomerRequisition(input: $input) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-
-mutation insertCustomerRequisition($input: InsertCustomerRequisitionInput!) {
-  insertCustomerRequisition(input: $input) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-
-query requisition($id: String!) {
-  requisition(id: $id) {
-    __typename
-    ... on RequisitionNode {
-      __typename
-      id
-      orderDate
-      requisitionDate
+      # orderDate
+      # requisitionDate
       comment
       theirReference
       type
       requisitionNumber
-      thresholdMOS
-      maxMOS
+      # thresholdMOS
+      # maxMOS
       status
       otherPartyId
       lines {
         __typename
-        ... on ConnectorError {
-          error {
-            description
-          }
-        }
         ... on RequisitionLineConnector {
           totalCount
           nodes {
             id
-            itemName
-            itemCode
-            itemUnit
+            # itemName
+            # itemCode
+            # itemUnit
             itemId
-            comment
-            monthlyConsumption
-            monthsOfSupply
+            # comment
+            # monthlyConsumption
+            # monthsOfSupply
             supplyQuantity
-            openingQuantity
-            issuedQuantity
+            # openingQuantity
+            # issuedQuantity
             requestedQuantity
-            receivedQuantity
-            imprestQuantity
-            previousQuantity
+            # receivedQuantity
+            # imprestQuantity
+            # previousQuantity
             calculatedQuantity
-            previousStockOnHand
-            closingQuantity
-            stockAdditions
-            stockLosses
-            expiredQuantity
-            otherPartyClosingQuantity
+            # previousStockOnHand
+            # closingQuantity
+            # stockAdditions
+            # stockLosses
+            # expiredQuantity
+            # otherPartyClosingQuantity
           }
         }
       }
       otherParty {
         __typename
-        ... on NodeError {
-          error {
-            description
-          }
-        }
         ... on NameNode {
           id
           name
@@ -560,75 +555,75 @@ query requisition($id: String!) {
   }
 }
 
-mutation upsertSupplierRequisition(
-  $deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineInput!]
-  $insertSupplierRequisitionLines: [InsertSupplierRequisitionLineInput!]
-  $updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineInput!]
-  $updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]
-) {
-  batchSupplierRequisition(
-    deleteSupplierRequisitionLines: $deleteSupplierRequisitionLines
-    insertSupplierRequisitionLines: $insertSupplierRequisitionLines
-    updateSupplierRequisitionLines: $updateSupplierRequisitionLines
-    updateSupplierRequisitions: $updateSupplierRequisitions
-  ) {
-    __typename
-    updateSupplierRequisitions {
-      __typename
-      id
-    }
+# mutation upsertSupplierRequisition(
+#   $deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineInput!]
+#   $insertSupplierRequisitionLines: [InsertSupplierRequisitionLineInput!]
+#   $updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineInput!]
+#   $updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]
+# ) {
+#   batchSupplierRequisition(
+#     deleteSupplierRequisitionLines: $deleteSupplierRequisitionLines
+#     insertSupplierRequisitionLines: $insertSupplierRequisitionLines
+#     updateSupplierRequisitionLines: $updateSupplierRequisitionLines
+#     updateSupplierRequisitions: $updateSupplierRequisitions
+#   ) {
+#     __typename
+#     updateSupplierRequisitions {
+#       __typename
+#       id
+#     }
 
-    insertSupplierRequisitionLines {
-      __typename
-      id
-    }
+#     insertSupplierRequisitionLines {
+#       __typename
+#       id
+#     }
 
-    deleteSupplierRequisitionLines {
-      __typename
-      id
-    }
+#     deleteSupplierRequisitionLines {
+#       __typename
+#       id
+#     }
 
-    updateSupplierRequisitionLines {
-      __typename
-      id
-    }
-  }
-}
+#     updateSupplierRequisitionLines {
+#       __typename
+#       id
+#     }
+#   }
+# }
 
-mutation upsertCustomerRequisition(
-  $deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
-  $insertCustomerRequisitionLines: [InsertCustomerRequisitionLineInput!]
-  $updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineInput!]
-  $updateCustomerRequisitions: [UpdateCustomerRequisitionInput!]
-) {
-  batchCustomerRequisition(
-    deleteCustomerRequisitionLines: $deleteCustomerRequisitionLines
-    insertCustomerRequisitionLines: $insertCustomerRequisitionLines
-    updateCustomerRequisitionLines: $updateCustomerRequisitionLines
-    updateCustomerRequisitions: $updateCustomerRequisitions
-  ) {
-    __typename
-    updateCustomerRequisitions {
-      __typename
-      id
-    }
+# mutation upsertCustomerRequisition(
+#   $deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
+#   $insertCustomerRequisitionLines: [InsertCustomerRequisitionLineInput!]
+#   $updateCustomerRequisitionLines: [UpdateCustomerRequisitionLineInput!]
+#   $updateCustomerRequisitions: [UpdateCustomerRequisitionInput!]
+# ) {
+#   batchCustomerRequisition(
+#     deleteCustomerRequisitionLines: $deleteCustomerRequisitionLines
+#     insertCustomerRequisitionLines: $insertCustomerRequisitionLines
+#     updateCustomerRequisitionLines: $updateCustomerRequisitionLines
+#     updateCustomerRequisitions: $updateCustomerRequisitions
+#   ) {
+#     __typename
+#     updateCustomerRequisitions {
+#       __typename
+#       id
+#     }
 
-    insertCustomerRequisitionLines {
-      __typename
-      id
-    }
+#     insertCustomerRequisitionLines {
+#       __typename
+#       id
+#     }
 
-    deleteCustomerRequisitionLines {
-      __typename
-      id
-    }
+#     deleteCustomerRequisitionLines {
+#       __typename
+#       id
+#     }
 
-    updateCustomerRequisitionLines {
-      __typename
-      id
-    }
-  }
-}
+#     updateCustomerRequisitionLines {
+#       __typename
+#       id
+#     }
+#   }
+# }
 
 query invoices(
   $first: Int
@@ -680,7 +675,7 @@ query invoices(
         theirReference
         type
         status
-        color
+        colour
 
         pricing {
           __typename
@@ -994,8 +989,10 @@ mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
   }
 }
 
-mutation deleteOutboundShipments($ids: [String!]) {
-  batchOutboundShipment(deleteOutboundShipments: $ids) {
+mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
+  batchOutboundShipment(
+    input: { deleteOutboundShipments: $deleteOutboundShipments }
+  ) {
     __typename
     deleteOutboundShipments {
       __typename
@@ -1032,51 +1029,84 @@ query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
   }
 }
 
-mutation upsertOutboundShipment(
-  $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]
-  $insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
-  $updateOutboundShipmentLines: [UpdateOutboundShipmentLineInput!]
-  $updateOutboundShipments: [UpdateOutboundShipmentInput!]
-) {
-  batchOutboundShipment(
-    deleteOutboundShipmentLines: $deleteOutboundShipmentLines
-    insertOutboundShipmentLines: $insertOutboundShipmentLines
-    updateOutboundShipmentLines: $updateOutboundShipmentLines
-    updateOutboundShipments: $updateOutboundShipments
-  ) {
-    __typename
-    insertOutboundShipmentLines {
-      __typename
-      id
-    }
-    updateOutboundShipments {
-      __typename
-      id
-    }
+mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
+  batchOutboundShipment(input: $input) {
     deleteOutboundShipmentLines {
-      __typename
+      id
+    }
+    deleteOutboundShipmentServiceLines {
+      id
+    }
+    deleteOutboundShipmentUnallocatedLines {
+      id
+    }
+    insertOutboundShipmentLines {
+      id
+    }
+    insertOutboundShipmentServiceLines {
+      id
+    }
+    insertOutboundShipmentUnallocatedLines {
       id
     }
     updateOutboundShipmentLines {
-      __typename
+      id
+    }
+    updateOutboundShipmentServiceLines {
+      id
+    }
+    updateOutboundShipmentUnallocatedLines {
+      id
+    }
+    updateOutboundShipments {
       id
     }
   }
 }
 
-mutation deleteInboundShipmentLines($input: [DeleteInboundShipmentLineInput!]) {
-  batchInboundShipment(deleteInboundShipmentLines: $input) {
+mutation deleteInboundShipmentLines($input: BatchInboundShipmentInput!) {
+  batchInboundShipment(input: $input) {
     deleteInboundShipmentLines {
       id
       response {
+        ... on DeleteResponse {
+          id
+        }
         ... on DeleteInboundShipmentLineError {
           __typename
           error {
             description
+            ... on NotAnInboundShipment {
+              __typename
+              description
+            }
+            ... on InvoiceDoesNotBelongToCurrentStore {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on BatchIsReserved {
+              __typename
+              description
+            }
+            ... on RecordNotFound {
+              __typename
+              description
+            }
           }
-        }
-        ... on DeleteResponse {
-          id
         }
       }
     }
@@ -1084,9 +1114,11 @@ mutation deleteInboundShipmentLines($input: [DeleteInboundShipmentLineInput!]) {
 }
 
 mutation deleteOutboundShipmentLines(
-  $input: [DeleteOutboundShipmentLineInput!]
+  $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!
 ) {
-  batchOutboundShipment(deleteOutboundShipmentLines: $input) {
+  batchOutboundShipment(
+    input: { deleteOutboundShipmentLines: $deleteOutboundShipmentLines }
+  ) {
     deleteOutboundShipmentLines {
       id
       response {
@@ -1094,6 +1126,36 @@ mutation deleteOutboundShipmentLines(
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+            ... on InvoiceDoesNotBelongToCurrentStore {
+              __typename
+              description
+            }
+            ... on InvoiceLineBelongsToAnotherInvoice {
+              __typename
+              description
+            }
+            ... on NotAnOutboundShipment {
+              __typename
+              description
+            }
           }
         }
         ... on DeleteResponse {
@@ -1104,40 +1166,40 @@ mutation deleteOutboundShipmentLines(
   }
 }
 
-mutation upsertInboundShipment(
-  $deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
-  $insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
-  $updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
-  $updateInboundShipments: [UpdateInboundShipmentInput!]
-) {
-  batchInboundShipment(
-    deleteInboundShipmentLines: $deleteInboundShipmentLines
-    insertInboundShipmentLines: $insertInboundShipmentLines
-    updateInboundShipmentLines: $updateInboundShipmentLines
-    updateInboundShipments: $updateInboundShipments
-  ) {
-    __typename
-    updateInboundShipments {
-      __typename
-      id
-    }
+# mutation upsertInboundShipment(
+#   $deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
+#   $insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
+#   $updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
+#   $updateInboundShipments: [UpdateInboundShipmentInput!]
+# ) {
+#   batchInboundShipment(
+#     deleteInboundShipmentLines: $deleteInboundShipmentLines
+#     insertInboundShipmentLines: $insertInboundShipmentLines
+#     updateInboundShipmentLines: $updateInboundShipmentLines
+#     updateInboundShipments: $updateInboundShipments
+#   ) {
+#     __typename
+#     updateInboundShipments {
+#       __typename
+#       id
+#     }
 
-    insertInboundShipmentLines {
-      __typename
-      id
-    }
+#     insertInboundShipmentLines {
+#       __typename
+#       id
+#     }
 
-    deleteInboundShipmentLines {
-      __typename
-      id
-    }
+#     deleteInboundShipmentLines {
+#       __typename
+#       id
+#     }
 
-    updateInboundShipmentLines {
-      __typename
-      id
-    }
-  }
-}
+#     updateInboundShipmentLines {
+#       __typename
+#       id
+#     }
+#   }
+# }
 
 mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
   updateInboundShipment(input: $input) {
@@ -1169,12 +1231,26 @@ mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
   }
 }
 
-mutation deleteInboundShipments($ids: [DeleteInboundShipmentInput!]) {
-  batchInboundShipment(deleteInboundShipments: $ids) {
+mutation deleteInboundShipments(
+  $deleteInboundShipments: [DeleteInboundShipmentInput!]!
+) {
+  batchInboundShipment(
+    input: { deleteInboundShipments: $deleteInboundShipments }
+  ) {
     __typename
     deleteInboundShipments {
-      __typename
       id
+      response {
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
     }
   }
 }

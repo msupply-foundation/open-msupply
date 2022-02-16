@@ -1,8 +1,8 @@
 import { InvoiceHandlers } from './invoice';
-import { RequisitionHandlers } from './requisition';
+// import { RequisitionHandlers } from './requisition';
 import { NameHandlers } from './name';
 import { ItemHandlers } from './item';
-import { StocktakeHandlers } from './stocktake';
+// import { StocktakeHandlers } from './stocktake';
 import { ExperimentalHandlers } from './experimental';
 import { LocationHandlers } from './location';
 import { StoreHandlers } from './store';
@@ -17,8 +17,8 @@ import { MasterListHandlers } from './masterList';
 const isDev = process.env['NODE_ENV'] !== 'production';
 
 const unsupported = [
-  ...StocktakeHandlers,
-  ...RequisitionHandlers,
+  // ...StocktakeHandlers,
+  // ...RequisitionHandlers,
   ...ExperimentalHandlers,
 ];
 
