@@ -5,6 +5,8 @@ use repository::{
 };
 use thiserror::Error;
 
+use crate::sync::translation_remote::{import_sync_records, REMOTE_TRANSLATION_RECORDS};
+
 use super::{
     sync_api_v5::{RemoteSyncActionV5, RemoteSyncRecordV5},
     SyncApiV5,
@@ -64,9 +66,14 @@ impl RemoteDataSynchroniser {
             })?;
         info!("Successfully pulled remote records");
 
-        // TODO:
-        //info!("Integrate remote records...");
-        //info!("Successfully integrate remote records");
+        info!("Integrate remote records...");
+        self.integrate_remote_records(connection)
+            .await
+            .map_err(|error| RemoteSyncError {
+                msg: "Failed to integrate remote records",
+                source: error,
+            })?;
+        info!("Successfully integrate remote records");
 
         state.set_initial_remote_data_synced()?;
 
@@ -103,6 +110,37 @@ impl RemoteDataSynchroniser {
                 break;
             }
         }
+
+        Ok(())
+    }
+
+    async fn integrate_remote_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        let remote_sync_buffer_repository = RemoteSyncBufferRepository::new(&connection);
+
+        let mut records: Vec<RemoteSyncBufferRow> = Vec::new();
+        for table_name in REMOTE_TRANSLATION_RECORDS {
+            info!("Querying remote sync buffer for {} records", table_name);
+
+            let mut buffer_rows = remote_sync_buffer_repository
+                .get_sync_entries(table_name)
+                .await?;
+
+            info!(
+                "Found {} {} records in remote sync buffer",
+                buffer_rows.len(),
+                table_name
+            );
+
+            records.append(&mut buffer_rows);
+        }
+
+        info!("Importing {} remote sync buffer records...", records.len());
+        import_sync_records(connection, &records).await?;
+        info!("Successfully Imported remote sync buffer records",);
+
+        info!("Clearing remote sync buffer");
+        remote_sync_buffer_repository.remove_all().await?;
+        info!("Successfully cleared remote sync buffer");
 
         Ok(())
     }
