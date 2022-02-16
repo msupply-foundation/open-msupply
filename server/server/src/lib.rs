@@ -1,8 +1,7 @@
 use self::{
-    actor_registry::ActorRegistry,
     middleware::{compress as compress_middleware, logger as logger_middleware},
     settings::Settings,
-    sync::{SyncReceiverActor, SyncSenderActor, Synchroniser},
+    sync::Synchroniser,
 };
 use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
 
@@ -16,14 +15,9 @@ use service::{auth_data::AuthData, service_provider::ServiceProvider, token_buck
 
 use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
-use std::{
-    net::TcpListener,
-    sync::{Arc, Mutex, RwLock},
-    time::Duration,
-};
+use std::{net::TcpListener, sync::RwLock};
 use tokio::sync::oneshot;
 
-pub mod actor_registry;
 pub mod configuration;
 pub mod environment;
 pub mod middleware;
@@ -46,16 +40,8 @@ pub async fn start_server(
         debug_no_access_control: true,
     });
 
-    let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
-        sync::get_sync_actors();
-
-    let actor_registry = ActorRegistry {
-        sync_sender: Arc::new(Mutex::new(sync_sender.clone())),
-    };
-
     let connection_manager = get_storage_connection_manager(&settings.database);
     let connection_manager_data_app = Data::new(connection_manager.clone());
-    let connection_manager_data_sync = connection_manager_data_app.clone();
 
     let service_provider = ServiceProvider::new(connection_manager.clone());
     let service_provider_data = Data::new(service_provider);
@@ -63,12 +49,9 @@ pub async fn start_server(
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
     let loader_registry_data = Data::new(LoaderRegistry { loaders });
 
-    let actor_registry_data = Data::new(actor_registry);
-
     let mut http_server = HttpServer::new(move || {
         App::new()
             .app_data(connection_manager_data_app.clone())
-            .app_data(actor_registry_data.clone())
             .wrap(logger_middleware())
             .wrap(Cors::permissive())
             .wrap(compress_middleware())
@@ -96,8 +79,12 @@ pub async fn start_server(
         }
     }
     let mut running_sever = http_server.run();
-
-    let mut synchroniser = Synchroniser::new(&settings.sync).unwrap();
+    let mut synchroniser = Synchroniser::new(settings.sync, connection_manager).unwrap();
+    // Do the initial pull before doing anything else
+    synchroniser
+        .initial_pull()
+        .await
+        .expect("Failed to perform initial sync");
 
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
@@ -105,11 +92,8 @@ pub async fn start_server(
         result = (&mut running_sever) => result,
         _ = (&mut off_switch) => Ok(running_sever.stop(true).await),
         () = async {
-          sync_sender.schedule_send(Duration::from_secs(settings.sync.interval)).await;
-        } => unreachable!("Sync receiver unexpectedly died!?"),
-        () = async {
-            sync_receiver.listen(&mut synchroniser, &connection_manager_data_sync).await;
-        } => unreachable!("Sync scheduler unexpectedly died!?"),
+            synchroniser.run().await;
+        } => unreachable!("Synchroniser unexpectedly died!?"),
     };
 
     info!("Remote server stopped");
