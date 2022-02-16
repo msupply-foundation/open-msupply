@@ -13,6 +13,9 @@ export const itemsGuard = (
   itemsQuery: ItemsWithStockLinesQuery
 ): { nodes: ItemNode[]; totalCount: number } => {
   if (itemsQuery.items.__typename === 'ItemConnector') {
+    // TODO:
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     return itemsQuery.items;
   } else {
     throw new Error(itemsQuery.items.error.description);
@@ -70,6 +73,11 @@ export const toItem = (line: ItemLike): Item => ({
   isVisible: true,
   availableBatches: [],
   availableQuantity: 0,
+  stats: {
+    monthsOfStock: 0,
+    averageMonthlyConsumption: 0,
+    stockOnHand: 0,
+  },
   unitName:
     ('lines' in line ? line.lines[0].item?.unitName : line.item?.unitName) ??
     '',
