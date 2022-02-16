@@ -169,14 +169,6 @@ impl CentralDataSynchroniser {
         self.integrate_central_records(connection).await?;
         info!("Successfully integrated central records");
 
-        // info!("Syncing remote records...");
-        // let remote_records = self.pull_remote_records().await?;
-        // info!("Successfully pulled remote records");
-
-        // info!("Integrating remote records...");
-        // self.integrate_remote_records(remote_records);
-        // info!("Successfully integrated remote records");
-
         Ok(())
     }
 }
