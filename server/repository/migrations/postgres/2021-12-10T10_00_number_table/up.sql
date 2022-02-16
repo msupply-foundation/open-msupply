@@ -3,7 +3,8 @@ CREATE TYPE number_type AS ENUM (
     'OUTBOUND_SHIPMENT',
     'INVENTORY_ADJUSTMENT',
     'STOCKTAKE',
-    'REQUEST_REQUISITION'
+    'REQUEST_REQUISITION',
+    'RESPONSE_REQUISITION'
 );
 
 -- Numbering table holding a list of typed counters

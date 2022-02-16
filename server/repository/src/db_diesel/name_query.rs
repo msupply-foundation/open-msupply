@@ -42,6 +42,10 @@ impl<'a> NameQueryRepository<'a> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
+    pub fn query_one(&self, filter: NameFilter) -> Result<Option<Name>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
     pub fn query(
         &self,
         pagination: Pagination,
@@ -108,6 +112,7 @@ pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
         apply_equal_filter!(query, f.id, name_dsl::id);
         apply_simple_string_filter!(query, f.code, name_dsl::code);
         apply_simple_string_filter!(query, f.name, name_dsl::name_);
+        apply_equal_filter!(query, f.store_id, store_dsl::id);
 
         if let Some(is_customer) = f.is_customer {
             query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));

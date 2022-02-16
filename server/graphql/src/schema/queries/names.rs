@@ -39,6 +39,7 @@ impl From<NameFilterInput> for NameFilter {
             code: f.code.map(SimpleStringFilter::from),
             is_customer: f.is_customer,
             is_supplier: f.is_supplier,
+            store_id: None,
         }
     }
 }

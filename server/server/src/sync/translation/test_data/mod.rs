@@ -83,8 +83,8 @@ pub async fn check_records_against_database(
                 assert_eq!(
                     NameRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
-                        .await,
-                    from_option_to_db_result(comparison_record)
+                        .unwrap(),
+                    comparison_record
                 )
             }
             TestSyncDataRecord::Item(comparison_record) => {
