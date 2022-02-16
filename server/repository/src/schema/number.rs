@@ -10,7 +10,7 @@ pub enum NumberRowType {
     InventoryAdjustment,
     RequestRequisition,
     ResponseRequisition,
-    StockTake,
+    Stocktake,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]

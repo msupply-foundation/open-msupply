@@ -1,22 +1,23 @@
-use crate::sync_processor::{
-    invoice::{
-        create_and_link_invoice::CreateAndLinkInvoiceProcessor,
-        create_invoice::CreateInvoiceProcessor,
-        update_inbound_shipment::UpdateInboundShipmentProcessor,
-        update_outbound_shipment_status::UpdateOutboundShipmentStatusProcessor,
-    },
-    requisition::{
-        create_and_link_requisition::CreateAndLinkRequistionProcessor,
-        create_requisition::CreateRequistionProcessor,
-        update_request_status::UpdateRequisitionStatusProcessor,
-    },
-};
 use domain::{invoice::InvoiceFilter, name::NameFilter, EqualFilter};
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
     InvoiceQueryRepository, InvoiceRepository, NameQueryRepository, NameRepository,
     RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
     StoreRowRepository,
+};
+
+use self::{
+    invoice::{
+        create_and_link_inbound_shipment::CreateAndLinkInboundShipmentProcessor,
+        create_inbound_shipment::CreateInboundShipmentProcessor,
+        update_inbound_shipment::UpdateInboundShipmentProcessor,
+        update_outbound_shipment_status::UpdateOutboundShipmentStatusProcessor,
+    },
+    requisition::{
+        create_and_link_response_requisition::CreateAndLinkResponseRequisitionProcessor,
+        create_response_requisition::CreateResponseRequisitionProcessor,
+        update_request_requisition_status::UpdateRequestRequisitionStatusProcessor,
+    },
 };
 
 pub mod invoice;
@@ -39,46 +40,46 @@ pub struct RecordForProcessing {
 }
 #[derive(Debug)]
 pub enum ProcessRecordError {
-    StringError(String),
+    CannotFindNameForSourceRecord(Record),
+    CannotFindStoreForSourceRecord(Record),
+    CannotFindNameForStoreSourceRecord(StoreRow),
+    OtherPartyStoreIsNotFound(RecordForProcessing),
+    CannotFindStatsForItemAndStore { store_id: String, item_id: String },
     DatabaseError(RepositoryError),
 }
-
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum ProcessRecordResult {
-    Success(String),
-    ConditionNotMet,
-    ConditionNotMetInProcessor,
+    ProcessRecordResult(String),
+    ProcessorNotMatched,
 }
 
 #[derive(Debug)]
 pub struct ProcessRecordResultSet {
     pub result: ProcessRecordResult,
-    pub processor_name: String,
     pub record: RecordForProcessing,
-}
-
-pub fn processors() -> Vec<Box<dyn ProcessRecord>> {
-    vec![
-        Box::new(CreateAndLinkRequistionProcessor {}),
-        Box::new(CreateRequistionProcessor {}),
-        Box::new(UpdateRequisitionStatusProcessor {}),
-        Box::new(CreateAndLinkInvoiceProcessor {}),
-        Box::new(CreateInvoiceProcessor {}),
-        // TODO delete picked outbound shipment ?
-        Box::new(UpdateInboundShipmentProcessor {}),
-        Box::new(UpdateOutboundShipmentStatusProcessor {}),
-    ]
 }
 
 pub fn process_records(
     connection: &StorageConnection,
     records: Vec<Record>,
 ) -> Result<Vec<ProcessRecordResultSet>, ProcessRecordError> {
-    let processors = processors();
+    let processors: Vec<Box<dyn SyncProcessor>> = vec![
+        // Requisitions
+        Box::new(CreateResponseRequisitionProcessor { connection }),
+        Box::new(CreateAndLinkResponseRequisitionProcessor { connection }),
+        Box::new(CreateAndLinkResponseRequisitionProcessor { connection }),
+        Box::new(UpdateRequestRequisitionStatusProcessor { connection }),
+        // Shipments
+        Box::new(CreateInboundShipmentProcessor { connection }),
+        Box::new(CreateAndLinkInboundShipmentProcessor { connection }),
+        Box::new(UpdateInboundShipmentProcessor { connection }),
+        Box::new(UpdateOutboundShipmentStatusProcessor { connection }),
+    ];
     // TODO transaction
     let mut results = Vec::new();
 
     for record in records.into_iter() {
+        // Create record_for-processing
         let source_name = get_source_name(connection, &record)?;
         let other_party_store = get_other_party_store(connection, &record)?;
 
@@ -95,34 +96,36 @@ pub fn process_records(
             record,
         };
 
-        // iterators don't work for dyn box ? (have to annotate type somehow), thus just looping
-        let mut i = 0;
-        loop {
-            if i >= processors.len() {
-                break;
-            }
+        // Iterate over processors
+        let mut processor_matched = false;
 
-            let processor_name = processors[i].name();
-            if processors[i].can_execute(&record_for_processing) {
+        for processor in processors.iter() {
+            if let Some(result) = processor.try_process_record(&record_for_processing)? {
                 results.push(ProcessRecordResultSet {
-                    result: processors[i].process_record(connection, &record_for_processing)?,
-                    processor_name,
+                    result: ProcessRecordResult::ProcessRecordResult(result),
                     record: record_for_processing.clone(),
                 });
+                processor_matched = true;
                 break;
-            } else {
-                results.push(ProcessRecordResultSet {
-                    result: ProcessRecordResult::ConditionNotMet,
-                    processor_name,
-                    record: record_for_processing.clone(),
-                })
             }
+        }
 
-            i += 1;
+        if !processor_matched {
+            results.push(ProcessRecordResultSet {
+                result: ProcessRecordResult::ProcessorNotMatched,
+                record: record_for_processing,
+            })
         }
     }
 
     Ok(results)
+}
+
+pub trait SyncProcessor {
+    fn try_process_record(
+        &self,
+        record_for_processing: &RecordForProcessing,
+    ) -> Result<Option<String>, ProcessRecordError>;
 }
 
 fn get_other_party_store(
@@ -136,8 +139,8 @@ fn get_other_party_store(
 
     let name = NameQueryRepository::new(connection)
         .query_one(NameFilter::new().id(EqualFilter::equal_to(&name_id)))?
-        .ok_or(ProcessRecordError::StringError(
-            "cannot find name for source record".to_string(),
+        .ok_or(ProcessRecordError::CannotFindNameForSourceRecord(
+            record.clone(),
         ))?;
 
     let result = match name.store_id {
@@ -158,14 +161,14 @@ fn get_source_name(
 
     let store = StoreRowRepository::new(connection)
         .find_one_by_id(&store_id)?
-        .ok_or(ProcessRecordError::StringError(
-            "cannot find store for source record".to_string(),
+        .ok_or(ProcessRecordError::CannotFindStoreForSourceRecord(
+            record.clone(),
         ))?;
 
     let result = NameRepository::new(connection)
         .find_one_by_id(&store.name_id)?
-        .ok_or(ProcessRecordError::StringError(
-            "cannot find name for store in source record".to_string(),
+        .ok_or(ProcessRecordError::CannotFindNameForStoreSourceRecord(
+            store,
         ))?;
 
     Ok(result)
@@ -186,7 +189,7 @@ fn get_linked_record(
             let invoice = InvoiceQueryRepository::new(connection).query_one(
                 InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(&invoice.id)),
             )?;
-            // TODO change when invoice domain is compositire of InvoiceRow
+            // TODO change when invoice domain is composite of InvoiceRow
             if let Some(invoice) = invoice {
                 Some(Record::InvoiceRow(
                     InvoiceRepository::new(connection).find_one_by_id(&invoice.id)?,
@@ -215,18 +218,6 @@ fn is_other_party_active_on_site(
         Some(_) => true,
         None => false,
     })
-}
-
-pub trait ProcessRecord {
-    fn name(&self) -> String;
-
-    fn can_execute(&self, record_for_processing: &RecordForProcessing) -> bool;
-
-    fn process_record(
-        &self,
-        connection: &StorageConnection,
-        record_for_processing: &RecordForProcessing,
-    ) -> Result<ProcessRecordResult, ProcessRecordError>;
 }
 
 impl From<RepositoryError> for ProcessRecordError {
