@@ -1,4 +1,4 @@
-use crate::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_ITEM};
+use crate::sync::translation_central::{SyncTranslationError, TRANSLATION_RECORD_ITEM};
 use repository::schema::{CentralSyncBufferRow, ItemRow, ItemRowType};
 
 use serde::Deserialize;
@@ -64,7 +64,7 @@ impl LegacyItemRow {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::translation::{
+    use crate::sync::translation_central::{
         item::LegacyItemRow,
         test_data::{item::get_test_item_records, TestSyncDataRecord},
     };
