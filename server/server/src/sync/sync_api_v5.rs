@@ -24,6 +24,9 @@ pub enum RemoteSyncActionV5 {
 pub struct RemoteSyncRecordV5 {
     #[serde(rename = "syncID")]
     pub sync_id: String,
+    pub table: String,
+    #[serde(rename = "recordID")]
+    pub record_id: String,
     pub action: RemoteSyncActionV5,
     pub data: serde_json::Value,
 }
@@ -60,6 +63,7 @@ pub struct CentralSyncBatchV5 {
     pub data: Option<Vec<CentralSyncRecordV5>>,
 }
 
+#[derive(Debug, Clone)]
 pub struct SyncApiV5 {
     server_url: Url,
     credentials: SyncCredentials,
@@ -134,17 +138,10 @@ impl SyncApiV5 {
     // Acknowledge successful integration of records from sync queue.
     pub async fn post_acknowledge_records(
         &self,
-        records: &Vec<RemoteSyncRecordV5>,
+        sync_ids: Vec<String>,
     ) -> Result<(), SyncConnectionError> {
         let url = self.server_url.join("/sync/v5/acknowledged_records")?;
-
-        let body: RemoteSyncAckV5 = RemoteSyncAckV5 {
-            sync_ids: records
-                .into_iter()
-                .map(|record| record.sync_id.clone())
-                .collect(),
-        };
-
+        let body: RemoteSyncAckV5 = RemoteSyncAckV5 { sync_ids };
         self.client
             .post(url)
             .basic_auth(
@@ -278,6 +275,8 @@ mod tests {
         let mock_remote_records_data = vec![
             RemoteSyncRecordV5 {
                 sync_id: "sync_record_a".to_owned(),
+                table: "table".to_owned(),
+                record_id: "record id".to_owned(),
                 action: RemoteSyncActionV5::Update,
                 data: json!({
                     "id": "record_a"
@@ -285,6 +284,8 @@ mod tests {
             },
             RemoteSyncRecordV5 {
                 sync_id: "sync_record_b".to_owned(),
+                table: "table".to_owned(),
+                record_id: "record id".to_owned(),
                 action: RemoteSyncActionV5::Create,
                 data: json!({
                     "id": "record_b"
@@ -341,6 +342,8 @@ mod tests {
         let mock_acknowledge_records_data = vec![
             RemoteSyncRecordV5 {
                 sync_id: "sync_record_a".to_owned(),
+                table: "table".to_owned(),
+                record_id: "record id".to_owned(),
                 action: RemoteSyncActionV5::Update,
                 data: json!({
                     "id": "record_a"
@@ -348,6 +351,8 @@ mod tests {
             },
             RemoteSyncRecordV5 {
                 sync_id: "sync_record_b".to_owned(),
+                table: "table".to_owned(),
+                record_id: "record id".to_owned(),
                 action: RemoteSyncActionV5::Create,
                 data: json!({
                     "id": "record_b"
@@ -374,14 +379,14 @@ mod tests {
 
         let sync_connection_with_auth = create_api(&url, "username", "password");
         let acknowledge_result_with_auth = sync_connection_with_auth
-            .post_acknowledge_records(&mock_acknowledge_records_data)
+            .post_acknowledge_records(mock_acknowledge_records_body.sync_ids.clone())
             .await;
 
         assert!(acknowledge_result_with_auth.is_ok());
 
         let sync_connection_without_auth = create_api(&url, "", "");
         let acknowledge_result_without_auth = sync_connection_without_auth
-            .post_acknowledge_records(&mock_acknowledge_records_data)
+            .post_acknowledge_records(mock_acknowledge_records_body.sync_ids.clone())
             .await;
 
         assert!(acknowledge_result_without_auth.is_err());
