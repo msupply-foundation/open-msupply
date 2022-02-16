@@ -38,7 +38,7 @@ export const ConfirmationModal = ({
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
           <Grid item>
-            <Icon color="primary" />
+            <Icon color={iconType === 'info' ? 'secondary' : 'primary'} />
           </Grid>
           <Grid item>
             <Typography variant="h6">{title}</Typography>
