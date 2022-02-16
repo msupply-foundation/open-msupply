@@ -8,6 +8,6 @@ const {
 } = require('@openmsupply-client/mock-server/src/worker/client');
 const worker = setupMockWorker();
 
-// worker.start();
+worker.start();
 
 ReactDOM.render(<App />, document.getElementById('root'));
