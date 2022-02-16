@@ -1,15 +1,13 @@
 use async_graphql::*;
 
 use crate::schema::{
-    mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
+    mutations::{ForeignKey, ForeignKeyError, OtherPartyNotASupplier, RecordAlreadyExist},
     queries::invoice::*,
     types::{DatabaseError, ErrorWrapper, InvoiceNode, NameNode, NodeError},
 };
 use domain::inbound_shipment::InsertInboundShipment;
 use repository::StorageConnectionManager;
 use service::invoice::{insert_inbound_shipment, InsertInboundShipmentError};
-
-use super::OtherPartyNotASupplier;
 
 #[derive(InputObject)]
 pub struct InsertInboundShipmentInput {

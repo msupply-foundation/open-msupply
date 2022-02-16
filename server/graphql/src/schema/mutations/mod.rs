@@ -1,10 +1,8 @@
-mod error;
-
 pub mod inbound_shipment;
 pub mod location;
 pub mod outbound_shipment;
 pub mod requisition;
-pub mod stock_take;
+pub mod stocktake;
 pub mod tax_update_input;
 pub mod user_register;
 
@@ -14,33 +12,35 @@ use self::{
         DeleteLocationResponse, InsertLocationInput, InsertLocationResponse, UpdateLocationInput,
         UpdateLocationResponse,
     },
-    stock_take::{
-        delete::{delete_stock_take, DeleteStockTakeInput, DeleteStockTakeResponse},
-        insert::{insert_stock_take, InsertStockTakeInput, InsertStockTakeResponse},
+    stocktake::{
+        batch::{batch_stocktake, BatchStocktakeInput, BatchStocktakeResponse},
+        delete::{delete_stocktake, DeleteStocktakeInput, DeleteStocktakeResponse},
+        insert::{insert_stocktake, InsertStocktakeInput, InsertStocktakeResponse},
         line::{
             delete::{
-                delete_stock_take_line, DeleteStockTakeLineInput, DeleteStockTakeLineResponse,
+                delete_stocktake_line, DeleteStocktakeLineInput, DeleteStocktakeLineResponse,
             },
             insert::{
-                insert_stock_take_line, InsertStockTakeLineInput, InsertStockTakeLineResponse,
+                insert_stocktake_line, InsertStocktakeLineInput, InsertStocktakeLineResponse,
             },
             update::{
-                update_stock_take_line, UpdateStockTakeLineInput, UpdateStockTakeLineResponse,
+                update_stocktake_line, UpdateStocktakeLineInput, UpdateStocktakeLineResponse,
             },
         },
-        update::{update_stock_take, UpdateStockTakeInput, UpdateStockTakeResponse},
+        update::{update_stocktake, UpdateStocktakeInput, UpdateStocktakeResponse},
     },
 };
 
 use super::{
     queries::invoice::*,
-    types::{Connector, InvoiceLineNode},
+    types::{Connector, InvoiceLineNode, NameNode},
 };
 use crate::ContextExt;
 use async_graphql::*;
 use inbound_shipment::*;
 use outbound_shipment::*;
 use requisition::*;
+use service::current_store_id;
 pub use user_register::*;
 
 pub struct Mutations;
@@ -58,38 +58,34 @@ impl Mutations {
     async fn insert_location(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: InsertLocationInput,
     ) -> InsertLocationResponse {
-        insert_location(ctx, &store_id, input)
+        insert_location(ctx, input)
     }
 
     async fn update_location(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: UpdateLocationInput,
     ) -> UpdateLocationResponse {
-        update_location(ctx, &store_id, input)
+        update_location(ctx, input)
     }
 
     async fn delete_location(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: DeleteLocationInput,
     ) -> DeleteLocationResponse {
-        delete_location(ctx, &store_id, input)
+        delete_location(ctx, input)
     }
 
     async fn insert_outbound_shipment(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: InsertOutboundShipmentInput,
     ) -> InsertOutboundShipmentResponse {
         let connection_manager = ctx.get_connection_manager();
-        get_insert_outbound_shipment_response(connection_manager, &store_id, input)
+        get_insert_outbound_shipment_response(connection_manager, input)
     }
 
     async fn update_outbound_shipment(
@@ -191,11 +187,10 @@ impl Mutations {
     async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: InsertInboundShipmentInput,
     ) -> InsertInboundShipmentResponse {
         let connection_manager = ctx.get_connection_manager();
-        get_insert_inbound_shipment_response(connection_manager, &store_id, input)
+        get_insert_inbound_shipment_response(connection_manager, input)
     }
 
     async fn update_inbound_shipment(
@@ -246,111 +241,106 @@ impl Mutations {
     async fn batch_inbound_shipment(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
-        insert_inbound_shipments: Option<Vec<InsertInboundShipmentInput>>,
-        insert_inbound_shipment_lines: Option<Vec<InsertInboundShipmentLineInput>>,
-        update_inbound_shipment_lines: Option<Vec<UpdateInboundShipmentLineInput>>,
-        delete_inbound_shipment_lines: Option<Vec<DeleteInboundShipmentLineInput>>,
-        update_inbound_shipments: Option<Vec<UpdateInboundShipmentInput>>,
-        delete_inbound_shipments: Option<Vec<DeleteInboundShipmentInput>>,
+        input: BatchInboundShipmentInput,
     ) -> BatchInboundShipmentResponse {
         let connection_manager = ctx.get_connection_manager();
 
-        get_batch_inbound_shipment_response(
-            connection_manager,
-            &store_id,
-            insert_inbound_shipments,
-            insert_inbound_shipment_lines,
-            update_inbound_shipment_lines,
-            delete_inbound_shipment_lines,
-            update_inbound_shipments,
-            delete_inbound_shipments,
-        )
+        get_batch_inbound_shipment_response(connection_manager, input)
     }
 
     async fn batch_outbound_shipment(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
-        insert_outbound_shipments: Option<Vec<InsertOutboundShipmentInput>>,
-        insert_outbound_shipment_lines: Option<Vec<InsertOutboundShipmentLineInput>>,
-        update_outbound_shipment_lines: Option<Vec<UpdateOutboundShipmentLineInput>>,
-        delete_outbound_shipment_lines: Option<Vec<DeleteOutboundShipmentLineInput>>,
-        insert_outbound_shipment_service_lines: Option<Vec<InsertOutboundShipmentServiceLineInput>>,
-        update_outbound_shipment_service_lines: Option<Vec<UpdateOutboundShipmentServiceLineInput>>,
-        delete_outbound_shipment_service_lines: Option<Vec<DeleteOutboundShipmentServiceLineInput>>,
-        update_outbound_shipments: Option<Vec<UpdateOutboundShipmentInput>>,
-        delete_outbound_shipments: Option<Vec<String>>,
-    ) -> BatchOutboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
-
-        get_batch_outbound_shipment_response(
-            connection_manager,
-            &store_id,
-            insert_outbound_shipments,
-            insert_outbound_shipment_lines,
-            update_outbound_shipment_lines,
-            delete_outbound_shipment_lines,
-            insert_outbound_shipment_service_lines,
-            update_outbound_shipment_service_lines,
-            delete_outbound_shipment_service_lines,
-            update_outbound_shipments,
-            delete_outbound_shipments,
-        )
+        input: BatchOutboundShipmentInput,
+    ) -> Result<BatchOutboundShipmentResponse> {
+        get_batch_outbound_shipment_response(ctx, input)
     }
 
-    async fn insert_stock_take(
+    async fn insert_stocktake(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: InsertStocktakeInput,
+    ) -> Result<InsertStocktakeResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        insert_stocktake(ctx, &store_id, input)
+    }
+
+    async fn update_stocktake(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: UpdateStocktakeInput,
+    ) -> Result<UpdateStocktakeResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        update_stocktake(ctx, &store_id, input)
+    }
+
+    async fn delete_stocktake(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: DeleteStocktakeInput,
+    ) -> Result<DeleteStocktakeResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        delete_stocktake(ctx, &store_id, input)
+    }
+
+    async fn insert_stocktake_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: InsertStocktakeLineInput,
+    ) -> Result<InsertStocktakeLineResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        insert_stocktake_line(ctx, &store_id, input)
+    }
+
+    async fn update_stocktake_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: UpdateStocktakeLineInput,
+    ) -> Result<UpdateStocktakeLineResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        update_stocktake_line(ctx, &store_id, input)
+    }
+
+    async fn delete_stocktake_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+        input: DeleteStocktakeLineInput,
+    ) -> Result<DeleteStocktakeLineResponse> {
+        // TODO remove and make store_id parameter required
+        let store_id = store_id.unwrap_or(current_store_id(
+            &ctx.get_connection_manager().connection()?,
+        )?);
+        delete_stocktake_line(ctx, &store_id, input)
+    }
+
+    async fn batch_stocktake(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: InsertStockTakeInput,
-    ) -> Result<InsertStockTakeResponse> {
-        insert_stock_take(ctx, &store_id, input)
-    }
-
-    async fn update_stock_take(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdateStockTakeInput,
-    ) -> Result<UpdateStockTakeResponse> {
-        update_stock_take(ctx, &store_id, input)
-    }
-
-    async fn delete_stock_take(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: DeleteStockTakeInput,
-    ) -> Result<DeleteStockTakeResponse> {
-        delete_stock_take(ctx, &store_id, input)
-    }
-
-    async fn insert_stock_take_line(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertStockTakeLineInput,
-    ) -> Result<InsertStockTakeLineResponse> {
-        insert_stock_take_line(ctx, &store_id, input)
-    }
-
-    async fn update_stock_take_line(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdateStockTakeLineInput,
-    ) -> Result<UpdateStockTakeLineResponse> {
-        update_stock_take_line(ctx, &store_id, input)
-    }
-
-    async fn delete_stock_take_line(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: DeleteStockTakeLineInput,
-    ) -> Result<DeleteStockTakeLineResponse> {
-        delete_stock_take_line(ctx, &store_id, &input)
+        input: BatchStocktakeInput,
+    ) -> Result<BatchStocktakeResponse> {
+        batch_stocktake(ctx, &store_id, input)
     }
 
     async fn insert_request_requisition(
@@ -359,6 +349,7 @@ impl Mutations {
         store_id: String,
         input: request_requisition::InsertInput,
     ) -> Result<request_requisition::InsertResponse> {
+        // TODO remove and make store_id parameter required
         request_requisition::insert(ctx, &store_id, input)
     }
 
@@ -368,6 +359,7 @@ impl Mutations {
         store_id: String,
         input: request_requisition::UpdateInput,
     ) -> Result<request_requisition::UpdateResponse> {
+        // TODO remove and make store_id parameter required
         request_requisition::update(ctx, &store_id, input)
     }
 
@@ -377,6 +369,7 @@ impl Mutations {
         store_id: String,
         input: request_requisition::DeleteInput,
     ) -> Result<request_requisition::DeleteResponse> {
+        // TODO remove and make store_id parameter required
         request_requisition::delete(ctx, &store_id, input)
     }
 
@@ -387,6 +380,7 @@ impl Mutations {
         store_id: String,
         input: request_requisition::UseCalculatedQuantityInput,
     ) -> Result<request_requisition::UseCalculatedQuantityResponse> {
+        // TODO remove and make store_id parameter required
         request_requisition::use_calculated_quantity(ctx, &store_id, input)
     }
 
@@ -397,6 +391,7 @@ impl Mutations {
         store_id: String,
         input: request_requisition::AddFromMasterListInput,
     ) -> Result<request_requisition::AddFromMasterListResponse> {
+        // TODO remove and make store_id parameter required
         request_requisition::add_from_master_list(ctx, &store_id, input)
     }
 
@@ -416,6 +411,7 @@ impl Mutations {
         store_id: String,
         input: request_requisition::line::UpdateInput,
     ) -> Result<request_requisition::line::UpdateResponse> {
+        // TODO remove and make store_id parameter required
         request_requisition::line::update(ctx, &store_id, input)
     }
 
@@ -425,6 +421,7 @@ impl Mutations {
         store_id: String,
         input: request_requisition::line::DeleteInput,
     ) -> Result<request_requisition::line::DeleteResponse> {
+        // TODO remove and make store_id parameter required
         request_requisition::line::delete(ctx, &store_id, input)
     }
 
@@ -434,6 +431,7 @@ impl Mutations {
         store_id: String,
         input: response_requisition::UpdateInput,
     ) -> Result<response_requisition::UpdateResponse> {
+        // TODO remove and make store_id parameter required
         response_requisition::update(ctx, &store_id, input)
     }
 
@@ -443,6 +441,7 @@ impl Mutations {
         store_id: String,
         input: response_requisition::line::UpdateInput,
     ) -> Result<response_requisition::line::UpdateResponse> {
+        // TODO remove and make store_id parameter required
         response_requisition::line::update(ctx, &store_id, input)
     }
 
@@ -453,6 +452,7 @@ impl Mutations {
         store_id: String,
         input: response_requisition::SupplyRequestedQuantityInput,
     ) -> Result<response_requisition::SupplyRequestedQuantityResponse> {
+        // TODO remove and make store_id parameter required
         response_requisition::supply_requested_quantity(ctx, &store_id, input)
     }
 
@@ -466,6 +466,7 @@ impl Mutations {
         store_id: String,
         input: response_requisition::CreateRequisitionShipmentInput,
     ) -> Result<response_requisition::CreateRequisitionShipmentResponse> {
+        // TODO remove and make store_id parameter required
         response_requisition::create_requisition_shipment(ctx, &store_id, input)
     }
 }
@@ -610,6 +611,18 @@ impl InvoiceLineBelongsToAnotherInvoice {
     }
 }
 
+pub struct OtherPartyNotASupplier(NameNode);
+#[Object]
+impl OtherPartyNotASupplier {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not a supplier"
+    }
+
+    pub async fn other_party(&self) -> &NameNode {
+        &self.0
+    }
+}
+
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "InsertInboundShipmentResponseWithId",
@@ -672,8 +685,16 @@ impl InvoiceLineBelongsToAnotherInvoice {
     params(DeleteOutboundShipmentServiceLineResponse)
 ))]
 #[graphql(concrete(
-    name = "DeleteStockTakeLineResponseWithId",
-    params(DeleteStockTakeLineResponse)
+    name = "InsertOutboundShipmentUnallocatedLineResponseWithId",
+    params(outbound_shipment::unallocated_line::InsertResponse)
+))]
+#[graphql(concrete(
+    name = "UpdateOutboundShipmentUnallocatedLineResponseWithId",
+    params(outbound_shipment::unallocated_line::UpdateResponse)
+))]
+#[graphql(concrete(
+    name = "DeleteOutboundShipmentUnallocatedLineResponseWithId",
+    params(outbound_shipment::unallocated_line::DeleteResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,

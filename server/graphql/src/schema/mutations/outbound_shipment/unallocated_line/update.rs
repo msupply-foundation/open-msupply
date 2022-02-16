@@ -47,22 +47,24 @@ pub fn update(ctx: &Context<'_>, input: UpdateInput) -> Result<UpdateResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
+    let id = input.id.clone();
+
     let response = match service_provider
         .outbound_shipment_line
         .update_outbound_shipment_unallocated_line(&service_context, input.into())
     {
         Ok(invoice_line) => UpdateResponse::Response(invoice_line.into()),
         Err(error) => UpdateResponse::Error(UpdateError {
-            error: map_error(error)?,
+            error: map_error(&id, error)?,
         }),
     };
 
     Ok(response)
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
+fn map_error(id: &str, error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("Update unallocated line {}: {:#?}", id, error);
 
     let graphql_error = match error {
         // Structured Errors

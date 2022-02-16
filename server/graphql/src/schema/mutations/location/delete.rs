@@ -7,8 +7,8 @@ use service::location::delete::{
 
 use crate::{
     schema::{
-        mutations::{error::DatabaseError, DeleteResponse, RecordBelongsToAnotherStore},
-        types::{Connector, InvoiceLineNode, RecordNotFound, StockLineNode},
+        mutations::{DeleteResponse, RecordBelongsToAnotherStore},
+        types::{Connector, DatabaseError, InvoiceLineNode, RecordNotFound, StockLineNode},
     },
     ContextExt,
 };

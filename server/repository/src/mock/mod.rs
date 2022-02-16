@@ -11,8 +11,8 @@ mod name;
 mod name_store_join;
 mod number;
 mod stock_line;
-mod stock_take;
-mod stock_take_line;
+mod stocktake;
+mod stocktake_line;
 mod store;
 mod test_invoice_count_service;
 mod test_invoice_loaders;
@@ -24,8 +24,8 @@ mod test_requisition_line_repository;
 mod test_requisition_queries;
 mod test_requisition_repository;
 mod test_requisition_service;
-mod test_stock_take;
-mod test_stock_take_line;
+mod test_stocktake;
+mod test_stocktake_line;
 mod test_sync_processor;
 mod test_unallocated_line;
 mod unit;
@@ -42,8 +42,8 @@ pub use name::*;
 pub use name_store_join::mock_name_store_joins;
 pub use number::*;
 pub use stock_line::*;
-pub use stock_take::*;
-pub use stock_take_line::*;
+pub use stocktake::*;
+pub use stocktake_line::*;
 pub use store::*;
 pub use test_invoice_count_service::*;
 pub use test_invoice_loaders::*;
@@ -55,8 +55,8 @@ pub use test_requisition_line_repository::*;
 pub use test_requisition_queries::*;
 pub use test_requisition_repository::*;
 pub use test_requisition_service::*;
-pub use test_stock_take::*;
-pub use test_stock_take_line::*;
+pub use test_stocktake::*;
+pub use test_stocktake_line::*;
 pub use test_sync_processor::*;
 pub use test_unallocated_line::*;
 pub use user_account::mock_user_accounts;
@@ -64,7 +64,7 @@ pub use user_account::mock_user_accounts;
 use crate::{
     InvoiceLineRowRepository, LocationRowRepository, NumberRowRepository,
     RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
-    StockTakeLineRowRepository, StockTakeRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository,
 };
 
 use self::unit::mock_units;
@@ -94,8 +94,8 @@ pub struct MockData {
     pub numbers: Vec<NumberRow>,
     pub requisitions: Vec<RequisitionRow>,
     pub requisition_lines: Vec<RequisitionLineRow>,
-    pub stock_takes: Vec<StockTakeRow>,
-    pub stock_take_lines: Vec<StockTakeLineRow>,
+    pub stocktakes: Vec<StocktakeRow>,
+    pub stocktake_lines: Vec<StocktakeLineRow>,
 }
 
 pub struct MockDataInserts {
@@ -114,8 +114,8 @@ pub struct MockDataInserts {
     pub numbers: bool,
     pub requisitions: bool,
     pub requisition_lines: bool,
-    pub stock_takes: bool,
-    pub stock_take_lines: bool,
+    pub stocktakes: bool,
+    pub stocktake_lines: bool,
 }
 
 impl MockDataInserts {
@@ -136,8 +136,8 @@ impl MockDataInserts {
             numbers: true,
             requisitions: true,
             requisition_lines: true,
-            stock_takes: true,
-            stock_take_lines: true,
+            stocktakes: true,
+            stocktake_lines: true,
         }
     }
 
@@ -158,8 +158,8 @@ impl MockDataInserts {
             numbers: false,
             requisitions: false,
             requisition_lines: false,
-            stock_takes: false,
-            stock_take_lines: false,
+            stocktakes: false,
+            stocktake_lines: false,
         }
     }
 
@@ -218,13 +218,13 @@ impl MockDataInserts {
         self
     }
 
-    pub fn stock_takes(mut self) -> Self {
-        self.stock_takes = true;
+    pub fn stocktakes(mut self) -> Self {
+        self.stocktakes = true;
         self
     }
 
-    pub fn stock_take_lines(mut self) -> Self {
-        self.stock_take_lines = true;
+    pub fn stocktake_lines(mut self) -> Self {
+        self.stocktake_lines = true;
         self
     }
 }
@@ -277,8 +277,8 @@ fn all_mock_data() -> MockDataCollection {
             full_invoices: mock_full_invoices(),
             full_master_lists: mock_full_master_lists(),
             numbers: mock_numbers(),
-            stock_takes: mock_stock_take_data(),
-            stock_take_lines: mock_stock_take_line_data(),
+            stocktakes: mock_stocktake_data(),
+            stocktake_lines: mock_stocktake_line_data(),
             requisitions: vec![],
             requisition_lines: vec![],
         },
@@ -291,8 +291,8 @@ fn all_mock_data() -> MockDataCollection {
         "test_outbound_shipment_update_data",
         test_outbound_shipment_update_data(),
     );
-    data.insert("test_stock_take_line_data", test_stock_take_line_data());
-    data.insert("test_stock_take_data", test_stock_take_data());
+    data.insert("test_stocktake_line_data", test_stocktake_line_data());
+    data.insert("test_stocktake_data", test_stocktake_data());
     data.insert("mock_test_unallocated_line", mock_test_unallocated_line());
     data.insert("mock_test_name_store_id", mock_test_name_store_id());
     data.insert(
@@ -432,16 +432,16 @@ pub async fn insert_mock_data(
             }
         }
 
-        if inserts.stock_takes {
-            let repo = StockTakeRowRepository::new(connection);
-            for row in &mock_data.stock_takes {
+        if inserts.stocktakes {
+            let repo = StocktakeRowRepository::new(connection);
+            for row in &mock_data.stocktakes {
                 repo.upsert_one(row).unwrap();
             }
         }
 
-        if inserts.stock_take_lines {
-            for row in &mock_data.stock_take_lines {
-                let repo = StockTakeLineRowRepository::new(connection);
+        if inserts.stocktake_lines {
+            for row in &mock_data.stocktake_lines {
+                let repo = StocktakeLineRowRepository::new(connection);
                 repo.upsert_one(row).unwrap();
             }
         }
