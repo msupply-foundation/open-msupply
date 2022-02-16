@@ -339,27 +339,6 @@ mod tests {
 
         let acknowledge_records_path = "/sync/v5/acknowledged_records".to_owned();
 
-        let mock_acknowledge_records_data = vec![
-            RemoteSyncRecordV5 {
-                sync_id: "sync_record_a".to_owned(),
-                table: "table".to_owned(),
-                record_id: "record id".to_owned(),
-                action: RemoteSyncActionV5::Update,
-                data: json!({
-                    "id": "record_a"
-                }),
-            },
-            RemoteSyncRecordV5 {
-                sync_id: "sync_record_b".to_owned(),
-                table: "table".to_owned(),
-                record_id: "record id".to_owned(),
-                action: RemoteSyncActionV5::Create,
-                data: json!({
-                    "id": "record_b"
-                }),
-            },
-        ];
-
         let mock_acknowledge_records_body = RemoteSyncAckV5 {
             sync_ids: vec!["sync_record_a".to_owned(), "sync_record_b".to_owned()],
         };
