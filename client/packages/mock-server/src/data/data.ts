@@ -17,7 +17,6 @@ import {
   MasterList,
 } from './types';
 import {
-  randomName,
   randomFloat,
   addRandomPercentageTo,
   alphaString,
@@ -36,8 +35,8 @@ import {
   InvoiceNodeStatus,
   InvoiceNodeType,
   StocktakeNodeStatus,
+  RequisitionNodeStatus,
   RequisitionNodeType,
-  SupplierRequisitionNodeStatus,
   InvoiceLineNodeType,
 } from '@openmsupply-client/common/src/types/schema';
 
@@ -301,7 +300,7 @@ export const createInvoice = (
       totalBeforeTax: 0,
     },
 
-    color: '#8f90a6',
+    colour: '#8f90a6',
     comment: takeRandomElementFrom(comments),
     onHold: false,
 
@@ -334,14 +333,10 @@ const getSuppliers = (names = NameData) =>
   names.filter(({ isCustomer }) => isCustomer);
 
 const getCustomerRequisitions = () =>
-  RequisitionData.filter(
-    ({ type }) => type === RequisitionNodeType.CustomerRequisition
-  );
+  RequisitionData.filter(({ type }) => type === RequisitionNodeType.Response);
 
 const getSupplierRequisitions = () =>
-  RequisitionData.filter(
-    ({ type }) => type === RequisitionNodeType.SupplierRequisition
-  );
+  RequisitionData.filter(({ type }) => type === RequisitionNodeType.Request);
 
 const getItems = () => [...ItemData];
 
@@ -589,15 +584,15 @@ const createRequisition = (
     id: `${faker.datatype.uuid()}`,
     requisitionNumber: faker.datatype.number({ max: 1000 }),
     otherPartyId: otherParty.id,
-    orderDate: faker.date.past(1.5).toISOString(),
-    requisitionDate: faker.date.past(1.5).toISOString(),
+    createdDatetime: faker.date.past(1.5).toISOString(),
+    // requisitionDate: faker.date.past(1.5).toISOString(),
     type,
-    maxMOS: 3,
-    thresholdMOS: 3,
-    color: '#8f90a6',
+    maxMonthsOfStock: 3,
+    thresholdMonthsOfStock: 3,
+    colour: '#8f90a6',
     status: takeRandomElementFrom([
-      SupplierRequisitionNodeStatus.Draft,
-      SupplierRequisitionNodeStatus.Finalised,
+      RequisitionNodeStatus.Draft,
+      RequisitionNodeStatus.Finalised,
     ]),
     comment: takeRandomElementFrom(comments),
   };
@@ -613,7 +608,7 @@ const createSupplierRequisitions = (): Requisition[] => {
       return Array.from({ length: numberOfRequisitions }).map(() => {
         const requisition: Requisition = createRequisition(
           supplier,
-          RequisitionNodeType.SupplierRequisition
+          RequisitionNodeType.Request
         );
         return requisition;
       });
@@ -631,7 +626,7 @@ const createCustomerRequisitions = (): Requisition[] => {
       return Array.from({ length: numberOfRequisitions }).map(() => {
         const requisition: Requisition = createRequisition(
           customer,
-          RequisitionNodeType.CustomerRequisition
+          RequisitionNodeType.Response
         );
 
         return requisition;
@@ -705,17 +700,18 @@ const createCustomerRequisitionLines = (): RequisitionLine[] => {
 const createStocktake = (): Stocktake => {
   return {
     id: faker.datatype.uuid(),
+    storeId: '',
     stocktakeNumber: faker.datatype.number({ max: 1000 }),
-    stocktakeDatetime: faker.date.past(1.5).toISOString(),
+    createdDatetime: faker.date.past(1.5).toISOString(),
     comment: takeRandomElementFrom(comments),
     description: takeRandomElementFrom(comments),
     status: takeRandomElementFrom([
-      StocktakeNodeStatus.Suggested,
+      StocktakeNodeStatus.New,
       StocktakeNodeStatus.Finalised,
     ]),
-    entryDatetime: faker.date.past(1.5).toISOString(),
-    enteredByName: randomName(),
-    onHold: faker.datatype.boolean(),
+    // entryDatetime: faker.date.past(1.5).toISOString(),
+    // enteredByName: randomName(),
+    // onHold: faker.datatype.boolean(),
   };
 };
 
@@ -740,12 +736,9 @@ export const createStocktakeLine = (
     countedNumberOfPacks: stockLine?.totalNumberOfPacks,
     expiryDate: stockLine?.expiryDate,
     itemId: item.id,
-    itemCode: item.code,
-    itemName: item.name,
-    snapshotNumberOfPacks: stockLine?.totalNumberOfPacks,
+    snapshotNumberOfPacks: stockLine?.totalNumberOfPacks ?? 0,
     packSize: stockLine?.packSize,
     stocktakeId,
-    stockLineId: stockLine?.id,
   };
 };
 

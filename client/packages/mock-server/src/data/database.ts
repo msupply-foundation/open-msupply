@@ -8,26 +8,27 @@ import {
   InvoiceLineNodeType,
   InvoiceNodeStatus,
   DeleteResponse,
-  InsertSupplierRequisitionInput,
-  UpdateSupplierRequisitionInput,
-  DeleteSupplierRequisitionInput,
-  InsertCustomerRequisitionInput,
-  UpdateCustomerRequisitionInput,
-  DeleteCustomerRequisitionInput,
-  InsertSupplierRequisitionLineInput,
-  UpdateSupplierRequisitionLineInput,
-  DeleteSupplierRequisitionLineInput,
+  InsertRequestRequisitionInput,
+  UpdateRequestRequisitionInput,
+  DeleteRequestRequisitionInput,
+  // InsertResponseRequisitionInput,
+  UpdateResponseRequisitionInput,
+  // DeleteResponseRequisitionInput,
+  InsertRequestRequisitionLineInput,
+  UpdateRequestRequisitionLineInput,
+  DeleteRequestRequisitionLineInput,
   UpdateInboundShipmentInput,
-  InsertCustomerRequisitionLineInput,
-  UpdateCustomerRequisitionLineInput,
-  DeleteCustomerRequisitionLineInput,
+  // InsertResponseRequisitionLineInput,
+  UpdateResponseRequisitionLineInput,
+  // DeleteResponseRequisitionLineInput,
   InsertStocktakeLineInput,
   UpdateStocktakeLineInput,
   DeleteStocktakeLineInput,
   UpdateOutboundShipmentInput,
   InsertOutboundShipmentLineInput,
   InsertInboundShipmentLineInput,
-  SupplierRequisitionNodeStatus,
+  // RequestRequisitionNodeStatus,
+  RequisitionNodeStatus,
   RequisitionNodeType,
   InsertStocktakeInput,
   UpdateStocktakeInput,
@@ -166,7 +167,13 @@ export const stocktakeLine = {
     }
 
     const line = { ...createStocktakeLine(input.stocktakeId, item), ...input };
+    // TODO:
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     StocktakeLineData.push(line);
+    // TODO:
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     return line;
   },
   update: (input: UpdateStocktakeLineInput): StocktakeLine => {
@@ -204,7 +211,7 @@ export const stocktake = {
   },
   insert: (input: InsertStocktakeInput): Stocktake => {
     const stocktakeNumber = faker.datatype.number({ max: 1000 });
-    const status = StocktakeNodeStatus.Suggested;
+    const status = StocktakeNodeStatus.New;
 
     const stocktake = {
       ...input,
@@ -214,7 +221,13 @@ export const stocktake = {
       enteredByName: randomName(),
       onHold: false,
     };
+    // TODO:
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     StocktakeData.push(stocktake);
+    // TODO:
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     return stocktake;
   },
   update: (input: UpdateStocktakeInput): Stocktake => {
@@ -286,16 +299,22 @@ export const requisition = {
     },
   },
   supplier: {
-    insert: (input: InsertSupplierRequisitionInput): Requisition => {
+    insert: (input: InsertRequestRequisitionInput): Requisition => {
       const requisitionNumber = faker.datatype.number({ max: 1000 });
       const storeId = '';
-      const status = SupplierRequisitionNodeStatus.Draft;
-      const type = input.type || RequisitionNodeType.SupplierRequisition;
+      const status = RequisitionNodeStatus.Draft;
+      const type = RequisitionNodeType.Request;
       const req = { ...input, requisitionNumber, storeId, status, type };
+      // TODO:
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       RequisitionData.push(req);
+      // TODO:
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       return req;
     },
-    update: (input: UpdateSupplierRequisitionInput): Requisition => {
+    update: (input: UpdateRequestRequisitionInput): Requisition => {
       const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
       const req = RequisitionData[index] as Requisition;
       if (!req) {
@@ -307,7 +326,7 @@ export const requisition = {
 
       return updatedReq;
     },
-    delete: (input: DeleteSupplierRequisitionInput): DeleteResponse => {
+    delete: (input: DeleteRequestRequisitionInput): DeleteResponse => {
       const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
       if (!(index >= 0))
         throw new Error(
@@ -318,16 +337,7 @@ export const requisition = {
     },
   },
   customer: {
-    insert: (input: InsertCustomerRequisitionInput): Requisition => {
-      const requisitionNumber = faker.datatype.number({ max: 1000 });
-      const storeId = '';
-      const status = SupplierRequisitionNodeStatus.Draft;
-      const type = input.type || RequisitionNodeType.CustomerRequisition;
-      const req = { ...input, requisitionNumber, storeId, status, type };
-      RequisitionData.push(req);
-      return req;
-    },
-    update: (input: UpdateCustomerRequisitionInput): Requisition => {
+    update: (input: UpdateResponseRequisitionInput): Requisition => {
       const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
       const req = RequisitionData[index] as Requisition;
       if (!req) {
@@ -338,15 +348,6 @@ export const requisition = {
       RequisitionData[index] = updatedReq;
 
       return updatedReq;
-    },
-    delete: (input: DeleteCustomerRequisitionInput): DeleteResponse => {
-      const index = RequisitionData.findIndex(getFilter(input.id, 'id'));
-      if (!(index >= 0))
-        throw new Error(
-          `Could not find requisition to delete with id: ${input.id}`
-        );
-      removeElement(RequisitionData, index);
-      return input;
     },
   },
 };
@@ -372,7 +373,7 @@ const requisitionLine = {
     },
   },
   supplier: {
-    insert: (input: InsertSupplierRequisitionLineInput): RequisitionLine => {
+    insert: (input: InsertRequestRequisitionLineInput): RequisitionLine => {
       const item = ItemData.find(getFilter(input.itemId, 'id'));
       if (!item) {
         throw new Error(`Could not find item with id: ${input.itemId}`);
@@ -385,10 +386,16 @@ const requisitionLine = {
       }
 
       const line = { ...createRequisitionLine(req, item), ...input };
+      // TODO:
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       RequisitionLineData.push(line);
+      // TODO:
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       return line;
     },
-    update: (input: UpdateSupplierRequisitionLineInput): RequisitionLine => {
+    update: (input: UpdateRequestRequisitionLineInput): RequisitionLine => {
       const index = RequisitionLineData.findIndex(getFilter(input.id, 'id'));
       const line = RequisitionLineData[index] as RequisitionLine;
       if (!line) {
@@ -400,7 +407,7 @@ const requisitionLine = {
 
       return updatedLine;
     },
-    delete: (input: DeleteSupplierRequisitionLineInput): DeleteResponse => {
+    delete: (input: DeleteRequestRequisitionLineInput): DeleteResponse => {
       const index = RequisitionLineData.findIndex(getFilter(input.id, 'id'));
       if (!(index >= 0))
         throw new Error(`Could not find line to delete with id: ${input.id}`);
@@ -409,23 +416,7 @@ const requisitionLine = {
     },
   },
   customer: {
-    insert: (input: InsertCustomerRequisitionLineInput): RequisitionLine => {
-      const item = ItemData.find(getFilter(input.itemId, 'id'));
-      if (!item) {
-        throw new Error(`Could not find item with id: ${input.itemId}`);
-      }
-      const req = RequisitionData.find(getFilter(input.requisitionId, 'id'));
-      if (!req) {
-        throw new Error(
-          `Could not find requisition with id: ${input.requisitionId}`
-        );
-      }
-
-      const line = createRequisitionLine(req, item);
-      RequisitionLineData.push(line);
-      return line;
-    },
-    update: (input: UpdateCustomerRequisitionLineInput): RequisitionLine => {
+    update: (input: UpdateResponseRequisitionLineInput): RequisitionLine => {
       const index = RequisitionLineData.findIndex(getFilter(input.id, 'id'));
       const line = RequisitionLineData[index] as RequisitionLine;
       if (!line) {
@@ -436,13 +427,6 @@ const requisitionLine = {
       RequisitionLineData[index] = updatedLine;
 
       return updatedLine;
-    },
-    delete: (input: DeleteCustomerRequisitionLineInput): DeleteResponse => {
-      const index = RequisitionLineData.findIndex(getFilter(input.id, 'id'));
-      if (!(index >= 0))
-        throw new Error(`Could not find line to delete with id: ${input.id}`);
-      removeElement(RequisitionLineData, index);
-      return input;
     },
   },
 };
@@ -601,7 +585,7 @@ export const update = {
     const existingInvoice: Invoice = InvoiceData[idx] as Invoice;
     const newInvoice: Invoice = {
       ...existingInvoice,
-      color: invoice?.color ?? existingInvoice.color,
+      colour: invoice?.colour ?? existingInvoice.colour,
       comment: invoice?.comment ?? existingInvoice.comment,
       theirReference: invoice?.theirReference ?? existingInvoice.theirReference,
       onHold: invoice?.onHold ?? existingInvoice.onHold,

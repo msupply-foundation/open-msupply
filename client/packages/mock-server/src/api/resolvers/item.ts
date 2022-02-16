@@ -47,6 +47,11 @@ export const itemResolver = {
       ...item,
       availableQuantity,
       availableBatches,
+      stats: {
+        averageMonthlyConsumption: 0,
+        stockOnHand: 0,
+        monthsOfStock: 0,
+      },
     };
   },
   list: (
