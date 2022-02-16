@@ -15,6 +15,7 @@ mod stocktake;
 mod stocktake_line;
 mod store;
 mod test_invoice_count_service;
+mod test_invoice_loaders;
 mod test_item_stats_repository;
 mod test_master_list_repository;
 mod test_name_store_id;
@@ -45,6 +46,7 @@ pub use stocktake::*;
 pub use stocktake_line::*;
 pub use store::*;
 pub use test_invoice_count_service::*;
+pub use test_invoice_loaders::*;
 pub use test_item_stats_repository::*;
 pub use test_master_list_repository::*;
 pub use test_name_store_id::*;
@@ -318,6 +320,7 @@ fn all_mock_data() -> MockDataCollection {
         mock_test_master_list_repository(),
     );
     data.insert("mock_test_sync_processor", mock_test_sync_processor());
+    data.insert("mock_test_invoice_loaders()", mock_test_invoice_loaders());
     data
 }
 

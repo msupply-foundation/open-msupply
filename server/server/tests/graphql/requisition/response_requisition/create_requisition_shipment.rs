@@ -241,6 +241,7 @@ mod graphql {
                 verified_datetime: None,
                 colour: None,
                 requisition_id: None,
+                linked_invoice_id: None,
             })
         }));
 

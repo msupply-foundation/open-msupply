@@ -97,6 +97,7 @@ mod graphql {
                 colour: None,
                 r#type: InvoiceType::OutboundShipment,
                 requisition_id: None,
+                linked_invoice_id: None,
             }))
         }));
 

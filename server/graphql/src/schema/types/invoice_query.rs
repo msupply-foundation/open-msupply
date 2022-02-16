@@ -1,5 +1,8 @@
 use crate::{
-    loader::{InvoiceLineQueryLoader, InvoiceStatsLoader, NameByIdLoader, StoreLoader},
+    loader::{
+        InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, NameByIdLoader,
+        RequisitionsByIdLoader, StoreLoader,
+    },
     ContextExt,
 };
 use async_graphql::*;
@@ -39,6 +42,7 @@ pub type InvoiceSortInput = SortInput<InvoiceSortFieldInput>;
 
 #[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
+    pub id: Option<EqualFilterStringInput>,
     pub invoice_number: Option<EqualFilterBigNumberInput>,
     pub name_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
@@ -52,12 +56,14 @@ pub struct InvoiceFilterInput {
     pub shipped_datetime: Option<DatetimeFilterInput>,
     pub delivered_datetime: Option<DatetimeFilterInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
+    pub requisition_id: Option<EqualFilterStringInput>,
+    pub linked_invoice_id: Option<EqualFilterStringInput>,
 }
 
 impl From<InvoiceFilterInput> for InvoiceFilter {
     fn from(f: InvoiceFilterInput) -> Self {
         InvoiceFilter {
-            id: None,
+            id: f.id.map(EqualFilter::from),
             invoice_number: f.invoice_number.map(EqualFilter::from),
             name_id: f.name_id.map(EqualFilter::from),
             store_id: f.store_id.map(EqualFilter::from),
@@ -71,8 +77,8 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
             shipped_datetime: f.shipped_datetime.map(DatetimeFilter::from),
             delivered_datetime: f.delivered_datetime.map(DatetimeFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
-            requisition_id: None,
-            linked_invoice_id: None,
+            requisition_id: f.requisition_id.map(EqualFilter::from),
+            linked_invoice_id: f.linked_invoice_id.map(EqualFilter::from),
         }
     }
 }
@@ -218,13 +224,34 @@ impl InvoiceNode {
 
     /// Response Requisition that is the origin of this Outbound Shipment
     /// Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
-    pub async fn requisition(&self) -> Result<Option<RequisitionNode>> {
-        todo!()
+    pub async fn requisition(&self, ctx: &Context<'_>) -> Result<Option<RequisitionNode>> {
+        let requisition_id = if let Some(id) = &self.invoice.requisition_id {
+            id
+        } else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<RequisitionsByIdLoader>>();
+
+        Ok(loader
+            .load_one(requisition_id.clone())
+            .await?
+            .map(RequisitionNode::from_domain))
     }
 
     /// Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment
-    pub async fn linked_shipment(&self) -> Result<Option<InvoiceNode>> {
-        todo!()
+    pub async fn linked_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        let linked_invoice_id = if let Some(id) = &self.invoice.linked_invoice_id {
+            id
+        } else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<InvoiceQueryLoader>>();
+        Ok(loader
+            .load_one(linked_invoice_id.to_string())
+            .await?
+            .map(InvoiceNode::from))
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> InvoiceLinesResponse {
