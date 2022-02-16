@@ -52,24 +52,19 @@ export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
 
 export const getNextOutboundStatus = (
   currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus => {
+): InvoiceNodeStatus | null => {
   const currentStatusIdx = outboundStatuses.findIndex(
     status => currentStatus === status
   );
-
   const nextStatus = outboundStatuses[currentStatusIdx + 1];
-
-  if (!nextStatus) throw new Error('Could not find the next status');
-
-  return nextStatus;
+  return nextStatus ?? null;
 };
 
 export const getNextInboundStatus = (
   currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus => {
+): InvoiceNodeStatus | null => {
   const nextStatus = nextStatusMap[currentStatus];
-  if (!nextStatus) throw new Error('Could not find the next status');
-  return nextStatus;
+  return nextStatus ?? null;
 };
 
 export const getNextOutboundStatusButtonTranslation = (

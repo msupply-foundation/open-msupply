@@ -1,28 +1,24 @@
 import {
   Box,
-  ArrowRightIcon,
   ButtonWithIcon,
   StatusCrumbs,
   ToggleButton,
   useTranslation,
-  useNotification,
   AppFooterPortal,
   InvoiceNodeStatus,
   useBufferState,
+  useNavigate,
+  XCircleIcon,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
-import {
-  getNextInboundStatusButtonTranslation,
-  getStatusTranslator,
-  inboundStatuses,
-  getNextInboundStatus,
-} from '../../utils';
-import { Invoice } from '../../types';
+import { getStatusTranslator, inboundStatuses } from '../../../utils';
+import { Invoice } from '../../../types';
 import {
   useInboundShipment,
   useInboundFields,
   useIsInboundEditable,
-} from './api';
+} from '.././api';
+import { StatusChangeButton } from './StatusChangeButton';
 
 const createStatusLog = (invoice: Invoice) => {
   const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
@@ -59,17 +55,16 @@ const createStatusLog = (invoice: Invoice) => {
 
 export const Footer: FC = () => {
   const t = useTranslation('replenishment');
-  const { success } = useNotification();
-  const { onHold, status, update } = useInboundFields(['onHold', 'status']);
+  const navigate = useNavigate();
+  const { onHold, update } = useInboundFields('onHold');
   const isEditable = useIsInboundEditable();
-  const { data: inbound } = useInboundShipment();
+  const { data } = useInboundShipment();
   const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
   return (
     <AppFooterPortal
       Content={
-        !!status &&
-        !!inbound && (
+        !!data && (
           <Box
             gap={2}
             display="flex"
@@ -90,35 +85,21 @@ export const Footer: FC = () => {
 
             <StatusCrumbs
               statuses={inboundStatuses}
-              statusLog={createStatusLog(inbound)}
+              statusLog={createStatusLog(data)}
               statusFormatter={getStatusTranslator(t)}
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              {isEditable && (
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  disabled={onHoldBuffer}
-                  Icon={<ArrowRightIcon />}
-                  label={t('button.save-and-confirm-status', {
-                    status: t(getNextInboundStatusButtonTranslation(status)),
-                  })}
-                  sx={{ fontSize: '12px' }}
-                  variant="contained"
-                  color="secondary"
-                  onClick={async () => {
-                    update(
-                      {
-                        onHold: onHoldBuffer,
-                        status: getNextInboundStatus(status),
-                      },
-                      {
-                        onSuccess: success('Saved invoice! 🥳'),
-                      }
-                    );
-                  }}
-                />
-              )}
+              <ButtonWithIcon
+                shrinkThreshold="lg"
+                Icon={<XCircleIcon />}
+                label={t('button.cancel')}
+                color="secondary"
+                sx={{ fontSize: '12px' }}
+                onClick={() => navigate(-1)}
+              />
+
+              <StatusChangeButton />
             </Box>
           </Box>
         )
