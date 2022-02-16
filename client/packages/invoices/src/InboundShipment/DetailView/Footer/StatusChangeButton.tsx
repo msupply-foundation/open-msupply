@@ -58,7 +58,7 @@ const getStatusOptions = (
 
   // When the status is delivered, only verified is available to select.
   if (currentStatus === InvoiceNodeStatus.Delivered) {
-    options[3].isDisabled = false;
+    options[4].isDisabled = false;
   }
 
   return options;
@@ -131,7 +131,6 @@ export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, onGetConfirmation } =
     useStatusChangeButton();
   const isDisabled = !useIsInboundEditable();
-  console.log(isDisabled, selectedOption);
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
