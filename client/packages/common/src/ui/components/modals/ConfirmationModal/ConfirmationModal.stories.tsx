@@ -4,7 +4,7 @@ import { Story } from '@storybook/react';
 import { ConfirmationModal } from './ConfirmationModal';
 import { BaseButton } from '../../buttons';
 import { useToggle } from '../../../../hooks';
-import { useConfirmationModal } from '@common/components';
+import { useConfirmationModal } from './ConfirmationModalProvider';
 
 export default {
   title: 'Modals/ConfirmationModal',
