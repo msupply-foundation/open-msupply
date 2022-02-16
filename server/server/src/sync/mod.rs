@@ -5,7 +5,7 @@ mod sync_api_credentials;
 mod sync_api_v3;
 mod sync_api_v5;
 mod synchroniser;
-mod translation;
+mod translation_central;
 
 pub use actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor};
 pub use sync_api_credentials::SyncCredentials;

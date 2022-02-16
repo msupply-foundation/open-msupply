@@ -1,6 +1,6 @@
 use crate::sync::{
     sync_api_v5::CentralSyncBatchV5,
-    translation::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
+    translation_central::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
     SyncApiV5, SyncConnectionError,
 };
 use log::info;
@@ -228,7 +228,7 @@ impl<'a> CentralSyncPullCursor<'a> {
 mod tests {
     use crate::{
         sync::{
-            translation::test_data::{
+            translation_central::test_data::{
                 check_records_against_database, extract_sync_buffer_rows,
                 item::get_test_item_records, master_list::get_test_master_list_records,
                 master_list_line::get_test_master_list_line_records,

@@ -1,4 +1,6 @@
-use crate::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN};
+use crate::sync::translation_central::{
+    SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN,
+};
 use repository::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
 
 use serde::Deserialize;
@@ -43,7 +45,7 @@ impl LegacyListMasterNameJoinRow {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::translation::{
+    use crate::sync::translation_central::{
         list_master_name_join::LegacyListMasterNameJoinRow,
         test_data::{
             master_list_name_join::get_test_master_list_name_join_records, TestSyncDataRecord,

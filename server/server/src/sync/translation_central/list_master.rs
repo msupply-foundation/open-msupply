@@ -1,4 +1,4 @@
-use crate::sync::translation::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER};
+use crate::sync::translation_central::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER};
 use repository::schema::{CentralSyncBufferRow, MasterListRow};
 
 use serde::Deserialize;
@@ -42,7 +42,7 @@ impl LegacyListMasterRow {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::translation::{
+    use crate::sync::translation_central::{
         list_master::LegacyListMasterRow,
         test_data::{master_list::get_test_master_list_records, TestSyncDataRecord},
     };
