@@ -47,6 +47,7 @@ pub fn generate(
         || update_max_months_of_stock != max_months_of_stock;
 
     let updated_requisition_row = RequisitionRow {
+        // Only sent status is available in UpdateRequestRequstionStatus
         status: if update_status.is_some() {
             RequisitionRowStatus::Sent
         } else {

@@ -10,7 +10,7 @@ mod name;
 mod requisition;
 mod requisition_line;
 mod stock_line;
-mod stock_take_lines;
+mod stocktake_lines;
 mod store;
 mod user_account;
 
@@ -29,7 +29,7 @@ pub use name::NameByIdLoader;
 pub use requisition::*;
 pub use requisition_line::*;
 pub use stock_line::*;
-pub use stock_take_lines::StockTakeLineByStockTakeIdLoader;
+pub use stocktake_lines::StockTakeLineByStockTakeIdLoader;
 pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
 
@@ -39,7 +39,7 @@ pub struct RequisitionAndItemId {
     pub item_id: String,
 }
 
-fn extract_unique_requisition_and_item_id(
+fn extract_unique_requisition_and_item_ids(
     requisition_and_item_ids: &[RequisitionAndItemId],
 ) -> (Vec<String>, Vec<String>) {
     let mut requisition_ids: HashSet<String> = HashSet::new();
