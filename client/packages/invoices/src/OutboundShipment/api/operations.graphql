@@ -1,0 +1,275 @@
+fragment Item on ItemNode {
+  id
+  code
+  name
+}
+
+query invoice($id: String!) {
+  invoice(id: $id) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
+      id
+      comment
+      createdDatetime
+      allocatedDatetime
+      deliveredDatetime
+      pickedDatetime
+      shippedDatetime
+      verifiedDatetime
+      invoiceNumber
+
+      # enteredByName
+      # donorName
+      # requisitionNumber
+      # purchaseOrderNumber
+      # inboundShipmentNumber
+      # goodsReceiptNumber
+      colour
+
+      onHold
+
+      otherParty {
+        __typename
+        ... on NameNode {
+          __typename
+          id
+          name
+          code
+          isCustomer
+          isSupplier
+        }
+
+        ... on NodeError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+          }
+        }
+      }
+
+      lines {
+        ... on ConnectorError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+          }
+        }
+        ... on InvoiceLineConnector {
+          __typename
+          nodes {
+            __typename
+            type
+            batch
+            costPricePerPack
+            expiryDate
+            id
+            itemCode
+            itemId
+            itemName
+            numberOfPacks
+            packSize
+            note
+            invoiceId
+            location {
+              __typename
+              ... on LocationNode {
+                __typename
+                id
+                name
+                code
+                onHold
+                stock {
+                  __typename
+                  ... on ConnectorError {
+                    __typename
+                    error {
+                      description
+                      ... on DatabaseError {
+                        __typename
+                        description
+                        fullError
+                      }
+                    }
+                  }
+                  ... on StockLineConnector {
+                    __typename
+                    totalCount
+                    nodes {
+                      id
+                      costPricePerPack
+                      itemId
+                      availableNumberOfPacks
+                      onHold
+                      packSize
+                      sellPricePerPack
+                      storeId
+                      totalNumberOfPacks
+                    }
+                  }
+                }
+              }
+              ... on NodeError {
+                __typename
+                error {
+                  description
+                  ... on DatabaseError {
+                    __typename
+                    description
+                    fullError
+                  }
+                  ... on RecordNotFound {
+                    __typename
+                    description
+                  }
+                }
+              }
+            }
+            item {
+              ... on ItemNode {
+                __typename
+                id
+                name
+                code
+                isVisible
+                unitName
+                availableBatches {
+                  ... on StockLineConnector {
+                    totalCount
+                    nodes {
+                      id
+                      availableNumberOfPacks
+                      costPricePerPack
+                      itemId
+                      onHold
+                      packSize
+                      sellPricePerPack
+                      storeId
+                      totalNumberOfPacks
+                      expiryDate
+                    }
+                  }
+                  ... on ConnectorError {
+                    __typename
+                    error {
+                      description
+                    }
+                  }
+                }
+              }
+              ... on ItemError {
+                __typename
+                error {
+                  ... on InternalError {
+                    __typename
+                    description
+                    fullError
+                  }
+                }
+              }
+            }
+
+            # itemUnit
+            locationName
+            sellPricePerPack
+            stockLine {
+              __typename
+              ... on NodeError {
+                __typename
+                error {
+                  description
+                  ... on DatabaseError {
+                    __typename
+                    description
+                    fullError
+                  }
+                  ... on RecordNotFound {
+                    __typename
+                    description
+                  }
+                }
+              }
+              ... on StockLineNode {
+                __typename
+                availableNumberOfPacks
+                batch
+                costPricePerPack
+                expiryDate
+                id
+                itemId
+                packSize
+                sellPricePerPack
+                storeId
+                totalNumberOfPacks
+                onHold
+                note
+              }
+            }
+          }
+          totalCount
+        }
+      }
+      otherPartyId
+      otherPartyName
+      pricing {
+        __typename
+        ... on NodeError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+          }
+        }
+        ... on InvoicePricingNode {
+          __typename
+          totalAfterTax
+          totalBeforeTax
+          stockTotalBeforeTax
+          stockTotalAfterTax
+          serviceTotalAfterTax
+          serviceTotalBeforeTax
+        }
+      }
+      status
+      theirReference
+      type
+    }
+  }
+}
