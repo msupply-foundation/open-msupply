@@ -15,37 +15,20 @@ impl<'a> KeyValueStoreRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn set_string(
-        &self,
-        key: KeyValueType,
-        value: Option<String>,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, value: &KeyValueStoreRow) -> Result<(), RepositoryError> {
         diesel::insert_into(kv_store_dsl::key_value_store)
-            .values(KeyValueStoreRow {
-                id: key.clone(),
-                value_string: value.clone(),
-            })
+            .values(value)
             .on_conflict(kv_store_dsl::id)
             .do_update()
-            .set(KeyValueStoreRow {
-                id: key,
-                value_string: value,
-            })
+            .set(value)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn set_string(
-        &self,
-        key: KeyValueType,
-        value: Option<String>,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, value: &KeyValueStoreRow) -> Result<(), RepositoryError> {
         diesel::replace_into(kv_store_dsl::key_value_store)
-            .values(KeyValueStoreRow {
-                id: key,
-                value_string: value,
-            })
+            .values(value)
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -58,8 +41,87 @@ impl<'a> KeyValueStoreRepository<'a> {
         Ok(result)
     }
 
+    pub fn set_string(
+        &self,
+        key: KeyValueType,
+        value: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        self.upsert_one(&KeyValueStoreRow {
+            id: key,
+            value_string: value,
+            value_int: None,
+            value_bigint: None,
+            value_float: None,
+            value_bool: None,
+        })
+    }
+
     pub fn get_string(&self, key: KeyValueType) -> Result<Option<String>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.map(|row| row.value_string).flatten())
+    }
+
+    pub fn set_i32(&self, key: KeyValueType, value: Option<i32>) -> Result<(), RepositoryError> {
+        self.upsert_one(&KeyValueStoreRow {
+            id: key,
+            value_string: None,
+            value_int: value,
+            value_bigint: None,
+            value_float: None,
+            value_bool: None,
+        })
+    }
+
+    pub fn get_i32(&self, key: KeyValueType) -> Result<Option<i32>, RepositoryError> {
+        let row = self.get_row(key)?;
+        Ok(row.map(|row| row.value_int).flatten())
+    }
+
+    pub fn set_i64(&self, key: KeyValueType, value: Option<i64>) -> Result<(), RepositoryError> {
+        self.upsert_one(&KeyValueStoreRow {
+            id: key,
+            value_string: None,
+            value_int: None,
+            value_bigint: value,
+            value_float: None,
+            value_bool: None,
+        })
+    }
+
+    pub fn get_i64(&self, key: KeyValueType) -> Result<Option<i64>, RepositoryError> {
+        let row = self.get_row(key)?;
+        Ok(row.map(|row| row.value_bigint).flatten())
+    }
+
+    pub fn set_f64(&self, key: KeyValueType, value: Option<f64>) -> Result<(), RepositoryError> {
+        self.upsert_one(&KeyValueStoreRow {
+            id: key,
+            value_string: None,
+            value_int: None,
+            value_bigint: None,
+            value_float: value,
+            value_bool: None,
+        })
+    }
+
+    pub fn get_f64(&self, key: KeyValueType) -> Result<Option<f64>, RepositoryError> {
+        let row = self.get_row(key)?;
+        Ok(row.map(|row| row.value_float).flatten())
+    }
+
+    pub fn set_bool(&self, key: KeyValueType, value: Option<bool>) -> Result<(), RepositoryError> {
+        self.upsert_one(&KeyValueStoreRow {
+            id: key,
+            value_string: None,
+            value_int: None,
+            value_bigint: None,
+            value_float: None,
+            value_bool: value,
+        })
+    }
+
+    pub fn get_bool(&self, key: KeyValueType) -> Result<Option<bool>, RepositoryError> {
+        let row = self.get_row(key)?;
+        Ok(row.map(|row| row.value_bool).flatten())
     }
 }

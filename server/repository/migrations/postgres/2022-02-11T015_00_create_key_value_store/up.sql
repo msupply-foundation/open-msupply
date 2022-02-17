@@ -8,5 +8,9 @@ CREATE TYPE key_type AS ENUM (
 -- key value store, e.g. to store local server state
 CREATE TABLE key_value_store (
     id key_type NOT NULL PRIMARY KEY,
-    value_string TEXT
+    value_string TEXT,
+    value_int INTEGER,
+    value_bigint BIGINT,
+    value_float DOUBLE PRECISION,
+    value_bool BOOLEAN
 )

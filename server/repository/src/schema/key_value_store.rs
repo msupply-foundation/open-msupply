@@ -12,10 +12,14 @@ pub enum KeyValueType {
     RemoteSyncInitialSyncState,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "key_value_store"]
 pub struct KeyValueStoreRow {
     pub id: KeyValueType,
     pub value_string: Option<String>,
+    pub value_int: Option<i32>,
+    pub value_bigint: Option<i64>,
+    pub value_float: Option<f64>,
+    pub value_bool: Option<bool>,
 }
