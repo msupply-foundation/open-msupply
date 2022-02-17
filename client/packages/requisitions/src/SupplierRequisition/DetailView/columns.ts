@@ -1,21 +1,23 @@
+import { RequestRequisitionLineFragment } from './../api/operations.generated';
 import {
   useColumns,
   Column,
   SortBy,
   GenericColumnKey,
 } from '@openmsupply-client/common';
-import { RequisitionLine } from '../../types';
 
 interface UseSupplierRequisitionColumnOptions {
-  sortBy: SortBy<RequisitionLine>;
-  onChangeSortBy: (column: Column<RequisitionLine>) => SortBy<RequisitionLine>;
+  sortBy: SortBy<RequestRequisitionLineFragment>;
+  onChangeSortBy: (
+    column: Column<RequestRequisitionLineFragment>
+  ) => SortBy<RequestRequisitionLineFragment>;
 }
 
 export const useSupplierRequisitionColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseSupplierRequisitionColumnOptions): Column<RequisitionLine>[] => {
-  return useColumns<RequisitionLine>(
+}: UseSupplierRequisitionColumnOptions): Column<RequestRequisitionLineFragment>[] => {
+  return useColumns<RequestRequisitionLineFragment>(
     [
       ['itemCode', { width: 50 }],
       ['itemName', { width: 150 }],
@@ -26,9 +28,9 @@ export const useSupplierRequisitionColumns = ({
         'previousStockOnHand',
         {
           accessor: ({ rowData }) =>
-            `${rowData.previousStockOnHand} (${Math.floor(
-              (rowData?.previousStockOnHand ?? 0) /
-                (rowData?.monthlyConsumption ?? 0)
+            `${rowData.itemStats.stockOnHand} (${Math.floor(
+              (rowData.itemStats.stockOnHand ?? 0) /
+                (rowData?.itemStats.averageMonthlyConsumption ?? 0)
             )} months)`,
         },
       ],
@@ -36,11 +38,13 @@ export const useSupplierRequisitionColumns = ({
         'calculatedQuantity',
         {
           accessor: ({ rowData }) => {
-            const threeMonthsStock = rowData?.monthlyConsumption ?? 1 * 3;
-            const diff = threeMonthsStock - (rowData?.previousStockOnHand ?? 0);
+            const threeMonthsStock =
+              rowData?.itemStats.averageMonthlyConsumption ?? 1 * 3;
+            const diff =
+              threeMonthsStock - (rowData?.itemStats.stockOnHand ?? 0);
             if (diff > 0) {
               return `${diff.toFixed(2)} (${Math.floor(
-                diff / (rowData?.monthlyConsumption ?? 1)
+                diff / (rowData?.itemStats.averageMonthlyConsumption ?? 1)
               )} months)`;
             } else {
               return 0;

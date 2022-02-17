@@ -1,0 +1,124 @@
+mutation insertRequestRequisition(
+  $storeId: String!
+  $input: InsertRequestRequisitionInput!
+) {
+  insertRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateRequestRequisition(
+  $storeId: String!
+  $input: UpdateRequestRequisitionInput!
+) {
+  updateRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+# mutation deleteSupplierRequisitions($ids: [DeleteSupplierRequisitionInput!]) {
+#   batchSupplierRequisition(deleteSupplierRequisitions: $ids) {
+#     __typename
+#     deleteSupplierRequisitions {
+#       __typename
+#       id
+#     }
+#   }
+# }
+
+fragment RequestRequisitionLine on RequisitionLineNode {
+  id
+  itemId
+  requestedQuantity
+  calculatedQuantity
+  itemStats {
+    averageMonthlyConsumption
+    stockOnHand
+    monthsOfStock
+  }
+}
+
+fragment RequestRequisition on RequisitionNode {
+  __typename
+  id
+  type
+  status
+  createdDatetime
+  sentDatetime
+  finalisedDatetime
+  requisitionNumber
+  colour
+  theirReference
+  comment
+  otherPartyName
+  otherPartyId
+  maxMonthsOfStock
+  thresholdMonthsOfStock
+  lines {
+    __typename
+    ... on RequisitionLineConnector {
+      totalCount
+      nodes {
+        ...RequestRequisitionLine
+      }
+    }
+  }
+}
+query requestRequisition($storeId: String!, $requisitionNumber: Int!) {
+  requisitionByNumber(
+    requisitionNumber: $requisitionNumber
+    type: "REQUEST"
+    storeId: $storeId
+  ) {
+    __typename
+    ... on RequisitionNode {
+      ...RequestRequisition
+      otherParty {
+        __typename
+        ... on NameNode {
+          id
+          name
+          code
+          isCustomer
+          isSupplier
+        }
+      }
+    }
+  }
+}
+
+fragment RequestRequisitionRow on RequisitionNode {
+  colour
+  comment
+  createdDatetime
+  finalisedDatetime
+  id
+  otherPartyName
+  requisitionNumber
+  sentDatetime
+  status
+  theirReference
+  type
+}
+
+query requestRequisitions(
+  $storeId: String!
+  $filter: RequisitionFilterInput
+  $page: PaginationInput
+  $sort: RequisitionSortInput
+) {
+  requisitions(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
+    ... on RequisitionConnector {
+      totalCount
+      nodes {
+        ...RequestRequisitionRow
+      }
+    }
+  }
+}

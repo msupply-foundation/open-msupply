@@ -9,48 +9,44 @@ import {
   DropdownMenuItem,
   DeleteIcon,
   useTranslation,
-  useNotification,
-  useTableStore,
-  DatePickerInput,
-  useBufferState,
+  // useNotification,
+  // useTableStore,
+  // DatePickerInput,
+  // useBufferState,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { RequisitionLine } from '../../types';
+// import { NameSearchInput } from '@openmsupply-client/system/src/Name';
+// import { RequisitionLine } from '../../types';
 import {
-  useSupplierRequisitionFields,
-  useIsSupplierRequisitionDisabled,
+  useRequestRequisitionFields,
+  useIsRequestRequisitionDisabled,
 } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['replenishment', 'common']);
 
-  const { success, info } = useNotification();
-  const isDisabled = useIsSupplierRequisitionDisabled();
-  const { lines, otherParty, requisitionDate, theirReference, update } =
-    useSupplierRequisitionFields([
-      'lines',
-      'otherParty',
-      'requisitionDate',
-      'theirReference',
-    ]);
-  const [bufferedDate, setBufferedDate] = useBufferState(requisitionDate);
+  // const { success, info } = useNotification();
+  const isDisabled = useIsRequestRequisitionDisabled();
+  const { theirReference, update } = useRequestRequisitionFields([
+    'theirReference',
+  ]);
+  // const [bufferedDate, setBufferedDate] = useBufferState(requisitionDate);
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => lines?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as RequisitionLine[],
-  }));
+  // const { selectedRows } = useTableStore(state => ({
+  //   selectedRows: Object.keys(state.rowState)
+  //     .filter(id => state.rowState[id]?.isSelected)
+  //     .map(selectedId => lines?.find(({ id }) => selectedId === id))
+  //     .filter(Boolean) as RequisitionLine[],
+  // }));
 
-  const deleteAction = () => {
-    if (selectedRows && selectedRows?.length > 0) {
-      const successSnack = success(`Deleted ${selectedRows?.length} lines`);
-      successSnack();
-    } else {
-      const infoSnack = info(t('label.select-rows-to-delete-them'));
-      infoSnack();
-    }
-  };
+  // const deleteAction = () => {
+  //   if (selectedRows && selectedRows?.length > 0) {
+  //     const successSnack = success(`Deleted ${selectedRows?.length} lines`);
+  //     successSnack();
+  //   } else {
+  //     const infoSnack = info(t('label.select-rows-to-delete-them'));
+  //     infoSnack();
+  //   }
+  // };
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -64,7 +60,7 @@ export const Toolbar: FC = () => {
         <Grid item display="flex" flex={1}>
           <Box display="flex" flexDirection="row" gap={4}>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
-              {otherParty && (
+              {/* {otherParty && (
                 <InputWithLabelRow
                   label={t('label.supplier-name')}
                   Input={
@@ -78,7 +74,7 @@ export const Toolbar: FC = () => {
                     />
                   }
                 />
-              )}
+              )} */}
               <InputWithLabelRow
                 label={t('label.supplier-ref')}
                 Input={
@@ -93,7 +89,7 @@ export const Toolbar: FC = () => {
               />
             </Box>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
-              <InputWithLabelRow
+              {/* <InputWithLabelRow
                 label={t('label.requisition-date')}
                 Input={
                   <DatePickerInput
@@ -105,12 +101,12 @@ export const Toolbar: FC = () => {
                     }}
                   />
                 }
-              />
+              /> */}
             </Box>
           </Box>
         </Grid>
         <DropdownMenu disabled={isDisabled} label={t('label.select')}>
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={() => {}}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>
         </DropdownMenu>
