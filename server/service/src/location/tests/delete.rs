@@ -6,12 +6,11 @@ mod query {
         EqualFilter,
     };
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, InvoiceLineRepository, LocationRepository,
-        StockLineRepository, InvoiceLineFilter,
+        mock::MockDataInserts, test_db::setup_all, InvoiceLineFilter, InvoiceLineRepository,
+        LocationRepository, StockLineRepository,
     };
 
     use crate::{
-        current_store_id,
         location::delete::{DeleteLocationError, LocationInUse},
         service_provider::ServiceProvider,
     };
@@ -31,15 +30,14 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_not_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to(
-                &current_store_id(&connection).unwrap(),
-            )))
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a")))
             .unwrap();
 
         // Location does not exist
         assert_eq!(
             service.delete_location(
                 &context,
+                "store_a",
                 DeleteLocation {
                     id: "invalid".to_owned(),
                 },
@@ -51,6 +49,7 @@ mod query {
         assert_eq!(
             service.delete_location(
                 &context,
+                "store_a",
                 DeleteLocation {
                     id: locations_not_in_store[0].id.clone(),
                 },
@@ -72,7 +71,7 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.delete_location(&context, DeleteLocation { id: location_id }),
+            service.delete_location(&context, "store_a", DeleteLocation { id: location_id }),
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines,
                 invoice_lines
@@ -93,7 +92,7 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.delete_location(&context, DeleteLocation { id: location_id }),
+            service.delete_location(&context, "store_a", DeleteLocation { id: location_id }),
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines,
                 invoice_lines
@@ -114,6 +113,7 @@ mod query {
         assert_eq!(
             service.delete_location(
                 &context,
+                "store_a",
                 DeleteLocation {
                     id: "location_2".to_owned()
                 },

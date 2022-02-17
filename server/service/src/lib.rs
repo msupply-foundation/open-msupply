@@ -1,5 +1,5 @@
 use domain::{Pagination, PaginationOption, DEFAULT_LIMIT};
-use repository::{RepositoryError, StorageConnection, StoreRowRepository};
+use repository::RepositoryError;
 use std::convert::TryInto;
 
 pub mod auth_data;
@@ -137,19 +137,4 @@ pub fn usize_to_u32(num: usize) -> u32 {
 
 pub fn u32_to_i32(num: u32) -> i32 {
     num.try_into().unwrap_or(0)
-}
-
-// TODO from session
-pub fn current_store_id(connection: &StorageConnection) -> Result<String, RepositoryError> {
-    let repository = StoreRowRepository::new(connection);
-
-    match repository.find_one_by_id("store_a") {
-        Ok(Some(_)) => Ok("store_a".to_owned()),
-        Ok(None) => Ok(repository
-            .all()?
-            .pop()
-            .ok_or(RepositoryError::as_db_error("No stores", ""))?
-            .id),
-        Err(error) => Err(error),
-    }
 }
