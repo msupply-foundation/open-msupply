@@ -8,7 +8,7 @@ use service::ListError;
 
 use crate::standard_graphql_error::StandardGraphqlError;
 
-use super::{extract_unique_requisition_and_item_id, RequisitionAndItemId};
+use super::{extract_unique_requisition_and_item_ids, RequisitionAndItemId};
 
 pub struct InvoiceLineQueryLoader {
     pub connection_manager: StorageConnectionManager,
@@ -60,7 +60,7 @@ impl Loader<RequisitionAndItemId> for InvoiceLineForRequisitionLine {
         let repo = InvoiceLineRepository::new(&connection);
 
         let (requisition_ids, item_ids) =
-            extract_unique_requisition_and_item_id(requisition_and_item_id);
+            extract_unique_requisition_and_item_ids(requisition_and_item_id);
 
         let all_invoice_lines = repo
             .query_by_filter(

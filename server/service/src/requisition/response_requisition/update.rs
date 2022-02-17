@@ -30,6 +30,7 @@ pub enum UpdateResponseRequisitionError {
     CannotEditRequisition,
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
+    // TODO https://github.com/openmsupply/remote-server/issues/760
     DatabaseError(RepositoryError),
 }
 
@@ -114,6 +115,7 @@ pub fn generate(
     }: UpdateResponseRequisition,
 ) -> RequisitionRow {
     RequisitionRow {
+        // Only finalised status is available in UpdateResponseRequstionStatus
         status: if update_status.is_some() {
             RequisitionRowStatus::Finalised
         } else {
