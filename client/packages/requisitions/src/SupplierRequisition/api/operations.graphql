@@ -6,6 +6,7 @@ mutation insertRequestRequisition(
     ... on RequisitionNode {
       __typename
       id
+      requisitionNumber
     }
   }
 }

@@ -30,19 +30,22 @@ export const requisitionToInput = (
 export const RequestRequisitionQueries = {
   get: {
     list:
-      (api: RequestRequisitionApi) =>
+      (api: RequestRequisitionApi, storeId: string) =>
       async (): Promise<RequestRequisitionsQuery['requisitions']> => {
         const result = await api.requestRequisitions({
-          storeId: '8D967C2618BE4D78B3A6FAD6C1C8FF25',
+          storeId,
         });
         return result.requisitions;
       },
     byNumber:
       (api: RequestRequisitionApi) =>
-      async (): Promise<RequestRequisitionFragment> => {
+      async (
+        requisitionNumber: number,
+        storeId: string
+      ): Promise<RequestRequisitionFragment> => {
         const result = await api.requestRequisition({
-          storeId: '8D967C2618BE4D78B3A6FAD6C1C8FF25',
-          requisitionNumber: 1,
+          storeId,
+          requisitionNumber,
         });
 
         if (result.requisitionByNumber.__typename === 'RequisitionNode') {
@@ -80,7 +83,11 @@ export const RequestRequisitionQueries = {
     }: {
       id: string;
       otherPartyId: string;
-    }): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
+    }): Promise<{
+      __typename: 'RequisitionNode';
+      id: string;
+      requisitionNumber: number;
+    }> => {
       const result = await api.insertRequestRequisition({
         storeId: '8D967C2618BE4D78B3A6FAD6C1C8FF25',
         input: {
