@@ -108,12 +108,14 @@ impl RemoteDataSynchroniser {
     }
 }
 
-fn to_row_action(action: &RemoteSyncActionV5) -> RemoteSyncBufferAction {
-    match action {
-        RemoteSyncActionV5::Create => RemoteSyncBufferAction::Create,
-        RemoteSyncActionV5::Update => RemoteSyncBufferAction::Update,
-        RemoteSyncActionV5::Delete => RemoteSyncBufferAction::Delete,
-        RemoteSyncActionV5::Merge => RemoteSyncBufferAction::Merge,
+impl RemoteSyncActionV5 {
+    fn to_row_action(&self) -> RemoteSyncBufferAction {
+        match self {
+            RemoteSyncActionV5::Create => RemoteSyncBufferAction::Create,
+            RemoteSyncActionV5::Update => RemoteSyncBufferAction::Update,
+            RemoteSyncActionV5::Delete => RemoteSyncBufferAction::Delete,
+            RemoteSyncActionV5::Merge => RemoteSyncBufferAction::Merge,
+        }
     }
 }
 
@@ -127,7 +129,7 @@ fn remote_sync_batch_records_to_buffer_rows(
                 id: record.sync_id.clone(),
                 table_name: record.table.clone(),
                 record_id: record.record_id.clone(),
-                action: to_row_action(&record.action),
+                action: record.action.to_row_action(),
                 data: serde_json::to_string(&record.data)?,
             })
         })
