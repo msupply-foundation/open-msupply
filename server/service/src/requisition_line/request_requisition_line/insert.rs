@@ -7,7 +7,7 @@ use crate::{
         query::get_requisition_line,
     },
     service_provider::ServiceContext,
-    stock_take_line::validate::check_item_exists,
+    stocktake_line::validate::check_item_exists,
 };
 
 use repository::{
@@ -34,9 +34,10 @@ pub enum InsertRequestRequisitionLineError {
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
-    ProblemCreatingRequisitionLine,
-    NewlyCreatedRequisitionLineDoesNotExist,
     DatabaseError(RepositoryError),
+    // Should never happen
+    CannotFindItemStatusForRequisitionLine,
+    NewlyCreatedRequisitionLineDoesNotExist,
 }
 
 type OutError = InsertRequestRequisitionLineError;
@@ -111,7 +112,7 @@ fn generate(
     let mut new_requisition_line =
         generate_requisition_lines(connection, store_id, &requisition_row, vec![item_id])?
             .pop()
-            .ok_or(OutError::ProblemCreatingRequisitionLine)?;
+            .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
     new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0) as i32;
     new_requisition_line.id = id;

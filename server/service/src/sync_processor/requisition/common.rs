@@ -66,8 +66,8 @@ pub fn generate_linked_requisition(
     let store_id = record_for_processing
         .other_party_store
         .clone()
-        .ok_or(ProcessRecordError::StringError(
-            "other party store is not found".to_string(),
+        .ok_or(ProcessRecordError::OtherPartyStoreIsNotFound(
+            record_for_processing.clone(),
         ))?
         .id;
 
@@ -137,13 +137,12 @@ fn get_item_stats(
 
     let filter = ItemStatsFilter::new().item_id(EqualFilter::equal_any(vec![item_id.to_string()]));
 
-    let result =
-        repository
-            .query_one(store_id, None, filter)?
-            .ok_or(ProcessRecordError::StringError(format!(
-                "Cannot find stats for item {} and store {} ",
-                item_id, store_id
-            )))?;
+    let result = repository.query_one(store_id, None, filter)?.ok_or(
+        ProcessRecordError::CannotFindStatsForItemAndStore {
+            store_id: store_id.to_string(),
+            item_id: item_id.to_string(),
+        },
+    )?;
 
     Ok(result)
 }

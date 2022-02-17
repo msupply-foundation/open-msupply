@@ -82,22 +82,24 @@ pub fn insert(ctx: &Context<'_>, input: InsertInput) -> Result<InsertResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
+    let id = input.id.clone();
+
     let response = match service_provider
         .outbound_shipment_line
         .insert_outbound_shipment_unallocated_line(&service_context, input.into())
     {
         Ok(invoice_line) => InsertResponse::Response(invoice_line.into()),
         Err(error) => InsertResponse::Error(InsertError {
-            error: map_error(error)?,
+            error: map_error(&id, error)?,
         }),
     };
 
     Ok(response)
 }
 
-fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+fn map_error(id: &str, error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("Insert unallocated line {}: {:#?}", id, error);
 
     let graphql_error = match error {
         // Structured Errors
