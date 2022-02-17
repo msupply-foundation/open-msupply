@@ -44,8 +44,7 @@ impl RemoteDataSynchroniser {
 
         if !state.sync_queue_initalised()? {
             info!("Initialising remote sync records...");
-            let _ = self
-                .sync_api_v5
+            self.sync_api_v5
                 .post_initialise()
                 .await
                 .map_err(|error| RemoteSyncError {
