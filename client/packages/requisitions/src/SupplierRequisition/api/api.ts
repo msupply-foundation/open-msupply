@@ -76,7 +76,7 @@ export const RequestRequisitionQueries = {
       throw new Error('Unable to update requisition');
     },
   create:
-    (api: RequestRequisitionApi) =>
+    (api: RequestRequisitionApi, storeId: string) =>
     async ({
       id,
       otherPartyId,
@@ -89,7 +89,7 @@ export const RequestRequisitionQueries = {
       requisitionNumber: number;
     }> => {
       const result = await api.insertRequestRequisition({
-        storeId: '8D967C2618BE4D78B3A6FAD6C1C8FF25',
+        storeId,
         input: {
           id,
           otherPartyId,

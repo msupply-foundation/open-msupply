@@ -40,9 +40,10 @@ export const useRequestRequisitions = () => {
 
 export const useCreateRequestRequisition = () => {
   const queryClient = useQueryClient();
+  const { store } = useHostContext();
   const navigate = useNavigate();
   const api = useRequestRequisitionApi();
-  return useMutation(RequestRequisitionQueries.create(api), {
+  return useMutation(RequestRequisitionQueries.create(api, store.id), {
     onSuccess: ({ requisitionNumber }) => {
       navigate(String(requisitionNumber));
       queryClient.invalidateQueries(['requisition']);
