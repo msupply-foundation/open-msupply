@@ -11,17 +11,22 @@ use crate::{
     ContextExt,
 };
 
-pub fn update_location(ctx: &Context<'_>, input: UpdateLocationInput) -> UpdateLocationResponse {
+pub fn update_location(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateLocationInput,
+) -> UpdateLocationResponse {
     let service_provider = ctx.service_provider();
     let service_context = match service_provider.context() {
         Ok(service) => service,
         Err(error) => return UpdateLocationResponse::Error(error.into()),
     };
 
-    match service_provider
-        .location_service
-        .update_location(&service_context, input.into())
-    {
+    match service_provider.location_service.update_location(
+        &service_context,
+        store_id,
+        input.into(),
+    ) {
         Ok(location) => UpdateLocationResponse::Response(location.into()),
         Err(error) => UpdateLocationResponse::Error(error.into()),
     }

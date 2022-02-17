@@ -1,5 +1,5 @@
 use super::{query::get_location, validate::check_location_code_is_unique};
-use crate::{current_store_id, service_provider::ServiceContext, SingleRecordError};
+use crate::{service_provider::ServiceContext, SingleRecordError};
 use domain::{
     location::{InsertLocation, Location, LocationFilter},
     EqualFilter,
@@ -19,13 +19,14 @@ pub enum InsertLocationError {
 
 pub fn insert_location(
     ctx: &ServiceContext,
+    store_id: &str,
     input: InsertLocation,
 ) -> Result<Location, InsertLocationError> {
     let location = ctx
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let new_location = generate(input, connection)?;
+            let new_location = generate(store_id, input);
             LocationRowRepository::new(&connection).upsert_one(&new_location)?;
 
             get_location(ctx, new_location.id).map_err(InsertLocationError::from)
@@ -49,23 +50,21 @@ pub fn validate(
 }
 
 pub fn generate(
+    store_id: &str,
     InsertLocation {
         id,
         code,
         name,
         on_hold,
     }: InsertLocation,
-    connection: &StorageConnection,
-) -> Result<LocationRow, RepositoryError> {
-    let result = LocationRow {
+) -> LocationRow {
+    LocationRow {
         id,
         name: name.unwrap_or(code.clone()),
         code,
         on_hold: on_hold.unwrap_or(false),
-        store_id: current_store_id(connection)?,
-    };
-
-    Ok(result)
+        store_id: store_id.to_string(),
+    }
 }
 
 pub fn check_location_does_not_exist(

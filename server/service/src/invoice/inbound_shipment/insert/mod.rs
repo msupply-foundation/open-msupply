@@ -10,12 +10,13 @@ use validate::validate;
 
 pub fn insert_inbound_shipment(
     connection: &StorageConnection,
+    store_id: &str,
     input: InsertInboundShipment,
 ) -> Result<String, InsertInboundShipmentError> {
     let new_invoice = connection
         .transaction_sync(|connection| {
             let other_party = validate(&input, &connection)?;
-            let new_invoice = generate(input, other_party, connection)?;
+            let new_invoice = generate(connection, store_id, input, other_party)?;
             InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
             Ok(new_invoice)
         })

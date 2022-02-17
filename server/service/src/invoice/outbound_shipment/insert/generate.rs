@@ -6,15 +6,15 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use crate::{current_store_id, number::next_number};
+use crate::number::next_number;
 
 pub fn generate(
+    connection: &StorageConnection,
+    store_id: &str,
     input: InsertOutboundShipment,
     other_party: Name,
-    connection: &StorageConnection,
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
-    let current_store_id = current_store_id(connection)?;
 
     let result = InvoiceRow {
         id: input.id,
@@ -22,13 +22,9 @@ pub fn generate(
         r#type: InvoiceType::OutboundShipment.into(),
         comment: input.comment,
         their_reference: input.their_reference,
-        invoice_number: next_number(
-            connection,
-            &NumberRowType::OutboundShipment,
-            &current_store_id,
-        )?,
+        invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
         name_store_id: other_party.store_id,
-        store_id: current_store_id,
+        store_id: store_id.to_string(),
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,
         on_hold: input.on_hold.unwrap_or(false),
