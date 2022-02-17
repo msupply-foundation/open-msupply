@@ -1,20 +1,10 @@
+use super::*;
+use crate::loader::{InvoiceLineLoader, ItemLoader, StoreLoader, UserAccountLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
-use service::service_provider::ServiceProvider;
-
-use crate::loader::{InvoiceLineLoader, ItemLoader, StoreLoader, UserAccountLoader};
-
-use repository::StorageConnectionManager;
-
 use async_graphql::dataloader::DataLoader;
-
-use super::{
-    invoice::InvoiceByRequisitionIdLoader, name::NameByIdLoader, InvoiceLineForRequisitionLine,
-    InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, ItemsStatsForItemLoader,
-    LinkedRequisitionLineLoader, LocationByIdLoader, MasterListLineByMasterListId,
-    RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader, StockLineByIdLoader,
-    StockLineByItemAndStoreIdLoader, StockLineByLocationIdLoader, StockTakeLineByStockTakeIdLoader,
-};
+use repository::StorageConnectionManager;
+use service::service_provider::ServiceProvider;
 
 pub type LoaderMap = Map<AnyLoader>;
 pub type AnyLoader = dyn Any + Send + Sync;
@@ -99,7 +89,7 @@ pub async fn get_loaders(
         connection_manager: connection_manager.clone(),
     });
 
-    let stock_take_line_loader = DataLoader::new(StockTakeLineByStockTakeIdLoader {
+    let stocktake_line_loader = DataLoader::new(StocktakeLineByStocktakeIdLoader {
         connection_manager: connection_manager.clone(),
     });
 
@@ -136,11 +126,11 @@ pub async fn get_loaders(
     loaders.insert(user_account_loader);
     loaders.insert(location_by_id_loader);
     loaders.insert(master_list_line_by_master_list_id);
-    loaders.insert(stock_take_line_loader);
     loaders.insert(requisitions_by_id_loader);
     loaders.insert(requisition_line_by_requisition_id_loader);
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
     loaders.insert(item_stats_for_item_loader);
+    loaders.insert(stocktake_line_loader);
 
     loaders
 }

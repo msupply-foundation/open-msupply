@@ -202,8 +202,13 @@ mod graphql {
         // NotAStockItem
         let test_service = TestService(Box::new(|_| Err(ServiceError::NotAStockItem)));
         let expected_message = "Bad user input";
-        let expected_extensions =
-            json!({ "details": format!("{:#?}", ServiceError::NotAStockItem) });
+        let expected_extensions = json!({
+            "details":
+                format!(
+                    "Insert unallocated line n/a: {:#?}",
+                    ServiceError::NotAStockItem
+                )
+        });
         assert_standard_graphql_error!(
             &settings,
             &mutation,

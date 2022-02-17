@@ -187,9 +187,9 @@ mod graphql {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // ProblemCreatingRequisitionLine
+        // CannotFindItemStatusForRequisitionLine
         let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::ProblemCreatingRequisitionLine)
+            Err(ServiceError::CannotFindItemStatusForRequisitionLine)
         }));
         let expected_message = "Internal error";
         assert_standard_graphql_error!(
