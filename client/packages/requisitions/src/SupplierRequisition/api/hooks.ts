@@ -81,7 +81,10 @@ export const useRequestRequisitionFields = <
         store.id
       ),
     (patch: Partial<RequestRequisitionFragment>) =>
-      RequestRequisitionQueries.update(api)({ ...patch, id: data?.id ?? '' }),
+      RequestRequisitionQueries.update(
+        api,
+        store.id
+      )({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
@@ -122,5 +125,8 @@ export const useRequestRequisitionLines =
 
 export const useIsRequestRequisitionDisabled = (): boolean => {
   const { status } = useRequestRequisitionFields('status');
-  return status === RequisitionNodeStatus.Finalised;
+  return (
+    status === RequisitionNodeStatus.Finalised ||
+    status === RequisitionNodeStatus.Sent
+  );
 };

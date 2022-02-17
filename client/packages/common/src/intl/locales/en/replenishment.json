@@ -22,5 +22,13 @@
   "message.select-rows-to-delete": "Select rows to delete",
   "messages.deleted-invoices": "Deleted {{number}} invoices",
   "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",
-  "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list"
+  "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list",
+  "label.draft": "Draft",
+  "label.sent": "Sent",
+  "label.new": "New",
+  "label.finalised": "Finalised",
+  "heading.are-you-sure": "Are you sure?",
+  "message.saved": "Saved",
+  "message.confirm-status-as": "Confirm status as $t({{status}})?",
+  "message.could-not-save": "Could not Save"
 }

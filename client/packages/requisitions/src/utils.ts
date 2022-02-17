@@ -1,4 +1,4 @@
-import { RequisitionNodeStatus } from '@openmsupply-client/common';
+import { RequisitionNodeStatus, LocaleKey } from '@openmsupply-client/common';
 import { Requisition, RequisitionRow } from './types';
 
 export const isRequisitionEditable = (requisition: Requisition): boolean => {
@@ -78,4 +78,39 @@ export const createStatusLog = (status: RequisitionNodeStatus) => {
     FINALISED: new Date().toISOString(),
     SENT: new Date().toISOString(),
   };
+};
+
+export const requestRequisitionStatuses = [
+  RequisitionNodeStatus.Draft,
+  RequisitionNodeStatus.Sent,
+  RequisitionNodeStatus.Finalised,
+];
+
+// TODO: When response requisitions can be manually created, the status of DRAFT
+// becomes possible and such will need to be handled.
+export const responseRequisitionStatuses = [
+  RequisitionNodeStatus.New,
+  RequisitionNodeStatus.Sent,
+  RequisitionNodeStatus.Finalised,
+];
+
+const statusTranslation: Record<RequisitionNodeStatus, LocaleKey> = {
+  DRAFT: 'label.draft',
+  NEW: 'label.new',
+  SENT: 'label.sent',
+  FINALISED: 'label.finalised',
+};
+
+export const getNextRequestRequisitionStatus = (
+  currentStatus: RequisitionNodeStatus
+): RequisitionNodeStatus | null => {
+  const currentStatusIdx = requestRequisitionStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = requestRequisitionStatuses[currentStatusIdx + 1];
+  return nextStatus ?? null;
+};
+
+export const getStatusTranslation = (status: RequisitionNodeStatus) => {
+  return statusTranslation[status];
 };
