@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import { useRequestRequisition, useIsRequestRequisitionDisabled } from '../api';
 import { Toolbar } from './Toolbar';
-import { Footer } from './Footer';
+import { Footer } from './Footer/Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
