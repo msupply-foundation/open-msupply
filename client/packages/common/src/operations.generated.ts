@@ -1,4 +1,4 @@
-import * as Types from './types/schema';
+import * as Types from '../../../../packages/common/src/types/schema';
 
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
@@ -2283,8 +2283,5 @@ export const mockUpsertOutboundShipmentMutation = (resolver: ResponseResolver<Gr
 export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentLinesMutationVariables>, GraphQLContext<DeleteOutboundShipmentLinesMutation>, any>) =>
   graphql.mutation<DeleteOutboundShipmentLinesMutation, DeleteOutboundShipmentLinesMutationVariables>(
     'deleteOutboundShipmentLines',
-    resolver
-  )
-pmentLines',
     resolver
   )
