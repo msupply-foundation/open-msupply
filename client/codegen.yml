@@ -1,14 +1,27 @@
 overwrite: true
 schema: ["https://demo-open.msupply.org:8000/graphql", "./packages/common/src/additions.schema.graphql"]
-documents: './packages/common/src/operations.graphql'
 generates:
   ./packages/common/src/types/schema.ts:
     plugins:
       - typescript
+    config:
+      nonOptionalTypename: true
+      scalars:
+        DateTime: string
+        NaiveDate: string
+  packages/:
+    documents: 
+      - packages/**/*.graphql
+    preset: near-operation-file
+    presetConfig:
+      extension: .generated.ts
+      baseTypesPath: ./common/src/types/schema.ts
+    plugins:
       - typescript-operations
       - typescript-graphql-request
       - typescript-msw
     config:
+      nonOptionalTypename: true
       scalars:
         DateTime: string
         NaiveDate: string

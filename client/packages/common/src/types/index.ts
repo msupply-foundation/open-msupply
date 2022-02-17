@@ -2,6 +2,7 @@ import { StockLineNode, ItemNode } from './schema';
 
 export * from './utility';
 export * from './schema';
+export * from '../operations.generated';
 
 type RecordWithId = { id: string };
 

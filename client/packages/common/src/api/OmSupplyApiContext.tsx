@@ -1,7 +1,7 @@
 import React, { FC, useMemo, useEffect, useState, useCallback } from 'react';
 import { createContext } from 'react';
 import { GraphQLClient } from 'graphql-request';
-import { getSdk } from '../types';
+import { getSdk } from '../operations.generated';
 
 export const createOmSupplyApi = (
   url: string

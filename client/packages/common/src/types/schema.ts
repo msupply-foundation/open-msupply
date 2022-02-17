@@ -1,7 +1,3 @@
-import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
-import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -41,13 +37,13 @@ export type Scalars = {
 };
 
 export type AccessDenied = LogoutErrorInterface & {
-  __typename?: 'AccessDenied';
+  __typename: 'AccessDenied';
   description: Scalars['String'];
   fullError: Scalars['String'];
 };
 
 export type AddFromMasterListError = {
-  __typename?: 'AddFromMasterListError';
+  __typename: 'AddFromMasterListError';
   error: AddFromMasterListErrorInterface;
 };
 
@@ -63,14 +59,14 @@ export type AddFromMasterListInput = {
 export type AddFromMasterListResponse = AddFromMasterListError | RequisitionLineConnector;
 
 export type AuthToken = {
-  __typename?: 'AuthToken';
+  __typename: 'AuthToken';
   /** Bearer token */
   token: Scalars['String'];
 };
 
 /** Generic Error Wrapper */
 export type AuthTokenError = {
-  __typename?: 'AuthTokenError';
+  __typename: 'AuthTokenError';
   error: AuthTokenErrorInterface;
 };
 
@@ -90,7 +86,7 @@ export type BatchInboundShipmentInput = {
 };
 
 export type BatchInboundShipmentResponse = {
-  __typename?: 'BatchInboundShipmentResponse';
+  __typename: 'BatchInboundShipmentResponse';
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineResponseWithId>>;
   deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentResponseWithId>>;
   insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineResponseWithId>>;
@@ -100,7 +96,7 @@ export type BatchInboundShipmentResponse = {
 };
 
 export type BatchIsReserved = DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & {
-  __typename?: 'BatchIsReserved';
+  __typename: 'BatchIsReserved';
   description: Scalars['String'];
 };
 
@@ -120,7 +116,7 @@ export type BatchOutboundShipmentInput = {
 };
 
 export type BatchOutboundShipmentResponse = {
-  __typename?: 'BatchOutboundShipmentResponse';
+  __typename: 'BatchOutboundShipmentResponse';
   deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineResponseWithId>>;
   deleteOutboundShipmentServiceLines?: Maybe<Array<DeleteOutboundShipmentServiceLineResponseWithId>>;
   deleteOutboundShipmentUnallocatedLines?: Maybe<Array<DeleteOutboundShipmentUnallocatedLineResponseWithId>>;
@@ -147,7 +143,7 @@ export type BatchStocktakeInput = {
 export type BatchStocktakeResponse = BatchStocktakeResponses | BatchStocktakeResponsesWithErrors;
 
 export type BatchStocktakeResponses = {
-  __typename?: 'BatchStocktakeResponses';
+  __typename: 'BatchStocktakeResponses';
   deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineResponseWithId>>;
   deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
   insertStocktakeLines?: Maybe<Array<InsertStocktakeLineResponseWithId>>;
@@ -157,7 +153,7 @@ export type BatchStocktakeResponses = {
 };
 
 export type BatchStocktakeResponsesWithErrors = {
-  __typename?: 'BatchStocktakeResponsesWithErrors';
+  __typename: 'BatchStocktakeResponsesWithErrors';
   deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineResponseWithId>>;
   deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
   insertStocktakeLines?: Maybe<Array<InsertStocktakeLineResponseWithId>>;
@@ -167,50 +163,50 @@ export type BatchStocktakeResponsesWithErrors = {
 };
 
 export type CanOnlyChangeToAllocatedWhenNoUnallocatedLines = UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines';
+  __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines';
   description: Scalars['String'];
   invoiceLines: InvoiceLineConnector;
 };
 
 export type CanOnlyEditInvoicesInLoggedInStoreError = UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'CanOnlyEditInvoicesInLoggedInStoreError';
+  __typename: 'CanOnlyEditInvoicesInLoggedInStoreError';
   description: Scalars['String'];
 };
 
 export type CannotChangeStatusOfInvoiceOnHold = UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'CannotChangeStatusOfInvoiceOnHold';
+  __typename: 'CannotChangeStatusOfInvoiceOnHold';
   description: Scalars['String'];
 };
 
 export type CannotDeleteInvoiceWithLines = DeleteInboundShipmentErrorInterface & DeleteOutboundShipmentErrorInterface & {
-  __typename?: 'CannotDeleteInvoiceWithLines';
+  __typename: 'CannotDeleteInvoiceWithLines';
   description: Scalars['String'];
   lines: InvoiceLineConnector;
 };
 
 export type CannotDeleteRequisitionWithLines = DeleteRequestRequisitionErrorInterface & {
-  __typename?: 'CannotDeleteRequisitionWithLines';
+  __typename: 'CannotDeleteRequisitionWithLines';
   description: Scalars['String'];
 };
 
 export type CannotEditInvoice = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'CannotEditInvoice';
+  __typename: 'CannotEditInvoice';
   description: Scalars['String'];
 };
 
 export type CannotEditRequisition = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseCalculatedQuantityErrorInterface & {
-  __typename?: 'CannotEditRequisition';
+  __typename: 'CannotEditRequisition';
   description: Scalars['String'];
 };
 
 export type CannotReverseInvoiceStatus = UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'CannotReverseInvoiceStatus';
+  __typename: 'CannotReverseInvoiceStatus';
   description: Scalars['String'];
 };
 
 /** Generic Error Wrapper */
 export type ConnectorError = {
-  __typename?: 'ConnectorError';
+  __typename: 'ConnectorError';
   error: ConnectorErrorInterface;
 };
 
@@ -219,7 +215,7 @@ export type ConnectorErrorInterface = {
 };
 
 export type CreateRequisitionShipmentError = {
-  __typename?: 'CreateRequisitionShipmentError';
+  __typename: 'CreateRequisitionShipmentError';
   error: CreateRequisitionShipmentErrorInterface;
 };
 
@@ -234,7 +230,7 @@ export type CreateRequisitionShipmentInput = {
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
 export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
-  __typename?: 'DatabaseError';
+  __typename: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
 };
@@ -247,7 +243,7 @@ export type DatetimeFilterInput = {
 
 /** Generic Error Wrapper */
 export type DeleteInboundShipmentError = {
-  __typename?: 'DeleteInboundShipmentError';
+  __typename: 'DeleteInboundShipmentError';
   error: DeleteInboundShipmentErrorInterface;
 };
 
@@ -261,7 +257,7 @@ export type DeleteInboundShipmentInput = {
 
 /** Generic Error Wrapper */
 export type DeleteInboundShipmentLineError = {
-  __typename?: 'DeleteInboundShipmentLineError';
+  __typename: 'DeleteInboundShipmentLineError';
   error: DeleteInboundShipmentLineErrorInterface;
 };
 
@@ -277,7 +273,7 @@ export type DeleteInboundShipmentLineInput = {
 export type DeleteInboundShipmentLineResponse = DeleteInboundShipmentLineError | DeleteResponse;
 
 export type DeleteInboundShipmentLineResponseWithId = {
-  __typename?: 'DeleteInboundShipmentLineResponseWithId';
+  __typename: 'DeleteInboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: DeleteInboundShipmentLineResponse;
 };
@@ -285,13 +281,13 @@ export type DeleteInboundShipmentLineResponseWithId = {
 export type DeleteInboundShipmentResponse = DeleteInboundShipmentError | DeleteResponse;
 
 export type DeleteInboundShipmentResponseWithId = {
-  __typename?: 'DeleteInboundShipmentResponseWithId';
+  __typename: 'DeleteInboundShipmentResponseWithId';
   id: Scalars['String'];
   response: DeleteInboundShipmentResponse;
 };
 
 export type DeleteLocationError = {
-  __typename?: 'DeleteLocationError';
+  __typename: 'DeleteLocationError';
   error: DeleteLocationErrorInterface;
 };
 
@@ -307,7 +303,7 @@ export type DeleteLocationResponse = DeleteLocationError | DeleteResponse;
 
 /** Generic Error Wrapper */
 export type DeleteOutboundShipmentError = {
-  __typename?: 'DeleteOutboundShipmentError';
+  __typename: 'DeleteOutboundShipmentError';
   error: DeleteOutboundShipmentErrorInterface;
 };
 
@@ -317,7 +313,7 @@ export type DeleteOutboundShipmentErrorInterface = {
 
 /** Generic Error Wrapper */
 export type DeleteOutboundShipmentLineError = {
-  __typename?: 'DeleteOutboundShipmentLineError';
+  __typename: 'DeleteOutboundShipmentLineError';
   error: DeleteOutboundShipmentLineErrorInterface;
 };
 
@@ -333,7 +329,7 @@ export type DeleteOutboundShipmentLineInput = {
 export type DeleteOutboundShipmentLineResponse = DeleteOutboundShipmentLineError | DeleteResponse;
 
 export type DeleteOutboundShipmentLineResponseWithId = {
-  __typename?: 'DeleteOutboundShipmentLineResponseWithId';
+  __typename: 'DeleteOutboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: DeleteOutboundShipmentLineResponse;
 };
@@ -341,14 +337,14 @@ export type DeleteOutboundShipmentLineResponseWithId = {
 export type DeleteOutboundShipmentResponse = DeleteOutboundShipmentError | DeleteResponse;
 
 export type DeleteOutboundShipmentResponseWithId = {
-  __typename?: 'DeleteOutboundShipmentResponseWithId';
+  __typename: 'DeleteOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: DeleteOutboundShipmentResponse;
 };
 
 /** Generic Error Wrapper */
 export type DeleteOutboundShipmentServiceLineError = {
-  __typename?: 'DeleteOutboundShipmentServiceLineError';
+  __typename: 'DeleteOutboundShipmentServiceLineError';
   error: DeleteOutboundShipmentServiceLineErrorInterface;
 };
 
@@ -364,13 +360,13 @@ export type DeleteOutboundShipmentServiceLineInput = {
 export type DeleteOutboundShipmentServiceLineResponse = DeleteOutboundShipmentServiceLineError | DeleteResponse;
 
 export type DeleteOutboundShipmentServiceLineResponseWithId = {
-  __typename?: 'DeleteOutboundShipmentServiceLineResponseWithId';
+  __typename: 'DeleteOutboundShipmentServiceLineResponseWithId';
   id: Scalars['String'];
   response: DeleteOutboundShipmentServiceLineResponse;
 };
 
 export type DeleteOutboundShipmentUnallocatedLineError = {
-  __typename?: 'DeleteOutboundShipmentUnallocatedLineError';
+  __typename: 'DeleteOutboundShipmentUnallocatedLineError';
   error: DeleteOutboundShipmentUnallocatedLineErrorInterface;
 };
 
@@ -385,13 +381,13 @@ export type DeleteOutboundShipmentUnallocatedLineInput = {
 export type DeleteOutboundShipmentUnallocatedLineResponse = DeleteOutboundShipmentUnallocatedLineError | DeleteResponse;
 
 export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
-  __typename?: 'DeleteOutboundShipmentUnallocatedLineResponseWithId';
+  __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId';
   id: Scalars['String'];
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
 
 export type DeleteRequestRequisitionError = {
-  __typename?: 'DeleteRequestRequisitionError';
+  __typename: 'DeleteRequestRequisitionError';
   error: DeleteRequestRequisitionErrorInterface;
 };
 
@@ -404,7 +400,7 @@ export type DeleteRequestRequisitionInput = {
 };
 
 export type DeleteRequestRequisitionLineError = {
-  __typename?: 'DeleteRequestRequisitionLineError';
+  __typename: 'DeleteRequestRequisitionLineError';
   error: DeleteRequestRequisitionLineErrorInterface;
 };
 
@@ -421,7 +417,7 @@ export type DeleteRequestRequisitionLineResponse = DeleteRequestRequisitionLineE
 export type DeleteRequestRequisitionResponse = DeleteRequestRequisitionError | DeleteResponse;
 
 export type DeleteResponse = {
-  __typename?: 'DeleteResponse';
+  __typename: 'DeleteResponse';
   id: Scalars['String'];
 };
 
@@ -434,20 +430,20 @@ export type DeleteStocktakeLineInput = {
 };
 
 export type DeleteStocktakeLineNode = {
-  __typename?: 'DeleteStocktakeLineNode';
+  __typename: 'DeleteStocktakeLineNode';
   id: Scalars['String'];
 };
 
 export type DeleteStocktakeLineResponse = DeleteStocktakeLineNode;
 
 export type DeleteStocktakeLineResponseWithId = {
-  __typename?: 'DeleteStocktakeLineResponseWithId';
+  __typename: 'DeleteStocktakeLineResponseWithId';
   id: Scalars['String'];
   response: DeleteStocktakeLineResponse;
 };
 
 export type DeleteStocktakeNode = {
-  __typename?: 'DeleteStocktakeNode';
+  __typename: 'DeleteStocktakeNode';
   /** The id of the deleted stocktake */
   id: Scalars['String'];
 };
@@ -455,7 +451,7 @@ export type DeleteStocktakeNode = {
 export type DeleteStocktakeResponse = DeleteStocktakeNode;
 
 export type DeleteStocktakeResponseWithId = {
-  __typename?: 'DeleteStocktakeResponseWithId';
+  __typename: 'DeleteStocktakeResponseWithId';
   id: Scalars['String'];
   response: DeleteStocktakeResponse;
 };
@@ -518,19 +514,19 @@ export enum ForeignKey {
 }
 
 export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
-  __typename?: 'ForeignKeyError';
+  __typename: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
 };
 
 export type InboundInvoiceCounts = {
-  __typename?: 'InboundInvoiceCounts';
+  __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
 };
 
 /** Generic Error Wrapper */
 export type InsertInboundShipmentError = {
-  __typename?: 'InsertInboundShipmentError';
+  __typename: 'InsertInboundShipmentError';
   error: InsertInboundShipmentErrorInterface;
 };
 
@@ -549,7 +545,7 @@ export type InsertInboundShipmentInput = {
 
 /** Generic Error Wrapper */
 export type InsertInboundShipmentLineError = {
-  __typename?: 'InsertInboundShipmentLineError';
+  __typename: 'InsertInboundShipmentLineError';
   error: InsertInboundShipmentLineErrorInterface;
 };
 
@@ -576,7 +572,7 @@ export type InsertInboundShipmentLineInput = {
 export type InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode | NodeError;
 
 export type InsertInboundShipmentLineResponseWithId = {
-  __typename?: 'InsertInboundShipmentLineResponseWithId';
+  __typename: 'InsertInboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: InsertInboundShipmentLineResponse;
 };
@@ -584,13 +580,13 @@ export type InsertInboundShipmentLineResponseWithId = {
 export type InsertInboundShipmentResponse = InsertInboundShipmentError | InvoiceNode | NodeError;
 
 export type InsertInboundShipmentResponseWithId = {
-  __typename?: 'InsertInboundShipmentResponseWithId';
+  __typename: 'InsertInboundShipmentResponseWithId';
   id: Scalars['String'];
   response: InsertInboundShipmentResponse;
 };
 
 export type InsertLocationError = {
-  __typename?: 'InsertLocationError';
+  __typename: 'InsertLocationError';
   error: InsertLocationErrorInterface;
 };
 
@@ -609,7 +605,7 @@ export type InsertLocationResponse = InsertLocationError | LocationNode;
 
 /** Generic Error Wrapper */
 export type InsertOutboundShipmentError = {
-  __typename?: 'InsertOutboundShipmentError';
+  __typename: 'InsertOutboundShipmentError';
   error: InsertOutboundShipmentErrorInterface;
 };
 
@@ -631,7 +627,7 @@ export type InsertOutboundShipmentInput = {
 
 /** Generic Error Wrapper */
 export type InsertOutboundShipmentLineError = {
-  __typename?: 'InsertOutboundShipmentLineError';
+  __typename: 'InsertOutboundShipmentLineError';
   error: InsertOutboundShipmentLineErrorInterface;
 };
 
@@ -653,7 +649,7 @@ export type InsertOutboundShipmentLineInput = {
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode | NodeError;
 
 export type InsertOutboundShipmentLineResponseWithId = {
-  __typename?: 'InsertOutboundShipmentLineResponseWithId';
+  __typename: 'InsertOutboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentLineResponse;
 };
@@ -661,14 +657,14 @@ export type InsertOutboundShipmentLineResponseWithId = {
 export type InsertOutboundShipmentResponse = InsertOutboundShipmentError | InvoiceNode | NodeError;
 
 export type InsertOutboundShipmentResponseWithId = {
-  __typename?: 'InsertOutboundShipmentResponseWithId';
+  __typename: 'InsertOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentResponse;
 };
 
 /** Generic Error Wrapper */
 export type InsertOutboundShipmentServiceLineError = {
-  __typename?: 'InsertOutboundShipmentServiceLineError';
+  __typename: 'InsertOutboundShipmentServiceLineError';
   error: InsertOutboundShipmentServiceLineErrorInterface;
 };
 
@@ -690,13 +686,13 @@ export type InsertOutboundShipmentServiceLineInput = {
 export type InsertOutboundShipmentServiceLineResponse = InsertOutboundShipmentServiceLineError | InvoiceLineNode;
 
 export type InsertOutboundShipmentServiceLineResponseWithId = {
-  __typename?: 'InsertOutboundShipmentServiceLineResponseWithId';
+  __typename: 'InsertOutboundShipmentServiceLineResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentServiceLineResponse;
 };
 
 export type InsertOutboundShipmentUnallocatedLineError = {
-  __typename?: 'InsertOutboundShipmentUnallocatedLineError';
+  __typename: 'InsertOutboundShipmentUnallocatedLineError';
   error: InsertOutboundShipmentUnallocatedLineErrorInterface;
 };
 
@@ -714,13 +710,13 @@ export type InsertOutboundShipmentUnallocatedLineInput = {
 export type InsertOutboundShipmentUnallocatedLineResponse = InsertOutboundShipmentUnallocatedLineError | InvoiceLineNode;
 
 export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
-  __typename?: 'InsertOutboundShipmentUnallocatedLineResponseWithId';
+  __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
 export type InsertRequestRequisitionError = {
-  __typename?: 'InsertRequestRequisitionError';
+  __typename: 'InsertRequestRequisitionError';
   error: InsertRequestRequisitionErrorInterface;
 };
 
@@ -739,7 +735,7 @@ export type InsertRequestRequisitionInput = {
 };
 
 export type InsertRequestRequisitionLineError = {
-  __typename?: 'InsertRequestRequisitionLineError';
+  __typename: 'InsertRequestRequisitionLineError';
   error: InsertRequestRequisitionLineErrorInterface;
 };
 
@@ -784,7 +780,7 @@ export type InsertStocktakeLineInput = {
 export type InsertStocktakeLineResponse = StocktakeLineNode;
 
 export type InsertStocktakeLineResponseWithId = {
-  __typename?: 'InsertStocktakeLineResponseWithId';
+  __typename: 'InsertStocktakeLineResponseWithId';
   id: Scalars['String'];
   response: InsertStocktakeLineResponse;
 };
@@ -792,48 +788,48 @@ export type InsertStocktakeLineResponseWithId = {
 export type InsertStocktakeResponse = StocktakeNode;
 
 export type InsertStocktakeResponseWithId = {
-  __typename?: 'InsertStocktakeResponseWithId';
+  __typename: 'InsertStocktakeResponseWithId';
   id: Scalars['String'];
   response: InsertStocktakeResponse;
 };
 
 export type InternalError = AuthTokenErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
-  __typename?: 'InternalError';
+  __typename: 'InternalError';
   description: Scalars['String'];
   fullError: Scalars['String'];
 };
 
 export type InvalidCredentials = AuthTokenErrorInterface & {
-  __typename?: 'InvalidCredentials';
+  __typename: 'InvalidCredentials';
   description: Scalars['String'];
 };
 
 export type InvalidToken = RefreshTokenErrorInterface & {
-  __typename?: 'InvalidToken';
+  __typename: 'InvalidToken';
   description: Scalars['String'];
 };
 
 /** Generic Connector */
 export type InvoiceConnector = {
-  __typename?: 'InvoiceConnector';
+  __typename: 'InvoiceConnector';
   nodes: Array<InvoiceNode>;
   totalCount: Scalars['Int'];
 };
 
 export type InvoiceCounts = {
-  __typename?: 'InvoiceCounts';
+  __typename: 'InvoiceCounts';
   inbound: InboundInvoiceCounts;
   outbound: OutboundInvoiceCounts;
 };
 
 export type InvoiceCountsSummary = {
-  __typename?: 'InvoiceCountsSummary';
+  __typename: 'InvoiceCountsSummary';
   thisWeek: Scalars['Int'];
   today: Scalars['Int'];
 };
 
 export type InvoiceDoesNotBelongToCurrentStore = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'InvoiceDoesNotBelongToCurrentStore';
+  __typename: 'InvoiceDoesNotBelongToCurrentStore';
   description: Scalars['String'];
 };
 
@@ -842,9 +838,12 @@ export type InvoiceFilterInput = {
   comment?: InputMaybe<SimpleStringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -854,31 +853,31 @@ export type InvoiceFilterInput = {
 };
 
 export type InvoiceIsNotEditable = UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'InvoiceIsNotEditable';
+  __typename: 'InvoiceIsNotEditable';
   description: Scalars['String'];
 };
 
 export type InvoiceLineBelongsToAnotherInvoice = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'InvoiceLineBelongsToAnotherInvoice';
+  __typename: 'InvoiceLineBelongsToAnotherInvoice';
   description: Scalars['String'];
   invoice: InvoiceResponse;
 };
 
 /** Generic Connector */
 export type InvoiceLineConnector = {
-  __typename?: 'InvoiceLineConnector';
+  __typename: 'InvoiceLineConnector';
   nodes: Array<InvoiceLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type InvoiceLineHasNoStockLineError = UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'InvoiceLineHasNoStockLineError';
+  __typename: 'InvoiceLineHasNoStockLineError';
   description: Scalars['String'];
   invoiceLineId: Scalars['String'];
 };
 
 export type InvoiceLineNode = {
-  __typename?: 'InvoiceLineNode';
+  __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
@@ -911,7 +910,7 @@ export type InvoiceLineResponse = InvoiceLineNode | NodeError;
 export type InvoiceLinesResponse = ConnectorError | InvoiceLineConnector;
 
 export type InvoiceNode = {
-  __typename?: 'InvoiceNode';
+  __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']>;
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
@@ -996,7 +995,7 @@ export enum InvoiceNodeType {
 export type InvoicePriceResponse = InvoicePricingNode | NodeError;
 
 export type InvoicePricingNode = {
-  __typename?: 'InvoicePricingNode';
+  __typename: 'InvoicePricingNode';
   serviceTotalAfterTax: Scalars['Float'];
   serviceTotalBeforeTax: Scalars['Float'];
   stockTotalAfterTax: Scalars['Float'];
@@ -1034,18 +1033,18 @@ export type InvoiceSortInput = {
 export type InvoicesResponse = ConnectorError | InvoiceConnector;
 
 export type ItemConnector = {
-  __typename?: 'ItemConnector';
+  __typename: 'ItemConnector';
   nodes: Array<ItemNode>;
   totalCount: Scalars['Int'];
 };
 
 export type ItemDoesNotMatchStockLine = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'ItemDoesNotMatchStockLine';
+  __typename: 'ItemDoesNotMatchStockLine';
   description: Scalars['String'];
 };
 
 export type ItemError = {
-  __typename?: 'ItemError';
+  __typename: 'ItemError';
   error: ItemResponseError;
 };
 
@@ -1057,7 +1056,7 @@ export type ItemFilterInput = {
 };
 
 export type ItemNode = {
-  __typename?: 'ItemNode';
+  __typename: 'ItemNode';
   availableBatches: StockLinesResponse;
   code: Scalars['String'];
   id: Scalars['String'];
@@ -1065,6 +1064,11 @@ export type ItemNode = {
   name: Scalars['String'];
   stats: ItemStatsNode;
   unitName?: Maybe<Scalars['String']>;
+};
+
+
+export type ItemNodeAvailableBatchesArgs = {
+  storeId: Scalars['String'];
 };
 
 
@@ -1093,7 +1097,7 @@ export type ItemSortInput = {
 };
 
 export type ItemStatsNode = {
-  __typename?: 'ItemStatsNode';
+  __typename: 'ItemStatsNode';
   averageMonthlyConsumption: Scalars['Int'];
   monthsOfStock: Scalars['Float'];
   stockOnHand: Scalars['Int'];
@@ -1102,13 +1106,13 @@ export type ItemStatsNode = {
 export type ItemsResponse = ConnectorError | ItemConnector;
 
 export type LineDoesNotReferenceStockLine = UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'LineDoesNotReferenceStockLine';
+  __typename: 'LineDoesNotReferenceStockLine';
   description: Scalars['String'];
 };
 
 /** Generic Connector */
 export type LocationConnector = {
-  __typename?: 'LocationConnector';
+  __typename: 'LocationConnector';
   nodes: Array<LocationNode>;
   totalCount: Scalars['Int'];
 };
@@ -1120,19 +1124,19 @@ export type LocationFilterInput = {
 };
 
 export type LocationInUse = DeleteLocationErrorInterface & {
-  __typename?: 'LocationInUse';
+  __typename: 'LocationInUse';
   description: Scalars['String'];
   invoiceLines: InvoiceLineConnector;
   stockLines: StockLineConnector;
 };
 
 export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'LocationIsOnHold';
+  __typename: 'LocationIsOnHold';
   description: Scalars['String'];
 };
 
 export type LocationNode = {
-  __typename?: 'LocationNode';
+  __typename: 'LocationNode';
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
@@ -1141,7 +1145,7 @@ export type LocationNode = {
 };
 
 export type LocationNotFound = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'LocationNotFound';
+  __typename: 'LocationNotFound';
   description: Scalars['String'];
 };
 
@@ -1165,14 +1169,14 @@ export type LocationSortInput = {
 export type LocationsResponse = ConnectorError | LocationConnector;
 
 export type Logout = {
-  __typename?: 'Logout';
+  __typename: 'Logout';
   /** User id of the logged out user */
   userId: Scalars['String'];
 };
 
 /** Generic Error Wrapper */
 export type LogoutError = {
-  __typename?: 'LogoutError';
+  __typename: 'LogoutError';
   error: LogoutErrorInterface;
 };
 
@@ -1183,7 +1187,7 @@ export type LogoutErrorInterface = {
 export type LogoutResponse = Logout | LogoutError;
 
 export type MasterListConnector = {
-  __typename?: 'MasterListConnector';
+  __typename: 'MasterListConnector';
   nodes: Array<MasterListNode>;
   totalCount: Scalars['Int'];
 };
@@ -1199,20 +1203,20 @@ export type MasterListFilterInput = {
 };
 
 export type MasterListLineConnector = {
-  __typename?: 'MasterListLineConnector';
+  __typename: 'MasterListLineConnector';
   nodes: Array<MasterListLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type MasterListLineNode = {
-  __typename?: 'MasterListLineNode';
+  __typename: 'MasterListLineNode';
   id: Scalars['String'];
   item: ItemNode;
   itemId: Scalars['String'];
 };
 
 export type MasterListNode = {
-  __typename?: 'MasterListNode';
+  __typename: 'MasterListNode';
   code: Scalars['String'];
   description: Scalars['String'];
   id: Scalars['String'];
@@ -1221,7 +1225,7 @@ export type MasterListNode = {
 };
 
 export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & {
-  __typename?: 'MasterListNotFoundForThisStore';
+  __typename: 'MasterListNotFoundForThisStore';
   description: Scalars['String'];
 };
 
@@ -1244,7 +1248,7 @@ export type MasterListSortInput = {
 export type MasterListsResponse = ConnectorError | MasterListConnector;
 
 export type Mutations = {
-  __typename?: 'Mutations';
+  __typename: 'Mutations';
   /** Add requisition lines from master item master list */
   addFromMasterList: AddFromMasterListResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
@@ -1308,11 +1312,13 @@ export type MutationsAddFromMasterListArgs = {
 
 export type MutationsBatchInboundShipmentArgs = {
   input: BatchInboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsBatchOutboundShipmentArgs = {
   input: BatchOutboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1340,6 +1346,7 @@ export type MutationsDeleteInboundShipmentLineArgs = {
 
 export type MutationsDeleteLocationArgs = {
   input: DeleteLocationInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1377,18 +1384,19 @@ export type MutationsDeleteRequestRequisitionLineArgs = {
 
 export type MutationsDeleteStocktakeArgs = {
   input: DeleteStocktakeInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsDeleteStocktakeLineArgs = {
   input: DeleteStocktakeLineInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsInsertInboundShipmentArgs = {
   input: InsertInboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1399,11 +1407,13 @@ export type MutationsInsertInboundShipmentLineArgs = {
 
 export type MutationsInsertLocationArgs = {
   input: InsertLocationInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsInsertOutboundShipmentArgs = {
   input: InsertOutboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1436,13 +1446,13 @@ export type MutationsInsertRequestRequisitionLineArgs = {
 
 export type MutationsInsertStocktakeArgs = {
   input: InsertStocktakeInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsInsertStocktakeLineArgs = {
   input: InsertStocktakeLineInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1469,6 +1479,7 @@ export type MutationsUpdateInboundShipmentLineArgs = {
 
 export type MutationsUpdateLocationArgs = {
   input: UpdateLocationInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1518,13 +1529,13 @@ export type MutationsUpdateResponseRequisitionLineArgs = {
 
 export type MutationsUpdateStocktakeArgs = {
   input: UpdateStocktakeInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsUpdateStocktakeLineArgs = {
   input: UpdateStocktakeLineInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1534,7 +1545,7 @@ export type MutationsUseCalculatedQuantityArgs = {
 };
 
 export type NameConnector = {
-  __typename?: 'NameConnector';
+  __typename: 'NameConnector';
   nodes: Array<NameNode>;
   totalCount: Scalars['Int'];
 };
@@ -1552,7 +1563,7 @@ export type NameFilterInput = {
 };
 
 export type NameNode = {
-  __typename?: 'NameNode';
+  __typename: 'NameNode';
   code: Scalars['String'];
   id: Scalars['String'];
   isCustomer: Scalars['Boolean'];
@@ -1581,13 +1592,13 @@ export type NameSortInput = {
 export type NamesResponse = ConnectorError | NameConnector;
 
 export type NoRefreshTokenProvided = RefreshTokenErrorInterface & {
-  __typename?: 'NoRefreshTokenProvided';
+  __typename: 'NoRefreshTokenProvided';
   description: Scalars['String'];
 };
 
 /** Generic Error Wrapper */
 export type NodeError = {
-  __typename?: 'NodeError';
+  __typename: 'NodeError';
   error: NodeErrorInterface;
 };
 
@@ -1596,68 +1607,68 @@ export type NodeErrorInterface = {
 };
 
 export type NotARefreshToken = RefreshTokenErrorInterface & {
-  __typename?: 'NotARefreshToken';
+  __typename: 'NotARefreshToken';
   description: Scalars['String'];
 };
 
 export type NotAServiceItem = DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'NotAServiceItem';
+  __typename: 'NotAServiceItem';
   description: Scalars['String'];
 };
 
 export type NotAnInboundShipment = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & {
-  __typename?: 'NotAnInboundShipment';
+  __typename: 'NotAnInboundShipment';
   description: Scalars['String'];
 };
 
 export type NotAnOutboundShipment = DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'NotAnOutboundShipment';
+  __typename: 'NotAnOutboundShipment';
   description: Scalars['String'];
 };
 
 export type NotAnOutboundShipmentError = UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'NotAnOutboundShipmentError';
+  __typename: 'NotAnOutboundShipmentError';
   description: Scalars['String'];
 };
 
 export type NotEnoughStockForReduction = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'NotEnoughStockForReduction';
+  __typename: 'NotEnoughStockForReduction';
   batch: StockLineResponse;
   description: Scalars['String'];
   line?: Maybe<InvoiceLineResponse>;
 };
 
 export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface & {
-  __typename?: 'NothingRemainingToSupply';
+  __typename: 'NothingRemainingToSupply';
   description: Scalars['String'];
 };
 
 export type OtherPartyCannotBeThisStoreError = InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'OtherPartyCannotBeThisStoreError';
+  __typename: 'OtherPartyCannotBeThisStoreError';
   description: Scalars['String'];
 };
 
 export type OtherPartyNotACustomerError = InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
-  __typename?: 'OtherPartyNotACustomerError';
+  __typename: 'OtherPartyNotACustomerError';
   description: Scalars['String'];
   otherParty: NameNode;
 };
 
 export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & {
-  __typename?: 'OtherPartyNotASupplier';
+  __typename: 'OtherPartyNotASupplier';
   description: Scalars['String'];
   otherParty: NameNode;
 };
 
 export type OutboundInvoiceCounts = {
-  __typename?: 'OutboundInvoiceCounts';
+  __typename: 'OutboundInvoiceCounts';
   created: InvoiceCountsSummary;
   /** Number of outbound shipments ready to be picked */
   toBePicked: Scalars['Int'];
 };
 
 export type PaginationError = ConnectorErrorInterface & {
-  __typename?: 'PaginationError';
+  __typename: 'PaginationError';
   description: Scalars['String'];
   rangeError: RangeError;
 };
@@ -1675,7 +1686,7 @@ export type PaginationInput = {
 };
 
 export type Queries = {
-  __typename?: 'Queries';
+  __typename: 'Queries';
   apiVersion: Scalars['String'];
   /**
    * Retrieves a new auth bearer and refresh token
@@ -1720,11 +1731,13 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesInvoiceArgs = {
   id: Scalars['String'];
+  storeId: Scalars['String'];
 };
 
 
 export type QueriesInvoiceByNumberArgs = {
   invoiceNumber: Scalars['Int'];
+  storeId: Scalars['String'];
   type: InvoiceNodeType;
 };
 
@@ -1738,6 +1751,7 @@ export type QueriesInvoicesArgs = {
   filter?: InputMaybe<InvoiceFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1822,7 +1836,7 @@ export type QueriesStoresArgs = {
 };
 
 export type RangeError = InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'RangeError';
+  __typename: 'RangeError';
   description: Scalars['String'];
   field: RangeField;
   max?: Maybe<Scalars['Int']>;
@@ -1836,34 +1850,34 @@ export enum RangeField {
 }
 
 export type RecordAlreadyExist = InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
-  __typename?: 'RecordAlreadyExist';
+  __typename: 'RecordAlreadyExist';
   description: Scalars['String'];
 };
 
 export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateLocationErrorInterface & {
-  __typename?: 'RecordBelongsToAnotherStore';
+  __typename: 'RecordBelongsToAnotherStore';
   description: Scalars['String'];
 };
 
 export type RecordDoesNotExist = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseCalculatedQuantityErrorInterface & {
-  __typename?: 'RecordDoesNotExist';
+  __typename: 'RecordDoesNotExist';
   description: Scalars['String'];
 };
 
 export type RecordNotFound = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'RecordNotFound';
+  __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
 
 export type RefreshToken = {
-  __typename?: 'RefreshToken';
+  __typename: 'RefreshToken';
   /** New Bearer token */
   token: Scalars['String'];
 };
 
 /** Generic Error Wrapper */
 export type RefreshTokenError = {
-  __typename?: 'RefreshTokenError';
+  __typename: 'RefreshTokenError';
   error: RefreshTokenErrorInterface;
 };
 
@@ -1874,14 +1888,14 @@ export type RefreshTokenErrorInterface = {
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
 export type RegisteredUser = {
-  __typename?: 'RegisteredUser';
+  __typename: 'RegisteredUser';
   email?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   username: Scalars['String'];
 };
 
 export type RequisitionConnector = {
-  __typename?: 'RequisitionConnector';
+  __typename: 'RequisitionConnector';
   nodes: Array<RequisitionNode>;
   totalCount: Scalars['Int'];
 };
@@ -1902,13 +1916,13 @@ export type RequisitionFilterInput = {
 };
 
 export type RequisitionLineConnector = {
-  __typename?: 'RequisitionLineConnector';
+  __typename: 'RequisitionLineConnector';
   nodes: Array<RequisitionLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type RequisitionLineNode = {
-  __typename?: 'RequisitionLineNode';
+  __typename: 'RequisitionLineNode';
   /**
    * Calculated quantity
    * When months_of_stock < requisition.threshold_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
@@ -1931,12 +1945,12 @@ export type RequisitionLineNode = {
 };
 
 export type RequisitionLineWithItemIdExists = InsertRequestRequisitionLineErrorInterface & {
-  __typename?: 'RequisitionLineWithItemIdExists';
+  __typename: 'RequisitionLineWithItemIdExists';
   description: Scalars['String'];
 };
 
 export type RequisitionNode = {
-  __typename?: 'RequisitionNode';
+  __typename: 'RequisitionNode';
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['DateTime'];
@@ -2022,42 +2036,42 @@ export type SimpleStringFilterInput = {
 };
 
 export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & {
-  __typename?: 'SnapshotCountCurrentCountMismatch';
+  __typename: 'SnapshotCountCurrentCountMismatch';
   description: Scalars['String'];
   lines: StocktakeLineConnector;
 };
 
 export type StockCounts = {
-  __typename?: 'StockCounts';
+  __typename: 'StockCounts';
   expired: Scalars['Int'];
   expiringSoon: Scalars['Int'];
 };
 
 export type StockLineAlreadyExistsInInvoice = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'StockLineAlreadyExistsInInvoice';
+  __typename: 'StockLineAlreadyExistsInInvoice';
   description: Scalars['String'];
   line: InvoiceLineResponse;
 };
 
 /** Generic Connector */
 export type StockLineConnector = {
-  __typename?: 'StockLineConnector';
+  __typename: 'StockLineConnector';
   nodes: Array<StockLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type StockLineDoesNotBelongToCurrentStore = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'StockLineDoesNotBelongToCurrentStore';
+  __typename: 'StockLineDoesNotBelongToCurrentStore';
   description: Scalars['String'];
 };
 
 export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'StockLineIsOnHold';
+  __typename: 'StockLineIsOnHold';
   description: Scalars['String'];
 };
 
 export type StockLineNode = {
-  __typename?: 'StockLineNode';
+  __typename: 'StockLineNode';
   availableNumberOfPacks: Scalars['Int'];
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
@@ -2080,7 +2094,7 @@ export type StockLineResponse = NodeError | StockLineNode;
 export type StockLinesResponse = ConnectorError | StockLineConnector;
 
 export type StocktakeConnector = {
-  __typename?: 'StocktakeConnector';
+  __typename: 'StocktakeConnector';
   nodes: Array<StocktakeNode>;
   totalCount: Scalars['Int'];
 };
@@ -2094,13 +2108,13 @@ export type StocktakeFilterInput = {
 };
 
 export type StocktakeLineConnector = {
-  __typename?: 'StocktakeLineConnector';
+  __typename: 'StocktakeLineConnector';
   nodes: Array<StocktakeLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type StocktakeLineNode = {
-  __typename?: 'StocktakeLineNode';
+  __typename: 'StocktakeLineNode';
   batch?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   costPricePerPack?: Maybe<Scalars['Float']>;
@@ -2119,7 +2133,7 @@ export type StocktakeLineNode = {
 };
 
 export type StocktakeNode = {
-  __typename?: 'StocktakeNode';
+  __typename: 'StocktakeNode';
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['NaiveDateTime'];
   description?: Maybe<Scalars['String']>;
@@ -2159,7 +2173,7 @@ export type StocktakeSortInput = {
 export type StocktakesResponse = StocktakeConnector;
 
 export type StoreConnector = {
-  __typename?: 'StoreConnector';
+  __typename: 'StoreConnector';
   nodes: Array<StoreNode>;
   totalCount: Scalars['Int'];
 };
@@ -2169,7 +2183,7 @@ export type StoreFilterInput = {
 };
 
 export type StoreNode = {
-  __typename?: 'StoreNode';
+  __typename: 'StoreNode';
   code: Scalars['String'];
   id: Scalars['String'];
 };
@@ -2177,7 +2191,7 @@ export type StoreNode = {
 export type StoresResponse = StoreConnector;
 
 export type SupplyRequestedQuantityError = {
-  __typename?: 'SupplyRequestedQuantityError';
+  __typename: 'SupplyRequestedQuantityError';
   error: SupplyRequestedQuantityErrorInterface;
 };
 
@@ -2197,17 +2211,17 @@ export type TaxUpdate = {
 };
 
 export type TokenExpired = RefreshTokenErrorInterface & {
-  __typename?: 'TokenExpired';
+  __typename: 'TokenExpired';
   description: Scalars['String'];
 };
 
 export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnallocatedLineErrorInterface & {
-  __typename?: 'UnallocatedLineForItemAlreadyExists';
+  __typename: 'UnallocatedLineForItemAlreadyExists';
   description: Scalars['String'];
 };
 
 export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUnallocatedLineErrorInterface & {
-  __typename?: 'UnallocatedLinesOnlyEditableInNewInvoice';
+  __typename: 'UnallocatedLinesOnlyEditableInNewInvoice';
   description: Scalars['String'];
 };
 
@@ -2216,14 +2230,14 @@ export enum UniqueValueKey {
 }
 
 export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocationErrorInterface & {
-  __typename?: 'UniqueValueViolation';
+  __typename: 'UniqueValueViolation';
   description: Scalars['String'];
   field: UniqueValueKey;
 };
 
 /** Generic Error Wrapper */
 export type UpdateInboundShipmentError = {
-  __typename?: 'UpdateInboundShipmentError';
+  __typename: 'UpdateInboundShipmentError';
   error: UpdateInboundShipmentErrorInterface;
 };
 
@@ -2243,7 +2257,7 @@ export type UpdateInboundShipmentInput = {
 
 /** Generic Error Wrapper */
 export type UpdateInboundShipmentLineError = {
-  __typename?: 'UpdateInboundShipmentLineError';
+  __typename: 'UpdateInboundShipmentLineError';
   error: UpdateInboundShipmentLineErrorInterface;
 };
 
@@ -2267,7 +2281,7 @@ export type UpdateInboundShipmentLineInput = {
 export type UpdateInboundShipmentLineResponse = InvoiceLineNode | NodeError | UpdateInboundShipmentLineError;
 
 export type UpdateInboundShipmentLineResponseWithId = {
-  __typename?: 'UpdateInboundShipmentLineResponseWithId';
+  __typename: 'UpdateInboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: UpdateInboundShipmentLineResponse;
 };
@@ -2275,7 +2289,7 @@ export type UpdateInboundShipmentLineResponseWithId = {
 export type UpdateInboundShipmentResponse = InvoiceNode | NodeError | UpdateInboundShipmentError;
 
 export type UpdateInboundShipmentResponseWithId = {
-  __typename?: 'UpdateInboundShipmentResponseWithId';
+  __typename: 'UpdateInboundShipmentResponseWithId';
   id: Scalars['String'];
   response: UpdateInboundShipmentResponse;
 };
@@ -2286,7 +2300,7 @@ export enum UpdateInboundShipmentStatusInput {
 }
 
 export type UpdateLocationError = {
-  __typename?: 'UpdateLocationError';
+  __typename: 'UpdateLocationError';
   error: UpdateLocationErrorInterface;
 };
 
@@ -2305,7 +2319,7 @@ export type UpdateLocationResponse = LocationNode | UpdateLocationError;
 
 /** Generic Error Wrapper */
 export type UpdateOutboundShipmentError = {
-  __typename?: 'UpdateOutboundShipmentError';
+  __typename: 'UpdateOutboundShipmentError';
   error: UpdateOutboundShipmentErrorInterface;
 };
 
@@ -2335,7 +2349,7 @@ export type UpdateOutboundShipmentInput = {
 
 /** Generic Error Wrapper */
 export type UpdateOutboundShipmentLineError = {
-  __typename?: 'UpdateOutboundShipmentLineError';
+  __typename: 'UpdateOutboundShipmentLineError';
   error: UpdateOutboundShipmentLineErrorInterface;
 };
 
@@ -2357,7 +2371,7 @@ export type UpdateOutboundShipmentLineInput = {
 export type UpdateOutboundShipmentLineResponse = InvoiceLineNode | NodeError | UpdateOutboundShipmentLineError;
 
 export type UpdateOutboundShipmentLineResponseWithId = {
-  __typename?: 'UpdateOutboundShipmentLineResponseWithId';
+  __typename: 'UpdateOutboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentLineResponse;
 };
@@ -2365,14 +2379,14 @@ export type UpdateOutboundShipmentLineResponseWithId = {
 export type UpdateOutboundShipmentResponse = InvoiceNode | NodeError | UpdateOutboundShipmentError;
 
 export type UpdateOutboundShipmentResponseWithId = {
-  __typename?: 'UpdateOutboundShipmentResponseWithId';
+  __typename: 'UpdateOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentResponse;
 };
 
 /** Generic Error Wrapper */
 export type UpdateOutboundShipmentServiceLineError = {
-  __typename?: 'UpdateOutboundShipmentServiceLineError';
+  __typename: 'UpdateOutboundShipmentServiceLineError';
   error: UpdateOutboundShipmentServiceLineErrorInterface;
 };
 
@@ -2394,7 +2408,7 @@ export type UpdateOutboundShipmentServiceLineInput = {
 export type UpdateOutboundShipmentServiceLineResponse = InvoiceLineNode | UpdateOutboundShipmentServiceLineError;
 
 export type UpdateOutboundShipmentServiceLineResponseWithId = {
-  __typename?: 'UpdateOutboundShipmentServiceLineResponseWithId';
+  __typename: 'UpdateOutboundShipmentServiceLineResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentServiceLineResponse;
 };
@@ -2406,7 +2420,7 @@ export enum UpdateOutboundShipmentStatusInput {
 }
 
 export type UpdateOutboundShipmentUnallocatedLineError = {
-  __typename?: 'UpdateOutboundShipmentUnallocatedLineError';
+  __typename: 'UpdateOutboundShipmentUnallocatedLineError';
   error: UpdateOutboundShipmentUnallocatedLineErrorInterface;
 };
 
@@ -2422,13 +2436,13 @@ export type UpdateOutboundShipmentUnallocatedLineInput = {
 export type UpdateOutboundShipmentUnallocatedLineResponse = InvoiceLineNode | UpdateOutboundShipmentUnallocatedLineError;
 
 export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
-  __typename?: 'UpdateOutboundShipmentUnallocatedLineResponseWithId';
+  __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentUnallocatedLineResponse;
 };
 
 export type UpdateRequestRequisitionError = {
-  __typename?: 'UpdateRequestRequisitionError';
+  __typename: 'UpdateRequestRequisitionError';
   error: UpdateRequestRequisitionErrorInterface;
 };
 
@@ -2447,7 +2461,7 @@ export type UpdateRequestRequisitionInput = {
 };
 
 export type UpdateRequestRequisitionLineError = {
-  __typename?: 'UpdateRequestRequisitionLineError';
+  __typename: 'UpdateRequestRequisitionLineError';
   error: UpdateRequestRequisitionLineErrorInterface;
 };
 
@@ -2469,7 +2483,7 @@ export enum UpdateRequestRequisitionStatusInput {
 }
 
 export type UpdateResponseRequisitionError = {
-  __typename?: 'UpdateResponseRequisitionError';
+  __typename: 'UpdateResponseRequisitionError';
   error: UpdateResponseRequisitionErrorInterface;
 };
 
@@ -2486,7 +2500,7 @@ export type UpdateResponseRequisitionInput = {
 };
 
 export type UpdateResponseRequisitionLineError = {
-  __typename?: 'UpdateResponseRequisitionLineError';
+  __typename: 'UpdateResponseRequisitionLineError';
   error: UpdateResponseRequisitionLineErrorInterface;
 };
 
@@ -2508,7 +2522,7 @@ export enum UpdateResponseRequisitionStatusInput {
 }
 
 export type UpdateStocktakeError = {
-  __typename?: 'UpdateStocktakeError';
+  __typename: 'UpdateStocktakeError';
   error: UpdateStocktakeErrorInterface;
 };
 
@@ -2540,7 +2554,7 @@ export type UpdateStocktakeLineInput = {
 export type UpdateStocktakeLineResponse = StocktakeLineNode;
 
 export type UpdateStocktakeLineResponseWithId = {
-  __typename?: 'UpdateStocktakeLineResponseWithId';
+  __typename: 'UpdateStocktakeLineResponseWithId';
   id: Scalars['String'];
   response: UpdateStocktakeLineResponse;
 };
@@ -2548,13 +2562,13 @@ export type UpdateStocktakeLineResponseWithId = {
 export type UpdateStocktakeResponse = StocktakeNode | UpdateStocktakeError;
 
 export type UpdateStocktakeResponseWithId = {
-  __typename?: 'UpdateStocktakeResponseWithId';
+  __typename: 'UpdateStocktakeResponseWithId';
   id: Scalars['String'];
   response: UpdateStocktakeResponse;
 };
 
 export type UseCalculatedQuantityError = {
-  __typename?: 'UseCalculatedQuantityError';
+  __typename: 'UseCalculatedQuantityError';
   error: UseCalculatedQuantityErrorInterface;
 };
 
@@ -2569,7 +2583,7 @@ export type UseCalculatedQuantityInput = {
 export type UseCalculatedQuantityResponse = RequisitionLineConnector | UseCalculatedQuantityError;
 
 export type User = {
-  __typename?: 'User';
+  __typename: 'User';
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
   /** Internal user id */
@@ -2577,13 +2591,13 @@ export type User = {
 };
 
 export type UserNameDoesNotExist = AuthTokenErrorInterface & {
-  __typename?: 'UserNameDoesNotExist';
+  __typename: 'UserNameDoesNotExist';
   description: Scalars['String'];
 };
 
 /** Generic Error Wrapper */
 export type UserRegisterError = {
-  __typename?: 'UserRegisterError';
+  __typename: 'UserRegisterError';
   error: UserRegisterErrorInterface;
 };
 
@@ -2600,2236 +2614,3 @@ export type UserRegisterInput = {
 export type UserRegisterResponse = RegisteredUser | UserRegisterError;
 
 export type UserResponse = User;
-
-export type InvoiceQueryVariables = Exact<{
-  id: Scalars['String'];
-}>;
-
-
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, invoiceNumber: number, colour?: string | null | undefined, onHold: boolean, otherPartyId: string, otherPartyName: string, status: InvoiceNodeStatus, theirReference?: string | null | undefined, type: InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: InvoiceLineNodeType, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null | undefined, invoiceId: string, locationName?: string | null | undefined, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null | undefined, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, expiryDate?: string | null | undefined }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined } | null | undefined }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
-
-export type StocktakeQueryVariables = Exact<{
-  stocktakeId: Scalars['String'];
-  storeId: Scalars['String'];
-}>;
-
-
-export type StocktakeQuery = { __typename?: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null | undefined, createdDatetime: any, status: StocktakeNodeStatus, description?: string | null | undefined, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', batch?: string | null | undefined, itemId: string, id: string, expiryDate?: string | null | undefined, packSize?: number | null | undefined, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null | undefined, sellPricePerPack?: number | null | undefined, costPricePerPack?: number | null | undefined }> } } };
-
-export type UpdateStocktakeMutationVariables = Exact<{
-  input: UpdateStocktakeInput;
-}>;
-
-
-export type UpdateStocktakeMutation = { __typename?: 'Mutations', updateStocktake: { __typename: 'StocktakeNode', id: string } | { __typename?: 'UpdateStocktakeError' } };
-
-export type UpsertStocktakeLinesMutationVariables = Exact<{
-  storeId: Scalars['String'];
-  deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput> | DeleteStocktakeLineInput>;
-  updateStocktakeLines?: InputMaybe<Array<UpdateStocktakeLineInput> | UpdateStocktakeLineInput>;
-  insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput> | InsertStocktakeLineInput>;
-}>;
-
-
-export type UpsertStocktakeLinesMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakeLines?: Array<{ __typename?: 'DeleteStocktakeLineResponseWithId', id: string }> | null | undefined, insertStocktakeLines?: Array<{ __typename?: 'InsertStocktakeLineResponseWithId', id: string }> | null | undefined, updateStocktakeLines?: Array<{ __typename?: 'UpdateStocktakeLineResponseWithId', id: string }> | null | undefined } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
-
-export type DeleteStocktakesMutationVariables = Exact<{
-  storeId: Scalars['String'];
-  ids?: InputMaybe<Array<DeleteStocktakeInput> | DeleteStocktakeInput>;
-}>;
-
-
-export type DeleteStocktakesMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null | undefined } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
-
-export type InsertStocktakeMutationVariables = Exact<{
-  input: InsertStocktakeInput;
-}>;
-
-
-export type InsertStocktakeMutation = { __typename?: 'Mutations', insertStocktake: { __typename: 'StocktakeNode', id: string } };
-
-export type UpdateSupplierRequisitionMutationVariables = Exact<{
-  storeId: Scalars['String'];
-  input: UpdateRequestRequisitionInput;
-}>;
-
-
-export type UpdateSupplierRequisitionMutation = { __typename?: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename?: 'UpdateRequestRequisitionError' } };
-
-export type InsertSupplierRequisitionMutationVariables = Exact<{
-  storeId: Scalars['String'];
-  input: InsertRequestRequisitionInput;
-}>;
-
-
-export type InsertSupplierRequisitionMutation = { __typename?: 'Mutations', insertRequestRequisition: { __typename?: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
-
-export type UpdateCustomerRequisitionMutationVariables = Exact<{
-  storeId: Scalars['String'];
-  input: UpdateRequestRequisitionInput;
-}>;
-
-
-export type UpdateCustomerRequisitionMutation = { __typename?: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename?: 'UpdateRequestRequisitionError' } };
-
-export type InsertCustomerRequisitionMutationVariables = Exact<{
-  storeId: Scalars['String'];
-  input: InsertRequestRequisitionInput;
-}>;
-
-
-export type InsertCustomerRequisitionMutation = { __typename?: 'Mutations', insertRequestRequisition: { __typename?: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
-
-export type RequisitionQueryVariables = Exact<{
-  storeId: Scalars['String'];
-  id: Scalars['String'];
-}>;
-
-
-export type RequisitionQuery = { __typename?: 'Queries', requisition: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, comment?: string | null | undefined, theirReference?: string | null | undefined, type: RequisitionNodeType, requisitionNumber: number, status: RequisitionNodeStatus, otherPartyId: string, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionLineNode', id: string, itemId: string, supplyQuantity: number, requestedQuantity: number, calculatedQuantity: number }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } } };
-
-export type InvoicesQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  key: InvoiceSortFieldInput;
-  desc?: InputMaybe<Scalars['Boolean']>;
-  filter?: InputMaybe<InvoiceFilterInput>;
-}>;
-
-
-export type InvoicesQuery = { __typename?: 'Queries', invoices: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename?: 'InvoiceNode', comment?: string | null | undefined, createdDatetime: string, allocatedDatetime?: string | null | undefined, deliveredDatetime?: string | null | undefined, pickedDatetime?: string | null | undefined, shippedDatetime?: string | null | undefined, verifiedDatetime?: string | null | undefined, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null | undefined, type: InvoiceNodeType, status: InvoiceNodeStatus, colour?: string | null | undefined, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> } };
-
-export type NamesQueryVariables = Exact<{
-  key: NameSortFieldInput;
-  desc?: InputMaybe<Scalars['Boolean']>;
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  filter?: InputMaybe<NameFilterInput>;
-}>;
-
-
-export type NamesQuery = { __typename?: 'Queries', names: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string }> } };
-
-export type ItemsWithStockLinesQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  key: ItemSortFieldInput;
-  desc?: InputMaybe<Scalars['Boolean']>;
-  filter?: InputMaybe<ItemFilterInput>;
-}>;
-
-
-export type ItemsWithStockLinesQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null | undefined, storeId: string, locationName?: string | null | undefined }> } }> } };
-
-export type ItemsListViewQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  key: ItemSortFieldInput;
-  desc?: InputMaybe<Scalars['Boolean']>;
-  filter?: InputMaybe<ItemFilterInput>;
-}>;
-
-
-export type ItemsListViewQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null | undefined }> } };
-
-export type InsertOutboundShipmentMutationVariables = Exact<{
-  id: Scalars['String'];
-  otherPartyId: Scalars['String'];
-}>;
-
-
-export type InsertOutboundShipmentMutation = { __typename?: 'Mutations', insertOutboundShipment: { __typename: 'InsertOutboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: ForeignKey } | { __typename: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename: 'OtherPartyNotACustomerError', description: string, otherParty: { __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
-
-export type UpdateOutboundShipmentMutationVariables = Exact<{
-  input: UpdateOutboundShipmentInput;
-}>;
-
-
-export type UpdateOutboundShipmentMutation = { __typename?: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename?: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename?: 'CanOnlyEditInvoicesInLoggedInStoreError', description: string } | { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotReverseInvoiceStatus', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceIsNotEditable', description: string } | { __typename?: 'InvoiceLineHasNoStockLineError', description: string } | { __typename?: 'NotAnOutboundShipmentError', description: string } | { __typename?: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename?: 'OtherPartyNotACustomerError', description: string } | { __typename?: 'RecordNotFound', description: string } } };
-
-export type DeleteOutboundShipmentsMutationVariables = Exact<{
-  deleteOutboundShipments: Array<Scalars['String']> | Scalars['String'];
-}>;
-
-
-export type DeleteOutboundShipmentsMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string }> | null | undefined } };
-
-export type InvoiceCountsQueryVariables = Exact<{
-  timezoneOffset?: InputMaybe<Scalars['Int']>;
-}>;
-
-
-export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename?: 'InvoiceCounts', outbound: { __typename?: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename?: 'InvoiceCountsSummary', today: number, thisWeek: number } }, inbound: { __typename?: 'InboundInvoiceCounts', created: { __typename?: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
-
-export type StockCountsQueryVariables = Exact<{
-  daysTillExpired?: InputMaybe<Scalars['Int']>;
-  timezoneOffset?: InputMaybe<Scalars['Int']>;
-}>;
-
-
-export type StockCountsQuery = { __typename?: 'Queries', stockCounts: { __typename?: 'StockCounts', expired: number, expiringSoon: number } };
-
-export type UpsertOutboundShipmentMutationVariables = Exact<{
-  input: BatchOutboundShipmentInput;
-}>;
-
-
-export type UpsertOutboundShipmentMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename?: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename?: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null | undefined, deleteOutboundShipmentServiceLines?: Array<{ __typename?: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string }> | null | undefined, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null | undefined, insertOutboundShipmentLines?: Array<{ __typename?: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null | undefined, insertOutboundShipmentServiceLines?: Array<{ __typename?: 'InsertOutboundShipmentServiceLineResponseWithId', id: string }> | null | undefined, insertOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null | undefined, updateOutboundShipmentLines?: Array<{ __typename?: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null | undefined, updateOutboundShipmentServiceLines?: Array<{ __typename?: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string }> | null | undefined, updateOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null | undefined, updateOutboundShipments?: Array<{ __typename?: 'UpdateOutboundShipmentResponseWithId', id: string }> | null | undefined } };
-
-export type DeleteInboundShipmentLinesMutationVariables = Exact<{
-  input: BatchInboundShipmentInput;
-}>;
-
-
-export type DeleteInboundShipmentLinesMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename?: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename?: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null | undefined } };
-
-export type DeleteOutboundShipmentLinesMutationVariables = Exact<{
-  deleteOutboundShipmentLines: Array<DeleteOutboundShipmentLineInput> | DeleteOutboundShipmentLineInput;
-}>;
-
-
-export type DeleteOutboundShipmentLinesMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename?: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename?: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null | undefined } };
-
-export type UpdateInboundShipmentMutationVariables = Exact<{
-  input: UpdateInboundShipmentInput;
-}>;
-
-
-export type UpdateInboundShipmentMutation = { __typename?: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateInboundShipmentError', error: { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'CannotReverseInvoiceStatus', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'OtherPartyNotASupplier', description: string } | { __typename?: 'RecordNotFound', description: string } } };
-
-export type DeleteInboundShipmentsMutationVariables = Exact<{
-  deleteInboundShipments: Array<DeleteInboundShipmentInput> | DeleteInboundShipmentInput;
-}>;
-
-
-export type DeleteInboundShipmentsMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipments?: Array<{ __typename?: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename?: 'CannotDeleteInvoiceWithLines', description: string } | { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null | undefined } };
-
-export type InsertInboundShipmentMutationVariables = Exact<{
-  id: Scalars['String'];
-  otherPartyId: Scalars['String'];
-}>;
-
-
-export type InsertInboundShipmentMutation = { __typename?: 'Mutations', insertInboundShipment: { __typename: 'InsertInboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: ForeignKey } | { __typename: 'OtherPartyNotASupplier', description: string, otherParty: { __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
-
-export type LocationsQueryVariables = Exact<{
-  sort?: InputMaybe<Array<LocationSortInput> | LocationSortInput>;
-}>;
-
-
-export type LocationsQuery = { __typename?: 'Queries', locations: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: RangeField, max?: number | null | undefined, min?: number | null | undefined } } } | { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
-
-export type InsertLocationMutationVariables = Exact<{
-  input: InsertLocationInput;
-}>;
-
-
-export type InsertLocationMutation = { __typename?: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: UniqueValueKey } } | { __typename?: 'LocationNode', id: string, name: string, code: string, onHold: boolean } };
-
-export type UpdateLocationMutationVariables = Exact<{
-  input: UpdateLocationInput;
-}>;
-
-
-export type UpdateLocationMutation = { __typename?: 'Mutations', updateLocation: { __typename?: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: UniqueValueKey } } };
-
-export type StoresQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  filter?: InputMaybe<StoreFilterInput>;
-}>;
-
-
-export type StoresQuery = { __typename?: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename?: 'StoreNode', code: string, id: string }> } };
-
-export type AuthTokenQueryVariables = Exact<{
-  username: Scalars['String'];
-  password: Scalars['String'];
-}>;
-
-
-export type AuthTokenQuery = { __typename?: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'UserNameDoesNotExist', description: string } } };
-
-export type MasterListsQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  key: MasterListSortFieldInput;
-  desc?: InputMaybe<Scalars['Boolean']>;
-  filter?: InputMaybe<MasterListFilterInput>;
-}>;
-
-
-export type MasterListsQuery = { __typename?: 'Queries', masterLists: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', field: RangeField, min?: number | null | undefined, max?: number | null | undefined, description: string } } } | { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename?: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListLineNode', id: string, itemId: string, item: { __typename?: 'ItemNode', code: string, id: string, unitName?: string | null | undefined, name: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, min?: number | null | undefined, max?: number | null | undefined, field: RangeField } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null | undefined, costPricePerPack: number, expiryDate?: string | null | undefined, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null | undefined, locationName?: string | null | undefined }> } } }> } }> } };
-
-
-export const InvoiceDocument = gql`
-    query invoice($id: String!) {
-  invoice(id: $id) {
-    __typename
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-    ... on InvoiceNode {
-      __typename
-      id
-      comment
-      createdDatetime
-      allocatedDatetime
-      deliveredDatetime
-      pickedDatetime
-      shippedDatetime
-      verifiedDatetime
-      invoiceNumber
-      colour
-      onHold
-      otherParty {
-        __typename
-        ... on NameNode {
-          __typename
-          id
-          name
-          code
-          isCustomer
-          isSupplier
-        }
-        ... on NodeError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-          }
-        }
-      }
-      lines {
-        ... on ConnectorError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-          }
-        }
-        ... on InvoiceLineConnector {
-          __typename
-          nodes {
-            __typename
-            type
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemCode
-            itemId
-            itemName
-            numberOfPacks
-            packSize
-            note
-            invoiceId
-            location {
-              __typename
-              ... on LocationNode {
-                __typename
-                id
-                name
-                code
-                onHold
-                stock {
-                  __typename
-                  ... on ConnectorError {
-                    __typename
-                    error {
-                      description
-                      ... on DatabaseError {
-                        __typename
-                        description
-                        fullError
-                      }
-                    }
-                  }
-                  ... on StockLineConnector {
-                    __typename
-                    totalCount
-                    nodes {
-                      id
-                      costPricePerPack
-                      itemId
-                      availableNumberOfPacks
-                      onHold
-                      packSize
-                      sellPricePerPack
-                      storeId
-                      totalNumberOfPacks
-                    }
-                  }
-                }
-              }
-              ... on NodeError {
-                __typename
-                error {
-                  description
-                  ... on DatabaseError {
-                    __typename
-                    description
-                    fullError
-                  }
-                  ... on RecordNotFound {
-                    __typename
-                    description
-                  }
-                }
-              }
-            }
-            item {
-              ... on ItemNode {
-                __typename
-                id
-                name
-                code
-                isVisible
-                unitName
-                availableBatches {
-                  ... on StockLineConnector {
-                    totalCount
-                    nodes {
-                      id
-                      availableNumberOfPacks
-                      costPricePerPack
-                      itemId
-                      onHold
-                      packSize
-                      sellPricePerPack
-                      storeId
-                      totalNumberOfPacks
-                      expiryDate
-                    }
-                  }
-                  ... on ConnectorError {
-                    __typename
-                    error {
-                      description
-                    }
-                  }
-                }
-              }
-              ... on ItemError {
-                __typename
-                error {
-                  ... on InternalError {
-                    __typename
-                    description
-                    fullError
-                  }
-                }
-              }
-            }
-            locationName
-            sellPricePerPack
-            stockLine {
-              __typename
-              ... on NodeError {
-                __typename
-                error {
-                  description
-                  ... on DatabaseError {
-                    __typename
-                    description
-                    fullError
-                  }
-                  ... on RecordNotFound {
-                    __typename
-                    description
-                  }
-                }
-              }
-              ... on StockLineNode {
-                __typename
-                availableNumberOfPacks
-                batch
-                costPricePerPack
-                expiryDate
-                id
-                itemId
-                packSize
-                sellPricePerPack
-                storeId
-                totalNumberOfPacks
-                onHold
-                note
-              }
-            }
-          }
-          totalCount
-        }
-      }
-      otherPartyId
-      otherPartyName
-      pricing {
-        __typename
-        ... on NodeError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-          }
-        }
-        ... on InvoicePricingNode {
-          __typename
-          totalAfterTax
-          totalBeforeTax
-          stockTotalBeforeTax
-          stockTotalAfterTax
-          serviceTotalAfterTax
-          serviceTotalBeforeTax
-        }
-      }
-      status
-      theirReference
-      type
-    }
-  }
-}
-    `;
-export const StocktakeDocument = gql`
-    query stocktake($stocktakeId: String!, $storeId: String!) {
-  stocktake(id: $stocktakeId, storeId: $storeId) {
-    __typename
-    ... on StocktakeNode {
-      __typename
-      id
-      stocktakeNumber
-      comment
-      createdDatetime
-      status
-      description
-      lines {
-        __typename
-        ... on StocktakeLineConnector {
-          __typename
-          nodes {
-            __typename
-            batch
-            itemId
-            id
-            expiryDate
-            packSize
-            snapshotNumberOfPacks
-            countedNumberOfPacks
-            sellPricePerPack
-            costPricePerPack
-          }
-          totalCount
-        }
-      }
-    }
-  }
-}
-    `;
-export const UpdateStocktakeDocument = gql`
-    mutation updateStocktake($input: UpdateStocktakeInput!) {
-  updateStocktake(input: $input) {
-    ... on StocktakeNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const UpsertStocktakeLinesDocument = gql`
-    mutation upsertStocktakeLines($storeId: String!, $deleteStocktakeLines: [DeleteStocktakeLineInput!], $updateStocktakeLines: [UpdateStocktakeLineInput!], $insertStocktakeLines: [InsertStocktakeLineInput!]) {
-  batchStocktake(
-    storeId: $storeId
-    input: {deleteStocktakeLines: $deleteStocktakeLines, updateStocktakeLines: $updateStocktakeLines, insertStocktakeLines: $insertStocktakeLines}
-  ) {
-    __typename
-    ... on BatchStocktakeResponses {
-      __typename
-      deleteStocktakeLines {
-        id
-      }
-      insertStocktakeLines {
-        id
-      }
-      updateStocktakeLines {
-        id
-      }
-    }
-  }
-}
-    `;
-export const DeleteStocktakesDocument = gql`
-    mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
-  batchStocktake(storeId: $storeId, input: {deleteStocktakes: $ids}) {
-    __typename
-    ... on BatchStocktakeResponses {
-      deleteStocktakes {
-        __typename
-        id
-      }
-    }
-  }
-}
-    `;
-export const InsertStocktakeDocument = gql`
-    mutation insertStocktake($input: InsertStocktakeInput!) {
-  insertStocktake(input: $input) {
-    ... on StocktakeNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const UpdateSupplierRequisitionDocument = gql`
-    mutation updateSupplierRequisition($storeId: String!, $input: UpdateRequestRequisitionInput!) {
-  updateRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const InsertSupplierRequisitionDocument = gql`
-    mutation insertSupplierRequisition($storeId: String!, $input: InsertRequestRequisitionInput!) {
-  insertRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const UpdateCustomerRequisitionDocument = gql`
-    mutation updateCustomerRequisition($storeId: String!, $input: UpdateRequestRequisitionInput!) {
-  updateRequestRequisition(storeId: $storeId, input: $input) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const InsertCustomerRequisitionDocument = gql`
-    mutation insertCustomerRequisition($storeId: String!, $input: InsertRequestRequisitionInput!) {
-  insertRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const RequisitionDocument = gql`
-    query requisition($storeId: String!, $id: String!) {
-  requisition(id: $id, storeId: $storeId) {
-    __typename
-    ... on RequisitionNode {
-      __typename
-      id
-      comment
-      theirReference
-      type
-      requisitionNumber
-      status
-      otherPartyId
-      lines {
-        __typename
-        ... on RequisitionLineConnector {
-          totalCount
-          nodes {
-            id
-            itemId
-            supplyQuantity
-            requestedQuantity
-            calculatedQuantity
-          }
-        }
-      }
-      otherParty {
-        __typename
-        ... on NameNode {
-          id
-          name
-          code
-          isCustomer
-          isSupplier
-        }
-      }
-    }
-  }
-}
-    `;
-export const InvoicesDocument = gql`
-    query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput) {
-  invoices(
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
-    ... on InvoiceConnector {
-      __typename
-      nodes {
-        comment
-        createdDatetime
-        allocatedDatetime
-        deliveredDatetime
-        pickedDatetime
-        shippedDatetime
-        verifiedDatetime
-        id
-        invoiceNumber
-        otherPartyId
-        otherPartyName
-        theirReference
-        type
-        status
-        colour
-        pricing {
-          __typename
-          ... on NodeError {
-            __typename
-            error {
-              ... on RecordNotFound {
-                __typename
-                description
-              }
-              ... on DatabaseError {
-                __typename
-                description
-                fullError
-              }
-              description
-            }
-          }
-          ... on InvoicePricingNode {
-            __typename
-            totalAfterTax
-            totalBeforeTax
-            stockTotalBeforeTax
-            stockTotalAfterTax
-            serviceTotalAfterTax
-            serviceTotalBeforeTax
-          }
-        }
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const NamesDocument = gql`
-    query names($key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
-  names(
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        description
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
-    ... on NameConnector {
-      __typename
-      nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const ItemsWithStockLinesDocument = gql`
-    query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
-  items(
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
-    ... on ItemConnector {
-      __typename
-      nodes {
-        __typename
-        availableBatches {
-          __typename
-          ... on ConnectorError {
-            __typename
-            error {
-              description
-              ... on DatabaseError {
-                __typename
-                description
-                fullError
-              }
-              ... on PaginationError {
-                __typename
-                description
-                rangeError {
-                  description
-                  field
-                  max
-                  min
-                }
-              }
-            }
-          }
-          ... on StockLineConnector {
-            __typename
-            nodes {
-              __typename
-              availableNumberOfPacks
-              batch
-              costPricePerPack
-              expiryDate
-              id
-              itemId
-              packSize
-              sellPricePerPack
-              totalNumberOfPacks
-              onHold
-              note
-              storeId
-              locationName
-            }
-            totalCount
-          }
-        }
-        code
-        id
-        isVisible
-        name
-        unitName
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const ItemsListViewDocument = gql`
-    query itemsListView($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
-  items(
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
-    ... on ItemConnector {
-      __typename
-      nodes {
-        __typename
-        code
-        id
-        isVisible
-        name
-        unitName
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const InsertOutboundShipmentDocument = gql`
-    mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
-  insertOutboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
-    __typename
-    ... on InvoiceNode {
-      id
-    }
-    ... on InsertOutboundShipmentError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-          key
-        }
-        ... on OtherPartyCannotBeThisStoreError {
-          __typename
-          description
-        }
-        ... on OtherPartyNotACustomerError {
-          __typename
-          description
-          otherParty {
-            code
-            id
-            isCustomer
-            isSupplier
-            name
-          }
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-      }
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-    `;
-export const UpdateOutboundShipmentDocument = gql`
-    mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
-  updateOutboundShipment(input: $input) {
-    ... on InvoiceNode {
-      __typename
-      id
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-    ... on UpdateOutboundShipmentError {
-      __typename
-      error {
-        description
-      }
-    }
-  }
-}
-    `;
-export const DeleteOutboundShipmentsDocument = gql`
-    mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
-  batchOutboundShipment(
-    input: {deleteOutboundShipments: $deleteOutboundShipments}
-  ) {
-    __typename
-    deleteOutboundShipments {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const InvoiceCountsDocument = gql`
-    query invoiceCounts($timezoneOffset: Int) {
-  invoiceCounts(timezoneOffset: $timezoneOffset) {
-    outbound {
-      created {
-        today
-        thisWeek
-      }
-      toBePicked
-    }
-    inbound {
-      created {
-        today
-        thisWeek
-      }
-    }
-  }
-}
-    `;
-export const StockCountsDocument = gql`
-    query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
-  stockCounts(daysTillExpired: $daysTillExpired, timezoneOffset: $timezoneOffset) {
-    expired
-    expiringSoon
-  }
-}
-    `;
-export const UpsertOutboundShipmentDocument = gql`
-    mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
-  batchOutboundShipment(input: $input) {
-    deleteOutboundShipmentLines {
-      id
-    }
-    deleteOutboundShipmentServiceLines {
-      id
-    }
-    deleteOutboundShipmentUnallocatedLines {
-      id
-    }
-    insertOutboundShipmentLines {
-      id
-    }
-    insertOutboundShipmentServiceLines {
-      id
-    }
-    insertOutboundShipmentUnallocatedLines {
-      id
-    }
-    updateOutboundShipmentLines {
-      id
-    }
-    updateOutboundShipmentServiceLines {
-      id
-    }
-    updateOutboundShipmentUnallocatedLines {
-      id
-    }
-    updateOutboundShipments {
-      id
-    }
-  }
-}
-    `;
-export const DeleteInboundShipmentLinesDocument = gql`
-    mutation deleteInboundShipmentLines($input: BatchInboundShipmentInput!) {
-  batchInboundShipment(input: $input) {
-    deleteInboundShipmentLines {
-      id
-      response {
-        ... on DeleteResponse {
-          id
-        }
-        ... on DeleteInboundShipmentLineError {
-          __typename
-          error {
-            description
-            ... on NotAnInboundShipment {
-              __typename
-              description
-            }
-            ... on InvoiceDoesNotBelongToCurrentStore {
-              __typename
-              description
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
-            }
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on BatchIsReserved {
-              __typename
-              description
-            }
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-export const DeleteOutboundShipmentLinesDocument = gql`
-    mutation deleteOutboundShipmentLines($deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!) {
-  batchOutboundShipment(
-    input: {deleteOutboundShipmentLines: $deleteOutboundShipmentLines}
-  ) {
-    deleteOutboundShipmentLines {
-      id
-      response {
-        ... on DeleteOutboundShipmentLineError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
-            }
-            ... on InvoiceDoesNotBelongToCurrentStore {
-              __typename
-              description
-            }
-            ... on InvoiceLineBelongsToAnotherInvoice {
-              __typename
-              description
-            }
-            ... on NotAnOutboundShipment {
-              __typename
-              description
-            }
-          }
-        }
-        ... on DeleteResponse {
-          id
-        }
-      }
-    }
-  }
-}
-    `;
-export const UpdateInboundShipmentDocument = gql`
-    mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
-  updateInboundShipment(input: $input) {
-    ... on InvoiceNode {
-      __typename
-      id
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-    ... on UpdateInboundShipmentError {
-      __typename
-      error {
-        description
-      }
-    }
-  }
-}
-    `;
-export const DeleteInboundShipmentsDocument = gql`
-    mutation deleteInboundShipments($deleteInboundShipments: [DeleteInboundShipmentInput!]!) {
-  batchInboundShipment(input: {deleteInboundShipments: $deleteInboundShipments}) {
-    __typename
-    deleteInboundShipments {
-      id
-      response {
-        ... on DeleteInboundShipmentError {
-          __typename
-          error {
-            description
-          }
-        }
-        ... on DeleteResponse {
-          id
-        }
-      }
-    }
-  }
-}
-    `;
-export const InsertInboundShipmentDocument = gql`
-    mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
-  insertInboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
-    __typename
-    ... on InvoiceNode {
-      id
-    }
-    ... on InsertInboundShipmentError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-          key
-        }
-        ... on OtherPartyNotASupplier {
-          __typename
-          description
-          otherParty {
-            code
-            id
-            isCustomer
-            isSupplier
-            name
-          }
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-      }
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-    `;
-export const LocationsDocument = gql`
-    query locations($sort: [LocationSortInput!]) {
-  locations(sort: $sort) {
-    __typename
-    ... on LocationConnector {
-      __typename
-      nodes {
-        __typename
-        id
-        name
-        onHold
-        code
-      }
-      totalCount
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-export const InsertLocationDocument = gql`
-    mutation insertLocation($input: InsertLocationInput!) {
-  insertLocation(input: $input) {
-    ... on InsertLocationError {
-      __typename
-      error {
-        description
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-        ... on UniqueValueViolation {
-          __typename
-          description
-          field
-        }
-      }
-    }
-    ... on LocationNode {
-      id
-      name
-      code
-      onHold
-    }
-  }
-}
-    `;
-export const UpdateLocationDocument = gql`
-    mutation updateLocation($input: UpdateLocationInput!) {
-  updateLocation(input: $input) {
-    ... on UpdateLocationError {
-      __typename
-      error {
-        description
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordBelongsToAnotherStore {
-          __typename
-          description
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on UniqueValueViolation {
-          __typename
-          description
-          field
-        }
-      }
-    }
-    ... on LocationNode {
-      id
-      name
-      onHold
-      code
-    }
-  }
-}
-    `;
-export const StoresDocument = gql`
-    query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(page: {first: $first, offset: $offset}, filter: $filter) {
-    ... on StoreConnector {
-      __typename
-      nodes {
-        code
-        id
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const AuthTokenDocument = gql`
-    query authToken($username: String!, $password: String!) {
-  authToken(password: $password, username: $username) {
-    ... on AuthToken {
-      __typename
-      token
-    }
-    ... on AuthTokenError {
-      __typename
-      error {
-        ... on UserNameDoesNotExist {
-          __typename
-          description
-        }
-        ... on InvalidCredentials {
-          __typename
-          description
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        description
-      }
-    }
-  }
-}
-    `;
-export const MasterListsDocument = gql`
-    query masterLists($first: Int, $offset: Int, $key: MasterListSortFieldInput!, $desc: Boolean, $filter: MasterListFilterInput) {
-  masterLists(
-    filter: $filter
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-  ) {
-    ... on MasterListConnector {
-      __typename
-      nodes {
-        name
-        code
-        lines {
-          nodes {
-            id
-            itemId
-            item {
-              code
-              id
-              unitName
-              name
-              isVisible
-              availableBatches {
-                ... on ConnectorError {
-                  __typename
-                  error {
-                    ... on PaginationError {
-                      __typename
-                      description
-                      rangeError {
-                        description
-                        min
-                        max
-                        field
-                      }
-                    }
-                    ... on DatabaseError {
-                      __typename
-                      description
-                      fullError
-                    }
-                    description
-                  }
-                }
-                ... on StockLineConnector {
-                  __typename
-                  nodes {
-                    __typename
-                    availableNumberOfPacks
-                    batch
-                    costPricePerPack
-                    expiryDate
-                    itemId
-                    id
-                    totalNumberOfPacks
-                    storeId
-                    sellPricePerPack
-                    packSize
-                    onHold
-                    note
-                    locationName
-                  }
-                  totalCount
-                }
-              }
-            }
-          }
-          totalCount
-        }
-        code
-        description
-        id
-      }
-      totalCount
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            field
-            min
-            max
-            description
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
-
-
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
-
-export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
-  return {
-    invoice(variables: InvoiceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InvoiceQuery>(InvoiceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoice');
-    },
-    stocktake(variables: StocktakeQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StocktakeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StocktakeQuery>(StocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktake');
-    },
-    updateStocktake(variables: UpdateStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStocktakeMutation>(UpdateStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStocktake');
-    },
-    upsertStocktakeLines(variables: UpsertStocktakeLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertStocktakeLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertStocktakeLinesMutation>(UpsertStocktakeLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertStocktakeLines');
-    },
-    deleteStocktakes(variables: DeleteStocktakesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteStocktakesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteStocktakesMutation>(DeleteStocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteStocktakes');
-    },
-    insertStocktake(variables: InsertStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertStocktakeMutation>(InsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStocktake');
-    },
-    updateSupplierRequisition(variables: UpdateSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateSupplierRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierRequisitionMutation>(UpdateSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierRequisition');
-    },
-    insertSupplierRequisition(variables: InsertSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertSupplierRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierRequisitionMutation>(InsertSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierRequisition');
-    },
-    updateCustomerRequisition(variables: UpdateCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateCustomerRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerRequisitionMutation>(UpdateCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateCustomerRequisition');
-    },
-    insertCustomerRequisition(variables: InsertCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertCustomerRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertCustomerRequisitionMutation>(InsertCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertCustomerRequisition');
-    },
-    requisition(variables: RequisitionQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionQuery>(RequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisition');
-    },
-    invoices(variables: InvoicesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoicesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InvoicesQuery>(InvoicesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoices');
-    },
-    names(variables: NamesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<NamesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names');
-    },
-    itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsWithStockLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines');
-    },
-    itemsListView(variables: ItemsListViewQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsListViewQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsListViewQuery>(ItemsListViewDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsListView');
-    },
-    insertOutboundShipment(variables: InsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertOutboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundShipmentMutation>(InsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundShipment');
-    },
-    updateOutboundShipment(variables: UpdateOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateOutboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundShipmentMutation>(UpdateOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundShipment');
-    },
-    deleteOutboundShipments(variables: DeleteOutboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentsMutation>(DeleteOutboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipments');
-    },
-    invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
-    },
-    stockCounts(variables?: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts');
-    },
-    upsertOutboundShipment(variables: UpsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertOutboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertOutboundShipmentMutation>(UpsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertOutboundShipment');
-    },
-    deleteInboundShipmentLines(variables: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines');
-    },
-    deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentLinesMutation>(DeleteOutboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipmentLines');
-    },
-    updateInboundShipment(variables: UpdateInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateInboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundShipmentMutation>(UpdateInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundShipment');
-    },
-    deleteInboundShipments(variables: DeleteInboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentsMutation>(DeleteInboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipments');
-    },
-    insertInboundShipment(variables: InsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertInboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundShipmentMutation>(InsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundShipment');
-    },
-    locations(variables?: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations');
-    },
-    insertLocation(variables: InsertLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertLocationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertLocationMutation>(InsertLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertLocation');
-    },
-    updateLocation(variables: UpdateLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateLocationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLocationMutation>(UpdateLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLocation');
-    },
-    stores(variables?: StoresQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StoresQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StoresQuery>(StoresDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stores');
-    },
-    authToken(variables: AuthTokenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AuthTokenQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AuthTokenQuery>(AuthTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'authToken');
-    },
-    masterLists(variables: MasterListsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<MasterListsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsQuery>(MasterListsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterLists');
-    }
-  };
-}
-export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInvoiceQuery((req, res, ctx) => {
- *   const { id } = req.variables;
- *   return res(
- *     ctx.data({ invoice })
- *   )
- * })
- */
-export const mockInvoiceQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceQueryVariables>, GraphQLContext<InvoiceQuery>, any>) =>
-  graphql.query<InvoiceQuery, InvoiceQueryVariables>(
-    'invoice',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStocktakeQuery((req, res, ctx) => {
- *   const { stocktakeId, storeId } = req.variables;
- *   return res(
- *     ctx.data({ stocktake })
- *   )
- * })
- */
-export const mockStocktakeQuery = (resolver: ResponseResolver<GraphQLRequest<StocktakeQueryVariables>, GraphQLContext<StocktakeQuery>, any>) =>
-  graphql.query<StocktakeQuery, StocktakeQueryVariables>(
-    'stocktake',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateStocktakeMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ updateStocktake })
- *   )
- * })
- */
-export const mockUpdateStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateStocktakeMutationVariables>, GraphQLContext<UpdateStocktakeMutation>, any>) =>
-  graphql.mutation<UpdateStocktakeMutation, UpdateStocktakeMutationVariables>(
-    'updateStocktake',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpsertStocktakeLinesMutation((req, res, ctx) => {
- *   const { storeId, deleteStocktakeLines, updateStocktakeLines, insertStocktakeLines } = req.variables;
- *   return res(
- *     ctx.data({ batchStocktake })
- *   )
- * })
- */
-export const mockUpsertStocktakeLinesMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertStocktakeLinesMutationVariables>, GraphQLContext<UpsertStocktakeLinesMutation>, any>) =>
-  graphql.mutation<UpsertStocktakeLinesMutation, UpsertStocktakeLinesMutationVariables>(
-    'upsertStocktakeLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteStocktakesMutation((req, res, ctx) => {
- *   const { storeId, ids } = req.variables;
- *   return res(
- *     ctx.data({ batchStocktake })
- *   )
- * })
- */
-export const mockDeleteStocktakesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteStocktakesMutationVariables>, GraphQLContext<DeleteStocktakesMutation>, any>) =>
-  graphql.mutation<DeleteStocktakesMutation, DeleteStocktakesMutationVariables>(
-    'deleteStocktakes',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertStocktakeMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ insertStocktake })
- *   )
- * })
- */
-export const mockInsertStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<InsertStocktakeMutationVariables>, GraphQLContext<InsertStocktakeMutation>, any>) =>
-  graphql.mutation<InsertStocktakeMutation, InsertStocktakeMutationVariables>(
-    'insertStocktake',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateSupplierRequisitionMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateRequestRequisition })
- *   )
- * })
- */
-export const mockUpdateSupplierRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateSupplierRequisitionMutationVariables>, GraphQLContext<UpdateSupplierRequisitionMutation>, any>) =>
-  graphql.mutation<UpdateSupplierRequisitionMutation, UpdateSupplierRequisitionMutationVariables>(
-    'updateSupplierRequisition',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertSupplierRequisitionMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertRequestRequisition })
- *   )
- * })
- */
-export const mockInsertSupplierRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<InsertSupplierRequisitionMutationVariables>, GraphQLContext<InsertSupplierRequisitionMutation>, any>) =>
-  graphql.mutation<InsertSupplierRequisitionMutation, InsertSupplierRequisitionMutationVariables>(
-    'insertSupplierRequisition',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateCustomerRequisitionMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateRequestRequisition })
- *   )
- * })
- */
-export const mockUpdateCustomerRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateCustomerRequisitionMutationVariables>, GraphQLContext<UpdateCustomerRequisitionMutation>, any>) =>
-  graphql.mutation<UpdateCustomerRequisitionMutation, UpdateCustomerRequisitionMutationVariables>(
-    'updateCustomerRequisition',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertCustomerRequisitionMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertRequestRequisition })
- *   )
- * })
- */
-export const mockInsertCustomerRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<InsertCustomerRequisitionMutationVariables>, GraphQLContext<InsertCustomerRequisitionMutation>, any>) =>
-  graphql.mutation<InsertCustomerRequisitionMutation, InsertCustomerRequisitionMutationVariables>(
-    'insertCustomerRequisition',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRequisitionQuery((req, res, ctx) => {
- *   const { storeId, id } = req.variables;
- *   return res(
- *     ctx.data({ requisition })
- *   )
- * })
- */
-export const mockRequisitionQuery = (resolver: ResponseResolver<GraphQLRequest<RequisitionQueryVariables>, GraphQLContext<RequisitionQuery>, any>) =>
-  graphql.query<RequisitionQuery, RequisitionQueryVariables>(
-    'requisition',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInvoicesQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter } = req.variables;
- *   return res(
- *     ctx.data({ invoices })
- *   )
- * })
- */
-export const mockInvoicesQuery = (resolver: ResponseResolver<GraphQLRequest<InvoicesQueryVariables>, GraphQLContext<InvoicesQuery>, any>) =>
-  graphql.query<InvoicesQuery, InvoicesQueryVariables>(
-    'invoices',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockNamesQuery((req, res, ctx) => {
- *   const { key, desc, first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ names })
- *   )
- * })
- */
-export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQueryVariables>, GraphQLContext<NamesQuery>, any>) =>
-  graphql.query<NamesQuery, NamesQueryVariables>(
-    'names',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockItemsWithStockLinesQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter } = req.variables;
- *   return res(
- *     ctx.data({ items })
- *   )
- * })
- */
-export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsWithStockLinesQueryVariables>, GraphQLContext<ItemsWithStockLinesQuery>, any>) =>
-  graphql.query<ItemsWithStockLinesQuery, ItemsWithStockLinesQueryVariables>(
-    'itemsWithStockLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockItemsListViewQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter } = req.variables;
- *   return res(
- *     ctx.data({ items })
- *   )
- * })
- */
-export const mockItemsListViewQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsListViewQueryVariables>, GraphQLContext<ItemsListViewQuery>, any>) =>
-  graphql.query<ItemsListViewQuery, ItemsListViewQueryVariables>(
-    'itemsListView',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertOutboundShipmentMutation((req, res, ctx) => {
- *   const { id, otherPartyId } = req.variables;
- *   return res(
- *     ctx.data({ insertOutboundShipment })
- *   )
- * })
- */
-export const mockInsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertOutboundShipmentMutationVariables>, GraphQLContext<InsertOutboundShipmentMutation>, any>) =>
-  graphql.mutation<InsertOutboundShipmentMutation, InsertOutboundShipmentMutationVariables>(
-    'insertOutboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateOutboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ updateOutboundShipment })
- *   )
- * })
- */
-export const mockUpdateOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundShipmentMutationVariables>, GraphQLContext<UpdateOutboundShipmentMutation>, any>) =>
-  graphql.mutation<UpdateOutboundShipmentMutation, UpdateOutboundShipmentMutationVariables>(
-    'updateOutboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteOutboundShipmentsMutation((req, res, ctx) => {
- *   const { deleteOutboundShipments } = req.variables;
- *   return res(
- *     ctx.data({ batchOutboundShipment })
- *   )
- * })
- */
-export const mockDeleteOutboundShipmentsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentsMutationVariables>, GraphQLContext<DeleteOutboundShipmentsMutation>, any>) =>
-  graphql.mutation<DeleteOutboundShipmentsMutation, DeleteOutboundShipmentsMutationVariables>(
-    'deleteOutboundShipments',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ invoiceCounts })
- *   )
- * })
- */
-export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceCountsQueryVariables>, GraphQLContext<InvoiceCountsQuery>, any>) =>
-  graphql.query<InvoiceCountsQuery, InvoiceCountsQueryVariables>(
-    'invoiceCounts',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStockCountsQuery((req, res, ctx) => {
- *   const { daysTillExpired, timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ stockCounts })
- *   )
- * })
- */
-export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<StockCountsQueryVariables>, GraphQLContext<StockCountsQuery>, any>) =>
-  graphql.query<StockCountsQuery, StockCountsQueryVariables>(
-    'stockCounts',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpsertOutboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ batchOutboundShipment })
- *   )
- * })
- */
-export const mockUpsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertOutboundShipmentMutationVariables>, GraphQLContext<UpsertOutboundShipmentMutation>, any>) =>
-  graphql.mutation<UpsertOutboundShipmentMutation, UpsertOutboundShipmentMutationVariables>(
-    'upsertOutboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteInboundShipmentLinesMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ batchInboundShipment })
- *   )
- * })
- */
-export const mockDeleteInboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentLinesMutationVariables>, GraphQLContext<DeleteInboundShipmentLinesMutation>, any>) =>
-  graphql.mutation<DeleteInboundShipmentLinesMutation, DeleteInboundShipmentLinesMutationVariables>(
-    'deleteInboundShipmentLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteOutboundShipmentLinesMutation((req, res, ctx) => {
- *   const { deleteOutboundShipmentLines } = req.variables;
- *   return res(
- *     ctx.data({ batchOutboundShipment })
- *   )
- * })
- */
-export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentLinesMutationVariables>, GraphQLContext<DeleteOutboundShipmentLinesMutation>, any>) =>
-  graphql.mutation<DeleteOutboundShipmentLinesMutation, DeleteOutboundShipmentLinesMutationVariables>(
-    'deleteOutboundShipmentLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateInboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ updateInboundShipment })
- *   )
- * })
- */
-export const mockUpdateInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateInboundShipmentMutationVariables>, GraphQLContext<UpdateInboundShipmentMutation>, any>) =>
-  graphql.mutation<UpdateInboundShipmentMutation, UpdateInboundShipmentMutationVariables>(
-    'updateInboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteInboundShipmentsMutation((req, res, ctx) => {
- *   const { deleteInboundShipments } = req.variables;
- *   return res(
- *     ctx.data({ batchInboundShipment })
- *   )
- * })
- */
-export const mockDeleteInboundShipmentsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentsMutationVariables>, GraphQLContext<DeleteInboundShipmentsMutation>, any>) =>
-  graphql.mutation<DeleteInboundShipmentsMutation, DeleteInboundShipmentsMutationVariables>(
-    'deleteInboundShipments',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertInboundShipmentMutation((req, res, ctx) => {
- *   const { id, otherPartyId } = req.variables;
- *   return res(
- *     ctx.data({ insertInboundShipment })
- *   )
- * })
- */
-export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertInboundShipmentMutationVariables>, GraphQLContext<InsertInboundShipmentMutation>, any>) =>
-  graphql.mutation<InsertInboundShipmentMutation, InsertInboundShipmentMutationVariables>(
-    'insertInboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLocationsQuery((req, res, ctx) => {
- *   const { sort } = req.variables;
- *   return res(
- *     ctx.data({ locations })
- *   )
- * })
- */
-export const mockLocationsQuery = (resolver: ResponseResolver<GraphQLRequest<LocationsQueryVariables>, GraphQLContext<LocationsQuery>, any>) =>
-  graphql.query<LocationsQuery, LocationsQueryVariables>(
-    'locations',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertLocationMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ insertLocation })
- *   )
- * })
- */
-export const mockInsertLocationMutation = (resolver: ResponseResolver<GraphQLRequest<InsertLocationMutationVariables>, GraphQLContext<InsertLocationMutation>, any>) =>
-  graphql.mutation<InsertLocationMutation, InsertLocationMutationVariables>(
-    'insertLocation',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateLocationMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ updateLocation })
- *   )
- * })
- */
-export const mockUpdateLocationMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLocationMutationVariables>, GraphQLContext<UpdateLocationMutation>, any>) =>
-  graphql.mutation<UpdateLocationMutation, UpdateLocationMutationVariables>(
-    'updateLocation',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStoresQuery((req, res, ctx) => {
- *   const { first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ stores })
- *   )
- * })
- */
-export const mockStoresQuery = (resolver: ResponseResolver<GraphQLRequest<StoresQueryVariables>, GraphQLContext<StoresQuery>, any>) =>
-  graphql.query<StoresQuery, StoresQueryVariables>(
-    'stores',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAuthTokenQuery((req, res, ctx) => {
- *   const { username, password } = req.variables;
- *   return res(
- *     ctx.data({ authToken })
- *   )
- * })
- */
-export const mockAuthTokenQuery = (resolver: ResponseResolver<GraphQLRequest<AuthTokenQueryVariables>, GraphQLContext<AuthTokenQuery>, any>) =>
-  graphql.query<AuthTokenQuery, AuthTokenQueryVariables>(
-    'authToken',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockMasterListsQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter } = req.variables;
- *   return res(
- *     ctx.data({ masterLists })
- *   )
- * })
- */
-export const mockMasterListsQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsQueryVariables>, GraphQLContext<MasterListsQuery>, any>) =>
-  graphql.query<MasterListsQuery, MasterListsQueryVariables>(
-    'masterLists',
-    resolver
-  )

@@ -309,15 +309,6 @@ query stocktake($stocktakeId: String!, $storeId: String!) {
   }
 }
 
-mutation updateStocktake($input: UpdateStocktakeInput!) {
-  updateStocktake(input: $input) {
-    ... on StocktakeNode {
-      __typename
-      id
-    }
-  }
-}
-
 mutation upsertStocktakeLines(
   $storeId: String!
   $deleteStocktakeLines: [DeleteStocktakeLineInput!]
