@@ -28,8 +28,8 @@ pub use master_list_line::MasterListLineByMasterListId;
 pub use name::NameByIdLoader;
 pub use requisition::*;
 pub use requisition_line::*;
-pub use stock_line::{StockLineByIdLoader, StockLineByItemIdLoader, StockLineByLocationIdLoader};
-pub use stocktake_lines::StocktakeLineByStocktakeIdLoader;
+pub use stock_line::*;
+pub use stocktake_lines::*;
 pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
 
@@ -58,6 +58,18 @@ fn extract_unique_requisition_and_item_ids(
         requisition_ids.into_iter().collect(),
         item_ids.into_iter().collect(),
     )
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IdAndStoreId {
+    pub id: String,
+    pub store_id: String,
+}
+
+impl std::hash::Hash for IdAndStoreId {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

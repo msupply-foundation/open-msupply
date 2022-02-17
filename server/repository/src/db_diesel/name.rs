@@ -42,11 +42,12 @@ impl<'a> NameRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, name_id: &str) -> Result<NameRow, RepositoryError> {
+    pub fn find_one_by_id(&self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
         use crate::schema::diesel_schema::name::dsl::*;
         let result = name
             .filter(id.eq(name_id))
-            .first(&self.connection.connection)?;
+            .first(&self.connection.connection)
+            .optional()?;
         Ok(result)
     }
 

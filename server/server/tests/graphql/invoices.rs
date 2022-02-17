@@ -3,7 +3,7 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, common::get_invoice_lines_inline};
     use chrono::{DateTime, Utc};
-    use domain::Pagination;
+    use domain::{invoice::InvoiceFilter, EqualFilter};
     use repository::{mock::MockDataInserts, InvoiceQueryRepository};
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -17,11 +17,11 @@ mod graphql {
         .await;
 
         let invoices = InvoiceQueryRepository::new(&connection)
-            .query(Pagination::new(), None, None)
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
             .unwrap();
 
         let query = r#"{
-            invoices{
+            invoices(storeId: \"store_a\"){
                 ... on InvoiceConnector {
                     nodes{
                         id
@@ -68,12 +68,12 @@ mod graphql {
         .await;
 
         let invoices = InvoiceQueryRepository::new(&connection)
-            .query(Pagination::new(), None, None)
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
             .unwrap();
 
         // filter query
         let query = r#"query Invoices($filter: [InvoiceFilterInput]) {
-            invoices(filter: $filter){
+            invoices(filter: $filter, storeId: \"store_a\"){
                 ... on InvoiceConnector {
                     nodes {
                         id
@@ -125,7 +125,7 @@ mod graphql {
     macro_rules! sort_test {
         ($key:expr, $field:ident, $gql_field:expr, $invoices:expr, $desc:expr, $to_lowercase:expr) => {{
             let query = r#"query Invoices($sort: [InvoiceSortInput]) {
-                invoices(sort: $sort){
+                invoices(sort: $sort, storeId: \"store_a\"){
                     ... on InvoiceConnector {
                         nodes {
                             $gql_field 
@@ -185,8 +185,9 @@ mod graphql {
         .await;
 
         let mut invoices = InvoiceQueryRepository::new(&connection)
-            .query(Pagination::new(), None, None)
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
             .unwrap();
+
         // invoice number
         let (query, variables, expected) = sort_test!(
             "invoiceNumber",

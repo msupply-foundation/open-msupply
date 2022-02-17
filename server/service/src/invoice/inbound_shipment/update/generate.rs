@@ -7,8 +7,6 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::current_store_id;
-
 use super::UpdateInboundShipmentError;
 
 pub struct LineAndStockLine {
@@ -17,10 +15,10 @@ pub struct LineAndStockLine {
 }
 
 pub fn generate(
+    connection: &StorageConnection,
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
     patch: UpdateInboundShipment,
-    connection: &StorageConnection,
 ) -> Result<(Option<Vec<LineAndStockLine>>, InvoiceRow), UpdateInboundShipmentError> {
     let should_create_batches = should_create_batches(&existing_invoice, &patch);
     let mut update_invoice = existing_invoice;
@@ -46,8 +44,9 @@ pub fn generate(
     } else {
         Ok((
             Some(generate_lines_and_stock_lines(
-                &update_invoice.id,
                 connection,
+                &update_invoice.store_id,
+                &update_invoice.id,
             )?),
             update_invoice,
         ))
@@ -88,8 +87,9 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
 }
 
 pub fn generate_lines_and_stock_lines(
-    id: &str,
     connection: &StorageConnection,
+    store_id: &str,
+    id: &str,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
@@ -123,7 +123,7 @@ pub fn generate_lines_and_stock_lines(
         let stock_line = StockLineRow {
             id: stock_line_id,
             item_id,
-            store_id: current_store_id(connection)?,
+            store_id: store_id.to_string(),
             location_id,
             batch,
             pack_size,

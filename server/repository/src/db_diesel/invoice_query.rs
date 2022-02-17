@@ -95,6 +95,10 @@ impl<'a> InvoiceQueryRepository<'a> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
+    pub fn query_one(&self, filter: InvoiceFilter) -> Result<Option<Invoice>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
     /// Gets all invoices
     pub fn query(
         &self,
@@ -180,6 +184,7 @@ fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
         delivered_datetime: invoice_row.delivered_datetime,
         verified_datetime: invoice_row.verified_datetime,
         colour: invoice_row.colour,
+        linked_invoice_id: invoice_row.linked_invoice_id,
         requisition_id: invoice_row.requisition_id,
     }
 }
@@ -201,6 +206,7 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
         apply_equal_filter!(query, f.their_reference, invoice_dsl::their_reference);
         apply_equal_filter!(query, f.requisition_id, invoice_dsl::requisition_id);
         apply_simple_string_filter!(query, f.comment, invoice_dsl::comment);
+        apply_equal_filter!(query, f.linked_invoice_id, invoice_dsl::linked_invoice_id);
 
         if let Some(value) = f.r#type {
             if let Some(eq) = value.equal_to {

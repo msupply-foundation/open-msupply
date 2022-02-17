@@ -207,6 +207,7 @@ impl RequisitionFilterInput {
             colour: self.colour.map(EqualFilter::from),
             their_reference: self.their_reference.map(SimpleStringFilter::from),
             comment: self.comment.map(SimpleStringFilter::from),
+            linked_requisition_id: None,
             store_id: None,
         }
     }

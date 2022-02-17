@@ -20,10 +20,11 @@ pub trait InvoiceServiceTrait: Sync + Send {
     fn get_invoice_by_number(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         invoice_number: u32,
         r#type: InvoiceType,
     ) -> Result<Option<Invoice>, RepositoryError> {
-        get_invoice_by_number(ctx, invoice_number, r#type)
+        get_invoice_by_number(ctx, store_id, invoice_number, r#type)
     }
 }
 

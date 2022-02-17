@@ -1,5 +1,5 @@
 use super::validate::check_location_exists;
-use crate::{service_provider::ServiceContext, validate::check_record_belongs_to_current_store};
+use crate::service_provider::ServiceContext;
 use domain::{
     invoice_line::InvoiceLine,
     location::DeleteLocation,
@@ -7,8 +7,8 @@ use domain::{
     EqualFilter,
 };
 use repository::{
-    InvoiceLineRepository, LocationRowRepository, RepositoryError, StockLineRepository,
-    StorageConnection, InvoiceLineFilter,
+    InvoiceLineFilter, InvoiceLineRepository, LocationRowRepository, RepositoryError,
+    StockLineRepository, StorageConnection,
 };
 #[derive(PartialEq, Debug)]
 pub struct LocationInUse {
@@ -26,12 +26,13 @@ pub enum DeleteLocationError {
 
 pub fn delete_location(
     ctx: &ServiceContext,
+    store_id: &str,
     input: DeleteLocation,
 ) -> Result<String, DeleteLocationError> {
     let location_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, &connection)?;
+            validate(connection, store_id, &input)?;
             match LocationRowRepository::new(&connection).delete(&input.id) {
                 Ok(_) => Ok(input.id),
                 Err(err) => Err(DeleteLocationError::from(err)),
@@ -42,14 +43,15 @@ pub fn delete_location(
 }
 
 pub fn validate(
-    input: &DeleteLocation,
     connection: &StorageConnection,
+    store_id: &str,
+    input: &DeleteLocation,
 ) -> Result<(), DeleteLocationError> {
     let location_row = match check_location_exists(&input.id, connection)? {
         Some(location_row) => location_row,
         None => return Err(DeleteLocationError::LocationDoesNotExist),
     };
-    if !check_record_belongs_to_current_store(&location_row.store_id, &connection)? {
+    if location_row.store_id != store_id {
         return Err(DeleteLocationError::LocationDoesNotBelongToCurrentStore);
     }
     if let Some(location_in_use) = check_location_in_use(&input.id, connection)? {

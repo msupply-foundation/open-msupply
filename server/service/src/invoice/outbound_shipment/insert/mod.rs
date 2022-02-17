@@ -39,11 +39,12 @@ impl From<TransactionError<InsertOutboundShipmentError>> for InsertOutboundShipm
 /// Insert a new outbound shipment and returns the invoice id when successful.
 pub fn insert_outbound_shipment(
     connection: &StorageConnection,
+    store_id: &str,
     input: InsertOutboundShipment,
 ) -> Result<String, InsertOutboundShipmentError> {
     let new_invoice_id = connection.transaction_sync(|connection| {
-        let other_party = validate(&input, &connection)?;
-        let new_invoice = generate(input, other_party, connection)?;
+        let other_party = validate(&input, connection)?;
+        let new_invoice = generate(connection, store_id, input, other_party)?;
         InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
 
         Ok(new_invoice.id)

@@ -27,6 +27,7 @@ pub struct StockLineFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub expiry_date: Option<DateFilter>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 impl StockLineFilter {
@@ -36,6 +37,7 @@ impl StockLineFilter {
             item_id: None,
             location_id: None,
             expiry_date: None,
+            store_id: None,
         }
     }
 
@@ -56,6 +58,11 @@ impl StockLineFilter {
 
     pub fn expiry_date(mut self, filter: DateFilter) -> Self {
         self.expiry_date = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }

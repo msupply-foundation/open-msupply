@@ -69,6 +69,7 @@ pub struct BatchOutboundShipmentInput {
 
 pub fn get_batch_outbound_shipment_response(
     ctx: &Context<'_>,
+    store_id: &str,
     input: BatchOutboundShipmentInput,
 ) -> Result<BatchOutboundShipmentResponse> {
     let connection_manager = ctx.get_connection_manager();
@@ -88,7 +89,8 @@ pub fn get_batch_outbound_shipment_response(
     };
 
     if let Some(inputs) = input.insert_outbound_shipments {
-        let (has_errors, responses) = do_insert_outbound_shipments(connection_manager, inputs);
+        let (has_errors, responses) =
+            do_insert_outbound_shipments(connection_manager, store_id, inputs);
         result.insert_outbound_shipments = Some(responses);
         if has_errors {
             return Ok(result);
@@ -191,6 +193,7 @@ pub fn get_batch_outbound_shipment_response(
 
 pub fn do_insert_outbound_shipments(
     connection: &StorageConnectionManager,
+    store_id: &str,
     inputs: Vec<InsertOutboundShipmentInput>,
 ) -> (bool, Vec<MutationWithId<InsertOutboundShipmentResponse>>) {
     let mut responses = Vec::new();
@@ -198,7 +201,7 @@ pub fn do_insert_outbound_shipments(
         let id = input.id.clone();
         responses.push(MutationWithId {
             id,
-            response: get_insert_outbound_shipment_response(connection, input),
+            response: get_insert_outbound_shipment_response(connection, store_id, input),
         });
     }
     let has_errors = responses.iter().any(|mutation_with_id| {

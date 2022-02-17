@@ -168,6 +168,7 @@ mod graphql {
                 colour,
                 their_reference,
                 comment,
+                linked_requisition_id: _,
                 store_id: _,
             } = filter.unwrap();
 

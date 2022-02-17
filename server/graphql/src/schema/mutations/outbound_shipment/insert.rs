@@ -47,6 +47,7 @@ pub enum InsertOutboundShipmentResponse {
 
 pub fn get_insert_outbound_shipment_response(
     connection_manager: &StorageConnectionManager,
+    store_id: &str,
     input: InsertOutboundShipmentInput,
 ) -> InsertOutboundShipmentResponse {
     use InsertOutboundShipmentResponse::*;
@@ -58,8 +59,8 @@ pub fn get_insert_outbound_shipment_response(
             })
         }
     };
-    match insert_outbound_shipment(&connection, input.into()) {
-        Ok(id) => match get_invoice(connection_manager, id) {
+    match insert_outbound_shipment(&connection, store_id, input.into()) {
+        Ok(id) => match get_invoice(connection_manager, None, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
         },
