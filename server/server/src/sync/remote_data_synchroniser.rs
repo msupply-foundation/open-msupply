@@ -92,7 +92,7 @@ impl RemoteDataSynchroniser {
                     data.iter().map(|record| record.sync_id.clone()).collect();
 
                 let _ = RemoteSyncBufferRepository::new(connection)
-                    .upsert_many(&remote_sync_batch_records_to_buffer_rows(&data)?);
+                    .upsert_many(&remote_sync_batch_records_to_buffer_rows(data)?);
 
                 info!("Acknowledging remote sync records...");
                 self.sync_api_v5.post_acknowledge_records(sync_ids).await?;
@@ -120,15 +120,15 @@ impl RemoteSyncActionV5 {
 }
 
 fn remote_sync_batch_records_to_buffer_rows(
-    records: &Vec<RemoteSyncRecordV5>,
+    records: Vec<RemoteSyncRecordV5>,
 ) -> Result<Vec<RemoteSyncBufferRow>, serde_json::Error> {
     let remote_sync_records: Result<Vec<RemoteSyncBufferRow>, serde_json::Error> = records
         .into_iter()
         .map(|record| {
             Ok(RemoteSyncBufferRow {
-                id: record.sync_id.clone(),
-                table_name: record.table.clone(),
-                record_id: record.record_id.clone(),
+                id: record.sync_id,
+                table_name: record.table,
+                record_id: record.record_id,
                 action: record.action.to_row_action(),
                 data: serde_json::to_string(&record.data)?,
             })
