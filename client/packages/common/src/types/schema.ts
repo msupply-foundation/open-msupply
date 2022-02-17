@@ -838,9 +838,12 @@ export type InvoiceFilterInput = {
   comment?: InputMaybe<SimpleStringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -1061,6 +1064,11 @@ export type ItemNode = {
   name: Scalars['String'];
   stats: ItemStatsNode;
   unitName?: Maybe<Scalars['String']>;
+};
+
+
+export type ItemNodeAvailableBatchesArgs = {
+  storeId: Scalars['String'];
 };
 
 
@@ -1304,11 +1312,13 @@ export type MutationsAddFromMasterListArgs = {
 
 export type MutationsBatchInboundShipmentArgs = {
   input: BatchInboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsBatchOutboundShipmentArgs = {
   input: BatchOutboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1336,6 +1346,7 @@ export type MutationsDeleteInboundShipmentLineArgs = {
 
 export type MutationsDeleteLocationArgs = {
   input: DeleteLocationInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1373,18 +1384,19 @@ export type MutationsDeleteRequestRequisitionLineArgs = {
 
 export type MutationsDeleteStocktakeArgs = {
   input: DeleteStocktakeInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsDeleteStocktakeLineArgs = {
   input: DeleteStocktakeLineInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsInsertInboundShipmentArgs = {
   input: InsertInboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1395,11 +1407,13 @@ export type MutationsInsertInboundShipmentLineArgs = {
 
 export type MutationsInsertLocationArgs = {
   input: InsertLocationInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsInsertOutboundShipmentArgs = {
   input: InsertOutboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1432,13 +1446,13 @@ export type MutationsInsertRequestRequisitionLineArgs = {
 
 export type MutationsInsertStocktakeArgs = {
   input: InsertStocktakeInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsInsertStocktakeLineArgs = {
   input: InsertStocktakeLineInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1465,6 +1479,7 @@ export type MutationsUpdateInboundShipmentLineArgs = {
 
 export type MutationsUpdateLocationArgs = {
   input: UpdateLocationInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1514,13 +1529,13 @@ export type MutationsUpdateResponseRequisitionLineArgs = {
 
 export type MutationsUpdateStocktakeArgs = {
   input: UpdateStocktakeInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsUpdateStocktakeLineArgs = {
   input: UpdateStocktakeLineInput;
-  storeId?: InputMaybe<Scalars['String']>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1716,11 +1731,13 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesInvoiceArgs = {
   id: Scalars['String'];
+  storeId: Scalars['String'];
 };
 
 
 export type QueriesInvoiceByNumberArgs = {
   invoiceNumber: Scalars['Int'];
+  storeId: Scalars['String'];
   type: InvoiceNodeType;
 };
 
@@ -1734,6 +1751,7 @@ export type QueriesInvoicesArgs = {
   filter?: InputMaybe<InvoiceFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
+  storeId: Scalars['String'];
 };
 
 

@@ -8,6 +8,7 @@ export type ItemFragment = { __typename?: 'ItemNode', id: string, code: string, 
 
 export type InvoiceQueryVariables = Types.Exact<{
   id: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -21,8 +22,8 @@ export const ItemFragmentDoc = gql`
 }
     `;
 export const InvoiceDocument = gql`
-    query invoice($id: String!) {
-  invoice(id: $id) {
+    query invoice($id: String!, $storeId: String!) {
+  invoice(id: $id, storeId: $storeId) {
     __typename
     ... on NodeError {
       __typename
@@ -168,7 +169,7 @@ export const InvoiceDocument = gql`
                 code
                 isVisible
                 unitName
-                availableBatches {
+                availableBatches(storeId: $storeId) {
                   ... on StockLineConnector {
                     totalCount
                     nodes {
@@ -298,7 +299,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceQuery((req, res, ctx) => {
- *   const { id } = req.variables;
+ *   const { id, storeId } = req.variables;
  *   return res(
  *     ctx.data({ invoice })
  *   )

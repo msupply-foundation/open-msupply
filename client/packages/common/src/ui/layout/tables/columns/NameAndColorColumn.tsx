@@ -5,7 +5,7 @@ import { ColumnDefinition } from '../columns/types';
 import { ColorSelectButton } from '@common/components';
 
 interface DomainObjectWithRequiredFields extends DomainObject {
-  color?: string | null;
+  colour?: string | null;
   otherPartyName: string;
 }
 
@@ -38,7 +38,7 @@ export const getNameAndColorColumn = <
     >
       <ColorSelectButton
         onChange={color => column.setter({ ...rowData, color: color.hex })}
-        color={rowData.color}
+        color={rowData.colour}
       />
       <Box ml={1} />
       {column.accessor({ rowData, rows })}

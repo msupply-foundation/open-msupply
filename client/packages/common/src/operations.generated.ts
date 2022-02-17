@@ -6,6 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type InvoiceQueryVariables = Types.Exact<{
   id: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -97,6 +98,7 @@ export type InvoicesQueryVariables = Types.Exact<{
   key: Types.InvoiceSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.InvoiceFilterInput>;
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -178,6 +180,13 @@ export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
 
 
 export type UpsertOutboundShipmentMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename?: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename?: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename?: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, insertOutboundShipmentLines?: Array<{ __typename?: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename?: 'InsertOutboundShipmentServiceLineResponseWithId', id: string }> | null, insertOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipmentLines?: Array<{ __typename?: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename?: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipments?: Array<{ __typename?: 'UpdateOutboundShipmentResponseWithId', id: string }> | null } };
+
+export type UpsertInboundShipmentMutationVariables = Types.Exact<{
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+
+export type UpsertInboundShipmentMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename?: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename?: 'DeleteInboundShipmentLineResponseWithId', id: string }> | null, insertInboundShipmentLines?: Array<{ __typename?: 'InsertInboundShipmentLineResponseWithId', id: string }> | null, updateInboundShipmentLines?: Array<{ __typename?: 'UpdateInboundShipmentLineResponseWithId', id: string }> | null, updateInboundShipments?: Array<{ __typename?: 'UpdateInboundShipmentResponseWithId', id: string }> | null } };
 
 export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
   input: Types.BatchInboundShipmentInput;
@@ -266,8 +275,8 @@ export type MasterListsQuery = { __typename?: 'Queries', masterLists: { __typena
 
 
 export const InvoiceDocument = gql`
-    query invoice($id: String!) {
-  invoice(id: $id) {
+    query invoice($id: String!, $storeId: String!) {
+  invoice(id: $id, storeId: $storeId) {
     __typename
     ... on NodeError {
       __typename
@@ -694,11 +703,12 @@ export const RequisitionDocument = gql`
 }
     `;
 export const InvoicesDocument = gql`
-    query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput) {
+    query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
+    storeId: $storeId
   ) {
     ... on ConnectorError {
       __typename
@@ -1106,6 +1116,24 @@ export const UpsertOutboundShipmentDocument = gql`
       id
     }
     updateOutboundShipments {
+      id
+    }
+  }
+}
+    `;
+export const UpsertInboundShipmentDocument = gql`
+    mutation upsertInboundShipment($input: BatchInboundShipmentInput!) {
+  batchInboundShipment(input: $input) {
+    deleteInboundShipmentLines {
+      id
+    }
+    insertInboundShipmentLines {
+      id
+    }
+    updateInboundShipmentLines {
+      id
+    }
+    updateInboundShipments {
       id
     }
   }
@@ -1656,6 +1684,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     upsertOutboundShipment(variables: UpsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertOutboundShipmentMutation>(UpsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertOutboundShipment');
     },
+    upsertInboundShipment(variables: UpsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertInboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertInboundShipmentMutation>(UpsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertInboundShipment');
+    },
     deleteInboundShipmentLines(variables: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines');
     },
@@ -1698,7 +1729,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceQuery((req, res, ctx) => {
- *   const { id } = req.variables;
+ *   const { id, storeId } = req.variables;
  *   return res(
  *     ctx.data({ invoice })
  *   )
@@ -1885,7 +1916,7 @@ export const mockRequisitionQuery = (resolver: ResponseResolver<GraphQLRequest<R
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoicesQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter } = req.variables;
+ *   const { first, offset, key, desc, filter, storeId } = req.variables;
  *   return res(
  *     ctx.data({ invoices })
  *   )
@@ -2047,6 +2078,23 @@ export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<S
 export const mockUpsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertOutboundShipmentMutationVariables>, GraphQLContext<UpsertOutboundShipmentMutation>, any>) =>
   graphql.mutation<UpsertOutboundShipmentMutation, UpsertOutboundShipmentMutationVariables>(
     'upsertOutboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpsertInboundShipmentMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ batchInboundShipment })
+ *   )
+ * })
+ */
+export const mockUpsertInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertInboundShipmentMutationVariables>, GraphQLContext<UpsertInboundShipmentMutation>, any>) =>
+  graphql.mutation<UpsertInboundShipmentMutation, UpsertInboundShipmentMutationVariables>(
+    'upsertInboundShipment',
     resolver
   )
 

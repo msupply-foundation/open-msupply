@@ -49,7 +49,7 @@ export const onDelete =
   (api: OmSupplyApi) =>
   async (invoices: InvoiceRow[]): Promise<string[]> => {
     const result = await api.deleteOutboundShipments({
-      ids: invoices.map(invoice => invoice.id),
+      deleteOutboundShipments: invoices.map(invoice => invoice.id),
     });
 
     const { batchOutboundShipment } = result;
@@ -98,7 +98,7 @@ const invoiceToInput = (
 ): UpdateOutboundShipmentInput => {
   return {
     id: patch.id,
-    color: patch.color,
+    colour: patch.colour,
   };
 };
 
@@ -137,13 +137,14 @@ const getSortDesc = (sortBy: SortBy<InvoiceRow>): boolean => {
 export const getOutboundShipmentListViewApi = (
   omSupplyApi: OmSupplyApi
 ): ListApi<InvoiceRow> => ({
-  onRead: ({ first, offset, sortBy, filterBy }) => {
+  onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
     const queryParams: InvoicesQueryVariables = {
       first,
       offset,
       key: getSortKey(sortBy),
       desc: getSortDesc(sortBy),
       filter: filterBy,
+      storeId: storeId,
     };
 
     const onReadFn = onRead(omSupplyApi);
