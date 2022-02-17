@@ -130,7 +130,10 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
+    const nextSelectedOption = getNextStatusOption(status, options);
+    if (nextSelectedOption?.value !== selectedOption?.value) {
+      setSelectedOption(nextSelectedOption);
+    }
   }, [status, options]);
 
   return { options, selectedOption, setSelectedOption, onGetConfirmation };

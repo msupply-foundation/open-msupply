@@ -32,6 +32,7 @@ import {
   useDebounceCallback,
   ItemNode,
   ItemResponse,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { Location, toItem } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
@@ -169,7 +170,7 @@ const createUpdateLineInput = (
 });
 
 interface Api<ReadType, UpdateType> {
-  onRead: (id: string) => Promise<ReadType>;
+  onRead: (id: string, storeId: string) => Promise<ReadType>;
   onUpdate: (val: UpdateType) => Promise<UpdateType>;
 }
 
@@ -183,16 +184,19 @@ export const getSaveInboundShipmentLines =
       .map(createUpdateLineInput);
 
     return api.upsertInboundShipment({
-      insertInboundShipmentLines,
-      updateInboundShipmentLines,
+      input: {
+        insertInboundShipmentLines,
+        updateInboundShipmentLines,
+      },
     });
   };
 
 export const getInboundShipmentDetailViewApi = (
-  api: OmSupplyApi
+  api: OmSupplyApi,
+  storeId: string
 ): Api<Invoice, Invoice> => ({
   onRead: async (id: string): Promise<Invoice> => {
-    const result = await api.invoice({ id });
+    const result = await api.invoice({ id, storeId });
 
     const invoice = invoiceGuard(result);
     const lineNodes = linesGuard(invoice.lines);
@@ -244,7 +248,8 @@ export const getInboundShipmentDetailViewApi = (
 export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
   const { id = '' } = useParams();
   const { api } = useOmSupplyApi();
-  const queries = getInboundShipmentDetailViewApi(api);
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const queries = getInboundShipmentDetailViewApi(api, storeId);
   return useQuery(['invoice', id], () => {
     return queries.onRead(id);
   });
@@ -255,7 +260,7 @@ export const useInboundShipmentSelector = <T = Invoice>(
 ): UseQueryResult<T, unknown> => {
   const { id = '' } = useParams();
   const { api } = useOmSupplyApi();
-  const queries = getInboundShipmentDetailViewApi(api);
+  const queries = getInboundShipmentDetailViewApi(api, storeId);
   return useQuery(
     ['invoice', id],
     () => {
