@@ -10,7 +10,7 @@ export type InsertRequestRequisitionMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertRequestRequisitionMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
+export type InsertRequestRequisitionMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
 export type UpdateRequestRequisitionMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -106,6 +106,7 @@ export const InsertRequestRequisitionDocument = gql`
     ... on RequisitionNode {
       __typename
       id
+      requisitionNumber
     }
   }
 }
