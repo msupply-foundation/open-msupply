@@ -49,7 +49,7 @@ impl CentralDataSynchroniser {
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
 
-        Ok(loop {
+        loop {
             info!("Pulling {} central sync records...", BATCH_SIZE);
             let sync_batch: CentralSyncBatchV5 = self
                 .sync_api_v5
@@ -88,7 +88,8 @@ impl CentralDataSynchroniser {
                 info!("All central sync records pulled successfully");
                 break;
             }
-        })
+        }
+        Ok(())
     }
 
     /// insert row and update cursor in a single transaction
