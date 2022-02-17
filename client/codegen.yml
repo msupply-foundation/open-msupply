@@ -10,7 +10,7 @@ generates:
         NaiveDate: string
   packages/:
     documents: 
-      - packages/**/*.graphql
+      - ./**/*.graphql
     preset: near-operation-file
     presetConfig:
       extension: .generated.ts

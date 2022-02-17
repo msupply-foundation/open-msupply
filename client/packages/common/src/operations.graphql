@@ -156,7 +156,7 @@ query invoice($id: String!, $storeId: String!) {
                 code
                 isVisible
                 unitName
-                availableBatches {
+                availableBatches(storeId: $storeId) {
                   ... on StockLineConnector {
                     totalCount
                     nodes {
@@ -756,6 +756,7 @@ query itemsWithStockLines(
   $key: ItemSortFieldInput!
   $desc: Boolean
   $filter: ItemFilterInput
+  $storeId: String!
 ) {
   items(
     page: { first: $first, offset: $offset }
@@ -789,7 +790,7 @@ query itemsWithStockLines(
         __typename
         # availableQuantity
 
-        availableBatches {
+        availableBatches(storeId: $storeId) {
           __typename
           ... on ConnectorError {
             __typename
@@ -893,107 +894,6 @@ query itemsListView(
   }
 }
 
-mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
-  insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
-    __typename
-    ... on InvoiceNode {
-      id
-    }
-    ... on InsertOutboundShipmentError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-          key
-        }
-        ... on OtherPartyCannotBeThisStoreError {
-          __typename
-          description
-        }
-        ... on OtherPartyNotACustomerError {
-          __typename
-          description
-          otherParty {
-            code
-            id
-            isCustomer
-            isSupplier
-            name
-          }
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-      }
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
-  updateOutboundShipment(input: $input) {
-    ... on InvoiceNode {
-      __typename
-      id
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-    ... on UpdateOutboundShipmentError {
-      __typename
-      error {
-        description
-      }
-    }
-  }
-}
-
-mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
-  batchOutboundShipment(
-    input: { deleteOutboundShipments: $deleteOutboundShipments }
-  ) {
-    __typename
-    deleteOutboundShipments {
-      __typename
-      id
-    }
-  }
-}
-
 query invoiceCounts($timezoneOffset: Int) {
   invoiceCounts(timezoneOffset: $timezoneOffset) {
     outbound {
@@ -1019,41 +919,6 @@ query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
   ) {
     expired
     expiringSoon
-  }
-}
-
-mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
-  batchOutboundShipment(input: $input) {
-    deleteOutboundShipmentLines {
-      id
-    }
-    deleteOutboundShipmentServiceLines {
-      id
-    }
-    deleteOutboundShipmentUnallocatedLines {
-      id
-    }
-    insertOutboundShipmentLines {
-      id
-    }
-    insertOutboundShipmentServiceLines {
-      id
-    }
-    insertOutboundShipmentUnallocatedLines {
-      id
-    }
-    updateOutboundShipmentLines {
-      id
-    }
-    updateOutboundShipmentServiceLines {
-      id
-    }
-    updateOutboundShipmentUnallocatedLines {
-      id
-    }
-    updateOutboundShipments {
-      id
-    }
   }
 }
 
@@ -1123,59 +988,6 @@ mutation deleteInboundShipmentLines($input: BatchInboundShipmentInput!) {
   }
 }
 
-mutation deleteOutboundShipmentLines(
-  $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!
-) {
-  batchOutboundShipment(
-    input: { deleteOutboundShipmentLines: $deleteOutboundShipmentLines }
-  ) {
-    deleteOutboundShipmentLines {
-      id
-      response {
-        ... on DeleteOutboundShipmentLineError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
-            }
-            ... on InvoiceDoesNotBelongToCurrentStore {
-              __typename
-              description
-            }
-            ... on InvoiceLineBelongsToAnotherInvoice {
-              __typename
-              description
-            }
-            ... on NotAnOutboundShipment {
-              __typename
-              description
-            }
-          }
-        }
-        ... on DeleteResponse {
-          id
-        }
-      }
-    }
-  }
-}
-
 # mutation upsertInboundShipment(
 #   $deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
 #   $insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
@@ -1210,116 +1022,6 @@ mutation deleteOutboundShipmentLines(
 #     }
 #   }
 # }
-
-mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
-  updateInboundShipment(input: $input) {
-    ... on InvoiceNode {
-      __typename
-      id
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-    ... on UpdateInboundShipmentError {
-      __typename
-      error {
-        description
-      }
-    }
-  }
-}
-
-mutation deleteInboundShipments(
-  $deleteInboundShipments: [DeleteInboundShipmentInput!]!
-) {
-  batchInboundShipment(
-    input: { deleteInboundShipments: $deleteInboundShipments }
-  ) {
-    __typename
-    deleteInboundShipments {
-      id
-      response {
-        ... on DeleteInboundShipmentError {
-          __typename
-          error {
-            description
-          }
-        }
-        ... on DeleteResponse {
-          id
-        }
-      }
-    }
-  }
-}
-
-mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
-  insertInboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
-    __typename
-    ... on InvoiceNode {
-      id
-    }
-    ... on InsertInboundShipmentError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-          key
-        }
-
-        ... on OtherPartyNotASupplier {
-          __typename
-          description
-          otherParty {
-            code
-            id
-            isCustomer
-            isSupplier
-            name
-          }
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-      }
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
 
 query locations($sort: [LocationSortInput!]) {
   locations(sort: $sort) {
@@ -1579,6 +1281,305 @@ query masterLists(
             max
             description
           }
+        }
+      }
+    }
+  }
+}
+
+mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
+  updateInboundShipment(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on UpdateInboundShipmentError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+mutation deleteInboundShipments(
+  $deleteInboundShipments: [DeleteInboundShipmentInput!]!
+) {
+  batchInboundShipment(
+    input: { deleteInboundShipments: $deleteInboundShipments }
+  ) {
+    __typename
+    deleteInboundShipments {
+      id
+      response {
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
+  insertInboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertInboundShipmentError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+          otherParty {
+            code
+            id
+            isCustomer
+            isSupplier
+            name
+          }
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
+  insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertOutboundShipmentError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on OtherPartyCannotBeThisStoreError {
+          __typename
+          description
+        }
+        ... on OtherPartyNotACustomerError {
+          __typename
+          description
+          otherParty {
+            code
+            id
+            isCustomer
+            isSupplier
+            name
+          }
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
+  updateOutboundShipment(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on UpdateOutboundShipmentError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
+  batchOutboundShipment(
+    input: { deleteOutboundShipments: $deleteOutboundShipments }
+  ) {
+    __typename
+    deleteOutboundShipments {
+      __typename
+      id
+    }
+  }
+}
+
+mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
+  batchOutboundShipment(input: $input) {
+    deleteOutboundShipmentLines {
+      id
+    }
+    deleteOutboundShipmentServiceLines {
+      id
+    }
+    deleteOutboundShipmentUnallocatedLines {
+      id
+    }
+    insertOutboundShipmentLines {
+      id
+    }
+    insertOutboundShipmentServiceLines {
+      id
+    }
+    insertOutboundShipmentUnallocatedLines {
+      id
+    }
+    updateOutboundShipmentLines {
+      id
+    }
+    updateOutboundShipmentServiceLines {
+      id
+    }
+    updateOutboundShipmentUnallocatedLines {
+      id
+    }
+    updateOutboundShipments {
+      id
+    }
+  }
+}
+
+mutation deleteOutboundShipmentLines(
+  $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!
+) {
+  batchOutboundShipment(
+    input: { deleteOutboundShipmentLines: $deleteOutboundShipmentLines }
+  ) {
+    deleteOutboundShipmentLines {
+      id
+      response {
+        ... on DeleteOutboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+            ... on InvoiceDoesNotBelongToCurrentStore {
+              __typename
+              description
+            }
+            ... on InvoiceLineBelongsToAnotherInvoice {
+              __typename
+              description
+            }
+            ... on NotAnOutboundShipment {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
         }
       }
     }
