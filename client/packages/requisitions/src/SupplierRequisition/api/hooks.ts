@@ -44,7 +44,7 @@ export const useCreateRequestRequisition = () => {
   const api = useRequestRequisitionApi();
   return useMutation(RequestRequisitionQueries.create(api), {
     onSuccess: ({ requisitionNumber }) => {
-      navigate(requisitionNumber);
+      navigate(String(requisitionNumber));
       queryClient.invalidateQueries(['requisition']);
     },
   });
