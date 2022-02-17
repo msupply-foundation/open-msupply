@@ -5,6 +5,7 @@ generates:
     plugins:
       - typescript
     config:
+      nonOptionalTypename: true
       scalars:
         DateTime: string
         NaiveDate: string
@@ -20,6 +21,7 @@ generates:
       - typescript-graphql-request
       - typescript-msw
     config:
+      nonOptionalTypename: true
       scalars:
         DateTime: string
         NaiveDate: string
