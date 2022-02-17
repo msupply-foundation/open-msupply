@@ -7,7 +7,7 @@ mod store;
 pub mod test_data;
 mod unit;
 
-use crate::sync::translation::unit::LegacyUnitRow;
+use crate::sync::translation_central::unit::LegacyUnitRow;
 use repository::{
     schema::{
         CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
@@ -15,7 +15,7 @@ use repository::{
     },
     ItemRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
     MasterListRowRepository, NameRepository, RepositoryError, StorageConnection,
-    StorageConnectionManager, StoreRowRepository, TransactionError, UnitRowRepository,
+    StoreRowRepository, TransactionError, UnitRowRepository,
 };
 
 use self::{
@@ -59,7 +59,7 @@ impl SyncImportError {
 }
 
 #[derive(Debug)]
-enum IntegrationUpsertRecord {
+pub enum IntegrationUpsertRecord {
     Unit(UnitRow),
     Name(NameRow),
     Item(ItemRow),
@@ -147,7 +147,7 @@ pub const TRANSLATION_RECORDS: &[&str] = &[
 /// Imports sync records and writes them to the DB
 /// If needed data records are translated to the local DB schema.
 pub async fn import_sync_records(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     records: &Vec<CentralSyncBufferRow>,
 ) -> Result<(), SyncImportError> {
     let mut integration_records = IntegrationRecord {
@@ -164,7 +164,7 @@ pub async fn import_sync_records(
     info!("Succesfully translated central sync buffer records");
 
     info!("Storing integration records...");
-    store_integration_records(connection_manager, &integration_records).await?;
+    store_integration_records(connection, &integration_records).await?;
     info!("Successfully stored integration records");
 
     Ok(())
@@ -192,46 +192,45 @@ fn integrate_record(
 }
 
 async fn store_integration_records(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     integration_records: &IntegrationRecord,
 ) -> Result<(), SyncImportError> {
-    let con = connection_manager
-        .connection()
-        .map_err(|error| SyncImportError::as_integration_error(error, ""))?;
-    con.transaction(|con| async move {
-        for record in &integration_records.upserts {
-            // Integrate every record in a sub transaction. This is mainly for Postgres where the
-            // whole transaction fails when there is a DB error (not a problem in sqlite).
-            let sub_result =
-                con.transaction_sync_etc(|sub_tx| integrate_record(record, sub_tx), false);
-            match sub_result {
-                Ok(_) => Ok(()),
-                Err(TransactionError::Inner(err @ RepositoryError::ForeignKeyViolation(_))) => {
-                    warn!("Failed to import ({}): {:?}", err, record);
-                    Ok(())
-                }
-                Err(err) => Err(SyncImportError::as_integration_error(
-                    RepositoryError::from(err),
-                    "",
-                )),
-            }?;
-        }
-        Ok(())
-    })
-    .await
-    .map_err(|error| match error {
-        TransactionError::Transaction { msg, level } => SyncImportError::as_integration_error(
-            RepositoryError::TransactionError { msg, level },
-            "",
-        ),
-        TransactionError::Inner(e) => e,
-    })
+    connection
+        .transaction_sync(|con| {
+            for record in &integration_records.upserts {
+                // Integrate every record in a sub transaction. This is mainly for Postgres where the
+                // whole transaction fails when there is a DB error (not a problem in sqlite).
+                let sub_result =
+                    con.transaction_sync_etc(|sub_tx| integrate_record(record, sub_tx), false);
+                match sub_result {
+                    Ok(_) => Ok(()),
+                    Err(TransactionError::Inner(err @ RepositoryError::ForeignKeyViolation(_))) => {
+                        warn!("Failed to import ({}): {:?}", err, record);
+                        Ok(())
+                    }
+                    Err(err) => Err(SyncImportError::as_integration_error(
+                        RepositoryError::from(err),
+                        "",
+                    )),
+                }?;
+            }
+            Ok(())
+        })
+        .map_err(|error| match error {
+            TransactionError::Transaction { msg, level } => SyncImportError::as_integration_error(
+                RepositoryError::TransactionError { msg, level },
+                "",
+            ),
+            TransactionError::Inner(e) => e,
+        })
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        sync::translation::{import_sync_records, test_data::store::get_test_store_records},
+        sync::translation_central::{
+            import_sync_records, test_data::store::get_test_store_records,
+        },
         test_utils::get_test_settings,
     };
     use repository::{get_storage_connection_manager, test_db};
@@ -251,7 +250,9 @@ mod tests {
         let settings = get_test_settings("omsupply-database-translation-insert");
 
         test_db::setup(&settings.database).await;
-        let connection_manager = get_storage_connection_manager(&settings.database);
+        let connection = get_storage_connection_manager(&settings.database)
+            .connection()
+            .unwrap();
 
         let mut records = Vec::new();
         // Need to be in order of reference dependency
@@ -263,12 +264,12 @@ mod tests {
         records.append(&mut get_test_master_list_line_records());
         records.append(&mut get_test_master_list_name_join_records());
 
-        import_sync_records(&connection_manager, &extract_sync_buffer_rows(&records))
+        import_sync_records(&connection, &extract_sync_buffer_rows(&records))
             .await
             .unwrap();
 
         // Asserts inside this method, to avoid repetition
-        check_records_against_database(&connection_manager, records).await;
+        check_records_against_database(&connection, records).await;
     }
 
     #[actix_rt::test]
@@ -276,7 +277,9 @@ mod tests {
         let settings = get_test_settings("omsupply-database-translation-upsert");
 
         test_db::setup(&settings.database).await;
-        let connection_manager = get_storage_connection_manager(&settings.database);
+        let connection = get_storage_connection_manager(&settings.database)
+            .connection()
+            .unwrap();
 
         let mut init_records = Vec::new();
         init_records.append(&mut get_test_name_records());
@@ -293,11 +296,11 @@ mod tests {
         records.append(&mut init_records.iter().cloned().collect());
         records.append(&mut upsert_records.iter().cloned().collect());
 
-        import_sync_records(&connection_manager, &extract_sync_buffer_rows(&records))
+        import_sync_records(&connection, &extract_sync_buffer_rows(&records))
             .await
             .unwrap();
 
         // Asserts inside this method, to avoid repetition
-        check_records_against_database(&connection_manager, upsert_records).await;
+        check_records_against_database(&connection, upsert_records).await;
     }
 }

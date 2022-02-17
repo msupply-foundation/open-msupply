@@ -12,7 +12,7 @@ use repository::{
         NameRow, StoreRow, UnitRow,
     },
     ItemRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-    MasterListRowRepository, NameRepository, RepositoryError, StorageConnectionManager,
+    MasterListRowRepository, NameRepository, RepositoryError, StorageConnection,
     StoreRowRepository, UnitRowRepository,
 };
 
@@ -65,10 +65,9 @@ pub fn extract_sync_buffer_rows(records: &Vec<TestSyncRecord>) -> Vec<CentralSyn
 
 #[allow(dead_code)]
 pub async fn check_records_against_database(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     records: Vec<TestSyncRecord>,
 ) {
-    let connection = connection_manager.connection().unwrap();
     for record in records {
         match record.translated_record {
             TestSyncDataRecord::Store(comparison_record) => {

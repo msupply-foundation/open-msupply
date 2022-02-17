@@ -8,8 +8,12 @@ table! {
 }
 
 table! {
-    central_sync_cursor (id) {
-        id -> Integer,
+    remote_sync_buffer (id) {
+        id -> Text,
+        table_name -> Text,
+        record_id -> Text,
+        action -> crate::schema::remote_sync_buffer::RemoteSyncBufferActionMapping,
+        data -> Text,
     }
 }
 
@@ -319,6 +323,10 @@ table! {
     key_value_store (id) {
         id -> crate::schema::key_value_store::KeyValueTypeMapping,
         value_string -> Nullable<Text>,
+        value_int-> Nullable<Integer>,
+        value_bigint-> Nullable<BigInt>,
+        value_float-> Nullable<Double>,
+        value_bool-> Nullable<Bool>,
     }
 }
 
@@ -354,7 +362,6 @@ allow_tables_to_appear_in_same_query!(
     unit,
     location,
     central_sync_buffer,
-    central_sync_cursor,
     item,
     stock_line,
     name,
