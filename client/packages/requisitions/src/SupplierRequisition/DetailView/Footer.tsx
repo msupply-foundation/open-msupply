@@ -16,13 +16,13 @@ import {
   getNextStatusText,
 } from '../../utils';
 import {
-  useIsSupplierRequisitionDisabled,
-  useSupplierRequisitionFields,
+  useIsRequestRequisitionDisabled,
+  useRequestRequisitionFields,
 } from '../api';
 
 export const Footer: FC = () => {
-  const { status, update } = useSupplierRequisitionFields('status');
-  const isDisabled = useIsSupplierRequisitionDisabled();
+  const { status, update } = useRequestRequisitionFields('status');
+  const isDisabled = useIsRequestRequisitionDisabled();
   const t = useTranslation('replenishment');
   const { success } = useNotification();
 
