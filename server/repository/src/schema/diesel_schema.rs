@@ -323,6 +323,10 @@ table! {
     key_value_store (id) {
         id -> crate::schema::key_value_store::KeyValueTypeMapping,
         value_string -> Nullable<Text>,
+        value_int-> Nullable<Integer>,
+        value_bigint-> Nullable<BigInt>,
+        value_float-> Nullable<Double>,
+        value_bool-> Nullable<Bool>,
     }
 }
 
