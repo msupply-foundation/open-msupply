@@ -78,6 +78,7 @@ mod graphql {
 
         let base_variables = insert::Variables {
             id: uuid(),
+            store_id: "store_a".to_string(),
             other_party_id: supplier.id.clone(),
             on_hold_option: None,
             comment_option: Some("some comment_option".to_string()),
@@ -202,6 +203,7 @@ mod graphql {
         // Test Success name_store_id, linked to store
         let variables = insert::Variables {
             id: uuid(),
+            store_id: "store_a".to_string(),
             other_party_id: mock_name_linked_to_store().id,
             on_hold_option: None,
             comment_option: None,
@@ -224,6 +226,7 @@ mod graphql {
         // Test Success name_store_id, not_linked
         let variables = insert::Variables {
             id: uuid(),
+            store_id: "store_a".to_string(),
             other_party_id: mock_name_not_linked_to_store().id,
             on_hold_option: None,
             comment_option: None,
@@ -245,6 +248,7 @@ mod graphql {
         fn eq(&self, other: &insert::Variables) -> bool {
             let insert::Variables {
                 id,
+                store_id: _,
                 other_party_id,
                 on_hold_option,
                 comment_option,

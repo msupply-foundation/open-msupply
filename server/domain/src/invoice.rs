@@ -36,6 +36,7 @@ pub struct Invoice {
     pub delivered_datetime: Option<NaiveDateTime>,
     pub verified_datetime: Option<NaiveDateTime>,
     pub colour: Option<String>,
+    pub linked_invoice_id: Option<String>,
     pub requisition_id: Option<String>,
 }
 #[derive(Clone)]
@@ -55,6 +56,7 @@ pub struct InvoiceFilter {
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
     pub requisition_id: Option<EqualFilter<String>>,
+    pub linked_invoice_id: Option<EqualFilter<String>>,
 }
 
 impl InvoiceFilter {
@@ -75,6 +77,7 @@ impl InvoiceFilter {
             delivered_datetime: None,
             verified_datetime: None,
             requisition_id: None,
+            linked_invoice_id: None,
         }
     }
 
@@ -130,6 +133,16 @@ impl InvoiceFilter {
 
     pub fn requisition_id(mut self, filter: EqualFilter<String>) -> Self {
         self.requisition_id = Some(filter);
+        self
+    }
+
+    pub fn linked_invoice_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.linked_invoice_id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }

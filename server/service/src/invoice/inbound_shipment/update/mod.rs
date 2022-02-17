@@ -1,4 +1,7 @@
-use crate::WithDBError;
+use crate::{
+    sync_processor::{process_records, Record},
+    WithDBError,
+};
 use domain::{inbound_shipment::UpdateInboundShipment, name::Name};
 use repository::{
     InvoiceLineRowRepository, InvoiceRepository, RepositoryError, StockLineRowRepository,
@@ -19,9 +22,9 @@ pub fn update_inbound_shipment(
 ) -> Result<String, UpdateInboundShipmentError> {
     let update_invoice = connection
         .transaction_sync(|connection| {
-            let (invoice, other_party) = validate(&patch, &connection)?;
+            let (invoice, other_party) = validate(&patch, connection)?;
             let (lines_and_invoice_lines_option, update_invoice) =
-                generate(invoice, other_party, patch, &connection)?;
+                generate(connection, invoice, other_party, patch)?;
 
             InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
 
@@ -44,6 +47,13 @@ pub fn update_inbound_shipment(
                 TransactionError::Inner(error) => error,
             },
         )?;
+
+    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
+    println!(
+        "{:#?}",
+        process_records(connection, vec![Record::InvoiceRow(update_invoice.clone())],)
+    );
+
     Ok(update_invoice.id)
 }
 

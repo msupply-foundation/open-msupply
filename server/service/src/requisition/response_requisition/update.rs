@@ -1,6 +1,7 @@
 use crate::{
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
+    sync_processor::{process_records, Record},
 };
 use chrono::Utc;
 use repository::{
@@ -53,7 +54,14 @@ pub fn update_response_requisition(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO trigger request requisition
+    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
+    println!(
+        "{:#?}",
+        process_records(
+            &ctx.connection,
+            vec![Record::RequisitionRow(requisition.requisition_row.clone())],
+        )
+    );
     Ok(requisition)
 }
 

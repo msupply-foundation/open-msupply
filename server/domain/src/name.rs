@@ -16,6 +16,7 @@ pub struct NameFilter {
     pub code: Option<SimpleStringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 pub enum NameSortField {
@@ -33,6 +34,7 @@ impl NameFilter {
             code: None,
             is_customer: None,
             is_supplier: None,
+            store_id: None,
         }
     }
 
@@ -48,6 +50,11 @@ impl NameFilter {
 
     pub fn match_is_supplier(mut self, value: bool) -> Self {
         self.is_supplier = Some(value);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }
