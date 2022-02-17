@@ -92,10 +92,11 @@ pub async fn start_server(
     let mut running_sever = http_server.run();
     let mut synchroniser = Synchroniser::new(settings.sync, connection_manager).unwrap();
     // Do the initial pull before doing anything else
-    synchroniser
-        .initial_pull()
-        .await
-        .expect("Failed to perform initial sync");
+    match synchroniser.initial_pull().await {
+        Ok(_) => {}
+        // TODO: remove for production
+        Err(err) => error!("Failed to perform the initial sync: {}", err),
+    };
 
     // http_server is the only one that should quit; a proper shutdown signal can cause this,
     // and so we want an orderly exit. This achieves it nicely.
