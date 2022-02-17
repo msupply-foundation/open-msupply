@@ -10,7 +10,7 @@ pub enum RemoteSyncBufferAction {
     Merge,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Eq)]
 #[table_name = "remote_sync_buffer"]
 pub struct RemoteSyncBufferRow {
     /// the sync id

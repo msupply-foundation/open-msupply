@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use super::StorageConnection;
 
 use crate::{
@@ -22,19 +20,23 @@ impl<'a> RemoteSyncBufferRepository<'a> {
 
     #[cfg(feature = "postgres")]
     pub fn upsert_many(&self, rows: &Vec<RemoteSyncBufferRow>) -> Result<(), RepositoryError> {
-        diesel::insert_into(remote_sync_buffer_dsl::remote_sync_buffer)
-            .values(rows)
-            .on_conflict(remote_sync_buffer_dsl::id)
-            .do_update()
-            .set(rows)
-            .execute(&self.connection.connection)?;
+        for row in rows {
+            diesel::insert_into(remote_sync_buffer_dsl::remote_sync_buffer)
+                .values(row)
+                .on_conflict(remote_sync_buffer_dsl::id)
+                .do_update()
+                .set(row)
+                .execute(&self.connection.connection)?;
+        }
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
     pub fn upsert_many(&self, rows: &Vec<RemoteSyncBufferRow>) -> Result<(), RepositoryError> {
+        use std::ops::Deref;
         diesel::replace_into(remote_sync_buffer_dsl::remote_sync_buffer)
             .values(rows)
+            // See https://github.com/diesel-rs/diesel/issues/1822.
             .execute(self.connection.connection.deref())?;
         Ok(())
     }
