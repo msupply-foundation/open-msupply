@@ -7,7 +7,7 @@ mod store;
 pub mod test_data;
 mod unit;
 
-use crate::sync::translation::unit::LegacyUnitRow;
+use crate::sync::translation_central::unit::LegacyUnitRow;
 use repository::{
     schema::{
         CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
@@ -59,7 +59,7 @@ impl SyncImportError {
 }
 
 #[derive(Debug)]
-enum IntegrationUpsertRecord {
+pub enum IntegrationUpsertRecord {
     Unit(UnitRow),
     Name(NameRow),
     Item(ItemRow),
@@ -228,7 +228,9 @@ async fn store_integration_records(
 #[cfg(test)]
 mod tests {
     use crate::{
-        sync::translation::{import_sync_records, test_data::store::get_test_store_records},
+        sync::translation_central::{
+            import_sync_records, test_data::store::get_test_store_records,
+        },
         test_utils::get_test_settings,
     };
     use repository::{get_storage_connection_manager, test_db};
