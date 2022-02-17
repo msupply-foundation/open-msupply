@@ -19,7 +19,6 @@ import {
   UseMutationResult,
   DeleteOutboundShipmentLinesMutation,
   useTableStore,
-  useHostContext,
   useQueryParams,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
@@ -46,10 +45,11 @@ export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
   const { id = '' } = useParams();
   const { api } = useOmSupplyApi();
   const queryKey = useOutboundDetailQueryKey();
-  const { store } = useHostContext();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+
   return useFieldsSelector(
     queryKey,
-    () => OutboundApi.get.byId(api, store.id)(id),
+    () => OutboundApi.get.byId(api, storeId)(id),
     (patch: Partial<Invoice>) => OutboundApi.update(api)({ ...patch, id }),
     keys
   );
@@ -68,11 +68,11 @@ const useOutboundSelector = <ReturnType>(
   select: (data: Invoice) => ReturnType
 ) => {
   const queryKey = useOutboundDetailQueryKey();
-  const { store } = useHostContext();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
   const { api } = useOmSupplyApi();
   return useQuerySelector(
     queryKey,
-    () => OutboundApi.get.byId(api, store.id)(queryKey[1]),
+    () => OutboundApi.get.byId(api, storeId)(queryKey[1]),
     select
   );
 };
