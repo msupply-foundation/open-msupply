@@ -1,20 +1,10 @@
+use super::*;
+use crate::loader::{InvoiceLineLoader, ItemLoader, StoreLoader, UserAccountLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
-use service::service_provider::ServiceProvider;
-
-use crate::loader::{InvoiceLineLoader, ItemLoader, StoreLoader, UserAccountLoader};
-
-use repository::StorageConnectionManager;
-
 use async_graphql::dataloader::DataLoader;
-
-use super::{
-    invoice::InvoiceByRequisitionIdLoader, name::NameByIdLoader, InvoiceLineForRequisitionLine,
-    InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, ItemsStatsForItemLoader,
-    LinkedRequisitionLineLoader, LocationByIdLoader, MasterListLineByMasterListId,
-    RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader, StockLineByIdLoader,
-    StockLineByItemAndStoreIdLoader, StockLineByLocationIdLoader, StocktakeLineByStockTakeIdLoader,
-};
+use repository::StorageConnectionManager;
+use service::service_provider::ServiceProvider;
 
 pub type LoaderMap = Map<AnyLoader>;
 pub type AnyLoader = dyn Any + Send + Sync;
