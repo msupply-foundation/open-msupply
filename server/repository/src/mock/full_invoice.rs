@@ -18,8 +18,8 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_id: String::from("name_store_a"),
-            store_id: String::from("store_b"),
+            name_id: String::from("name_store_b"),
+            store_id: String::from("store_a"),
             invoice_number: 10,
             name_store_id: None,
             r#type: InvoiceRowType::OutboundShipment,

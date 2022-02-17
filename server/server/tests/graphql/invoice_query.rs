@@ -29,7 +29,7 @@ mod graphql {
         let full_invoice = mock_data["base"].full_invoices.get("draft_ci_a").unwrap();
 
         let query = r#"query Invoice($id: String) {            
-                invoice(id: $id) {
+                invoice(id: $id, storeId: \"store_a\") {
                     ... on InvoiceNode {
                         id
                         status
@@ -85,7 +85,7 @@ mod graphql {
         assert_gql_not_found(
             &settings,
             r#"query InvoiceNotFound($id: String) {
-                invoice(id: $id){
+                invoice(id: $id, storeId: \"store_a\"){
                     ... on NodeError {
                         error {
                             __typename

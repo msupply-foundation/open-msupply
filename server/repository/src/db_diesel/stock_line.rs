@@ -72,6 +72,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, f.item_id, stock_line_dsl::item_id);
         apply_equal_filter!(query, f.location_id, stock_line_dsl::location_id);
         apply_date_time_filter!(query, f.expiry_date, stock_line_dsl::expiry_date);
+        apply_equal_filter!(query, f.store_id, stock_line_dsl::store_id);
     }
 
     query

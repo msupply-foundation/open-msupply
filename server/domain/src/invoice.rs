@@ -140,6 +140,11 @@ impl InvoiceFilter {
         self.linked_invoice_id = Some(filter);
         self
     }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
 }
 
 pub enum InvoiceSortField {

@@ -92,7 +92,7 @@ pub fn get_update_outbound_shipment_response(
         }
     };
     match update_outbound_shipment(&connection, input.into()) {
-        Ok(id) => match get_invoice(connection_manager, id) {
+        Ok(id) => match get_invoice(connection_manager, None, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
         },

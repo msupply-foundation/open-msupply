@@ -425,7 +425,7 @@ fragment DeleteOutboundShipmentLineErrorInterface on DeleteOutboundShipmentLineE
 # INVOICE
 
 query invoiceFull($id: String!) {
-  invoice(id: $id) {
+  invoice(id: $id, storeId: "store_a") {
     ...InvoiceResponse
   }
 }

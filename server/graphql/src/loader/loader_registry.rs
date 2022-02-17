@@ -1,20 +1,10 @@
+use super::*;
+use crate::loader::{InvoiceLineLoader, ItemLoader, StoreLoader, UserAccountLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
-use service::service_provider::ServiceProvider;
-
-use crate::loader::{InvoiceLineLoader, ItemLoader, StoreLoader, UserAccountLoader};
-
-use repository::StorageConnectionManager;
-
 use async_graphql::dataloader::DataLoader;
-
-use super::{
-    invoice::InvoiceByRequisitionIdLoader, name::NameByIdLoader, InvoiceLineForRequisitionLine,
-    InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, ItemsStatsForItemLoader,
-    LinkedRequisitionLineLoader, LocationByIdLoader, MasterListLineByMasterListId,
-    RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader, StockLineByIdLoader,
-    StockLineByItemIdLoader, StockLineByLocationIdLoader, StocktakeLineByStocktakeIdLoader,
-};
+use repository::StorageConnectionManager;
+use service::service_provider::ServiceProvider;
 
 pub type LoaderMap = Map<AnyLoader>;
 pub type AnyLoader = dyn Any + Send + Sync;
@@ -70,9 +60,10 @@ pub async fn get_loaders(
         connection_manager: connection_manager.clone(),
     });
 
-    let stock_line_by_item_id_loader = DataLoader::new(StockLineByItemIdLoader {
-        connection_manager: connection_manager.clone(),
-    });
+    let stock_line_by_item_id_and_store_id_loader =
+        DataLoader::new(StockLineByItemAndStoreIdLoader {
+            connection_manager: connection_manager.clone(),
+        });
 
     let stock_line_by_location_id_loader = DataLoader::new(StockLineByLocationIdLoader {
         connection_manager: connection_manager.clone(),
@@ -129,7 +120,7 @@ pub async fn get_loaders(
     loaders.insert(invoice_line_query_loader);
     loaders.insert(invoice_line_stats_loader);
     loaders.insert(invoice_line_for_requisition_line);
-    loaders.insert(stock_line_by_item_id_loader);
+    loaders.insert(stock_line_by_item_id_and_store_id_loader);
     loaders.insert(stock_line_by_location_id_loader);
     loaders.insert(stock_line_by_id_loader);
     loaders.insert(user_account_loader);

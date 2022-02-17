@@ -41,7 +41,7 @@ pub fn get_insert_inbound_shipment_response(
         }
     };
     match insert_inbound_shipment(&connection, store_id, input.into()) {
-        Ok(id) => match get_invoice(connection_manager, id) {
+        Ok(id) => match get_invoice(connection_manager, None, id) {
             InvoiceResponse::Response(node) => Response(node),
             InvoiceResponse::Error(err) => NodeError(err),
         },
