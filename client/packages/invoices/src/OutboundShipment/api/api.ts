@@ -152,9 +152,9 @@ const createUpdateOutboundLineInput = (
 export const OutboundApi = {
   get: {
     byId:
-      (api: OmSupplyApi) =>
+      (api: OmSupplyApi, storeId: string) =>
       async (id: string): Promise<Invoice> => {
-        const result = await api.invoice({ id });
+        const result = await api.invoice({ id, storeId });
 
         const invoice = invoiceGuard(result);
         // TODO:

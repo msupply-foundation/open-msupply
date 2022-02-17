@@ -121,7 +121,7 @@ const invoiceToInput = (
 ): UpdateInboundShipmentInput => {
   return {
     id: patch.id,
-    color: patch.color,
+    colour: patch.colour,
     comment: patch.comment,
     status: getPatchStatus(patch),
     onHold: patch.onHold,

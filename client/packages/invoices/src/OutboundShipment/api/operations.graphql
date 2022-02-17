@@ -4,8 +4,8 @@ fragment Item on ItemNode {
   name
 }
 
-query invoice($id: String!) {
-  invoice(id: $id) {
+query invoice($id: String!, $storeId: String!) {
+  invoice(id: $id, storeId: $storeId) {
     __typename
     ... on NodeError {
       __typename
@@ -162,7 +162,7 @@ query invoice($id: String!) {
                 code
                 isVisible
                 unitName
-                availableBatches {
+                availableBatches(storeId: $storeId) {
                   ... on StockLineConnector {
                     totalCount
                     nodes {

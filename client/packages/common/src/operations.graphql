@@ -1,5 +1,5 @@
-query invoice($id: String!) {
-  invoice(id: $id) {
+query invoice($id: String!, $storeId: String!) {
+  invoice(id: $id, storeId: $storeId) {
     __typename
     ... on NodeError {
       __typename
@@ -622,11 +622,13 @@ query invoices(
   $key: InvoiceSortFieldInput!
   $desc: Boolean
   $filter: InvoiceFilterInput
+  $storeId: String!
 ) {
   invoices(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
+    storeId: $storeId
   ) {
     ... on ConnectorError {
       __typename
@@ -1050,6 +1052,23 @@ mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
       id
     }
     updateOutboundShipments {
+      id
+    }
+  }
+}
+
+mutation upsertInboundShipment($input: BatchInboundShipmentInput!) {
+  batchInboundShipment(input: $input) {
+    deleteInboundShipmentLines {
+      id
+    }
+    insertInboundShipmentLines {
+      id
+    }
+    updateInboundShipmentLines {
+      id
+    }
+    updateInboundShipments {
       id
     }
   }

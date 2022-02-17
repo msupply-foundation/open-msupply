@@ -19,6 +19,8 @@ import {
   UseMutationResult,
   DeleteOutboundShipmentLinesMutation,
   useTableStore,
+  useHostContext,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
 import { OutboundApi } from './api';
@@ -33,7 +35,9 @@ export const useOutbound = (): UseQueryResult<Invoice> => {
   const { id = '' } = useParams();
   const { api } = useOmSupplyApi();
   const queryKey = useOutboundDetailQueryKey();
-  return useQuery(queryKey, () => OutboundApi.get.byId(api)(id));
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+
+  return useQuery(queryKey, () => OutboundApi.get.byId(api, storeId)(id));
 };
 
 export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
@@ -42,9 +46,10 @@ export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
   const { id = '' } = useParams();
   const { api } = useOmSupplyApi();
   const queryKey = useOutboundDetailQueryKey();
+  const { store } = useHostContext();
   return useFieldsSelector(
     queryKey,
-    () => OutboundApi.get.byId(api)(id),
+    () => OutboundApi.get.byId(api, store.id)(id),
     (patch: Partial<Invoice>) => OutboundApi.update(api)({ ...patch, id }),
     keys
   );
@@ -63,10 +68,11 @@ const useOutboundSelector = <ReturnType>(
   select: (data: Invoice) => ReturnType
 ) => {
   const queryKey = useOutboundDetailQueryKey();
+  const { store } = useHostContext();
   const { api } = useOmSupplyApi();
   return useQuerySelector(
     queryKey,
-    () => OutboundApi.get.byId(api)(queryKey[1]),
+    () => OutboundApi.get.byId(api, store.id)(queryKey[1]),
     select
   );
 };
@@ -88,6 +94,7 @@ export const useOutboundLines = (
   return useOutboundSelector(selectLines);
 };
 
+// : {id:string, itemId: string, lines: InvoiceLine[]}
 export const useOutboundItems = (): UseQueryResult<InvoiceItem[]> => {
   const selectLines = useCallback((invoice: Invoice) => {
     const { lines } = invoice;
