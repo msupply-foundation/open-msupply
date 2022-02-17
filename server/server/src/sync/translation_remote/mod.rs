@@ -1,19 +1,22 @@
 use log::{info, warn};
 use repository::{
-    schema::{NumberRow, RemoteSyncBufferRow},
-    NumberRowRepository, RepositoryError, StorageConnection, TransactionError,
+    schema::{NumberRow, RemoteSyncBufferRow, StockLineRow},
+    NumberRowRepository, RepositoryError, StockLineRowRepository, StorageConnection,
+    TransactionError,
 };
 
-use crate::sync::translation_remote::number::LegacyNumberRow;
+use crate::sync::translation_remote::{number::LegacyNumberRow, stock_line::LegacyStockLineRow};
 
 use super::translation_central::{SyncImportError, SyncTranslationError};
 
 mod number;
+mod stock_line;
 mod test_data;
 
 #[derive(Debug)]
 pub enum IntegrationUpsertRecord {
     Number(NumberRow),
+    StockLine(StockLineRow),
 }
 
 #[derive(Debug)]
@@ -22,10 +25,13 @@ struct IntegrationRecord {
 }
 
 pub const TRANSLATION_RECORD_NUMBER: &str = "number";
+/// stock line
+pub const TRANSLATION_RECORD_ITEM_LINE: &str = "item_line";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
-pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[TRANSLATION_RECORD_NUMBER];
+pub const REMOTE_TRANSLATION_RECORDS: &[&str] =
+    &[TRANSLATION_RECORD_NUMBER, TRANSLATION_RECORD_ITEM_LINE];
 
 /// Imports sync records and writes them to the DB
 /// If needed data records are translated to the local DB schema.
@@ -63,6 +69,11 @@ fn do_translation(
         return Ok(());
     }
 
+    if let Some(row) = LegacyStockLineRow::try_translate_pull(sync_record)? {
+        records.upserts.push(StockLine(row));
+        return Ok(());
+    }
+
     Ok(())
 }
 
@@ -72,6 +83,9 @@ fn integrate_record(
 ) -> Result<(), RepositoryError> {
     match &record {
         IntegrationUpsertRecord::Number(record) => NumberRowRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::StockLine(record) => {
+            StockLineRowRepository::new(con).upsert_one(record)
+        }
     }
 }
 
