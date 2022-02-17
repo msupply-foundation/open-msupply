@@ -212,18 +212,14 @@ impl<'a> CentralSyncPullCursor<'a> {
     pub fn get_cursor(&self) -> Result<u32, RepositoryError> {
         let value = self
             .key_value_store
-            .get_string(KeyValueType::CentralSyncPullCursor)?;
-        let cursor = value
-            .and_then(|value| value.parse::<u32>().ok())
-            .unwrap_or(0);
-        Ok(cursor)
+            .get_i32(KeyValueType::CentralSyncPullCursor)?;
+        let cursor = value.unwrap_or(0);
+        Ok(cursor as u32)
     }
 
     pub fn update_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {
-        self.key_value_store.set_string(
-            KeyValueType::CentralSyncPullCursor,
-            Some(format!("{}", cursor)),
-        )
+        self.key_value_store
+            .set_i32(KeyValueType::CentralSyncPullCursor, Some(cursor as i32))
     }
 }
 
