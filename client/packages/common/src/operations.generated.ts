@@ -6,11 +6,10 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type InvoiceQueryVariables = Types.Exact<{
   id: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
 }>;
 
 
-export type InvoiceQuery = { __typename?: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, type: Types.InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, locationName?: string | null, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename?: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null, availableBatches: { __typename: 'ConnectorError', error: { __typename?: 'DatabaseError', description: string } | { __typename?: 'PaginationError', description: string } } | { __typename?: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename?: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, expiryDate?: string | null }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, type: Types.InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, locationName?: string | null, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, expiryDate?: string | null }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type StocktakeQueryVariables = Types.Exact<{
   stocktakeId: Types.Scalars['String'];
@@ -18,7 +17,7 @@ export type StocktakeQueryVariables = Types.Exact<{
 }>;
 
 
-export type StocktakeQuery = { __typename?: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null }> } } };
+export type StocktakeQuery = { __typename: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null }> } } };
 
 export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -28,7 +27,7 @@ export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertStocktakeLinesMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakeLines?: Array<{ __typename?: 'DeleteStocktakeLineResponseWithId', id: string }> | null, insertStocktakeLines?: Array<{ __typename?: 'InsertStocktakeLineResponseWithId', id: string }> | null, updateStocktakeLines?: Array<{ __typename?: 'UpdateStocktakeLineResponseWithId', id: string }> | null } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
+export type UpsertStocktakeLinesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
 
 export type DeleteStocktakesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -36,21 +35,21 @@ export type DeleteStocktakesMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteStocktakesMutation = { __typename?: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
+export type DeleteStocktakesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
 
 export type UpdateStocktakeMutationVariables = Types.Exact<{
   input: Types.UpdateStocktakeInput;
 }>;
 
 
-export type UpdateStocktakeMutation = { __typename?: 'Mutations', updateStocktake: { __typename: 'StocktakeNode', id: string } | { __typename?: 'UpdateStocktakeError' } };
+export type UpdateStocktakeMutation = { __typename: 'Mutations', updateStocktake: { __typename: 'StocktakeNode', id: string } | { __typename: 'UpdateStocktakeError' } };
 
 export type InsertStocktakeMutationVariables = Types.Exact<{
   input: Types.InsertStocktakeInput;
 }>;
 
 
-export type InsertStocktakeMutation = { __typename?: 'Mutations', insertStocktake: { __typename: 'StocktakeNode', id: string } };
+export type InsertStocktakeMutation = { __typename: 'Mutations', insertStocktake: { __typename: 'StocktakeNode', id: string } };
 
 export type UpdateSupplierRequisitionMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -58,7 +57,7 @@ export type UpdateSupplierRequisitionMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateSupplierRequisitionMutation = { __typename?: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename?: 'UpdateRequestRequisitionError' } };
+export type UpdateSupplierRequisitionMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateRequestRequisitionError' } };
 
 export type InsertSupplierRequisitionMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -66,7 +65,7 @@ export type InsertSupplierRequisitionMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertSupplierRequisitionMutation = { __typename?: 'Mutations', insertRequestRequisition: { __typename?: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
+export type InsertSupplierRequisitionMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
 
 export type UpdateCustomerRequisitionMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -74,7 +73,7 @@ export type UpdateCustomerRequisitionMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateCustomerRequisitionMutation = { __typename?: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename?: 'UpdateRequestRequisitionError' } };
+export type UpdateCustomerRequisitionMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateRequestRequisitionError' } };
 
 export type InsertCustomerRequisitionMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -82,7 +81,7 @@ export type InsertCustomerRequisitionMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertCustomerRequisitionMutation = { __typename?: 'Mutations', insertRequestRequisition: { __typename?: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
+export type InsertCustomerRequisitionMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
 
 export type RequisitionQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -90,7 +89,7 @@ export type RequisitionQueryVariables = Types.Exact<{
 }>;
 
 
-export type RequisitionQuery = { __typename?: 'Queries', requisition: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, comment?: string | null, theirReference?: string | null, type: Types.RequisitionNodeType, requisitionNumber: number, status: Types.RequisitionNodeStatus, otherPartyId: string, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename?: 'RequisitionLineNode', id: string, itemId: string, supplyQuantity: number, requestedQuantity: number, calculatedQuantity: number }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } } };
+export type RequisitionQuery = { __typename: 'Queries', requisition: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, comment?: string | null, theirReference?: string | null, type: Types.RequisitionNodeType, requisitionNumber: number, status: Types.RequisitionNodeStatus, otherPartyId: string, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, supplyQuantity: number, requestedQuantity: number, calculatedQuantity: number }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } } };
 
 export type InvoicesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -98,11 +97,10 @@ export type InvoicesQueryVariables = Types.Exact<{
   key: Types.InvoiceSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.InvoiceFilterInput>;
-  storeId: Types.Scalars['String'];
 }>;
 
 
-export type InvoicesQuery = { __typename?: 'Queries', invoices: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename?: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> } };
+export type InvoicesQuery = { __typename: 'Queries', invoices: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> } };
 
 export type NamesQueryVariables = Types.Exact<{
   key: Types.NameSortFieldInput;
@@ -113,7 +111,7 @@ export type NamesQueryVariables = Types.Exact<{
 }>;
 
 
-export type NamesQuery = { __typename?: 'Queries', names: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string }> } };
+export type NamesQuery = { __typename: 'Queries', names: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string }> } };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -121,11 +119,10 @@ export type ItemsWithStockLinesQueryVariables = Types.Exact<{
   key: Types.ItemSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  storeId: Types.Scalars['String'];
 }>;
 
 
-export type ItemsWithStockLinesQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
+export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
 
 export type ItemsListViewQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -136,14 +133,36 @@ export type ItemsListViewQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsListViewQuery = { __typename?: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null }> } };
+export type ItemsListViewQuery = { __typename: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null }> } };
+
+export type InsertOutboundShipmentMutationVariables = Types.Exact<{
+  id: Types.Scalars['String'];
+  otherPartyId: Types.Scalars['String'];
+}>;
+
+
+export type InsertOutboundShipmentMutation = { __typename: 'Mutations', insertOutboundShipment: { __typename: 'InsertOutboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename: 'OtherPartyNotACustomerError', description: string, otherParty: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+
+export type UpdateOutboundShipmentMutationVariables = Types.Exact<{
+  input: Types.UpdateOutboundShipmentInput;
+}>;
+
+
+export type UpdateOutboundShipmentMutation = { __typename: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename: 'CanOnlyEditInvoicesInLoggedInStoreError', description: string } | { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'InvoiceLineHasNoStockLineError', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename: 'OtherPartyNotACustomerError', description: string } | { __typename: 'RecordNotFound', description: string } } };
+
+export type DeleteOutboundShipmentsMutationVariables = Types.Exact<{
+  deleteOutboundShipments: Array<Types.Scalars['String']> | Types.Scalars['String'];
+}>;
+
+
+export type DeleteOutboundShipmentsMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string }> | null } };
 
 export type InvoiceCountsQueryVariables = Types.Exact<{
   timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
 }>;
 
 
-export type InvoiceCountsQuery = { __typename?: 'Queries', invoiceCounts: { __typename?: 'InvoiceCounts', outbound: { __typename?: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename?: 'InvoiceCountsSummary', today: number, thisWeek: number } }, inbound: { __typename?: 'InboundInvoiceCounts', created: { __typename?: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
+export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } }, inbound: { __typename: 'InboundInvoiceCounts', created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
 export type StockCountsQueryVariables = Types.Exact<{
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -151,42 +170,71 @@ export type StockCountsQueryVariables = Types.Exact<{
 }>;
 
 
-export type StockCountsQuery = { __typename?: 'Queries', stockCounts: { __typename?: 'StockCounts', expired: number, expiringSoon: number } };
+export type StockCountsQuery = { __typename: 'Queries', stockCounts: { __typename: 'StockCounts', expired: number, expiringSoon: number } };
 
-export type UpsertInboundShipmentMutationVariables = Types.Exact<{
-  input: Types.BatchInboundShipmentInput;
+export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
+  input: Types.BatchOutboundShipmentInput;
 }>;
 
 
-export type UpsertInboundShipmentMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename?: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename?: 'DeleteInboundShipmentLineResponseWithId', id: string }> | null, insertInboundShipmentLines?: Array<{ __typename?: 'InsertInboundShipmentLineResponseWithId', id: string }> | null, updateInboundShipmentLines?: Array<{ __typename?: 'UpdateInboundShipmentLineResponseWithId', id: string }> | null, updateInboundShipments?: Array<{ __typename?: 'UpdateInboundShipmentResponseWithId', id: string }> | null } };
+export type UpsertOutboundShipmentMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename: 'InsertOutboundShipmentServiceLineResponseWithId', id: string }> | null, insertOutboundShipmentUnallocatedLines?: Array<{ __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string }> | null } };
 
 export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
   input: Types.BatchInboundShipmentInput;
 }>;
 
 
-export type DeleteInboundShipmentLinesMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename?: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename?: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null } };
+export type DeleteInboundShipmentLinesMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
+export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
+  deleteOutboundShipmentLines: Array<Types.DeleteOutboundShipmentLineInput> | Types.DeleteOutboundShipmentLineInput;
+}>;
+
+
+export type DeleteOutboundShipmentLinesMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
+export type UpdateInboundShipmentMutationVariables = Types.Exact<{
+  input: Types.UpdateInboundShipmentInput;
+}>;
+
+
+export type UpdateInboundShipmentMutation = { __typename: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'RecordNotFound', description: string } } };
+
+export type DeleteInboundShipmentsMutationVariables = Types.Exact<{
+  deleteInboundShipments: Array<Types.DeleteInboundShipmentInput> | Types.DeleteInboundShipmentInput;
+}>;
+
+
+export type DeleteInboundShipmentsMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
+export type InsertInboundShipmentMutationVariables = Types.Exact<{
+  id: Types.Scalars['String'];
+  otherPartyId: Types.Scalars['String'];
+}>;
+
+
+export type InsertInboundShipmentMutation = { __typename: 'Mutations', insertInboundShipment: { __typename: 'InsertInboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'OtherPartyNotASupplier', description: string, otherParty: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type LocationsQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Array<Types.LocationSortInput> | Types.LocationSortInput>;
 }>;
 
 
-export type LocationsQuery = { __typename?: 'Queries', locations: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
+export type LocationsQuery = { __typename: 'Queries', locations: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
 
 export type InsertLocationMutationVariables = Types.Exact<{
   input: Types.InsertLocationInput;
 }>;
 
 
-export type InsertLocationMutation = { __typename?: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } | { __typename?: 'LocationNode', id: string, name: string, code: string, onHold: boolean } };
+export type InsertLocationMutation = { __typename: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } | { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } };
 
 export type UpdateLocationMutationVariables = Types.Exact<{
   input: Types.UpdateLocationInput;
 }>;
 
 
-export type UpdateLocationMutation = { __typename?: 'Mutations', updateLocation: { __typename?: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } };
+export type UpdateLocationMutation = { __typename: 'Mutations', updateLocation: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } };
 
 export type StoresQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -195,7 +243,7 @@ export type StoresQueryVariables = Types.Exact<{
 }>;
 
 
-export type StoresQuery = { __typename?: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename?: 'StoreNode', code: string, id: string }> } };
+export type StoresQuery = { __typename: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, id: string }> } };
 
 export type AuthTokenQueryVariables = Types.Exact<{
   username: Types.Scalars['String'];
@@ -203,7 +251,7 @@ export type AuthTokenQueryVariables = Types.Exact<{
 }>;
 
 
-export type AuthTokenQuery = { __typename?: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'UserNameDoesNotExist', description: string } } };
+export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'UserNameDoesNotExist', description: string } } };
 
 export type MasterListsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -214,70 +262,12 @@ export type MasterListsQueryVariables = Types.Exact<{
 }>;
 
 
-export type MasterListsQuery = { __typename?: 'Queries', masterLists: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', field: Types.RangeField, min?: number | null, max?: number | null, description: string } } } | { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename?: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListLineNode', id: string, itemId: string, item: { __typename?: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename?: 'RangeError', description: string, min?: number | null, max?: number | null, field: Types.RangeField } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
-
-export type UpdateInboundShipmentMutationVariables = Types.Exact<{
-  input: Types.UpdateInboundShipmentInput;
-}>;
-
-
-export type UpdateInboundShipmentMutation = { __typename?: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateInboundShipmentError', error: { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'CannotReverseInvoiceStatus', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'OtherPartyNotASupplier', description: string } | { __typename?: 'RecordNotFound', description: string } } };
-
-export type DeleteInboundShipmentsMutationVariables = Types.Exact<{
-  deleteInboundShipments: Array<Types.DeleteInboundShipmentInput> | Types.DeleteInboundShipmentInput;
-}>;
-
-
-export type DeleteInboundShipmentsMutation = { __typename?: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipments?: Array<{ __typename?: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename?: 'CannotDeleteInvoiceWithLines', description: string } | { __typename?: 'CannotEditInvoice', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename?: 'NotAnInboundShipment', description: string } | { __typename?: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null } };
-
-export type InsertInboundShipmentMutationVariables = Types.Exact<{
-  id: Types.Scalars['String'];
-  otherPartyId: Types.Scalars['String'];
-}>;
-
-
-export type InsertInboundShipmentMutation = { __typename?: 'Mutations', insertInboundShipment: { __typename: 'InsertInboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'OtherPartyNotASupplier', description: string, otherParty: { __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
-
-export type InsertOutboundShipmentMutationVariables = Types.Exact<{
-  id: Types.Scalars['String'];
-  otherPartyId: Types.Scalars['String'];
-}>;
-
-
-export type InsertOutboundShipmentMutation = { __typename?: 'Mutations', insertOutboundShipment: { __typename: 'InsertOutboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename: 'OtherPartyNotACustomerError', description: string, otherParty: { __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
-
-export type UpdateOutboundShipmentMutationVariables = Types.Exact<{
-  input: Types.UpdateOutboundShipmentInput;
-}>;
-
-
-export type UpdateOutboundShipmentMutation = { __typename?: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename?: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename?: 'CanOnlyEditInvoicesInLoggedInStoreError', description: string } | { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename?: 'CannotReverseInvoiceStatus', description: string } | { __typename?: 'DatabaseError', description: string } | { __typename?: 'ForeignKeyError', description: string } | { __typename?: 'InvoiceIsNotEditable', description: string } | { __typename?: 'InvoiceLineHasNoStockLineError', description: string } | { __typename?: 'NotAnOutboundShipmentError', description: string } | { __typename?: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename?: 'OtherPartyNotACustomerError', description: string } | { __typename?: 'RecordNotFound', description: string } } };
-
-export type DeleteOutboundShipmentsMutationVariables = Types.Exact<{
-  deleteOutboundShipments: Array<Types.Scalars['String']> | Types.Scalars['String'];
-}>;
-
-
-export type DeleteOutboundShipmentsMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string }> | null } };
-
-export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
-  input: Types.BatchOutboundShipmentInput;
-}>;
-
-
-export type UpsertOutboundShipmentMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename?: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename?: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename?: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, insertOutboundShipmentLines?: Array<{ __typename?: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename?: 'InsertOutboundShipmentServiceLineResponseWithId', id: string }> | null, insertOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipmentLines?: Array<{ __typename?: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename?: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipments?: Array<{ __typename?: 'UpdateOutboundShipmentResponseWithId', id: string }> | null } };
-
-export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
-  deleteOutboundShipmentLines: Array<Types.DeleteOutboundShipmentLineInput> | Types.DeleteOutboundShipmentLineInput;
-}>;
-
-
-export type DeleteOutboundShipmentLinesMutation = { __typename?: 'Mutations', batchOutboundShipment: { __typename?: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename?: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename?: 'DeleteResponse', id: string } }> | null } };
+export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', field: Types.RangeField, min?: number | null, max?: number | null, description: string } } } | { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListLineNode', id: string, itemId: string, item: { __typename: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, min?: number | null, max?: number | null, field: Types.RangeField } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
 
 
 export const InvoiceDocument = gql`
-    query invoice($id: String!, $storeId: String!) {
-  invoice(id: $id, storeId: $storeId) {
+    query invoice($id: String!) {
+  invoice(id: $id) {
     __typename
     ... on NodeError {
       __typename
@@ -423,7 +413,7 @@ export const InvoiceDocument = gql`
                 code
                 isVisible
                 unitName
-                availableBatches(storeId: $storeId) {
+                availableBatches {
                   ... on StockLineConnector {
                     totalCount
                     nodes {
@@ -704,12 +694,11 @@ export const RequisitionDocument = gql`
 }
     `;
 export const InvoicesDocument = gql`
-    query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
+    query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput) {
   invoices(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
-    storeId: $storeId
   ) {
     ... on ConnectorError {
       __typename
@@ -826,7 +815,7 @@ export const NamesDocument = gql`
 }
     `;
 export const ItemsWithStockLinesDocument = gql`
-    query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
+    query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
   items(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
@@ -857,7 +846,7 @@ export const ItemsWithStockLinesDocument = gql`
       __typename
       nodes {
         __typename
-        availableBatches(storeId: $storeId) {
+        availableBatches {
           __typename
           ... on ConnectorError {
             __typename
@@ -955,6 +944,110 @@ export const ItemsListViewDocument = gql`
   }
 }
     `;
+export const InsertOutboundShipmentDocument = gql`
+    mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
+  insertOutboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertOutboundShipmentError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on OtherPartyCannotBeThisStoreError {
+          __typename
+          description
+        }
+        ... on OtherPartyNotACustomerError {
+          __typename
+          description
+          otherParty {
+            code
+            id
+            isCustomer
+            isSupplier
+            name
+          }
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+    `;
+export const UpdateOutboundShipmentDocument = gql`
+    mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
+  updateOutboundShipment(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on UpdateOutboundShipmentError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    `;
+export const DeleteOutboundShipmentsDocument = gql`
+    mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
+  batchOutboundShipment(
+    input: {deleteOutboundShipments: $deleteOutboundShipments}
+  ) {
+    __typename
+    deleteOutboundShipments {
+      __typename
+      id
+    }
+  }
+}
+    `;
 export const InvoiceCountsDocument = gql`
     query invoiceCounts($timezoneOffset: Int) {
   invoiceCounts(timezoneOffset: $timezoneOffset) {
@@ -982,19 +1075,37 @@ export const StockCountsDocument = gql`
   }
 }
     `;
-export const UpsertInboundShipmentDocument = gql`
-    mutation upsertInboundShipment($input: BatchInboundShipmentInput!) {
-  batchInboundShipment(input: $input) {
-    deleteInboundShipmentLines {
+export const UpsertOutboundShipmentDocument = gql`
+    mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
+  batchOutboundShipment(input: $input) {
+    deleteOutboundShipmentLines {
       id
     }
-    insertInboundShipmentLines {
+    deleteOutboundShipmentServiceLines {
       id
     }
-    updateInboundShipmentLines {
+    deleteOutboundShipmentUnallocatedLines {
       id
     }
-    updateInboundShipments {
+    insertOutboundShipmentLines {
+      id
+    }
+    insertOutboundShipmentServiceLines {
+      id
+    }
+    insertOutboundShipmentUnallocatedLines {
+      id
+    }
+    updateOutboundShipmentLines {
+      id
+    }
+    updateOutboundShipmentServiceLines {
+      id
+    }
+    updateOutboundShipmentUnallocatedLines {
+      id
+    }
+    updateOutboundShipments {
       id
     }
   }
@@ -1044,6 +1155,166 @@ export const DeleteInboundShipmentLinesDocument = gql`
               description
             }
           }
+        }
+      }
+    }
+  }
+}
+    `;
+export const DeleteOutboundShipmentLinesDocument = gql`
+    mutation deleteOutboundShipmentLines($deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!) {
+  batchOutboundShipment(
+    input: {deleteOutboundShipmentLines: $deleteOutboundShipmentLines}
+  ) {
+    deleteOutboundShipmentLines {
+      id
+      response {
+        ... on DeleteOutboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+            ... on InvoiceDoesNotBelongToCurrentStore {
+              __typename
+              description
+            }
+            ... on InvoiceLineBelongsToAnotherInvoice {
+              __typename
+              description
+            }
+            ... on NotAnOutboundShipment {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
+export const UpdateInboundShipmentDocument = gql`
+    mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
+  updateInboundShipment(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on UpdateInboundShipmentError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    `;
+export const DeleteInboundShipmentsDocument = gql`
+    mutation deleteInboundShipments($deleteInboundShipments: [DeleteInboundShipmentInput!]!) {
+  batchInboundShipment(input: {deleteInboundShipments: $deleteInboundShipments}) {
+    __typename
+    deleteInboundShipments {
+      id
+      response {
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
+export const InsertInboundShipmentDocument = gql`
+    mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
+  insertInboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertInboundShipmentError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+          otherParty {
+            code
+            id
+            isCustomer
+            isSupplier
+            name
+          }
+        }
+        ... on RecordAlreadyExist {
+          __typename
+          description
+        }
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
         }
       }
     }
@@ -1314,306 +1585,6 @@ export const MasterListsDocument = gql`
   }
 }
     `;
-export const UpdateInboundShipmentDocument = gql`
-    mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
-  updateInboundShipment(input: $input) {
-    ... on InvoiceNode {
-      __typename
-      id
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-    ... on UpdateInboundShipmentError {
-      __typename
-      error {
-        description
-      }
-    }
-  }
-}
-    `;
-export const DeleteInboundShipmentsDocument = gql`
-    mutation deleteInboundShipments($deleteInboundShipments: [DeleteInboundShipmentInput!]!) {
-  batchInboundShipment(input: {deleteInboundShipments: $deleteInboundShipments}) {
-    __typename
-    deleteInboundShipments {
-      id
-      response {
-        ... on DeleteInboundShipmentError {
-          __typename
-          error {
-            description
-          }
-        }
-        ... on DeleteResponse {
-          id
-        }
-      }
-    }
-  }
-}
-    `;
-export const InsertInboundShipmentDocument = gql`
-    mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
-  insertInboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
-    __typename
-    ... on InvoiceNode {
-      id
-    }
-    ... on InsertInboundShipmentError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-          key
-        }
-        ... on OtherPartyNotASupplier {
-          __typename
-          description
-          otherParty {
-            code
-            id
-            isCustomer
-            isSupplier
-            name
-          }
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-      }
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-    `;
-export const InsertOutboundShipmentDocument = gql`
-    mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
-  insertOutboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
-    __typename
-    ... on InvoiceNode {
-      id
-    }
-    ... on InsertOutboundShipmentError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-          key
-        }
-        ... on OtherPartyCannotBeThisStoreError {
-          __typename
-          description
-        }
-        ... on OtherPartyNotACustomerError {
-          __typename
-          description
-          otherParty {
-            code
-            id
-            isCustomer
-            isSupplier
-            name
-          }
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-      }
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-    `;
-export const UpdateOutboundShipmentDocument = gql`
-    mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
-  updateOutboundShipment(input: $input) {
-    ... on InvoiceNode {
-      __typename
-      id
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-    ... on UpdateOutboundShipmentError {
-      __typename
-      error {
-        description
-      }
-    }
-  }
-}
-    `;
-export const DeleteOutboundShipmentsDocument = gql`
-    mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
-  batchOutboundShipment(
-    input: {deleteOutboundShipments: $deleteOutboundShipments}
-  ) {
-    __typename
-    deleteOutboundShipments {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const UpsertOutboundShipmentDocument = gql`
-    mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
-  batchOutboundShipment(input: $input) {
-    deleteOutboundShipmentLines {
-      id
-    }
-    deleteOutboundShipmentServiceLines {
-      id
-    }
-    deleteOutboundShipmentUnallocatedLines {
-      id
-    }
-    insertOutboundShipmentLines {
-      id
-    }
-    insertOutboundShipmentServiceLines {
-      id
-    }
-    insertOutboundShipmentUnallocatedLines {
-      id
-    }
-    updateOutboundShipmentLines {
-      id
-    }
-    updateOutboundShipmentServiceLines {
-      id
-    }
-    updateOutboundShipmentUnallocatedLines {
-      id
-    }
-    updateOutboundShipments {
-      id
-    }
-  }
-}
-    `;
-export const DeleteOutboundShipmentLinesDocument = gql`
-    mutation deleteOutboundShipmentLines($deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!) {
-  batchOutboundShipment(
-    input: {deleteOutboundShipmentLines: $deleteOutboundShipmentLines}
-  ) {
-    deleteOutboundShipmentLines {
-      id
-      response {
-        ... on DeleteOutboundShipmentLineError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
-            }
-            ... on InvoiceDoesNotBelongToCurrentStore {
-              __typename
-              description
-            }
-            ... on InvoiceLineBelongsToAnotherInvoice {
-              __typename
-              description
-            }
-            ... on NotAnOutboundShipment {
-              __typename
-              description
-            }
-          }
-        }
-        ... on DeleteResponse {
-          id
-        }
-      }
-    }
-  }
-}
-    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -1667,17 +1638,38 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     itemsListView(variables: ItemsListViewQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsListViewQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemsListViewQuery>(ItemsListViewDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsListView');
     },
+    insertOutboundShipment(variables: InsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertOutboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundShipmentMutation>(InsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundShipment');
+    },
+    updateOutboundShipment(variables: UpdateOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateOutboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundShipmentMutation>(UpdateOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundShipment');
+    },
+    deleteOutboundShipments(variables: DeleteOutboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentsMutation>(DeleteOutboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipments');
+    },
     invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
     },
     stockCounts(variables?: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts');
     },
-    upsertInboundShipment(variables: UpsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertInboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertInboundShipmentMutation>(UpsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertInboundShipment');
+    upsertOutboundShipment(variables: UpsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertOutboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertOutboundShipmentMutation>(UpsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertOutboundShipment');
     },
     deleteInboundShipmentLines(variables: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines');
+    },
+    deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentLinesMutation>(DeleteOutboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipmentLines');
+    },
+    updateInboundShipment(variables: UpdateInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateInboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundShipmentMutation>(UpdateInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundShipment');
+    },
+    deleteInboundShipments(variables: DeleteInboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentsMutation>(DeleteInboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipments');
+    },
+    insertInboundShipment(variables: InsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertInboundShipmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundShipmentMutation>(InsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundShipment');
     },
     locations(variables?: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations');
@@ -1696,30 +1688,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     masterLists(variables: MasterListsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<MasterListsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MasterListsQuery>(MasterListsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterLists');
-    },
-    updateInboundShipment(variables: UpdateInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateInboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundShipmentMutation>(UpdateInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundShipment');
-    },
-    deleteInboundShipments(variables: DeleteInboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentsMutation>(DeleteInboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipments');
-    },
-    insertInboundShipment(variables: InsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertInboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundShipmentMutation>(InsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundShipment');
-    },
-    insertOutboundShipment(variables: InsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertOutboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundShipmentMutation>(InsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundShipment');
-    },
-    updateOutboundShipment(variables: UpdateOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateOutboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundShipmentMutation>(UpdateOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundShipment');
-    },
-    deleteOutboundShipments(variables: DeleteOutboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentsMutation>(DeleteOutboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipments');
-    },
-    upsertOutboundShipment(variables: UpsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertOutboundShipmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertOutboundShipmentMutation>(UpsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertOutboundShipment');
-    },
-    deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentLinesMutation>(DeleteOutboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipmentLines');
     }
   };
 }
@@ -1730,7 +1698,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceQuery((req, res, ctx) => {
- *   const { id, storeId } = req.variables;
+ *   const { id } = req.variables;
  *   return res(
  *     ctx.data({ invoice })
  *   )
@@ -1917,7 +1885,7 @@ export const mockRequisitionQuery = (resolver: ResponseResolver<GraphQLRequest<R
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoicesQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
+ *   const { first, offset, key, desc, filter } = req.variables;
  *   return res(
  *     ctx.data({ invoices })
  *   )
@@ -1951,7 +1919,7 @@ export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQu
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockItemsWithStockLinesQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
+ *   const { first, offset, key, desc, filter } = req.variables;
  *   return res(
  *     ctx.data({ items })
  *   )
@@ -1977,6 +1945,57 @@ export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLR
 export const mockItemsListViewQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsListViewQueryVariables>, GraphQLContext<ItemsListViewQuery>, any>) =>
   graphql.query<ItemsListViewQuery, ItemsListViewQueryVariables>(
     'itemsListView',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertOutboundShipmentMutation((req, res, ctx) => {
+ *   const { id, otherPartyId } = req.variables;
+ *   return res(
+ *     ctx.data({ insertOutboundShipment })
+ *   )
+ * })
+ */
+export const mockInsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertOutboundShipmentMutationVariables>, GraphQLContext<InsertOutboundShipmentMutation>, any>) =>
+  graphql.mutation<InsertOutboundShipmentMutation, InsertOutboundShipmentMutationVariables>(
+    'insertOutboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateOutboundShipmentMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateOutboundShipment })
+ *   )
+ * })
+ */
+export const mockUpdateOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundShipmentMutationVariables>, GraphQLContext<UpdateOutboundShipmentMutation>, any>) =>
+  graphql.mutation<UpdateOutboundShipmentMutation, UpdateOutboundShipmentMutationVariables>(
+    'updateOutboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteOutboundShipmentsMutation((req, res, ctx) => {
+ *   const { deleteOutboundShipments } = req.variables;
+ *   return res(
+ *     ctx.data({ batchOutboundShipment })
+ *   )
+ * })
+ */
+export const mockDeleteOutboundShipmentsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentsMutationVariables>, GraphQLContext<DeleteOutboundShipmentsMutation>, any>) =>
+  graphql.mutation<DeleteOutboundShipmentsMutation, DeleteOutboundShipmentsMutationVariables>(
+    'deleteOutboundShipments',
     resolver
   )
 
@@ -2018,16 +2037,16 @@ export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<S
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockUpsertInboundShipmentMutation((req, res, ctx) => {
+ * mockUpsertOutboundShipmentMutation((req, res, ctx) => {
  *   const { input } = req.variables;
  *   return res(
- *     ctx.data({ batchInboundShipment })
+ *     ctx.data({ batchOutboundShipment })
  *   )
  * })
  */
-export const mockUpsertInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertInboundShipmentMutationVariables>, GraphQLContext<UpsertInboundShipmentMutation>, any>) =>
-  graphql.mutation<UpsertInboundShipmentMutation, UpsertInboundShipmentMutationVariables>(
-    'upsertInboundShipment',
+export const mockUpsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertOutboundShipmentMutationVariables>, GraphQLContext<UpsertOutboundShipmentMutation>, any>) =>
+  graphql.mutation<UpsertOutboundShipmentMutation, UpsertOutboundShipmentMutationVariables>(
+    'upsertOutboundShipment',
     resolver
   )
 
@@ -2045,6 +2064,74 @@ export const mockUpsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
 export const mockDeleteInboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentLinesMutationVariables>, GraphQLContext<DeleteInboundShipmentLinesMutation>, any>) =>
   graphql.mutation<DeleteInboundShipmentLinesMutation, DeleteInboundShipmentLinesMutationVariables>(
     'deleteInboundShipmentLines',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteOutboundShipmentLinesMutation((req, res, ctx) => {
+ *   const { deleteOutboundShipmentLines } = req.variables;
+ *   return res(
+ *     ctx.data({ batchOutboundShipment })
+ *   )
+ * })
+ */
+export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentLinesMutationVariables>, GraphQLContext<DeleteOutboundShipmentLinesMutation>, any>) =>
+  graphql.mutation<DeleteOutboundShipmentLinesMutation, DeleteOutboundShipmentLinesMutationVariables>(
+    'deleteOutboundShipmentLines',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateInboundShipmentMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateInboundShipment })
+ *   )
+ * })
+ */
+export const mockUpdateInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateInboundShipmentMutationVariables>, GraphQLContext<UpdateInboundShipmentMutation>, any>) =>
+  graphql.mutation<UpdateInboundShipmentMutation, UpdateInboundShipmentMutationVariables>(
+    'updateInboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteInboundShipmentsMutation((req, res, ctx) => {
+ *   const { deleteInboundShipments } = req.variables;
+ *   return res(
+ *     ctx.data({ batchInboundShipment })
+ *   )
+ * })
+ */
+export const mockDeleteInboundShipmentsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentsMutationVariables>, GraphQLContext<DeleteInboundShipmentsMutation>, any>) =>
+  graphql.mutation<DeleteInboundShipmentsMutation, DeleteInboundShipmentsMutationVariables>(
+    'deleteInboundShipments',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertInboundShipmentMutation((req, res, ctx) => {
+ *   const { id, otherPartyId } = req.variables;
+ *   return res(
+ *     ctx.data({ insertInboundShipment })
+ *   )
+ * })
+ */
+export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertInboundShipmentMutationVariables>, GraphQLContext<InsertInboundShipmentMutation>, any>) =>
+  graphql.mutation<InsertInboundShipmentMutation, InsertInboundShipmentMutationVariables>(
+    'insertInboundShipment',
     resolver
   )
 
@@ -2147,141 +2234,5 @@ export const mockAuthTokenQuery = (resolver: ResponseResolver<GraphQLRequest<Aut
 export const mockMasterListsQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsQueryVariables>, GraphQLContext<MasterListsQuery>, any>) =>
   graphql.query<MasterListsQuery, MasterListsQueryVariables>(
     'masterLists',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateInboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ updateInboundShipment })
- *   )
- * })
- */
-export const mockUpdateInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateInboundShipmentMutationVariables>, GraphQLContext<UpdateInboundShipmentMutation>, any>) =>
-  graphql.mutation<UpdateInboundShipmentMutation, UpdateInboundShipmentMutationVariables>(
-    'updateInboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteInboundShipmentsMutation((req, res, ctx) => {
- *   const { deleteInboundShipments } = req.variables;
- *   return res(
- *     ctx.data({ batchInboundShipment })
- *   )
- * })
- */
-export const mockDeleteInboundShipmentsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentsMutationVariables>, GraphQLContext<DeleteInboundShipmentsMutation>, any>) =>
-  graphql.mutation<DeleteInboundShipmentsMutation, DeleteInboundShipmentsMutationVariables>(
-    'deleteInboundShipments',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertInboundShipmentMutation((req, res, ctx) => {
- *   const { id, otherPartyId } = req.variables;
- *   return res(
- *     ctx.data({ insertInboundShipment })
- *   )
- * })
- */
-export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertInboundShipmentMutationVariables>, GraphQLContext<InsertInboundShipmentMutation>, any>) =>
-  graphql.mutation<InsertInboundShipmentMutation, InsertInboundShipmentMutationVariables>(
-    'insertInboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertOutboundShipmentMutation((req, res, ctx) => {
- *   const { id, otherPartyId } = req.variables;
- *   return res(
- *     ctx.data({ insertOutboundShipment })
- *   )
- * })
- */
-export const mockInsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertOutboundShipmentMutationVariables>, GraphQLContext<InsertOutboundShipmentMutation>, any>) =>
-  graphql.mutation<InsertOutboundShipmentMutation, InsertOutboundShipmentMutationVariables>(
-    'insertOutboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateOutboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ updateOutboundShipment })
- *   )
- * })
- */
-export const mockUpdateOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundShipmentMutationVariables>, GraphQLContext<UpdateOutboundShipmentMutation>, any>) =>
-  graphql.mutation<UpdateOutboundShipmentMutation, UpdateOutboundShipmentMutationVariables>(
-    'updateOutboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteOutboundShipmentsMutation((req, res, ctx) => {
- *   const { deleteOutboundShipments } = req.variables;
- *   return res(
- *     ctx.data({ batchOutboundShipment })
- *   )
- * })
- */
-export const mockDeleteOutboundShipmentsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentsMutationVariables>, GraphQLContext<DeleteOutboundShipmentsMutation>, any>) =>
-  graphql.mutation<DeleteOutboundShipmentsMutation, DeleteOutboundShipmentsMutationVariables>(
-    'deleteOutboundShipments',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpsertOutboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ batchOutboundShipment })
- *   )
- * })
- */
-export const mockUpsertOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertOutboundShipmentMutationVariables>, GraphQLContext<UpsertOutboundShipmentMutation>, any>) =>
-  graphql.mutation<UpsertOutboundShipmentMutation, UpsertOutboundShipmentMutationVariables>(
-    'upsertOutboundShipment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteOutboundShipmentLinesMutation((req, res, ctx) => {
- *   const { deleteOutboundShipmentLines } = req.variables;
- *   return res(
- *     ctx.data({ batchOutboundShipment })
- *   )
- * })
- */
-export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentLinesMutationVariables>, GraphQLContext<DeleteOutboundShipmentLinesMutation>, any>) =>
-  graphql.mutation<DeleteOutboundShipmentLinesMutation, DeleteOutboundShipmentLinesMutationVariables>(
-    'deleteOutboundShipmentLines',
     resolver
   )
