@@ -1,8 +1,8 @@
 CREATE TYPE key_type AS ENUM (
     -- Cursor for pulling central records from the central server
     'CENTRAL_SYNC_PULL_CURSOR',
-    'REMOTE_SYNC_QUEUE_V5_INITALISED',
-    'REMOTE_SYNC_INITIAL_SYNC_STATE'
+    'REMOTE_SYNC_INITILISATION_STARTED',
+    'REMOTE_SYNC_INITILISATION_FINISHED'
 );
 
 -- key value store, e.g. to store local server state

@@ -136,8 +136,6 @@ struct RemoteSyncState<'a> {
     key_value_store: KeyValueStoreRepository<'a>,
 }
 
-const DONE_VALUE: &'static str = "true";
-
 impl<'a> RemoteSyncState<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         RemoteSyncState {
@@ -148,28 +146,24 @@ impl<'a> RemoteSyncState<'a> {
     pub fn sync_queue_initalised(&self) -> Result<bool, RepositoryError> {
         let value = self
             .key_value_store
-            .get_string(KeyValueType::RemoteSyncQueueV5Initalised)?;
-        Ok(value.map(|value| value == DONE_VALUE).unwrap_or(false))
+            .get_bool(KeyValueType::RemoteSyncQueueV5Initalised)?;
+        Ok(value.unwrap_or(false))
     }
 
     pub fn set_sync_queue_initalised(&self) -> Result<(), RepositoryError> {
-        self.key_value_store.set_string(
-            KeyValueType::RemoteSyncQueueV5Initalised,
-            Some(DONE_VALUE.to_string()),
-        )
+        self.key_value_store
+            .set_bool(KeyValueType::RemoteSyncQueueV5Initalised, Some(true))
     }
 
     pub fn initial_remote_data_synced(&self) -> Result<bool, RepositoryError> {
         let value = self
             .key_value_store
-            .get_string(KeyValueType::RemoteSyncInitialSyncState)?;
-        Ok(value.map(|value| value == DONE_VALUE).unwrap_or(false))
+            .get_bool(KeyValueType::RemoteSyncInitialSyncState)?;
+        Ok(value.unwrap_or(false))
     }
 
     pub fn set_initial_remote_data_synced(&self) -> Result<(), RepositoryError> {
-        self.key_value_store.set_string(
-            KeyValueType::RemoteSyncInitialSyncState,
-            Some(DONE_VALUE.to_string()),
-        )
+        self.key_value_store
+            .set_bool(KeyValueType::RemoteSyncInitialSyncState, Some(true))
     }
 }
