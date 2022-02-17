@@ -17,6 +17,15 @@ pub struct RemoteSyncError {
     source: anyhow::Error,
 }
 
+impl From<RepositoryError> for RemoteSyncError {
+    fn from(err: RepositoryError) -> Self {
+        RemoteSyncError {
+            msg: "Internal DB error",
+            source: anyhow::Error::from(err),
+        }
+    }
+}
+
 pub struct RemoteDataSynchroniser {
     pub sync_api_v5: SyncApiV5,
 }
@@ -29,14 +38,22 @@ impl RemoteDataSynchroniser {
         connection: &StorageConnection,
     ) -> Result<(), RemoteSyncError> {
         let state = RemoteSyncState::new(connection);
-        if state
-            .initial_remote_data_synced()
-            .map_err(|error| RemoteSyncError {
-                msg: "Failed to get initial sync state",
-                source: anyhow::Error::from(error),
-            })?
-        {
+        if state.initial_remote_data_synced()? {
             return Ok(());
+        }
+
+        if !state.sync_queue_initalised()? {
+            info!("Initialising remote sync records...");
+            let _ = self
+                .sync_api_v5
+                .post_initialise()
+                .await
+                .map_err(|error| RemoteSyncError {
+                    msg: "Failed to post sync queue initialisation request to the central server",
+                    source: anyhow::Error::from(error),
+                })?;
+            state.set_sync_queue_initalised()?;
+            info!("Initialised remote sync records");
         }
 
         info!("Pull remote records...");
@@ -52,12 +69,7 @@ impl RemoteDataSynchroniser {
         //info!("Integrate remote records...");
         //info!("Successfully integrate remote records");
 
-        state
-            .set_initial_remote_data_synced()
-            .map_err(|error| RemoteSyncError {
-                msg: "Failed write initial sync state",
-                source: anyhow::Error::from(error),
-            })?;
+        state.set_initial_remote_data_synced()?;
 
         Ok(())
     }
@@ -68,14 +80,6 @@ impl RemoteDataSynchroniser {
         &self,
         connection: &StorageConnection,
     ) -> anyhow::Result<()> {
-        let state = RemoteSyncState::new(connection);
-        if !state.sync_queue_initalised()? {
-            info!("Initialising remote sync records...");
-            let _ = self.sync_api_v5.post_initialise().await?;
-            state.set_sync_queue_initalised()?;
-            info!("Initialised remote sync records");
-        }
-
         loop {
             info!("Pulling remote sync records...");
             let sync_batch = self.sync_api_v5.get_queued_records().await?;
@@ -146,24 +150,24 @@ impl<'a> RemoteSyncState<'a> {
     pub fn sync_queue_initalised(&self) -> Result<bool, RepositoryError> {
         let value = self
             .key_value_store
-            .get_bool(KeyValueType::RemoteSyncQueueV5Initalised)?;
+            .get_bool(KeyValueType::RemoteSyncInitilisationStarted)?;
         Ok(value.unwrap_or(false))
     }
 
     pub fn set_sync_queue_initalised(&self) -> Result<(), RepositoryError> {
         self.key_value_store
-            .set_bool(KeyValueType::RemoteSyncQueueV5Initalised, Some(true))
+            .set_bool(KeyValueType::RemoteSyncInitilisationStarted, Some(true))
     }
 
     pub fn initial_remote_data_synced(&self) -> Result<bool, RepositoryError> {
         let value = self
             .key_value_store
-            .get_bool(KeyValueType::RemoteSyncInitialSyncState)?;
+            .get_bool(KeyValueType::RemoteSyncInitilisationFinished)?;
         Ok(value.unwrap_or(false))
     }
 
     pub fn set_initial_remote_data_synced(&self) -> Result<(), RepositoryError> {
         self.key_value_store
-            .set_bool(KeyValueType::RemoteSyncInitialSyncState, Some(true))
+            .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
     }
 }
