@@ -1,14 +1,16 @@
 use repository::{
-    schema::{NumberRow, RemoteSyncBufferRow},
-    NumberRowRepository, RepositoryError, StorageConnection,
+    schema::{NumberRow, RemoteSyncBufferRow, StockLineRow},
+    NumberRowRepository, RepositoryError, StockLineRowRepository, StorageConnection,
 };
 
 pub mod number;
+pub mod stock_line;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum TestSyncDataRecord {
     Number(Option<NumberRow>),
+    StockLine(Option<StockLineRow>),
 }
 
 #[allow(dead_code)]
@@ -66,6 +68,18 @@ pub async fn check_records_against_database(
                             &comparison_record.store_id
                         )
                         .unwrap()
+                        .unwrap(),
+                    comparison_record
+                )
+            }
+            TestSyncDataRecord::StockLine(comparison_record) => {
+                let comparison_record = match comparison_record {
+                    Some(comparison_record) => comparison_record,
+                    None => return,
+                };
+                assert_eq!(
+                    StockLineRowRepository::new(&connection)
+                        .find_one_by_id(&comparison_record.id)
                         .unwrap(),
                     comparison_record
                 )
