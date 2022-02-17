@@ -94,7 +94,6 @@ export const useOutboundLines = (
   return useOutboundSelector(selectLines);
 };
 
-// : {id:string, itemId: string, lines: InvoiceLine[]}
 export const useOutboundItems = (): UseQueryResult<InvoiceItem[]> => {
   const selectLines = useCallback((invoice: Invoice) => {
     const { lines } = invoice;
