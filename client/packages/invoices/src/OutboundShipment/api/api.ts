@@ -1,3 +1,4 @@
+import { useOmSupplyApi } from './../../../../common/src/api/OmSupplyApiContext';
 import { DraftOutboundLine } from './../../types';
 import {
   DeleteOutboundShipmentLineInput,
@@ -21,6 +22,12 @@ import {
 } from '@openmsupply-client/common';
 import { Location } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
+import { getSdk } from './operations.generated';
+
+export const useOutboundShipmentApi = () => {
+  const { client } = useOmSupplyApi();
+  return getSdk(client);
+};
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
