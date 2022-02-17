@@ -329,9 +329,10 @@ mod repository_test {
             mock_inbound_shipment_number_store_a, mock_item_stats_item1, mock_item_stats_item2,
             mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
             mock_request_draft_requisition, mock_request_draft_requisition2, mock_stocktake_a,
-            mock_stocktake_b, mock_test_master_list_name1, mock_test_master_list_name2,
+            mock_stocktake_b, mock_stocktake_no_line_a, mock_stocktake_no_line_b,
+            mock_test_master_list_name1, mock_test_master_list_name2,
             mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
-            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts, mock_stocktake_no_line_a, mock_stocktake_no_line_b,
+            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
         schema::{
             ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, KeyValueType,
@@ -1440,7 +1441,7 @@ mod repository_test {
             .unwrap();
         assert_eq!(result, None);
 
-        // write a value
+        // write a string value
         repo.set_string(
             KeyValueType::CentralSyncPullCursor,
             Some("test".to_string()),
@@ -1458,5 +1459,29 @@ mod repository_test {
             .get_string(KeyValueType::CentralSyncPullCursor)
             .unwrap();
         assert_eq!(result, None);
+
+        // write a i32 value
+        repo.set_i32(KeyValueType::CentralSyncPullCursor, Some(50))
+            .unwrap();
+        let result = repo.get_i32(KeyValueType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some(50));
+
+        // write a i64 value
+        repo.set_i64(KeyValueType::CentralSyncPullCursor, Some(500))
+            .unwrap();
+        let result = repo.get_i64(KeyValueType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some(500));
+
+        // write a f64 value
+        repo.set_f64(KeyValueType::CentralSyncPullCursor, Some(600.0))
+            .unwrap();
+        let result = repo.get_f64(KeyValueType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some(600.0));
+
+        // write a bool value
+        repo.set_bool(KeyValueType::CentralSyncPullCursor, Some(true))
+            .unwrap();
+        let result = repo.get_bool(KeyValueType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some(true));
     }
 }
