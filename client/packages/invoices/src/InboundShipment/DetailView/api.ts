@@ -170,7 +170,7 @@ const createUpdateLineInput = (
 });
 
 interface Api<ReadType, UpdateType> {
-  onRead: (id: string, storeId: string) => Promise<ReadType>;
+  onRead: (id: string) => Promise<ReadType>;
   onUpdate: (val: UpdateType) => Promise<UpdateType>;
 }
 
@@ -226,7 +226,7 @@ export const getInboundShipmentDetailViewApi = (
   },
   onUpdate: async (patch: Invoice): Promise<Invoice> => {
     const result = await api.upsertInboundShipment({
-      updateInboundShipments: [invoiceToInput(patch)],
+      input: { updateInboundShipments: [invoiceToInput(patch)] },
     });
 
     const { batchInboundShipment } = result;
@@ -260,6 +260,7 @@ export const useInboundShipmentSelector = <T = Invoice>(
 ): UseQueryResult<T, unknown> => {
   const { id = '' } = useParams();
   const { api } = useOmSupplyApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
   const queries = getInboundShipmentDetailViewApi(api, storeId);
   return useQuery(
     ['invoice', id],
@@ -278,7 +279,8 @@ const getUpdateInbound =
 
 const useOptimisticInboundUpdate = () => {
   const { api } = useOmSupplyApi();
-  const queries = getInboundShipmentDetailViewApi(api);
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const queries = getInboundShipmentDetailViewApi(api, storeId);
   const queryClient = useQueryClient();
   const { id } = useParams();
   return useMutation(queries.onUpdate, {
@@ -464,7 +466,7 @@ const getDeleteInboundLinesQuery =
   (api: OmSupplyApi, invoiceId: string) => (ids: string[]) => {
     const createDeleteLineInput = getCreateDeleteInboundLineInput(invoiceId);
     return api.deleteInboundShipmentLines({
-      input: ids.map(createDeleteLineInput),
+      input: { deleteInboundShipmentLines: ids.map(createDeleteLineInput) },
     });
   };
 
