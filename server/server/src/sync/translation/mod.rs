@@ -196,7 +196,7 @@ async fn store_integration_records(
     integration_records: &IntegrationRecord,
 ) -> Result<(), SyncImportError> {
     connection
-        .transaction(|con| async move {
+        .transaction_sync(|con| {
             for record in &integration_records.upserts {
                 // Integrate every record in a sub transaction. This is mainly for Postgres where the
                 // whole transaction fails when there is a DB error (not a problem in sqlite).
@@ -216,7 +216,6 @@ async fn store_integration_records(
             }
             Ok(())
         })
-        .await
         .map_err(|error| match error {
             TransactionError::Transaction { msg, level } => SyncImportError::as_integration_error(
                 RepositoryError::TransactionError { msg, level },
