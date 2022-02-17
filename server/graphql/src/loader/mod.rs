@@ -29,7 +29,7 @@ pub use name::NameByIdLoader;
 pub use requisition::*;
 pub use requisition_line::*;
 pub use stock_line::*;
-pub use stocktake_lines::StockTakeLineByStockTakeIdLoader;
+pub use stocktake_lines::*;
 pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
 
