@@ -68,7 +68,6 @@ impl RemoteDataSynchroniser {
 
         info!("Integrate remote records...");
         self.integrate_remote_records(connection)
-            .await
             .map_err(|error| RemoteSyncError {
                 msg: "Failed to integrate remote records",
                 source: error,
@@ -114,16 +113,14 @@ impl RemoteDataSynchroniser {
         Ok(())
     }
 
-    async fn integrate_remote_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn integrate_remote_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         let remote_sync_buffer_repository = RemoteSyncBufferRepository::new(&connection);
 
         let mut records: Vec<RemoteSyncBufferRow> = Vec::new();
         for table_name in REMOTE_TRANSLATION_RECORDS {
             info!("Querying remote sync buffer for {} records", table_name);
 
-            let mut buffer_rows = remote_sync_buffer_repository
-                .get_sync_entries(table_name)
-                .await?;
+            let mut buffer_rows = remote_sync_buffer_repository.get_sync_entries(table_name)?;
 
             info!(
                 "Found {} {} records in remote sync buffer",
@@ -135,11 +132,11 @@ impl RemoteDataSynchroniser {
         }
 
         info!("Importing {} remote sync buffer records...", records.len());
-        import_sync_records(connection, &records).await?;
+        import_sync_records(connection, &records)?;
         info!("Successfully Imported remote sync buffer records",);
 
         info!("Clearing remote sync buffer");
-        remote_sync_buffer_repository.remove_all().await?;
+        remote_sync_buffer_repository.remove_all()?;
         info!("Successfully cleared remote sync buffer");
 
         Ok(())
@@ -208,5 +205,51 @@ impl<'a> RemoteSyncState<'a> {
     pub fn set_initial_remote_data_synced(&self) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::sync::{
+        translation_remote::test_data::{
+            check_records_against_database, extract_sync_buffer_rows,
+            number::get_test_number_records, stock_line::get_test_stock_line_records,
+        },
+        SyncApiV5, SyncCredentials,
+    };
+    use repository::{mock::MockDataInserts, test_db, RemoteSyncBufferRepository};
+    use reqwest::{Client, Url};
+
+    use super::RemoteDataSynchroniser;
+
+    #[actix_rt::test]
+    async fn test_integrate_remote_records() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "omsupply-database-integrate_remote_records",
+            MockDataInserts::none().stores().names().units().items(),
+        )
+        .await;
+
+        // use test records with cursors that are out of order
+        let mut test_records = Vec::new();
+        test_records.append(&mut get_test_number_records());
+        test_records.append(&mut get_test_stock_line_records());
+
+        let buffer_rows = extract_sync_buffer_rows(&test_records);
+        RemoteSyncBufferRepository::new(&connection)
+            .upsert_many(&buffer_rows)
+            .expect("Failed to insert central sync records into sync buffer");
+
+        let sync = RemoteDataSynchroniser {
+            sync_api_v5: SyncApiV5::new(
+                Url::parse("http://localhost").unwrap(),
+                SyncCredentials::new("username", "password"),
+                Client::new(),
+            ),
+        };
+        sync.integrate_remote_records(&connection)
+            .expect("Failed to integrate central records");
+
+        check_records_against_database(&connection, test_records);
     }
 }

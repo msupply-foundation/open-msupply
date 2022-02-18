@@ -5,23 +5,39 @@ use repository::{
     TransactionError,
 };
 
-use crate::sync::translation_remote::{number::LegacyNumberRow, stock_line::LegacyStockLineRow};
+use self::number::NumberTranslation;
+use self::stock_line::StockLineTranslation;
 
 use super::translation_central::{SyncImportError, SyncTranslationError};
 
 mod number;
 mod stock_line;
-mod test_data;
+pub mod test_data;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum IntegrationUpsertRecord {
     Number(NumberRow),
     StockLine(StockLineRow),
 }
 
-#[derive(Debug)]
-struct IntegrationRecord {
+#[derive(Debug, Clone, PartialEq)]
+pub struct IntegrationRecord {
     pub upserts: Vec<IntegrationUpsertRecord>,
+}
+
+impl IntegrationRecord {
+    pub fn from_upsert(record: IntegrationUpsertRecord) -> Self {
+        IntegrationRecord {
+            upserts: vec![record],
+        }
+    }
+}
+
+pub trait RemotePullTranslation {
+    fn try_translate_pull(
+        &self,
+        sync_record: &RemoteSyncBufferRow,
+    ) -> Result<Option<IntegrationRecord>, SyncTranslationError>;
 }
 
 pub const TRANSLATION_RECORD_NUMBER: &str = "number";
@@ -35,7 +51,7 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] =
 
 /// Imports sync records and writes them to the DB
 /// If needed data records are translated to the local DB schema.
-pub async fn import_sync_records(
+pub fn import_sync_records(
     connection: &StorageConnection,
     records: &Vec<RemoteSyncBufferRow>,
 ) -> Result<(), SyncImportError> {
@@ -53,7 +69,7 @@ pub async fn import_sync_records(
     info!("Succesfully translated remote sync buffer records");
 
     info!("Storing integration remote records...");
-    store_integration_records(connection, &integration_records).await?;
+    store_integration_records(connection, &integration_records)?;
     info!("Successfully stored integration remote records");
 
     Ok(())
@@ -63,17 +79,17 @@ fn do_translation(
     sync_record: &RemoteSyncBufferRow,
     records: &mut IntegrationRecord,
 ) -> Result<(), SyncTranslationError> {
-    use IntegrationUpsertRecord::*;
-    if let Some(row) = LegacyNumberRow::try_translate_pull(sync_record)? {
-        records.upserts.push(Number(row));
-        return Ok(());
+    let translations: Vec<Box<dyn RemotePullTranslation>> = vec![
+        Box::new(NumberTranslation {}),
+        Box::new(StockLineTranslation {}),
+    ];
+    for translation in translations {
+        if let Some(mut result) = translation.try_translate_pull(sync_record)? {
+            records.upserts.append(&mut result.upserts);
+            return Ok(());
+        }
     }
-
-    if let Some(row) = LegacyStockLineRow::try_translate_pull(sync_record)? {
-        records.upserts.push(StockLine(row));
-        return Ok(());
-    }
-
+    warn!("Unhandled remote pull record: {:?}", sync_record);
     Ok(())
 }
 
@@ -89,12 +105,12 @@ fn integrate_record(
     }
 }
 
-async fn store_integration_records(
+fn store_integration_records(
     connection: &StorageConnection,
     integration_records: &IntegrationRecord,
 ) -> Result<(), SyncImportError> {
     connection
-        .transaction(|con| async move {
+        .transaction_sync(|con| {
             for record in &integration_records.upserts {
                 // Integrate every record in a sub transaction. This is mainly for Postgres where the
                 // whole transaction fails when there is a DB error (not a problem in sqlite).
@@ -114,7 +130,6 @@ async fn store_integration_records(
             }
             Ok(())
         })
-        .await
         .map_err(|error| match error {
             TransactionError::Transaction { msg, level } => SyncImportError::as_integration_error(
                 RepositoryError::TransactionError { msg, level },

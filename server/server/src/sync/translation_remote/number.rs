@@ -4,20 +4,24 @@ use serde::Deserialize;
 
 use crate::sync::translation_central::SyncTranslationError;
 
-use super::TRANSLATION_RECORD_NUMBER;
+use super::{
+    IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation, TRANSLATION_RECORD_NUMBER,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
-pub struct LegacyNumberRow {
+struct LegacyNumberRow {
     ID: String,
     name: String,
     value: i64,
 }
 
-impl LegacyNumberRow {
-    pub fn try_translate_pull(
+pub struct NumberTranslation {}
+impl RemotePullTranslation for NumberTranslation {
+    fn try_translate_pull(
+        &self,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<NumberRow>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_NUMBER;
 
         if sync_record.table_name != table_name {
@@ -37,12 +41,14 @@ impl LegacyNumberRow {
             Some(type_and_store) => type_and_store,
             None => return Ok(None),
         };
-        Ok(Some(NumberRow {
-            id: data.ID.to_string(),
-            value: data.value,
-            store_id: type_and_store.1,
-            r#type: type_and_store.0,
-        }))
+        Ok(Some(IntegrationRecord::from_upsert(
+            IntegrationUpsertRecord::Number(NumberRow {
+                id: data.ID.to_string(),
+                value: data.value,
+                store_id: type_and_store.1,
+                r#type: type_and_store.0,
+            }),
+        )))
     }
 }
 
@@ -64,25 +70,21 @@ fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
 #[cfg(test)]
 mod tests {
     use crate::sync::translation_remote::{
-        number::LegacyNumberRow,
-        test_data::{number::get_test_number_records, TestSyncDataRecord},
+        number::NumberTranslation, test_data::number::get_test_number_records,
+        RemotePullTranslation,
     };
 
     #[test]
     fn test_number_translation() {
         for record in get_test_number_records() {
-            match record.translated_record {
-                TestSyncDataRecord::Number(translated_record) => {
-                    assert_eq!(
-                        LegacyNumberRow::try_translate_pull(&record.remote_sync_buffer_row)
-                            .unwrap(),
-                        translated_record,
-                        "{}",
-                        record.identifier
-                    )
-                }
-                _ => panic!("Testing wrong record type {:#?}", record.translated_record),
-            }
+            assert_eq!(
+                NumberTranslation {}
+                    .try_translate_pull(&record.remote_sync_buffer_row)
+                    .unwrap(),
+                record.translated_record,
+                "{}",
+                record.identifier
+            );
         }
     }
 }
