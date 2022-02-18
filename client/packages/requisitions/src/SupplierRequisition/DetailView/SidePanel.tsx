@@ -16,18 +16,18 @@ import {
   useBufferState,
 } from '@openmsupply-client/common';
 import {
-  useIsSupplierRequisitionDisabled,
-  useSupplierRequisition,
-  useSupplierRequisitionFields,
+  useIsRequestRequisitionDisabled,
+  useRequestRequisition,
+  useRequestRequisitionFields,
 } from '../api';
 
 const AdditionalInfoSection: FC = () => {
-  const isDisabled = useIsSupplierRequisitionDisabled();
-  const { color, comment, update } = useSupplierRequisitionFields([
-    'color',
+  const isDisabled = useIsRequestRequisitionDisabled();
+  const { colour, comment, update } = useRequestRequisitionFields([
+    'colour',
     'comment',
   ]);
-  const [bufferedColor, setBufferedColor] = useBufferState(color);
+  const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const t = useTranslation('common');
 
   return (
@@ -40,7 +40,7 @@ const AdditionalInfoSection: FC = () => {
               disabled={isDisabled}
               onChange={color => {
                 setBufferedColor(color.hex);
-                update({ color: color.hex });
+                update({ colour: color.hex });
               }}
               color={bufferedColor ?? ''}
             />
@@ -67,7 +67,7 @@ const RelatedDocumentsSection: FC = () => {
 };
 
 export const SidePanel: FC = () => {
-  const { data } = useSupplierRequisition();
+  const { data } = useRequestRequisition();
   const { success } = useNotification();
   const t = useTranslation(['replenishment', 'common']);
 

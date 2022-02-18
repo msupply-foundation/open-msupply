@@ -1,3 +1,5 @@
+import { RequestRequisitionRowFragment } from './../api/operations.generated';
+import { RequestRequisitionQueries, RequestRequisitionApi } from './../api/api';
 import {
   RequisitionSortFieldInput,
   RequisitionsQuery,
@@ -113,24 +115,10 @@ export const onCreate =
   };
 
 export const getSupplierRequisitionListViewApi = (
-  omSupplyApi: OmSupplyApi
-): ListApi<RequisitionRow> => ({
-  onRead: ({ first, offset, sortBy, filterBy }) => {
-    const queryParams: RequisitionListParameters = {
-      page: { first, offset },
-      filter: filterBy,
-      sort: [
-        {
-          key: getSortKey(),
-          desc: getSortDesc(sortBy),
-        },
-      ],
-    };
-
-    const onReadFn = onRead(omSupplyApi);
-    return () => onReadFn(queryParams);
-  },
-  onDelete: onDelete(omSupplyApi),
-  onUpdate: onUpdate(omSupplyApi),
-  onCreate: onCreate(omSupplyApi),
+  api: RequestRequisitionApi
+): ListApi<RequestRequisitionRowFragment> => ({
+  onRead: RequestRequisitionQueries.get.list(api),
+  onDelete: () => {},
+  onUpdate: () => {},
+  onCreate: RequestRequisitionQueries.create(api),
 });

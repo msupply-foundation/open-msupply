@@ -744,6 +744,10 @@ query names(
         isCustomer
         isSupplier
         name
+        store {
+          id
+          code
+        }
       }
       totalCount
     }

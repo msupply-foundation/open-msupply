@@ -26,7 +26,7 @@ const supplierRequisitionsRoute = RouteBuilder.create(
 const supplierRequisitionRoute = RouteBuilder.create(
   AppRoute.SupplierRequisition
 )
-  .addPart(':id')
+  .addPart(':requisitionNumber')
   .build();
 
 export const RequisitionService: FC = () => {

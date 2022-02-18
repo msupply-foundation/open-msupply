@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { Name, useTranslation } from '@openmsupply-client/common';
 import { ListSearch } from '@common/components';
 import { useNames } from '../../hooks';
@@ -7,7 +7,7 @@ interface NameSearchProps {
   open: boolean;
   onClose: () => void;
   onChange: (name: Name) => void;
-
+  onlyShowStores?: boolean;
   type: 'customer' | 'supplier';
 }
 
@@ -19,6 +19,7 @@ export const NameSearchModal: FC<NameSearchProps> = ({
   onClose,
   onChange,
   type,
+  onlyShowStores = false,
 }) => {
   // TODO: Need to also handle manufacturers and potentially filter out
   // patients when querying for customers. Also might need to handle
@@ -27,11 +28,17 @@ export const NameSearchModal: FC<NameSearchProps> = ({
   const filter = isCustomerLookup ? { isCustomer: true } : { isSupplier: true };
   const { data, isLoading } = useNames(filter);
   const t = useTranslation(['app', 'common']);
+
+  const filteredData = useMemo(() => {
+    if (onlyShowStores) return data?.nodes.filter(({ store }) => !!store) ?? [];
+    else return data?.nodes ?? [];
+  }, [data, onlyShowStores]);
+
   return (
     <ListSearch
       loading={isLoading}
       open={open}
-      options={data?.nodes ?? []}
+      options={filteredData}
       onClose={onClose}
       title={
         isCustomerLookup
