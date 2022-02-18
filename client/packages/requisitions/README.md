@@ -8,7 +8,7 @@ Requisitions Domain
 
 The intention is that this package is responsible for requisition domain features:
 
-- Supplier requisitions
+- Internal orders
 - Customer requisitions
 
 ### Tips & Things to keep in mind

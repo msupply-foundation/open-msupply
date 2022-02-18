@@ -1,12 +1,12 @@
 import React, { FC } from 'react';
 import { DataTable, useTranslation } from '@openmsupply-client/common';
-import { useSupplierRequisitionColumns } from './columns';
+import { useRequestRequisitionColumns } from './columns';
 import { useRequestRequisitionLines } from '../api';
 
 export const ContentArea: FC = () => {
   const { lines, onChangeSortBy, sortBy, pagination } =
     useRequestRequisitionLines();
-  const columns = useSupplierRequisitionColumns({ sortBy, onChangeSortBy });
+  const columns = useRequestRequisitionColumns({ sortBy, onChangeSortBy });
   const t = useTranslation('common');
 
   return (

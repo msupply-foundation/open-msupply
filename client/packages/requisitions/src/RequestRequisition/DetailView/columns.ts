@@ -1,4 +1,4 @@
-import { RequestRequisitionLineFragment } from './../api/operations.generated';
+import { RequestRequisitionLineFragment } from '../api/operations.generated';
 import {
   useColumns,
   Column,
@@ -6,17 +6,17 @@ import {
   GenericColumnKey,
 } from '@openmsupply-client/common';
 
-interface UseSupplierRequisitionColumnOptions {
+interface UseRequestRequisitionColumnOptions {
   sortBy: SortBy<RequestRequisitionLineFragment>;
   onChangeSortBy: (
     column: Column<RequestRequisitionLineFragment>
   ) => SortBy<RequestRequisitionLineFragment>;
 }
 
-export const useSupplierRequisitionColumns = ({
+export const useRequestRequisitionColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseSupplierRequisitionColumnOptions): Column<RequestRequisitionLineFragment>[] => {
+}: UseRequestRequisitionColumnOptions): Column<RequestRequisitionLineFragment>[] => {
   return useColumns<RequestRequisitionLineFragment>(
     [
       ['itemCode', { width: 50 }],

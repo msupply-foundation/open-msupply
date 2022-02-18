@@ -38,7 +38,7 @@ export const DetailView: FC = () => {
       onOk={() =>
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.SupplierRequisition)
+            .addPart(AppRoute.InternalOrder)
             .build()
         )
       }

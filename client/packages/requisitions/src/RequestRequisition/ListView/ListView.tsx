@@ -18,7 +18,7 @@ import {
   useRequestRequisitions,
 } from '../api';
 
-export const SupplierRequisitionListView: FC = () => {
+export const RequestRequisitionListView: FC = () => {
   const navigate = useNavigate();
   const { mutate } = useCreateRequestRequisition();
   const { data } = useRequestRequisitions();
@@ -71,7 +71,7 @@ export const SupplierRequisitionListView: FC = () => {
 export const ListView: FC = () => {
   return (
     <TableProvider createStore={createTableStore}>
-      <SupplierRequisitionListView />
+      <RequestRequisitionListView />
     </TableProvider>
   );
 };

@@ -1,4 +1,8 @@
-import { RequisitionNodeStatus, LocaleKey } from '@openmsupply-client/common';
+import {
+  RequisitionNodeStatus,
+  LocaleKey,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { Requisition, RequisitionRow } from './types';
 
 export const isRequisitionEditable = (requisition: Requisition): boolean => {
@@ -8,37 +12,21 @@ export const isRequisitionEditable = (requisition: Requisition): boolean => {
   );
 };
 
-// TODO: When supplier requisition statuses are finalised, this function should be passed
-// `t` and should properly translate the status.
-export const getSupplierRequisitionTranslator =
-  () =>
-  (currentStatus: RequisitionNodeStatus): string =>
-    currentStatus;
-
-// TODO: When supplier requisition statuses are finalised, this function should
-// return the next status rather than just returning the current status
-export const getNextSupplierRequisitionStatus = (
-  currentStatus: RequisitionNodeStatus
-): RequisitionNodeStatus => {
-  const statuses = getSupplierRequisitionStatuses();
-  const currentIdx = statuses.findIndex(
-    requisitionStatus => requisitionStatus === currentStatus
-  );
-
-  if (currentIdx < 0) {
-    throw new Error('Cannot find index of current supplier requisition idx');
-  }
-
-  const nextStatus = statuses[currentIdx + 1];
-
-  if (!nextStatus) {
-    throw new Error('Cannot find next supplier requisition status');
-  }
-
-  return nextStatus;
+const requisitionStatusToLocaleKey: Record<RequisitionNodeStatus, LocaleKey> = {
+  [RequisitionNodeStatus.Draft]: 'label.draft',
+  [RequisitionNodeStatus.New]: 'label.new',
+  [RequisitionNodeStatus.Sent]: 'label.sent',
+  [RequisitionNodeStatus.Finalised]: 'label.finalised',
 };
 
-export const getSupplierRequisitionStatuses = (): RequisitionNodeStatus[] => [
+// TODO: When supplier requisition statuses are finalised, this function should be passed
+// `t` and should properly translate the status.
+export const getRequestRequisitionTranslator =
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: RequisitionNodeStatus): string =>
+    t(requisitionStatusToLocaleKey[currentStatus]);
+
+export const getRequestRequisitionStatuses = (): RequisitionNodeStatus[] => [
   RequisitionNodeStatus.Draft,
   RequisitionNodeStatus.New,
   RequisitionNodeStatus.Sent,
@@ -48,8 +36,9 @@ export const canDeleteRequisition = (requisitionRow: RequisitionRow): boolean =>
   requisitionRow.status === RequisitionNodeStatus.Draft;
 
 export const getNextStatusText = (status: RequisitionNodeStatus): string => {
-  const nextStatus = getNextSupplierRequisitionStatus(status);
-  const translation = getSupplierRequisitionTranslator()(nextStatus);
+  const nextStatus = getNextRequestRequisitionStatus(status);
+  if (!nextStatus) return '';
+  const translation = getRequestRequisitionTranslator()(nextStatus);
   return translation;
 };
 

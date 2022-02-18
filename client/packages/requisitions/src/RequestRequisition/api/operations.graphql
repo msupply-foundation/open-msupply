@@ -23,16 +23,6 @@ mutation updateRequestRequisition(
   }
 }
 
-# mutation deleteSupplierRequisitions($ids: [DeleteSupplierRequisitionInput!]) {
-#   batchSupplierRequisition(deleteSupplierRequisitions: $ids) {
-#     __typename
-#     deleteSupplierRequisitions {
-#       __typename
-#       id
-#     }
-#   }
-# }
-
 fragment RequestRequisitionLine on RequisitionLineNode {
   id
   itemId

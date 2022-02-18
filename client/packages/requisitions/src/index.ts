@@ -1,7 +1,7 @@
 export {
-  ListView as SupplierRequisitionListView,
-  DetailView as SupplierRequisitionDetailView,
-} from './SupplierRequisition';
+  ListView as RequestRequisitionListView,
+  DetailView as RequestRequisitionDetailView,
+} from './RequestRequisition';
 export {
   ListView as CustomerRequisitionListView,
   DetailView as CustomerRequisitionDetailView,
