@@ -57,13 +57,13 @@ export const RequestRequisitionQueries = {
   },
 
   update:
-    (api: RequestRequisitionApi) =>
+    (api: RequestRequisitionApi, storeId: string) =>
     async (
       patch: Partial<RequestRequisitionFragment> & { id: string }
     ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
       const input = requisitionToInput(patch);
       const result = await api.updateRequestRequisition({
-        storeId: '',
+        storeId,
         input,
       });
 
