@@ -1,14 +1,16 @@
 import {
   UpdateInboundShipmentInput,
-  InvoicesQuery,
   SortBy,
   ListApi,
   InvoiceSortFieldInput,
-  InvoicesQueryVariables,
   InvoicePriceResponse,
-  OmSupplyApi,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceRow } from '../../types';
+import {
+  InboundShipmentApi,
+  InvoicesQueryVariables,
+  InvoicesQuery,
+} from '../api';
 
 const invoiceToInput = (
   patch: Partial<Invoice> & { id: string }
@@ -70,7 +72,7 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
 };
 
 export const getInboundShipmentListViewApi = (
-  api: OmSupplyApi
+  api: InboundShipmentApi
 ): ListApi<InvoiceRow> => ({
   onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
     const queryParams: InvoicesQueryVariables = {
