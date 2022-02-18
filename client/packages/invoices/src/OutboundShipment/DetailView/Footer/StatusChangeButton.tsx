@@ -99,7 +99,7 @@ const useStatusChangeButton = () => {
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel, t]
+    [status, getButtonLabel]
   );
 
   const [selectedOption, setSelectedOption] =
@@ -130,10 +130,7 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    const nextSelectedOption = getNextStatusOption(status, options);
-    if (nextSelectedOption?.value !== selectedOption?.value) {
-      setSelectedOption(nextSelectedOption);
-    }
+    setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
   return { options, selectedOption, setSelectedOption, onGetConfirmation };
