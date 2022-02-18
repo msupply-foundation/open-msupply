@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import {
-  SupplierRequisitionNodeStatus,
+  RequisitionNodeStatus,
   useParams,
   useOmSupplyApi,
   UseQueryResult,
@@ -71,5 +71,5 @@ export const useCustomerRequisitionLines =
 
 export const useIsCustomerRequisitionDisabled = (): boolean => {
   const { status } = useCustomerRequisitionFields('status');
-  return status === SupplierRequisitionNodeStatus.Finalised;
+  return status === RequisitionNodeStatus.Finalised;
 };

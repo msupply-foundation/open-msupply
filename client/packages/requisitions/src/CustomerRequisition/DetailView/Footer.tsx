@@ -9,11 +9,11 @@ import {
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import {
-  getSupplierRequisitionStatuses,
-  getNextSupplierRequisitionStatus,
-  getSupplierRequisitionTranslator,
+  getRequestRequisitionStatuses,
+  getNextRequestRequisitionStatus,
+  getRequestRequisitionTranslator,
   createStatusLog,
-  getNextStatusText,
+  getStatusTranslation,
 } from '../../utils';
 import {
   useCustomerRequisitionFields,
@@ -38,9 +38,9 @@ export const Footer: FC = () => {
             height={64}
           >
             <StatusCrumbs
-              statuses={getSupplierRequisitionStatuses()}
+              statuses={getRequestRequisitionStatuses()}
               statusLog={createStatusLog(status)}
-              statusFormatter={getSupplierRequisitionTranslator()}
+              statusFormatter={getRequestRequisitionTranslator(t)}
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
@@ -50,15 +50,15 @@ export const Footer: FC = () => {
                   disabled={isDisabled}
                   Icon={<ArrowRightIcon />}
                   label={t('button.save-and-confirm-status', {
-                    status: getNextStatusText(status),
+                    status: getStatusTranslation(status),
                   })}
                   sx={{ fontSize: '12px' }}
                   variant="contained"
                   color="secondary"
                   onClick={async () => {
-                    await update({
-                      status: getNextSupplierRequisitionStatus(status),
-                    });
+                    const nextStatus = getNextRequestRequisitionStatus(status);
+                    if (!nextStatus) return;
+                    await update({ status: nextStatus });
                     success('Saved requisition! 🥳 ')();
                   }}
                 />
