@@ -15,6 +15,7 @@ import {
   useSortBy,
   usePagination,
   getDataSorter,
+  useHostContext,
 } from '@openmsupply-client/common';
 import { RequestRequisitionQueries } from './api';
 import {
@@ -29,17 +30,22 @@ export const useRequestRequisitionApi = () => {
 };
 
 export const useRequestRequisitions = () => {
+  const { store } = useHostContext();
   const api = useRequestRequisitionApi();
-  return useQuery(['requisition'], RequestRequisitionQueries.get.list(api));
+  return useQuery(
+    ['requisition', store.id],
+    RequestRequisitionQueries.get.list(api, store.id)
+  );
 };
 
 export const useCreateRequestRequisition = () => {
   const queryClient = useQueryClient();
+  const { store } = useHostContext();
   const navigate = useNavigate();
   const api = useRequestRequisitionApi();
-  return useMutation(RequestRequisitionQueries.create(api), {
-    onSuccess: ({ id }) => {
-      navigate(id);
+  return useMutation(RequestRequisitionQueries.create(api, store.id), {
+    onSuccess: ({ requisitionNumber }) => {
+      navigate(String(requisitionNumber));
       queryClient.invalidateQueries(['requisition']);
     },
   });
@@ -47,10 +53,14 @@ export const useCreateRequestRequisition = () => {
 
 export const useRequestRequisition =
   (): UseQueryResult<RequestRequisitionFragment> => {
-    const { id = '' } = useParams();
+    const { requisitionNumber = '' } = useParams();
+    const { store } = useHostContext();
     const api = useRequestRequisitionApi();
-    return useQuery(['requisition', id], () =>
-      RequestRequisitionQueries.get.byNumber(api)()
+    return useQuery(['requisition', store.id, requisitionNumber], () =>
+      RequestRequisitionQueries.get.byNumber(api)(
+        Number(requisitionNumber),
+        store.id
+      )
     );
   };
 
@@ -59,13 +69,19 @@ export const useRequestRequisitionFields = <
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<RequestRequisitionFragment, KeyOfRequisition> => {
-  const { id = '' } = useParams();
+  const { store } = useHostContext();
+  const { data } = useRequestRequisition();
+  const { requisitionNumber = '' } = useParams();
   const api = useRequestRequisitionApi();
   return useFieldsSelector(
-    ['requisition', id],
-    () => RequestRequisitionQueries.get.byNumber(api)(),
+    ['requisition', store.id, requisitionNumber],
+    () =>
+      RequestRequisitionQueries.get.byNumber(api)(
+        Number(requisitionNumber),
+        store.id
+      ),
     (patch: Partial<RequestRequisitionFragment>) =>
-      RequestRequisitionQueries.update(api)({ ...patch, id }),
+      RequestRequisitionQueries.update(api)({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
