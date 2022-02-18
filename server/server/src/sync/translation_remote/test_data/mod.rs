@@ -1,23 +1,18 @@
 use repository::{
-    schema::{NumberRow, RemoteSyncBufferRow, StockLineRow},
-    NumberRowRepository, RepositoryError, StockLineRowRepository, StorageConnection,
+    schema::RemoteSyncBufferRow, NumberRowRepository, RepositoryError, StockLineRowRepository,
+    StorageConnection,
 };
+
+use super::{IntegrationRecord, IntegrationUpsertRecord};
 
 pub mod number;
 pub mod stock_line;
 
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
-pub enum TestSyncDataRecord {
-    Number(Option<NumberRow>),
-    StockLine(Option<StockLineRow>),
-}
-
-#[allow(dead_code)]
 #[derive(Clone)]
 pub struct TestSyncRecord {
     /// Expected result for the imported data
-    pub translated_record: TestSyncDataRecord,
+    pub translated_record: Option<IntegrationRecord>,
     /// Identifier for this record
     pub identifier: &'static str,
     /// Row as stored in the remote sync buffer
@@ -50,39 +45,37 @@ pub fn extract_sync_buffer_rows(records: &Vec<TestSyncRecord>) -> Vec<RemoteSync
 }
 
 #[allow(dead_code)]
-pub async fn check_records_against_database(
+pub fn check_records_against_database(
     connection: &StorageConnection,
     records: Vec<TestSyncRecord>,
 ) {
     for record in records {
-        match record.translated_record {
-            TestSyncDataRecord::Number(comparison_record) => {
-                let comparison_record = match comparison_record {
-                    Some(comparison_record) => comparison_record,
-                    None => return,
-                };
-                assert_eq!(
-                    NumberRowRepository::new(&connection)
-                        .find_one_by_type_and_store(
-                            &comparison_record.r#type,
-                            &comparison_record.store_id
-                        )
-                        .unwrap()
-                        .unwrap(),
-                    comparison_record
-                )
-            }
-            TestSyncDataRecord::StockLine(comparison_record) => {
-                let comparison_record = match comparison_record {
-                    Some(comparison_record) => comparison_record,
-                    None => return,
-                };
-                assert_eq!(
-                    StockLineRowRepository::new(&connection)
-                        .find_one_by_id(&comparison_record.id)
-                        .unwrap(),
-                    comparison_record
-                )
+        let translated_record = match record.translated_record {
+            Some(translated_record) => translated_record,
+            None => continue,
+        };
+        for upsert in translated_record.upserts {
+            match upsert {
+                IntegrationUpsertRecord::Number(comparison_record) => {
+                    assert_eq!(
+                        NumberRowRepository::new(&connection)
+                            .find_one_by_type_and_store(
+                                &comparison_record.r#type,
+                                &comparison_record.store_id
+                            )
+                            .unwrap()
+                            .unwrap(),
+                        comparison_record
+                    )
+                }
+                IntegrationUpsertRecord::StockLine(comparison_record) => {
+                    assert_eq!(
+                        StockLineRowRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap(),
+                        comparison_record
+                    )
+                }
             }
         }
     }

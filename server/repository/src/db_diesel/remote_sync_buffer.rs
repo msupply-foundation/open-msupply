@@ -41,14 +41,14 @@ impl<'a> RemoteSyncBufferRepository<'a> {
         Ok(())
     }
 
-    pub async fn remove_all(&self) -> Result<(), RepositoryError> {
+    pub fn remove_all(&self) -> Result<(), RepositoryError> {
         diesel::delete(remote_sync_buffer_dsl::remote_sync_buffer)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
     // Retrieves all sync entries for a given table and returns them in asc order.
-    pub async fn get_sync_entries(
+    pub fn get_sync_entries(
         &self,
         table: &str,
     ) -> Result<Vec<RemoteSyncBufferRow>, RepositoryError> {
