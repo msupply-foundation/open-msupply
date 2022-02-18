@@ -70,6 +70,17 @@ fragment RequestRequisition on RequisitionNode {
       }
     }
   }
+  otherParty {
+    id
+    code
+    isCustomer
+    isSupplier
+    name
+    store {
+      id
+      code
+    }
+  }
 }
 query requestRequisition($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
