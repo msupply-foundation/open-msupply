@@ -1,9 +1,13 @@
 import {
+  FilterBy,
+  SortBy,
   RequisitionNodeStatus,
   UpdateRequestRequisitionInput,
   UpdateRequestRequisitionStatusInput,
+  RequisitionSortFieldInput,
 } from '@openmsupply-client/common';
 import {
+  RequestRequisitionRowFragment,
   getSdk,
   RequestRequisitionFragment,
   RequestRequisitionsQuery,
@@ -30,10 +34,30 @@ export const requisitionToInput = (
 export const RequestRequisitionQueries = {
   get: {
     list:
-      (api: RequestRequisitionApi, storeId: string) =>
+      (
+        api: RequestRequisitionApi,
+        storeId: string,
+        {
+          first,
+          offset,
+          sortBy,
+          filter,
+        }: {
+          first: number;
+          offset: number;
+          sortBy: SortBy<RequestRequisitionRowFragment>;
+          filter: FilterBy | null;
+        }
+      ) =>
       async (): Promise<RequestRequisitionsQuery['requisitions']> => {
         const result = await api.requestRequisitions({
           storeId,
+          page: { offset, first },
+          sort: {
+            key: sortBy.key as RequisitionSortFieldInput,
+            desc: !!sortBy.isDesc,
+          },
+          filter: { ...filter },
         });
         return result.requisitions;
       },

@@ -107,6 +107,7 @@ fragment RequestRequisitionRow on RequisitionNode {
   status
   theirReference
   type
+  otherPartyId
 }
 
 query requestRequisitions(
