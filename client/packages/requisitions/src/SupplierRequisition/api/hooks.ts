@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import {
-  SupplierRequisitionNodeStatus,
+  useQueryClient,
+  RequisitionNodeStatus,
+  useNavigate,
+  useMutation,
   useParams,
   useOmSupplyApi,
   UseQueryResult,
@@ -12,53 +15,103 @@ import {
   useSortBy,
   usePagination,
   getDataSorter,
+  useHostContext,
 } from '@openmsupply-client/common';
-import { Requisition, RequisitionLine } from '../../types';
-import { SupplierRequisitionApi } from './api';
+import { RequestRequisitionQueries } from './api';
+import {
+  getSdk,
+  RequestRequisitionFragment,
+  RequestRequisitionLineFragment,
+} from './operations.generated';
 
-export const useSupplierRequisition = (): UseQueryResult<Requisition> => {
-  const { id = '' } = useParams();
-  const { api } = useOmSupplyApi();
-  return useQuery(['requisition', id], () =>
-    SupplierRequisitionApi.get.byId(api)(id)
+export const useRequestRequisitionApi = () => {
+  const { client } = useOmSupplyApi();
+  return getSdk(client);
+};
+
+export const useRequestRequisitions = () => {
+  const { store } = useHostContext();
+  const api = useRequestRequisitionApi();
+  return useQuery(
+    ['requisition', store.id],
+    RequestRequisitionQueries.get.list(api, store.id)
   );
 };
 
-export const useSupplierRequisitionFields = <
-  KeyOfRequisition extends keyof Requisition
+export const useCreateRequestRequisition = () => {
+  const queryClient = useQueryClient();
+  const { store } = useHostContext();
+  const navigate = useNavigate();
+  const api = useRequestRequisitionApi();
+  return useMutation(RequestRequisitionQueries.create(api, store.id), {
+    onSuccess: ({ requisitionNumber }) => {
+      navigate(String(requisitionNumber));
+      queryClient.invalidateQueries(['requisition']);
+    },
+  });
+};
+
+export const useRequestRequisition =
+  (): UseQueryResult<RequestRequisitionFragment> => {
+    const { requisitionNumber = '' } = useParams();
+    const { store } = useHostContext();
+    const api = useRequestRequisitionApi();
+    return useQuery(['requisition', store.id, requisitionNumber], () =>
+      RequestRequisitionQueries.get.byNumber(api)(
+        Number(requisitionNumber),
+        store.id
+      )
+    );
+  };
+
+export const useRequestRequisitionFields = <
+  KeyOfRequisition extends keyof RequestRequisitionFragment
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
-): FieldSelectorControl<Requisition, KeyOfRequisition> => {
-  const { id = '' } = useParams();
-  const { api } = useOmSupplyApi();
+): FieldSelectorControl<RequestRequisitionFragment, KeyOfRequisition> => {
+  const { store } = useHostContext();
+  const { data } = useRequestRequisition();
+  const { requisitionNumber = '' } = useParams();
+  const api = useRequestRequisitionApi();
   return useFieldsSelector(
-    ['requisition', id],
-    () => SupplierRequisitionApi.get.byId(api)(id),
-    (patch: Partial<Requisition>) =>
-      SupplierRequisitionApi.update(api)({ ...patch, id }),
+    ['requisition', store.id, requisitionNumber],
+    () =>
+      RequestRequisitionQueries.get.byNumber(api)(
+        Number(requisitionNumber),
+        store.id
+      ),
+    (patch: Partial<RequestRequisitionFragment>) =>
+      RequestRequisitionQueries.update(
+        api,
+        store.id
+      )({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
 
-interface UseSupplierRequisitionLinesController
-  extends SortController<RequisitionLine>,
+interface UseRequestRequisitionLinesController
+  extends SortController<RequestRequisitionLineFragment>,
     PaginationState {
-  lines: RequisitionLine[];
+  lines: RequestRequisitionLineFragment[];
 }
 
-export const useSupplierRequisitionLines =
-  (): UseSupplierRequisitionLinesController => {
-    const { sortBy, onChangeSortBy } = useSortBy<RequisitionLine>({
-      key: 'itemName',
-      isDesc: false,
-    });
+export const useRequestRequisitionLines =
+  (): UseRequestRequisitionLinesController => {
+    const { sortBy, onChangeSortBy } =
+      useSortBy<RequestRequisitionLineFragment>({
+        key: 'itemName',
+        isDesc: false,
+      });
     const pagination = usePagination(20);
-    const { lines } = useSupplierRequisitionFields('lines');
+    const { lines } = useRequestRequisitionFields('lines');
 
     const sorted = useMemo(() => {
       const sorted =
-        lines?.sort(
-          getDataSorter(sortBy.key as keyof RequisitionLine, !!sortBy.isDesc)
+        lines?.nodes.sort(
+          getDataSorter(
+            sortBy.key as keyof RequestRequisitionLineFragment,
+            !!sortBy.isDesc
+          )
         ) ?? [];
 
       return sorted.slice(
@@ -70,7 +123,10 @@ export const useSupplierRequisitionLines =
     return { lines: sorted, sortBy, onChangeSortBy, ...pagination };
   };
 
-export const useIsSupplierRequisitionDisabled = (): boolean => {
-  const { status } = useSupplierRequisitionFields('status');
-  return status === SupplierRequisitionNodeStatus.Finalised;
+export const useIsRequestRequisitionDisabled = (): boolean => {
+  const { status } = useRequestRequisitionFields('status');
+  return (
+    status === RequisitionNodeStatus.Finalised ||
+    status === RequisitionNodeStatus.Sent
+  );
 };

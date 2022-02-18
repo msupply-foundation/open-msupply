@@ -8,17 +8,17 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useSupplierRequisition } from '../api';
+import { useRequestRequisition, useIsRequestRequisitionDisabled } from '../api';
 import { Toolbar } from './Toolbar';
-import { Footer } from './Footer';
+import { Footer } from './Footer/Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { isRequisitionEditable } from '../../utils';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const DetailView: FC = () => {
-  const { data, isLoading } = useSupplierRequisition();
+  const { data, isLoading } = useRequestRequisition();
+  const isDisabled = useIsRequestRequisitionDisabled();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 
@@ -26,10 +26,7 @@ export const DetailView: FC = () => {
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
-      <AppBarButtons
-        isDisabled={!data || !isRequisitionEditable(data)}
-        onAddItem={() => {}}
-      />
+      <AppBarButtons isDisabled={!data || !isDisabled} onAddItem={() => {}} />
       <Toolbar />
       <ContentArea />
       <Footer />
