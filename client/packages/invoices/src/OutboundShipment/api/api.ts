@@ -1,15 +1,12 @@
-import { useOmSupplyApi } from './../../../../common/src/api/OmSupplyApiContext';
 import { DraftOutboundLine } from './../../types';
 import {
   DeleteOutboundShipmentLineInput,
   RecordPatch,
-  OmSupplyApi,
   UpdateOutboundShipmentInput,
   InvoiceNodeStatus,
   UpdateOutboundShipmentStatusInput,
   NameResponse,
   InvoicePriceResponse,
-  InvoiceQuery,
   InvoiceLineConnector,
   ConnectorError,
   StockLineResponse,
@@ -22,12 +19,9 @@ import {
 } from '@openmsupply-client/common';
 import { Location } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
-import { getSdk } from './operations.generated';
+import { getSdk, InvoiceQuery } from './operations.generated';
 
-export const useOutboundShipmentApi = () => {
-  const { client } = useOmSupplyApi();
-  return getSdk(client);
-};
+export type OutboundShipmentApi = ReturnType<typeof getSdk>;
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
@@ -152,9 +146,9 @@ const createUpdateOutboundLineInput = (
 export const OutboundApi = {
   get: {
     byId:
-      (api: OmSupplyApi) =>
+      (api: OutboundShipmentApi, storeId: string) =>
       async (id: string): Promise<Invoice> => {
-        const result = await api.invoice({ id });
+        const result = await api.invoice({ id, storeId });
 
         const invoice = invoiceGuard(result);
         // TODO:
@@ -189,7 +183,7 @@ export const OutboundApi = {
       },
   },
   update:
-    (api: OmSupplyApi) =>
+    (api: OutboundShipmentApi) =>
     async (patch: RecordPatch<Invoice>): Promise<RecordPatch<Invoice>> => {
       const result = await api.upsertOutboundShipment({
         input: {
@@ -214,7 +208,8 @@ export const OutboundApi = {
       throw new Error('Unable to update invoice');
     },
   updateLines:
-    (api: OmSupplyApi) => async (draftStocktakeLines: DraftOutboundLine[]) => {
+    (api: OutboundShipmentApi) =>
+    async (draftStocktakeLines: DraftOutboundLine[]) => {
       const input = {
         insertOutboundShipmentLines: draftStocktakeLines
           .filter(({ isCreated }) => isCreated)
@@ -229,7 +224,7 @@ export const OutboundApi = {
       return result;
     },
   deleteLines:
-    (api: OmSupplyApi, invoiceId: string) => async (ids: string[]) => {
+    (api: OutboundShipmentApi, invoiceId: string) => async (ids: string[]) => {
       const createDeleteLineInput = getCreateDeleteOutboundLineInput(invoiceId);
       return api.deleteOutboundShipmentLines({
         deleteOutboundShipmentLines: ids.map(createDeleteLineInput),

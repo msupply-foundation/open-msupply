@@ -23,7 +23,7 @@ export const useItemsList = (initialListParameters: {
 }> => {
   const queryClient = useQueryClient();
   const { api } = useOmSupplyApi();
-  const { filterBy, filter, queryParams, first, offset, sortBy } =
+  const { filterBy, filter, queryParams, first, offset, sortBy, storeId } =
     useQueryParams(initialListParameters);
 
   const queryState = useQuery(
@@ -34,6 +34,7 @@ export const useItemsList = (initialListParameters: {
         filter: filterBy,
         first,
         offset,
+        storeId,
       });
 
       return mapItemNodes(result);
@@ -56,6 +57,7 @@ export const useItemsList = (initialListParameters: {
           filter: prefetchQueryParams.filterBy,
           first: prefetchQueryParams.pagination.first,
           offset: prefetchQueryParams.pagination.offset,
+          storeId,
         })
     );
   };
