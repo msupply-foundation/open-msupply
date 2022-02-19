@@ -1,96 +1,102 @@
 import {
-  UpdateCustomerRequisitionInput,
-  NameResponse,
-  RequisitionQuery,
-  RequisitionLineConnector,
-  OmSupplyApi,
-  ConnectorError,
+  SortBy,
+  FilterBy,
+  RequisitionSortFieldInput,
+  RequisitionNodeType,
+  UpdateResponseRequisitionInput,
+  UpdateResponseRequisitionStatusInput,
 } from '@openmsupply-client/common';
-import { Requisition } from '../../types';
 
-const otherPartyGuard = (otherParty: NameResponse) => {
-  if (otherParty.__typename === 'NameNode') {
-    return otherParty;
-  } else if (otherParty.__typename === 'NodeError') {
-    throw new Error(otherParty.error.description);
-  }
+import {
+  getSdk,
+  ResponseRequisitionFragment,
+  ResponseRequisitionRowFragment,
+  ResponseRequisitionsQuery,
+} from './operations.generated';
 
-  throw new Error('Unknown');
-};
-
-const requisitionGuard = (requisitionQuery: RequisitionQuery) => {
-  if (requisitionQuery.requisition.__typename === 'RequisitionNode') {
-    return requisitionQuery.requisition;
-  }
-
-  throw new Error('Could not find the requisition');
-};
-
-const linesGuard = (
-  requisitionLines: RequisitionLineConnector | ConnectorError
-) => {
-  if (requisitionLines.__typename === 'RequisitionLineConnector') {
-    return requisitionLines.nodes;
-  }
-
-  if (requisitionLines.__typename === 'ConnectorError') {
-    throw new Error('Error fetching lines for requisition');
-  }
-
-  throw new Error('Unknown');
-};
+export type ResponseRequisitionApi = ReturnType<typeof getSdk>;
 
 export const requisitionToInput = (
-  requisition: Partial<Requisition> & { id: string }
-): UpdateCustomerRequisitionInput => {
+  requisition: Partial<ResponseRequisitionFragment> & { id: string }
+): UpdateResponseRequisitionInput => {
   return {
     id: requisition.id,
-    orderDate: requisition.requisitionDate?.toISOString(),
-    otherPartyId: requisition.otherParty?.id,
+    // otherPartyId: requisition.otherParty?.id,
     comment: requisition.comment,
     theirReference: requisition.theirReference,
-    color: requisition.color,
-    status: requisition.status,
+    colour: requisition.colour,
+    status: requisition.status
+      ? UpdateResponseRequisitionStatusInput.Finalised
+      : undefined,
   };
 };
 
-export const CustomerRequisitionApi = {
+export const ResponseRequisitionQueries = {
   get: {
-    byId:
-      (api: OmSupplyApi) =>
-      async (id: string): Promise<Requisition> => {
-        const result = await api.requisition({ id });
-        const requisition = requisitionGuard(result);
-        const lines = linesGuard(requisition.lines);
-        const otherParty = otherPartyGuard(requisition.otherParty);
+    list:
+      (
+        api: ResponseRequisitionApi,
+        storeId: string,
+        {
+          first,
+          offset,
+          sortBy,
+          filter,
+        }: {
+          first: number;
+          offset: number;
+          sortBy: SortBy<ResponseRequisitionRowFragment>;
+          filter: FilterBy | null;
+        }
+      ) =>
+      async (): Promise<ResponseRequisitionsQuery['requisitions']> => {
+        const result = await api.responseRequisitions({
+          storeId,
+          page: { offset, first },
+          sort: {
+            key: sortBy.key as RequisitionSortFieldInput,
+            desc: !!sortBy.isDesc,
+          },
+          filter: {
+            ...filter,
+            type: { equalTo: RequisitionNodeType.Response },
+          },
+        });
+        return result.requisitions;
+      },
+    byNumber:
+      (api: ResponseRequisitionApi) =>
+      async (
+        requisitionNumber: number,
+        storeId: string
+      ): Promise<ResponseRequisitionFragment> => {
+        const result = await api.responseRequisition({
+          storeId,
+          requisitionNumber,
+        });
 
-        return {
-          ...requisition,
-          lines,
-          otherParty,
-          orderDate: requisition.orderDate
-            ? new Date(requisition.orderDate)
-            : null,
-          requisitionDate: requisition.requisitionDate
-            ? new Date(requisition.requisitionDate)
-            : null,
-          otherPartyName: otherParty.name,
-        };
+        if (result.requisitionByNumber.__typename === 'RequisitionNode') {
+          return result.requisitionByNumber;
+        }
+
+        throw new Error('Record not found');
       },
   },
-
   update:
-    (api: OmSupplyApi) =>
+    (api: ResponseRequisitionApi, storeId: string) =>
     async (
-      patch: Partial<Requisition> & { id: string }
-    ): Promise<UpdateCustomerRequisitionInput> => {
+      patch: Partial<ResponseRequisitionFragment> & { id: string }
+    ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
       const input = requisitionToInput(patch);
-      const result = await api.updateCustomerRequisition({ input });
+      const result = await api.updateResponseRequisition({
+        storeId,
+        input,
+      });
 
-      const { updateCustomerRequisition } = result;
+      const { updateResponseRequisition } = result;
 
-      if (updateCustomerRequisition.__typename === 'RequisitionNode') {
-        return input;
+      if (updateResponseRequisition.__typename === 'RequisitionNode') {
+        return updateResponseRequisition;
       }
 
       throw new Error('Unable to update requisition');
