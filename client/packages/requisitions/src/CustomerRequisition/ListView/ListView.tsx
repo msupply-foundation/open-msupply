@@ -1,65 +1,32 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   useNavigate,
   DataTable,
   useColumns,
-  useListData,
   TableProvider,
   createTableStore,
-  useNotification,
-  generateUUID,
-  useOmSupplyApi,
   getNameAndColorColumn,
-  useFormatDate,
 } from '@openmsupply-client/common';
-import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getCustomerRequisitionListViewApi } from './api';
-import { RequisitionRow } from '../../types';
+import {
+  useResponseRequisitions,
+  ResponseRequisitionRowFragment,
+} from '../api';
 
 export const CustomerRequisitionListView: FC = () => {
   const navigate = useNavigate();
-  const { error } = useNotification();
-  const { api } = useOmSupplyApi();
-  const d = useFormatDate();
+  const { data, onChangeSortBy, sortBy, onChangePage, pagination, filter } =
+    useResponseRequisitions();
 
-  const {
-    totalCount,
-    data,
-    onDelete,
-    onUpdate,
-    sortBy,
-    onChangeSortBy,
-    onCreate,
-    onChangePage,
-    pagination,
-    filter,
-    invalidate,
-  } = useListData(
-    {
-      initialSortBy: { key: 'otherPartyName' },
-      initialFilterBy: { type: { equalTo: 'CUSTOMER_REQUISITION' } },
-    },
-    'requisition',
-    getCustomerRequisitionListViewApi(api)
-  );
-
-  const columns = useColumns<RequisitionRow>(
+  const columns = useColumns<ResponseRequisitionRowFragment>(
     [
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      [getNameAndColorColumn(), { setter: () => {} }],
       {
         key: 'requisitionNumber',
         label: 'label.number',
       },
       'status',
-      {
-        key: 'orderDate',
-        label: 'label.requisition-date',
-        width: 100,
-        accessor: ({ rowData }) =>
-          rowData.orderDate ? d(rowData.orderDate) : '',
-      },
       'comment',
       'selection',
     ],
@@ -67,47 +34,16 @@ export const CustomerRequisitionListView: FC = () => {
     [sortBy]
   );
 
-  const [open, setOpen] = useState(false);
-
   return (
     <>
-      <NameSearchModal
-        type="customer"
-        open={open}
-        onClose={() => setOpen(false)}
-        onChange={async name => {
-          setOpen(false);
-
-          const createRequisition = async () => {
-            const requisition = {
-              id: generateUUID(),
-              otherPartyId: name?.id,
-            };
-
-            try {
-              const result = await onCreate(requisition);
-              invalidate();
-              navigate(result);
-            } catch (e) {
-              const errorSnack = error(
-                'Failed to create requisition! ' + (e as Error).message
-              );
-              errorSnack();
-            }
-          };
-
-          createRequisition();
-        }}
-      />
-
-      <Toolbar onDelete={onDelete} data={data} filter={filter} />
-      <AppBarButtons onCreate={setOpen} />
+      <Toolbar onDelete={() => {}} data={data?.nodes} filter={filter} />
+      <AppBarButtons />
 
       <DataTable
-        pagination={{ ...pagination, total: totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data ?? []}
+        data={data?.nodes}
         onRowClick={row => {
           navigate(row.id);
         }}

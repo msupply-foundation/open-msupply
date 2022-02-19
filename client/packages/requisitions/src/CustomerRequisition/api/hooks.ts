@@ -13,12 +13,14 @@ import {
   useSortBy,
   usePagination,
   getDataSorter,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { ResponseRequisitionQueries } from './api';
 import {
   getSdk,
   ResponseRequisitionFragment,
   ResponseRequisitionLineFragment,
+  ResponseRequisitionRowFragment,
 } from './operations.generated';
 
 export const useResponseRequisitionApi = () => {
@@ -26,7 +28,28 @@ export const useResponseRequisitionApi = () => {
   return getSdk(client);
 };
 
-export const useCustomerRequisition =
+export const useResponseRequisitions = () => {
+  const queryParams = useQueryParams<ResponseRequisitionRowFragment>({
+    initialSortBy: { key: 'otherPartyName' },
+  });
+  const { store } = useHostContext();
+  const api = useResponseRequisitionApi();
+
+  return {
+    ...useQuery(
+      ['requisition', store.id, queryParams],
+      ResponseRequisitionQueries.get.list(api, store.id, {
+        first: queryParams.first,
+        offset: queryParams.offset,
+        sortBy: queryParams.sortBy,
+        filter: queryParams.filter.filterBy,
+      })
+    ),
+    ...queryParams,
+  };
+};
+
+export const useResponseRequisition =
   (): UseQueryResult<ResponseRequisitionFragment> => {
     const { id = '' } = useParams();
     const { store } = useHostContext();
@@ -36,7 +59,7 @@ export const useCustomerRequisition =
     );
   };
 
-export const useCustomerRequisitionFields = <
+export const useResponseRequisitionFields = <
   KeyOfRequisition extends keyof ResponseRequisitionFragment
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
@@ -53,21 +76,21 @@ export const useCustomerRequisitionFields = <
   );
 };
 
-interface UseCustomerRequisitionLinesController
+interface UseResponseRequisitionLinesController
   extends SortController<ResponseRequisitionLineFragment>,
     PaginationState {
   lines: ResponseRequisitionLineFragment[];
 }
 
-export const useCustomerRequisitionLines =
-  (): UseCustomerRequisitionLinesController => {
+export const useResponseRequisitionLines =
+  (): UseResponseRequisitionLinesController => {
     const { sortBy, onChangeSortBy } =
       useSortBy<ResponseRequisitionLineFragment>({
         key: 'itemName',
         isDesc: false,
       });
     const pagination = usePagination(20);
-    const { lines } = useCustomerRequisitionFields('lines');
+    const { lines } = useResponseRequisitionFields('lines');
 
     const sorted = useMemo(() => {
       const sorted = [...(lines.nodes ?? [])].sort(
@@ -86,7 +109,7 @@ export const useCustomerRequisitionLines =
     return { lines: sorted, sortBy, onChangeSortBy, ...pagination };
   };
 
-export const useIsCustomerRequisitionDisabled = (): boolean => {
-  const { status } = useCustomerRequisitionFields('status');
+export const useIsResponseRequisitionDisabled = (): boolean => {
+  const { status } = useResponseRequisitionFields('status');
   return status === RequisitionNodeStatus.Finalised;
 };
