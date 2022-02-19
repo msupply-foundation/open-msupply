@@ -4,18 +4,20 @@ import {
   SortBy,
   Column,
 } from '@openmsupply-client/common';
-import { RequisitionLine } from '../../types';
+import { ResponseRequisitionLineFragment } from './../api';
 
 interface UseCustomerRequisitionColumnOptions {
-  sortBy: SortBy<RequisitionLine>;
-  onChangeSortBy: (column: Column<RequisitionLine>) => SortBy<RequisitionLine>;
+  sortBy: SortBy<ResponseRequisitionLineFragment>;
+  onChangeSortBy: (
+    column: Column<ResponseRequisitionLineFragment>
+  ) => SortBy<ResponseRequisitionLineFragment>;
 }
 
 export const useCustomerRequisitionColumns = ({
   onChangeSortBy,
   sortBy,
-}: UseCustomerRequisitionColumnOptions): Column<RequisitionLine>[] =>
-  useColumns<RequisitionLine>(
+}: UseCustomerRequisitionColumnOptions): Column<ResponseRequisitionLineFragment>[] =>
+  useColumns<ResponseRequisitionLineFragment>(
     ['itemCode', 'itemName', 'comment', GenericColumnKey.Selection],
     { onChangeSortBy, sortBy },
     [sortBy]

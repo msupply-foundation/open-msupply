@@ -11,42 +11,27 @@ import {
   useTranslation,
   useNotification,
   useTableStore,
-  DatePickerInput,
-  useBufferState,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import { RequisitionLine } from '../../types';
+
 import {
-  useCustomerRequisitionFields,
-  useIsCustomerRequisitionDisabled,
+  useResponseRequisitionFields,
+  useIsResponseRequisitionDisabled,
+  ResponseRequisitionLineFragment,
 } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
-  const isDisabled = useIsCustomerRequisitionDisabled();
-  const {
-    lines,
-    otherParty,
-    requisitionDate,
-    orderDate,
-    theirReference,
-    update,
-  } = useCustomerRequisitionFields([
-    'lines',
-    'otherParty',
-    'orderDate',
-    'requisitionDate',
-    'theirReference',
-  ]);
-  const [bufferedReqDate, setBufferedReqDate] = useBufferState(requisitionDate);
-  const [bufferedOrderDate, setBufferedOrderDate] = useBufferState(orderDate);
+  const isDisabled = useIsResponseRequisitionDisabled();
+  const { lines, otherParty, theirReference, update } =
+    useResponseRequisitionFields(['lines', 'otherParty', 'theirReference']);
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => lines.find(({ id }) => selectedId === id))
-      .filter(Boolean) as RequisitionLine[],
+      .map(selectedId => lines.nodes.find(({ id }) => selectedId === id))
+      .filter(Boolean) as ResponseRequisitionLineFragment[],
   }));
 
   const deleteAction = () => {
@@ -95,35 +80,6 @@ export const Toolbar: FC = () => {
                     sx={{ width: 250 }}
                     value={theirReference}
                     onChange={e => update({ theirReference: e.target.value })}
-                  />
-                }
-              />
-            </Box>
-            <Box display="flex" flex={1} flexDirection="column" gap={1}>
-              <InputWithLabelRow
-                label={t('label.order-date')}
-                Input={
-                  <DatePickerInput
-                    disabled={isDisabled}
-                    value={bufferedOrderDate}
-                    onChange={d => {
-                      setBufferedOrderDate(d);
-                      update({ orderDate: d });
-                    }}
-                  />
-                }
-              />
-
-              <InputWithLabelRow
-                label={t('label.requisition-date')}
-                Input={
-                  <DatePickerInput
-                    disabled={isDisabled}
-                    value={bufferedReqDate}
-                    onChange={d => {
-                      setBufferedReqDate(d);
-                      update({ requisitionDate: d });
-                    }}
                   />
                 }
               />
