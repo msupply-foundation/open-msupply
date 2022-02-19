@@ -1,21 +1,23 @@
 import {
   UpdateInboundShipmentInput,
-  InvoicesQuery,
   SortBy,
   ListApi,
   InvoiceSortFieldInput,
-  InvoicesQueryVariables,
   InvoicePriceResponse,
-  OmSupplyApi,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceRow } from '../../types';
+import {
+  InboundShipmentApi,
+  InvoicesQueryVariables,
+  InvoicesQuery,
+} from '../api';
 
 const invoiceToInput = (
   patch: Partial<Invoice> & { id: string }
 ): UpdateInboundShipmentInput => {
   return {
     id: patch.id,
-    color: patch.color,
+    colour: patch.colour,
   };
 };
 
@@ -70,15 +72,16 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
 };
 
 export const getInboundShipmentListViewApi = (
-  api: OmSupplyApi
+  api: InboundShipmentApi
 ): ListApi<InvoiceRow> => ({
-  onRead: ({ first, offset, sortBy, filterBy }) => {
+  onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
     const queryParams: InvoicesQueryVariables = {
       first,
       offset,
       key: getSortKey(sortBy),
       desc: getSortDesc(sortBy),
       filter: filterBy,
+      storeId,
     };
     return async (): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
       const result = await api.invoices(queryParams);
@@ -95,7 +98,7 @@ export const getInboundShipmentListViewApi = (
   },
   onDelete: async (invoices: InvoiceRow[]): Promise<string[]> => {
     const result = await api.deleteInboundShipments({
-      ids: invoices.map(invoice => ({ id: invoice.id })),
+      deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
     });
 
     const { batchInboundShipment } = result;

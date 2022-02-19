@@ -12,11 +12,13 @@ const onRead =
   async ({
     sortBy,
     filterBy,
+    storeId,
   }: {
     first: number;
     offset: number;
     sortBy: SortBy<StockRow>;
     filterBy: FilterBy | null;
+    storeId: string;
   }): Promise<{
     nodes: StockRow[];
     totalCount: number;
@@ -27,6 +29,7 @@ const onRead =
       key: ItemSortFieldInput.Name,
       desc: sortBy.isDesc,
       filter: filterBy,
+      storeId,
     });
 
     const items = itemsGuard(result);
@@ -55,9 +58,9 @@ const onRead =
 
 export const getStockListViewApi = (api: OmSupplyApi): ListApi<StockRow> => ({
   onRead:
-    ({ first, offset, sortBy, filterBy }) =>
+    ({ first, offset, sortBy, filterBy, storeId }) =>
     () =>
-      onRead(api)({ first, offset, sortBy, filterBy }),
+      onRead(api)({ first, offset, sortBy, filterBy, storeId }),
   onDelete: async () => [''],
   onUpdate: async () => '',
   onCreate: async () => '',
