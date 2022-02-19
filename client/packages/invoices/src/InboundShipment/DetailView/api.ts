@@ -4,19 +4,14 @@ import {
   MutateOptions,
   Item,
   UseMutationResult,
-  DeleteInboundShipmentLinesMutation,
   InvoiceNodeStatus,
-  UpdateInboundShipmentMutation,
   useParams,
-  useOmSupplyApi,
   useQueryClient,
   useMutation,
   InvoiceLineConnector,
-  InvoiceQuery,
   InvoicePriceResponse,
   ConnectorError,
   NameResponse,
-  OmSupplyApi,
   StockLineResponse,
   StockLineNode,
   UpdateInboundShipmentLineInput,
@@ -32,12 +27,20 @@ import {
   useDebounceCallback,
   ItemNode,
   ItemResponse,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { Location, toItem } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
 import { inboundLinesToSummaryItems } from '../../utils';
 import { InboundShipmentItem } from './../../types';
 import { DraftInboundLine } from './modals/InboundLineEdit';
+import {
+  DeleteInboundShipmentLinesMutation,
+  InboundShipmentApi,
+  InvoiceQuery,
+  UpdateInboundShipmentMutation,
+  useInboundShipmentApi,
+} from '../api';
 
 const otherPartyGuard = (otherParty: NameResponse) => {
   if (otherParty.__typename === 'NameNode') {
@@ -121,7 +124,7 @@ const invoiceToInput = (
 ): UpdateInboundShipmentInput => {
   return {
     id: patch.id,
-    color: patch.color,
+    colour: patch.colour,
     comment: patch.comment,
     status: getPatchStatus(patch),
     onHold: patch.onHold,
@@ -174,7 +177,7 @@ interface Api<ReadType, UpdateType> {
 }
 
 export const getSaveInboundShipmentLines =
-  (api: OmSupplyApi) => (lines: DraftInboundLine[]) => {
+  (api: InboundShipmentApi) => (lines: DraftInboundLine[]) => {
     const insertInboundShipmentLines = lines
       .filter(({ isCreated }) => isCreated)
       .map(createInsertLineInput);
@@ -183,16 +186,19 @@ export const getSaveInboundShipmentLines =
       .map(createUpdateLineInput);
 
     return api.upsertInboundShipment({
-      insertInboundShipmentLines,
-      updateInboundShipmentLines,
+      input: {
+        insertInboundShipmentLines,
+        updateInboundShipmentLines,
+      },
     });
   };
 
 export const getInboundShipmentDetailViewApi = (
-  api: OmSupplyApi
+  api: InboundShipmentApi,
+  storeId: string
 ): Api<Invoice, Invoice> => ({
   onRead: async (id: string): Promise<Invoice> => {
-    const result = await api.invoice({ id });
+    const result = await api.invoice({ id, storeId });
 
     const invoice = invoiceGuard(result);
     const lineNodes = linesGuard(invoice.lines);
@@ -222,7 +228,7 @@ export const getInboundShipmentDetailViewApi = (
   },
   onUpdate: async (patch: Invoice): Promise<Invoice> => {
     const result = await api.upsertInboundShipment({
-      updateInboundShipments: [invoiceToInput(patch)],
+      input: { updateInboundShipments: [invoiceToInput(patch)] },
     });
 
     const { batchInboundShipment } = result;
@@ -243,8 +249,9 @@ export const getInboundShipmentDetailViewApi = (
 
 export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
   const { id = '' } = useParams();
-  const { api } = useOmSupplyApi();
-  const queries = getInboundShipmentDetailViewApi(api);
+  const api = useInboundShipmentApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const queries = getInboundShipmentDetailViewApi(api, storeId);
   return useQuery(['invoice', id], () => {
     return queries.onRead(id);
   });
@@ -254,8 +261,9 @@ export const useInboundShipmentSelector = <T = Invoice>(
   select?: (data: Invoice) => T
 ): UseQueryResult<T, unknown> => {
   const { id = '' } = useParams();
-  const { api } = useOmSupplyApi();
-  const queries = getInboundShipmentDetailViewApi(api);
+  const api = useInboundShipmentApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const queries = getInboundShipmentDetailViewApi(api, storeId);
   return useQuery(
     ['invoice', id],
     () => {
@@ -266,14 +274,15 @@ export const useInboundShipmentSelector = <T = Invoice>(
 };
 
 const getUpdateInbound =
-  (api: ReturnType<typeof useOmSupplyApi>['api']) =>
+  (api: InboundShipmentApi) =>
   async (patch: Partial<Invoice> & { id: string }) => {
     return api.updateInboundShipment({ input: invoiceToInput(patch) });
   };
 
 const useOptimisticInboundUpdate = () => {
-  const { api } = useOmSupplyApi();
-  const queries = getInboundShipmentDetailViewApi(api);
+  const api = useInboundShipmentApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const queries = getInboundShipmentDetailViewApi(api, storeId);
   const queryClient = useQueryClient();
   const { id } = useParams();
   return useMutation(queries.onUpdate, {
@@ -319,7 +328,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
 } => {
   const queryClient = useQueryClient();
   const { id = '' } = useParams();
-  const { api } = useOmSupplyApi();
+  const api = useInboundShipmentApi();
   const select = useCallback(
     (invoice: Invoice) => {
       if (Array.isArray(keyOrKeys)) {
@@ -425,7 +434,7 @@ export const useNextItem = (currentItemId: string): Item | null => {
 export const useSaveInboundLines = () => {
   const queryClient = useQueryClient();
   const { id } = useParams();
-  const { api } = useOmSupplyApi();
+  const api = useInboundShipmentApi();
 
   return useMutation(getSaveInboundShipmentLines(api), {
     onSettled: () => queryClient.invalidateQueries(['invoice', id]),
@@ -456,10 +465,10 @@ const getCreateDeleteInboundLineInput =
   };
 
 const getDeleteInboundLinesQuery =
-  (api: OmSupplyApi, invoiceId: string) => (ids: string[]) => {
+  (api: InboundShipmentApi, invoiceId: string) => (ids: string[]) => {
     const createDeleteLineInput = getCreateDeleteInboundLineInput(invoiceId);
     return api.deleteInboundShipmentLines({
-      input: ids.map(createDeleteLineInput),
+      input: { deleteInboundShipmentLines: ids.map(createDeleteLineInput) },
     });
   };
 
@@ -473,7 +482,7 @@ export const useDeleteInboundLine = (): UseMutationResult<
   // input object should not require the invoice ID. Waiting for an API change.
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
-  const { api } = useOmSupplyApi();
+  const api = useInboundShipmentApi();
   const mutation = getDeleteInboundLinesQuery(api, id);
   return useMutation(mutation, {
     onMutate: async (ids: string[]) => {
