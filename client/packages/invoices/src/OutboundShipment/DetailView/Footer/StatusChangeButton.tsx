@@ -99,7 +99,7 @@ const useStatusChangeButton = () => {
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel, t]
+    [status, getButtonLabel]
   );
 
   const [selectedOption, setSelectedOption] =
