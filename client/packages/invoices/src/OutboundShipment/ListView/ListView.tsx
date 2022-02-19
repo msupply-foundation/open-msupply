@@ -7,7 +7,6 @@ import {
   getNameAndColorColumn,
   TableProvider,
   createTableStore,
-  useOmSupplyApi,
   useNotification,
   useTranslation,
   InvoiceNodeStatus,
@@ -18,12 +17,13 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getOutboundShipmentListViewApi } from './api';
 import { InvoiceRow } from '../../types';
+import { useOutboundShipmentApi } from '../api';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const t = useTranslation('common');
   const navigate = useNavigate();
   const { error } = useNotification();
-  const { api } = useOmSupplyApi();
+  const api = useOutboundShipmentApi();
 
   const {
     totalCount,

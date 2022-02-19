@@ -40,7 +40,7 @@ export interface InvoiceRow
       | 'otherPartyId'
       | 'otherPartyName'
       | 'status'
-      | 'color'
+      | 'colour'
       | 'theirReference'
       | 'type'
     >,
