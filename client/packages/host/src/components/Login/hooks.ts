@@ -48,6 +48,7 @@ export const useLoginForm = (
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
   const [, setAuthToken] = useLocalStorage('/authentication/token');
+  const [, setStoreId] = useLocalStorage('/authentication/storeid');
   const {
     isLoggingIn,
     password,
@@ -71,6 +72,8 @@ export const useLoginForm = (
     setAuthToken(token);
     setMRUCredentials({ username: username, store: store });
     setUser({ id: '', name: username });
+    setStoreId(store?.id ?? '');
+
     if (store) setHostStore(store);
     // navigate back, if redirected by the <RequireAuthentication /> component
     // or to the dashboard as a default

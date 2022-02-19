@@ -1,14 +1,16 @@
 import {
   UpdateOutboundShipmentInput,
-  InvoicesQuery,
   SortBy,
   ListApi,
   InvoiceSortFieldInput,
-  InvoicesQueryVariables,
   InvoicePriceResponse,
-  OmSupplyApi,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceRow } from '../../types';
+import { OutboundShipmentApi } from '../api';
+import {
+  InvoicesQuery,
+  InvoicesQueryVariables,
+} from '../api/operations.generated';
 
 const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {
@@ -29,7 +31,7 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
 };
 
 export const onCreate =
-  (api: OmSupplyApi) =>
+  (api: OutboundShipmentApi) =>
   async (invoice: Partial<Invoice>): Promise<string> => {
     const result = await api.insertOutboundShipment({
       id: invoice.id ?? '',
@@ -46,10 +48,10 @@ export const onCreate =
   };
 
 export const onDelete =
-  (api: OmSupplyApi) =>
+  (api: OutboundShipmentApi) =>
   async (invoices: InvoiceRow[]): Promise<string[]> => {
     const result = await api.deleteOutboundShipments({
-      ids: invoices.map(invoice => invoice.id),
+      deleteOutboundShipments: invoices.map(invoice => invoice.id),
     });
 
     const { batchOutboundShipment } = result;
@@ -61,7 +63,7 @@ export const onDelete =
   };
 
 export const onRead =
-  (api: OmSupplyApi) =>
+  (api: OutboundShipmentApi) =>
   async (
     queryParams: InvoicesQueryVariables
   ): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
@@ -78,7 +80,7 @@ export const onRead =
   };
 
 export const onUpdate =
-  (api: OmSupplyApi) =>
+  (api: OutboundShipmentApi) =>
   async (patch: Partial<Invoice> & { id: string }): Promise<string> => {
     const result = await api.updateOutboundShipment({
       input: invoiceToInput(patch),
@@ -98,7 +100,7 @@ const invoiceToInput = (
 ): UpdateOutboundShipmentInput => {
   return {
     id: patch.id,
-    color: patch.color,
+    colour: patch.colour,
   };
 };
 
@@ -135,15 +137,16 @@ const getSortDesc = (sortBy: SortBy<InvoiceRow>): boolean => {
 };
 
 export const getOutboundShipmentListViewApi = (
-  omSupplyApi: OmSupplyApi
+  omSupplyApi: OutboundShipmentApi
 ): ListApi<InvoiceRow> => ({
-  onRead: ({ first, offset, sortBy, filterBy }) => {
+  onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
     const queryParams: InvoicesQueryVariables = {
       first,
       offset,
       key: getSortKey(sortBy),
       desc: getSortDesc(sortBy),
       filter: filterBy,
+      storeId: storeId,
     };
 
     const onReadFn = onRead(omSupplyApi);
