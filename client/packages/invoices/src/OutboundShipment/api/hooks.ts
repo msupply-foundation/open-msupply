@@ -17,12 +17,21 @@ import {
   useSortBy,
   useMutation,
   UseMutationResult,
-  DeleteOutboundShipmentLinesMutation,
   useTableStore,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
 import { OutboundApi } from './api';
 import { useOutboundColumns } from '../DetailView/columns';
+import {
+  getSdk,
+  DeleteOutboundShipmentLinesMutation,
+} from './operations.generated';
+
+export const useOutboundShipmentApi = () => {
+  const { client } = useOmSupplyApi();
+  return getSdk(client);
+};
 
 export const useOutboundDetailQueryKey = (): ['invoice', string] => {
   const { id = '' } = useParams();
@@ -31,20 +40,24 @@ export const useOutboundDetailQueryKey = (): ['invoice', string] => {
 
 export const useOutbound = (): UseQueryResult<Invoice> => {
   const { id = '' } = useParams();
-  const { api } = useOmSupplyApi();
+  const api = useOutboundShipmentApi();
   const queryKey = useOutboundDetailQueryKey();
-  return useQuery(queryKey, () => OutboundApi.get.byId(api)(id));
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+
+  return useQuery(queryKey, () => OutboundApi.get.byId(api, storeId)(id));
 };
 
 export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
   keys: KeyOfInvoice | KeyOfInvoice[]
 ): FieldSelectorControl<Invoice, KeyOfInvoice> => {
   const { id = '' } = useParams();
-  const { api } = useOmSupplyApi();
+  const api = useOutboundShipmentApi();
   const queryKey = useOutboundDetailQueryKey();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+
   return useFieldsSelector(
     queryKey,
-    () => OutboundApi.get.byId(api)(id),
+    () => OutboundApi.get.byId(api, storeId)(id),
     (patch: Partial<Invoice>) => OutboundApi.update(api)({ ...patch, id }),
     keys
   );
@@ -63,10 +76,11 @@ const useOutboundSelector = <ReturnType>(
   select: (data: Invoice) => ReturnType
 ) => {
   const queryKey = useOutboundDetailQueryKey();
-  const { api } = useOmSupplyApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const api = useOutboundShipmentApi();
   return useQuerySelector(
     queryKey,
-    () => OutboundApi.get.byId(api)(queryKey[1]),
+    () => OutboundApi.get.byId(api, storeId)(queryKey[1]),
     select
   );
 };
@@ -140,7 +154,7 @@ export const useOutboundRows = (isGrouped = true) => {
 export const useSaveOutboundLines = () => {
   const queryKey = useOutboundDetailQueryKey();
   const queryClient = useQueryClient();
-  const { api } = useOmSupplyApi();
+  const api = useOutboundShipmentApi();
   return useMutation(OutboundApi.updateLines(api), {
     onSuccess: () => {
       queryClient.invalidateQueries(queryKey);
@@ -158,7 +172,7 @@ export const useDeleteInboundLine = (): UseMutationResult<
   // input object should not require the invoice ID. Waiting for an API change.
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
-  const { api } = useOmSupplyApi();
+  const api = useOutboundShipmentApi();
   const mutation = OutboundApi.deleteLines(api, id);
   return useMutation(mutation, {
     onMutate: async (ids: string[]) => {
