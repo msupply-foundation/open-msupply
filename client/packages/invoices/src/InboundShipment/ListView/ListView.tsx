@@ -8,7 +8,6 @@ import {
   TableProvider,
   createTableStore,
   InvoiceNodeStatus,
-  useOmSupplyApi,
   useNotification,
   generateUUID,
   useTranslation,
@@ -19,11 +18,12 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { InvoiceRow } from '../../types';
 import { getStatusTranslator } from '../../utils';
+import { useInboundShipmentApi } from '../api';
 
 export const InboundListView: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
-  const { api } = useOmSupplyApi();
+  const api = useInboundShipmentApi();
   const {
     totalCount,
     data,

@@ -5,6 +5,10 @@ import {
   Item,
   useEditModal,
   DetailViewSkeleton,
+  AlertModal,
+  useNavigate,
+  RouteBuilder,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -15,11 +19,13 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { useOutbound } from '../api';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const DetailView: FC = () => {
   const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Item>();
-  const { data } = useOutbound();
-
+  const { data, isLoading } = useOutbound();
+  const t = useTranslation('distribution');
+  const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: InvoiceLine | InvoiceItem) => {
       onOpen(toItem(item));
@@ -27,11 +33,13 @@ export const DetailView: FC = () => {
     [toItem, onOpen]
   );
 
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
-      {data && data.id ? (
+      {data ? (
         <TableProvider createStore={createTableStore}>
           <AppBarButtons onAddItem={() => onOpen()} />
           {isOpen && (
@@ -49,7 +57,18 @@ export const DetailView: FC = () => {
           <SidePanel />
         </TableProvider>
       ) : (
-        <DetailViewSkeleton hasGroupBy={true} hasHold={true} />
+        <AlertModal
+          open={true}
+          onOk={() =>
+            navigate(
+              RouteBuilder.create(AppRoute.Distribution)
+                .addPart(AppRoute.OutboundShipment)
+                .build()
+            )
+          }
+          title={t('error.shipment-not-found')}
+          message={t('messages.click-to-return-to-shipments')}
+        />
       )}
     </React.Suspense>
   );

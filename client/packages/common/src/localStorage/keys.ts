@@ -20,6 +20,7 @@ export type LocalStorageRecord = {
   '/theme/logo': string;
   '/mru/credentials': AuthenticationCredentials;
   '/authentication/token': string;
+  '/authentication/storeid': string;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;
