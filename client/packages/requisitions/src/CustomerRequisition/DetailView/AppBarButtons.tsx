@@ -7,16 +7,16 @@ import {
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useIsResponseRequisitionDisabled } from '../api';
 
 interface AppBarButtonProps {
-  isDisabled: boolean;
   onAddItem: (newState: boolean) => void;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  isDisabled,
   onAddItem,
 }) => {
+  const isDisabled = useIsResponseRequisitionDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
 
