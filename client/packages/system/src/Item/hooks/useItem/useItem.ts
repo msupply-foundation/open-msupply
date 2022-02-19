@@ -10,7 +10,7 @@ import { getItemSortField, mapItemNodes } from '../../utils';
 // TODO: Use itemID to filter when possible.
 export const useItem = (itemCode: string): UseQueryResult<Item> => {
   const { api } = useOmSupplyApi();
-  const { filterBy, filter, queryParams, first, offset, sortBy } =
+  const { filterBy, filter, queryParams, first, offset, sortBy, storeId } =
     useQueryParams<Item>({
       initialSortBy: { key: 'name' },
       initialFilterBy: { code: { equalTo: itemCode } },
@@ -22,6 +22,7 @@ export const useItem = (itemCode: string): UseQueryResult<Item> => {
       filter: filterBy,
       first,
       offset,
+      storeId,
     });
 
     const { nodes, totalCount } = mapItemNodes(result);

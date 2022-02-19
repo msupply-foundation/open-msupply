@@ -13,11 +13,13 @@ export interface ListApi<T extends DomainObject> {
     offset,
     sortBy,
     filterBy,
+    storeId,
   }: {
     first: number;
     offset: number;
     sortBy: SortBy<T>;
     filterBy: FilterBy | null;
+    storeId: string;
   }) => () => Promise<{ nodes: T[]; totalCount: number }>;
   onDelete: (toDelete: T[]) => Promise<string[]>;
   onUpdate: (toUpdate: Partial<T> & { id: string }) => Promise<string>;
@@ -55,9 +57,8 @@ export const useListData = <T extends DomainObject>(
   onError?: (e: ClientError) => void
 ): ListDataState<T> => {
   const queryClient = useQueryClient();
-  const { filterBy, queryParams, first, offset, sortBy } = useQueryParams(
-    initialListParameters
-  );
+  const { filterBy, queryParams, first, offset, sortBy, storeId } =
+    useQueryParams(initialListParameters);
   const fullQueryKey = [queryKey, 'list', queryParams];
   const { error } = useNotification();
   const defaultErrorHandler = (e: ClientError) =>
@@ -70,6 +71,7 @@ export const useListData = <T extends DomainObject>(
       offset,
       sortBy,
       filterBy,
+      storeId,
     }),
     {
       onError: onError || defaultErrorHandler,
