@@ -14,7 +14,7 @@ import {
   ResponseRequisitionRowFragment,
 } from '../api';
 
-export const CustomerRequisitionListView: FC = () => {
+export const ResponseRequisitionListView: FC = () => {
   const navigate = useNavigate();
   const { data, onChangeSortBy, sortBy, onChangePage, pagination, filter } =
     useResponseRequisitions();
@@ -55,7 +55,7 @@ export const CustomerRequisitionListView: FC = () => {
 export const ListView: FC = () => {
   return (
     <TableProvider createStore={createTableStore}>
-      <CustomerRequisitionListView />
+      <ResponseRequisitionListView />
     </TableProvider>
   );
 };

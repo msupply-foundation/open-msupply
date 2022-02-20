@@ -4,7 +4,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { Requisition } from './types';
-import { ResponseRequisitionRowFragment } from './CustomerRequisition/api';
+import { ResponseRequisitionRowFragment } from './ResponseRequisition/api';
 
 export const isRequisitionEditable = (requisition: Requisition): boolean => {
   return (

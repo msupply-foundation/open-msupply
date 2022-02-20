@@ -5,9 +5,9 @@ import {
   DetailView as RequestRequisitionDetailView,
 } from './RequestRequisition';
 import {
-  ListView as CustomerRequisitionListView,
-  DetailView as CustomerRequisitionDetailView,
-} from './CustomerRequisition';
+  ListView as ResponseRequisitionListView,
+  DetailView as ResponseRequisitionDetailView,
+} from './ResponseRequisition';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -30,11 +30,11 @@ export const RequisitionService: FC = () => {
     <Routes>
       <Route
         path={customerRequisitionsRoute}
-        element={<CustomerRequisitionListView />}
+        element={<ResponseRequisitionListView />}
       />
       <Route
         path={customerRequisitionRoute}
-        element={<CustomerRequisitionDetailView />}
+        element={<ResponseRequisitionDetailView />}
       />
       <Route
         path={internalOrdersRoute}
