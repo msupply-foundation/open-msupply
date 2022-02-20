@@ -6,17 +6,17 @@ import {
 } from '@openmsupply-client/common';
 import { ResponseRequisitionLineFragment } from './../api';
 
-interface UseCustomerRequisitionColumnOptions {
+interface UseResponseRequisitionColumnOptions {
   sortBy: SortBy<ResponseRequisitionLineFragment>;
   onChangeSortBy: (
     column: Column<ResponseRequisitionLineFragment>
   ) => SortBy<ResponseRequisitionLineFragment>;
 }
 
-export const useCustomerRequisitionColumns = ({
+export const useResponseRequisitionColumns = ({
   onChangeSortBy,
   sortBy,
-}: UseCustomerRequisitionColumnOptions): Column<ResponseRequisitionLineFragment>[] =>
+}: UseResponseRequisitionColumnOptions): Column<ResponseRequisitionLineFragment>[] =>
   useColumns<ResponseRequisitionLineFragment>(
     ['itemCode', 'itemName', 'comment', GenericColumnKey.Selection],
     { onChangeSortBy, sortBy },
