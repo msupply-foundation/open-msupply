@@ -12,7 +12,7 @@ import {
   useNotification,
   useTableStore,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system/src/Name';
+import { NameSearchInput } from '@openmsupply-client/system';
 
 import {
   useResponseRequisitionFields,
