@@ -213,8 +213,7 @@ mod tests {
     use crate::sync::{
         translation_remote::test_data::{
             check_records_against_database, extract_sync_buffer_rows,
-            number::get_test_number_records, stock_line::get_test_stock_line_records,
-            transact::get_test_transact_records,
+            get_all_remote_pull_test_records,
         },
         SyncApiV5, SyncCredentials,
     };
@@ -233,11 +232,7 @@ mod tests {
         .await;
 
         // use test records with cursors that are out of order
-        let mut test_records = Vec::new();
-        test_records.append(&mut get_test_number_records());
-        test_records.append(&mut get_test_stock_line_records());
-        test_records.append(&mut get_test_transact_records());
-
+        let test_records = get_all_remote_pull_test_records();
         let buffer_rows = extract_sync_buffer_rows(&test_records);
         RemoteSyncBufferRepository::new(&connection)
             .upsert_many(&buffer_rows)

@@ -108,3 +108,12 @@ pub fn check_records_against_database(
         }
     }
 }
+
+#[allow(dead_code)]
+pub fn get_all_remote_pull_test_records() -> Vec<TestSyncRecord> {
+    let mut test_records = Vec::new();
+    test_records.append(&mut get_test_number_records());
+    test_records.append(&mut get_test_stock_line_records());
+    test_records.append(&mut get_test_name_store_join_records());
+    test_records
+}
