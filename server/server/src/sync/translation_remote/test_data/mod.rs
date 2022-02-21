@@ -1,6 +1,7 @@
 use repository::{
-    schema::RemoteSyncBufferRow, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
-    RepositoryError, StockLineRowRepository, StorageConnection,
+    schema::RemoteSyncBufferRow, InvoiceLineRowRepository, InvoiceRepository,
+    NameStoreJoinRepository, NumberRowRepository, RepositoryError, StockLineRowRepository,
+    StorageConnection,
 };
 
 use super::{IntegrationRecord, IntegrationUpsertRecord};
@@ -90,6 +91,14 @@ pub fn check_records_against_database(
                 IntegrationUpsertRecord::Shipment(comparison_record) => {
                     assert_eq!(
                         InvoiceRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap(),
+                        comparison_record
+                    )
+                }
+                IntegrationUpsertRecord::ShipmentLine(comparison_record) => {
+                    assert_eq!(
+                        InvoiceLineRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
                             .unwrap(),
                         comparison_record

@@ -1,13 +1,17 @@
 use chrono::NaiveDate;
 use log::{info, warn};
 use repository::{
-    schema::{InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow},
-    InvoiceRepository, NameStoreJoinRepository, NumberRowRepository, RepositoryError,
-    StockLineRowRepository, StorageConnection, TransactionError,
+    schema::{
+        InvoiceLineRow, InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow,
+    },
+    InvoiceLineRowRepository, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
+    RepositoryError, StockLineRowRepository, StorageConnection, TransactionError,
 };
 use serde::{Deserialize, Deserializer};
 
-use crate::sync::translation_remote::shipment::ShipmentTranslation;
+use crate::sync::translation_remote::{
+    shipment::ShipmentTranslation, shipment_line::ShipmentLineTranslation,
+};
 
 use self::number::NumberTranslation;
 use self::stock_line::StockLineTranslation;
@@ -17,6 +21,7 @@ use super::{SyncImportError, SyncTranslationError};
 mod name_store_join;
 mod number;
 mod shipment;
+mod shipment_line;
 mod stock_line;
 pub mod test_data;
 
@@ -26,6 +31,7 @@ pub enum IntegrationUpsertRecord {
     StockLine(StockLineRow),
     NameStoreJoin(NameStoreJoinRow),
     Shipment(InvoiceRow),
+    ShipmentLine(InvoiceLineRow),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -54,6 +60,7 @@ pub const TRANSLATION_RECORD_NUMBER: &str = "number";
 pub const TRANSLATION_RECORD_ITEM_LINE: &str = "item_line";
 pub const TRANSLATION_RECORD_NAME_STORE_JOIN: &str = "name_store_join";
 pub const TRANSLATION_RECORD_TRANSACT: &str = "transact";
+pub const TRANSLATION_RECORD_TRANS_LINE: &str = "trans_line";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
@@ -62,6 +69,7 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_ITEM_LINE,
     TRANSLATION_RECORD_NAME_STORE_JOIN,
     TRANSLATION_RECORD_TRANSACT,
+    TRANSLATION_RECORD_TRANS_LINE,
 ];
 
 /// Imports sync records and writes them to the DB
@@ -99,6 +107,7 @@ fn do_translation(
         Box::new(NumberTranslation {}),
         Box::new(StockLineTranslation {}),
         Box::new(ShipmentTranslation {}),
+        Box::new(ShipmentLineTranslation {}),
     ];
     for translation in translations {
         if let Some(mut result) = translation.try_translate_pull(connection, sync_record)? {
@@ -123,6 +132,9 @@ fn integrate_record(
             NameStoreJoinRepository::new(con).upsert_one(record)
         }
         IntegrationUpsertRecord::Shipment(record) => InvoiceRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::ShipmentLine(record) => {
+            InvoiceLineRowRepository::new(con).upsert_one(record)
+        }
     }
 }
 
