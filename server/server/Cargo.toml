@@ -24,6 +24,7 @@ actix-web = { version= "3.3.2", features = ["openssl"] } # Versions >=v4 depend 
 openssl = { version = "0.10", features = ["v110"] }
 anyhow = "1.0.44"
 config = "0.11.0"
+chrono = { version = "0.4", features = ["serde"] }
 env_logger = "0.8.3"
 log = "0.4.14"
 reqwest = { version = "0.10", features = ["json"] } # Versions >=0.11 depend on Tokio v1.
@@ -35,7 +36,6 @@ thiserror = "1"
 [dev-dependencies]
 actix-rt = "1.1.1" # for Tokio 0.2
 assert-json-diff = "2.0.1"
-chrono = { version = "0.4", features = ["serde"] }
 graphql_client = "0.10.0"
 httpmock = "0.6"
 
