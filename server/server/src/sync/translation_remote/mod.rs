@@ -1,9 +1,13 @@
+use chrono::NaiveDate;
 use log::{info, warn};
 use repository::{
-    schema::{NumberRow, RemoteSyncBufferRow, StockLineRow},
-    NumberRowRepository, RepositoryError, StockLineRowRepository, StorageConnection,
-    TransactionError,
+    schema::{InvoiceRow, NumberRow, RemoteSyncBufferRow, StockLineRow},
+    InvoiceRepository, NumberRowRepository, RepositoryError, StockLineRowRepository,
+    StorageConnection, TransactionError,
 };
+use serde::{Deserialize, Deserializer};
+
+use crate::sync::translation_remote::shipment::ShipmentTranslation;
 
 use self::number::NumberTranslation;
 use self::stock_line::StockLineTranslation;
@@ -11,6 +15,7 @@ use self::stock_line::StockLineTranslation;
 use super::translation_central::{SyncImportError, SyncTranslationError};
 
 mod number;
+mod shipment;
 mod stock_line;
 pub mod test_data;
 
@@ -18,6 +23,7 @@ pub mod test_data;
 pub enum IntegrationUpsertRecord {
     Number(NumberRow),
     StockLine(StockLineRow),
+    Shipment(InvoiceRow),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -43,11 +49,15 @@ pub trait RemotePullTranslation {
 pub const TRANSLATION_RECORD_NUMBER: &str = "number";
 /// stock line
 pub const TRANSLATION_RECORD_ITEM_LINE: &str = "item_line";
+pub const TRANSLATION_RECORD_TRANSACT: &str = "transact";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
-pub const REMOTE_TRANSLATION_RECORDS: &[&str] =
-    &[TRANSLATION_RECORD_NUMBER, TRANSLATION_RECORD_ITEM_LINE];
+pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
+    TRANSLATION_RECORD_NUMBER,
+    TRANSLATION_RECORD_ITEM_LINE,
+    TRANSLATION_RECORD_TRANSACT,
+];
 
 /// Imports sync records and writes them to the DB
 /// If needed data records are translated to the local DB schema.
@@ -82,6 +92,7 @@ fn do_translation(
     let translations: Vec<Box<dyn RemotePullTranslation>> = vec![
         Box::new(NumberTranslation {}),
         Box::new(StockLineTranslation {}),
+        Box::new(ShipmentTranslation {}),
     ];
     for translation in translations {
         if let Some(mut result) = translation.try_translate_pull(sync_record)? {
@@ -102,6 +113,7 @@ fn integrate_record(
         IntegrationUpsertRecord::StockLine(record) => {
             StockLineRowRepository::new(con).upsert_one(record)
         }
+        IntegrationUpsertRecord::Shipment(record) => InvoiceRepository::new(con).upsert_one(record),
     }
 }
 
@@ -137,4 +149,15 @@ fn store_integration_records(
             ),
             TransactionError::Inner(e) => e,
         })
+}
+
+pub fn empty_str_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
+    let s: Option<String> = Option::deserialize(d)?;
+    Ok(s.filter(|s| !s.is_empty()))
+}
+
+pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
+    let s: Option<String> = Option::deserialize(d)?;
+    Ok(s.filter(|s| s != "0000-00-00")
+        .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
 }
