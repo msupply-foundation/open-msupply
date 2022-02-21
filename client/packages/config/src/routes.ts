@@ -9,7 +9,7 @@ export enum AppRoute {
 
   Replenishment = 'replenishment',
   InboundShipment = 'inbound-shipment',
-  SupplierRequisition = 'supplier-requisition',
+  InternalOrder = 'internal-order',
   Suppliers = 'suppliers',
 
   Inventory = 'inventory',

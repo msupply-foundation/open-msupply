@@ -148,40 +148,6 @@ mutation insertStocktake($input: InsertStocktakeInput!) {
 #   }
 # }
 
-# mutation deleteSupplierRequisitions($ids: [DeleteSupplierRequisitionInput!]) {
-#   batchSupplierRequisition(deleteSupplierRequisitions: $ids) {
-#     __typename
-#     deleteSupplierRequisitions {
-#       __typename
-#       id
-#     }
-#   }
-# }
-
-mutation updateSupplierRequisition(
-  $storeId: String!
-  $input: UpdateRequestRequisitionInput!
-) {
-  updateRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-
-mutation insertSupplierRequisition(
-  $storeId: String!
-  $input: InsertRequestRequisitionInput!
-) {
-  insertRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-
 # mutation deleteCustomerRequisitions($ids: [DeleteRequestRequisitionInput!]) {
 #   batchRequestRequisition(deleteCustomerRequisitions: $ids) {
 #     __typename
@@ -275,41 +241,6 @@ query requisition($storeId: String!, $id: String!) {
     }
   }
 }
-
-# mutation upsertSupplierRequisition(
-#   $deleteSupplierRequisitionLines: [DeleteSupplierRequisitionLineInput!]
-#   $insertSupplierRequisitionLines: [InsertSupplierRequisitionLineInput!]
-#   $updateSupplierRequisitionLines: [UpdateSupplierRequisitionLineInput!]
-#   $updateSupplierRequisitions: [UpdateSupplierRequisitionInput!]
-# ) {
-#   batchSupplierRequisition(
-#     deleteSupplierRequisitionLines: $deleteSupplierRequisitionLines
-#     insertSupplierRequisitionLines: $insertSupplierRequisitionLines
-#     updateSupplierRequisitionLines: $updateSupplierRequisitionLines
-#     updateSupplierRequisitions: $updateSupplierRequisitions
-#   ) {
-#     __typename
-#     updateSupplierRequisitions {
-#       __typename
-#       id
-#     }
-
-#     insertSupplierRequisitionLines {
-#       __typename
-#       id
-#     }
-
-#     deleteSupplierRequisitionLines {
-#       __typename
-#       id
-#     }
-
-#     updateSupplierRequisitionLines {
-#       __typename
-#       id
-#     }
-#   }
-# }
 
 # mutation upsertCustomerRequisition(
 #   $deleteCustomerRequisitionLines: [DeleteCustomerRequisitionLineInput!]
