@@ -1,38 +1,38 @@
+import React, { FC } from 'react';
 import {
   Box,
   StatusCrumbs,
+  useTranslation,
   AppFooterPortal,
   RequisitionNodeStatus,
-  useTranslation,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
 import {
+  responseRequisitionStatuses,
   getRequisitionTranslator,
-  requestRequisitionStatuses,
 } from '../../../utils';
-import { RequestRequisitionFragment, useRequestRequisition } from '../../api';
+import { ResponseRequisitionFragment, useResponseRequisition } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
-export const createStatusLog = (requisition: RequestRequisitionFragment) => {
+export const createStatusLog = (requisition: ResponseRequisitionFragment) => {
   const statusLog: Record<RequisitionNodeStatus, null | undefined | string> = {
-    [RequisitionNodeStatus.Draft]: requisition.createdDatetime,
-    [RequisitionNodeStatus.Sent]: requisition.sentDatetime,
+    [RequisitionNodeStatus.New]: requisition.createdDatetime,
     [RequisitionNodeStatus.Finalised]: requisition.finalisedDatetime,
-    // Keeping typescript happy, not used for request requisitions.
-    [RequisitionNodeStatus.New]: null,
+    // Keeping typescript happy, not used for response requisitions.
+    [RequisitionNodeStatus.Draft]: null,
+    [RequisitionNodeStatus.Sent]: null,
   };
 
   return statusLog;
 };
 
 export const Footer: FC = () => {
-  const { data } = useRequestRequisition();
-  const t = useTranslation('replenishment');
+  const { data } = useResponseRequisition();
+  const t = useTranslation('distribution');
 
   return (
     <AppFooterPortal
       Content={
-        data && (
+        data ? (
           <Box
             gap={2}
             display="flex"
@@ -41,7 +41,7 @@ export const Footer: FC = () => {
             height={64}
           >
             <StatusCrumbs
-              statuses={requestRequisitionStatuses}
+              statuses={responseRequisitionStatuses}
               statusLog={createStatusLog(data)}
               statusFormatter={getRequisitionTranslator(t)}
             />
@@ -50,7 +50,7 @@ export const Footer: FC = () => {
               <StatusChangeButton />
             </Box>
           </Box>
-        )
+        ) : null
       }
     />
   );
