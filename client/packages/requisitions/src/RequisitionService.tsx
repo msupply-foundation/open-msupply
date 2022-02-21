@@ -17,7 +17,7 @@ const customerRequisitionsRoute = RouteBuilder.create(
 const customerRequisitionRoute = RouteBuilder.create(
   AppRoute.CustomerRequisition
 )
-  .addPart(':id')
+  .addPart(':requisitionNumber')
   .build();
 
 const internalOrdersRoute = RouteBuilder.create(AppRoute.InternalOrder).build();

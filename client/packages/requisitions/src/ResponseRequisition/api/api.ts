@@ -21,7 +21,6 @@ export const requisitionToInput = (
 ): UpdateResponseRequisitionInput => {
   return {
     id: requisition.id,
-    // otherPartyId: requisition.otherParty?.id,
     comment: requisition.comment,
     theirReference: requisition.theirReference,
     colour: requisition.colour,
