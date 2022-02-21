@@ -1,10 +1,11 @@
 use repository::{
-    schema::RemoteSyncBufferRow, InvoiceRepository, NumberRowRepository, RepositoryError,
-    StockLineRowRepository, StorageConnection,
+    schema::RemoteSyncBufferRow, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
+    RepositoryError, StockLineRowRepository, StorageConnection,
 };
 
 use super::{IntegrationRecord, IntegrationUpsertRecord};
 
+pub mod name_store_join;
 pub mod number;
 pub mod stock_line;
 pub mod transact;
@@ -73,6 +74,15 @@ pub fn check_records_against_database(
                     assert_eq!(
                         StockLineRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
+                            .unwrap(),
+                        comparison_record
+                    )
+                }
+                IntegrationUpsertRecord::NameStoreJoin(comparison_record) => {
+                    assert_eq!(
+                        NameStoreJoinRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap()
                             .unwrap(),
                         comparison_record
                     )

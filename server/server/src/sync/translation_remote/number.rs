@@ -1,4 +1,7 @@
-use repository::schema::{NumberRow, NumberRowType, RemoteSyncBufferRow};
+use repository::{
+    schema::{NumberRow, NumberRowType, RemoteSyncBufferRow},
+    StorageConnection,
+};
 
 use serde::Deserialize;
 
@@ -20,6 +23,7 @@ pub struct NumberTranslation {}
 impl RemotePullTranslation for NumberTranslation {
     fn try_translate_pull(
         &self,
+        _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
     ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_NUMBER;
@@ -32,7 +36,7 @@ impl RemotePullTranslation for NumberTranslation {
             serde_json::from_str::<LegacyNumberRow>(&sync_record.data).map_err(|source| {
                 SyncTranslationError {
                     table_name,
-                    source,
+                    source: source.into(),
                     record: sync_record.data.clone(),
                 }
             })?;
@@ -65,26 +69,4 @@ fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
     };
     let store = split.next()?.to_string();
     Some((number_type, store))
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::sync::translation_remote::{
-        number::NumberTranslation, test_data::number::get_test_number_records,
-        RemotePullTranslation,
-    };
-
-    #[test]
-    fn test_number_translation() {
-        for record in get_test_number_records() {
-            assert_eq!(
-                NumberTranslation {}
-                    .try_translate_pull(&record.remote_sync_buffer_row)
-                    .unwrap(),
-                record.translated_record,
-                "{}",
-                record.identifier
-            );
-        }
-    }
 }

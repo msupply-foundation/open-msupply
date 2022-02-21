@@ -1,9 +1,9 @@
 use chrono::NaiveDate;
 use log::{info, warn};
 use repository::{
-    schema::{InvoiceRow, NumberRow, RemoteSyncBufferRow, StockLineRow},
-    InvoiceRepository, NumberRowRepository, RepositoryError, StockLineRowRepository,
-    StorageConnection, TransactionError,
+    schema::{InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow},
+    InvoiceRepository, NameStoreJoinRepository, NumberRowRepository, RepositoryError,
+    StockLineRowRepository, StorageConnection, TransactionError,
 };
 use serde::{Deserialize, Deserializer};
 
@@ -14,6 +14,7 @@ use self::stock_line::StockLineTranslation;
 
 use super::translation_central::{SyncImportError, SyncTranslationError};
 
+mod name_store_join;
 mod number;
 mod shipment;
 mod stock_line;
@@ -23,6 +24,7 @@ pub mod test_data;
 pub enum IntegrationUpsertRecord {
     Number(NumberRow),
     StockLine(StockLineRow),
+    NameStoreJoin(NameStoreJoinRow),
     Shipment(InvoiceRow),
 }
 
@@ -42,6 +44,7 @@ impl IntegrationRecord {
 pub trait RemotePullTranslation {
     fn try_translate_pull(
         &self,
+        connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
     ) -> Result<Option<IntegrationRecord>, SyncTranslationError>;
 }
@@ -49,6 +52,7 @@ pub trait RemotePullTranslation {
 pub const TRANSLATION_RECORD_NUMBER: &str = "number";
 /// stock line
 pub const TRANSLATION_RECORD_ITEM_LINE: &str = "item_line";
+pub const TRANSLATION_RECORD_NAME_STORE_JOIN: &str = "name_store_join";
 pub const TRANSLATION_RECORD_TRANSACT: &str = "transact";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
@@ -56,6 +60,7 @@ pub const TRANSLATION_RECORD_TRANSACT: &str = "transact";
 pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_NUMBER,
     TRANSLATION_RECORD_ITEM_LINE,
+    TRANSLATION_RECORD_NAME_STORE_JOIN,
     TRANSLATION_RECORD_TRANSACT,
 ];
 
@@ -74,7 +79,7 @@ pub fn import_sync_records(
         records.len()
     );
     for record in records {
-        do_translation(&record, &mut integration_records)?;
+        do_translation(connection, &record, &mut integration_records)?;
     }
     info!("Succesfully translated remote sync buffer records");
 
@@ -86,6 +91,7 @@ pub fn import_sync_records(
 }
 
 fn do_translation(
+    connection: &StorageConnection,
     sync_record: &RemoteSyncBufferRow,
     records: &mut IntegrationRecord,
 ) -> Result<(), SyncTranslationError> {
@@ -95,7 +101,7 @@ fn do_translation(
         Box::new(ShipmentTranslation {}),
     ];
     for translation in translations {
-        if let Some(mut result) = translation.try_translate_pull(sync_record)? {
+        if let Some(mut result) = translation.try_translate_pull(connection, sync_record)? {
             records.upserts.append(&mut result.upserts);
             return Ok(());
         }
@@ -112,6 +118,9 @@ fn integrate_record(
         IntegrationUpsertRecord::Number(record) => NumberRowRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::StockLine(record) => {
             StockLineRowRepository::new(con).upsert_one(record)
+        }
+        IntegrationUpsertRecord::NameStoreJoin(record) => {
+            NameStoreJoinRepository::new(con).upsert_one(record)
         }
         IntegrationUpsertRecord::Shipment(record) => InvoiceRepository::new(con).upsert_one(record),
     }
