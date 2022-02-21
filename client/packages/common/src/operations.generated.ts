@@ -1,4 +1,4 @@
-import * as Types from './types/schema';
+import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';

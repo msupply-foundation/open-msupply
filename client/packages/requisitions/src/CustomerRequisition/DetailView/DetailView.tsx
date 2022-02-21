@@ -13,15 +13,11 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import {
-  useIsCustomerRequisitionDisabled,
-  useCustomerRequisition,
-} from '../api';
+import { useResponseRequisition } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const DetailView: FC = () => {
-  const { data, isLoading } = useCustomerRequisition();
-  const isDisabled = useIsCustomerRequisitionDisabled();
+  const { data, isLoading } = useResponseRequisition();
   const navigate = useNavigate();
   const t = useTranslation('distribution');
 
@@ -29,7 +25,7 @@ export const DetailView: FC = () => {
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
-      <AppBarButtons isDisabled={isDisabled} onAddItem={() => {}} />
+      <AppBarButtons onAddItem={() => {}} />
       <Toolbar />
       <ContentArea />
       <Footer />
