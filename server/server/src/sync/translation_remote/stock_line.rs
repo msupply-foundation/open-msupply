@@ -1,24 +1,14 @@
 use chrono::NaiveDate;
 use repository::schema::{RemoteSyncBufferRow, StockLineRow};
 
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 
 use crate::sync::translation_central::SyncTranslationError;
 
 use super::{
-    IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation, TRANSLATION_RECORD_ITEM_LINE,
+    empty_str_as_option, zero_date_as_option, IntegrationRecord, IntegrationUpsertRecord,
+    RemotePullTranslation, TRANSLATION_RECORD_ITEM_LINE,
 };
-
-fn empty_str_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
-    let s: Option<String> = Option::deserialize(d)?;
-    Ok(s.filter(|s| !s.is_empty()))
-}
-
-fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
-    let s: Option<String> = Option::deserialize(d)?;
-    Ok(s.filter(|s| s != "0000-00-00")
-        .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
-}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
