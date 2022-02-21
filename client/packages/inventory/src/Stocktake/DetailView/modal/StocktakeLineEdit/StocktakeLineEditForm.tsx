@@ -11,13 +11,13 @@ import {
 import { ItemSearchInput } from '@openmsupply-client/system';
 import { useStocktakeRows } from 'packages/inventory/src/Stocktake/api';
 
-interface InboundLineEditProps {
+interface StocktakeLineEditProps {
   item: Item | null;
   mode: ModalMode | null;
   onChangeItem: (item: Item | null) => void;
 }
 
-export const StocktakeLineEditForm: FC<InboundLineEditProps> = ({
+export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   item,
   mode,
   onChangeItem,

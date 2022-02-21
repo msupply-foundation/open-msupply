@@ -8,40 +8,47 @@ import {
   Column,
   SortBy,
 } from '@openmsupply-client/common';
-import { StocktakeLine, StocktakeSummaryItem } from './../../types';
+import { StocktakeSummaryItem } from './../../types';
+import { StocktakeLineFragment } from './../api';
 
 interface UseStocktakeColumnOptions {
-  sortBy: SortBy<StocktakeLine | StocktakeSummaryItem>;
+  sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
   onChangeSortBy: (
-    column: Column<StocktakeLine | StocktakeSummaryItem>
-  ) => SortBy<StocktakeLine | StocktakeSummaryItem>;
+    column: Column<StocktakeLineFragment | StocktakeSummaryItem>
+  ) => SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
 }
 
-const expandColumn = getRowExpandColumn<StocktakeLine | StocktakeSummaryItem>();
+const expandColumn = getRowExpandColumn<
+  StocktakeLineFragment | StocktakeSummaryItem
+>();
 
 export const useStocktakeColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseStocktakeColumnOptions): Column<StocktakeLine | StocktakeSummaryItem>[] =>
-  useColumns<StocktakeLine | StocktakeSummaryItem>(
+}: UseStocktakeColumnOptions): Column<
+  StocktakeLineFragment | StocktakeSummaryItem
+>[] =>
+  useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
       [
         'itemCode',
         {
           getSortValue: row => {
             if ('lines' in row) {
-              const { lines } = row;
-              return ifTheSameElseDefault(lines, 'itemCode', '');
+              // const { lines } = row;
+              // return ifTheSameElseDefault(lines, 'itemCode', '');
+              return '';
             } else {
-              return row.itemCode;
+              return row.item?.code ?? '';
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'itemCode', '');
+              // const { lines } = row;
+              // return ifTheSameElseDefault(lines, 'itemCode', '');
+              return '';
             } else {
-              return rowData.itemCode;
+              return rowData.item?.code ?? '';
             }
           },
         },
@@ -51,18 +58,20 @@ export const useStocktakeColumns = ({
         {
           getSortValue: row => {
             if ('lines' in row) {
-              const { lines } = row;
-              return ifTheSameElseDefault(lines, 'itemName', '');
+              // const { lines } = row;
+              // return ifTheSameElseDefault(lines, 'itemCode', '');
+              return '';
             } else {
-              return row.itemName;
+              return row.item?.name ?? '';
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'itemName', '');
+              // const { lines } = row;
+              // return ifTheSameElseDefault(lines, 'itemCode', '');
+              return '';
             } else {
-              return rowData.itemName;
+              return rowData.item?.name ?? '';
             }
           },
         },
@@ -96,9 +105,13 @@ export const useStocktakeColumns = ({
               const { lines } = row;
               const expiryDate =
                 ifTheSameElseDefault(lines, 'expiryDate', null) ?? '';
-              return (expiryDate && formatExpiryDate(expiryDate)) || '';
+              return (
+                (expiryDate && formatExpiryDate(new Date(expiryDate))) || ''
+              );
             } else {
-              return formatExpiryDate(row.expiryDate) ?? '';
+              return row.expiryDate
+                ? formatExpiryDate(new Date(row.expiryDate)) ?? ''
+                : '';
             }
           },
           accessor: ({ rowData }) => {
@@ -193,7 +206,7 @@ export const useStocktakeColumns = ({
     [sortBy, onChangeSortBy]
   );
 
-export const useExpansionColumns = (): Column<StocktakeLine>[] =>
+export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
   useColumns([
     'batch',
     'expiryDate',

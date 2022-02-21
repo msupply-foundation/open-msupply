@@ -12,11 +12,12 @@ import {
   Column,
   RecordPatch,
 } from '@openmsupply-client/common';
-import { StocktakeLine } from '../../../../types';
 import { DraftStocktakeLine } from './hooks';
+import { StocktakeLineFragment } from '../../../api';
+
 interface StocktakeLinePanelProps {
   value: string;
-  batches: StocktakeLine[];
+  batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
 }
 
@@ -47,7 +48,7 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
   const [selectionColumn, batchColumn] = useColumns([
     { key: 'count', label: 'label.count-this-line', width: 200 },
     ['batch', { width: 100 }],
-  ]) as [Column<StocktakeLine>, Column<StocktakeLine>];
+  ]) as [Column<StocktakeLineFragment>, Column<StocktakeLineFragment>];
 
   return (
     <StyledTabPanel value={value}>

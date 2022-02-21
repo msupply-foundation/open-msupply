@@ -9,6 +9,7 @@ generates:
       scalars:
         DateTime: string
         NaiveDate: string
+        NaiveDateTime: string
   packages/:
     documents: 
       - ./**/*.graphql
