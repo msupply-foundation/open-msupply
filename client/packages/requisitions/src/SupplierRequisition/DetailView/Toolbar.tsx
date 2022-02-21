@@ -14,7 +14,7 @@ import {
   // DatePickerInput,
   // useBufferState,
 } from '@openmsupply-client/common';
-// import { NameSearchInput } from '@openmsupply-client/system/src/Name';
+import { NameSearchInput } from '@openmsupply-client/system/src/Name';
 // import { RequisitionLine } from '../../types';
 import {
   useRequestRequisitionFields,
@@ -26,8 +26,9 @@ export const Toolbar: FC = () => {
 
   // const { success, info } = useNotification();
   const isDisabled = useIsRequestRequisitionDisabled();
-  const { theirReference, update } = useRequestRequisitionFields([
+  const { theirReference, update, otherParty } = useRequestRequisitionFields([
     'theirReference',
+    'otherParty',
   ]);
   // const [bufferedDate, setBufferedDate] = useBufferState(requisitionDate);
 
@@ -60,7 +61,7 @@ export const Toolbar: FC = () => {
         <Grid item display="flex" flex={1}>
           <Box display="flex" flexDirection="row" gap={4}>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
-              {/* {otherParty && (
+              {otherParty && (
                 <InputWithLabelRow
                   label={t('label.supplier-name')}
                   Input={
@@ -74,7 +75,7 @@ export const Toolbar: FC = () => {
                     />
                   }
                 />
-              )} */}
+              )}
               <InputWithLabelRow
                 label={t('label.supplier-ref')}
                 Input={
