@@ -11,6 +11,7 @@ import {
   useNotification,
   generateUUID,
   useTranslation,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { getInboundShipmentListViewApi } from './api';
 import { NameSearchModal } from '@openmsupply-client/system';
@@ -24,6 +25,7 @@ export const InboundListView: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const api = useInboundShipmentApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
   const {
     totalCount,
     data,
@@ -43,7 +45,7 @@ export const InboundListView: FC = () => {
       initialFilterBy: { type: { equalTo: 'INBOUND_SHIPMENT' } },
     },
     'invoice',
-    getInboundShipmentListViewApi(api)
+    getInboundShipmentListViewApi(api, storeId)
   );
   const t = useTranslation();
 

@@ -72,7 +72,8 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
 };
 
 export const getInboundShipmentListViewApi = (
-  api: InboundShipmentApi
+  api: InboundShipmentApi,
+  storeId: string
 ): ListApi<InvoiceRow> => ({
   onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
     const queryParams: InvoicesQueryVariables = {
@@ -113,6 +114,7 @@ export const getInboundShipmentListViewApi = (
     patch: Partial<Invoice> & { id: string }
   ): Promise<string> => {
     const result = await api.updateInboundShipment({
+      storeId,
       input: invoiceToInput(patch),
     });
 
@@ -128,6 +130,7 @@ export const getInboundShipmentListViewApi = (
     const result = await api.insertInboundShipment({
       id: invoice.id ?? '',
       otherPartyId: invoice?.otherPartyId ?? '',
+      storeId,
     });
 
     const { insertInboundShipment } = result;
