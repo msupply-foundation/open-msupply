@@ -35,13 +35,6 @@ export const getRequestRequisitionStatuses = (): RequisitionNodeStatus[] => [
 export const canDeleteRequisition = (requisitionRow: RequisitionRow): boolean =>
   requisitionRow.status === RequisitionNodeStatus.Draft;
 
-export const getNextStatusText = (status: RequisitionNodeStatus): string => {
-  const nextStatus = getNextRequestRequisitionStatus(status);
-  if (!nextStatus) return '';
-  const translation = getRequestRequisitionTranslator()(nextStatus);
-  return translation;
-};
-
 export const createStatusLog = (status: RequisitionNodeStatus) => {
   if (status === 'DRAFT') {
     return {
