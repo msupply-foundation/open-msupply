@@ -14,6 +14,7 @@ import {
   getColumnSorter,
   useSortBy,
   useHostContext,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
 import { StocktakeQueries, StocktakeApi } from './api';
@@ -21,6 +22,7 @@ import { useStocktakeColumns } from '../DetailView/columns';
 import {
   getSdk,
   StocktakeFragment,
+  StocktakeRowFragment,
   StocktakeLineFragment,
 } from './operations.generated';
 
@@ -36,6 +38,27 @@ export const useStocktake = (): UseQueryResult<StocktakeFragment> => {
   return useQuery(['stocktake', id], () =>
     StocktakeQueries.get.byId(api, store.id)(id)
   );
+};
+
+export const useStocktakes = () => {
+  const queryParams = useQueryParams<StocktakeRowFragment>({
+    initialSortBy: { key: 'createdDatetime' },
+  });
+  const { store } = useHostContext();
+  const api = useStocktakeApi();
+
+  return {
+    ...useQuery(
+      ['stocktake', store.id, queryParams],
+      StocktakeQueries.get.list(api, store.id, {
+        first: queryParams.first,
+        offset: queryParams.offset,
+        sortBy: queryParams.sortBy,
+        filter: queryParams.filter.filterBy,
+      })
+    ),
+    ...queryParams,
+  };
 };
 
 export const useStocktakeFields = <
@@ -103,7 +126,13 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
 
     return Object.entries(groupBy(lines.nodes, 'itemId')).map(
       ([itemId, lines]) => {
-        return { id: itemId, itemId, lines };
+        return {
+          id: itemId,
+          itemId,
+          itemName: lines[0].item?.name ?? '',
+          itemCode: lines[0].item?.code ?? '',
+          lines,
+        };
       }
     );
   }, []);

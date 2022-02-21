@@ -15,12 +15,13 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { StocktakeLine, StocktakeSummaryItem } from '../../types';
+import { StocktakeSummaryItem } from '../../types';
 
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 import { useStocktake } from '../api/hooks';
 import { AppRoute } from '@openmsupply-client/config';
+import { StocktakeLineFragment } from '../api';
 
 export const DetailView: FC = () => {
   const { isOpen, entity, onOpen, onClose, mode } = useEditModal<Item>();
@@ -28,8 +29,15 @@ export const DetailView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('inventory');
 
-  const onRowClick = (item: StocktakeLine | StocktakeSummaryItem) => {
-    onOpen(toItem(item));
+  const onRowClick = (item: StocktakeLineFragment | StocktakeSummaryItem) => {
+    if ('lines' in item) return onOpen(toItem(item));
+    onOpen(
+      toItem({
+        itemId: item.item?.id ?? '',
+        itemName: item.item?.name ?? '',
+        itemCode: item.item?.code ?? '',
+      })
+    );
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;

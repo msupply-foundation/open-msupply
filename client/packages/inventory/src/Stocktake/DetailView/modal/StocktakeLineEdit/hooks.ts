@@ -1,3 +1,4 @@
+import { StocktakeLineFragment } from './../../../api/operations.generated';
 import React, { useEffect, Dispatch, SetStateAction } from 'react';
 import {
   useParams,
@@ -7,14 +8,14 @@ import {
   Item,
 } from '@openmsupply-client/common';
 import { toItem, useStockLines } from '@openmsupply-client/system';
-import { StocktakeLine } from '../../../../types';
+
 import {
   useStocktakeRows,
   useStocktakeLines,
   useSaveStocktakeLines,
 } from '../../../api';
 
-export type DraftStocktakeLine = StocktakeLine & {
+export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
   countThisLine: boolean;
   isCreated?: boolean;
   isUpdated?: boolean;
@@ -23,13 +24,14 @@ export type DraftStocktakeLine = StocktakeLine & {
 
 const stocktakeLineToDraftLine = (
   stocktakeId: string,
-  line: StocktakeLine
+  line: StocktakeLineFragment
 ): DraftStocktakeLine => {
   return {
     isCreated: false,
     isUpdated: false,
-    stocktakeId,
+    countThisLine: true,
     ...line,
+    stocktakeId,
   };
 };
 
@@ -39,8 +41,7 @@ const createDraftLine = (
 ): DraftStocktakeLine => {
   return {
     stocktakeId,
-    itemCode: item.code,
-    itemName: item.name,
+    snapshotNumberOfPacks: 0,
     countThisLine: true,
     isCreated: true,
     isUpdated: false,
@@ -58,14 +59,12 @@ const stockLineToDraftLine = (
 ): DraftStocktakeLine => {
   return {
     stocktakeId,
-    itemCode: '',
-    itemName: '',
     countThisLine: false,
     isCreated: false,
     isUpdated: false,
     ...line,
     snapshotNumberOfPacks: line.totalNumberOfPacks,
-    expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
+    expiryDate: line.expiryDate ? line.expiryDate : null,
     id: generateUUID(),
   };
 };
@@ -96,7 +95,7 @@ const useDraftStocktakeLines = (
     const uncountedLines =
       stockLines?.filter(
         ({ id }) =>
-          !stocktakeLines?.some(({ stockLineId }) => stockLineId === id)
+          !stocktakeLines?.some(({ stockLine }) => stockLine?.id === id)
       ) ?? [];
     const uncounted = uncountedLines.map(line =>
       stockLineToDraftLine(id, line)
@@ -115,7 +114,7 @@ const useDraftStocktakeLines = (
 
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
-  update: (patch: RecordPatch<StocktakeLine>) => void;
+  update: (patch: RecordPatch<StocktakeLineFragment>) => void;
   addLine: () => void;
   save: (lines: DraftStocktakeLine[]) => void;
   isLoading: boolean;
@@ -145,7 +144,7 @@ export const useStocktakeLineEdit = (
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
   const { mutate: save, isLoading } = useSaveStocktakeLines();
 
-  const update = (patch: RecordPatch<StocktakeLine>) => {
+  const update = (patch: RecordPatch<StocktakeLineFragment>) => {
     setDraftLines(lines => {
       return lines.map(line => {
         if (line.id === patch.id) {
