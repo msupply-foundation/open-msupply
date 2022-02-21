@@ -1,5 +1,8 @@
 use chrono::NaiveDate;
-use repository::schema::{RemoteSyncBufferRow, StockLineRow};
+use repository::{
+    schema::{RemoteSyncBufferRow, StockLineRow},
+    StorageConnection,
+};
 
 use serde::Deserialize;
 
@@ -35,6 +38,7 @@ pub struct StockLineTranslation {}
 impl RemotePullTranslation for StockLineTranslation {
     fn try_translate_pull(
         &self,
+        _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
     ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_ITEM_LINE;
@@ -47,7 +51,7 @@ impl RemotePullTranslation for StockLineTranslation {
             serde_json::from_str::<LegacyStockLineRow>(&sync_record.data).map_err(|source| {
                 SyncTranslationError {
                     table_name,
-                    source,
+                    source: source.into(),
                     record: sync_record.data.clone(),
                 }
             })?;
@@ -69,27 +73,5 @@ impl RemotePullTranslation for StockLineTranslation {
                 note: data.note,
             }),
         )))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::sync::translation_remote::{
-        stock_line::StockLineTranslation, test_data::stock_line::get_test_stock_line_records,
-        RemotePullTranslation,
-    };
-
-    #[test]
-    fn test_stock_line_translation() {
-        for record in get_test_stock_line_records() {
-            assert_eq!(
-                StockLineTranslation {}
-                    .try_translate_pull(&record.remote_sync_buffer_row)
-                    .unwrap(),
-                record.translated_record,
-                "{}",
-                record.identifier
-            );
-        }
     }
 }

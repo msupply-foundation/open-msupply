@@ -76,4 +76,12 @@ impl<'a> NameStoreJoinRepository<'a> {
             .execute(&self.connection.connection)?;
         Ok(())
     }
+
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameStoreJoinRow>, RepositoryError> {
+        let result = name_store_join_dsl::name_store_join
+            .filter(name_store_join_dsl::id.eq(id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
 }

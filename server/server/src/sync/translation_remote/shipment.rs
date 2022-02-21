@@ -1,5 +1,8 @@
 use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
-use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, RemoteSyncBufferRow};
+use repository::{
+    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, RemoteSyncBufferRow},
+    StorageConnection,
+};
 
 use serde::Deserialize;
 
@@ -91,6 +94,7 @@ pub struct ShipmentTranslation {}
 impl RemotePullTranslation for ShipmentTranslation {
     fn try_translate_pull(
         &self,
+        _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
     ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_TRANSACT;
@@ -102,7 +106,7 @@ impl RemotePullTranslation for ShipmentTranslation {
             serde_json::from_str::<LegacyTransactRow>(&sync_record.data).map_err(|source| {
                 SyncTranslationError {
                     table_name,
-                    source,
+                    source: source.into(),
                     record: sync_record.data.clone(),
                 }
             })?;
