@@ -6,15 +6,14 @@ import {
   useColumns,
   createTableStore,
 } from '@openmsupply-client/common';
-import { ItemRow } from '../types';
-import { useItemListView } from 'packages/system/src';
+import { useItemListView, ItemRowFragment } from '../api';
 
 export const ItemListView: FC = () => {
   const { data, isLoading, onChangePage, pagination, sortBy, onChangeSortBy } =
     useItemListView();
   const navigate = useNavigate();
 
-  const columns = useColumns<ItemRow>(
+  const columns = useColumns<ItemRowFragment>(
     ['name', 'code'],
     {
       sortBy,

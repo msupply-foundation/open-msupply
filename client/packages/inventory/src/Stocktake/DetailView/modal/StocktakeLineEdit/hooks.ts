@@ -1,4 +1,3 @@
-import { ItemRowFragment } from './../../../../../../system/src/Item/api/operations.generated';
 import { StocktakeLineFragment } from './../../../api/operations.generated';
 import React, { useEffect, Dispatch, SetStateAction } from 'react';
 import {
@@ -7,7 +6,7 @@ import {
   RecordPatch,
   generateUUID,
 } from '@openmsupply-client/common';
-import { useStockLines } from '@openmsupply-client/system';
+import { useStockLines, ItemRowFragment } from '@openmsupply-client/system';
 
 import {
   useStocktakeRows,
