@@ -1,5 +1,4 @@
 import {
-  useOmSupplyApi,
   Item,
   FilterBy,
   useQueryParams,
@@ -8,11 +7,14 @@ import {
   UseQueryResult,
   useQueryClient,
 } from '@openmsupply-client/common';
-import { getItemSortField, mapItemNodes } from '../../utils';
+import { useItemApi } from './../useItemApi';
+import { getItemSortField, mapItemNodes } from '../../../utils';
+import { ItemFragment } from './../../operations.generated';
+import { ItemQueries } from './../../api';
 
 export const useItemsList = (initialListParameters: {
   initialFilterBy?: FilterBy;
-  initialSortBy: SortRule<Item>;
+  initialSortBy: SortRule<ItemFragment>;
 }): {
   onFilterByCode: (code: string) => void;
   onFilterByName: (name: string) => void;
@@ -22,16 +24,16 @@ export const useItemsList = (initialListParameters: {
   totalCount: number;
 }> => {
   const queryClient = useQueryClient();
-  const { api } = useOmSupplyApi();
+  const api = useItemApi();
   const { filterBy, filter, queryParams, first, offset, sortBy, storeId } =
     useQueryParams(initialListParameters);
 
   const queryState = useQuery(
-    ['items', 'list', queryParams],
+    ['item', 'list', queryParams],
     async () => {
-      const result = await api.itemsWithStockLines({
-        key: getItemSortField(sortBy.key),
-        filter: filterBy,
+      const result = await ItemQueries.get.listWithStockLines(api, {
+        sortBy,
+        filterBy,
         first,
         offset,
         storeId,
