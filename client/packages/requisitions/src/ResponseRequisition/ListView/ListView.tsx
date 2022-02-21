@@ -45,7 +45,7 @@ export const ResponseRequisitionListView: FC = () => {
         columns={columns}
         data={data?.nodes}
         onRowClick={row => {
-          navigate(row.id);
+          navigate(String(row.requisitionNumber));
         }}
       />
     </>
