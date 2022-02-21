@@ -2,6 +2,7 @@ import {
   RequisitionNodeStatus,
   LocaleKey,
   useTranslation,
+  RequisitionNodeType,
 } from '@openmsupply-client/common';
 import { ResponseRequisitionRowFragment } from './ResponseRequisition/api';
 import { RequestRequisitionRowFragment } from './RequestRequisition/api';
@@ -69,5 +70,5 @@ export const getNextResponseRequisitionStatus = (
 export const canDeleteRequisition = (
   requisitionRow: ResponseRequisitionRowFragment | RequestRequisitionRowFragment
 ): boolean =>
-  requisitionRow.status === RequisitionNodeStatus.Draft ||
-  requisitionRow.status === RequisitionNodeStatus.New;
+  requisitionRow.status === RequisitionNodeStatus.New &&
+  requisitionRow.type === RequisitionNodeType.Request;

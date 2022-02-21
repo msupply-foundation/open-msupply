@@ -99,8 +99,8 @@ const useStatusChangeButton = () => {
     onConfirm: onConfirmStatusChange,
   });
 
-  // When the status of the invoice changes (after an update), set the selected option to the next status.
-  // It would be set to the current status, which is now a disabled option.
+  // When the status of the requisition changes (after an update), set the selected option to the next status.
+  // Otherwise, it would be set to the current status, which is now a disabled option.
   useEffect(() => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
@@ -112,8 +112,6 @@ export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, onGetConfirmation } =
     useStatusChangeButton();
   const isDisabled = useIsResponseRequisitionDisabled();
-
-  console.log(selectedOption);
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
