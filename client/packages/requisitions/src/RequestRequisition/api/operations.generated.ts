@@ -22,7 +22,7 @@ export type UpdateRequestRequisitionMutation = { __typename: 'Mutations', update
 
 export type RequestRequisitionLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, calculatedQuantity: number, itemStats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, stockOnHand: number, monthsOfStock: number } };
 
-export type RequestRequisitionFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, thresholdMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, calculatedQuantity: number, itemStats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, stockOnHand: number, monthsOfStock: number } }> } };
+export type RequestRequisitionFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, thresholdMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, calculatedQuantity: number, itemStats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, stockOnHand: number, monthsOfStock: number } }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
 
 export type RequestRequisitionQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -30,9 +30,9 @@ export type RequestRequisitionQueryVariables = Types.Exact<{
 }>;
 
 
-export type RequestRequisitionQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, thresholdMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, calculatedQuantity: number, itemStats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, stockOnHand: number, monthsOfStock: number } }> } } };
+export type RequestRequisitionQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, thresholdMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, calculatedQuantity: number, itemStats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, stockOnHand: number, monthsOfStock: number } }> } } };
 
-export type RequestRequisitionRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType };
+export type RequestRequisitionRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string };
 
 export type RequestRequisitionsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -42,7 +42,7 @@ export type RequestRequisitionsQueryVariables = Types.Exact<{
 }>;
 
 
-export type RequestRequisitionsQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType }> } };
+export type RequestRequisitionsQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string }> } };
 
 export const RequestRequisitionLineFragmentDoc = gql`
     fragment RequestRequisitionLine on RequisitionLineNode {
@@ -83,6 +83,17 @@ export const RequestRequisitionFragmentDoc = gql`
       }
     }
   }
+  otherParty {
+    id
+    code
+    isCustomer
+    isSupplier
+    name
+    store {
+      id
+      code
+    }
+  }
 }
     ${RequestRequisitionLineFragmentDoc}`;
 export const RequestRequisitionRowFragmentDoc = gql`
@@ -98,6 +109,7 @@ export const RequestRequisitionRowFragmentDoc = gql`
   status
   theirReference
   type
+  otherPartyId
 }
     `;
 export const InsertRequestRequisitionDocument = gql`

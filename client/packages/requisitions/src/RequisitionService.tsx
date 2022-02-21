@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
 
 import {
-  ListView as SupplierRequisitionListView,
-  DetailView as SupplierRequisitionDetailView,
-} from './SupplierRequisition';
+  ListView as RequestRequisitionListView,
+  DetailView as RequestRequisitionDetailView,
+} from './RequestRequisition';
 import {
   ListView as CustomerRequisitionListView,
   DetailView as CustomerRequisitionDetailView,
@@ -20,12 +20,8 @@ const customerRequisitionRoute = RouteBuilder.create(
   .addPart(':id')
   .build();
 
-const supplierRequisitionsRoute = RouteBuilder.create(
-  AppRoute.SupplierRequisition
-).build();
-const supplierRequisitionRoute = RouteBuilder.create(
-  AppRoute.SupplierRequisition
-)
+const internalOrdersRoute = RouteBuilder.create(AppRoute.InternalOrder).build();
+const internalOrderRoute = RouteBuilder.create(AppRoute.InternalOrder)
   .addPart(':requisitionNumber')
   .build();
 
@@ -41,12 +37,12 @@ export const RequisitionService: FC = () => {
         element={<CustomerRequisitionDetailView />}
       />
       <Route
-        path={supplierRequisitionsRoute}
-        element={<SupplierRequisitionListView />}
+        path={internalOrdersRoute}
+        element={<RequestRequisitionListView />}
       />
       <Route
-        path={supplierRequisitionRoute}
-        element={<SupplierRequisitionDetailView />}
+        path={internalOrderRoute}
+        element={<RequestRequisitionDetailView />}
       />
     </Routes>
   );

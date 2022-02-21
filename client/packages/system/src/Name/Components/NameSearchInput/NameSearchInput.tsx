@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { Name, useBufferState } from '@openmsupply-client/common';
 import {
   Autocomplete,
@@ -17,6 +17,7 @@ interface NameSearchInputProps {
   width?: number;
   value: Name | null;
   disabled?: boolean;
+  onlyShowStores?: boolean;
   type: 'customer' | 'supplier';
 }
 
@@ -26,11 +27,17 @@ export const NameSearchInput: FC<NameSearchInputProps> = ({
   value,
   disabled = false,
   type,
+  onlyShowStores,
 }) => {
   const isCustomerLookup = type === 'customer';
   const filter = isCustomerLookup ? { isCustomer: true } : { isSupplier: true };
   const { data, isLoading } = useNames(filter);
   const [buffer, setBuffer] = useBufferState(value);
+
+  const filteredData = useMemo(() => {
+    if (onlyShowStores) return data?.nodes.filter(({ store }) => !!store) ?? [];
+    else return data?.nodes ?? [];
+  }, [data, onlyShowStores]);
 
   return (
     <Autocomplete
@@ -48,7 +55,7 @@ export const NameSearchInput: FC<NameSearchInputProps> = ({
         setBuffer(name);
         name && onChange(name);
       }}
-      options={defaultOptionMapper(data?.nodes ?? [], 'name')}
+      options={defaultOptionMapper(filteredData, 'name')}
       renderOption={getDefaultOptionRenderer('name')}
       width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}

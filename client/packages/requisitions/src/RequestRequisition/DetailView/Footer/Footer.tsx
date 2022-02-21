@@ -3,10 +3,11 @@ import {
   StatusCrumbs,
   AppFooterPortal,
   RequisitionNodeStatus,
+  useTranslation,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import {
-  getSupplierRequisitionTranslator,
+  getRequestRequisitionTranslator,
   requestRequisitionStatuses,
 } from '../../../utils';
 import { RequestRequisitionFragment, useRequestRequisition } from '../../api';
@@ -40,6 +41,7 @@ export const createStatusLog = (requisition: RequestRequisitionFragment) => {
 
 export const Footer: FC = () => {
   const { data } = useRequestRequisition();
+  const t = useTranslation('replenishment');
 
   return (
     <AppFooterPortal
@@ -55,7 +57,7 @@ export const Footer: FC = () => {
             <StatusCrumbs
               statuses={requestRequisitionStatuses}
               statusLog={createStatusLog(data)}
-              statusFormatter={getSupplierRequisitionTranslator()}
+              statusFormatter={getRequestRequisitionTranslator(t)}
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
