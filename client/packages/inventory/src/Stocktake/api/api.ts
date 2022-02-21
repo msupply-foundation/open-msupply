@@ -37,7 +37,9 @@ const createUpdateStocktakeLineInput = (
     sellPricePerPack: line.sellPricePerPack,
     id: line.id,
     countedNumberOfPacks: line.countedNumberOfPacks,
-    expiryDate: line.expiryDate ? formatNaiveDate(line.expiryDate) : undefined,
+    expiryDate: line.expiryDate
+      ? formatNaiveDate(new Date(line.expiryDate))
+      : undefined,
   };
 };
 
@@ -52,7 +54,9 @@ const createInsertStocktakeLineInput = (
     itemId: line.itemId,
     sellPricePerPack: line.sellPricePerPack,
     stocktakeId: line.stocktakeId,
-    expiryDate: line.expiryDate ? formatNaiveDate(line.expiryDate) : undefined,
+    expiryDate: line.expiryDate
+      ? formatNaiveDate(new Date(line.expiryDate))
+      : undefined,
   };
 };
 

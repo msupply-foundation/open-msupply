@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -11,11 +10,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 
-interface AppBarButtonsProps {
-  onCreate: (toggle: boolean) => void;
-}
-
-export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
+export const AppBarButtons: FC = () => {
   const { info, success } = useNotification();
   const t = useTranslation(['distribution', 'common']);
 
@@ -25,7 +20,7 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('label.new-stocktake')}
-          onClick={() => onCreate(true)}
+          onClick={() => {}}
         />
         <ButtonWithIcon
           Icon={<DownloadIcon />}

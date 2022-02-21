@@ -4,12 +4,14 @@ fragment StocktakeRow on StocktakeNode {
   comment
   description
   createdDatetime
+  finalisedDatetime
   stocktakeNumber
   status
 }
 
 fragment StocktakeLine on StocktakeLineNode {
   __typename
+  stocktakeId
   batch
   itemId
   id
@@ -19,6 +21,14 @@ fragment StocktakeLine on StocktakeLineNode {
   countedNumberOfPacks
   sellPricePerPack
   costPricePerPack
+  stockLine {
+    id
+  }
+  item {
+    id
+    code
+    name
+  }
 }
 
 fragment Stocktake on StocktakeNode {
@@ -27,6 +37,7 @@ fragment Stocktake on StocktakeNode {
   stocktakeNumber
   comment
   createdDatetime
+  finalisedDatetime
   status
   description
   lines {
