@@ -8,7 +8,7 @@ const NUMBER_STOCK_TAKE: (&'static str, &'static str) = (
     "0a355d80f0d211eb8dddb54df6d741bc",
     r#"{
       "ID": "0a355d80f0d211eb8dddb54df6d741bc",
-      "name": "stock_take_number_for_store_store_a",
+      "name": "stock_take_number_for_store_store_remote_pull",
       "value": 1
     }"#,
 );
@@ -17,7 +17,7 @@ const NUMBER_INVENTORY_ADJUSTMENT: (&'static str, &'static str) = (
     "12e8d7e0f0d211eb8dddb54df6d741bc",
     r#"{
       "ID": "12e8d7e0f0d211eb8dddb54df6d741bc",
-      "name": "inventory_adjustment_serial_number_for_store_store_a",
+      "name": "inventory_adjustment_serial_number_for_store_store_remote_pull",
       "value": 2
     }"#,
 );
@@ -26,7 +26,7 @@ const CUSTOMER_INVOICE_ADJUSTMENT: (&'static str, &'static str) = (
     "67f303f0f0d211eb8dddb54df6d741bc",
     r#"{
       "ID": "67f303f0f0d211eb8dddb54df6d741bc",
-      "name": "customer_invoice_number_for_store_store_a",
+      "name": "customer_invoice_number_for_store_store_remote_pull",
       "value": 8
     }"#,
 );
@@ -35,7 +35,7 @@ const PURCHASE_ORDER: (&'static str, &'static str) = (
     "772B973657F440089E4BFE7ADE013D28",
     r#"{
       "ID": "772B973657F440089E4BFE7ADE013D28",
-      "name": "purchase_order_number_for_store_store_a",
+      "name": "purchase_order_number_for_store_store_remote_pull",
       "value": 2
     }"#,
 );
@@ -44,7 +44,7 @@ const SUPPLIER_INVOICE: (&'static str, &'static str) = (
     "F16EC3CB735B4C8B8D441EDB9186A262",
     r#"{
       "ID": "F16EC3CB735B4C8B8D441EDB9186A262",
-      "name": "supplier_invoice_number_for_store_store_a",
+      "name": "supplier_invoice_number_for_store_store_remote_pull",
       "value": 3
     }"#,
 );
@@ -59,7 +59,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
                 IntegrationUpsertRecord::Number(NumberRow {
                     id: NUMBER_STOCK_TAKE.0.to_string(),
                     value: 1,
-                    store_id: "store_a".to_string(),
+                    store_id: "store_remote_pull".to_string(),
                     r#type: NumberRowType::Stocktake,
                 }),
             )),
@@ -77,7 +77,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
                 IntegrationUpsertRecord::Number(NumberRow {
                     id: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
                     value: 2,
-                    store_id: "store_a".to_string(),
+                    store_id: "store_remote_pull".to_string(),
                     r#type: NumberRowType::InventoryAdjustment,
                 }),
             )),
@@ -95,7 +95,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
                 IntegrationUpsertRecord::Number(NumberRow {
                     id: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
                     value: 8,
-                    store_id: "store_a".to_string(),
+                    store_id: "store_remote_pull".to_string(),
                     r#type: NumberRowType::OutboundShipment,
                 }),
             )),
@@ -113,7 +113,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
                 IntegrationUpsertRecord::Number(NumberRow {
                     id: SUPPLIER_INVOICE.0.to_string(),
                     value: 3,
-                    store_id: "store_a".to_string(),
+                    store_id: "store_remote_pull".to_string(),
                     r#type: NumberRowType::InboundShipment,
                 }),
             )),

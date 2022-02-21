@@ -227,7 +227,8 @@ mod tests {
     async fn test_integrate_remote_records() {
         let (_, connection, _, _) = test_db::setup_all(
             "omsupply-database-integrate_remote_records",
-            MockDataInserts::none().stores().names().units().items(),
+            // can't use all mocks because there will b
+            MockDataInserts::all(),
         )
         .await;
 
