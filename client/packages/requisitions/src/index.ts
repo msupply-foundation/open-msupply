@@ -3,8 +3,8 @@ export {
   DetailView as RequestRequisitionDetailView,
 } from './RequestRequisition';
 export {
-  ListView as CustomerRequisitionListView,
-  DetailView as CustomerRequisitionDetailView,
-} from './CustomerRequisition';
+  ListView as ResponseRequisitionListView,
+  DetailView as ResponseRequisitionDetailView,
+} from './ResponseRequisition';
 
 export { RequisitionService } from './RequisitionService';

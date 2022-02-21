@@ -1,0 +1,114 @@
+mutation updateResponseRequisition(
+  $storeId: String!
+  $input: UpdateResponseRequisitionInput!
+) {
+  updateResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+  }
+}
+
+fragment ResponseRequisitionLine on RequisitionLineNode {
+  id
+  itemId
+  requestedQuantity
+  calculatedQuantity
+  itemStats {
+    averageMonthlyConsumption
+    stockOnHand
+    monthsOfStock
+  }
+}
+
+fragment ResponseRequisition on RequisitionNode {
+  __typename
+  id
+  type
+  status
+  createdDatetime
+  sentDatetime
+  finalisedDatetime
+  requisitionNumber
+  colour
+  theirReference
+  comment
+  otherPartyName
+  otherPartyId
+  maxMonthsOfStock
+  thresholdMonthsOfStock
+  lines {
+    __typename
+    ... on RequisitionLineConnector {
+      totalCount
+      nodes {
+        ...ResponseRequisitionLine
+      }
+    }
+  }
+  otherParty {
+    id
+    code
+    isCustomer
+    isSupplier
+    name
+    store {
+      id
+      code
+    }
+  }
+}
+query responseRequisition($storeId: String!, $requisitionNumber: Int!) {
+  requisitionByNumber(
+    requisitionNumber: $requisitionNumber
+    type: "RESPONSE"
+    storeId: $storeId
+  ) {
+    __typename
+    ... on RequisitionNode {
+      ...ResponseRequisition
+      otherParty {
+        __typename
+        ... on NameNode {
+          id
+          name
+          code
+          isCustomer
+          isSupplier
+        }
+      }
+    }
+  }
+}
+
+fragment ResponseRequisitionRow on RequisitionNode {
+  colour
+  comment
+  createdDatetime
+  finalisedDatetime
+  id
+  otherPartyName
+  requisitionNumber
+  sentDatetime
+  status
+  theirReference
+  type
+  otherPartyId
+}
+
+query responseRequisitions(
+  $storeId: String!
+  $filter: RequisitionFilterInput
+  $page: PaginationInput
+  $sort: RequisitionSortInput
+) {
+  requisitions(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
+    ... on RequisitionConnector {
+      totalCount
+      nodes {
+        ...ResponseRequisitionRow
+      }
+    }
+  }
+}

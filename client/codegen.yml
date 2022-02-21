@@ -15,7 +15,7 @@ generates:
     preset: near-operation-file
     presetConfig:
       extension: .generated.ts
-      baseTypesPath: ./common/src/types/schema.ts
+      baseTypesPath: ~@openmsupply-client/common
     plugins:
       - typescript-operations
       - typescript-graphql-request

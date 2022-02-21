@@ -67,6 +67,7 @@ export const mapItemNodes = (
 };
 
 export const toItem = (line: ItemLike): Item => ({
+  __typename: 'ItemNode',
   id: 'lines' in line ? line.lines[0].itemId : line.itemId,
   name: 'lines' in line ? line.lines[0].itemName : line.itemName,
   code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
@@ -74,6 +75,7 @@ export const toItem = (line: ItemLike): Item => ({
   availableBatches: [],
   availableQuantity: 0,
   stats: {
+    __typename: 'ItemStatsNode',
     monthsOfStock: 0,
     averageMonthlyConsumption: 0,
     stockOnHand: 0,

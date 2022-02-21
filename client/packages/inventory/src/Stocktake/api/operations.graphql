@@ -1,0 +1,128 @@
+fragment StocktakeRow on StocktakeNode {
+  __typename
+  id
+  comment
+  description
+  createdDatetime
+  stocktakeNumber
+  status
+}
+
+fragment StocktakeLine on StocktakeLineNode {
+  __typename
+  batch
+  itemId
+  id
+  expiryDate
+  packSize
+  snapshotNumberOfPacks
+  countedNumberOfPacks
+  sellPricePerPack
+  costPricePerPack
+}
+
+fragment Stocktake on StocktakeNode {
+  __typename
+  id
+  stocktakeNumber
+  comment
+  createdDatetime
+  status
+  description
+  lines {
+    __typename
+    ... on StocktakeLineConnector {
+      __typename
+      nodes {
+        ...StocktakeLine
+      }
+      totalCount
+    }
+  }
+}
+
+query stocktakes(
+  $storeId: String!
+  $filter: StocktakeFilterInput
+  $page: PaginationInput
+  $sort: [StocktakeSortInput!]
+) {
+  stocktakes(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
+    __typename
+    ... on StocktakeConnector {
+      nodes {
+        ...StocktakeRow
+      }
+      totalCount
+    }
+  }
+}
+
+query stocktake($stocktakeId: String!, $storeId: String!) {
+  stocktake(id: $stocktakeId, storeId: $storeId) {
+    __typename
+    ... on StocktakeNode {
+      ...Stocktake
+    }
+  }
+}
+
+mutation upsertStocktakeLines(
+  $storeId: String!
+  $deleteStocktakeLines: [DeleteStocktakeLineInput!]
+  $updateStocktakeLines: [UpdateStocktakeLineInput!]
+  $insertStocktakeLines: [InsertStocktakeLineInput!]
+) {
+  batchStocktake(
+    storeId: $storeId
+    input: {
+      deleteStocktakeLines: $deleteStocktakeLines
+      updateStocktakeLines: $updateStocktakeLines
+      insertStocktakeLines: $insertStocktakeLines
+    }
+  ) {
+    __typename
+    ... on BatchStocktakeResponses {
+      __typename
+      deleteStocktakeLines {
+        id
+      }
+      insertStocktakeLines {
+        id
+      }
+      updateStocktakeLines {
+        id
+      }
+    }
+  }
+}
+
+mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
+  batchStocktake(storeId: $storeId, input: { deleteStocktakes: $ids }) {
+    __typename
+    ... on BatchStocktakeResponses {
+      deleteStocktakes {
+        __typename
+        id
+      }
+    }
+  }
+}
+
+mutation updateStocktake($input: UpdateStocktakeInput!, $storeId: String!) {
+  updateStocktake(input: $input, storeId: $storeId) {
+    ... on StocktakeNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertStocktake($input: InsertStocktakeInput!, $storeId: String!) {
+  insertStocktake(input: $input, storeId: $storeId) {
+    ... on StocktakeNode {
+      __typename
+      id
+    }
+  }
+}

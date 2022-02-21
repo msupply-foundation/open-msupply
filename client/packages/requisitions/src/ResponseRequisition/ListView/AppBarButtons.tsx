@@ -1,32 +1,21 @@
 import React, { FC } from 'react';
-
 import {
   DownloadIcon,
-  PlusCircleIcon,
   PrinterIcon,
   useNotification,
-  AppBarButtonsPortal,
-  ButtonWithIcon,
-  Grid,
   useTranslation,
+  AppBarButtonsPortal,
+  Grid,
+  ButtonWithIcon,
 } from '@openmsupply-client/common';
 
-interface AppBarButtonsProps {
-  onCreate: (toggle: boolean) => void;
-}
-
-export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
+export const AppBarButtons: FC = () => {
   const { info, success } = useNotification();
   const t = useTranslation('common');
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('label.new-requisition')}
-          onClick={() => onCreate(true)}
-        />
         <ButtonWithIcon
           Icon={<DownloadIcon />}
           label={t('button.export')}

@@ -3,7 +3,8 @@ import {
   LocaleKey,
   useTranslation,
 } from '@openmsupply-client/common';
-import { Requisition, RequisitionRow } from './types';
+import { Requisition } from './types';
+import { ResponseRequisitionRowFragment } from './ResponseRequisition/api';
 
 export const isRequisitionEditable = (requisition: Requisition): boolean => {
   return (
@@ -32,8 +33,9 @@ export const getRequestRequisitionStatuses = (): RequisitionNodeStatus[] => [
   RequisitionNodeStatus.Sent,
 ];
 
-export const canDeleteRequisition = (requisitionRow: RequisitionRow): boolean =>
-  requisitionRow.status === RequisitionNodeStatus.Draft;
+export const canDeleteRequisition = (
+  requisitionRow: ResponseRequisitionRowFragment
+): boolean => requisitionRow.status === RequisitionNodeStatus.Draft;
 
 export const createStatusLog = (status: RequisitionNodeStatus) => {
   if (status === 'DRAFT') {
