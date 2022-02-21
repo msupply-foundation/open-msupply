@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-
 import {
   Grid,
   CopyIcon,
@@ -61,7 +60,7 @@ const RelatedDocumentsSection: FC = () => {
   const t = useTranslation('replenishment');
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid container gap={0.5} key="additional-info"></Grid>
+      <Grid container gap={0.5} key="additional-info" />
     </DetailPanelSection>
   );
 };

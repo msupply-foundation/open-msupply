@@ -40,9 +40,9 @@ export const ReplenishmentNav: FC = () => {
             end
             expandOnHover
             to={RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.SupplierRequisition)
+              .addPart(AppRoute.InternalOrder)
               .build()}
-            text={t('supplier-requisition')}
+            text={t('internal-order')}
           />
 
           <AppNavLink

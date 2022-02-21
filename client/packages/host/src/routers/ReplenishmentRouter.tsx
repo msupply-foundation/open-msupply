@@ -19,8 +19,8 @@ const fullInboundShipmentPath = RouteBuilder.create(AppRoute.Replenishment)
   .addWildCard()
   .build();
 
-const fullSupplierRequisitionPath = RouteBuilder.create(AppRoute.Replenishment)
-  .addPart(AppRoute.SupplierRequisition)
+const fullInternalOrderPath = RouteBuilder.create(AppRoute.Replenishment)
+  .addPart(AppRoute.InternalOrder)
   .addWildCard()
   .build();
 
@@ -30,7 +30,7 @@ const fullSuppliersPath = RouteBuilder.create(AppRoute.Replenishment)
   .build();
 
 export const ReplenishmentRouter: FC = () => {
-  const gotoRequisition = useMatch(fullSupplierRequisitionPath);
+  const gotoRequisition = useMatch(fullInternalOrderPath);
   const gotoSuppliers = useMatch(fullSuppliersPath);
   const gotoInboundShipment = useMatch(fullInboundShipmentPath);
 

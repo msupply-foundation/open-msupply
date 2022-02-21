@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  useQueryParams,
   useQueryClient,
   RequisitionNodeStatus,
   useNavigate,
@@ -22,6 +23,7 @@ import {
   getSdk,
   RequestRequisitionFragment,
   RequestRequisitionLineFragment,
+  RequestRequisitionRowFragment,
 } from './operations.generated';
 
 export const useRequestRequisitionApi = () => {
@@ -30,12 +32,24 @@ export const useRequestRequisitionApi = () => {
 };
 
 export const useRequestRequisitions = () => {
+  const queryParams = useQueryParams<RequestRequisitionRowFragment>({
+    initialSortBy: { key: 'otherPartyName' },
+  });
   const { store } = useHostContext();
   const api = useRequestRequisitionApi();
-  return useQuery(
-    ['requisition', store.id],
-    RequestRequisitionQueries.get.list(api, store.id)
-  );
+
+  return {
+    ...useQuery(
+      ['requisition', store.id, queryParams],
+      RequestRequisitionQueries.get.list(api, store.id, {
+        first: queryParams.first,
+        offset: queryParams.offset,
+        sortBy: queryParams.sortBy,
+        filter: queryParams.filter.filterBy,
+      })
+    ),
+    ...queryParams,
+  };
 };
 
 export const useCreateRequestRequisition = () => {

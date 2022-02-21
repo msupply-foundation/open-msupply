@@ -44,22 +44,6 @@ export type InsertStocktakeMutationVariables = Types.Exact<{
 
 export type InsertStocktakeMutation = { __typename: 'Mutations', insertStocktake: { __typename: 'StocktakeNode', id: string } };
 
-export type UpdateSupplierRequisitionMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  input: Types.UpdateRequestRequisitionInput;
-}>;
-
-
-export type UpdateSupplierRequisitionMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateRequestRequisitionError' } };
-
-export type InsertSupplierRequisitionMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  input: Types.InsertRequestRequisitionInput;
-}>;
-
-
-export type InsertSupplierRequisitionMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
-
 export type UpdateCustomerRequisitionMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.UpdateRequestRequisitionInput;
@@ -260,26 +244,6 @@ export const InsertStocktakeDocument = gql`
     mutation insertStocktake($input: InsertStocktakeInput!) {
   insertStocktake(input: $input) {
     ... on StocktakeNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const UpdateSupplierRequisitionDocument = gql`
-    mutation updateSupplierRequisition($storeId: String!, $input: UpdateRequestRequisitionInput!) {
-  updateRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const InsertSupplierRequisitionDocument = gql`
-    mutation insertSupplierRequisition($storeId: String!, $input: InsertRequestRequisitionInput!) {
-  insertRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
       __typename
       id
     }
@@ -817,12 +781,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     insertStocktake(variables: InsertStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertStocktakeMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertStocktakeMutation>(InsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStocktake');
     },
-    updateSupplierRequisition(variables: UpdateSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateSupplierRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierRequisitionMutation>(UpdateSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierRequisition');
-    },
-    insertSupplierRequisition(variables: InsertSupplierRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertSupplierRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierRequisitionMutation>(InsertSupplierRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierRequisition');
-    },
     updateCustomerRequisition(variables: UpdateCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateCustomerRequisitionMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerRequisitionMutation>(UpdateCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateCustomerRequisition');
     },
@@ -948,40 +906,6 @@ export const mockUpdateStocktakeMutation = (resolver: ResponseResolver<GraphQLRe
 export const mockInsertStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<InsertStocktakeMutationVariables>, GraphQLContext<InsertStocktakeMutation>, any>) =>
   graphql.mutation<InsertStocktakeMutation, InsertStocktakeMutationVariables>(
     'insertStocktake',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateSupplierRequisitionMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateRequestRequisition })
- *   )
- * })
- */
-export const mockUpdateSupplierRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateSupplierRequisitionMutationVariables>, GraphQLContext<UpdateSupplierRequisitionMutation>, any>) =>
-  graphql.mutation<UpdateSupplierRequisitionMutation, UpdateSupplierRequisitionMutationVariables>(
-    'updateSupplierRequisition',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertSupplierRequisitionMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertRequestRequisition })
- *   )
- * })
- */
-export const mockInsertSupplierRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<InsertSupplierRequisitionMutationVariables>, GraphQLContext<InsertSupplierRequisitionMutation>, any>) =>
-  graphql.mutation<InsertSupplierRequisitionMutation, InsertSupplierRequisitionMutationVariables>(
-    'insertSupplierRequisition',
     resolver
   )
 
