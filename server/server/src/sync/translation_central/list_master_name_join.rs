@@ -1,5 +1,5 @@
-use crate::sync::translation_central::{
-    SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN,
+use crate::sync::{
+    translation_central::TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN, SyncTranslationError,
 };
 use repository::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
 

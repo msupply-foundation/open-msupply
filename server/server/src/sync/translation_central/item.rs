@@ -1,4 +1,4 @@
-use crate::sync::translation_central::{SyncTranslationError, TRANSLATION_RECORD_ITEM};
+use crate::sync::{translation_central::TRANSLATION_RECORD_ITEM, SyncTranslationError};
 use repository::schema::{CentralSyncBufferRow, ItemRow, ItemRowType};
 
 use serde::Deserialize;

@@ -1,4 +1,4 @@
-use crate::sync::translation_central::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_LINE};
+use crate::sync::{translation_central::TRANSLATION_RECORD_LIST_MASTER_LINE, SyncTranslationError};
 use repository::schema::{CentralSyncBufferRow, MasterListLineRow};
 
 use serde::Deserialize;
