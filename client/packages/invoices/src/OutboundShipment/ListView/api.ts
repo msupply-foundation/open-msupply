@@ -5,11 +5,11 @@ import {
   InvoiceSortFieldInput,
   InvoicePriceResponse,
 } from '@openmsupply-client/common';
-import { Invoice, InvoiceRow } from '../../types';
 import { OutboundShipmentApi } from '../api';
 import {
   InvoicesQuery,
   InvoicesQueryVariables,
+  OutboundShipmentRowFragment,
 } from '../api/operations.generated';
 
 const pricingGuard = (pricing: InvoicePriceResponse) => {
@@ -32,7 +32,7 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
 
 export const onCreate =
   (api: OutboundShipmentApi) =>
-  async (invoice: Partial<Invoice>): Promise<string> => {
+  async (invoice: Partial<OutboundShipmentRowFragment>): Promise<string> => {
     const result = await api.insertOutboundShipment({
       id: invoice.id ?? '',
       otherPartyId: invoice?.otherPartyId ?? '',
@@ -49,7 +49,7 @@ export const onCreate =
 
 export const onDelete =
   (api: OutboundShipmentApi) =>
-  async (invoices: InvoiceRow[]): Promise<string[]> => {
+  async (invoices: OutboundShipmentRowFragment[]): Promise<string[]> => {
     const result = await api.deleteOutboundShipments({
       deleteOutboundShipments: invoices.map(invoice => invoice.id),
     });
@@ -66,7 +66,7 @@ export const onRead =
   (api: OutboundShipmentApi) =>
   async (
     queryParams: InvoicesQueryVariables
-  ): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
+  ): Promise<{ nodes: OutboundShipmentRowFragment[]; totalCount: number }> => {
     const result = await api.invoices(queryParams);
 
     const invoices = invoicesGuard(result);
@@ -81,7 +81,9 @@ export const onRead =
 
 export const onUpdate =
   (api: OutboundShipmentApi) =>
-  async (patch: Partial<Invoice> & { id: string }): Promise<string> => {
+  async (
+    patch: Partial<OutboundShipmentRowFragment> & { id: string }
+  ): Promise<string> => {
     const result = await api.updateOutboundShipment({
       input: invoiceToInput(patch),
     });
@@ -96,7 +98,7 @@ export const onUpdate =
   };
 
 const invoiceToInput = (
-  patch: Partial<Invoice> & { id: string }
+  patch: Partial<OutboundShipmentRowFragment> & { id: string }
 ): UpdateOutboundShipmentInput => {
   return {
     id: patch.id,
@@ -104,7 +106,9 @@ const invoiceToInput = (
   };
 };
 
-const getSortKey = (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
+const getSortKey = (
+  sortBy: SortBy<OutboundShipmentRowFragment>
+): InvoiceSortFieldInput => {
   switch (sortBy.key) {
     // case 'allocatedDatetime': {
     //   return InvoiceSortFieldInput.ConfirmDatetime;
@@ -132,13 +136,13 @@ const getSortKey = (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
   }
 };
 
-const getSortDesc = (sortBy: SortBy<InvoiceRow>): boolean => {
+const getSortDesc = (sortBy: SortBy<OutboundShipmentRowFragment>): boolean => {
   return !!sortBy.isDesc;
 };
 
 export const getOutboundShipmentListViewApi = (
   omSupplyApi: OutboundShipmentApi
-): ListApi<InvoiceRow> => ({
+): ListApi<OutboundShipmentRowFragment> => ({
   onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
     const queryParams: InvoicesQueryVariables = {
       first,

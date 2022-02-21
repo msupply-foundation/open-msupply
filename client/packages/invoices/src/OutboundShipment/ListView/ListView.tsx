@@ -16,8 +16,8 @@ import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getOutboundShipmentListViewApi } from './api';
-import { InvoiceRow } from '../../types';
 import { useOutboundShipmentApi } from '../api';
+import { OutboundShipmentRowFragment } from '../api/operations.generated';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const t = useTranslation('common');
@@ -47,7 +47,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     getOutboundShipmentListViewApi(api)
   );
 
-  const columns = useColumns<InvoiceRow>(
+  const columns = useColumns<OutboundShipmentRowFragment>(
     [
       [getNameAndColorColumn(), { setter: onUpdate }],
       [
