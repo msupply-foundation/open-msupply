@@ -1,3 +1,57 @@
+fragment OutboundShipmentLine on InvoiceLineNode {
+  __typename
+  batch
+  expiryDate
+  id
+  item
+  itemCode
+  itemId
+  itemName
+  locationName
+  note
+  numberOfPacks
+  packSize
+  sellPricePerPack
+  stockLine
+}
+
+fragment OutboundShipment on InvoiceNode {
+  __typename
+  allocatedDatetime
+  colour
+  comment
+  createdDatetime
+  id
+  invoiceNumber
+  lines {
+    __typename
+    ... on InvoiceLineConnector {
+      totalCount
+      nodes {
+        ...OutboundShipmentLine
+      }
+    }
+  }
+  otherPartyName
+  pricing 
+  status
+}
+
+fragment OutboundShipmentRow on InvoiceNode {
+  __typename
+  allocatedDatetime
+  colour
+  comment
+  createdDatetime
+  id
+  invoiceNumber
+  otherPartyId
+  otherPartyName
+  pricing
+  status
+  type
+}
+
 query invoices(
   $first: Int
   $offset: Int

@@ -33,7 +33,7 @@ const otherPartyGuard = (otherParty: NameResponse) => {
   throw new Error('Unknown');
 };
 
-const pricingGuard = (pricing: InvoicePriceResponse) => {
+export const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {
     return pricing;
   } else if (pricing.__typename === 'NodeError') {

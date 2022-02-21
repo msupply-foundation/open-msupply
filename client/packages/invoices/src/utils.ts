@@ -4,6 +4,7 @@ import {
   useTranslation,
   groupBy,
 } from '@openmsupply-client/common';
+import { OutboundShipmentRowFragment } from './OutboundShipment/api/operations.generated';
 import {
   OutboundShipment,
   OutboundShipmentRow,
@@ -135,6 +136,8 @@ export const inboundLinesToSummaryItems = (
     createSummaryItem(itemId, lines)
   );
 };
-export const canDeleteInvoice = (invoice: InvoiceRow): boolean =>
+export const canDeleteInvoice = (
+  invoice: OutboundShipmentRowFragment
+): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;

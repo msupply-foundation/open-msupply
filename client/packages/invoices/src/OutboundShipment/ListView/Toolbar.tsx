@@ -12,11 +12,12 @@ import {
 } from '@openmsupply-client/common';
 import { InvoiceRow } from '../../types';
 import { canDeleteInvoice } from '../../utils';
+import { OutboundShipmentRowFragment } from '../api/operations.generated';
 
 export const Toolbar: FC<{
-  onDelete: (toDelete: InvoiceRow[]) => void;
+  onDelete: (toDelete: OutboundShipmentRowFragment[]) => void;
   filter: FilterController;
-  data?: InvoiceRow[];
+  data?: OutboundShipmentRowFragment[];
 }> = ({ onDelete, data, filter }) => {
   const t = useTranslation('distribution');
 
@@ -26,7 +27,7 @@ export const Toolbar: FC<{
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as InvoiceRow[],
+      .filter(Boolean) as OutboundShipmentRowFragment[],
   }));
 
   const deleteAction = () => {
