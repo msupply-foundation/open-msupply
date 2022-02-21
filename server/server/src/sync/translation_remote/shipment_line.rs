@@ -24,6 +24,7 @@ enum LegacyTransLineType {
     Placeholder,
 }
 
+#[allow(non_snake_case)]
 #[derive(Deserialize)]
 struct LegacyTransLineRow {
     ID: String,
@@ -102,8 +103,8 @@ impl RemotePullTranslation for ShipmentLineTranslation {
                 pack_size: data.pack_size,
                 cost_price_per_pack: data.cost_price,
                 sell_price_per_pack: data.sell_price,
-                total_before_tax: data.cost_price * data.quantity as f64,
-                total_after_tax: data.cost_price * data.quantity as f64,
+                total_before_tax: data.sell_price * data.quantity as f64,
+                total_after_tax: data.sell_price * data.quantity as f64,
                 tax: None,
                 r#type: to_shipment_line_type(data._type),
                 number_of_packs: data.quantity,

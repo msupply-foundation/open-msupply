@@ -4,11 +4,18 @@ use repository::{
     StorageConnection,
 };
 
+use self::{
+    name_store_join::get_test_name_store_join_records, number::get_test_number_records,
+    stock_line::get_test_stock_line_records, trans_line::get_test_trans_line_records,
+    transact::get_test_transact_records,
+};
+
 use super::{IntegrationRecord, IntegrationUpsertRecord};
 
 pub mod name_store_join;
 pub mod number;
 pub mod stock_line;
+pub mod trans_line;
 pub mod transact;
 
 #[allow(dead_code)]
@@ -115,5 +122,7 @@ pub fn get_all_remote_pull_test_records() -> Vec<TestSyncRecord> {
     test_records.append(&mut get_test_number_records());
     test_records.append(&mut get_test_stock_line_records());
     test_records.append(&mut get_test_name_store_join_records());
+    test_records.append(&mut get_test_transact_records());
+    test_records.append(&mut get_test_trans_line_records());
     test_records
 }
