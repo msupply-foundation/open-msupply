@@ -23,7 +23,7 @@ impl LegacyListMasterLineRow {
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data).map_err(
             |source| SyncTranslationError {
                 table_name,
-                source,
+                source: source.into(),
                 record: sync_record.data.clone(),
             },
         )?;

@@ -41,7 +41,7 @@ impl LegacyItemRow {
         let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data).map_err(|source| {
             SyncTranslationError {
                 table_name,
-                source,
+                source: source.into(),
                 record: sync_record.data.clone(),
             }
         })?;
