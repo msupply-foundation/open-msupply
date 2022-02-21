@@ -1,11 +1,11 @@
-import { OmSupplyApi } from '@openmsupply-client/common';
+import { OutboundShipmentApi } from '../api';
 
 export const getOutboundShipmentCountQueryFn =
-  (omSupplyApi: OmSupplyApi) =>
+  (api: OutboundShipmentApi) =>
   async (): Promise<{
     toBePicked: number;
   }> => {
-    const result = await omSupplyApi.invoiceCounts({});
+    const result = await api.invoiceCounts({});
 
     return {
       toBePicked: result.invoiceCounts.outbound.toBePicked ?? 0,

@@ -7,7 +7,6 @@ import {
   PlusCircleIcon,
   useListData,
   useNotification,
-  useOmSupplyApi,
   useQuery,
   useTranslation,
   StatsPanel,
@@ -15,6 +14,7 @@ import {
   useNavigate,
 } from '@openmsupply-client/common';
 import { getOutboundShipmentCountQueryFn } from './api';
+import { useOutboundShipmentApi } from '../api';
 
 export const OutboundShipmentWidget: React.FC = () => {
   const { error } = useNotification();
@@ -22,7 +22,7 @@ export const OutboundShipmentWidget: React.FC = () => {
   const [open, setOpen] = useState(false);
   const t = useTranslation(['app', 'dashboard']);
 
-  const { api } = useOmSupplyApi();
+  const api = useOutboundShipmentApi();
   const { onCreate, invalidate } = useListData(
     { initialSortBy: { key: 'otherPartyName' } },
     'invoice',

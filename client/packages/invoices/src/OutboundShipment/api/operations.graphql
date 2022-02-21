@@ -543,3 +543,15 @@ mutation deleteOutboundShipmentLines(
     }
   }
 }
+
+query invoiceCounts($timezoneOffset: Int) {
+  invoiceCounts(timezoneOffset: $timezoneOffset) {
+    outbound {
+      created {
+        today
+        thisWeek
+      }
+      toBePicked
+    }
+  }
+}
