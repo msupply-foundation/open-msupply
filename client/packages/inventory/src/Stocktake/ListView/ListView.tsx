@@ -4,49 +4,33 @@ import {
   StocktakeNodeStatus,
   DataTable,
   useColumns,
-  useListData,
   TableProvider,
   createTableStore,
-  useNotification,
-  generateUUID,
-  useOmSupplyApi,
   useTranslation,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getStocktakeListViewApi } from './api';
-import { StocktakeRow } from '../../types';
 import { getStocktakeTranslator } from '../../utils';
+import { StocktakeRowFragment } from '../api/operations.generated';
+import { useStocktakes } from '../api';
 
 export const StocktakeListView: FC = () => {
   const navigate = useNavigate();
-  const { error } = useNotification();
-  const { api } = useOmSupplyApi();
   const t = useTranslation(['common', 'inventory']);
 
   const {
-    totalCount,
     data,
     isLoading,
-    onDelete,
     sortBy,
     onChangeSortBy,
-    onCreate,
     onChangePage,
     pagination,
     filter,
-    invalidate,
-  } = useListData(
-    {
-      initialSortBy: { key: 'comment' },
-    },
-    'invoice',
-    getStocktakeListViewApi(api)
-  );
+  } = useStocktakes();
 
   const statusTranslator = getStocktakeTranslator(t);
 
-  const columns = useColumns<StocktakeRow>(
+  const columns = useColumns<StocktakeRowFragment>(
     [
       'stocktakeNumber',
       [
@@ -64,30 +48,16 @@ export const StocktakeListView: FC = () => {
     [sortBy]
   );
 
-  const onNewStocktake = async () => {
-    try {
-      const id = generateUUID();
-      const result = await onCreate({ id });
-      invalidate();
-      navigate(result);
-    } catch (e) {
-      const errorSnack = error(
-        'Failed to create stocktake! ' + (e as Error).message
-      );
-      errorSnack();
-    }
-  };
-
   return (
     <>
-      <Toolbar onDelete={onDelete} data={data} filter={filter} />
-      <AppBarButtons onCreate={onNewStocktake} />
+      <Toolbar onDelete={() => {}} data={data?.nodes} filter={filter} />
+      <AppBarButtons />
 
       <DataTable
-        pagination={{ ...pagination, total: totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data ?? []}
+        data={data?.nodes ?? []}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(row.id);
