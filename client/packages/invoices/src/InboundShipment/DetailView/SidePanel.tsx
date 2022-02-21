@@ -21,10 +21,10 @@ import {
 } from './api';
 
 const AdditionalInfoSection: FC = () => {
-  const { comment, color, update } = useInboundFields(['comment', 'color']);
+  const { comment, colour, update } = useInboundFields(['comment', 'colour']);
   const isEditable = useIsInboundEditable();
   const t = useTranslation(['common', 'replenishment']);
-  const [bufferedColor, setBufferedColor] = useBufferState(color);
+  const [bufferedColor, setBufferedColor] = useBufferState(colour);
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -41,7 +41,7 @@ const AdditionalInfoSection: FC = () => {
               disabled={!isEditable}
               onChange={({ hex }) => {
                 setBufferedColor(hex);
-                update({ color: hex });
+                update({ colour: hex });
               }}
               color={bufferedColor}
             />

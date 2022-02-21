@@ -177,7 +177,7 @@ interface Api<ReadType, UpdateType> {
 }
 
 export const getSaveInboundShipmentLines =
-  (api: InboundShipmentApi) => (lines: DraftInboundLine[]) => {
+  (api: InboundShipmentApi, storeId: string) => (lines: DraftInboundLine[]) => {
     const insertInboundShipmentLines = lines
       .filter(({ isCreated }) => isCreated)
       .map(createInsertLineInput);
@@ -186,6 +186,7 @@ export const getSaveInboundShipmentLines =
       .map(createUpdateLineInput);
 
     return api.upsertInboundShipment({
+      storeId,
       input: {
         insertInboundShipmentLines,
         updateInboundShipmentLines,
@@ -228,6 +229,7 @@ export const getInboundShipmentDetailViewApi = (
   },
   onUpdate: async (patch: Invoice): Promise<Invoice> => {
     const result = await api.upsertInboundShipment({
+      storeId,
       input: { updateInboundShipments: [invoiceToInput(patch)] },
     });
 
@@ -274,10 +276,9 @@ export const useInboundShipmentSelector = <T = Invoice>(
 };
 
 const getUpdateInbound =
-  (api: InboundShipmentApi) =>
-  async (patch: Partial<Invoice> & { id: string }) => {
-    return api.updateInboundShipment({ input: invoiceToInput(patch) });
-  };
+  (api: InboundShipmentApi, storeId: string) =>
+  async (patch: Partial<Invoice> & { id: string }) =>
+    api.updateInboundShipment({ storeId, input: invoiceToInput(patch) });
 
 const useOptimisticInboundUpdate = () => {
   const api = useInboundShipmentApi();
@@ -347,9 +348,11 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
     [keyOrKeys]
   );
   const { data } = useInboundShipmentSelector(select);
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
 
   const { mutate } = useMutation(
-    (patch: Partial<Invoice>) => getUpdateInbound(api)({ id, ...patch }),
+    (patch: Partial<Invoice>) =>
+      getUpdateInbound(api, storeId)({ id, ...patch }),
     {
       onMutate: async (patch: Partial<Invoice>) => {
         await queryClient.cancelQueries(['invoice', id]);
@@ -435,8 +438,9 @@ export const useSaveInboundLines = () => {
   const queryClient = useQueryClient();
   const { id } = useParams();
   const api = useInboundShipmentApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
 
-  return useMutation(getSaveInboundShipmentLines(api), {
+  return useMutation(getSaveInboundShipmentLines(api, storeId), {
     onSettled: () => queryClient.invalidateQueries(['invoice', id]),
   });
 };
@@ -465,9 +469,11 @@ const getCreateDeleteInboundLineInput =
   };
 
 const getDeleteInboundLinesQuery =
-  (api: InboundShipmentApi, invoiceId: string) => (ids: string[]) => {
+  (api: InboundShipmentApi, invoiceId: string, storeId: string) =>
+  (ids: string[]) => {
     const createDeleteLineInput = getCreateDeleteInboundLineInput(invoiceId);
     return api.deleteInboundShipmentLines({
+      storeId,
       input: { deleteInboundShipmentLines: ids.map(createDeleteLineInput) },
     });
   };
@@ -483,7 +489,8 @@ export const useDeleteInboundLine = (): UseMutationResult<
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
   const api = useInboundShipmentApi();
-  const mutation = getDeleteInboundLinesQuery(api, id);
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const mutation = getDeleteInboundLinesQuery(api, id, storeId);
   return useMutation(mutation, {
     onMutate: async (ids: string[]) => {
       await queryClient.cancelQueries(['invoice', id]);

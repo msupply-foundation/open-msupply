@@ -10,13 +10,14 @@ import {
   useNotification,
   useTranslation,
   InvoiceNodeStatus,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getOutboundShipmentListViewApi } from './api';
-import { useOutboundShipmentApi } from '../api';
+import { pricingGuard, useOutboundShipmentApi } from '../api';
 import { OutboundShipmentRowFragment } from '../api/operations.generated';
 
 export const OutboundShipmentListViewComponent: FC = () => {
@@ -24,6 +25,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const api = useOutboundShipmentApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
 
   const {
     totalCount,
@@ -44,7 +46,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       initialFilterBy: { type: { equalTo: 'OUTBOUND_SHIPMENT' } },
     },
     'invoice',
-    getOutboundShipmentListViewApi(api)
+    getOutboundShipmentListViewApi(api, storeId)
   );
 
   const columns = useColumns<OutboundShipmentRowFragment>(
@@ -63,7 +65,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
       'comment',
       [
         'totalAfterTax',
-        { accessor: ({ rowData }) => rowData.pricing.totalAfterTax },
+        {
+          accessor: ({ rowData }) =>
+            pricingGuard(rowData.pricing).totalAfterTax,
+        },
       ],
       'selection',
     ],

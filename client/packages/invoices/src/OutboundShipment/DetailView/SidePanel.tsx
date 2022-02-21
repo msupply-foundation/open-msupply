@@ -19,8 +19,8 @@ import { useOutboundFields, useOutbound, useIsOutboundDisabled } from '../api';
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
   const isDisabled = useIsOutboundDisabled();
-  const { color, comment, update } = useOutboundFields(['color', 'comment']);
-  const [colorBuffer, setColorBuffer] = useBufferState(color);
+  const { colour, comment, update } = useOutboundFields(['colour', 'comment']);
+  const [colorBuffer, setColorBuffer] = useBufferState(colour);
   const [commentBuffer, setCommentBuffer] = useBufferState(comment);
 
   return (
@@ -38,7 +38,7 @@ const AdditionalInfoSection: FC = () => {
               disabled={isDisabled}
               onChange={color => {
                 setColorBuffer(color.hex);
-                update({ color: color.hex });
+                update({ colour: color.hex });
               }}
               color={colorBuffer}
             />
