@@ -541,24 +541,6 @@ query itemsListView(
   }
 }
 
-query invoiceCounts($timezoneOffset: Int) {
-  invoiceCounts(timezoneOffset: $timezoneOffset) {
-    outbound {
-      created {
-        today
-        thisWeek
-      }
-      toBePicked
-    }
-    inbound {
-      created {
-        today
-        thisWeek
-      }
-    }
-  }
-}
-
 query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
   stockCounts(
     daysTillExpired: $daysTillExpired

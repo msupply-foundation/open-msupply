@@ -118,13 +118,6 @@ export type ItemsListViewQueryVariables = Types.Exact<{
 
 export type ItemsListViewQuery = { __typename: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null }> } };
 
-export type InvoiceCountsQueryVariables = Types.Exact<{
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
-}>;
-
-
-export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } }, inbound: { __typename: 'InboundInvoiceCounts', created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
-
 export type StockCountsQueryVariables = Types.Exact<{
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']>;
   timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -529,25 +522,6 @@ export const ItemsListViewDocument = gql`
   }
 }
     `;
-export const InvoiceCountsDocument = gql`
-    query invoiceCounts($timezoneOffset: Int) {
-  invoiceCounts(timezoneOffset: $timezoneOffset) {
-    outbound {
-      created {
-        today
-        thisWeek
-      }
-      toBePicked
-    }
-    inbound {
-      created {
-        today
-        thisWeek
-      }
-    }
-  }
-}
-    `;
 export const StockCountsDocument = gql`
     query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
   stockCounts(daysTillExpired: $daysTillExpired, timezoneOffset: $timezoneOffset) {
@@ -867,9 +841,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     itemsListView(variables: ItemsListViewQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsListViewQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemsListViewQuery>(ItemsListViewDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsListView');
     },
-    invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
-    },
     stockCounts(variables?: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts');
     },
@@ -1113,23 +1084,6 @@ export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLR
 export const mockItemsListViewQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsListViewQueryVariables>, GraphQLContext<ItemsListViewQuery>, any>) =>
   graphql.query<ItemsListViewQuery, ItemsListViewQueryVariables>(
     'itemsListView',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ invoiceCounts })
- *   )
- * })
- */
-export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceCountsQueryVariables>, GraphQLContext<InvoiceCountsQuery>, any>) =>
-  graphql.query<InvoiceCountsQuery, InvoiceCountsQueryVariables>(
-    'invoiceCounts',
     resolver
   )
 
