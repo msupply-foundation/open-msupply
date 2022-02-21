@@ -6,8 +6,8 @@ use crate::sync::{
 use log::info;
 use repository::{
     schema::{CentralSyncBufferRow, KeyValueType},
-    CentralSyncBufferRepository, KeyValueStoreRepository, NameStoreJoinRepository, RepositoryError,
-    StorageConnection, TransactionError,
+    CentralSyncBufferRepository, KeyValueStoreRepository, RepositoryError, StorageConnection,
+    TransactionError,
 };
 use thiserror::Error;
 
@@ -140,15 +140,6 @@ impl CentralDataSynchroniser {
             .await
             .map_err(|source| CentralSyncError::ImportCentralSyncRecordsError { source })?;
         info!("Successfully Imported central sync buffer records",);
-
-        // TODO needs to be done for M1 as name_store_joins are not synced yet but are required in API
-        // these records should actually sync from server in remote sync
-        if records.len() > 0 {
-            match NameStoreJoinRepository::new(connection).m1_add() {
-                Ok(_) => {}
-                Err(_) => {}
-            };
-        }
 
         info!("Clearing central sync buffer");
         central_sync_buffer_repository
