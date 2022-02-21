@@ -33,7 +33,7 @@ export type Scalars = {
    *
    * * `2015-07-01T08:59:60.123`,
    */
-  NaiveDateTime: any;
+  NaiveDateTime: string;
 };
 
 export type AccessDenied = LogoutErrorInterface & {

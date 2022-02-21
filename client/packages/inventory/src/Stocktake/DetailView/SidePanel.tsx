@@ -11,11 +11,7 @@ import {
   useBufferState,
   useNotification,
   useTranslation,
-  PanelRow,
-  PanelField,
-  useFormatDate,
 } from '@openmsupply-client/common';
-
 import {
   useIsStocktakeDisabled,
   useStocktake,
@@ -24,27 +20,14 @@ import {
 
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
-  const d = useFormatDate();
 
-  const { enteredByName, entryDatetime, comment, update } = useStocktakeFields([
-    'enteredByName',
-    'entryDatetime',
-    'comment',
-  ]);
+  const { comment, update } = useStocktakeFields('comment');
   const [bufferedComment, setBufferedComment] = useBufferState(comment);
   const isDisabled = useIsStocktakeDisabled();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
-        <PanelRow>
-          <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          <PanelField>{enteredByName}</PanelField>
-        </PanelRow>
-        <PanelRow>
-          <PanelLabel>{t('label.entered')}</PanelLabel>
-          <PanelField>{d(new Date(entryDatetime))}</PanelField>
-        </PanelRow>
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <BufferedTextArea
           disabled={isDisabled}
