@@ -1,4 +1,4 @@
-import * as Types from '../../../../../../packages/common/src/types/schema';
+import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
@@ -32,7 +32,6 @@ export type UpdateInboundShipmentMutationVariables = Types.Exact<{
 export type UpdateInboundShipmentMutation = { __typename: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteInboundShipmentsMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
   deleteInboundShipments: Array<Types.DeleteInboundShipmentInput> | Types.DeleteInboundShipmentInput;
 }>;
 
@@ -42,14 +41,12 @@ export type DeleteInboundShipmentsMutation = { __typename: 'Mutations', batchInb
 export type InsertInboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String'];
   otherPartyId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
 }>;
 
 
 export type InsertInboundShipmentMutation = { __typename: 'Mutations', insertInboundShipment: { __typename: 'InsertInboundShipmentError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'OtherPartyNotASupplier', description: string, otherParty: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string } } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type UpsertInboundShipmentMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
   input: Types.BatchInboundShipmentInput;
 }>;
 
@@ -57,12 +54,18 @@ export type UpsertInboundShipmentMutationVariables = Types.Exact<{
 export type UpsertInboundShipmentMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string }> | null, insertInboundShipmentLines?: Array<{ __typename: 'InsertInboundShipmentLineResponseWithId', id: string }> | null, updateInboundShipmentLines?: Array<{ __typename: 'UpdateInboundShipmentLineResponseWithId', id: string }> | null, updateInboundShipments?: Array<{ __typename: 'UpdateInboundShipmentResponseWithId', id: string }> | null } };
 
 export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
   input: Types.BatchInboundShipmentInput;
 }>;
 
 
 export type DeleteInboundShipmentLinesMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
+export type InvoiceCountsQueryVariables = Types.Exact<{
+  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
+}>;
+
+
+export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', inbound: { __typename: 'InboundInvoiceCounts', created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
 
 export const InvoicesDocument = gql`
@@ -435,11 +438,8 @@ export const UpdateInboundShipmentDocument = gql`
 }
     `;
 export const DeleteInboundShipmentsDocument = gql`
-    mutation deleteInboundShipments($storeId: String!, $deleteInboundShipments: [DeleteInboundShipmentInput!]!) {
-  batchInboundShipment(
-    storeId: $storeId
-    input: {deleteInboundShipments: $deleteInboundShipments}
-  ) {
+    mutation deleteInboundShipments($deleteInboundShipments: [DeleteInboundShipmentInput!]!) {
+  batchInboundShipment(input: {deleteInboundShipments: $deleteInboundShipments}) {
     __typename
     deleteInboundShipments {
       id
@@ -459,11 +459,8 @@ export const DeleteInboundShipmentsDocument = gql`
 }
     `;
 export const InsertInboundShipmentDocument = gql`
-    mutation insertInboundShipment($id: String!, $otherPartyId: String!, $storeId: String!) {
-  insertInboundShipment(
-    storeId: $storeId
-    input: {id: $id, otherPartyId: $otherPartyId}
-  ) {
+    mutation insertInboundShipment($id: String!, $otherPartyId: String!) {
+  insertInboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
     __typename
     ... on InvoiceNode {
       id
@@ -518,8 +515,8 @@ export const InsertInboundShipmentDocument = gql`
 }
     `;
 export const UpsertInboundShipmentDocument = gql`
-    mutation upsertInboundShipment($storeId: String!, $input: BatchInboundShipmentInput!) {
-  batchInboundShipment(storeId: $storeId, input: $input) {
+    mutation upsertInboundShipment($input: BatchInboundShipmentInput!) {
+  batchInboundShipment(input: $input) {
     deleteInboundShipmentLines {
       id
     }
@@ -536,8 +533,8 @@ export const UpsertInboundShipmentDocument = gql`
 }
     `;
 export const DeleteInboundShipmentLinesDocument = gql`
-    mutation deleteInboundShipmentLines($storeId: String!, $input: BatchInboundShipmentInput!) {
-  batchInboundShipment(storeId: $storeId, input: $input) {
+    mutation deleteInboundShipmentLines($input: BatchInboundShipmentInput!) {
+  batchInboundShipment(input: $input) {
     deleteInboundShipmentLines {
       id
       response {
@@ -585,6 +582,18 @@ export const DeleteInboundShipmentLinesDocument = gql`
   }
 }
     `;
+export const InvoiceCountsDocument = gql`
+    query invoiceCounts($timezoneOffset: Int) {
+  invoiceCounts(timezoneOffset: $timezoneOffset) {
+    inbound {
+      created {
+        today
+        thisWeek
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -613,6 +622,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteInboundShipmentLines(variables: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines');
+    },
+    invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
     }
   };
 }
@@ -674,7 +686,7 @@ export const mockUpdateInboundShipmentMutation = (resolver: ResponseResolver<Gra
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockDeleteInboundShipmentsMutation((req, res, ctx) => {
- *   const { storeId, deleteInboundShipments } = req.variables;
+ *   const { deleteInboundShipments } = req.variables;
  *   return res(
  *     ctx.data({ batchInboundShipment })
  *   )
@@ -691,7 +703,7 @@ export const mockDeleteInboundShipmentsMutation = (resolver: ResponseResolver<Gr
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInsertInboundShipmentMutation((req, res, ctx) => {
- *   const { id, otherPartyId, storeId } = req.variables;
+ *   const { id, otherPartyId } = req.variables;
  *   return res(
  *     ctx.data({ insertInboundShipment })
  *   )
@@ -708,7 +720,7 @@ export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockUpsertInboundShipmentMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
+ *   const { input } = req.variables;
  *   return res(
  *     ctx.data({ batchInboundShipment })
  *   )
@@ -725,7 +737,7 @@ export const mockUpsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockDeleteInboundShipmentLinesMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
+ *   const { input } = req.variables;
  *   return res(
  *     ctx.data({ batchInboundShipment })
  *   )
@@ -734,5 +746,22 @@ export const mockUpsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
 export const mockDeleteInboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentLinesMutationVariables>, GraphQLContext<DeleteInboundShipmentLinesMutation>, any>) =>
   graphql.mutation<DeleteInboundShipmentLinesMutation, DeleteInboundShipmentLinesMutationVariables>(
     'deleteInboundShipmentLines',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInvoiceCountsQuery((req, res, ctx) => {
+ *   const { timezoneOffset } = req.variables;
+ *   return res(
+ *     ctx.data({ invoiceCounts })
+ *   )
+ * })
+ */
+export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceCountsQueryVariables>, GraphQLContext<InvoiceCountsQuery>, any>) =>
+  graphql.query<InvoiceCountsQuery, InvoiceCountsQueryVariables>(
+    'invoiceCounts',
     resolver
   )

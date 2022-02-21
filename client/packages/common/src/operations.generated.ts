@@ -1,73 +1,9 @@
-import * as Types from './types/schema';
+import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type StocktakeQueryVariables = Types.Exact<{
-  stocktakeId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
-}>;
-
-
-export type StocktakeQuery = { __typename: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null }> } } };
-
-export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  deleteStocktakeLines?: Types.InputMaybe<Array<Types.DeleteStocktakeLineInput> | Types.DeleteStocktakeLineInput>;
-  updateStocktakeLines?: Types.InputMaybe<Array<Types.UpdateStocktakeLineInput> | Types.UpdateStocktakeLineInput>;
-  insertStocktakeLines?: Types.InputMaybe<Array<Types.InsertStocktakeLineInput> | Types.InsertStocktakeLineInput>;
-}>;
-
-
-export type UpsertStocktakeLinesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
-
-export type DeleteStocktakesMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  ids?: Types.InputMaybe<Array<Types.DeleteStocktakeInput> | Types.DeleteStocktakeInput>;
-}>;
-
-
-export type DeleteStocktakesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
-
-export type UpdateStocktakeMutationVariables = Types.Exact<{
-  input: Types.UpdateStocktakeInput;
-}>;
-
-
-export type UpdateStocktakeMutation = { __typename: 'Mutations', updateStocktake: { __typename: 'StocktakeNode', id: string } | { __typename: 'UpdateStocktakeError' } };
-
-export type InsertStocktakeMutationVariables = Types.Exact<{
-  input: Types.InsertStocktakeInput;
-}>;
-
-
-export type InsertStocktakeMutation = { __typename: 'Mutations', insertStocktake: { __typename: 'StocktakeNode', id: string } };
-
-export type UpdateCustomerRequisitionMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  input: Types.UpdateRequestRequisitionInput;
-}>;
-
-
-export type UpdateCustomerRequisitionMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateRequestRequisitionError' } };
-
-export type InsertCustomerRequisitionMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  input: Types.InsertRequestRequisitionInput;
-}>;
-
-
-export type InsertCustomerRequisitionMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string } };
-
-export type RequisitionQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  id: Types.Scalars['String'];
-}>;
-
-
-export type RequisitionQuery = { __typename: 'Queries', requisition: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, comment?: string | null, theirReference?: string | null, type: Types.RequisitionNodeType, requisitionNumber: number, status: Types.RequisitionNodeStatus, otherPartyId: string, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, supplyQuantity: number, requestedQuantity: number, calculatedQuantity: number }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } } };
-
 export type NamesQueryVariables = Types.Exact<{
   key: Types.NameSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
@@ -101,13 +37,6 @@ export type ItemsListViewQueryVariables = Types.Exact<{
 
 
 export type ItemsListViewQuery = { __typename: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null }> } };
-
-export type InvoiceCountsQueryVariables = Types.Exact<{
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
-}>;
-
-
-export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } }, inbound: { __typename: 'InboundInvoiceCounts', created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
 export type StockCountsQueryVariables = Types.Exact<{
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -167,156 +96,6 @@ export type MasterListsQueryVariables = Types.Exact<{
 export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', field: Types.RangeField, min?: number | null, max?: number | null, description: string } } } | { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListLineNode', id: string, itemId: string, item: { __typename: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, min?: number | null, max?: number | null, field: Types.RangeField } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
 
 
-export const StocktakeDocument = gql`
-    query stocktake($stocktakeId: String!, $storeId: String!) {
-  stocktake(id: $stocktakeId, storeId: $storeId) {
-    __typename
-    ... on StocktakeNode {
-      __typename
-      id
-      stocktakeNumber
-      comment
-      createdDatetime
-      status
-      description
-      lines {
-        __typename
-        ... on StocktakeLineConnector {
-          __typename
-          nodes {
-            __typename
-            batch
-            itemId
-            id
-            expiryDate
-            packSize
-            snapshotNumberOfPacks
-            countedNumberOfPacks
-            sellPricePerPack
-            costPricePerPack
-          }
-          totalCount
-        }
-      }
-    }
-  }
-}
-    `;
-export const UpsertStocktakeLinesDocument = gql`
-    mutation upsertStocktakeLines($storeId: String!, $deleteStocktakeLines: [DeleteStocktakeLineInput!], $updateStocktakeLines: [UpdateStocktakeLineInput!], $insertStocktakeLines: [InsertStocktakeLineInput!]) {
-  batchStocktake(
-    storeId: $storeId
-    input: {deleteStocktakeLines: $deleteStocktakeLines, updateStocktakeLines: $updateStocktakeLines, insertStocktakeLines: $insertStocktakeLines}
-  ) {
-    __typename
-    ... on BatchStocktakeResponses {
-      __typename
-      deleteStocktakeLines {
-        id
-      }
-      insertStocktakeLines {
-        id
-      }
-      updateStocktakeLines {
-        id
-      }
-    }
-  }
-}
-    `;
-export const DeleteStocktakesDocument = gql`
-    mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
-  batchStocktake(storeId: $storeId, input: {deleteStocktakes: $ids}) {
-    __typename
-    ... on BatchStocktakeResponses {
-      deleteStocktakes {
-        __typename
-        id
-      }
-    }
-  }
-}
-    `;
-export const UpdateStocktakeDocument = gql`
-    mutation updateStocktake($input: UpdateStocktakeInput!) {
-  updateStocktake(input: $input) {
-    ... on StocktakeNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const InsertStocktakeDocument = gql`
-    mutation insertStocktake($input: InsertStocktakeInput!) {
-  insertStocktake(input: $input) {
-    ... on StocktakeNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const UpdateCustomerRequisitionDocument = gql`
-    mutation updateCustomerRequisition($storeId: String!, $input: UpdateRequestRequisitionInput!) {
-  updateRequestRequisition(storeId: $storeId, input: $input) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const InsertCustomerRequisitionDocument = gql`
-    mutation insertCustomerRequisition($storeId: String!, $input: InsertRequestRequisitionInput!) {
-  insertRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const RequisitionDocument = gql`
-    query requisition($storeId: String!, $id: String!) {
-  requisition(id: $id, storeId: $storeId) {
-    __typename
-    ... on RequisitionNode {
-      __typename
-      id
-      comment
-      theirReference
-      type
-      requisitionNumber
-      status
-      otherPartyId
-      lines {
-        __typename
-        ... on RequisitionLineConnector {
-          totalCount
-          nodes {
-            id
-            itemId
-            supplyQuantity
-            requestedQuantity
-            calculatedQuantity
-          }
-        }
-      }
-      otherParty {
-        __typename
-        ... on NameNode {
-          id
-          name
-          code
-          isCustomer
-          isSupplier
-        }
-      }
-    }
-  }
-}
-    `;
 export const NamesDocument = gql`
     query names($key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
   names(
@@ -489,25 +268,6 @@ export const ItemsListViewDocument = gql`
         unitName
       }
       totalCount
-    }
-  }
-}
-    `;
-export const InvoiceCountsDocument = gql`
-    query invoiceCounts($timezoneOffset: Int) {
-  invoiceCounts(timezoneOffset: $timezoneOffset) {
-    outbound {
-      created {
-        today
-        thisWeek
-      }
-      toBePicked
-    }
-    inbound {
-      created {
-        today
-        thisWeek
-      }
     }
   }
 }
@@ -792,30 +552,6 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    stocktake(variables: StocktakeQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StocktakeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StocktakeQuery>(StocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktake');
-    },
-    upsertStocktakeLines(variables: UpsertStocktakeLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertStocktakeLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertStocktakeLinesMutation>(UpsertStocktakeLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertStocktakeLines');
-    },
-    deleteStocktakes(variables: DeleteStocktakesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteStocktakesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteStocktakesMutation>(DeleteStocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteStocktakes');
-    },
-    updateStocktake(variables: UpdateStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStocktakeMutation>(UpdateStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStocktake');
-    },
-    insertStocktake(variables: InsertStocktakeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertStocktakeMutation>(InsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStocktake');
-    },
-    updateCustomerRequisition(variables: UpdateCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateCustomerRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerRequisitionMutation>(UpdateCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateCustomerRequisition');
-    },
-    insertCustomerRequisition(variables: InsertCustomerRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertCustomerRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertCustomerRequisitionMutation>(InsertCustomerRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertCustomerRequisition');
-    },
-    requisition(variables: RequisitionQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionQuery>(RequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisition');
-    },
     names(variables: NamesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<NamesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names');
     },
@@ -824,9 +560,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     itemsListView(variables: ItemsListViewQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsListViewQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemsListViewQuery>(ItemsListViewDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsListView');
-    },
-    invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
     },
     stockCounts(variables?: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts');
@@ -852,142 +585,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStocktakeQuery((req, res, ctx) => {
- *   const { stocktakeId, storeId } = req.variables;
- *   return res(
- *     ctx.data({ stocktake })
- *   )
- * })
- */
-export const mockStocktakeQuery = (resolver: ResponseResolver<GraphQLRequest<StocktakeQueryVariables>, GraphQLContext<StocktakeQuery>, any>) =>
-  graphql.query<StocktakeQuery, StocktakeQueryVariables>(
-    'stocktake',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpsertStocktakeLinesMutation((req, res, ctx) => {
- *   const { storeId, deleteStocktakeLines, updateStocktakeLines, insertStocktakeLines } = req.variables;
- *   return res(
- *     ctx.data({ batchStocktake })
- *   )
- * })
- */
-export const mockUpsertStocktakeLinesMutation = (resolver: ResponseResolver<GraphQLRequest<UpsertStocktakeLinesMutationVariables>, GraphQLContext<UpsertStocktakeLinesMutation>, any>) =>
-  graphql.mutation<UpsertStocktakeLinesMutation, UpsertStocktakeLinesMutationVariables>(
-    'upsertStocktakeLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteStocktakesMutation((req, res, ctx) => {
- *   const { storeId, ids } = req.variables;
- *   return res(
- *     ctx.data({ batchStocktake })
- *   )
- * })
- */
-export const mockDeleteStocktakesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteStocktakesMutationVariables>, GraphQLContext<DeleteStocktakesMutation>, any>) =>
-  graphql.mutation<DeleteStocktakesMutation, DeleteStocktakesMutationVariables>(
-    'deleteStocktakes',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateStocktakeMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ updateStocktake })
- *   )
- * })
- */
-export const mockUpdateStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateStocktakeMutationVariables>, GraphQLContext<UpdateStocktakeMutation>, any>) =>
-  graphql.mutation<UpdateStocktakeMutation, UpdateStocktakeMutationVariables>(
-    'updateStocktake',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertStocktakeMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ insertStocktake })
- *   )
- * })
- */
-export const mockInsertStocktakeMutation = (resolver: ResponseResolver<GraphQLRequest<InsertStocktakeMutationVariables>, GraphQLContext<InsertStocktakeMutation>, any>) =>
-  graphql.mutation<InsertStocktakeMutation, InsertStocktakeMutationVariables>(
-    'insertStocktake',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateCustomerRequisitionMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateRequestRequisition })
- *   )
- * })
- */
-export const mockUpdateCustomerRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateCustomerRequisitionMutationVariables>, GraphQLContext<UpdateCustomerRequisitionMutation>, any>) =>
-  graphql.mutation<UpdateCustomerRequisitionMutation, UpdateCustomerRequisitionMutationVariables>(
-    'updateCustomerRequisition',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertCustomerRequisitionMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertRequestRequisition })
- *   )
- * })
- */
-export const mockInsertCustomerRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<InsertCustomerRequisitionMutationVariables>, GraphQLContext<InsertCustomerRequisitionMutation>, any>) =>
-  graphql.mutation<InsertCustomerRequisitionMutation, InsertCustomerRequisitionMutationVariables>(
-    'insertCustomerRequisition',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRequisitionQuery((req, res, ctx) => {
- *   const { storeId, id } = req.variables;
- *   return res(
- *     ctx.data({ requisition })
- *   )
- * })
- */
-export const mockRequisitionQuery = (resolver: ResponseResolver<GraphQLRequest<RequisitionQueryVariables>, GraphQLContext<RequisitionQuery>, any>) =>
-  graphql.query<RequisitionQuery, RequisitionQueryVariables>(
-    'requisition',
-    resolver
-  )
 
 /**
  * @param resolver a function that accepts a captured request and may return a mocked response.
@@ -1037,23 +634,6 @@ export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLR
 export const mockItemsListViewQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsListViewQueryVariables>, GraphQLContext<ItemsListViewQuery>, any>) =>
   graphql.query<ItemsListViewQuery, ItemsListViewQueryVariables>(
     'itemsListView',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ invoiceCounts })
- *   )
- * })
- */
-export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceCountsQueryVariables>, GraphQLContext<InvoiceCountsQuery>, any>) =>
-  graphql.query<InvoiceCountsQuery, InvoiceCountsQueryVariables>(
-    'invoiceCounts',
     resolver
   )
 

@@ -10,13 +10,13 @@ import {
   SearchBar,
   FilterController,
 } from '@openmsupply-client/common';
-import { RequisitionRow } from '../../types';
 import { canDeleteRequisition } from '../../utils';
+import { ResponseRequisitionRowFragment } from '../api';
 
 export const Toolbar: FC<{
-  onDelete: (toDelete: RequisitionRow[]) => void;
+  onDelete: (toDelete: ResponseRequisitionRowFragment[]) => void;
   filter: FilterController;
-  data?: RequisitionRow[];
+  data?: ResponseRequisitionRowFragment[];
 }> = ({ onDelete, data, filter }) => {
   const t = useTranslation('distribution');
 
@@ -26,7 +26,7 @@ export const Toolbar: FC<{
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as RequisitionRow[],
+      .filter(Boolean) as ResponseRequisitionRowFragment[],
   }));
 
   const deleteAction = () => {
@@ -56,7 +56,7 @@ export const Toolbar: FC<{
     ref.current = deleteAction;
   }, [selectedRows]);
 
-  const key = 'comment' as keyof RequisitionRow;
+  const key = 'comment' as keyof ResponseRequisitionRowFragment;
   const filterString = filter.filterBy?.[key]?.like as string;
 
   return (
@@ -72,7 +72,8 @@ export const Toolbar: FC<{
         placeholder="Search by comment..."
         value={filterString}
         onChange={newValue => {
-          filter.onChangeStringFilterRule('comment', 'like', newValue);
+          if (!newValue) return filter.onClearFilterRule('comment');
+          return filter.onChangeStringFilterRule('comment', 'like', newValue);
         }}
       />
 
