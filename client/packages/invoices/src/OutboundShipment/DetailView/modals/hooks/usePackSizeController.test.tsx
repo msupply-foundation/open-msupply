@@ -94,6 +94,65 @@ const multipleWithOneAssigned: DraftOutboundLine[] = [
   }),
 ];
 
+const singleLineWithNoneAssigned: DraftOutboundLine[] = [
+  createDraftOutboundLine({
+    invoiceId: '',
+    stockLine: {
+      itemId: '3',
+      packSize: 2,
+      totalNumberOfPacks: 10,
+      availableNumberOfPacks: 10,
+    },
+    invoiceLine: { numberOfPacks: 0 },
+  }),
+];
+
+const multipleLinesWithNoneAssigned: DraftOutboundLine[] = [
+  createDraftOutboundLine({
+    invoiceId: '',
+    stockLine: {
+      itemId: '1',
+      packSize: 2,
+      totalNumberOfPacks: 10,
+      availableNumberOfPacks: 10,
+    },
+    invoiceLine: { numberOfPacks: 0 },
+  }),
+  createDraftOutboundLine({
+    invoiceId: '',
+    stockLine: {
+      itemId: '2',
+      packSize: 2,
+      totalNumberOfPacks: 10,
+      availableNumberOfPacks: 10,
+    },
+    invoiceLine: { numberOfPacks: 0 },
+  }),
+];
+
+const multipleLinesWithNoneAssignedMultiplePackSizes: DraftOutboundLine[] = [
+  createDraftOutboundLine({
+    invoiceId: '',
+    stockLine: {
+      itemId: '1',
+      packSize: 1,
+      totalNumberOfPacks: 10,
+      availableNumberOfPacks: 10,
+    },
+    invoiceLine: { numberOfPacks: 0 },
+  }),
+  createDraftOutboundLine({
+    invoiceId: '',
+    stockLine: {
+      itemId: '2',
+      packSize: 2,
+      totalNumberOfPacks: 10,
+      availableNumberOfPacks: 10,
+    },
+    invoiceLine: { numberOfPacks: 0 },
+  }),
+];
+
 describe('usePackSizeController', () => {
   it('returns the correct distinct pack sizes of available batches', () => {
     const { result } = renderHook(() =>
@@ -224,5 +283,29 @@ describe('usePackSizeController', () => {
     );
 
     expect(result.current.selected).toEqual({ label: '1', value: 1 });
+  });
+
+  it('has an initial value of the unique pack size with no assigned packs', async () => {
+    const { result } = renderHook(() =>
+      usePackSizeController(singleLineWithNoneAssigned)
+    );
+
+    expect(result.current.selected).toEqual({ label: '2', value: 2 });
+  });
+
+  it('has an initial value of the unique pack size with no assigned packs', async () => {
+    const { result } = renderHook(() =>
+      usePackSizeController(multipleLinesWithNoneAssigned)
+    );
+
+    expect(result.current.selected).toEqual({ label: '2', value: 2 });
+  });
+
+  it('has an initial value of the unique pack size with no assigned packs', async () => {
+    const { result } = renderHook(() =>
+      usePackSizeController(multipleLinesWithNoneAssignedMultiplePackSizes)
+    );
+
+    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
   });
 });
