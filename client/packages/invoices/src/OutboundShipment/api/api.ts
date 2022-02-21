@@ -33,7 +33,7 @@ const otherPartyGuard = (otherParty: NameResponse) => {
   throw new Error('Unknown');
 };
 
-const pricingGuard = (pricing: InvoicePriceResponse) => {
+export const pricingGuard = (pricing: InvoicePriceResponse) => {
   if (pricing.__typename === 'InvoicePricingNode') {
     return pricing;
   } else if (pricing.__typename === 'NodeError') {
@@ -183,9 +183,10 @@ export const OutboundApi = {
       },
   },
   update:
-    (api: OutboundShipmentApi) =>
+    (api: OutboundShipmentApi, storeId: string) =>
     async (patch: RecordPatch<Invoice>): Promise<RecordPatch<Invoice>> => {
       const result = await api.upsertOutboundShipment({
+        storeId,
         input: {
           updateOutboundShipments: [invoiceToInput(patch)],
         },
@@ -208,7 +209,7 @@ export const OutboundApi = {
       throw new Error('Unable to update invoice');
     },
   updateLines:
-    (api: OutboundShipmentApi) =>
+    (api: OutboundShipmentApi, storeId: string) =>
     async (draftStocktakeLines: DraftOutboundLine[]) => {
       const input = {
         insertOutboundShipmentLines: draftStocktakeLines
@@ -219,14 +220,16 @@ export const OutboundApi = {
           .map(createUpdateOutboundLineInput),
       };
 
-      const result = await api.upsertOutboundShipment({ input });
+      const result = await api.upsertOutboundShipment({ storeId, input });
 
       return result;
     },
   deleteLines:
-    (api: OutboundShipmentApi, invoiceId: string) => async (ids: string[]) => {
+    (api: OutboundShipmentApi, invoiceId: string, storeId: string) =>
+    async (ids: string[]) => {
       const createDeleteLineInput = getCreateDeleteOutboundLineInput(invoiceId);
       return api.deleteOutboundShipmentLines({
+        storeId,
         deleteOutboundShipmentLines: ids.map(createDeleteLineInput),
       });
     },

@@ -58,7 +58,8 @@ export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
   return useFieldsSelector(
     queryKey,
     () => OutboundApi.get.byId(api, storeId)(id),
-    (patch: Partial<Invoice>) => OutboundApi.update(api)({ ...patch, id }),
+    (patch: Partial<Invoice>) =>
+      OutboundApi.update(api, storeId)({ ...patch, id }),
     keys
   );
 };
@@ -155,7 +156,8 @@ export const useSaveOutboundLines = () => {
   const queryKey = useOutboundDetailQueryKey();
   const queryClient = useQueryClient();
   const api = useOutboundShipmentApi();
-  return useMutation(OutboundApi.updateLines(api), {
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  return useMutation(OutboundApi.updateLines(api, storeId), {
     onSuccess: () => {
       queryClient.invalidateQueries(queryKey);
     },
@@ -173,7 +175,8 @@ export const useDeleteInboundLine = (): UseMutationResult<
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
   const api = useOutboundShipmentApi();
-  const mutation = OutboundApi.deleteLines(api, id);
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const mutation = OutboundApi.deleteLines(api, id, storeId);
   return useMutation(mutation, {
     onMutate: async (ids: string[]) => {
       await queryClient.cancelQueries(['invoice', id]);

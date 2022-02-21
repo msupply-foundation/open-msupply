@@ -4,6 +4,12 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+export type OutboundShipmentLineFragment = { __typename: 'InvoiceLineNode', batch?: string | null, expiryDate?: string | null, id: string, item: ItemResponse, itemCode: string, itemId: string, itemName: string, locationName?: string | null, note?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, stockLine?: StockLineResponse | null };
+
+export type OutboundShipmentFragment = { __typename: 'InvoiceNode', allocatedDatetime?: string | null, colour?: string | null, comment?: string | null, createdDatetime: string, id: string, invoiceNumber: number, otherPartyName: string, pricing: InvoicePriceResponse, status: Types.InvoiceNodeStatus, lines: { __typename: 'ConnectorError' } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', batch?: string | null, expiryDate?: string | null, id: string, item: ItemResponse, itemCode: string, itemId: string, itemName: string, locationName?: string | null, note?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, stockLine?: StockLineResponse | null }> } };
+
+export type OutboundShipmentRowFragment = { __typename: 'InvoiceNode', allocatedDatetime?: string | null, colour?: string | null, comment?: string | null, createdDatetime: string, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, pricing: InvoicePriceResponse, status: Types.InvoiceNodeStatus, type: Types.InvoiceNodeType };
+
 export type InvoicesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -27,6 +33,7 @@ export type InvoiceQuery = { __typename: 'Queries', invoice: { __typename: 'Invo
 export type InsertOutboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String'];
   otherPartyId: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -40,6 +47,7 @@ export type UpdateOutboundShipmentMutationVariables = Types.Exact<{
 export type UpdateOutboundShipmentMutation = { __typename: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename: 'CanOnlyEditInvoicesInLoggedInStoreError', description: string } | { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'InvoiceLineHasNoStockLineError', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename: 'OtherPartyNotACustomerError', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteOutboundShipmentsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   deleteOutboundShipments: Array<Types.Scalars['String']> | Types.Scalars['String'];
 }>;
 
@@ -47,6 +55,7 @@ export type DeleteOutboundShipmentsMutationVariables = Types.Exact<{
 export type DeleteOutboundShipmentsMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string }> | null } };
 
 export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   input: Types.BatchOutboundShipmentInput;
 }>;
 
@@ -54,6 +63,7 @@ export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
 export type UpsertOutboundShipmentMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename: 'InsertOutboundShipmentServiceLineResponseWithId', id: string }> | null, insertOutboundShipmentUnallocatedLines?: Array<{ __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string }> | null } };
 
 export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   deleteOutboundShipmentLines: Array<Types.DeleteOutboundShipmentLineInput> | Types.DeleteOutboundShipmentLineInput;
 }>;
 
@@ -67,7 +77,63 @@ export type InvoiceCountsQueryVariables = Types.Exact<{
 
 export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
-
+export const OutboundShipmentLineFragmentDoc = gql`
+    fragment OutboundShipmentLine on InvoiceLineNode {
+  __typename
+  batch
+  expiryDate
+  id
+  item
+  itemCode
+  itemId
+  itemName
+  locationName
+  note
+  numberOfPacks
+  packSize
+  sellPricePerPack
+  stockLine
+}
+    `;
+export const OutboundShipmentFragmentDoc = gql`
+    fragment OutboundShipment on InvoiceNode {
+  __typename
+  allocatedDatetime
+  colour
+  comment
+  createdDatetime
+  id
+  invoiceNumber
+  lines {
+    __typename
+    ... on InvoiceLineConnector {
+      totalCount
+      nodes {
+        ...OutboundShipmentLine
+      }
+    }
+  }
+  otherPartyName
+  pricing
+  status
+}
+    ${OutboundShipmentLineFragmentDoc}`;
+export const OutboundShipmentRowFragmentDoc = gql`
+    fragment OutboundShipmentRow on InvoiceNode {
+  __typename
+  allocatedDatetime
+  colour
+  comment
+  createdDatetime
+  id
+  invoiceNumber
+  otherPartyId
+  otherPartyName
+  pricing
+  status
+  type
+}
+    `;
 export const InvoicesDocument = gql`
     query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
@@ -407,8 +473,11 @@ export const InvoiceDocument = gql`
 }
     `;
 export const InsertOutboundShipmentDocument = gql`
-    mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
-  insertOutboundShipment(input: {id: $id, otherPartyId: $otherPartyId}) {
+    mutation insertOutboundShipment($id: String!, $otherPartyId: String!, $storeId: String!) {
+  insertOutboundShipment(
+    storeId: $storeId
+    input: {id: $id, otherPartyId: $otherPartyId}
+  ) {
     __typename
     ... on InvoiceNode {
       id
@@ -498,8 +567,9 @@ export const UpdateOutboundShipmentDocument = gql`
 }
     `;
 export const DeleteOutboundShipmentsDocument = gql`
-    mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
+    mutation deleteOutboundShipments($storeId: String!, $deleteOutboundShipments: [String!]!) {
   batchOutboundShipment(
+    storeId: $storeId
     input: {deleteOutboundShipments: $deleteOutboundShipments}
   ) {
     __typename
@@ -511,8 +581,8 @@ export const DeleteOutboundShipmentsDocument = gql`
 }
     `;
 export const UpsertOutboundShipmentDocument = gql`
-    mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
-  batchOutboundShipment(input: $input) {
+    mutation upsertOutboundShipment($storeId: String!, $input: BatchOutboundShipmentInput!) {
+  batchOutboundShipment(storeId: $storeId, input: $input) {
     deleteOutboundShipmentLines {
       id
     }
@@ -547,8 +617,9 @@ export const UpsertOutboundShipmentDocument = gql`
 }
     `;
 export const DeleteOutboundShipmentLinesDocument = gql`
-    mutation deleteOutboundShipmentLines($deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!) {
+    mutation deleteOutboundShipmentLines($storeId: String!, $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!) {
   batchOutboundShipment(
+    storeId: $storeId
     input: {deleteOutboundShipmentLines: $deleteOutboundShipmentLines}
   ) {
     deleteOutboundShipmentLines {
@@ -686,7 +757,7 @@ export const mockInvoiceQuery = (resolver: ResponseResolver<GraphQLRequest<Invoi
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInsertOutboundShipmentMutation((req, res, ctx) => {
- *   const { id, otherPartyId } = req.variables;
+ *   const { id, otherPartyId, storeId } = req.variables;
  *   return res(
  *     ctx.data({ insertOutboundShipment })
  *   )
@@ -720,7 +791,7 @@ export const mockUpdateOutboundShipmentMutation = (resolver: ResponseResolver<Gr
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockDeleteOutboundShipmentsMutation((req, res, ctx) => {
- *   const { deleteOutboundShipments } = req.variables;
+ *   const { storeId, deleteOutboundShipments } = req.variables;
  *   return res(
  *     ctx.data({ batchOutboundShipment })
  *   )
@@ -737,7 +808,7 @@ export const mockDeleteOutboundShipmentsMutation = (resolver: ResponseResolver<G
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockUpsertOutboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
+ *   const { storeId, input } = req.variables;
  *   return res(
  *     ctx.data({ batchOutboundShipment })
  *   )
@@ -754,7 +825,7 @@ export const mockUpsertOutboundShipmentMutation = (resolver: ResponseResolver<Gr
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockDeleteOutboundShipmentLinesMutation((req, res, ctx) => {
- *   const { deleteOutboundShipmentLines } = req.variables;
+ *   const { storeId, deleteOutboundShipmentLines } = req.variables;
  *   return res(
  *     ctx.data({ batchOutboundShipment })
  *   )

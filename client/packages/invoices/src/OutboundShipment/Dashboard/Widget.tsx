@@ -12,6 +12,7 @@ import {
   StatsPanel,
   Widget,
   useNavigate,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { getOutboundShipmentCountQueryFn } from './api';
 import { useOutboundShipmentApi } from '../api';
@@ -21,12 +22,13 @@ export const OutboundShipmentWidget: React.FC = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const t = useTranslation(['app', 'dashboard']);
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
 
   const api = useOutboundShipmentApi();
   const { onCreate, invalidate } = useListData(
     { initialSortBy: { key: 'otherPartyName' } },
     'invoice',
-    getOutboundShipmentListViewApi(api)
+    getOutboundShipmentListViewApi(api, storeId)
   );
   const { data, isLoading } = useQuery(
     ['outound-shipment', 'count'],

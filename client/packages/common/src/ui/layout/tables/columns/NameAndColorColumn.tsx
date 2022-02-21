@@ -37,7 +37,7 @@ export const getNameAndColorColumn = <
       }}
     >
       <ColorSelectButton
-        onChange={color => column.setter({ ...rowData, color: color.hex })}
+        onChange={color => column.setter({ ...rowData, colour: color.hex })}
         color={rowData.colour}
       />
       <Box ml={1} />
