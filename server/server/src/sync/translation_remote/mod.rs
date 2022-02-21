@@ -10,7 +10,8 @@ use repository::{
 use serde::{Deserialize, Deserializer};
 
 use crate::sync::translation_remote::{
-    shipment::ShipmentTranslation, shipment_line::ShipmentLineTranslation,
+    name_store_join::NameStoreJoinTranslation, shipment::ShipmentTranslation,
+    shipment_line::ShipmentLineTranslation,
 };
 
 use self::number::NumberTranslation;
@@ -23,6 +24,7 @@ mod number;
 mod shipment;
 mod shipment_line;
 mod stock_line;
+#[cfg(test)]
 pub mod test_data;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -106,6 +108,7 @@ fn do_translation(
     let translations: Vec<Box<dyn RemotePullTranslation>> = vec![
         Box::new(NumberTranslation {}),
         Box::new(StockLineTranslation {}),
+        Box::new(NameStoreJoinTranslation {}),
         Box::new(ShipmentTranslation {}),
         Box::new(ShipmentLineTranslation {}),
     ];
