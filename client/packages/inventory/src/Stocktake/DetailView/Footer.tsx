@@ -1,3 +1,4 @@
+import React, { FC } from 'react';
 import {
   Box,
   ArrowRightIcon,
@@ -6,18 +7,19 @@ import {
   useTranslation,
   useNotification,
   AppFooterPortal,
-  ToggleButton,
   StocktakeNodeStatus,
-  useBufferState,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
 import {
   getStocktakeStatuses,
   getNextStocktakeStatus,
   getStocktakeTranslator,
 } from '../../utils';
-
-import { useStocktakeFields, useIsStocktakeDisabled } from '../api';
+import {
+  StocktakeFragment,
+  useStocktakeFields,
+  useStocktake,
+  useIsStocktakeDisabled,
+} from '../api';
 
 const getNextStatusText = (
   status: StocktakeNodeStatus,
@@ -28,31 +30,24 @@ const getNextStatusText = (
   return translation;
 };
 
-const createStatusLog = (status: 'SUGGESTED' | 'FINALISED') => {
-  if (status === 'SUGGESTED') {
-    return {
-      SUGGESTED: new Date().toISOString(),
-      FINALISED: null,
-    };
-  }
-
+const createStatusLog = (stocktake: StocktakeFragment) => {
   return {
-    SUGGESTED: new Date().toISOString(),
-    FINALISED: new Date().toISOString(),
+    [StocktakeNodeStatus.New]: stocktake.createdDatetime,
+    [StocktakeNodeStatus.Finalised]: stocktake.finalisedDatetime,
   };
 };
 
 export const Footer: FC = () => {
   const t = useTranslation(['common', 'inventory']);
+  const { data } = useStocktake();
   const { success, error } = useNotification();
   const isDisabled = useIsStocktakeDisabled();
-  const { status, onHold, update } = useStocktakeFields(['status', 'onHold']);
-  const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
+  const { status, update } = useStocktakeFields('status');
 
   return (
     <AppFooterPortal
       Content={
-        status && (
+        data && (
           <Box
             gap={2}
             display="flex"
@@ -60,26 +55,15 @@ export const Footer: FC = () => {
             alignItems="center"
             height={64}
           >
-            <ToggleButton
-              disabled={isDisabled}
-              value={onHoldBuffer}
-              selected={onHoldBuffer}
-              onClick={(_, value) => {
-                setOnHoldBuffer(!value);
-                update({ onHold: !value });
-              }}
-              label={t('label.hold')}
-            />
             <StatusCrumbs
               statuses={getStocktakeStatuses()}
-              statusLog={createStatusLog(status)}
+              statusLog={createStatusLog(data)}
               statusFormatter={getStocktakeTranslator(t)}
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
               {!isDisabled && (
                 <ButtonWithIcon
-                  disabled={onHoldBuffer}
                   shrinkThreshold="lg"
                   Icon={<ArrowRightIcon />}
                   label={t('button.save-and-confirm-status', {

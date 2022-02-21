@@ -4,11 +4,11 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type StocktakeRowFragment = { __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, stocktakeNumber: number, status: Types.StocktakeNodeStatus };
+export type StocktakeRowFragment = { __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeNumber: number, status: Types.StocktakeNodeStatus };
 
-export type StocktakeLineFragment = { __typename: 'StocktakeLineNode', batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null };
+export type StocktakeLineFragment = { __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item?: { __typename: 'ItemNode', id: string, code: string, name: string } | null };
 
-export type StocktakeFragment = { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null }> } };
+export type StocktakeFragment = { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item?: { __typename: 'ItemNode', id: string, code: string, name: string } | null }> } };
 
 export type StocktakesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -18,7 +18,7 @@ export type StocktakesQueryVariables = Types.Exact<{
 }>;
 
 
-export type StocktakesQuery = { __typename: 'Queries', stocktakes: { __typename: 'StocktakeConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, stocktakeNumber: number, status: Types.StocktakeNodeStatus }> } };
+export type StocktakesQuery = { __typename: 'Queries', stocktakes: { __typename: 'StocktakeConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeNumber: number, status: Types.StocktakeNodeStatus }> } };
 
 export type StocktakeQueryVariables = Types.Exact<{
   stocktakeId: Types.Scalars['String'];
@@ -26,7 +26,7 @@ export type StocktakeQueryVariables = Types.Exact<{
 }>;
 
 
-export type StocktakeQuery = { __typename: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null }> } } };
+export type StocktakeQuery = { __typename: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item?: { __typename: 'ItemNode', id: string, code: string, name: string } | null }> } } };
 
 export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -69,6 +69,7 @@ export const StocktakeRowFragmentDoc = gql`
   comment
   description
   createdDatetime
+  finalisedDatetime
   stocktakeNumber
   status
 }
@@ -76,6 +77,7 @@ export const StocktakeRowFragmentDoc = gql`
 export const StocktakeLineFragmentDoc = gql`
     fragment StocktakeLine on StocktakeLineNode {
   __typename
+  stocktakeId
   batch
   itemId
   id
@@ -85,6 +87,14 @@ export const StocktakeLineFragmentDoc = gql`
   countedNumberOfPacks
   sellPricePerPack
   costPricePerPack
+  stockLine {
+    id
+  }
+  item {
+    id
+    code
+    name
+  }
 }
     `;
 export const StocktakeFragmentDoc = gql`
@@ -94,6 +104,7 @@ export const StocktakeFragmentDoc = gql`
   stocktakeNumber
   comment
   createdDatetime
+  finalisedDatetime
   status
   description
   lines {

@@ -3,10 +3,10 @@ import {
   useTranslation,
   Item,
 } from '@openmsupply-client/common';
-import { StocktakeRow } from './types';
+import { StocktakeRowFragment } from './Stocktake/api';
 
 export const getStocktakeStatuses = (): StocktakeNodeStatus[] => [
-  StocktakeNodeStatus.Suggested,
+  StocktakeNodeStatus.New,
   StocktakeNodeStatus.Finalised,
 ];
 
@@ -30,17 +30,24 @@ export const getNextStocktakeStatus = (
 export const getStocktakeTranslator =
   (t: ReturnType<typeof useTranslation>) =>
   (currentStatus: StocktakeNodeStatus): string => {
-    if (currentStatus === StocktakeNodeStatus.Suggested) {
+    if (currentStatus === StocktakeNodeStatus.New) {
       return t('label.suggested', { ns: 'inventory' });
     }
 
     return t('label.finalised', { ns: 'inventory' });
   };
 
-export const canDeleteStocktake = (row: StocktakeRow): boolean =>
-  row.status === StocktakeNodeStatus.Suggested;
+export const canDeleteStocktake = (row: StocktakeRowFragment): boolean =>
+  row.status === StocktakeNodeStatus.New;
 
 export const toItem = (line: ItemLike): Item => ({
+  __typename: 'ItemNode',
+  stats: {
+    __typename: 'ItemStatsNode',
+    averageMonthlyConsumption: 0,
+    monthsOfStock: 0,
+    stockOnHand: 0,
+  },
   id: 'lines' in line ? line.lines[0].itemId : line.itemId,
   name: 'lines' in line ? line.lines[0].itemName : line.itemName,
   code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,

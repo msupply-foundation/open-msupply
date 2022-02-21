@@ -9,13 +9,13 @@ import {
   DataTableSkeleton,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
-import { useStocktakeRows } from '../api';
-import { StocktakeSummaryItem, StocktakeLine } from '../../types';
+import { StocktakeLineFragment, useStocktakeRows } from '../api';
+import { StocktakeSummaryItem } from '../../types';
 
 const Expando = ({
   rowData,
 }: {
-  rowData: StocktakeLine | StocktakeSummaryItem;
+  rowData: StocktakeSummaryItem | StocktakeLineFragment;
 }) => {
   const expandoColumns = useExpansionColumns();
   if ('lines' in rowData && rowData.lines.length > 1) {
@@ -26,7 +26,7 @@ const Expando = ({
 };
 
 export const ContentArea: FC<{
-  onRowClick: (item: StocktakeSummaryItem | StocktakeLine) => void;
+  onRowClick: (item: StocktakeSummaryItem | StocktakeLineFragment) => void;
 }> = ({ onRowClick }) => {
   const t = useTranslation('inventory');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
@@ -47,7 +47,7 @@ export const ContentArea: FC<{
           color="secondary"
         />
       </Box>
-      <DataTable<StocktakeSummaryItem | StocktakeLine>
+      <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
         onRowClick={onRowClick}
         ExpandContent={Expando}
         columns={columns}
