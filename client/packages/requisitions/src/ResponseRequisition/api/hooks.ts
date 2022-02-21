@@ -51,11 +51,14 @@ export const useResponseRequisitions = () => {
 
 export const useResponseRequisition =
   (): UseQueryResult<ResponseRequisitionFragment> => {
-    const { id = '' } = useParams();
+    const { requisitionNumber = '' } = useParams();
     const { store } = useHostContext();
     const api = useResponseRequisitionApi();
-    return useQuery(['requisition', id], () =>
-      ResponseRequisitionQueries.get.byNumber(api)(Number(id), store.id)
+    return useQuery(['requisition', requisitionNumber], () =>
+      ResponseRequisitionQueries.get.byNumber(api)(
+        Number(requisitionNumber),
+        store.id
+      )
     );
   };
 
@@ -65,13 +68,21 @@ export const useResponseRequisitionFields = <
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<ResponseRequisitionFragment, KeyOfRequisition> => {
   const { store } = useHostContext();
-  const { id = '' } = useParams();
+  const { data } = useResponseRequisition();
+  const { requisitionNumber = '' } = useParams();
   const api = useResponseRequisitionApi();
   return useFieldsSelector(
-    ['requisition', id],
-    () => ResponseRequisitionQueries.get.byNumber(api)(Number(id), store.id),
+    ['requisition', requisitionNumber],
+    () =>
+      ResponseRequisitionQueries.get.byNumber(api)(
+        Number(requisitionNumber),
+        store.id
+      ),
     (patch: Partial<ResponseRequisitionFragment>) =>
-      ResponseRequisitionQueries.update(api, store.id)({ ...patch, id }),
+      ResponseRequisitionQueries.update(
+        api,
+        store.id
+      )({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };

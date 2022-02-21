@@ -184,6 +184,17 @@ export const CommandK: FC = ({ children }) => {
         ),
     },
     {
+      id: 'navigation:internal-order',
+      name: `${t('cmdk.goto-internal-order')}`,
+      keywords: 'replenishment',
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InternalOrder)
+            .build()
+        ),
+    },
+    {
       id: 'navigation:reports',
       name: `${t('cmdk.goto-reports')} (r)`,
       shortcut: ['r'],
