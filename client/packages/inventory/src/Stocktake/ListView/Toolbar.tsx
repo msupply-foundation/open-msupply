@@ -10,13 +10,13 @@ import {
   SearchBar,
   FilterController,
 } from '@openmsupply-client/common';
-import { StocktakeRow } from '../../types';
 import { canDeleteStocktake } from '../../utils';
+import { StocktakeRowFragment } from '../api';
 
 export const Toolbar: FC<{
-  onDelete: (toDelete: StocktakeRow[]) => void;
+  onDelete: (toDelete: StocktakeRowFragment[]) => void;
   filter: FilterController;
-  data?: StocktakeRow[];
+  data?: StocktakeRowFragment[];
 }> = ({ onDelete, data, filter }) => {
   const t = useTranslation('inventory');
 
@@ -26,7 +26,7 @@ export const Toolbar: FC<{
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as StocktakeRow[],
+      .filter(Boolean) as StocktakeRowFragment[],
   }));
 
   const deleteAction = () => {
@@ -56,7 +56,7 @@ export const Toolbar: FC<{
     ref.current = deleteAction;
   }, [selectedRows]);
 
-  const key = 'comment' as keyof StocktakeRow;
+  const key = 'comment';
   const filterString = filter.filterBy?.[key]?.like as string;
 
   return (
