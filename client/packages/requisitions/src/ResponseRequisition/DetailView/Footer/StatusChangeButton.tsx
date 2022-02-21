@@ -27,7 +27,7 @@ const getStatusOptions = (
   ] = [
     {
       value: RequisitionNodeStatus.New,
-      label: getButtonLabel(RequisitionNodeStatus.Draft),
+      label: getButtonLabel(RequisitionNodeStatus.New),
       isDisabled: true,
     },
     {
@@ -51,7 +51,6 @@ const getNextStatusOption = (
   if (!status) return options[0] ?? null;
 
   const nextStatus = getNextResponseRequisitionStatus(status);
-  console.log('nextStatus', nextStatus);
   const nextStatusOption = options.find(o => o.value === nextStatus);
   return nextStatusOption || null;
 };
