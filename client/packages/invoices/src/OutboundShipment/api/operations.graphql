@@ -33,7 +33,7 @@ fragment OutboundShipment on InvoiceNode {
     }
   }
   otherPartyName
-  pricing 
+  pricing
   status
 }
 
@@ -409,8 +409,15 @@ query invoice($id: String!, $storeId: String!) {
   }
 }
 
-mutation insertOutboundShipment($id: String!, $otherPartyId: String!) {
-  insertOutboundShipment(input: { id: $id, otherPartyId: $otherPartyId }) {
+mutation insertOutboundShipment(
+  $id: String!
+  $otherPartyId: String!
+  $storeId: String!
+) {
+  insertOutboundShipment(
+    storeId: $storeId
+    input: { id: $id, otherPartyId: $otherPartyId }
+  ) {
     __typename
     ... on InvoiceNode {
       id
@@ -498,8 +505,12 @@ mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
   }
 }
 
-mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
+mutation deleteOutboundShipments(
+  $storeId: String!
+  $deleteOutboundShipments: [String!]!
+) {
   batchOutboundShipment(
+    storeId: $storeId
     input: { deleteOutboundShipments: $deleteOutboundShipments }
   ) {
     __typename
@@ -510,8 +521,11 @@ mutation deleteOutboundShipments($deleteOutboundShipments: [String!]!) {
   }
 }
 
-mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
-  batchOutboundShipment(input: $input) {
+mutation upsertOutboundShipment(
+  $storeId: String!
+  $input: BatchOutboundShipmentInput!
+) {
+  batchOutboundShipment(storeId: $storeId, input: $input) {
     deleteOutboundShipmentLines {
       id
     }
@@ -546,9 +560,11 @@ mutation upsertOutboundShipment($input: BatchOutboundShipmentInput!) {
 }
 
 mutation deleteOutboundShipmentLines(
+  $storeId: String!
   $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!
 ) {
   batchOutboundShipment(
+    storeId: $storeId
     input: { deleteOutboundShipmentLines: $deleteOutboundShipmentLines }
   ) {
     deleteOutboundShipmentLines {

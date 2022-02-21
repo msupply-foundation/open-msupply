@@ -74,11 +74,19 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
     // one.
 
     if (selected) return;
-    const selectedPackSize = ifTheSameElseDefault(
+    let selectedPackSize = ifTheSameElseDefault(
       lines.filter(({ numberOfPacks }) => numberOfPacks > 0),
       'packSize',
       -1
     );
+
+    // on initial selection of an item there will be no packs selected
+    if (selectedPackSize === -1)
+      selectedPackSize = ifTheSameElseDefault(
+        lines.filter(({ id }) => id !== 'placeholder'),
+        'packSize',
+        -1
+      );
 
     setPackSize(selectedPackSize);
   }, [setPackSize, selected, lines]);

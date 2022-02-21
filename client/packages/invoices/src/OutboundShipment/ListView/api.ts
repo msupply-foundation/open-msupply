@@ -4,6 +4,7 @@ import {
   ListApi,
   InvoiceSortFieldInput,
   InvoicePriceResponse,
+  useQueryParams,
 } from '@openmsupply-client/common';
 import { OutboundShipmentApi } from '../api';
 import {
@@ -31,11 +32,12 @@ const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
 };
 
 export const onCreate =
-  (api: OutboundShipmentApi) =>
+  (api: OutboundShipmentApi, storeId: string) =>
   async (invoice: Partial<OutboundShipmentRowFragment>): Promise<string> => {
     const result = await api.insertOutboundShipment({
       id: invoice.id ?? '',
       otherPartyId: invoice?.otherPartyId ?? '',
+      storeId,
     });
 
     const { insertOutboundShipment } = result;
@@ -48,9 +50,10 @@ export const onCreate =
   };
 
 export const onDelete =
-  (api: OutboundShipmentApi) =>
+  (api: OutboundShipmentApi, storeId: string) =>
   async (invoices: OutboundShipmentRowFragment[]): Promise<string[]> => {
     const result = await api.deleteOutboundShipments({
+      storeId,
       deleteOutboundShipments: invoices.map(invoice => invoice.id),
     });
 
@@ -80,12 +83,13 @@ export const onRead =
   };
 
 export const onUpdate =
-  (api: OutboundShipmentApi) =>
+  (api: OutboundShipmentApi, storeId: string) =>
   async (
     patch: Partial<OutboundShipmentRowFragment> & { id: string }
   ): Promise<string> => {
     const result = await api.updateOutboundShipment({
       input: invoiceToInput(patch),
+      storeId,
     });
 
     const { updateOutboundShipment } = result;
@@ -142,21 +146,25 @@ const getSortDesc = (sortBy: SortBy<OutboundShipmentRowFragment>): boolean => {
 
 export const getOutboundShipmentListViewApi = (
   omSupplyApi: OutboundShipmentApi
-): ListApi<OutboundShipmentRowFragment> => ({
-  onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
-    const queryParams: InvoicesQueryVariables = {
-      first,
-      offset,
-      key: getSortKey(sortBy),
-      desc: getSortDesc(sortBy),
-      filter: filterBy,
-      storeId: storeId,
-    };
+): ListApi<OutboundShipmentRowFragment> => {
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
 
-    const onReadFn = onRead(omSupplyApi);
-    return () => onReadFn(queryParams);
-  },
-  onDelete: onDelete(omSupplyApi),
-  onUpdate: onUpdate(omSupplyApi),
-  onCreate: onCreate(omSupplyApi),
-});
+  return {
+    onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
+      const queryParams: InvoicesQueryVariables = {
+        first,
+        offset,
+        key: getSortKey(sortBy),
+        desc: getSortDesc(sortBy),
+        filter: filterBy,
+        storeId: storeId,
+      };
+
+      const onReadFn = onRead(omSupplyApi);
+      return () => onReadFn(queryParams);
+    },
+    onDelete: onDelete(omSupplyApi, storeId),
+    onUpdate: onUpdate(omSupplyApi, storeId),
+    onCreate: onCreate(omSupplyApi, storeId),
+  };
+};

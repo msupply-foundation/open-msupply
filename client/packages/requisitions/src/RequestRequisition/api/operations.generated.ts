@@ -1,4 +1,4 @@
-import * as Types from '../../../../common/src/types/schema';
+import * as Types from '../../../../../../packages/common/src/types/schema';
 
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
