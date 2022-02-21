@@ -3,66 +3,8 @@ import {
   LocaleKey,
   useTranslation,
 } from '@openmsupply-client/common';
-import { Requisition } from './types';
 import { ResponseRequisitionRowFragment } from './ResponseRequisition/api';
-
-export const isRequisitionEditable = (requisition: Requisition): boolean => {
-  return (
-    requisition.status === RequisitionNodeStatus.Draft ||
-    requisition.status === RequisitionNodeStatus.New
-  );
-};
-
-const requisitionStatusToLocaleKey: Record<RequisitionNodeStatus, LocaleKey> = {
-  [RequisitionNodeStatus.Draft]: 'label.draft',
-  [RequisitionNodeStatus.New]: 'label.new',
-  [RequisitionNodeStatus.Sent]: 'label.sent',
-  [RequisitionNodeStatus.Finalised]: 'label.finalised',
-};
-
-// TODO: When supplier requisition statuses are finalised, this function should be passed
-// `t` and should properly translate the status.
-export const getRequestRequisitionTranslator =
-  (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: RequisitionNodeStatus): string =>
-    t(requisitionStatusToLocaleKey[currentStatus]);
-
-export const getRequestRequisitionStatuses = (): RequisitionNodeStatus[] => [
-  RequisitionNodeStatus.Draft,
-  RequisitionNodeStatus.New,
-  RequisitionNodeStatus.Sent,
-];
-
-export const canDeleteRequisition = (
-  requisitionRow: ResponseRequisitionRowFragment
-): boolean => requisitionRow.status === RequisitionNodeStatus.Draft;
-
-export const createStatusLog = (status: RequisitionNodeStatus) => {
-  if (status === 'DRAFT') {
-    return {
-      DRAFT: new Date().toISOString(),
-      NEW: null,
-      FINALISED: null,
-      SENT: null,
-    };
-  }
-
-  if (status === 'FINALISED') {
-    return {
-      DRAFT: new Date().toISOString(),
-      NEW: new Date().toISOString(),
-      FINALISED: new Date().toISOString(),
-      SENT: null,
-    };
-  }
-
-  return {
-    DRAFT: new Date().toISOString(),
-    NEW: new Date().toISOString(),
-    FINALISED: new Date().toISOString(),
-    SENT: new Date().toISOString(),
-  };
-};
+import { RequestRequisitionRowFragment } from './RequestRequisition/api';
 
 export const requestRequisitionStatuses = [
   RequisitionNodeStatus.Draft,
@@ -74,16 +16,35 @@ export const requestRequisitionStatuses = [
 // becomes possible and such will need to be handled.
 export const responseRequisitionStatuses = [
   RequisitionNodeStatus.New,
-  RequisitionNodeStatus.Sent,
   RequisitionNodeStatus.Finalised,
 ];
 
-const statusTranslation: Record<RequisitionNodeStatus, LocaleKey> = {
-  DRAFT: 'label.draft',
-  NEW: 'label.new',
-  SENT: 'label.sent',
-  FINALISED: 'label.finalised',
+const requisitionStatusToLocaleKey: Record<RequisitionNodeStatus, LocaleKey> = {
+  [RequisitionNodeStatus.Draft]: 'label.draft',
+  [RequisitionNodeStatus.New]: 'label.new',
+  [RequisitionNodeStatus.Sent]: 'label.sent',
+  [RequisitionNodeStatus.Finalised]: 'label.finalised',
 };
+
+export const getStatusTranslation = (status: RequisitionNodeStatus) => {
+  return requisitionStatusToLocaleKey[status];
+};
+
+export const getRequisitionTranslator =
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: RequisitionNodeStatus): string =>
+    t(getStatusTranslation(currentStatus));
+
+export const getRequestRequisitionStatuses = (): RequisitionNodeStatus[] => [
+  RequisitionNodeStatus.Draft,
+  RequisitionNodeStatus.New,
+  RequisitionNodeStatus.Sent,
+];
+
+export const getResponseRequisitionStatuses = (): RequisitionNodeStatus[] => [
+  RequisitionNodeStatus.New,
+  RequisitionNodeStatus.Finalised,
+];
 
 export const getNextRequestRequisitionStatus = (
   currentStatus: RequisitionNodeStatus
@@ -95,6 +56,18 @@ export const getNextRequestRequisitionStatus = (
   return nextStatus ?? null;
 };
 
-export const getStatusTranslation = (status: RequisitionNodeStatus) => {
-  return statusTranslation[status];
+export const getNextResponseRequisitionStatus = (
+  currentStatus: RequisitionNodeStatus
+): RequisitionNodeStatus | null => {
+  const currentStatusIdx = responseRequisitionStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = responseRequisitionStatuses[currentStatusIdx + 1];
+  return nextStatus ?? null;
 };
+
+export const canDeleteRequisition = (
+  requisitionRow: ResponseRequisitionRowFragment | RequestRequisitionRowFragment
+): boolean =>
+  requisitionRow.status === RequisitionNodeStatus.Draft ||
+  requisitionRow.status === RequisitionNodeStatus.New;
