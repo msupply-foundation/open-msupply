@@ -64,9 +64,9 @@ impl RemotePullTranslation for StockLineTranslation {
 
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::StockLine(StockLineRow {
-                id: data.ID.clone(),
-                store_id: data.store_ID.clone(),
-                item_id: data.item_ID.clone(),
+                id: data.ID,
+                store_id: data.store_ID,
+                item_id: data.item_ID,
                 location_id: data.location_ID,
                 batch: data.batch,
                 pack_size: data.pack_size,
