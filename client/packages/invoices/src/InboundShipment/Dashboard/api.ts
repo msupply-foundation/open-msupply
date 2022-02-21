@@ -1,12 +1,12 @@
-import { OmSupplyApi } from '@openmsupply-client/common';
+import { InboundShipmentApi } from '../api';
 
 export const getInboundShipmentCountQueryFn =
-  (omSupplyApi: OmSupplyApi) =>
+  (api: InboundShipmentApi) =>
   async (): Promise<{
     today: number;
     thisWeek: number;
   }> => {
-    const result = await omSupplyApi.invoiceCounts({});
+    const result = await api.invoiceCounts({});
 
     return {
       thisWeek: result.invoiceCounts.inbound.created?.thisWeek ?? 0,
