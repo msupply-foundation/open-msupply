@@ -5,7 +5,7 @@ use repository::{
 
 use serde::Deserialize;
 
-use crate::sync::translation_central::SyncTranslationError;
+use crate::sync::SyncTranslationError;
 
 use super::{
     IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation,

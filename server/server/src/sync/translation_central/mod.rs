@@ -25,38 +25,8 @@ use self::{
 };
 
 use log::{info, warn};
-use thiserror::Error;
 
-#[derive(Error, Debug)]
-#[error("Failed to translate {table_name} sync record")]
-pub struct SyncTranslationError {
-    pub table_name: &'static str,
-    pub source: anyhow::Error,
-    pub record: String,
-}
-
-#[derive(Error, Debug)]
-pub enum SyncImportError {
-    #[error("Failed to translate sync records")]
-    TranslationError {
-        #[from]
-        source: SyncTranslationError,
-    },
-    #[error("Failed to integrate sync records")]
-    IntegrationError {
-        source: RepositoryError,
-        extra: String,
-    },
-}
-
-impl SyncImportError {
-    pub fn as_integration_error<T: std::fmt::Debug>(error: RepositoryError, extra: T) -> Self {
-        SyncImportError::IntegrationError {
-            source: error,
-            extra: format!("{:?}", extra),
-        }
-    }
-}
+use super::{SyncImportError, SyncTranslationError};
 
 #[derive(Debug)]
 pub enum IntegrationUpsertRecord {

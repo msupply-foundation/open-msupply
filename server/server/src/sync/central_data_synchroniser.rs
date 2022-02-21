@@ -1,6 +1,6 @@
 use crate::sync::{
     sync_api_v5::CentralSyncBatchV5,
-    translation_central::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
+    translation_central::{import_sync_records, TRANSLATION_RECORDS},
     SyncApiV5, SyncConnectionError,
 };
 use log::info;
@@ -11,7 +11,7 @@ use repository::{
 };
 use thiserror::Error;
 
-use super::sync_api_v5::CentralSyncRecordV5;
+use super::{sync_api_v5::CentralSyncRecordV5, SyncImportError};
 
 #[derive(Error, Debug)]
 pub enum CentralSyncError {

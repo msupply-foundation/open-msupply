@@ -12,7 +12,7 @@ use crate::sync::translation_remote::shipment::ShipmentTranslation;
 use self::number::NumberTranslation;
 use self::stock_line::StockLineTranslation;
 
-use super::translation_central::{SyncImportError, SyncTranslationError};
+use super::{SyncImportError, SyncTranslationError};
 
 mod name_store_join;
 mod number;

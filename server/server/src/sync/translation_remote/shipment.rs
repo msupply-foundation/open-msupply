@@ -6,7 +6,7 @@ use repository::{
 
 use serde::Deserialize;
 
-use crate::sync::translation_central::SyncTranslationError;
+use crate::sync::SyncTranslationError;
 
 use super::{
     empty_str_as_option, zero_date_as_option, IntegrationRecord, IntegrationUpsertRecord,
