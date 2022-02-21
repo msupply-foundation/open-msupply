@@ -126,7 +126,13 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
 
     return Object.entries(groupBy(lines.nodes, 'itemId')).map(
       ([itemId, lines]) => {
-        return { id: itemId, itemId, lines };
+        return {
+          id: itemId,
+          itemId,
+          itemName: lines[0].item?.name ?? '',
+          itemCode: lines[0].item?.code ?? '',
+          lines,
+        };
       }
     );
   }, []);

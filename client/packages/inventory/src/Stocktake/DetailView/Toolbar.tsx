@@ -7,11 +7,9 @@ import {
   DeleteIcon,
   useTranslation,
   useNotification,
-  // useTableStore,
   BufferedTextInput,
   useBufferState,
   InputWithLabelRow,
-  DatePickerInput,
 } from '@openmsupply-client/common';
 import { useStocktakeFields, useIsStocktakeDisabled } from '../api';
 
@@ -19,10 +17,7 @@ export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common', 'inventory']);
   const { success, info } = useNotification();
   const isDisabled = useIsStocktakeDisabled();
-  const { stocktakeDatetime, description, update } = useStocktakeFields([
-    'description',
-    'stocktakeDatetime',
-  ]);
+  const { description, update } = useStocktakeFields('description');
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
 
   // const { selectedRows } = useTableStore(state => ({
@@ -64,19 +59,6 @@ export const Toolbar: FC = () => {
                 onChange={event => {
                   setDescriptionBuffer(event.target.value);
                   update({ description: event.target.value });
-                }}
-              />
-            }
-          />
-
-          <InputWithLabelRow
-            label={t('label.stocktake-date', { ns: 'inventory' })}
-            Input={
-              <DatePickerInput
-                disabled={isDisabled}
-                value={stocktakeDatetime}
-                onChange={newDate => {
-                  update({ stocktakeDatetime: newDate });
                 }}
               />
             }
