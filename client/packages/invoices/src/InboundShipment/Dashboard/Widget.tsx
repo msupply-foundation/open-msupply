@@ -4,15 +4,15 @@ import {
   Grid,
   PlusCircleIcon,
   StatsPanel,
-  useOmSupplyApi,
   useQuery,
   useTranslation,
   Widget,
 } from '@openmsupply-client/common';
 import { getInboundShipmentCountQueryFn } from './api';
+import { useInboundShipmentApi } from '../api';
 
 export const InboundShipmentWidget: React.FC = () => {
-  const { api } = useOmSupplyApi();
+  const api = useInboundShipmentApi();
   const t = useTranslation(['app', 'dashboard']);
   const { data, isLoading } = useQuery(
     ['inbound-shipment', 'count'],
