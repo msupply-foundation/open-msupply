@@ -1,54 +1,3 @@
-query names(
-  $key: NameSortFieldInput!
-  $desc: Boolean
-  $first: Int
-  $offset: Int
-  $filter: NameFilterInput
-) {
-  names(
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        description
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
-    ... on NameConnector {
-      __typename
-      nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-        store {
-          id
-          code
-        }
-      }
-      totalCount
-    }
-  }
-}
-
 query itemsWithStockLines(
   $first: Int
   $offset: Int
@@ -144,14 +93,14 @@ query itemsWithStockLines(
   }
 }
 
-query itemsListView(
+query names(
+  $key: NameSortFieldInput!
+  $desc: Boolean
   $first: Int
   $offset: Int
-  $key: ItemSortFieldInput!
-  $desc: Boolean
-  $filter: ItemFilterInput
+  $filter: NameFilterInput
 ) {
-  items(
+  names(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
@@ -159,12 +108,12 @@ query itemsListView(
     ... on ConnectorError {
       __typename
       error {
-        description
         ... on DatabaseError {
           __typename
           description
           fullError
         }
+        description
         ... on PaginationError {
           __typename
           description
@@ -177,16 +126,18 @@ query itemsListView(
         }
       }
     }
-    ... on ItemConnector {
+    ... on NameConnector {
       __typename
       nodes {
-        __typename
-        # availableQuantity
         code
         id
-        isVisible
+        isCustomer
+        isSupplier
         name
-        unitName
+        store {
+          id
+          code
+        }
       }
       totalCount
     }

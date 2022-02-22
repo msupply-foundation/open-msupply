@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
 import {
+  useNavigate,
+  useTranslation,
+  useNotification,
   useQuerySelector,
   StocktakeNodeStatus,
   useQueryClient,
@@ -15,11 +18,11 @@ import {
   useSortBy,
   useHostContext,
   useQueryParams,
-  useAuthContext,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
-import { StocktakeQueries, StocktakeApi } from './api';
-import { useStocktakeColumns } from '../DetailView/columns';
+import { StocktakeApi, getStocktakeQueries } from './api';
+import { useStocktakeColumns } from '../DetailView';
 import {
   getSdk,
   StocktakeFragment,
@@ -29,15 +32,16 @@ import {
 
 export const useStocktakeApi = (): StocktakeApi => {
   const { client } = useOmSupplyApi();
-  return getSdk(client);
+  const { store } = useHostContext();
+  const queries = getStocktakeQueries(getSdk(client), store.id);
+  return { ...queries, storeId: store.id };
 };
 
 export const useStocktake = (): UseQueryResult<StocktakeFragment> => {
-  const { id = '' } = useParams();
-  const { store } = useHostContext();
+  const { stocktakeNumber = '' } = useParams();
   const api = useStocktakeApi();
-  return useQuery(['stocktake', id], () =>
-    StocktakeQueries.get.byId(api, store.id)(id)
+  return useQuery(['stocktake', stocktakeNumber], () =>
+    api.get.byNumber(Number(stocktakeNumber))
   );
 };
 
@@ -45,14 +49,12 @@ export const useStocktakes = () => {
   const queryParams = useQueryParams<StocktakeRowFragment>({
     initialSortBy: { key: 'createdDatetime' },
   });
-  // const { store } = useHostContext();
-  const { storeId } = useAuthContext();
   const api = useStocktakeApi();
 
   return {
     ...useQuery(
-      ['stocktake', storeId, queryParams],
-      StocktakeQueries.get.list(api, storeId, {
+      ['stocktake', api.storeId, queryParams],
+      api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
@@ -63,19 +65,29 @@ export const useStocktakes = () => {
   };
 };
 
+export const useInsertStocktake = () => {
+  const navigate = useNavigate();
+  const api = useStocktakeApi();
+  return useMutation(api.insertStocktake, {
+    onSuccess: ({ stocktakeNumber }) => {
+      navigate(String(stocktakeNumber));
+    },
+  });
+};
+
 export const useStocktakeFields = <
   KeyOfStocktake extends keyof StocktakeFragment
 >(
   keys: KeyOfStocktake | KeyOfStocktake[]
 ): FieldSelectorControl<StocktakeFragment, KeyOfStocktake> => {
-  const { id = '' } = useParams();
-  const { store } = useHostContext();
+  const { stocktakeNumber = '' } = useParams();
+  const { data } = useStocktake();
   const api = useStocktakeApi();
   return useFieldsSelector(
-    ['stocktake', id],
-    () => StocktakeQueries.get.byId(api, store.id)(id),
+    ['stocktake', stocktakeNumber],
+    () => api.get.byNumber(Number(stocktakeNumber)),
     (patch: Partial<StocktakeFragment>) =>
-      StocktakeQueries.update(api, store.id)({ ...patch, id }),
+      api.update({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
@@ -88,19 +100,18 @@ export const useIsStocktakeDisabled = (): boolean => {
 import { useCallback } from 'react';
 
 export const useStocktakeDetailQueryKey = (): ['stocktake', string] => {
-  const { id = '' } = useParams();
-  return ['stocktake', id];
+  const { stocktakeNumber = '' } = useParams();
+  return ['stocktake', stocktakeNumber];
 };
 
 const useStocktakeSelector = <ReturnType>(
   select: (data: StocktakeFragment) => ReturnType
 ) => {
   const queryKey = useStocktakeDetailQueryKey();
-  const { store } = useHostContext();
   const api = useStocktakeApi();
   return useQuerySelector(
     queryKey,
-    () => StocktakeQueries.get.byId(api, store.id)(queryKey[1]),
+    () => api.get.byNumber(Number(queryKey[1])),
     select
   );
 };
@@ -130,9 +141,7 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
       ([itemId, lines]) => {
         return {
           id: itemId,
-          itemId,
-          itemName: lines[0].item?.name ?? '',
-          itemCode: lines[0].item?.code ?? '',
+          item: lines[0].item,
           lines,
         };
       }
@@ -145,13 +154,70 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
 export const useSaveStocktakeLines = () => {
   const queryKey = useStocktakeDetailQueryKey();
   const queryClient = useQueryClient();
-  const { store } = useHostContext();
   const api = useStocktakeApi();
-  return useMutation(StocktakeQueries.updateLines(api, store.id), {
+  return useMutation(api.updateLines, {
     onSuccess: () => {
       queryClient.invalidateQueries(queryKey);
     },
   });
+};
+
+export const useDeleteStocktakeLine = () => {
+  const api = useStocktakeApi();
+  return useMutation(api.deleteLines);
+};
+
+export const useDeleteSelectedLines = (): {
+  onDelete: () => Promise<void>;
+} => {
+  const queryKey = useStocktakeDetailQueryKey();
+  const { success, info } = useNotification();
+  const queryClient = useQueryClient();
+  const { items, lines } = useStocktakeRows();
+  const { mutate } = useDeleteStocktakeLine();
+  const t = useTranslation('inventory');
+
+  const { selectedRows } = useTableStore(state => {
+    const { isGrouped } = state;
+
+    if (isGrouped) {
+      return {
+        selectedRows: (
+          Object.keys(state.rowState)
+            .filter(id => state.rowState[id]?.isSelected)
+            .map(selectedId => items?.find(({ id }) => selectedId === id))
+            .filter(Boolean) as StocktakeSummaryItem[]
+        )
+          .map(({ lines }) => lines)
+          .flat(),
+      };
+    } else {
+      return {
+        selectedRows: Object.keys(state.rowState)
+          .filter(id => state.rowState[id]?.isSelected)
+          .map(selectedId => lines?.find(({ id }) => selectedId === id))
+          .filter(Boolean) as StocktakeLineFragment[],
+      };
+    }
+  });
+
+  const onDelete = async () => {
+    if (selectedRows && selectedRows?.length > 0) {
+      const number = selectedRows?.length;
+      const successSnack = success(t('message.deleted-lines', { number }));
+      mutate(selectedRows, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(queryKey);
+          successSnack();
+        },
+      });
+    } else {
+      const infoSnack = info(t('label.select-rows-to-delete-them'));
+      infoSnack();
+    }
+  };
+
+  return { onDelete };
 };
 
 export const useStocktakeRows = (isGrouped = true) => {

@@ -20,7 +20,7 @@ import {
   useCreateRequestRequisition,
   useRequestRequisitions,
 } from '../api';
-import { getRequestRequisitionTranslator } from '../../utils';
+import { getRequisitionTranslator } from '../../utils';
 
 export const RequestRequisitionListView: FC = () => {
   const modalController = useToggle(false);
@@ -47,9 +47,7 @@ export const RequestRequisitionListView: FC = () => {
         'status',
         {
           formatter: currentStatus =>
-            getRequestRequisitionTranslator(t)(
-              currentStatus as RequisitionNodeStatus
-            ),
+            getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
         },
       ],
       'comment',
