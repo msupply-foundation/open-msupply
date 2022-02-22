@@ -4,7 +4,6 @@ import {
   ListApi,
   InvoiceSortFieldInput,
   InvoicePriceResponse,
-  useQueryParams,
 } from '@openmsupply-client/common';
 import { OutboundShipmentApi } from '../api';
 import {
@@ -83,13 +82,15 @@ export const onRead =
   };
 
 export const onUpdate =
-  (api: OutboundShipmentApi, storeId: string) =>
+  (
+    api: OutboundShipmentApi // storeId: string
+  ) =>
   async (
     patch: Partial<OutboundShipmentRowFragment> & { id: string }
   ): Promise<string> => {
     const result = await api.updateOutboundShipment({
       input: invoiceToInput(patch),
-      storeId,
+      // storeId,
     });
 
     const { updateOutboundShipment } = result;
@@ -162,6 +163,8 @@ export const getOutboundShipmentListViewApi = (
     return () => onReadFn(queryParams);
   },
   onDelete: onDelete(omSupplyApi, storeId),
-  onUpdate: onUpdate(omSupplyApi, storeId),
+  onUpdate: onUpdate(
+    omSupplyApi // storeId
+  ),
   onCreate: onCreate(omSupplyApi, storeId),
 });
