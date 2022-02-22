@@ -30,7 +30,7 @@ pub fn mock_invoice_loader_requistion1() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }

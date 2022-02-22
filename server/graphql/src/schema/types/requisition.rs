@@ -128,8 +128,8 @@ impl RequisitionNode {
     }
 
     /// Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
-    pub async fn threshold_months_of_stock(&self) -> &f64 {
-        &self.row().threshold_months_of_stock
+    pub async fn min_months_of_stock(&self) -> &f64 {
+        &self.row().min_months_of_stock
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<RequisitionLineConnector> {

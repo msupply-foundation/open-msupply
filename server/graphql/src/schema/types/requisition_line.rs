@@ -64,9 +64,9 @@ impl RequisitionLineNode {
     }
 
     /// Calculated quantity
-    /// When months_of_stock < requisition.threshold_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
-    pub async fn calculated_quantity(&self) -> &i32 {
-        &self.row().calculated_quantity
+    /// When months_of_stock < requisition.min_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
+    pub async fn suggested_quantity(&self) -> &i32 {
+        &self.row().suggested_quantity
     }
 
     /// OutboundShipment lines linked to requisitions line
@@ -131,7 +131,7 @@ impl RequisitionLineNode {
     pub async fn item_stats(&self) -> ItemStatsNode {
         ItemStatsNode {
             average_monthly_consumption: self.row().average_monthly_consumption,
-            stock_on_hand: self.row().stock_on_hand,
+            available_stock_on_hand: self.row().available_stock_on_hand,
         }
     }
 

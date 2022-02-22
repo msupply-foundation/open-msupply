@@ -34,6 +34,6 @@ pub struct RequisitionRow {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub max_months_of_stock: f64,
-    pub threshold_months_of_stock: f64,
+    pub min_months_of_stock: f64,
     pub linked_requisition_id: Option<String>,
 }

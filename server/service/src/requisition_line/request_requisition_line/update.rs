@@ -84,9 +84,9 @@ fn generate(
         requisition_id,
         item_id,
         requested_quantity,
-        calculated_quantity,
+        suggested_quantity,
         supply_quantity,
-        stock_on_hand,
+        available_stock_on_hand,
         average_monthly_consumption,
     }: RequisitionLineRow,
     UpdateRequestRequisitionLine {
@@ -100,9 +100,9 @@ fn generate(
         id,
         requisition_id,
         item_id,
-        calculated_quantity,
+        suggested_quantity,
         supply_quantity,
-        stock_on_hand,
+        available_stock_on_hand,
         average_monthly_consumption,
     }
 }

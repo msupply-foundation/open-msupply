@@ -103,7 +103,7 @@ pub fn generate(
         comment,
         their_reference,
         max_months_of_stock,
-        threshold_months_of_stock,
+        min_months_of_stock,
         linked_requisition_id,
     }: RequisitionRow,
     UpdateResponseRequisition {
@@ -139,7 +139,7 @@ pub fn generate(
         created_datetime,
         sent_datetime,
         linked_requisition_id,
-        threshold_months_of_stock,
+        min_months_of_stock,
         max_months_of_stock,
     }
 }

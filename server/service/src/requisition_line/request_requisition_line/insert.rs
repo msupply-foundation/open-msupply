@@ -306,8 +306,8 @@ mod test {
 
         assert_eq!(line.requested_quantity, 20);
         // as per test_item_stats_repository
-        assert_eq!(line.stock_on_hand, 22);
+        assert_eq!(line.available_stock_on_hand, 22);
         assert_eq!(line.average_monthly_consumption, 5);
-        assert_eq!(line.calculated_quantity, 10 * 5 - 22);
+        assert_eq!(line.suggested_quantity, 10 * 5 - 22);
     }
 }
