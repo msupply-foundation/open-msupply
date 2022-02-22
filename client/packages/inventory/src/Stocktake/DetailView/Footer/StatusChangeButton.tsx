@@ -6,75 +6,62 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
-  RequisitionNodeStatus,
+  StocktakeNodeStatus,
 } from '@openmsupply-client/common';
-import {
-  getNextResponseRequisitionStatus,
-  getStatusTranslation,
-} from '../../../utils';
-import {
-  useIsResponseRequisitionDisabled,
-  useResponseRequisitionFields,
-} from '../../api';
+import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
+import { useIsStocktakeDisabled, useStocktakeFields } from '../../api';
 
 const getStatusOptions = (
-  currentStatus: RequisitionNodeStatus,
-  getButtonLabel: (status: RequisitionNodeStatus) => string
-): SplitButtonOption<RequisitionNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<RequisitionNodeStatus>,
-    SplitButtonOption<RequisitionNodeStatus>
-  ] = [
+  getButtonLabel: (status: StocktakeNodeStatus) => string
+): [
+  SplitButtonOption<StocktakeNodeStatus>,
+  SplitButtonOption<StocktakeNodeStatus>
+] => {
+  return [
     {
-      value: RequisitionNodeStatus.New,
-      label: getButtonLabel(RequisitionNodeStatus.Draft),
+      value: StocktakeNodeStatus.New,
+      label: getButtonLabel(StocktakeNodeStatus.New),
       isDisabled: true,
     },
     {
-      value: RequisitionNodeStatus.Finalised,
-      label: getButtonLabel(RequisitionNodeStatus.Finalised),
-      isDisabled: true,
+      value: StocktakeNodeStatus.Finalised,
+      label: getButtonLabel(StocktakeNodeStatus.Finalised),
+      isDisabled: false,
     },
   ];
-
-  if (currentStatus === RequisitionNodeStatus.New) {
-    options[1].isDisabled = false;
-  }
-
-  return options;
 };
 
 const getNextStatusOption = (
-  status: RequisitionNodeStatus,
-  options: SplitButtonOption<RequisitionNodeStatus>[]
-): SplitButtonOption<RequisitionNodeStatus> | null => {
+  status: StocktakeNodeStatus,
+  options: SplitButtonOption<StocktakeNodeStatus>[]
+): SplitButtonOption<StocktakeNodeStatus> | null => {
   if (!status) return options[0] ?? null;
 
-  const nextStatus = getNextResponseRequisitionStatus(status);
+  const nextStatus = getNextStocktakeStatus(status);
   const nextStatusOption = options.find(o => o.value === nextStatus);
   return nextStatusOption || null;
 };
 
 const getButtonLabel =
   (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: RequisitionNodeStatus): string => {
+  (invoiceStatus: StocktakeNodeStatus): string => {
     return t('button.save-and-confirm-status', {
       status: t(getStatusTranslation(invoiceStatus)),
     });
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = useResponseRequisitionFields('status');
+  const { lines, status, update } = useStocktakeFields(['status', 'lines']);
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
 
   const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
+    () => getStatusOptions(getButtonLabel(t)),
+    [getButtonLabel]
   );
 
   const [selectedOption, setSelectedOption] =
-    useState<SplitButtonOption<RequisitionNodeStatus> | null>(() =>
+    useState<SplitButtonOption<StocktakeNodeStatus> | null>(() =>
       getNextStatusOption(status, options)
     );
 
@@ -104,19 +91,31 @@ const useStatusChangeButton = () => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, onGetConfirmation };
+  return {
+    options,
+    selectedOption,
+    setSelectedOption,
+    onGetConfirmation,
+    lines,
+  };
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, onGetConfirmation } =
-    useStatusChangeButton();
-  const isDisabled = useIsResponseRequisitionDisabled();
+  const {
+    options,
+    selectedOption,
+    setSelectedOption,
+    onGetConfirmation,
+    lines,
+  } = useStatusChangeButton();
+  const isDisabled = useIsStocktakeDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
   return (
     <SplitButton
+      isDisabled={lines?.totalCount === 0}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
