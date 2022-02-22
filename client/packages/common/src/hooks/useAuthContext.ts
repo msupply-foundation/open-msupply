@@ -14,7 +14,7 @@ interface AuthCookie {
   user?: User;
 }
 
-const getAuthCookie = (): AuthCookie => {
+export const getAuthCookie = (): AuthCookie => {
   const authString = Cookies.get('auth');
   const emptyCookie = { token: '' };
   if (!!authString) {
@@ -32,23 +32,23 @@ export const useAuthContext = () => {
   const { setStore, setUser } = useHostContext();
   const [, setMRUCredentials] = useLocalStorage('/mru/credentials');
   const { setHeader } = useOmSupplyApi();
-  const { token, store } = getAuthCookie();
+  const { token, store, user } = getAuthCookie();
   const storeId = store?.id ?? '';
 
   const login = (user: User, token: string, store?: Store) => {
     setMRUCredentials({ username: user.name, store: store });
-    setUser(user);
-    if (store) setStore(store);
 
     const authCookie = { store, token, user };
     const expires = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
 
     Cookies.set('auth', JSON.stringify(authCookie), { expires });
+    setUser(user);
+    if (store) setStore(store);
   };
 
   useEffect(() => {
     setHeader('Authorization', `Bearer ${token}`);
   }, [token]);
 
-  return { login, storeId, token };
+  return { login, storeId, token, user, store };
 };
