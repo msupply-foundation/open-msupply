@@ -21,7 +21,7 @@ import { Location } from '@openmsupply-client/system';
  */
 
 export interface InvoiceLine
-  extends Omit<InvoiceLineNode, 'item' | 'type' | 'location'>,
+  extends Omit<InvoiceLineNode, 'item' | 'type' | 'location' | 'stockLine'>,
     DomainObject {
   stockLine?: StockLine;
   stockLineId: string;
@@ -33,6 +33,7 @@ export interface InvoiceLine
 export interface InvoiceRow
   extends Pick<
       InvoiceNode,
+      | '__typename'
       | 'comment'
       | 'createdDatetime'
       | 'id'
