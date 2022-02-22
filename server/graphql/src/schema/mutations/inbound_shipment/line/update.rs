@@ -59,6 +59,7 @@ pub fn get_update_inbound_shipment_line_response(
 }
 
 #[derive(Interface)]
+#[graphql(name = "UpdateInboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
     DatabaseError(DatabaseError),

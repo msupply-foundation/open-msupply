@@ -83,6 +83,7 @@ pub enum UpdateOutboundShipmentServiceLineResponse {
 }
 
 #[derive(Interface)]
+#[graphql(name = "UpdateOutboundShipmentServiceLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
     InternalError(InternalError),

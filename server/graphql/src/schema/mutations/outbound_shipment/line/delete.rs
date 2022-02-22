@@ -42,6 +42,7 @@ pub fn get_delete_outbound_shipment_line_response(
 }
 
 #[derive(Interface)]
+#[graphql(name = "DeleteOutboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteErrorInterface {
     DatabaseError(DatabaseError),
