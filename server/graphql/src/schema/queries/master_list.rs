@@ -5,9 +5,10 @@ use repository::MasterList;
 use service::ListResult;
 
 use crate::schema::types::{MasterListNode, PaginationInput};
+use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
 
-use super::{ConnectorError, EqualFilterStringInput, SimpleStringFilterInput};
+use super::{EqualFilterStringInput, SimpleStringFilterInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "domain::master_list::MasterListSortField")]
@@ -83,7 +84,6 @@ impl MasterListConnector {
 
 #[derive(Union)]
 pub enum MasterListsResponse {
-    Error(ConnectorError),
     Response(MasterListConnector),
 }
 
@@ -92,25 +92,24 @@ pub fn master_lists(
     page: Option<PaginationInput>,
     filter: Option<MasterListFilterInput>,
     sort: Option<Vec<MasterListSortInput>>,
-) -> MasterListsResponse {
+) -> Result<MasterListsResponse> {
     let service_provider = ctx.service_provider();
-    let service_context = match service_provider.context() {
-        Ok(service) => service,
-        Err(error) => return MasterListsResponse::Error(error.into()),
-    };
+    let service_context = service_provider.context()?;
 
-    match service_provider.master_list_service.get_master_lists(
-        &service_context,
-        page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
-        // Currently only one sort option is supported, use the first from the list.
-        sort.map(|mut sort_list| sort_list.pop())
-            .flatten()
-            .map(|sort| sort.to_domain()),
-    ) {
-        Ok(master_lists) => {
-            MasterListsResponse::Response(MasterListConnector::from_domain(master_lists))
-        }
-        Err(error) => MasterListsResponse::Error(error.into()),
-    }
+    let master_lists = service_provider
+        .master_list_service
+        .get_master_lists(
+            &service_context,
+            page.map(PaginationOption::from),
+            filter.map(|filter| filter.to_domain()),
+            // Currently only one sort option is supported, use the first from the list.
+            sort.map(|mut sort_list| sort_list.pop())
+                .flatten()
+                .map(|sort| sort.to_domain()),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(MasterListsResponse::Response(
+        MasterListConnector::from_domain(master_lists),
+    ))
 }

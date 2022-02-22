@@ -53,8 +53,8 @@ pub struct NameNode {
     pub name: Name,
 }
 
-impl From<Name> for NameNode {
-    fn from(name: Name) -> Self {
+impl NameNode {
+    pub fn from_domain(name: Name) -> NameNode {
         NameNode { name }
     }
 }

@@ -27,7 +27,7 @@ pub fn insert_location(
         store_id,
         input.into(),
     ) {
-        Ok(location) => InsertLocationResponse::Response(location.into()),
+        Ok(location) => InsertLocationResponse::Response(LocationNode::from_domain(location)),
         Err(error) => InsertLocationResponse::Error(error.into()),
     }
 }

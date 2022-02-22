@@ -1,18 +1,18 @@
-use async_graphql::*;
-use domain::{PaginationOption, SimpleStringFilter, EqualFilter};
-use repository::ItemFilter;
-use service::item::get_items;
-
 use crate::{
     schema::types::{
         sort_filter_types::{
             convert_sort, EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput,
             SortInput,
         },
-        ConnectorError, ItemNode, PaginationInput,
+        ItemConnector, PaginationInput,
     },
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+use async_graphql::*;
+use domain::{EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::ItemFilter;
+use service::item::get_items;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "domain::item::ItemSortField")]
@@ -43,15 +43,8 @@ impl From<ItemFilterInput> for ItemFilter {
     }
 }
 
-#[derive(SimpleObject)]
-pub struct ItemConnector {
-    total_count: u32,
-    nodes: Vec<ItemNode>,
-}
-
 #[derive(Union)]
 pub enum ItemsResponse {
-    Error(ConnectorError),
     Response(ItemConnector),
 }
 
@@ -60,18 +53,15 @@ pub fn items(
     page: Option<PaginationInput>,
     filter: Option<ItemFilterInput>,
     sort: Option<Vec<ItemSortInput>>,
-) -> ItemsResponse {
+) -> Result<ItemsResponse> {
     let connection_manager = ctx.get_connection_manager();
-    match get_items(
+    let items = get_items(
         connection_manager,
         page.map(PaginationOption::from),
         filter.map(ItemFilter::from),
         convert_sort(sort),
-    ) {
-        Ok(items) => ItemsResponse::Response(ItemConnector {
-            total_count: items.count,
-            nodes: items.rows.into_iter().map(ItemNode::from).collect(),
-        }),
-        Err(error) => ItemsResponse::Error(error.into()),
-    }
+    )
+    .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(ItemsResponse::Response(ItemConnector::from_domain(items)))
 }

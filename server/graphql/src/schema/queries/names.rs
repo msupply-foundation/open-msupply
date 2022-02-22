@@ -2,12 +2,14 @@ use async_graphql::*;
 use domain::{name::NameFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 
 use service::name::get_names;
+use service::ListResult;
 
 use crate::schema::types::sort_filter_types::{convert_sort, EqualFilterStringInput};
 use crate::schema::types::{name::NameNode, PaginationInput};
+use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
 
-use super::{ConnectorError, SimpleStringFilterInput, SortInput};
+use super::{SimpleStringFilterInput, SortInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "domain::name::NameSortField")]
@@ -52,7 +54,6 @@ pub struct NameConnector {
 
 #[derive(Union)]
 pub enum NamesResponse {
-    Error(ConnectorError),
     Response(NameConnector),
 }
 
@@ -61,18 +62,24 @@ pub fn names(
     page: Option<PaginationInput>,
     filter: Option<NameFilterInput>,
     sort: Option<Vec<NameSortInput>>,
-) -> NamesResponse {
+) -> Result<NamesResponse> {
     let connection_manager = ctx.get_connection_manager();
-    match get_names(
+    let names = get_names(
         connection_manager,
         page.map(PaginationOption::from),
         filter.map(NameFilter::from),
         convert_sort(sort),
-    ) {
-        Ok(names) => NamesResponse::Response(NameConnector {
+    )
+    .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(NamesResponse::Response(NameConnector::from_domain(names)))
+}
+
+impl NameConnector {
+    pub fn from_domain(names: ListResult<domain::name::Name>) -> NameConnector {
+        NameConnector {
             total_count: names.count,
-            nodes: names.rows.into_iter().map(NameNode::from).collect(),
-        }),
-        Err(error) => NamesResponse::Error(error.into()),
+            nodes: names.rows.into_iter().map(NameNode::from_domain).collect(),
+        }
     }
 }

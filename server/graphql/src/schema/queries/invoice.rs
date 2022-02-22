@@ -22,7 +22,7 @@ pub fn get_invoice(
     id: String,
 ) -> InvoiceResponse {
     match get_invoice_service(connection_manager, store_id, id) {
-        Ok(invoice) => InvoiceResponse::Response(invoice.into()),
+        Ok(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
         Err(error) => InvoiceResponse::Error(error.into()),
     }
 }
@@ -45,7 +45,7 @@ pub fn get_invoice_by_number(
     )?;
 
     let response = match invoice_option {
-        Some(invoice) => InvoiceResponse::Response(invoice.into()),
+        Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
         None => InvoiceResponse::Error(NodeError {
             error: NodeErrorInterface::record_not_found(),
         }),

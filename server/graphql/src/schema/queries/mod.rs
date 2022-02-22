@@ -1,3 +1,4 @@
+use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
 use domain::location::LocationFilter;
 use domain::{invoice::InvoiceFilter, PaginationOption};
@@ -76,7 +77,7 @@ impl Queries {
         #[graphql(desc = "Filter option")] filter: Option<NameFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<NameSortInput>>,
-    ) -> NamesResponse {
+    ) -> Result<NamesResponse> {
         names(ctx, page, filter, sort)
     }
 
@@ -97,22 +98,23 @@ impl Queries {
         #[graphql(desc = "Filter option")] filter: Option<LocationFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<LocationSortInput>>,
-    ) -> LocationsResponse {
+    ) -> Result<LocationsResponse> {
         let service_provider = ctx.service_provider();
-        let service_context = match service_provider.context() {
-            Ok(service) => service,
-            Err(error) => return LocationsResponse::Error(error.into()),
-        };
+        let service_context = service_provider.context()?;
 
-        match service_provider.location_service.get_locations(
-            &service_context,
-            page.map(PaginationOption::from),
-            filter.map(LocationFilter::from),
-            convert_sort(sort),
-        ) {
-            Ok(locations) => LocationsResponse::Response(locations.into()),
-            Err(error) => LocationsResponse::Error(error.into()),
-        }
+        let locations = service_provider
+            .location_service
+            .get_locations(
+                &service_context,
+                page.map(PaginationOption::from),
+                filter.map(LocationFilter::from),
+                convert_sort(sort),
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(LocationsResponse::Response(LocationConnector::from_domain(
+            locations,
+        )))
     }
 
     /// Query omSupply "master_lists" entries
@@ -123,7 +125,7 @@ impl Queries {
         #[graphql(desc = "Filter option")] filter: Option<MasterListFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<MasterListSortInput>>,
-    ) -> MasterListsResponse {
+    ) -> Result<MasterListsResponse> {
         master_lists(ctx, page, filter, sort)
     }
 
@@ -135,7 +137,7 @@ impl Queries {
         #[graphql(desc = "Filter option")] filter: Option<ItemFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<ItemSortInput>>,
-    ) -> ItemsResponse {
+    ) -> Result<ItemsResponse> {
         items(ctx, page, filter, sort)
     }
 
@@ -167,18 +169,20 @@ impl Queries {
         #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
-    ) -> InvoicesResponse {
+    ) -> Result<InvoicesResponse> {
         let connection_manager = ctx.get_connection_manager();
-        match get_invoices(
+        let invoices = get_invoices(
             connection_manager,
             Some(&store_id),
             page.map(PaginationOption::from),
             filter.map(InvoiceFilter::from),
             convert_sort(sort),
-        ) {
-            Ok(invoices) => InvoicesResponse::Response(invoices.into()),
-            Err(error) => InvoicesResponse::Error(error.into()),
-        }
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(InvoicesResponse::Response(InvoiceConnector::from_domain(
+            invoices,
+        )))
     }
 
     pub async fn invoice_counts(

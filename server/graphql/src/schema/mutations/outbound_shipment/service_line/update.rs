@@ -7,7 +7,7 @@ use crate::schema::{
         InvoiceLineBelongsToAnotherInvoice, NotAnOutboundShipment,
     },
     types::{
-        get_invoice_line_response, DatabaseError, ErrorWrapper, InternalError, InvoiceLineNode,
+        get_invoice_line_response, DatabaseError, InternalError, InvoiceLineNode,
         InvoiceLineResponse, NodeErrorInterface, RecordNotFound,
     },
 };
@@ -60,29 +60,31 @@ pub fn get_update_outbound_shipment_service_line_response(
         InvoiceLineResponse::Response(node) => Response(node),
         InvoiceLineResponse::Error(err) => {
             let error = match err.error {
-                NodeErrorInterface::DatabaseError(err) => {
-                    UpdateOutboundShipmentServiceLineErrorInterface::DatabaseError(err)
-                }
-                NodeErrorInterface::RecordNotFound(_) => {
-                    UpdateOutboundShipmentServiceLineErrorInterface::InternalError(InternalError(
-                        "Update item went missing!".to_string(),
-                    ))
-                }
+                NodeErrorInterface::DatabaseError(err) => UpdateErrorInterface::DatabaseError(err),
+                NodeErrorInterface::RecordNotFound(_) => UpdateErrorInterface::InternalError(
+                    InternalError("Update item went missing!".to_string()),
+                ),
             };
-            UpdateOutboundShipmentServiceLineResponse::Error(ErrorWrapper { error })
+            UpdateOutboundShipmentServiceLineResponse::Error(UpdateError { error })
         }
     }
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateOutboundShipmentServiceLineError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 pub enum UpdateOutboundShipmentServiceLineResponse {
-    Error(ErrorWrapper<UpdateOutboundShipmentServiceLineErrorInterface>),
+    Error(UpdateError),
     Response(InvoiceLineNode),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum UpdateOutboundShipmentServiceLineErrorInterface {
+pub enum UpdateErrorInterface {
     InternalError(InternalError),
     DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
@@ -95,7 +97,7 @@ pub enum UpdateOutboundShipmentServiceLineErrorInterface {
 
 impl From<UpdateOutboundShipmentServiceLineError> for UpdateOutboundShipmentServiceLineResponse {
     fn from(error: UpdateOutboundShipmentServiceLineError) -> Self {
-        use UpdateOutboundShipmentServiceLineErrorInterface as OutError;
+        use UpdateErrorInterface as OutError;
         let error = match error {
             UpdateOutboundShipmentServiceLineError::LineDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
@@ -125,6 +127,6 @@ impl From<UpdateOutboundShipmentServiceLineError> for UpdateOutboundShipmentServ
             }
         };
 
-        UpdateOutboundShipmentServiceLineResponse::Error(ErrorWrapper { error })
+        UpdateOutboundShipmentServiceLineResponse::Error(UpdateError { error })
     }
 }
