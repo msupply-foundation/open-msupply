@@ -73,7 +73,7 @@ const stockLineToDraftLine = (
 const useDraftStocktakeLines = (
   item: ItemRowFragment | null
 ): [DraftStocktakeLine[], Dispatch<SetStateAction<DraftStocktakeLine[]>>] => {
-  const { id = '' } = useParams();
+  const { id } = useStocktakeFields('id');
   const { data: stocktakeLines } = useStocktakeLines(item?.id);
   const { data: stockLines } = useStockLines(item?.code || '');
 
