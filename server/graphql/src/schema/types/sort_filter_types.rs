@@ -1,15 +1,6 @@
-use super::{
-    InvoiceNodeStatus, InvoiceNodeType, RequisitionNodeStatus, RequisitionNodeType,
-    StocktakeNodeStatus,
-};
-
-use domain::{
-    invoice::{InvoiceStatus, InvoiceType},
-    DatetimeFilter, EqualFilter, SimpleStringFilter,
-};
-
 use async_graphql::{InputObject, InputType};
 use chrono::{DateTime, Utc};
+use domain::{DatetimeFilter, EqualFilter, SimpleStringFilter};
 
 // simple string filter
 #[derive(InputObject, Clone)]
@@ -34,14 +25,6 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
 #[graphql(concrete(name = "EqualFilterBooleanInput", params(bool)))]
 #[graphql(concrete(name = "EqualFilterNumberInput", params(i32)))]
 #[graphql(concrete(name = "EqualFilterBigNumberInput", params(i64)))]
-#[graphql(concrete(name = "EqualFilterInvoiceTypeInput", params(InvoiceNodeType)))]
-#[graphql(concrete(name = "EqualFilterInvoiceStatusInput", params(InvoiceNodeStatus)))]
-#[graphql(concrete(
-    name = "EqualFilterRequisitionStatusInput",
-    params(RequisitionNodeStatus)
-))]
-#[graphql(concrete(name = "EqualFilterRequisitionTypeInput", params(RequisitionNodeType)))]
-#[graphql(concrete(name = "EqualFilterStocktakeStatusInput", params(StocktakeNodeStatus)))]
 pub struct EqualFilterInput<T: InputType> {
     pub equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
@@ -69,6 +52,21 @@ impl<I: InputType> EqualFilterInput<I> {
     }
 }
 
+macro_rules! map_filter {
+    ($from:ident, $f:expr) => {{
+        EqualFilter {
+            equal_to: $from.equal_to.map($f),
+            not_equal_to: $from.not_equal_to.map($f),
+            equal_any: $from
+                .equal_any
+                .map(|inputs| inputs.into_iter().map($f).collect()),
+            not_equal_all: None,
+        }
+    }};
+}
+
+pub(crate) use map_filter;
+
 impl<T> From<EqualFilterInput<T>> for EqualFilter<T>
 where
     T: InputType,
@@ -84,40 +82,6 @@ where
             equal_to,
             equal_any,
             not_equal_to,
-            not_equal_all: None,
-        }
-    }
-}
-
-impl From<EqualFilterInput<InvoiceNodeType>> for EqualFilter<InvoiceType> {
-    fn from(
-        EqualFilterInput {
-            equal_to,
-            equal_any,
-            not_equal_to,
-        }: EqualFilterInput<InvoiceNodeType>,
-    ) -> Self {
-        EqualFilter {
-            equal_to: equal_to.map(InvoiceType::from),
-            equal_any: equal_any.map(|types| types.into_iter().map(InvoiceType::from).collect()),
-            not_equal_to: not_equal_to.map(InvoiceType::from),
-            not_equal_all: None,
-        }
-    }
-}
-
-impl From<EqualFilterInput<InvoiceNodeStatus>> for EqualFilter<InvoiceStatus> {
-    fn from(
-        EqualFilterInput {
-            equal_to,
-            equal_any,
-            not_equal_to,
-        }: EqualFilterInput<InvoiceNodeStatus>,
-    ) -> Self {
-        EqualFilter {
-            equal_to: equal_to.map(InvoiceStatus::from),
-            equal_any: equal_any.map(|types| types.into_iter().map(InvoiceStatus::from).collect()),
-            not_equal_to: not_equal_to.map(InvoiceStatus::from),
             not_equal_all: None,
         }
     }

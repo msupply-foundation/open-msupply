@@ -41,7 +41,7 @@ pub fn get_invoice_by_number(
         &service_context,
         store_id,
         invoice_number,
-        r#type.into(),
+        r#type.to_domain(),
     )?;
 
     let response = match invoice_option {

@@ -1,3 +1,4 @@
+use crate::schema::types::sort_filter_types::map_filter;
 use crate::schema::types::ErrorWrapper;
 use crate::schema::types::NodeError;
 use crate::schema::types::NodeErrorInterface;
@@ -5,9 +6,7 @@ use crate::schema::types::RecordNotFound;
 use crate::schema::types::StocktakeNode;
 use crate::schema::types::StocktakeNodeStatus;
 use crate::schema::types::{
-    sort_filter_types::{
-        DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput, EqualFilterStringInput,
-    },
+    sort_filter_types::{DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput},
     PaginationInput,
 };
 use crate::standard_graphql_error::list_error_to_gql_err;
@@ -18,7 +17,6 @@ use async_graphql::*;
 use domain::DatetimeFilter;
 use domain::EqualFilter;
 use domain::PaginationOption;
-use repository::schema::StocktakeStatus;
 use repository::StocktakeFilter;
 use repository::{StocktakeSort, StocktakeSortField};
 use service::permission_validation::Resource;
@@ -43,10 +41,17 @@ pub struct StocktakeSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterStocktakeStatusInput {
+    pub equal_to: Option<StocktakeNodeStatus>,
+    pub equal_any: Option<Vec<StocktakeNodeStatus>>,
+    pub not_equal_to: Option<StocktakeNodeStatus>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct StocktakeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub stocktake_number: Option<EqualFilterBigNumberInput>,
-    pub status: Option<EqualFilterInput<StocktakeNodeStatus>>,
+    pub status: Option<EqualFilterStocktakeStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
 }
@@ -57,7 +62,9 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             id: f.id.map(EqualFilter::from),
             store_id: None,
             stocktake_number: f.stocktake_number.map(EqualFilter::from),
-            status: f.status.map(|t| t.map_to_domain(StocktakeStatus::from)),
+            status: f
+                .status
+                .map(|t| map_filter!(t, StocktakeNodeStatus::to_domain)),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
         }
