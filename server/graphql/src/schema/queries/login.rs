@@ -9,7 +9,7 @@ use service::{
     user_account::UserAccountService,
 };
 
-use super::{DatabaseError, ErrorWrapper};
+use super::DatabaseError;
 
 pub struct AuthToken {
     pub pair: TokenPair,
@@ -48,7 +48,10 @@ pub enum AuthTokenErrorInterface {
     InternalError(InternalError),
 }
 
-pub type AuthTokenError = ErrorWrapper<AuthTokenErrorInterface>;
+#[derive(SimpleObject)]
+pub struct AuthTokenError {
+    pub error: AuthTokenErrorInterface,
+}
 
 #[derive(Union)]
 pub enum AuthTokenResponse {
@@ -61,7 +64,7 @@ pub fn login(ctx: &Context<'_>, username: &str, password: &str) -> AuthTokenResp
     let con = match connection_manager.connection() {
         Ok(con) => con,
         Err(err) => {
-            return AuthTokenResponse::Error(ErrorWrapper {
+            return AuthTokenResponse::Error(AuthTokenError {
                 error: AuthTokenErrorInterface::DatabaseError(DatabaseError(err)),
             })
         }
@@ -70,7 +73,7 @@ pub fn login(ctx: &Context<'_>, username: &str, password: &str) -> AuthTokenResp
     let user_account = match user_service.verify_password(username, password) {
         Ok(user) => user,
         Err(err) => {
-            return AuthTokenResponse::Error(ErrorWrapper {
+            return AuthTokenResponse::Error(AuthTokenError {
                 error: match err {
                     service::user_account::VerifyPasswordError::UsernameDoesNotExist => {
                         AuthTokenErrorInterface::UserNameDoesNotExist(UserNameDoesNotExist)
@@ -101,7 +104,7 @@ pub fn login(ctx: &Context<'_>, username: &str, password: &str) -> AuthTokenResp
     let pair = match token_service.jwt_token(&user_account.id, max_age_token, max_age_refresh) {
         Ok(pair) => pair,
         Err(err) => {
-            return AuthTokenResponse::Error(ErrorWrapper {
+            return AuthTokenResponse::Error(AuthTokenError {
                 error: match err {
                     JWTIssuingError::CanNotCreateToken(_) => {
                         AuthTokenErrorInterface::InternalError(InternalError(

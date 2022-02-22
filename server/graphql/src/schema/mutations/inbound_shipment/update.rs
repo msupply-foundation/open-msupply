@@ -7,7 +7,7 @@ use crate::schema::{
         InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment, OtherPartyNotASupplier,
     },
     queries::invoice::*,
-    types::{DatabaseError, ErrorWrapper, InvoiceNode, NameNode, NodeError, RecordNotFound},
+    types::{DatabaseError, InvoiceNode, NameNode, NodeError, RecordNotFound},
 };
 use domain::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus};
 use repository::StorageConnectionManager;
@@ -40,9 +40,15 @@ impl UpdateInboundShipmentStatusInput {
     }
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateInboundShipmentError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 pub enum UpdateInboundShipmentResponse {
-    Error(ErrorWrapper<UpdateInboundShipmentErrorInterface>),
+    Error(UpdateError),
     NodeError(NodeError),
     Response(InvoiceNode),
 }
@@ -55,8 +61,8 @@ pub fn get_update_inbound_shipment_response(
     let connection = match connection_manager.connection() {
         Ok(con) => con,
         Err(err) => {
-            return UpdateInboundShipmentResponse::Error(ErrorWrapper {
-                error: UpdateInboundShipmentErrorInterface::DatabaseError(DatabaseError(err)),
+            return UpdateInboundShipmentResponse::Error(UpdateError {
+                error: UpdateErrorInterface::DatabaseError(DatabaseError(err)),
             })
         }
     };
@@ -71,7 +77,7 @@ pub fn get_update_inbound_shipment_response(
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum UpdateInboundShipmentErrorInterface {
+pub enum UpdateErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
@@ -109,7 +115,7 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
 
 impl From<UpdateInboundShipmentError> for UpdateInboundShipmentResponse {
     fn from(error: UpdateInboundShipmentError) -> Self {
-        use UpdateInboundShipmentErrorInterface as OutError;
+        use UpdateErrorInterface as OutError;
         let error = match error {
             UpdateInboundShipmentError::InvoiceDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
@@ -140,6 +146,6 @@ impl From<UpdateInboundShipmentError> for UpdateInboundShipmentResponse {
             }
         };
 
-        UpdateInboundShipmentResponse::Error(ErrorWrapper { error })
+        UpdateInboundShipmentResponse::Error(UpdateError { error })
     }
 }

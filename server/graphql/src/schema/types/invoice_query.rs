@@ -14,11 +14,12 @@ use domain::{
 };
 use repository::schema::InvoiceStatsRow;
 use serde::Serialize;
+use service::{usize_to_u32, ListResult};
 
 use super::{
-    Connector, ConnectorError, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput,
-    EqualFilterStringInput, ErrorWrapper, InvoiceLinesResponse, NameResponse, NodeError,
-    NodeErrorInterface, RequisitionNode, SimpleStringFilterInput, SortInput, StoreNode,
+    DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput, EqualFilterStringInput,
+    ErrorWrapper, InvoiceLineConnector, NameNode, NameResponse, NodeError, NodeErrorInterface,
+    RequisitionNode, SimpleStringFilterInput, SortInput, StoreNode,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -131,6 +132,12 @@ pub enum InvoiceNodeStatus {
 
 pub struct InvoiceNode {
     pub invoice: Invoice,
+}
+
+#[derive(SimpleObject)]
+pub struct InvoiceConnector {
+    total_count: u32,
+    nodes: Vec<InvoiceNode>,
 }
 
 #[Object]
@@ -251,17 +258,16 @@ impl InvoiceNode {
         Ok(loader
             .load_one(linked_invoice_id.to_string())
             .await?
-            .map(InvoiceNode::from))
+            .map(InvoiceNode::from_domain))
     }
 
-    pub async fn lines(&self, ctx: &Context<'_>) -> InvoiceLinesResponse {
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
-        match loader.load_one(self.invoice.id.to_string()).await {
-            Ok(result_option) => {
-                InvoiceLinesResponse::Response(result_option.unwrap_or(Vec::new()).into())
-            }
-            Err(error) => InvoiceLinesResponse::Error(error.into()),
-        }
+        let result_option = loader.load_one(self.invoice.id.to_string()).await?;
+
+        Ok(InvoiceLineConnector::from_vec(
+            result_option.unwrap_or(vec![]),
+        ))
     }
 
     async fn pricing(&self, ctx: &Context<'_>) -> InvoicePriceResponse {
@@ -290,7 +296,7 @@ impl InvoiceNode {
 
         match loader.load_one(self.invoice.other_party_id.clone()).await {
             Ok(response_option) => match response_option {
-                Some(name) => NameResponse::Response(name.into()),
+                Some(name) => NameResponse::Response(NameNode::from_domain(name)),
                 None => NameResponse::Error(ErrorWrapper {
                     error: NodeErrorInterface::record_not_found(),
                 }),
@@ -302,12 +308,11 @@ impl InvoiceNode {
 
 #[derive(Union)]
 pub enum InvoicesResponse {
-    Error(ConnectorError),
-    Response(Connector<InvoiceNode>),
+    Response(InvoiceConnector),
 }
 
-impl From<Invoice> for InvoiceNode {
-    fn from(invoice: Invoice) -> Self {
+impl InvoiceNode {
+    pub fn from_domain(invoice: Invoice) -> InvoiceNode {
         InvoiceNode { invoice }
     }
 }
@@ -354,4 +359,24 @@ impl InvoicePricingNode {
 pub enum InvoicePriceResponse {
     Error(NodeError),
     Response(InvoicePricingNode),
+}
+
+impl InvoiceConnector {
+    pub fn from_domain(invoices: ListResult<Invoice>) -> InvoiceConnector {
+        InvoiceConnector {
+            total_count: invoices.count,
+            nodes: invoices
+                .rows
+                .into_iter()
+                .map(InvoiceNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(invoices: Vec<Invoice>) -> InvoiceConnector {
+        InvoiceConnector {
+            total_count: usize_to_u32(invoices.len()),
+            nodes: invoices.into_iter().map(InvoiceNode::from_domain).collect(),
+        }
+    }
 }

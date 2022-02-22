@@ -5,7 +5,7 @@ use crate::schema::{
         CannotEditInvoice, ForeignKey, ForeignKeyError, NotAnOutboundShipment, RecordAlreadyExist,
     },
     types::{
-        get_invoice_line_response, DatabaseError, ErrorWrapper, InternalError, InvoiceLineNode,
+        get_invoice_line_response, DatabaseError, InternalError, InvoiceLineNode,
         InvoiceLineResponse, NodeErrorInterface,
     },
 };
@@ -29,9 +29,15 @@ pub struct InsertOutboundShipmentServiceLineInput {
     note: Option<String>,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "InsertOutboundShipmentServiceLineError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
 #[derive(Union)]
 pub enum InsertOutboundShipmentServiceLineResponse {
-    Error(ErrorWrapper<InsertOutboundShipmentServiceLineErrorInterface>),
+    Error(InsertError),
     Response(InvoiceLineNode),
 }
 
@@ -69,23 +75,19 @@ pub fn get_insert_outbound_shipment_service_line_response(
         InvoiceLineResponse::Response(node) => Response(node),
         InvoiceLineResponse::Error(err) => {
             let error = match err.error {
-                NodeErrorInterface::DatabaseError(err) => {
-                    InsertOutboundShipmentServiceLineErrorInterface::DatabaseError(err)
-                }
-                NodeErrorInterface::RecordNotFound(_) => {
-                    InsertOutboundShipmentServiceLineErrorInterface::InternalError(InternalError(
-                        "Inserted item went missing!".to_string(),
-                    ))
-                }
+                NodeErrorInterface::DatabaseError(err) => InsertErrorInterface::DatabaseError(err),
+                NodeErrorInterface::RecordNotFound(_) => InsertErrorInterface::InternalError(
+                    InternalError("Inserted item went missing!".to_string()),
+                ),
             };
-            InsertOutboundShipmentServiceLineResponse::Error(ErrorWrapper { error })
+            InsertOutboundShipmentServiceLineResponse::Error(InsertError { error })
         }
     }
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum InsertOutboundShipmentServiceLineErrorInterface {
+pub enum InsertErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     InternalError(InternalError),
@@ -97,7 +99,7 @@ pub enum InsertOutboundShipmentServiceLineErrorInterface {
 
 impl From<InsertOutboundShipmentServiceLineError> for InsertOutboundShipmentServiceLineResponse {
     fn from(error: InsertOutboundShipmentServiceLineError) -> Self {
-        use InsertOutboundShipmentServiceLineErrorInterface as OutError;
+        use InsertErrorInterface as OutError;
         let error = match error {
             InsertOutboundShipmentServiceLineError::LineAlreadyExists => {
                 OutError::RecordAlreadyExist(RecordAlreadyExist {})
@@ -121,6 +123,6 @@ impl From<InsertOutboundShipmentServiceLineError> for InsertOutboundShipmentServ
                 OutError::NotAServiceItem(NotAServiceItem)
             }
         };
-        InsertOutboundShipmentServiceLineResponse::Error(ErrorWrapper { error })
+        InsertOutboundShipmentServiceLineResponse::Error(InsertError { error })
     }
 }

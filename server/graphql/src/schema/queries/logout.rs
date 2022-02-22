@@ -6,7 +6,7 @@ use crate::schema::validation_denied_kind_to_string;
 use crate::ContextExt;
 use service::token::TokenService;
 
-use super::{set_refresh_token_cookie, ErrorWrapper};
+use super::set_refresh_token_cookie;
 
 pub struct Logout {
     pub user_id: String,
@@ -67,7 +67,10 @@ pub enum LogoutErrorInterface {
     InternalError(InternalError),
 }
 
-pub type LogoutError = ErrorWrapper<LogoutErrorInterface>;
+#[derive(SimpleObject)]
+pub struct LogoutError {
+    pub error: LogoutErrorInterface,
+}
 
 #[derive(Union)]
 pub enum LogoutResponse {
@@ -91,7 +94,7 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
                     LogoutErrorInterface::InternalError(InternalError(err))
                 }
             };
-            return LogoutResponse::Error(ErrorWrapper { error });
+            return LogoutResponse::Error(LogoutError { error });
         }
     };
 
@@ -105,7 +108,7 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
         Ok(_) => {}
         Err(e) => match e {
             service::token::JWTLogoutError::ConcurrencyLockError(_) => {
-                return LogoutResponse::Error(ErrorWrapper {
+                return LogoutResponse::Error(LogoutError {
                     error: LogoutErrorInterface::InternalError(InternalError(
                         "Lock error".to_string(),
                     )),

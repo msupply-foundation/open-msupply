@@ -65,18 +65,17 @@ impl StocktakeLineNode {
         &self.line.line.item_id
     }
 
-    pub async fn item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
         let item_option = loader.load_one(self.line.line.item_id.clone()).await?;
-        let item = item_option.ok_or(
+
+        item_option.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item_id {} for stocktake line id {}",
                 self.line.line.item_id, self.line.line.id
             ))
             .extend(),
-        )?;
-
-        Ok(Some(ItemNode::from(item)))
+        )
     }
 
     pub async fn batch(&self) -> &Option<String> {

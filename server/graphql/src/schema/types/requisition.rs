@@ -16,7 +16,7 @@ use repository::{
 use service::ListResult;
 use StandardGraphqlError::*;
 
-use super::{Connector, InvoiceNode, NameNode, RequisitionLineConnector};
+use super::{InvoiceConnector, NameNode, RequisitionLineConnector};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum RequisitionNodeType {
@@ -104,7 +104,7 @@ impl RequisitionNode {
 
         let response_option = loader.load_one(self.row().name_id.clone()).await?;
 
-        response_option.map(NameNode::from).ok_or(
+        response_option.map(NameNode::from_domain).ok_or(
             InternalError(format!(
                 "Cannot find name ({}) linked to requisition ({})",
                 &self.row().name_id,
@@ -163,13 +163,13 @@ impl RequisitionNode {
 
     /// Response Requisition: Outbound Shipments linked requisition
     /// Request Requisition: Inbound Shipments linked to requisition
-    pub async fn shipments(&self, ctx: &Context<'_>) -> Result<Connector<InvoiceNode>> {
+    pub async fn shipments(&self, ctx: &Context<'_>) -> Result<InvoiceConnector> {
         let loader = ctx.get_loader::<DataLoader<InvoiceByRequisitionIdLoader>>();
         let result_option = loader.load_one(self.row().id.clone()).await?;
 
-        let list_result = result_option.unwrap_or(vec![]);
+        let result = result_option.unwrap_or(vec![]);
 
-        Ok(list_result.into())
+        Ok(InvoiceConnector::from_vec(result))
     }
 
     // % allocated ?
@@ -178,6 +178,14 @@ impl RequisitionNode {
 }
 
 impl RequisitionNode {
+    pub fn row(&self) -> &RequisitionRow {
+        &self.requisition.requisition_row
+    }
+
+    pub fn name_row(&self) -> &NameRow {
+        &self.requisition.name_row
+    }
+
     pub fn from_domain(requisition: Requisition) -> RequisitionNode {
         RequisitionNode { requisition }
     }
@@ -233,15 +241,5 @@ impl RequisitionNodeStatus {
             Sent => RequisitionNodeStatus::Sent,
             Finalised => RequisitionNodeStatus::Finalised,
         }
-    }
-}
-
-impl RequisitionNode {
-    pub fn row(&self) -> &RequisitionRow {
-        &self.requisition.requisition_row
-    }
-
-    pub fn name_row(&self) -> &NameRow {
-        &self.requisition.name_row
     }
 }

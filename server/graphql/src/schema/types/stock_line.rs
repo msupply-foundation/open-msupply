@@ -4,14 +4,20 @@ use chrono::NaiveDate;
 
 use domain::stock_line::StockLine;
 use repository::StorageConnectionManager;
-use service::stock_line::get_stock_line;
+use service::{stock_line::get_stock_line, usize_to_u32, ListResult};
 
 use crate::{loader::LocationByIdLoader, ContextExt};
 
-use super::{Connector, ConnectorError, LocationResponse, NodeError};
+use super::{LocationNode, LocationResponse, NodeError};
 
 pub struct StockLineNode {
     pub stock_line: StockLine,
+}
+
+#[derive(SimpleObject)]
+pub struct StockLineConnector {
+    total_count: u32,
+    nodes: Vec<StockLineNode>,
 }
 
 #[Object]
@@ -63,9 +69,9 @@ impl StockLineNode {
 
         match &self.stock_line.location_id {
             Some(location_id) => match loader.load_one(location_id.clone()).await {
-                Ok(response) => {
-                    response.map(|location| LocationResponse::Response(location.into()))
-                }
+                Ok(response) => response.map(|location| {
+                    LocationResponse::Response(LocationNode::from_domain(location))
+                }),
                 Err(error) => Some(LocationResponse::Error(error.into())),
             },
             None => None,
@@ -73,12 +79,9 @@ impl StockLineNode {
     }
 }
 
-type CurrentConnector = Connector<StockLineNode>;
-
 #[derive(Union)]
 pub enum StockLinesResponse {
-    Error(ConnectorError),
-    Response(CurrentConnector),
+    Response(StockLineConnector),
 }
 
 #[derive(Union)]
@@ -92,13 +95,36 @@ pub fn get_stock_line_response(
     id: String,
 ) -> StockLineResponse {
     match get_stock_line(connection_manager, id) {
-        Ok(stock_line) => StockLineResponse::Response(stock_line.into()),
+        Ok(stock_line) => StockLineResponse::Response(StockLineNode::from_domain(stock_line)),
         Err(error) => StockLineResponse::Error(error.into()),
     }
 }
 
-impl From<StockLine> for StockLineNode {
-    fn from(stock_line: StockLine) -> Self {
+impl StockLineNode {
+    pub fn from_domain(stock_line: StockLine) -> StockLineNode {
         StockLineNode { stock_line }
+    }
+}
+
+impl StockLineConnector {
+    pub fn from_domain(stock_lines: ListResult<StockLine>) -> StockLineConnector {
+        StockLineConnector {
+            total_count: stock_lines.count,
+            nodes: stock_lines
+                .rows
+                .into_iter()
+                .map(StockLineNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(stock_lines: Vec<StockLine>) -> StockLineConnector {
+        StockLineConnector {
+            total_count: usize_to_u32(stock_lines.len()),
+            nodes: stock_lines
+                .into_iter()
+                .map(StockLineNode::from_domain)
+                .collect(),
+        }
     }
 }

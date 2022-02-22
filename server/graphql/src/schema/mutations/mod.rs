@@ -33,7 +33,7 @@ use self::{
 
 use super::{
     queries::invoice::*,
-    types::{Connector, InvoiceLineNode, NameNode},
+    types::{InvoiceLineConnector, NameNode},
 };
 use crate::ContextExt;
 use async_graphql::*;
@@ -531,14 +531,14 @@ impl NotAnOutboundShipment {
     }
 }
 
-pub struct CannotDeleteInvoiceWithLines(pub Connector<InvoiceLineNode>);
+pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
 impl CannotDeleteInvoiceWithLines {
     pub async fn description(&self) -> &'static str {
         "Cannot delete invoice with existing lines"
     }
 
-    pub async fn lines(&self) -> &Connector<InvoiceLineNode> {
+    pub async fn lines(&self) -> &InvoiceLineConnector {
         &self.0
     }
 }

@@ -6,7 +6,7 @@ use crate::schema::{
         ForeignKeyError, InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
         NotAnOutboundShipment,
     },
-    types::{DatabaseError, ErrorWrapper, RecordNotFound},
+    types::{DatabaseError, RecordNotFound},
 };
 use domain::outbound_shipment::DeleteOutboundShipmentLine;
 use repository::StorageConnectionManager;
@@ -20,9 +20,15 @@ pub struct DeleteOutboundShipmentServiceLineInput {
     pub invoice_id: String,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "DeleteOutboundShipmentServiceLineError")]
+pub struct DeleteError {
+    pub error: DeleteErrorInterface,
+}
+
 #[derive(Union)]
 pub enum DeleteOutboundShipmentServiceLineResponse {
-    Error(ErrorWrapper<DeleteOutboundShipmentServiceLineErrorInterface>),
+    Error(DeleteError),
     Response(DeleteResponse),
 }
 
@@ -45,7 +51,7 @@ pub fn get_delete_outbound_shipment_service_line_response(
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum DeleteOutboundShipmentServiceLineErrorInterface {
+pub enum DeleteErrorInterface {
     DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
@@ -58,7 +64,7 @@ pub enum DeleteOutboundShipmentServiceLineErrorInterface {
 
 impl From<DeleteOutboundShipmentServiceLineError> for DeleteOutboundShipmentServiceLineResponse {
     fn from(error: DeleteOutboundShipmentServiceLineError) -> Self {
-        use DeleteOutboundShipmentServiceLineErrorInterface as OutError;
+        use DeleteErrorInterface as OutError;
         let error = match error {
             DeleteOutboundShipmentServiceLineError::LineDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
@@ -91,6 +97,6 @@ impl From<DeleteOutboundShipmentServiceLineError> for DeleteOutboundShipmentServ
             }
         };
 
-        DeleteOutboundShipmentServiceLineResponse::Error(ErrorWrapper { error })
+        DeleteOutboundShipmentServiceLineResponse::Error(DeleteError { error })
     }
 }

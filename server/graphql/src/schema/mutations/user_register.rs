@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use crate::schema::types::{DatabaseError, ErrorWrapper, InternalError};
+use crate::schema::types::{DatabaseError, InternalError};
 use crate::ContextExt;
 use repository::schema::UserAccountRow;
 use service::user_account::{
@@ -37,7 +37,10 @@ pub enum UserRegisterErrorInterface {
     InternalError(InternalError),
 }
 
-pub type UserRegisterError = ErrorWrapper<UserRegisterErrorInterface>;
+#[derive(SimpleObject)]
+pub struct UserRegisterError {
+    pub error: UserRegisterErrorInterface,
+}
 
 #[derive(Union)]
 pub enum UserRegisterResponse {
@@ -57,7 +60,7 @@ pub fn user_register(ctx: &Context<'_>, input: UserRegisterInput) -> UserRegiste
     let con = match connection_manager.connection() {
         Ok(con) => con,
         Err(err) => {
-            return UserRegisterResponse::Error(ErrorWrapper {
+            return UserRegisterResponse::Error(UserRegisterError {
                 error: UserRegisterErrorInterface::DatabaseError(DatabaseError(err)),
             })
         }
@@ -70,7 +73,7 @@ pub fn user_register(ctx: &Context<'_>, input: UserRegisterInput) -> UserRegiste
     }) {
         Ok(user) => user,
         Err(err) => {
-            return UserRegisterResponse::Error(ErrorWrapper {
+            return UserRegisterResponse::Error(UserRegisterError {
                 error: match err {
                     ServiceError::UserNameExist => {
                         UserRegisterErrorInterface::RecordAlreadyExist(RecordAlreadyExist)

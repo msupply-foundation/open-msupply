@@ -8,7 +8,7 @@ use crate::schema::{
     },
     queries::invoice::*,
     types::{
-        Connector, ErrorWrapper, InvoiceLineNode, InvoiceNode, NameNode, NodeError, RecordNotFound, DatabaseError,
+        DatabaseError, InvoiceLineConnector, InvoiceNode, NameNode, NodeError, RecordNotFound,
     },
 };
 use domain::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus};
@@ -71,9 +71,15 @@ impl From<UpdateOutboundShipmentInput> for UpdateOutboundShipment {
     }
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateOutboundShipmentError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 pub enum UpdateOutboundShipmentResponse {
-    Error(ErrorWrapper<UpdateOutboundShipmentErrorInterface>),
+    Error(UpdateError),
     NodeError(NodeError),
     Response(InvoiceNode),
 }
@@ -86,8 +92,8 @@ pub fn get_update_outbound_shipment_response(
     let connection = match connection_manager.connection() {
         Ok(con) => con,
         Err(err) => {
-            return UpdateOutboundShipmentResponse::Error(ErrorWrapper {
-                error: UpdateOutboundShipmentErrorInterface::DatabaseError(DatabaseError(err)),
+            return UpdateOutboundShipmentResponse::Error(UpdateError {
+                error: UpdateErrorInterface::DatabaseError(DatabaseError(err)),
             })
         }
     };
@@ -102,7 +108,7 @@ pub fn get_update_outbound_shipment_response(
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
-pub enum UpdateOutboundShipmentErrorInterface {
+pub enum UpdateErrorInterface {
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
     CanOnlyEditInvoicesInLoggedInStore(CanOnlyEditInvoicesInLoggedInStoreError),
@@ -120,7 +126,7 @@ pub enum UpdateOutboundShipmentErrorInterface {
 
 impl From<UpdateOutboundShipmentError> for UpdateOutboundShipmentResponse {
     fn from(error: UpdateOutboundShipmentError) -> Self {
-        use UpdateOutboundShipmentErrorInterface as OutError;
+        use UpdateErrorInterface as OutError;
         let error = match error {
             UpdateOutboundShipmentError::CannotReverseInvoiceStatus => {
                 OutError::CannotReverseInvoiceStatus(CannotReverseInvoiceStatus {})
@@ -154,16 +160,18 @@ impl From<UpdateOutboundShipmentError> for UpdateOutboundShipmentResponse {
             }
             UpdateOutboundShipmentError::CanOnlyChangeToAllocatedWhenNoUnallocatedLines(lines) => {
                 OutError::CanOnlyChangeToAllocatedWhenNoUnallocatedLines(
-                    CanOnlyChangeToAllocatedWhenNoUnallocatedLines(lines.into()),
+                    CanOnlyChangeToAllocatedWhenNoUnallocatedLines(InvoiceLineConnector::from_vec(
+                        lines,
+                    )),
                 )
             }
         };
 
-        UpdateOutboundShipmentResponse::Error(ErrorWrapper { error })
+        UpdateOutboundShipmentResponse::Error(UpdateError { error })
     }
 }
 
-pub struct CanOnlyChangeToAllocatedWhenNoUnallocatedLines(pub Connector<InvoiceLineNode>);
+pub struct CanOnlyChangeToAllocatedWhenNoUnallocatedLines(pub InvoiceLineConnector);
 
 #[Object]
 impl CanOnlyChangeToAllocatedWhenNoUnallocatedLines {
@@ -171,7 +179,7 @@ impl CanOnlyChangeToAllocatedWhenNoUnallocatedLines {
         "Cannot change to allocated status when unallocated lines are present"
     }
 
-    pub async fn invoice_lines(&self) -> &Connector<InvoiceLineNode> {
+    pub async fn invoice_lines(&self) -> &InvoiceLineConnector {
         &self.0
     }
 }
