@@ -2,6 +2,7 @@ use repository::schema::{NameStoreJoinRow, RemoteSyncBufferAction, RemoteSyncBuf
 
 use crate::sync::translation_remote::{
     test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    TRANSLATION_RECORD_NAME_STORE_JOIN,
 };
 
 const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
@@ -31,8 +32,6 @@ const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
 );
 
 #[allow(dead_code)]
-const RECORD_TYPE: &'static str = "name_store_join";
-#[allow(dead_code)]
 pub fn get_test_name_store_join_records() -> Vec<TestSyncRecord> {
     vec![
         TestSyncRecord {
@@ -48,7 +47,7 @@ pub fn get_test_name_store_join_records() -> Vec<TestSyncRecord> {
             identifier: "Name store join 1",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "name_store_join_1".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
                 record_id: NAME_STORE_JOIN_1.0.to_string(),
                 data: NAME_STORE_JOIN_1.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
@@ -67,7 +66,7 @@ pub fn get_test_name_store_join_records() -> Vec<TestSyncRecord> {
             identifier: "Name store join 2",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "name_store_join_2".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
                 record_id: NAME_STORE_JOIN_2.0.to_string(),
                 data: NAME_STORE_JOIN_2.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
