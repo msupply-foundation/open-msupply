@@ -3,17 +3,18 @@ use log::{info, warn};
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow,
-        StocktakeRow,
+        StocktakeLineRow, StocktakeRow,
     },
     InvoiceLineRowRepository, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
-    RepositoryError, StockLineRowRepository, StocktakeRowRepository, StorageConnection,
-    TransactionError,
+    RepositoryError, StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository,
+    StorageConnection, TransactionError,
 };
 use serde::{Deserialize, Deserializer};
 
 use crate::sync::translation_remote::{
     name_store_join::NameStoreJoinTranslation, shipment::ShipmentTranslation,
     shipment_line::ShipmentLineTranslation, stocktake::StocktakeTranslation,
+    stocktake_line::StocktakeLineTranslation,
 };
 
 use self::number::NumberTranslation;
@@ -27,6 +28,7 @@ mod shipment;
 mod shipment_line;
 mod stock_line;
 mod stocktake;
+mod stocktake_line;
 #[cfg(test)]
 pub mod test_data;
 
@@ -38,6 +40,7 @@ pub enum IntegrationUpsertRecord {
     Shipment(InvoiceRow),
     ShipmentLine(InvoiceLineRow),
     Stocktake(StocktakeRow),
+    StocktakeLine(StocktakeLineRow),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -68,6 +71,7 @@ pub const TRANSLATION_RECORD_NAME_STORE_JOIN: &str = "name_store_join";
 pub const TRANSLATION_RECORD_TRANSACT: &str = "transact";
 pub const TRANSLATION_RECORD_TRANS_LINE: &str = "trans_line";
 pub const TRANSLATION_RECORD_STOCKTAKE: &str = "Stock_take";
+pub const TRANSLATION_RECORD_STOCKTAKE_LINE: &str = "Stock_take_lines";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
@@ -78,6 +82,7 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_TRANSACT,
     TRANSLATION_RECORD_TRANS_LINE,
     TRANSLATION_RECORD_STOCKTAKE,
+    TRANSLATION_RECORD_STOCKTAKE_LINE,
 ];
 
 /// Imports sync records and writes them to the DB
@@ -118,6 +123,7 @@ fn do_translation(
         Box::new(ShipmentTranslation {}),
         Box::new(ShipmentLineTranslation {}),
         Box::new(StocktakeTranslation {}),
+        Box::new(StocktakeLineTranslation {}),
     ];
     for translation in translations {
         if let Some(mut result) = translation.try_translate_pull(connection, sync_record)? {
@@ -147,6 +153,9 @@ fn integrate_record(
         }
         IntegrationUpsertRecord::Stocktake(record) => {
             StocktakeRowRepository::new(con).upsert_one(record)
+        }
+        IntegrationUpsertRecord::StocktakeLine(record) => {
+            StocktakeLineRowRepository::new(con).upsert_one(record)
         }
     }
 }
