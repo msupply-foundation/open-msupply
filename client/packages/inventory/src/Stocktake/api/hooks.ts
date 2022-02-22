@@ -1,6 +1,8 @@
-import { useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import {
+  useNavigate,
+  useTranslation,
+  useNotification,
   useQuerySelector,
   StocktakeNodeStatus,
   useQueryClient,
@@ -16,6 +18,7 @@ import {
   useSortBy,
   useHostContext,
   useQueryParams,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
 import { StocktakeApi, getStocktakeQueries } from './api';
@@ -157,6 +160,64 @@ export const useSaveStocktakeLines = () => {
       queryClient.invalidateQueries(queryKey);
     },
   });
+};
+
+export const useDeleteStocktakeLine = () => {
+  const api = useStocktakeApi();
+  return useMutation(api.deleteLines);
+};
+
+export const useDeleteSelectedLines = (): {
+  onDelete: () => Promise<void>;
+} => {
+  const queryKey = useStocktakeDetailQueryKey();
+  const { success, info } = useNotification();
+  const queryClient = useQueryClient();
+  const { items, lines } = useStocktakeRows();
+  const { mutate } = useDeleteStocktakeLine();
+  const t = useTranslation('inventory');
+
+  const { selectedRows } = useTableStore(state => {
+    const { isGrouped } = state;
+
+    if (isGrouped) {
+      return {
+        selectedRows: (
+          Object.keys(state.rowState)
+            .filter(id => state.rowState[id]?.isSelected)
+            .map(selectedId => items?.find(({ id }) => selectedId === id))
+            .filter(Boolean) as StocktakeSummaryItem[]
+        )
+          .map(({ lines }) => lines)
+          .flat(),
+      };
+    } else {
+      return {
+        selectedRows: Object.keys(state.rowState)
+          .filter(id => state.rowState[id]?.isSelected)
+          .map(selectedId => lines?.find(({ id }) => selectedId === id))
+          .filter(Boolean) as StocktakeLineFragment[],
+      };
+    }
+  });
+
+  const onDelete = async () => {
+    if (selectedRows && selectedRows?.length > 0) {
+      const number = selectedRows?.length;
+      const successSnack = success(t('message.deleted-lines', { number }));
+      mutate(selectedRows, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(queryKey);
+          successSnack();
+        },
+      });
+    } else {
+      const infoSnack = info(t('label.select-rows-to-delete-them'));
+      infoSnack();
+    }
+  };
+
+  return { onDelete };
 };
 
 export const useStocktakeRows = (isGrouped = true) => {
