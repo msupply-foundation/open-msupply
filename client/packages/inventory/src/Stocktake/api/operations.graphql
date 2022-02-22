@@ -79,6 +79,15 @@ query stocktake($stocktakeId: String!, $storeId: String!) {
   }
 }
 
+query stocktakeByNumber($stocktakeNumber: Int!, $storeId: String!) {
+  stocktakeByNumber(stocktakeNumber: $stocktakeNumber, storeId: $storeId) {
+    __typename
+    ... on StocktakeNode {
+      ...Stocktake
+    }
+  }
+}
+
 mutation upsertStocktakeLines(
   $storeId: String!
   $deleteStocktakeLines: [DeleteStocktakeLineInput!]
@@ -135,6 +144,7 @@ mutation insertStocktake($input: InsertStocktakeInput!, $storeId: String!) {
     ... on StocktakeNode {
       __typename
       id
+      stocktakeNumber
     }
   }
 }

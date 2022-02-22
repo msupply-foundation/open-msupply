@@ -33,6 +33,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'packSize',
       label: 'label.pack-size',
       width: 100,
+      Cell: NumberInputCell,
       setter: update,
     },
     {

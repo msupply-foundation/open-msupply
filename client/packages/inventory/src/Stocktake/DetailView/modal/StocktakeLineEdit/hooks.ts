@@ -1,3 +1,4 @@
+import { useStocktakeFields } from './../../../api/hooks';
 import { StocktakeLineFragment } from './../../../api/operations.generated';
 import React, { useEffect, Dispatch, SetStateAction } from 'react';
 import {
@@ -49,6 +50,7 @@ const createDraftLine = (
     itemId: item.id,
     sellPricePerPack: 0,
     costPricePerPack: 0,
+    packSize: 1,
   };
 };
 
@@ -71,7 +73,7 @@ const stockLineToDraftLine = (
 const useDraftStocktakeLines = (
   item: ItemRowFragment | null
 ): [DraftStocktakeLine[], Dispatch<SetStateAction<DraftStocktakeLine[]>>] => {
-  const { id = '' } = useParams();
+  const { id } = useStocktakeFields('id');
   const { data: stocktakeLines } = useStocktakeLines(item?.id);
   const { data: stockLines } = useStockLines(item?.code || '');
 
@@ -138,7 +140,7 @@ export const useNextItem = (currentItemId?: string): ItemRowFragment | null => {
 export const useStocktakeLineEdit = (
   item: ItemRowFragment | null
 ): useStocktakeLineEditController => {
-  const { id = '' } = useParams();
+  const { id } = useStocktakeFields('id');
   const nextItem = useNextItem(item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
   const { mutate: save, isLoading } = useSaveStocktakeLines();
