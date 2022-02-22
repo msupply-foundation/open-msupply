@@ -13,6 +13,7 @@ import {
   SortBy,
   LocationSortInput,
   LocationSortFieldInput,
+  DeleteLocationMutation,
 } from '@openmsupply-client/common';
 import { Location } from '../types';
 
@@ -74,6 +75,24 @@ export const useLocationUpdate = (): UseMutationResult<
     },
     {
       onSettled: () => queryClient.invalidateQueries(['location', 'list']),
+    }
+  );
+};
+
+export const useLocationDelete = (): UseMutationResult<
+  DeleteLocationMutation,
+  unknown,
+  Location,
+  unknown
+> => {
+  const queryClient = useQueryClient();
+  const { api } = useOmSupplyApi();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  return useMutation(
+    async (location: Location) =>
+      api.deleteLocation({ input: { id: location.id }, storeId: storeId }),
+    {
+      onSettled: () => queryClient.invalidateQueries(['location']),
     }
   );
 };
