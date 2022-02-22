@@ -29,7 +29,10 @@ impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
         InsertOutboundShipment {
             id: input.id,
             other_party_id: input.other_party_id,
-            status: input.status.map(|s| s.into()).unwrap_or(InvoiceStatus::New),
+            status: input
+                .status
+                .map(|s| s.to_domain())
+                .unwrap_or(InvoiceStatus::New),
             on_hold: input.on_hold,
             comment: input.comment,
             their_reference: input.their_reference,

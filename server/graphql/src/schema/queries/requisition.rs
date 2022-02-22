@@ -6,8 +6,7 @@ use service::permission_validation::{Resource, ResourceAccessRequest};
 use crate::{
     schema::types::{
         sort_filter_types::{
-            DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput,
-            SimpleStringFilterInput,
+            map_filter, DatetimeFilterInput, EqualFilterBigNumberInput, SimpleStringFilterInput,
         },
         PaginationInput, RecordNotFound, RequisitionConnector, RequisitionNode,
         RequisitionNodeStatus, RequisitionNodeType,
@@ -40,11 +39,24 @@ pub struct RequisitionSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterRequisitionTypeInput {
+    pub equal_to: Option<RequisitionNodeType>,
+    pub equal_any: Option<Vec<RequisitionNodeType>>,
+    pub not_equal_to: Option<RequisitionNodeType>,
+}
+#[derive(InputObject, Clone)]
+pub struct EqualFilterRequisitionStatusInput {
+    pub equal_to: Option<RequisitionNodeStatus>,
+    pub equal_any: Option<Vec<RequisitionNodeStatus>>,
+    pub not_equal_to: Option<RequisitionNodeStatus>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct RequisitionFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub requisition_number: Option<EqualFilterBigNumberInput>,
-    pub r#type: Option<EqualFilterInput<RequisitionNodeType>>,
-    pub status: Option<EqualFilterInput<RequisitionNodeStatus>>,
+    pub r#type: Option<EqualFilterRequisitionTypeInput>,
+    pub status: Option<EqualFilterRequisitionStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub sent_datetime: Option<DatetimeFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
@@ -195,10 +207,10 @@ impl RequisitionFilterInput {
             requisition_number: self.requisition_number.map(EqualFilter::from),
             r#type: self
                 .r#type
-                .map(|t| t.map_to_domain(RequisitionNodeType::to_domain)),
+                .map(|t| map_filter!(t, RequisitionNodeType::to_domain)),
             status: self
                 .status
-                .map(|t| t.map_to_domain(RequisitionNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, RequisitionNodeStatus::to_domain)),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
             finalised_datetime: self.finalised_datetime.map(DatetimeFilter::from),

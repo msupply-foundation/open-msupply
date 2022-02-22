@@ -9,7 +9,7 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use domain::{
-    invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField},
+    invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus, InvoiceType},
     DatetimeFilter, EqualFilter, SimpleStringFilter,
 };
 use repository::schema::InvoiceStatsRow;
@@ -17,7 +17,7 @@ use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
 use super::{
-    DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput, EqualFilterStringInput,
+    map_filter, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
     ErrorWrapper, InvoiceLineConnector, NameNode, NameResponse, NodeError, NodeErrorInterface,
     RequisitionNode, SimpleStringFilterInput, StoreNode,
 };
@@ -48,13 +48,27 @@ pub struct InvoiceSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterInvoiceTypeInput {
+    pub equal_to: Option<InvoiceNodeType>,
+    pub equal_any: Option<Vec<InvoiceNodeType>>,
+    pub not_equal_to: Option<InvoiceNodeType>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterInvoiceStatusInput {
+    pub equal_to: Option<InvoiceNodeStatus>,
+    pub equal_any: Option<Vec<InvoiceNodeStatus>>,
+    pub not_equal_to: Option<InvoiceNodeStatus>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub invoice_number: Option<EqualFilterBigNumberInput>,
     pub name_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
-    pub r#type: Option<EqualFilterInput<InvoiceNodeType>>,
-    pub status: Option<EqualFilterInput<InvoiceNodeStatus>>,
+    pub r#type: Option<EqualFilterInvoiceTypeInput>,
+    pub status: Option<EqualFilterInvoiceStatusInput>,
     pub comment: Option<SimpleStringFilterInput>,
     pub their_reference: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
@@ -74,8 +88,10 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
             invoice_number: f.invoice_number.map(EqualFilter::from),
             name_id: f.name_id.map(EqualFilter::from),
             store_id: f.store_id.map(EqualFilter::from),
-            r#type: f.r#type.map(EqualFilter::from),
-            status: f.status.map(EqualFilter::from),
+            r#type: f.r#type.map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
+            status: f
+                .status
+                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             comment: f.comment.map(SimpleStringFilter::from),
             their_reference: f.their_reference.map(EqualFilter::from),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
@@ -91,7 +107,6 @@ impl From<InvoiceFilterInput> for InvoiceFilter {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[graphql(remote = "domain::invoice::InvoiceType")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvoiceNodeType {
     OutboundShipment,
@@ -100,7 +115,6 @@ pub enum InvoiceNodeType {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[graphql(remote = "domain::invoice::InvoiceStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum InvoiceNodeStatus {
     /// Outbound Shipment: available_number_of_packs in a stock line gets
@@ -174,11 +188,11 @@ impl InvoiceNode {
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
-        self.invoice.r#type.clone().into()
+        InvoiceNodeType::from_domain(&self.invoice.r#type)
     }
 
     pub async fn status(&self) -> InvoiceNodeStatus {
-        self.invoice.status.clone().into()
+        InvoiceNodeStatus::from_domain(&self.invoice.status)
     }
 
     pub async fn invoice_number(&self) -> i64 {
@@ -408,6 +422,52 @@ impl InvoiceSortInput {
         InvoiceSort {
             key,
             desc: self.desc,
+        }
+    }
+}
+
+impl InvoiceNodeType {
+    pub fn to_domain(self) -> InvoiceType {
+        use InvoiceNodeType::*;
+        match self {
+            OutboundShipment => InvoiceType::OutboundShipment,
+            InboundShipment => InvoiceType::InboundShipment,
+            InventoryAdjustment => InvoiceType::InventoryAdjustment,
+        }
+    }
+
+    pub fn from_domain(r#type: &InvoiceType) -> InvoiceNodeType {
+        use InvoiceType::*;
+        match r#type {
+            OutboundShipment => InvoiceNodeType::OutboundShipment,
+            InboundShipment => InvoiceNodeType::InboundShipment,
+            InventoryAdjustment => InvoiceNodeType::InventoryAdjustment,
+        }
+    }
+}
+
+impl InvoiceNodeStatus {
+    pub fn to_domain(self) -> InvoiceStatus {
+        use InvoiceNodeStatus::*;
+        match self {
+            New => InvoiceStatus::New,
+            Allocated => InvoiceStatus::Allocated,
+            Picked => InvoiceStatus::Picked,
+            Shipped => InvoiceStatus::Shipped,
+            Delivered => InvoiceStatus::Delivered,
+            Verified => InvoiceStatus::Verified,
+        }
+    }
+
+    pub fn from_domain(status: &InvoiceStatus) -> InvoiceNodeStatus {
+        use InvoiceStatus::*;
+        match status {
+            New => InvoiceNodeStatus::New,
+            Allocated => InvoiceNodeStatus::Allocated,
+            Picked => InvoiceNodeStatus::Picked,
+            Shipped => InvoiceNodeStatus::Shipped,
+            Delivered => InvoiceNodeStatus::Delivered,
+            Verified => InvoiceNodeStatus::Verified,
         }
     }
 }
