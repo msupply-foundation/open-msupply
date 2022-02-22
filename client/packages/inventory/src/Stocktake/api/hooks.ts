@@ -18,7 +18,7 @@ import {
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
 import { StocktakeQueries, StocktakeApi } from './api';
-import { useStocktakeColumns } from '../DetailView/columns';
+import { useStocktakeColumns } from '../DetailView';
 import {
   getSdk,
   StocktakeFragment,

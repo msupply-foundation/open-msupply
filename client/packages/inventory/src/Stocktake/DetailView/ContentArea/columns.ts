@@ -8,8 +8,8 @@ import {
   Column,
   SortBy,
 } from '@openmsupply-client/common';
-import { StocktakeSummaryItem } from './../../types';
-import { StocktakeLineFragment } from './../api';
+import { StocktakeSummaryItem } from '../../../types';
+import { StocktakeLineFragment } from '../../api';
 
 interface UseStocktakeColumnOptions {
   sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
@@ -34,22 +34,10 @@ export const useStocktakeColumns = ({
         'itemCode',
         {
           getSortValue: row => {
-            if ('lines' in row) {
-              // const { lines } = row;
-              // return ifTheSameElseDefault(lines, 'itemCode', '');
-              return '';
-            } else {
-              return row.item?.code ?? '';
-            }
+            return row.item?.code ?? '';
           },
           accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              // const { lines } = row;
-              // return ifTheSameElseDefault(lines, 'itemCode', '');
-              return '';
-            } else {
-              return rowData.item?.code ?? '';
-            }
+            return rowData.item?.code ?? '';
           },
         },
       ],
@@ -57,22 +45,10 @@ export const useStocktakeColumns = ({
         'itemName',
         {
           getSortValue: row => {
-            if ('lines' in row) {
-              // const { lines } = row;
-              // return ifTheSameElseDefault(lines, 'itemCode', '');
-              return '';
-            } else {
-              return row.item?.name ?? '';
-            }
+            return row.item?.name ?? '';
           },
           accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              // const { lines } = row;
-              // return ifTheSameElseDefault(lines, 'itemCode', '');
-              return '';
-            } else {
-              return rowData.item?.name ?? '';
-            }
+            return rowData.item?.name ?? '';
           },
         },
       ],
