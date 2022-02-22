@@ -9,8 +9,8 @@ import {
   DataTableSkeleton,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
-import { StocktakeLineFragment, useStocktakeRows } from '../api';
-import { StocktakeSummaryItem } from '../../types';
+import { StocktakeLineFragment, useStocktakeRows } from '../../api';
+import { StocktakeSummaryItem } from '../../../types';
 
 const Expando = ({
   rowData,
