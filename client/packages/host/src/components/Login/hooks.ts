@@ -4,7 +4,7 @@ import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   Store,
-  useHostContext,
+  useAuthContext,
   useLocalStorage,
   useLocation,
   useNavigate,
@@ -44,11 +44,8 @@ export const useLoginForm = (
   const state = useLoginFormState();
   const navigate = useNavigate();
   const location = useLocation();
-  const { setStore: setHostStore, setUser } = useHostContext();
-  const [mostRecentlyUsedCredentials, setMRUCredentials] =
-    useLocalStorage('/mru/credentials');
-  const [, setAuthToken] = useLocalStorage('/authentication/token');
-  const [, setStoreId] = useLocalStorage('/authentication/storeid');
+  const [mostRecentlyUsedCredentials] = useLocalStorage('/mru/credentials');
+  const { login } = useAuthContext();
   const {
     isLoggingIn,
     password,
@@ -69,14 +66,9 @@ export const useLoginForm = (
   const isValid = !!username && !!password && !!store?.id;
   const onAuthenticated = (token: string) => {
     setPassword('');
-    setAuthToken(token);
-    setMRUCredentials({ username: username, store: store });
-    setUser({ id: '', name: username });
-    setStoreId(store?.id ?? '');
-
-    if (store) setHostStore(store);
     // navigate back, if redirected by the <RequireAuthentication /> component
     // or to the dashboard as a default
+    login({ id: '', name: username }, token, store);
     const state = location.state as State | undefined;
     const from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
     navigate(from, { replace: true });

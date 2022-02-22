@@ -15,6 +15,7 @@ import {
   useSortBy,
   useHostContext,
   useQueryParams,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
 import { StocktakeQueries, StocktakeApi } from './api';
@@ -44,13 +45,14 @@ export const useStocktakes = () => {
   const queryParams = useQueryParams<StocktakeRowFragment>({
     initialSortBy: { key: 'createdDatetime' },
   });
-  const { store } = useHostContext();
+  // const { store } = useHostContext();
+  const { storeId } = useAuthContext();
   const api = useStocktakeApi();
 
   return {
     ...useQuery(
-      ['stocktake', store.id, queryParams],
-      StocktakeQueries.get.list(api, store.id, {
+      ['stocktake', storeId, queryParams],
+      StocktakeQueries.get.list(api, storeId, {
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
