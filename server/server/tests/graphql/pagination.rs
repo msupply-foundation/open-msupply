@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::assert_graphql_query;
+    use crate::graphql::{assert_graphql_query, assert_standard_graphql_error};
     use domain::{
         location::{Location, LocationFilter, LocationSort},
         PaginationOption,
@@ -53,16 +53,9 @@ mod graphql {
         let query = r#"
       query {
           locations {
-            ... on ConnectorError {
-              error {
-                  ...on PaginationError {
-                     rangeError {
-                        description
-                        field
-                        max
-                        min
-                     }
-                  }
+            ... on LocationConnector {
+              nodes {
+                id
               }
             }
           }
@@ -71,51 +64,33 @@ mod graphql {
 
         // Test pagination, first over limit
         let test_service = TestService(Box::new(|_, _, _| Err(ListError::LimitAboveMax(1000))));
+        let expected_message = "Bad user input";
 
-        let expected = json!({
-              "locations": {
-                "error": {
-                  "rangeError": {
-                    "description": "Value is above maximum",
-                    "field": "first",
-                    "max": 1000,
-                    "min": null
-                  }
-                }
-              }
-          }
-        );
-
-        assert_graphql_query!(
+        let expected_extensions =
+            json!({ "details": format!("{:#?}", ListError::LimitAboveMax(1000)) });
+        assert_standard_graphql_error!(
             &settings,
-            query,
+            &query,
             &None,
-            &expected,
+            &expected_message,
+            Some(expected_extensions),
             Some(service_provider(test_service, &connection_manager))
         );
 
         // Test pagination, first too small
         let test_service = TestService(Box::new(|_, _, _| Err(ListError::LimitBelowMin(1))));
 
-        let expected = json!({
-              "locations": {
-                "error": {
-                  "rangeError": {
-                    "description": "Value is below minimum",
-                    "field": "first",
-                    "max": null,
-                    "min": 1
-                  }
-                }
-              }
-          }
-        );
+        let expected_message = "Bad user input";
 
-        assert_graphql_query!(
+        let expected_extensions =
+            json!({ "details": format!("{:#?}", ListError::LimitBelowMin(1)) });
+
+        assert_standard_graphql_error!(
             &settings,
-            query,
+            &query,
             &None,
-            &expected,
+            &expected_message,
+            Some(expected_extensions),
             Some(service_provider(test_service, &connection_manager))
         );
 
