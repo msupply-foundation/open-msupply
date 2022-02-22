@@ -111,7 +111,6 @@ export const useLocationList = (): UseQueryResult<
   const result = useQuery(['location', 'list', queryParams], async () => {
     const response = await api.locations({
       sort: [toSortInput(queryParams.sortBy)],
-      filter: queryParams.filterBy,
     });
     const locations = locationsGuard(response);
     return locations;
