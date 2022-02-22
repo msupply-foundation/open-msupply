@@ -63,6 +63,7 @@ pub enum UpdateOutboundShipmentLineResponse {
 }
 
 #[derive(Interface)]
+#[graphql(name = "UpdateOutboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
     DatabaseError(DatabaseError),

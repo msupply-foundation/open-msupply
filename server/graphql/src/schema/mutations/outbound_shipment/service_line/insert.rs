@@ -86,6 +86,7 @@ pub fn get_insert_outbound_shipment_service_line_response(
 }
 
 #[derive(Interface)]
+#[graphql(name = "InsertOutboundShipmentServiceLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum InsertErrorInterface {
     DatabaseError(DatabaseError),
