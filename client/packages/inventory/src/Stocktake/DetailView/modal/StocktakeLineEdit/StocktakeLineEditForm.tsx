@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import {
-  Item,
   ModalRow,
   ModalLabel,
   Grid,
@@ -8,13 +7,13 @@ import {
   BasicTextInput,
   ModalMode,
 } from '@openmsupply-client/common';
-import { ItemSearchInput } from '@openmsupply-client/system';
+import { ItemSearchInput, ItemRowFragment } from '@openmsupply-client/system';
 import { useStocktakeRows } from 'packages/inventory/src/Stocktake/api';
 
 interface StocktakeLineEditProps {
-  item: Item | null;
+  item: ItemRowFragment | null;
   mode: ModalMode | null;
-  onChangeItem: (item: Item | null) => void;
+  onChangeItem: (item: ItemRowFragment | null) => void;
 }
 
 export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
@@ -34,9 +33,9 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
             disabled={mode === ModalMode.Update}
             currentItem={item}
             onChange={onChangeItem}
-            extraFilter={item => {
+            extraFilter={itemToCheck => {
               const itemAlreadyInStocktake = items?.some(
-                ({ itemId }) => item.id === itemId
+                ({ item }) => itemToCheck.id === item?.id
               );
               return !itemAlreadyInStocktake;
             }}

@@ -4,9 +4,33 @@ import {
   useFormatNumber,
   useTranslation,
   styled,
+  Autocomplete,
+  defaultOptionMapper,
 } from '@openmsupply-client/common';
-import { useItemsList } from '../../hooks/useItemsList';
-import { Autocomplete, defaultOptionMapper } from '@openmsupply-client/common';
+import { useItemsList, ItemRowFragment } from '../../api';
+
+// This is casting an `ItemRowFragment` into an `Item` which is the type that the
+// `Autocomplete` expects. This allows a caller to pass just an `ItemFragment`,
+// which is essentially all that is needed: the id of the item and the name.
+const toItem = (fragment: ItemRowFragment | null): Item | null => {
+  if (!fragment) return null;
+  return {
+    __typename: 'ItemNode',
+    id: fragment.id,
+    name: fragment.name,
+    code: fragment.code,
+    unitName: fragment.unitName ?? '',
+    isVisible: true,
+    availableBatches: [],
+    availableQuantity: 0,
+    stats: {
+      __typename: 'ItemStatsNode',
+      monthsOfStock: 0,
+      averageMonthlyConsumption: 0,
+      stockOnHand: 0,
+    },
+  };
+};
 
 const ItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.gray.main,
@@ -37,7 +61,7 @@ const getOptionRenderer =
 
 interface ItemSearchInputProps {
   onChange: (item: Item | null) => void;
-  currentItem?: Item | null;
+  currentItem?: ItemRowFragment | null;
   currentItemName?: string;
   disabled?: boolean;
   extraFilter?: (item: Item) => boolean;
@@ -67,7 +91,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
 
   const value = currentItem ?? null;
   const [open, setOpen] = useState(false);
-  const [buffer, setBuffer] = React.useState(value);
+  const [buffer, setBuffer] = React.useState(toItem(value));
 
   useEffect(() => {
     if (value && buffer && open) {
@@ -77,7 +101,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
         field: 'name',
       });
     } else if (!open) {
-      setBuffer(value);
+      setBuffer(toItem(value));
     }
   }, [open, value, buffer]);
 
