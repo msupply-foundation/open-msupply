@@ -34,7 +34,7 @@ export const Toolbar: FC<{
     if (selectedRows && numberSelected > 0) {
       const canDeleteRows = selectedRows.every(canDeleteStocktake);
       if (!canDeleteRows) {
-        const cannotDeleteSnack = info(t('message.cant-delete-stocktakes'));
+        const cannotDeleteSnack = info(t('messages.cant-delete-stocktakes'));
         cannotDeleteSnack();
       } else {
         onDelete(selectedRows);
@@ -45,7 +45,7 @@ export const Toolbar: FC<{
         successSnack();
       }
     } else {
-      const selectRowsSnack = info(t('message.select-rows-to-delete'));
+      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
       selectRowsSnack();
     }
   };

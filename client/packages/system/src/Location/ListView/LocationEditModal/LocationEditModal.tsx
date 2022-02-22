@@ -129,14 +129,16 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             label={t('label.code')}
             InputLabelProps={{ shrink: true }}
           />
-          <ToggleButton
-            label="On hold"
-            value={draft.onHold}
-            selected={draft.onHold}
-            onClick={(_, val) => {
-              onUpdate({ onHold: !val });
-            }}
-          />
+          <Grid alignSelf="center">
+            <ToggleButton
+              label="On hold"
+              value={draft.onHold}
+              selected={draft.onHold}
+              onClick={(_, val) => {
+                onUpdate({ onHold: !val });
+              }}
+            />
+          </Grid>
         </Grid>
       ) : (
         <InlineSpinner />
