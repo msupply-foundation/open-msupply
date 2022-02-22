@@ -5,9 +5,8 @@ import {
   StockLine,
   RecordPatch,
   generateUUID,
-  Item,
 } from '@openmsupply-client/common';
-import { toItem, useStockLines } from '@openmsupply-client/system';
+import { useStockLines, ItemRowFragment } from '@openmsupply-client/system';
 
 import {
   useStocktakeRows,
@@ -37,7 +36,7 @@ const stocktakeLineToDraftLine = (
 
 const createDraftLine = (
   stocktakeId: string,
-  item: Item
+  item: ItemRowFragment
 ): DraftStocktakeLine => {
   return {
     stocktakeId,
@@ -70,7 +69,7 @@ const stockLineToDraftLine = (
 };
 
 const useDraftStocktakeLines = (
-  item: Item | null
+  item: ItemRowFragment | null
 ): [DraftStocktakeLine[], Dispatch<SetStateAction<DraftStocktakeLine[]>>] => {
   const { id = '' } = useParams();
   const { data: stocktakeLines } = useStocktakeLines(item?.id);
@@ -118,26 +117,26 @@ interface useStocktakeLineEditController {
   addLine: () => void;
   save: (lines: DraftStocktakeLine[]) => void;
   isLoading: boolean;
-  nextItem: Item | null;
+  nextItem: ItemRowFragment | null;
 }
 
-export const useNextItem = (currentItemId?: string): Item | null => {
+export const useNextItem = (currentItemId?: string): ItemRowFragment | null => {
   const { items } = useStocktakeRows();
   if (!items || !currentItemId) return null;
 
   const numberOfItems = items.length;
-  const currentIdx = items.findIndex(({ itemId }) => itemId === currentItemId);
+  const currentIdx = items.findIndex(({ item }) => item?.id === currentItemId);
   const nextItem = items[(currentIdx + 1) % numberOfItems];
 
   if (currentIdx === -1 || currentIdx === numberOfItems - 1 || !nextItem) {
     return null;
   }
 
-  return toItem(nextItem);
+  return nextItem.item ?? null;
 };
 
 export const useStocktakeLineEdit = (
-  item: Item | null
+  item: ItemRowFragment | null
 ): useStocktakeLineEditController => {
   const { id = '' } = useParams();
   const nextItem = useNextItem(item?.id);

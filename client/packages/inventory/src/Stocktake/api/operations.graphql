@@ -28,6 +28,7 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     code
     name
+    unitName
   }
 }
 

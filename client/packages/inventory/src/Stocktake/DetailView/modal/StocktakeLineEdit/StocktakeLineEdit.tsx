@@ -1,4 +1,5 @@
 import React, { FC, useState } from 'react';
+import { ItemRowFragment } from '@openmsupply-client/system';
 import {
   BasicSpinner,
   useDialog,
@@ -12,7 +13,6 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   Box,
-  Item,
   ModalMode,
   useNotification,
   DialogButton,
@@ -23,7 +23,7 @@ import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
 
 interface StocktakeLineEditProps {
-  item: Item | null;
+  item: ItemRowFragment | null;
   mode: ModalMode | null;
   onClose: () => void;
   isOpen: boolean;
