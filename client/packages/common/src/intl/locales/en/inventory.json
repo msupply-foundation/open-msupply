@@ -15,11 +15,13 @@
   "label.new-location": "New Location",
   "label.stocktake-date": "Stocktake Date",
   "label.suggested": "Suggested",
-  "message.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'Suggested'",
-  "message.deleted-stocktakes": "Deleted {{number}} stocktakes",
-  "message.select-rows-to-delete": "Select rows to delete",
+  "messages.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'Suggested'",
+  "messages.select-rows-to-delete": "Select rows to delete",
   "messages.click-to-return": "Unable to find a stocktake with that ID. Click OK to return to the stocktake list",
   "messages.deleted-stocktakes": "Deleted {{number}} stocktakes",
+  "messages.deleted-locations": "Deleted {{number}} locations",
+  "messages.error-deleting-locations_one": "{{count}} location could not be deleted",
+  "messages.error-deleting-locations_other": "{{count}} locations could not be deleted",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
   "placeholder.search-by-name": "Search by name"
 }
