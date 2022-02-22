@@ -27,7 +27,7 @@ const getStatusOptions = (
   ] = [
     {
       value: RequisitionNodeStatus.New,
-      label: getButtonLabel(RequisitionNodeStatus.Draft),
+      label: getButtonLabel(RequisitionNodeStatus.New),
       isDisabled: true,
     },
     {

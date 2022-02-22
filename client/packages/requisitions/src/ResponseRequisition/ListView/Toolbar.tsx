@@ -34,18 +34,18 @@ export const Toolbar: FC<{
     if (selectedRows && numberSelected > 0) {
       const canDeleteRows = selectedRows.every(canDeleteRequisition);
       if (!canDeleteRows) {
-        const cannotDeleteSnack = info(t('message.cant-delete-requisitions'));
+        const cannotDeleteSnack = info(t('messages.cant-delete-requisitions'));
         cannotDeleteSnack();
       } else {
         onDelete(selectedRows);
-        const deletedMessage = t('message.deleted-requisitions', {
+        const deletedMessage = t('messages.deleted-requisitions', {
           number: numberSelected,
         });
         const successSnack = success(deletedMessage);
         successSnack();
       }
     } else {
-      const selectRowsSnack = info(t('message.select-rows-to-delete'));
+      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
       selectRowsSnack();
     }
   };

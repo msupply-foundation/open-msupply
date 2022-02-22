@@ -5,7 +5,7 @@ import { AlertIcon } from '@common/icons';
 import { BasicModal } from '@common/components';
 
 export interface AlertModalProps {
-  message: string;
+  message: React.ReactNode;
   open: boolean;
   onOk: () => void;
   title: string;
@@ -34,9 +34,7 @@ export const AlertModal: React.FC<AlertModalProps> = ({
             </Typography>
           </Grid>
         </Grid>
-        <Grid item>
-          <Typography>{message}</Typography>
-        </Grid>
+        <Grid item>{message}</Grid>
         <Grid item display="flex" justifyContent="flex-end" flex={1}>
           <DialogButton variant="ok" onClick={onOk} />
         </Grid>
