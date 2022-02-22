@@ -18,9 +18,8 @@ import { StocktakeSummaryItem } from '../../types';
 
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
-import { useStocktake } from '../api/hooks';
 import { AppRoute } from '@openmsupply-client/config';
-import { StocktakeLineFragment } from '../api';
+import { StocktakeLineFragment, useStocktake } from '../api';
 
 export const DetailView: FC = () => {
   const { isOpen, entity, onOpen, onClose, mode } =
