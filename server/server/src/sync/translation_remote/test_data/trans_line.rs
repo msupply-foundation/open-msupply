@@ -6,6 +6,7 @@ use repository::{
 
 use crate::sync::translation_remote::{
     test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    TRANSLATION_RECORD_TRANS_LINE,
 };
 
 const TRANS_LINE_1: (&'static str, &'static str) = (
@@ -125,8 +126,6 @@ const TRANS_LINE_2: (&'static str, &'static str) = (
 );
 
 #[allow(dead_code)]
-const RECORD_TYPE: &'static str = "trans_line";
-#[allow(dead_code)]
 pub fn get_test_trans_line_records() -> Vec<TestSyncRecord> {
     vec![
         TestSyncRecord {
@@ -155,7 +154,7 @@ pub fn get_test_trans_line_records() -> Vec<TestSyncRecord> {
             identifier: "Transact line 1",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Transact_line_10".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_TRANS_LINE.to_string(),
                 record_id: TRANS_LINE_1.0.to_string(),
                 data: TRANS_LINE_1.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
@@ -187,7 +186,7 @@ pub fn get_test_trans_line_records() -> Vec<TestSyncRecord> {
             identifier: "Transact line (Placeholder)",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Transact_line_20".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_TRANS_LINE.to_string(),
                 record_id: TRANS_LINE_2.0.to_string(),
                 data: TRANS_LINE_2.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
