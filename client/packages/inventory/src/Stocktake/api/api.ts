@@ -14,6 +14,7 @@ import {
   getSdk,
   StocktakeFragment,
   StocktakeRowFragment,
+  StocktakeLineFragment,
 } from './operations.generated';
 import { DraftStocktakeLine } from './../DetailView/modal/StocktakeLineEdit/hooks';
 
@@ -159,6 +160,11 @@ export const getStocktakeQueries = (
     }
 
     throw new Error('Unknown');
+  },
+  deleteLines: async (stocktakeLines: StocktakeLineFragment[]) => {
+    const input = { storeId, deleteStocktakeLines: stocktakeLines };
+    const result = await queries.upsertStocktakeLines(input);
+    return result;
   },
   insertStocktake: async () => {
     const result = await queries.insertStocktake({

@@ -21,5 +21,6 @@
   "messages.click-to-return": "Unable to find a stocktake with that ID. Click OK to return to the stocktake list",
   "messages.deleted-stocktakes": "Deleted {{number}} stocktakes",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
-  "placeholder.search-by-name": "Search by name"
+  "placeholder.search-by-name": "Search by name",
+  "message.deleted-lines": "Deleted {{number}} lines"
 }
