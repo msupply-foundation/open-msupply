@@ -88,15 +88,15 @@ const useStatusChangeButton = () => {
     if (!selectedOption) return null;
     try {
       await update({ status: selectedOption.value });
-      success(t('message.saved'))();
+      success(t('messages.saved'))();
     } catch (e) {
-      error(t('message.could-not-save'))();
+      error(t('messages.could-not-save'))();
     }
   };
 
   const onGetConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('message.confirm-status-as', {
+    message: t('messages.confirm-status-as', {
       status: selectedOption?.value
         ? getStatusTranslation(selectedOption?.value)
         : '',
