@@ -292,17 +292,17 @@ mod test {
             .find(|line| line.requisition_line_row.item_id == mock_item_stats_item1().id)
             .unwrap();
 
-        assert_eq!(line.requisition_line_row.stock_on_hand, 210);
+        assert_eq!(line.requisition_line_row.available_stock_on_hand, 210);
         assert_eq!(line.requisition_line_row.average_monthly_consumption, 15);
-        assert_eq!(line.requisition_line_row.calculated_quantity, 0);
+        assert_eq!(line.requisition_line_row.suggested_quantity, 0);
 
         let line = lines
             .iter()
             .find(|line| line.requisition_line_row.item_id == mock_item_stats_item2().id)
             .unwrap();
 
-        assert_eq!(line.requisition_line_row.stock_on_hand, 22);
+        assert_eq!(line.requisition_line_row.available_stock_on_hand, 22);
         assert_eq!(line.requisition_line_row.average_monthly_consumption, 5);
-        assert_eq!(line.requisition_line_row.calculated_quantity, 10 * 5 - 22);
+        assert_eq!(line.requisition_line_row.suggested_quantity, 10 * 5 - 22);
     }
 }

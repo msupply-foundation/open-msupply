@@ -74,7 +74,7 @@ pub fn mock_requisition_for_number_test() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }
@@ -94,7 +94,7 @@ pub fn mock_draft_request_requisition_for_update_test() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }
@@ -114,7 +114,7 @@ pub fn mock_sent_request_requisition() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }
@@ -125,9 +125,9 @@ pub fn mock_sent_request_requisition_line() -> RequisitionLineRow {
         requisition_id: mock_sent_request_requisition().id,
         item_id: mock_item_a().id,
         requested_quantity: 10,
-        calculated_quantity: 5,
+        suggested_quantity: 5,
         supply_quantity: 0,
-        stock_on_hand: 1,
+        available_stock_on_hand: 1,
         average_monthly_consumption: 1,
     }
 }
@@ -147,7 +147,7 @@ pub fn mock_finalised_response_requisition() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }
@@ -158,9 +158,9 @@ pub fn mock_finalised_request_requisition_line() -> RequisitionLineRow {
         requisition_id: mock_finalised_response_requisition().id,
         item_id: mock_item_a().id,
         requested_quantity: 10,
-        calculated_quantity: 5,
+        suggested_quantity: 5,
         supply_quantity: 0,
-        stock_on_hand: 1,
+        available_stock_on_hand: 1,
         average_monthly_consumption: 1,
     }
 }
@@ -180,7 +180,7 @@ pub fn mock_draft_response_requisition_for_update_test() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }
@@ -200,7 +200,7 @@ pub fn mock_new_response_requisition() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }
@@ -211,9 +211,9 @@ pub fn mock_draft_response_requisition_for_update_test_line() -> RequisitionLine
         requisition_id: mock_draft_response_requisition_for_update_test().id,
         item_id: mock_item_a().id,
         requested_quantity: 10,
-        calculated_quantity: 5,
+        suggested_quantity: 5,
         supply_quantity: 0,
-        stock_on_hand: 1,
+        available_stock_on_hand: 1,
         average_monthly_consumption: 1,
     }
 }
@@ -239,7 +239,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             comment: None,
             their_reference: None,
             max_months_of_stock: 10.0,
-            threshold_months_of_stock: 5.0,
+            min_months_of_stock: 5.0,
             linked_requisition_id: None,
         },
         lines: vec![
@@ -248,9 +248,9 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
                 requisition_id: requisition_id.clone(),
                 item_id: mock_item_a().id,
                 requested_quantity: 10,
-                calculated_quantity: 5,
+                suggested_quantity: 5,
                 supply_quantity: 0,
-                stock_on_hand: 1,
+                available_stock_on_hand: 1,
                 average_monthly_consumption: 1,
             },
             RequisitionLineRow {
@@ -258,9 +258,9 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
                 requisition_id: requisition_id.clone(),
                 item_id: mock_item_b().id,
                 requested_quantity: 10,
-                calculated_quantity: 5,
+                suggested_quantity: 5,
                 supply_quantity: 0,
-                stock_on_hand: 1,
+                available_stock_on_hand: 1,
                 average_monthly_consumption: 0,
             },
             RequisitionLineRow {
@@ -268,9 +268,9 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
                 requisition_id: requisition_id.clone(),
                 item_id: mock_item_c().id,
                 requested_quantity: 10,
-                calculated_quantity: 5,
+                suggested_quantity: 5,
                 supply_quantity: 0,
-                stock_on_hand: 6,
+                available_stock_on_hand: 6,
                 average_monthly_consumption: 1,
             },
             RequisitionLineRow {
@@ -278,9 +278,9 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
                 requisition_id: requisition_id.clone(),
                 item_id: mock_item_d().id,
                 requested_quantity: 10,
-                calculated_quantity: 200,
+                suggested_quantity: 200,
                 supply_quantity: 0,
-                stock_on_hand: 20,
+                available_stock_on_hand: 20,
                 average_monthly_consumption: 1,
             },
         ],
@@ -360,7 +360,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             comment: None,
             their_reference: None,
             max_months_of_stock: 10.0,
-            threshold_months_of_stock: 5.0,
+            min_months_of_stock: 5.0,
             linked_requisition_id: None,
         },
         lines: vec![
@@ -369,9 +369,9 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
                 requisition_id: requisition_id.clone(),
                 item_id: mock_item_a().id,
                 requested_quantity: 10,
-                calculated_quantity: 5,
+                suggested_quantity: 5,
                 supply_quantity: 50,
-                stock_on_hand: 1,
+                available_stock_on_hand: 1,
                 average_monthly_consumption: 1,
             },
             RequisitionLineRow {
@@ -379,9 +379,9 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
                 requisition_id: requisition_id.clone(),
                 item_id: mock_item_b().id,
                 requested_quantity: 11,
-                calculated_quantity: 5,
+                suggested_quantity: 5,
                 supply_quantity: 100,
-                stock_on_hand: 1,
+                available_stock_on_hand: 1,
                 average_monthly_consumption: 0,
             },
         ],

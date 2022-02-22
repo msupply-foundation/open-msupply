@@ -28,14 +28,14 @@ SELECT
     'n/a' as id,
     items_and_stores.item_id AS item_id, 
     items_and_stores.store_id AS store_id,
-	COALESCE(stock.stock_on_hand, 0) AS stock_on_hand
+	COALESCE(stock.available_stock_on_hand, 0) AS available_stock_on_hand
 FROM
    (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
 LEFT OUTER JOIN 
 	(SELECT 
 	  	item_id, 
 	 	store_id,
-	 	SUM(pack_size * available_number_of_packs) AS stock_on_hand
+	 	SUM(pack_size * available_number_of_packs) AS available_stock_on_hand
 	FROM stock_line
 	WHERE stock_line.available_number_of_packs > 0
 	GROUP BY item_id, store_id

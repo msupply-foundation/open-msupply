@@ -117,7 +117,7 @@ pub fn to_domain(
                     id: "n/a".to_owned(),
                     store_id: consumption_row.store_id.clone(),
                     item_id: consumption_row.item_id.clone(),
-                    stock_on_hand: 0,
+                    available_stock_on_hand: 0,
                 },
                 look_back_datetime,
             })
@@ -155,7 +155,7 @@ impl ItemStats {
             * NUMBER_OF_DAYS_IN_A_MONTH) as i32
     }
 
-    pub fn stock_on_hand(&self) -> i32 {
-        self.stock_info_row.stock_on_hand as i32
+    pub fn available_stock_on_hand(&self) -> i32 {
+        self.stock_info_row.available_stock_on_hand as i32
     }
 }

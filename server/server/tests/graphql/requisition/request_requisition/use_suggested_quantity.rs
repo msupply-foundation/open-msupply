@@ -11,7 +11,7 @@ mod graphql {
     use service::{
         requisition::{
             request_requisition::{
-                UseCalculatedQuantity as ServiceInput, UseCalculatedQuantityError as ServiceError,
+                UseSuggestedQuantity as ServiceInput, UseSuggestedQuantityError as ServiceError,
             },
             RequisitionServiceTrait,
         },
@@ -24,7 +24,7 @@ mod graphql {
     pub struct TestService(pub Box<DeleteLineMethod>);
 
     impl RequisitionServiceTrait for TestService {
-        fn use_calculated_quantity(
+        fn use_suggested_quantity(
             &self,
             _: &ServiceContext,
             store_id: &str,
@@ -53,17 +53,17 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_use_calculated_quantity_errors() {
+    async fn test_graphql_use_suggested_quantity_errors() {
         let (_, _, connection_manager, settings) = setup_all(
-            "test_graphql_use_calculated_quantity_structured_errors",
+            "test_graphql_use_suggested_quantity_structured_errors",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: UseCalculatedQuantityInput!, $storeId: String) {
-            useCalculatedQuantity(storeId: $storeId, input: $input) {
-              ... on UseCalculatedQuantityError {
+        mutation ($input: UseSuggestedQuantityInput!, $storeId: String) {
+            useSuggestedQuantity(storeId: $storeId, input: $input) {
+              ... on UseSuggestedQuantityError {
                 error {
                   __typename
                 }
@@ -76,7 +76,7 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
-            "useCalculatedQuantity": {
+            "useSuggestedQuantity": {
               "error": {
                 "__typename": "RecordDoesNotExist"
               }
@@ -96,7 +96,7 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
-            "useCalculatedQuantity": {
+            "useSuggestedQuantity": {
               "error": {
                 "__typename": "CannotEditRequisition"
               }
@@ -138,16 +138,16 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_use_calculated_quantity_success() {
+    async fn test_graphql_use_suggested_quantity_success() {
         let (_, _, connection_manager, settings) = setup_all(
-            "test_graphql_use_calculated_quantity_success",
+            "test_graphql_use_suggested_quantity_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($storeId: String, $input: UseCalculatedQuantityInput!) {
-            useCalculatedQuantity(storeId: $storeId, input: $input) {
+        mutation ($storeId: String, $input: UseSuggestedQuantityInput!) {
+            useSuggestedQuantity(storeId: $storeId, input: $input) {
                 ... on RequisitionLineConnector{
                   nodes {
                     id
@@ -180,7 +180,7 @@ mod graphql {
         });
 
         let expected = json!({
-            "useCalculatedQuantity": {
+            "useSuggestedQuantity": {
               "nodes": [
                 {
                   "id": mock_sent_request_requisition_line().id

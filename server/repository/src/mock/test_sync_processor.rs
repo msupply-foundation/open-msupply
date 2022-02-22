@@ -52,7 +52,7 @@ pub fn mock_sent_requistion_sync_processor() -> FullMockRequisition {
             comment: None,
             their_reference: Some("some reference".to_string()),
             max_months_of_stock: 10.0,
-            threshold_months_of_stock: 5.0,
+            min_months_of_stock: 5.0,
             linked_requisition_id: None,
         },
         lines: vec![
@@ -61,9 +61,9 @@ pub fn mock_sent_requistion_sync_processor() -> FullMockRequisition {
                 requisition_id: requisition_id.clone(),
                 item_id: mock_item_a().id,
                 requested_quantity: 2,
-                calculated_quantity: 3,
+                suggested_quantity: 3,
                 supply_quantity: 0,
-                stock_on_hand: 1,
+                available_stock_on_hand: 1,
                 average_monthly_consumption: 1,
             },
             RequisitionLineRow {
@@ -71,9 +71,9 @@ pub fn mock_sent_requistion_sync_processor() -> FullMockRequisition {
                 requisition_id: requisition_id.clone(),
                 item_id: mock_item_b().id,
                 requested_quantity: 5,
-                calculated_quantity: 6,
+                suggested_quantity: 6,
                 supply_quantity: 0,
-                stock_on_hand: 1,
+                available_stock_on_hand: 1,
                 average_monthly_consumption: 0,
             },
         ],
@@ -95,7 +95,7 @@ pub fn mock_request_requisition_for_invoice_sync_processor() -> RequisitionRow {
         comment: None,
         their_reference: Some("some reference".to_string()),
         max_months_of_stock: 10.0,
-        threshold_months_of_stock: 5.0,
+        min_months_of_stock: 5.0,
         linked_requisition_id: None,
     }
 }
@@ -115,7 +115,7 @@ pub fn mock_response_requisition_for_invoice_sync_processor() -> RequisitionRow 
         comment: None,
         their_reference: Some("some reference".to_string()),
         max_months_of_stock: 10.0,
-        threshold_months_of_stock: 5.0,
+        min_months_of_stock: 5.0,
         linked_requisition_id: Some(mock_request_requisition_for_invoice_sync_processor().id),
     }
 }

@@ -1376,8 +1376,8 @@ mod repository_test {
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
         assert_eq!(item_stats.len(), 2);
-        assert_eq!(item_stats[0].stock_on_hand(), 210);
-        assert_eq!(item_stats[1].stock_on_hand(), 22);
+        assert_eq!(item_stats[0].available_stock_on_hand(), 210);
+        assert_eq!(item_stats[1].available_stock_on_hand(), 22);
 
         assert_eq!(
             item_stats[0].average_monthly_consumption(),
@@ -1399,8 +1399,8 @@ mod repository_test {
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
         assert_eq!(item_stats.len(), 2);
-        assert_eq!(item_stats[0].stock_on_hand(), 210);
-        assert_eq!(item_stats[1].stock_on_hand(), 22);
+        assert_eq!(item_stats[0].available_stock_on_hand(), 210);
+        assert_eq!(item_stats[1].available_stock_on_hand(), 22);
 
         assert_eq!(
             item_stats[0].average_monthly_consumption(),
@@ -1414,9 +1414,9 @@ mod repository_test {
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
         assert_eq!(item_stats.len(), 2);
-        assert_eq!(item_stats[0].stock_on_hand(), 10);
+        assert_eq!(item_stats[0].available_stock_on_hand(), 10);
         // No stock line check
-        assert_eq!(item_stats[1].stock_on_hand(), 0);
+        assert_eq!(item_stats[1].available_stock_on_hand(), 0);
 
         assert_eq!(
             item_stats[0].average_monthly_consumption(),
