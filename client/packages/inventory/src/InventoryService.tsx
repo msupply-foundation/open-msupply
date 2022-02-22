@@ -9,7 +9,7 @@ import { AppRoute } from '@openmsupply-client/config';
 
 const stocktakesRoute = RouteBuilder.create(AppRoute.Stocktakes).build();
 const stocktakeRoute = RouteBuilder.create(AppRoute.Stocktakes)
-  .addPart(':id')
+  .addPart(':stocktakeNumber')
   .build();
 
 export const InventoryService: FC = () => {

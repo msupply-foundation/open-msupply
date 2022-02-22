@@ -103,7 +103,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
     } else if (!open) {
       setBuffer(toItem(value));
     }
-  }, [open, value, buffer]);
+  }, [open, value]);
 
   const options = extraFilter
     ? data?.nodes?.filter(extraFilter) ?? []

@@ -9,9 +9,11 @@ import {
   Grid,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useInsertStocktake } from '../api';
 
 export const AppBarButtons: FC = () => {
   const { info, success } = useNotification();
+  const { mutate } = useInsertStocktake();
   const t = useTranslation(['distribution', 'common']);
 
   return (
@@ -20,7 +22,7 @@ export const AppBarButtons: FC = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('label.new-stocktake')}
-          onClick={() => {}}
+          onClick={() => mutate()}
         />
         <ButtonWithIcon
           Icon={<DownloadIcon />}

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import {
   useQuerySelector,
@@ -17,7 +18,7 @@ import {
   useQueryParams,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
-import { StocktakeQueries, StocktakeApi } from './api';
+import { StocktakeApi, getStocktakeQueries } from './api';
 import { useStocktakeColumns } from '../DetailView';
 import {
   getSdk,
@@ -28,15 +29,16 @@ import {
 
 export const useStocktakeApi = (): StocktakeApi => {
   const { client } = useOmSupplyApi();
-  return getSdk(client);
+  const { store } = useHostContext();
+  const queries = getStocktakeQueries(getSdk(client), store.id);
+  return { ...queries, storeId: store.id };
 };
 
 export const useStocktake = (): UseQueryResult<StocktakeFragment> => {
-  const { id = '' } = useParams();
-  const { store } = useHostContext();
+  const { stocktakeNumber = '' } = useParams();
   const api = useStocktakeApi();
-  return useQuery(['stocktake', id], () =>
-    StocktakeQueries.get.byId(api, store.id)(id)
+  return useQuery(['stocktake', stocktakeNumber], () =>
+    api.get.byNumber(Number(stocktakeNumber))
   );
 };
 
@@ -44,13 +46,12 @@ export const useStocktakes = () => {
   const queryParams = useQueryParams<StocktakeRowFragment>({
     initialSortBy: { key: 'createdDatetime' },
   });
-  const { store } = useHostContext();
   const api = useStocktakeApi();
 
   return {
     ...useQuery(
-      ['stocktake', store.id, queryParams],
-      StocktakeQueries.get.list(api, store.id, {
+      ['stocktake', api.storeId, queryParams],
+      api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
@@ -61,19 +62,29 @@ export const useStocktakes = () => {
   };
 };
 
+export const useInsertStocktake = () => {
+  const navigate = useNavigate();
+  const api = useStocktakeApi();
+  return useMutation(api.insertStocktake, {
+    onSuccess: ({ stocktakeNumber }) => {
+      navigate(String(stocktakeNumber));
+    },
+  });
+};
+
 export const useStocktakeFields = <
   KeyOfStocktake extends keyof StocktakeFragment
 >(
   keys: KeyOfStocktake | KeyOfStocktake[]
 ): FieldSelectorControl<StocktakeFragment, KeyOfStocktake> => {
-  const { id = '' } = useParams();
-  const { store } = useHostContext();
+  const { stocktakeNumber = '' } = useParams();
+  const { data } = useStocktake();
   const api = useStocktakeApi();
   return useFieldsSelector(
-    ['stocktake', id],
-    () => StocktakeQueries.get.byId(api, store.id)(id),
+    ['stocktake', stocktakeNumber],
+    () => api.get.byNumber(Number(stocktakeNumber)),
     (patch: Partial<StocktakeFragment>) =>
-      StocktakeQueries.update(api, store.id)({ ...patch, id }),
+      api.update({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
@@ -86,19 +97,18 @@ export const useIsStocktakeDisabled = (): boolean => {
 import { useCallback } from 'react';
 
 export const useStocktakeDetailQueryKey = (): ['stocktake', string] => {
-  const { id = '' } = useParams();
-  return ['stocktake', id];
+  const { stocktakeNumber = '' } = useParams();
+  return ['stocktake', stocktakeNumber];
 };
 
 const useStocktakeSelector = <ReturnType>(
   select: (data: StocktakeFragment) => ReturnType
 ) => {
   const queryKey = useStocktakeDetailQueryKey();
-  const { store } = useHostContext();
   const api = useStocktakeApi();
   return useQuerySelector(
     queryKey,
-    () => StocktakeQueries.get.byId(api, store.id)(queryKey[1]),
+    () => api.get.byNumber(Number(queryKey[1])),
     select
   );
 };
@@ -141,9 +151,8 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
 export const useSaveStocktakeLines = () => {
   const queryKey = useStocktakeDetailQueryKey();
   const queryClient = useQueryClient();
-  const { store } = useHostContext();
   const api = useStocktakeApi();
-  return useMutation(StocktakeQueries.updateLines(api, store.id), {
+  return useMutation(api.updateLines, {
     onSuccess: () => {
       queryClient.invalidateQueries(queryKey);
     },
