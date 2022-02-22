@@ -65,7 +65,7 @@ export const Toolbar: FC = () => {
   const deleteAction = async () => {
     if (selectedRows && selectedRows?.length > 0) {
       const number = selectedRows?.length;
-      const onSuccess = success(t('message.deleted-lines', { number }));
+      const onSuccess = success(t('messages.deleted-lines', { number }));
       mutate(selectedRows, {
         onSuccess,
       });
