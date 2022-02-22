@@ -6,11 +6,10 @@ import {
   Switch,
   useIsGrouped,
   MiniTable,
-  DataTableSkeleton,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
-import { StocktakeLineFragment, useStocktakeRows } from '../api';
-import { StocktakeSummaryItem } from '../../types';
+import { StocktakeLineFragment, useStocktakeRows } from '../../api';
+import { StocktakeSummaryItem } from '../../../types';
 
 const Expando = ({
   rowData,
@@ -32,8 +31,6 @@ export const ContentArea: FC<{
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
   const { rows, onChangeSortBy, sortBy } = useStocktakeRows(isGrouped);
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
-
-  if (!rows) return <DataTableSkeleton hasGroupBy={true} />;
 
   return (
     <Box flexDirection="column" flex={1}>

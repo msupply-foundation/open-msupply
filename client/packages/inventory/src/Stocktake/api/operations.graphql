@@ -28,6 +28,7 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     code
     name
+    unitName
   }
 }
 
@@ -71,6 +72,15 @@ query stocktakes(
 
 query stocktake($stocktakeId: String!, $storeId: String!) {
   stocktake(id: $stocktakeId, storeId: $storeId) {
+    __typename
+    ... on StocktakeNode {
+      ...Stocktake
+    }
+  }
+}
+
+query stocktakeByNumber($stocktakeNumber: Int!, $storeId: String!) {
+  stocktakeByNumber(stocktakeNumber: $stocktakeNumber, storeId: $storeId) {
     __typename
     ... on StocktakeNode {
       ...Stocktake
@@ -134,6 +144,7 @@ mutation insertStocktake($input: InsertStocktakeInput!, $storeId: String!) {
     ... on StocktakeNode {
       __typename
       id
+      stocktakeNumber
     }
   }
 }

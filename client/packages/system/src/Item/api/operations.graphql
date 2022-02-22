@@ -1,0 +1,147 @@
+fragment ItemRow on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+}
+
+fragment Item on ItemNode {
+  __typename
+  availableBatches(storeId: $storeId) {
+    __typename
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            description
+            field
+            max
+            min
+          }
+        }
+      }
+    }
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        __typename
+        availableNumberOfPacks
+        batch
+        costPricePerPack
+        expiryDate
+        id
+        itemId
+        packSize
+        sellPricePerPack
+        totalNumberOfPacks
+        onHold
+        note
+        storeId
+        locationName
+      }
+      totalCount
+    }
+  }
+  code
+  id
+  isVisible
+  name
+  unitName
+}
+
+query itemsWithStockLines(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+  $filter: ItemFilterInput
+  $storeId: String!
+) {
+  items(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            description
+            field
+            max
+            min
+          }
+        }
+      }
+    }
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ...Item
+      }
+      totalCount
+    }
+  }
+}
+
+query itemsListView(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+  $filter: ItemFilterInput
+) {
+  items(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ConnectorError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on PaginationError {
+          __typename
+          description
+          rangeError {
+            description
+            field
+            max
+            min
+          }
+        }
+      }
+    }
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ...ItemRow
+      }
+      totalCount
+    }
+  }
+}

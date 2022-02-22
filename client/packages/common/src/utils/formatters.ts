@@ -9,6 +9,11 @@ export const formatNaiveDate = (date?: Date | null): string | null => {
   else return null;
 };
 
+export const formatNaiveDateTime = (date?: Date | null): string | null => {
+  if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+  else return null;
+};
+
 export const formatExpiryDate = (date?: Date | null): string | null => {
   if (date && isValid(date)) return format(date, 'MM/yyyy');
   else return null;

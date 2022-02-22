@@ -3,32 +3,17 @@ import {
   useNavigate,
   TableProvider,
   DataTable,
-  useListData,
   useColumns,
   createTableStore,
-  useOmSupplyApi,
 } from '@openmsupply-client/common';
-import { getItemListViewApi } from './api';
-import { ItemRow } from '../types';
+import { useItemListView, ItemRowFragment } from '../api';
 
 export const ItemListView: FC = () => {
-  const { api } = useOmSupplyApi();
-  const {
-    totalCount,
-    data,
-    isLoading,
-    onChangePage,
-    pagination,
-    sortBy,
-    onChangeSortBy,
-  } = useListData(
-    { initialSortBy: { key: 'name' } },
-    ['items', 'list'],
-    getItemListViewApi(api)
-  );
+  const { data, isLoading, onChangePage, pagination, sortBy, onChangeSortBy } =
+    useItemListView();
   const navigate = useNavigate();
 
-  const columns = useColumns<ItemRow>(
+  const columns = useColumns<ItemRowFragment>(
     ['name', 'code'],
     {
       sortBy,
@@ -40,10 +25,10 @@ export const ItemListView: FC = () => {
   return (
     <TableProvider createStore={createTableStore}>
       <DataTable
-        pagination={{ ...pagination, total: totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data ?? []}
+        data={data?.nodes}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(`/catalogue/items/${row.id}`);
