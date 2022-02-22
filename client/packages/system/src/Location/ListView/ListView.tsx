@@ -11,7 +11,7 @@ import { useLocationList } from './api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
 import { Location } from '../types';
-
+import { Toolbar } from './Toolbar';
 interface EditModalState<T> {
   entity: T | null;
   mode: ModalMode | null;
@@ -20,7 +20,7 @@ interface EditModalState<T> {
   isOpen: boolean;
 }
 
-const useEditModal = <T extends unknown>(): EditModalState<T> => {
+function useEditModal<T>(): EditModalState<T> {
   const modalControl = useToggle(false);
   const [entity, setEntity] = useState<T | null>(null);
   const [mode, setMode] = useState<ModalMode | null>(null);
@@ -44,14 +44,21 @@ const useEditModal = <T extends unknown>(): EditModalState<T> => {
     mode,
     isOpen: modalControl.isOn,
   };
-};
+}
 
 export const LocationListView: FC = () => {
-  const { pagination, onChangePage, data, isLoading, onChangeSortBy, sortBy } =
-    useLocationList();
+  const {
+    pagination,
+    onChangePage,
+    data,
+    isLoading,
+    onChangeSortBy,
+    sortBy,
+    filter,
+  } = useLocationList();
 
   const columns = useColumns<Location>(
-    ['code', 'name'],
+    ['code', 'name', 'selection'],
     {
       onChangeSortBy,
       sortBy,
@@ -59,7 +66,7 @@ export const LocationListView: FC = () => {
     [onChangeSortBy, sortBy]
   );
   const { isOpen, entity, mode, onClose, onOpen } = useEditModal<Location>();
-
+  const locations = data?.nodes ?? [];
   return (
     <TableProvider createStore={createTableStore}>
       {isOpen && (
@@ -70,12 +77,13 @@ export const LocationListView: FC = () => {
           location={entity}
         />
       )}
+      <Toolbar data={locations} filter={filter} />
       <AppBarButtons onCreate={() => onOpen()} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data?.nodes ?? []}
+        data={locations}
         isLoading={isLoading}
         onRowClick={onOpen}
       />
