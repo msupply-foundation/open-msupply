@@ -11,7 +11,7 @@ import { useLocationList } from './api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
 import { Location } from '../types';
-import { Toolbar } from '../Components';
+import { Toolbar } from './Toolbar';
 interface EditModalState<T> {
   entity: T | null;
   mode: ModalMode | null;
@@ -20,7 +20,7 @@ interface EditModalState<T> {
   isOpen: boolean;
 }
 
-const useEditModal = <T extends unknown>(): EditModalState<T> => {
+function useEditModal<T>(): EditModalState<T> {
   const modalControl = useToggle(false);
   const [entity, setEntity] = useState<T | null>(null);
   const [mode, setMode] = useState<ModalMode | null>(null);
@@ -44,7 +44,7 @@ const useEditModal = <T extends unknown>(): EditModalState<T> => {
     mode,
     isOpen: modalControl.isOn,
   };
-};
+}
 
 export const LocationListView: FC = () => {
   const {

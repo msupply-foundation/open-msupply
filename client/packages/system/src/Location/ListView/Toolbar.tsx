@@ -10,7 +10,7 @@ import {
   FilterController,
   AlertModal,
 } from '@openmsupply-client/common';
-import { useLocationDelete } from '../ListView/api';
+import { useLocationDelete } from './api';
 import { Location } from '../types';
 
 type DeleteError = {
