@@ -60,7 +60,7 @@ export const StocktakeListView: FC = () => {
         data={data?.nodes ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(row.id);
+          navigate(String(row.stocktakeNumber));
         }}
       />
     </>
