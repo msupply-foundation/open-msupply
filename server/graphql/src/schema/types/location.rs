@@ -1,21 +1,28 @@
-use super::{EqualFilterStringInput, NodeError, SortInput, StockLineConnector};
+use super::{EqualFilterStringInput, NodeError, StockLineConnector};
 use crate::{loader::StockLineByLocationIdLoader, ContextExt};
 use async_graphql::*;
 use async_graphql::{dataloader::DataLoader, Context};
+use domain::location::LocationSort;
 use domain::{
-    location::{Location, LocationFilter},
+    location::{Location, LocationFilter, LocationSortField},
     EqualFilter,
 };
 use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "domain::location::LocationSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum LocationSortFieldInput {
     Name,
     Code,
 }
-pub type LocationSortInput = SortInput<LocationSortFieldInput>;
+#[derive(InputObject)]
+pub struct LocationSortInput {
+    /// Sort query result by `key`
+    key: LocationSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
 
 #[derive(InputObject, Clone)]
 pub struct LocationFilterInput {
@@ -110,6 +117,22 @@ impl LocationConnector {
                 .into_iter()
                 .map(LocationNode::from_domain)
                 .collect(),
+        }
+    }
+}
+
+impl LocationSortInput {
+    pub fn to_domain(self) -> LocationSort {
+        use LocationSortField as to;
+        use LocationSortFieldInput as from;
+        let key = match self.key {
+            from::Name => to::Name,
+            from::Code => to::Code,
+        };
+
+        LocationSort {
+            key,
+            desc: self.desc,
         }
     }
 }

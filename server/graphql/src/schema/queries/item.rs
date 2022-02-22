@@ -1,8 +1,7 @@
 use crate::{
     schema::types::{
         sort_filter_types::{
-            convert_sort, EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput,
-            SortInput,
+            EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput,
         },
         ItemConnector, PaginationInput,
     },
@@ -10,7 +9,10 @@ use crate::{
     ContextExt,
 };
 use async_graphql::*;
-use domain::{EqualFilter, PaginationOption, SimpleStringFilter};
+use domain::{
+    item::{ItemSort, ItemSortField},
+    EqualFilter, PaginationOption, SimpleStringFilter,
+};
 use repository::ItemFilter;
 use service::item::get_items;
 
@@ -21,7 +23,15 @@ pub enum ItemSortFieldInput {
     Name,
     Code,
 }
-pub type ItemSortInput = SortInput<ItemSortFieldInput>;
+
+#[derive(InputObject)]
+pub struct ItemSortInput {
+    /// Sort query result by `key`
+    key: ItemSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
 
 #[derive(InputObject, Clone)]
 pub struct ItemFilterInput {
@@ -59,9 +69,28 @@ pub fn items(
         connection_manager,
         page.map(PaginationOption::from),
         filter.map(ItemFilter::from),
-        convert_sort(sort),
+        // Currently only one sort option is supported, use the first from the list.
+        sort.map(|mut sort_list| sort_list.pop())
+            .flatten()
+            .map(|sort| sort.to_domain()),
     )
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(ItemsResponse::Response(ItemConnector::from_domain(items)))
+}
+
+impl ItemSortInput {
+    pub fn to_domain(self) -> ItemSort {
+        use ItemSortField as to;
+        use ItemSortFieldInput as from;
+        let key = match self.key {
+            from::Name => to::Name,
+            from::Code => to::Code,
+        };
+
+        ItemSort {
+            key,
+            desc: self.desc,
+        }
+    }
 }
