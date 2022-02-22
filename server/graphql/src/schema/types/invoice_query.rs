@@ -9,7 +9,7 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use domain::{
-    invoice::{Invoice, InvoiceFilter},
+    invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField},
     DatetimeFilter, EqualFilter, SimpleStringFilter,
 };
 use repository::schema::InvoiceStatsRow;
@@ -19,11 +19,10 @@ use service::{usize_to_u32, ListResult};
 use super::{
     DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput, EqualFilterStringInput,
     ErrorWrapper, InvoiceLineConnector, NameNode, NameResponse, NodeError, NodeErrorInterface,
-    RequisitionNode, SimpleStringFilterInput, SortInput, StoreNode,
+    RequisitionNode, SimpleStringFilterInput, StoreNode,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "domain::invoice::InvoiceSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum InvoiceSortFieldInput {
     Type,
@@ -39,7 +38,14 @@ pub enum InvoiceSortFieldInput {
     VerifiedDatetime,
 }
 
-pub type InvoiceSortInput = SortInput<InvoiceSortFieldInput>;
+#[derive(InputObject)]
+pub struct InvoiceSortInput {
+    /// Sort query result by `key`
+    key: InvoiceSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
 
 #[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
@@ -377,6 +383,31 @@ impl InvoiceConnector {
         InvoiceConnector {
             total_count: usize_to_u32(invoices.len()),
             nodes: invoices.into_iter().map(InvoiceNode::from_domain).collect(),
+        }
+    }
+}
+
+impl InvoiceSortInput {
+    pub fn to_domain(self) -> InvoiceSort {
+        use InvoiceSortField as to;
+        use InvoiceSortFieldInput as from;
+        let key = match self.key {
+            from::Type => to::Type,
+            from::OtherPartyName => to::OtherPartyName,
+            from::InvoiceNumber => to::InvoiceNumber,
+            from::Comment => to::Comment,
+            from::Status => to::Status,
+            from::CreatedDatetime => to::CreatedDatetime,
+            from::AllocatedDatetime => to::AllocatedDatetime,
+            from::PickedDatetime => to::PickedDatetime,
+            from::ShippedDatetime => to::ShippedDatetime,
+            from::DeliveredDatetime => to::DeliveredDatetime,
+            from::VerifiedDatetime => to::VerifiedDatetime,
+        };
+
+        InvoiceSort {
+            key,
+            desc: self.desc,
         }
     }
 }

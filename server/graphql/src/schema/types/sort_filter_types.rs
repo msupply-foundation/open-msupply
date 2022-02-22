@@ -1,60 +1,17 @@
-use crate::schema::queries::{ItemSortFieldInput, NameSortFieldInput, StocktakeSortFieldInput};
-
 use super::{
-    InvoiceNodeStatus, InvoiceNodeType, InvoiceSortFieldInput, LocationSortFieldInput,
-    RequisitionNodeStatus, RequisitionNodeType, StocktakeNodeStatus,
+    InvoiceNodeStatus, InvoiceNodeType, RequisitionNodeStatus, RequisitionNodeType,
+    StocktakeNodeStatus,
 };
 
 use domain::{
     invoice::{InvoiceStatus, InvoiceType},
-    DatetimeFilter, EqualFilter, SimpleStringFilter, Sort,
+    DatetimeFilter, EqualFilter, SimpleStringFilter,
 };
 
 use async_graphql::{InputObject, InputType};
 use chrono::{DateTime, Utc};
 
-#[derive(InputObject)]
-#[graphql(concrete(name = "InvoiceSortInput", params(InvoiceSortFieldInput)))]
-#[graphql(concrete(name = "ItemSortInput", params(ItemSortFieldInput)))]
-#[graphql(concrete(name = "NameSortInput", params(NameSortFieldInput)))]
-#[graphql(concrete(name = "LocationSortInput", params(LocationSortFieldInput)))]
-#[graphql(concrete(name = "StocktakeSortInput", params(StocktakeSortFieldInput)))]
-pub struct SortInput<T: InputType> {
-    /// Sort query result by `key`
-    pub key: T,
-    /// Sort query result is sorted descending or ascending (if not provided the default is
-    /// ascending)
-    pub desc: Option<bool>,
-}
-
-impl<TInput, T> From<SortInput<TInput>> for Sort<T>
-where
-    TInput: InputType,
-    T: From<TInput>,
-{
-    fn from(sort: SortInput<TInput>) -> Self {
-        Sort {
-            key: T::from(sort.key),
-            desc: sort.desc,
-        }
-    }
-}
-
-pub fn convert_sort<FromField, ToField>(
-    from: Option<Vec<SortInput<FromField>>>,
-) -> Option<Sort<ToField>>
-where
-    FromField: InputType,
-    Sort<ToField>: From<SortInput<FromField>>,
-{
-    // Currently only one sort option is supported, use the first from the list.
-    from.map(|mut sort_list| sort_list.pop())
-        .flatten()
-        .map(Sort::from)
-}
-
 // simple string filter
-
 #[derive(InputObject, Clone)]
 pub struct SimpleStringFilterInput {
     /// Search term must be an exact match (case sensitive)
