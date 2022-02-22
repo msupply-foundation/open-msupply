@@ -92,7 +92,7 @@ export const useLocationDelete = (): UseMutationResult<
     async (location: Location) =>
       api.deleteLocation({ input: { id: location.id }, storeId: storeId }),
     {
-      onSettled: () => queryClient.invalidateQueries(['location', 'list']),
+      onSettled: () => queryClient.invalidateQueries(['location']),
     }
   );
 };
