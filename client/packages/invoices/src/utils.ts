@@ -12,7 +12,6 @@ import {
   InboundShipmentItem,
   Invoice,
   InvoiceLine,
-  InvoiceRow,
 } from './types';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
