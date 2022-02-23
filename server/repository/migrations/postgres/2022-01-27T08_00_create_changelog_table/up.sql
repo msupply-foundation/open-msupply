@@ -1,5 +1,13 @@
 CREATE TYPE changelog_table_name AS ENUM (
-    'stocktake'
+    'number',
+    'stock_line',
+    'name_store_join',
+    'invoice',
+    'invoice_line',
+    'stocktake',
+    'stocktake_line',
+    'requisition',
+    'requisition_line'
 );
 
 CREATE TYPE row_action_type AS ENUM (
