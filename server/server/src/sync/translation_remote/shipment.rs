@@ -186,12 +186,12 @@ fn shipment_status(
         InvoiceRowType::OutboundShipment => shipment_status_for_outbound(
             &data.status,
             data.arrival_date_actual.is_some(),
-            data.confirm_date.is_some(),
+            data.ship_date.is_some(),
         ),
         InvoiceRowType::InboundShipment => shipment_status_for_inbound(
             &data.status,
             data.their_ref.is_none(),
-            data.arrival_date_actual.is_some(),
+            data.ship_date.is_some(),
         ),
         InvoiceRowType::InventoryAdjustment => return None,
     };
@@ -222,7 +222,7 @@ fn shipment_status_for_inbound(
 fn shipment_status_for_outbound(
     status: &LegacyTransactStatus,
     delivered: bool,
-    confirmed: bool,
+    shipped: bool,
 ) -> InvoiceRowStatus {
     match status {
         LegacyTransactStatus::Nw => InvoiceRowStatus::New,
@@ -230,12 +230,12 @@ fn shipment_status_for_outbound(
         LegacyTransactStatus::Sg => InvoiceRowStatus::New,
         LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
         LegacyTransactStatus::Fn => {
-            if confirmed {
-                InvoiceRowStatus::Verified
+            if shipped {
+                InvoiceRowStatus::Shipped
             } else if delivered {
                 InvoiceRowStatus::Delivered
             } else {
-                InvoiceRowStatus::Shipped
+                InvoiceRowStatus::Verified
             }
         }
     }
