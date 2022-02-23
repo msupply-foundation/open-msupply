@@ -1,6 +1,4 @@
-use super::{
-    ItemNode, LocationNode, LocationResponse, NodeError, StockLineNode, StockLineResponse,
-};
+use super::{ItemNode, LocationNode, NodeError, StockLineNode};
 use crate::{
     loader::{ItemLoader, LocationByIdLoader, StockLineByIdLoader},
     standard_graphql_error::StandardGraphqlError,
@@ -103,31 +101,29 @@ impl InvoiceLineNode {
     pub async fn r#type(&self) -> InvoiceLineNodeType {
         InvoiceLineNodeType::from_domain(&self.invoice_line.r#type)
     }
-    async fn location(&self, ctx: &Context<'_>) -> Option<LocationResponse> {
+    async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
         let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
-        match &self.invoice_line.location_id {
-            Some(location_id) => match loader.load_one(location_id.clone()).await {
-                Ok(response) => response.map(|location| {
-                    LocationResponse::Response(LocationNode::from_domain(location))
-                }),
-                Err(error) => Some(LocationResponse::Error(error.into())),
-            },
-            None => None,
-        }
+        let location_id = match &self.invoice_line.location_id {
+            None => return Ok(None),
+            Some(location_id) => location_id,
+        };
+
+        let result = loader.load_one(location_id.clone()).await?;
+
+        Ok(result.map(LocationNode::from_domain))
     }
-    async fn stock_line(&self, ctx: &Context<'_>) -> Option<StockLineResponse> {
+    async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
 
-        match &self.invoice_line.stock_line_id {
-            Some(invoice_line_id) => match loader.load_one(invoice_line_id.clone()).await {
-                Ok(response) => response.map(|stock_line| {
-                    StockLineResponse::Response(StockLineNode::from_domain(stock_line))
-                }),
-                Err(error) => Some(StockLineResponse::Error(error.into())),
-            },
-            None => None,
-        }
+        let stock_line_id = match &self.invoice_line.stock_line_id {
+            None => return Ok(None),
+            Some(stock_line_id) => stock_line_id,
+        };
+
+        let result = loader.load_one(stock_line_id.clone()).await?;
+
+        Ok(result.map(StockLineNode::from_domain))
     }
 }
 
