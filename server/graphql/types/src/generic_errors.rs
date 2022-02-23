@@ -1,7 +1,7 @@
-use crate::types::{InvoiceLineConnector, InvoiceNode, NameNode};
+use crate::types::{InvoiceLineConnector, NameNode};
 use async_graphql::*;
-use graphql_core::ContextExt;
-use service::invoice::get_invoice;
+
+
 pub struct OtherPartyNotASupplier(pub NameNode);
 #[Object]
 impl OtherPartyNotASupplier {

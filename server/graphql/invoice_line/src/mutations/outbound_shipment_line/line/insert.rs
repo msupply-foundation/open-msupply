@@ -3,11 +3,10 @@ use async_graphql::*;
 use domain::outbound_shipment::InsertOutboundShipmentLine;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError,
-    InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NodeError,
-    NotAnInboundShipment, NotAnOutboundShipment, Range, RangeError, RangeField, RecordNotFound, RecordAlreadyExist,
+    InvoiceDoesNotBelongToCurrentStore, NodeError, NotAnOutboundShipment, Range, RangeError, RangeField, RecordAlreadyExist,
 };
 use graphql_types::types::{
-    get_invoice_line_response, DeleteResponse, InvoiceLineNode, InvoiceLineResponse,
+    get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse,
 };
 use repository::StorageConnectionManager;
 use service::invoice_line::{insert_outbound_shipment_line, InsertOutboundShipmentLineError};

@@ -2,13 +2,12 @@ use async_graphql::*;
 use domain::master_list::{MasterListFilter, MasterListSort};
 use domain::{EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
-    generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
-    simple_generic_errors::{AccessDenied, DatabaseError, InternalError},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{ItemConnector, MasterListNode};
+use graphql_types::types::{MasterListNode};
 use repository::MasterList;
 use service::ListResult;
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

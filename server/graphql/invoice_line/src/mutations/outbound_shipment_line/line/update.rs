@@ -5,12 +5,11 @@ use domain::{
 
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError,
-    InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NodeError,
-    NotAnInboundShipment, NotAnOutboundShipment, Range, RangeError, RangeField, RecordAlreadyExist,
+    InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NodeError, NotAnOutboundShipment, Range, RangeError, RangeField,
     RecordNotFound,
 };
 use graphql_types::types::{
-    get_invoice_line_response, DeleteResponse, InvoiceLineNode, InvoiceLineResponse,
+    get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse,
 };
 use repository::StorageConnectionManager;
 use service::invoice_line::{update_outbound_shipment_line, UpdateOutboundShipmentLineError};
@@ -162,7 +161,7 @@ impl From<UpdateOutboundShipmentLineError> for UpdateOutboundShipmentLineRespons
                 stock_line_id,
                 line_id: Some(line_id),
             }),
-            UpdateOutboundShipmentLineError::NotThisInvoiceLine(invoice_id) => {
+            UpdateOutboundShipmentLineError::NotThisInvoiceLine(_invoice_id) => {
                 OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice {})
             }
             UpdateOutboundShipmentLineError::BatchIsOnHold => {

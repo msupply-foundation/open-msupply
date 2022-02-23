@@ -1,12 +1,10 @@
 use domain::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus};
 use graphql_core::{
     simple_generic_errors::{
-        CannotReverseInvoiceStatus, DatabaseError, ForeignKey, ForeignKeyError, NodeError,
-        NodeErrorInterface, RecordNotFound,
+        CannotReverseInvoiceStatus, DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordNotFound,
     },
-    ContextExt,
 };
-use graphql_types::types::{InvoiceLineConnector, InvoiceNode, InvoiceNodeType, NameNode};
+use graphql_types::types::{InvoiceLineConnector, InvoiceNode, NameNode};
 use repository::StorageConnectionManager;
 use service::invoice::{update_outbound_shipment, UpdateOutboundShipmentError};
 

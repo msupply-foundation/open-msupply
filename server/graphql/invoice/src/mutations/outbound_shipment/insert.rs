@@ -4,13 +4,11 @@ use async_graphql::*;
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
 use graphql_core::{
     simple_generic_errors::{
-        CannotReverseInvoiceStatus, DatabaseError, ForeignKey, ForeignKeyError, NodeError,
-        NodeErrorInterface, RecordAlreadyExist, RecordNotFound,
+        DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordAlreadyExist,
     },
-    ContextExt,
 };
 use graphql_types::types::{
-    InvoiceLineConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType, NameNode,
+    InvoiceNode, InvoiceNodeStatus, NameNode,
 };
 use repository::StorageConnectionManager;
 use service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError};

@@ -4,13 +4,12 @@ use domain::{
     EqualFilter, PaginationOption, SimpleStringFilter,
 };
 use graphql_core::{
-    generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
-    simple_generic_errors::{AccessDenied, DatabaseError, InternalError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    standard_graphql_error::{StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{ItemConnector, NameNode};
+use graphql_types::types::{NameNode};
 use service::name::get_names;
 use service::ListResult;
 

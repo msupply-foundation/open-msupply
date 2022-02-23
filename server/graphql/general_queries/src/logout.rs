@@ -1,12 +1,10 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
-    pagination::PaginationInput,
-    simple_generic_errors::{AccessDenied, DatabaseError, InternalError},
-    standard_graphql_error::{StandardGraphqlError, validation_denied_kind_to_string},
+    simple_generic_errors::{AccessDenied, InternalError},
+    standard_graphql_error::{validation_denied_kind_to_string},
     ContextExt,
 };
-use graphql_types::types::ItemConnector;
+
 use service::permission_validation::{validate_auth, ValidationError};
 use service::token::TokenService;
 

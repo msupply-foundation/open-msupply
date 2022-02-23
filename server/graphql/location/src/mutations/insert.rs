@@ -2,13 +2,12 @@ use async_graphql::*;
 use domain::location::InsertLocation;
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, RecordAlreadyExist, RecordBelongsToAnotherStore,
-        RecordNotFound, UniqueValueKey, UniqueValueViolation,
+        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
     },
     ContextExt,
 };
 use graphql_types::types::{
-    DeleteResponse, InvoiceLineConnector, LocationNode, StockLineConnector,
+    LocationNode,
 };
 use repository::RepositoryError;
 use service::location::insert::InsertLocationError as InError;

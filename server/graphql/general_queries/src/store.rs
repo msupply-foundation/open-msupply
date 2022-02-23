@@ -1,13 +1,12 @@
 use async_graphql::*;
 use domain::{PaginationOption, SimpleStringFilter};
 use graphql_core::{
-    generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{SimpleStringFilterInput},
     pagination::PaginationInput,
-    simple_generic_errors::{AccessDenied, DatabaseError, InternalError},
-    standard_graphql_error::{list_error_to_gql_err, validate_auth, StandardGraphqlError},
+    standard_graphql_error::{list_error_to_gql_err},
     ContextExt,
 };
-use graphql_types::types::{ItemConnector, NameNode, StoreNode};
+use graphql_types::types::{StoreNode};
 use repository::StoreFilter;
 #[derive(InputObject, Clone)]
 pub struct StoreFilterInput {
