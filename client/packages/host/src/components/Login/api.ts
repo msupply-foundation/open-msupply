@@ -1,12 +1,9 @@
-import { useRef } from 'react';
 import {
   useOmSupplyApi,
   AuthTokenQuery,
   useMutation,
   MutateOptions,
 } from '@openmsupply-client/common';
-
-const REFRESH_INTERVAL = 10 * 60 * 1000;
 
 export type AuthenticationError = {
   message: string;
@@ -42,7 +39,6 @@ interface LoginCredentials {
 
 export const useAuthToken = () => {
   const { api } = useOmSupplyApi();
-  const timeoutRef = useRef<NodeJS.Timeout>();
   const { mutate, ...rest } = useMutation<
     AuthenticationResponse,
     unknown,
@@ -61,12 +57,6 @@ export const useAuthToken = () => {
       LoginCredentials,
       unknown
     >
-  ) => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    mutate(credentials, options);
-    timeoutRef.current = setTimeout(() => {
-      login(credentials, options);
-    }, REFRESH_INTERVAL);
-  };
+  ) => mutate(credentials, options);
   return { login, ...rest };
 };
