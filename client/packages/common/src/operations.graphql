@@ -1,346 +1,150 @@
-query itemsWithStockLines(
-  $first: Int
-  $offset: Int
-  $key: ItemSortFieldInput!
-  $desc: Boolean
-  $filter: ItemFilterInput
+fragment StocktakeRow on StocktakeNode {
+  __typename
+  id
+  comment
+  description
+  createdDatetime
+  finalisedDatetime
+  stocktakeNumber
+  status
+}
+
+fragment StocktakeLine on StocktakeLineNode {
+  __typename
+  stocktakeId
+  batch
+  itemId
+  id
+  expiryDate
+  packSize
+  snapshotNumberOfPacks
+  countedNumberOfPacks
+  sellPricePerPack
+  costPricePerPack
+  stockLine {
+    id
+  }
+  item {
+    id
+    code
+    name
+    unitName
+  }
+}
+
+fragment Stocktake on StocktakeNode {
+  __typename
+  id
+  stocktakeNumber
+  comment
+  createdDatetime
+  finalisedDatetime
+  status
+  description
+  lines {
+    __typename
+    ... on StocktakeLineConnector {
+      __typename
+      nodes {
+        ...StocktakeLine
+      }
+      totalCount
+    }
+  }
+}
+
+query stocktakes(
   $storeId: String!
+  $filter: StocktakeFilterInput
+  $page: PaginationInput
+  $sort: [StocktakeSortInput!]
 ) {
-  items(
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
+  stocktakes(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
+    __typename
+    ... on StocktakeConnector {
+      nodes {
+        ...StocktakeRow
+      }
+      totalCount
+    }
+  }
+}
+
+query stocktake($stocktakeId: String!, $storeId: String!) {
+  stocktake(id: $stocktakeId, storeId: $storeId) {
+    __typename
+    ... on StocktakeNode {
+      ...Stocktake
+    }
+  }
+}
+
+query stocktakeByNumber($stocktakeNumber: Int!, $storeId: String!) {
+  stocktakeByNumber(stocktakeNumber: $stocktakeNumber, storeId: $storeId) {
+    __typename
+    ... on StocktakeNode {
+      ...Stocktake
+    }
+  }
+}
+
+mutation upsertStocktakeLines(
+  $storeId: String!
+  $deleteStocktakeLines: [DeleteStocktakeLineInput!]
+  $updateStocktakeLines: [UpdateStocktakeLineInput!]
+  $insertStocktakeLines: [InsertStocktakeLineInput!]
+) {
+  batchStocktake(
+    storeId: $storeId
+    input: {
+      deleteStocktakeLines: $deleteStocktakeLines
+      updateStocktakeLines: $updateStocktakeLines
+      insertStocktakeLines: $insertStocktakeLines
+    }
   ) {
     __typename
-    ... on ItemConnector {
+    ... on BatchStocktakeResponses {
       __typename
-      nodes {
-        __typename
-        availableBatches(storeId: $storeId) {
-          __typename
-          ... on StockLineConnector {
-            __typename
-            nodes {
-              __typename
-              availableNumberOfPacks
-              batch
-              costPricePerPack
-              expiryDate
-              id
-              itemId
-              packSize
-              sellPricePerPack
-              totalNumberOfPacks
-              onHold
-              note
-              storeId
-              locationName
-            }
-            totalCount
-          }
-        }
-        code
+      deleteStocktakeLines {
         id
-        isVisible
-        name
-        unitName
       }
-      totalCount
+      insertStocktakeLines {
+        id
+      }
+      updateStocktakeLines {
+        id
+      }
     }
   }
 }
 
-query names(
-  $key: NameSortFieldInput!
-  $desc: Boolean
-  $first: Int
-  $offset: Int
-  $filter: NameFilterInput
-) {
-  names(
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on NameConnector {
-      __typename
-      nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-        store {
-          id
-          code
-        }
-      }
-      totalCount
-    }
-  }
-}
-
-query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
-  stockCounts(
-    daysTillExpired: $daysTillExpired
-    timezoneOffset: $timezoneOffset
-  ) {
-    expired
-    expiringSoon
-  }
-}
-
-query locations($sort: [LocationSortInput!]) {
-  locations(sort: $sort) {
+mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
+  batchStocktake(storeId: $storeId, input: { deleteStocktakes: $ids }) {
     __typename
-    ... on LocationConnector {
-      __typename
-      nodes {
+    ... on BatchStocktakeResponses {
+      deleteStocktakes {
         __typename
         id
-        name
-        onHold
-        code
       }
-      totalCount
     }
   }
 }
 
-mutation insertLocation($input: InsertLocationInput!, $storeId: String!) {
-  insertLocation(input: $input, storeId: $storeId) {
-    ... on InsertLocationError {
-      __typename
-      error {
-        description
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-        ... on UniqueValueViolation {
-          __typename
-          description
-          field
-        }
-      }
-    }
-    ... on LocationNode {
-      id
-      name
-      code
-      onHold
-    }
-  }
-}
-
-mutation updateLocation($input: UpdateLocationInput!, $storeId: String!) {
-  updateLocation(input: $input, storeId: $storeId) {
-    ... on UpdateLocationError {
-      __typename
-      error {
-        description
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordBelongsToAnotherStore {
-          __typename
-          description
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on UniqueValueViolation {
-          __typename
-          description
-          field
-        }
-      }
-    }
-    ... on LocationNode {
-      id
-      name
-      onHold
-      code
-    }
-  }
-}
-
-mutation deleteLocation($storeId: String!, $input: DeleteLocationInput!) {
-  deleteLocation(storeId: $storeId, input: $input) {
-    ... on DeleteLocationError {
-      __typename
-      error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordBelongsToAnotherStore {
-          __typename
-          description
-        }
-        ... on LocationInUse {
-          __typename
-          description
-          stockLines {
-            ... on StockLineConnector {
-              __typename
-              nodes {
-                __typename
-                id
-                itemId
-              }
-              totalCount
-            }
-          }
-          invoiceLines {
-            ... on InvoiceLineConnector {
-              __typename
-              nodes {
-                __typename
-                id
-              }
-            }
-            totalCount
-          }
-        }
-      }
-    }
-    ... on DeleteResponse {
+mutation updateStocktake($input: UpdateStocktakeInput!, $storeId: String!) {
+  updateStocktake(input: $input, storeId: $storeId) {
+    ... on StocktakeNode {
       __typename
       id
     }
   }
 }
 
-query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(page: { first: $first, offset: $offset }, filter: $filter) {
-    ... on StoreConnector {
+mutation insertStocktake($input: InsertStocktakeInput!, $storeId: String!) {
+  insertStocktake(input: $input, storeId: $storeId) {
+    ... on StocktakeNode {
       __typename
-      nodes {
-        code
-        id
-      }
-      totalCount
-    }
-  }
-}
-
-query authToken($username: String!, $password: String!) {
-  authToken(password: $password, username: $username) {
-    ... on AuthToken {
-      __typename
-      token
-    }
-    ... on AuthTokenError {
-      __typename
-      error {
-        ... on UserNameDoesNotExist {
-          __typename
-          description
-        }
-        ... on InvalidCredentials {
-          __typename
-          description
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        description
-      }
-    }
-  }
-}
-
-query masterLists(
-  $first: Int
-  $offset: Int
-  $key: MasterListSortFieldInput!
-  $desc: Boolean
-  $filter: MasterListFilterInput
-  $storeId: String!
-) {
-  masterLists(
-    filter: $filter
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-  ) {
-    ... on MasterListConnector {
-      __typename
-      nodes {
-        name
-        code
-        lines {
-          nodes {
-            id
-            itemId
-            item {
-              code
-              id
-              unitName
-              name
-              isVisible
-              availableBatches(storeId: $storeId) {
-                ... on StockLineConnector {
-                  __typename
-                  nodes {
-                    __typename
-                    availableNumberOfPacks
-                    batch
-                    costPricePerPack
-                    expiryDate
-                    itemId
-                    id
-                    totalNumberOfPacks
-                    storeId
-                    sellPricePerPack
-                    packSize
-                    onHold
-                    note
-                    locationName
-                  }
-                  totalCount
-                }
-              }
-            }
-          }
-          totalCount
-        }
-        code
-        description
-        id
-      }
-      totalCount
+      id
+      stocktakeNumber
     }
   }
 }
