@@ -4,19 +4,19 @@ import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   Store,
-  useHostContext,
+  useAuthState,
   useLocalStorage,
   useLocation,
   useNavigate,
 } from '@openmsupply-client/common';
-import { useAuthToken } from './api';
+import { AuthenticationError, useAuthToken } from './api';
 
 interface LoginForm {
-  isLoggingIn: boolean;
+  error?: AuthenticationError;
   password: string;
   store?: Store;
   username: string;
-  setIsLoggingIn: (isLoggingIn: boolean) => void;
+  setError: (error?: AuthenticationError) => void;
   setPassword: (password: string) => void;
   setStore: (store?: Store) => void;
   setUsername: (username: string) => void;
@@ -27,12 +27,13 @@ interface State {
 }
 
 export const useLoginFormState = create<LoginForm>(set => ({
-  isLoggingIn: false,
+  error: undefined,
   password: '',
   store: undefined,
   username: '',
-  setIsLoggingIn: (isLoggingIn: boolean) =>
-    set(state => ({ ...state, isLoggingIn })),
+
+  setError: (error?: AuthenticationError) =>
+    set(state => ({ ...state, error })),
   setPassword: (password: string) => set(state => ({ ...state, password })),
   setStore: (store?: Store) => set(state => ({ ...state, store })),
   setUsername: (username: string) => set(state => ({ ...state, username })),
@@ -44,43 +45,43 @@ export const useLoginForm = (
   const state = useLoginFormState();
   const navigate = useNavigate();
   const location = useLocation();
-  const { setStore: setHostStore, setUser } = useHostContext();
-  const [mostRecentlyUsedCredentials, setMRUCredentials] =
-    useLocalStorage('/mru/credentials');
-  const [, setAuthToken] = useLocalStorage('/authentication/token');
-  const [, setStoreId] = useLocalStorage('/authentication/storeid');
+  const { onLoggedIn } = useAuthState();
+  const [mostRecentlyUsedCredentials] = useLocalStorage('/mru/credentials');
+  const { login, isLoading: isLoggingIn } = useAuthToken();
   const {
-    isLoggingIn,
     password,
-    setIsLoggingIn,
     setPassword,
     setStore,
     setUsername,
     store,
     username,
+    error,
+    setError,
   } = state;
-  const { data: authenticationResponse, isLoading: isAuthenticating } =
-    useAuthToken({ username, password }, isLoggingIn);
 
   const onLogin = () => {
-    setIsLoggingIn(true);
+    login(
+      { username, password },
+      {
+        onSuccess: ({ error, token }) => {
+          setError(error);
+          setPassword('');
+
+          if (!token) return;
+
+          onLoggedIn({ id: '', name: username }, token, store);
+
+          // navigate back, if redirected by the <RequireAuthentication /> component
+          // or to the dashboard as a default
+          const state = location.state as State | undefined;
+          const from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
+          navigate(from, { replace: true });
+        },
+      }
+    );
   };
 
   const isValid = !!username && !!password && !!store?.id;
-  const onAuthenticated = (token: string) => {
-    setPassword('');
-    setAuthToken(token);
-    setMRUCredentials({ username: username, store: store });
-    setUser({ id: '', name: username });
-    setStoreId(store?.id ?? '');
-
-    if (store) setHostStore(store);
-    // navigate back, if redirected by the <RequireAuthentication /> component
-    // or to the dashboard as a default
-    const state = location.state as State | undefined;
-    const from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
-    navigate(from, { replace: true });
-  };
 
   React.useEffect(() => {
     if (mostRecentlyUsedCredentials?.store && !store) {
@@ -92,13 +93,5 @@ export const useLoginForm = (
     }
   }, [mostRecentlyUsedCredentials]);
 
-  React.useEffect(() => {
-    setIsLoggingIn(isAuthenticating);
-
-    if (authenticationResponse?.token) {
-      onAuthenticated(authenticationResponse.token);
-    }
-  }, [authenticationResponse, isAuthenticating]);
-
-  return { authenticationResponse, isValid, onLogin, ...state };
+  return { isValid, onLogin, isLoggingIn, ...state, error };
 };

@@ -25,3 +25,4 @@ export * from './useFilterBy';
 export * from './useNotification';
 export * from './useBufferState';
 export * from './useEditModal';
+export * from './useAuthState';
