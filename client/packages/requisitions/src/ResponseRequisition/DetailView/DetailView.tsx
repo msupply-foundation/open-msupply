@@ -16,7 +16,10 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { useResponseRequisition } from '../api';
+import {
+  useResponseRequisition,
+  ResponseRequisitionLineFragment,
+} from '../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 
 export const DetailView: FC = () => {
@@ -26,13 +29,20 @@ export const DetailView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('distribution');
 
+  const onRowClick = React.useCallback(
+    (line: ResponseRequisitionLineFragment) => {
+      onOpen(line.item);
+    },
+    [onOpen]
+  );
+
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons onAddItem={() => onOpen(null)} />
       <Toolbar />
-      <ContentArea />
+      <ContentArea onRowClick={onRowClick} />
       <Footer />
       <SidePanel />
       {isOpen && (
