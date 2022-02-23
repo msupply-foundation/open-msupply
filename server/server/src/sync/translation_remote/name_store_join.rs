@@ -49,7 +49,13 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
                 record: sync_record.data.clone(),
             })? {
             Some(name) => name,
-            None => todo!(),
+            None => {
+                return Err(SyncTranslationError {
+                    table_name,
+                    source: anyhow::Error::msg(format!("Failed to get name: {}", data.name_ID)),
+                    record: sync_record.data.clone(),
+                })
+            }
         };
 
         Ok(Some(IntegrationRecord::from_upsert(

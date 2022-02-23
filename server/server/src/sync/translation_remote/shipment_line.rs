@@ -86,7 +86,7 @@ impl RemotePullTranslation for ShipmentLineTranslation {
             None => {
                 return Err(SyncTranslationError {
                     table_name,
-                    source: anyhow::Error::msg(format!("Failed to find item: {}", data.item_ID)),
+                    source: anyhow::Error::msg(format!("Failed to get item: {}", data.item_ID)),
                     record: sync_record.data.clone(),
                 })
             }

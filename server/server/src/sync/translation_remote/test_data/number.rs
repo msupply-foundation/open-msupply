@@ -2,6 +2,7 @@ use repository::schema::{NumberRow, NumberRowType, RemoteSyncBufferAction, Remot
 
 use crate::sync::translation_remote::{
     test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    TRANSLATION_RECORD_NUMBER,
 };
 
 const NUMBER_STOCK_TAKE: (&'static str, &'static str) = (
@@ -50,8 +51,6 @@ const SUPPLIER_INVOICE: (&'static str, &'static str) = (
 );
 
 #[allow(dead_code)]
-const RECORD_TYPE: &'static str = "number";
-#[allow(dead_code)]
 pub fn get_test_number_records() -> Vec<TestSyncRecord> {
     vec![
         TestSyncRecord {
@@ -66,7 +65,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
             identifier: "Stocktake",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Number_10".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_NUMBER.to_string(),
                 record_id: NUMBER_STOCK_TAKE.0.to_string(),
                 data: NUMBER_STOCK_TAKE.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
@@ -84,7 +83,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
             identifier: "Inventory adjustment",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Number_20".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_NUMBER.to_string(),
                 record_id: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
                 data: NUMBER_INVENTORY_ADJUSTMENT.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
@@ -102,7 +101,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
             identifier: "Customer invoice",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Number_30".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_NUMBER.to_string(),
                 record_id: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
                 data: CUSTOMER_INVOICE_ADJUSTMENT.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
@@ -120,7 +119,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
             identifier: "Supplier invoice",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Number_40".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_NUMBER.to_string(),
                 record_id: SUPPLIER_INVOICE.0.to_string(),
                 data: SUPPLIER_INVOICE.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
@@ -131,7 +130,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
             identifier: "Purchase order",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Number_50".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_NUMBER.to_string(),
                 record_id: PURCHASE_ORDER.0.to_string(),
                 data: PURCHASE_ORDER.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
