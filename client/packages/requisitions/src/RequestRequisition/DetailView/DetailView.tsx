@@ -43,7 +43,7 @@ export const DetailView: FC = () => {
   return !!data ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons
-        isDisabled={!data || !isDisabled}
+        isDisabled={!data || isDisabled}
         onAddItem={() => onOpen(null)}
       />
       <Toolbar />
