@@ -77,7 +77,6 @@ impl RemotePullTranslation for StocktakeLineTranslation {
                 item_id: data.item_ID,
                 batch: data.Batch,
                 expiry_date: data.expiry,
-                // TODO: correct?
                 pack_size: Some(data.snapshot_packsize),
                 cost_price_per_pack: Some(data.cost_price),
                 sell_price_per_pack: Some(data.sell_price),
