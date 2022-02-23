@@ -452,17 +452,11 @@ fragment InvoiceNode on InvoiceNode {
   otherPartyId
   otherPartyName
   pricing {
-    ...InvoicePriceResponse
+    ...InvoicePricingNode
   }
   status
   theirReference
   type
-}
-
-fragment InvoicePriceResponse on InvoicePriceResponse {
-  __typename
-  ...NodeError
-  ...InvoicePricingNode
 }
 
 fragment InvoicePricingNode on InvoicePricingNode {
@@ -491,7 +485,7 @@ fragment InvoiceLineNode on InvoiceLineNode {
   sellPricePerPack
   note
   stockLine {
-    ...StockLineResponse
+    ...StockLineNode
   }
 }
 
