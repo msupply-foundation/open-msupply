@@ -13,7 +13,7 @@ use super::{
     RemotePullTranslation, TRANSLATION_RECORD_TRANSACT,
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 enum LegacyTransactType {
     /// Supplier invoice
     #[serde(rename = "si")]
@@ -22,12 +22,16 @@ enum LegacyTransactType {
     #[serde(rename = "ci")]
     Ci,
     // customer credit
-    //cc,
+    #[serde(rename = "cc")]
+    Cc,
     // supplier credit
-    //sc,
+    #[serde(rename = "sc")]
+    Sc,
+    #[serde(other)]
+    Other,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 enum LegacyTransactStatus {
     /// new
     #[serde(rename = "nw")]
@@ -110,7 +114,11 @@ impl RemotePullTranslation for ShipmentTranslation {
                     record: sync_record.data.clone(),
                 }
             })?;
-
+        let shipment_type = shipment_type(&data._type).ok_or(SyncTranslationError {
+            table_name,
+            source: anyhow::Error::msg(format!("Unsupported shipment type: {:?}", data._type)),
+            record: sync_record.data.clone(),
+        })?;
         let confirm_time = data.confirm_time;
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Shipment(InvoiceRow {
@@ -120,7 +128,7 @@ impl RemotePullTranslation for ShipmentTranslation {
                 // TODO is None correct?
                 name_store_id: None,
                 invoice_number: data.invoice_num,
-                r#type: shipment_type(&data._type),
+                r#type: shipment_type,
                 status: shipment_status(&data.status),
                 on_hold: data.hold,
                 comment: data.comment,
@@ -145,10 +153,11 @@ impl RemotePullTranslation for ShipmentTranslation {
     }
 }
 
-fn shipment_type(_type: &LegacyTransactType) -> InvoiceRowType {
+fn shipment_type(_type: &LegacyTransactType) -> Option<InvoiceRowType> {
     match _type {
-        LegacyTransactType::Si => InvoiceRowType::InboundShipment,
-        LegacyTransactType::Ci => InvoiceRowType::OutboundShipment,
+        LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
+        LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
+        _ => return None,
     }
 }
 
