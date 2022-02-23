@@ -41,9 +41,7 @@ mod graphql {
     macro_rules! assert_unwrap_batch {
         ($line:ident) => {{
             let line_cloned = $line.clone();
-            let batch_variant = assert_unwrap_optional_key!(line_cloned, stock_line);
-            let batch =
-                assert_unwrap_enum!(batch_variant, update::StockLineResponse::StockLineNode);
+            let batch = assert_unwrap_optional_key!(line_cloned, stock_line);
             batch
         }};
     }
