@@ -1,1 +1,1 @@
-export const RequestLineEditForm = () => {};
+export const ResponseLineEditForm = () => {};
