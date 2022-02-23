@@ -204,7 +204,7 @@ export const useDeleteSelectedLines = (): {
   const onDelete = async () => {
     if (selectedRows && selectedRows?.length > 0) {
       const number = selectedRows?.length;
-      const successSnack = success(t('message.deleted-lines', { number }));
+      const successSnack = success(t('messages.deleted-lines', { number }));
       mutate(selectedRows, {
         onSuccess: () => {
           queryClient.invalidateQueries(queryKey);

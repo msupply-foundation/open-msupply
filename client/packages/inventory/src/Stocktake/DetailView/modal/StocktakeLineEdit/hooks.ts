@@ -2,7 +2,6 @@ import { useStocktakeFields } from './../../../api/hooks';
 import { StocktakeLineFragment } from './../../../api/operations.generated';
 import React, { useEffect, Dispatch, SetStateAction } from 'react';
 import {
-  useParams,
   StockLine,
   RecordPatch,
   generateUUID,

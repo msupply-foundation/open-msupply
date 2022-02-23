@@ -99,6 +99,7 @@ export const getInboundShipmentListViewApi = (
   },
   onDelete: async (invoices: InvoiceRow[]): Promise<string[]> => {
     const result = await api.deleteInboundShipments({
+      storeId,
       deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
     });
 
@@ -114,7 +115,6 @@ export const getInboundShipmentListViewApi = (
     patch: Partial<Invoice> & { id: string }
   ): Promise<string> => {
     const result = await api.updateInboundShipment({
-      storeId,
       input: invoiceToInput(patch),
     });
 
