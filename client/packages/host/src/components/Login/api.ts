@@ -1,15 +1,19 @@
+import { useRef } from 'react';
 import {
-  UseQueryResult,
   useOmSupplyApi,
-  useQuery,
   AuthTokenQuery,
+  useMutation,
+  MutateOptions,
 } from '@openmsupply-client/common';
 
+const REFRESH_INTERVAL = 10 * 60 * 1000;
+
+export type AuthenticationError = {
+  message: string;
+};
 interface AuthenticationResponse {
   token: string;
-  error?: {
-    message: string;
-  };
+  error?: AuthenticationError;
 }
 
 const tokenGuard = (authTokenQuery: AuthTokenQuery): AuthenticationResponse => {
@@ -36,22 +40,33 @@ interface LoginCredentials {
   password: string;
 }
 
-export const useAuthToken = (
-  credentials: LoginCredentials,
-  login: boolean
-): UseQueryResult<AuthenticationResponse> => {
+export const useAuthToken = () => {
   const { api } = useOmSupplyApi();
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const { mutate, ...rest } = useMutation<
+    AuthenticationResponse,
+    unknown,
+    LoginCredentials,
+    unknown
+  >(async credentials => {
+    const result = await api.authToken(credentials);
+    return tokenGuard(result);
+  });
 
-  return useQuery(
-    ['authToken', credentials],
-    async () => {
-      const result = await api.authToken(credentials);
-
-      return tokenGuard(result);
-    },
-    {
-      cacheTime: 0,
-      enabled: login,
-    }
-  );
+  const login = (
+    credentials: LoginCredentials,
+    options: MutateOptions<
+      AuthenticationResponse,
+      unknown,
+      LoginCredentials,
+      unknown
+    >
+  ) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    mutate(credentials, options);
+    timeoutRef.current = setTimeout(() => {
+      login(credentials, options);
+    }, REFRESH_INTERVAL);
+  };
+  return { login, ...rest };
 };
