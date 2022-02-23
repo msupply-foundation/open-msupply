@@ -1,13 +1,21 @@
-use chrono::NaiveDate;
+use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use log::{info, warn};
 use repository::{
-    schema::{InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow},
-    InvoiceRepository, NameStoreJoinRepository, NumberRowRepository, RepositoryError,
-    StockLineRowRepository, StorageConnection, TransactionError,
+    schema::{
+        InvoiceLineRow, InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow,
+        StocktakeLineRow, StocktakeRow,
+    },
+    InvoiceLineRowRepository, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
+    RepositoryError, StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository,
+    StorageConnection, TransactionError,
 };
 use serde::{Deserialize, Deserializer};
 
-use crate::sync::translation_remote::shipment::ShipmentTranslation;
+use crate::sync::translation_remote::{
+    name_store_join::NameStoreJoinTranslation, shipment::ShipmentTranslation,
+    shipment_line::ShipmentLineTranslation, stocktake::StocktakeTranslation,
+    stocktake_line::StocktakeLineTranslation,
+};
 
 use self::number::NumberTranslation;
 use self::stock_line::StockLineTranslation;
@@ -17,7 +25,11 @@ use super::{SyncImportError, SyncTranslationError};
 mod name_store_join;
 mod number;
 mod shipment;
+mod shipment_line;
 mod stock_line;
+mod stocktake;
+mod stocktake_line;
+#[cfg(test)]
 pub mod test_data;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -26,6 +38,9 @@ pub enum IntegrationUpsertRecord {
     StockLine(StockLineRow),
     NameStoreJoin(NameStoreJoinRow),
     Shipment(InvoiceRow),
+    ShipmentLine(InvoiceLineRow),
+    Stocktake(StocktakeRow),
+    StocktakeLine(StocktakeLineRow),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -54,6 +69,9 @@ pub const TRANSLATION_RECORD_NUMBER: &str = "number";
 pub const TRANSLATION_RECORD_ITEM_LINE: &str = "item_line";
 pub const TRANSLATION_RECORD_NAME_STORE_JOIN: &str = "name_store_join";
 pub const TRANSLATION_RECORD_TRANSACT: &str = "transact";
+pub const TRANSLATION_RECORD_TRANS_LINE: &str = "trans_line";
+pub const TRANSLATION_RECORD_STOCKTAKE: &str = "Stock_take";
+pub const TRANSLATION_RECORD_STOCKTAKE_LINE: &str = "Stock_take_lines";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
@@ -62,6 +80,9 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_ITEM_LINE,
     TRANSLATION_RECORD_NAME_STORE_JOIN,
     TRANSLATION_RECORD_TRANSACT,
+    TRANSLATION_RECORD_TRANS_LINE,
+    TRANSLATION_RECORD_STOCKTAKE,
+    TRANSLATION_RECORD_STOCKTAKE_LINE,
 ];
 
 /// Imports sync records and writes them to the DB
@@ -98,7 +119,11 @@ fn do_translation(
     let translations: Vec<Box<dyn RemotePullTranslation>> = vec![
         Box::new(NumberTranslation {}),
         Box::new(StockLineTranslation {}),
+        Box::new(NameStoreJoinTranslation {}),
         Box::new(ShipmentTranslation {}),
+        Box::new(ShipmentLineTranslation {}),
+        Box::new(StocktakeTranslation {}),
+        Box::new(StocktakeLineTranslation {}),
     ];
     for translation in translations {
         if let Some(mut result) = translation.try_translate_pull(connection, sync_record)? {
@@ -123,6 +148,15 @@ fn integrate_record(
             NameStoreJoinRepository::new(con).upsert_one(record)
         }
         IntegrationUpsertRecord::Shipment(record) => InvoiceRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::ShipmentLine(record) => {
+            InvoiceLineRowRepository::new(con).upsert_one(record)
+        }
+        IntegrationUpsertRecord::Stocktake(record) => {
+            StocktakeRowRepository::new(con).upsert_one(record)
+        }
+        IntegrationUpsertRecord::StocktakeLine(record) => {
+            StocktakeLineRowRepository::new(con).upsert_one(record)
+        }
     }
 }
 
@@ -169,4 +203,11 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
     let s: Option<String> = Option::deserialize(d)?;
     Ok(s.filter(|s| s != "0000-00-00")
         .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
+}
+
+pub fn date_and_time_to_datatime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
+    NaiveDateTime::new(
+        date,
+        NaiveTime::from_hms(0, 0, 0) + Duration::seconds(seconds),
+    )
 }
