@@ -11,18 +11,15 @@ interface ContentAreaProps {
 }
 
 export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
-  const { lines, onChangeSortBy, sortBy, pagination } =
-    useRequestRequisitionLines();
+  const { lines, onChangeSortBy, sortBy } = useRequestRequisitionLines();
   const columns = useRequestRequisitionColumns({ sortBy, onChangeSortBy });
   const t = useTranslation('common');
 
   return (
     <DataTable
       onRowClick={onRowClick}
-      pagination={{ ...pagination, total: lines.length }}
       columns={columns}
       data={lines}
-      onChangePage={pagination.onChangePage}
       noDataMessage={t('error.no-items')}
     />
   );
