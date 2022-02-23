@@ -13,15 +13,18 @@ use super::{
     TRANSLATION_RECORD_TRANS_LINE,
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 enum LegacyTransLineType {
     #[serde(rename = "stock_in")]
     StockIn,
-    // TODO check stock_out exist in mSupply:
     #[serde(rename = "stock_out")]
     StockOut,
     #[serde(rename = "placeholder")]
     Placeholder,
+    #[serde(rename = "service")]
+    Service,
+    #[serde(rename = "non_stock")]
+    NonStock,
 }
 
 #[allow(non_snake_case)]
@@ -88,7 +91,11 @@ impl RemotePullTranslation for ShipmentLineTranslation {
                 })
             }
         };
-
+        let line_type = to_shipment_line_type(&data._type).ok_or(SyncTranslationError {
+            table_name,
+            source: anyhow::Error::msg(format!("Unsupported trans_line type: {:?}", data._type)),
+            record: sync_record.data.clone(),
+        })?;
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::ShipmentLine(InvoiceLineRow {
                 id: data.ID,
@@ -106,7 +113,7 @@ impl RemotePullTranslation for ShipmentLineTranslation {
                 total_before_tax: data.sell_price * data.quantity as f64,
                 total_after_tax: data.sell_price * data.quantity as f64,
                 tax: None,
-                r#type: to_shipment_line_type(data._type),
+                r#type: line_type,
                 number_of_packs: data.quantity,
                 note: data.note,
             }),
@@ -114,10 +121,13 @@ impl RemotePullTranslation for ShipmentLineTranslation {
     }
 }
 
-fn to_shipment_line_type(_type: LegacyTransLineType) -> InvoiceLineRowType {
-    match _type {
+fn to_shipment_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowType> {
+    let invoice_line_type = match _type {
         LegacyTransLineType::StockIn => InvoiceLineRowType::StockIn,
         LegacyTransLineType::StockOut => InvoiceLineRowType::StockOut,
         LegacyTransLineType::Placeholder => InvoiceLineRowType::UnallocatedStock,
-    }
+        LegacyTransLineType::Service => InvoiceLineRowType::Service,
+        LegacyTransLineType::NonStock => return None,
+    };
+    Some(invoice_line_type)
 }
