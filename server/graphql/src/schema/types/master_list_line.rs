@@ -52,6 +52,7 @@ impl MasterListLineNode {
         let item_option = loader
             .load_one(self.master_list_line.item_id.clone())
             .await?;
+
         let item = item_option.ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item_id {} for master_list_line_id {}",
@@ -60,7 +61,7 @@ impl MasterListLineNode {
             .extend(),
         )?;
 
-        Ok(ItemNode::from(item))
+        Ok(ItemNode::from_domain(item))
     }
 }
 

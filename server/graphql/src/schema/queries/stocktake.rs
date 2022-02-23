@@ -1,13 +1,4 @@
-use async_graphql::*;
-use domain::DatetimeFilter;
-use domain::EqualFilter;
-use domain::PaginationOption;
-use repository::schema::StocktakeStatus;
-use repository::StocktakeFilter;
-use service::permission_validation::Resource;
-use service::permission_validation::ResourceAccessRequest;
-use service::ListError;
-
+use crate::schema::types::sort_filter_types::map_filter;
 use crate::schema::types::ErrorWrapper;
 use crate::schema::types::NodeError;
 use crate::schema::types::NodeErrorInterface;
@@ -15,34 +6,52 @@ use crate::schema::types::RecordNotFound;
 use crate::schema::types::StocktakeNode;
 use crate::schema::types::StocktakeNodeStatus;
 use crate::schema::types::{
-    sort_filter_types::{
-        convert_sort, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterInput,
-        EqualFilterStringInput,
-    },
+    sort_filter_types::{DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput},
     PaginationInput,
 };
 use crate::standard_graphql_error::list_error_to_gql_err;
 use crate::standard_graphql_error::validate_auth;
 use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
-
-use super::SortInput;
+use async_graphql::*;
+use domain::DatetimeFilter;
+use domain::EqualFilter;
+use domain::PaginationOption;
+use repository::StocktakeFilter;
+use repository::{StocktakeSort, StocktakeSortField};
+use service::permission_validation::Resource;
+use service::permission_validation::ResourceAccessRequest;
+use service::ListError;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::StocktakeSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum StocktakeSortFieldInput {
     Status,
     CreatedDatetime,
     FinalisedDatetime,
 }
-pub type StocktakeSortInput = SortInput<StocktakeSortFieldInput>;
+
+#[derive(InputObject)]
+pub struct StocktakeSortInput {
+    /// Sort query result by `key`
+    key: StocktakeSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterStocktakeStatusInput {
+    pub equal_to: Option<StocktakeNodeStatus>,
+    pub equal_any: Option<Vec<StocktakeNodeStatus>>,
+    pub not_equal_to: Option<StocktakeNodeStatus>,
+}
 
 #[derive(InputObject, Clone)]
 pub struct StocktakeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub stocktake_number: Option<EqualFilterBigNumberInput>,
-    pub status: Option<EqualFilterInput<StocktakeNodeStatus>>,
+    pub status: Option<EqualFilterStocktakeStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
 }
@@ -53,7 +62,9 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             id: f.id.map(EqualFilter::from),
             store_id: None,
             stocktake_number: f.stocktake_number.map(EqualFilter::from),
-            status: f.status.map(|t| t.map_to_domain(StocktakeStatus::from)),
+            status: f
+                .status
+                .map(|t| map_filter!(t, StocktakeNodeStatus::to_domain)),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
         }
@@ -95,7 +106,10 @@ pub fn stocktakes(
         store_id,
         page.map(PaginationOption::from),
         filter.map(StocktakeFilter::from),
-        convert_sort(sort),
+        // Currently only one sort option is supported, use the first from the list.
+        sort.map(|mut sort_list| sort_list.pop())
+            .flatten()
+            .map(|sort| sort.to_domain()),
     ) {
         Ok(stocktakes) => Ok(StocktakesResponse::Response(StocktakeConnector {
             total_count: stocktakes.count,
@@ -192,5 +206,22 @@ pub fn stocktake_by_number(
         }
 
         Err(err) => Err(list_error_to_gql_err(err)),
+    }
+}
+
+impl StocktakeSortInput {
+    pub fn to_domain(self) -> StocktakeSort {
+        use StocktakeSortField as to;
+        use StocktakeSortFieldInput as from;
+        let key = match self.key {
+            from::Status => to::Status,
+            from::CreatedDatetime => to::CreatedDatetime,
+            from::FinalisedDatetime => to::FinalisedDatetime,
+        };
+
+        StocktakeSort {
+            key,
+            desc: self.desc,
+        }
     }
 }

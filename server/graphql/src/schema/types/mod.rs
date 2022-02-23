@@ -1,12 +1,7 @@
-use crate::schema::{
-    mutations::UserRegisterErrorInterface,
-    queries::{AuthTokenErrorInterface, LogoutErrorInterface, RefreshTokenErrorInterface},
-};
+use async_graphql::*;
 use domain::PaginationOption;
 use repository::RepositoryError;
-use service::{usize_to_u32, ListError, ListResult, SingleRecordError};
-
-use async_graphql::*;
+use service::SingleRecordError;
 
 // M1 speced API is moved to their own files
 // Types defined here are prototype types and should be removed before M1 release to avoid confusion (for consumers and devs)
@@ -55,54 +50,6 @@ pub use self::stocktake::*;
 pub mod stocktake_line;
 pub use self::stocktake_line::*;
 
-use super::mutations::{inbound_shipment::*, outbound_shipment::*};
-
-/// Generic Connector
-#[derive(SimpleObject)]
-#[graphql(concrete(name = "InvoiceConnector", params(InvoiceNode)))]
-#[graphql(concrete(name = "InvoiceLineConnector", params(InvoiceLineNode)))]
-#[graphql(concrete(name = "StockLineConnector", params(StockLineNode)))]
-#[graphql(concrete(name = "LocationConnector", params(LocationNode)))]
-pub struct Connector<T: OutputType> {
-    total_count: u32,
-    nodes: Vec<T>,
-}
-
-impl<T: OutputType> Connector<T> {
-    pub fn empty() -> Connector<T> {
-        Connector {
-            total_count: 0,
-            nodes: vec![],
-        }
-    }
-}
-
-/// Convert from ListResult (service return) to Generic Connector
-impl<DomainType, GQLType> From<ListResult<DomainType>> for Connector<GQLType>
-where
-    GQLType: From<DomainType> + OutputType,
-{
-    fn from(ListResult { count, rows }: ListResult<DomainType>) -> Self {
-        Connector {
-            total_count: count,
-            nodes: rows.into_iter().map(GQLType::from).collect(),
-        }
-    }
-}
-
-/// Convert from Vec<T> (loader result) to Generic Connector
-impl<DomainType, GQLType> From<Vec<DomainType>> for Connector<GQLType>
-where
-    GQLType: From<DomainType> + OutputType,
-{
-    fn from(rows: Vec<DomainType>) -> Self {
-        Connector {
-            total_count: usize_to_u32(rows.len()),
-            nodes: rows.into_iter().map(GQLType::from).collect(),
-        }
-    }
-}
-
 /// Pagination input.
 ///
 /// Option to limit the number of returned items and/or queries large lists in "pages".
@@ -127,86 +74,12 @@ impl From<PaginationInput> for PaginationOption {
 
 /// Generic Error Wrapper
 #[derive(SimpleObject)]
-#[graphql(concrete(name = "ConnectorError", params(ConnectorErrorInterface)))]
 #[graphql(concrete(name = "NodeError", params(NodeErrorInterface)))]
-#[graphql(concrete(
-    name = "InsertOutboundShipmentError",
-    params(InsertOutboundShipmentErrorInterface)
-))]
-#[graphql(concrete(
-    name = "UpdateOutboundShipmentError",
-    params(UpdateOutboundShipmentErrorInterface)
-))]
-#[graphql(concrete(
-    name = "DeleteOutboundShipmentError",
-    params(DeleteOutboundShipmentErrorInterface)
-))]
-#[graphql(concrete(
-    name = "InsertInboundShipmentError",
-    params(InsertInboundShipmentErrorInterface)
-))]
-#[graphql(concrete(
-    name = "UpdateInboundShipmentError",
-    params(UpdateInboundShipmentErrorInterface)
-))]
-#[graphql(concrete(
-    name = "DeleteInboundShipmentError",
-    params(DeleteInboundShipmentErrorInterface)
-))]
-#[graphql(concrete(
-    name = "InsertInboundShipmentLineError",
-    params(InsertInboundShipmentLineErrorInterface)
-))]
-#[graphql(concrete(
-    name = "UpdateInboundShipmentLineError",
-    params(UpdateInboundShipmentLineErrorInterface)
-))]
-#[graphql(concrete(
-    name = "DeleteInboundShipmentLineError",
-    params(DeleteInboundShipmentLineErrorInterface)
-))]
-#[graphql(concrete(
-    name = "InsertOutboundShipmentLineError",
-    params(InsertOutboundShipmentLineErrorInterface)
-))]
-#[graphql(concrete(
-    name = "UpdateOutboundShipmentLineError",
-    params(UpdateOutboundShipmentLineErrorInterface)
-))]
-#[graphql(concrete(
-    name = "DeleteOutboundShipmentLineError",
-    params(DeleteOutboundShipmentLineErrorInterface)
-))]
-#[graphql(concrete(name = "UserRegisterError", params(UserRegisterErrorInterface)))]
-#[graphql(concrete(name = "AuthTokenError", params(AuthTokenErrorInterface)))]
-#[graphql(concrete(name = "RefreshTokenError", params(RefreshTokenErrorInterface)))]
-#[graphql(concrete(name = "LogoutError", params(LogoutErrorInterface)))]
-#[graphql(concrete(
-    name = "InsertOutboundShipmentServiceLineError",
-    params(InsertOutboundShipmentServiceLineErrorInterface)
-))]
-#[graphql(concrete(
-    name = "UpdateOutboundShipmentServiceLineError",
-    params(UpdateOutboundShipmentServiceLineErrorInterface)
-))]
-#[graphql(concrete(
-    name = "DeleteOutboundShipmentServiceLineError",
-    params(DeleteOutboundShipmentServiceLineErrorInterface)
-))]
 pub struct ErrorWrapper<T: OutputType> {
     pub error: T,
 }
 
-pub type ConnectorError = ErrorWrapper<ConnectorErrorInterface>;
 pub type NodeError = ErrorWrapper<NodeErrorInterface>;
-
-// Generic Connector Error Interface
-#[derive(Interface)]
-#[graphql(field(name = "description", type = "&str"))]
-pub enum ConnectorErrorInterface {
-    DatabaseError(DatabaseError),
-    PaginationError(PaginationError),
-}
 
 // Generic Node Error Interface
 #[derive(Interface)]
@@ -222,31 +95,6 @@ impl NodeErrorInterface {
     }
 }
 
-/// Convert from ListError (service result) to Generic connector error
-impl From<ListError> for ConnectorError {
-    fn from(error: ListError) -> Self {
-        let error = match error {
-            ListError::DatabaseError(error) => {
-                ConnectorErrorInterface::DatabaseError(DatabaseError(error))
-            }
-            ListError::LimitBelowMin(min) => {
-                ConnectorErrorInterface::PaginationError(PaginationError(RangeError {
-                    field: RangeField::First,
-                    range: Range::Min(min),
-                }))
-            }
-            ListError::LimitAboveMax(max) => {
-                ConnectorErrorInterface::PaginationError(PaginationError(RangeError {
-                    field: RangeField::First,
-                    range: Range::Max(max),
-                }))
-            }
-        };
-
-        ErrorWrapper { error }
-    }
-}
-
 /// Convert from SingleRecordError (service result) to Generic single node error
 impl From<SingleRecordError> for NodeError {
     fn from(error: SingleRecordError) -> Self {
@@ -258,15 +106,6 @@ impl From<SingleRecordError> for NodeError {
         };
 
         ErrorWrapper { error }
-    }
-}
-
-/// Convert from RepositoryError (loader result) to Generic connector error
-impl From<RepositoryError> for ConnectorError {
-    fn from(error: RepositoryError) -> Self {
-        ErrorWrapper {
-            error: ConnectorErrorInterface::DatabaseError(DatabaseError(error)),
-        }
     }
 }
 

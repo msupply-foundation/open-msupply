@@ -12,7 +12,6 @@ use crate::{
 use super::{InvoiceNode, StocktakeLineConnector};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[graphql(remote = "repository::schema::StocktakeStatus")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum StocktakeNodeStatus {
     New,
@@ -46,7 +45,7 @@ impl StocktakeNode {
     }
 
     pub async fn status(&self) -> StocktakeNodeStatus {
-        StocktakeNodeStatus::from(self.stocktake.status.clone())
+        StocktakeNodeStatus::from_domain(&self.stocktake.status)
     }
 
     pub async fn created_datetime(&self) -> &NaiveDateTime {
@@ -92,7 +91,7 @@ impl StocktakeNode {
 }
 
 impl StocktakeNodeStatus {
-    pub fn to_domain(&self) -> StocktakeStatus {
+    pub fn to_domain(self) -> StocktakeStatus {
         match self {
             StocktakeNodeStatus::New => StocktakeStatus::New,
             StocktakeNodeStatus::Finalised => StocktakeStatus::Finalised,
