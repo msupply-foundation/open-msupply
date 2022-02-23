@@ -1,5 +1,5 @@
 import create from 'zustand';
-import { getAuthCookie } from './useAuthContext';
+import { getAuthCookie } from './useAuthState';
 import { Store, User } from '../types';
 
 type HostContext = {
