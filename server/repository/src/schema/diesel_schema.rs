@@ -90,7 +90,7 @@ table! {
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
         max_months_of_stock -> Double,
-        threshold_months_of_stock -> Double,
+        min_months_of_stock -> Double,
         linked_requisition_id -> Nullable<Text>,
     }
 }
@@ -101,9 +101,9 @@ table! {
         requisition_id -> Text,
         item_id -> Text,
         requested_quantity -> Integer,
-        calculated_quantity -> Integer,
+        suggested_quantity -> Integer,
         supply_quantity -> Integer,
-        stock_on_hand -> Integer ,
+        available_stock_on_hand -> Integer ,
         average_monthly_consumption -> Integer,
     }
 }
@@ -315,7 +315,7 @@ table! {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        stock_on_hand -> BigInt,
+        available_stock_on_hand -> BigInt,
     }
 }
 

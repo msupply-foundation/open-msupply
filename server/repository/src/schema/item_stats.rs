@@ -14,5 +14,5 @@ pub struct StockInfoRow {
     pub id: String,
     pub item_id: String,
     pub store_id: String,
-    pub stock_on_hand: i64,
+    pub available_stock_on_hand: i64,
 }

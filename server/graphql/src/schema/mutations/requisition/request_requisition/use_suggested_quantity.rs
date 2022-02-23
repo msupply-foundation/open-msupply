@@ -10,17 +10,17 @@ use async_graphql::*;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
-        UseCalculatedQuantity as ServiceInput, UseCalculatedQuantityError as ServiceError,
+        UseSuggestedQuantity as ServiceInput, UseSuggestedQuantityError as ServiceError,
     },
 };
 
 #[derive(InputObject)]
-pub struct UseCalculatedQuantityInput {
+pub struct UseSuggestedQuantityInput {
     pub request_requisition_id: String,
 }
 
 #[derive(Interface)]
-#[graphql(name = "UseCalculatedQuantityErrorInterface")]
+#[graphql(name = "UseSuggestedQuantityErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
     RecordDoesNotExist(RecordDoesNotExist),
@@ -28,23 +28,23 @@ pub enum DeleteErrorInterface {
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "UseCalculatedQuantityError")]
+#[graphql(name = "UseSuggestedQuantityError")]
 pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "UseCalculatedQuantityResponse")]
-pub enum UseCalculatedQuantityResponse {
+#[graphql(name = "UseSuggestedQuantityResponse")]
+pub enum UseSuggestedQuantityResponse {
     Error(DeleteError),
     Response(RequisitionLineConnector),
 }
 
-pub fn use_calculated_quantity(
+pub fn use_suggested_quantity(
     ctx: &Context<'_>,
     store_id: &str,
-    input: UseCalculatedQuantityInput,
-) -> Result<UseCalculatedQuantityResponse> {
+    input: UseSuggestedQuantityInput,
+) -> Result<UseSuggestedQuantityResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -56,14 +56,15 @@ pub fn use_calculated_quantity(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider
-        .requisition_service
-        .use_calculated_quantity(&service_context, store_id, input.to_domain())
-    {
-        Ok(requisition_lines) => UseCalculatedQuantityResponse::Response(
+    let response = match service_provider.requisition_service.use_suggested_quantity(
+        &service_context,
+        store_id,
+        input.to_domain(),
+    ) {
+        Ok(requisition_lines) => UseSuggestedQuantityResponse::Response(
             RequisitionLineConnector::from_vec(requisition_lines),
         ),
-        Err(error) => UseCalculatedQuantityResponse::Error(DeleteError {
+        Err(error) => UseSuggestedQuantityResponse::Error(DeleteError {
             error: map_error(error)?,
         }),
     };
@@ -71,9 +72,9 @@ pub fn use_calculated_quantity(
     Ok(response)
 }
 
-impl UseCalculatedQuantityInput {
+impl UseSuggestedQuantityInput {
     fn to_domain(self) -> ServiceInput {
-        let UseCalculatedQuantityInput {
+        let UseSuggestedQuantityInput {
             request_requisition_id,
         } = self;
         ServiceInput {

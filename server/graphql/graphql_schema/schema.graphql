@@ -71,7 +71,7 @@ type CannotDeleteRequisitionWithLines implements DeleteRequestRequisitionErrorIn
 type CannotEditInvoice implements DeleteOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface {
 	description: String!
 }
-type CannotEditRequisition implements DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UseCalculatedQuantityErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & AddFromMasterListErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface {
+type CannotEditRequisition implements DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & AddFromMasterListErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface {
 	description: String!
 }
 type CannotReverseInvoiceStatus implements UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface {
@@ -478,7 +478,7 @@ input InsertRequestRequisitionInput {
 	theirReference: String
 	comment: String
 	maxMonthsOfStock: Float!
-	thresholdMonthsOfStock: Float!
+	minMonthsOfStock: Float!
 }
 type InsertRequestRequisitionLineError {
 	error: InsertRequestRequisitionLineErrorInterface!
@@ -732,8 +732,8 @@ ascending)
 }
 type ItemStatsNode {
 	averageMonthlyConsumption: Int!
-	stockOnHand: Int!
-	monthsOfStock: Float!
+	availableStockOnHand: Int!
+	availableMonthsOfStockOnHand: Float!
 }
 union ItemsResponse = | ConnectorError | ItemConnector
 type LineDoesNotReferenceStockLine implements UpdateOutboundShipmentLineErrorInterface {
@@ -888,7 +888,7 @@ type Mutations {
 	"""
 	Set requested for each line in request requisition to calculated
 	"""
-	useCalculatedQuantity(storeId: String!, input: UseCalculatedQuantityInput!): UseCalculatedQuantityResponse!
+	useSuggestedQuantity(storeId: String!, input: UseSuggestedQuantityInput!): UseSuggestedQuantityResponse!
 	"""
 	Add requisition lines from master item master list
 	"""
@@ -1106,7 +1106,7 @@ type RecordAlreadyExist implements InsertLocationErrorInterface & InsertOutbound
 type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & DeleteLocationErrorInterface {
 	description: String!
 }
-type RecordDoesNotExist implements SupplyRequestedQuantityErrorInterface & UpdateRequestRequisitionErrorInterface & UseCalculatedQuantityErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AddFromMasterListErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteRequestRequisitionErrorInterface {
+type RecordDoesNotExist implements SupplyRequestedQuantityErrorInterface & UpdateRequestRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AddFromMasterListErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteRequestRequisitionErrorInterface {
 	description: String!
 }
 type RecordNotFound implements DeleteInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateLocationErrorInterface & NodeErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface {
@@ -1169,9 +1169,9 @@ type RequisitionLineNode {
 	supplyQuantity: Int!
 	"""
 	Calculated quantity
-	When months_of_stock < requisition.threshold_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
+	When months_of_stock < requisition.min_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
 	"""
-	calculatedQuantity: Int!
+	SuggestedQuantity: Int!
 	"""
 	OutboundShipment lines linked to requisitions line
 	"""
@@ -1217,7 +1217,7 @@ type RequisitionNode {
 	"""
 	Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
 	"""
-	thresholdMonthsOfStock: Float!
+	minMonthsOfStock: Float!
 	lines: RequisitionLineConnector!
 	"""
 	Link to request requisition
@@ -1604,7 +1604,7 @@ input UpdateRequestRequisitionInput {
 	theirReference: String
 	comment: String
 	maxMonthsOfStock: Float
-	thresholdMonthsOfStock: Float
+	minMonthsOfStock: Float
 	status: UpdateRequestRequisitionStatusInput
 }
 type UpdateRequestRequisitionLineError {
@@ -1677,16 +1677,16 @@ input UpdateStockTakeLineInput {
 }
 union UpdateStockTakeLineResponse = | StockTakeLineNode
 union UpdateStockTakeResponse = | StockTakeNode | UpdateStockTakeError
-type UseCalculatedQuantityError {
-	error: UseCalculatedQuantityErrorInterface!
+type UseSuggestedQuantityError {
+	error: UseSuggestedQuantityErrorInterface!
 }
-interface UseCalculatedQuantityErrorInterface {
+interface UseSuggestedQuantityErrorInterface {
 	description: String!
 }
-input UseCalculatedQuantityInput {
+input UseSuggestedQuantityInput {
 	requestRequisitionId: String!
 }
-union UseCalculatedQuantityResponse = | UseCalculatedQuantityError | RequisitionLineConnector
+union UseSuggestedQuantityResponse = | UseSuggestedQuantityError | RequisitionLineConnector
 type User {
 	"""
 	Internal user id

@@ -26,7 +26,7 @@ pub fn mock_request_draft_requisition() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }
@@ -46,7 +46,7 @@ pub fn mock_request_draft_requisition2() -> RequisitionRow {
         comment: None,
         their_reference: None,
         max_months_of_stock: 1.0,
-        threshold_months_of_stock: 0.9,
+        min_months_of_stock: 0.9,
         linked_requisition_id: None,
     }
 }

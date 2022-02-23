@@ -1,7 +1,7 @@
 use super::UpdateRequestRequisition;
 use crate::requisition::{
     common::get_lines_for_requisition,
-    request_requisition::{generate_calculated_quantity, GenerateCalculatedQuantity},
+    request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
 };
 use chrono::Utc;
 use repository::{
@@ -25,7 +25,7 @@ pub fn generate(
         comment,
         their_reference,
         max_months_of_stock,
-        threshold_months_of_stock,
+        min_months_of_stock,
         linked_requisition_id,
     }: RequisitionRow,
     UpdateRequestRequisition {
@@ -35,15 +35,15 @@ pub fn generate(
         comment: update_comment,
         their_reference: update_their_reference,
         max_months_of_stock: update_max_months_of_stock,
-        threshold_months_of_stock: update_threashold_months_of_stock,
+        min_months_of_stock: update_threashold_months_of_stock,
     }: UpdateRequestRequisition,
 ) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
-    // Recalculate lines only if max_months_of_stock or threshold_months_of_stock changed
+    // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
     let update_threashold_months_of_stock =
-        update_threashold_months_of_stock.unwrap_or(threshold_months_of_stock);
+        update_threashold_months_of_stock.unwrap_or(min_months_of_stock);
     let update_max_months_of_stock = update_max_months_of_stock.unwrap_or(max_months_of_stock);
 
-    let should_recalculate = update_threashold_months_of_stock != threshold_months_of_stock
+    let should_recalculate = update_threashold_months_of_stock != min_months_of_stock
         || update_max_months_of_stock != max_months_of_stock;
 
     let updated_requisition_row = RequisitionRow {
@@ -61,7 +61,7 @@ pub fn generate(
         colour: update_colour.or(colour),
         comment: update_comment.or(comment),
         their_reference: update_their_reference.or(their_reference),
-        threshold_months_of_stock: update_threashold_months_of_stock,
+        min_months_of_stock: update_threashold_months_of_stock,
         max_months_of_stock: update_max_months_of_stock,
 
         // not changed
@@ -79,7 +79,7 @@ pub fn generate(
         generate_updated_lines(
             connection,
             &updated_requisition_row.id,
-            updated_requisition_row.threshold_months_of_stock,
+            updated_requisition_row.min_months_of_stock,
             updated_requisition_row.max_months_of_stock,
         )?
     } else {
@@ -92,7 +92,7 @@ pub fn generate(
 pub fn generate_updated_lines(
     connection: &StorageConnection,
     requisition_id: &str,
-    threshold_months_of_stock: f64,
+    min_months_of_stock: f64,
     max_months_of_stock: f64,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let lines = get_lines_for_requisition(connection, requisition_id)?;
@@ -104,12 +104,12 @@ pub fn generate_updated_lines(
                  mut requisition_line_row,
                  ..
              }| {
-                requisition_line_row.calculated_quantity =
-                    generate_calculated_quantity(GenerateCalculatedQuantity {
+                requisition_line_row.suggested_quantity =
+                    generate_suggested_quantity(GenerateSuggestedQuantity {
                         average_monthly_consumption: requisition_line_row
                             .average_monthly_consumption,
-                        stock_on_hand: requisition_line_row.stock_on_hand,
-                        threshold_months_of_stock,
+                        available_stock_on_hand: requisition_line_row.available_stock_on_hand,
+                        min_months_of_stock,
                         max_months_of_stock,
                     });
                 requisition_line_row

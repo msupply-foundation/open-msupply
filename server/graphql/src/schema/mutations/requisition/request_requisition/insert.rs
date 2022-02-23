@@ -1,5 +1,8 @@
 use crate::{
-    schema::{mutations::OtherPartyNotASupplier, types::{RequisitionNode, NameNode}},
+    schema::{
+        mutations::OtherPartyNotASupplier,
+        types::{NameNode, RequisitionNode},
+    },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -20,7 +23,7 @@ pub struct InsertInput {
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub max_months_of_stock: f64,
-    pub threshold_months_of_stock: f64,
+    pub min_months_of_stock: f64,
 }
 
 #[derive(Interface)]
@@ -77,7 +80,7 @@ impl InsertInput {
             their_reference,
             comment,
             max_months_of_stock,
-            threshold_months_of_stock,
+            min_months_of_stock,
         } = self;
 
         ServiceInput {
@@ -87,7 +90,7 @@ impl InsertInput {
             their_reference,
             comment,
             max_months_of_stock,
-            threshold_months_of_stock,
+            min_months_of_stock,
         }
     }
 }

@@ -42,7 +42,7 @@ mod test_update {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: None,
-                    threshold_months_of_stock: None,
+                    min_months_of_stock: None,
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
@@ -60,7 +60,7 @@ mod test_update {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: None,
-                    threshold_months_of_stock: None,
+                    min_months_of_stock: None,
                 },
             ),
             Err(ServiceError::NotThisStoreRequisition)
@@ -78,7 +78,7 @@ mod test_update {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: None,
-                    threshold_months_of_stock: None,
+                    min_months_of_stock: None,
                 },
             ),
             Err(ServiceError::CannotEditRequisition)
@@ -96,7 +96,7 @@ mod test_update {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: None,
-                    threshold_months_of_stock: None,
+                    min_months_of_stock: None,
                 },
             ),
             Err(ServiceError::NotARequestRequisition)
@@ -126,7 +126,7 @@ mod test_update {
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
                     max_months_of_stock: None,
-                    threshold_months_of_stock: None,
+                    min_months_of_stock: None,
                 },
             )
             .unwrap();
@@ -170,7 +170,7 @@ mod test_update {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: Some(20.0),
-                    threshold_months_of_stock: None,
+                    min_months_of_stock: None,
                 },
             )
             .unwrap();
@@ -182,27 +182,27 @@ mod test_update {
             .find_one_by_id(&calculation_requisition.lines[0].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.calculated_quantity, 19);
+        assert_eq!(line.suggested_quantity, 19);
 
         // Average monthly consumption = 0
         let line = requisition_line_row_repo
             .find_one_by_id(&calculation_requisition.lines[1].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.calculated_quantity, 0);
+        assert_eq!(line.suggested_quantity, 0);
 
         // Above threshold MOS
         let line = requisition_line_row_repo
             .find_one_by_id(&calculation_requisition.lines[2].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.calculated_quantity, 0);
+        assert_eq!(line.suggested_quantity, 0);
 
         // Above max MOS
         let line = requisition_line_row_repo
             .find_one_by_id(&calculation_requisition.lines[3].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.calculated_quantity, 0);
+        assert_eq!(line.suggested_quantity, 0);
     }
 }
