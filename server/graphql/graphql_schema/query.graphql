@@ -656,7 +656,4 @@ fragment NotEnoughStockForReduction on NotEnoughStockForReduction {
 
 fragment InvoiceLineBelongsToAnotherInvoice on InvoiceLineBelongsToAnotherInvoice {
   description
-  invoice {
-    ...InvoiceResponse
-  }
 }
