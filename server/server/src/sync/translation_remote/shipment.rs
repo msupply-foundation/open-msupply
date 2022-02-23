@@ -115,11 +115,7 @@ impl RemotePullTranslation for ShipmentTranslation {
                     record: sync_record.data.clone(),
                 }
             })?;
-        let shipment_type = shipment_type(&data._type).ok_or(SyncTranslationError {
-            table_name,
-            source: anyhow::Error::msg(format!("Unsupported shipment type: {:?}", data._type)),
-            record: sync_record.data.clone(),
-        })?;
+
         let name_store_join = NameQueryRepository::new(connection)
             .query_one(NameFilter::new().id(EqualFilter::equal_to(&data.name_ID)))
             .map_err(|err| SyncTranslationError {
@@ -128,6 +124,18 @@ impl RemotePullTranslation for ShipmentTranslation {
                 record: sync_record.data.clone(),
             })?;
         let name_store_id = name_store_join.and_then(|name| name.store_id);
+
+        let shipment_type = shipment_type(&data._type).ok_or(SyncTranslationError {
+            table_name,
+            source: anyhow::Error::msg(format!("Unsupported shipment type: {:?}", data._type)),
+            record: sync_record.data.clone(),
+        })?;
+        let shipment_status =
+            shipment_status(&shipment_type, &data).ok_or(SyncTranslationError {
+                table_name,
+                source: anyhow::Error::msg(format!("Unsupported shipment type: {:?}", data._type)),
+                record: sync_record.data.clone(),
+            })?;
 
         let confirm_time = data.confirm_time;
         Ok(Some(IntegrationRecord::from_upsert(
@@ -138,7 +146,7 @@ impl RemotePullTranslation for ShipmentTranslation {
                 name_store_id,
                 invoice_number: data.invoice_num,
                 r#type: shipment_type,
-                status: shipment_status(&data.status),
+                status: shipment_status,
                 on_hold: data.hold,
                 comment: data.comment,
                 their_reference: data.their_ref,
@@ -170,13 +178,65 @@ fn shipment_type(_type: &LegacyTransactType) -> Option<InvoiceRowType> {
     }
 }
 
-fn shipment_status(status: &LegacyTransactStatus) -> InvoiceRowStatus {
+fn shipment_status(
+    shipment_type: &InvoiceRowType,
+    data: &LegacyTransactRow,
+) -> Option<InvoiceRowStatus> {
+    let status = match shipment_type {
+        InvoiceRowType::OutboundShipment => shipment_status_for_outbound(
+            &data.status,
+            data.arrival_date_actual.is_some(),
+            data.confirm_date.is_some(),
+        ),
+        InvoiceRowType::InboundShipment => shipment_status_for_inbound(
+            &data.status,
+            data.their_ref.is_none(),
+            data.arrival_date_actual.is_some(),
+        ),
+        InvoiceRowType::InventoryAdjustment => return None,
+    };
+    Some(status)
+}
+
+fn shipment_status_for_inbound(
+    status: &LegacyTransactStatus,
+    manual_created: bool,
+    shipped: bool,
+) -> InvoiceRowStatus {
+    match status {
+        LegacyTransactStatus::Nw => {
+            if manual_created {
+                InvoiceRowStatus::New
+            } else if !shipped {
+                InvoiceRowStatus::Picked
+            } else {
+                InvoiceRowStatus::Shipped
+            }
+        }
+        LegacyTransactStatus::Sg => InvoiceRowStatus::New,
+        LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
+        LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
+    }
+}
+
+fn shipment_status_for_outbound(
+    status: &LegacyTransactStatus,
+    delivered: bool,
+    confirmed: bool,
+) -> InvoiceRowStatus {
     match status {
         LegacyTransactStatus::Nw => InvoiceRowStatus::New,
-        // suggested TODO correct mapping?
-        LegacyTransactStatus::Sg => InvoiceRowStatus::Allocated,
-        // confirmed TODO correct mapping?
+        // TODO could also mean Allocated
+        LegacyTransactStatus::Sg => InvoiceRowStatus::New,
         LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
-        LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
+        LegacyTransactStatus::Fn => {
+            if confirmed {
+                InvoiceRowStatus::Verified
+            } else if delivered {
+                InvoiceRowStatus::Delivered
+            } else {
+                InvoiceRowStatus::Shipped
+            }
+        }
     }
 }
