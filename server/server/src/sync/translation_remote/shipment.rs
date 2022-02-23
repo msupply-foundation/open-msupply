@@ -1,7 +1,8 @@
 use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
+use domain::{name::NameFilter, EqualFilter};
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, RemoteSyncBufferRow},
-    StorageConnection,
+    NameQueryRepository, StorageConnection,
 };
 
 use serde::Deserialize;
@@ -98,7 +99,7 @@ pub struct ShipmentTranslation {}
 impl RemotePullTranslation for ShipmentTranslation {
     fn try_translate_pull(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
     ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_TRANSACT;
@@ -119,14 +120,22 @@ impl RemotePullTranslation for ShipmentTranslation {
             source: anyhow::Error::msg(format!("Unsupported shipment type: {:?}", data._type)),
             record: sync_record.data.clone(),
         })?;
+        let name_store_join = NameQueryRepository::new(connection)
+            .query_one(NameFilter::new().id(EqualFilter::equal_to(&data.name_ID)))
+            .map_err(|err| SyncTranslationError {
+                table_name,
+                source: err.into(),
+                record: sync_record.data.clone(),
+            })?;
+        let name_store_id = name_store_join.and_then(|name| name.store_id);
+
         let confirm_time = data.confirm_time;
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Shipment(InvoiceRow {
                 id: data.ID,
                 store_id: data.store_ID,
                 name_id: data.name_ID,
-                // TODO is None correct?
-                name_store_id: None,
+                name_store_id,
                 invoice_number: data.invoice_num,
                 r#type: shipment_type,
                 status: shipment_status(&data.status),
