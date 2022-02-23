@@ -1,12 +1,13 @@
 use repository::{
     schema::RemoteSyncBufferRow, InvoiceLineRowRepository, InvoiceRepository,
     NameStoreJoinRepository, NumberRowRepository, RepositoryError, StockLineRowRepository,
-    StorageConnection,
+    StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
 };
 
 use self::{
     name_store_join::get_test_name_store_join_records, number::get_test_number_records,
-    stock_line::get_test_stock_line_records, trans_line::get_test_trans_line_records,
+    stock_line::get_test_stock_line_records, stocktake::get_test_stocktake_records,
+    stocktake_line::get_test_stocktake_line_records, trans_line::get_test_trans_line_records,
     transact::get_test_transact_records,
 };
 
@@ -15,6 +16,8 @@ use super::{IntegrationRecord, IntegrationUpsertRecord};
 pub mod name_store_join;
 pub mod number;
 pub mod stock_line;
+pub mod stocktake;
+pub mod stocktake_line;
 pub mod trans_line;
 pub mod transact;
 
@@ -111,6 +114,24 @@ pub fn check_records_against_database(
                         comparison_record
                     )
                 }
+                IntegrationUpsertRecord::Stocktake(comparison_record) => {
+                    assert_eq!(
+                        StocktakeRowRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap()
+                            .unwrap(),
+                        comparison_record
+                    )
+                }
+                IntegrationUpsertRecord::StocktakeLine(comparison_record) => {
+                    assert_eq!(
+                        StocktakeLineRowRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap()
+                            .unwrap(),
+                        comparison_record
+                    )
+                }
             }
         }
     }
@@ -124,5 +145,7 @@ pub fn get_all_remote_pull_test_records() -> Vec<TestSyncRecord> {
     test_records.append(&mut get_test_name_store_join_records());
     test_records.append(&mut get_test_transact_records());
     test_records.append(&mut get_test_trans_line_records());
+    test_records.append(&mut get_test_stocktake_records());
+    test_records.append(&mut get_test_stocktake_line_records());
     test_records
 }
