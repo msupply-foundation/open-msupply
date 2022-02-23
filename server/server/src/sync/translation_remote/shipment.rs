@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::NaiveDate;
 use domain::{name::NameFilter, EqualFilter};
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, RemoteSyncBufferRow},
@@ -10,8 +10,8 @@ use serde::Deserialize;
 use crate::sync::SyncTranslationError;
 
 use super::{
-    empty_str_as_option, zero_date_as_option, IntegrationRecord, IntegrationUpsertRecord,
-    RemotePullTranslation, TRANSLATION_RECORD_TRANSACT,
+    date_and_time_to_datatime, empty_str_as_option, zero_date_as_option, IntegrationRecord,
+    IntegrationUpsertRecord, RemotePullTranslation, TRANSLATION_RECORD_TRANSACT,
 };
 
 #[derive(Deserialize, Debug)]
@@ -86,13 +86,6 @@ struct LegacyTransactRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     confirm_date: Option<NaiveDate>,
     confirm_time: i64,
-}
-
-fn date_and_time_to_datatime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
-    NaiveDateTime::new(
-        date,
-        NaiveTime::from_hms(0, 0, 0) + Duration::seconds(seconds),
-    )
 }
 
 pub struct ShipmentTranslation {}

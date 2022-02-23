@@ -1,0 +1,58 @@
+use chrono::NaiveDate;
+use repository::schema::{
+    RemoteSyncBufferAction, RemoteSyncBufferRow, StocktakeRow, StocktakeStatus,
+};
+
+use crate::sync::translation_remote::{
+    test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    TRANSLATION_RECORD_STOCKTAKE,
+};
+
+const STOCKTAKE_1: (&'static str, &'static str) = (
+    "0a375950f0d211eb8dddb54df6d741bc",
+    r#"{
+      "Description": "Test",
+      "ID": "0a375950f0d211eb8dddb54df6d741bc",
+      "Locked": false,
+      "comment": "",
+      "created_by_ID": "",
+      "finalised_by_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+      "invad_additions_ID": "inbound_shipment_a",
+      "invad_reductions_ID": "",
+      "programID": "",
+      "serial_number": 3,
+      "status": "fn",
+      "stock_take_created_date": "2021-07-30",
+      "stock_take_date": "2021-07-30",
+      "stock_take_time": 47061,
+      "store_ID": "store_a",
+      "type": ""
+    }"#,
+);
+
+#[allow(dead_code)]
+pub fn get_test_stocktake_records() -> Vec<TestSyncRecord> {
+    vec![TestSyncRecord {
+        translated_record: Some(IntegrationRecord::from_upsert(
+            IntegrationUpsertRecord::Stocktake(StocktakeRow {
+                id: STOCKTAKE_1.0.to_string(),
+                store_id: "store_a".to_string(),
+                stocktake_number: 3,
+                comment: None,
+                description: Some("Test".to_string()),
+                status: StocktakeStatus::Finalised,
+                created_datetime: NaiveDate::from_ymd(2021, 07, 30).and_hms(0, 0, 0),
+                finalised_datetime: None,
+                inventory_adjustment_id: Some("inbound_shipment_a".to_string()),
+            }),
+        )),
+        identifier: "Stocktake 1",
+        remote_sync_buffer_row: RemoteSyncBufferRow {
+            id: "Stocktake_10".to_string(),
+            table_name: TRANSLATION_RECORD_STOCKTAKE.to_string(),
+            record_id: STOCKTAKE_1.0.to_string(),
+            data: STOCKTAKE_1.1.to_string(),
+            action: RemoteSyncBufferAction::Update,
+        },
+    }]
+}
