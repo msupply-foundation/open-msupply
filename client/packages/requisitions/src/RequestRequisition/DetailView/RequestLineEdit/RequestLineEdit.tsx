@@ -7,6 +7,7 @@ import {
   useTranslation,
   useBufferState,
   RecordPatch,
+  generateUUID,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
@@ -18,6 +19,14 @@ import {
   RequestRequisitionLineFragment,
 } from '../../api';
 
+export type DraftRequestRequisitionLine = Omit<
+  RequestRequisitionLineFragment,
+  '__typename' | 'item' | 'itemStats'
+> & {
+  isCreated: boolean;
+  requisitionId: string;
+};
+
 interface RequestLineEditProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,25 +37,13 @@ interface RequestLineEditProps {
 const createDraftRequestLine = (
   item: ItemRowFragment,
   id: string
-): RequestRequisitionLineFragment => ({
-  __typename: 'RequisitionLineNode',
-  id,
+): DraftRequestRequisitionLine => ({
+  id: generateUUID(),
+  requisitionId: id,
   itemId: item.id,
   requestedQuantity: 0,
-  calculatedQuantity: 0,
-  itemStats: {
-    __typename: 'ItemStatsNode',
-    averageMonthlyConsumption: 0,
-    stockOnHand: 0,
-    monthsOfStock: 0,
-  },
-  item: {
-    __typename: 'ItemNode',
-    id: 'string',
-    name: 'string',
-    code: 'string',
-    unitName: 'string',
-  },
+  suggestedQuantity: 0,
+  isCreated: true,
 });
 
 const useDraftRequisitionLine = (item: ItemRowFragment | null) => {
@@ -54,16 +51,19 @@ const useDraftRequisitionLine = (item: ItemRowFragment | null) => {
   const { id } = useRequestRequisitionFields('id');
   const { mutate: save, isLoading } = useSaveRequestLines();
 
-  const [draft, setDraft] = useState<RequestRequisitionLineFragment | null>(
-    null
-  );
+  const [draft, setDraft] = useState<DraftRequestRequisitionLine | null>(null);
 
   useEffect(() => {
     if (lines && item) {
       const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
       );
-      if (existingLine) return setDraft({ ...existingLine });
+      if (existingLine)
+        return setDraft({
+          ...existingLine,
+          isCreated: false,
+          requisitionId: id,
+        });
       else return setDraft(createDraftRequestLine(item, id));
     } else {
       setDraft(null);
@@ -76,7 +76,7 @@ const useDraftRequisitionLine = (item: ItemRowFragment | null) => {
     }
   };
 
-  return { draft, isLoading, save: () => save(draft), update };
+  return { draft, isLoading, save: () => draft && save(draft), update };
 };
 
 export const RequestLineEdit = ({

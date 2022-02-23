@@ -1,3 +1,4 @@
+import { DraftRequestRequisitionLine } from './../DetailView/RequestLineEdit/RequestLineEdit';
 import {
   FilterBy,
   SortBy,
@@ -15,20 +16,32 @@ import {
 
 export type RequestRequisitionApi = ReturnType<typeof getSdk>;
 
-export const requisitionToInput = (
-  requisition: Partial<RequestRequisitionFragment> & { id: string }
-): UpdateRequestRequisitionInput => {
-  return {
-    id: requisition.id,
-    // otherPartyId: requisition.otherParty?.id,
-    comment: requisition.comment,
-    theirReference: requisition.theirReference,
-    colour: requisition.colour,
-    status:
-      requisition.status === RequisitionNodeStatus.Sent
-        ? UpdateRequestRequisitionStatusInput.Sent
-        : undefined,
-  };
+const requisitionParser = {
+  toInsertLineInput: (line: DraftRequestRequisitionLine) => ({
+    id: line.id,
+    itemId: line.itemId,
+    requisitionId: line.requisitionId,
+    requestedQuantity: line.requestedQuantity,
+  }),
+  toUpdateLineInput: (line: DraftRequestRequisitionLine) => ({
+    id: line.id,
+    requestedQuantity: line.requestedQuantity,
+  }),
+  toInsertInput: (
+    requisition: Partial<RequestRequisitionFragment> & { id: string }
+  ): UpdateRequestRequisitionInput => {
+    return {
+      id: requisition.id,
+      // otherPartyId: requisition.otherParty?.id,
+      comment: requisition.comment,
+      theirReference: requisition.theirReference,
+      colour: requisition.colour,
+      status:
+        requisition.status === RequisitionNodeStatus.Sent
+          ? UpdateRequestRequisitionStatusInput.Sent
+          : undefined,
+    };
+  },
 };
 
 export const RequestRequisitionQueries = {
@@ -79,13 +92,42 @@ export const RequestRequisitionQueries = {
         throw new Error('Record not found');
       },
   },
+  upsertLine:
+    (api: RequestRequisitionApi, storeId: string) =>
+    async (draftLine: DraftRequestRequisitionLine) => {
+      let result;
+      if (draftLine.isCreated) {
+        const input = requisitionParser.toInsertLineInput(draftLine);
+        result = await api.insertRequestRequisitionLine({
+          storeId,
+          input,
+        });
 
+        const { insertRequestRequisitionLine } = result;
+        if (insertRequestRequisitionLine.__typename === 'RequisitionLineNode') {
+          return insertRequestRequisitionLine;
+        }
+      } else {
+        const input = requisitionParser.toUpdateLineInput(draftLine);
+        result = await api.updateRequestRequisitionLine({
+          storeId,
+          input,
+        });
+
+        const { updateRequestRequisitionLine } = result;
+        if (updateRequestRequisitionLine.__typename === 'RequisitionLineNode') {
+          return updateRequestRequisitionLine;
+        }
+      }
+
+      throw new Error('Unable to update requisition');
+    },
   update:
     (api: RequestRequisitionApi, storeId: string) =>
     async (
       patch: Partial<RequestRequisitionFragment> & { id: string }
     ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
-      const input = requisitionToInput(patch);
+      const input = requisitionParser.toInsertInput(patch);
       const result = await api.updateRequestRequisition({
         storeId,
         input,
@@ -118,7 +160,7 @@ export const RequestRequisitionQueries = {
           id,
           otherPartyId,
           maxMonthsOfStock: 1,
-          thresholdMonthsOfStock: 1,
+          minMonthsOfStock: 1,
         },
       });
 
