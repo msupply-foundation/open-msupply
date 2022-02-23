@@ -6,7 +6,7 @@ use service::location::update::UpdateLocationError as InError;
 use crate::{
     schema::{
         mutations::{RecordBelongsToAnotherStore, UniqueValueKey, UniqueValueViolation},
-        types::{InternalError, LocationNode, RecordNotFound, DatabaseError},
+        types::{DatabaseError, InternalError, LocationNode, RecordNotFound},
     },
     ContextExt,
 };
@@ -27,7 +27,7 @@ pub fn update_location(
         store_id,
         input.into(),
     ) {
-        Ok(location) => UpdateLocationResponse::Response(location.into()),
+        Ok(location) => UpdateLocationResponse::Response(LocationNode::from_domain(location)),
         Err(error) => UpdateLocationResponse::Error(error.into()),
     }
 }

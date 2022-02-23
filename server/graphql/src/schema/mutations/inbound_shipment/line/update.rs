@@ -7,8 +7,8 @@ use crate::schema::{
         InvoiceLineBelongsToAnotherInvoice, NotAnInboundShipment,
     },
     types::{
-        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
-        InvoiceLineResponse, NodeError, Range, RangeError, RangeField, RecordNotFound,
+        get_invoice_line_response, DatabaseError, InvoiceLineNode, InvoiceLineResponse, NodeError,
+        Range, RangeError, RangeField, RecordNotFound,
     },
 };
 use domain::inbound_shipment::UpdateInboundShipmentLine;
@@ -31,9 +31,15 @@ pub struct UpdateInboundShipmentLineInput {
     pub number_of_packs: Option<u32>,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateInboundShipmentLineError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 pub enum UpdateInboundShipmentLineResponse {
-    Error(ErrorWrapper<UpdateInboundShipmentLineErrorInterface>),
+    Error(UpdateError),
     NodeError(NodeError),
     Response(InvoiceLineNode),
 }
@@ -53,8 +59,9 @@ pub fn get_update_inbound_shipment_line_response(
 }
 
 #[derive(Interface)]
+#[graphql(name = "UpdateInboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum UpdateInboundShipmentLineErrorInterface {
+pub enum UpdateErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
@@ -98,7 +105,7 @@ impl From<UpdateInboundShipmentLineInput> for UpdateInboundShipmentLine {
 
 impl From<UpdateInboundShipmentLineError> for UpdateInboundShipmentLineResponse {
     fn from(error: UpdateInboundShipmentLineError) -> Self {
-        use UpdateInboundShipmentLineErrorInterface as OutError;
+        use UpdateErrorInterface as OutError;
         let error = match error {
             UpdateInboundShipmentLineError::LineDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
@@ -144,6 +151,6 @@ impl From<UpdateInboundShipmentLineError> for UpdateInboundShipmentLineResponse 
             }
         };
 
-        UpdateInboundShipmentLineResponse::Error(ErrorWrapper { error })
+        UpdateInboundShipmentLineResponse::Error(UpdateError { error })
     }
 }

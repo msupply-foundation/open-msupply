@@ -23,7 +23,7 @@ pub struct UpdateInput {
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
-    pub threshold_months_of_stock: Option<f64>,
+    pub min_months_of_stock: Option<f64>,
     pub status: Option<UpdateRequestRequisitionStatusInput>,
 }
 
@@ -86,7 +86,7 @@ impl UpdateInput {
             their_reference,
             comment,
             max_months_of_stock,
-            threshold_months_of_stock,
+            min_months_of_stock,
             status,
         } = self;
 
@@ -96,7 +96,7 @@ impl UpdateInput {
             their_reference,
             comment,
             max_months_of_stock,
-            threshold_months_of_stock,
+            min_months_of_stock,
             status: status.map(|status| status.to_domain()),
         }
     }

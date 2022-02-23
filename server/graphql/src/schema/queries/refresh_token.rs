@@ -4,7 +4,7 @@ use crate::schema::types::InternalError;
 use crate::{ContextExt, RequestUserData};
 use service::token::{JWTRefreshError, TokenPair, TokenService};
 
-use super::{set_refresh_token_cookie, DatabaseError, ErrorWrapper};
+use super::{set_refresh_token_cookie, DatabaseError};
 
 pub struct RefreshToken {
     pub pair: TokenPair,
@@ -61,7 +61,10 @@ pub enum RefreshTokenErrorInterface {
     InternalError(InternalError),
 }
 
-pub type RefreshTokenError = ErrorWrapper<RefreshTokenErrorInterface>;
+#[derive(SimpleObject)]
+pub struct RefreshTokenError {
+    pub error: RefreshTokenErrorInterface,
+}
 
 #[derive(Union)]
 pub enum RefreshTokenResponse {
@@ -82,7 +85,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
     {
         Some(data) => data,
         None => {
-            return RefreshTokenResponse::Error(ErrorWrapper {
+            return RefreshTokenResponse::Error(RefreshTokenError {
                 error: RefreshTokenErrorInterface::NoRefreshTokenProvided(NoRefreshTokenProvided),
             })
         }
@@ -92,7 +95,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
     let pair = match service.refresh_token(&refresh_token, max_age_token, max_age_refresh) {
         Ok(pair) => pair,
         Err(err) => {
-            return RefreshTokenResponse::Error(ErrorWrapper {
+            return RefreshTokenResponse::Error(RefreshTokenError {
                 error: match err {
                     JWTRefreshError::ExpiredSignature => {
                         RefreshTokenErrorInterface::TokenExpired(TokenExpired)

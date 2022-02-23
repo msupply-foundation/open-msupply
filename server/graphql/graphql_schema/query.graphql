@@ -447,7 +447,7 @@ fragment InvoiceNode on InvoiceNode {
   id
   invoiceNumber
   lines {
-    ...InvoiceLinesResponse
+    ...InvoiceLineConnector
   }
   otherPartyId
   otherPartyName
@@ -475,12 +475,6 @@ fragment InvoiceLineResponse on InvoiceLineResponse {
   __typename
   ...NodeError
   ...InvoiceLineNode
-}
-
-fragment InvoiceLinesResponse on InvoiceLinesResponse {
-  __typename
-  ...ConnectorError
-  ...InvoiceLineConnector
 }
 
 fragment InvoiceLineNode on InvoiceLineNode {
@@ -587,30 +581,11 @@ fragment NodeErrorInterface on NodeErrorInterface {
   ...RecordNotFound
 }
 
-fragment PaginationError on PaginationError {
-  description
-  rangeError {
-    ...RangeError
-  }
-}
-
 fragment RangeError on RangeError {
   description
   field
   max
   min
-}
-
-fragment ConnectorError on ConnectorError {
-  error {
-    ...ConnectorErrorInterface
-  }
-}
-
-fragment ConnectorErrorInterface on ConnectorErrorInterface {
-  __typename
-  ...DatabaseError
-  ...PaginationError
 }
 
 fragment CannotEditInvoice on CannotEditInvoice {

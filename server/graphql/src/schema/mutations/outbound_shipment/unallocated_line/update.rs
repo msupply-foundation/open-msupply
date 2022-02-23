@@ -53,7 +53,7 @@ pub fn update(ctx: &Context<'_>, input: UpdateInput) -> Result<UpdateResponse> {
         .outbound_shipment_line
         .update_outbound_shipment_unallocated_line(&service_context, input.into())
     {
-        Ok(invoice_line) => UpdateResponse::Response(invoice_line.into()),
+        Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(&id, error)?,
         }),

@@ -21,7 +21,7 @@ pub struct InsertRequestRequisition {
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub max_months_of_stock: f64,
-    pub threshold_months_of_stock: f64,
+    pub min_months_of_stock: f64,
 }
 
 #[derive(Debug, PartialEq)]
@@ -95,7 +95,7 @@ fn generate(
         comment,
         their_reference,
         max_months_of_stock,
-        threshold_months_of_stock,
+        min_months_of_stock,
     }: InsertRequestRequisition,
 ) -> Result<RequisitionRow, RepositoryError> {
     let result = RequisitionRow {
@@ -112,7 +112,7 @@ fn generate(
         comment,
         their_reference,
         max_months_of_stock,
-        threshold_months_of_stock,
+        min_months_of_stock,
         linked_requisition_id: None,
     };
 
@@ -144,7 +144,7 @@ mod test_insert {
     use repository::{
         mock::{
             mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
-            MockDataInserts, mock_store_b,
+            mock_store_b, MockDataInserts,
         },
         schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
         test_db::setup_all,
@@ -179,7 +179,7 @@ mod test_insert {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: 1.0,
-                    threshold_months_of_stock: 0.5,
+                    min_months_of_stock: 0.5,
                 },
             ),
             Err(ServiceError::RequisitionAlreadyExists)
@@ -198,7 +198,7 @@ mod test_insert {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: 1.0,
-                    threshold_months_of_stock: 0.5,
+                    min_months_of_stock: 0.5,
                 },
             ),
             Err(ServiceError::OtherPartyNotASupplier(Name {
@@ -223,7 +223,7 @@ mod test_insert {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: 1.0,
-                    threshold_months_of_stock: 0.5,
+                    min_months_of_stock: 0.5,
                 },
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
@@ -241,7 +241,7 @@ mod test_insert {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: 1.0,
-                    threshold_months_of_stock: 0.5,
+                    min_months_of_stock: 0.5,
                 },
             ),
             Err(ServiceError::OtherPartyIsNotAStore)
@@ -259,7 +259,7 @@ mod test_insert {
                     their_reference: None,
                     comment: None,
                     max_months_of_stock: 1.0,
-                    threshold_months_of_stock: 0.5,
+                    min_months_of_stock: 0.5,
                 },
             ),
             Err(ServiceError::OtherPartyIsThisStore)
@@ -288,7 +288,7 @@ mod test_insert {
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
                     max_months_of_stock: 1.0,
-                    threshold_months_of_stock: 0.5,
+                    min_months_of_stock: 0.5,
                 },
             )
             .unwrap();
@@ -309,7 +309,7 @@ mod test_insert {
             comment,
             their_reference,
             max_months_of_stock,
-            threshold_months_of_stock,
+            min_months_of_stock,
             linked_requisition_id,
         } = RequisitionRowRepository::new(&connection)
             .find_one_by_id(&result.requisition_row.id)
@@ -323,7 +323,7 @@ mod test_insert {
         assert_eq!(their_reference, Some("new their_reference".to_owned()));
         assert_eq!(comment, Some("new comment".to_owned()));
         assert_eq!(max_months_of_stock, 1.0);
-        assert_eq!(threshold_months_of_stock, 0.5);
+        assert_eq!(min_months_of_stock, 0.5);
         assert_eq!(store_id, "store_a".to_owned());
         assert_eq!(r#type, RequisitionRowType::Request);
         assert_eq!(status, RequisitionRowStatus::Draft);

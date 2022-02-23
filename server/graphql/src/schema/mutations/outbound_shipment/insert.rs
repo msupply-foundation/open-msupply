@@ -1,7 +1,7 @@
 use crate::schema::{
     mutations::{ForeignKey, ForeignKeyError, RecordAlreadyExist},
     queries::invoice::*,
-    types::{DatabaseError, ErrorWrapper, InvoiceNode, InvoiceNodeStatus, NameNode, NodeError},
+    types::{DatabaseError, InvoiceNode, InvoiceNodeStatus, NameNode, NodeError},
 };
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
 use repository::StorageConnectionManager;
@@ -9,7 +9,7 @@ use service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError};
 
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
 
-use async_graphql::{InputObject, Interface, Union};
+use async_graphql::*;
 
 #[derive(InputObject)]
 pub struct InsertOutboundShipmentInput {
@@ -29,7 +29,10 @@ impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
         InsertOutboundShipment {
             id: input.id,
             other_party_id: input.other_party_id,
-            status: input.status.map(|s| s.into()).unwrap_or(InvoiceStatus::New),
+            status: input
+                .status
+                .map(|s| s.to_domain())
+                .unwrap_or(InvoiceStatus::New),
             on_hold: input.on_hold,
             comment: input.comment,
             their_reference: input.their_reference,
@@ -38,9 +41,15 @@ impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
     }
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "InsertOutboundShipmentError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
 #[derive(Union)]
 pub enum InsertOutboundShipmentResponse {
-    Error(ErrorWrapper<InsertOutboundShipmentErrorInterface>),
+    Error(InsertError),
     NodeError(NodeError),
     Response(InvoiceNode),
 }
@@ -54,8 +63,8 @@ pub fn get_insert_outbound_shipment_response(
     let connection = match connection_manager.connection() {
         Ok(con) => con,
         Err(err) => {
-            return InsertOutboundShipmentResponse::Error(ErrorWrapper {
-                error: InsertOutboundShipmentErrorInterface::DatabaseError(DatabaseError(err)),
+            return InsertOutboundShipmentResponse::Error(InsertError {
+                error: InsertErrorInterface::DatabaseError(DatabaseError(err)),
             })
         }
     };
@@ -70,7 +79,7 @@ pub fn get_insert_outbound_shipment_response(
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
-pub enum InsertOutboundShipmentErrorInterface {
+pub enum InsertErrorInterface {
     InvoiceAlreadyExists(RecordAlreadyExist),
     ForeignKeyError(ForeignKeyError),
     OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
@@ -80,7 +89,7 @@ pub enum InsertOutboundShipmentErrorInterface {
 
 impl From<InsertOutboundShipmentError> for InsertOutboundShipmentResponse {
     fn from(error: InsertOutboundShipmentError) -> Self {
-        use InsertOutboundShipmentErrorInterface as OutError;
+        use InsertErrorInterface as OutError;
         let error = match error {
             InsertOutboundShipmentError::OtherPartyCannotBeThisStore => {
                 OutError::OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError {})
@@ -99,6 +108,6 @@ impl From<InsertOutboundShipmentError> for InsertOutboundShipmentResponse {
             }
         };
 
-        InsertOutboundShipmentResponse::Error(ErrorWrapper { error })
+        InsertOutboundShipmentResponse::Error(InsertError { error })
     }
 }

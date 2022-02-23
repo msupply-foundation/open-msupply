@@ -62,7 +62,9 @@ pub fn create_requisition_shipment(
         .requisition_service
         .create_requisition_shipment(&service_context, store_id, input.to_domain())
     {
-        Ok(invoice) => CreateRequisitionShipmentResponse::Response(invoice.into()),
+        Ok(invoice) => {
+            CreateRequisitionShipmentResponse::Response(InvoiceNode::from_domain(invoice))
+        }
         Err(error) => CreateRequisitionShipmentResponse::Error(DeleteError {
             error: map_error(error)?,
         }),

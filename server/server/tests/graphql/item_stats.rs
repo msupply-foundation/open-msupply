@@ -18,8 +18,8 @@ mod graphql {
                 id
                 stats(storeId: \"store_a\") {
                     averageMonthlyConsumption
-                    monthsOfStock
-                    stockOnHand
+                    availableMonthsOfStockOnHand
+                    availableStockOnHand
                 }
               }
             }
@@ -43,16 +43,16 @@ mod graphql {
                     "id": &mock_item_stats_item1().id,
                     "stats": {
                         "averageMonthlyConsumption":  15,
-                        "stockOnHand": 210,
-                        "monthsOfStock": 210 as f64 / 15 as f64
+                        "availableStockOnHand": 210,
+                        "availableMonthsOfStockOnHand": 210 as f64 / 15 as f64
                     }
                 },
                 {
                     "id": &mock_item_stats_item2().id,
                     "stats": {
                         "averageMonthlyConsumption": 5,
-                        "stockOnHand": 22,
-                        "monthsOfStock": 22 as f64 / 5 as f64
+                        "availableStockOnHand": 22,
+                        "availableMonthsOfStockOnHand": 22 as f64 / 5 as f64
                     },
                 }]
             }

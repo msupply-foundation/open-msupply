@@ -179,7 +179,7 @@ mod graphql {
                     their_reference: Some("reference input".to_string()),
                     comment: Some("comment input".to_string()),
                     max_months_of_stock: Some(1.0),
-                    threshold_months_of_stock: Some(2.0),
+                    min_months_of_stock: Some(2.0),
                     status: Some(UpdateRequestRequstionStatus::Sent)
                 }
             );
@@ -193,7 +193,7 @@ mod graphql {
           "input": {
             "id": "id input",
             "maxMonthsOfStock": 1,
-            "thresholdMonthsOfStock": 2,
+            "minMonthsOfStock": 2,
             "colour": "colour input",
             "theirReference": "reference input",
             "comment": "comment input",

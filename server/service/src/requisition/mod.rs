@@ -2,10 +2,10 @@ use self::{
     query::{get_requisition, get_requisition_by_number, get_requisitions},
     request_requisition::{
         add_from_master_list, delete_request_requisition, insert_request_requisition,
-        update_request_requisition, use_calculated_quantity, AddFromMasterList,
+        update_request_requisition, use_suggested_quantity, AddFromMasterList,
         AddFromMasterListError, DeleteRequestRequisition, DeleteRequestRequisitionError,
         InsertRequestRequisition, InsertRequestRequisitionError, UpdateRequestRequisition,
-        UpdateRequestRequisitionError, UseCalculatedQuantity, UseCalculatedQuantityError,
+        UpdateRequestRequisitionError, UseSuggestedQuantity, UseSuggestedQuantityError,
     },
     response_requisition::{
         create_requisition_shipment, supply_requested_quantity, update_response_requisition,
@@ -16,7 +16,7 @@ use self::{
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
-use domain::{PaginationOption, invoice::Invoice};
+use domain::{invoice::Invoice, PaginationOption};
 use repository::{
     schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter, RequisitionLine,
     RequisitionSort,
@@ -85,13 +85,13 @@ pub trait RequisitionServiceTrait: Sync + Send {
         delete_request_requisition(ctx, store_id, input)
     }
 
-    fn use_calculated_quantity(
+    fn use_suggested_quantity(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: UseCalculatedQuantity,
-    ) -> Result<Vec<RequisitionLine>, UseCalculatedQuantityError> {
-        use_calculated_quantity(ctx, store_id, input)
+        input: UseSuggestedQuantity,
+    ) -> Result<Vec<RequisitionLine>, UseSuggestedQuantityError> {
+        use_suggested_quantity(ctx, store_id, input)
     }
 
     fn add_from_master_list(

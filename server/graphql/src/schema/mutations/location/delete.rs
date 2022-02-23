@@ -8,7 +8,7 @@ use service::location::delete::{
 use crate::{
     schema::{
         mutations::{DeleteResponse, RecordBelongsToAnotherStore},
-        types::{Connector, DatabaseError, InvoiceLineNode, RecordNotFound, StockLineNode},
+        types::{DatabaseError, InvoiceLineConnector, RecordNotFound, StockLineConnector},
     },
     ContextExt,
 };
@@ -66,8 +66,8 @@ pub enum DeleteLocationErrorInterface {
 }
 
 pub struct LocationInUse {
-    stock_lines: Connector<StockLineNode>,
-    invoice_lines: Connector<InvoiceLineNode>,
+    stock_lines: StockLineConnector,
+    invoice_lines: InvoiceLineConnector,
 }
 
 #[Object]
@@ -76,11 +76,11 @@ impl LocationInUse {
         "Location in use"
     }
 
-    pub async fn stock_lines(&self) -> &Connector<StockLineNode> {
+    pub async fn stock_lines(&self) -> &StockLineConnector {
         &self.stock_lines
     }
 
-    pub async fn invoice_lines(&self) -> &Connector<InvoiceLineNode> {
+    pub async fn invoice_lines(&self) -> &InvoiceLineConnector {
         &self.invoice_lines
     }
 }
@@ -101,8 +101,8 @@ impl From<InError> for DeleteLocationError {
                 stock_lines,
                 invoice_lines,
             }) => OutError::LocationInUse(LocationInUse {
-                stock_lines: stock_lines.into(),
-                invoice_lines: invoice_lines.into(),
+                stock_lines: StockLineConnector::from_vec(stock_lines),
+                invoice_lines: InvoiceLineConnector::from_vec(invoice_lines),
             }),
             InError::LocationDoesNotBelongToCurrentStore => {
                 OutError::RecordBelongsToAnotherStore(RecordBelongsToAnotherStore {})

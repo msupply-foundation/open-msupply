@@ -6,7 +6,7 @@ use crate::schema::{
         InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice,
         NotAnOutboundShipment,
     },
-    types::{DatabaseError, ErrorWrapper, RecordNotFound},
+    types::{DatabaseError, RecordNotFound},
 };
 use domain::outbound_shipment::DeleteOutboundShipmentLine;
 use repository::StorageConnectionManager;
@@ -18,9 +18,15 @@ pub struct DeleteOutboundShipmentLineInput {
     pub invoice_id: String,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "DeleteOutboundShipmentLineError")]
+pub struct DeleteError {
+    pub error: DeleteErrorInterface,
+}
+
 #[derive(Union)]
 pub enum DeleteOutboundShipmentLineResponse {
-    Error(ErrorWrapper<DeleteOutboundShipmentLineErrorInterface>),
+    Error(DeleteError),
     Response(DeleteResponse),
 }
 
@@ -36,8 +42,9 @@ pub fn get_delete_outbound_shipment_line_response(
 }
 
 #[derive(Interface)]
+#[graphql(name = "DeleteOutboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum DeleteOutboundShipmentLineErrorInterface {
+pub enum DeleteErrorInterface {
     DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
@@ -58,7 +65,7 @@ impl From<DeleteOutboundShipmentLineInput> for DeleteOutboundShipmentLine {
 
 impl From<DeleteOutboundShipmentLineError> for DeleteOutboundShipmentLineResponse {
     fn from(error: DeleteOutboundShipmentLineError) -> Self {
-        use DeleteOutboundShipmentLineErrorInterface as OutError;
+        use DeleteErrorInterface as OutError;
         let error = match error {
             DeleteOutboundShipmentLineError::LineDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
@@ -85,6 +92,6 @@ impl From<DeleteOutboundShipmentLineError> for DeleteOutboundShipmentLineRespons
             }
         };
 
-        DeleteOutboundShipmentLineResponse::Error(ErrorWrapper { error })
+        DeleteOutboundShipmentLineResponse::Error(DeleteError { error })
     }
 }

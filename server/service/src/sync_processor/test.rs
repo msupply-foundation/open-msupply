@@ -50,8 +50,8 @@ mod test_update {
             start_requisition.max_months_of_stock
         );
         assert_eq!(
-            new_requisition.threshold_months_of_stock,
-            start_requisition.threshold_months_of_stock
+            new_requisition.min_months_of_stock,
+            start_requisition.min_months_of_stock
         );
         assert_eq!(new_requisition.r#type, RequisitionRowType::Response);
         assert_eq!(new_requisition.status, RequisitionRowStatus::New);

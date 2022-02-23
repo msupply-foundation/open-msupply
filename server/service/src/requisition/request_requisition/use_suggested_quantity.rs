@@ -10,13 +10,13 @@ use repository::{
 };
 
 #[derive(Debug, PartialEq)]
-pub struct UseCalculatedQuantity {
+pub struct UseSuggestedQuantity {
     pub request_requisition_id: String,
 }
 
 #[derive(Debug, PartialEq)]
 
-pub enum UseCalculatedQuantityError {
+pub enum UseSuggestedQuantityError {
     RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
@@ -24,12 +24,12 @@ pub enum UseCalculatedQuantityError {
     DatabaseError(RepositoryError),
 }
 
-type OutError = UseCalculatedQuantityError;
+type OutError = UseSuggestedQuantityError;
 
-pub fn use_calculated_quantity(
+pub fn use_suggested_quantity(
     ctx: &ServiceContext,
     store_id: &str,
-    input: UseCalculatedQuantity,
+    input: UseSuggestedQuantity,
 ) -> Result<Vec<RequisitionLine>, OutError> {
     let requisition_lines = ctx
         .connection
@@ -58,7 +58,7 @@ pub fn use_calculated_quantity(
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &UseCalculatedQuantity,
+    input: &UseSuggestedQuantity,
 ) -> Result<(), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.request_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
@@ -90,7 +90,7 @@ fn generate(
                  mut requisition_line_row,
                  ..
              }| {
-                requisition_line_row.requested_quantity = requisition_line_row.calculated_quantity;
+                requisition_line_row.requested_quantity = requisition_line_row.suggested_quantity;
 
                 requisition_line_row
             },
@@ -100,9 +100,9 @@ fn generate(
     Ok(result)
 }
 
-impl From<RepositoryError> for UseCalculatedQuantityError {
+impl From<RepositoryError> for UseSuggestedQuantityError {
     fn from(error: RepositoryError) -> Self {
-        UseCalculatedQuantityError::DatabaseError(error)
+        UseSuggestedQuantityError::DatabaseError(error)
     }
 }
 
@@ -122,16 +122,16 @@ mod test {
         requisition::{
             common::get_lines_for_requisition,
             request_requisition::{
-                UseCalculatedQuantity, UseCalculatedQuantityError as ServiceError,
+                UseSuggestedQuantity, UseSuggestedQuantityError as ServiceError,
             },
         },
         service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn use_calculated_quantity_errors() {
+    async fn use_suggested_quantity_errors() {
         let (_, _, connection_manager, _) =
-            setup_all("use_calculated_quantity_errors", MockDataInserts::all()).await;
+            setup_all("use_suggested_quantity_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
@@ -139,10 +139,10 @@ mod test {
 
         // RequisitionDoesNotExist
         assert_eq!(
-            service.use_calculated_quantity(
+            service.use_suggested_quantity(
                 &context,
                 "store_a",
-                UseCalculatedQuantity {
+                UseSuggestedQuantity {
                     request_requisition_id: "invalid".to_owned(),
                 },
             ),
@@ -151,10 +151,10 @@ mod test {
 
         // NotThisStoreRequisition
         assert_eq!(
-            service.use_calculated_quantity(
+            service.use_suggested_quantity(
                 &context,
                 "store_b",
-                UseCalculatedQuantity {
+                UseSuggestedQuantity {
                     request_requisition_id: mock_draft_request_requisition_for_update_test().id,
                 },
             ),
@@ -163,10 +163,10 @@ mod test {
 
         // CannotEditRequisition
         assert_eq!(
-            service.use_calculated_quantity(
+            service.use_suggested_quantity(
                 &context,
                 "store_a",
-                UseCalculatedQuantity {
+                UseSuggestedQuantity {
                     request_requisition_id: mock_sent_request_requisition().id,
                 },
             ),
@@ -175,10 +175,10 @@ mod test {
 
         // NotARequestRequisition
         assert_eq!(
-            service.use_calculated_quantity(
+            service.use_suggested_quantity(
                 &context,
                 "store_a",
-                UseCalculatedQuantity {
+                UseSuggestedQuantity {
                     request_requisition_id: mock_draft_response_requisition_for_update_test().id,
                 },
             ),
@@ -187,19 +187,19 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn use_calculated_quantity_success() {
+    async fn use_suggested_quantity_success() {
         let (_, connection, connection_manager, _) =
-            setup_all("use_calculated_quantity_success", MockDataInserts::all()).await;
+            setup_all("use_suggested_quantity_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 
         let result = service
-            .use_calculated_quantity(
+            .use_suggested_quantity(
                 &context,
                 "store_a",
-                UseCalculatedQuantity {
+                UseSuggestedQuantity {
                     request_requisition_id: mock_request_draft_requisition_calculation_test()
                         .requisition
                         .id,
@@ -220,7 +220,7 @@ mod test {
         for requisition_line in lines {
             assert_eq!(
                 requisition_line.requisition_line_row.requested_quantity,
-                requisition_line.requisition_line_row.calculated_quantity
+                requisition_line.requisition_line_row.suggested_quantity
             )
         }
     }

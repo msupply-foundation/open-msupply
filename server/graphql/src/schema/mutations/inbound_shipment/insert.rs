@@ -3,7 +3,7 @@ use async_graphql::*;
 use crate::schema::{
     mutations::{ForeignKey, ForeignKeyError, OtherPartyNotASupplier, RecordAlreadyExist},
     queries::invoice::*,
-    types::{DatabaseError, ErrorWrapper, InvoiceNode, NameNode, NodeError},
+    types::{DatabaseError, InvoiceNode, NameNode, NodeError},
 };
 use domain::inbound_shipment::InsertInboundShipment;
 use repository::StorageConnectionManager;
@@ -19,9 +19,15 @@ pub struct InsertInboundShipmentInput {
     pub colour: Option<String>,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "InsertInboundShipmentError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
 #[derive(Union)]
 pub enum InsertInboundShipmentResponse {
-    Error(ErrorWrapper<InsertInboundShipmentErrorInterface>),
+    Error(InsertError),
     NodeError(NodeError),
     Response(InvoiceNode),
 }
@@ -35,8 +41,8 @@ pub fn get_insert_inbound_shipment_response(
     let connection = match connection_manager.connection() {
         Ok(con) => con,
         Err(err) => {
-            return InsertInboundShipmentResponse::Error(ErrorWrapper {
-                error: InsertInboundShipmentErrorInterface::DatabaseError(DatabaseError(err)),
+            return InsertInboundShipmentResponse::Error(InsertError {
+                error: InsertErrorInterface::DatabaseError(DatabaseError(err)),
             })
         }
     };
@@ -50,8 +56,9 @@ pub fn get_insert_inbound_shipment_response(
 }
 
 #[derive(Interface)]
+#[graphql(name = "InsertInboundShipmentErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum InsertInboundShipmentErrorInterface {
+pub enum InsertErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExist(RecordAlreadyExist),
@@ -82,7 +89,7 @@ impl From<InsertInboundShipmentInput> for InsertInboundShipment {
 
 impl From<InsertInboundShipmentError> for InsertInboundShipmentResponse {
     fn from(error: InsertInboundShipmentError) -> Self {
-        use InsertInboundShipmentErrorInterface as OutError;
+        use InsertErrorInterface as OutError;
         let error = match error {
             InsertInboundShipmentError::InvoiceAlreadyExists => {
                 OutError::RecordAlreadyExist(RecordAlreadyExist {})
@@ -98,6 +105,6 @@ impl From<InsertInboundShipmentError> for InsertInboundShipmentResponse {
             }
         };
 
-        InsertInboundShipmentResponse::Error(ErrorWrapper { error })
+        InsertInboundShipmentResponse::Error(InsertError { error })
     }
 }

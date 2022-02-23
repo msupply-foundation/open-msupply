@@ -5,7 +5,7 @@ use crate::schema::{
         CannotDeleteInvoiceWithLines, CannotEditInvoice, DeleteResponse,
         InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
     },
-    types::{DatabaseError, ErrorWrapper, RecordNotFound},
+    types::{DatabaseError, InvoiceLineConnector, RecordNotFound},
 };
 use domain::inbound_shipment::DeleteInboundShipment;
 use repository::StorageConnectionManager;
@@ -16,9 +16,15 @@ pub struct DeleteInboundShipmentInput {
     pub id: String,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "DeleteInboundShipmentError")]
+pub struct DeleteError {
+    pub error: DeleteErrorInterface,
+}
+
 #[derive(Union)]
 pub enum DeleteInboundShipmentResponse {
-    Error(ErrorWrapper<DeleteInboundShipmentErrorInterface>),
+    Error(DeleteError),
     Response(DeleteResponse),
 }
 
@@ -34,8 +40,9 @@ pub fn get_delete_inbound_shipment_response(
 }
 
 #[derive(Interface)]
+#[graphql(name = "DeleteInboundShipmentErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum DeleteInboundShipmentErrorInterface {
+pub enum DeleteErrorInterface {
     DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
@@ -52,7 +59,7 @@ impl From<DeleteInboundShipmentInput> for DeleteInboundShipment {
 
 impl From<DeleteInboundShipmentError> for DeleteInboundShipmentResponse {
     fn from(error: DeleteInboundShipmentError) -> Self {
-        use DeleteInboundShipmentErrorInterface as OutError;
+        use DeleteErrorInterface as OutError;
         let error = match error {
             DeleteInboundShipmentError::InvoiceDoesNotExist => {
                 OutError::RecordNotFound(RecordNotFound {})
@@ -71,10 +78,12 @@ impl From<DeleteInboundShipmentError> for DeleteInboundShipmentResponse {
                 OutError::CannotEditInvoice(CannotEditInvoice {})
             }
             DeleteInboundShipmentError::InvoiceLinesExists(lines) => {
-                OutError::CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines(lines.into()))
+                OutError::CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines(
+                    InvoiceLineConnector::from_vec(lines),
+                ))
             }
         };
 
-        DeleteInboundShipmentResponse::Error(ErrorWrapper { error })
+        DeleteInboundShipmentResponse::Error(DeleteError { error })
     }
 }

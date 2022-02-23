@@ -1,24 +1,28 @@
+use super::{EqualFilterStringInput, NodeError, StockLineConnector};
+use crate::{loader::StockLineByLocationIdLoader, ContextExt};
 use async_graphql::*;
 use async_graphql::{dataloader::DataLoader, Context};
+use domain::location::LocationSort;
 use domain::{
-    location::{Location, LocationFilter},
+    location::{Location, LocationFilter, LocationSortField},
     EqualFilter,
 };
-
-use crate::{loader::StockLineByLocationIdLoader, ContextExt};
-
-use super::{
-    Connector, ConnectorError, EqualFilterStringInput, NodeError, SortInput, StockLinesResponse,
-};
+use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "domain::location::LocationSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum LocationSortFieldInput {
     Name,
     Code,
 }
-pub type LocationSortInput = SortInput<LocationSortFieldInput>;
+#[derive(InputObject)]
+pub struct LocationSortInput {
+    /// Sort query result by `key`
+    key: LocationSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
 
 #[derive(InputObject, Clone)]
 pub struct LocationFilterInput {
@@ -43,6 +47,12 @@ pub struct LocationNode {
     pub location: Location,
 }
 
+#[derive(SimpleObject)]
+pub struct LocationConnector {
+    total_count: u32,
+    nodes: Vec<LocationNode>,
+}
+
 #[Object]
 impl LocationNode {
     pub async fn id(&self) -> &str {
@@ -61,21 +71,19 @@ impl LocationNode {
         self.location.on_hold
     }
 
-    pub async fn stock(&self, ctx: &Context<'_>) -> StockLinesResponse {
+    pub async fn stock(&self, ctx: &Context<'_>) -> Result<StockLineConnector> {
         let loader = ctx.get_loader::<DataLoader<StockLineByLocationIdLoader>>();
-        match loader.load_one(self.location.id.clone()).await {
-            Ok(result_option) => {
-                StockLinesResponse::Response(result_option.unwrap_or(Vec::new()).into())
-            }
-            Err(error) => StockLinesResponse::Error(error.into()),
-        }
+        let result_option = loader.load_one(self.location.id.clone()).await?;
+
+        Ok(StockLineConnector::from_vec(
+            result_option.unwrap_or(vec![]),
+        ))
     }
 }
 
 #[derive(Union)]
 pub enum LocationsResponse {
-    Error(ConnectorError),
-    Response(Connector<LocationNode>),
+    Response(LocationConnector),
 }
 
 #[derive(Union)]
@@ -84,8 +92,47 @@ pub enum LocationResponse {
     Response(LocationNode),
 }
 
-impl From<Location> for LocationNode {
-    fn from(location: Location) -> Self {
+impl LocationNode {
+    pub fn from_domain(location: Location) -> LocationNode {
         LocationNode { location }
+    }
+}
+
+impl LocationConnector {
+    pub fn from_domain(locations: ListResult<Location>) -> LocationConnector {
+        LocationConnector {
+            total_count: locations.count,
+            nodes: locations
+                .rows
+                .into_iter()
+                .map(LocationNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(locations: Vec<Location>) -> LocationConnector {
+        LocationConnector {
+            total_count: usize_to_u32(locations.len()),
+            nodes: locations
+                .into_iter()
+                .map(LocationNode::from_domain)
+                .collect(),
+        }
+    }
+}
+
+impl LocationSortInput {
+    pub fn to_domain(self) -> LocationSort {
+        use LocationSortField as to;
+        use LocationSortFieldInput as from;
+        let key = match self.key {
+            from::Name => to::Name,
+            from::Code => to::Code,
+        };
+
+        LocationSort {
+            key,
+            desc: self.desc,
+        }
     }
 }

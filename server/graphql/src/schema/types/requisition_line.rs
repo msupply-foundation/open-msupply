@@ -15,7 +15,7 @@ use crate::{
     ContextExt,
 };
 
-use super::{Connector, InvoiceLineNode, ItemNode, ItemStatsNode};
+use super::{InvoiceLineConnector, ItemNode, ItemStatsNode};
 
 #[derive(PartialEq, Debug)]
 pub struct RequisitionLineNode {
@@ -41,16 +41,15 @@ impl RequisitionLineNode {
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
         let item_option = loader.load_one(self.row().item_id.clone()).await?;
-        let item = item_option.ok_or(
+
+        item_option.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item_id {} for requisition_line_id {}",
                 &self.row().item_id,
                 &self.row().id
             ))
             .extend(),
-        )?;
-
-        Ok(ItemNode::from(item))
+        )
     }
 
     /// Quantity requested
@@ -64,23 +63,20 @@ impl RequisitionLineNode {
     }
 
     /// Calculated quantity
-    /// When months_of_stock < requisition.threshold_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
-    pub async fn calculated_quantity(&self) -> &i32 {
-        &self.row().calculated_quantity
+    /// When months_of_stock < requisition.min_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
+    pub async fn suggested_quantity(&self) -> &i32 {
+        &self.row().suggested_quantity
     }
 
     /// OutboundShipment lines linked to requisitions line
-    pub async fn outbound_shipment_lines(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Connector<InvoiceLineNode>> {
+    pub async fn outbound_shipment_lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
         // Outbound shipments link to response requisition, so for request requisition
         // use linked requisition id
         let requisition_row = &self.requisition_line.requisition_row;
         let requisition_id = match requisition_row.r#type {
             RequisitionRowType::Request => match &requisition_row.linked_requisition_id {
                 Some(linked_requisition_id) => linked_requisition_id,
-                None => return Ok(Connector::empty()),
+                None => return Ok(InvoiceLineConnector::empty()),
             },
             _ => &self.row().requisition_id,
         };
@@ -93,23 +89,20 @@ impl RequisitionLineNode {
             })
             .await?;
 
-        let list_result = result_option.unwrap_or(vec![]);
+        let result = result_option.unwrap_or(vec![]);
 
-        Ok(list_result.into())
+        Ok(InvoiceLineConnector::from_vec(result))
     }
 
     /// InboundShipment lines linked to requisitions line
-    pub async fn inbound_shipment_lines(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Connector<InvoiceLineNode>> {
+    pub async fn inbound_shipment_lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
         // Outbound shipments links to request requisition, so for response requisition
         // use linked requisition id
         let requisition_row = &self.requisition_line.requisition_row;
         let requisition_id = match requisition_row.r#type {
             RequisitionRowType::Response => match &requisition_row.linked_requisition_id {
                 Some(linked_requisition_id) => linked_requisition_id,
-                None => return Ok(Connector::empty()),
+                None => return Ok(InvoiceLineConnector::empty()),
             },
             _ => &self.row().requisition_id,
         };
@@ -122,16 +115,16 @@ impl RequisitionLineNode {
             })
             .await?;
 
-        let list_result = result_option.unwrap_or(vec![]);
+        let result = result_option.unwrap_or(vec![]);
 
-        Ok(list_result.into())
+        Ok(InvoiceLineConnector::from_vec(result))
     }
 
     /// Snapshot Stats (when requisition was created)
     pub async fn item_stats(&self) -> ItemStatsNode {
         ItemStatsNode {
             average_monthly_consumption: self.row().average_monthly_consumption,
-            stock_on_hand: self.row().stock_on_hand,
+            available_stock_on_hand: self.row().available_stock_on_hand,
         }
     }
 

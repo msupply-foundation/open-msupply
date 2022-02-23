@@ -19,9 +19,9 @@ pub fn mock_draft_request_requisition_line() -> RequisitionLineRow {
         requisition_id: mock_request_draft_requisition().id,
         item_id: mock_item_a().id,
         requested_quantity: 10,
-        calculated_quantity: 3,
+        suggested_quantity: 3,
         supply_quantity: 0,
-        stock_on_hand: 1,
+        available_stock_on_hand: 1,
         average_monthly_consumption: 10,
     }
 }
@@ -32,9 +32,9 @@ pub fn mock_draft_request_requisition_line2() -> RequisitionLineRow {
         requisition_id: mock_request_draft_requisition().id,
         item_id: mock_item_a().id,
         requested_quantity: 10,
-        calculated_quantity: 3,
+        suggested_quantity: 3,
         supply_quantity: 0,
-        stock_on_hand: 1,
+        available_stock_on_hand: 1,
         average_monthly_consumption: 10,
     }
 }

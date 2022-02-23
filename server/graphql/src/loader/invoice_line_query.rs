@@ -1,14 +1,10 @@
+use super::{extract_unique_requisition_and_item_ids, RequisitionAndItemId};
+use crate::standard_graphql_error::StandardGraphqlError;
 use async_graphql::dataloader::*;
 use async_graphql::*;
 use domain::{invoice_line::InvoiceLine, EqualFilter};
 use repository::{InvoiceLineFilter, InvoiceLineRepository, StorageConnectionManager};
 use std::collections::HashMap;
-
-use service::ListError;
-
-use crate::standard_graphql_error::StandardGraphqlError;
-
-use super::{extract_unique_requisition_and_item_ids, RequisitionAndItemId};
 
 pub struct InvoiceLineQueryLoader {
     pub connection_manager: StorageConnectionManager,
@@ -17,7 +13,7 @@ pub struct InvoiceLineQueryLoader {
 #[async_trait::async_trait]
 impl Loader<String> for InvoiceLineQueryLoader {
     type Value = Vec<InvoiceLine>;
-    type Error = ListError;
+    type Error = async_graphql::Error;
 
     async fn load(
         &self,

@@ -1,22 +1,32 @@
-use async_graphql::*;
-use domain::{name::NameFilter, EqualFilter, PaginationOption, SimpleStringFilter};
-
-use service::name::get_names;
-
-use crate::schema::types::sort_filter_types::{convert_sort, EqualFilterStringInput};
+use crate::schema::types::sort_filter_types::EqualFilterStringInput;
 use crate::schema::types::{name::NameNode, PaginationInput};
+use crate::standard_graphql_error::StandardGraphqlError;
 use crate::ContextExt;
+use async_graphql::*;
+use domain::{
+    name::{NameFilter, NameSort, NameSortField},
+    EqualFilter, PaginationOption, SimpleStringFilter,
+};
+use service::name::get_names;
+use service::ListResult;
 
-use super::{ConnectorError, SimpleStringFilterInput, SortInput};
+use super::SimpleStringFilterInput;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "domain::name::NameSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum NameSortFieldInput {
     Name,
     Code,
 }
-pub type NameSortInput = SortInput<NameSortFieldInput>;
+
+#[derive(InputObject)]
+pub struct NameSortInput {
+    /// Sort query result by `key`
+    key: NameSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
 
 #[derive(InputObject, Clone)]
 pub struct NameFilterInput {
@@ -52,7 +62,6 @@ pub struct NameConnector {
 
 #[derive(Union)]
 pub enum NamesResponse {
-    Error(ConnectorError),
     Response(NameConnector),
 }
 
@@ -61,18 +70,43 @@ pub fn names(
     page: Option<PaginationInput>,
     filter: Option<NameFilterInput>,
     sort: Option<Vec<NameSortInput>>,
-) -> NamesResponse {
+) -> Result<NamesResponse> {
     let connection_manager = ctx.get_connection_manager();
-    match get_names(
+    let names = get_names(
         connection_manager,
         page.map(PaginationOption::from),
         filter.map(NameFilter::from),
-        convert_sort(sort),
-    ) {
-        Ok(names) => NamesResponse::Response(NameConnector {
+        // Currently only one sort option is supported, use the first from the list.
+        sort.map(|mut sort_list| sort_list.pop())
+            .flatten()
+            .map(|sort| sort.to_domain()),
+    )
+    .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(NamesResponse::Response(NameConnector::from_domain(names)))
+}
+
+impl NameConnector {
+    pub fn from_domain(names: ListResult<domain::name::Name>) -> NameConnector {
+        NameConnector {
             total_count: names.count,
-            nodes: names.rows.into_iter().map(NameNode::from).collect(),
-        }),
-        Err(error) => NamesResponse::Error(error.into()),
+            nodes: names.rows.into_iter().map(NameNode::from_domain).collect(),
+        }
+    }
+}
+
+impl NameSortInput {
+    pub fn to_domain(self) -> NameSort {
+        use NameSortField as to;
+        use NameSortFieldInput as from;
+        let key = match self.key {
+            from::Name => to::Name,
+            from::Code => to::Code,
+        };
+
+        NameSort {
+            key,
+            desc: self.desc,
+        }
     }
 }
