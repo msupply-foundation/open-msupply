@@ -110,8 +110,9 @@ impl RemotePullTranslation for ShipmentLineTranslation {
                 pack_size: data.pack_size,
                 cost_price_per_pack: data.cost_price,
                 sell_price_per_pack: data.sell_price,
-                total_before_tax: data.sell_price * data.quantity as f64,
-                total_after_tax: data.sell_price * data.quantity as f64,
+                // TODO check that this is the correct way to calculate the total values
+                total_before_tax: data.cost_price * data.quantity as f64,
+                total_after_tax: data.cost_price * data.quantity as f64,
                 tax: None,
                 r#type: line_type,
                 number_of_packs: data.quantity,
