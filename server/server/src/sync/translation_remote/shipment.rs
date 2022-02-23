@@ -87,7 +87,7 @@ struct LegacyTransactRow {
     confirm_time: i64,
 }
 
-fn data_and_time_to_datatime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
+fn date_and_time_to_datatime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
     NaiveDateTime::new(
         date,
         NaiveTime::from_hms(0, 0, 0) + Duration::seconds(seconds),
@@ -133,18 +133,18 @@ impl RemotePullTranslation for ShipmentTranslation {
                 on_hold: data.hold,
                 comment: data.comment,
                 their_reference: data.their_ref,
-                created_datetime: data_and_time_to_datatime(data.entry_date, data.entry_time),
+                created_datetime: date_and_time_to_datatime(data.entry_date, data.entry_time),
                 allocated_datetime: None,
                 picked_datetime: None,
                 shipped_datetime: data
                     .ship_date
-                    .map(|ship_date| data_and_time_to_datatime(ship_date, 0)),
+                    .map(|ship_date| date_and_time_to_datatime(ship_date, 0)),
                 delivered_datetime: data
                     .arrival_date_actual
-                    .map(|arrival| data_and_time_to_datatime(arrival, 0)),
+                    .map(|arrival| date_and_time_to_datatime(arrival, 0)),
                 verified_datetime: data
                     .confirm_date
-                    .map(|confirm_date| data_and_time_to_datatime(confirm_date, confirm_time)),
+                    .map(|confirm_date| date_and_time_to_datatime(confirm_date, confirm_time)),
                 colour: Some(format!("#{:06X}", data.Colour)),
                 requisition_id: data.requisition_ID,
                 linked_invoice_id: data.linked_transaction_id,
