@@ -1,12 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
-    pagination::PaginationInput,
     simple_generic_errors::{DatabaseError, InternalError},
-    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::ItemConnector;
+
 use reqwest::header::SET_COOKIE;
 use service::{
     token::{JWTIssuingError, TokenPair, TokenService},

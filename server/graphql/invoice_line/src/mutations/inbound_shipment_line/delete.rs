@@ -89,7 +89,7 @@ impl From<DeleteInboundShipmentLineError> for DeleteInboundShipmentLineResponse 
             DeleteInboundShipmentLineError::BatchIsReserved => {
                 OutError::BatchIsReserved(BatchIsReserved {})
             }
-            DeleteInboundShipmentLineError::NotThisInvoiceLine(invoice_id) => {
+            DeleteInboundShipmentLineError::NotThisInvoiceLine(_invoice_id) => {
                 OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice {})
             }
         };

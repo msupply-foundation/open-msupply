@@ -1,12 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
-    pagination::PaginationInput,
-    simple_generic_errors::{AccessDenied, DatabaseError, InternalError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    simple_generic_errors::{DatabaseError, InternalError},
     ContextExt, RequestUserData,
 };
-use graphql_types::types::{ItemConnector, NameNode};
+
 use service::token::{TokenPair, TokenService, JWTRefreshError};
 
 use crate::set_refresh_token_cookie;

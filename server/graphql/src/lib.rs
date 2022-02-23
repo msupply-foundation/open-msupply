@@ -1,12 +1,12 @@
 mod mutations;
 mod queries;
 
-use actix_web::cookie::Cookie;
+
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use actix_web::{guard::fn_guard, HttpResponse, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql::{Context, EmptySubscription, SchemaBuilder};
+use async_graphql::{EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{Request, Response};
 use graphql_core::auth_data_from_request;
 use graphql_core::loader::LoaderRegistry;

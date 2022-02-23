@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{InternalError, RecordDoesNotExist, CannotEditRequisition},
+    simple_generic_errors::{RecordDoesNotExist, CannotEditRequisition},
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,

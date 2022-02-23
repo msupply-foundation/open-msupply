@@ -2,13 +2,11 @@ use async_graphql::*;
 use domain::shipment_tax_update::ShipmentTaxUpdate;
 
 use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError, InternalError,
-    InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NodeError,
-    NodeErrorInterface, NotAnInboundShipment, NotAnOutboundShipment, Range, RangeError, RangeField,
-    RecordAlreadyExist, RecordNotFound,
+    CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError, InternalError, InvoiceLineBelongsToAnotherInvoice,
+    NodeErrorInterface, NotAnOutboundShipment, RecordNotFound,
 };
 use graphql_types::types::{
-    get_invoice_line_response, DeleteResponse, InvoiceLineNode, InvoiceLineResponse,
+    get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse,
 };
 use repository::StorageConnectionManager;
 use service::invoice_line::{
@@ -113,7 +111,7 @@ impl From<UpdateOutboundShipmentServiceLineError> for UpdateOutboundShipmentServ
             UpdateOutboundShipmentServiceLineError::NotAnOutboundShipment => {
                 OutError::NotAnOutboundShipment(NotAnOutboundShipment {})
             }
-            UpdateOutboundShipmentServiceLineError::NotThisInvoiceLine(invoice_id) => {
+            UpdateOutboundShipmentServiceLineError::NotThisInvoiceLine(_invoice_id) => {
                 OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice {})
             }
             UpdateOutboundShipmentServiceLineError::CannotEditFinalised => {

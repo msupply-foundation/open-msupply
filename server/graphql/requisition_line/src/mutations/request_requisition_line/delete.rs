@@ -1,12 +1,12 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
-        CannotEditRequisition, ForeignKey, ForeignKeyError, RecordDoesNotExist,
+        CannotEditRequisition, RecordDoesNotExist,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{DeleteResponse as GenericDeleteResponse, RequisitionLineNode};
+use graphql_types::types::{DeleteResponse as GenericDeleteResponse};
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
     requisition_line::request_requisition_line::{

@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
-        CannotEditRequisition, ForeignKey, ForeignKeyError, RecordDoesNotExist,
+        CannotEditRequisition, ForeignKey, ForeignKeyError,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,

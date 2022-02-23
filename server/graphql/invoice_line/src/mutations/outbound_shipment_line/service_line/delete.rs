@@ -3,12 +3,11 @@ use async_graphql::*;
 use domain::outbound_shipment::DeleteOutboundShipmentLine;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError,
-    InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NodeError,
-    NotAnInboundShipment, NotAnOutboundShipment, Range, RangeError, RangeField, RecordAlreadyExist,
+    InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NotAnOutboundShipment,
     RecordNotFound,
 };
 use graphql_types::types::{
-    get_invoice_line_response, DeleteResponse, InvoiceLineNode, InvoiceLineResponse,
+    DeleteResponse,
 };
 use repository::StorageConnectionManager;
 use service::invoice_line::{
@@ -88,7 +87,7 @@ impl From<DeleteOutboundShipmentServiceLineError> for DeleteOutboundShipmentServ
             DeleteOutboundShipmentServiceLineError::CannotEditFinalised => {
                 OutError::CannotEditInvoice(CannotEditInvoice {})
             }
-            DeleteOutboundShipmentServiceLineError::NotThisInvoiceLine(invoice_id) => {
+            DeleteOutboundShipmentServiceLineError::NotThisInvoiceLine(_invoice_id) => {
                 OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice {})
             }
             DeleteOutboundShipmentServiceLineError::NotAServiceItem => {
