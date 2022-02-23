@@ -50,7 +50,7 @@ export const Login: React.FC = ({}) => {
     setUsername,
     isLoggingIn,
     onLogin,
-    authenticationResponse,
+    error,
   } = useLoginForm(passwordRef);
 
   const { data, isLoading } = useStores();
@@ -153,15 +153,14 @@ export const Login: React.FC = ({}) => {
                 value={currentStore}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
               />
-              {authenticationResponse?.error && (
+              {error && (
                 <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
                   <Box>
                     <AlertIcon />
                   </Box>
                   <Box>
                     <Typography sx={{ color: 'inherit' }}>
-                      {authenticationResponse?.error.message ||
-                        t('error.login')}
+                      {error.message || t('error.login')}
                     </Typography>
                   </Box>
                 </Box>
