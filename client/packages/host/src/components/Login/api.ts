@@ -1,15 +1,16 @@
 import {
-  UseQueryResult,
   useOmSupplyApi,
-  useQuery,
   AuthTokenQuery,
+  useMutation,
+  MutateOptions,
 } from '@openmsupply-client/common';
 
+export type AuthenticationError = {
+  message: string;
+};
 interface AuthenticationResponse {
   token: string;
-  error?: {
-    message: string;
-  };
+  error?: AuthenticationError;
 }
 
 const tokenGuard = (authTokenQuery: AuthTokenQuery): AuthenticationResponse => {
@@ -36,22 +37,26 @@ interface LoginCredentials {
   password: string;
 }
 
-export const useAuthToken = (
-  credentials: LoginCredentials,
-  login: boolean
-): UseQueryResult<AuthenticationResponse> => {
+export const useAuthToken = () => {
   const { api } = useOmSupplyApi();
+  const { mutate, ...rest } = useMutation<
+    AuthenticationResponse,
+    unknown,
+    LoginCredentials,
+    unknown
+  >(async credentials => {
+    const result = await api.authToken(credentials);
+    return tokenGuard(result);
+  });
 
-  return useQuery(
-    ['authToken', credentials],
-    async () => {
-      const result = await api.authToken(credentials);
-
-      return tokenGuard(result);
-    },
-    {
-      cacheTime: 0,
-      enabled: login,
-    }
-  );
+  const login = (
+    credentials: LoginCredentials,
+    options: MutateOptions<
+      AuthenticationResponse,
+      unknown,
+      LoginCredentials,
+      unknown
+    >
+  ) => mutate(credentials, options);
+  return { login, ...rest };
 };
