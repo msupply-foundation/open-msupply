@@ -8,7 +8,7 @@ use serde::Deserialize;
 use crate::sync::SyncTranslationError;
 
 use super::{
-    data_and_time_to_datatime, empty_str_as_option, IntegrationRecord, IntegrationUpsertRecord,
+    date_and_time_to_datatime, empty_str_as_option, IntegrationRecord, IntegrationUpsertRecord,
     RemotePullTranslation, TRANSLATION_RECORD_STOCKTAKE,
 };
 
@@ -76,7 +76,7 @@ impl RemotePullTranslation for StocktakeTranslation {
                 comment: data.comment,
                 description: data.Description,
                 status: stocktake_status(&data.status),
-                created_datetime: data_and_time_to_datatime(data.stock_take_created_date, 0),
+                created_datetime: date_and_time_to_datatime(data.stock_take_created_date, 0),
                 // TODO finalise doesn't exist in mSupply?
                 finalised_datetime: None,
                 // TODO what is the correct mapping:
