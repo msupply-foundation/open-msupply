@@ -243,6 +243,11 @@ query invoice($id: String!, $storeId: String!) {
                 code
                 isVisible
                 unitName
+                stats {
+                  stockOnHand
+                  monthsOfStock
+                  averageMonthlyConsumption
+                }
                 availableBatches(storeId: $storeId) {
                   ... on StockLineConnector {
                     totalCount

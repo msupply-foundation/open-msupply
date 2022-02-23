@@ -14,6 +14,7 @@ export const createPlaceholderRow = (
   invoiceId: string,
   itemId = ''
 ): DraftOutboundLine => ({
+  __typename: 'InvoiceLineNode',
   availableNumberOfPacks: 0,
   batch: 'Placeholder',
   costPricePerPack: 0,
@@ -44,6 +45,7 @@ export const createDraftOutboundLine = ({
   stockLine,
   invoiceLine,
 }: DraftOutboundLineSeeds): DraftOutboundLine => ({
+  __typename: 'InvoiceLineNode',
   isCreated: !invoiceLine,
   isUpdated: false,
   numberOfPacks: 0,

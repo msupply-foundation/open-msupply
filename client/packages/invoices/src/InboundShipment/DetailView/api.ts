@@ -276,9 +276,9 @@ export const useInboundShipmentSelector = <T = Invoice>(
 };
 
 const getUpdateInbound =
-  (api: InboundShipmentApi, storeId: string) =>
+  (api: InboundShipmentApi) =>
   async (patch: Partial<Invoice> & { id: string }) =>
-    api.updateInboundShipment({ storeId, input: invoiceToInput(patch) });
+    api.updateInboundShipment({ input: invoiceToInput(patch) });
 
 const useOptimisticInboundUpdate = () => {
   const api = useInboundShipmentApi();
@@ -348,11 +348,9 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
     [keyOrKeys]
   );
   const { data } = useInboundShipmentSelector(select);
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
 
   const { mutate } = useMutation(
-    (patch: Partial<Invoice>) =>
-      getUpdateInbound(api, storeId)({ id, ...patch }),
+    (patch: Partial<Invoice>) => getUpdateInbound(api)({ id, ...patch }),
     {
       onMutate: async (patch: Partial<Invoice>) => {
         await queryClient.cancelQueries(['invoice', id]);

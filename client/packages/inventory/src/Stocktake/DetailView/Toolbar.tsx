@@ -6,7 +6,6 @@ import {
   DropdownMenuItem,
   DeleteIcon,
   useTranslation,
-  useNotification,
   BufferedTextInput,
   useBufferState,
   InputWithLabelRow,
