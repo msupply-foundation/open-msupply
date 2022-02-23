@@ -7,8 +7,8 @@ use crate::schema::{
         NotAnOutboundShipment,
     },
     types::{
-        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
-        InvoiceLineResponse, NodeError, Range, RangeError, RangeField, RecordNotFound,
+        get_invoice_line_response, DatabaseError, InvoiceLineNode, InvoiceLineResponse, NodeError,
+        Range, RangeError, RangeField, RecordNotFound,
     },
 };
 use domain::{
@@ -49,16 +49,23 @@ pub fn get_update_outbound_shipment_line_response(
     }
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateOutboundShipmentLineError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 pub enum UpdateOutboundShipmentLineResponse {
-    Error(ErrorWrapper<UpdateOutboundShipmentLineErrorInterface>),
+    Error(UpdateError),
     NodeError(NodeError),
     Response(InvoiceLineNode),
 }
 
 #[derive(Interface)]
+#[graphql(name = "UpdateOutboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum UpdateOutboundShipmentLineErrorInterface {
+pub enum UpdateErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
@@ -107,7 +114,7 @@ impl From<UpdateOutboundShipmentLineInput> for UpdateOutboundShipmentLine {
 
 impl From<UpdateOutboundShipmentLineError> for UpdateOutboundShipmentLineResponse {
     fn from(error: UpdateOutboundShipmentLineError) -> Self {
-        use UpdateOutboundShipmentLineErrorInterface as OutError;
+        use UpdateErrorInterface as OutError;
         let error = match error {
             UpdateOutboundShipmentLineError::DatabaseError(error) => {
                 OutError::DatabaseError(DatabaseError(error))
@@ -171,6 +178,6 @@ impl From<UpdateOutboundShipmentLineError> for UpdateOutboundShipmentLineRespons
             }
         };
 
-        UpdateOutboundShipmentLineResponse::Error(ErrorWrapper { error })
+        UpdateOutboundShipmentLineResponse::Error(UpdateError { error })
     }
 }

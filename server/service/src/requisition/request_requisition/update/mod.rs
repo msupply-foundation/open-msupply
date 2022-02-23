@@ -26,7 +26,7 @@ pub struct UpdateRequestRequisition {
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
-    pub threshold_months_of_stock: Option<f64>,
+    pub min_months_of_stock: Option<f64>,
     pub status: Option<UpdateRequestRequstionStatus>,
 }
 

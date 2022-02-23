@@ -88,7 +88,7 @@ pub fn insert(ctx: &Context<'_>, input: InsertInput) -> Result<InsertResponse> {
         .outbound_shipment_line
         .insert_outbound_shipment_unallocated_line(&service_context, input.into())
     {
-        Ok(invoice_line) => InsertResponse::Response(invoice_line.into()),
+        Ok(invoice_line) => InsertResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => InsertResponse::Error(InsertError {
             error: map_error(&id, error)?,
         }),

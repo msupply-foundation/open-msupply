@@ -91,7 +91,7 @@ pub fn generate_linked_requisition(
         comment: None,
         their_reference: source_requisition.their_reference.clone(),
         max_months_of_stock: source_requisition.max_months_of_stock.clone(),
-        threshold_months_of_stock: source_requisition.threshold_months_of_stock.clone(),
+        min_months_of_stock: source_requisition.min_months_of_stock.clone(),
         linked_requisition_id: Some(source_requisition.id.clone()),
     };
 
@@ -116,9 +116,9 @@ fn generate_linked_requisition_lines(
             requisition_id: linked_requisition.id.clone(),
             item_id,
             requested_quantity: source_line.requisition_line_row.requested_quantity,
-            calculated_quantity: source_line.requisition_line_row.calculated_quantity,
+            suggested_quantity: source_line.requisition_line_row.suggested_quantity,
             supply_quantity: 0,
-            stock_on_hand: item_stats.stock_on_hand(),
+            available_stock_on_hand: item_stats.available_stock_on_hand(),
             average_monthly_consumption: item_stats.average_monthly_consumption(),
         };
 

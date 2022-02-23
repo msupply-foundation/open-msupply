@@ -76,7 +76,7 @@ mod graphql {
                             }
                         })).collect::<Vec<serde_json::Value>>(),
                 },
-                "status": InvoiceNodeStatus::from(InvoiceStatus::from(full_invoice.invoice.status.clone())),
+                "status": InvoiceNodeStatus::from_domain(&InvoiceStatus::from(full_invoice.invoice.status.clone())),
             },
         });
         assert_graphql_query!(&settings, &query, &variables, &expected, None);

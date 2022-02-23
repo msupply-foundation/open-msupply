@@ -1,3 +1,4 @@
+use super::{InternalError, ItemStatsNode, StockLineConnector};
 use crate::{
     loader::{
         IdAndStoreId, ItemStatsLoaderInput, ItemsStatsForItemLoader,
@@ -10,12 +11,17 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDateTime;
 use domain::item::Item;
-
-use super::{InternalError, ItemStatsNode, StockLinesResponse};
+use service::ListResult;
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
     item: Item,
+}
+
+#[derive(SimpleObject)]
+pub struct ItemConnector {
+    total_count: u32,
+    nodes: Vec<ItemNode>,
 }
 
 #[Object]
@@ -65,20 +71,22 @@ impl ItemNode {
         Ok(ItemStatsNode::from_domain(result))
     }
 
-    async fn available_batches(&self, ctx: &Context<'_>, store_id: String) -> StockLinesResponse {
+    async fn available_batches(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<StockLineConnector> {
         let loader = ctx.get_loader::<DataLoader<StockLineByItemAndStoreIdLoader>>();
-        match loader
+        let result_option = loader
             .load_one(IdAndStoreId {
                 id: self.item.id.clone(),
                 store_id,
             })
-            .await
-        {
-            Ok(result_option) => {
-                StockLinesResponse::Response(result_option.unwrap_or(Vec::new()).into())
-            }
-            Err(error) => StockLinesResponse::Error(error.into()),
-        }
+            .await?;
+
+        Ok(StockLineConnector::from_vec(
+            result_option.unwrap_or(vec![]),
+        ))
     }
 }
 
@@ -98,8 +106,17 @@ pub enum ItemResponse {
     Response(ItemNode),
 }
 
-impl From<Item> for ItemNode {
-    fn from(item: Item) -> Self {
+impl ItemNode {
+    pub fn from_domain(item: Item) -> ItemNode {
         ItemNode { item }
+    }
+}
+
+impl ItemConnector {
+    pub fn from_domain(items: ListResult<Item>) -> ItemConnector {
+        ItemConnector {
+            total_count: items.count,
+            nodes: items.rows.into_iter().map(ItemNode::from_domain).collect(),
+        }
     }
 }

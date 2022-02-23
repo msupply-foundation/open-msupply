@@ -142,11 +142,11 @@ mod graphql {
                         itemId
                         requestedQuantity
                         supplyQuantity
-                        calculatedQuantity
+                        suggestedQuantity
                         itemStats {
                             averageMonthlyConsumption
-                            stockOnHand
-                            monthsOfStock
+                            availableStockOnHand
+                            availableMonthsOfStockOnHand
                         }
                     } 
                 }
@@ -180,11 +180,11 @@ mod graphql {
                             "itemId":&response_requisition.lines[0].item_id,
                             "requestedQuantity": &response_requisition.lines[0].requested_quantity,
                             "supplyQuantity":&response_requisition.lines[0].supply_quantity,
-                            "calculatedQuantity":&response_requisition.lines[0].calculated_quantity,
+                            "suggestedQuantity":&response_requisition.lines[0].suggested_quantity,
                             "itemStats": {
                                 "averageMonthlyConsumption": &response_requisition.lines[0].average_monthly_consumption,
-                                "stockOnHand": &response_requisition.lines[0].stock_on_hand,
-                                "monthsOfStock": response_requisition.lines[0].stock_on_hand as f64 / response_requisition.lines[0].average_monthly_consumption as f64
+                                "availableStockOnHand": &response_requisition.lines[0].available_stock_on_hand,
+                                "availableMonthsOfStockOnHand": response_requisition.lines[0].available_stock_on_hand as f64 / response_requisition.lines[0].average_monthly_consumption as f64
                             }
                          }]
                     }

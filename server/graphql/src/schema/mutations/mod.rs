@@ -33,7 +33,7 @@ use self::{
 
 use super::{
     queries::invoice::*,
-    types::{Connector, InvoiceLineNode, NameNode},
+    types::{InvoiceLineConnector, NameNode},
 };
 use crate::ContextExt;
 use async_graphql::*;
@@ -353,13 +353,13 @@ impl Mutations {
     }
 
     /// Set requested for each line in request requisition to calculated
-    async fn use_calculated_quantity(
+    async fn use_suggested_quantity(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: request_requisition::UseCalculatedQuantityInput,
-    ) -> Result<request_requisition::UseCalculatedQuantityResponse> {
-        request_requisition::use_calculated_quantity(ctx, &store_id, input)
+        input: request_requisition::UseSuggestedQuantityInput,
+    ) -> Result<request_requisition::UseSuggestedQuantityResponse> {
+        request_requisition::use_suggested_quantity(ctx, &store_id, input)
     }
 
     /// Add requisition lines from master item master list
@@ -531,14 +531,14 @@ impl NotAnOutboundShipment {
     }
 }
 
-pub struct CannotDeleteInvoiceWithLines(pub Connector<InvoiceLineNode>);
+pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
 impl CannotDeleteInvoiceWithLines {
     pub async fn description(&self) -> &'static str {
         "Cannot delete invoice with existing lines"
     }
 
-    pub async fn lines(&self) -> &Connector<InvoiceLineNode> {
+    pub async fn lines(&self) -> &InvoiceLineConnector {
         &self.0
     }
 }

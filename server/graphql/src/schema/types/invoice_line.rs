@@ -1,9 +1,9 @@
 use super::{
-    Connector, ConnectorError, InternalError, ItemError, ItemResponse, ItemResponseError,
-    LocationResponse, NodeError, StockLineResponse,
+    ItemNode, LocationNode, LocationResponse, NodeError, StockLineNode, StockLineResponse,
 };
 use crate::{
     loader::{ItemLoader, LocationByIdLoader, StockLineByIdLoader},
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use async_graphql::*;
@@ -12,7 +12,7 @@ use dataloader::DataLoader;
 use domain::invoice_line::{InvoiceLine, InvoiceLineType};
 use repository::StorageConnectionManager;
 use serde::Serialize;
-use service::invoice_line::get_invoice_line;
+use service::{invoice_line::get_invoice_line, usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -38,6 +38,12 @@ pub struct InvoiceLineNode {
     invoice_line: InvoiceLine,
 }
 
+#[derive(SimpleObject)]
+pub struct InvoiceLineConnector {
+    total_count: u32,
+    nodes: Vec<InvoiceLineNode>,
+}
+
 #[Object]
 impl InvoiceLineNode {
     pub async fn id(&self) -> &str {
@@ -55,21 +61,17 @@ impl InvoiceLineNode {
     pub async fn item_code(&self) -> &str {
         &self.invoice_line.item_code
     }
-    pub async fn item(&self, ctx: &Context<'_>) -> ItemResponse {
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        match loader.load_one(self.invoice_line.item_id.clone()).await {
-            Ok(response) => match response {
-                Some(item) => ItemResponse::Response(item.into()),
-                None => ItemResponse::Error(ItemError {
-                    error: ItemResponseError::InternalError(InternalError(
-                        "Missing item".to_string(),
-                    )),
-                }),
-            },
-            Err(error) => ItemResponse::Error(ItemError {
-                error: ItemResponseError::InternalError(InternalError(format!("{:?}", error))),
-            }),
-        }
+        let item_option = loader.load_one(self.invoice_line.item_id.clone()).await?;
+
+        item_option.map(ItemNode::from_domain).ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find item ({}) linked to invoice_line ({})",
+                &self.invoice_line.item_id, &self.invoice_line.id
+            ))
+            .extend(),
+        )
     }
     pub async fn pack_size(&self) -> i32 {
         self.invoice_line.pack_size
@@ -106,9 +108,9 @@ impl InvoiceLineNode {
 
         match &self.invoice_line.location_id {
             Some(location_id) => match loader.load_one(location_id.clone()).await {
-                Ok(response) => {
-                    response.map(|location| LocationResponse::Response(location.into()))
-                }
+                Ok(response) => response.map(|location| {
+                    LocationResponse::Response(LocationNode::from_domain(location))
+                }),
                 Err(error) => Some(LocationResponse::Error(error.into())),
             },
             None => None,
@@ -119,9 +121,9 @@ impl InvoiceLineNode {
 
         match &self.invoice_line.stock_line_id {
             Some(invoice_line_id) => match loader.load_one(invoice_line_id.clone()).await {
-                Ok(response) => {
-                    response.map(|stock_line| StockLineResponse::Response(stock_line.into()))
-                }
+                Ok(response) => response.map(|stock_line| {
+                    StockLineResponse::Response(StockLineNode::from_domain(stock_line))
+                }),
                 Err(error) => Some(StockLineResponse::Error(error.into())),
             },
             None => None,
@@ -129,12 +131,9 @@ impl InvoiceLineNode {
     }
 }
 
-type CurrentConnector = Connector<InvoiceLineNode>;
-
 #[derive(Union)]
 pub enum InvoiceLinesResponse {
-    Error(ConnectorError),
-    Response(CurrentConnector),
+    Response(InvoiceLineConnector),
 }
 
 #[derive(Union)]
@@ -148,21 +147,45 @@ pub fn get_invoice_line_response(
     id: String,
 ) -> InvoiceLineResponse {
     match get_invoice_line(connection_manager, id) {
-        Ok(invoice_line) => InvoiceLineResponse::Response(invoice_line.into()),
+        Ok(invoice_line) => {
+            InvoiceLineResponse::Response(InvoiceLineNode::from_domain(invoice_line))
+        }
         Err(error) => InvoiceLineResponse::Error(error.into()),
     }
 }
 
-impl From<Vec<InvoiceLine>> for InvoiceLinesResponse {
-    fn from(result: Vec<InvoiceLine>) -> Self {
-        let nodes: CurrentConnector = result.into();
-        nodes.into()
+impl InvoiceLineConnector {
+    pub fn from_domain(invoice_lines: ListResult<InvoiceLine>) -> InvoiceLineConnector {
+        InvoiceLineConnector {
+            total_count: invoice_lines.count,
+            nodes: invoice_lines
+                .rows
+                .into_iter()
+                .map(InvoiceLineNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(invoice_lines: Vec<InvoiceLine>) -> InvoiceLineConnector {
+        InvoiceLineConnector {
+            total_count: usize_to_u32(invoice_lines.len()),
+            nodes: invoice_lines
+                .into_iter()
+                .map(InvoiceLineNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn empty() -> InvoiceLineConnector {
+        InvoiceLineConnector {
+            total_count: 0,
+            nodes: vec![],
+        }
     }
 }
 
-impl From<InvoiceLine> for InvoiceLineNode {
-    /// number of pack available for a batch ("includes" numberOfPacks in this line)
-    fn from(invoice_line: InvoiceLine) -> Self {
+impl InvoiceLineNode {
+    pub fn from_domain(invoice_line: InvoiceLine) -> InvoiceLineNode {
         InvoiceLineNode { invoice_line }
     }
 }

@@ -7,8 +7,8 @@ use crate::schema::{
         NotAnInboundShipment, RecordAlreadyExist,
     },
     types::{
-        get_invoice_line_response, DatabaseError, ErrorWrapper, InvoiceLineNode,
-        InvoiceLineResponse, NodeError, Range, RangeError, RangeField,
+        get_invoice_line_response, DatabaseError, InvoiceLineNode, InvoiceLineResponse, NodeError,
+        Range, RangeError, RangeField,
     },
 };
 use domain::inbound_shipment::InsertInboundShipmentLine;
@@ -32,9 +32,15 @@ pub struct InsertInboundShipmentLineInput {
     pub tax: Option<f64>,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "InsertInboundShipmentLineError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
 #[derive(Union)]
 pub enum InsertInboundShipmentLineResponse {
-    Error(ErrorWrapper<InsertInboundShipmentLineErrorInterface>),
+    Error(InsertError),
     NodeError(NodeError),
     Response(InvoiceLineNode),
 }
@@ -47,8 +53,8 @@ pub fn get_insert_inbound_shipment_line_response(
     let connection = match connection_manager.connection() {
         Ok(con) => con,
         Err(err) => {
-            return InsertInboundShipmentLineResponse::Error(ErrorWrapper {
-                error: InsertInboundShipmentLineErrorInterface::DatabaseError(DatabaseError(err)),
+            return InsertInboundShipmentLineResponse::Error(InsertError {
+                error: InsertErrorInterface::DatabaseError(DatabaseError(err)),
             })
         }
     };
@@ -62,8 +68,9 @@ pub fn get_insert_inbound_shipment_line_response(
 }
 
 #[derive(Interface)]
+#[graphql(name = "InsertInboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum InsertInboundShipmentLineErrorInterface {
+pub enum InsertErrorInterface {
     DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordAlreadyExist(RecordAlreadyExist),
@@ -111,7 +118,7 @@ impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
 
 impl From<InsertInboundShipmentLineError> for InsertInboundShipmentLineResponse {
     fn from(error: InsertInboundShipmentLineError) -> Self {
-        use InsertInboundShipmentLineErrorInterface as OutError;
+        use InsertErrorInterface as OutError;
         let error = match error {
             InsertInboundShipmentLineError::LineAlreadyExists => {
                 OutError::RecordAlreadyExist(RecordAlreadyExist {})
@@ -149,6 +156,6 @@ impl From<InsertInboundShipmentLineError> for InsertInboundShipmentLineResponse 
             }
         };
 
-        InsertInboundShipmentLineResponse::Error(ErrorWrapper { error })
+        InsertInboundShipmentLineResponse::Error(InsertError { error })
     }
 }
