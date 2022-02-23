@@ -194,7 +194,7 @@ export type CannotEditInvoice = DeleteInboundShipmentErrorInterface & DeleteInbo
   description: Scalars['String'];
 };
 
-export type CannotEditRequisition = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseCalculatedQuantityErrorInterface & {
+export type CannotEditRequisition = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'CannotEditRequisition';
   description: Scalars['String'];
 };
@@ -729,9 +729,9 @@ export type InsertRequestRequisitionInput = {
   comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
   maxMonthsOfStock: Scalars['Float'];
+  minMonthsOfStock: Scalars['Float'];
   otherPartyId: Scalars['String'];
   theirReference?: InputMaybe<Scalars['String']>;
-  thresholdMonthsOfStock: Scalars['Float'];
 };
 
 export type InsertRequestRequisitionLineError = {
@@ -1098,9 +1098,9 @@ export type ItemSortInput = {
 
 export type ItemStatsNode = {
   __typename: 'ItemStatsNode';
+  availableMonthsOfStockOnHand: Scalars['Float'];
+  availableStockOnHand: Scalars['Int'];
   averageMonthlyConsumption: Scalars['Int'];
-  monthsOfStock: Scalars['Float'];
-  stockOnHand: Scalars['Int'];
 };
 
 export type ItemsResponse = ConnectorError | ItemConnector;
@@ -1300,7 +1300,7 @@ export type Mutations = {
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   /** Set requested for each line in request requisition to calculated */
-  useCalculatedQuantity: UseCalculatedQuantityResponse;
+  useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
 
 
@@ -1539,8 +1539,8 @@ export type MutationsUpdateStocktakeLineArgs = {
 };
 
 
-export type MutationsUseCalculatedQuantityArgs = {
-  input: UseCalculatedQuantityInput;
+export type MutationsUseSuggestedQuantityArgs = {
+  input: UseSuggestedQuantityInput;
   storeId: Scalars['String'];
 };
 
@@ -1859,7 +1859,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordDoesNotExist = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseCalculatedQuantityErrorInterface & {
+export type RecordDoesNotExist = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordDoesNotExist';
   description: Scalars['String'];
 };
@@ -1923,11 +1923,6 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
-  /**
-   * Calculated quantity
-   * When months_of_stock < requisition.threshold_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
-   */
-  calculatedQuantity: Scalars['Int'];
   id: Scalars['String'];
   /** InboundShipment lines linked to requisitions line */
   inboundShipmentLines: InvoiceLineConnector;
@@ -1940,6 +1935,11 @@ export type RequisitionLineNode = {
   outboundShipmentLines: InvoiceLineConnector;
   /** Quantity requested */
   requestedQuantity: Scalars['Int'];
+  /**
+   * Calculated quantity
+   * When months_of_stock < requisition.min_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
+   */
+  suggestedQuantity: Scalars['Int'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
   supplyQuantity: Scalars['Int'];
 };
@@ -1959,6 +1959,8 @@ export type RequisitionNode = {
   lines: RequisitionLineConnector;
   /** Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line */
   maxMonthsOfStock: Scalars['Float'];
+  /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
+  minMonthsOfStock: Scalars['Float'];
   /**
    * Request Requisition: Supplying store (store that is supplying stock)
    * Response Requisition: Customer store (store that is ordering stock)
@@ -1978,8 +1980,6 @@ export type RequisitionNode = {
   shipments: InvoiceConnector;
   status: RequisitionNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
-  /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
-  thresholdMonthsOfStock: Scalars['Float'];
   type: RequisitionNodeType;
 };
 
@@ -2455,9 +2455,9 @@ export type UpdateRequestRequisitionInput = {
   comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
   maxMonthsOfStock?: InputMaybe<Scalars['Float']>;
+  minMonthsOfStock?: InputMaybe<Scalars['Float']>;
   status?: InputMaybe<UpdateRequestRequisitionStatusInput>;
   theirReference?: InputMaybe<Scalars['String']>;
-  thresholdMonthsOfStock?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateRequestRequisitionLineError = {
@@ -2567,20 +2567,20 @@ export type UpdateStocktakeResponseWithId = {
   response: UpdateStocktakeResponse;
 };
 
-export type UseCalculatedQuantityError = {
-  __typename: 'UseCalculatedQuantityError';
-  error: UseCalculatedQuantityErrorInterface;
+export type UseSuggestedQuantityError = {
+  __typename: 'UseSuggestedQuantityError';
+  error: UseSuggestedQuantityErrorInterface;
 };
 
-export type UseCalculatedQuantityErrorInterface = {
+export type UseSuggestedQuantityErrorInterface = {
   description: Scalars['String'];
 };
 
-export type UseCalculatedQuantityInput = {
+export type UseSuggestedQuantityInput = {
   requestRequisitionId: Scalars['String'];
 };
 
-export type UseCalculatedQuantityResponse = RequisitionLineConnector | UseCalculatedQuantityError;
+export type UseSuggestedQuantityResponse = RequisitionLineConnector | UseSuggestedQuantityError;
 
 export type User = {
   __typename: 'User';

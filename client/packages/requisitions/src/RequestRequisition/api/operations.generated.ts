@@ -20,9 +20,9 @@ export type UpdateRequestRequisitionMutationVariables = Types.Exact<{
 
 export type UpdateRequestRequisitionMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateRequestRequisitionError' } };
 
-export type RequestRequisitionLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, calculatedQuantity: number, itemStats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, stockOnHand: number, monthsOfStock: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } };
+export type RequestRequisitionLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } };
 
-export type RequestRequisitionFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, thresholdMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, calculatedQuantity: number, itemStats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, stockOnHand: number, monthsOfStock: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
+export type RequestRequisitionFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
 
 export type RequestRequisitionQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -30,7 +30,7 @@ export type RequestRequisitionQueryVariables = Types.Exact<{
 }>;
 
 
-export type RequestRequisitionQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, thresholdMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, calculatedQuantity: number, itemStats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, stockOnHand: number, monthsOfStock: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } }> } } };
+export type RequestRequisitionQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } }> } } };
 
 export type RequestRequisitionRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string };
 
@@ -44,16 +44,33 @@ export type RequestRequisitionsQueryVariables = Types.Exact<{
 
 export type RequestRequisitionsQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string }> } };
 
+export type InsertRequestRequisitionLineMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.InsertRequestRequisitionLineInput;
+}>;
+
+
+export type InsertRequestRequisitionLineMutation = { __typename: 'Mutations', insertRequestRequisitionLine: { __typename: 'InsertRequestRequisitionLineError' } | { __typename: 'RequisitionLineNode', id: string } };
+
+export type UpdateRequestRequisitionLineMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.UpdateRequestRequisitionLineInput;
+}>;
+
+
+export type UpdateRequestRequisitionLineMutation = { __typename: 'Mutations', updateRequestRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateRequestRequisitionLineError' } };
+
 export const RequestRequisitionLineFragmentDoc = gql`
     fragment RequestRequisitionLine on RequisitionLineNode {
   id
   itemId
   requestedQuantity
-  calculatedQuantity
+  suggestedQuantity
   itemStats {
+    __typename
+    availableStockOnHand
+    availableMonthsOfStockOnHand
     averageMonthlyConsumption
-    stockOnHand
-    monthsOfStock
   }
   item {
     id
@@ -79,7 +96,7 @@ export const RequestRequisitionFragmentDoc = gql`
   otherPartyName
   otherPartyId
   maxMonthsOfStock
-  thresholdMonthsOfStock
+  minMonthsOfStock
   lines {
     __typename
     ... on RequisitionLineConnector {
@@ -175,6 +192,24 @@ export const RequestRequisitionsDocument = gql`
   }
 }
     ${RequestRequisitionRowFragmentDoc}`;
+export const InsertRequestRequisitionLineDocument = gql`
+    mutation insertRequestRequisitionLine($storeId: String!, $input: InsertRequestRequisitionLineInput!) {
+  insertRequestRequisitionLine(input: $input, storeId: $storeId) {
+    ... on RequisitionLineNode {
+      id
+    }
+  }
+}
+    `;
+export const UpdateRequestRequisitionLineDocument = gql`
+    mutation updateRequestRequisitionLine($storeId: String!, $input: UpdateRequestRequisitionLineInput!) {
+  updateRequestRequisitionLine(input: $input, storeId: $storeId) {
+    ... on RequisitionLineNode {
+      id
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -194,6 +229,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     requestRequisitions(variables: RequestRequisitionsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestRequisitionsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestRequisitionsQuery>(RequestRequisitionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requestRequisitions');
+    },
+    insertRequestRequisitionLine(variables: InsertRequestRequisitionLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertRequestRequisitionLineMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestRequisitionLineMutation>(InsertRequestRequisitionLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequestRequisitionLine');
+    },
+    updateRequestRequisitionLine(variables: UpdateRequestRequisitionLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateRequestRequisitionLineMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestRequisitionLineMutation>(UpdateRequestRequisitionLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequestRequisitionLine');
     }
   };
 }
@@ -264,5 +305,39 @@ export const mockRequestRequisitionQuery = (resolver: ResponseResolver<GraphQLRe
 export const mockRequestRequisitionsQuery = (resolver: ResponseResolver<GraphQLRequest<RequestRequisitionsQueryVariables>, GraphQLContext<RequestRequisitionsQuery>, any>) =>
   graphql.query<RequestRequisitionsQuery, RequestRequisitionsQueryVariables>(
     'requestRequisitions',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertRequestRequisitionLineMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertRequestRequisitionLine })
+ *   )
+ * })
+ */
+export const mockInsertRequestRequisitionLineMutation = (resolver: ResponseResolver<GraphQLRequest<InsertRequestRequisitionLineMutationVariables>, GraphQLContext<InsertRequestRequisitionLineMutation>, any>) =>
+  graphql.mutation<InsertRequestRequisitionLineMutation, InsertRequestRequisitionLineMutationVariables>(
+    'insertRequestRequisitionLine',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateRequestRequisitionLineMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateRequestRequisitionLine })
+ *   )
+ * })
+ */
+export const mockUpdateRequestRequisitionLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateRequestRequisitionLineMutationVariables>, GraphQLContext<UpdateRequestRequisitionLineMutation>, any>) =>
+  graphql.mutation<UpdateRequestRequisitionLineMutation, UpdateRequestRequisitionLineMutationVariables>(
+    'updateRequestRequisitionLine',
     resolver
   )

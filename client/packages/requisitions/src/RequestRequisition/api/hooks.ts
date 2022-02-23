@@ -139,11 +139,7 @@ export const useIsRequestRequisitionDisabled = (): boolean => {
 };
 
 export const useSaveRequestLines = () => {
-  // TODO: Stub impl for now.
-  return {
-    mutate: async (draft: RequestRequisitionLineFragment | null) => {
-      console.log(draft);
-    },
-    isLoading: false,
-  };
+  const { store } = useHostContext();
+  const api = useRequestRequisitionApi();
+  return useMutation(RequestRequisitionQueries.upsertLine(api, store.id));
 };
