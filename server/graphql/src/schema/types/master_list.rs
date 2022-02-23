@@ -1,11 +1,7 @@
-use async_graphql::{dataloader::DataLoader, Context, Object};
-use repository::MasterList;
-
-use crate::{
-    loader::MasterListLineByMasterListId, standard_graphql_error::StandardGraphqlError, ContextExt,
-};
-
 use super::MasterListLineConnector;
+use crate::{loader::MasterListLineByMasterListId, ContextExt};
+use async_graphql::{dataloader::DataLoader, Context, Object, Result};
+use repository::MasterList;
 
 #[derive(PartialEq, Debug)]
 pub struct MasterListNode {
@@ -30,10 +26,7 @@ impl MasterListNode {
         &self.master_list.description
     }
 
-    pub async fn lines(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<MasterListLineConnector, StandardGraphqlError> {
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<MasterListLineConnector> {
         let loader = ctx.get_loader::<DataLoader<MasterListLineByMasterListId>>();
 
         let lines_option = loader.load_one(self.master_list.id.clone()).await?;

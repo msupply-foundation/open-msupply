@@ -1,8 +1,13 @@
+use super::{
+    map_filter, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
+    InvoiceLineConnector, NameNode, RequisitionNode, SimpleStringFilterInput, StoreNode,
+};
 use crate::{
     loader::{
         InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, NameByIdLoader,
         RequisitionsByIdLoader, StoreLoader,
     },
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use async_graphql::*;
@@ -15,12 +20,6 @@ use domain::{
 use repository::schema::InvoiceStatsRow;
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
-
-use super::{
-    map_filter, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
-    ErrorWrapper, InvoiceLineConnector, NameNode, NameResponse, NodeError, NodeErrorInterface,
-    RequisitionNode, SimpleStringFilterInput, StoreNode,
-};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -290,7 +289,7 @@ impl InvoiceNode {
         ))
     }
 
-    async fn pricing(&self, ctx: &Context<'_>) -> InvoicePriceResponse {
+    pub async fn pricing(&self, ctx: &Context<'_>) -> Result<InvoicePricingNode> {
         let loader = ctx.get_loader::<DataLoader<InvoiceStatsLoader>>();
         let default = InvoiceStatsRow {
             invoice_id: self.invoice.id.clone(),
@@ -302,27 +301,25 @@ impl InvoiceNode {
             service_total_after_tax: 0.0,
         };
 
-        match loader.load_one(self.invoice.id.to_string()).await {
-            Ok(result_option) => InvoicePriceResponse::Response(InvoicePricingNode {
-                invoice_pricing: result_option.unwrap_or(default),
-            }),
-            // TODO report error
-            Err(error) => InvoicePriceResponse::Error(error.into()),
-        }
+        let result_option = loader.load_one(self.invoice.id.to_string()).await?;
+
+        Ok(InvoicePricingNode {
+            invoice_pricing: result_option.unwrap_or(default),
+        })
     }
 
-    async fn other_party(&self, ctx: &Context<'_>) -> NameResponse {
+    pub async fn other_party(&self, ctx: &Context<'_>) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        match loader.load_one(self.invoice.other_party_id.clone()).await {
-            Ok(response_option) => match response_option {
-                Some(name) => NameResponse::Response(NameNode::from_domain(name)),
-                None => NameResponse::Error(ErrorWrapper {
-                    error: NodeErrorInterface::record_not_found(),
-                }),
-            },
-            Err(error) => NameResponse::Error(error.into()),
-        }
+        let response_option = loader.load_one(self.invoice.other_party_id.clone()).await?;
+
+        response_option.map(NameNode::from_domain).ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find name ({}) linked to invoice ({})",
+                &self.invoice.other_party_id, &self.invoice.id
+            ))
+            .extend(),
+        )
     }
 }
 
@@ -373,12 +370,6 @@ impl InvoicePricingNode {
     pub async fn service_total_after_tax(&self) -> f64 {
         self.invoice_pricing.service_total_after_tax
     }
-}
-
-#[derive(Union)]
-pub enum InvoicePriceResponse {
-    Error(NodeError),
-    Response(InvoicePricingNode),
 }
 
 impl InvoiceConnector {
