@@ -1,4 +1,4 @@
-use crate::sync::translation_central::{SyncTranslationError, TRANSLATION_RECORD_ITEM};
+use crate::sync::{translation_central::TRANSLATION_RECORD_ITEM, SyncTranslationError};
 use repository::schema::{CentralSyncBufferRow, ItemRow, ItemRowType};
 
 use serde::Deserialize;
@@ -41,7 +41,7 @@ impl LegacyItemRow {
         let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data).map_err(|source| {
             SyncTranslationError {
                 table_name,
-                source,
+                source: source.into(),
                 record: sync_record.data.clone(),
             }
         })?;
