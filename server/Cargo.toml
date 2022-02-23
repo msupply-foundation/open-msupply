@@ -18,5 +18,6 @@ members = [
     "graphql/invoice_line",
     "graphql/location",
     "graphql/general_queries",
+    "graphql/general_mutations",
     "graphql/batch_mutations",
 ]

@@ -6,7 +6,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{RequisitionLineNode, GenericDeleteResponse};
+use graphql_types::types::{DeleteResponse as GenericDeleteResponse, RequisitionLineNode};
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
     requisition_line::request_requisition_line::{

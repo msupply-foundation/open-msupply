@@ -8,7 +8,7 @@ use graphql_core::simple_generic_errors::{
     NotAnInboundShipment, Range, RangeError, RangeField, RecordAlreadyExist, RecordNotFound,
 };
 use graphql_types::types::{
-    get_invoice_line_response, GenericDeleteResponse, InvoiceLineNode, InvoiceLineResponse,
+    get_invoice_line_response, DeleteResponse, InvoiceLineNode, InvoiceLineResponse,
 };
 use repository::StorageConnectionManager;
 use service::invoice_line::{insert_inbound_shipment_line, InsertInboundShipmentLineError};

@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{
-    GenericDeleteResponse, InvoiceLineConnector, LocationNode, StockLineConnector,
+    DeleteResponse, InvoiceLineConnector, LocationNode, StockLineConnector,
 };
 use repository::RepositoryError;
 use service::location::insert::InsertLocationError as InError;

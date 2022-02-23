@@ -1,9 +1,7 @@
+use graphql_core::loader::{get_loaders, LoaderRegistry};
 use server::settings::Settings;
 
-use graphql::{
-    config as graphql_config,
-    loader::{get_loaders, LoaderRegistry},
-};
+use graphql::config as graphql_config;
 use repository::get_storage_connection_manager;
 use service::{auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket};
 

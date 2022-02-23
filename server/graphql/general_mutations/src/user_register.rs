@@ -1,13 +1,12 @@
 use async_graphql::*;
-
-use crate::schema::types::{DatabaseError, InternalError};
-use crate::ContextExt;
+use graphql_core::{
+    simple_generic_errors::{DatabaseError, InternalError, RecordAlreadyExist},
+    ContextExt,
+};
 use repository::schema::UserAccountRow;
 use service::user_account::{
     CreateUserAccount, CreateUserAccountError as ServiceError, UserAccountService,
 };
-
-use super::RecordAlreadyExist;
 
 pub struct RegisteredUser {
     pub user: UserAccountRow,

@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_types::types::GenericDeleteResponse;
+use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
@@ -8,8 +8,10 @@ use service::{
 };
 
 use graphql_core::{
-    simple_generic_errors::{RecordDoesNotExist, CannotEditRequisition}, standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    simple_generic_errors::{CannotEditRequisition, RecordDoesNotExist},
+    standard_graphql_error::validate_auth,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
 
 use crate::mutations::errors::CannotDeleteRequisitionWithLines;

@@ -17,6 +17,19 @@ domain = { path = "../domain" }
 repository = { path = "../repository" }
 service = { path = "../service" }
 util = { path = "../util" }
+graphql_core = { path = "core" }
+graphql_types = { path = "types" }
+graphql_general_queries = { path = "general_queries" }
+graphql_general_mutations = { path = "general_mutations" }
+graphql_location = { path = "location" }
+graphql_invoice = { path = "invoice" }
+graphql_invoice_line = { path = "invoice_line" }
+graphql_requisition = { path = "requisition" }
+graphql_requisition_line = { path = "requisition_line" }
+graphql_stocktake = { path = "stocktake" }
+graphql_stocktake_line = { path = "stocktake_line" }
+graphql_batch_mutations = { path = "batch_mutations" }
+
 
 actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
 anymap = "0.12"
