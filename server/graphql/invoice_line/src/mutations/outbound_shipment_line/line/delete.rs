@@ -6,7 +6,7 @@ use graphql_core::simple_generic_errors::{
     NotAnInboundShipment, NotAnOutboundShipment, Range, RangeError, RangeField, RecordNotFound,
 };
 use graphql_types::types::{
-    get_invoice_line_response, GenericDeleteResponse, InvoiceLineNode, InvoiceLineResponse,
+    get_invoice_line_response, DeleteResponse, InvoiceLineNode, InvoiceLineResponse,
 };
 use repository::StorageConnectionManager;
 use service::invoice_line::{delete_outbound_shipment_line, DeleteOutboundShipmentLineError};
@@ -26,7 +26,7 @@ pub struct DeleteError {
 #[derive(Union)]
 pub enum DeleteOutboundShipmentLineResponse {
     Error(DeleteError),
-    Response(GenericDeleteResponse),
+    Response(DeleteResponse),
 }
 
 pub fn get_delete_outbound_shipment_line_response(
@@ -35,7 +35,7 @@ pub fn get_delete_outbound_shipment_line_response(
 ) -> DeleteOutboundShipmentLineResponse {
     use DeleteOutboundShipmentLineResponse::*;
     match delete_outbound_shipment_line(connection_manager, input.into()) {
-        Ok(id) => Response(GenericDeleteResponse(id)),
+        Ok(id) => Response(DeleteResponse(id)),
         Err(error) => error.into(),
     }
 }

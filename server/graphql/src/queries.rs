@@ -1,41 +1,18 @@
-use crate::standard_graphql_error::StandardGraphqlError;
-use crate::ContextExt;
-use domain::location::LocationFilter;
-use domain::{invoice::InvoiceFilter, PaginationOption};
+use async_graphql::*;
+use domain::PaginationOption;
+use domain::{invoice::InvoiceFilter, location::LocationFilter};
+use graphql_core::ContextExt;
+use graphql_core::pagination::PaginationInput;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_general_queries::store::*;
+use graphql_general_queries::*;
+use graphql_invoice::invoice_queries::*;
+use graphql_requisition::requisition_queries::*;
+use graphql_stocktake::stocktake_queries::*;
+use graphql_types::types::*;
 use service::invoice::get_invoices;
 
-use async_graphql::{Context, Object, Result};
-
-use super::types::*;
 pub struct Queries;
-
-pub mod login;
-pub use self::login::*;
-pub mod invoice;
-pub use self::invoice::*;
-pub mod logout;
-pub use self::logout::*;
-pub mod me;
-pub use self::me::*;
-pub mod refresh_token;
-pub use self::refresh_token::*;
-pub mod master_list;
-pub use self::master_list::*;
-pub mod invoice_counts;
-pub use self::invoice_counts::*;
-pub mod names;
-pub use self::names::*;
-pub mod item;
-pub use self::item::*;
-pub mod requisition;
-pub use self::requisition::*;
-pub mod stock_counts;
-pub use self::stock_counts::*;
-pub mod store;
-use self::store::{stores, StoreFilterInput, StoresResponse};
-pub mod stocktake;
-pub use self::stocktake::*;
-pub use self::stocktake_line::*;
 
 #[Object]
 impl Queries {

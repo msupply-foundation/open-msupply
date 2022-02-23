@@ -17,8 +17,7 @@ use graphql_core::{
 };
 use graphql_types::generic_errors::{CannotDeleteInvoiceWithLines, OtherPartyNotASupplier};
 use graphql_types::types::{
-    GenericDeleteResponse, InvoiceLineConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType,
-    NameNode,
+    DeleteResponse, InvoiceLineConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType, NameNode,
 };
 use repository::StorageConnectionManager;
 use service::invoice::{
@@ -41,7 +40,7 @@ pub struct DeleteError {
 #[derive(Union)]
 pub enum DeleteInboundShipmentResponse {
     Error(DeleteError),
-    Response(GenericDeleteResponse),
+    Response(DeleteResponse),
 }
 
 pub fn get_delete_inbound_shipment_response(
@@ -50,7 +49,7 @@ pub fn get_delete_inbound_shipment_response(
 ) -> DeleteInboundShipmentResponse {
     use DeleteInboundShipmentResponse::*;
     match delete_inbound_shipment(connection_manager, input.into()) {
-        Ok(id) => Response(GenericDeleteResponse(id)),
+        Ok(id) => Response(DeleteResponse(id)),
         Err(error) => error.into(),
     }
 }

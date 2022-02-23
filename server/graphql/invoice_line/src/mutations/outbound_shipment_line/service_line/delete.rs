@@ -8,7 +8,7 @@ use graphql_core::simple_generic_errors::{
     RecordNotFound,
 };
 use graphql_types::types::{
-    get_invoice_line_response, GenericDeleteResponse, InvoiceLineNode, InvoiceLineResponse,
+    get_invoice_line_response, DeleteResponse, InvoiceLineNode, InvoiceLineResponse,
 };
 use repository::StorageConnectionManager;
 use service::invoice_line::{
@@ -32,7 +32,7 @@ pub struct DeleteError {
 #[derive(Union)]
 pub enum DeleteOutboundShipmentServiceLineResponse {
     Error(DeleteError),
-    Response(GenericDeleteResponse),
+    Response(DeleteResponse),
 }
 
 pub fn get_delete_outbound_shipment_service_line_response(
@@ -47,7 +47,7 @@ pub fn get_delete_outbound_shipment_service_line_response(
             invoice_id: input.invoice_id,
         },
     ) {
-        Ok(id) => Response(GenericDeleteResponse(id)),
+        Ok(id) => Response(DeleteResponse(id)),
         Err(error) => error.into(),
     }
 }

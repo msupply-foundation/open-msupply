@@ -5,7 +5,7 @@ use graphql_core::simple_generic_errors::{
     InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NotAnInboundShipment,
     RecordNotFound,
 };
-use graphql_types::types::GenericDeleteResponse;
+use graphql_types::types::DeleteResponse;
 use repository::StorageConnectionManager;
 use service::invoice_line::{delete_inbound_shipment_line, DeleteInboundShipmentLineError};
 
@@ -26,7 +26,7 @@ pub struct DeleteError {
 #[derive(Union)]
 pub enum DeleteInboundShipmentLineResponse {
     Error(DeleteError),
-    Response(GenericDeleteResponse),
+    Response(DeleteResponse),
 }
 
 pub fn get_delete_inbound_shipment_line_response(
@@ -35,7 +35,7 @@ pub fn get_delete_inbound_shipment_line_response(
 ) -> DeleteInboundShipmentLineResponse {
     use DeleteInboundShipmentLineResponse::*;
     match delete_inbound_shipment_line(connection_manager, input.into()) {
-        Ok(id) => Response(GenericDeleteResponse(id)),
+        Ok(id) => Response(DeleteResponse(id)),
         Err(error) => error.into(),
     }
 }

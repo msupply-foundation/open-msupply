@@ -58,9 +58,9 @@ macro_rules! map_filter {
 pub(crate) use map_filter;
 
 use async_graphql::*;
-pub struct GenericDeleteResponse(pub String);
+pub struct DeleteResponse(pub String);
 #[Object]
-impl GenericDeleteResponse {
+impl DeleteResponse {
     pub async fn id(&self) -> &str {
         &self.0
     }

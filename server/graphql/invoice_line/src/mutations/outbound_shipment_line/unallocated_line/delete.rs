@@ -10,7 +10,8 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{
-    get_invoice_line_response, GenericDeleteResponse, InvoiceLineNode, InvoiceLineResponse,
+    get_invoice_line_response, DeleteResponse as GenericDeleteResponse, InvoiceLineNode,
+    InvoiceLineResponse,
 };
 use service::invoice_line::{
     DeleteOutboundShipmentUnallocatedLine as ServiceInput,

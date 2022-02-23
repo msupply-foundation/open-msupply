@@ -3,12 +3,10 @@ use self::{
     settings::Settings,
     sync::Synchroniser,
 };
+use graphql_core::loader::{get_loaders, LoaderRegistry};
 use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
 
-use graphql::{
-    config as graphql_config,
-    loader::{get_loaders, LoaderRegistry},
-};
+use graphql::config as graphql_config;
 use log::{error, info, warn};
 use repository::{get_storage_connection_manager, run_db_migrations};
 use service::{auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket};

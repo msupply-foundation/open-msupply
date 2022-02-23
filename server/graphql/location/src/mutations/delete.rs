@@ -4,7 +4,7 @@ use graphql_core::{
     simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
     ContextExt,
 };
-use graphql_types::types::{GenericDeleteResponse, InvoiceLineConnector, StockLineConnector};
+use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use repository::RepositoryError;
 use service::location::delete::{
     DeleteLocationError as InError, LocationInUse as ServiceLocationInUse,
@@ -26,7 +26,7 @@ pub fn delete_location(
         store_id,
         input.into(),
     ) {
-        Ok(location_id) => DeleteLocationResponse::Response(GenericDeleteResponse(location_id)),
+        Ok(location_id) => DeleteLocationResponse::Response(DeleteResponse(location_id)),
         Err(error) => DeleteLocationResponse::Error(error.into()),
     }
 }
@@ -50,7 +50,7 @@ pub struct DeleteLocationError {
 #[derive(Union)]
 pub enum DeleteLocationResponse {
     Error(DeleteLocationError),
-    Response(GenericDeleteResponse),
+    Response(DeleteResponse),
 }
 
 #[derive(Interface)]
