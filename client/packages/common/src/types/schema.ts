@@ -1,7 +1,3 @@
-import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
-import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -37,17 +33,17 @@ export type Scalars = {
    *
    * * `2015-07-01T08:59:60.123`,
    */
-  NaiveDateTime: any;
+  NaiveDateTime: string;
 };
 
 export type AccessDenied = LogoutErrorInterface & {
-  __typename?: 'AccessDenied';
+  __typename: 'AccessDenied';
   description: Scalars['String'];
   fullError: Scalars['String'];
 };
 
 export type AddFromMasterListError = {
-  __typename?: 'AddFromMasterListError';
+  __typename: 'AddFromMasterListError';
   error: AddFromMasterListErrorInterface;
 };
 
@@ -63,13 +59,13 @@ export type AddFromMasterListInput = {
 export type AddFromMasterListResponse = AddFromMasterListError | RequisitionLineConnector;
 
 export type AuthToken = {
-  __typename?: 'AuthToken';
+  __typename: 'AuthToken';
   /** Bearer token */
   token: Scalars['String'];
 };
 
 export type AuthTokenError = {
-  __typename?: 'AuthTokenError';
+  __typename: 'AuthTokenError';
   error: AuthTokenErrorInterface;
 };
 
@@ -89,7 +85,7 @@ export type BatchInboundShipmentInput = {
 };
 
 export type BatchInboundShipmentResponse = {
-  __typename?: 'BatchInboundShipmentResponse';
+  __typename: 'BatchInboundShipmentResponse';
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineResponseWithId>>;
   deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentResponseWithId>>;
   insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineResponseWithId>>;
@@ -99,7 +95,7 @@ export type BatchInboundShipmentResponse = {
 };
 
 export type BatchIsReserved = DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & {
-  __typename?: 'BatchIsReserved';
+  __typename: 'BatchIsReserved';
   description: Scalars['String'];
 };
 
@@ -119,7 +115,7 @@ export type BatchOutboundShipmentInput = {
 };
 
 export type BatchOutboundShipmentResponse = {
-  __typename?: 'BatchOutboundShipmentResponse';
+  __typename: 'BatchOutboundShipmentResponse';
   deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineResponseWithId>>;
   deleteOutboundShipmentServiceLines?: Maybe<Array<DeleteOutboundShipmentServiceLineResponseWithId>>;
   deleteOutboundShipmentUnallocatedLines?: Maybe<Array<DeleteOutboundShipmentUnallocatedLineResponseWithId>>;
@@ -146,7 +142,7 @@ export type BatchStocktakeInput = {
 export type BatchStocktakeResponse = BatchStocktakeResponses | BatchStocktakeResponsesWithErrors;
 
 export type BatchStocktakeResponses = {
-  __typename?: 'BatchStocktakeResponses';
+  __typename: 'BatchStocktakeResponses';
   deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineResponseWithId>>;
   deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
   insertStocktakeLines?: Maybe<Array<InsertStocktakeLineResponseWithId>>;
@@ -156,7 +152,7 @@ export type BatchStocktakeResponses = {
 };
 
 export type BatchStocktakeResponsesWithErrors = {
-  __typename?: 'BatchStocktakeResponsesWithErrors';
+  __typename: 'BatchStocktakeResponsesWithErrors';
   deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineResponseWithId>>;
   deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
   insertStocktakeLines?: Maybe<Array<InsertStocktakeLineResponseWithId>>;
@@ -166,49 +162,49 @@ export type BatchStocktakeResponsesWithErrors = {
 };
 
 export type CanOnlyChangeToAllocatedWhenNoUnallocatedLines = UpdateErrorInterface & {
-  __typename?: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines';
+  __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines';
   description: Scalars['String'];
   invoiceLines: InvoiceLineConnector;
 };
 
 export type CanOnlyEditInvoicesInLoggedInStoreError = UpdateErrorInterface & {
-  __typename?: 'CanOnlyEditInvoicesInLoggedInStoreError';
+  __typename: 'CanOnlyEditInvoicesInLoggedInStoreError';
   description: Scalars['String'];
 };
 
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
-  __typename?: 'CannotChangeStatusOfInvoiceOnHold';
+  __typename: 'CannotChangeStatusOfInvoiceOnHold';
   description: Scalars['String'];
 };
 
 export type CannotDeleteInvoiceWithLines = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & {
-  __typename?: 'CannotDeleteInvoiceWithLines';
+  __typename: 'CannotDeleteInvoiceWithLines';
   description: Scalars['String'];
   lines: InvoiceLineConnector;
 };
 
 export type CannotDeleteRequisitionWithLines = DeleteRequestRequisitionErrorInterface & {
-  __typename?: 'CannotDeleteRequisitionWithLines';
+  __typename: 'CannotDeleteRequisitionWithLines';
   description: Scalars['String'];
 };
 
 export type CannotEditInvoice = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'CannotEditInvoice';
+  __typename: 'CannotEditInvoice';
   description: Scalars['String'];
 };
 
 export type CannotEditRequisition = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
-  __typename?: 'CannotEditRequisition';
+  __typename: 'CannotEditRequisition';
   description: Scalars['String'];
 };
 
 export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
-  __typename?: 'CannotReverseInvoiceStatus';
+  __typename: 'CannotReverseInvoiceStatus';
   description: Scalars['String'];
 };
 
 export type CreateRequisitionShipmentError = {
-  __typename?: 'CreateRequisitionShipmentError';
+  __typename: 'CreateRequisitionShipmentError';
   error: CreateRequisitionShipmentErrorInterface;
 };
 
@@ -223,7 +219,7 @@ export type CreateRequisitionShipmentInput = {
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
 export type DatabaseError = AuthTokenErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
-  __typename?: 'DatabaseError';
+  __typename: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
 };
@@ -239,7 +235,7 @@ export type DeleteErrorInterface = {
 };
 
 export type DeleteInboundShipmentError = {
-  __typename?: 'DeleteInboundShipmentError';
+  __typename: 'DeleteInboundShipmentError';
   error: DeleteInboundShipmentErrorInterface;
 };
 
@@ -252,7 +248,7 @@ export type DeleteInboundShipmentInput = {
 };
 
 export type DeleteInboundShipmentLineError = {
-  __typename?: 'DeleteInboundShipmentLineError';
+  __typename: 'DeleteInboundShipmentLineError';
   error: DeleteInboundShipmentLineErrorInterface;
 };
 
@@ -268,7 +264,7 @@ export type DeleteInboundShipmentLineInput = {
 export type DeleteInboundShipmentLineResponse = DeleteInboundShipmentLineError | DeleteResponse;
 
 export type DeleteInboundShipmentLineResponseWithId = {
-  __typename?: 'DeleteInboundShipmentLineResponseWithId';
+  __typename: 'DeleteInboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: DeleteInboundShipmentLineResponse;
 };
@@ -276,13 +272,13 @@ export type DeleteInboundShipmentLineResponseWithId = {
 export type DeleteInboundShipmentResponse = DeleteInboundShipmentError | DeleteResponse;
 
 export type DeleteInboundShipmentResponseWithId = {
-  __typename?: 'DeleteInboundShipmentResponseWithId';
+  __typename: 'DeleteInboundShipmentResponseWithId';
   id: Scalars['String'];
   response: DeleteInboundShipmentResponse;
 };
 
 export type DeleteLocationError = {
-  __typename?: 'DeleteLocationError';
+  __typename: 'DeleteLocationError';
   error: DeleteLocationErrorInterface;
 };
 
@@ -297,12 +293,12 @@ export type DeleteLocationInput = {
 export type DeleteLocationResponse = DeleteLocationError | DeleteResponse;
 
 export type DeleteOutboundShipmentError = {
-  __typename?: 'DeleteOutboundShipmentError';
+  __typename: 'DeleteOutboundShipmentError';
   error: DeleteErrorInterface;
 };
 
 export type DeleteOutboundShipmentLineError = {
-  __typename?: 'DeleteOutboundShipmentLineError';
+  __typename: 'DeleteOutboundShipmentLineError';
   error: DeleteOutboundShipmentLineErrorInterface;
 };
 
@@ -318,7 +314,7 @@ export type DeleteOutboundShipmentLineInput = {
 export type DeleteOutboundShipmentLineResponse = DeleteOutboundShipmentLineError | DeleteResponse;
 
 export type DeleteOutboundShipmentLineResponseWithId = {
-  __typename?: 'DeleteOutboundShipmentLineResponseWithId';
+  __typename: 'DeleteOutboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: DeleteOutboundShipmentLineResponse;
 };
@@ -326,13 +322,13 @@ export type DeleteOutboundShipmentLineResponseWithId = {
 export type DeleteOutboundShipmentResponse = DeleteOutboundShipmentError | DeleteResponse;
 
 export type DeleteOutboundShipmentResponseWithId = {
-  __typename?: 'DeleteOutboundShipmentResponseWithId';
+  __typename: 'DeleteOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: DeleteOutboundShipmentResponse;
 };
 
 export type DeleteOutboundShipmentServiceLineError = {
-  __typename?: 'DeleteOutboundShipmentServiceLineError';
+  __typename: 'DeleteOutboundShipmentServiceLineError';
   error: DeleteOutboundShipmentServiceLineErrorInterface;
 };
 
@@ -348,13 +344,13 @@ export type DeleteOutboundShipmentServiceLineInput = {
 export type DeleteOutboundShipmentServiceLineResponse = DeleteOutboundShipmentServiceLineError | DeleteResponse;
 
 export type DeleteOutboundShipmentServiceLineResponseWithId = {
-  __typename?: 'DeleteOutboundShipmentServiceLineResponseWithId';
+  __typename: 'DeleteOutboundShipmentServiceLineResponseWithId';
   id: Scalars['String'];
   response: DeleteOutboundShipmentServiceLineResponse;
 };
 
 export type DeleteOutboundShipmentUnallocatedLineError = {
-  __typename?: 'DeleteOutboundShipmentUnallocatedLineError';
+  __typename: 'DeleteOutboundShipmentUnallocatedLineError';
   error: DeleteOutboundShipmentUnallocatedLineErrorInterface;
 };
 
@@ -369,13 +365,13 @@ export type DeleteOutboundShipmentUnallocatedLineInput = {
 export type DeleteOutboundShipmentUnallocatedLineResponse = DeleteOutboundShipmentUnallocatedLineError | DeleteResponse;
 
 export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
-  __typename?: 'DeleteOutboundShipmentUnallocatedLineResponseWithId';
+  __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId';
   id: Scalars['String'];
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
 
 export type DeleteRequestRequisitionError = {
-  __typename?: 'DeleteRequestRequisitionError';
+  __typename: 'DeleteRequestRequisitionError';
   error: DeleteRequestRequisitionErrorInterface;
 };
 
@@ -388,7 +384,7 @@ export type DeleteRequestRequisitionInput = {
 };
 
 export type DeleteRequestRequisitionLineError = {
-  __typename?: 'DeleteRequestRequisitionLineError';
+  __typename: 'DeleteRequestRequisitionLineError';
   error: DeleteRequestRequisitionLineErrorInterface;
 };
 
@@ -405,7 +401,7 @@ export type DeleteRequestRequisitionLineResponse = DeleteRequestRequisitionLineE
 export type DeleteRequestRequisitionResponse = DeleteRequestRequisitionError | DeleteResponse;
 
 export type DeleteResponse = {
-  __typename?: 'DeleteResponse';
+  __typename: 'DeleteResponse';
   id: Scalars['String'];
 };
 
@@ -418,20 +414,20 @@ export type DeleteStocktakeLineInput = {
 };
 
 export type DeleteStocktakeLineNode = {
-  __typename?: 'DeleteStocktakeLineNode';
+  __typename: 'DeleteStocktakeLineNode';
   id: Scalars['String'];
 };
 
 export type DeleteStocktakeLineResponse = DeleteStocktakeLineNode;
 
 export type DeleteStocktakeLineResponseWithId = {
-  __typename?: 'DeleteStocktakeLineResponseWithId';
+  __typename: 'DeleteStocktakeLineResponseWithId';
   id: Scalars['String'];
   response: DeleteStocktakeLineResponse;
 };
 
 export type DeleteStocktakeNode = {
-  __typename?: 'DeleteStocktakeNode';
+  __typename: 'DeleteStocktakeNode';
   /** The id of the deleted stocktake */
   id: Scalars['String'];
 };
@@ -439,7 +435,7 @@ export type DeleteStocktakeNode = {
 export type DeleteStocktakeResponse = DeleteStocktakeNode;
 
 export type DeleteStocktakeResponseWithId = {
-  __typename?: 'DeleteStocktakeResponseWithId';
+  __typename: 'DeleteStocktakeResponseWithId';
   id: Scalars['String'];
   response: DeleteStocktakeResponse;
 };
@@ -502,13 +498,13 @@ export enum ForeignKey {
 }
 
 export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
-  __typename?: 'ForeignKeyError';
+  __typename: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
 };
 
 export type InboundInvoiceCounts = {
-  __typename?: 'InboundInvoiceCounts';
+  __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
 };
 
@@ -517,7 +513,7 @@ export type InsertErrorInterface = {
 };
 
 export type InsertInboundShipmentError = {
-  __typename?: 'InsertInboundShipmentError';
+  __typename: 'InsertInboundShipmentError';
   error: InsertInboundShipmentErrorInterface;
 };
 
@@ -535,7 +531,7 @@ export type InsertInboundShipmentInput = {
 };
 
 export type InsertInboundShipmentLineError = {
-  __typename?: 'InsertInboundShipmentLineError';
+  __typename: 'InsertInboundShipmentLineError';
   error: InsertInboundShipmentLineErrorInterface;
 };
 
@@ -562,7 +558,7 @@ export type InsertInboundShipmentLineInput = {
 export type InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode | NodeError;
 
 export type InsertInboundShipmentLineResponseWithId = {
-  __typename?: 'InsertInboundShipmentLineResponseWithId';
+  __typename: 'InsertInboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: InsertInboundShipmentLineResponse;
 };
@@ -570,13 +566,13 @@ export type InsertInboundShipmentLineResponseWithId = {
 export type InsertInboundShipmentResponse = InsertInboundShipmentError | InvoiceNode | NodeError;
 
 export type InsertInboundShipmentResponseWithId = {
-  __typename?: 'InsertInboundShipmentResponseWithId';
+  __typename: 'InsertInboundShipmentResponseWithId';
   id: Scalars['String'];
   response: InsertInboundShipmentResponse;
 };
 
 export type InsertLocationError = {
-  __typename?: 'InsertLocationError';
+  __typename: 'InsertLocationError';
   error: InsertLocationErrorInterface;
 };
 
@@ -594,7 +590,7 @@ export type InsertLocationInput = {
 export type InsertLocationResponse = InsertLocationError | LocationNode;
 
 export type InsertOutboundShipmentError = {
-  __typename?: 'InsertOutboundShipmentError';
+  __typename: 'InsertOutboundShipmentError';
   error: InsertErrorInterface;
 };
 
@@ -611,7 +607,7 @@ export type InsertOutboundShipmentInput = {
 };
 
 export type InsertOutboundShipmentLineError = {
-  __typename?: 'InsertOutboundShipmentLineError';
+  __typename: 'InsertOutboundShipmentLineError';
   error: InsertOutboundShipmentLineErrorInterface;
 };
 
@@ -633,7 +629,7 @@ export type InsertOutboundShipmentLineInput = {
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode | NodeError;
 
 export type InsertOutboundShipmentLineResponseWithId = {
-  __typename?: 'InsertOutboundShipmentLineResponseWithId';
+  __typename: 'InsertOutboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentLineResponse;
 };
@@ -641,13 +637,13 @@ export type InsertOutboundShipmentLineResponseWithId = {
 export type InsertOutboundShipmentResponse = InsertOutboundShipmentError | InvoiceNode | NodeError;
 
 export type InsertOutboundShipmentResponseWithId = {
-  __typename?: 'InsertOutboundShipmentResponseWithId';
+  __typename: 'InsertOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentResponse;
 };
 
 export type InsertOutboundShipmentServiceLineError = {
-  __typename?: 'InsertOutboundShipmentServiceLineError';
+  __typename: 'InsertOutboundShipmentServiceLineError';
   error: InsertOutboundShipmentServiceLineErrorInterface;
 };
 
@@ -669,13 +665,13 @@ export type InsertOutboundShipmentServiceLineInput = {
 export type InsertOutboundShipmentServiceLineResponse = InsertOutboundShipmentServiceLineError | InvoiceLineNode;
 
 export type InsertOutboundShipmentServiceLineResponseWithId = {
-  __typename?: 'InsertOutboundShipmentServiceLineResponseWithId';
+  __typename: 'InsertOutboundShipmentServiceLineResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentServiceLineResponse;
 };
 
 export type InsertOutboundShipmentUnallocatedLineError = {
-  __typename?: 'InsertOutboundShipmentUnallocatedLineError';
+  __typename: 'InsertOutboundShipmentUnallocatedLineError';
   error: InsertOutboundShipmentUnallocatedLineErrorInterface;
 };
 
@@ -693,13 +689,13 @@ export type InsertOutboundShipmentUnallocatedLineInput = {
 export type InsertOutboundShipmentUnallocatedLineResponse = InsertOutboundShipmentUnallocatedLineError | InvoiceLineNode;
 
 export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
-  __typename?: 'InsertOutboundShipmentUnallocatedLineResponseWithId';
+  __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId';
   id: Scalars['String'];
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
 export type InsertRequestRequisitionError = {
-  __typename?: 'InsertRequestRequisitionError';
+  __typename: 'InsertRequestRequisitionError';
   error: InsertRequestRequisitionErrorInterface;
 };
 
@@ -718,7 +714,7 @@ export type InsertRequestRequisitionInput = {
 };
 
 export type InsertRequestRequisitionLineError = {
-  __typename?: 'InsertRequestRequisitionLineError';
+  __typename: 'InsertRequestRequisitionLineError';
   error: InsertRequestRequisitionLineErrorInterface;
 };
 
@@ -763,7 +759,7 @@ export type InsertStocktakeLineInput = {
 export type InsertStocktakeLineResponse = StocktakeLineNode;
 
 export type InsertStocktakeLineResponseWithId = {
-  __typename?: 'InsertStocktakeLineResponseWithId';
+  __typename: 'InsertStocktakeLineResponseWithId';
   id: Scalars['String'];
   response: InsertStocktakeLineResponse;
 };
@@ -771,47 +767,47 @@ export type InsertStocktakeLineResponseWithId = {
 export type InsertStocktakeResponse = StocktakeNode;
 
 export type InsertStocktakeResponseWithId = {
-  __typename?: 'InsertStocktakeResponseWithId';
+  __typename: 'InsertStocktakeResponseWithId';
   id: Scalars['String'];
   response: InsertStocktakeResponse;
 };
 
 export type InternalError = AuthTokenErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
-  __typename?: 'InternalError';
+  __typename: 'InternalError';
   description: Scalars['String'];
   fullError: Scalars['String'];
 };
 
 export type InvalidCredentials = AuthTokenErrorInterface & {
-  __typename?: 'InvalidCredentials';
+  __typename: 'InvalidCredentials';
   description: Scalars['String'];
 };
 
 export type InvalidToken = RefreshTokenErrorInterface & {
-  __typename?: 'InvalidToken';
+  __typename: 'InvalidToken';
   description: Scalars['String'];
 };
 
 export type InvoiceConnector = {
-  __typename?: 'InvoiceConnector';
+  __typename: 'InvoiceConnector';
   nodes: Array<InvoiceNode>;
   totalCount: Scalars['Int'];
 };
 
 export type InvoiceCounts = {
-  __typename?: 'InvoiceCounts';
+  __typename: 'InvoiceCounts';
   inbound: InboundInvoiceCounts;
   outbound: OutboundInvoiceCounts;
 };
 
 export type InvoiceCountsSummary = {
-  __typename?: 'InvoiceCountsSummary';
+  __typename: 'InvoiceCountsSummary';
   thisWeek: Scalars['Int'];
   today: Scalars['Int'];
 };
 
 export type InvoiceDoesNotBelongToCurrentStore = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'InvoiceDoesNotBelongToCurrentStore';
+  __typename: 'InvoiceDoesNotBelongToCurrentStore';
   description: Scalars['String'];
 };
 
@@ -835,30 +831,30 @@ export type InvoiceFilterInput = {
 };
 
 export type InvoiceIsNotEditable = UpdateErrorInterface & {
-  __typename?: 'InvoiceIsNotEditable';
+  __typename: 'InvoiceIsNotEditable';
   description: Scalars['String'];
 };
 
 export type InvoiceLineBelongsToAnotherInvoice = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'InvoiceLineBelongsToAnotherInvoice';
+  __typename: 'InvoiceLineBelongsToAnotherInvoice';
   description: Scalars['String'];
   invoice: InvoiceResponse;
 };
 
 export type InvoiceLineConnector = {
-  __typename?: 'InvoiceLineConnector';
+  __typename: 'InvoiceLineConnector';
   nodes: Array<InvoiceLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type InvoiceLineHasNoStockLineError = UpdateErrorInterface & {
-  __typename?: 'InvoiceLineHasNoStockLineError';
+  __typename: 'InvoiceLineHasNoStockLineError';
   description: Scalars['String'];
   invoiceLineId: Scalars['String'];
 };
 
 export type InvoiceLineNode = {
-  __typename?: 'InvoiceLineNode';
+  __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
@@ -889,7 +885,7 @@ export enum InvoiceLineNodeType {
 export type InvoiceLineResponse = InvoiceLineNode | NodeError;
 
 export type InvoiceNode = {
-  __typename?: 'InvoiceNode';
+  __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']>;
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
@@ -974,7 +970,7 @@ export enum InvoiceNodeType {
 export type InvoicePriceResponse = InvoicePricingNode | NodeError;
 
 export type InvoicePricingNode = {
-  __typename?: 'InvoicePricingNode';
+  __typename: 'InvoicePricingNode';
   serviceTotalAfterTax: Scalars['Float'];
   serviceTotalBeforeTax: Scalars['Float'];
   stockTotalAfterTax: Scalars['Float'];
@@ -1012,13 +1008,13 @@ export type InvoiceSortInput = {
 export type InvoicesResponse = InvoiceConnector;
 
 export type ItemConnector = {
-  __typename?: 'ItemConnector';
+  __typename: 'ItemConnector';
   nodes: Array<ItemNode>;
   totalCount: Scalars['Int'];
 };
 
 export type ItemDoesNotMatchStockLine = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'ItemDoesNotMatchStockLine';
+  __typename: 'ItemDoesNotMatchStockLine';
   description: Scalars['String'];
 };
 
@@ -1030,7 +1026,7 @@ export type ItemFilterInput = {
 };
 
 export type ItemNode = {
-  __typename?: 'ItemNode';
+  __typename: 'ItemNode';
   availableBatches: StockLineConnector;
   code: Scalars['String'];
   id: Scalars['String'];
@@ -1067,7 +1063,7 @@ export type ItemSortInput = {
 };
 
 export type ItemStatsNode = {
-  __typename?: 'ItemStatsNode';
+  __typename: 'ItemStatsNode';
   availableMonthsOfStockOnHand: Scalars['Float'];
   availableStockOnHand: Scalars['Int'];
   averageMonthlyConsumption: Scalars['Int'];
@@ -1076,12 +1072,12 @@ export type ItemStatsNode = {
 export type ItemsResponse = ItemConnector;
 
 export type LineDoesNotReferenceStockLine = UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'LineDoesNotReferenceStockLine';
+  __typename: 'LineDoesNotReferenceStockLine';
   description: Scalars['String'];
 };
 
 export type LocationConnector = {
-  __typename?: 'LocationConnector';
+  __typename: 'LocationConnector';
   nodes: Array<LocationNode>;
   totalCount: Scalars['Int'];
 };
@@ -1093,19 +1089,19 @@ export type LocationFilterInput = {
 };
 
 export type LocationInUse = DeleteLocationErrorInterface & {
-  __typename?: 'LocationInUse';
+  __typename: 'LocationInUse';
   description: Scalars['String'];
   invoiceLines: InvoiceLineConnector;
   stockLines: StockLineConnector;
 };
 
 export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'LocationIsOnHold';
+  __typename: 'LocationIsOnHold';
   description: Scalars['String'];
 };
 
 export type LocationNode = {
-  __typename?: 'LocationNode';
+  __typename: 'LocationNode';
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
@@ -1114,7 +1110,7 @@ export type LocationNode = {
 };
 
 export type LocationNotFound = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'LocationNotFound';
+  __typename: 'LocationNotFound';
   description: Scalars['String'];
 };
 
@@ -1138,13 +1134,13 @@ export type LocationSortInput = {
 export type LocationsResponse = LocationConnector;
 
 export type Logout = {
-  __typename?: 'Logout';
+  __typename: 'Logout';
   /** User id of the logged out user */
   userId: Scalars['String'];
 };
 
 export type LogoutError = {
-  __typename?: 'LogoutError';
+  __typename: 'LogoutError';
   error: LogoutErrorInterface;
 };
 
@@ -1155,7 +1151,7 @@ export type LogoutErrorInterface = {
 export type LogoutResponse = Logout | LogoutError;
 
 export type MasterListConnector = {
-  __typename?: 'MasterListConnector';
+  __typename: 'MasterListConnector';
   nodes: Array<MasterListNode>;
   totalCount: Scalars['Int'];
 };
@@ -1171,20 +1167,20 @@ export type MasterListFilterInput = {
 };
 
 export type MasterListLineConnector = {
-  __typename?: 'MasterListLineConnector';
+  __typename: 'MasterListLineConnector';
   nodes: Array<MasterListLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type MasterListLineNode = {
-  __typename?: 'MasterListLineNode';
+  __typename: 'MasterListLineNode';
   id: Scalars['String'];
   item: ItemNode;
   itemId: Scalars['String'];
 };
 
 export type MasterListNode = {
-  __typename?: 'MasterListNode';
+  __typename: 'MasterListNode';
   code: Scalars['String'];
   description: Scalars['String'];
   id: Scalars['String'];
@@ -1193,7 +1189,7 @@ export type MasterListNode = {
 };
 
 export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & {
-  __typename?: 'MasterListNotFoundForThisStore';
+  __typename: 'MasterListNotFoundForThisStore';
   description: Scalars['String'];
 };
 
@@ -1216,7 +1212,7 @@ export type MasterListSortInput = {
 export type MasterListsResponse = MasterListConnector;
 
 export type Mutations = {
-  __typename?: 'Mutations';
+  __typename: 'Mutations';
   /** Add requisition lines from master item master list */
   addFromMasterList: AddFromMasterListResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
@@ -1513,7 +1509,7 @@ export type MutationsUseSuggestedQuantityArgs = {
 };
 
 export type NameConnector = {
-  __typename?: 'NameConnector';
+  __typename: 'NameConnector';
   nodes: Array<NameNode>;
   totalCount: Scalars['Int'];
 };
@@ -1531,7 +1527,7 @@ export type NameFilterInput = {
 };
 
 export type NameNode = {
-  __typename?: 'NameNode';
+  __typename: 'NameNode';
   code: Scalars['String'];
   id: Scalars['String'];
   isCustomer: Scalars['Boolean'];
@@ -1560,13 +1556,13 @@ export type NameSortInput = {
 export type NamesResponse = NameConnector;
 
 export type NoRefreshTokenProvided = RefreshTokenErrorInterface & {
-  __typename?: 'NoRefreshTokenProvided';
+  __typename: 'NoRefreshTokenProvided';
   description: Scalars['String'];
 };
 
 /** Generic Error Wrapper */
 export type NodeError = {
-  __typename?: 'NodeError';
+  __typename: 'NodeError';
   error: NodeErrorInterface;
 };
 
@@ -1575,61 +1571,61 @@ export type NodeErrorInterface = {
 };
 
 export type NotARefreshToken = RefreshTokenErrorInterface & {
-  __typename?: 'NotARefreshToken';
+  __typename: 'NotARefreshToken';
   description: Scalars['String'];
 };
 
 export type NotAServiceItem = DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'NotAServiceItem';
+  __typename: 'NotAServiceItem';
   description: Scalars['String'];
 };
 
 export type NotAnInboundShipment = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & {
-  __typename?: 'NotAnInboundShipment';
+  __typename: 'NotAnInboundShipment';
   description: Scalars['String'];
 };
 
 export type NotAnOutboundShipment = DeleteErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'NotAnOutboundShipment';
+  __typename: 'NotAnOutboundShipment';
   description: Scalars['String'];
 };
 
 export type NotAnOutboundShipmentError = UpdateErrorInterface & {
-  __typename?: 'NotAnOutboundShipmentError';
+  __typename: 'NotAnOutboundShipmentError';
   description: Scalars['String'];
 };
 
 export type NotEnoughStockForReduction = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'NotEnoughStockForReduction';
+  __typename: 'NotEnoughStockForReduction';
   batch: StockLineResponse;
   description: Scalars['String'];
   line?: Maybe<InvoiceLineResponse>;
 };
 
 export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface & {
-  __typename?: 'NothingRemainingToSupply';
+  __typename: 'NothingRemainingToSupply';
   description: Scalars['String'];
 };
 
 export type OtherPartyCannotBeThisStoreError = InsertErrorInterface & UpdateErrorInterface & {
-  __typename?: 'OtherPartyCannotBeThisStoreError';
+  __typename: 'OtherPartyCannotBeThisStoreError';
   description: Scalars['String'];
 };
 
 export type OtherPartyNotACustomerError = InsertErrorInterface & UpdateErrorInterface & {
-  __typename?: 'OtherPartyNotACustomerError';
+  __typename: 'OtherPartyNotACustomerError';
   description: Scalars['String'];
   otherParty: NameNode;
 };
 
 export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & {
-  __typename?: 'OtherPartyNotASupplier';
+  __typename: 'OtherPartyNotASupplier';
   description: Scalars['String'];
   otherParty: NameNode;
 };
 
 export type OutboundInvoiceCounts = {
-  __typename?: 'OutboundInvoiceCounts';
+  __typename: 'OutboundInvoiceCounts';
   created: InvoiceCountsSummary;
   /** Number of outbound shipments ready to be picked */
   toBePicked: Scalars['Int'];
@@ -1648,7 +1644,7 @@ export type PaginationInput = {
 };
 
 export type Queries = {
-  __typename?: 'Queries';
+  __typename: 'Queries';
   apiVersion: Scalars['String'];
   /**
    * Retrieves a new auth bearer and refresh token
@@ -1798,7 +1794,7 @@ export type QueriesStoresArgs = {
 };
 
 export type RangeError = InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'RangeError';
+  __typename: 'RangeError';
   description: Scalars['String'];
   field: RangeField;
   max?: Maybe<Scalars['Int']>;
@@ -1812,33 +1808,33 @@ export enum RangeField {
 }
 
 export type RecordAlreadyExist = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
-  __typename?: 'RecordAlreadyExist';
+  __typename: 'RecordAlreadyExist';
   description: Scalars['String'];
 };
 
 export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateLocationErrorInterface & {
-  __typename?: 'RecordBelongsToAnotherStore';
+  __typename: 'RecordBelongsToAnotherStore';
   description: Scalars['String'];
 };
 
 export type RecordDoesNotExist = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
-  __typename?: 'RecordDoesNotExist';
+  __typename: 'RecordDoesNotExist';
   description: Scalars['String'];
 };
 
 export type RecordNotFound = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
-  __typename?: 'RecordNotFound';
+  __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
 
 export type RefreshToken = {
-  __typename?: 'RefreshToken';
+  __typename: 'RefreshToken';
   /** New Bearer token */
   token: Scalars['String'];
 };
 
 export type RefreshTokenError = {
-  __typename?: 'RefreshTokenError';
+  __typename: 'RefreshTokenError';
   error: RefreshTokenErrorInterface;
 };
 
@@ -1849,14 +1845,14 @@ export type RefreshTokenErrorInterface = {
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
 export type RegisteredUser = {
-  __typename?: 'RegisteredUser';
+  __typename: 'RegisteredUser';
   email?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   username: Scalars['String'];
 };
 
 export type RequisitionConnector = {
-  __typename?: 'RequisitionConnector';
+  __typename: 'RequisitionConnector';
   nodes: Array<RequisitionNode>;
   totalCount: Scalars['Int'];
 };
@@ -1877,13 +1873,13 @@ export type RequisitionFilterInput = {
 };
 
 export type RequisitionLineConnector = {
-  __typename?: 'RequisitionLineConnector';
+  __typename: 'RequisitionLineConnector';
   nodes: Array<RequisitionLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type RequisitionLineNode = {
-  __typename?: 'RequisitionLineNode';
+  __typename: 'RequisitionLineNode';
   id: Scalars['String'];
   /** InboundShipment lines linked to requisitions line */
   inboundShipmentLines: InvoiceLineConnector;
@@ -1906,12 +1902,12 @@ export type RequisitionLineNode = {
 };
 
 export type RequisitionLineWithItemIdExists = InsertRequestRequisitionLineErrorInterface & {
-  __typename?: 'RequisitionLineWithItemIdExists';
+  __typename: 'RequisitionLineWithItemIdExists';
   description: Scalars['String'];
 };
 
 export type RequisitionNode = {
-  __typename?: 'RequisitionNode';
+  __typename: 'RequisitionNode';
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['DateTime'];
@@ -1997,41 +1993,41 @@ export type SimpleStringFilterInput = {
 };
 
 export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & {
-  __typename?: 'SnapshotCountCurrentCountMismatch';
+  __typename: 'SnapshotCountCurrentCountMismatch';
   description: Scalars['String'];
   lines: StocktakeLineConnector;
 };
 
 export type StockCounts = {
-  __typename?: 'StockCounts';
+  __typename: 'StockCounts';
   expired: Scalars['Int'];
   expiringSoon: Scalars['Int'];
 };
 
 export type StockLineAlreadyExistsInInvoice = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'StockLineAlreadyExistsInInvoice';
+  __typename: 'StockLineAlreadyExistsInInvoice';
   description: Scalars['String'];
   line: InvoiceLineResponse;
 };
 
 export type StockLineConnector = {
-  __typename?: 'StockLineConnector';
+  __typename: 'StockLineConnector';
   nodes: Array<StockLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type StockLineDoesNotBelongToCurrentStore = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'StockLineDoesNotBelongToCurrentStore';
+  __typename: 'StockLineDoesNotBelongToCurrentStore';
   description: Scalars['String'];
 };
 
 export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
-  __typename?: 'StockLineIsOnHold';
+  __typename: 'StockLineIsOnHold';
   description: Scalars['String'];
 };
 
 export type StockLineNode = {
-  __typename?: 'StockLineNode';
+  __typename: 'StockLineNode';
   availableNumberOfPacks: Scalars['Int'];
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
@@ -2052,7 +2048,7 @@ export type StockLineNode = {
 export type StockLineResponse = NodeError | StockLineNode;
 
 export type StocktakeConnector = {
-  __typename?: 'StocktakeConnector';
+  __typename: 'StocktakeConnector';
   nodes: Array<StocktakeNode>;
   totalCount: Scalars['Int'];
 };
@@ -2066,13 +2062,13 @@ export type StocktakeFilterInput = {
 };
 
 export type StocktakeLineConnector = {
-  __typename?: 'StocktakeLineConnector';
+  __typename: 'StocktakeLineConnector';
   nodes: Array<StocktakeLineNode>;
   totalCount: Scalars['Int'];
 };
 
 export type StocktakeLineNode = {
-  __typename?: 'StocktakeLineNode';
+  __typename: 'StocktakeLineNode';
   batch?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   costPricePerPack?: Maybe<Scalars['Float']>;
@@ -2091,7 +2087,7 @@ export type StocktakeLineNode = {
 };
 
 export type StocktakeNode = {
-  __typename?: 'StocktakeNode';
+  __typename: 'StocktakeNode';
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['NaiveDateTime'];
   description?: Maybe<Scalars['String']>;
@@ -2131,7 +2127,7 @@ export type StocktakeSortInput = {
 export type StocktakesResponse = StocktakeConnector;
 
 export type StoreConnector = {
-  __typename?: 'StoreConnector';
+  __typename: 'StoreConnector';
   nodes: Array<StoreNode>;
   totalCount: Scalars['Int'];
 };
@@ -2141,7 +2137,7 @@ export type StoreFilterInput = {
 };
 
 export type StoreNode = {
-  __typename?: 'StoreNode';
+  __typename: 'StoreNode';
   code: Scalars['String'];
   id: Scalars['String'];
 };
@@ -2149,7 +2145,7 @@ export type StoreNode = {
 export type StoresResponse = StoreConnector;
 
 export type SupplyRequestedQuantityError = {
-  __typename?: 'SupplyRequestedQuantityError';
+  __typename: 'SupplyRequestedQuantityError';
   error: SupplyRequestedQuantityErrorInterface;
 };
 
@@ -2169,17 +2165,17 @@ export type TaxUpdate = {
 };
 
 export type TokenExpired = RefreshTokenErrorInterface & {
-  __typename?: 'TokenExpired';
+  __typename: 'TokenExpired';
   description: Scalars['String'];
 };
 
 export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnallocatedLineErrorInterface & {
-  __typename?: 'UnallocatedLineForItemAlreadyExists';
+  __typename: 'UnallocatedLineForItemAlreadyExists';
   description: Scalars['String'];
 };
 
 export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUnallocatedLineErrorInterface & {
-  __typename?: 'UnallocatedLinesOnlyEditableInNewInvoice';
+  __typename: 'UnallocatedLinesOnlyEditableInNewInvoice';
   description: Scalars['String'];
 };
 
@@ -2188,7 +2184,7 @@ export enum UniqueValueKey {
 }
 
 export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocationErrorInterface & {
-  __typename?: 'UniqueValueViolation';
+  __typename: 'UniqueValueViolation';
   description: Scalars['String'];
   field: UniqueValueKey;
 };
@@ -2198,7 +2194,7 @@ export type UpdateErrorInterface = {
 };
 
 export type UpdateInboundShipmentError = {
-  __typename?: 'UpdateInboundShipmentError';
+  __typename: 'UpdateInboundShipmentError';
   error: UpdateInboundShipmentErrorInterface;
 };
 
@@ -2217,7 +2213,7 @@ export type UpdateInboundShipmentInput = {
 };
 
 export type UpdateInboundShipmentLineError = {
-  __typename?: 'UpdateInboundShipmentLineError';
+  __typename: 'UpdateInboundShipmentLineError';
   error: UpdateInboundShipmentLineErrorInterface;
 };
 
@@ -2241,7 +2237,7 @@ export type UpdateInboundShipmentLineInput = {
 export type UpdateInboundShipmentLineResponse = InvoiceLineNode | NodeError | UpdateInboundShipmentLineError;
 
 export type UpdateInboundShipmentLineResponseWithId = {
-  __typename?: 'UpdateInboundShipmentLineResponseWithId';
+  __typename: 'UpdateInboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: UpdateInboundShipmentLineResponse;
 };
@@ -2249,7 +2245,7 @@ export type UpdateInboundShipmentLineResponseWithId = {
 export type UpdateInboundShipmentResponse = InvoiceNode | NodeError | UpdateInboundShipmentError;
 
 export type UpdateInboundShipmentResponseWithId = {
-  __typename?: 'UpdateInboundShipmentResponseWithId';
+  __typename: 'UpdateInboundShipmentResponseWithId';
   id: Scalars['String'];
   response: UpdateInboundShipmentResponse;
 };
@@ -2260,7 +2256,7 @@ export enum UpdateInboundShipmentStatusInput {
 }
 
 export type UpdateLocationError = {
-  __typename?: 'UpdateLocationError';
+  __typename: 'UpdateLocationError';
   error: UpdateLocationErrorInterface;
 };
 
@@ -2278,7 +2274,7 @@ export type UpdateLocationInput = {
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;
 
 export type UpdateOutboundShipmentError = {
-  __typename?: 'UpdateOutboundShipmentError';
+  __typename: 'UpdateOutboundShipmentError';
   error: UpdateErrorInterface;
 };
 
@@ -2303,7 +2299,7 @@ export type UpdateOutboundShipmentInput = {
 };
 
 export type UpdateOutboundShipmentLineError = {
-  __typename?: 'UpdateOutboundShipmentLineError';
+  __typename: 'UpdateOutboundShipmentLineError';
   error: UpdateOutboundShipmentLineErrorInterface;
 };
 
@@ -2325,7 +2321,7 @@ export type UpdateOutboundShipmentLineInput = {
 export type UpdateOutboundShipmentLineResponse = InvoiceLineNode | NodeError | UpdateOutboundShipmentLineError;
 
 export type UpdateOutboundShipmentLineResponseWithId = {
-  __typename?: 'UpdateOutboundShipmentLineResponseWithId';
+  __typename: 'UpdateOutboundShipmentLineResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentLineResponse;
 };
@@ -2333,13 +2329,13 @@ export type UpdateOutboundShipmentLineResponseWithId = {
 export type UpdateOutboundShipmentResponse = InvoiceNode | NodeError | UpdateOutboundShipmentError;
 
 export type UpdateOutboundShipmentResponseWithId = {
-  __typename?: 'UpdateOutboundShipmentResponseWithId';
+  __typename: 'UpdateOutboundShipmentResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentResponse;
 };
 
 export type UpdateOutboundShipmentServiceLineError = {
-  __typename?: 'UpdateOutboundShipmentServiceLineError';
+  __typename: 'UpdateOutboundShipmentServiceLineError';
   error: UpdateOutboundShipmentServiceLineErrorInterface;
 };
 
@@ -2361,7 +2357,7 @@ export type UpdateOutboundShipmentServiceLineInput = {
 export type UpdateOutboundShipmentServiceLineResponse = InvoiceLineNode | UpdateOutboundShipmentServiceLineError;
 
 export type UpdateOutboundShipmentServiceLineResponseWithId = {
-  __typename?: 'UpdateOutboundShipmentServiceLineResponseWithId';
+  __typename: 'UpdateOutboundShipmentServiceLineResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentServiceLineResponse;
 };
@@ -2373,7 +2369,7 @@ export enum UpdateOutboundShipmentStatusInput {
 }
 
 export type UpdateOutboundShipmentUnallocatedLineError = {
-  __typename?: 'UpdateOutboundShipmentUnallocatedLineError';
+  __typename: 'UpdateOutboundShipmentUnallocatedLineError';
   error: UpdateOutboundShipmentUnallocatedLineErrorInterface;
 };
 
@@ -2389,13 +2385,13 @@ export type UpdateOutboundShipmentUnallocatedLineInput = {
 export type UpdateOutboundShipmentUnallocatedLineResponse = InvoiceLineNode | UpdateOutboundShipmentUnallocatedLineError;
 
 export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
-  __typename?: 'UpdateOutboundShipmentUnallocatedLineResponseWithId';
+  __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId';
   id: Scalars['String'];
   response: UpdateOutboundShipmentUnallocatedLineResponse;
 };
 
 export type UpdateRequestRequisitionError = {
-  __typename?: 'UpdateRequestRequisitionError';
+  __typename: 'UpdateRequestRequisitionError';
   error: UpdateRequestRequisitionErrorInterface;
 };
 
@@ -2414,7 +2410,7 @@ export type UpdateRequestRequisitionInput = {
 };
 
 export type UpdateRequestRequisitionLineError = {
-  __typename?: 'UpdateRequestRequisitionLineError';
+  __typename: 'UpdateRequestRequisitionLineError';
   error: UpdateRequestRequisitionLineErrorInterface;
 };
 
@@ -2436,7 +2432,7 @@ export enum UpdateRequestRequisitionStatusInput {
 }
 
 export type UpdateResponseRequisitionError = {
-  __typename?: 'UpdateResponseRequisitionError';
+  __typename: 'UpdateResponseRequisitionError';
   error: UpdateResponseRequisitionErrorInterface;
 };
 
@@ -2453,7 +2449,7 @@ export type UpdateResponseRequisitionInput = {
 };
 
 export type UpdateResponseRequisitionLineError = {
-  __typename?: 'UpdateResponseRequisitionLineError';
+  __typename: 'UpdateResponseRequisitionLineError';
   error: UpdateResponseRequisitionLineErrorInterface;
 };
 
@@ -2475,7 +2471,7 @@ export enum UpdateResponseRequisitionStatusInput {
 }
 
 export type UpdateStocktakeError = {
-  __typename?: 'UpdateStocktakeError';
+  __typename: 'UpdateStocktakeError';
   error: UpdateStocktakeErrorInterface;
 };
 
@@ -2507,7 +2503,7 @@ export type UpdateStocktakeLineInput = {
 export type UpdateStocktakeLineResponse = StocktakeLineNode;
 
 export type UpdateStocktakeLineResponseWithId = {
-  __typename?: 'UpdateStocktakeLineResponseWithId';
+  __typename: 'UpdateStocktakeLineResponseWithId';
   id: Scalars['String'];
   response: UpdateStocktakeLineResponse;
 };
@@ -2515,13 +2511,13 @@ export type UpdateStocktakeLineResponseWithId = {
 export type UpdateStocktakeResponse = StocktakeNode | UpdateStocktakeError;
 
 export type UpdateStocktakeResponseWithId = {
-  __typename?: 'UpdateStocktakeResponseWithId';
+  __typename: 'UpdateStocktakeResponseWithId';
   id: Scalars['String'];
   response: UpdateStocktakeResponse;
 };
 
 export type UseSuggestedQuantityError = {
-  __typename?: 'UseSuggestedQuantityError';
+  __typename: 'UseSuggestedQuantityError';
   error: UseSuggestedQuantityErrorInterface;
 };
 
@@ -2536,7 +2532,7 @@ export type UseSuggestedQuantityInput = {
 export type UseSuggestedQuantityResponse = RequisitionLineConnector | UseSuggestedQuantityError;
 
 export type User = {
-  __typename?: 'User';
+  __typename: 'User';
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
   /** Internal user id */
@@ -2544,12 +2540,12 @@ export type User = {
 };
 
 export type UserNameDoesNotExist = AuthTokenErrorInterface & {
-  __typename?: 'UserNameDoesNotExist';
+  __typename: 'UserNameDoesNotExist';
   description: Scalars['String'];
 };
 
 export type UserRegisterError = {
-  __typename?: 'UserRegisterError';
+  __typename: 'UserRegisterError';
   error: UserRegisterErrorInterface;
 };
 
@@ -2566,641 +2562,3 @@ export type UserRegisterInput = {
 export type UserRegisterResponse = RegisteredUser | UserRegisterError;
 
 export type UserResponse = User;
-
-export type ItemsWithStockLinesQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  key: ItemSortFieldInput;
-  desc?: InputMaybe<Scalars['Boolean']>;
-  filter?: InputMaybe<ItemFilterInput>;
-  storeId: Scalars['String'];
-}>;
-
-
-export type ItemsWithStockLinesQuery = { __typename?: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
-
-export type NamesQueryVariables = Exact<{
-  key: NameSortFieldInput;
-  desc?: InputMaybe<Scalars['Boolean']>;
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  filter?: InputMaybe<NameFilterInput>;
-}>;
-
-
-export type NamesQuery = { __typename?: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename?: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename?: 'StoreNode', id: string, code: string } | null }> } };
-
-export type StockCountsQueryVariables = Exact<{
-  daysTillExpired?: InputMaybe<Scalars['Int']>;
-  timezoneOffset?: InputMaybe<Scalars['Int']>;
-}>;
-
-
-export type StockCountsQuery = { __typename?: 'Queries', stockCounts: { __typename?: 'StockCounts', expired: number, expiringSoon: number } };
-
-export type LocationsQueryVariables = Exact<{
-  sort?: InputMaybe<Array<LocationSortInput> | LocationSortInput>;
-}>;
-
-
-export type LocationsQuery = { __typename?: 'Queries', locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
-
-export type InsertLocationMutationVariables = Exact<{
-  input: InsertLocationInput;
-  storeId: Scalars['String'];
-}>;
-
-
-export type InsertLocationMutation = { __typename?: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: UniqueValueKey } } | { __typename?: 'LocationNode', id: string, name: string, code: string, onHold: boolean } };
-
-export type UpdateLocationMutationVariables = Exact<{
-  input: UpdateLocationInput;
-  storeId: Scalars['String'];
-}>;
-
-
-export type UpdateLocationMutation = { __typename?: 'Mutations', updateLocation: { __typename?: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: UniqueValueKey } } };
-
-export type DeleteLocationMutationVariables = Exact<{
-  storeId: Scalars['String'];
-  input: DeleteLocationInput;
-}>;
-
-
-export type DeleteLocationMutation = { __typename?: 'Mutations', deleteLocation: { __typename: 'DeleteLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'LocationInUse', description: string, stockLines: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, itemId: string }> }, invoiceLines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string }> } } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } };
-
-export type StoresQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  filter?: InputMaybe<StoreFilterInput>;
-}>;
-
-
-export type StoresQuery = { __typename?: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename?: 'StoreNode', code: string, id: string }> } };
-
-export type AuthTokenQueryVariables = Exact<{
-  username: Scalars['String'];
-  password: Scalars['String'];
-}>;
-
-
-export type AuthTokenQuery = { __typename?: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'UserNameDoesNotExist', description: string } } };
-
-export type MasterListsQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']>;
-  offset?: InputMaybe<Scalars['Int']>;
-  key: MasterListSortFieldInput;
-  desc?: InputMaybe<Scalars['Boolean']>;
-  filter?: InputMaybe<MasterListFilterInput>;
-  storeId: Scalars['String'];
-}>;
-
-
-export type MasterListsQuery = { __typename?: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename?: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename?: 'MasterListLineNode', id: string, itemId: string, item: { __typename?: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
-
-
-export const ItemsWithStockLinesDocument = gql`
-    query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
-  items(
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    __typename
-    ... on ItemConnector {
-      __typename
-      nodes {
-        __typename
-        availableBatches(storeId: $storeId) {
-          __typename
-          ... on StockLineConnector {
-            __typename
-            nodes {
-              __typename
-              availableNumberOfPacks
-              batch
-              costPricePerPack
-              expiryDate
-              id
-              itemId
-              packSize
-              sellPricePerPack
-              totalNumberOfPacks
-              onHold
-              note
-              storeId
-              locationName
-            }
-            totalCount
-          }
-        }
-        code
-        id
-        isVisible
-        name
-        unitName
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const NamesDocument = gql`
-    query names($key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
-  names(
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on NameConnector {
-      __typename
-      nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-        store {
-          id
-          code
-        }
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const StockCountsDocument = gql`
-    query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
-  stockCounts(daysTillExpired: $daysTillExpired, timezoneOffset: $timezoneOffset) {
-    expired
-    expiringSoon
-  }
-}
-    `;
-export const LocationsDocument = gql`
-    query locations($sort: [LocationSortInput!]) {
-  locations(sort: $sort) {
-    __typename
-    ... on LocationConnector {
-      __typename
-      nodes {
-        __typename
-        id
-        name
-        onHold
-        code
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const InsertLocationDocument = gql`
-    mutation insertLocation($input: InsertLocationInput!, $storeId: String!) {
-  insertLocation(input: $input, storeId: $storeId) {
-    ... on InsertLocationError {
-      __typename
-      error {
-        description
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-        ... on UniqueValueViolation {
-          __typename
-          description
-          field
-        }
-      }
-    }
-    ... on LocationNode {
-      id
-      name
-      code
-      onHold
-    }
-  }
-}
-    `;
-export const UpdateLocationDocument = gql`
-    mutation updateLocation($input: UpdateLocationInput!, $storeId: String!) {
-  updateLocation(input: $input, storeId: $storeId) {
-    ... on UpdateLocationError {
-      __typename
-      error {
-        description
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordBelongsToAnotherStore {
-          __typename
-          description
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on UniqueValueViolation {
-          __typename
-          description
-          field
-        }
-      }
-    }
-    ... on LocationNode {
-      id
-      name
-      onHold
-      code
-    }
-  }
-}
-    `;
-export const DeleteLocationDocument = gql`
-    mutation deleteLocation($storeId: String!, $input: DeleteLocationInput!) {
-  deleteLocation(storeId: $storeId, input: $input) {
-    ... on DeleteLocationError {
-      __typename
-      error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordBelongsToAnotherStore {
-          __typename
-          description
-        }
-        ... on LocationInUse {
-          __typename
-          description
-          stockLines {
-            ... on StockLineConnector {
-              __typename
-              nodes {
-                __typename
-                id
-                itemId
-              }
-              totalCount
-            }
-          }
-          invoiceLines {
-            ... on InvoiceLineConnector {
-              __typename
-              nodes {
-                __typename
-                id
-              }
-            }
-            totalCount
-          }
-        }
-      }
-    }
-    ... on DeleteResponse {
-      __typename
-      id
-    }
-  }
-}
-    `;
-export const StoresDocument = gql`
-    query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(page: {first: $first, offset: $offset}, filter: $filter) {
-    ... on StoreConnector {
-      __typename
-      nodes {
-        code
-        id
-      }
-      totalCount
-    }
-  }
-}
-    `;
-export const AuthTokenDocument = gql`
-    query authToken($username: String!, $password: String!) {
-  authToken(password: $password, username: $username) {
-    ... on AuthToken {
-      __typename
-      token
-    }
-    ... on AuthTokenError {
-      __typename
-      error {
-        ... on UserNameDoesNotExist {
-          __typename
-          description
-        }
-        ... on InvalidCredentials {
-          __typename
-          description
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        description
-      }
-    }
-  }
-}
-    `;
-export const MasterListsDocument = gql`
-    query masterLists($first: Int, $offset: Int, $key: MasterListSortFieldInput!, $desc: Boolean, $filter: MasterListFilterInput, $storeId: String!) {
-  masterLists(
-    filter: $filter
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-  ) {
-    ... on MasterListConnector {
-      __typename
-      nodes {
-        name
-        code
-        lines {
-          nodes {
-            id
-            itemId
-            item {
-              code
-              id
-              unitName
-              name
-              isVisible
-              availableBatches(storeId: $storeId) {
-                ... on StockLineConnector {
-                  __typename
-                  nodes {
-                    __typename
-                    availableNumberOfPacks
-                    batch
-                    costPricePerPack
-                    expiryDate
-                    itemId
-                    id
-                    totalNumberOfPacks
-                    storeId
-                    sellPricePerPack
-                    packSize
-                    onHold
-                    note
-                    locationName
-                  }
-                  totalCount
-                }
-              }
-            }
-          }
-          totalCount
-        }
-        code
-        description
-        id
-      }
-      totalCount
-    }
-  }
-}
-    `;
-
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
-
-
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
-
-export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
-  return {
-    itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsWithStockLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines');
-    },
-    names(variables: NamesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<NamesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names');
-    },
-    stockCounts(variables?: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts');
-    },
-    locations(variables?: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations');
-    },
-    insertLocation(variables: InsertLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertLocationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertLocationMutation>(InsertLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertLocation');
-    },
-    updateLocation(variables: UpdateLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateLocationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLocationMutation>(UpdateLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLocation');
-    },
-    deleteLocation(variables: DeleteLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteLocationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteLocationMutation>(DeleteLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLocation');
-    },
-    stores(variables?: StoresQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StoresQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StoresQuery>(StoresDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stores');
-    },
-    authToken(variables: AuthTokenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AuthTokenQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AuthTokenQuery>(AuthTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'authToken');
-    },
-    masterLists(variables: MasterListsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<MasterListsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsQuery>(MasterListsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterLists');
-    }
-  };
-}
-export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockItemsWithStockLinesQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ items })
- *   )
- * })
- */
-export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsWithStockLinesQueryVariables>, GraphQLContext<ItemsWithStockLinesQuery>, any>) =>
-  graphql.query<ItemsWithStockLinesQuery, ItemsWithStockLinesQueryVariables>(
-    'itemsWithStockLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockNamesQuery((req, res, ctx) => {
- *   const { key, desc, first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ names })
- *   )
- * })
- */
-export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQueryVariables>, GraphQLContext<NamesQuery>, any>) =>
-  graphql.query<NamesQuery, NamesQueryVariables>(
-    'names',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStockCountsQuery((req, res, ctx) => {
- *   const { daysTillExpired, timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ stockCounts })
- *   )
- * })
- */
-export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<StockCountsQueryVariables>, GraphQLContext<StockCountsQuery>, any>) =>
-  graphql.query<StockCountsQuery, StockCountsQueryVariables>(
-    'stockCounts',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLocationsQuery((req, res, ctx) => {
- *   const { sort } = req.variables;
- *   return res(
- *     ctx.data({ locations })
- *   )
- * })
- */
-export const mockLocationsQuery = (resolver: ResponseResolver<GraphQLRequest<LocationsQueryVariables>, GraphQLContext<LocationsQuery>, any>) =>
-  graphql.query<LocationsQuery, LocationsQueryVariables>(
-    'locations',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertLocationMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ insertLocation })
- *   )
- * })
- */
-export const mockInsertLocationMutation = (resolver: ResponseResolver<GraphQLRequest<InsertLocationMutationVariables>, GraphQLContext<InsertLocationMutation>, any>) =>
-  graphql.mutation<InsertLocationMutation, InsertLocationMutationVariables>(
-    'insertLocation',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateLocationMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ updateLocation })
- *   )
- * })
- */
-export const mockUpdateLocationMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLocationMutationVariables>, GraphQLContext<UpdateLocationMutation>, any>) =>
-  graphql.mutation<UpdateLocationMutation, UpdateLocationMutationVariables>(
-    'updateLocation',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteLocationMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ deleteLocation })
- *   )
- * })
- */
-export const mockDeleteLocationMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteLocationMutationVariables>, GraphQLContext<DeleteLocationMutation>, any>) =>
-  graphql.mutation<DeleteLocationMutation, DeleteLocationMutationVariables>(
-    'deleteLocation',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStoresQuery((req, res, ctx) => {
- *   const { first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ stores })
- *   )
- * })
- */
-export const mockStoresQuery = (resolver: ResponseResolver<GraphQLRequest<StoresQueryVariables>, GraphQLContext<StoresQuery>, any>) =>
-  graphql.query<StoresQuery, StoresQueryVariables>(
-    'stores',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAuthTokenQuery((req, res, ctx) => {
- *   const { username, password } = req.variables;
- *   return res(
- *     ctx.data({ authToken })
- *   )
- * })
- */
-export const mockAuthTokenQuery = (resolver: ResponseResolver<GraphQLRequest<AuthTokenQueryVariables>, GraphQLContext<AuthTokenQuery>, any>) =>
-  graphql.query<AuthTokenQuery, AuthTokenQueryVariables>(
-    'authToken',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockMasterListsQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ masterLists })
- *   )
- * })
- */
-export const mockMasterListsQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsQueryVariables>, GraphQLContext<MasterListsQuery>, any>) =>
-  graphql.query<MasterListsQuery, MasterListsQueryVariables>(
-    'masterLists',
-    resolver
-  )

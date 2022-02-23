@@ -1,18 +1,29 @@
-query invoices(
-  $first: Int
-  $offset: Int
-  $key: InvoiceSortFieldInput!
-  $desc: Boolean
-  $filter: InvoiceFilterInput
-  $storeId: String!
-) {
-  invoices(
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-    storeId: $storeId
-  ) {
-    ... on ConnectorError {
+fragment InboundShipment on InvoiceNode {
+  __typename
+  id
+  comment
+  createdDatetime
+  allocatedDatetime
+  deliveredDatetime
+  pickedDatetime
+  shippedDatetime
+  verifiedDatetime
+  invoiceNumber
+  colour
+  onHold
+
+  otherParty {
+    __typename
+    ... on NameNode {
+      __typename
+      id
+      name
+      code
+      isCustomer
+      isSupplier
+    }
+
+    ... on NodeError {
       __typename
       error {
         description
@@ -21,72 +32,26 @@ query invoices(
           description
           fullError
         }
-        ... on PaginationError {
+        ... on RecordNotFound {
           __typename
           description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
         }
       }
     }
-    ... on InvoiceConnector {
+  }
+
+  lines {
+    ... on InvoiceLineConnector {
       __typename
       nodes {
-        comment
-        createdDatetime
-        allocatedDatetime
-        deliveredDatetime
-        pickedDatetime
-        shippedDatetime
-        verifiedDatetime
-        id
-        invoiceNumber
-        otherPartyId
-        otherPartyName
-        theirReference
-        type
-        status
-        colour
-
-        pricing {
-          __typename
-          ... on NodeError {
-            __typename
-            error {
-              ... on RecordNotFound {
-                __typename
-                description
-              }
-              ... on DatabaseError {
-                __typename
-                description
-                fullError
-              }
-              description
-            }
-          }
-          ... on InvoicePricingNode {
-            __typename
-            totalAfterTax
-            totalBeforeTax
-            stockTotalBeforeTax
-            stockTotalAfterTax
-            serviceTotalAfterTax
-            serviceTotalBeforeTax
-          }
-        }
+        ...InboundShipmentLine
       }
       totalCount
     }
   }
-}
-
-query invoice($id: String!, $storeId: String!) {
-  invoice(id: $id, storeId: $storeId) {
+  otherPartyId
+  otherPartyName
+  pricing {
     __typename
     ... on NodeError {
       __typename
@@ -103,261 +68,208 @@ query invoice($id: String!, $storeId: String!) {
         }
       }
     }
-    ... on InvoiceNode {
+    ... on InvoicePricingNode {
+      __typename
+      totalAfterTax
+      totalBeforeTax
+      stockTotalBeforeTax
+      stockTotalAfterTax
+      serviceTotalAfterTax
+      serviceTotalBeforeTax
+    }
+  }
+  status
+  theirReference
+  type
+}
+
+fragment InboundShipmentRow on InvoiceNode {
+  __typename
+  comment
+  createdDatetime
+  allocatedDatetime
+  deliveredDatetime
+  pickedDatetime
+  shippedDatetime
+  verifiedDatetime
+  id
+  invoiceNumber
+  otherPartyId
+  otherPartyName
+  theirReference
+  type
+  status
+  colour
+  pricing {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        description
+      }
+    }
+    ... on InvoicePricingNode {
+      __typename
+      totalAfterTax
+      totalBeforeTax
+      stockTotalBeforeTax
+      stockTotalAfterTax
+      serviceTotalAfterTax
+      serviceTotalBeforeTax
+    }
+  }
+}
+
+fragment InboundShipmentLine on InvoiceLineNode {
+  __typename
+  type
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemCode
+  itemId
+  itemName
+  numberOfPacks
+  packSize
+  note
+  invoiceId
+  location {
+    __typename
+    ... on LocationNode {
       __typename
       id
-      comment
-      createdDatetime
-      allocatedDatetime
-      deliveredDatetime
-      pickedDatetime
-      shippedDatetime
-      verifiedDatetime
-      invoiceNumber
-
-      # enteredByName
-      # donorName
-      # requisitionNumber
-      # purchaseOrderNumber
-      # inboundShipmentNumber
-      # goodsReceiptNumber
-      colour
-
+      name
+      code
       onHold
-
-      otherParty {
+      stock {
         __typename
-        ... on NameNode {
-          __typename
+        totalCount
+        nodes {
           id
-          name
-          code
-          isCustomer
-          isSupplier
-        }
-
-        ... on NodeError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-          }
+          costPricePerPack
+          itemId
+          availableNumberOfPacks
+          onHold
+          packSize
+          sellPricePerPack
+          storeId
+          totalNumberOfPacks
         }
       }
-
-      lines {
-        ... on ConnectorError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-          }
-        }
-        ... on InvoiceLineConnector {
-          __typename
-          nodes {
-            __typename
-            type
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemCode
-            itemId
-            itemName
-            numberOfPacks
-            packSize
-            note
-            invoiceId
-            location {
-              __typename
-              ... on LocationNode {
-                __typename
-                id
-                name
-                code
-                onHold
-                stock {
-                  __typename
-                  ... on ConnectorError {
-                    __typename
-                    error {
-                      description
-                      ... on DatabaseError {
-                        __typename
-                        description
-                        fullError
-                      }
-                    }
-                  }
-                  ... on StockLineConnector {
-                    __typename
-                    totalCount
-                    nodes {
-                      id
-                      costPricePerPack
-                      itemId
-                      availableNumberOfPacks
-                      onHold
-                      packSize
-                      sellPricePerPack
-                      storeId
-                      totalNumberOfPacks
-                    }
-                  }
-                }
-              }
-              ... on NodeError {
-                __typename
-                error {
-                  description
-                  ... on DatabaseError {
-                    __typename
-                    description
-                    fullError
-                  }
-                  ... on RecordNotFound {
-                    __typename
-                    description
-                  }
-                }
-              }
-            }
-            item {
-              ... on ItemNode {
-                __typename
-                id
-                name
-                code
-                isVisible
-                unitName
-                stats {
-                  __typename
-                  availableStockOnHand
-                  availableMonthsOfStockOnHand
-                  averageMonthlyConsumption
-                }
-                availableBatches(storeId: $storeId) {
-                  ... on StockLineConnector {
-                    totalCount
-                    nodes {
-                      id
-                      availableNumberOfPacks
-                      costPricePerPack
-                      itemId
-                      onHold
-                      packSize
-                      sellPricePerPack
-                      storeId
-                      totalNumberOfPacks
-                      expiryDate
-                    }
-                  }
-                  ... on ConnectorError {
-                    __typename
-                    error {
-                      description
-                    }
-                  }
-                }
-              }
-              ... on ItemError {
-                __typename
-                error {
-                  ... on InternalError {
-                    __typename
-                    description
-                    fullError
-                  }
-                }
-              }
-            }
-
-            # itemUnit
-            locationName
-            sellPricePerPack
-            stockLine {
-              __typename
-              ... on NodeError {
-                __typename
-                error {
-                  description
-                  ... on DatabaseError {
-                    __typename
-                    description
-                    fullError
-                  }
-                  ... on RecordNotFound {
-                    __typename
-                    description
-                  }
-                }
-              }
-              ... on StockLineNode {
-                __typename
-                availableNumberOfPacks
-                batch
-                costPricePerPack
-                expiryDate
-                id
-                itemId
-                packSize
-                sellPricePerPack
-                storeId
-                totalNumberOfPacks
-                onHold
-                note
-              }
-            }
-          }
-          totalCount
-        }
-      }
-      otherPartyId
-      otherPartyName
-      pricing {
-        __typename
-        ... on NodeError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-          }
-        }
-        ... on InvoicePricingNode {
-          __typename
-          totalAfterTax
-          totalBeforeTax
-          stockTotalBeforeTax
-          stockTotalAfterTax
-          serviceTotalAfterTax
-          serviceTotalBeforeTax
-        }
-      }
-      status
-      theirReference
-      type
     }
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  item {
+    __typename
+    id
+    name
+    code
+    isVisible
+    unitName
+    availableBatches(storeId: $storeId) {
+      totalCount
+      nodes {
+        id
+        availableNumberOfPacks
+        costPricePerPack
+        itemId
+        onHold
+        packSize
+        sellPricePerPack
+        storeId
+        totalNumberOfPacks
+        expiryDate
+      }
+    }
+  }
+  locationName
+  sellPricePerPack
+  stockLine {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on StockLineNode {
+      __typename
+      availableNumberOfPacks
+      batch
+      costPricePerPack
+      expiryDate
+      id
+      itemId
+      packSize
+      sellPricePerPack
+      storeId
+      totalNumberOfPacks
+      onHold
+      note
+    }
+  }
+}
+
+query invoices(
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+  $storeId: String!
+) {
+  invoices(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InboundShipmentRow
+      }
+    }
+  }
+}
+
+query invoice($id: String!, $storeId: String!) {
+  invoice(id: $id, storeId: $storeId) {
+    ...InboundShipment
   }
 }
 
@@ -551,41 +463,6 @@ mutation deleteInboundShipmentLines(
     }
   }
 }
-
-# mutation upsertInboundShipment(
-#   $deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
-#   $insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
-#   $updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
-#   $updateInboundShipments: [UpdateInboundShipmentInput!]
-# ) {
-#   batchInboundShipment(
-#     deleteInboundShipmentLines: $deleteInboundShipmentLines
-#     insertInboundShipmentLines: $insertInboundShipmentLines
-#     updateInboundShipmentLines: $updateInboundShipmentLines
-#     updateInboundShipments: $updateInboundShipments
-#   ) {
-#     __typename
-#     updateInboundShipments {
-#       __typename
-#       id
-#     }
-
-#     insertInboundShipmentLines {
-#       __typename
-#       id
-#     }
-
-#     deleteInboundShipmentLines {
-#       __typename
-#       id
-#     }
-
-#     updateInboundShipmentLines {
-#       __typename
-#       id
-#     }
-#   }
-# }
 
 query invoiceCounts($timezoneOffset: Int) {
   invoiceCounts(timezoneOffset: $timezoneOffset) {

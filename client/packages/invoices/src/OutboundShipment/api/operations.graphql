@@ -22,31 +22,17 @@ fragment OutboundShipmentLine on InvoiceLineNode {
       onHold
       stock {
         __typename
-        ... on ConnectorError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-          }
-        }
-        ... on StockLineConnector {
-          __typename
-          totalCount
-          nodes {
-            id
-            costPricePerPack
-            itemId
-            availableNumberOfPacks
-            onHold
-            packSize
-            sellPricePerPack
-            storeId
-            totalNumberOfPacks
-          }
+        totalCount
+        nodes {
+          id
+          costPricePerPack
+          itemId
+          availableNumberOfPacks
+          onHold
+          packSize
+          sellPricePerPack
+          storeId
+          totalNumberOfPacks
         }
       }
     }
@@ -67,45 +53,25 @@ fragment OutboundShipmentLine on InvoiceLineNode {
     }
   }
   item {
-    ... on ItemNode {
-      __typename
-      id
-      name
-      code
-      isVisible
-      unitName
-      availableBatches(storeId: $storeId) {
-        ... on StockLineConnector {
-          totalCount
-          nodes {
-            id
-            availableNumberOfPacks
-            costPricePerPack
-            itemId
-            onHold
-            packSize
-            sellPricePerPack
-            storeId
-            totalNumberOfPacks
-            expiryDate
-          }
-        }
-        ... on ConnectorError {
-          __typename
-          error {
-            description
-          }
-        }
-      }
-    }
-    ... on ItemError {
-      __typename
-      error {
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
+    __typename
+    id
+    name
+    code
+    isVisible
+    unitName
+    availableBatches(storeId: $storeId) {
+      totalCount
+      nodes {
+        id
+        availableNumberOfPacks
+        costPricePerPack
+        itemId
+        onHold
+        packSize
+        sellPricePerPack
+        storeId
+        totalNumberOfPacks
+        expiryDate
       }
     }
   }
@@ -157,15 +123,7 @@ fragment OutboundShipment on InvoiceNode {
   shippedDatetime
   verifiedDatetime
   invoiceNumber
-
-  # enteredByName
-  # donorName
-  # requisitionNumber
-  # purchaseOrderNumber
-  # inboundShipmentNumber
-  # goodsReceiptNumber
   colour
-
   onHold
 
   otherParty {
@@ -197,17 +155,6 @@ fragment OutboundShipment on InvoiceNode {
   }
 
   lines {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-      }
-    }
     ... on InvoiceLineConnector {
       __typename
       nodes {
@@ -310,27 +257,6 @@ query invoices(
     filter: $filter
     storeId: $storeId
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on InvoiceConnector {
       __typename
       nodes {

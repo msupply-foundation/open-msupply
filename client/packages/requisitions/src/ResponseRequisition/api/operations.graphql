@@ -69,7 +69,7 @@ fragment ResponseRequisition on RequisitionNode {
 query responseRequisition($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
-    type: "RESPONSE"
+    type: RESPONSE
     storeId: $storeId
   ) {
     __typename
@@ -108,7 +108,7 @@ query responseRequisitions(
   $storeId: String!
   $filter: RequisitionFilterInput
   $page: PaginationInput
-  $sort: RequisitionSortInput
+  $sort: [RequisitionSortInput!]
 ) {
   requisitions(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
     ... on RequisitionConnector {

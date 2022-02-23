@@ -30,7 +30,7 @@ export type ResponseRequisitionsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
-  sort?: Types.InputMaybe<Types.RequisitionSortInput>;
+  sort?: Types.InputMaybe<Array<Types.RequisitionSortInput> | Types.RequisitionSortInput>;
 }>;
 
 
@@ -125,7 +125,7 @@ export const ResponseRequisitionDocument = gql`
     query responseRequisition($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
-    type: "RESPONSE"
+    type: RESPONSE
     storeId: $storeId
   ) {
     __typename
@@ -146,7 +146,7 @@ export const ResponseRequisitionDocument = gql`
 }
     ${ResponseRequisitionFragmentDoc}`;
 export const ResponseRequisitionsDocument = gql`
-    query responseRequisitions($storeId: String!, $filter: RequisitionFilterInput, $page: PaginationInput, $sort: RequisitionSortInput) {
+    query responseRequisitions($storeId: String!, $filter: RequisitionFilterInput, $page: PaginationInput, $sort: [RequisitionSortInput!]) {
   requisitions(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
     ... on RequisitionConnector {
       totalCount

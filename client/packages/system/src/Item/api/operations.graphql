@@ -10,27 +10,6 @@ fragment Item on ItemNode {
   __typename
   availableBatches(storeId: $storeId) {
     __typename
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on StockLineConnector {
       __typename
       nodes {
@@ -72,27 +51,6 @@ query itemsWithStockLines(
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on ItemConnector {
       __typename
       nodes {
@@ -115,27 +73,6 @@ query itemsListView(
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on ItemConnector {
       __typename
       nodes {
