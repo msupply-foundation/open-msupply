@@ -33,6 +33,12 @@ fragment RequestRequisitionLine on RequisitionLineNode {
     stockOnHand
     monthsOfStock
   }
+  item {
+    id
+    name
+    code
+    unitName
+  }
 }
 
 fragment RequestRequisition on RequisitionNode {
