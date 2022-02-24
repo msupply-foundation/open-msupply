@@ -1,12 +1,9 @@
 use super::validate::check_location_exists;
 use crate::service_provider::ServiceContext;
-use domain::{
-    stock_line::{StockLine, StockLineFilter},
-    EqualFilter,
-};
+use domain::EqualFilter;
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, LocationRowRepository, RepositoryError,
-    StockLineRepository, StorageConnection,
+    StockLineRepository, StorageConnection, StockLine, StockLineFilter,
 };
 #[derive(PartialEq, Debug)]
 pub struct LocationInUse {

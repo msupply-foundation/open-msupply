@@ -1,12 +1,11 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, unallocated_line::successfull_invoice_line};
-    use domain::stock_line::StockLine;
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{mock::{MockDataInserts, mock_stock_line_a}, StockLine, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
         location::{
-            delete::{DeleteLocationError, LocationInUse, DeleteLocation},
+            delete::{DeleteLocation, DeleteLocationError, LocationInUse},
             LocationServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -134,20 +133,8 @@ mod graphql {
         let test_service = TestService(Box::new(|_| {
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines: vec![StockLine {
-                    id: "stock_line_id".to_owned(),
-                    item_id: "n/a".to_owned(),
-                    store_id: "n/a".to_owned(),
-                    location_id: None,
-                    location_name: None,
-                    batch: None,
-                    pack_size: 1,
-                    cost_price_per_pack: 1.0,
-                    sell_price_per_pack: 1.0,
-                    available_number_of_packs: 1,
-                    total_number_of_packs: 1,
-                    expiry_date: None,
-                    on_hold: false,
-                    note: None,
+                    stock_line_row: mock_stock_line_a(),
+                    location_row: None,
                 }],
                 invoice_lines: vec![successfull_invoice_line()],
             }))
@@ -160,7 +147,7 @@ mod graphql {
               "error": {
                 "__typename": "LocationInUse",
                 "stockLines": {
-                  "nodes": [{"id": "stock_line_id"}]
+                  "nodes": [{"id": mock_stock_line_a().id}]
                 },
                 "invoiceLines": {
                   "nodes": [{"id": out_line.invoice_line_row.id}]

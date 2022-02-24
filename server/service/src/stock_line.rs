@@ -1,9 +1,6 @@
 use crate::SingleRecordError;
-use domain::{
-    stock_line::{StockLine, StockLineFilter},
-    Pagination, EqualFilter,
-};
-use repository::{StockLineRepository, StorageConnectionManager};
+use domain::{EqualFilter, Pagination};
+use repository::{StockLineRepository, StorageConnectionManager, StockLine, StockLineFilter};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

@@ -60,7 +60,7 @@ pub use number_row::NumberRowRepository;
 pub use remote_sync_buffer::*;
 pub use requisition::*;
 pub use requisition_line::*;
-pub use stock_line::StockLineRepository;
+pub use stock_line::*;
 pub use stock_line_row::StockLineRowRepository;
 pub use stocktake::*;
 pub use stocktake_line::*;

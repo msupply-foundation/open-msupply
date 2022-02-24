@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod query {
-    use domain::{stock_line::StockLineFilter, EqualFilter};
+    use domain::EqualFilter;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, InvoiceLineFilter, InvoiceLineRepository,
-        LocationFilter, LocationRepository, StockLineRepository,
+        LocationFilter, LocationRepository, StockLineRepository, StockLineFilter,
     };
 
     use crate::{
