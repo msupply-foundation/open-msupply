@@ -11,7 +11,7 @@ use self::{
     transact::get_test_transact_records,
 };
 
-use super::{IntegrationRecord, IntegrationUpsertRecord};
+use super::pull::{IntegrationRecord, IntegrationUpsertRecord};
 
 pub mod name_store_join;
 pub mod number;

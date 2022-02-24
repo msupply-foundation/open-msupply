@@ -8,7 +8,7 @@ use serde::Deserialize;
 use crate::sync::SyncTranslationError;
 
 use super::{
-    IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation,
+    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     TRANSLATION_RECORD_NAME_STORE_JOIN,
 };
 
@@ -26,7 +26,7 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<super::pull::IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_NAME_STORE_JOIN;
 
         if sync_record.table_name != table_name {

@@ -9,8 +9,9 @@ use serde::Deserialize;
 use crate::sync::SyncTranslationError;
 
 use super::{
-    empty_str_as_option, zero_date_as_option, IntegrationRecord, IntegrationUpsertRecord,
-    RemotePullTranslation, TRANSLATION_RECORD_ITEM_LINE,
+    empty_str_as_option,
+    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
+    zero_date_as_option, TRANSLATION_RECORD_ITEM_LINE,
 };
 
 #[allow(non_snake_case)]
@@ -40,7 +41,7 @@ impl RemotePullTranslation for StockLineTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_ITEM_LINE;
 
         if sync_record.table_name != table_name {

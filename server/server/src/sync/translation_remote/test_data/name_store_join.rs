@@ -1,7 +1,8 @@
 use repository::schema::{NameStoreJoinRow, RemoteSyncBufferAction, RemoteSyncBufferRow};
 
 use crate::sync::translation_remote::{
-    test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    pull::{IntegrationRecord, IntegrationUpsertRecord},
+    test_data::TestSyncRecord,
     TRANSLATION_RECORD_NAME_STORE_JOIN,
 };
 

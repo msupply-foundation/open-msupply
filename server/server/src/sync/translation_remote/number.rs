@@ -8,7 +8,8 @@ use serde::Deserialize;
 use crate::sync::SyncTranslationError;
 
 use super::{
-    IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation, TRANSLATION_RECORD_NUMBER,
+    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
+    TRANSLATION_RECORD_NUMBER,
 };
 
 #[allow(non_snake_case)]

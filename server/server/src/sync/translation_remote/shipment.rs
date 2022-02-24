@@ -9,8 +9,9 @@ use serde::Deserialize;
 use crate::sync::SyncTranslationError;
 
 use super::{
-    date_and_time_to_datatime, empty_str_as_option, zero_date_as_option, IntegrationRecord,
-    IntegrationUpsertRecord, RemotePullTranslation, TRANSLATION_RECORD_TRANSACT,
+    date_and_time_to_datatime, empty_str_as_option,
+    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
+    zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
 };
 
 #[derive(Deserialize, Debug)]
@@ -93,7 +94,7 @@ impl RemotePullTranslation for ShipmentTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_TRANSACT;
         if sync_record.table_name != table_name {
             return Ok(None);

@@ -1,7 +1,8 @@
 use repository::schema::{RemoteSyncBufferAction, RemoteSyncBufferRow, StocktakeLineRow};
 
 use crate::sync::translation_remote::{
-    test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    pull::{IntegrationRecord, IntegrationUpsertRecord},
+    test_data::TestSyncRecord,
     TRANSLATION_RECORD_STOCKTAKE_LINE,
 };
 

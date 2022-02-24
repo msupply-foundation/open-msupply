@@ -5,7 +5,8 @@ use repository::{
 };
 
 use crate::sync::translation_remote::{
-    test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    pull::{IntegrationRecord, IntegrationUpsertRecord},
+    test_data::TestSyncRecord,
     TRANSLATION_RECORD_TRANS_LINE,
 };
 
