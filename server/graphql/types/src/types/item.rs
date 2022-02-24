@@ -2,7 +2,6 @@ use super::{ItemStatsNode, StockLineConnector};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDateTime;
-use domain::item::Item;
 use graphql_core::{
     loader::{
         IdAndStoreId, ItemStatsLoaderInput, ItemsStatsForItemLoader,
@@ -12,6 +11,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+use repository::{schema::ItemRow, Item};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
@@ -28,23 +28,23 @@ pub struct ItemConnector {
 #[Object]
 impl ItemNode {
     pub async fn id(&self) -> &str {
-        &self.item.id
+        &self.row().id
     }
 
     pub async fn name(&self) -> &str {
-        &self.item.name
+        &self.row().name
     }
 
     pub async fn code(&self) -> &str {
-        &self.item.code
+        &self.row().code
     }
 
     pub async fn is_visible(&self) -> bool {
-        self.item.is_visible
+        self.item.is_visible()
     }
 
-    pub async fn unit_name(&self) -> &Option<String> {
-        &self.item.unit_name
+    pub async fn unit_name(&self) -> Option<&str> {
+        self.item.unit_name()
     }
 
     pub async fn stats(
@@ -58,13 +58,14 @@ impl ItemNode {
             .load_one(ItemStatsLoaderInput {
                 store_id: store_id.clone(),
                 look_back_datetime,
-                item_id: (&self.item.id).clone(),
+                item_id: self.row().id.to_string(),
             })
             .await?
             .ok_or(
                 StandardGraphqlError::InternalError(format!(
                     "Cannot find item stats for item {} and store {}",
-                    &self.item.id, store_id
+                    &self.row().id,
+                    store_id
                 ))
                 .extend(),
             )?;
@@ -80,7 +81,7 @@ impl ItemNode {
         let loader = ctx.get_loader::<DataLoader<StockLineByItemAndStoreIdLoader>>();
         let result_option = loader
             .load_one(IdAndStoreId {
-                id: self.item.id.clone(),
+                id: self.row().id.to_string(),
                 store_id,
             })
             .await?;
@@ -110,6 +111,10 @@ pub enum ItemResponse {
 impl ItemNode {
     pub fn from_domain(item: Item) -> ItemNode {
         ItemNode { item }
+    }
+
+    pub fn row(&self) -> &ItemRow {
+        &self.item.item_row
     }
 }
 

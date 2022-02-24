@@ -43,7 +43,7 @@ pub use invoice_line::*;
 pub use invoice_line_row::*;
 pub use invoice_query::*;
 pub use item::ItemRepository;
-pub use item_query::{ItemFilter, ItemQueryRepository};
+pub use item_query::*;
 pub use item_stats::*;
 pub use key_value_store::*;
 pub use location::{to_domain as location_to_domain, LocationRepository};
