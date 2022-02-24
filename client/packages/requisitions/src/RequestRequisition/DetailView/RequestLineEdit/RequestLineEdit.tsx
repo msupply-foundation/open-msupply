@@ -7,7 +7,6 @@ import {
   useBufferState,
   generateUUID,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
 import {
   useSaveRequestLines,
@@ -15,6 +14,7 @@ import {
   useRequestRequisitionLines,
   useIsRequestRequisitionDisabled,
   RequestRequisitionLineFragment,
+  ItemWithStatsFragment,
 } from '../../api';
 
 export type DraftRequestRequisitionLine = Omit<
@@ -29,24 +29,45 @@ interface RequestLineEditProps {
   isOpen: boolean;
   onClose: () => void;
   mode: ModalMode | null;
-  item: ItemRowFragment | null;
+  item: ItemWithStatsFragment | null;
 }
 
-const createDraftRequestLine = (
-  item: ItemRowFragment,
+const createDraftFromItem = (
+  item: ItemWithStatsFragment,
+  requisitionId: string
+): DraftRequestRequisitionLine => {
+  const { stats } = item;
+  const { averageMonthlyConsumption, availableStockOnHand } = stats;
+
+  // TODO: Use months of stock from what has been set on the requisition,
+  // not this arbitrary 3.
+  const suggested = averageMonthlyConsumption * 3 - availableStockOnHand;
+  const suggestedQuantity = Math.max(suggested, 0);
+  return {
+    id: generateUUID(),
+    requisitionId,
+    itemId: item.id,
+    requestedQuantity: suggestedQuantity,
+    suggestedQuantity,
+    isCreated: true,
+  };
+};
+
+const createDraftFromRequestLine = (
+  line: RequestRequisitionLineFragment,
   id: string
 ): DraftRequestRequisitionLine => ({
-  id: generateUUID(),
+  ...line,
   requisitionId: id,
-  itemId: item.id,
-  requestedQuantity: 0,
-  suggestedQuantity: 0,
-  isCreated: true,
+  itemId: line.item.id,
+  requestedQuantity: line.requestedQuantity ?? line.suggestedQuantity,
+  suggestedQuantity: line.suggestedQuantity,
+  isCreated: false,
 });
 
-const useDraftRequisitionLine = (item: ItemRowFragment | null) => {
+const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
   const { lines } = useRequestRequisitionLines();
-  const { id } = useRequestRequisitionFields('id');
+  const { id: reqId } = useRequestRequisitionFields('id');
   const { mutate: save, isLoading } = useSaveRequestLines();
 
   const [draft, setDraft] = useState<DraftRequestRequisitionLine | null>(null);
@@ -56,17 +77,15 @@ const useDraftRequisitionLine = (item: ItemRowFragment | null) => {
       const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
       );
-      if (existingLine)
-        return setDraft({
-          ...existingLine,
-          isCreated: false,
-          requisitionId: id,
-        });
-      else return setDraft(createDraftRequestLine(item, id));
+      if (existingLine) {
+        setDraft(createDraftFromRequestLine(existingLine, reqId));
+      } else {
+        setDraft(createDraftFromItem(item, reqId));
+      }
     } else {
       setDraft(null);
     }
-  }, [lines, item, id]);
+  }, [lines, item, reqId]);
 
   const update = (patch: Partial<DraftRequestRequisitionLine>) => {
     if (draft) {
@@ -94,7 +113,15 @@ export const RequestLineEdit = ({
       title={''}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={<DialogButton variant="next" onClick={() => {}} />}
-      okButton={<DialogButton variant="ok" onClick={save} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={async () => {
+            await save();
+            onClose();
+          }}
+        />
+      }
       height={600}
       width={1024}
     >
