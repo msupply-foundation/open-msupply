@@ -7,7 +7,7 @@ import {
   useOmSupplyApi,
   useListData,
   useNavigate,
-  useHostContext,
+  useAuthState,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { getMasterListListViewApi } from './api';
@@ -15,7 +15,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { MasterListRow } from '../types';
 
 export const MasterListListView: FC = () => {
-  const { store } = useHostContext();
+  const { store } = useAuthState();
   const { api } = useOmSupplyApi();
   const {
     totalCount,
@@ -29,7 +29,7 @@ export const MasterListListView: FC = () => {
   } = useListData(
     { initialSortBy: { key: 'name' } },
     ['master-list', 'list'],
-    getMasterListListViewApi(api, store.id)
+    getMasterListListViewApi(api, store?.id ?? '')
   );
 
   const navigate = useNavigate();
