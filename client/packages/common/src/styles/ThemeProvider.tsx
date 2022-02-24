@@ -32,7 +32,6 @@ const cacheRtl = createCache({
 
 const ThemeProvider: React.FC = ({ children }) => {
   const appTheme = useAppTheme();
-  console.info(`** app theme direction: ${appTheme.direction} **`);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>

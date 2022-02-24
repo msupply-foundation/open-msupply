@@ -9,9 +9,8 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
-import { useDrawer, useDebounceCallback } from '@common/hooks';
+import { useDrawer } from '@common/hooks';
 
-const HOVER_DEBOUNCE_TIME = 500;
 const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // This nav menu item should be selected when lower level elements
   // are selected. For example, the route /outbound-shipment/{id} should
@@ -67,11 +66,6 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const drawer = useDrawer();
 
   const selected = useSelectedNavMenuItem(to, !!end);
-  const debouncedClearHoverActive = useDebounceCallback(
-    drawer.clearHoverActive,
-    [],
-    HOVER_DEBOUNCE_TIME + 50
-  );
 
   const CustomLink = React.useMemo(
     () =>
@@ -90,69 +84,40 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             role="link"
             aria-label={text}
             title={text}
-            onClick={onClick || debouncedClearHoverActive}
+            onClick={onClick}
           />
         )
       ),
     [to]
   );
 
-  const debouncedHoverActive = useDebounceCallback(
-    drawer.setHoverActive,
-    [],
-    HOVER_DEBOUNCE_TIME
-  );
-
   const expandChildren = () => {
     drawer.setClicked(to);
   };
 
-  const onHoverOver = () => {
-    drawer.setHoverActive(to, true);
-    if (!drawer.isOpen) {
-      drawer.open();
-      drawer.setHoverOpen(true);
-    }
-  };
-
-  const onHoverOut = () => {
-    debouncedHoverActive(to, false);
-  };
-
-  React.useEffect(() => {
-    const isActive = Object.values(drawer.hoverActive).some(active => active);
-    if (drawer.hoverOpen && !isActive) {
-      drawer.close();
-      drawer.setHoverOpen(false);
-      drawer.clearHoverActive();
-    }
-  }, [drawer.hoverActive]);
-
   return (
-    <span onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
-      <StyledListItem isSelected={selected} to={to}>
-        <ListItemButton
-          sx={{
-            ...getListItemCommonStyles(),
-            '&.MuiListItemButton-root:hover': {
-              backgroundColor: 'transparent',
-            },
-            '& .MuiTypography-root': {
-              textOverflow: 'ellipsis',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-            },
-          }}
-          disableGutters
-          component={CustomLink}
-        >
-          <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
-          <Box className="navLinkText">
-            <Box width={10} />
-            <ListItemText primary={text} />
-          </Box>
-        </ListItemButton>
-      </StyledListItem>
-    </span>
+    <StyledListItem isSelected={selected} to={to}>
+      <ListItemButton
+        sx={{
+          ...getListItemCommonStyles(),
+          '&.MuiListItemButton-root:hover': {
+            backgroundColor: 'transparent',
+          },
+          '& .MuiTypography-root': {
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          },
+        }}
+        disableGutters
+        component={CustomLink}
+      >
+        <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+        <Box className="navLinkText">
+          <Box width={10} />
+          <ListItemText primary={text} />
+        </Box>
+      </ListItemButton>
+    </StyledListItem>
   );
 };
