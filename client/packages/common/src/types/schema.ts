@@ -864,14 +864,14 @@ export type InvoiceLineNode = {
   itemCode: Scalars['String'];
   itemId: Scalars['String'];
   itemName: Scalars['String'];
-  location?: Maybe<LocationResponse>;
+  location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']>;
   locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
-  stockLine?: Maybe<StockLineResponse>;
+  stockLine?: Maybe<StockLineNode>;
   type: InvoiceLineNodeType;
 };
 
@@ -897,12 +897,12 @@ export type InvoiceNode = {
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
   onHold: Scalars['Boolean'];
-  otherParty: NameResponse;
+  otherParty: NameNode;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
   otherPartyStore?: Maybe<StoreNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']>;
-  pricing: InvoicePriceResponse;
+  pricing: InvoicePricingNode;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -966,8 +966,6 @@ export enum InvoiceNodeType {
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT'
 }
-
-export type InvoicePriceResponse = InvoicePricingNode | NodeError;
 
 export type InvoicePricingNode = {
   __typename: 'InvoicePricingNode';
@@ -1113,8 +1111,6 @@ export type LocationNotFound = InsertOutboundShipmentLineErrorInterface & Update
   __typename: 'LocationNotFound';
   description: Scalars['String'];
 };
-
-export type LocationResponse = LocationNode | NodeError;
 
 export enum LocationSortFieldInput {
   Code = 'code',
@@ -1535,8 +1531,6 @@ export type NameNode = {
   name: Scalars['String'];
   store?: Maybe<StoreNode>;
 };
-
-export type NameResponse = NameNode | NodeError;
 
 export enum NameSortFieldInput {
   Code = 'code',
@@ -2034,7 +2028,7 @@ export type StockLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   itemId: Scalars['String'];
-  location?: Maybe<LocationResponse>;
+  location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']>;
   locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;

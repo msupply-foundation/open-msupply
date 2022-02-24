@@ -8,27 +8,29 @@ fragment ItemRow on ItemNode {
 
 fragment Item on ItemNode {
   __typename
+  code
+  id
+  isVisible
+  name
+  unitName
   availableBatches(storeId: $storeId) {
     __typename
-    ... on StockLineConnector {
+    totalCount
+    nodes {
       __typename
-      nodes {
-        __typename
-        availableNumberOfPacks
-        batch
-        costPricePerPack
-        expiryDate
-        id
-        itemId
-        packSize
-        sellPricePerPack
-        totalNumberOfPacks
-        onHold
-        note
-        storeId
-        locationName
-      }
-      totalCount
+      availableNumberOfPacks
+      batch
+      costPricePerPack
+      expiryDate
+      id
+      itemId
+      packSize
+      sellPricePerPack
+      totalNumberOfPacks
+      onHold
+      note
+      storeId
+      locationName
     }
   }
   stats(storeId: $storeId) {
@@ -37,11 +39,6 @@ fragment Item on ItemNode {
     availableStockOnHand
     availableMonthsOfStockOnHand
   }
-  code
-  id
-  isVisible
-  name
-  unitName
 }
 
 query itemsWithStockLines(

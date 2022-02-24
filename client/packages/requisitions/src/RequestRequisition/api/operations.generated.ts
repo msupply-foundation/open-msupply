@@ -99,11 +99,9 @@ export const RequestRequisitionFragmentDoc = gql`
   minMonthsOfStock
   lines {
     __typename
-    ... on RequisitionLineConnector {
-      totalCount
-      nodes {
-        ...RequestRequisitionLine
-      }
+    totalCount
+    nodes {
+      ...RequestRequisitionLine
     }
   }
   otherParty {

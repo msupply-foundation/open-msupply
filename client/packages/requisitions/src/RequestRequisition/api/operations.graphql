@@ -60,11 +60,10 @@ fragment RequestRequisition on RequisitionNode {
   minMonthsOfStock
   lines {
     __typename
-    ... on RequisitionLineConnector {
-      totalCount
-      nodes {
-        ...RequestRequisitionLine
-      }
+
+    totalCount
+    nodes {
+      ...RequestRequisitionLine
     }
   }
   otherParty {

@@ -106,38 +106,35 @@ export const ItemsWithStockLinesDocument = gql`
     __typename
     ... on ItemConnector {
       __typename
+      totalCount
       nodes {
         __typename
-        availableBatches(storeId: $storeId) {
-          __typename
-          ... on StockLineConnector {
-            __typename
-            nodes {
-              __typename
-              availableNumberOfPacks
-              batch
-              costPricePerPack
-              expiryDate
-              id
-              itemId
-              packSize
-              sellPricePerPack
-              totalNumberOfPacks
-              onHold
-              note
-              storeId
-              locationName
-            }
-            totalCount
-          }
-        }
         code
         id
         isVisible
         name
         unitName
+        availableBatches(storeId: $storeId) {
+          __typename
+          totalCount
+          nodes {
+            __typename
+            availableNumberOfPacks
+            batch
+            costPricePerPack
+            expiryDate
+            id
+            itemId
+            packSize
+            sellPricePerPack
+            totalNumberOfPacks
+            onHold
+            note
+            storeId
+            locationName
+          }
+        }
       }
-      totalCount
     }
   }
 }
@@ -181,6 +178,7 @@ export const LocationsDocument = gql`
     __typename
     ... on LocationConnector {
       __typename
+      totalCount
       nodes {
         __typename
         id
@@ -188,7 +186,6 @@ export const LocationsDocument = gql`
         onHold
         code
       }
-      totalCount
     }
   }
 }
@@ -330,11 +327,11 @@ export const StoresDocument = gql`
   stores(page: {first: $first, offset: $offset}, filter: $filter) {
     ... on StoreConnector {
       __typename
+      totalCount
       nodes {
         code
         id
       }
-      totalCount
     }
   }
 }
@@ -382,10 +379,15 @@ export const MasterListsDocument = gql`
   ) {
     ... on MasterListConnector {
       __typename
+      totalCount
       nodes {
         name
         code
+        description
+        id
         lines {
+          __typename
+          totalCount
           nodes {
             id
             itemId
@@ -396,36 +398,29 @@ export const MasterListsDocument = gql`
               name
               isVisible
               availableBatches(storeId: $storeId) {
-                ... on StockLineConnector {
+                __typename
+                totalCount
+                nodes {
                   __typename
-                  nodes {
-                    __typename
-                    availableNumberOfPacks
-                    batch
-                    costPricePerPack
-                    expiryDate
-                    itemId
-                    id
-                    totalNumberOfPacks
-                    storeId
-                    sellPricePerPack
-                    packSize
-                    onHold
-                    note
-                    locationName
-                  }
-                  totalCount
+                  availableNumberOfPacks
+                  batch
+                  costPricePerPack
+                  expiryDate
+                  itemId
+                  id
+                  totalNumberOfPacks
+                  storeId
+                  sellPricePerPack
+                  packSize
+                  onHold
+                  note
+                  locationName
                 }
               }
             }
           }
-          totalCount
         }
-        code
-        description
-        id
       }
-      totalCount
     }
   }
 }
