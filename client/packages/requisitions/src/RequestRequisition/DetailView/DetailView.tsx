@@ -13,6 +13,7 @@ import {
   RequestRequisitionLineFragment,
   useRequestRequisition,
   useIsRequestRequisitionDisabled,
+  ItemWithStatsFragment,
 } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer/Footer';
@@ -21,12 +22,11 @@ import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestLineEdit } from './RequestLineEdit';
-import { ItemRowFragment } from '@openmsupply-client/system';
 
 export const DetailView: FC = () => {
   const { data, isLoading } = useRequestRequisition();
   const { onOpen, onClose, mode, entity, isOpen } =
-    useEditModal<ItemRowFragment>();
+    useEditModal<ItemWithStatsFragment>();
   const isDisabled = useIsRequestRequisitionDisabled();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
