@@ -2,10 +2,8 @@
 mod query {
     use domain::EqualFilter;
     use repository::{
-        mock::{mock_location_1, MockDataInserts},
-        schema::LocationRow,
-        test_db::setup_all,
-        Location, LocationFilter, LocationRepository,
+        mock::MockDataInserts, schema::LocationRow, test_db::setup_all, Location, LocationFilter,
+        LocationRepository,
     };
 
     use crate::{
@@ -69,7 +67,13 @@ mod query {
         let service = service_provider.location_service;
 
         let result_location = Location {
-            location_row: mock_location_1(),
+            location_row: LocationRow {
+                id: "new_id".to_owned(),
+                code: "new_code".to_owned(),
+                name: "new_code".to_owned(),
+                on_hold: false,
+                store_id: "store_a".to_owned(),
+            },
         };
 
         assert_eq!(
