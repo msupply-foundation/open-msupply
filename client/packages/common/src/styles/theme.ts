@@ -113,7 +113,7 @@ export const themeOptions = {
       xl: 1537,
     },
   },
-  direction: 'ltr' as Direction,
+  direction: 'rtl' as Direction,
   mixins: {
     dialog: {
       button: {
