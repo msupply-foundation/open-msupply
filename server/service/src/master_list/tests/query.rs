@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
-    use domain::{master_list::MasterListFilter, EqualFilter, SimpleStringFilter};
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use domain::{EqualFilter, SimpleStringFilter};
+    use repository::{mock::MockDataInserts, test_db::setup_all, MasterListFilter};
 
     use crate::service_provider::ServiceProvider;
 
