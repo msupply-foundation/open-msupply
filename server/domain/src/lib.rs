@@ -1,7 +1,6 @@
 pub mod master_list;
 pub mod master_list_line;
 pub mod shipment_tax_update;
-pub mod stock_line;
 
 use chrono::{NaiveDate, NaiveDateTime};
 

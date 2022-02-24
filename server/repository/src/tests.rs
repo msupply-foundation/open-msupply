@@ -345,14 +345,14 @@ mod repository_test {
         MasterListRowRepository, NameFilter, NameQueryRepository, NameRepository, NameSort,
         NameSortField, NumberRowRepository, OutboundShipmentRepository, RequisitionFilter,
         RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
-        RequisitionRepository, RequisitionRowRepository, StockLineRepository,
+        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
         StockLineRowRepository, StocktakeRowRepository, StoreRowRepository, UserAccountRepository,
     };
     use chrono::{Duration, Utc};
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
     use domain::{
-        master_list::MasterListFilter, master_list_line::MasterListLineFilter,
-        stock_line::StockLineFilter, DateFilter, EqualFilter, Pagination, SimpleStringFilter,
+        master_list::MasterListFilter, master_list_line::MasterListLineFilter, DateFilter,
+        EqualFilter, Pagination, SimpleStringFilter,
     };
     use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
