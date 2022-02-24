@@ -5,10 +5,11 @@ import {
   NumericTextInput,
   TextArea,
   Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system';
 import { useRequestRequisitionLines, ItemWithStatsFragment } from '../../api';
-import { DraftRequestRequisitionLine } from './RequestLineEdit';
+import { DraftRequestRequisitionLine } from './hooks';
 
 interface RequestLineEditFormProps {
   item: ItemWithStatsFragment | null;
@@ -66,13 +67,14 @@ export const RequestLineEditForm = ({
   update,
   draftLine,
 }: RequestLineEditFormProps) => {
+  const t = useTranslation(['replenishment', 'common']);
   const { lines } = useRequestRequisitionLines();
   return (
     <RequestLineEditFormLayout
       Left={
         <>
           <Typography variant="body1" fontWeight="bold">
-            Stock details
+            {t('label.stock-details', { ns: 'replenishment' })}
           </Typography>
           <ItemSearchInput
             width={300}
@@ -81,9 +83,9 @@ export const RequestLineEditForm = ({
             onChange={(newItem: ItemWithStatsFragment | null) =>
               newItem && onChangeItem(newItem)
             }
-            extraFilter={item => {
+            extraFilter={itemToFind => {
               const itemAlreadyInShipment = lines?.some(
-                ({ id }) => id === item.id
+                ({ item: itemInReq }) => itemInReq.id === itemToFind.id
               );
               return !itemAlreadyInShipment;
             }}
@@ -94,13 +96,13 @@ export const RequestLineEditForm = ({
           ) : null}
           {item && item?.stats.averageMonthlyConsumption != null ? (
             <InfoRow
-              label="AMC"
+              label={t('label.amc')}
               value={String(item?.stats.averageMonthlyConsumption)}
             />
           ) : null}
           {draftLine && draftLine.suggestedQuantity != null ? (
             <InfoRow
-              label="Suggested"
+              label={t('label.suggested')}
               value={String(draftLine.suggestedQuantity)}
             />
           ) : null}
@@ -109,7 +111,7 @@ export const RequestLineEditForm = ({
       Middle={
         <>
           <Typography variant="body1" fontWeight="bold">
-            Comments
+            {t('heading.comment')}
           </Typography>
           <TextArea
             InputProps={{
@@ -121,7 +123,7 @@ export const RequestLineEditForm = ({
       Right={
         <>
           <Typography variant="body1" fontWeight="bold">
-            Order
+            {t('heading.order')}
           </Typography>
           <InputWithLabelRow
             Input={
@@ -136,7 +138,7 @@ export const RequestLineEditForm = ({
               />
             }
             labelProps={{ sx: { fontWeight: 500 } }}
-            label="Order Quantity"
+            label={t('label.order-quantity', { ns: 'replenishment' })}
           />
         </>
       }
