@@ -92,7 +92,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   );
 
   const expandChildren = () => {
-    drawer.setClicked(to);
+    drawer.setClickedNavPath(to);
   };
 
   return (

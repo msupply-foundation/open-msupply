@@ -5,12 +5,12 @@ type DrawerController = {
   hoverOpen: boolean;
   isOpen: boolean;
   hasUserSet: boolean;
-  clicked?: string;
+  clickedNavPath?: string;
   open: () => void;
   close: () => void;
   toggle: () => void;
   setHoverOpen: (open: boolean) => void;
-  setClicked: (clicked?: string) => void;
+  setClickedNavPath: (clicked?: string) => void;
 };
 
 export const useDrawer = create<DrawerController>(set => {
@@ -19,7 +19,8 @@ export const useDrawer = create<DrawerController>(set => {
     hasUserSet: initialValue !== null,
     isOpen: !!initialValue,
     hoverOpen: false,
-    setClicked: (clicked?: string) => set(state => ({ ...state, clicked })),
+    setClickedNavPath: (clickedNavPath?: string) =>
+      set(state => ({ ...state, clickedNavPath })),
     setHoverOpen: hoverOpen => set(state => ({ ...state, hoverOpen })),
     open: () => set(state => ({ ...state, isOpen: true })),
     close: () => set(state => ({ ...state, isOpen: false, hoverOpen: false })),
