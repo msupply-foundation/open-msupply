@@ -6,11 +6,13 @@ type DrawerController = {
   hoverOpen: boolean;
   isOpen: boolean;
   hasUserSet: boolean;
+  clicked?: string;
   open: () => void;
   close: () => void;
   toggle: () => void;
   setHoverActive: (key: string, active: boolean) => void;
   setHoverOpen: (open: boolean) => void;
+  setClicked: (clicked?: string) => void;
   clearHoverActive: () => void;
 };
 
@@ -21,6 +23,7 @@ export const useDrawer = create<DrawerController>(set => {
     isOpen: !!initialValue,
     hoverActive: {},
     hoverOpen: false,
+    setClicked: (clicked?: string) => set(state => ({ ...state, clicked })),
     setHoverActive: (key, active) =>
       set(state => {
         const newHoverActive = { ...state.hoverActive, [key]: active };

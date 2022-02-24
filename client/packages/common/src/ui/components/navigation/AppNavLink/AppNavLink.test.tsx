@@ -89,7 +89,6 @@ describe('AppNavLink', () => {
                   icon={<TruckIcon />}
                   text="Distribution"
                   end={false}
-                  expandOnHover
                 />
               </Box>
             }
