@@ -1,5 +1,5 @@
 use crate::WithDBError;
-use domain::name::Name;
+use repository::Name;
 use repository::{InvoiceRepository, RepositoryError, StorageConnection, TransactionError};
 
 mod generate;

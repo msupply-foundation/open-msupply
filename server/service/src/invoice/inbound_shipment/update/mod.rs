@@ -2,7 +2,7 @@ use crate::{
     sync_processor::{process_records, Record},
     WithDBError,
 };
-use domain::name::Name;
+use repository::Name;
 use repository::{
     schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
     StockLineRowRepository, StorageConnection, TransactionError,

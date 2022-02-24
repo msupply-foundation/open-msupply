@@ -1,7 +1,5 @@
-use domain::{
-    name::{Name, NameFilter, NameSort},
-    PaginationOption,
-};
+use domain::PaginationOption;
+use repository::{Name, NameFilter, NameSort};
 use repository::{NameQueryRepository, StorageConnectionManager};
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};

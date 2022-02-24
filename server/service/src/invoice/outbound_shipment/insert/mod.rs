@@ -1,5 +1,8 @@
-use domain::name::Name;
-use repository::{InvoiceRepository, RepositoryError, StorageConnection, TransactionError, schema::InvoiceRowStatus};
+use repository::Name;
+use repository::{
+    schema::InvoiceRowStatus, InvoiceRepository, RepositoryError, StorageConnection,
+    TransactionError,
+};
 
 pub mod generate;
 pub mod validate;

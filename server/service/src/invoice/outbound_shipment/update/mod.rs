@@ -1,4 +1,4 @@
-use domain::name::Name;
+use repository::Name;
 use repository::{
     schema::InvoiceRowStatus, InvoiceLine, InvoiceRepository, RepositoryError,
     StockLineRowRepository, StorageConnection, TransactionError,

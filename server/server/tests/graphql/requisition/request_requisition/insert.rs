@@ -1,6 +1,6 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, assert_standard_graphql_error};
-    use domain::name::Name;
+    use repository::Name;
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
@@ -78,12 +78,9 @@ mod graphql {
         // OtherPartyNotASupplier
         let test_service = TestService(Box::new(|_, _| {
             Err(ServiceError::OtherPartyNotASupplier(Name {
-                id: "n/a".to_string(),
-                name: "n/a".to_string(),
-                code: "n/a".to_string(),
-                store_id: None,
-                is_customer: false,
-                is_supplier: false,
+                name_row: mock_name_a(),
+                name_store_join_row: None,
+                store_row: None,
             }))
         }));
 

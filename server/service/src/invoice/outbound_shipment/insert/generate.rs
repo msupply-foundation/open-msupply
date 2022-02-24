@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use domain::name::Name;
+use repository::Name;
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType},
     RepositoryError, StorageConnection,
@@ -25,7 +25,7 @@ pub fn generate(
         comment: input.comment,
         their_reference: input.their_reference,
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
-        name_store_id: other_party.store_id,
+        name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,

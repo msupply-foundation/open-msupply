@@ -3,7 +3,7 @@ use crate::invoice::{
     check_other_party_id, InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceRowStatusError,
     WrongInvoiceRowType,
 };
-use domain::name::Name;
+use repository::Name;
 use repository::{
     schema::{InvoiceRow, InvoiceRowType},
     StorageConnection,
@@ -28,7 +28,7 @@ pub fn validate(
             let other_party = check_other_party_id(connection, &other_party_id)?
                 .ok_or(OtherPartyDoesNotExist {})?;
 
-            if !other_party.is_supplier {
+            if !other_party.is_supplier() {
                 return Err(OtherPartyNotASupplier(other_party));
             };
             Some(other_party)

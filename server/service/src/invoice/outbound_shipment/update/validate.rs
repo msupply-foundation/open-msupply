@@ -2,10 +2,10 @@ use crate::invoice::{
     check_invoice_is_editable, check_invoice_status, check_other_party_id, InvoiceIsNotEditable,
     InvoiceRowStatusError,
 };
-use domain::{name::Name, EqualFilter};
+use domain::EqualFilter;
 use repository::{
     schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, Name, RepositoryError,
     StorageConnection,
 };
 
@@ -29,7 +29,7 @@ pub fn validate(
             let other_party = check_other_party_id(connection, &other_party_id)?
                 .ok_or(OtherPartyDoesNotExists {})?;
 
-            if !other_party.is_customer {
+            if !other_party.is_customer() {
                 return Err(OtherPartyNotACustomer(other_party));
             };
             Some(other_party)

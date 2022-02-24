@@ -1,15 +1,13 @@
-use async_graphql::*;
-use domain::{
-    name::{NameFilter, NameSort, NameSortField},
-    EqualFilter, PaginationOption, SimpleStringFilter,
-};
+use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
+use domain::{EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
-    standard_graphql_error::{StandardGraphqlError},
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{NameNode};
+use graphql_types::types::NameNode;
+use repository::{Name, NameFilter, NameSort, NameSortField};
 use service::name::get_names;
 use service::ListResult;
 
@@ -88,7 +86,7 @@ pub fn names(
 }
 
 impl NameConnector {
-    pub fn from_domain(names: ListResult<domain::name::Name>) -> NameConnector {
+    pub fn from_domain(names: ListResult<Name>) -> NameConnector {
         NameConnector {
             total_count: names.count,
             nodes: names.rows.into_iter().map(NameNode::from_domain).collect(),

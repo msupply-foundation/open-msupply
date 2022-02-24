@@ -1,8 +1,8 @@
 use chrono::Utc;
 
-use domain::name::Name;
+use repository::Name;
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, StockLineRow, InvoiceRowStatus},
+    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, StockLineRow},
     InvoiceLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
@@ -35,8 +35,8 @@ pub fn generate(
     }
 
     if let Some(other_party) = other_party_option {
-        update_invoice.name_id = other_party.id;
-        update_invoice.name_store_id = other_party.store_id;
+        update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
+        update_invoice.name_id = other_party.name_row.id;
     }
 
     if !should_create_batches {

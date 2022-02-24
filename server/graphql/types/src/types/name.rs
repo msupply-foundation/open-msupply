@@ -1,6 +1,6 @@
 use async_graphql::*;
 use dataloader::DataLoader;
-use domain::name::Name;
+use repository::{Name, schema::NameRow};
 
 use graphql_core::{loader::StoreLoader, simple_generic_errors::NodeError, ContextExt};
 
@@ -9,34 +9,34 @@ use super::StoreNode;
 #[Object]
 impl NameNode {
     pub async fn id(&self) -> &str {
-        &self.name.id
+        &self.row().id
     }
 
     pub async fn name(&self) -> &str {
-        &self.name.name
+        &self.row().name
     }
 
     pub async fn code(&self) -> &str {
-        &self.name.code
+        &self.row().code
     }
 
     pub async fn is_customer(&self) -> bool {
-        self.name.is_customer
+        self.name.is_customer()
     }
 
     pub async fn is_supplier(&self) -> bool {
-        self.name.is_supplier
+        self.name.is_supplier()
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let store_id = match &self.name.store_id {
+        let store_id = match self.name.store_id() {
             Some(store_id) => store_id,
             None => return Ok(None),
         };
 
         let loader = ctx.get_loader::<DataLoader<StoreLoader>>();
         Ok(loader
-            .load_one(store_id.clone())
+            .load_one(store_id.to_string())
             .await?
             .map(StoreNode::from))
     }
@@ -56,5 +56,9 @@ pub struct NameNode {
 impl NameNode {
     pub fn from_domain(name: Name) -> NameNode {
         NameNode { name }
+    }
+
+    pub fn row(&self) -> &NameRow {
+        &self.name.name_row
     }
 }

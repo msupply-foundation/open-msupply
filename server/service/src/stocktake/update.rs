@@ -1,11 +1,11 @@
 use chrono::Utc;
-use domain::{name::NameFilter, EqualFilter, SimpleStringFilter};
+use domain::{EqualFilter, SimpleStringFilter};
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus,
     },
-    InvoiceLineRowRepository, InvoiceRepository, ItemRepository, NameQueryRepository,
+    InvoiceLineRowRepository, InvoiceRepository, ItemRepository, NameFilter, NameQueryRepository,
     RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
     StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
 };
@@ -312,7 +312,7 @@ fn generate(
     let now = Utc::now().naive_utc();
     let shipment = InvoiceRow {
         id: shipment_id,
-        name_id: invad_name.id.to_owned(),
+        name_id: invad_name.name_row.id.to_owned(),
         store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
         name_store_id: None,
