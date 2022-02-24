@@ -1,4 +1,7 @@
-use repository::{schema::{InvoiceRow, InvoiceRowType}, StorageConnection};
+use repository::{
+    schema::{InvoiceRow, InvoiceRowType},
+    StorageConnection,
+};
 
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_is_empty, check_invoice_type,

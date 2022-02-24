@@ -8,7 +8,6 @@ mod graphql {
     };
     use chrono::NaiveDate;
 
-    use repository::Pagination;
     use graphql_client::{GraphQLQuery, Response};
     use insert::InsertInboundShipmentLineErrorInterface::*;
     use repository::schema::{InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType};

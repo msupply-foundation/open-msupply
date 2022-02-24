@@ -4,7 +4,7 @@ use crate::{
         diesel_schema::{consumption::dsl as consumption_dsl, stock_info::dsl as stock_info_dsl},
         ConsumptionRow, StockInfoRow,
     },
-    RepositoryError, StorageConnection, EqualFilter,
+    EqualFilter, RepositoryError, StorageConnection,
 };
 use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::prelude::*;

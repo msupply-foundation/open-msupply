@@ -7,7 +7,7 @@ use graphql_core::{
 };
 use graphql_types::types::LocationNode;
 use repository::RepositoryError;
-use service::location::insert::{InsertLocationError as InError, InsertLocation};
+use service::location::insert::{InsertLocation, InsertLocationError as InError};
 
 pub fn insert_location(
     ctx: &Context<'_>,

@@ -1,5 +1,4 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
-use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
@@ -7,6 +6,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::NameNode;
+use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
 use service::name::get_names;
 use service::ListResult;

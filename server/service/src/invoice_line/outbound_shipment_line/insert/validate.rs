@@ -16,11 +16,11 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    schema::{InvoiceRow, ItemRow, StockLineRow, InvoiceRowType},
+    schema::{InvoiceRow, InvoiceRowType, ItemRow, StockLineRow},
     StorageConnection,
 };
 
-use super::{InsertOutboundShipmentLineError, InsertOutboundShipmentLine};
+use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};
 
 pub fn validate(
     input: &InsertOutboundShipmentLine,

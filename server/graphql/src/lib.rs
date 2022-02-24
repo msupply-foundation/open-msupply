@@ -1,7 +1,6 @@
 mod mutations;
 mod queries;
 
-
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use actix_web::{guard::fn_guard, HttpResponse, Result};

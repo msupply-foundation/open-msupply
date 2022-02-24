@@ -9,7 +9,7 @@ use crate::{
         },
         LocationRow, StockLineRow,
     },
-    EqualFilter, Sort, DateFilter, Pagination,
+    DateFilter, EqualFilter, Pagination, Sort,
 };
 
 use diesel::{

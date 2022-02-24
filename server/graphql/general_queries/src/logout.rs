@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{AccessDenied, InternalError},
-    standard_graphql_error::{validation_denied_kind_to_string},
+    standard_graphql_error::validation_denied_kind_to_string,
     ContextExt,
 };
 

@@ -1,14 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        RecordDoesNotExist,
-    },
-    standard_graphql_error::StandardGraphqlError,
+    simple_generic_errors::RecordDoesNotExist, standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{
-    DeleteResponse as GenericDeleteResponse,
-};
+use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::invoice_line::{
     DeleteOutboundShipmentUnallocatedLine as ServiceInput,
     DeleteOutboundShipmentUnallocatedLineError as ServiceError,

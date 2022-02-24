@@ -1,5 +1,5 @@
-use repository::{Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::RepositoryError;
+use repository::{Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use std::convert::TryInto;
 
 pub mod auth_data;

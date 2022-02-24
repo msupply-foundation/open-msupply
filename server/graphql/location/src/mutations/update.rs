@@ -9,7 +9,7 @@ use graphql_core::{
 };
 use graphql_types::types::LocationNode;
 use repository::RepositoryError;
-use service::location::update::{UpdateLocationError as InError, UpdateLocation};
+use service::location::update::{UpdateLocation, UpdateLocationError as InError};
 
 pub fn update_location(
     ctx: &Context<'_>,

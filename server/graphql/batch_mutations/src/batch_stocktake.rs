@@ -4,14 +4,14 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_stocktake::mutations::{
-    delete::{DeleteStocktakeInput, DeleteStocktakeResponse, do_delete_stocktake},
+    delete::{do_delete_stocktake, DeleteStocktakeInput, DeleteStocktakeResponse},
     insert::{do_insert_stocktake, InsertStocktakeInput, InsertStocktakeResponse},
-    update::{UpdateStocktakeInput, UpdateStocktakeResponse, do_update_stocktake},
+    update::{do_update_stocktake, UpdateStocktakeInput, UpdateStocktakeResponse},
 };
 use graphql_stocktake_line::mutations::{
-    delete::{DeleteStocktakeLineInput, DeleteStocktakeLineResponse, do_delete_stocktake_line},
-    insert::{InsertStocktakeLineInput, InsertStocktakeLineResponse, do_insert_stocktake_line},
-    update::{UpdateStocktakeLineInput, UpdateStocktakeLineResponse, do_update_stocktake_line},
+    delete::{do_delete_stocktake_line, DeleteStocktakeLineInput, DeleteStocktakeLineResponse},
+    insert::{do_insert_stocktake_line, InsertStocktakeLineInput, InsertStocktakeLineResponse},
+    update::{do_update_stocktake_line, UpdateStocktakeLineInput, UpdateStocktakeLineResponse},
 };
 use repository::{RepositoryError, TransactionError};
 use service::{

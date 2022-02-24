@@ -14,11 +14,11 @@ use crate::{
     },
 };
 use repository::{
-    schema::{InvoiceRow, ItemRow, InvoiceRowType},
+    schema::{InvoiceRow, InvoiceRowType, ItemRow},
     StorageConnection,
 };
 
-use super::{InsertInboundShipmentLineError, InsertInboundShipmentLine};
+use super::{InsertInboundShipmentLine, InsertInboundShipmentLineError};
 
 pub fn validate(
     input: &InsertInboundShipmentLine,

@@ -1,14 +1,10 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        ForeignKey, ForeignKeyError,
-    },
+    simple_generic_errors::{ForeignKey, ForeignKeyError},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{
-    InvoiceLineNode,
-};
+use graphql_types::types::InvoiceLineNode;
 use service::invoice_line::{
     InsertOutboundShipmentUnallocatedLine as ServiceInput,
     InsertOutboundShipmentUnallocatedLineError as ServiceError,

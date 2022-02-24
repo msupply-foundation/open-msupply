@@ -6,7 +6,7 @@ use graphql_core::{
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use repository::RepositoryError;
 use service::location::delete::{
-    DeleteLocationError as InError, LocationInUse as ServiceLocationInUse, DeleteLocation,
+    DeleteLocation, DeleteLocationError as InError, LocationInUse as ServiceLocationInUse,
 };
 
 pub fn delete_location(

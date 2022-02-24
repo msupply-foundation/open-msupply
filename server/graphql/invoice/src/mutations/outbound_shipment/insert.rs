@@ -6,7 +6,7 @@ use graphql_core::simple_generic_errors::{
     DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordAlreadyExist,
 };
 use graphql_types::types::{InvoiceNode, InvoiceNodeStatus, NameNode};
-use repository::{StorageConnectionManager, schema::InvoiceRowStatus};
+use repository::{schema::InvoiceRowStatus, StorageConnectionManager};
 use service::invoice::{
     insert_outbound_shipment, InsertOutboundShipment, InsertOutboundShipmentError,
 };

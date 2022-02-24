@@ -1,7 +1,8 @@
 use crate::service_provider::ServiceContext;
 use repository::EqualFilter;
 use repository::{
-    InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository, RepositoryError, Invoice, InvoiceFilter,
+    Invoice, InvoiceFilter, InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository,
+    RepositoryError,
 };
 
 mod generate;

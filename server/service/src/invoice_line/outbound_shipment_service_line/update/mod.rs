@@ -7,7 +7,7 @@ use repository::{
 };
 use validate::validate;
 
-use crate::{WithDBError, invoice_line::ShipmentTaxUpdate};
+use crate::{invoice_line::ShipmentTaxUpdate, WithDBError};
 
 pub struct UpdateOutboundShipmentServiceLine {
     pub id: String,

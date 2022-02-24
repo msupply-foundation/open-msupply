@@ -1,6 +1,9 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, unallocated_line::successfull_invoice_line};
-    use repository::{mock::{MockDataInserts, mock_stock_line_a}, StockLine, StorageConnectionManager};
+    use repository::{
+        mock::{mock_stock_line_a, MockDataInserts},
+        StockLine, StorageConnectionManager,
+    };
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{

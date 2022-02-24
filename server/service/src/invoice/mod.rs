@@ -1,6 +1,6 @@
 pub mod query;
-use repository::Invoice;
 use repository::schema::InvoiceRowType;
+use repository::Invoice;
 use repository::RepositoryError;
 
 use crate::service_provider::ServiceContext;

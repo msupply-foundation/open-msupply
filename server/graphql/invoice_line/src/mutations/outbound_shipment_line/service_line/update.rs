@@ -7,8 +7,8 @@ use graphql_core::simple_generic_errors::{
 use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
 use repository::StorageConnectionManager;
 use service::invoice_line::{
-    update_outbound_shipment_service_line, UpdateOutboundShipmentServiceLine,
-    UpdateOutboundShipmentServiceLineError, ShipmentTaxUpdate,
+    update_outbound_shipment_service_line, ShipmentTaxUpdate, UpdateOutboundShipmentServiceLine,
+    UpdateOutboundShipmentServiceLineError,
 };
 
 use crate::mutations::outbound_shipment_line::TaxUpdate;

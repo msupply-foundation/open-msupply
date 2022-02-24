@@ -1,5 +1,4 @@
 use async_graphql::*;
-use repository::PaginationOption;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
@@ -9,6 +8,7 @@ use graphql_invoice::invoice_queries::*;
 use graphql_requisition::requisition_queries::*;
 use graphql_stocktake::stocktake_queries::*;
 use graphql_types::types::*;
+use repository::PaginationOption;
 use repository::{InvoiceFilter, LocationFilter};
 use service::invoice::get_invoices;
 

@@ -8,7 +8,9 @@ use graphql_core::simple_generic_errors::{
 use graphql_types::generic_errors::OtherPartyNotASupplier;
 use graphql_types::types::{InvoiceNode, NameNode};
 use repository::StorageConnectionManager;
-use service::invoice::{insert_inbound_shipment, InsertInboundShipmentError, InsertInboundShipment};
+use service::invoice::{
+    insert_inbound_shipment, InsertInboundShipment, InsertInboundShipmentError,
+};
 
 #[derive(InputObject)]
 pub struct InsertInboundShipmentInput {

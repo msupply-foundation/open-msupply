@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod query {
-    use repository::{EqualFilter, PaginationOption, Sort};
     use repository::{
         mock::MockDataInserts, test_db::setup_all, LocationFilter, LocationSortField,
     };
+    use repository::{EqualFilter, PaginationOption, Sort};
 
     use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
 

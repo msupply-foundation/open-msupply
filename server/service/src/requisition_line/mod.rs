@@ -6,7 +6,11 @@ use self::{
         DeleteRequestRequisitionLineError, InsertRequestRequisitionLine,
         InsertRequestRequisitionLineError, UpdateRequestRequisitionLine,
         UpdateRequestRequisitionLineError,
-    }, response_requisition_line::{update_response_requisition_line, UpdateResponseRequisitionLine, UpdateResponseRequisitionLineError},
+    },
+    response_requisition_line::{
+        update_response_requisition_line, UpdateResponseRequisitionLine,
+        UpdateResponseRequisitionLineError,
+    },
 };
 
 use super::{ListError, ListResult};

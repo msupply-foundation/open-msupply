@@ -15,11 +15,11 @@ use crate::{
     },
 };
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, ItemRow, InvoiceRowType},
+    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow},
     StorageConnection,
 };
 
-use super::{BatchPair, UpdateOutboundShipmentLineError, UpdateOutboundShipmentLine};
+use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
 
 pub fn validate(
     input: &UpdateOutboundShipmentLine,

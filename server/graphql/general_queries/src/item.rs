@@ -1,5 +1,4 @@
 use async_graphql::*;
-use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
@@ -7,6 +6,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::ItemConnector;
+use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::item::get_items;
 

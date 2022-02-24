@@ -1,12 +1,9 @@
 use async_graphql::*;
 use chrono::NaiveDateTime;
 
-
-use graphql_core::standard_graphql_error::{
-    validate_auth, StandardGraphqlError,
-};
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::{StocktakeNode};
+use graphql_types::types::StocktakeNode;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
     service_provider::{ServiceContext, ServiceProvider},
