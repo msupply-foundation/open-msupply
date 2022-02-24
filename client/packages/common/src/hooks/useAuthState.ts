@@ -28,14 +28,14 @@ export const getAuthCookie = (): AuthCookie => {
   return emptyCookie;
 };
 
-export const useAuthContext = () => {
+export const useAuthState = () => {
   const { setStore, setUser } = useHostContext();
   const [, setMRUCredentials] = useLocalStorage('/mru/credentials');
   const { setHeader } = useOmSupplyApi();
   const { token, store, user } = getAuthCookie();
   const storeId = store?.id ?? '';
 
-  const login = (user: User, token: string, store?: Store) => {
+  const onLoggedIn = (user: User, token: string, store?: Store) => {
     setMRUCredentials({ username: user.name, store: store });
 
     const authCookie = { store, token, user };
@@ -50,5 +50,5 @@ export const useAuthContext = () => {
     setHeader('Authorization', `Bearer ${token}`);
   }, [token]);
 
-  return { login, storeId, token, user, store };
+  return { onLoggedIn, storeId, token, user, store };
 };

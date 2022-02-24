@@ -100,7 +100,7 @@ export const RequestLineEdit = ({
           : t('heading.edit-item')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      nextButton={<DialogButton variant="next" onClick={save} />}
+      nextButton={<DialogButton variant="next" onClick={() => {}} />}
       okButton={<DialogButton variant="ok" onClick={save} />}
       height={600}
       width={1024}

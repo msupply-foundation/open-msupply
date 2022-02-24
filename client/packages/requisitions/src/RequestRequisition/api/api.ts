@@ -27,7 +27,7 @@ const requisitionParser = {
     id: line.id,
     requestedQuantity: line.requestedQuantity,
   }),
-  toInsertInput: (
+  toUpdateInput: (
     requisition: Partial<RequestRequisitionFragment> & { id: string }
   ): UpdateRequestRequisitionInput => {
     return {
@@ -127,7 +127,7 @@ export const RequestRequisitionQueries = {
     async (
       patch: Partial<RequestRequisitionFragment> & { id: string }
     ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
-      const input = requisitionParser.toInsertInput(patch);
+      const input = requisitionParser.toUpdateInput(patch);
       const result = await api.updateRequestRequisition({
         storeId,
         input,
