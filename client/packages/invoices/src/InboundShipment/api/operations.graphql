@@ -244,8 +244,9 @@ query invoice($id: String!, $storeId: String!) {
                 isVisible
                 unitName
                 stats {
-                  stockOnHand
-                  monthsOfStock
+                  __typename
+                  availableStockOnHand
+                  availableMonthsOfStockOnHand
                   averageMonthlyConsumption
                 }
                 availableBatches(storeId: $storeId) {

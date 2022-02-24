@@ -76,9 +76,9 @@ export const toItem = (line: ItemLike): Item => ({
   availableQuantity: 0,
   stats: {
     __typename: 'ItemStatsNode',
-    monthsOfStock: 0,
+    availableMonthsOfStockOnHand: 0,
     averageMonthlyConsumption: 0,
-    stockOnHand: 0,
+    availableStockOnHand: 0,
   },
   unitName:
     ('lines' in line ? line.lines[0].item?.unitName : line.item?.unitName) ??

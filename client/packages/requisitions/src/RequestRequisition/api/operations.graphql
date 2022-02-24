@@ -27,11 +27,12 @@ fragment RequestRequisitionLine on RequisitionLineNode {
   id
   itemId
   requestedQuantity
-  calculatedQuantity
+  suggestedQuantity
   itemStats {
+    __typename
+    availableStockOnHand
+    availableMonthsOfStockOnHand
     averageMonthlyConsumption
-    stockOnHand
-    monthsOfStock
   }
   item {
     id
@@ -56,7 +57,7 @@ fragment RequestRequisition on RequisitionNode {
   otherPartyName
   otherPartyId
   maxMonthsOfStock
-  thresholdMonthsOfStock
+  minMonthsOfStock
   lines {
     __typename
     ... on RequisitionLineConnector {
@@ -128,6 +129,28 @@ query requestRequisitions(
       nodes {
         ...RequestRequisitionRow
       }
+    }
+  }
+}
+
+mutation insertRequestRequisitionLine(
+  $storeId: String!
+  $input: InsertRequestRequisitionLineInput!
+) {
+  insertRequestRequisitionLine(input: $input, storeId: $storeId) {
+    ... on RequisitionLineNode {
+      id
+    }
+  }
+}
+
+mutation updateRequestRequisitionLine(
+  $storeId: String!
+  $input: UpdateRequestRequisitionLineInput!
+) {
+  updateRequestRequisitionLine(input: $input, storeId: $storeId) {
+    ... on RequisitionLineNode {
+      id
     }
   }
 }

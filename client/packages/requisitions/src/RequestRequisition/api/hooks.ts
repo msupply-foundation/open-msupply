@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  useAuthContext,
   useQueryParams,
   useQueryClient,
   RequisitionNodeStatus,
@@ -12,9 +13,7 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
   SortController,
-  PaginationState,
   useSortBy,
-  usePagination,
   getDataSorter,
   useHostContext,
 } from '@openmsupply-client/common';
@@ -35,13 +34,13 @@ export const useRequestRequisitions = () => {
   const queryParams = useQueryParams<RequestRequisitionRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
-  const { store } = useHostContext();
+  const { store } = useAuthContext();
   const api = useRequestRequisitionApi();
 
   return {
     ...useQuery(
-      ['requisition', store.id, queryParams],
-      RequestRequisitionQueries.get.list(api, store.id, {
+      ['requisition', store?.id, queryParams],
+      RequestRequisitionQueries.get.list(api, store?.id ?? '', {
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
@@ -104,8 +103,7 @@ export const useRequestRequisitionFields = <
 };
 
 interface UseRequestRequisitionLinesController
-  extends SortController<RequestRequisitionLineFragment>,
-    PaginationState {
+  extends SortController<RequestRequisitionLineFragment> {
   lines: RequestRequisitionLineFragment[];
 }
 
@@ -116,25 +114,21 @@ export const useRequestRequisitionLines =
         key: 'itemName',
         isDesc: false,
       });
-    const pagination = usePagination(20);
+
     const { lines } = useRequestRequisitionFields('lines');
 
     const sorted = useMemo(() => {
-      const sorted =
+      return (
         lines?.nodes.sort(
           getDataSorter(
             sortBy.key as keyof RequestRequisitionLineFragment,
             !!sortBy.isDesc
           )
-        ) ?? [];
-
-      return sorted.slice(
-        pagination.offset,
-        pagination.first + pagination.offset
+        ) ?? []
       );
-    }, [sortBy, lines, pagination]);
+    }, [sortBy, lines]);
 
-    return { lines: sorted, sortBy, onChangeSortBy, ...pagination };
+    return { lines: sorted, sortBy, onChangeSortBy };
   };
 
 export const useIsRequestRequisitionDisabled = (): boolean => {
@@ -143,4 +137,10 @@ export const useIsRequestRequisitionDisabled = (): boolean => {
     status === RequisitionNodeStatus.Finalised ||
     status === RequisitionNodeStatus.Sent
   );
+};
+
+export const useSaveRequestLines = () => {
+  const { store } = useHostContext();
+  const api = useRequestRequisitionApi();
+  return useMutation(RequestRequisitionQueries.upsertLine(api, store.id));
 };
