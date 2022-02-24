@@ -29,5 +29,7 @@
   "heading.are-you-sure": "Are you sure?",
   "messages.saved": "Saved",
   "messages.confirm-status-as": "Confirm status as $t({{status}})?",
-  "messages.could-not-save": "Could not Save"
+  "messages.could-not-save": "Could not Save",
+  "label.stock-details": "Stock details",
+  "label.order-quantity": "Order quantity"
 }
