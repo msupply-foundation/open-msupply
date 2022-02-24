@@ -1,9 +1,8 @@
 use chrono::Utc;
 
-use domain::name::Name;
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType},
-    RepositoryError, StorageConnection,
+    Name, RepositoryError, StorageConnection,
 };
 
 use crate::number::next_number;
@@ -28,7 +27,7 @@ pub fn generate(
     let result = InvoiceRow {
         id,
         name_id: other_party_id,
-        name_store_id: other_party.store_id,
+        name_store_id: other_party.store_id().map(|id| id.to_string()),
         r#type: InvoiceRowType::InboundShipment,
         comment,
         their_reference,

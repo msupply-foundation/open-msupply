@@ -54,7 +54,7 @@ pub use master_list_line_row::MasterListLineRowRepository;
 pub use master_list_name_join::MasterListNameJoinRepository;
 pub use master_list_row::MasterListRowRepository;
 pub use name::NameRepository;
-pub use name_query::NameQueryRepository;
+pub use name_query::*;
 pub use name_store_join::NameStoreJoinRepository;
 pub use number_row::NumberRowRepository;
 pub use remote_sync_buffer::*;

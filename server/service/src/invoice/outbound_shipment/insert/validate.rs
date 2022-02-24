@@ -1,9 +1,9 @@
-use domain::name::Name;
+use repository::Name;
 use repository::{InvoiceRepository, RepositoryError, StorageConnection};
 
 use crate::invoice::check_other_party_id;
 
-use super::{InsertOutboundShipmentError, InsertOutboundShipment};
+use super::{InsertOutboundShipment, InsertOutboundShipmentError};
 
 pub fn validate(
     input: &InsertOutboundShipment,
@@ -15,7 +15,7 @@ pub fn validate(
     let other_party = check_other_party_id(connection, &input.other_party_id)?
         .ok_or(OtherPartyIdNotFound(input.id.clone()))?;
 
-    if !other_party.is_customer {
+    if !other_party.is_customer() {
         return Err(OtherPartyNotACustomer(other_party));
     }
 

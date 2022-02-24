@@ -10,15 +10,36 @@ use crate::{
         NameRow, NameStoreJoinRow, StoreRow,
     },
 };
-use domain::{
-    name::{Name, NameFilter, NameSort, NameSortField},
-    Pagination,
-};
+use domain::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Name {
+    pub name_row: NameRow,
+    pub name_store_join_row: Option<NameStoreJoinRow>,
+    pub store_row: Option<StoreRow>,
+}
+
+#[derive(Clone)]
+pub struct NameFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub name: Option<SimpleStringFilter>,
+    pub code: Option<SimpleStringFilter>,
+    pub is_customer: Option<bool>,
+    pub is_supplier: Option<bool>,
+    pub store_id: Option<EqualFilter<String>>,
+}
+
+pub enum NameSortField {
+    Name,
+    Code,
+}
+
+pub type NameSort = Sort<NameSortField>;
 
 type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>, Option<StoreRow>);
 
@@ -77,22 +98,11 @@ impl<'a> NameQueryRepository<'a> {
     }
 }
 
-fn to_domain((name_row, name_store_join_row_option, store_option): NameAndNameStoreJoin) -> Name {
-    let (is_customer, is_supplier) = match name_store_join_row_option {
-        Some(name_store_join_row) => (
-            name_store_join_row.name_is_customer,
-            name_store_join_row.name_is_supplier,
-        ),
-        None => (false, false),
-    };
-
+fn to_domain((name_row, name_store_join_row, store_row): NameAndNameStoreJoin) -> Name {
     Name {
-        id: name_row.id,
-        name: name_row.name,
-        code: name_row.code,
-        store_id: store_option.map(|store| store.id),
-        is_customer,
-        is_supplier,
+        name_row,
+        name_store_join_row,
+        store_row,
     }
 }
 
@@ -125,6 +135,61 @@ pub fn create_filtered_query(filter: Option<NameFilter>) -> BoxedNameQuery {
     query
 }
 
+impl NameFilter {
+    pub fn new() -> NameFilter {
+        NameFilter {
+            id: None,
+            name: None,
+            code: None,
+            is_customer: None,
+            is_supplier: None,
+            store_id: None,
+        }
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
+    pub fn match_is_supplier(mut self, value: bool) -> Self {
+        self.is_supplier = Some(value);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
+}
+
+impl Name {
+    pub fn is_customer(&self) -> bool {
+        self.name_store_join_row
+            .as_ref()
+            .map(|name_store_join_row| name_store_join_row.name_is_customer)
+            .unwrap_or(false)
+    }
+
+    pub fn is_supplier(&self) -> bool {
+        self.name_store_join_row
+            .as_ref()
+            .map(|name_store_join_row| name_store_join_row.name_is_supplier)
+            .unwrap_or(false)
+    }
+
+    pub fn store_id(&self) -> Option<&str> {
+        self.store_row
+            .as_ref()
+            .map(|store_row| store_row.id.as_str())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -135,11 +200,10 @@ mod tests {
             schema::NameRow,
         },
     };
-    use domain::{
-        name::{Name, NameSort, NameSortField},
-        Pagination, DEFAULT_LIMIT,
-    };
+    use domain::{Pagination, DEFAULT_LIMIT};
     use std::convert::TryFrom;
+
+    use super::{Name, NameSort, NameSortField};
 
     fn data() -> (Vec<NameRow>, Vec<Name>) {
         let mut rows = Vec::new();
@@ -154,12 +218,16 @@ mod tests {
             });
 
             queries.push(Name {
-                id: format!("id{:05}", index),
-                name: format!("name{}", index),
-                code: format!("code{}", index),
-                store_id: None,
-                is_customer: false,
-                is_supplier: false,
+                name_row: NameRow {
+                    id: format!("id{:05}", index),
+                    name: format!("name{}", index),
+                    code: format!("code{}", index),
+
+                    is_customer: true,
+                    is_supplier: true,
+                },
+                name_store_join_row: None,
+                store_row: None,
             });
         }
         (rows, queries)
@@ -268,12 +336,17 @@ mod tests {
             )
             .unwrap();
 
-        names.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        names.sort_by(|a, b| {
+            a.name_row
+                .name
+                .to_lowercase()
+                .cmp(&b.name_row.name.to_lowercase())
+        });
 
         for (count, name) in names.iter().enumerate() {
             assert_eq!(
-                name.name.clone().to_lowercase(),
-                sorted[count].name.clone().to_lowercase(),
+                name.name_row.name.clone().to_lowercase(),
+                sorted[count].name_row.name.clone().to_lowercase(),
             );
         }
 
@@ -288,12 +361,17 @@ mod tests {
             )
             .unwrap();
 
-        names.sort_by(|b, a| a.code.to_lowercase().cmp(&b.code.to_lowercase()));
+        names.sort_by(|b, a| {
+            a.name_row
+                .code
+                .to_lowercase()
+                .cmp(&b.name_row.code.to_lowercase())
+        });
 
         for (count, name) in names.iter().enumerate() {
             assert_eq!(
-                name.code.clone().to_lowercase(),
-                sorted[count].code.clone().to_lowercase(),
+                name.name_row.code.clone().to_lowercase(),
+                sorted[count].name_row.code.clone().to_lowercase(),
             );
         }
     }

@@ -10,7 +10,7 @@ mod graphql {
         update_inbound_shipment_full as update, UpdateInboundShipmentFull as Update,
     };
     use chrono::{Duration, Utc};
-    use domain::{name::NameFilter, EqualFilter, Pagination};
+    use domain::{EqualFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::{
@@ -18,7 +18,7 @@ mod graphql {
             MockDataInserts,
         },
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
-        InvoiceFilter, InvoiceRepository, StockLineRowRepository,
+        InvoiceFilter, InvoiceRepository, NameFilter, StockLineRowRepository,
     };
     use server::test_utils::setup_all;
 
@@ -116,7 +116,7 @@ mod graphql {
 
         let base_variables = update::Variables {
             id: draft_inbound_shipment.invoice_row.id.clone(),
-            other_party_id_option: Some(supplier.id.clone()),
+            other_party_id_option: Some(supplier.name_row.id.clone()),
             update_inbound_status_option: None,
             on_hold_option: None,
             comment_option: Some("some comment".to_string()),
@@ -158,7 +158,7 @@ mod graphql {
         // Test OtherPartyNotASupplier
 
         let mut variables = base_variables.clone();
-        variables.other_party_id_option = Some(not_supplier.id.clone());
+        variables.other_party_id_option = Some(not_supplier.name_row.id.clone());
 
         let query = Update::build_query(variables);
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
@@ -166,7 +166,7 @@ mod graphql {
         let error_variant = assert_unwrap_error!(response);
         let error = assert_unwrap_enum!(error_variant, OtherPartyNotASupplier);
 
-        assert_eq!(error.other_party.id, not_supplier.id.clone());
+        assert_eq!(error.other_party.id, not_supplier.name_row.id.clone());
 
         // Test NotAnInboundShipment
 
@@ -188,7 +188,7 @@ mod graphql {
         let mut variables = base_variables.clone();
         variables.update_inbound_status_option =
             Some(update::UpdateInboundShipmentStatusInput::Delivered);
-        variables.other_party_id_option = Some(another_name.id.clone());
+        variables.other_party_id_option = Some(another_name.name_row.id.clone());
 
         let query = Update::build_query(variables.clone());
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;

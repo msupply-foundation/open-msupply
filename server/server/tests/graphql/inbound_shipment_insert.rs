@@ -4,7 +4,7 @@ mod graphql {
         get_gql_result,
     };
     use chrono::{Duration, Utc};
-    use domain::{name::NameFilter, Pagination};
+    use domain::Pagination;
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::{
@@ -12,7 +12,7 @@ mod graphql {
             mock_name_not_linked_to_store, mock_store_linked_to_name, MockDataInserts,
         },
         schema::{InvoiceRow, InvoiceRowType},
-        InvoiceRepository,
+        InvoiceRepository, NameFilter,
     };
     use server::test_utils::setup_all;
     use util::uuid::uuid;
@@ -79,7 +79,7 @@ mod graphql {
         let base_variables = insert::Variables {
             id: uuid(),
             store_id: "store_a".to_string(),
-            other_party_id: supplier.id.clone(),
+            other_party_id: supplier.name_row.id.clone(),
             on_hold_option: None,
             comment_option: Some("some comment_option".to_string()),
             their_reference_option: Some("some reference".to_string()),
@@ -105,7 +105,7 @@ mod graphql {
         // Test OtherPartyNotASupplier
 
         let mut variables = base_variables.clone();
-        variables.other_party_id = not_supplier.id.clone();
+        variables.other_party_id = not_supplier.name_row.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -113,7 +113,7 @@ mod graphql {
         let error_variant = assert_unwrap_error!(response);
         let error = assert_unwrap_enum!(error_variant, OtherPartyNotASupplier);
 
-        assert_eq!(error.other_party.id, not_supplier.id.clone());
+        assert_eq!(error.other_party.id, not_supplier.name_row.id.clone());
 
         // Test Success
         let variables = base_variables.clone();

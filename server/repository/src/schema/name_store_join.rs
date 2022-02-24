@@ -1,6 +1,6 @@
 use super::diesel_schema::name_store_join;
 
-#[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Clone)]
 #[table_name = "name_store_join"]
 pub struct NameStoreJoinRow {
     pub id: String,

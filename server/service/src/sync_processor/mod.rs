@@ -1,8 +1,9 @@
-use domain::{name::NameFilter, EqualFilter};
+use domain::EqualFilter;
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
-    InvoiceFilter, InvoiceQueryRepository, NameQueryRepository, NameRepository, RepositoryError,
-    RequisitionFilter, RequisitionRepository, StorageConnection, StoreRowRepository,
+    InvoiceFilter, InvoiceQueryRepository, NameFilter, NameQueryRepository, NameRepository,
+    RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
+    StoreRowRepository,
 };
 
 use self::{
@@ -142,8 +143,8 @@ fn get_other_party_store(
             record.clone(),
         ))?;
 
-    let result = match name.store_id {
-        Some(store_id) => StoreRowRepository::new(connection).find_one_by_id(&store_id)?,
+    let result = match name.store_id() {
+        Some(store_id) => StoreRowRepository::new(connection).find_one_by_id(store_id)?,
         None => None,
     };
     Ok(result)

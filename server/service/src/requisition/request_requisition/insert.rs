@@ -4,14 +4,12 @@ use crate::{
     service_provider::ServiceContext,
 };
 use chrono::Utc;
-use domain::{
-    name::{Name, NameFilter},
-    EqualFilter,
-};
+use domain::EqualFilter;
 use repository::{
     schema::{NumberRowType, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     NameQueryRepository, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
+use repository::{Name, NameFilter};
 
 #[derive(Debug, PartialEq)]
 pub struct InsertRequestRequisition {
@@ -70,12 +68,12 @@ fn validate(
     let other_party = check_other_party_exists(connection, &input.other_party_id)?
         .ok_or(OutError::OtherPartyDoesNotExist)?;
 
-    if !other_party.is_supplier {
+    if !other_party.is_supplier() {
         return Err(OutError::OtherPartyNotASupplier(other_party));
     }
 
     let other_party_store_id = other_party
-        .store_id
+        .store_id()
         .ok_or(OutError::OtherPartyIsNotAStore)?;
 
     if store_id == other_party_store_id {
@@ -140,11 +138,11 @@ pub fn check_other_party_exists(
 #[cfg(test)]
 mod test_insert {
     use chrono::Utc;
-    use domain::name::Name;
+    use repository::Name;
     use repository::{
         mock::{
             mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
-            mock_store_b, MockDataInserts,
+            MockDataInserts,
         },
         schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
         test_db::setup_all,
@@ -202,12 +200,9 @@ mod test_insert {
                 },
             ),
             Err(ServiceError::OtherPartyNotASupplier(Name {
-                id: name_store_b.id,
-                name: name_store_b.name,
-                code: name_store_b.code,
-                store_id: Some(mock_store_b().id),
-                is_customer: true,
-                is_supplier: false
+                name_row: name_store_b,
+                name_store_join_row: None,
+                store_row: None
             }))
         );
 
