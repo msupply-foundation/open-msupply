@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{location_to_domain, StocktakeLine};
+use repository::{Location, StocktakeLine};
 use service::{i32_to_u32, usize_to_u32};
 
 use graphql_core::{
@@ -43,8 +43,9 @@ impl StocktakeLineNode {
     }
 
     pub async fn location(&self) -> Option<LocationNode> {
-        self.line.location.clone().map(|location| LocationNode {
-            location: location_to_domain(location),
+        // TODO should be loader, no custruction of domain object oustide of repo
+        self.line.location.clone().map(|location_row| LocationNode {
+            location: Location { location_row },
         })
     }
 

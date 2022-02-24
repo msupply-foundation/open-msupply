@@ -1,8 +1,5 @@
-use domain::{
-    location::{Location, LocationFilter, LocationSort},
-    EqualFilter, PaginationOption,
-};
-use repository::LocationRepository;
+use domain::{EqualFilter, PaginationOption};
+use repository::{Location, LocationFilter, LocationRepository, LocationSort};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,

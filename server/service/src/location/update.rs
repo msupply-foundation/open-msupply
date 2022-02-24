@@ -3,8 +3,9 @@ use super::{
     validate::{check_location_code_is_unique, check_location_exists},
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use domain::location::{Location, UpdateLocation};
-use repository::{schema::LocationRow, LocationRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    schema::LocationRow, Location, LocationRowRepository, RepositoryError, StorageConnection,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateLocationError {
@@ -13,6 +14,13 @@ pub enum UpdateLocationError {
     LocationDoesNotBelongToCurrentStore,
     UpdatedRecordDoesNotExist,
     DatabaseError(RepositoryError),
+}
+
+pub struct UpdateLocation {
+    pub id: String,
+    pub code: Option<String>,
+    pub name: Option<String>,
+    pub on_hold: Option<bool>,
 }
 
 pub fn update_location(

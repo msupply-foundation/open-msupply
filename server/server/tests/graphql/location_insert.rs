@@ -1,11 +1,15 @@
 mod graphql {
     use crate::graphql::assert_graphql_query;
-    use domain::location::{InsertLocation, Location};
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{
+        mock::MockDataInserts, schema::LocationRow, Location, StorageConnectionManager,
+    };
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
-        location::{insert::InsertLocationError, LocationServiceTrait},
+        location::{
+            insert::{InsertLocation, InsertLocationError},
+            LocationServiceTrait,
+        },
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -195,10 +199,13 @@ mod graphql {
         // Record Already Exists
         let test_service = TestService(Box::new(|_| {
             Ok(Location {
-                id: "id".to_owned(),
-                name: "name".to_owned(),
-                code: "code".to_owned(),
-                on_hold: true,
+                location_row: LocationRow {
+                    id: "id".to_owned(),
+                    name: "name".to_owned(),
+                    code: "code".to_owned(),
+                    on_hold: true,
+                    store_id: "store_a".to_owned(),
+                },
             })
         }));
 

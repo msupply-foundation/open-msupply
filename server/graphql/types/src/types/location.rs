@@ -1,14 +1,12 @@
 use super::StockLineConnector;
 use async_graphql::*;
 use async_graphql::{dataloader::DataLoader, Context};
-use domain::location::LocationSort;
-use domain::{
-    location::{Location, LocationFilter, LocationSortField},
-    EqualFilter,
-};
+use domain::EqualFilter;
 use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
+use repository::schema::LocationRow;
+use repository::{Location, LocationFilter, LocationSort, LocationSortField};
 use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -58,24 +56,24 @@ pub struct LocationConnector {
 #[Object]
 impl LocationNode {
     pub async fn id(&self) -> &str {
-        &self.location.id
+        &self.row().id
     }
 
     pub async fn name(&self) -> &str {
-        &self.location.name
+        &self.row().name
     }
 
     pub async fn code(&self) -> &str {
-        &self.location.code
+        &self.row().code
     }
 
     pub async fn on_hold(&self) -> bool {
-        self.location.on_hold
+        self.row().on_hold
     }
 
     pub async fn stock(&self, ctx: &Context<'_>) -> Result<StockLineConnector> {
         let loader = ctx.get_loader::<DataLoader<StockLineByLocationIdLoader>>();
-        let result_option = loader.load_one(self.location.id.clone()).await?;
+        let result_option = loader.load_one(self.row().id.clone()).await?;
 
         Ok(StockLineConnector::from_vec(
             result_option.unwrap_or(vec![]),
@@ -97,6 +95,10 @@ pub enum LocationResponse {
 impl LocationNode {
     pub fn from_domain(location: Location) -> LocationNode {
         LocationNode { location }
+    }
+
+    pub fn row(&self) -> &LocationRow {
+        &self.location.location_row
     }
 }
 

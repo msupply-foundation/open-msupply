@@ -1,5 +1,4 @@
 use async_graphql::*;
-use domain::location::DeleteLocation;
 use graphql_core::{
     simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
     ContextExt,
@@ -7,7 +6,7 @@ use graphql_core::{
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use repository::RepositoryError;
 use service::location::delete::{
-    DeleteLocationError as InError, LocationInUse as ServiceLocationInUse,
+    DeleteLocationError as InError, LocationInUse as ServiceLocationInUse, DeleteLocation,
 };
 
 pub fn delete_location(

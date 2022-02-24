@@ -1,12 +1,12 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, unallocated_line::successfull_invoice_line};
-    use domain::{location::DeleteLocation, stock_line::StockLine};
+    use domain::stock_line::StockLine;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
         location::{
-            delete::{DeleteLocationError, LocationInUse},
+            delete::{DeleteLocationError, LocationInUse, DeleteLocation},
             LocationServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},

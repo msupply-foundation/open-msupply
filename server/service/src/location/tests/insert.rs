@@ -1,12 +1,17 @@
 #[cfg(test)]
 mod query {
-    use domain::{
-        location::{InsertLocation, Location, LocationFilter},
-        EqualFilter,
+    use domain::EqualFilter;
+    use repository::{
+        mock::{mock_location_1, MockDataInserts},
+        schema::LocationRow,
+        test_db::setup_all,
+        Location, LocationFilter, LocationRepository,
     };
-    use repository::{mock::MockDataInserts, test_db::setup_all, LocationRepository};
 
-    use crate::{location::insert::InsertLocationError, service_provider::ServiceProvider};
+    use crate::{
+        location::insert::{InsertLocation, InsertLocationError},
+        service_provider::ServiceProvider,
+    };
 
     #[actix_rt::test]
     async fn insert_location_service_errors() {
@@ -43,7 +48,7 @@ mod query {
                 "store_a",
                 InsertLocation {
                     id: "new_id".to_owned(),
-                    code: locations_in_store[0].code.clone(),
+                    code: locations_in_store[0].location_row.code.clone(),
                     name: None,
                     on_hold: None
                 },
@@ -64,10 +69,7 @@ mod query {
         let service = service_provider.location_service;
 
         let result_location = Location {
-            id: "new_id".to_owned(),
-            name: "new_code".to_owned(),
-            code: "new_code".to_owned(),
-            on_hold: false,
+            location_row: mock_location_1(),
         };
 
         assert_eq!(
@@ -108,10 +110,13 @@ mod query {
                 },
             ),
             Ok(Location {
-                id: "new_id2".to_owned(),
-                name: "new_location_name".to_owned(),
-                code: "store_b_location_code".to_owned(),
-                on_hold: true
+                location_row: LocationRow {
+                    id: "new_id2".to_owned(),
+                    name: "new_location_name".to_owned(),
+                    code: "store_b_location_code".to_owned(),
+                    on_hold: true,
+                    store_id: "store_a".to_owned(),
+                }
             })
         );
     }
