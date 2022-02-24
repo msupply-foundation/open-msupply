@@ -256,10 +256,7 @@ mod graphql {
         let response: Response<update::ResponseData> = get_gql_result(&settings, query).await;
 
         let error_variant = assert_unwrap_error!(response);
-        let invoice_variant =
-            assert_unwrap_enum!(error_variant, InvoiceLineBelongsToAnotherInvoice).invoice;
-        let invoice = assert_unwrap_enum!(invoice_variant, update::InvoiceResponse::InvoiceNode);
-        assert_eq!(invoice.id, draft_inbound_shipment.id);
+        assert_unwrap_enum!(error_variant, InvoiceLineBelongsToAnotherInvoice);
 
         // Test BatchIsReserved
 

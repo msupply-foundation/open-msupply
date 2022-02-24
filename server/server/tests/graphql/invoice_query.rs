@@ -1,11 +1,10 @@
 mod graphql {
     use crate::graphql::{assert_gql_not_found, assert_graphql_query};
     use domain::invoice::InvoiceStatus;
-    use server::test_utils::setup_all;
-
-    use graphql::schema::types::{InvoiceLineNodeType, InvoiceNodeStatus};
+    use graphql_types::types::{InvoiceLineNodeType, InvoiceNodeStatus};
     use repository::{mock::MockDataInserts, schema::InvoiceLineRowType};
     use serde_json::json;
+    use server::test_utils::setup_all;
 
     // TODO remove when node will use database row vs domain
     pub fn from_row_to_graphql_type(r#type: &InvoiceLineRowType) -> InvoiceLineNodeType {
