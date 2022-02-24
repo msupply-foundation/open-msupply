@@ -168,16 +168,22 @@ impl RemoteDataSynchroniser {
         const BATCH_SIZE: u32 = 1000;
         let state = RemoteSyncState::new(connection);
         loop {
+            info!("Remote push: Check changelog...");
             let cursor = state.get_push_cursor()?;
             let changelogs = changelog.changelogs(cursor as u64, BATCH_SIZE)?;
             if changelogs.is_empty() {
                 break;
             }
-
+            info!(
+                "Remote push: Translate {} changelogs to push records...",
+                changelogs.len()
+            );
             let mut out_records: Vec<PushRecord> = Vec::new();
             for changelog in changelogs {
                 translate_changelog(connection, &changelog, &mut out_records)?;
             }
+
+            info!("Remote push: Send records to central server...");
             let records: Vec<RemotePostRecordV3> = out_records
                 .into_iter()
                 .map(|record| match record {
@@ -205,6 +211,10 @@ impl RemoteDataSynchroniser {
                 .await?;
 
             state.update_push_cursor(cursor + 1)?;
+            info!(
+                "Remote push: {} records pushed to central server",
+                records.len()
+            );
         }
 
         Ok(())
