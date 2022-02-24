@@ -1,7 +1,6 @@
 use crate::types::{InvoiceLineConnector, NameNode};
 use async_graphql::*;
 
-
 pub struct OtherPartyNotASupplier(pub NameNode);
 #[Object]
 impl OtherPartyNotASupplier {

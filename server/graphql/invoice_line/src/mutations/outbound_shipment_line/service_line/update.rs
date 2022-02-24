@@ -2,12 +2,10 @@ use async_graphql::*;
 use domain::shipment_tax_update::ShipmentTaxUpdate;
 
 use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError, InternalError, InvoiceLineBelongsToAnotherInvoice,
-    NodeErrorInterface, NotAnOutboundShipment, RecordNotFound,
+    CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError, InternalError,
+    InvoiceLineBelongsToAnotherInvoice, NodeErrorInterface, NotAnOutboundShipment, RecordNotFound,
 };
-use graphql_types::types::{
-    get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse,
-};
+use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
 use repository::StorageConnectionManager;
 use service::invoice_line::{
     update_outbound_shipment_service_line, UpdateOutboundShipmentServiceLine,

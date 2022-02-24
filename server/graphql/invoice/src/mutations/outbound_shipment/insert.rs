@@ -2,14 +2,10 @@ use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
 use crate::invoice_queries::{get_invoice, InvoiceResponse};
 use async_graphql::*;
 use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
-use graphql_core::{
-    simple_generic_errors::{
-        DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordAlreadyExist,
-    },
+use graphql_core::simple_generic_errors::{
+    DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordAlreadyExist,
 };
-use graphql_types::types::{
-    InvoiceNode, InvoiceNodeStatus, NameNode,
-};
+use graphql_types::types::{InvoiceNode, InvoiceNodeStatus, NameNode};
 use repository::StorageConnectionManager;
 use service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError};
 

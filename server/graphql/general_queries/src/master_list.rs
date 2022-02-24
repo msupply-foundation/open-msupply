@@ -7,7 +7,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{MasterListNode};
+use graphql_types::types::MasterListNode;
 use repository::MasterList;
 use service::ListResult;
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

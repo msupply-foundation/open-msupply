@@ -1,4 +1,4 @@
-use super::{InvoiceLineConnector, NameNode, RequisitionNode, StoreNode, map_filter};
+use super::{map_filter, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;

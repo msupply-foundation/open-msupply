@@ -1,15 +1,10 @@
-
-use graphql_core::{
-    simple_generic_errors::{
-        CannotEditInvoice, DatabaseError,
-        InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment, RecordNotFound,
-    },
+use graphql_core::simple_generic_errors::{
+    CannotEditInvoice, DatabaseError, InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
+    RecordNotFound,
 };
 use graphql_types::{
     generic_errors::CannotDeleteInvoiceWithLines,
-    types::{
-        DeleteResponse, InvoiceLineConnector,
-    },
+    types::{DeleteResponse, InvoiceLineConnector},
 };
 use repository::StorageConnectionManager;
 use service::invoice::{delete_outbound_shipment, DeleteOutboundShipmentError};
