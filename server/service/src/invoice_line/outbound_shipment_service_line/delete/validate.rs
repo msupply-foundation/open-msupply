@@ -3,13 +3,16 @@ use crate::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type,
         validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceRowType,
     },
-    invoice_line::{validate::{
-        check_item, check_line_belongs_to_invoice, check_line_exists, ItemNotFound,
-        LineDoesNotExist, NotInvoiceLine,
-    }, DeleteOutboundShipmentLine},
+    invoice_line::{
+        validate::{
+            check_item, check_line_belongs_to_invoice, check_line_exists, ItemNotFound,
+            LineDoesNotExist, NotInvoiceLine,
+        },
+        DeleteOutboundShipmentLine,
+    },
 };
 use repository::{
-    schema::{InvoiceLineRow, ItemRowType, InvoiceRowType},
+    schema::{InvoiceLineRow, InvoiceRowType, ItemRowType},
     StorageConnection,
 };
 

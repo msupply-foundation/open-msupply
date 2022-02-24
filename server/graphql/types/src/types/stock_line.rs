@@ -3,7 +3,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{loader::LocationByIdLoader, simple_generic_errors::NodeError, ContextExt};
-use repository::{StockLine, StorageConnectionManager, schema::StockLineRow};
+use repository::{schema::StockLineRow, StockLine, StorageConnectionManager};
 use service::{stock_line::get_stock_line, usize_to_u32, ListResult};
 
 pub struct StockLineNode {

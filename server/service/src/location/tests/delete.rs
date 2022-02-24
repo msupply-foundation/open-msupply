@@ -3,7 +3,7 @@ mod query {
     use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, InvoiceLineFilter, InvoiceLineRepository,
-        LocationFilter, LocationRepository, StockLineRepository, StockLineFilter,
+        LocationFilter, LocationRepository, StockLineFilter, StockLineRepository,
     };
 
     use crate::{

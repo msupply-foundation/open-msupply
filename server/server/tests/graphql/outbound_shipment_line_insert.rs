@@ -9,7 +9,7 @@ mod graphql {
     };
 
     use repository::EqualFilter;
-    use repository::Pagination;
+
     use graphql_client::{GraphQLQuery, Response};
     use repository::schema::{InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType};
     use repository::InvoiceFilter;

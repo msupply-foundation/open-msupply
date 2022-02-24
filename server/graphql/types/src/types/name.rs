@@ -1,6 +1,6 @@
 use async_graphql::*;
 use dataloader::DataLoader;
-use repository::{Name, schema::NameRow};
+use repository::{schema::NameRow, Name};
 
 use graphql_core::{loader::StoreLoader, simple_generic_errors::NodeError, ContextExt};
 

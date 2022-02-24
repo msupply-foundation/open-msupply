@@ -6,7 +6,9 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_types::types::DeleteResponse;
 use repository::StorageConnectionManager;
-use service::invoice_line::{delete_inbound_shipment_line, DeleteInboundShipmentLineError, DeleteInboundShipmentLine};
+use service::invoice_line::{
+    delete_inbound_shipment_line, DeleteInboundShipmentLine, DeleteInboundShipmentLineError,
+};
 
 use super::BatchIsReserved;
 

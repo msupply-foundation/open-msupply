@@ -4,7 +4,7 @@ use graphql_core::{
     ContextExt, RequestUserData,
 };
 
-use service::token::{TokenPair, TokenService, JWTRefreshError};
+use service::token::{JWTRefreshError, TokenPair, TokenService};
 
 use crate::set_refresh_token_cookie;
 

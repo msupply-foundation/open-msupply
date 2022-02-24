@@ -13,7 +13,10 @@ use graphql_types::generic_errors::OtherPartyNotASupplier;
 use graphql_types::types::{InvoiceNode, NameNode};
 use repository::StorageConnectionManager;
 
-use service::invoice::{update_inbound_shipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus, UpdateInboundShipment};
+use service::invoice::{
+    update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentError,
+    UpdateInboundShipmentStatus,
+};
 
 #[derive(InputObject)]
 pub struct UpdateInboundShipmentInput {

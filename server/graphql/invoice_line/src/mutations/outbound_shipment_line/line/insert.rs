@@ -7,7 +7,9 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
 use repository::StorageConnectionManager;
-use service::invoice_line::{insert_outbound_shipment_line, InsertOutboundShipmentLineError, InsertOutboundShipmentLine};
+use service::invoice_line::{
+    insert_outbound_shipment_line, InsertOutboundShipmentLine, InsertOutboundShipmentLineError,
+};
 
 use super::{
     ItemDoesNotMatchStockLine, LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,

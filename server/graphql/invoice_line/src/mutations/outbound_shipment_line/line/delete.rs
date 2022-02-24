@@ -6,7 +6,9 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_types::types::DeleteResponse;
 use repository::StorageConnectionManager;
-use service::invoice_line::{delete_outbound_shipment_line, DeleteOutboundShipmentLineError, DeleteOutboundShipmentLine};
+use service::invoice_line::{
+    delete_outbound_shipment_line, DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
+};
 
 #[derive(InputObject)]
 pub struct DeleteOutboundShipmentLineInput {

@@ -3,7 +3,7 @@ use crate::service_provider::ServiceContext;
 use repository::EqualFilter;
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, LocationRowRepository, RepositoryError,
-    StockLineRepository, StorageConnection, StockLine, StockLineFilter,
+    StockLine, StockLineFilter, StockLineRepository, StorageConnection,
 };
 #[derive(PartialEq, Debug)]
 pub struct LocationInUse {

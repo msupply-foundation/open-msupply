@@ -1,5 +1,4 @@
 use async_graphql::*;
-use repository::*;
 use graphql_core::generic_filters::{
     DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
 };
@@ -13,6 +12,7 @@ use graphql_core::standard_graphql_error::{
 use graphql_core::ContextExt;
 use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeFilter;
+use repository::*;
 use repository::{StocktakeSort, StocktakeSortField};
 use service::permission_validation::Resource;
 use service::permission_validation::ResourceAccessRequest;

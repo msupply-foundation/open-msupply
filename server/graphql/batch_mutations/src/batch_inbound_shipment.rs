@@ -1,10 +1,16 @@
 use async_graphql::*;
 use graphql_invoice::mutations::inbound_shipment::{
-    DeleteInboundShipmentResponse, InsertInboundShipmentResponse, UpdateInboundShipmentResponse, InsertInboundShipmentInput, UpdateInboundShipmentInput, DeleteInboundShipmentInput, get_insert_inbound_shipment_response, get_update_inbound_shipment_response, get_delete_inbound_shipment_response,
+    get_delete_inbound_shipment_response, get_insert_inbound_shipment_response,
+    get_update_inbound_shipment_response, DeleteInboundShipmentInput,
+    DeleteInboundShipmentResponse, InsertInboundShipmentInput, InsertInboundShipmentResponse,
+    UpdateInboundShipmentInput, UpdateInboundShipmentResponse,
 };
 use graphql_invoice_line::mutations::inbound_shipment_line::{
-    DeleteInboundShipmentLineResponse, InsertInboundShipmentLineResponse,
-    UpdateInboundShipmentLineResponse, InsertInboundShipmentLineInput, UpdateInboundShipmentLineInput, DeleteInboundShipmentLineInput, get_insert_inbound_shipment_line_response, get_update_inbound_shipment_line_response, get_delete_inbound_shipment_line_response,
+    get_delete_inbound_shipment_line_response, get_insert_inbound_shipment_line_response,
+    get_update_inbound_shipment_line_response, DeleteInboundShipmentLineInput,
+    DeleteInboundShipmentLineResponse, InsertInboundShipmentLineInput,
+    InsertInboundShipmentLineResponse, UpdateInboundShipmentLineInput,
+    UpdateInboundShipmentLineResponse,
 };
 use repository::StorageConnectionManager;
 

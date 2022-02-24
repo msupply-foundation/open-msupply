@@ -1,9 +1,6 @@
 use async_graphql::*;
 
-
-use graphql_core::standard_graphql_error::{
-    validate_auth, StandardGraphqlError,
-};
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{StocktakeLineConnector, StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeLine;

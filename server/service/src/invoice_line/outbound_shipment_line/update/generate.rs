@@ -1,7 +1,7 @@
 use crate::u32_to_i32;
 use repository::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
-use super::{BatchPair, UpdateOutboundShipmentLineError, UpdateOutboundShipmentLine};
+use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
 
 pub fn generate(
     input: UpdateOutboundShipmentLine,

@@ -3,7 +3,7 @@ use repository::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
 
-use super::{InsertOutboundShipmentLineError, InsertOutboundShipmentLine};
+use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};
 
 pub fn generate(
     input: InsertOutboundShipmentLine,

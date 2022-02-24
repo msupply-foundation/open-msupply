@@ -1,7 +1,10 @@
 mod graphql {
     use crate::graphql::{assert_gql_not_found, assert_graphql_query};
     use graphql_types::types::{InvoiceLineNodeType, InvoiceNodeStatus};
-    use repository::{mock::MockDataInserts, schema::{InvoiceLineRowType, InvoiceRowStatus}};
+    use repository::{
+        mock::MockDataInserts,
+        schema::{InvoiceLineRowType, InvoiceRowStatus},
+    };
     use serde_json::json;
     use server::test_utils::setup_all;
 

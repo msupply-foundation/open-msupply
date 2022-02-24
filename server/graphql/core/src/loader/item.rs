@@ -1,4 +1,4 @@
-use repository::{Item, ItemFilter, ItemQueryRepository, Pagination, EqualFilter};
+use repository::{EqualFilter, Item, ItemFilter, ItemQueryRepository, Pagination};
 use repository::{RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;

@@ -2,9 +2,12 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_is_empty, check_invoice_type,
     InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
 };
-use repository::{schema::{InvoiceRow, InvoiceRowType}, StorageConnection};
+use repository::{
+    schema::{InvoiceRow, InvoiceRowType},
+    StorageConnection,
+};
 
-use super::{DeleteInboundShipmentError, DeleteInboundShipment};
+use super::{DeleteInboundShipment, DeleteInboundShipmentError};
 
 pub fn validate(
     input: &DeleteInboundShipment,

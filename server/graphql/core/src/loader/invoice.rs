@@ -1,7 +1,7 @@
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use repository::EqualFilter;
 use repository::schema::InvoiceStatsRow;
+use repository::EqualFilter;
 use repository::{Invoice, InvoiceFilter, InvoiceLineRepository, InvoiceQueryRepository};
 use repository::{RepositoryError, StorageConnectionManager};
 use service::invoice::get_invoices;

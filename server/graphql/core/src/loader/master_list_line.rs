@@ -1,7 +1,7 @@
 use async_graphql::dataloader::*;
 use repository::{
-    MasterListLine, MasterListLineFilter, MasterListLineRepository, RepositoryError,
-    StorageConnectionManager, EqualFilter,
+    EqualFilter, MasterListLine, MasterListLineFilter, MasterListLineRepository, RepositoryError,
+    StorageConnectionManager,
 };
 use std::collections::HashMap;
 pub struct MasterListLineByMasterListId {

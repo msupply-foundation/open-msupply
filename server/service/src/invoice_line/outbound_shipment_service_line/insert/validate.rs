@@ -1,5 +1,5 @@
 use repository::{
-    schema::{InvoiceRow, ItemRow, ItemRowType, InvoiceRowType},
+    schema::{InvoiceRow, InvoiceRowType, ItemRow, ItemRowType},
     StorageConnection,
 };
 

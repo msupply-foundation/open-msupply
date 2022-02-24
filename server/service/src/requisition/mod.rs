@@ -18,8 +18,8 @@ use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 use repository::PaginationOption;
 use repository::{
-    schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter, RequisitionLine,
-    RequisitionSort, Invoice,
+    schema::RequisitionRowType, Invoice, RepositoryError, Requisition, RequisitionFilter,
+    RequisitionLine, RequisitionSort,
 };
 
 pub mod common;

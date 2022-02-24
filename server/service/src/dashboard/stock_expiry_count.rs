@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{RepositoryError, StockLineFilter, StockLineRepository, DateFilter};
+use repository::{DateFilter, RepositoryError, StockLineFilter, StockLineRepository};
 
 use crate::service_provider::ServiceContext;
 

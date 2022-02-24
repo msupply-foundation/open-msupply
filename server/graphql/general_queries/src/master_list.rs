@@ -1,5 +1,4 @@
 use async_graphql::*;
-use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
@@ -7,7 +6,8 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::MasterListNode;
-use repository::{MasterList, MasterListSort, MasterListFilter};
+use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{MasterList, MasterListFilter, MasterListSort};
 use service::ListResult;
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::MasterListSortField")]
