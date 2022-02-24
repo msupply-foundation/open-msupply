@@ -3,16 +3,8 @@ import {
   ListApi,
   SortBy,
   NameSortFieldInput,
-  NamesQuery,
   OmSupplyApi,
 } from '@openmsupply-client/common';
-
-const namesGuard = (namesQuery: NamesQuery) => {
-  if (namesQuery.names.__typename === 'NameConnector') {
-    return namesQuery.names;
-  }
-  throw new Error(namesQuery.names.error.description);
-};
 
 const onRead =
   (api: OmSupplyApi, type: 'customer' | 'supplier') =>
@@ -41,7 +33,7 @@ const onRead =
       },
     });
 
-    return namesGuard(result);
+    return result.names;
   };
 
 export const getNameListViewApi = (

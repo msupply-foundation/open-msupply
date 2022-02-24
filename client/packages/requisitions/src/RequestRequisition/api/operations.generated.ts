@@ -38,7 +38,7 @@ export type RequestRequisitionsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
-  sort?: Types.InputMaybe<Types.RequisitionSortInput>;
+  sort?: Types.InputMaybe<Array<Types.RequisitionSortInput> | Types.RequisitionSortInput>;
 }>;
 
 
@@ -99,11 +99,9 @@ export const RequestRequisitionFragmentDoc = gql`
   minMonthsOfStock
   lines {
     __typename
-    ... on RequisitionLineConnector {
-      totalCount
-      nodes {
-        ...RequestRequisitionLine
-      }
+    totalCount
+    nodes {
+      ...RequestRequisitionLine
     }
   }
   otherParty {
@@ -160,7 +158,7 @@ export const RequestRequisitionDocument = gql`
     query requestRequisition($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
-    type: "REQUEST"
+    type: REQUEST
     storeId: $storeId
   ) {
     __typename
@@ -181,7 +179,7 @@ export const RequestRequisitionDocument = gql`
 }
     ${RequestRequisitionFragmentDoc}`;
 export const RequestRequisitionsDocument = gql`
-    query requestRequisitions($storeId: String!, $filter: RequisitionFilterInput, $page: PaginationInput, $sort: RequisitionSortInput) {
+    query requestRequisitions($storeId: String!, $filter: RequisitionFilterInput, $page: PaginationInput, $sort: [RequisitionSortInput!]) {
   requisitions(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
     ... on RequisitionConnector {
       totalCount

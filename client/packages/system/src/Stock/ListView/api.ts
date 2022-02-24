@@ -5,7 +5,6 @@ import {
   OmSupplyApi,
   FilterBy,
 } from '@openmsupply-client/common';
-import { availableBatchesGuard, itemsGuard } from '../../Item/utils';
 import { StockRow } from '../types';
 const onRead =
   (api: OmSupplyApi) =>
@@ -32,11 +31,11 @@ const onRead =
       storeId,
     });
 
-    const items = itemsGuard(result);
+    const items = result.items;
     const nodes: StockRow[] = [];
     items.nodes.forEach(item => {
-      const availableBatches = availableBatchesGuard(item.availableBatches);
-      availableBatches
+      const availableBatches = item.availableBatches;
+      availableBatches.nodes
         .filter(batch => batch.totalNumberOfPacks > 0)
         .forEach(batch =>
           nodes.push({

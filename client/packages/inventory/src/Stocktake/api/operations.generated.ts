@@ -6,9 +6,9 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type StocktakeRowFragment = { __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeNumber: number, status: Types.StocktakeNodeStatus };
 
-export type StocktakeLineFragment = { __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item?: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } | null };
+export type StocktakeLineFragment = { __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } };
 
-export type StocktakeFragment = { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item?: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } | null }> } };
+export type StocktakeFragment = { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } };
 
 export type StocktakesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -26,7 +26,7 @@ export type StocktakeQueryVariables = Types.Exact<{
 }>;
 
 
-export type StocktakeQuery = { __typename: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item?: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } | null }> } } };
+export type StocktakeQuery = { __typename: 'Queries', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } } };
 
 export type StocktakeByNumberQueryVariables = Types.Exact<{
   stocktakeNumber: Types.Scalars['Int'];
@@ -34,7 +34,7 @@ export type StocktakeByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type StocktakeByNumberQuery = { __typename: 'Queries', stocktakeByNumber: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item?: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } | null }> } } };
+export type StocktakeByNumberQuery = { __typename: 'Queries', stocktakeByNumber: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } } };
 
 export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -95,10 +95,19 @@ export const StocktakeLineFragmentDoc = gql`
   countedNumberOfPacks
   sellPricePerPack
   costPricePerPack
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
   stockLine {
+    __typename
     id
   }
   item {
+    __typename
     id
     code
     name
@@ -118,12 +127,9 @@ export const StocktakeFragmentDoc = gql`
   description
   lines {
     __typename
-    ... on StocktakeLineConnector {
-      __typename
-      nodes {
-        ...StocktakeLine
-      }
-      totalCount
+    totalCount
+    nodes {
+      ...StocktakeLine
     }
   }
 }
@@ -133,10 +139,11 @@ export const StocktakesDocument = gql`
   stocktakes(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
     __typename
     ... on StocktakeConnector {
+      __typename
+      totalCount
       nodes {
         ...StocktakeRow
       }
-      totalCount
     }
   }
 }

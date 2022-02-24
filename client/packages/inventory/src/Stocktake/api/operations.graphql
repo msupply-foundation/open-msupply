@@ -21,10 +21,21 @@ fragment StocktakeLine on StocktakeLineNode {
   countedNumberOfPacks
   sellPricePerPack
   costPricePerPack
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+
   stockLine {
+    __typename
     id
   }
+
   item {
+    __typename
     id
     code
     name
@@ -43,12 +54,9 @@ fragment Stocktake on StocktakeNode {
   description
   lines {
     __typename
-    ... on StocktakeLineConnector {
-      __typename
-      nodes {
-        ...StocktakeLine
-      }
-      totalCount
+    totalCount
+    nodes {
+      ...StocktakeLine
     }
   }
 }
@@ -62,10 +70,11 @@ query stocktakes(
   stocktakes(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
     __typename
     ... on StocktakeConnector {
+      __typename
+      totalCount
       nodes {
         ...StocktakeRow
       }
-      totalCount
     }
   }
 }

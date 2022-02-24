@@ -64,7 +64,6 @@ export type AuthToken = {
   token: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
 export type AuthTokenError = {
   __typename: 'AuthTokenError';
   error: AuthTokenErrorInterface;
@@ -162,23 +161,23 @@ export type BatchStocktakeResponsesWithErrors = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
-export type CanOnlyChangeToAllocatedWhenNoUnallocatedLines = UpdateOutboundShipmentErrorInterface & {
+export type CanOnlyChangeToAllocatedWhenNoUnallocatedLines = UpdateErrorInterface & {
   __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines';
   description: Scalars['String'];
   invoiceLines: InvoiceLineConnector;
 };
 
-export type CanOnlyEditInvoicesInLoggedInStoreError = UpdateOutboundShipmentErrorInterface & {
+export type CanOnlyEditInvoicesInLoggedInStoreError = UpdateErrorInterface & {
   __typename: 'CanOnlyEditInvoicesInLoggedInStoreError';
   description: Scalars['String'];
 };
 
-export type CannotChangeStatusOfInvoiceOnHold = UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
+export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
   __typename: 'CannotChangeStatusOfInvoiceOnHold';
   description: Scalars['String'];
 };
 
-export type CannotDeleteInvoiceWithLines = DeleteInboundShipmentErrorInterface & DeleteOutboundShipmentErrorInterface & {
+export type CannotDeleteInvoiceWithLines = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & {
   __typename: 'CannotDeleteInvoiceWithLines';
   description: Scalars['String'];
   lines: InvoiceLineConnector;
@@ -189,7 +188,7 @@ export type CannotDeleteRequisitionWithLines = DeleteRequestRequisitionErrorInte
   description: Scalars['String'];
 };
 
-export type CannotEditInvoice = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type CannotEditInvoice = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename: 'CannotEditInvoice';
   description: Scalars['String'];
 };
@@ -199,18 +198,8 @@ export type CannotEditRequisition = AddFromMasterListErrorInterface & CreateRequ
   description: Scalars['String'];
 };
 
-export type CannotReverseInvoiceStatus = UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
+export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
   __typename: 'CannotReverseInvoiceStatus';
-  description: Scalars['String'];
-};
-
-/** Generic Error Wrapper */
-export type ConnectorError = {
-  __typename: 'ConnectorError';
-  error: ConnectorErrorInterface;
-};
-
-export type ConnectorErrorInterface = {
   description: Scalars['String'];
 };
 
@@ -229,7 +218,7 @@ export type CreateRequisitionShipmentInput = {
 
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
-export type DatabaseError = AuthTokenErrorInterface & ConnectorErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
+export type DatabaseError = AuthTokenErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -241,7 +230,10 @@ export type DatetimeFilterInput = {
   equalTo?: InputMaybe<Scalars['DateTime']>;
 };
 
-/** Generic Error Wrapper */
+export type DeleteErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
   error: DeleteInboundShipmentErrorInterface;
@@ -255,7 +247,6 @@ export type DeleteInboundShipmentInput = {
   id: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
 export type DeleteInboundShipmentLineError = {
   __typename: 'DeleteInboundShipmentLineError';
   error: DeleteInboundShipmentLineErrorInterface;
@@ -301,17 +292,11 @@ export type DeleteLocationInput = {
 
 export type DeleteLocationResponse = DeleteLocationError | DeleteResponse;
 
-/** Generic Error Wrapper */
 export type DeleteOutboundShipmentError = {
   __typename: 'DeleteOutboundShipmentError';
-  error: DeleteOutboundShipmentErrorInterface;
+  error: DeleteErrorInterface;
 };
 
-export type DeleteOutboundShipmentErrorInterface = {
-  description: Scalars['String'];
-};
-
-/** Generic Error Wrapper */
 export type DeleteOutboundShipmentLineError = {
   __typename: 'DeleteOutboundShipmentLineError';
   error: DeleteOutboundShipmentLineErrorInterface;
@@ -342,7 +327,6 @@ export type DeleteOutboundShipmentResponseWithId = {
   response: DeleteOutboundShipmentResponse;
 };
 
-/** Generic Error Wrapper */
 export type DeleteOutboundShipmentServiceLineError = {
   __typename: 'DeleteOutboundShipmentServiceLineError';
   error: DeleteOutboundShipmentServiceLineErrorInterface;
@@ -513,7 +497,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
   __typename: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
@@ -524,7 +508,10 @@ export type InboundInvoiceCounts = {
   created: InvoiceCountsSummary;
 };
 
-/** Generic Error Wrapper */
+export type InsertErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
   error: InsertInboundShipmentErrorInterface;
@@ -543,7 +530,6 @@ export type InsertInboundShipmentInput = {
   theirReference?: InputMaybe<Scalars['String']>;
 };
 
-/** Generic Error Wrapper */
 export type InsertInboundShipmentLineError = {
   __typename: 'InsertInboundShipmentLineError';
   error: InsertInboundShipmentLineErrorInterface;
@@ -603,14 +589,9 @@ export type InsertLocationInput = {
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
 
-/** Generic Error Wrapper */
 export type InsertOutboundShipmentError = {
   __typename: 'InsertOutboundShipmentError';
-  error: InsertOutboundShipmentErrorInterface;
-};
-
-export type InsertOutboundShipmentErrorInterface = {
-  description: Scalars['String'];
+  error: InsertErrorInterface;
 };
 
 export type InsertOutboundShipmentInput = {
@@ -625,7 +606,6 @@ export type InsertOutboundShipmentInput = {
   theirReference?: InputMaybe<Scalars['String']>;
 };
 
-/** Generic Error Wrapper */
 export type InsertOutboundShipmentLineError = {
   __typename: 'InsertOutboundShipmentLineError';
   error: InsertOutboundShipmentLineErrorInterface;
@@ -662,7 +642,6 @@ export type InsertOutboundShipmentResponseWithId = {
   response: InsertOutboundShipmentResponse;
 };
 
-/** Generic Error Wrapper */
 export type InsertOutboundShipmentServiceLineError = {
   __typename: 'InsertOutboundShipmentServiceLineError';
   error: InsertOutboundShipmentServiceLineErrorInterface;
@@ -809,7 +788,6 @@ export type InvalidToken = RefreshTokenErrorInterface & {
   description: Scalars['String'];
 };
 
-/** Generic Connector */
 export type InvoiceConnector = {
   __typename: 'InvoiceConnector';
   nodes: Array<InvoiceNode>;
@@ -828,7 +806,7 @@ export type InvoiceCountsSummary = {
   today: Scalars['Int'];
 };
 
-export type InvoiceDoesNotBelongToCurrentStore = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+export type InvoiceDoesNotBelongToCurrentStore = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'InvoiceDoesNotBelongToCurrentStore';
   description: Scalars['String'];
 };
@@ -852,7 +830,7 @@ export type InvoiceFilterInput = {
   verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
 };
 
-export type InvoiceIsNotEditable = UpdateOutboundShipmentErrorInterface & {
+export type InvoiceIsNotEditable = UpdateErrorInterface & {
   __typename: 'InvoiceIsNotEditable';
   description: Scalars['String'];
 };
@@ -863,14 +841,13 @@ export type InvoiceLineBelongsToAnotherInvoice = DeleteInboundShipmentLineErrorI
   invoice: InvoiceResponse;
 };
 
-/** Generic Connector */
 export type InvoiceLineConnector = {
   __typename: 'InvoiceLineConnector';
   nodes: Array<InvoiceLineNode>;
   totalCount: Scalars['Int'];
 };
 
-export type InvoiceLineHasNoStockLineError = UpdateOutboundShipmentErrorInterface & {
+export type InvoiceLineHasNoStockLineError = UpdateErrorInterface & {
   __typename: 'InvoiceLineHasNoStockLineError';
   description: Scalars['String'];
   invoiceLineId: Scalars['String'];
@@ -883,18 +860,18 @@ export type InvoiceLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   invoiceId: Scalars['String'];
-  item: ItemResponse;
+  item: ItemNode;
   itemCode: Scalars['String'];
   itemId: Scalars['String'];
   itemName: Scalars['String'];
-  location?: Maybe<LocationResponse>;
+  location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']>;
   locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
-  stockLine?: Maybe<StockLineResponse>;
+  stockLine?: Maybe<StockLineNode>;
   type: InvoiceLineNodeType;
 };
 
@@ -907,8 +884,6 @@ export enum InvoiceLineNodeType {
 
 export type InvoiceLineResponse = InvoiceLineNode | NodeError;
 
-export type InvoiceLinesResponse = ConnectorError | InvoiceLineConnector;
-
 export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']>;
@@ -918,16 +893,16 @@ export type InvoiceNode = {
   deliveredDatetime?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   invoiceNumber: Scalars['Int'];
-  lines: InvoiceLinesResponse;
+  lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
   onHold: Scalars['Boolean'];
-  otherParty: NameResponse;
+  otherParty: NameNode;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
   otherPartyStore?: Maybe<StoreNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']>;
-  pricing: InvoicePriceResponse;
+  pricing: InvoicePricingNode;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -992,8 +967,6 @@ export enum InvoiceNodeType {
   OutboundShipment = 'OUTBOUND_SHIPMENT'
 }
 
-export type InvoicePriceResponse = InvoicePricingNode | NodeError;
-
 export type InvoicePricingNode = {
   __typename: 'InvoicePricingNode';
   serviceTotalAfterTax: Scalars['Float'];
@@ -1030,7 +1003,7 @@ export type InvoiceSortInput = {
   key: InvoiceSortFieldInput;
 };
 
-export type InvoicesResponse = ConnectorError | InvoiceConnector;
+export type InvoicesResponse = InvoiceConnector;
 
 export type ItemConnector = {
   __typename: 'ItemConnector';
@@ -1043,11 +1016,6 @@ export type ItemDoesNotMatchStockLine = InsertOutboundShipmentLineErrorInterface
   description: Scalars['String'];
 };
 
-export type ItemError = {
-  __typename: 'ItemError';
-  error: ItemResponseError;
-};
-
 export type ItemFilterInput = {
   code?: InputMaybe<SimpleStringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -1057,7 +1025,7 @@ export type ItemFilterInput = {
 
 export type ItemNode = {
   __typename: 'ItemNode';
-  availableBatches: StockLinesResponse;
+  availableBatches: StockLineConnector;
   code: Scalars['String'];
   id: Scalars['String'];
   isVisible: Scalars['Boolean'];
@@ -1076,10 +1044,6 @@ export type ItemNodeStatsArgs = {
   lookBackDatetime?: InputMaybe<Scalars['NaiveDateTime']>;
   storeId: Scalars['String'];
 };
-
-export type ItemResponse = ItemError | ItemNode;
-
-export type ItemResponseError = InternalError;
 
 export enum ItemSortFieldInput {
   Code = 'code',
@@ -1103,14 +1067,13 @@ export type ItemStatsNode = {
   averageMonthlyConsumption: Scalars['Int'];
 };
 
-export type ItemsResponse = ConnectorError | ItemConnector;
+export type ItemsResponse = ItemConnector;
 
 export type LineDoesNotReferenceStockLine = UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'LineDoesNotReferenceStockLine';
   description: Scalars['String'];
 };
 
-/** Generic Connector */
 export type LocationConnector = {
   __typename: 'LocationConnector';
   nodes: Array<LocationNode>;
@@ -1141,15 +1104,13 @@ export type LocationNode = {
   id: Scalars['String'];
   name: Scalars['String'];
   onHold: Scalars['Boolean'];
-  stock: StockLinesResponse;
+  stock: StockLineConnector;
 };
 
 export type LocationNotFound = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'LocationNotFound';
   description: Scalars['String'];
 };
-
-export type LocationResponse = LocationNode | NodeError;
 
 export enum LocationSortFieldInput {
   Code = 'code',
@@ -1166,7 +1127,7 @@ export type LocationSortInput = {
   key: LocationSortFieldInput;
 };
 
-export type LocationsResponse = ConnectorError | LocationConnector;
+export type LocationsResponse = LocationConnector;
 
 export type Logout = {
   __typename: 'Logout';
@@ -1174,7 +1135,6 @@ export type Logout = {
   userId: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
 export type LogoutError = {
   __typename: 'LogoutError';
   error: LogoutErrorInterface;
@@ -1245,7 +1205,7 @@ export type MasterListSortInput = {
   key: MasterListSortFieldInput;
 };
 
-export type MasterListsResponse = ConnectorError | MasterListConnector;
+export type MasterListsResponse = MasterListConnector;
 
 export type Mutations = {
   __typename: 'Mutations';
@@ -1572,8 +1532,6 @@ export type NameNode = {
   store?: Maybe<StoreNode>;
 };
 
-export type NameResponse = NameNode | NodeError;
-
 export enum NameSortFieldInput {
   Code = 'code',
   Name = 'name'
@@ -1589,7 +1547,7 @@ export type NameSortInput = {
   key: NameSortFieldInput;
 };
 
-export type NamesResponse = ConnectorError | NameConnector;
+export type NamesResponse = NameConnector;
 
 export type NoRefreshTokenProvided = RefreshTokenErrorInterface & {
   __typename: 'NoRefreshTokenProvided';
@@ -1621,12 +1579,12 @@ export type NotAnInboundShipment = DeleteInboundShipmentErrorInterface & DeleteI
   description: Scalars['String'];
 };
 
-export type NotAnOutboundShipment = DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type NotAnOutboundShipment = DeleteErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename: 'NotAnOutboundShipment';
   description: Scalars['String'];
 };
 
-export type NotAnOutboundShipmentError = UpdateOutboundShipmentErrorInterface & {
+export type NotAnOutboundShipmentError = UpdateErrorInterface & {
   __typename: 'NotAnOutboundShipmentError';
   description: Scalars['String'];
 };
@@ -1643,12 +1601,12 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String'];
 };
 
-export type OtherPartyCannotBeThisStoreError = InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
+export type OtherPartyCannotBeThisStoreError = InsertErrorInterface & UpdateErrorInterface & {
   __typename: 'OtherPartyCannotBeThisStoreError';
   description: Scalars['String'];
 };
 
-export type OtherPartyNotACustomerError = InsertOutboundShipmentErrorInterface & UpdateOutboundShipmentErrorInterface & {
+export type OtherPartyNotACustomerError = InsertErrorInterface & UpdateErrorInterface & {
   __typename: 'OtherPartyNotACustomerError';
   description: Scalars['String'];
   otherParty: NameNode;
@@ -1665,12 +1623,6 @@ export type OutboundInvoiceCounts = {
   created: InvoiceCountsSummary;
   /** Number of outbound shipments ready to be picked */
   toBePicked: Scalars['Int'];
-};
-
-export type PaginationError = ConnectorErrorInterface & {
-  __typename: 'PaginationError';
-  description: Scalars['String'];
-  rangeError: RangeError;
 };
 
 /**
@@ -1849,7 +1801,7 @@ export enum RangeField {
   PackSize = 'packSize'
 }
 
-export type RecordAlreadyExist = InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
+export type RecordAlreadyExist = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String'];
 };
@@ -1864,7 +1816,7 @@ export type RecordDoesNotExist = AddFromMasterListErrorInterface & CreateRequisi
   description: Scalars['String'];
 };
 
-export type RecordNotFound = DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type RecordNotFound = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & NodeErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -1875,7 +1827,6 @@ export type RefreshToken = {
   token: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
 export type RefreshTokenError = {
   __typename: 'RefreshTokenError';
   error: RefreshTokenErrorInterface;
@@ -2053,7 +2004,6 @@ export type StockLineAlreadyExistsInInvoice = InsertOutboundShipmentLineErrorInt
   line: InvoiceLineResponse;
 };
 
-/** Generic Connector */
 export type StockLineConnector = {
   __typename: 'StockLineConnector';
   nodes: Array<StockLineNode>;
@@ -2078,7 +2028,7 @@ export type StockLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   itemId: Scalars['String'];
-  location?: Maybe<LocationResponse>;
+  location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']>;
   locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
@@ -2090,8 +2040,6 @@ export type StockLineNode = {
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
-
-export type StockLinesResponse = ConnectorError | StockLineConnector;
 
 export type StocktakeConnector = {
   __typename: 'StocktakeConnector';
@@ -2121,7 +2069,7 @@ export type StocktakeLineNode = {
   countedNumberOfPacks?: Maybe<Scalars['Int']>;
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
-  item?: Maybe<ItemNode>;
+  item: ItemNode;
   itemId: Scalars['String'];
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']>;
@@ -2235,7 +2183,10 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   field: UniqueValueKey;
 };
 
-/** Generic Error Wrapper */
+export type UpdateErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';
   error: UpdateInboundShipmentErrorInterface;
@@ -2255,7 +2206,6 @@ export type UpdateInboundShipmentInput = {
   theirReference?: InputMaybe<Scalars['String']>;
 };
 
-/** Generic Error Wrapper */
 export type UpdateInboundShipmentLineError = {
   __typename: 'UpdateInboundShipmentLineError';
   error: UpdateInboundShipmentLineErrorInterface;
@@ -2317,14 +2267,9 @@ export type UpdateLocationInput = {
 
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;
 
-/** Generic Error Wrapper */
 export type UpdateOutboundShipmentError = {
   __typename: 'UpdateOutboundShipmentError';
-  error: UpdateOutboundShipmentErrorInterface;
-};
-
-export type UpdateOutboundShipmentErrorInterface = {
-  description: Scalars['String'];
+  error: UpdateErrorInterface;
 };
 
 export type UpdateOutboundShipmentInput = {
@@ -2347,7 +2292,6 @@ export type UpdateOutboundShipmentInput = {
   theirReference?: InputMaybe<Scalars['String']>;
 };
 
-/** Generic Error Wrapper */
 export type UpdateOutboundShipmentLineError = {
   __typename: 'UpdateOutboundShipmentLineError';
   error: UpdateOutboundShipmentLineErrorInterface;
@@ -2384,7 +2328,6 @@ export type UpdateOutboundShipmentResponseWithId = {
   response: UpdateOutboundShipmentResponse;
 };
 
-/** Generic Error Wrapper */
 export type UpdateOutboundShipmentServiceLineError = {
   __typename: 'UpdateOutboundShipmentServiceLineError';
   error: UpdateOutboundShipmentServiceLineErrorInterface;
@@ -2595,7 +2538,6 @@ export type UserNameDoesNotExist = AuthTokenErrorInterface & {
   description: Scalars['String'];
 };
 
-/** Generic Error Wrapper */
 export type UserRegisterError = {
   __typename: 'UserRegisterError';
   error: UserRegisterErrorInterface;

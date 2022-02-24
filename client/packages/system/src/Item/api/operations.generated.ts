@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
-export type ItemFragment = { __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } };
+export type ItemFragment = { __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -18,7 +18,7 @@ export type ItemsWithStockLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
+export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } }> } };
 
 export type ItemsListViewQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -29,7 +29,7 @@ export type ItemsListViewQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsListViewQuery = { __typename: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }> } };
+export type ItemsListViewQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }> } };
 
 export const ItemRowFragmentDoc = gql`
     fragment ItemRow on ItemNode {
@@ -43,55 +43,37 @@ export const ItemRowFragmentDoc = gql`
 export const ItemFragmentDoc = gql`
     fragment Item on ItemNode {
   __typename
-  availableBatches(storeId: $storeId) {
-    __typename
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
-    ... on StockLineConnector {
-      __typename
-      nodes {
-        __typename
-        availableNumberOfPacks
-        batch
-        costPricePerPack
-        expiryDate
-        id
-        itemId
-        packSize
-        sellPricePerPack
-        totalNumberOfPacks
-        onHold
-        note
-        storeId
-        locationName
-      }
-      totalCount
-    }
-  }
   code
   id
   isVisible
   name
   unitName
+  availableBatches(storeId: $storeId) {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      availableNumberOfPacks
+      batch
+      costPricePerPack
+      expiryDate
+      id
+      itemId
+      packSize
+      sellPricePerPack
+      totalNumberOfPacks
+      onHold
+      note
+      storeId
+      locationName
+    }
+  }
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
 }
     `;
 export const ItemsWithStockLinesDocument = gql`
@@ -101,27 +83,6 @@ export const ItemsWithStockLinesDocument = gql`
     sort: {key: $key, desc: $desc}
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on ItemConnector {
       __typename
       nodes {
@@ -139,27 +100,6 @@ export const ItemsListViewDocument = gql`
     sort: {key: $key, desc: $desc}
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on ItemConnector {
       __typename
       nodes {

@@ -8,55 +8,37 @@ fragment ItemRow on ItemNode {
 
 fragment Item on ItemNode {
   __typename
-  availableBatches(storeId: $storeId) {
-    __typename
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
-    ... on StockLineConnector {
-      __typename
-      nodes {
-        __typename
-        availableNumberOfPacks
-        batch
-        costPricePerPack
-        expiryDate
-        id
-        itemId
-        packSize
-        sellPricePerPack
-        totalNumberOfPacks
-        onHold
-        note
-        storeId
-        locationName
-      }
-      totalCount
-    }
-  }
   code
   id
   isVisible
   name
   unitName
+  availableBatches(storeId: $storeId) {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      availableNumberOfPacks
+      batch
+      costPricePerPack
+      expiryDate
+      id
+      itemId
+      packSize
+      sellPricePerPack
+      totalNumberOfPacks
+      onHold
+      note
+      storeId
+      locationName
+    }
+  }
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
 }
 
 query itemsWithStockLines(
@@ -72,27 +54,6 @@ query itemsWithStockLines(
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on ItemConnector {
       __typename
       nodes {
@@ -115,27 +76,6 @@ query itemsListView(
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on ItemConnector {
       __typename
       nodes {

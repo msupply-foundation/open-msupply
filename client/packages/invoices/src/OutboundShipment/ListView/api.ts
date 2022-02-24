@@ -3,32 +3,12 @@ import {
   SortBy,
   ListApi,
   InvoiceSortFieldInput,
-  InvoicePriceResponse,
 } from '@openmsupply-client/common';
 import { OutboundShipmentApi } from '../api';
 import {
-  InvoicesQuery,
   InvoicesQueryVariables,
   OutboundShipmentRowFragment,
 } from '../api/operations.generated';
-
-const pricingGuard = (pricing: InvoicePriceResponse) => {
-  if (pricing.__typename === 'InvoicePricingNode') {
-    return pricing;
-  } else if (pricing.__typename === 'NodeError') {
-    throw new Error(pricing.error.description);
-  } else {
-    throw new Error('Unknown');
-  }
-};
-
-const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
-  if (invoicesQuery.invoices.__typename === 'InvoiceConnector') {
-    return invoicesQuery.invoices;
-  }
-
-  throw new Error(invoicesQuery.invoices.error.description);
-};
 
 export const onCreate =
   (api: OutboundShipmentApi, storeId: string) =>
@@ -70,27 +50,16 @@ export const onRead =
     queryParams: InvoicesQueryVariables
   ): Promise<{ nodes: OutboundShipmentRowFragment[]; totalCount: number }> => {
     const result = await api.invoices(queryParams);
-
-    const invoices = invoicesGuard(result);
-
-    const nodes = invoices.nodes.map(invoice => ({
-      ...invoice,
-      pricing: pricingGuard(invoice.pricing),
-    }));
-
-    return { nodes, totalCount: invoices.totalCount };
+    return result.invoices;
   };
 
 export const onUpdate =
-  (
-    api: OutboundShipmentApi // storeId: string
-  ) =>
+  (api: OutboundShipmentApi) =>
   async (
     patch: Partial<OutboundShipmentRowFragment> & { id: string }
   ): Promise<string> => {
     const result = await api.updateOutboundShipment({
       input: invoiceToInput(patch),
-      // storeId,
     });
 
     const { updateOutboundShipment } = result;
@@ -115,9 +84,6 @@ const getSortKey = (
   sortBy: SortBy<OutboundShipmentRowFragment>
 ): InvoiceSortFieldInput => {
   switch (sortBy.key) {
-    // case 'allocatedDatetime': {
-    //   return InvoiceSortFieldInput.ConfirmDatetime;
-    // }
     case 'createdDatetime': {
       return InvoiceSortFieldInput.CreatedDatetime;
     }
@@ -128,12 +94,7 @@ const getSortKey = (
     case 'invoiceNumber': {
       return InvoiceSortFieldInput.InvoiceNumber;
     }
-    // case 'otherPartyName': {
-    //   return InvoiceSortFieldInput.OtherPartyName;
-    // }
-    // case 'totalAfterTax': {
-    //   return InvoiceSortFieldInput.TotalAfterTax;
-    // }
+
     case 'status':
     default: {
       return InvoiceSortFieldInput.Status;

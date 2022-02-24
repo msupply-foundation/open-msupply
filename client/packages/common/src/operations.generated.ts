@@ -14,7 +14,7 @@ export type ItemsWithStockLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
+export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
 
 export type NamesQueryVariables = Types.Exact<{
   key: Types.NameSortFieldInput;
@@ -25,7 +25,7 @@ export type NamesQueryVariables = Types.Exact<{
 }>;
 
 
-export type NamesQuery = { __typename: 'Queries', names: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+export type NamesQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
 export type StockCountsQueryVariables = Types.Exact<{
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -40,10 +40,11 @@ export type LocationsQueryVariables = Types.Exact<{
 }>;
 
 
-export type LocationsQuery = { __typename: 'Queries', locations: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
+export type LocationsQuery = { __typename: 'Queries', locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
 
 export type InsertLocationMutationVariables = Types.Exact<{
   input: Types.InsertLocationInput;
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -51,6 +52,7 @@ export type InsertLocationMutation = { __typename: 'Mutations', insertLocation: 
 
 export type UpdateLocationMutationVariables = Types.Exact<{
   input: Types.UpdateLocationInput;
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -87,10 +89,11 @@ export type MasterListsQueryVariables = Types.Exact<{
   key: Types.MasterListSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.MasterListFilterInput>;
+  storeId: Types.Scalars['String'];
 }>;
 
 
-export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', field: Types.RangeField, min?: number | null, max?: number | null, description: string } } } | { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListLineNode', id: string, itemId: string, item: { __typename: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, min?: number | null, max?: number | null, field: Types.RangeField } } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
+export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListLineNode', id: string, itemId: string, item: { __typename: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
 
 
 export const ItemsWithStockLinesDocument = gql`
@@ -100,82 +103,38 @@ export const ItemsWithStockLinesDocument = gql`
     sort: {key: $key, desc: $desc}
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
+    __typename
     ... on ItemConnector {
       __typename
+      totalCount
       nodes {
         __typename
-        availableBatches(storeId: $storeId) {
-          __typename
-          ... on ConnectorError {
-            __typename
-            error {
-              description
-              ... on DatabaseError {
-                __typename
-                description
-                fullError
-              }
-              ... on PaginationError {
-                __typename
-                description
-                rangeError {
-                  description
-                  field
-                  max
-                  min
-                }
-              }
-            }
-          }
-          ... on StockLineConnector {
-            __typename
-            nodes {
-              __typename
-              availableNumberOfPacks
-              batch
-              costPricePerPack
-              expiryDate
-              id
-              itemId
-              packSize
-              sellPricePerPack
-              totalNumberOfPacks
-              onHold
-              note
-              storeId
-              locationName
-            }
-            totalCount
-          }
-        }
         code
         id
         isVisible
         name
         unitName
+        availableBatches(storeId: $storeId) {
+          __typename
+          totalCount
+          nodes {
+            __typename
+            availableNumberOfPacks
+            batch
+            costPricePerPack
+            expiryDate
+            id
+            itemId
+            packSize
+            sellPricePerPack
+            totalNumberOfPacks
+            onHold
+            note
+            storeId
+            locationName
+          }
+        }
       }
-      totalCount
     }
   }
 }
@@ -187,27 +146,6 @@ export const NamesDocument = gql`
     sort: {key: $key, desc: $desc}
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        description
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on NameConnector {
       __typename
       nodes {
@@ -240,6 +178,7 @@ export const LocationsDocument = gql`
     __typename
     ... on LocationConnector {
       __typename
+      totalCount
       nodes {
         __typename
         id
@@ -247,35 +186,13 @@ export const LocationsDocument = gql`
         onHold
         code
       }
-      totalCount
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
     }
   }
 }
     `;
 export const InsertLocationDocument = gql`
-    mutation insertLocation($input: InsertLocationInput!) {
-  insertLocation(input: $input) {
+    mutation insertLocation($input: InsertLocationInput!, $storeId: String!) {
+  insertLocation(input: $input, storeId: $storeId) {
     ... on InsertLocationError {
       __typename
       error {
@@ -311,8 +228,8 @@ export const InsertLocationDocument = gql`
 }
     `;
 export const UpdateLocationDocument = gql`
-    mutation updateLocation($input: UpdateLocationInput!) {
-  updateLocation(input: $input) {
+    mutation updateLocation($input: UpdateLocationInput!, $storeId: String!) {
+  updateLocation(input: $input, storeId: $storeId) {
     ... on UpdateLocationError {
       __typename
       error {
@@ -410,11 +327,11 @@ export const StoresDocument = gql`
   stores(page: {first: $first, offset: $offset}, filter: $filter) {
     ... on StoreConnector {
       __typename
+      totalCount
       nodes {
         code
         id
       }
-      totalCount
     }
   }
 }
@@ -454,7 +371,7 @@ export const AuthTokenDocument = gql`
 }
     `;
 export const MasterListsDocument = gql`
-    query masterLists($first: Int, $offset: Int, $key: MasterListSortFieldInput!, $desc: Boolean, $filter: MasterListFilterInput) {
+    query masterLists($first: Int, $offset: Int, $key: MasterListSortFieldInput!, $desc: Boolean, $filter: MasterListFilterInput, $storeId: String!) {
   masterLists(
     filter: $filter
     page: {first: $first, offset: $offset}
@@ -462,10 +379,15 @@ export const MasterListsDocument = gql`
   ) {
     ... on MasterListConnector {
       __typename
+      totalCount
       nodes {
         name
         code
+        description
+        id
         lines {
+          __typename
+          totalCount
           nodes {
             id
             itemId
@@ -475,76 +397,27 @@ export const MasterListsDocument = gql`
               unitName
               name
               isVisible
-              availableBatches {
-                ... on ConnectorError {
+              availableBatches(storeId: $storeId) {
+                __typename
+                totalCount
+                nodes {
                   __typename
-                  error {
-                    ... on PaginationError {
-                      __typename
-                      description
-                      rangeError {
-                        description
-                        min
-                        max
-                        field
-                      }
-                    }
-                    ... on DatabaseError {
-                      __typename
-                      description
-                      fullError
-                    }
-                    description
-                  }
-                }
-                ... on StockLineConnector {
-                  __typename
-                  nodes {
-                    __typename
-                    availableNumberOfPacks
-                    batch
-                    costPricePerPack
-                    expiryDate
-                    itemId
-                    id
-                    totalNumberOfPacks
-                    storeId
-                    sellPricePerPack
-                    packSize
-                    onHold
-                    note
-                    locationName
-                  }
-                  totalCount
+                  availableNumberOfPacks
+                  batch
+                  costPricePerPack
+                  expiryDate
+                  itemId
+                  id
+                  totalNumberOfPacks
+                  storeId
+                  sellPricePerPack
+                  packSize
+                  onHold
+                  note
+                  locationName
                 }
               }
             }
-          }
-          totalCount
-        }
-        code
-        description
-        id
-      }
-      totalCount
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            field
-            min
-            max
-            description
           }
         }
       }
@@ -667,7 +540,7 @@ export const mockLocationsQuery = (resolver: ResponseResolver<GraphQLRequest<Loc
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInsertLocationMutation((req, res, ctx) => {
- *   const { input } = req.variables;
+ *   const { input, storeId } = req.variables;
  *   return res(
  *     ctx.data({ insertLocation })
  *   )
@@ -684,7 +557,7 @@ export const mockInsertLocationMutation = (resolver: ResponseResolver<GraphQLReq
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockUpdateLocationMutation((req, res, ctx) => {
- *   const { input } = req.variables;
+ *   const { input, storeId } = req.variables;
  *   return res(
  *     ctx.data({ updateLocation })
  *   )
@@ -752,7 +625,7 @@ export const mockAuthTokenQuery = (resolver: ResponseResolver<GraphQLRequest<Aut
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockMasterListsQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter } = req.variables;
+ *   const { first, offset, key, desc, filter, storeId } = req.variables;
  *   return res(
  *     ctx.data({ masterLists })
  *   )

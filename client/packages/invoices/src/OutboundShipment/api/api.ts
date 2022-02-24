@@ -5,43 +5,13 @@ import {
   UpdateOutboundShipmentInput,
   InvoiceNodeStatus,
   UpdateOutboundShipmentStatusInput,
-  NameResponse,
-  InvoicePriceResponse,
-  InvoiceLineConnector,
-  ConnectorError,
-  StockLineResponse,
-  StockLineNode,
-  LocationResponse,
-  ItemNode,
-  ItemResponse,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
-import { Location } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
 import { getSdk, InvoiceQuery } from './operations.generated';
 
 export type OutboundShipmentApi = ReturnType<typeof getSdk>;
-
-const otherPartyGuard = (otherParty: NameResponse) => {
-  if (otherParty.__typename === 'NameNode') {
-    return otherParty;
-  } else if (otherParty.__typename === 'NodeError') {
-    throw new Error(otherParty.error.description);
-  }
-
-  throw new Error('Unknown');
-};
-
-export const pricingGuard = (pricing: InvoicePriceResponse) => {
-  if (pricing.__typename === 'InvoicePricingNode') {
-    return pricing;
-  } else if (pricing.__typename === 'NodeError') {
-    throw new Error(pricing.error.description);
-  } else {
-    throw new Error('Unknown');
-  }
-};
 
 const invoiceGuard = (invoiceQuery: InvoiceQuery) => {
   if (invoiceQuery.invoice.__typename === 'InvoiceNode') {
@@ -49,42 +19,6 @@ const invoiceGuard = (invoiceQuery: InvoiceQuery) => {
   }
 
   throw new Error(invoiceQuery.invoice.error.description);
-};
-
-const linesGuard = (invoiceLines: InvoiceLineConnector | ConnectorError) => {
-  if (invoiceLines.__typename === 'InvoiceLineConnector') {
-    return invoiceLines.nodes;
-  }
-
-  if (invoiceLines.__typename === 'ConnectorError') {
-    throw new Error(invoiceLines.error.description);
-  }
-
-  throw new Error('Unknown');
-};
-
-const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
-  if (stockLine.__typename === 'StockLineNode') {
-    return stockLine;
-  }
-
-  throw new Error('Unknown');
-};
-
-const locationGuard = (location: LocationResponse): Location => {
-  if (location.__typename === 'LocationNode') {
-    return location;
-  }
-
-  throw new Error('Unknown');
-};
-
-const itemGuard = (item: ItemResponse): ItemNode => {
-  if (item.__typename === 'ItemNode') {
-    return item;
-  }
-
-  throw new Error('Unknown');
 };
 
 const getPatchStatus = (patch: RecordPatch<Invoice>) => {
@@ -151,34 +85,19 @@ export const OutboundApi = {
         const result = await api.invoice({ id, storeId });
 
         const invoice = invoiceGuard(result);
-        // TODO:
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const lineNodes = linesGuard(invoice.lines);
-        const lines: InvoiceLine[] = lineNodes.map(line => {
-          const stockLine = line.stockLine
-            ? stockLineGuard(line.stockLine)
-            : undefined;
-          const location = line.location
-            ? locationGuard(line.location)
-            : undefined;
-          const item = line.item ? itemGuard(line.item) : undefined;
-
+        const lineNodes = invoice.lines;
+        const lines: InvoiceLine[] = lineNodes.nodes.map(line => {
           return {
             ...line,
-            stockLine,
-            location,
-            stockLineId: stockLine?.id ?? '',
+            stockLineId: line.stockLine?.id ?? '',
             invoiceId: invoice.id,
-            unitName: item?.unitName ?? '',
+            unitName: line.item?.unitName ?? '',
           };
         });
 
         return {
           ...invoice,
           lines,
-          pricing: pricingGuard(invoice.pricing),
-          otherParty: otherPartyGuard(invoice.otherParty),
         };
       },
   },

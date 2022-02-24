@@ -17,7 +17,7 @@ import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getOutboundShipmentListViewApi } from './api';
-import { pricingGuard, useOutboundShipmentApi } from '../api';
+import { useOutboundShipmentApi } from '../api';
 import { OutboundShipmentRowFragment } from '../api/operations.generated';
 
 export const OutboundShipmentListViewComponent: FC = () => {
@@ -66,8 +66,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       [
         'totalAfterTax',
         {
-          accessor: ({ rowData }) =>
-            pricingGuard(rowData.pricing).totalAfterTax,
+          accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
         },
       ],
       'selection',

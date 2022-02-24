@@ -21,7 +21,11 @@ const toItem = (fragment: ItemRowFragment | null): Item | null => {
     code: fragment.code,
     unitName: fragment.unitName ?? '',
     isVisible: true,
-    availableBatches: [],
+    availableBatches: {
+      __typename: 'StockLineConnector',
+      nodes: [],
+      totalCount: 0,
+    },
     availableQuantity: 0,
     stats: {
       __typename: 'ItemStatsNode',

@@ -11,84 +11,38 @@ query itemsWithStockLines(
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
+    __typename
     ... on ItemConnector {
       __typename
+      totalCount
       nodes {
         __typename
-        # availableQuantity
-
-        availableBatches(storeId: $storeId) {
-          __typename
-          ... on ConnectorError {
-            __typename
-            error {
-              description
-              ... on DatabaseError {
-                __typename
-                description
-                fullError
-              }
-              ... on PaginationError {
-                __typename
-                description
-                rangeError {
-                  description
-                  field
-                  max
-                  min
-                }
-              }
-            }
-          }
-          ... on StockLineConnector {
-            __typename
-            nodes {
-              __typename
-              availableNumberOfPacks
-              batch
-              costPricePerPack
-              expiryDate
-              id
-              itemId
-              packSize
-              sellPricePerPack
-              totalNumberOfPacks
-              onHold
-              note
-              storeId
-              locationName
-            }
-            totalCount
-          }
-        }
         code
         id
         isVisible
         name
         unitName
+        availableBatches(storeId: $storeId) {
+          __typename
+          totalCount
+          nodes {
+            __typename
+            availableNumberOfPacks
+            batch
+            costPricePerPack
+            expiryDate
+            id
+            itemId
+            packSize
+            sellPricePerPack
+            totalNumberOfPacks
+            onHold
+            note
+            storeId
+            locationName
+          }
+        }
       }
-      totalCount
     }
   }
 }
@@ -105,27 +59,6 @@ query names(
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        description
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on NameConnector {
       __typename
       nodes {
@@ -159,6 +92,7 @@ query locations($sort: [LocationSortInput!]) {
     __typename
     ... on LocationConnector {
       __typename
+      totalCount
       nodes {
         __typename
         id
@@ -166,34 +100,12 @@ query locations($sort: [LocationSortInput!]) {
         onHold
         code
       }
-      totalCount
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
     }
   }
 }
 
-mutation insertLocation($input: InsertLocationInput!) {
-  insertLocation(input: $input) {
+mutation insertLocation($input: InsertLocationInput!, $storeId: String!) {
+  insertLocation(input: $input, storeId: $storeId) {
     ... on InsertLocationError {
       __typename
       error {
@@ -228,8 +140,8 @@ mutation insertLocation($input: InsertLocationInput!) {
   }
 }
 
-mutation updateLocation($input: UpdateLocationInput!) {
-  updateLocation(input: $input) {
+mutation updateLocation($input: UpdateLocationInput!, $storeId: String!) {
+  updateLocation(input: $input, storeId: $storeId) {
     ... on UpdateLocationError {
       __typename
       error {
@@ -325,11 +237,11 @@ query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
   stores(page: { first: $first, offset: $offset }, filter: $filter) {
     ... on StoreConnector {
       __typename
+      totalCount
       nodes {
         code
         id
       }
-      totalCount
     }
   }
 }
@@ -373,6 +285,7 @@ query masterLists(
   $key: MasterListSortFieldInput!
   $desc: Boolean
   $filter: MasterListFilterInput
+  $storeId: String!
 ) {
   masterLists(
     filter: $filter
@@ -381,10 +294,15 @@ query masterLists(
   ) {
     ... on MasterListConnector {
       __typename
+      totalCount
       nodes {
         name
         code
+        description
+        id
         lines {
+          __typename
+          totalCount
           nodes {
             id
             itemId
@@ -394,76 +312,27 @@ query masterLists(
               unitName
               name
               isVisible
-              availableBatches {
-                ... on ConnectorError {
+              availableBatches(storeId: $storeId) {
+                __typename
+                totalCount
+                nodes {
                   __typename
-                  error {
-                    ... on PaginationError {
-                      __typename
-                      description
-                      rangeError {
-                        description
-                        min
-                        max
-                        field
-                      }
-                    }
-                    ... on DatabaseError {
-                      __typename
-                      description
-                      fullError
-                    }
-                    description
-                  }
-                }
-                ... on StockLineConnector {
-                  __typename
-                  nodes {
-                    __typename
-                    availableNumberOfPacks
-                    batch
-                    costPricePerPack
-                    expiryDate
-                    itemId
-                    id
-                    totalNumberOfPacks
-                    storeId
-                    sellPricePerPack
-                    packSize
-                    onHold
-                    note
-                    locationName
-                  }
-                  totalCount
+                  availableNumberOfPacks
+                  batch
+                  costPricePerPack
+                  expiryDate
+                  itemId
+                  id
+                  totalNumberOfPacks
+                  storeId
+                  sellPricePerPack
+                  packSize
+                  onHold
+                  note
+                  locationName
                 }
               }
             }
-          }
-          totalCount
-        }
-        code
-        description
-        id
-      }
-      totalCount
-    }
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            field
-            min
-            max
-            description
           }
         }
       }

@@ -4,6 +4,12 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+export type InboundShipmentFragment = { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, status: Types.InvoiceNodeStatus, theirReference?: string | null, type: Types.InvoiceNodeType, otherPartyId: string, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, locationName?: string | null, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableMonthsOfStockOnHand: number, availableStockOnHand: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, expiryDate?: string | null }> } }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } };
+
+export type InboundShipmentRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } };
+
+export type InboundShipmentLineFragment = { __typename: 'InvoiceLineNode', type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, locationName?: string | null, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableMonthsOfStockOnHand: number, availableStockOnHand: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, expiryDate?: string | null }> } }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null };
+
 export type InvoicesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -14,7 +20,7 @@ export type InvoicesQueryVariables = Types.Exact<{
 }>;
 
 
-export type InvoicesQuery = { __typename: 'Queries', invoices: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string, rangeError: { __typename: 'RangeError', description: string, field: Types.RangeField, max?: number | null, min?: number | null } } } | { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> } };
+export type InvoicesQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } }> } };
 
 export type InvoiceQueryVariables = Types.Exact<{
   id: Types.Scalars['String'];
@@ -22,7 +28,7 @@ export type InvoiceQueryVariables = Types.Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, type: Types.InvoiceNodeType, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } }, lines: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, locationName?: string | null, sellPricePerPack: number, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | null, item: { __typename: 'ItemError', error: { __typename: 'InternalError', description: string, fullError: string } } | { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null, stats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, availableBatches: { __typename: 'ConnectorError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'PaginationError', description: string } } | { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, expiryDate?: string | null }> } }, stockLine?: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, status: Types.InvoiceNodeStatus, theirReference?: string | null, type: Types.InvoiceNodeType, otherPartyId: string, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, locationName?: string | null, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableMonthsOfStockOnHand: number, availableStockOnHand: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, expiryDate?: string | null }> } }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type UpdateInboundShipmentMutationVariables = Types.Exact<{
   input: Types.UpdateInboundShipmentInput;
@@ -71,7 +77,166 @@ export type InvoiceCountsQueryVariables = Types.Exact<{
 
 export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', inbound: { __typename: 'InboundInvoiceCounts', created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
-
+export const InboundShipmentLineFragmentDoc = gql`
+    fragment InboundShipmentLine on InvoiceLineNode {
+  __typename
+  type
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemCode
+  itemId
+  itemName
+  numberOfPacks
+  packSize
+  note
+  invoiceId
+  locationName
+  sellPricePerPack
+  item {
+    __typename
+    id
+    name
+    code
+    isVisible
+    unitName
+    stats(storeId: $storeId) {
+      __typename
+      averageMonthlyConsumption
+      availableMonthsOfStockOnHand
+      availableStockOnHand
+    }
+    availableBatches(storeId: $storeId) {
+      __typename
+      totalCount
+      nodes {
+        id
+        availableNumberOfPacks
+        costPricePerPack
+        itemId
+        onHold
+        packSize
+        sellPricePerPack
+        storeId
+        totalNumberOfPacks
+        expiryDate
+      }
+    }
+  }
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+    stock {
+      __typename
+      totalCount
+      nodes {
+        id
+        costPricePerPack
+        itemId
+        availableNumberOfPacks
+        onHold
+        packSize
+        sellPricePerPack
+        storeId
+        totalNumberOfPacks
+      }
+    }
+  }
+  stockLine {
+    __typename
+    availableNumberOfPacks
+    batch
+    costPricePerPack
+    expiryDate
+    id
+    itemId
+    packSize
+    sellPricePerPack
+    storeId
+    totalNumberOfPacks
+    onHold
+    note
+  }
+}
+    `;
+export const InboundShipmentFragmentDoc = gql`
+    fragment InboundShipment on InvoiceNode {
+  __typename
+  id
+  comment
+  createdDatetime
+  allocatedDatetime
+  deliveredDatetime
+  pickedDatetime
+  shippedDatetime
+  verifiedDatetime
+  invoiceNumber
+  colour
+  onHold
+  status
+  theirReference
+  type
+  otherPartyId
+  otherPartyName
+  lines {
+    __typename
+    totalCount
+    nodes {
+      ...InboundShipmentLine
+    }
+  }
+  otherParty {
+    __typename
+    id
+    name
+    code
+    isCustomer
+    isSupplier
+  }
+  pricing {
+    __typename
+    totalAfterTax
+    totalBeforeTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalAfterTax
+    serviceTotalBeforeTax
+  }
+}
+    ${InboundShipmentLineFragmentDoc}`;
+export const InboundShipmentRowFragmentDoc = gql`
+    fragment InboundShipmentRow on InvoiceNode {
+  __typename
+  comment
+  createdDatetime
+  allocatedDatetime
+  deliveredDatetime
+  pickedDatetime
+  shippedDatetime
+  verifiedDatetime
+  id
+  invoiceNumber
+  otherPartyId
+  otherPartyName
+  theirReference
+  type
+  status
+  colour
+  pricing {
+    __typename
+    totalAfterTax
+    totalBeforeTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalAfterTax
+    serviceTotalBeforeTax
+  }
+}
+    `;
 export const InvoicesDocument = gql`
     query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
@@ -80,342 +245,40 @@ export const InvoicesDocument = gql`
     filter: $filter
     storeId: $storeId
   ) {
-    ... on ConnectorError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on PaginationError {
-          __typename
-          description
-          rangeError {
-            description
-            field
-            max
-            min
-          }
-        }
-      }
-    }
     ... on InvoiceConnector {
       __typename
-      nodes {
-        comment
-        createdDatetime
-        allocatedDatetime
-        deliveredDatetime
-        pickedDatetime
-        shippedDatetime
-        verifiedDatetime
-        id
-        invoiceNumber
-        otherPartyId
-        otherPartyName
-        theirReference
-        type
-        status
-        colour
-        pricing {
-          __typename
-          ... on NodeError {
-            __typename
-            error {
-              ... on RecordNotFound {
-                __typename
-                description
-              }
-              ... on DatabaseError {
-                __typename
-                description
-                fullError
-              }
-              description
-            }
-          }
-          ... on InvoicePricingNode {
-            __typename
-            totalAfterTax
-            totalBeforeTax
-            stockTotalBeforeTax
-            stockTotalAfterTax
-            serviceTotalAfterTax
-            serviceTotalBeforeTax
-          }
-        }
-      }
       totalCount
+      nodes {
+        ...InboundShipmentRow
+      }
     }
   }
 }
-    `;
+    ${InboundShipmentRowFragmentDoc}`;
 export const InvoiceDocument = gql`
     query invoice($id: String!, $storeId: String!) {
   invoice(id: $id, storeId: $storeId) {
-    __typename
+    ... on InvoiceNode {
+      ...InboundShipment
+    }
     ... on NodeError {
       __typename
       error {
         description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
         ... on DatabaseError {
           __typename
           description
           fullError
         }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
       }
-    }
-    ... on InvoiceNode {
-      __typename
-      id
-      comment
-      createdDatetime
-      allocatedDatetime
-      deliveredDatetime
-      pickedDatetime
-      shippedDatetime
-      verifiedDatetime
-      invoiceNumber
-      colour
-      onHold
-      otherParty {
-        __typename
-        ... on NameNode {
-          __typename
-          id
-          name
-          code
-          isCustomer
-          isSupplier
-        }
-        ... on NodeError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-          }
-        }
-      }
-      lines {
-        ... on ConnectorError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-          }
-        }
-        ... on InvoiceLineConnector {
-          __typename
-          nodes {
-            __typename
-            type
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemCode
-            itemId
-            itemName
-            numberOfPacks
-            packSize
-            note
-            invoiceId
-            location {
-              __typename
-              ... on LocationNode {
-                __typename
-                id
-                name
-                code
-                onHold
-                stock {
-                  __typename
-                  ... on ConnectorError {
-                    __typename
-                    error {
-                      description
-                      ... on DatabaseError {
-                        __typename
-                        description
-                        fullError
-                      }
-                    }
-                  }
-                  ... on StockLineConnector {
-                    __typename
-                    totalCount
-                    nodes {
-                      id
-                      costPricePerPack
-                      itemId
-                      availableNumberOfPacks
-                      onHold
-                      packSize
-                      sellPricePerPack
-                      storeId
-                      totalNumberOfPacks
-                    }
-                  }
-                }
-              }
-              ... on NodeError {
-                __typename
-                error {
-                  description
-                  ... on DatabaseError {
-                    __typename
-                    description
-                    fullError
-                  }
-                  ... on RecordNotFound {
-                    __typename
-                    description
-                  }
-                }
-              }
-            }
-            item {
-              ... on ItemNode {
-                __typename
-                id
-                name
-                code
-                isVisible
-                unitName
-                stats {
-                  __typename
-                  availableStockOnHand
-                  availableMonthsOfStockOnHand
-                  averageMonthlyConsumption
-                }
-                availableBatches(storeId: $storeId) {
-                  ... on StockLineConnector {
-                    totalCount
-                    nodes {
-                      id
-                      availableNumberOfPacks
-                      costPricePerPack
-                      itemId
-                      onHold
-                      packSize
-                      sellPricePerPack
-                      storeId
-                      totalNumberOfPacks
-                      expiryDate
-                    }
-                  }
-                  ... on ConnectorError {
-                    __typename
-                    error {
-                      description
-                    }
-                  }
-                }
-              }
-              ... on ItemError {
-                __typename
-                error {
-                  ... on InternalError {
-                    __typename
-                    description
-                    fullError
-                  }
-                }
-              }
-            }
-            locationName
-            sellPricePerPack
-            stockLine {
-              __typename
-              ... on NodeError {
-                __typename
-                error {
-                  description
-                  ... on DatabaseError {
-                    __typename
-                    description
-                    fullError
-                  }
-                  ... on RecordNotFound {
-                    __typename
-                    description
-                  }
-                }
-              }
-              ... on StockLineNode {
-                __typename
-                availableNumberOfPacks
-                batch
-                costPricePerPack
-                expiryDate
-                id
-                itemId
-                packSize
-                sellPricePerPack
-                storeId
-                totalNumberOfPacks
-                onHold
-                note
-              }
-            }
-          }
-          totalCount
-        }
-      }
-      otherPartyId
-      otherPartyName
-      pricing {
-        __typename
-        ... on NodeError {
-          __typename
-          error {
-            description
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-          }
-        }
-        ... on InvoicePricingNode {
-          __typename
-          totalAfterTax
-          totalBeforeTax
-          stockTotalBeforeTax
-          stockTotalAfterTax
-          serviceTotalAfterTax
-          serviceTotalBeforeTax
-        }
-      }
-      status
-      theirReference
-      type
     }
   }
 }
-    `;
+    ${InboundShipmentFragmentDoc}`;
 export const UpdateInboundShipmentDocument = gql`
     mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
   updateInboundShipment(input: $input) {

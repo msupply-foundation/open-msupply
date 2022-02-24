@@ -1,38 +1,6 @@
-import {
-  ConnectorError,
-  StockLineConnector,
-  ItemSortFieldInput,
-  ItemsWithStockLinesQuery,
-  StockLineNode,
-  ItemNode,
-  Item,
-} from '@openmsupply-client/common';
+import { ItemSortFieldInput, Item } from '@openmsupply-client/common';
 import { ItemLike } from './types';
-
-export const itemsGuard = (
-  itemsQuery: ItemsWithStockLinesQuery
-): { nodes: ItemNode[]; totalCount: number } => {
-  if (itemsQuery.items.__typename === 'ItemConnector') {
-    // TODO:
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    return itemsQuery.items;
-  } else {
-    throw new Error(itemsQuery.items.error.description);
-  }
-};
-
-export const availableBatchesGuard = (
-  availableBatches: StockLineConnector | ConnectorError
-): StockLineNode[] => {
-  if (availableBatches.__typename === 'StockLineConnector') {
-    return availableBatches.nodes;
-  } else if (availableBatches.__typename === 'ConnectorError') {
-    throw new Error(availableBatches.error.description);
-  }
-
-  throw new Error('Unknown');
-};
+import { ItemsWithStockLinesQuery } from './api';
 
 export const getItemSortField = (sortField: string): ItemSortFieldInput => {
   if (sortField === 'name') return ItemSortFieldInput.Name;
@@ -45,13 +13,12 @@ export const mapItemNodes = (
   nodes: Item[];
   totalCount: number;
 } => {
-  const items = itemsGuard(result);
+  const items = result.items;
   const { totalCount } = items;
   const nodes: Item[] = items.nodes.map(item => {
-    const availableBatches = availableBatchesGuard(item.availableBatches);
     return {
       ...item,
-      availableQuantity: availableBatches.reduce(
+      availableQuantity: item.availableBatches.nodes.reduce(
         (sum, batch) =>
           sum +
           (batch.onHold ? 0 : batch.availableNumberOfPacks * batch.packSize),
@@ -59,7 +26,6 @@ export const mapItemNodes = (
       ),
       allocatedQuantity: 0,
       unitName: item.unitName ?? '',
-      availableBatches,
     };
   });
 
@@ -72,7 +38,11 @@ export const toItem = (line: ItemLike): Item => ({
   name: 'lines' in line ? line.lines[0].itemName : line.itemName,
   code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
   isVisible: true,
-  availableBatches: [],
+  availableBatches: {
+    __typename: 'StockLineConnector',
+    nodes: [],
+    totalCount: 0,
+  },
   availableQuantity: 0,
   stats: {
     __typename: 'ItemStatsNode',
