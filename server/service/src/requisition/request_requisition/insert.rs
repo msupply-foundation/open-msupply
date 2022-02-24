@@ -138,6 +138,7 @@ pub fn check_other_party_exists(
 #[cfg(test)]
 mod test_insert {
     use chrono::Utc;
+    use repository::mock::{mock_name_store_join_b, mock_store_b};
     use repository::Name;
     use repository::{
         mock::{
@@ -201,8 +202,8 @@ mod test_insert {
             ),
             Err(ServiceError::OtherPartyNotASupplier(Name {
                 name_row: name_store_b,
-                name_store_join_row: None,
-                store_row: None
+                name_store_join_row: Some(mock_name_store_join_b()),
+                store_row: Some(mock_store_b()),
             }))
         );
 
