@@ -6,9 +6,7 @@ use graphql_core::simple_generic_errors::{
     InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NodeError,
     NotAnInboundShipment, Range, RangeError, RangeField, RecordNotFound,
 };
-use graphql_types::types::{
-    get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse,
-};
+use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
 use repository::StorageConnectionManager;
 use service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError};
 

@@ -1,6 +1,8 @@
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use domain::{invoice_line::InvoiceLine, EqualFilter, Pagination};
-use repository::{InvoiceLineRepository, RepositoryError, StorageConnectionManager, InvoiceLineFilter};
+use repository::{
+    InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StorageConnectionManager,
+};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

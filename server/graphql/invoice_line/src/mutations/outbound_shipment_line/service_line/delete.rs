@@ -6,9 +6,7 @@ use graphql_core::simple_generic_errors::{
     InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NotAnOutboundShipment,
     RecordNotFound,
 };
-use graphql_types::types::{
-    DeleteResponse,
-};
+use graphql_types::types::DeleteResponse;
 use repository::StorageConnectionManager;
 use service::invoice_line::{
     delete_outbound_shipment_service_line, DeleteOutboundShipmentServiceLineError,

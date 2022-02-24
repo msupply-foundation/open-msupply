@@ -6,10 +6,10 @@ use domain::{
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
-    standard_graphql_error::{StandardGraphqlError},
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{NameNode};
+use graphql_types::types::NameNode;
 use service::name::get_names;
 use service::ListResult;
 

@@ -1,8 +1,7 @@
 use domain::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus};
-use graphql_core::{
-    simple_generic_errors::{
-        CannotReverseInvoiceStatus, DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordNotFound,
-    },
+use graphql_core::simple_generic_errors::{
+    CannotReverseInvoiceStatus, DatabaseError, ForeignKey, ForeignKeyError, NodeError,
+    RecordNotFound,
 };
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode, NameNode};
 use repository::StorageConnectionManager;
@@ -14,7 +13,8 @@ use crate::invoice_queries::{get_invoice, InvoiceResponse};
 
 use super::{
     CanOnlyEditInvoicesInLoggedInStoreError, CannotChangeStatusOfInvoiceOnHold,
-    InvoiceIsNotEditable, OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError, NotAnOutboundShipmentError, InvoiceLineHasNoStockLineError,
+    InvoiceIsNotEditable, InvoiceLineHasNoStockLineError, NotAnOutboundShipmentError,
+    OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError,
 };
 
 #[derive(InputObject)]

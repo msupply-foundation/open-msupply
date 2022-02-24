@@ -1,9 +1,6 @@
 use async_graphql::*;
 use chrono::{Duration, FixedOffset, Utc};
-use graphql_core::{
-    standard_graphql_error::{StandardGraphqlError},
-    ContextExt,
-};
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use util::timezone::offset_to_timezone;
 pub struct StockCounts {

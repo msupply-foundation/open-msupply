@@ -1,5 +1,8 @@
 use async_graphql::*;
-use graphql_core::{simple_generic_errors::{NodeError, NodeErrorInterface}, ContextExt};
+use graphql_core::{
+    simple_generic_errors::{NodeError, NodeErrorInterface},
+    ContextExt,
+};
 use graphql_types::types::{InvoiceNode, InvoiceNodeType};
 use repository::StorageConnectionManager;
 use service::invoice::get_invoice as get_invoice_service;

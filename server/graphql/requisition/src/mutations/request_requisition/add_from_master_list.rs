@@ -1,7 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{RecordDoesNotExist, CannotEditRequisition}, standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    simple_generic_errors::{CannotEditRequisition, RecordDoesNotExist},
+    standard_graphql_error::validate_auth,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
 use graphql_types::types::RequisitionLineConnector;
 use service::{

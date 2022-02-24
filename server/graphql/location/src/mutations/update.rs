@@ -2,14 +2,12 @@ use async_graphql::*;
 use domain::location::UpdateLocation;
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, RecordBelongsToAnotherStore,
-        RecordNotFound, UniqueValueViolation, UniqueValueKey,
+        DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound, UniqueValueKey,
+        UniqueValueViolation,
     },
     ContextExt,
 };
-use graphql_types::types::{
-    LocationNode,
-};
+use graphql_types::types::LocationNode;
 use repository::RepositoryError;
 use service::location::update::UpdateLocationError as InError;
 

@@ -1,14 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        RecordDoesNotExist,
-    },
-    standard_graphql_error::StandardGraphqlError,
+    simple_generic_errors::RecordDoesNotExist, standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{
-    InvoiceLineNode,
-};
+use graphql_types::types::InvoiceLineNode;
 use service::invoice_line::{
     UpdateOutboundShipmentUnallocatedLine as ServiceInput,
     UpdateOutboundShipmentUnallocatedLineError as ServiceError,

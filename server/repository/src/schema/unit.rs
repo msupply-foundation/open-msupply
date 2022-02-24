@@ -6,5 +6,5 @@ pub struct UnitRow {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
-    pub index: i32
+    pub index: i32,
 }

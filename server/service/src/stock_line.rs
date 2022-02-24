@@ -1,7 +1,7 @@
 use crate::SingleRecordError;
 use domain::{
     stock_line::{StockLine, StockLineFilter},
-    Pagination, EqualFilter,
+    EqualFilter, Pagination,
 };
 use repository::{StockLineRepository, StorageConnectionManager};
 
