@@ -3,7 +3,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Tooltip,
   ListItemButton,
   Box,
   ListItemProps,
@@ -50,7 +49,7 @@ const StyledListItem = styled<
 export interface AppNavLinkProps {
   end?: boolean; // denotes lowest level menu item, using terminology from useMatch
   icon?: JSX.Element;
-  expandOnHover?: boolean;
+  inactive?: boolean;
   text?: string;
   to: string;
   onClick?: () => void;
@@ -59,8 +58,8 @@ export interface AppNavLinkProps {
 export const AppNavLink: FC<AppNavLinkProps> = props => {
   const {
     end,
+    inactive,
     icon = <span style={{ width: 2 }} />,
-    expandOnHover,
     text,
     to,
     onClick,
@@ -77,10 +76,10 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) =>
-        expandOnHover && !end ? (
+        !end && !!inactive ? (
           <span
             {...linkProps}
-            onClick={onHoverOver}
+            onClick={expandChildren}
             data-testid={`${to}_hover`}
           />
         ) : (
@@ -104,20 +103,20 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     HOVER_DEBOUNCE_TIME
   );
 
+  const expandChildren = () => {
+    drawer.setClicked(to);
+  };
+
   const onHoverOver = () => {
-    if (expandOnHover) {
-      drawer.setHoverActive(to, true);
-      if (!drawer.isOpen) {
-        drawer.open();
-        drawer.setHoverOpen(true);
-      }
+    drawer.setHoverActive(to, true);
+    if (!drawer.isOpen) {
+      drawer.open();
+      drawer.setHoverOpen(true);
     }
   };
 
   const onHoverOut = () => {
-    if (expandOnHover) {
-      debouncedHoverActive(to, false);
-    }
+    debouncedHoverActive(to, false);
   };
 
   React.useEffect(() => {
@@ -130,13 +129,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   }, [drawer.hoverActive]);
 
   return (
-    <Tooltip
-      disableHoverListener={drawer.isOpen && !expandOnHover}
-      title={text || ''}
-      onClose={onHoverOut}
-      onOpen={onHoverOver}
-      PopperProps={expandOnHover ? { style: { display: 'none' } } : {}}
-    >
+    <span onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
       <StyledListItem isSelected={selected} to={to}>
         <ListItemButton
           sx={{
@@ -160,6 +153,6 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           </Box>
         </ListItemButton>
       </StyledListItem>
-    </Tooltip>
+    </span>
   );
 };

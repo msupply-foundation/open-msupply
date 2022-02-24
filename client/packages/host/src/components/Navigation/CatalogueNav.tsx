@@ -22,18 +22,24 @@ export const CatalogueNav: FC = () => {
         end={false}
         to={AppRoute.Catalogue}
         icon={<ListIcon color="primary" />}
-        expandOnHover
         text={t('catalogue')}
+        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Catalogue)
               .addPart(AppRoute.Items)
               .build()}
             text={t('items')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.MasterLists)
+              .build()}
+            text={t('master-lists')}
           />
         </List>
       </Collapse>
