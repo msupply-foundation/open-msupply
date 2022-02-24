@@ -11,5 +11,5 @@ export const useStockLines = (
 
   const { availableBatches } = data ?? {};
 
-  return { ...queryState, data: availableBatches };
+  return { ...queryState, data: availableBatches?.nodes };
 };

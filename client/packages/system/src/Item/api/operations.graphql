@@ -31,6 +31,12 @@ fragment Item on ItemNode {
       totalCount
     }
   }
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
   code
   id
   isVisible

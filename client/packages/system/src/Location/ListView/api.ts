@@ -8,7 +8,6 @@ import {
   useQuery,
   useOmSupplyApi,
   UseQueryResult,
-  LocationsQuery,
   QueryParamsState,
   SortBy,
   LocationSortInput,
@@ -19,14 +18,6 @@ import { Location } from '../types';
 
 const toSortInput = (sortBy: SortBy<Location>): LocationSortInput => {
   return { desc: sortBy.isDesc, key: sortBy.key as LocationSortFieldInput };
-};
-
-const locationsGuard = (locationsQuery: LocationsQuery) => {
-  if (locationsQuery.locations.__typename === 'LocationConnector') {
-    return locationsQuery.locations;
-  }
-
-  throw new Error(locationsQuery.locations.error.description);
 };
 
 const toInsertInput = (location: Location): InsertLocationInput => ({
@@ -43,10 +34,11 @@ export const useLocationInsert = (): UseMutationResult<
   unknown
 > => {
   const queryClient = useQueryClient();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
   const { api } = useOmSupplyApi();
   return useMutation(
     async (location: Location) => {
-      api.insertLocation({ input: toInsertInput(location) });
+      api.insertLocation({ input: toInsertInput(location), storeId });
     },
     {
       onSettled: () => queryClient.invalidateQueries(['location', 'list']),
@@ -68,10 +60,11 @@ export const useLocationUpdate = (): UseMutationResult<
   unknown
 > => {
   const queryClient = useQueryClient();
+  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
   const { api } = useOmSupplyApi();
   return useMutation(
     async (location: Location) => {
-      api.updateLocation({ input: toUpdateInput(location) });
+      api.updateLocation({ input: toUpdateInput(location), storeId });
     },
     {
       onSettled: () => queryClient.invalidateQueries(['location', 'list']),
@@ -112,7 +105,7 @@ export const useLocationList = (): UseQueryResult<
     const response = await api.locations({
       sort: [toSortInput(queryParams.sortBy)],
     });
-    const locations = locationsGuard(response);
+    const locations = response.locations;
     return locations;
   });
 

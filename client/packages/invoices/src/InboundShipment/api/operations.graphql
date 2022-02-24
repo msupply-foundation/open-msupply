@@ -190,6 +190,11 @@ fragment InboundShipmentLine on InvoiceLineNode {
     code
     isVisible
     unitName
+    stats(storeId: $storeId) {
+      averageMonthlyConsumption
+      availableMonthsOfStockOnHand
+      availableStockOnHand
+    }
     availableBatches(storeId: $storeId) {
       totalCount
       nodes {

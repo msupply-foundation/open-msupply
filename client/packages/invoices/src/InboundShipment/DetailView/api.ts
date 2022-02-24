@@ -8,9 +8,7 @@ import {
   useParams,
   useQueryClient,
   useMutation,
-  InvoiceLineConnector,
   InvoicePriceResponse,
-  ConnectorError,
   NameResponse,
   StockLineResponse,
   StockLineNode,
@@ -25,8 +23,6 @@ import {
   useSortBy,
   getDataSorter,
   useDebounceCallback,
-  ItemNode,
-  ItemResponse,
   useQueryParams,
 } from '@openmsupply-client/common';
 import { Location, toItem } from '@openmsupply-client/system';
@@ -67,19 +63,7 @@ const invoiceGuard = (invoiceQuery: InvoiceQuery) => {
     return invoiceQuery.invoice;
   }
 
-  throw new Error(invoiceQuery.invoice.error.description);
-};
-
-const linesGuard = (invoiceLines: InvoiceLineConnector | ConnectorError) => {
-  if (invoiceLines.__typename === 'InvoiceLineConnector') {
-    return invoiceLines.nodes;
-  }
-
-  if (invoiceLines.__typename === 'ConnectorError') {
-    throw new Error(invoiceLines.error.description);
-  }
-
-  throw new Error('Unknown');
+  throw new Error(invoiceQuery.invoice.__typename);
 };
 
 const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
@@ -93,14 +77,6 @@ const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
 const locationGuard = (location: LocationResponse): Location => {
   if (location.__typename === 'LocationNode') {
     return location;
-  }
-
-  throw new Error('Unknown');
-};
-
-const itemGuard = (item: ItemResponse): ItemNode => {
-  if (item.__typename === 'ItemNode') {
-    return item;
   }
 
   throw new Error('Unknown');
@@ -202,13 +178,12 @@ export const getInboundShipmentDetailViewApi = (
     const result = await api.invoice({ id, storeId });
 
     const invoice = invoiceGuard(result);
-    const lineNodes = linesGuard(invoice.lines);
+    const lineNodes = invoice.lines.nodes;
     const lines: InvoiceLine[] = lineNodes.map(line => {
       const stockLine = line.stockLine
         ? stockLineGuard(line.stockLine)
         : undefined;
       const location = line.location ? locationGuard(line.location) : undefined;
-      const item = line.item ? itemGuard(line.item) : undefined;
 
       return {
         ...line,
@@ -216,7 +191,7 @@ export const getInboundShipmentDetailViewApi = (
         location,
         stockLineId: stockLine?.id ?? '',
         invoiceId: invoice.id,
-        unitName: item?.unitName ?? '',
+        unitName: line.item?.unitName ?? '',
       };
     });
 

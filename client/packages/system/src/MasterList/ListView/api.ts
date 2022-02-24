@@ -1,5 +1,4 @@
 import {
-  MasterListsQuery,
   MasterListSortFieldInput,
   OmSupplyApi,
   SortBy,
@@ -7,14 +6,6 @@ import {
   FilterBy,
 } from '@openmsupply-client/common';
 import { MasterList, MasterListRow } from '../types';
-
-const masterListsGuard = (masterListsQuery: MasterListsQuery) => {
-  if (masterListsQuery.masterLists.__typename === 'MasterListConnector') {
-    return masterListsQuery.masterLists;
-  }
-
-  throw new Error(masterListsQuery.masterLists.error.description);
-};
 
 const getMasterListSortField = (
   sortField: string
@@ -25,7 +16,7 @@ const getMasterListSortField = (
 };
 
 const onRead =
-  (api: OmSupplyApi) =>
+  (api: OmSupplyApi, storeId: string) =>
   async ({
     first,
     offset,
@@ -48,8 +39,9 @@ const onRead =
       key,
       desc,
       filter: filterBy,
+      storeId,
     });
-    const masterLists = masterListsGuard(result);
+    const masterLists = result.masterLists;
     const nodes: MasterListRow[] = masterLists.nodes.map(masterList => ({
       ...masterList,
     }));
@@ -58,12 +50,13 @@ const onRead =
   };
 
 export const getMasterListListViewApi = (
-  api: OmSupplyApi
+  api: OmSupplyApi,
+  storeId: string
 ): ListApi<MasterListRow> => ({
   onRead:
     ({ first, offset, sortBy, filterBy }) =>
     () =>
-      onRead(api)({ first, offset, sortBy, filterBy }),
+      onRead(api, storeId)({ first, offset, sortBy, filterBy }),
   onDelete: async () => [''],
   onUpdate: async () => '',
   onCreate: async () => '',

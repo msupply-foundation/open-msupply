@@ -25,13 +25,12 @@ export interface ItemRow extends DomainObject {
   unitName?: string;
 }
 
-export interface Item extends Omit<ItemNode, 'availableBatches'>, DomainObject {
+export interface Item extends ItemNode, DomainObject {
   id: string;
   isVisible: boolean;
   code: string;
   name: string;
   availableQuantity: number;
-  availableBatches: StockLine[];
   unitName: string;
 }
 

@@ -8,12 +8,9 @@ import {
   NameResponse,
   InvoicePriceResponse,
   InvoiceLineConnector,
-  ConnectorError,
   StockLineResponse,
   StockLineNode,
   LocationResponse,
-  ItemNode,
-  ItemResponse,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
 } from '@openmsupply-client/common';
@@ -51,13 +48,9 @@ const invoiceGuard = (invoiceQuery: InvoiceQuery) => {
   throw new Error(invoiceQuery.invoice.error.description);
 };
 
-const linesGuard = (invoiceLines: InvoiceLineConnector | ConnectorError) => {
+const linesGuard = (invoiceLines: InvoiceLineConnector) => {
   if (invoiceLines.__typename === 'InvoiceLineConnector') {
     return invoiceLines.nodes;
-  }
-
-  if (invoiceLines.__typename === 'ConnectorError') {
-    throw new Error(invoiceLines.error.description);
   }
 
   throw new Error('Unknown');
@@ -74,14 +67,6 @@ const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
 const locationGuard = (location: LocationResponse): Location => {
   if (location.__typename === 'LocationNode') {
     return location;
-  }
-
-  throw new Error('Unknown');
-};
-
-const itemGuard = (item: ItemResponse): ItemNode => {
-  if (item.__typename === 'ItemNode') {
-    return item;
   }
 
   throw new Error('Unknown');
@@ -162,7 +147,6 @@ export const OutboundApi = {
           const location = line.location
             ? locationGuard(line.location)
             : undefined;
-          const item = line.item ? itemGuard(line.item) : undefined;
 
           return {
             ...line,
@@ -170,7 +154,7 @@ export const OutboundApi = {
             location,
             stockLineId: stockLine?.id ?? '',
             invoiceId: invoice.id,
-            unitName: item?.unitName ?? '',
+            unitName: line.item?.unitName ?? '',
           };
         });
 
