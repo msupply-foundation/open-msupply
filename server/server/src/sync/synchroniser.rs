@@ -9,6 +9,7 @@ use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
     get_sync_actors,
     remote_data_synchroniser::RemoteDataSynchroniser,
+    sync_api_v3::SyncApiV3,
     SyncApiV5, SyncCredentials, SyncReceiverActor, SyncSenderActor,
 };
 
@@ -28,14 +29,18 @@ impl Synchroniser {
         let client = Client::new();
         let url = Url::parse(&settings.url)?;
         let credentials = SyncCredentials::new(&settings.username, &settings.password);
-        let sync_api_v5 = SyncApiV5::new(url, credentials, client);
+        let sync_api_v5 = SyncApiV5::new(url.clone(), credentials.clone(), client.clone());
+        let sync_api_v3 = SyncApiV3::new(url, credentials, client, settings.site_id)?;
         Ok(Synchroniser {
+            remote_data: RemoteDataSynchroniser {
+                sync_api_v5: sync_api_v5.clone(),
+                sync_api_v3,
+                site_id: settings.site_id,
+                central_server_site_id: settings.central_server_site_id,
+            },
             settings,
             connection_manager,
-            central_data: CentralDataSynchroniser {
-                sync_api_v5: sync_api_v5.clone(),
-            },
-            remote_data: RemoteDataSynchroniser { sync_api_v5 },
+            central_data: CentralDataSynchroniser { sync_api_v5 },
         })
     }
 
@@ -63,6 +68,8 @@ impl Synchroniser {
         // check if there is new data on the central server
         self.central_data.pull(&connection).await?;
 
+        // TODO pull changes from remote server
+        self.remote_data.push_changes(&connection).await?;
         Ok(())
     }
 

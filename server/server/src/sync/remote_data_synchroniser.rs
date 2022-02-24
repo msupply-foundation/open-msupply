@@ -1,13 +1,22 @@
 use log::info;
 use repository::{
     schema::{KeyValueType, RemoteSyncBufferAction, RemoteSyncBufferRow},
-    KeyValueStoreRepository, RemoteSyncBufferRepository, RepositoryError, StorageConnection,
+    ChangelogRepository, KeyValueStoreRepository, RemoteSyncBufferRepository, RepositoryError,
+    StorageConnection,
 };
 use thiserror::Error;
 
-use crate::sync::translation_remote::{import_sync_records, REMOTE_TRANSLATION_RECORDS};
+use crate::sync::{
+    sync_api_v3::{RemotePostRecordV3, SyncTypeV3},
+    translation_remote::{
+        pull::import_sync_pull_records,
+        push::{translate_changelog, PushRecord},
+        REMOTE_TRANSLATION_RECORDS,
+    },
+};
 
 use super::{
+    sync_api_v3::SyncApiV3,
     sync_api_v5::{RemoteSyncActionV5, RemoteSyncRecordV5},
     SyncApiV5,
 };
@@ -30,6 +39,9 @@ impl From<RepositoryError> for RemoteSyncError {
 
 pub struct RemoteDataSynchroniser {
     pub sync_api_v5: SyncApiV5,
+    pub sync_api_v3: SyncApiV3,
+    pub site_id: u32,
+    pub central_server_site_id: u32,
 }
 
 #[allow(unused_assignments)]
@@ -138,12 +150,62 @@ impl RemoteDataSynchroniser {
         }
 
         info!("Importing {} remote sync buffer records...", records.len());
-        import_sync_records(connection, &records)?;
+        import_sync_pull_records(connection, &records)?;
         info!("Successfully Imported remote sync buffer records",);
 
         info!("Clearing remote sync buffer");
         remote_sync_buffer_repository.remove_all()?;
         info!("Successfully cleared remote sync buffer");
+
+        Ok(())
+    }
+
+    // push
+
+    pub async fn push_changes(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
+        let changelog = ChangelogRepository::new(connection);
+
+        const BATCH_SIZE: u32 = 1000;
+        let state = RemoteSyncState::new(connection);
+        loop {
+            let cursor = state.get_push_cursor()?;
+            let changelogs = changelog.changelogs(cursor as u64, BATCH_SIZE)?;
+            if changelogs.is_empty() {
+                break;
+            }
+
+            let mut out_records: Vec<PushRecord> = Vec::new();
+            for changelog in changelogs {
+                translate_changelog(connection, &changelog, &mut out_records)?;
+            }
+            let records: Vec<RemotePostRecordV3> = out_records
+                .into_iter()
+                .map(|record| match record {
+                    PushRecord::Upsert(record) => RemotePostRecordV3 {
+                        sync_id: format!("{}", record.sync_id),
+                        sync_type: SyncTypeV3::Update,
+                        store_id: record.store_id,
+                        record_type: record.table_name.to_string(),
+                        record_id: record.record_id.clone(),
+                        data: Some(record.data),
+                    },
+                    PushRecord::Delete(record) => RemotePostRecordV3 {
+                        sync_id: format!("{}", record.sync_id),
+                        sync_type: SyncTypeV3::Delete,
+                        store_id: None,
+                        record_type: record.table_name.to_string(),
+                        record_id: record.record_id.clone(),
+                        data: None,
+                    },
+                })
+                .collect();
+
+            self.sync_api_v3
+                .post_queued_records(self.site_id, self.central_server_site_id, &records)
+                .await?;
+
+            state.update_push_cursor(cursor + 1)?;
+        }
 
         Ok(())
     }
@@ -212,11 +274,25 @@ impl<'a> RemoteSyncState<'a> {
         self.key_value_store
             .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
     }
+
+    pub fn get_push_cursor(&self) -> Result<u32, RepositoryError> {
+        let value = self
+            .key_value_store
+            .get_i32(KeyValueType::RemoteSyncPushCursor)?;
+        let cursor = value.unwrap_or(0);
+        Ok(cursor as u32)
+    }
+
+    pub fn update_push_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {
+        self.key_value_store
+            .set_i32(KeyValueType::RemoteSyncPushCursor, Some(cursor as i32))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::sync::{
+        sync_api_v3::SyncApiV3,
         translation_remote::test_data::{
             check_records_against_database, extract_sync_buffer_rows,
             get_all_remote_pull_test_records,
@@ -244,12 +320,17 @@ mod tests {
             .upsert_many(&buffer_rows)
             .expect("Failed to insert remote sync records into sync buffer");
 
+        let url = Url::parse("http://localhost").unwrap();
+        let credentials = SyncCredentials::new("username", "password");
+        let client = Client::new();
+
+        let site_id = 1;
+        let central_server_site_id = 2;
         let sync = RemoteDataSynchroniser {
-            sync_api_v5: SyncApiV5::new(
-                Url::parse("http://localhost").unwrap(),
-                SyncCredentials::new("username", "password"),
-                Client::new(),
-            ),
+            sync_api_v5: SyncApiV5::new(url.clone(), credentials.clone(), client.clone()),
+            sync_api_v3: SyncApiV3::new(url, credentials, client, site_id).unwrap(),
+            site_id,
+            central_server_site_id,
         };
         sync.integrate_remote_records(&connection)
             .expect("Failed to integrate remote records");
