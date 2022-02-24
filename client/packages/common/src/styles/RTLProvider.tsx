@@ -4,12 +4,9 @@ import { useRtl } from '@common/intl';
 export const RTLProvider: FC = props => {
   const isRtl = useRtl();
 
-  React.useLayoutEffect(() => {
-    document.body.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
-  }, [isRtl]);
-
   return (
     <div
+      dir={isRtl ? 'rtl' : 'ltr'}
       style={{
         height: '100vh',
         width: '100vw',
