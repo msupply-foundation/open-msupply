@@ -4,7 +4,7 @@ use crate::{
     sync_processor::{ProcessRecordError, RecordForProcessing},
 };
 use chrono::Utc;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{
         NumberRowType, RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType,

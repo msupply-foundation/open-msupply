@@ -1,6 +1,6 @@
 mod graphql {
     use crate::graphql::assert_graphql_query;
-    use domain::{EqualFilter, PaginationOption, SimpleStringFilter};
+    use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
     use repository::{
         mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
         MasterList, StorageConnectionManager, MasterListFilter, MasterListSort,

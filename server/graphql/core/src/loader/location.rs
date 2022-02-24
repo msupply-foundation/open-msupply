@@ -1,4 +1,4 @@
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     Location, LocationFilter, LocationRepository, RepositoryError, StorageConnectionManager,
 };

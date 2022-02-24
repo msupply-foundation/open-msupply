@@ -1,5 +1,5 @@
 use crate::service_provider::ServiceContext;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository, RepositoryError, Invoice, InvoiceFilter,
 };

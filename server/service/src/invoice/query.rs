@@ -2,11 +2,11 @@ use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     SingleRecordError,
 };
-use domain::{EqualFilter, PaginationOption};
 use repository::{
     schema::InvoiceRowType, Invoice, InvoiceFilter, InvoiceQueryRepository, InvoiceSort,
     RepositoryError, StorageConnectionManager,
 };
+use repository::{EqualFilter, PaginationOption};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

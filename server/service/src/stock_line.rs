@@ -1,6 +1,7 @@
+use crate::Pagination;
 use crate::SingleRecordError;
-use domain::{EqualFilter, Pagination};
-use repository::{StockLineRepository, StorageConnectionManager, StockLine, StockLineFilter};
+use repository::EqualFilter;
+use repository::{StockLine, StockLineFilter, StockLineRepository, StorageConnectionManager};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;

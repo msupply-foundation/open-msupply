@@ -2,7 +2,7 @@ use crate::{
     requisition::common::{check_requisition_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
 };
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{RequisitionLineRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,

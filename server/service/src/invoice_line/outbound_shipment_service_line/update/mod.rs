@@ -1,14 +1,13 @@
 mod generate;
 mod validate;
 
-use domain::shipment_tax_update::ShipmentTaxUpdate;
 use generate::generate;
 use repository::{
     InvoiceLineRowRepository, RepositoryError, StorageConnectionManager, TransactionError,
 };
 use validate::validate;
 
-use crate::WithDBError;
+use crate::{WithDBError, invoice_line::ShipmentTaxUpdate};
 
 pub struct UpdateOutboundShipmentServiceLine {
     pub id: String,

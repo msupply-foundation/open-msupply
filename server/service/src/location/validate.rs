@@ -1,4 +1,4 @@
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::LocationRow, LocationRepository, LocationRowRepository, RepositoryError,
     StorageConnection, LocationFilter,

@@ -1,8 +1,8 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
-use domain::DatetimeFilter;
+use repository::DatetimeFilter;
 use repository::{
     schema::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceQueryRepository, RepositoryError, InvoiceFilter,
+    InvoiceFilter, InvoiceQueryRepository, RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;

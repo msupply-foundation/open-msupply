@@ -1,4 +1,4 @@
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     RepositoryError, StockLine, StockLineFilter, StockLineRepository, StorageConnectionManager,
 };

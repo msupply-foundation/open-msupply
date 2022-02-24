@@ -1,6 +1,6 @@
 use super::validate::check_location_exists;
 use crate::service_provider::ServiceContext;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, LocationRowRepository, RepositoryError,
     StockLineRepository, StorageConnection, StockLine, StockLineFilter,

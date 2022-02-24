@@ -10,7 +10,7 @@ use crate::{
         NameRow, NameStoreJoinRow, StoreRow,
     },
 };
-use domain::{EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
@@ -193,14 +193,14 @@ impl Name {
 #[cfg(test)]
 mod tests {
     use crate::{
-        test_db,
+        test_db, Pagination, DEFAULT_PAGINATION_LIMIT,
         {
             db_diesel::{NameQueryRepository, NameRepository},
             mock::MockDataInserts,
             schema::NameRow,
         },
     };
-    use domain::{Pagination, DEFAULT_LIMIT};
+
     use std::convert::TryFrom;
 
     use super::{Name, NameSort, NameSortField};
@@ -247,7 +247,7 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_LIMIT).unwrap();
+        let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
 
         // Test
 
@@ -271,7 +271,7 @@ mod tests {
             .query(
                 Pagination {
                     offset: 10,
-                    limit: DEFAULT_LIMIT,
+                    limit: DEFAULT_PAGINATION_LIMIT,
                 },
                 None,
                 None,

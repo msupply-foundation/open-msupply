@@ -13,7 +13,7 @@ test = false
 bench = false
 
 [dependencies]
-domain = { path = "../domain" }
+
 repository = { path = "../repository" }
 service = { path = "../service" }
 util = { path = "../util" }

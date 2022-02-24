@@ -2,7 +2,7 @@ use super::{map_filter, InvoiceLineConnector, NameNode, RequisitionNode, StoreNo
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
-use domain::{DatetimeFilter, EqualFilter, SimpleStringFilter};
+use repository::{DatetimeFilter, EqualFilter, SimpleStringFilter};
 use graphql_core::generic_filters::{
     DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, SimpleStringFilterInput,
 };

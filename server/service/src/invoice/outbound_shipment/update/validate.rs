@@ -2,7 +2,7 @@ use crate::invoice::{
     check_invoice_is_editable, check_invoice_status, check_other_party_id, InvoiceIsNotEditable,
     InvoiceRowStatusError,
 };
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, Name, RepositoryError,

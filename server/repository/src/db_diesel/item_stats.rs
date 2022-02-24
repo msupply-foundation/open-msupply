@@ -4,12 +4,11 @@ use crate::{
         diesel_schema::{consumption::dsl as consumption_dsl, stock_info::dsl as stock_info_dsl},
         ConsumptionRow, StockInfoRow,
     },
-    RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection, EqualFilter,
 };
 use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
-use domain::EqualFilter;
 use std::collections::HashMap;
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 

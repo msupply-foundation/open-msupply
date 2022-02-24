@@ -1,5 +1,5 @@
 use async_graphql::dataloader::*;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use std::collections::HashMap;
 
 use repository::{Name, NameFilter};

@@ -1,7 +1,7 @@
 mod graphql {
     use crate::graphql::assert_graphql_query;
     use chrono::NaiveDate;
-    use domain::PaginationOption;
+    use repository::PaginationOption;
     use repository::{
         mock::{mock_stocktake_a, MockDataInserts},
         schema::{StocktakeRow, StocktakeStatus},

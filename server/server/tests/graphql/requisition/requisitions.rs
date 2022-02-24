@@ -1,6 +1,6 @@
 mod graphql {
     use chrono::NaiveDate;
-    use domain::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
+    use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition_all_fields, MockDataInserts},
         schema::{RequisitionRowStatus, RequisitionRowType},

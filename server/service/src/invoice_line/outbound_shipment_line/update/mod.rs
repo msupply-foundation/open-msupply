@@ -1,5 +1,4 @@
-use crate::{u32_to_i32, WithDBError};
-use domain::shipment_tax_update::ShipmentTaxUpdate;
+use crate::{u32_to_i32, WithDBError, invoice_line::ShipmentTaxUpdate};
 use repository::{
     schema::{InvoiceLineRow, StockLineRow},
     InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,

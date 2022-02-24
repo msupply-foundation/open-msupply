@@ -1,4 +1,4 @@
-use domain::PaginationOption;
+use repository::PaginationOption;
 use repository::{Name, NameFilter, NameSort};
 use repository::{NameQueryRepository, StorageConnectionManager};
 

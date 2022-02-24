@@ -4,9 +4,8 @@ use crate::{
     schema::{
         diesel_schema::{master_list_line, master_list_line::dsl as master_list_line_dsl},
         MasterListLineRow,
-    },
+    }, EqualFilter, Pagination,
 };
-use domain::{EqualFilter, Pagination};
 
 use super::{DBType, StorageConnection};
 
