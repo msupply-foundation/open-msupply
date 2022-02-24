@@ -140,6 +140,25 @@ mutation insertRequestRequisitionLine(
     ... on RequisitionLineNode {
       id
     }
+    ... on InsertRequestRequisitionLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on RequisitionLineWithItemIdExists {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 

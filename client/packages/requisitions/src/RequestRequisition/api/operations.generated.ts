@@ -50,7 +50,7 @@ export type InsertRequestRequisitionLineMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertRequestRequisitionLineMutation = { __typename: 'Mutations', insertRequestRequisitionLine: { __typename: 'InsertRequestRequisitionLineError' } | { __typename: 'RequisitionLineNode', id: string } };
+export type InsertRequestRequisitionLineMutation = { __typename: 'Mutations', insertRequestRequisitionLine: { __typename: 'InsertRequestRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RequisitionLineWithItemIdExists', description: string } } | { __typename: 'RequisitionLineNode', id: string } };
 
 export type UpdateRequestRequisitionLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -195,6 +195,25 @@ export const InsertRequestRequisitionLineDocument = gql`
   insertRequestRequisitionLine(input: $input, storeId: $storeId) {
     ... on RequisitionLineNode {
       id
+    }
+    ... on InsertRequestRequisitionLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on RequisitionLineWithItemIdExists {
+          __typename
+          description
+        }
+      }
     }
   }
 }

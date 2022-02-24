@@ -4,9 +4,7 @@ import {
   useDialog,
   DialogButton,
   BasicSpinner,
-  useTranslation,
   useBufferState,
-  RecordPatch,
   generateUUID,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
@@ -70,7 +68,7 @@ const useDraftRequisitionLine = (item: ItemRowFragment | null) => {
     }
   }, [lines, item, id]);
 
-  const update = (patch: RecordPatch<RequestRequisitionLineFragment>) => {
+  const update = (patch: Partial<DraftRequestRequisitionLine>) => {
     if (draft) {
       setDraft({ ...draft, ...patch });
     }
@@ -85,7 +83,6 @@ export const RequestLineEdit = ({
   mode,
   item,
 }: RequestLineEditProps) => {
-  const t = useTranslation();
   const isDisabled = useIsRequestRequisitionDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -94,11 +91,7 @@ export const RequestLineEdit = ({
 
   return (
     <Modal
-      title={
-        mode === ModalMode.Create
-          ? t('heading.add-item')
-          : t('heading.edit-item')
-      }
+      title={''}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={<DialogButton variant="next" onClick={() => {}} />}
       okButton={<DialogButton variant="ok" onClick={save} />}
@@ -106,26 +99,13 @@ export const RequestLineEdit = ({
       width={1024}
     >
       {!isLoading ? (
-        <>
-          <RequestLineEditForm
-            disabled={mode === ModalMode.Update || isDisabled}
-            onChangeItem={setCurrentItem}
-            item={currentItem}
-          />
-          <span style={{ whiteSpace: 'pre' }}>
-            {JSON.stringify(draft, null, 2)}
-          </span>
-          <input
-            type="number"
-            onInput={e =>
-              draft &&
-              update({
-                ...draft,
-                requestedQuantity: Number(e.currentTarget.value),
-              })
-            }
-          />
-        </>
+        <RequestLineEditForm
+          draftLine={draft}
+          update={update}
+          disabled={mode === ModalMode.Update || isDisabled}
+          onChangeItem={setCurrentItem}
+          item={currentItem}
+        />
       ) : (
         <BasicSpinner />
       )}
