@@ -11,15 +11,15 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
+import { AppRoute } from '@openmsupply-client/config';
 import { useDraftInbound } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
-import { InboundLineEdit } from './modals/InboundLineEdit/InboundLineEdit';
+import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InvoiceLine, InboundShipmentItem } from '../../types';
-import { AppRoute } from '@openmsupply-client/config';
 
 export const DetailView: FC = () => {
   const { draft, isLoading } = useDraftInbound();
