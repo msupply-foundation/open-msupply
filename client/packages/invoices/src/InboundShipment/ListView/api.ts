@@ -3,7 +3,6 @@ import {
   SortBy,
   ListApi,
   InvoiceSortFieldInput,
-  InvoicePriceResponse,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceRow } from '../../types';
 import { InboundShipmentApi, InvoicesQueryVariables } from '../api';
@@ -49,16 +48,6 @@ const getSortDesc = (sortBy: SortBy<InvoiceRow>): boolean => {
   return !!sortBy.isDesc;
 };
 
-const pricingGuard = (pricing: InvoicePriceResponse) => {
-  if (pricing.__typename === 'InvoicePricingNode') {
-    return pricing;
-  } else if (pricing.__typename === 'NodeError') {
-    throw new Error(pricing.error.description);
-  } else {
-    throw new Error('Unknown');
-  }
-};
-
 export const getInboundShipmentListViewApi = (
   api: InboundShipmentApi,
   storeId: string
@@ -74,15 +63,8 @@ export const getInboundShipmentListViewApi = (
     };
     return async (): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
       const result = await api.invoices(queryParams);
-
       const invoices = result.invoices;
-
-      const nodes = invoices.nodes.map(invoice => ({
-        ...invoice,
-        pricing: pricingGuard(invoice.pricing),
-      }));
-
-      return { nodes, totalCount: invoices.totalCount };
+      return invoices;
     };
   },
   onDelete: async (invoices: InvoiceRow[]): Promise<string[]> => {

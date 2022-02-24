@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import {
-  LocationResponse,
   MutateOptions,
   Item,
   UseMutationResult,
@@ -8,10 +7,6 @@ import {
   useParams,
   useQueryClient,
   useMutation,
-  InvoicePriceResponse,
-  NameResponse,
-  StockLineResponse,
-  StockLineNode,
   UpdateInboundShipmentLineInput,
   InsertInboundShipmentLineInput,
   DeleteInboundShipmentLineInput,
@@ -25,7 +20,7 @@ import {
   useDebounceCallback,
   useQueryParams,
 } from '@openmsupply-client/common';
-import { Location, toItem } from '@openmsupply-client/system';
+import { toItem } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
 import { inboundLinesToSummaryItems } from '../../utils';
 import { InboundShipmentItem } from './../../types';
@@ -33,54 +28,9 @@ import { DraftInboundLine } from './modals/InboundLineEdit';
 import {
   DeleteInboundShipmentLinesMutation,
   InboundShipmentApi,
-  InvoiceQuery,
   UpdateInboundShipmentMutation,
   useInboundShipmentApi,
 } from '../api';
-
-const otherPartyGuard = (otherParty: NameResponse) => {
-  if (otherParty.__typename === 'NameNode') {
-    return otherParty;
-  } else if (otherParty.__typename === 'NodeError') {
-    throw new Error(otherParty.error.description);
-  }
-
-  throw new Error('Unknown');
-};
-
-const pricingGuard = (pricing: InvoicePriceResponse) => {
-  if (pricing.__typename === 'InvoicePricingNode') {
-    return pricing;
-  } else if (pricing.__typename === 'NodeError') {
-    throw new Error(pricing.error.description);
-  } else {
-    throw new Error('Unknown');
-  }
-};
-
-const invoiceGuard = (invoiceQuery: InvoiceQuery) => {
-  if (invoiceQuery.invoice.__typename === 'InvoiceNode') {
-    return invoiceQuery.invoice;
-  }
-
-  throw new Error(invoiceQuery.invoice.__typename);
-};
-
-const stockLineGuard = (stockLine: StockLineResponse): StockLineNode => {
-  if (stockLine.__typename === 'StockLineNode') {
-    return stockLine;
-  }
-
-  throw new Error('Unknown');
-};
-
-const locationGuard = (location: LocationResponse): Location => {
-  if (location.__typename === 'LocationNode') {
-    return location;
-  }
-
-  throw new Error('Unknown');
-};
 
 const getPatchStatus = (
   patch: Partial<Invoice>
@@ -177,30 +127,31 @@ export const getInboundShipmentDetailViewApi = (
   onRead: async (id: string): Promise<Invoice> => {
     const result = await api.invoice({ id, storeId });
 
-    const invoice = invoiceGuard(result);
-    const lineNodes = invoice.lines.nodes;
-    const lines: InvoiceLine[] = lineNodes.map(line => {
-      const stockLine = line.stockLine
-        ? stockLineGuard(line.stockLine)
-        : undefined;
-      const location = line.location ? locationGuard(line.location) : undefined;
+    const invoice = result.invoice;
+
+    if (invoice.__typename === 'InvoiceNode') {
+      const lineNodes = invoice.lines.nodes;
+      const lines: InvoiceLine[] = lineNodes.map(line => {
+        const stockLine = line.stockLine;
+        const location = line.location;
+
+        return {
+          ...line,
+          stockLine,
+          location,
+          stockLineId: stockLine?.id ?? '',
+          invoiceId: invoice.id,
+          unitName: line.item?.unitName ?? '',
+        };
+      });
 
       return {
-        ...line,
-        stockLine,
-        location,
-        stockLineId: stockLine?.id ?? '',
-        invoiceId: invoice.id,
-        unitName: line.item?.unitName ?? '',
+        ...invoice,
+        lines,
       };
-    });
+    }
 
-    return {
-      ...invoice,
-      lines,
-      pricing: pricingGuard(invoice.pricing),
-      otherParty: otherPartyGuard(invoice.otherParty),
-    };
+    throw new Error(result.invoice.__typename);
   },
   onUpdate: async (patch: Invoice): Promise<Invoice> => {
     const result = await api.upsertInboundShipment({

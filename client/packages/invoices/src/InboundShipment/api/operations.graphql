@@ -11,76 +11,38 @@ fragment InboundShipment on InvoiceNode {
   invoiceNumber
   colour
   onHold
-
-  otherParty {
-    __typename
-    ... on NameNode {
-      __typename
-      id
-      name
-      code
-      isCustomer
-      isSupplier
-    }
-
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-  }
-
-  lines {
-    ... on InvoiceLineConnector {
-      __typename
-      nodes {
-        ...InboundShipmentLine
-      }
-      totalCount
-    }
-  }
-  otherPartyId
-  otherPartyName
-  pricing {
-    __typename
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-    ... on InvoicePricingNode {
-      __typename
-      totalAfterTax
-      totalBeforeTax
-      stockTotalBeforeTax
-      stockTotalAfterTax
-      serviceTotalAfterTax
-      serviceTotalBeforeTax
-    }
-  }
   status
   theirReference
   type
+  otherPartyId
+  otherPartyName
+
+  lines {
+    __typename
+    totalCount
+    nodes {
+      ...InboundShipmentLine
+    }
+  }
+
+  otherParty {
+    __typename
+    id
+    name
+    code
+    isCustomer
+    isSupplier
+  }
+
+  pricing {
+    __typename
+    totalAfterTax
+    totalBeforeTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalAfterTax
+    serviceTotalBeforeTax
+  }
 }
 
 fragment InboundShipmentRow on InvoiceNode {
@@ -102,30 +64,12 @@ fragment InboundShipmentRow on InvoiceNode {
   colour
   pricing {
     __typename
-    ... on NodeError {
-      __typename
-      error {
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        description
-      }
-    }
-    ... on InvoicePricingNode {
-      __typename
-      totalAfterTax
-      totalBeforeTax
-      stockTotalBeforeTax
-      stockTotalAfterTax
-      serviceTotalAfterTax
-      serviceTotalBeforeTax
-    }
+    totalAfterTax
+    totalBeforeTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalAfterTax
+    serviceTotalBeforeTax
   }
 }
 
@@ -143,46 +87,9 @@ fragment InboundShipmentLine on InvoiceLineNode {
   packSize
   note
   invoiceId
-  location {
-    __typename
-    ... on LocationNode {
-      __typename
-      id
-      name
-      code
-      onHold
-      stock {
-        __typename
-        totalCount
-        nodes {
-          id
-          costPricePerPack
-          itemId
-          availableNumberOfPacks
-          onHold
-          packSize
-          sellPricePerPack
-          storeId
-          totalNumberOfPacks
-        }
-      }
-    }
-    ... on NodeError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-      }
-    }
-  }
+  locationName
+  sellPricePerPack
+
   item {
     __typename
     id
@@ -191,11 +98,13 @@ fragment InboundShipmentLine on InvoiceLineNode {
     isVisible
     unitName
     stats(storeId: $storeId) {
+      __typename
       averageMonthlyConsumption
       availableMonthsOfStockOnHand
       availableStockOnHand
     }
     availableBatches(storeId: $storeId) {
+      __typename
       totalCount
       nodes {
         id
@@ -211,40 +120,44 @@ fragment InboundShipmentLine on InvoiceLineNode {
       }
     }
   }
-  locationName
-  sellPricePerPack
-  stockLine {
+
+  location {
     __typename
-    ... on NodeError {
+    id
+    name
+    code
+    onHold
+    stock {
       __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
+      totalCount
+      nodes {
+        id
+        costPricePerPack
+        itemId
+        availableNumberOfPacks
+        onHold
+        packSize
+        sellPricePerPack
+        storeId
+        totalNumberOfPacks
       }
     }
-    ... on StockLineNode {
-      __typename
-      availableNumberOfPacks
-      batch
-      costPricePerPack
-      expiryDate
-      id
-      itemId
-      packSize
-      sellPricePerPack
-      storeId
-      totalNumberOfPacks
-      onHold
-      note
-    }
+  }
+
+  stockLine {
+    __typename
+    availableNumberOfPacks
+    batch
+    costPricePerPack
+    expiryDate
+    id
+    itemId
+    packSize
+    sellPricePerPack
+    storeId
+    totalNumberOfPacks
+    onHold
+    note
   }
 }
 
@@ -274,7 +187,25 @@ query invoices(
 
 query invoice($id: String!, $storeId: String!) {
   invoice(id: $id, storeId: $storeId) {
-    ...InboundShipment
+    ... on InvoiceNode {
+      ...InboundShipment
+    }
+
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+      }
+    }
   }
 }
 

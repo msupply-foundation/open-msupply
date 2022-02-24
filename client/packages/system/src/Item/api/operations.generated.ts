@@ -43,27 +43,29 @@ export const ItemRowFragmentDoc = gql`
 export const ItemFragmentDoc = gql`
     fragment Item on ItemNode {
   __typename
+  code
+  id
+  isVisible
+  name
+  unitName
   availableBatches(storeId: $storeId) {
     __typename
-    ... on StockLineConnector {
+    totalCount
+    nodes {
       __typename
-      nodes {
-        __typename
-        availableNumberOfPacks
-        batch
-        costPricePerPack
-        expiryDate
-        id
-        itemId
-        packSize
-        sellPricePerPack
-        totalNumberOfPacks
-        onHold
-        note
-        storeId
-        locationName
-      }
-      totalCount
+      availableNumberOfPacks
+      batch
+      costPricePerPack
+      expiryDate
+      id
+      itemId
+      packSize
+      sellPricePerPack
+      totalNumberOfPacks
+      onHold
+      note
+      storeId
+      locationName
     }
   }
   stats(storeId: $storeId) {
@@ -72,11 +74,6 @@ export const ItemFragmentDoc = gql`
     availableStockOnHand
     availableMonthsOfStockOnHand
   }
-  code
-  id
-  isVisible
-  name
-  unitName
 }
     `;
 export const ItemsWithStockLinesDocument = gql`
