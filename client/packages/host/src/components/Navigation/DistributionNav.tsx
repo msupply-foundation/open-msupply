@@ -22,14 +22,13 @@ export const DistributionNav: FC = () => {
         end={false}
         to={AppRoute.Distribution}
         icon={<TruckIcon color="primary" fontSize="small" />}
-        expandOnHover
         text={t('distribution')}
+        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.OutboundShipment)
               .build()}
@@ -37,7 +36,6 @@ export const DistributionNav: FC = () => {
           />
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.CustomerRequisition)
               .build()}
@@ -45,7 +43,6 @@ export const DistributionNav: FC = () => {
           />
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.Customer)
               .build()}

@@ -3,16 +3,14 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Tooltip,
   ListItemButton,
   Box,
   ListItemProps,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
-import { useDrawer, useDebounceCallback } from '@common/hooks';
+import { useDrawer } from '@common/hooks';
 
-const HOVER_DEBOUNCE_TIME = 500;
 const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
   // This nav menu item should be selected when lower level elements
   // are selected. For example, the route /outbound-shipment/{id} should
@@ -50,7 +48,7 @@ const StyledListItem = styled<
 export interface AppNavLinkProps {
   end?: boolean; // denotes lowest level menu item, using terminology from useMatch
   icon?: JSX.Element;
-  expandOnHover?: boolean;
+  inactive?: boolean;
   text?: string;
   to: string;
   onClick?: () => void;
@@ -59,8 +57,8 @@ export interface AppNavLinkProps {
 export const AppNavLink: FC<AppNavLinkProps> = props => {
   const {
     end,
+    inactive,
     icon = <span style={{ width: 2 }} />,
-    expandOnHover,
     text,
     to,
     onClick,
@@ -68,19 +66,14 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const drawer = useDrawer();
 
   const selected = useSelectedNavMenuItem(to, !!end);
-  const debouncedClearHoverActive = useDebounceCallback(
-    drawer.clearHoverActive,
-    [],
-    HOVER_DEBOUNCE_TIME + 50
-  );
 
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) =>
-        expandOnHover && !end ? (
+        !end && !!inactive ? (
           <span
             {...linkProps}
-            onClick={onHoverOver}
+            onClick={expandChildren}
             data-testid={`${to}_hover`}
           />
         ) : (
@@ -91,75 +84,40 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             role="link"
             aria-label={text}
             title={text}
-            onClick={onClick || debouncedClearHoverActive}
+            onClick={onClick}
           />
         )
       ),
     [to]
   );
 
-  const debouncedHoverActive = useDebounceCallback(
-    drawer.setHoverActive,
-    [],
-    HOVER_DEBOUNCE_TIME
-  );
-
-  const onHoverOver = () => {
-    if (expandOnHover) {
-      drawer.setHoverActive(to, true);
-      if (!drawer.isOpen) {
-        drawer.open();
-        drawer.setHoverOpen(true);
-      }
-    }
+  const expandChildren = () => {
+    drawer.setClickedNavPath(to);
   };
-
-  const onHoverOut = () => {
-    if (expandOnHover) {
-      debouncedHoverActive(to, false);
-    }
-  };
-
-  React.useEffect(() => {
-    const isActive = Object.values(drawer.hoverActive).some(active => active);
-    if (drawer.hoverOpen && !isActive) {
-      drawer.close();
-      drawer.setHoverOpen(false);
-      drawer.clearHoverActive();
-    }
-  }, [drawer.hoverActive]);
 
   return (
-    <Tooltip
-      disableHoverListener={drawer.isOpen && !expandOnHover}
-      title={text || ''}
-      onClose={onHoverOut}
-      onOpen={onHoverOver}
-      PopperProps={expandOnHover ? { style: { display: 'none' } } : {}}
-    >
-      <StyledListItem isSelected={selected} to={to}>
-        <ListItemButton
-          sx={{
-            ...getListItemCommonStyles(),
-            '&.MuiListItemButton-root:hover': {
-              backgroundColor: 'transparent',
-            },
-            '& .MuiTypography-root': {
-              textOverflow: 'ellipsis',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-            },
-          }}
-          disableGutters
-          component={CustomLink}
-        >
-          <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
-          <Box className="navLinkText">
-            <Box width={10} />
-            <ListItemText primary={text} />
-          </Box>
-        </ListItemButton>
-      </StyledListItem>
-    </Tooltip>
+    <StyledListItem isSelected={selected} to={to}>
+      <ListItemButton
+        sx={{
+          ...getListItemCommonStyles(),
+          '&.MuiListItemButton-root:hover': {
+            backgroundColor: 'transparent',
+          },
+          '& .MuiTypography-root': {
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          },
+        }}
+        disableGutters
+        component={CustomLink}
+      >
+        <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+        <Box className="navLinkText">
+          <Box width={10} />
+          <ListItemText primary={text} />
+        </Box>
+      </ListItemButton>
+    </StyledListItem>
   );
 };
