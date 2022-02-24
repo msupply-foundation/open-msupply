@@ -1,23 +1,19 @@
 use crate::invoice_queries::{get_invoice, InvoiceResponse};
 use crate::mutations::outbound_shipment::CannotChangeStatusOfInvoiceOnHold;
 use async_graphql::*;
-use domain::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus};
 
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
 };
-use graphql_core::{
-    simple_generic_errors::{
-        CannotReverseInvoiceStatus, DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordNotFound,
-    },
+use graphql_core::simple_generic_errors::{
+    CannotReverseInvoiceStatus, DatabaseError, ForeignKey, ForeignKeyError, NodeError,
+    RecordNotFound,
 };
 use graphql_types::generic_errors::OtherPartyNotASupplier;
-use graphql_types::types::{
-    InvoiceNode, NameNode,
-};
+use graphql_types::types::{InvoiceNode, NameNode};
 use repository::StorageConnectionManager;
 
-use service::invoice::{update_inbound_shipment, UpdateInboundShipmentError};
+use service::invoice::{update_inbound_shipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus, UpdateInboundShipment};
 
 #[derive(InputObject)]
 pub struct UpdateInboundShipmentInput {

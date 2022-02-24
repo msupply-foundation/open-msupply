@@ -2,10 +2,10 @@ use crate::{
     sync_processor::{process_records, Record},
     WithDBError,
 };
-use domain::{inbound_shipment::UpdateInboundShipment, name::Name};
+use domain::name::Name;
 use repository::{
-    InvoiceLineRowRepository, InvoiceRepository, RepositoryError, StockLineRowRepository,
-    StorageConnection, TransactionError,
+    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
+    StockLineRowRepository, StorageConnection, TransactionError,
 };
 
 mod generate;
@@ -15,6 +15,21 @@ use generate::generate;
 use validate::validate;
 
 use self::generate::LineAndStockLine;
+
+pub enum UpdateInboundShipmentStatus {
+    Delivered,
+    Verified,
+}
+
+pub struct UpdateInboundShipment {
+    pub id: String,
+    pub other_party_id: Option<String>,
+    pub status: Option<UpdateInboundShipmentStatus>,
+    pub on_hold: Option<bool>,
+    pub comment: Option<String>,
+    pub their_reference: Option<String>,
+    pub colour: Option<String>,
+}
 
 pub fn update_inbound_shipment(
     connection: &StorageConnection,
@@ -84,6 +99,24 @@ where
         match result {
             WithDBError::DatabaseError(error) => error.into(),
             WithDBError::Error(error) => error.into(),
+        }
+    }
+}
+
+impl UpdateInboundShipmentStatus {
+    pub fn full_status(&self) -> InvoiceRowStatus {
+        match self {
+            UpdateInboundShipmentStatus::Delivered => InvoiceRowStatus::Delivered,
+            UpdateInboundShipmentStatus::Verified => InvoiceRowStatus::Verified,
+        }
+    }
+}
+
+impl UpdateInboundShipment {
+    pub fn full_status(&self) -> Option<InvoiceRowStatus> {
+        match &self.status {
+            Some(status) => Some(status.full_status()),
+            None => None,
         }
     }
 }

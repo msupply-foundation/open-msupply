@@ -1,8 +1,10 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, assert_standard_graphql_error};
-    use chrono::Utc;
-    use domain::invoice::{Invoice, InvoiceStatus, InvoiceType};
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+
+    use repository::{
+        mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a, MockDataInserts},
+        Invoice, StorageConnectionManager,
+    };
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
@@ -223,25 +225,9 @@ mod graphql {
                 }
             );
             Ok(Invoice {
-                id: "new invoice id".to_string(),
-                other_party_name: "n/a".to_string(),
-                other_party_id: "n/a".to_string(),
-                other_party_store_id: None,
-                status: InvoiceStatus::New,
-                on_hold: false,
-                r#type: InvoiceType::OutboundShipment,
-                invoice_number: 1,
-                their_reference: None,
-                comment: None,
-                created_datetime: Utc::now().naive_utc(),
-                allocated_datetime: None,
-                picked_datetime: None,
-                shipped_datetime: None,
-                delivered_datetime: None,
-                verified_datetime: None,
-                colour: None,
-                requisition_id: None,
-                linked_invoice_id: None,
+                invoice_row: mock_outbound_shipment_a(),
+                name_row: mock_name_store_a(),
+                store_row: mock_store_a(),
             })
         }));
 
@@ -254,7 +240,7 @@ mod graphql {
 
         let expected = json!({
             "createRequisitionShipment": {
-              "id": "new invoice id"
+              "id": mock_outbound_shipment_a().id
             }
           }
         );

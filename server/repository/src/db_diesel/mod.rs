@@ -38,10 +38,10 @@ mod user_account;
 
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use changelog_row::*;
-pub use invoice::{InvoiceRepository, OutboundShipmentRepository};
+pub use invoice::*;
 pub use invoice_line::*;
 pub use invoice_line_row::*;
-pub use invoice_query::InvoiceQueryRepository;
+pub use invoice_query::*;
 pub use item::ItemRepository;
 pub use item_query::{ItemFilter, ItemQueryRepository};
 pub use item_stats::*;

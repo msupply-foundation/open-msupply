@@ -1,6 +1,7 @@
-use domain::{name::Name, outbound_shipment::UpdateOutboundShipment};
+use domain::name::Name;
 use repository::{
-    InvoiceRepository, RepositoryError, StockLineRowRepository, StorageConnection, TransactionError, InvoiceLine,
+    schema::InvoiceRowStatus, InvoiceLine, InvoiceRepository, RepositoryError,
+    StockLineRowRepository, StorageConnection, TransactionError,
 };
 
 pub mod generate;
@@ -10,6 +11,38 @@ use generate::generate;
 use validate::validate;
 
 use crate::sync_processor::{process_records, Record};
+
+pub enum UpdateOutboundShipmentStatus {
+    Allocated,
+    Picked,
+    Shipped,
+}
+
+pub struct UpdateOutboundShipment {
+    pub id: String,
+    pub other_party_id: Option<String>,
+    pub status: Option<UpdateOutboundShipmentStatus>,
+    pub on_hold: Option<bool>,
+    pub comment: Option<String>,
+    pub their_reference: Option<String>,
+    pub colour: Option<String>,
+}
+
+#[derive(Debug)]
+pub enum UpdateOutboundShipmentError {
+    CannotReverseInvoiceStatus,
+    CannotChangeStatusOfInvoiceOnHold,
+    InvoiceDoesNotExists,
+    InvoiceIsNotEditable,
+    DatabaseError(RepositoryError),
+    OtherPartyDoesNotExists,
+    OtherPartyNotACustomer(Name),
+    OtherPartyCannotBeThisStore,
+    NotAnOutboundShipment,
+    CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
+    /// Holds the id of the invalid invoice line
+    InvoiceLineHasNoStockLine(String),
+}
 
 pub fn update_outbound_shipment(
     connection: &StorageConnection,
@@ -39,22 +72,6 @@ pub fn update_outbound_shipment(
     Ok(update_invoice.id)
 }
 
-#[derive(Debug)]
-pub enum UpdateOutboundShipmentError {
-    CannotReverseInvoiceStatus,
-    CannotChangeStatusOfInvoiceOnHold,
-    InvoiceDoesNotExists,
-    InvoiceIsNotEditable,
-    DatabaseError(RepositoryError),
-    OtherPartyDoesNotExists,
-    OtherPartyNotACustomer(Name),
-    OtherPartyCannotBeThisStore,
-    NotAnOutboundShipment,
-    CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
-    /// Holds the id of the invalid invoice line
-    InvoiceLineHasNoStockLine(String),
-}
-
 impl From<RepositoryError> for UpdateOutboundShipmentError {
     fn from(error: RepositoryError) -> Self {
         UpdateOutboundShipmentError::DatabaseError(error)
@@ -71,6 +88,25 @@ impl From<TransactionError<UpdateOutboundShipmentError>> for UpdateOutboundShipm
                 })
             }
             TransactionError::Inner(e) => e,
+        }
+    }
+}
+
+impl UpdateOutboundShipmentStatus {
+    pub fn full_status(&self) -> InvoiceRowStatus {
+        match self {
+            UpdateOutboundShipmentStatus::Allocated => InvoiceRowStatus::Allocated,
+            UpdateOutboundShipmentStatus::Picked => InvoiceRowStatus::Picked,
+            UpdateOutboundShipmentStatus::Shipped => InvoiceRowStatus::Shipped,
+        }
+    }
+}
+
+impl UpdateOutboundShipment {
+    pub fn full_status(&self) -> Option<InvoiceRowStatus> {
+        match &self.status {
+            Some(status) => Some(status.full_status()),
+            None => None,
         }
     }
 }

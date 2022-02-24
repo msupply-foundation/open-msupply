@@ -8,12 +8,12 @@ mod graphql {
         delete_inbound_shipment_line_full as delete, DeleteInboundShipmentLineFull as Delete,
     };
 
-    use domain::invoice::{InvoiceStatus, InvoiceType};
     use domain::EqualFilter;
-    use domain::{invoice::InvoiceFilter, Pagination};
+    use domain::Pagination;
     use graphql_client::{GraphQLQuery, Response};
+    use repository::schema::{InvoiceRowStatus, InvoiceRowType};
     use repository::{mock::MockDataInserts, RepositoryError};
-    use repository::{InvoiceLineRowRepository, StockLineRowRepository};
+    use repository::{InvoiceFilter, InvoiceLineRowRepository, StockLineRowRepository};
     use server::test_utils::setup_all;
 
     use delete::DeleteInboundShipmentLineErrorInterface::*;
@@ -65,40 +65,44 @@ mod graphql {
 
         let draft_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::New.equal_to())
+                .r#type(InvoiceRowType::InboundShipment.equal_to())
+                .status(InvoiceRowStatus::New.equal_to())
                 .id(EqualFilter::equal_to("inbound_shipment_c")),
             &connection
         );
         let delivered_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Delivered.equal_to())
+                .r#type(InvoiceRowType::InboundShipment.equal_to())
+                .status(InvoiceRowStatus::Delivered.equal_to())
                 .id(EqualFilter::equal_to("inbound_shipment_d")),
             &connection
         );
         let verified_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Verified.equal_to()),
+                .r#type(InvoiceRowType::InboundShipment.equal_to())
+                .status(InvoiceRowStatus::Verified.equal_to()),
             &connection
         );
         let outbound_shipment = get_invoice_inline!(
-            InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
+            InvoiceFilter::new().r#type(InvoiceRowType::OutboundShipment.equal_to()),
             &connection
         );
-        let delivered_invoice_lines =
-            get_invoice_lines_inline!(&delivered_inbound_shipment.id.clone(), &connection);
+        let delivered_invoice_lines = get_invoice_lines_inline!(
+            &delivered_inbound_shipment.invoice_row.id.clone(),
+            &connection
+        );
         let outbound_shipment_lines =
-            get_invoice_lines_inline!(&outbound_shipment.id.clone(), &connection);
-        let verified_invoice_lines =
-            get_invoice_lines_inline!(&verified_inbound_shipment.id.clone(), &connection);
+            get_invoice_lines_inline!(&outbound_shipment.invoice_row.id.clone(), &connection);
+        let verified_invoice_lines = get_invoice_lines_inline!(
+            &verified_inbound_shipment.invoice_row.id.clone(),
+            &connection
+        );
         let draft_invoice_lines =
-            get_invoice_lines_inline!(&draft_inbound_shipment.id.clone(), &connection);
+            get_invoice_lines_inline!(&draft_inbound_shipment.invoice_row.id.clone(), &connection);
 
         let base_variables = delete::Variables {
             id: draft_invoice_lines[0].id.clone(),
-            invoice_id: draft_inbound_shipment.id.clone(),
+            invoice_id: draft_inbound_shipment.invoice_row.id.clone(),
         };
 
         // Test RecordNotFound Item
@@ -135,7 +139,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = verified_invoice_lines[0].id.clone();
-        variables.invoice_id = verified_inbound_shipment.id.clone();
+        variables.invoice_id = verified_inbound_shipment.invoice_row.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -150,7 +154,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = outbound_shipment_lines[0].id.clone();
-        variables.invoice_id = outbound_shipment.id.clone();
+        variables.invoice_id = outbound_shipment.invoice_row.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -164,7 +168,7 @@ mod graphql {
         // Test InvoiceLineBelongsToAnotherInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = delivered_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.invoice_row.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -176,7 +180,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = delivered_invoice_lines[1].id.clone();
-        variables.invoice_id = delivered_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.invoice_row.id.clone();
         let mut stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(delivered_invoice_lines[1].stock_line_id.as_ref().unwrap())
             .unwrap();
@@ -218,7 +222,7 @@ mod graphql {
 
         let mut variables = base_variables.clone();
         variables.id = delivered_invoice_lines[0].id.clone();
-        variables.invoice_id = delivered_inbound_shipment.id.clone();
+        variables.invoice_id = delivered_inbound_shipment.invoice_row.id.clone();
 
         let query = Delete::build_query(variables.clone());
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;

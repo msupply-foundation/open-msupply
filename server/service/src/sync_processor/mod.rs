@@ -1,9 +1,8 @@
-use domain::{invoice::InvoiceFilter, name::NameFilter, EqualFilter};
+use domain::{name::NameFilter, EqualFilter};
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
-    InvoiceQueryRepository, InvoiceRepository, NameQueryRepository, NameRepository,
-    RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
-    StoreRowRepository,
+    InvoiceFilter, InvoiceQueryRepository, NameQueryRepository, NameRepository, RepositoryError,
+    RequisitionFilter, RequisitionRepository, StorageConnection, StoreRowRepository,
 };
 
 use self::{
@@ -185,19 +184,9 @@ fn get_linked_record(
                     .linked_requisition_id(EqualFilter::equal_to(&requisition_row.id)),
             )?
             .map(|requisition| Record::RequisitionRow(requisition.requisition_row)),
-        Record::InvoiceRow(invoice) => {
-            let invoice = InvoiceQueryRepository::new(connection).query_one(
-                InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(&invoice.id)),
-            )?;
-            // TODO change when invoice domain is composite of InvoiceRow
-            if let Some(invoice) = invoice {
-                Some(Record::InvoiceRow(
-                    InvoiceRepository::new(connection).find_one_by_id(&invoice.id)?,
-                ))
-            } else {
-                None
-            }
-        }
+        Record::InvoiceRow(invoice) => InvoiceQueryRepository::new(connection)
+            .query_one(InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(&invoice.id)))?
+            .map(|invoice| Record::InvoiceRow(invoice.invoice_row)),
     };
 
     Ok(result)

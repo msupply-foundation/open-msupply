@@ -1,13 +1,12 @@
-use domain::invoice::InvoiceType;
 use repository::{
-    schema::{InvoiceRow, ItemRow, ItemRowType},
+    schema::{InvoiceRow, ItemRow, ItemRowType, InvoiceRowType},
     StorageConnection,
 };
 
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceType,
+        InvoiceIsNotEditable, WrongInvoiceRowType,
     },
     invoice_line::validate::{
         check_item, check_line_does_not_exists, ItemNotFound, LineAlreadyExists,
@@ -28,7 +27,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     // TODO:
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     Ok((item, invoice))
@@ -52,8 +51,8 @@ impl From<InvoiceDoesNotExist> for InsertOutboundShipmentServiceLineError {
     }
 }
 
-impl From<WrongInvoiceType> for InsertOutboundShipmentServiceLineError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for InsertOutboundShipmentServiceLineError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         InsertOutboundShipmentServiceLineError::NotAnOutboundShipment
     }
 }

@@ -1,12 +1,14 @@
 use chrono::Utc;
 
-use domain::{invoice::InvoiceType, name::Name, outbound_shipment::InsertOutboundShipment};
+use domain::name::Name;
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus, NumberRowType},
+    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType},
     RepositoryError, StorageConnection,
 };
 
 use crate::number::next_number;
+
+use super::InsertOutboundShipment;
 
 pub fn generate(
     connection: &StorageConnection,
@@ -19,7 +21,7 @@ pub fn generate(
     let result = InvoiceRow {
         id: input.id,
         name_id: input.other_party_id,
-        r#type: InvoiceType::OutboundShipment.into(),
+        r#type: InvoiceRowType::OutboundShipment,
         comment: input.comment,
         their_reference: input.their_reference,
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,

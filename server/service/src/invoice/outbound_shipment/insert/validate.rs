@@ -1,9 +1,9 @@
-use domain::{name::Name, outbound_shipment::InsertOutboundShipment};
+use domain::name::Name;
 use repository::{InvoiceRepository, RepositoryError, StorageConnection};
 
 use crate::invoice::check_other_party_id;
 
-use super::InsertOutboundShipmentError;
+use super::{InsertOutboundShipmentError, InsertOutboundShipment};
 
 pub fn validate(
     input: &InsertOutboundShipment,

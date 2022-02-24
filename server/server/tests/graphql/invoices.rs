@@ -3,8 +3,8 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, common::get_invoice_lines_inline};
     use chrono::{DateTime, Utc};
-    use domain::{invoice::InvoiceFilter, EqualFilter};
-    use repository::{mock::MockDataInserts, InvoiceQueryRepository};
+    use domain::EqualFilter;
+    use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceQueryRepository};
     use serde_json::json;
     use server::test_utils::setup_all;
 
@@ -39,10 +39,10 @@ mod graphql {
             .iter()
             .map(|invoice| {
                 json!({
-                    "id": invoice.id.to_owned(),
+                    "id": invoice.invoice_row.id.to_owned(),
                     "pricing": {
                         "totalAfterTax":
-                             get_invoice_lines_inline!(&invoice.id, &connection)
+                             get_invoice_lines_inline!(&invoice.invoice_row.id, &connection)
                             .iter()
                             .fold(0.0, |acc, invoice_line| acc + invoice_line.total_after_tax),
                     }
@@ -83,7 +83,7 @@ mod graphql {
         }"#;
 
         // test time range filter
-        let filter_time = invoices.get(1).unwrap().created_datetime;
+        let filter_time = invoices.get(1).unwrap().invoice_row.created_datetime;
         let variables = Some(json!({
           "filter": {
             "createdDatetime": {
@@ -94,9 +94,9 @@ mod graphql {
         let expected = json!({
             "invoices": {
                 "nodes": invoices.iter()
-                    .filter(|invoice| invoice.created_datetime <= filter_time)
+                    .filter(|invoice| invoice.invoice_row.created_datetime <= filter_time)
                     .map(|invoice| json!({
-                        "id": invoice.id,
+                        "id": invoice.invoice_row.id,
                     })).collect::<Vec<serde_json::Value>>(),
             },
         });
@@ -113,9 +113,9 @@ mod graphql {
         let expected = json!({
             "invoices": {
                 "nodes": invoices.iter()
-                    .filter(|invoice| invoice.invoice_number == 3)
+                    .filter(|invoice| invoice.invoice_row.invoice_number == 3)
                     .map(|invoice| json!({
-                        "id": invoice.id,
+                        "id": invoice.invoice_row.id,
                     })).collect::<Vec<serde_json::Value>>(),
             },
         });
@@ -144,21 +144,21 @@ mod graphql {
               if $desc {
                 $invoices.sort_by(|b, a| {
                     if $to_lowercase {
-                        let a = &format!("{}", a.$field).to_lowercase();
-                        let b = &format!("{}", b.$field).to_lowercase();
+                        let a = &format!("{}", a.invoice_row.$field).to_lowercase();
+                        let b = &format!("{}", b.invoice_row.$field).to_lowercase();
                         a.cmp(b)
                     } else {
-                        a.$field.cmp(&b.$field)
+                        a.invoice_row.$field.cmp(&b.invoice_row.$field)
                     }
                 });
               } else {
                 $invoices.sort_by(|a, b| {
                     if $to_lowercase {
-                        let a = &format!("{}", a.$field).to_lowercase();
-                        let b = &format!("{}", b.$field).to_lowercase();
+                        let a = &format!("{}", a.invoice_row.$field).to_lowercase();
+                        let b = &format!("{}", b.invoice_row.$field).to_lowercase();
                         a.cmp(b)
                     } else {
-                        a.$field.cmp(&b.$field)
+                        a.invoice_row.$field.cmp(&b.invoice_row.$field)
                     }
                 });
               }
@@ -167,7 +167,7 @@ mod graphql {
                 "invoices": {
                     "nodes": $invoices.iter()
                         .map(|invoice| json!({
-                            $gql_field: invoice.$field,
+                            $gql_field: invoice.invoice_row.$field,
                         })).collect::<Vec<serde_json::Value>>(),
                 },
             });
@@ -208,20 +208,38 @@ mod graphql {
         );
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
         // other party name
+
+        // TODO this is too hacky
+        struct TempStruct {
+            invoice_row: TempInnerStruct,
+        }
+        struct TempInnerStruct {
+            field: String,
+        }
+
+        let mut other_party_names: Vec<TempStruct> = invoices
+            .into_iter()
+            .map(|invoice| TempStruct {
+                invoice_row: TempInnerStruct {
+                    field: invoice.other_party_name().to_string(),
+                },
+            })
+            .collect();
+
         let (query, variables, expected) = sort_test!(
             "otherPartyName",
-            other_party_name,
+            field,
             "otherPartyName",
-            invoices,
+            other_party_names,
             true,
             true
         );
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
         let (query, variables, expected) = sort_test!(
             "otherPartyName",
-            other_party_name,
+            field,
             "otherPartyName",
-            invoices,
+            other_party_names,
             false,
             true
         );

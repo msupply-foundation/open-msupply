@@ -1,5 +1,4 @@
-use crate::WithDBError;
-use domain::outbound_shipment::DeleteOutboundShipmentLine;
+use crate::{invoice_line::DeleteOutboundShipmentLine, WithDBError};
 use repository::{
     InvoiceLineRowRepository, RepositoryError, StorageConnectionManager, TransactionError,
 };

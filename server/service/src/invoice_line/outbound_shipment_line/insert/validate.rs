@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceType,
+        InvoiceIsNotEditable, WrongInvoiceRowType,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -15,13 +15,12 @@ use crate::{
     },
     u32_to_i32,
 };
-use domain::{invoice::InvoiceType, outbound_shipment::InsertOutboundShipmentLine};
 use repository::{
-    schema::{InvoiceRow, ItemRow, StockLineRow},
+    schema::{InvoiceRow, ItemRow, StockLineRow, InvoiceRowType},
     StorageConnection,
 };
 
-use super::InsertOutboundShipmentLineError;
+use super::{InsertOutboundShipmentLineError, InsertOutboundShipmentLine};
 
 pub fn validate(
     input: &InsertOutboundShipmentLine,
@@ -40,7 +39,7 @@ pub fn validate(
         connection,
     )?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     check_batch_on_hold(&batch)?;
@@ -115,8 +114,8 @@ impl From<LineAlreadyExists> for InsertOutboundShipmentLineError {
     }
 }
 
-impl From<WrongInvoiceType> for InsertOutboundShipmentLineError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for InsertOutboundShipmentLineError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         InsertOutboundShipmentLineError::NotAnOutboundShipment
     }
 }
