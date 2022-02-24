@@ -14,11 +14,12 @@ fragment ResponseRequisitionLine on RequisitionLineNode {
   id
   itemId
   requestedQuantity
-  calculatedQuantity
+  suggestedQuantity
   itemStats {
+    __typename
+    availableStockOnHand
+    availableMonthsOfStockOnHand
     averageMonthlyConsumption
-    stockOnHand
-    monthsOfStock
   }
   item {
     id
@@ -43,7 +44,7 @@ fragment ResponseRequisition on RequisitionNode {
   otherPartyName
   otherPartyId
   maxMonthsOfStock
-  thresholdMonthsOfStock
+  minMonthsOfStock
   lines {
     __typename
     ... on RequisitionLineConnector {

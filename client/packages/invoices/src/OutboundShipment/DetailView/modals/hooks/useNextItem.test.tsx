@@ -51,8 +51,8 @@ const getLines = (): InvoiceLineNode[] => [
       name: '',
       stats: {
         __typename: 'ItemStatsNode',
-        stockOnHand: 0,
-        monthsOfStock: 0,
+        availableStockOnHand: 0,
+        availableMonthsOfStockOnHand: 0,
         averageMonthlyConsumption: 0,
       },
     },
@@ -82,8 +82,8 @@ const getLines = (): InvoiceLineNode[] => [
       name: '',
       stats: {
         __typename: 'ItemStatsNode',
-        stockOnHand: 0,
-        monthsOfStock: 0,
+        availableStockOnHand: 0,
+        availableMonthsOfStockOnHand: 0,
         averageMonthlyConsumption: 0,
       },
     },
@@ -113,8 +113,8 @@ const getLines = (): InvoiceLineNode[] => [
       name: '',
       stats: {
         __typename: 'ItemStatsNode',
-        stockOnHand: 0,
-        monthsOfStock: 0,
+        availableStockOnHand: 0,
+        availableMonthsOfStockOnHand: 0,
         averageMonthlyConsumption: 0,
       },
     },

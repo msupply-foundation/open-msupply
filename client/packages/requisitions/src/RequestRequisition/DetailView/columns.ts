@@ -28,8 +28,8 @@ export const useRequestRequisitionColumns = ({
         'previousStockOnHand',
         {
           accessor: ({ rowData }) =>
-            `${rowData.itemStats.stockOnHand} (${Math.floor(
-              (rowData.itemStats.stockOnHand ?? 0) /
+            `${rowData.itemStats.availableStockOnHand} (${Math.floor(
+              (rowData.itemStats.availableStockOnHand ?? 0) /
                 (rowData?.itemStats.averageMonthlyConsumption ?? 0)
             )} months)`,
         },
@@ -41,7 +41,7 @@ export const useRequestRequisitionColumns = ({
             const threeMonthsStock =
               rowData?.itemStats.averageMonthlyConsumption ?? 1 * 3;
             const diff =
-              threeMonthsStock - (rowData?.itemStats.stockOnHand ?? 0);
+              threeMonthsStock - (rowData?.itemStats.availableStockOnHand ?? 0);
             if (diff > 0) {
               return `${diff.toFixed(2)} (${Math.floor(
                 diff / (rowData?.itemStats.averageMonthlyConsumption ?? 1)
