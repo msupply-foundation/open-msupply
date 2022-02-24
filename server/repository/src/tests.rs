@@ -340,17 +340,18 @@ mod repository_test {
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRepository, ItemRepository, ItemStatsFilter,
-        ItemStatsRepository, KeyValueStoreRepository, MasterListFilter, MasterListLineRepository,
-        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameFilter, NameQueryRepository, NameRepository, NameSort,
-        NameSortField, NumberRowRepository, OutboundShipmentRepository, RequisitionFilter,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
-        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
-        StockLineRowRepository, StocktakeRowRepository, StoreRowRepository, UserAccountRepository, MasterListLineFilter,
+        ItemStatsRepository, KeyValueStoreRepository, MasterListFilter, MasterListLineFilter,
+        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
+        MasterListRepository, MasterListRowRepository, NameFilter, NameQueryRepository,
+        NameRepository, NameSort, NameSortField, NumberRowRepository, OutboundShipmentRepository,
+        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
+        StockLineFilter, StockLineRepository, StockLineRowRepository, StocktakeRowRepository,
+        StoreRowRepository, UserAccountRepository,
     };
+    use crate::{DateFilter, EqualFilter, Pagination, SimpleStringFilter};
     use chrono::{Duration, Utc};
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use domain::{DateFilter, EqualFilter, Pagination, SimpleStringFilter};
     use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
     #[actix_rt::test]

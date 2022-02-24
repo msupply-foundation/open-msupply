@@ -1,5 +1,5 @@
 use async_graphql::*;
-use domain::{PaginationOption, SimpleStringFilter};
+use repository::{PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{SimpleStringFilterInput},
     pagination::PaginationInput,

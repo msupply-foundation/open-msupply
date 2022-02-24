@@ -1,8 +1,8 @@
+use crate::{EqualFilter, Pagination, Sort};
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
-use domain::{EqualFilter, Pagination, Sort};
 
 use crate::{
     diesel_macros::apply_equal_filter,

@@ -4,7 +4,7 @@ use crate::{
     service_provider::ServiceContext,
 };
 use chrono::Utc;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{NumberRowType, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     NameQueryRepository, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,

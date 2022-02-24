@@ -1,4 +1,4 @@
-use domain::{EqualFilter, PaginationOption};
+use repository::{EqualFilter, PaginationOption};
 use repository::{Location, LocationFilter, LocationRepository, LocationSort};
 
 use crate::{

@@ -3,7 +3,7 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, common::get_invoice_lines_inline};
     use chrono::{DateTime, Utc};
-    use domain::EqualFilter;
+    use repository::EqualFilter;
     use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceQueryRepository};
     use serde_json::json;
     use server::test_utils::setup_all;

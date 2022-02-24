@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StorageConnection,

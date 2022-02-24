@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod query {
-    use domain::{EqualFilter, SimpleStringFilter};
+    use repository::{EqualFilter, SimpleStringFilter};
     use repository::{mock::MockDataInserts, test_db::setup_all, MasterListFilter};
 
     use crate::service_provider::ServiceProvider;

@@ -1,4 +1,4 @@
-use domain::{EqualFilter, PaginationOption};
+use repository::{EqualFilter, PaginationOption};
 use repository::{RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository, StocktakeSort};
 
 use crate::{

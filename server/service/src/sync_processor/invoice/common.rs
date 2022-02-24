@@ -3,7 +3,7 @@ use crate::{
     sync_processor::{ProcessRecordError, RecordForProcessing},
 };
 use chrono::Utc;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,

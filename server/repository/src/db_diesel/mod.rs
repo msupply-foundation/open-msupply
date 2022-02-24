@@ -2,6 +2,7 @@ use crate::repository_error::RepositoryError;
 
 mod central_sync_buffer;
 mod changelog_row;
+mod filter_sort_pagination;
 mod invoice;
 mod invoice_line;
 mod invoice_line_row;
@@ -38,6 +39,7 @@ mod user_account;
 
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use changelog_row::*;
+pub use filter_sort_pagination::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use invoice_line_row::*;

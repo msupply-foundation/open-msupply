@@ -11,11 +11,11 @@ use crate::{
     DBType, StorageConnection,
 };
 
+use crate::Pagination;
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
     prelude::*,
 };
-use domain::Pagination;
 
 use super::RequisitionLineFilter;
 

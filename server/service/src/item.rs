@@ -1,4 +1,4 @@
-use domain::PaginationOption;
+use repository::PaginationOption;
 use repository::{Item, ItemFilter, ItemQueryRepository, ItemSort, StorageConnectionManager};
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};

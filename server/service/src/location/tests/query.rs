@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod query {
-    use domain::{EqualFilter, PaginationOption, Sort};
+    use repository::{EqualFilter, PaginationOption, Sort};
     use repository::{
         mock::MockDataInserts, test_db::setup_all, LocationFilter, LocationSortField,
     };

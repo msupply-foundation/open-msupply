@@ -8,8 +8,8 @@ mod graphql {
         delete_inbound_shipment_line_full as delete, DeleteInboundShipmentLineFull as Delete,
     };
 
-    use domain::EqualFilter;
-    use domain::Pagination;
+    use repository::EqualFilter;
+    use repository::Pagination;
     use graphql_client::{GraphQLQuery, Response};
     use repository::schema::{InvoiceRowStatus, InvoiceRowType};
     use repository::{mock::MockDataInserts, RepositoryError};

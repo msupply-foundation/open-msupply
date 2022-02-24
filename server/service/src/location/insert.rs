@@ -1,6 +1,6 @@
 use super::{query::get_location, validate::check_location_code_is_unique};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::LocationRow, Location, LocationFilter, LocationRepository, LocationRowRepository,
     RepositoryError, StorageConnection,

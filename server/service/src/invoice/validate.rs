@@ -1,5 +1,5 @@
 use crate::WithDBError;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, NameQueryRepository,

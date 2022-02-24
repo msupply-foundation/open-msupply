@@ -1,6 +1,6 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, assert_standard_graphql_error};
-    use domain::PaginationOption;
+    use repository::PaginationOption;
     use repository::{
         mock::MockDataInserts, Location, LocationFilter, LocationSort, StorageConnectionManager,
     };

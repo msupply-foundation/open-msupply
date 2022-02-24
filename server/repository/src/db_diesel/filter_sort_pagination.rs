@@ -1,5 +1,3 @@
-pub mod shipment_tax_update;
-
 use chrono::{NaiveDate, NaiveDateTime};
 
 #[derive(Clone, PartialEq, Debug)]
@@ -145,7 +143,7 @@ pub struct Sort<T> {
     pub desc: Option<bool>,
 }
 
-pub const DEFAULT_LIMIT: u32 = 100;
+pub const DEFAULT_PAGINATION_LIMIT: u32 = 100;
 
 #[derive(Debug, PartialEq)]
 pub struct PaginationOption {
@@ -162,7 +160,7 @@ impl Pagination {
     pub fn new() -> Pagination {
         Pagination {
             offset: 0,
-            limit: DEFAULT_LIMIT,
+            limit: DEFAULT_PAGINATION_LIMIT,
         }
     }
 

@@ -10,7 +10,7 @@ use crate::{
         ItemIsVisibleRow, ItemRow, ItemRowType, UnitRow,
     },
 };
-use domain::{EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Item {
@@ -184,7 +184,7 @@ mod tests {
     use crate::{
         db_diesel::item_query::ItemFilter,
         schema::ItemRowType,
-        test_db,
+        test_db, EqualFilter, Pagination, DEFAULT_PAGINATION_LIMIT,
         {
             db_diesel::{
                 MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
@@ -194,7 +194,6 @@ mod tests {
             ItemQueryRepository, ItemRepository, NameRepository,
         },
     };
-    use domain::{EqualFilter, Pagination, DEFAULT_LIMIT};
 
     use super::{Item, ItemSort, ItemSortField};
 
@@ -235,7 +234,7 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_LIMIT).unwrap();
+        let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
 
         // Test
         // .count()
@@ -258,7 +257,7 @@ mod tests {
             .query(
                 Pagination {
                     offset: 10,
-                    limit: DEFAULT_LIMIT,
+                    limit: DEFAULT_PAGINATION_LIMIT,
                 },
                 None,
                 None,

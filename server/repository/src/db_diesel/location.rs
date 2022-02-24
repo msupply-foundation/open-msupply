@@ -5,8 +5,8 @@ use crate::schema::diesel_schema::{location, location::dsl as location_dsl};
 use crate::schema::LocationRow;
 use crate::DBType;
 
+use crate::{EqualFilter, Pagination, Sort};
 use diesel::prelude::*;
-use domain::{EqualFilter, Pagination, Sort};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Location {

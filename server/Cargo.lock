@@ -1373,13 +1373,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
 
 [[package]]
-name = "domain"
-version = "0.1.0"
-dependencies = [
- "chrono",
-]
-
-[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1718,7 +1711,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_batch_mutations",
  "graphql_core",
  "graphql_general_mutations",
@@ -1769,7 +1761,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_invoice",
  "graphql_invoice_line",
@@ -1823,7 +1814,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "repository",
  "reqwest",
  "serde 1.0.130",
@@ -1843,7 +1833,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -1865,7 +1854,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -1887,7 +1875,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -1909,7 +1896,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -1931,7 +1917,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -1964,7 +1949,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -1986,7 +1970,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -2008,7 +1991,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -2030,7 +2012,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -2052,7 +2033,6 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
- "domain",
  "graphql_core",
  "repository",
  "reqwest",
@@ -3326,7 +3306,6 @@ dependencies = [
  "diesel",
  "diesel-derive-enum",
  "diesel_migrations",
- "domain",
  "futures-util",
  "libsqlite3-sys",
  "log",
@@ -3612,7 +3591,6 @@ dependencies = [
  "assert-json-diff",
  "chrono",
  "config",
- "domain",
  "env_logger",
  "graphql",
  "graphql_client",
@@ -3640,7 +3618,6 @@ dependencies = [
  "anymap",
  "bcrypt",
  "chrono",
- "domain",
  "jsonwebtoken",
  "log",
  "repository",

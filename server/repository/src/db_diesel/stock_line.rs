@@ -9,8 +9,8 @@ use crate::{
         },
         LocationRow, StockLineRow,
     },
+    EqualFilter, Sort, DateFilter, Pagination,
 };
-use domain::{DateFilter, EqualFilter, Pagination, Sort};
 
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},

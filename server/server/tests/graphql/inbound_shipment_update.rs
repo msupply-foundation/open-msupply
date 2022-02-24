@@ -9,8 +9,8 @@ mod graphql {
     use crate::graphql::{
         update_inbound_shipment_full as update, UpdateInboundShipmentFull as Update,
     };
+
     use chrono::{Duration, Utc};
-    use domain::{EqualFilter, Pagination};
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::{
@@ -18,7 +18,7 @@ mod graphql {
             MockDataInserts,
         },
         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
-        InvoiceFilter, InvoiceRepository, NameFilter, StockLineRowRepository,
+        EqualFilter, InvoiceFilter, InvoiceRepository, NameFilter, StockLineRowRepository,
     };
     use server::test_utils::setup_all;
 

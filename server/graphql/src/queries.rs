@@ -1,5 +1,5 @@
 use async_graphql::*;
-use domain::PaginationOption;
+use repository::PaginationOption;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;

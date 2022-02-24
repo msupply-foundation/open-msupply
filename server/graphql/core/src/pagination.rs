@@ -1,5 +1,5 @@
 pub use async_graphql::*;
-use domain::PaginationOption;
+use repository::PaginationOption;
 
 /// Pagination input.
 ///

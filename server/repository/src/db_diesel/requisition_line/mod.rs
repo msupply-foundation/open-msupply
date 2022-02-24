@@ -1,4 +1,4 @@
-use domain::EqualFilter;
+use crate::EqualFilter;
 
 mod requisition_line;
 mod requisition_line_row;

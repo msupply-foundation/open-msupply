@@ -1,5 +1,5 @@
 use async_graphql::*;
-use domain::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{
         DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,

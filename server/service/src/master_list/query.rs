@@ -1,4 +1,4 @@
-use domain::PaginationOption;
+use repository::PaginationOption;
 use repository::{MasterList, MasterListRepository, MasterListFilter, MasterListSort};
 
 use crate::{

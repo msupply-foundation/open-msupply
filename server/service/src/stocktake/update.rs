@@ -1,5 +1,4 @@
 use chrono::Utc;
-use domain::{EqualFilter, SimpleStringFilter};
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -9,6 +8,7 @@ use repository::{
     RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
     StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
 };
+use repository::{EqualFilter, SimpleStringFilter};
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, uuid::uuid};
 
 use crate::{

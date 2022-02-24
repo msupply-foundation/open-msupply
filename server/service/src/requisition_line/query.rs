@@ -1,4 +1,4 @@
-use domain::{EqualFilter, PaginationOption};
+use repository::{EqualFilter, PaginationOption};
 use repository::{
     RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
 };
@@ -35,7 +35,7 @@ pub fn get_requisition_line(
 
 #[cfg(test)]
 mod test {
-    use domain::EqualFilter;
+    use repository::EqualFilter;
     use repository::{
         mock::{mock_draft_request_requisition_line, MockDataInserts},
         test_db::setup_all,

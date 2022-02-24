@@ -1,4 +1,4 @@
-use domain::PaginationOption;
+use repository::PaginationOption;
 use repository::{RepositoryError, StocktakeLine, StocktakeLineFilter, StocktakeLineSort};
 
 use crate::{service_provider::ServiceContext, ListResult};

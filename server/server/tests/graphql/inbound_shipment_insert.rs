@@ -4,7 +4,6 @@ mod graphql {
         get_gql_result,
     };
     use chrono::{Duration, Utc};
-    use domain::Pagination;
     use graphql_client::{GraphQLQuery, Response};
     use repository::{
         mock::{

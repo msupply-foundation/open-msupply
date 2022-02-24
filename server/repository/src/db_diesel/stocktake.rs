@@ -1,4 +1,4 @@
-use domain::{DatetimeFilter, EqualFilter, Pagination, Sort};
+use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},

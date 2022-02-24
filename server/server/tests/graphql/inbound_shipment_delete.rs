@@ -7,7 +7,6 @@ mod graphql {
     use crate::graphql::{
         delete_inbound_shipment_full as delete, DeleteInboundShipmentFull as Delete,
     };
-    use domain::Pagination;
     use graphql_client::{GraphQLQuery, Response};
     use repository::mock::MockDataInserts;
     use repository::schema::{InvoiceRowStatus, InvoiceRowType};

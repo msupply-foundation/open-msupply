@@ -7,7 +7,7 @@ edition = "2018"
 path = "src/lib.rs"
 
 [dependencies]
-domain = { path = "../domain" }
+
 util = { path = "../util" }
 
 chrono = { version = "0.4", features = ["serde"] }

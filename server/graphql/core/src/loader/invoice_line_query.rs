@@ -2,7 +2,7 @@ use super::{extract_unique_requisition_and_item_ids, RequisitionAndItemId};
 use crate::standard_graphql_error::StandardGraphqlError;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, StorageConnectionManager};
 use std::collections::HashMap;
 

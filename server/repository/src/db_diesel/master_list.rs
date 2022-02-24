@@ -10,7 +10,7 @@ use crate::{
         MasterListRow,
     },
 };
-use domain::{EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use super::{DBType, StorageConnection};
 

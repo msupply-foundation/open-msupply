@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test_update {
-    use domain::EqualFilter;
+    use repository::EqualFilter;
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,

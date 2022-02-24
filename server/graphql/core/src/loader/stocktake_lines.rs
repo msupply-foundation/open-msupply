@@ -1,6 +1,6 @@
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     RepositoryError, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StorageConnectionManager,

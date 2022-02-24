@@ -1,5 +1,5 @@
-use domain::SimpleStringFilter;
-use domain::{DatetimeFilter, EqualFilter, Sort};
+use crate::SimpleStringFilter;
+use crate::{DatetimeFilter, EqualFilter, Sort};
 
 use crate::schema::{RequisitionRowStatus, RequisitionRowType};
 

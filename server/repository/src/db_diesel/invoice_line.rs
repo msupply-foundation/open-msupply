@@ -11,11 +11,11 @@ use crate::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceStatsRow, LocationRow,
     },
 };
+use crate::{EqualFilter, Pagination};
 use diesel::{
     dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
-use domain::{EqualFilter, Pagination};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct InvoiceLine {

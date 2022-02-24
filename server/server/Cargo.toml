@@ -13,7 +13,7 @@ path = "src/main.rs"
 name = "remote_server"
 
 [dependencies]
-domain = { path = "../domain" }
+
 graphql = { path = "../graphql" }
 graphql_core = { path = "../graphql/core" }
 graphql_types = { path = "../graphql/types" }

@@ -8,10 +8,9 @@ mod graphql {
         update_inbound_shipment_line_full as update, UpdateInboundShipmentLineFull as Update,
     };
     use chrono::NaiveDate;
-    use domain::EqualFilter;
-    use domain::Pagination;
     use graphql_client::{GraphQLQuery, Response};
     use repository::schema::{InvoiceRowStatus, InvoiceRowType};
+    use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts,
         schema::{InvoiceLineRow, StockLineRow},

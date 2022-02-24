@@ -1,4 +1,4 @@
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::StocktakeLineRow, ItemFilter, ItemQueryRepository, LocationRepository, RepositoryError,
     StocktakeLineRowRepository, StorageConnection, LocationFilter,

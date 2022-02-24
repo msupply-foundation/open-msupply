@@ -8,8 +8,8 @@ mod graphql {
         insert_outbound_shipment_line_full as insert, InsertOutboundShipmentLineFull as Insert,
     };
 
-    use domain::EqualFilter;
-    use domain::Pagination;
+    use repository::EqualFilter;
+    use repository::Pagination;
     use graphql_client::{GraphQLQuery, Response};
     use repository::schema::{InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType};
     use repository::InvoiceFilter;

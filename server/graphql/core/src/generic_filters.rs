@@ -1,6 +1,6 @@
 use async_graphql::{InputObject, InputType};
 use chrono::{DateTime, Utc};
-use domain::{DatetimeFilter, EqualFilter, SimpleStringFilter};
+use repository::{DatetimeFilter, EqualFilter, SimpleStringFilter};
 
 // simple string filter
 #[derive(InputObject, Clone)]

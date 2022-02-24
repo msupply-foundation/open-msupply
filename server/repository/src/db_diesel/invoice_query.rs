@@ -13,7 +13,7 @@ use crate::{
     },
     RepositoryError,
 };
-use domain::{DatetimeFilter, EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{DatetimeFilter, EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
@@ -370,8 +370,8 @@ mod tests {
     use std::cmp::Ordering;
 
     use super::{InvoiceQueryRepository, InvoiceSort, InvoiceSortField};
+    use crate::Pagination;
     use crate::{mock::MockDataInserts, test_db};
-    use domain::Pagination;
 
     #[actix_rt::test]
     async fn test_invoice_query_sort() {

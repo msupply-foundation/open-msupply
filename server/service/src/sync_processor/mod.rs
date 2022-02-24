@@ -1,4 +1,4 @@
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
     InvoiceFilter, InvoiceQueryRepository, NameFilter, NameQueryRepository, NameRepository,

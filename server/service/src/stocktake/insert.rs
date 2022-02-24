@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{NumberRowType, StocktakeRow, StocktakeStatus},
     RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository, StocktakeRowRepository,

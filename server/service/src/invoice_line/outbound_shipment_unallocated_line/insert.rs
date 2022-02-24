@@ -1,4 +1,4 @@
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType, ItemRow, ItemRowType,

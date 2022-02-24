@@ -1,4 +1,4 @@
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{
     schema::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,

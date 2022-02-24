@@ -1,4 +1,4 @@
-use domain::{Pagination, SimpleStringFilter, Sort};
+use crate::{Pagination, SimpleStringFilter, Sort};
 
 use crate::{
     diesel_macros::apply_simple_string_filter,

@@ -2,7 +2,7 @@
 mod test_update {
 
     use chrono::Utc;
-    use domain::EqualFilter;
+    use repository::EqualFilter;
     use repository::{
         mock::{
             mock_picked_invoice_sync_processor,
