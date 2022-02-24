@@ -1719,6 +1719,18 @@ dependencies = [
  "async-trait",
  "chrono",
  "domain",
+ "graphql_batch_mutations",
+ "graphql_core",
+ "graphql_general_mutations",
+ "graphql_general_queries",
+ "graphql_invoice",
+ "graphql_invoice_line",
+ "graphql_location",
+ "graphql_requisition",
+ "graphql_requisition_line",
+ "graphql_stocktake",
+ "graphql_stocktake_line",
+ "graphql_types",
  "repository",
  "reqwest",
  "serde 1.0.130",
@@ -1745,6 +1757,32 @@ checksum = "a5613c31f18676f164112732202124f373bb2103ff017b3b85ca954ea6a66ada"
 dependencies = [
  "combine 3.8.1",
  "failure",
+]
+
+[[package]]
+name = "graphql_batch_mutations"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_invoice",
+ "graphql_invoice_line",
+ "graphql_stocktake",
+ "graphql_stocktake_line",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
 ]
 
 [[package]]
@@ -1776,6 +1814,136 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphql_core"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_general_mutations"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_general_queries"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_invoice"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_invoice_line"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_location"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
 name = "graphql_query_derive"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1784,6 +1952,115 @@ dependencies = [
  "graphql_client_codegen",
  "proc-macro2",
  "syn",
+]
+
+[[package]]
+name = "graphql_requisition"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_requisition_line"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_stocktake"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_stocktake_line"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_types"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anymap",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "domain",
+ "graphql_core",
+ "repository",
+ "reqwest",
+ "serde 1.0.130",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
 ]
 
 [[package]]
@@ -3339,6 +3616,8 @@ dependencies = [
  "env_logger",
  "graphql",
  "graphql_client",
+ "graphql_core",
+ "graphql_types",
  "httpmock",
  "log",
  "openssl",

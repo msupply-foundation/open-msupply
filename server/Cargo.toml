@@ -1,4 +1,3 @@
- 
 [workspace]
 
 members = [
@@ -9,4 +8,16 @@ members = [
     "server",
     "service",
     "util",
+    "graphql/core",
+    "graphql/types",
+    "graphql/requisition",
+    "graphql/requisition_line",
+    "graphql/stocktake",
+    "graphql/stocktake_line",
+    "graphql/invoice",
+    "graphql/invoice_line",
+    "graphql/location",
+    "graphql/general_queries",
+    "graphql/general_mutations",
+    "graphql/batch_mutations",
 ]
