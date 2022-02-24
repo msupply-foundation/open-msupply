@@ -1,19 +1,20 @@
 use repository::{
-    schema::{NumberRow, NumberRowType, RemoteSyncBufferRow},
-    StorageConnection,
+    schema::{ChangelogRow, ChangelogTableName, NumberRow, NumberRowType, RemoteSyncBufferRow},
+    NumberRowRepository, StorageConnection,
 };
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::sync::SyncTranslationError;
 
 use super::{
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
+    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     TRANSLATION_RECORD_NUMBER,
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct LegacyNumberRow {
     ID: String,
     name: String,
@@ -57,6 +58,52 @@ impl RemotePullTranslation for NumberTranslation {
     }
 }
 
+impl RemotePushUpsertTranslation for NumberTranslation {
+    fn try_translate_push(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+        if changelog.table_name != ChangelogTableName::Number {
+            return Ok(None);
+        }
+        let table_name = TRANSLATION_RECORD_NUMBER;
+
+        let NumberRow {
+            id,
+            value,
+            store_id,
+            r#type,
+        } = NumberRowRepository::new(connection)
+            .find_one_by_id(&changelog.row_id)
+            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
+            .ok_or(to_push_translation_error(
+                table_name,
+                anyhow::Error::msg("Number row not found"),
+                changelog,
+            ))?;
+
+        let name = match make_number_name(&r#type, &store_id) {
+            Some(name) => name,
+            None => return Ok(None),
+        };
+        let legacy_row = LegacyNumberRow {
+            ID: id.clone(),
+            name,
+            value,
+        };
+
+        Ok(Some(vec![PushUpsertRecord {
+            sync_id: changelog.id,
+            store_id: Some(store_id),
+            table_name,
+            record_id: id,
+            data: serde_json::to_value(&legacy_row)
+                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+        }]))
+    }
+}
+
 fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
     let mut split = value.split("_for_store_");
     let number_type = match split.next()? {
@@ -70,4 +117,16 @@ fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
     };
     let store = split.next()?.to_string();
     Some((number_type, store))
+}
+
+fn make_number_name(number_type: &NumberRowType, store_id: &str) -> Option<String> {
+    let number_str = match number_type {
+        NumberRowType::InboundShipment => "supplier_invoice_number",
+        NumberRowType::OutboundShipment => "customer_invoice_number",
+        NumberRowType::InventoryAdjustment => "inventory_adjustment_serial_number",
+        NumberRowType::Stocktake => "stock_take_number",
+        NumberRowType::RequestRequisition => return None,
+        NumberRowType::ResponseRequisition => return None,
+    };
+    Some(format!("{}_for_store_{}", number_str, store_id))
 }
