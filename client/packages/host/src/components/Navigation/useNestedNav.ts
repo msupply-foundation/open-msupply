@@ -4,11 +4,11 @@ interface NestedNavState {
   isActive: boolean;
 }
 
-const matchPath = (path: string, clicked?: string) =>
-  `/${clicked?.replace(/^\//, '')}/`.startsWith(path.replace(/\*$/, ''));
+const matchPath = (path: string, clickedNavPath?: string) =>
+  `/${clickedNavPath?.replace(/^\//, '')}/`.startsWith(path.replace(/\*$/, ''));
 
 export const useNestedNav = (path: string): NestedNavState => {
-  const { clicked, isOpen } = useDrawer();
+  const { clickedNavPath, isOpen } = useDrawer();
   const match = useMatch(path);
   const [expanded, setExpanded] = useState(false);
 
@@ -16,5 +16,5 @@ export const useNestedNav = (path: string): NestedNavState => {
     setExpanded(!!match);
   }, [match]);
 
-  return { isActive: isOpen && (expanded || matchPath(path, clicked)) };
+  return { isActive: isOpen && (expanded || matchPath(path, clickedNavPath)) };
 };
