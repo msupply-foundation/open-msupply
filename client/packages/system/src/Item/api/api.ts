@@ -4,21 +4,9 @@ import {
   ItemSortFieldInput,
   FilterBy,
 } from '@openmsupply-client/common';
-import {
-  ItemRowFragment,
-  ItemsListViewQuery,
-  ItemFragment,
-} from './operations.generated';
+import { ItemRowFragment, ItemFragment } from './operations.generated';
 import { ItemApi } from './hooks';
 import { getItemSortField } from '../utils';
-
-const itemsGuard = (itemsQuery: ItemsListViewQuery) => {
-  if (itemsQuery.items.__typename === 'ItemConnector') {
-    return itemsQuery.items;
-  }
-
-  throw new Error(itemsQuery.items.error.description);
-};
 
 export const ItemQueries = {
   get: {
@@ -51,7 +39,7 @@ export const ItemQueries = {
           desc: sortBy.isDesc,
         });
 
-        const items = itemsGuard(result);
+        const items = result.items;
 
         return items;
       },

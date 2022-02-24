@@ -7,7 +7,6 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundShipmentApi } from '../api';
 import {
-  InvoicesQuery,
   InvoicesQueryVariables,
   OutboundShipmentRowFragment,
 } from '../api/operations.generated';
@@ -20,14 +19,6 @@ const pricingGuard = (pricing: InvoicePriceResponse) => {
   } else {
     throw new Error('Unknown');
   }
-};
-
-const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
-  if (invoicesQuery.invoices.__typename === 'InvoiceConnector') {
-    return invoicesQuery.invoices;
-  }
-
-  throw new Error(invoicesQuery.invoices.error.description);
 };
 
 export const onCreate =
@@ -71,7 +62,7 @@ export const onRead =
   ): Promise<{ nodes: OutboundShipmentRowFragment[]; totalCount: number }> => {
     const result = await api.invoices(queryParams);
 
-    const invoices = invoicesGuard(result);
+    const invoices = result.invoices;
 
     const nodes = invoices.nodes.map(invoice => ({
       ...invoice,
@@ -82,15 +73,12 @@ export const onRead =
   };
 
 export const onUpdate =
-  (
-    api: OutboundShipmentApi // storeId: string
-  ) =>
+  (api: OutboundShipmentApi) =>
   async (
     patch: Partial<OutboundShipmentRowFragment> & { id: string }
   ): Promise<string> => {
     const result = await api.updateOutboundShipment({
       input: invoiceToInput(patch),
-      // storeId,
     });
 
     const { updateOutboundShipment } = result;
@@ -115,9 +103,6 @@ const getSortKey = (
   sortBy: SortBy<OutboundShipmentRowFragment>
 ): InvoiceSortFieldInput => {
   switch (sortBy.key) {
-    // case 'allocatedDatetime': {
-    //   return InvoiceSortFieldInput.ConfirmDatetime;
-    // }
     case 'createdDatetime': {
       return InvoiceSortFieldInput.CreatedDatetime;
     }
@@ -128,12 +113,7 @@ const getSortKey = (
     case 'invoiceNumber': {
       return InvoiceSortFieldInput.InvoiceNumber;
     }
-    // case 'otherPartyName': {
-    //   return InvoiceSortFieldInput.OtherPartyName;
-    // }
-    // case 'totalAfterTax': {
-    //   return InvoiceSortFieldInput.TotalAfterTax;
-    // }
+
     case 'status':
     default: {
       return InvoiceSortFieldInput.Status;

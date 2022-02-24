@@ -14,7 +14,10 @@ import {
   useSaveStocktakeLines,
 } from '../../../api';
 
-export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
+export type DraftStocktakeLine = Omit<
+  StocktakeLineFragment,
+  '__typename' | 'item'
+> & {
   countThisLine: boolean;
   isCreated?: boolean;
   isUpdated?: boolean;

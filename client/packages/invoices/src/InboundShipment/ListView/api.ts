@@ -6,11 +6,7 @@ import {
   InvoicePriceResponse,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceRow } from '../../types';
-import {
-  InboundShipmentApi,
-  InvoicesQueryVariables,
-  InvoicesQuery,
-} from '../api';
+import { InboundShipmentApi, InvoicesQueryVariables } from '../api';
 
 const invoiceToInput = (
   patch: Partial<Invoice> & { id: string }
@@ -63,14 +59,6 @@ const pricingGuard = (pricing: InvoicePriceResponse) => {
   }
 };
 
-const invoicesGuard = (invoicesQuery: InvoicesQuery) => {
-  if (invoicesQuery.invoices.__typename === 'InvoiceConnector') {
-    return invoicesQuery.invoices;
-  }
-
-  throw new Error(invoicesQuery.invoices.error.description);
-};
-
 export const getInboundShipmentListViewApi = (
   api: InboundShipmentApi,
   storeId: string
@@ -87,7 +75,7 @@ export const getInboundShipmentListViewApi = (
     return async (): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
       const result = await api.invoices(queryParams);
 
-      const invoices = invoicesGuard(result);
+      const invoices = result.invoices;
 
       const nodes = invoices.nodes.map(invoice => ({
         ...invoice,
