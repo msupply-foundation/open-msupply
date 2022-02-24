@@ -6,7 +6,6 @@ export const RTLProvider: FC = props => {
 
   return (
     <div
-      dir={isRtl ? 'rtl' : 'ltr'}
       style={{
         height: '100vh',
         width: '100vw',
