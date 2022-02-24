@@ -1,10 +1,6 @@
 mod graphql {
-    use crate::graphql::assert_graphql_query;
-    use domain::{
-        invoice_line::{InvoiceLine, InvoiceLineType},
-        location::DeleteLocation,
-        stock_line::StockLine,
-    };
+    use crate::graphql::{assert_graphql_query, unallocated_line::successfull_invoice_line};
+    use domain::{location::DeleteLocation, stock_line::StockLine};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -153,30 +149,12 @@ mod graphql {
                     on_hold: false,
                     note: None,
                 }],
-                invoice_lines: vec![InvoiceLine {
-                    id: "invoice_line_id".to_owned(),
-                    stock_line_id: None,
-                    invoice_id: "n/a".to_owned(),
-                    location_id: None,
-                    location_name: None,
-                    item_id: "n/a".to_owned(),
-                    item_name: "n/a".to_owned(),
-                    item_code: "n/a".to_owned(),
-                    r#type: InvoiceLineType::StockIn,
-                    number_of_packs: 1,
-                    pack_size: 1,
-                    cost_price_per_pack: 1.0,
-                    sell_price_per_pack: 1.0,
-                    batch: None,
-                    expiry_date: None,
-                    note: None,
-                    requisition_id: None,
-                }],
+                invoice_lines: vec![successfull_invoice_line()],
             }))
         }));
 
         // let invoice_line_ids = stock_lines.iter();
-
+        let out_line = successfull_invoice_line();
         let expected = json!({
             "deleteLocation": {
               "error": {
@@ -185,7 +163,7 @@ mod graphql {
                   "nodes": [{"id": "stock_line_id"}]
                 },
                 "invoiceLines": {
-                  "nodes": [{"id": "invoice_line_id"}]
+                  "nodes": [{"id": out_line.invoice_line_row.id}]
                 }
               }
             }

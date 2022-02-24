@@ -59,8 +59,10 @@ pub fn get_remaining_fulfilments(
         .collect();
 
     for line in existing_invoice_lines {
-        let map_value = fulfilments_map.entry(line.item_id.clone()).or_insert(0);
-        *map_value -= line.pack_size * line.number_of_packs;
+        let map_value = fulfilments_map
+            .entry(line.invoice_line_row.item_id.clone())
+            .or_insert(0);
+        *map_value -= line.invoice_line_row.pack_size * line.invoice_line_row.number_of_packs;
     }
 
     let result = fulfilments_map

@@ -3,10 +3,7 @@ use crate::{
     sync_processor::{ProcessRecordError, RecordForProcessing},
 };
 use chrono::Utc;
-use domain::{
-    invoice_line::{InvoiceLine, InvoiceLineType},
-    EqualFilter,
-};
+use domain::EqualFilter;
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -132,89 +129,70 @@ fn get_request_requisition_id_from_inbound_shipment(
     Ok(result)
 }
 
-pub fn find_delete_lines(
-    connection: &StorageConnection,
-    invoice: &InvoiceRow,
-) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
-    let lines_to_delete = get_lines_for_invoice(connection, &invoice.id)?;
-
-    let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
-
-    let mut result_lines = Vec::new();
-
-    for line in lines_to_delete.iter() {
-        result_lines.push(
-            invoice_line_row_repository
-                .find_one_by_id(&line.id)
-                .unwrap(),
-        );
-    }
-
-    Ok(result_lines)
-}
-
 pub fn regenerate_linked_invoice_lines(
     connection: &StorageConnection,
     linked_invoice: &InvoiceRow,
     source_invoice: &InvoiceRow,
 ) -> Result<(Vec<InvoiceLineRow>, Vec<InvoiceLineRow>), ProcessRecordError> {
-    let lines_to_delete = find_delete_lines(connection, linked_invoice)?;
+    let lines_to_delete = get_lines_for_invoice(connection, &linked_invoice.id)?;
 
-    let source_lines = get_lines_for_invoice(connection, &source_invoice.id)?;
+    let source_lines: Vec<InvoiceLineRow> = get_lines_for_invoice(connection, &source_invoice.id)?;
 
-    let mut new_lines = Vec::new();
-
-    for InvoiceLine {
-        item_id,
-        item_name,
-        item_code,
-        pack_size,
-        number_of_packs,
-        r#type,
-        sell_price_per_pack,
-        batch,
-        expiry_date,
-        note,
-        id: _,
-        stock_line_id: _,
-        invoice_id: _,
-        location_id: _,
-        location_name: _,
-        requisition_id: _,
-        cost_price_per_pack: _,
-    } in source_lines.into_iter()
-    {
-        let cost_price_per_pack = sell_price_per_pack;
-
-        let new_row = InvoiceLineRow {
-            id: uuid(),
-            invoice_id: linked_invoice.id.clone(),
-            item_id,
-            item_name,
-            item_code,
-            batch,
-            expiry_date,
-            pack_size,
-            total_before_tax: cost_price_per_pack * pack_size as f64 * number_of_packs as f64,
-            total_after_tax: cost_price_per_pack * pack_size as f64 * number_of_packs as f64,
-            cost_price_per_pack,
-            r#type: match r#type {
-                InvoiceLineType::StockIn => InvoiceLineRowType::StockIn,
-                InvoiceLineType::StockOut => InvoiceLineRowType::StockOut,
-                InvoiceLineType::UnallocatedStock => InvoiceLineRowType::UnallocatedStock,
-                InvoiceLineType::Service => InvoiceLineRowType::Service,
+    let new_lines = source_lines
+        .into_iter()
+        .map(
+            |InvoiceLineRow {
+                 id: _,
+                 invoice_id: _,
+                 item_id,
+                 item_name,
+                 item_code,
+                 stock_line_id: _,
+                 location_id: _,
+                 batch,
+                 expiry_date,
+                 pack_size,
+                 cost_price_per_pack: _,
+                 sell_price_per_pack,
+                 number_of_packs,
+                 note,
+                 r#type,
+                 total_after_tax: _,
+                 total_before_tax: _,
+                 tax: _,
+             }| {
+                let cost_price_per_pack = sell_price_per_pack;
+                InvoiceLineRow {
+                    id: uuid(),
+                    invoice_id: linked_invoice.id.clone(),
+                    item_id,
+                    item_name,
+                    item_code,
+                    batch,
+                    expiry_date,
+                    pack_size,
+                    total_before_tax: cost_price_per_pack
+                        * pack_size as f64
+                        * number_of_packs as f64,
+                    total_after_tax: cost_price_per_pack
+                        * pack_size as f64
+                        * number_of_packs as f64,
+                    cost_price_per_pack,
+                    r#type: match r#type {
+                        InvoiceLineRowType::Service => InvoiceLineRowType::Service,
+                        _ => InvoiceLineRowType::StockIn,
+                    },
+                    number_of_packs,
+                    note,
+                    // Default
+                    stock_line_id: None,
+                    location_id: None,
+                    sell_price_per_pack: 0.0,
+                    tax: Some(0.0),
+                }
             },
-            number_of_packs,
-            note,
-            // Default
-            stock_line_id: None,
-            location_id: None,
-            sell_price_per_pack: 0.0,
-            tax: Some(0.0),
-        };
-
-        new_lines.push(new_row);
-    }
+        )
+        .collect();
 
     Ok((lines_to_delete, new_lines))
 }
@@ -222,7 +200,12 @@ pub fn regenerate_linked_invoice_lines(
 pub fn get_lines_for_invoice(
     connection: &StorageConnection,
     invoice_id: &str,
-) -> Result<Vec<InvoiceLine>, RepositoryError> {
-    InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))
+) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
+    let invoice_line_rows = InvoiceLineRepository::new(connection)
+        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?
+        .into_iter()
+        .map(|line| line.invoice_line_row)
+        .collect();
+
+    Ok(invoice_line_rows)
 }

@@ -1,5 +1,4 @@
-use domain::invoice_line::InvoiceLine;
-use repository::{InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError};
+use repository::{InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError, InvoiceLine};
 
 pub mod validate;
 

@@ -1,7 +1,7 @@
-use domain::invoice_line::InvoiceLine;
 use domain::EqualFilter;
 use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StorageConnectionManager,
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, RepositoryError,
+    StorageConnectionManager,
 };
 
 use async_graphql::dataloader::*;
@@ -29,7 +29,7 @@ impl Loader<String> for InvoiceLineLoader {
                 InvoiceLineFilter::new().id(EqualFilter::equal_any(invoice_line_ids.to_owned())),
             )?
             .into_iter()
-            .map(|invoice_line| (invoice_line.id.clone(), invoice_line))
+            .map(|invoice_line| (invoice_line.invoice_line_row.id.clone(), invoice_line))
             .collect();
 
         Ok(result)

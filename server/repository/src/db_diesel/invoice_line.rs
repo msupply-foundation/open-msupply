@@ -1,3 +1,4 @@
+use super::{DBType, StorageConnection};
 use crate::{
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
@@ -10,10 +11,18 @@ use crate::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceStatsRow, LocationRow,
     },
 };
-use domain::{
-    invoice_line::{InvoiceLine, InvoiceLineSort},
-    EqualFilter, Pagination,
+use diesel::{
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    prelude::*,
 };
+use domain::{EqualFilter, Pagination};
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct InvoiceLine {
+    pub invoice_line_row: InvoiceLineRow,
+    pub invoice_row: InvoiceRow,
+    pub location_row_option: Option<LocationRow>,
+}
 
 pub struct InvoiceLineFilter {
     pub id: Option<EqualFilter<String>>,
@@ -67,13 +76,6 @@ impl InvoiceLineFilter {
     }
 }
 
-use super::{DBType, StorageConnection};
-
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
-
 type InvoiceLineJoin = (InvoiceLineRow, InvoiceRow, Option<LocationRow>);
 
 pub struct InvoiceLineRepository<'a> {
@@ -96,14 +98,20 @@ impl<'a> InvoiceLineRepository<'a> {
         &self,
         filter: InvoiceLineFilter,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+        self.query(Pagination::new(), Some(filter))
+    }
+
+    pub fn query_one(
+        &self,
+        filter: InvoiceLineFilter,
+    ) -> Result<Option<InvoiceLine>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
         &self,
         pagination: Pagination,
         filter: Option<InvoiceLineFilter>,
-        _: Option<InvoiceLineSort>,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
@@ -149,24 +157,18 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     query
 }
 
-fn to_domain((invoice_line, invoice_row, location_row_option): InvoiceLineJoin) -> InvoiceLine {
+fn to_domain((invoice_line_row, invoice_row, location_row_option): InvoiceLineJoin) -> InvoiceLine {
     InvoiceLine {
-        id: invoice_line.id,
-        stock_line_id: invoice_line.stock_line_id,
-        invoice_id: invoice_line.invoice_id,
-        item_id: invoice_line.item_id,
-        location_id: invoice_line.location_id,
-        item_name: invoice_line.item_name,
-        item_code: invoice_line.item_code,
-        pack_size: invoice_line.pack_size,
-        r#type: invoice_line.r#type.to_domain(),
-        number_of_packs: invoice_line.number_of_packs,
-        cost_price_per_pack: invoice_line.cost_price_per_pack,
-        sell_price_per_pack: invoice_line.sell_price_per_pack,
-        batch: invoice_line.batch,
-        expiry_date: invoice_line.expiry_date,
-        note: invoice_line.note,
-        location_name: location_row_option.map(|location_row| location_row.name),
-        requisition_id: invoice_row.requisition_id,
+        invoice_line_row,
+        invoice_row,
+        location_row_option,
+    }
+}
+
+impl InvoiceLine {
+    pub fn location_name(&self) -> Option<&str> {
+        self.location_row_option
+            .as_ref()
+            .map(|location_row| location_row.name.as_str())
     }
 }

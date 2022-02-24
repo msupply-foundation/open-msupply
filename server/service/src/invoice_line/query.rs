@@ -1,6 +1,9 @@
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use domain::{invoice_line::InvoiceLine, EqualFilter, Pagination};
-use repository::{InvoiceLineRepository, RepositoryError, StorageConnectionManager, InvoiceLineFilter};
+use domain::{EqualFilter, Pagination};
+use repository::{
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, RepositoryError,
+    StorageConnectionManager,
+};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -14,7 +17,6 @@ pub fn get_invoice_line(
     let mut result = InvoiceLineRepository::new(&connection).query(
         Pagination::one(),
         Some(InvoiceLineFilter::new().id(EqualFilter::equal_to(&id))),
-        None,
     )?;
 
     if let Some(record) = result.pop() {
