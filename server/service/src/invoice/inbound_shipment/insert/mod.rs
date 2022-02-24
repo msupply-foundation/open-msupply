@@ -1,5 +1,5 @@
 use crate::WithDBError;
-use domain::{inbound_shipment::InsertInboundShipment, name::Name};
+use domain::name::Name;
 use repository::{InvoiceRepository, RepositoryError, StorageConnection, TransactionError};
 
 mod generate;
@@ -7,6 +7,15 @@ mod validate;
 
 use generate::generate;
 use validate::validate;
+
+pub struct InsertInboundShipment {
+    pub id: String,
+    pub other_party_id: String,
+    pub on_hold: Option<bool>,
+    pub comment: Option<String>,
+    pub their_reference: Option<String>,
+    pub colour: Option<String>,
+}
 
 pub fn insert_inbound_shipment(
     connection: &StorageConnection,

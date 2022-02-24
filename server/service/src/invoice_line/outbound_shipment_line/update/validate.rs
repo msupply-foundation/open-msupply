@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceType,
+        InvoiceIsNotEditable, WrongInvoiceRowType,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -14,13 +14,12 @@ use crate::{
         StockLineAlreadyExistsInInvoice, StockLineNotFound,
     },
 };
-use domain::{invoice::InvoiceType, outbound_shipment::UpdateOutboundShipmentLine};
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, ItemRow},
+    schema::{InvoiceLineRow, InvoiceRow, ItemRow, InvoiceRowType},
     StorageConnection,
 };
 
-use super::{BatchPair, UpdateOutboundShipmentLineError};
+use super::{BatchPair, UpdateOutboundShipmentLineError, UpdateOutboundShipmentLine};
 
 pub fn validate(
     input: &UpdateOutboundShipmentLine,
@@ -39,7 +38,7 @@ pub fn validate(
     // check batch belongs to store
 
     check_line_belongs_to_invoice(&line, &invoice)?;
-    check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     check_number_of_packs(input.number_of_packs.clone())?;
@@ -176,8 +175,8 @@ impl From<NumberOfPacksBelowOne> for UpdateOutboundShipmentLineError {
     }
 }
 
-impl From<WrongInvoiceType> for UpdateOutboundShipmentLineError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for UpdateOutboundShipmentLineError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         UpdateOutboundShipmentLineError::NotAnOutboundShipment
     }
 }

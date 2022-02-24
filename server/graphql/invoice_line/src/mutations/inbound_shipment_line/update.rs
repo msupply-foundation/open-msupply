@@ -1,16 +1,13 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use domain::inbound_shipment::UpdateInboundShipmentLine;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError,
     InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NodeError,
     NotAnInboundShipment, Range, RangeError, RangeField, RecordNotFound,
 };
-use graphql_types::types::{
-    get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse,
-};
+use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
 use repository::StorageConnectionManager;
-use service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError};
+use service::invoice_line::{update_inbound_shipment_line, UpdateInboundShipmentLineError, UpdateInboundShipmentLine};
 
 use super::BatchIsReserved;
 

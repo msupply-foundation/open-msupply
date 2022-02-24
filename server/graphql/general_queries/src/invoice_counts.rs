@@ -1,14 +1,14 @@
 use async_graphql::*;
 use chrono::{FixedOffset, Utc};
-use domain::invoice::{InvoiceStatus, InvoiceType};
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use repository::schema::{InvoiceRowStatus, InvoiceRowType};
 use service::dashboard::invoice_count::{CountTimeRange, InvoiceCountError};
 use util::timezone::offset_to_timezone;
 
 fn do_invoice_count(
     ctx: &Context<'_>,
-    invoice_type: &InvoiceType,
-    invoice_status: &InvoiceStatus,
+    invoice_type: &InvoiceRowType,
+    invoice_status: &InvoiceRowStatus,
     range: &CountTimeRange,
     timezone_offset: &FixedOffset,
 ) -> Result<i64> {
@@ -35,8 +35,8 @@ fn do_invoice_count(
 }
 
 pub struct InvoiceCountsSummary {
-    invoice_type: InvoiceType,
-    invoice_status: InvoiceStatus,
+    invoice_type: InvoiceRowType,
+    invoice_status: InvoiceRowStatus,
     timezone_offset: FixedOffset,
 }
 
@@ -71,8 +71,8 @@ pub struct OutboundInvoiceCounts {
 impl OutboundInvoiceCounts {
     async fn created(&self) -> InvoiceCountsSummary {
         InvoiceCountsSummary {
-            invoice_type: InvoiceType::OutboundShipment,
-            invoice_status: InvoiceStatus::New,
+            invoice_type: InvoiceRowType::OutboundShipment,
+            invoice_status: InvoiceRowStatus::New,
             timezone_offset: self.timezone_offset,
         }
     }
@@ -105,8 +105,8 @@ pub struct InboundInvoiceCounts {
 impl InboundInvoiceCounts {
     async fn created(&self) -> InvoiceCountsSummary {
         InvoiceCountsSummary {
-            invoice_type: InvoiceType::InboundShipment,
-            invoice_status: InvoiceStatus::New,
+            invoice_type: InvoiceRowType::InboundShipment,
+            invoice_status: InvoiceRowStatus::New,
             timezone_offset: self.timezone_offset,
         }
     }

@@ -1,17 +1,15 @@
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
 use crate::invoice_queries::{get_invoice, InvoiceResponse};
 use async_graphql::*;
-use domain::{invoice::InvoiceStatus, outbound_shipment::InsertOutboundShipment};
-use graphql_core::{
-    simple_generic_errors::{
-        DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordAlreadyExist,
-    },
+
+use graphql_core::simple_generic_errors::{
+    DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordAlreadyExist,
 };
-use graphql_types::types::{
-    InvoiceNode, InvoiceNodeStatus, NameNode,
+use graphql_types::types::{InvoiceNode, InvoiceNodeStatus, NameNode};
+use repository::{StorageConnectionManager, schema::InvoiceRowStatus};
+use service::invoice::{
+    insert_outbound_shipment, InsertOutboundShipment, InsertOutboundShipmentError,
 };
-use repository::StorageConnectionManager;
-use service::invoice::{insert_outbound_shipment, InsertOutboundShipmentError};
 
 #[derive(InputObject)]
 pub struct InsertOutboundShipmentInput {
@@ -34,7 +32,7 @@ impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
             status: input
                 .status
                 .map(|s| s.to_domain())
-                .unwrap_or(InvoiceStatus::New),
+                .unwrap_or(InvoiceRowStatus::New),
             on_hold: input.on_hold,
             comment: input.comment,
             their_reference: input.their_reference,

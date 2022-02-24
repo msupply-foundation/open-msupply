@@ -1,5 +1,5 @@
 use crate::{u32_to_i32, WithDBError};
-use domain::outbound_shipment::UpdateOutboundShipmentLine;
+use domain::shipment_tax_update::ShipmentTaxUpdate;
 use repository::{
     schema::{InvoiceLineRow, StockLineRow},
     InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
@@ -11,6 +11,17 @@ mod validate;
 
 use generate::generate;
 use validate::validate;
+
+pub struct UpdateOutboundShipmentLine {
+    pub id: String,
+    pub invoice_id: String,
+    pub item_id: Option<String>,
+    pub stock_line_id: Option<String>,
+    pub number_of_packs: Option<u32>,
+    pub total_before_tax: Option<f64>,
+    pub total_after_tax: Option<f64>,
+    pub tax: Option<ShipmentTaxUpdate>,
+}
 
 pub fn update_outbound_shipment_line(
     connection_manager: &StorageConnectionManager,

@@ -1,11 +1,8 @@
-pub mod inbound_shipment;
-pub mod invoice;
 pub mod item;
 pub mod location;
 pub mod master_list;
 pub mod master_list_line;
 pub mod name;
-pub mod outbound_shipment;
 pub mod shipment_tax_update;
 pub mod stock_line;
 

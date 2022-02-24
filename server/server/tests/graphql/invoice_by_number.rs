@@ -1,7 +1,9 @@
 mod graphql {
-    use chrono::Utc;
-    use domain::invoice::{Invoice, InvoiceStatus, InvoiceType};
-    use repository::{mock::MockDataInserts, RepositoryError, StorageConnectionManager};
+    use repository::{
+        mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a, MockDataInserts},
+        schema::InvoiceRowType,
+        Invoice, RepositoryError, StorageConnectionManager,
+    };
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
@@ -12,7 +14,7 @@ mod graphql {
     use crate::graphql::assert_graphql_query;
 
     type GetInvoiceByNumber =
-        dyn Fn(u32, InvoiceType) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
+        dyn Fn(u32, InvoiceRowType) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<GetInvoiceByNumber>);
 
@@ -22,7 +24,7 @@ mod graphql {
             _: &ServiceContext,
             _: &str,
             invoice_number: u32,
-            r#type: InvoiceType,
+            r#type: InvoiceRowType,
         ) -> Result<Option<Invoice>, RepositoryError> {
             self.0(invoice_number, r#type)
         }
@@ -80,32 +82,15 @@ mod graphql {
         // Found
         let test_service = TestService(Box::new(|_, _| {
             Ok(Some(Invoice {
-                id: "test_id".to_owned(),
-                other_party_name: "na".to_owned(),
-                other_party_id: "na".to_owned(),
-                other_party_store_id: None,
-                status: InvoiceStatus::New,
-                on_hold: false,
-                invoice_number: 1,
-                their_reference: None,
-                comment: None,
-                created_datetime: Utc::now().naive_utc(),
-                allocated_datetime: None,
-                picked_datetime: None,
-                shipped_datetime: None,
-                delivered_datetime: None,
-                verified_datetime: None,
-                colour: None,
-                r#type: InvoiceType::OutboundShipment,
-                requisition_id: None,
-                linked_invoice_id: None,
+                invoice_row: mock_outbound_shipment_a(),
+                name_row: mock_name_store_a(),
+                store_row: mock_store_a(),
             }))
         }));
 
         let expected = json!({
             "invoiceByNumber": {
-                "id": "test_id"
-
+                "id": mock_outbound_shipment_a().id,
             }
           }
         );

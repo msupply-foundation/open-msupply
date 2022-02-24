@@ -1,8 +1,7 @@
 mod graphql {
     use crate::graphql::{assert_gql_not_found, assert_graphql_query};
-    use domain::invoice::InvoiceStatus;
     use graphql_types::types::{InvoiceLineNodeType, InvoiceNodeStatus};
-    use repository::{mock::MockDataInserts, schema::InvoiceLineRowType};
+    use repository::{mock::MockDataInserts, schema::{InvoiceLineRowType, InvoiceRowStatus}};
     use serde_json::json;
     use server::test_utils::setup_all;
 
@@ -75,7 +74,7 @@ mod graphql {
                             }
                         })).collect::<Vec<serde_json::Value>>(),
                 },
-                "status": InvoiceNodeStatus::from_domain(&InvoiceStatus::from(full_invoice.invoice.status.clone())),
+                "status": InvoiceNodeStatus::from_domain(&InvoiceRowStatus::from(full_invoice.invoice.status.clone())),
             },
         });
         assert_graphql_query!(&settings, &query, &variables, &expected, None);

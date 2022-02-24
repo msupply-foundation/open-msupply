@@ -1,5 +1,4 @@
 use crate::WithDBError;
-use domain::outbound_shipment::InsertOutboundShipmentLine;
 use repository::{
     InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnection,
     TransactionError,
@@ -10,6 +9,17 @@ mod validate;
 
 use generate::generate;
 use validate::validate;
+
+pub struct InsertOutboundShipmentLine {
+    pub id: String,
+    pub invoice_id: String,
+    pub item_id: String,
+    pub stock_line_id: String,
+    pub number_of_packs: u32,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub tax: Option<f64>,
+}
 
 pub fn insert_outbound_shipment_line(
     connection: &StorageConnection,

@@ -1,6 +1,6 @@
 pub mod query;
-use domain::invoice::Invoice;
-use domain::invoice::InvoiceType;
+use repository::Invoice;
+use repository::schema::InvoiceRowType;
 use repository::RepositoryError;
 
 use crate::service_provider::ServiceContext;
@@ -22,7 +22,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         invoice_number: u32,
-        r#type: InvoiceType,
+        r#type: InvoiceRowType,
     ) -> Result<Option<Invoice>, RepositoryError> {
         get_invoice_by_number(ctx, store_id, invoice_number, r#type)
     }

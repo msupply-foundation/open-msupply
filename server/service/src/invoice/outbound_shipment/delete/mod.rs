@@ -1,4 +1,6 @@
-use repository::{InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError, InvoiceLine};
+use repository::{
+    InvoiceLine, InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
+};
 
 pub mod validate;
 

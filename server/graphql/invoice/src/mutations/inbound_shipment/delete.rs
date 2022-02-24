@@ -1,27 +1,13 @@
-
 use async_graphql::*;
-use domain::inbound_shipment::{
-    DeleteInboundShipment,
-};
 
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
 };
-use graphql_core::{
-    simple_generic_errors::{
-        DatabaseError, RecordNotFound,
-    },
-};
-use graphql_types::generic_errors::{CannotDeleteInvoiceWithLines};
-use graphql_types::types::{
-    DeleteResponse, InvoiceLineConnector,
-};
+use graphql_core::simple_generic_errors::{DatabaseError, RecordNotFound};
+use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
+use graphql_types::types::{DeleteResponse, InvoiceLineConnector};
 use repository::StorageConnectionManager;
-use service::invoice::{
-    delete_inbound_shipment,
-    DeleteInboundShipmentError,
-};
-
+use service::invoice::{delete_inbound_shipment, DeleteInboundShipmentError, DeleteInboundShipment};
 
 #[derive(InputObject)]
 pub struct DeleteInboundShipmentInput {

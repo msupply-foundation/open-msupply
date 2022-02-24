@@ -1,12 +1,12 @@
 use chrono::Utc;
 
-use domain::{invoice::InvoiceStatus, name::Name, outbound_shipment::UpdateOutboundShipment};
+use domain::name::Name;
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, StockLineRow},
+    schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow},
     InvoiceLineRowRepository, StockLineRowRepository, StorageConnection,
 };
 
-use super::UpdateOutboundShipmentError;
+use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
 
 pub fn generate(
     existing_invoice: InvoiceRow,
@@ -46,10 +46,10 @@ pub fn generate(
 
 pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateOutboundShipment) -> bool {
     if let Some(new_invoice_status) = patch.full_status() {
-        let invoice_status_index = InvoiceStatus::from(invoice.status.clone()).index();
+        let invoice_status_index = invoice.status.index();
         let new_invoice_status_index = new_invoice_status.index();
 
-        new_invoice_status_index >= InvoiceStatus::Picked.index()
+        new_invoice_status_index >= InvoiceRowStatus::Picked.index()
             && invoice_status_index < new_invoice_status_index
     } else {
         false
@@ -59,23 +59,23 @@ pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateOutboundShipmen
 fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateOutboundShipment) {
     if let Some(new_invoice_status) = patch.full_status() {
         let current_datetime = Utc::now().naive_utc();
-        let invoice_status_index = InvoiceStatus::from(invoice.status.clone()).index();
+        let invoice_status_index = invoice.status.index();
         let new_invoice_status_index = new_invoice_status.index();
 
-        let is_status_update = |status: InvoiceStatus| {
+        let is_status_update = |status: InvoiceRowStatus| {
             new_invoice_status_index >= status.index()
                 && invoice_status_index < new_invoice_status_index
         };
 
-        if is_status_update(InvoiceStatus::Allocated) {
+        if is_status_update(InvoiceRowStatus::Allocated) {
             invoice.allocated_datetime = Some(current_datetime.clone());
         }
 
-        if is_status_update(InvoiceStatus::Picked) {
+        if is_status_update(InvoiceRowStatus::Picked) {
             invoice.picked_datetime = Some(current_datetime);
         }
 
-        if is_status_update(InvoiceStatus::Shipped) {
+        if is_status_update(InvoiceRowStatus::Shipped) {
             invoice.shipped_datetime = Some(current_datetime);
         }
     }

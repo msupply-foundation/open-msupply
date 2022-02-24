@@ -7,11 +7,11 @@ mod graphql {
     use crate::graphql::{
         delete_inbound_shipment_full as delete, DeleteInboundShipmentFull as Delete,
     };
-    use domain::invoice::{InvoiceStatus, InvoiceType};
-    use domain::{invoice::InvoiceFilter, Pagination};
+    use domain::Pagination;
     use graphql_client::{GraphQLQuery, Response};
     use repository::mock::MockDataInserts;
-    use repository::{InvoiceLineRowRepository, RepositoryError};
+    use repository::schema::{InvoiceRowStatus, InvoiceRowType};
+    use repository::{InvoiceFilter, InvoiceLineRowRepository, RepositoryError};
     use server::test_utils::setup_all;
 
     use delete::DeleteInboundShipmentErrorInterface::*;
@@ -62,13 +62,13 @@ mod graphql {
 
         let verified_inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Verified.equal_to()),
+                .r#type(InvoiceRowType::InboundShipment.equal_to())
+                .status(InvoiceRowStatus::Verified.equal_to()),
             &connection
         );
 
         let outbound_shipment = get_invoice_inline!(
-            InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
+            InvoiceFilter::new().r#type(InvoiceRowType::OutboundShipment.equal_to()),
             &connection
         );
         let lines_in_invoice = get_invoice_lines_inline!(invoice_with_lines_id, &connection);
@@ -95,7 +95,7 @@ mod graphql {
         // Test NotAnInboundShipment
 
         let mut variables = base_variables.clone();
-        variables.id = outbound_shipment.id.clone();
+        variables.id = outbound_shipment.invoice_row.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
@@ -110,7 +110,7 @@ mod graphql {
         // Test CannotEditInvoice
 
         let mut variables = base_variables.clone();
-        variables.id = verified_inbound_shipment.id.clone();
+        variables.id = verified_inbound_shipment.invoice_row.id.clone();
 
         let query = Delete::build_query(variables);
         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;

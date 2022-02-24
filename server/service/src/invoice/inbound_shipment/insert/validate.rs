@@ -1,8 +1,8 @@
 use crate::invoice::check_other_party_id;
-use domain::{inbound_shipment::InsertInboundShipment, name::Name};
+use domain::name::Name;
 use repository::{InvoiceRepository, RepositoryError, StorageConnection};
 
-use super::InsertInboundShipmentError;
+use super::{InsertInboundShipmentError, InsertInboundShipment};
 
 pub fn validate(
     input: &InsertInboundShipment,

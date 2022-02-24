@@ -1,11 +1,10 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_is_empty, check_invoice_type,
-    InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceType,
+    InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
 };
-use domain::{inbound_shipment::DeleteInboundShipment, invoice::InvoiceType};
-use repository::{schema::InvoiceRow, StorageConnection};
+use repository::{schema::{InvoiceRow, InvoiceRowType}, StorageConnection};
 
-use super::DeleteInboundShipmentError;
+use super::{DeleteInboundShipmentError, DeleteInboundShipment};
 
 pub fn validate(
     input: &DeleteInboundShipment,
@@ -14,15 +13,15 @@ pub fn validate(
     let invoice = check_invoice_exists(&input.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
     check_invoice_is_empty(&input.id, connection)?;
 
     Ok(invoice)
 }
 
-impl From<WrongInvoiceType> for DeleteInboundShipmentError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for DeleteInboundShipmentError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         DeleteInboundShipmentError::NotAnInboundShipment
     }
 }

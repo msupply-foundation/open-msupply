@@ -1,11 +1,8 @@
-use super::{InvoiceLineConnector, NameNode, RequisitionNode, StoreNode, map_filter};
+use super::{map_filter, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
-use domain::{
-    invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus, InvoiceType},
-    DatetimeFilter, EqualFilter, SimpleStringFilter,
-};
+use domain::{DatetimeFilter, EqualFilter, SimpleStringFilter};
 use graphql_core::generic_filters::{
     DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, SimpleStringFilterInput,
 };
@@ -17,7 +14,8 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::schema::InvoiceStatsRow;
+use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, InvoiceStatsRow};
+use repository::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -162,19 +160,19 @@ pub struct InvoiceConnector {
 #[Object]
 impl InvoiceNode {
     pub async fn id(&self) -> &str {
-        &self.invoice.id
+        &self.row().id
     }
 
     pub async fn other_party_name(&self) -> &str {
-        &self.invoice.other_party_name
+        self.invoice.other_party_name()
     }
 
     pub async fn other_party_id(&self) -> &str {
-        &self.invoice.other_party_id
+        self.invoice.other_party_id()
     }
 
     pub async fn other_party_store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let other_party_store_id = match &self.invoice.other_party_store_id {
+        let other_party_store_id = match self.invoice.other_party_store_id() {
             Some(other_party_store_id) => other_party_store_id,
             None => return Ok(None),
         };
@@ -187,71 +185,71 @@ impl InvoiceNode {
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
-        InvoiceNodeType::from_domain(&self.invoice.r#type)
+        InvoiceNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn status(&self) -> InvoiceNodeStatus {
-        InvoiceNodeStatus::from_domain(&self.invoice.status)
+        InvoiceNodeStatus::from_domain(&self.row().status)
     }
 
     pub async fn invoice_number(&self) -> i64 {
-        self.invoice.invoice_number
+        self.row().invoice_number
     }
 
     pub async fn their_reference(&self) -> &Option<String> {
-        &self.invoice.their_reference
+        &self.row().their_reference
     }
 
     pub async fn comment(&self) -> &Option<String> {
-        &self.invoice.comment
+        &self.row().comment
     }
 
     pub async fn on_hold(&self) -> bool {
-        self.invoice.on_hold
+        self.row().on_hold
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.invoice.created_datetime, Utc)
+        DateTime::<Utc>::from_utc(self.row().created_datetime, Utc)
     }
 
     pub async fn allocated_datetime(&self) -> Option<DateTime<Utc>> {
-        self.invoice
+        self.row()
             .allocated_datetime
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
     pub async fn picked_datetime(&self) -> Option<DateTime<Utc>> {
-        self.invoice
+        self.row()
             .picked_datetime
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
     pub async fn shipped_datetime(&self) -> Option<DateTime<Utc>> {
-        self.invoice
+        self.row()
             .shipped_datetime
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
     pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
-        self.invoice
+        self.row()
             .delivered_datetime
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
     pub async fn verified_datetime(&self) -> Option<DateTime<Utc>> {
-        self.invoice
+        self.row()
             .verified_datetime
             .map(|v| DateTime::<Utc>::from_utc(v, Utc))
     }
 
     pub async fn colour(&self) -> &Option<String> {
-        &self.invoice.colour
+        &self.row().colour
     }
 
     /// Response Requisition that is the origin of this Outbound Shipment
     /// Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
     pub async fn requisition(&self, ctx: &Context<'_>) -> Result<Option<RequisitionNode>> {
-        let requisition_id = if let Some(id) = &self.invoice.requisition_id {
+        let requisition_id = if let Some(id) = &self.row().requisition_id {
             id
         } else {
             return Ok(None);
@@ -267,7 +265,7 @@ impl InvoiceNode {
 
     /// Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment
     pub async fn linked_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
-        let linked_invoice_id = if let Some(id) = &self.invoice.linked_invoice_id {
+        let linked_invoice_id = if let Some(id) = &self.row().linked_invoice_id {
             id
         } else {
             return Ok(None);
@@ -282,7 +280,7 @@ impl InvoiceNode {
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
-        let result_option = loader.load_one(self.invoice.id.to_string()).await?;
+        let result_option = loader.load_one(self.row().id.to_string()).await?;
 
         Ok(InvoiceLineConnector::from_vec(
             result_option.unwrap_or(vec![]),
@@ -292,7 +290,7 @@ impl InvoiceNode {
     pub async fn pricing(&self, ctx: &Context<'_>) -> Result<InvoicePricingNode> {
         let loader = ctx.get_loader::<DataLoader<InvoiceStatsLoader>>();
         let default = InvoiceStatsRow {
-            invoice_id: self.invoice.id.clone(),
+            invoice_id: self.row().id.clone(),
             total_before_tax: 0.0,
             total_after_tax: 0.0,
             stock_total_before_tax: 0.0,
@@ -301,7 +299,7 @@ impl InvoiceNode {
             service_total_after_tax: 0.0,
         };
 
-        let result_option = loader.load_one(self.invoice.id.to_string()).await?;
+        let result_option = loader.load_one(self.row().id.to_string()).await?;
 
         Ok(InvoicePricingNode {
             invoice_pricing: result_option.unwrap_or(default),
@@ -311,12 +309,15 @@ impl InvoiceNode {
     pub async fn other_party(&self, ctx: &Context<'_>) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        let response_option = loader.load_one(self.invoice.other_party_id.clone()).await?;
+        let response_option = loader
+            .load_one(self.invoice.other_party_id().to_string())
+            .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to invoice ({})",
-                &self.invoice.other_party_id, &self.invoice.id
+                &self.invoice.other_party_id(),
+                &self.row().id
             ))
             .extend(),
         )
@@ -331,6 +332,9 @@ pub enum InvoicesResponse {
 impl InvoiceNode {
     pub fn from_domain(invoice: Invoice) -> InvoiceNode {
         InvoiceNode { invoice }
+    }
+    pub fn row(&self) -> &InvoiceRow {
+        &self.invoice.invoice_row
     }
 }
 
@@ -418,17 +422,17 @@ impl InvoiceSortInput {
 }
 
 impl InvoiceNodeType {
-    pub fn to_domain(self) -> InvoiceType {
+    pub fn to_domain(self) -> InvoiceRowType {
         use InvoiceNodeType::*;
         match self {
-            OutboundShipment => InvoiceType::OutboundShipment,
-            InboundShipment => InvoiceType::InboundShipment,
-            InventoryAdjustment => InvoiceType::InventoryAdjustment,
+            OutboundShipment => InvoiceRowType::OutboundShipment,
+            InboundShipment => InvoiceRowType::InboundShipment,
+            InventoryAdjustment => InvoiceRowType::InventoryAdjustment,
         }
     }
 
-    pub fn from_domain(r#type: &InvoiceType) -> InvoiceNodeType {
-        use InvoiceType::*;
+    pub fn from_domain(r#type: &InvoiceRowType) -> InvoiceNodeType {
+        use InvoiceRowType::*;
         match r#type {
             OutboundShipment => InvoiceNodeType::OutboundShipment,
             InboundShipment => InvoiceNodeType::InboundShipment,
@@ -438,20 +442,20 @@ impl InvoiceNodeType {
 }
 
 impl InvoiceNodeStatus {
-    pub fn to_domain(self) -> InvoiceStatus {
+    pub fn to_domain(self) -> InvoiceRowStatus {
         use InvoiceNodeStatus::*;
         match self {
-            New => InvoiceStatus::New,
-            Allocated => InvoiceStatus::Allocated,
-            Picked => InvoiceStatus::Picked,
-            Shipped => InvoiceStatus::Shipped,
-            Delivered => InvoiceStatus::Delivered,
-            Verified => InvoiceStatus::Verified,
+            New => InvoiceRowStatus::New,
+            Allocated => InvoiceRowStatus::Allocated,
+            Picked => InvoiceRowStatus::Picked,
+            Shipped => InvoiceRowStatus::Shipped,
+            Delivered => InvoiceRowStatus::Delivered,
+            Verified => InvoiceRowStatus::Verified,
         }
     }
 
-    pub fn from_domain(status: &InvoiceStatus) -> InvoiceNodeStatus {
-        use InvoiceStatus::*;
+    pub fn from_domain(status: &InvoiceRowStatus) -> InvoiceNodeStatus {
+        use InvoiceRowStatus::*;
         match status {
             New => InvoiceNodeStatus::New,
             Allocated => InvoiceNodeStatus::Allocated,

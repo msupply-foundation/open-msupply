@@ -7,11 +7,12 @@ mod graphql {
     use crate::graphql::{
         insert_outbound_shipment_line_full as insert, InsertOutboundShipmentLineFull as Insert,
     };
-    use domain::invoice::{InvoiceStatus, InvoiceType};
+
     use domain::EqualFilter;
-    use domain::{invoice::InvoiceFilter, Pagination};
+    use domain::Pagination;
     use graphql_client::{GraphQLQuery, Response};
-    use repository::schema::InvoiceLineRowType;
+    use repository::schema::{InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType};
+    use repository::InvoiceFilter;
     use repository::{
         mock::MockDataInserts,
         schema::{InvoiceLineRow, StockLineRow},
@@ -69,37 +70,39 @@ mod graphql {
 
         let draft_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::New.equal_to())
+                .r#type(InvoiceRowType::OutboundShipment.equal_to())
+                .status(InvoiceRowStatus::New.equal_to())
                 .id(EqualFilter::equal_to("outbound_shipment_c")),
             &connection
         );
 
         let picked_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Picked.equal_to())
+                .r#type(InvoiceRowType::OutboundShipment.equal_to())
+                .status(InvoiceRowStatus::Picked.equal_to())
                 .id(EqualFilter::equal_to("outbound_shipment_d")),
             &connection
         );
 
         let shipped_outbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Shipped.equal_to()),
+                .r#type(InvoiceRowType::OutboundShipment.equal_to())
+                .status(InvoiceRowStatus::Shipped.equal_to()),
             &connection
         );
 
         let inbound_shipment = get_invoice_inline!(
             InvoiceFilter::new()
-                .r#type(InvoiceType::InboundShipment.equal_to())
+                .r#type(InvoiceRowType::InboundShipment.equal_to())
                 .id(EqualFilter::equal_to("inbound_shipment_c")),
             &connection
         );
 
-        let draft_lines = get_invoice_lines_inline!(&draft_outbound_shipment.id, &connection);
+        let draft_lines =
+            get_invoice_lines_inline!(&draft_outbound_shipment.invoice_row.id, &connection);
 
-        let supplier_lines = get_invoice_lines_inline!(&inbound_shipment.id, &connection);
+        let supplier_lines =
+            get_invoice_lines_inline!(&inbound_shipment.invoice_row.id, &connection);
         let item_not_in_invoices_id = "item_c".to_string();
         let stock_line_not_in_invoices_id = "item_c_line_a".to_string();
 
@@ -107,7 +110,7 @@ mod graphql {
 
         let base_variables = insert::Variables {
             id: uuid(),
-            invoice_id: draft_outbound_shipment.id.clone(),
+            invoice_id: draft_outbound_shipment.invoice_row.id.clone(),
             item_id: item_not_in_invoices_id.clone(),
             number_of_packs: 3,
             stock_line_id: stock_line_not_in_invoices_id.clone(),
@@ -163,7 +166,7 @@ mod graphql {
         // Test CannotEditInvoice
 
         let mut variables = base_variables.clone();
-        variables.invoice_id = shipped_outbound_shipment.id.clone();
+        variables.invoice_id = shipped_outbound_shipment.invoice_row.id.clone();
 
         let query = Insert::build_query(variables);
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
@@ -328,7 +331,7 @@ mod graphql {
         let mut variables = base_variables.clone();
         variables.id = uuid();
         variables.number_of_packs = number_of_packs;
-        variables.invoice_id = picked_outbound_shipment.id.clone();
+        variables.invoice_id = picked_outbound_shipment.invoice_row.id.clone();
 
         let query = Insert::build_query(variables.clone());
         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;

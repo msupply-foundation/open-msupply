@@ -1,5 +1,5 @@
 use crate::WithDBError;
-use domain::inbound_shipment::InsertInboundShipmentLine;
+use chrono::NaiveDate;
 use repository::{
     InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnection,
     TransactionError,
@@ -10,6 +10,22 @@ mod validate;
 
 use generate::generate;
 use validate::validate;
+
+pub struct InsertInboundShipmentLine {
+    pub id: String,
+    pub invoice_id: String,
+    pub item_id: String,
+    pub location_id: Option<String>,
+    pub pack_size: u32,
+    pub batch: Option<String>,
+    pub cost_price_per_pack: f64,
+    pub sell_price_per_pack: f64,
+    pub expiry_date: Option<NaiveDate>,
+    pub number_of_packs: u32,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub tax: Option<f64>,
+}
 
 pub fn insert_inbound_shipment_line(
     connection: &StorageConnection,

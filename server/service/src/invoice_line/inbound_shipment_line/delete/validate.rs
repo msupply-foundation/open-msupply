@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type,
-        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceType,
+        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceRowType,
     },
     invoice_line::{
         inbound_shipment_line::check_batch,
@@ -11,10 +11,12 @@ use crate::{
         BatchIsReserved,
     },
 };
-use domain::{inbound_shipment::DeleteInboundShipmentLine, invoice::InvoiceType};
-use repository::{schema::InvoiceLineRow, StorageConnection};
+use repository::{
+    schema::{InvoiceLineRow, InvoiceRowType},
+    StorageConnection,
+};
 
-use super::DeleteInboundShipmentLineError;
+use super::{DeleteInboundShipmentLine, DeleteInboundShipmentLineError};
 
 pub fn validate(
     input: &DeleteInboundShipmentLine,
@@ -25,7 +27,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_line_belongs_to_invoice(&line, &invoice)?;
-    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
     check_batch(&line, connection)?;
 
@@ -38,8 +40,8 @@ impl From<LineDoesNotExist> for DeleteInboundShipmentLineError {
     }
 }
 
-impl From<WrongInvoiceType> for DeleteInboundShipmentLineError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for DeleteInboundShipmentLineError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         DeleteInboundShipmentLineError::NotAnInboundShipment
     }
 }

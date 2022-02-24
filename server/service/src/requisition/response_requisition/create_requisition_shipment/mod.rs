@@ -1,10 +1,7 @@
 use crate::service_provider::ServiceContext;
-use domain::{
-    invoice::{Invoice, InvoiceFilter},
-    EqualFilter,
-};
+use domain::EqualFilter;
 use repository::{
-    InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository, RepositoryError,
+    InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository, RepositoryError, Invoice, InvoiceFilter,
 };
 
 mod generate;
