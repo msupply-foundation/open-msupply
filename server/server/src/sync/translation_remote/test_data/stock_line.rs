@@ -2,7 +2,8 @@ use chrono::NaiveDate;
 use repository::schema::{RemoteSyncBufferAction, RemoteSyncBufferRow, StockLineRow};
 
 use crate::sync::translation_remote::{
-    test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    pull::{IntegrationRecord, IntegrationUpsertRecord},
+    test_data::TestSyncRecord,
     TRANSLATION_RECORD_ITEM_LINE,
 };
 

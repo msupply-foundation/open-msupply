@@ -1,26 +1,6 @@
 use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
-use log::{info, warn};
-use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow,
-        StocktakeLineRow, StocktakeRow,
-    },
-    InvoiceLineRowRepository, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
-    RepositoryError, StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository,
-    StorageConnection, TransactionError,
-};
+use repository::schema::ChangelogTableName;
 use serde::{Deserialize, Deserializer};
-
-use crate::sync::translation_remote::{
-    name_store_join::NameStoreJoinTranslation, shipment::ShipmentTranslation,
-    shipment_line::ShipmentLineTranslation, stocktake::StocktakeTranslation,
-    stocktake_line::StocktakeLineTranslation,
-};
-
-use self::number::NumberTranslation;
-use self::stock_line::StockLineTranslation;
-
-use super::{SyncImportError, SyncTranslationError};
 
 mod name_store_join;
 mod number;
@@ -29,49 +9,19 @@ mod shipment_line;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
+
+pub mod pull;
 #[cfg(test)]
 pub mod test_data;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum IntegrationUpsertRecord {
-    Number(NumberRow),
-    StockLine(StockLineRow),
-    NameStoreJoin(NameStoreJoinRow),
-    Shipment(InvoiceRow),
-    ShipmentLine(InvoiceLineRow),
-    Stocktake(StocktakeRow),
-    StocktakeLine(StocktakeLineRow),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct IntegrationRecord {
-    pub upserts: Vec<IntegrationUpsertRecord>,
-}
-
-impl IntegrationRecord {
-    pub fn from_upsert(record: IntegrationUpsertRecord) -> Self {
-        IntegrationRecord {
-            upserts: vec![record],
-        }
-    }
-}
-
-pub trait RemotePullTranslation {
-    fn try_translate_pull(
-        &self,
-        connection: &StorageConnection,
-        sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError>;
-}
-
-pub const TRANSLATION_RECORD_NUMBER: &str = "number";
+pub const TRANSLATION_RECORD_NUMBER: &'static str = "number";
 /// stock line
-pub const TRANSLATION_RECORD_ITEM_LINE: &str = "item_line";
-pub const TRANSLATION_RECORD_NAME_STORE_JOIN: &str = "name_store_join";
-pub const TRANSLATION_RECORD_TRANSACT: &str = "transact";
-pub const TRANSLATION_RECORD_TRANS_LINE: &str = "trans_line";
-pub const TRANSLATION_RECORD_STOCKTAKE: &str = "Stock_take";
-pub const TRANSLATION_RECORD_STOCKTAKE_LINE: &str = "Stock_take_lines";
+pub const TRANSLATION_RECORD_ITEM_LINE: &'static str = "item_line";
+pub const TRANSLATION_RECORD_NAME_STORE_JOIN: &'static str = "name_store_join";
+pub const TRANSLATION_RECORD_TRANSACT: &'static str = "transact";
+pub const TRANSLATION_RECORD_TRANS_LINE: &'static str = "trans_line";
+pub const TRANSLATION_RECORD_STOCKTAKE: &'static str = "Stock_take";
+pub const TRANSLATION_RECORD_STOCKTAKE_LINE: &'static str = "Stock_take_lines";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
@@ -85,113 +35,18 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_STOCKTAKE_LINE,
 ];
 
-/// Imports sync records and writes them to the DB
-/// If needed data records are translated to the local DB schema.
-pub fn import_sync_records(
-    connection: &StorageConnection,
-    records: &Vec<RemoteSyncBufferRow>,
-) -> Result<(), SyncImportError> {
-    let mut integration_records = IntegrationRecord {
-        upserts: Vec::new(),
-    };
-
-    info!(
-        "Translating {} remote sync buffer records...",
-        records.len()
-    );
-    for record in records {
-        do_translation(connection, &record, &mut integration_records)?;
+pub fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
+    match table {
+        ChangelogTableName::Number => TRANSLATION_RECORD_NUMBER,
+        ChangelogTableName::StockLine => TRANSLATION_RECORD_ITEM_LINE,
+        ChangelogTableName::NameStoreJoin => TRANSLATION_RECORD_NAME_STORE_JOIN,
+        ChangelogTableName::Invoice => TRANSLATION_RECORD_TRANSACT,
+        ChangelogTableName::InvoiceLine => TRANSLATION_RECORD_TRANS_LINE,
+        ChangelogTableName::Stocktake => TRANSLATION_RECORD_STOCKTAKE,
+        ChangelogTableName::StocktakeLine => TRANSLATION_RECORD_STOCKTAKE_LINE,
+        ChangelogTableName::Requisition => todo!(),
+        ChangelogTableName::RequisitionLine => todo!(),
     }
-    info!("Succesfully translated remote sync buffer records");
-
-    info!("Storing integration remote records...");
-    store_integration_records(connection, &integration_records)?;
-    info!("Successfully stored integration remote records");
-
-    Ok(())
-}
-
-fn do_translation(
-    connection: &StorageConnection,
-    sync_record: &RemoteSyncBufferRow,
-    records: &mut IntegrationRecord,
-) -> Result<(), SyncTranslationError> {
-    let translations: Vec<Box<dyn RemotePullTranslation>> = vec![
-        Box::new(NumberTranslation {}),
-        Box::new(StockLineTranslation {}),
-        Box::new(NameStoreJoinTranslation {}),
-        Box::new(ShipmentTranslation {}),
-        Box::new(ShipmentLineTranslation {}),
-        Box::new(StocktakeTranslation {}),
-        Box::new(StocktakeLineTranslation {}),
-    ];
-    for translation in translations {
-        if let Some(mut result) = translation.try_translate_pull(connection, sync_record)? {
-            records.upserts.append(&mut result.upserts);
-            return Ok(());
-        }
-    }
-    warn!("Unhandled remote pull record: {:?}", sync_record);
-    Ok(())
-}
-
-fn integrate_record(
-    record: &IntegrationUpsertRecord,
-    con: &StorageConnection,
-) -> Result<(), RepositoryError> {
-    match &record {
-        IntegrationUpsertRecord::Number(record) => NumberRowRepository::new(con).upsert_one(record),
-        IntegrationUpsertRecord::StockLine(record) => {
-            StockLineRowRepository::new(con).upsert_one(record)
-        }
-        IntegrationUpsertRecord::NameStoreJoin(record) => {
-            NameStoreJoinRepository::new(con).upsert_one(record)
-        }
-        IntegrationUpsertRecord::Shipment(record) => InvoiceRepository::new(con).upsert_one(record),
-        IntegrationUpsertRecord::ShipmentLine(record) => {
-            InvoiceLineRowRepository::new(con).upsert_one(record)
-        }
-        IntegrationUpsertRecord::Stocktake(record) => {
-            StocktakeRowRepository::new(con).upsert_one(record)
-        }
-        IntegrationUpsertRecord::StocktakeLine(record) => {
-            StocktakeLineRowRepository::new(con).upsert_one(record)
-        }
-    }
-}
-
-fn store_integration_records(
-    connection: &StorageConnection,
-    integration_records: &IntegrationRecord,
-) -> Result<(), SyncImportError> {
-    connection
-        .transaction_sync(|con| {
-            for record in &integration_records.upserts {
-                // Integrate every record in a sub transaction. This is mainly for Postgres where the
-                // whole transaction fails when there is a DB error (not a problem in sqlite).
-                let sub_result =
-                    con.transaction_sync_etc(|sub_tx| integrate_record(record, sub_tx), false);
-                match sub_result {
-                    Ok(_) => Ok(()),
-                    Err(TransactionError::Inner(err @ RepositoryError::ForeignKeyViolation(_))) => {
-                        warn!("Failed to import ({}): {:?}", err, record);
-                        Ok(())
-                    }
-                    Err(err) => Err(SyncImportError::as_integration_error(
-                        RepositoryError::from(err),
-                        "",
-                    )),
-                }?;
-            }
-            Ok(())
-        })
-        .map_err(|error| match error {
-            TransactionError::Transaction { msg, level } => SyncImportError::as_integration_error(
-                RepositoryError::TransactionError { msg, level },
-                "",
-            ),
-            TransactionError::Inner(e) => e,
-        })
 }
 
 pub fn empty_str_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
