@@ -61,6 +61,7 @@ pub struct RemotePostRecordV3 {
     #[serde(rename = "SyncID")]
     pub sync_id: String,
     #[serde(rename = "RecordType")]
+    // Equivalent to the table name
     pub record_type: String,
     #[serde(rename = "RecordID")]
     pub record_id: String,
@@ -68,7 +69,7 @@ pub struct RemotePostRecordV3 {
     pub sync_type: SyncTypeV3,
     #[serde(rename = "StoreID")]
     pub store_id: Option<String>,
-    // if sync type is Delete data is None
+    // If sync type is Delete data is None
     #[serde(rename = "Data")]
     pub data: Option<serde_json::Value>,
 }
