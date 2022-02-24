@@ -46,7 +46,7 @@ pub use item::ItemRepository;
 pub use item_query::*;
 pub use item_stats::*;
 pub use key_value_store::*;
-pub use location::{to_domain as location_to_domain, LocationRepository};
+pub use location::*;
 pub use location_row::LocationRowRepository;
 pub use master_list::{MasterList, MasterListRepository};
 pub use master_list_line::{MasterListLine, MasterListLineRepository};

@@ -1,6 +1,6 @@
 use crate::schema::LocationRow;
 
-pub fn mock_loaction_1() -> LocationRow {
+pub fn mock_location_1() -> LocationRow {
     LocationRow {
         id: "location_1".to_owned(),
         code: "code_location_1".to_owned(),
@@ -12,7 +12,7 @@ pub fn mock_loaction_1() -> LocationRow {
 
 pub fn mock_locations() -> Vec<LocationRow> {
     vec![
-        mock_loaction_1(),
+        mock_location_1(),
         LocationRow {
             id: "location_on_hold".to_owned(),
             code: "code_location_on_hold".to_owned(),

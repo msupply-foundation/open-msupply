@@ -1,16 +1,13 @@
 use async_graphql::*;
-use domain::location::InsertLocation;
 use graphql_core::{
     simple_generic_errors::{
         DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
     },
     ContextExt,
 };
-use graphql_types::types::{
-    LocationNode,
-};
+use graphql_types::types::LocationNode;
 use repository::RepositoryError;
-use service::location::insert::InsertLocationError as InError;
+use service::location::insert::{InsertLocationError as InError, InsertLocation};
 
 pub fn insert_location(
     ctx: &Context<'_>,

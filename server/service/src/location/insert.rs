@@ -1,12 +1,9 @@
 use super::{query::get_location, validate::check_location_code_is_unique};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use domain::{
-    location::{InsertLocation, Location, LocationFilter},
-    EqualFilter,
-};
+use domain::EqualFilter;
 use repository::{
-    schema::LocationRow, LocationRepository, LocationRowRepository, RepositoryError,
-    StorageConnection,
+    schema::LocationRow, Location, LocationFilter, LocationRepository, LocationRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -15,6 +12,13 @@ pub enum InsertLocationError {
     LocationWithCodeAlreadyExists,
     CreatedRecordDoesNotExist,
     DatabaseError(RepositoryError),
+}
+
+pub struct InsertLocation {
+    pub id: String,
+    pub code: String,
+    pub name: Option<String>,
+    pub on_hold: Option<bool>,
 }
 
 pub fn insert_location(

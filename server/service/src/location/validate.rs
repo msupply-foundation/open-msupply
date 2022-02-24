@@ -1,7 +1,7 @@
-use domain::{location::LocationFilter, EqualFilter};
+use domain::EqualFilter;
 use repository::{
     schema::LocationRow, LocationRepository, LocationRowRepository, RepositoryError,
-    StorageConnection,
+    StorageConnection, LocationFilter,
 };
 
 pub fn check_location_code_is_unique(
