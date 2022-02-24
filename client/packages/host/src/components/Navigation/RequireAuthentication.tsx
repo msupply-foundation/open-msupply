@@ -1,13 +1,13 @@
 import {
   Navigate,
-  useAuthContext,
+  useAuthState,
   useLocation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import React from 'react';
 
 export const RequireAuthentication = ({ children }) => {
-  const { token } = useAuthContext();
+  const { token } = useAuthState();
   const location = useLocation();
   // const isProduction = process.env['NODE_ENV'] === 'production';
 
