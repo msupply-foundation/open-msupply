@@ -14,10 +14,6 @@ const LocationService = React.lazy(
   () => import('@openmsupply-client/system/src/Location/Service/Service')
 );
 
-const MasterListService = React.lazy(
-  () => import('@openmsupply-client/system/src/MasterList/Service/Service')
-);
-
 const fullItemPath = RouteBuilder.create(AppRoute.Inventory)
   .addPart(AppRoute.Stock)
   .addWildCard()
@@ -32,16 +28,10 @@ const fullLocationPath = RouteBuilder.create(AppRoute.Inventory)
   .addPart(AppRoute.Locations)
   .build();
 
-const fullMasterListPath = RouteBuilder.create(AppRoute.Inventory)
-  .addPart(AppRoute.MasterLists)
-  .addWildCard()
-  .build();
-
 export const InventoryRouter: FC = () => {
   const gotoStock = useMatch(fullItemPath);
   const gotoStocktakes = useMatch(fullStocktakePath);
   const gotoLocations = useMatch(fullLocationPath);
-  const gotoMasterLists = useMatch(fullMasterListPath);
 
   if (gotoStock) {
     return <StockService />;
@@ -53,9 +43,6 @@ export const InventoryRouter: FC = () => {
 
   if (gotoLocations) {
     return <LocationService />;
-  }
-  if (gotoMasterLists) {
-    return <MasterListService />;
   }
 
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();

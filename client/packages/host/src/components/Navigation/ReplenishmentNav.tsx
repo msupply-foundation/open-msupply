@@ -23,14 +23,13 @@ export const ReplenishmentNav: FC = () => {
         end={false}
         to={AppRoute.Replenishment}
         icon={<SuppliersIcon color="primary" fontSize="small" />}
-        expandOnHover
         text={t('replenishment')}
+        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InboundShipment)
               .build()}
@@ -38,7 +37,6 @@ export const ReplenishmentNav: FC = () => {
           />
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InternalOrder)
               .build()}
@@ -47,7 +45,6 @@ export const ReplenishmentNav: FC = () => {
 
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.Suppliers)
               .build()}
