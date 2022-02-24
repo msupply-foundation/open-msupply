@@ -19,6 +19,7 @@ import {
   AppNavLink,
   useIsMediumScreen,
   useLocalStorage,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -28,6 +29,8 @@ import {
   ReplenishmentNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
+
+const HOVER_DEBOUNCE_TIME = 500;
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -126,22 +129,6 @@ const StyledDrawer = styled(Box, {
     '& div > ul > li': {
       width: 40,
     },
-    '&:hover': {
-      ...openedMixin(theme),
-      '& .navLinkText': {
-        display: 'inline-flex',
-        flex: 1,
-      },
-      '& div > ul > li': {
-        width: 200,
-      },
-    },
-    '&:not(:hover)': {
-      ...closedMixin(theme),
-      '& div > ul > li': {
-        width: 40,
-      },
-    },
   }),
 }));
 
@@ -159,6 +146,22 @@ export const AppDrawer: React.FC = () => {
     if (!isMediumScreen && !drawer.isOpen) drawer.open();
   }, [isMediumScreen]);
 
+  const onHoverOut = useDebounceCallback(
+    () => {
+      drawer.close();
+      drawer.setHoverOpen(false);
+    },
+    [],
+    HOVER_DEBOUNCE_TIME
+  );
+
+  const onHoverOver = () => {
+    if (!drawer.isOpen) {
+      drawer.open();
+      drawer.setHoverOpen(true);
+    }
+  };
+
   return (
     <StyledDrawer
       data-testid="drawer"
@@ -174,7 +177,7 @@ export const AppDrawer: React.FC = () => {
           icon={<AppDrawerIcon />}
         />
       </ToolbarIconContainer>
-      <UpperListContainer>
+      <UpperListContainer onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
         <List>
           <AppNavLink
             to={AppRoute.Dashboard}
