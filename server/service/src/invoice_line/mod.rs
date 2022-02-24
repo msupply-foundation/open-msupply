@@ -1,6 +1,7 @@
 pub mod query;
 pub mod validate;
-use domain::invoice_line::InvoiceLine;
+
+use repository::InvoiceLine;
 
 use crate::service_provider::ServiceContext;
 

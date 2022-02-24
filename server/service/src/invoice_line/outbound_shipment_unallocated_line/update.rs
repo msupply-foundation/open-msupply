@@ -1,13 +1,11 @@
-use domain::invoice_line::InvoiceLine;
-use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType},
-    InvoiceLineRowRepository, RepositoryError, StorageConnection,
-};
-
 use crate::{
     invoice_line::{get_invoice_line_ctx, validate::check_line_exists_option},
     service_provider::ServiceContext,
     u32_to_i32,
+};
+use repository::{
+    schema::{InvoiceLineRow, InvoiceLineRowType},
+    InvoiceLine, InvoiceLineRowRepository, RepositoryError, StorageConnection,
 };
 
 pub struct UpdateOutboundShipmentUnallocatedLine {
@@ -151,11 +149,11 @@ mod test_update {
             )
             .unwrap();
 
-        assert_eq!(result.id, line_to_update.id);
+        assert_eq!(result.invoice_line_row.id, line_to_update.id);
         line_to_update.number_of_packs = 20;
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id(&result.id)
+                .find_one_by_id(&result.invoice_line_row.id)
                 .unwrap(),
             line_to_update
         )

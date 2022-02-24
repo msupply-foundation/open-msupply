@@ -114,12 +114,12 @@ mod test_update {
             )
             .unwrap();
 
-        invoice_lines.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+        invoice_lines.sort_by(|a, b| a.invoice_line_row.item_id.cmp(&b.invoice_line_row.item_id));
 
         assert_eq!(invoice_lines.len(), 2);
 
-        assert_eq!(invoice_lines[0].number_of_packs, 44);
-        assert_eq!(invoice_lines[1].number_of_packs, 100);
+        assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 44);
+        assert_eq!(invoice_lines[1].invoice_line_row.number_of_packs, 100);
 
         // NothingRemainingToSupply
         assert_eq!(
@@ -171,10 +171,10 @@ mod test_update {
             )
             .unwrap();
 
-        invoice_lines.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+        invoice_lines.sort_by(|a, b| a.invoice_line_row.item_id.cmp(&b.invoice_line_row.item_id));
 
         assert_eq!(invoice_lines.len(), 1);
 
-        assert_eq!(invoice_lines[0].number_of_packs, 50);
+        assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 50);
     }
 }

@@ -3,8 +3,7 @@ mod graphql {
         assert_graphql_query, assert_standard_graphql_error,
         unallocated_line::successfull_invoice_line,
     };
-    use domain::invoice_line::InvoiceLine;
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{mock::MockDataInserts, InvoiceLine, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
@@ -244,9 +243,9 @@ mod graphql {
         let out_line = successfull_invoice_line();
         let expected = json!({
             "insertOutboundShipmentUnallocatedLine": {
-                "id": out_line.id,
-                "invoiceId": out_line.invoice_id,
-                "itemName": out_line.item_name
+                "id": out_line.invoice_line_row.id,
+                "invoiceId": out_line.invoice_line_row.invoice_id,
+                "itemName": out_line.invoice_line_row.item_name
             }
           }
         );

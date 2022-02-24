@@ -1,6 +1,6 @@
-use domain::{invoice_line::InvoiceLine, name::Name, outbound_shipment::UpdateOutboundShipment};
+use domain::{name::Name, outbound_shipment::UpdateOutboundShipment};
 use repository::{
-    InvoiceRepository, RepositoryError, StockLineRowRepository, StorageConnection, TransactionError,
+    InvoiceRepository, RepositoryError, StockLineRowRepository, StorageConnection, TransactionError, InvoiceLine,
 };
 
 pub mod generate;

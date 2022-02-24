@@ -1,14 +1,13 @@
 use crate::WithDBError;
 use domain::{
     invoice::{InvoiceStatus, InvoiceType},
-    invoice_line::InvoiceLine,
     name::{Name, NameFilter},
     EqualFilter,
 };
 use repository::{
     schema::{InvoiceRow, InvoiceRowType},
     InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, NameQueryRepository,
-    RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection, InvoiceLine,
 };
 
 pub struct WrongInvoiceType;
