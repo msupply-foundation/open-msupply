@@ -87,7 +87,9 @@ fn validate(
         return Err(OutError::NotARequestRequisition);
     }
 
-    if let Some(_) = check_item_exists_in_requisition(connection, &input.item_id)? {
+    if let Some(_) =
+        check_item_exists_in_requisition(connection, &input.requisition_id, &input.item_id)?
+    {
         return Err(OutError::ItemAlreadyExistInRequisition);
     }
 
