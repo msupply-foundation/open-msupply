@@ -45,6 +45,7 @@
   "error.too-many-packs": "Too many packs",
   "heading.404": "Feeling lost?",
   "heading.actions": "Actions",
+  "heading.order": "Order",
   "heading.add-item": "Add Item",
   "heading.custom-theme": "Custom theme",
   "heading.custom-logo": "Custom logo",
@@ -128,6 +129,8 @@
   "label.counted-num-of-packs": "Counted # of Packs",
   "label.snapshot-num-of-packs": "Snapshot # of Packs",
   "label.count-this-line": "Count this line",
+  "label.amc": "AMC",
+  "label.suggested": "Suggested",
   "label.unit-price": "Unit Price",
   "aria.split-button": "Split button",
   "aria.split-button-controls": "Split button menu"

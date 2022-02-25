@@ -1,3 +1,15 @@
+fragment ItemWithStats on ItemNode {
+  id
+  name
+  code
+  unitName
+  stats(storeId: $storeId) {
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
+}
+
 mutation insertRequestRequisition(
   $storeId: String!
   $input: InsertRequestRequisitionInput!
@@ -35,10 +47,7 @@ fragment RequestRequisitionLine on RequisitionLineNode {
     averageMonthlyConsumption
   }
   item {
-    id
-    name
-    code
-    unitName
+    ...ItemWithStats
   }
 }
 
@@ -138,7 +147,27 @@ mutation insertRequestRequisitionLine(
 ) {
   insertRequestRequisitionLine(input: $input, storeId: $storeId) {
     ... on RequisitionLineNode {
+      __typename
       id
+    }
+    ... on InsertRequestRequisitionLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on RequisitionLineWithItemIdExists {
+          __typename
+          description
+        }
+      }
     }
   }
 }
@@ -149,7 +178,27 @@ mutation updateRequestRequisitionLine(
 ) {
   updateRequestRequisitionLine(input: $input, storeId: $storeId) {
     ... on RequisitionLineNode {
+      __typename
       id
+    }
+    ... on UpdateRequestRequisitionLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on RecordDoesNotExist {
+          __typename
+          description
+        }
+      }
     }
   }
 }
