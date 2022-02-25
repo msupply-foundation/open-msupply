@@ -53,7 +53,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: DeleteOutboundShipmentUnallocatedLineInput!) {
-            deleteOutboundShipmentUnallocatedLine(input: $input) {
+            deleteOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
               ... on DeleteOutboundShipmentUnallocatedLineError {
                 error {
                   __typename
@@ -94,7 +94,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: DeleteOutboundShipmentUnallocatedLineInput!) {
-            deleteOutboundShipmentUnallocatedLine(input: $input) {
+            deleteOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 __typename
             }
           }
@@ -130,7 +130,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: DeleteOutboundShipmentUnallocatedLineInput!) {
-            deleteOutboundShipmentUnallocatedLine(input: $input) {
+            deleteOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 ... on DeleteResponse {
                     id
                 }
