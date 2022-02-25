@@ -43,7 +43,7 @@ mod graphql {
         }
 
         let query = r#"{
-            names {
+            names(storeId: \"store_a\") {
                 ... on NameConnector {
                   nodes{
                       id
@@ -63,7 +63,7 @@ mod graphql {
 
         // test sorting
         let query = r#"query Names($sort: [NameSortInput]) {
-          names(sort: $sort){
+          names(sort: $sort, storeId: \"store_a\"){
               ... on NameConnector {
                 nodes {
                     name
@@ -91,7 +91,7 @@ mod graphql {
 
         // test filtering
         let query = r#"query Names($filter: [NameFilterInput]) {
-          names(filter: $filter){
+          names(filter: $filter, storeId: \"store_a\"){
               ... on NameConnector {
                 nodes {
                     id
@@ -135,7 +135,7 @@ mod graphql {
             setup_all("test_graphql_names_query_loaders", MockDataInserts::all()).await;
 
         let query = r#"query Names($filter: NameFilterInput!) {
-              names(filter: $filter){
+              names(filter: $filter, storeId: \"store_a\"){
                   ... on NameConnector {
                     nodes {
                         store {

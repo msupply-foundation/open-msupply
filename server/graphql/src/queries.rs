@@ -50,6 +50,7 @@ impl Queries {
     pub async fn names(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<NameFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -71,6 +72,7 @@ impl Queries {
     pub async fn locations(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<LocationFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -101,6 +103,7 @@ impl Queries {
     pub async fn master_lists(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<MasterListFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -113,6 +116,7 @@ impl Queries {
     pub async fn items(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<ItemFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -170,6 +174,7 @@ impl Queries {
 
     pub async fn invoice_counts(
         &self,
+        _store_id: String,
         #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
     ) -> Result<InvoiceCounts> {
         invoice_counts(timezone_offset)
