@@ -1,10 +1,16 @@
-use repository::{RepositoryError, StocktakeRowRepository, StorageConnection, TransactionError};
-
-use crate::{service_provider::ServiceContext, validate::check_store_id_matches};
-
-use super::validate::{
-    check_no_stocktake_lines_exist, check_stocktake_exist, check_stocktake_not_finalised,
+use domain::EqualFilter;
+use repository::{
+    RepositoryError, StocktakeLineFilter, StocktakeLineRepository, StocktakeRowRepository,
+    StorageConnection, TransactionError,
 };
+
+use crate::{
+    service_provider::ServiceContext,
+    stocktake_line::delete::{delete_stocktake_line, DeleteStocktakeLineError},
+    validate::check_store_id_matches,
+};
+
+use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
 
 #[derive(Debug, PartialEq)]
 pub enum DeleteStocktakeError {
@@ -13,6 +19,10 @@ pub enum DeleteStocktakeError {
     StocktakeDoesNotExist,
     StocktakeLinesExist,
     CannotEditFinalised,
+    LineDeleteError {
+        line_id: String,
+        error: DeleteStocktakeLineError,
+    },
 }
 
 pub struct DeleteStocktakeInput {
@@ -34,9 +44,10 @@ fn validate(
     if !check_stocktake_not_finalised(&existing.status) {
         return Err(DeleteStocktakeError::CannotEditFinalised);
     }
-    if !check_no_stocktake_lines_exist(connection, stocktake_id)? {
-        return Err(DeleteStocktakeError::StocktakeLinesExist);
-    }
+    // TODO https://github.com/openmsupply/remote-server/issues/839
+    // if !check_no_stocktake_lines_exist(connection, stocktake_id)? {
+    //     return Err(DeleteStocktakeError::StocktakeLinesExist);
+    // }
     Ok(())
 }
 
@@ -49,6 +60,21 @@ pub fn delete_stocktake(
     ctx.connection
         .transaction_sync(|connection| {
             validate(connection, store_id, stocktake_id)?;
+
+            // TODO https://github.com/openmsupply/remote-server/issues/839
+            let lines = StocktakeLineRepository::new(&connection).query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake_id)),
+            )?;
+            for line in lines {
+                delete_stocktake_line(ctx, store_id, &line.line.id).map_err(|error| {
+                    DeleteStocktakeError::LineDeleteError {
+                        line_id: line.line.id,
+                        error,
+                    }
+                })?;
+            }
+            // End TODO
+
             StocktakeRowRepository::new(&connection).delete(stocktake_id)?;
             Ok(())
         })

@@ -373,13 +373,14 @@ mod stocktake_test {
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::InvalidStore);
 
+        // TODO https://github.com/openmsupply/remote-server/issues/839
         // error: StocktakeLinesExist
-        let store_a = mock_store_a();
-        let stocktake_a = mock_stocktake_a();
-        let error = service
-            .delete_stocktake(&context, &store_a.id, &stocktake_a.id)
-            .unwrap_err();
-        assert_eq!(error, DeleteStocktakeError::StocktakeLinesExist);
+        // let store_a = mock_store_a();
+        // let stocktake_a = mock_stocktake_a();
+        // let error = service
+        //     .delete_stocktake(&context, &store_a.id, &stocktake_a.id)
+        //     .unwrap_err();
+        // assert_eq!(error, DeleteStocktakeError::StocktakeLinesExist);
 
         // error: CannotEditFinalised
         let store_a = mock_store_a();
