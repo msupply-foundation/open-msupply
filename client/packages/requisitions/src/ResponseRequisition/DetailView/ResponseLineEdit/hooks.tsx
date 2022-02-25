@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   useSaveResponseLines,
   useResponseRequisitionFields,
+  useResponseRequisitionLines,
   ResponseRequisitionLineFragment,
 } from '../../api';
 
@@ -33,6 +34,10 @@ export const useDraftRequisitionLine = (
     createDraftLine(line, reqId)
   );
 
+  useEffect(() => {
+    setDraft(createDraftLine(line, reqId));
+  }, [line, reqId]);
+
   const update = (patch: Partial<DraftResponseLine>) => {
     if (draft) {
       setDraft({ ...draft, ...patch });
@@ -40,4 +45,25 @@ export const useDraftRequisitionLine = (
   };
 
   return { draft, isLoading, save: () => draft && save(draft), update };
+};
+
+export const useNextResponseLine = (
+  currentItem: ResponseRequisitionLineFragment
+) => {
+  const { lines } = useResponseRequisitionLines();
+  const nextState: {
+    isDisabled: boolean;
+    next: null | ResponseRequisitionLineFragment;
+  } = { isDisabled: false, next: null };
+
+  const idx = lines.findIndex(l => l.id === currentItem.id);
+  const next = lines[idx + 1];
+  if (!next) {
+    nextState.isDisabled = true;
+    return nextState;
+  }
+
+  nextState.next = next;
+
+  return nextState;
 };
