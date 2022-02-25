@@ -16,7 +16,7 @@ mod graphql {
         .await;
 
         let query = r#"mutation BatchInboundShipment($storeId: String, $input: BatchInboundShipmentInput!) {
-          batchInboundShipment(input: $input) {
+          batchInboundShipment(input: $input, storeId: \"store_a\") {
             __typename
             ... on BatchInboundShipmentResponses {                    
               insertInboundShipments {
@@ -31,7 +31,6 @@ mod graphql {
         }"#;
 
         // success
-       
 
         let variables = Some(json!({
             "input": {
