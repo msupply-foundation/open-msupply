@@ -108,12 +108,6 @@ export const RequestLineEditForm = ({
               value={String(item?.stats.averageMonthlyConsumption)}
             />
           ) : null}
-          {draftLine && draftLine.suggestedQuantity != null ? (
-            <InfoRow
-              label={t('label.suggested')}
-              value={String(draftLine.suggestedQuantity)}
-            />
-          ) : null}
         </>
       }
       Middle={
@@ -133,6 +127,17 @@ export const RequestLineEditForm = ({
           <Typography variant="body1" fontWeight="bold">
             {t('heading.order')}
           </Typography>
+          <InputWithLabelRow
+            Input={
+              <NumericTextInput
+                value={draftLine?.suggestedQuantity}
+                width={220}
+                disabled
+              />
+            }
+            labelProps={{ sx: { fontWeight: 500 } }}
+            label={t('label.order-quantity', { ns: 'replenishment' })}
+          />
           <InputWithLabelRow
             Input={
               <NumericTextInput
