@@ -1,16 +1,22 @@
 import React from 'react';
 import {
+  ButtonWithIcon,
   Grid,
+  PlusCircleIcon,
+  RouteBuilder,
   StatsPanel,
+  useNavigate,
   useTranslation,
   Widget,
 } from '@openmsupply-client/common';
 import { useItemStats, useStockCounts } from '../api';
+import { AppRoute } from '@openmsupply-client/config';
 
 const LOW_MOS_THRESHOLD = 3;
 
 export const StockWidget: React.FC = () => {
   const t = useTranslation(['dashboard']);
+  const navigate = useNavigate();
   const { data: expiryData, isLoading: isExpiryLoading } = useStockCounts();
   const { data: itemStatsData, isLoading: isItemStatsLoading } = useItemStats();
 
@@ -65,6 +71,27 @@ export const StockWidget: React.FC = () => {
                 value: lowStockItemsCount,
               },
             ]}
+          />
+        </Grid>
+        <Grid
+          item
+          flex={1}
+          container
+          justifyContent="flex-end"
+          alignItems="flex-end"
+        >
+          <ButtonWithIcon
+            variant="contained"
+            color="secondary"
+            Icon={<PlusCircleIcon />}
+            label={t('button.order-more')}
+            onClick={() =>
+              navigate(
+                RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InternalOrder)
+                  .build()
+              )
+            }
           />
         </Grid>
       </Grid>
