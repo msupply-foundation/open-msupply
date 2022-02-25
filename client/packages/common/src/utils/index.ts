@@ -1,5 +1,6 @@
 import { v4 } from 'uuid';
 
+export * from './quantities';
 export * from './formatters';
 export * from './testing';
 export * from './debounce';

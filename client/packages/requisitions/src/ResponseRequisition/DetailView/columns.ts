@@ -18,7 +18,12 @@ export const useResponseRequisitionColumns = ({
   sortBy,
 }: UseResponseRequisitionColumnOptions): Column<ResponseRequisitionLineFragment>[] =>
   useColumns<ResponseRequisitionLineFragment>(
-    ['itemCode', 'itemName', 'comment', GenericColumnKey.Selection],
+    [
+      ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
+      ['itemName', { accessor: ({ rowData }) => rowData.item.name }],
+      'comment',
+      GenericColumnKey.Selection,
+    ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );

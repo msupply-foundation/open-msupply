@@ -1,9 +1,12 @@
 import { RequestRequisitionLineFragment } from '../api/operations.generated';
 import {
+  useTranslation,
+  ColumnAlign,
   useColumns,
   Column,
   SortBy,
   GenericColumnKey,
+  suggestedQuantity,
 } from '@openmsupply-client/common';
 
 interface UseRequestRequisitionColumnOptions {
@@ -17,44 +20,72 @@ export const useRequestRequisitionColumns = ({
   sortBy,
   onChangeSortBy,
 }: UseRequestRequisitionColumnOptions): Column<RequestRequisitionLineFragment>[] => {
+  const t = useTranslation('common');
   return useColumns<RequestRequisitionLineFragment>(
     [
-      ['itemCode', { width: 50 }],
-      ['itemName', { width: 150 }],
-
-      'monthlyConsumption',
+      [
+        'itemCode',
+        { width: 100, accessor: ({ rowData }) => rowData.item.code },
+      ],
+      [
+        'itemName',
+        { width: 350, accessor: ({ rowData }) => rowData.item.name },
+      ],
 
       [
-        'previousStockOnHand',
+        'monthlyConsumption',
         {
+          width: 200,
           accessor: ({ rowData }) =>
-            `${rowData.itemStats.availableStockOnHand} (${Math.floor(
-              (rowData.itemStats.availableStockOnHand ?? 0) /
-                (rowData?.itemStats.averageMonthlyConsumption ?? 0)
-            )} months)`,
+            rowData.itemStats.averageMonthlyConsumption,
         },
       ],
-      [
-        'calculatedQuantity',
-        {
-          accessor: ({ rowData }) => {
-            const threeMonthsStock =
-              rowData?.itemStats.averageMonthlyConsumption ?? 1 * 3;
-            const diff =
-              threeMonthsStock - (rowData?.itemStats.availableStockOnHand ?? 0);
-            if (diff > 0) {
-              return `${diff.toFixed(2)} (${Math.floor(
-                diff / (rowData?.itemStats.averageMonthlyConsumption ?? 1)
-              )} months)`;
-            } else {
-              return 0;
-            }
-          },
+
+      {
+        key: 'availableStockOnHand',
+        label: 'label.stock-on-hand',
+        align: ColumnAlign.Left,
+
+        width: 200,
+        accessor: ({ rowData }) => {
+          const { itemStats } = rowData;
+          const { availableStockOnHand, availableMonthsOfStockOnHand } =
+            itemStats;
+
+          const monthsString = availableMonthsOfStockOnHand
+            ? `${availableMonthsOfStockOnHand} ${t('label.months')}`
+            : '';
+          return `${availableStockOnHand} ${monthsString}`;
         },
-      ],
-      ['forecastMethod', { accessor: () => 'AMC' }],
-      'requestedQuantity',
-      ['comment', { width: 150 }],
+      },
+
+      {
+        key: 'suggestedQuantity',
+        label: 'label.forecast-quantity',
+        align: ColumnAlign.Right,
+        width: 200,
+        accessor: ({ rowData }) => {
+          // TODO: Use requisition months of stock here rather than hard coded
+          // '3'.
+          const suggested = suggestedQuantity(
+            rowData.itemStats.averageMonthlyConsumption,
+            rowData.itemStats.availableStockOnHand,
+            3
+          );
+          if (suggested > 0) {
+            return suggested.toFixed(2);
+          } else {
+            return 0;
+          }
+        },
+      },
+      {
+        key: 'requestedQuantity',
+        label: 'label.requested-quantity',
+        align: ColumnAlign.Right,
+        width: 200,
+      },
+      ['comment', { width: 300 }],
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
