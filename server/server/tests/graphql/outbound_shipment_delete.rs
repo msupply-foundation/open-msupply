@@ -69,19 +69,20 @@ mod graphql {
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
+        // TODO https://github.com/openmsupply/remote-server/issues/839
         // CannotDeleteInvoiceWithLines
-        let variables = Some(json!({
-          "id": "outbound_shipment_a"
-        }));
-        let expected = json!({
-            "deleteOutboundShipment": {
-              "error": {
-                "__typename": "CannotDeleteInvoiceWithLines"
-              }
-            }
-          }
-        );
-        assert_graphql_query!(&settings, query, &variables, &expected, None);
+        // let variables = Some(json!({
+        //   "id": "outbound_shipment_a"
+        // }));
+        // let expected = json!({
+        //     "deleteOutboundShipment": {
+        //       "error": {
+        //         "__typename": "CannotDeleteInvoiceWithLines"
+        //       }
+        //     }
+        //   }
+        // );
+        // assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // Test succeeding delete
         let variables = Some(json!({

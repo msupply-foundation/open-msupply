@@ -1,6 +1,6 @@
 use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, DatabaseError, InvoiceDoesNotBelongToCurrentStore, NotAnOutboundShipment,
-    RecordNotFound,
+    CannotEditInvoice, DatabaseError, InternalError, InvoiceDoesNotBelongToCurrentStore,
+    NotAnOutboundShipment, RecordNotFound,
 };
 use graphql_types::{
     generic_errors::CannotDeleteInvoiceWithLines,
@@ -42,6 +42,7 @@ pub enum DeleteErrorInterface {
     NotAnOutboundShipment(NotAnOutboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
+    InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
 
@@ -68,6 +69,12 @@ impl From<DeleteOutboundShipmentError> for DeleteOutboundShipmentResponse {
             }
             DeleteOutboundShipmentError::NotAnOutboundShipment => {
                 OutError::NotAnOutboundShipment(NotAnOutboundShipment {})
+            }
+            DeleteOutboundShipmentError::LineDeleteError { line_id, error } => {
+                OutError::InternalError(InternalError(format!(
+                    "failed to delete line {} with error {:#?}",
+                    line_id, error
+                )))
             }
         };
 
