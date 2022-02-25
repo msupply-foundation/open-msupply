@@ -40,7 +40,7 @@ export const RequestLineEdit = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={isDisabled}
+          disabled={isDisabled || mode === ModalMode.Create}
           variant="next"
           onClick={() => {
             next && setCurrentItem(next);
