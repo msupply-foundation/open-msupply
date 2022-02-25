@@ -130,19 +130,20 @@ export const RequestLineEditForm = ({
           <InputWithLabelRow
             Input={
               <NumericTextInput
+                width={150}
                 value={draftLine?.suggestedQuantity}
-                width={220}
                 disabled
               />
             }
+            labelWidth="150px"
             labelProps={{ sx: { fontWeight: 500 } }}
-            label={t('label.order-quantity', { ns: 'replenishment' })}
+            label={t('label.suggested-quantity', { ns: 'replenishment' })}
           />
           <InputWithLabelRow
             Input={
               <NumericTextInput
                 value={draftLine?.requestedQuantity}
-                width={220}
+                width={150}
                 onChange={e =>
                   update({
                     requestedQuantity: Math.max(Number(e.target.value), 0),
@@ -150,6 +151,7 @@ export const RequestLineEditForm = ({
                 }
               />
             }
+            labelWidth="150px"
             labelProps={{ sx: { fontWeight: 500 } }}
             label={t('label.order-quantity', { ns: 'replenishment' })}
           />
