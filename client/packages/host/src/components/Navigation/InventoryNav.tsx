@@ -22,14 +22,13 @@ export const InventoryNav: FC = () => {
         end={false}
         to={AppRoute.Inventory}
         icon={<StockIcon color="primary" fontSize="small" />}
-        expandOnHover
         text={t('inventory')}
+        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Inventory)
               .addPart(AppRoute.Locations)
               .build()}
@@ -37,15 +36,6 @@ export const InventoryNav: FC = () => {
           />
           <AppNavLink
             end
-            expandOnHover
-            to={RouteBuilder.create(AppRoute.Inventory)
-              .addPart(AppRoute.MasterLists)
-              .build()}
-            text={t('master-lists')}
-          />
-          <AppNavLink
-            end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Inventory)
               .addPart(AppRoute.Stock)
               .build()}
@@ -53,7 +43,6 @@ export const InventoryNav: FC = () => {
           />
           <AppNavLink
             end
-            expandOnHover
             to={RouteBuilder.create(AppRoute.Inventory)
               .addPart(AppRoute.Stocktakes)
               .build()}

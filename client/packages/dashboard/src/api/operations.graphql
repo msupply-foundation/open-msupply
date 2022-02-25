@@ -1,0 +1,28 @@
+fragment ItemStats on ItemNode {
+  stats(storeId: $storeId) {
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
+}
+
+query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
+  stockCounts(
+    daysTillExpired: $daysTillExpired
+    timezoneOffset: $timezoneOffset
+  ) {
+    expired
+    expiringSoon
+  }
+}
+
+query itemStats($storeId: String!) {
+  items(filter: { isVisible: { equalTo: true } }) {
+    ... on ItemConnector {
+      nodes {
+        ...ItemStats
+      }
+      totalCount
+    }
+  }
+}

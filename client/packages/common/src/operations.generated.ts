@@ -27,14 +27,6 @@ export type NamesQueryVariables = Types.Exact<{
 
 export type NamesQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
-export type StockCountsQueryVariables = Types.Exact<{
-  daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']>;
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
-}>;
-
-
-export type StockCountsQuery = { __typename: 'Queries', stockCounts: { __typename: 'StockCounts', expired: number, expiringSoon: number } };
-
 export type LocationsQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Array<Types.LocationSortInput> | Types.LocationSortInput>;
 }>;
@@ -161,14 +153,6 @@ export const NamesDocument = gql`
       }
       totalCount
     }
-  }
-}
-    `;
-export const StockCountsDocument = gql`
-    query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
-  stockCounts(daysTillExpired: $daysTillExpired, timezoneOffset: $timezoneOffset) {
-    expired
-    expiringSoon
   }
 }
     `;
@@ -439,9 +423,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     names(variables: NamesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<NamesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names');
     },
-    stockCounts(variables?: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts');
-    },
     locations(variables?: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations');
     },
@@ -498,23 +479,6 @@ export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLR
 export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQueryVariables>, GraphQLContext<NamesQuery>, any>) =>
   graphql.query<NamesQuery, NamesQueryVariables>(
     'names',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStockCountsQuery((req, res, ctx) => {
- *   const { daysTillExpired, timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ stockCounts })
- *   )
- * })
- */
-export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<StockCountsQueryVariables>, GraphQLContext<StockCountsQuery>, any>) =>
-  graphql.query<StockCountsQuery, StockCountsQueryVariables>(
-    'stockCounts',
     resolver
   )
 
