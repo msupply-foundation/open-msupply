@@ -15,7 +15,7 @@ mod graphql {
         .await;
 
         let query = r#"mutation DeleteOutboundShipment($id: String!) {
-            deleteOutboundShipment(id: $id) {
+            deleteOutboundShipment(id: $id, storeId: \"store_a\") {
                 ... on DeleteOutboundShipmentError {
                   error {
                     __typename
