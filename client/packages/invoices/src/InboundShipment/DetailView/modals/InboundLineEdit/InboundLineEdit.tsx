@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useCallback, useState, useEffect } from 'react';
 import {
   Divider,
   TableContainer,
@@ -17,6 +17,8 @@ import {
   Item,
   useNotification,
   ModalMode,
+  NavigationPrompt,
+  isEqual,
 } from '@openmsupply-client/common';
 import { InvoiceLine } from '../../../../types';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
@@ -84,9 +86,11 @@ const useDraftInboundLines = (itemId: string) => {
   const lines = useInboundLines(itemId);
   const { id } = useInboundFields('id');
   const { mutateAsync, isLoading } = useSaveInboundLines();
-  const [draftLines, setDraftLines] = React.useState<DraftInboundLine[]>([]);
-
-  React.useEffect(() => {
+  const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
+  const [initialLines, setInitialLines] = useState<
+    DraftInboundLine[] | undefined
+  >();
+  useEffect(() => {
     if (lines && itemId) {
       const drafts = lines.map(line =>
         createDraftInvoiceLine(line.itemId, line.invoiceId, line)
@@ -98,12 +102,18 @@ const useDraftInboundLines = (itemId: string) => {
     }
   }, [lines, itemId]);
 
+  useEffect(() => {
+    if (!initialLines && draftLines.length > 0) {
+      setInitialLines([...draftLines]);
+    }
+  }, [draftLines]);
+
   const addDraftLine = () => {
     const newLine = createDraftInvoiceLine(itemId, id);
     setDraftLines([...draftLines, newLine]);
   };
 
-  const updateDraftLine = React.useCallback(
+  const updateDraftLine = useCallback(
     (patch: Partial<DraftInboundLine> & { id: string }) => {
       const batch = draftLines.find(line => line.id === patch.id);
 
@@ -121,10 +131,13 @@ const useDraftInboundLines = (itemId: string) => {
     await mutateAsync(draftLines);
   };
 
+  const isDirty = !!initialLines && !isEqual(initialLines, draftLines);
+
   return {
     draftLines,
     addDraftLine,
     updateDraftLine,
+    isDirty,
     isLoading,
     saveLines,
   };
@@ -148,8 +161,14 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
     setCurrentItem(item);
   }, [item]);
 
-  const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
-    useDraftInboundLines(currentItem?.id ?? '');
+  const {
+    draftLines,
+    addDraftLine,
+    updateDraftLine,
+    isLoading,
+    saveLines,
+    isDirty,
+  } = useDraftInboundLines(currentItem?.id ?? '');
 
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
@@ -216,6 +235,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         <BasicSpinner messageKey="saving" />
       ) : (
         <>
+          <NavigationPrompt isUnsaved={isDirty} />
           <InboundLineEditForm
             disabled={mode === ModalMode.Update}
             item={currentItem}
