@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -10,7 +10,6 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -23,15 +22,15 @@ import {
 import { ResponseLineEdit } from './ResponseLineEdit';
 
 export const DetailView: FC = () => {
-  const { onOpen, onClose, mode, entity, isOpen } =
-    useEditModal<ItemRowFragment>();
+  const { onOpen, onClose, entity, isOpen } =
+    useEditModal<ResponseRequisitionLineFragment>();
   const { data, isLoading } = useResponseRequisition();
   const navigate = useNavigate();
   const t = useTranslation('distribution');
 
-  const onRowClick = React.useCallback(
+  const onRowClick = useCallback(
     (line: ResponseRequisitionLineFragment) => {
-      onOpen(line.item);
+      onOpen(line);
     },
     [onOpen]
   );
@@ -45,13 +44,8 @@ export const DetailView: FC = () => {
       <ContentArea onRowClick={onRowClick} />
       <Footer />
       <SidePanel />
-      {isOpen && (
-        <ResponseLineEdit
-          isOpen={isOpen}
-          onClose={onClose}
-          mode={mode}
-          item={entity}
-        />
+      {entity && (
+        <ResponseLineEdit isOpen={isOpen} onClose={onClose} line={entity} />
       )}
     </TableProvider>
   ) : (

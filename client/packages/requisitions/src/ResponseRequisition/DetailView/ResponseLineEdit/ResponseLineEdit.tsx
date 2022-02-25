@@ -1,42 +1,58 @@
 import React from 'react';
 import {
-  ModalMode,
   useDialog,
   DialogButton,
   BasicSpinner,
-  useTranslation,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import { ResponseLineEditForm } from './ResponseLineEditForm';
+import {
+  useIsResponseRequisitionDisabled,
+  ResponseRequisitionLineFragment,
+} from '../../api';
+import { useDraftRequisitionLine } from './hooks';
 
 interface ResponseLineEditProps {
   isOpen: boolean;
   onClose: () => void;
-  mode: ModalMode | null;
-  item: ItemRowFragment | null;
+  line: ResponseRequisitionLineFragment;
 }
 
 export const ResponseLineEdit = ({
   isOpen,
   onClose,
-  mode,
+  line,
 }: ResponseLineEditProps) => {
-  const t = useTranslation();
+  const isDisabled = useIsResponseRequisitionDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
+  const { draft, isLoading, save, update } = useDraftRequisitionLine(line);
 
   return (
     <Modal
-      title={
-        mode === ModalMode.Create
-          ? t('heading.add-item')
-          : t('heading.edit-item')
-      }
+      title={''}
+      contentProps={{ sx: { padding: 0 } }}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={<DialogButton variant="next" onClick={() => {}} />}
-      okButton={<DialogButton variant="ok" onClick={onClose} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={async () => {
+            await save();
+            onClose();
+          }}
+        />
+      }
       height={600}
       width={1024}
     >
-      <BasicSpinner messageKey="saving" />
+      {!isLoading ? (
+        <ResponseLineEditForm
+          draftLine={draft}
+          update={update}
+          disabled={isDisabled}
+        />
+      ) : (
+        <BasicSpinner />
+      )}
     </Modal>
   );
 };
