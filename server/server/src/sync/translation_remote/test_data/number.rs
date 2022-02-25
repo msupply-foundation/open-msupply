@@ -1,8 +1,13 @@
-use repository::schema::{NumberRow, NumberRowType, RemoteSyncBufferAction, RemoteSyncBufferRow};
+use repository::schema::{
+    ChangelogAction, ChangelogRow, ChangelogTableName, NumberRow, NumberRowType,
+    RemoteSyncBufferAction, RemoteSyncBufferRow,
+};
+use serde_json::json;
 
 use crate::sync::translation_remote::{
+    number::LegacyNumberRow,
     pull::{IntegrationRecord, IntegrationUpsertRecord},
-    test_data::TestSyncRecord,
+    test_data::{TestSyncPushRecord, TestSyncRecord},
     TRANSLATION_RECORD_NUMBER,
 };
 
@@ -136,6 +141,64 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
                 data: PURCHASE_ORDER.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
             },
+        },
+    ]
+}
+
+#[allow(dead_code)]
+pub fn get_test_push_number_records() -> Vec<TestSyncPushRecord> {
+    vec![
+        TestSyncPushRecord {
+            change_log: ChangelogRow {
+                id: 2,
+                table_name: ChangelogTableName::Number,
+                row_id: NUMBER_STOCK_TAKE.0.to_string(),
+                row_action: ChangelogAction::Upsert,
+            },
+            push_data: json!(LegacyNumberRow {
+                ID: NUMBER_STOCK_TAKE.0.to_string(),
+                name: "stock_take_number_for_store_store_remote_pull".to_string(),
+                value: 1,
+            }),
+        },
+        TestSyncPushRecord {
+            change_log: ChangelogRow {
+                id: 2,
+                table_name: ChangelogTableName::Number,
+                row_id: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
+                row_action: ChangelogAction::Upsert,
+            },
+            push_data: json!(LegacyNumberRow {
+                ID: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
+                name: "inventory_adjustment_serial_number_for_store_store_remote_pull".to_string(),
+                value: 2,
+            }),
+        },
+        TestSyncPushRecord {
+            change_log: ChangelogRow {
+                id: 2,
+                table_name: ChangelogTableName::Number,
+                row_id: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
+                row_action: ChangelogAction::Upsert,
+            },
+            push_data: json!(LegacyNumberRow {
+                ID: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
+                name: "customer_invoice_number_for_store_store_remote_pull".to_string(),
+                value: 8,
+            }),
+        },
+        TestSyncPushRecord {
+            change_log: ChangelogRow {
+                id: 2,
+                table_name: ChangelogTableName::Number,
+                row_id: SUPPLIER_INVOICE.0.to_string(),
+                row_action: ChangelogAction::Upsert,
+            },
+            push_data: json!(LegacyNumberRow {
+                ID: SUPPLIER_INVOICE.0.to_string(),
+                name: "supplier_invoice_number_for_store_store_remote_pull".to_string(),
+                value: 3,
+            }),
         },
     ]
 }

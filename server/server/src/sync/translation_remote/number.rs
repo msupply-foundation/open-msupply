@@ -14,11 +14,11 @@ use super::{
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
-struct LegacyNumberRow {
-    ID: String,
-    name: String,
-    value: i64,
+#[derive(Deserialize, Serialize, PartialEq)]
+pub struct LegacyNumberRow {
+    pub ID: String,
+    pub name: String,
+    pub value: i64,
 }
 
 pub struct NumberTranslation {}
