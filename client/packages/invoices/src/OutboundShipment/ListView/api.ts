@@ -50,8 +50,7 @@ export const onRead =
     queryParams: InvoicesQueryVariables
   ): Promise<{ nodes: OutboundShipmentRowFragment[]; totalCount: number }> => {
     const result = await api.invoices(queryParams);
-    const invoices = result.invoices;
-    return invoices;
+    return result.invoices;
   };
 
 export const onUpdate =

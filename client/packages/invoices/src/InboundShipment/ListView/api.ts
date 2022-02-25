@@ -63,8 +63,7 @@ export const getInboundShipmentListViewApi = (
     };
     return async (): Promise<{ nodes: InvoiceRow[]; totalCount: number }> => {
       const result = await api.invoices(queryParams);
-      const invoices = result.invoices;
-      return invoices;
+      return result.invoices;
     };
   },
   onDelete: async (invoices: InvoiceRow[]): Promise<string[]> => {

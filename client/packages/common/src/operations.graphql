@@ -77,16 +77,6 @@ query names(
   }
 }
 
-query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
-  stockCounts(
-    daysTillExpired: $daysTillExpired
-    timezoneOffset: $timezoneOffset
-  ) {
-    expired
-    expiringSoon
-  }
-}
-
 query locations($sort: [LocationSortInput!]) {
   locations(sort: $sort) {
     __typename
