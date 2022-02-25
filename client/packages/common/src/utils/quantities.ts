@@ -1,8 +1,9 @@
+import { NumUtils } from './NumUtils';
 export const suggestedQuantity = (amc: number, soh: number, mos: number) => {
   // If there is no consumption, don't suggest any
-  if (!amc || amc < 0) return 0;
+  if (!NumUtils.isPositive(amc)) return 0;
   // If there is no months of stock to order to, don't suggest stock to be ordered
-  if (!mos || amc < 0) return 0;
+  if (!NumUtils.isPositive(mos)) return 0;
 
   // Total amount to potentially order
   const total = amc * mos;
