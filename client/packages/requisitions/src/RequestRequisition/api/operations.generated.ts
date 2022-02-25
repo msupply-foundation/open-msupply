@@ -238,7 +238,7 @@ export const UpdateRequestRequisitionLineDocument = gql`
       __typename
       id
     }
-    ... on UpdateRequestRequisitionLineError {
+    ... on UpdateResponseRequisitionLineError {
       __typename
       error {
         description

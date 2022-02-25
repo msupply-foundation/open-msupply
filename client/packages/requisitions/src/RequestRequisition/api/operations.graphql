@@ -181,7 +181,7 @@ mutation updateRequestRequisitionLine(
       __typename
       id
     }
-    ... on UpdateRequestRequisitionLineError {
+    ... on UpdateResponseRequisitionLineError {
       __typename
       error {
         description
