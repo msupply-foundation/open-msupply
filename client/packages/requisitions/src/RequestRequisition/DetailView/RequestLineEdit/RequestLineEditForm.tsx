@@ -46,7 +46,15 @@ export const RequestLineEditFormLayout = ({
   Right,
 }: RequestLineEditFormLayoutProps) => {
   return (
-    <Grid container spacing={2} direction="row" justifyContent="space-between">
+    <Grid
+      container
+      spacing={2}
+      direction="row"
+      justifyContent="space-between"
+      bgcolor="background.toolbar"
+      padding={2}
+      boxShadow={theme => theme.shadows[2]}
+    >
       <Grid item xs={4}>
         {Left}
       </Grid>

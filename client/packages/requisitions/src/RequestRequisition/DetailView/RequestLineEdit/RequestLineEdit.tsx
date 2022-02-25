@@ -35,6 +35,7 @@ export const RequestLineEdit = ({
   return (
     <Modal
       title={''}
+      contentProps={{ sx: { padding: 0 } }}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={<DialogButton variant="next" onClick={() => {}} />}
       okButton={

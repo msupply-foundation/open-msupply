@@ -147,7 +147,6 @@ export const useSaveRequestLines = () => {
 
   return useMutation(RequestRequisitionQueries.upsertLine(api, store.id), {
     onSuccess: () => {
-      console.log(['requisition', store.id, requisitionNumber]);
       queryClient.invalidateQueries([
         'requisition',
         store.id,

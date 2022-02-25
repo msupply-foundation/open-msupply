@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
+import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
 import { useRtl } from '@common/intl';
@@ -13,6 +13,7 @@ export interface ButtonProps {
 }
 
 export interface ModalProps {
+  contentProps?: DialogContentProps;
   children: React.ReactElement<any, any>;
   cancelButton?: JSX.Element;
   height?: number;
@@ -89,6 +90,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     okButton,
     width,
     title,
+    contentProps,
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
@@ -112,6 +114,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       });
     }
 
+    const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
     return (
       <BasicModal
         open={open}
@@ -119,8 +122,11 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         width={width}
         height={height}
       >
-        <ModalTitle title={title} />
-        <DialogContent sx={{ overflowX: 'hidden' }}>
+        {title ? <ModalTitle title={title} /> : null}
+        <DialogContent
+          {...restOfContentProps}
+          sx={{ overflowX: 'hidden', ...contentSX }}
+        >
           <Slide in={slideConfig.in} direction={slideConfig.direction}>
             <div> {children}</div>
           </Slide>
