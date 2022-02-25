@@ -39,7 +39,7 @@ export const DetailView: FC = () => {
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
-      <AppBarButtons onAddItem={() => onOpen(null)} />
+      <AppBarButtons />
       <Toolbar />
       <ContentArea onRowClick={onRowClick} />
       <Footer />
