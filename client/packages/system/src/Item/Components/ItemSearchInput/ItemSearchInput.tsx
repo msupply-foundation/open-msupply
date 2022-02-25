@@ -69,6 +69,7 @@ interface ItemSearchInputProps {
   currentItemName?: string;
   disabled?: boolean;
   extraFilter?: (item: Item) => boolean;
+  width?: number;
 }
 
 export const ItemSearchInput: FC<ItemSearchInputProps> = ({
@@ -76,6 +77,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   currentItem,
   disabled = false,
   extraFilter,
+  width = 850,
 }) => {
   const [filter, setFilter] = useState<{
     searchTerm: string;
@@ -137,8 +139,9 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
       options={defaultOptionMapper(options, 'name')}
       getOptionLabel={option => `${option.code}     ${option.name}`}
       renderOption={getOptionRenderer(t('label.units'), formatNumber)}
-      width="100%"
+      width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      autoWidthPopper
     />
   );
 };
