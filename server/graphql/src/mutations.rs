@@ -63,6 +63,7 @@ impl Mutations {
     async fn update_outbound_shipment(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: UpdateOutboundShipmentInput,
     ) -> UpdateOutboundShipmentResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -72,6 +73,7 @@ impl Mutations {
     async fn delete_outbound_shipment(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         id: String,
     ) -> DeleteOutboundShipmentResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -81,6 +83,7 @@ impl Mutations {
     async fn insert_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: InsertOutboundShipmentLineInput,
     ) -> InsertOutboundShipmentLineResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -90,6 +93,7 @@ impl Mutations {
     async fn update_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: UpdateOutboundShipmentLineInput,
     ) -> UpdateOutboundShipmentLineResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -99,6 +103,7 @@ impl Mutations {
     async fn delete_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: DeleteOutboundShipmentLineInput,
     ) -> DeleteOutboundShipmentLineResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -108,6 +113,7 @@ impl Mutations {
     async fn insert_outbound_shipment_service_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: InsertOutboundShipmentServiceLineInput,
     ) -> InsertOutboundShipmentServiceLineResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -117,6 +123,7 @@ impl Mutations {
     async fn update_outbound_shipment_service_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: UpdateOutboundShipmentServiceLineInput,
     ) -> UpdateOutboundShipmentServiceLineResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -126,6 +133,7 @@ impl Mutations {
     async fn delete_outbound_shipment_service_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: DeleteOutboundShipmentServiceLineInput,
     ) -> DeleteOutboundShipmentServiceLineResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -135,6 +143,7 @@ impl Mutations {
     async fn insert_outbound_shipment_unallocated_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: unallocated_line::InsertInput,
     ) -> Result<unallocated_line::InsertResponse> {
         unallocated_line::insert(ctx, input)
@@ -143,6 +152,7 @@ impl Mutations {
     async fn update_outbound_shipment_unallocated_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: unallocated_line::UpdateInput,
     ) -> Result<unallocated_line::UpdateResponse> {
         unallocated_line::update(ctx, input)
@@ -151,6 +161,7 @@ impl Mutations {
     async fn delete_outbound_shipment_unallocated_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: unallocated_line::DeleteInput,
     ) -> Result<unallocated_line::DeleteResponse> {
         unallocated_line::delete(ctx, input)
@@ -169,6 +180,7 @@ impl Mutations {
     async fn update_inbound_shipment(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: UpdateInboundShipmentInput,
     ) -> UpdateInboundShipmentResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -178,6 +190,7 @@ impl Mutations {
     async fn delete_inbound_shipment(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: DeleteInboundShipmentInput,
     ) -> DeleteInboundShipmentResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -187,6 +200,7 @@ impl Mutations {
     async fn insert_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: InsertInboundShipmentLineInput,
     ) -> InsertInboundShipmentLineResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -196,6 +210,7 @@ impl Mutations {
     async fn update_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: UpdateInboundShipmentLineInput,
     ) -> UpdateInboundShipmentLineResponse {
         let connection_manager = ctx.get_connection_manager();
@@ -205,6 +220,7 @@ impl Mutations {
     async fn delete_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         input: DeleteInboundShipmentLineInput,
     ) -> DeleteInboundShipmentLineResponse {
         let connection_manager = ctx.get_connection_manager();
