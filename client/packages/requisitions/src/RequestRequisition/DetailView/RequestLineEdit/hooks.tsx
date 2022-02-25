@@ -79,3 +79,25 @@ export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
 
   return { draft, isLoading, save: () => draft && save(draft), update };
 };
+
+export const useNextRequestLine = (
+  currentItem: ItemWithStatsFragment | null
+) => {
+  const { lines } = useRequestRequisitionLines();
+
+  const nextState: {
+    isDisabled: boolean;
+    next: null | ItemWithStatsFragment;
+  } = { isDisabled: false, next: null };
+
+  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
+  const next = lines[idx + 1];
+  if (!next) {
+    nextState.isDisabled = true;
+    return nextState;
+  }
+
+  nextState.next = next.item;
+
+  return nextState;
+};
