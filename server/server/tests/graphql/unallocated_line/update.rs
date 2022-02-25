@@ -58,7 +58,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: UpdateOutboundShipmentUnallocatedLineInput!) {
-            updateOutboundShipmentUnallocatedLine(input: $input) {
+            updateOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
               ... on UpdateOutboundShipmentUnallocatedLineError {
                 error {
                   __typename
@@ -99,7 +99,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: UpdateOutboundShipmentUnallocatedLineInput!) {
-            updateOutboundShipmentUnallocatedLine(input: $input) {
+            updateOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 __typename
             }
           }
@@ -135,7 +135,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: UpdateOutboundShipmentUnallocatedLineInput!) {
-            updateOutboundShipmentUnallocatedLine(input: $input) {
+            updateOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 ... on InvoiceLineNode {
                     id
                     invoiceId

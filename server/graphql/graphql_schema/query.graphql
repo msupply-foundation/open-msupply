@@ -59,6 +59,7 @@ mutation updateInboundShipmentFull(
   $colour_option: String
 ) {
   updateInboundShipment(
+    storeId: "store_a"
     input: {
       id: $id
       otherPartyId: $otherPartyId_option
@@ -102,7 +103,7 @@ fragment UpdateInboundShipmentErrorInterface on UpdateInboundShipmentErrorInterf
 # DELETE INBOUND SHIPMENT
 
 mutation deleteInboundShipmentFull($id: String!) {
-  deleteInboundShipment(input: { id: $id }) {
+  deleteInboundShipment(input: { id: $id }, storeId: "store_a") {
     ...DeleteInboundShipmentResponse
   }
 }
@@ -146,6 +147,7 @@ mutation insertInboundShipmentLineFull(
   $total_after_tax: Float!
 ) {
   insertInboundShipmentLine(
+    storeId: "store_a"
     input: {
       id: $id
       invoiceId: $invoiceId
@@ -205,6 +207,7 @@ mutation updateInboundShipmentLineFull(
   $packSize_option: Int
 ) {
   updateInboundShipmentLine(
+    storeId: "store_a"
     input: {
       id: $id
       invoiceId: $invoiceId
@@ -259,6 +262,7 @@ mutation updateOutboundShipmentLineFull(
   $stockLineId_option: String
 ) {
   updateOutboundShipmentLine(
+    storeId: "store_a"
     input: {
       id: $id
       invoiceId: $invoiceId
@@ -315,6 +319,7 @@ mutation insertOutboundShipmentLineFull(
   $total_after_tax: Float!
 ) {
   insertOutboundShipmentLine(
+    storeId: "store_a"
     input: {
       id: $id
       invoiceId: $invoiceId
@@ -362,7 +367,7 @@ fragment InsertOutboundShipmentLineErrorInterface on InsertOutboundShipmentLineE
 # DELETE INBOUND SHIPMENT LINE
 
 mutation deleteInboundShipmentLineFull($id: String!, $invoiceId: String!) {
-  deleteInboundShipmentLine(input: { id: $id, invoiceId: $invoiceId }) {
+  deleteInboundShipmentLine(input: { id: $id, invoiceId: $invoiceId }, storeId: "store_a") {
     ...DeleteInboundShipmentLineResponse
   }
 }
@@ -394,7 +399,7 @@ fragment DeleteInboundShipmentLineErrorInterface on DeleteInboundShipmentLineErr
 # DELETE OUTBOUND SHIPMENT LINE
 
 mutation deleteOutboundShipmentLineFull($id: String!, $invoiceId: String!) {
-  deleteOutboundShipmentLine(input: { id: $id, invoiceId: $invoiceId }) {
+  deleteOutboundShipmentLine(input: { id: $id, invoiceId: $invoiceId }, storeId: "store_a") {
     ...DeleteOutboundShipmentLineResponse
   }
 }
