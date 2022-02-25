@@ -90,7 +90,10 @@ impl RemoteDataSynchroniser {
 
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
-        let cursor = state.get_push_cursor()?;
+        let cursor = ChangelogRepository::new(connection)
+            .latest_changelog()?
+            .map(|row| row.id)
+            .unwrap_or(0) as u32;
         state.update_push_cursor(cursor + 1)?;
 
         Ok(())
