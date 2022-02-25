@@ -2,7 +2,7 @@ use async_graphql::*;
 use domain::inbound_shipment::DeleteInboundShipment;
 
 use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
+    CannotEditInvoice, InternalError, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
 };
 use graphql_core::simple_generic_errors::{DatabaseError, RecordNotFound};
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
@@ -48,6 +48,7 @@ pub enum DeleteErrorInterface {
     NotAnInboundShipment(NotAnInboundShipment),
     InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
+    InternalError(InternalError),
 }
 
 impl From<DeleteInboundShipmentInput> for DeleteInboundShipment {
@@ -80,6 +81,12 @@ impl From<DeleteInboundShipmentError> for DeleteInboundShipmentResponse {
                 OutError::CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines(
                     InvoiceLineConnector::from_vec(lines),
                 ))
+            }
+            DeleteInboundShipmentError::LineDeleteError { line_id, error } => {
+                OutError::InternalError(InternalError(format!(
+                    "failed to delete line {} with error {:#?}",
+                    line_id, error
+                )))
             }
         };
 

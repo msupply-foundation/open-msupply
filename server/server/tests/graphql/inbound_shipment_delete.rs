@@ -1,5 +1,5 @@
 mod graphql {
-    use crate::graphql::common::{assert_matches, get_invoice_lines_inline};
+    use crate::graphql::common::assert_matches;
     use crate::graphql::common::{
         assert_unwrap_enum, assert_unwrap_optional_key, get_invoice_inline,
     };
@@ -57,7 +57,6 @@ mod graphql {
             setup_all("test_delete_inbound_shipment_query", MockDataInserts::all()).await;
 
         // Setup
-        let invoice_with_lines_id = "inbound_shipment_a";
         let empty_draft_invoice_id = "empty_draft_inbound_shipment";
 
         let verified_inbound_shipment = get_invoice_inline!(
@@ -71,7 +70,6 @@ mod graphql {
             InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
             &connection
         );
-        let lines_in_invoice = get_invoice_lines_inline!(invoice_with_lines_id, &connection);
 
         let base_variables = delete::Variables {
             id: empty_draft_invoice_id.to_string(),
@@ -122,26 +120,29 @@ mod graphql {
             },)
         );
 
+        // TODO https://github.com/openmsupply/remote-server/issues/839
+        // let invoice_with_lines_id = "inbound_shipment_a";
+        // let lines_in_invoice = get_invoice_lines_inline!(invoice_with_lines_id, &connection);
         // Test CannotDeleteInvoiceWithLines
 
-        let mut variables = base_variables.clone();
-        variables.id = invoice_with_lines_id.to_string();
+        // let mut variables = base_variables.clone();
+        // variables.id = invoice_with_lines_id.to_string();
 
-        let query = Delete::build_query(variables);
-        let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
+        // let query = Delete::build_query(variables);
+        // let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
 
-        let error_variant = assert_unwrap_error!(response);
-        let error = assert_unwrap_enum!(error_variant, CannotDeleteInvoiceWithLines);
-        let lines = error.lines.nodes;
+        // let error_variant = assert_unwrap_error!(response);
+        // let error = assert_unwrap_enum!(error_variant, CannotDeleteInvoiceWithLines);
+        // let lines = error.lines.nodes;
 
-        let mut api_lines: Vec<String> = lines.into_iter().map(|line| line.id).collect();
+        // let mut api_lines: Vec<String> = lines.into_iter().map(|line| line.id).collect();
 
-        let mut db_lines: Vec<String> = lines_in_invoice.into_iter().map(|line| line.id).collect();
+        // let mut db_lines: Vec<String> = lines_in_invoice.into_iter().map(|line| line.id).collect();
 
-        api_lines.sort();
-        db_lines.sort();
+        // api_lines.sort();
+        // db_lines.sort();
 
-        assert_eq!(api_lines, db_lines);
+        // assert_eq!(api_lines, db_lines);
 
         // Test Success
 
