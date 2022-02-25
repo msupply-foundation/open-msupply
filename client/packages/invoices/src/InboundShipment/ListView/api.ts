@@ -85,6 +85,7 @@ export const getInboundShipmentListViewApi = (
   ): Promise<string> => {
     const result = await api.updateInboundShipment({
       input: invoiceToInput(patch),
+      storeId,
     });
 
     const { updateInboundShipment } = result;

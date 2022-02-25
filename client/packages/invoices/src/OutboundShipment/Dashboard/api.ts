@@ -1,3 +1,4 @@
+import { useAuthState } from '@openmsupply-client/common';
 import { OutboundShipmentApi } from '../api';
 
 export const getOutboundShipmentCountQueryFn =
@@ -5,7 +6,8 @@ export const getOutboundShipmentCountQueryFn =
   async (): Promise<{
     toBePicked: number;
   }> => {
-    const result = await api.invoiceCounts({});
+    const { storeId } = useAuthState();
+    const result = await api.invoiceCounts({ storeId });
 
     return {
       toBePicked: result.invoiceCounts.outbound.toBePicked ?? 0,

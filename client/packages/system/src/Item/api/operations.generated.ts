@@ -26,6 +26,7 @@ export type ItemsListViewQueryVariables = Types.Exact<{
   key: Types.ItemSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -94,8 +95,9 @@ export const ItemsWithStockLinesDocument = gql`
 }
     ${ItemFragmentDoc}`;
 export const ItemsListViewDocument = gql`
-    query itemsListView($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
+    query itemsListView($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
   items(
+    store: $storeId
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
@@ -150,7 +152,7 @@ export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLR
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockItemsListViewQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter } = req.variables;
+ *   const { first, offset, key, desc, filter, storeId } = req.variables;
  *   return res(
  *     ctx.data({ items })
  *   )

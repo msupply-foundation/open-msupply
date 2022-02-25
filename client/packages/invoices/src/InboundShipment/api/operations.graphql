@@ -209,8 +209,11 @@ query invoice($id: String!, $storeId: String!) {
   }
 }
 
-mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
-  updateInboundShipment(input: $input) {
+mutation updateInboundShipment(
+  $storeId: String!
+  $input: UpdateInboundShipmentInput!
+) {
+  updateInboundShipment(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -400,8 +403,8 @@ mutation deleteInboundShipmentLines(
   }
 }
 
-query invoiceCounts($timezoneOffset: Int) {
-  invoiceCounts(timezoneOffset: $timezoneOffset) {
+query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
+  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
     inbound {
       created {
         today

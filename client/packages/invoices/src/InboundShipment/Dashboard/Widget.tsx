@@ -4,6 +4,7 @@ import {
   Grid,
   PlusCircleIcon,
   StatsPanel,
+  useAuthState,
   useQuery,
   useTranslation,
   Widget,
@@ -13,10 +14,11 @@ import { useInboundShipmentApi } from '../api';
 
 export const InboundShipmentWidget: React.FC = () => {
   const api = useInboundShipmentApi();
+  const { storeId } = useAuthState();
   const t = useTranslation(['app', 'dashboard']);
   const { data, isLoading } = useQuery(
     ['inbound-shipment', 'count'],
-    getInboundShipmentCountQueryFn(api),
+    getInboundShipmentCountQueryFn(api, storeId),
     { retry: false }
   );
 
