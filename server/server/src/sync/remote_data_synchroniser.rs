@@ -1,6 +1,6 @@
 use log::info;
 use repository::{
-    schema::{KeyValueType, RemoteSyncBufferAction, RemoteSyncBufferRow},
+    schema::{ChangelogRow, KeyValueType, RemoteSyncBufferAction, RemoteSyncBufferRow},
     ChangelogRepository, KeyValueStoreRepository, RemoteSyncBufferRepository, RepositoryError,
     StorageConnection,
 };
@@ -183,33 +183,7 @@ impl RemoteDataSynchroniser {
                 "Remote push: Translate {} changelogs to push records...",
                 changelogs.len()
             );
-            let mut out_records: Vec<PushRecord> = Vec::new();
-            for changelog in changelogs {
-                translate_changelog(connection, &changelog, &mut out_records)?;
-            }
-
-            info!("Remote push: Send records to central server...");
-            let records: Vec<RemotePostRecordV3> = out_records
-                .into_iter()
-                .map(|record| match record {
-                    PushRecord::Upsert(record) => RemotePostRecordV3 {
-                        sync_id: format!("{}", record.sync_id),
-                        sync_type: SyncTypeV3::Update,
-                        store_id: record.store_id,
-                        record_type: record.table_name.to_string(),
-                        record_id: record.record_id.clone(),
-                        data: Some(record.data),
-                    },
-                    PushRecord::Delete(record) => RemotePostRecordV3 {
-                        sync_id: format!("{}", record.sync_id),
-                        sync_type: SyncTypeV3::Delete,
-                        store_id: None,
-                        record_type: record.table_name.to_string(),
-                        record_id: record.record_id.clone(),
-                        data: None,
-                    },
-                })
-                .collect();
+            let records = translate_changelogs_to_push_records(connection, changelogs)?;
 
             self.sync_api_v3
                 .post_queued_records(self.site_id, self.central_server_site_id, &records)
@@ -224,6 +198,40 @@ impl RemoteDataSynchroniser {
 
         Ok(())
     }
+}
+
+pub fn translate_changelogs_to_push_records(
+    connection: &StorageConnection,
+    changelogs: Vec<ChangelogRow>,
+) -> Result<Vec<RemotePostRecordV3>, anyhow::Error> {
+    let mut out_records: Vec<PushRecord> = Vec::new();
+    for changelog in changelogs {
+        translate_changelog(connection, &changelog, &mut out_records)?;
+    }
+
+    info!("Remote push: Send records to central server...");
+    let records: Vec<RemotePostRecordV3> = out_records
+        .into_iter()
+        .map(|record| match record {
+            PushRecord::Upsert(record) => RemotePostRecordV3 {
+                sync_id: format!("{}", record.sync_id),
+                sync_type: SyncTypeV3::Update,
+                store_id: record.store_id,
+                record_type: record.table_name.to_string(),
+                record_id: record.record_id.clone(),
+                data: Some(record.data),
+            },
+            PushRecord::Delete(record) => RemotePostRecordV3 {
+                sync_id: format!("{}", record.sync_id),
+                sync_type: SyncTypeV3::Delete,
+                store_id: None,
+                record_type: record.table_name.to_string(),
+                record_id: record.record_id.clone(),
+                data: None,
+            },
+        })
+        .collect();
+    Ok(records)
 }
 
 impl RemoteSyncActionV5 {
@@ -308,16 +316,19 @@ impl<'a> RemoteSyncState<'a> {
 mod tests {
     use crate::sync::{
         sync_api_v3::SyncApiV3,
-        translation_remote::test_data::{
-            check_records_against_database, extract_sync_buffer_rows,
-            get_all_remote_pull_test_records,
+        translation_remote::{
+            table_name_to_central,
+            test_data::{
+                check_records_against_database, extract_sync_buffer_rows,
+                get_all_remote_pull_test_records, get_all_remote_push_test_records,
+            },
         },
         SyncApiV5, SyncCredentials,
     };
     use repository::{mock::MockDataInserts, test_db, RemoteSyncBufferRepository};
     use reqwest::{Client, Url};
 
-    use super::RemoteDataSynchroniser;
+    use super::{translate_changelogs_to_push_records, RemoteDataSynchroniser};
 
     #[actix_rt::test]
     async fn test_integrate_remote_records() {
@@ -351,5 +362,22 @@ mod tests {
             .expect("Failed to integrate remote records");
 
         check_records_against_database(&connection, test_records);
+
+        // test push
+        let test_records = get_all_remote_push_test_records();
+        for record in test_records {
+            let expected_row_id = record.change_log.row_id.to_string();
+            let expected_table_name = table_name_to_central(&record.change_log.table_name);
+            let mut result =
+                translate_changelogs_to_push_records(&connection, vec![record.change_log]).unwrap();
+            // we currently only have one entry in the data_list
+            let result = result.pop().unwrap();
+            // tests only do upsert right now, so there must be Some data:
+            let data = result.data.unwrap();
+
+            assert_eq!(result.record_id, expected_row_id);
+            assert_eq!(result.record_type, expected_table_name);
+            assert_eq!(data, record.push_data);
+        }
     }
 }

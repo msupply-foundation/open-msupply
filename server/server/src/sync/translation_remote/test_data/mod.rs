@@ -1,13 +1,17 @@
 use repository::{
-    schema::RemoteSyncBufferRow, InvoiceLineRowRepository, InvoiceRepository,
-    NameStoreJoinRepository, NumberRowRepository, RepositoryError, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
+    schema::{ChangelogRow, RemoteSyncBufferRow},
+    InvoiceLineRowRepository, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
+    RepositoryError, StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository,
+    StorageConnection,
 };
 
 use self::{
-    name_store_join::get_test_name_store_join_records, number::get_test_number_records,
-    stock_line::get_test_stock_line_records, stocktake::get_test_stocktake_records,
-    stocktake_line::get_test_stocktake_line_records, trans_line::get_test_trans_line_records,
+    name_store_join::get_test_name_store_join_records,
+    number::{get_test_number_records, get_test_push_number_records},
+    stock_line::get_test_stock_line_records,
+    stocktake::get_test_stocktake_records,
+    stocktake_line::get_test_stocktake_line_records,
+    trans_line::get_test_trans_line_records,
     transact::get_test_transact_records,
 };
 
@@ -30,6 +34,18 @@ pub struct TestSyncRecord {
     pub identifier: &'static str,
     /// Row as stored in the remote sync buffer
     pub remote_sync_buffer_row: RemoteSyncBufferRow,
+}
+
+/// To be used in combination with TestSyncRecord.
+/// I.e. first run and integrate a row from TestSyncRecord and then try to push this record out
+#[allow(dead_code)]
+pub struct TestSyncPushRecord {
+    /// Change log event for the row to be pushed.
+    /// Its assumed the row exists, e.g. because it has been integrated before through a
+    /// TestSyncRecord
+    pub change_log: ChangelogRow,
+    /// Expected record as pushed out to the server
+    pub push_data: serde_json::Value,
 }
 
 #[allow(dead_code)]
@@ -147,5 +163,12 @@ pub fn get_all_remote_pull_test_records() -> Vec<TestSyncRecord> {
     test_records.append(&mut get_test_trans_line_records());
     test_records.append(&mut get_test_stocktake_records());
     test_records.append(&mut get_test_stocktake_line_records());
+    test_records
+}
+
+#[allow(dead_code)]
+pub fn get_all_remote_push_test_records() -> Vec<TestSyncPushRecord> {
+    let mut test_records = Vec::new();
+    test_records.append(&mut get_test_push_number_records());
     test_records
 }
