@@ -18,7 +18,7 @@ import {
   useMutation,
   UseMutationResult,
   useTableStore,
-  useQueryParams,
+  useAuthState,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
 import { OutboundApi } from './api';
@@ -42,7 +42,7 @@ export const useOutbound = (): UseQueryResult<Invoice> => {
   const { id = '' } = useParams();
   const api = useOutboundShipmentApi();
   const queryKey = useOutboundDetailQueryKey();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
 
   return useQuery(queryKey, () => OutboundApi.get.byId(api, storeId)(id));
 };
@@ -53,7 +53,7 @@ export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
   const { id = '' } = useParams();
   const api = useOutboundShipmentApi();
   const queryKey = useOutboundDetailQueryKey();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
 
   return useFieldsSelector(
     queryKey,
@@ -77,7 +77,7 @@ const useOutboundSelector = <ReturnType>(
   select: (data: Invoice) => ReturnType
 ) => {
   const queryKey = useOutboundDetailQueryKey();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
   const api = useOutboundShipmentApi();
   return useQuerySelector(
     queryKey,
@@ -156,7 +156,7 @@ export const useSaveOutboundLines = () => {
   const queryKey = useOutboundDetailQueryKey();
   const queryClient = useQueryClient();
   const api = useOutboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
   return useMutation(OutboundApi.updateLines(api, storeId), {
     onSuccess: () => {
       queryClient.invalidateQueries(queryKey);
@@ -175,7 +175,7 @@ export const useDeleteInboundLine = (): UseMutationResult<
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
   const api = useOutboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
   const mutation = OutboundApi.deleteLines(api, id, storeId);
   return useMutation(mutation, {
     onMutate: async (ids: string[]) => {

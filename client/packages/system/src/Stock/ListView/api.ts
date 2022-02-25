@@ -55,9 +55,12 @@ const onRead =
     return { totalCount: nodes.length, nodes };
   };
 
-export const getStockListViewApi = (api: OmSupplyApi): ListApi<StockRow> => ({
+export const getStockListViewApi = (
+  api: OmSupplyApi,
+  storeId: string
+): ListApi<StockRow> => ({
   onRead:
-    ({ first, offset, sortBy, filterBy, storeId }) =>
+    ({ first, offset, sortBy, filterBy }) =>
     () =>
       onRead(api)({ first, offset, sortBy, filterBy, storeId }),
   onDelete: async () => [''],

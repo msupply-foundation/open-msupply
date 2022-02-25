@@ -18,7 +18,7 @@ import {
   useSortBy,
   getDataSorter,
   useDebounceCallback,
-  useQueryParams,
+  useAuthState,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
@@ -178,7 +178,7 @@ export const getInboundShipmentDetailViewApi = (
 export const useInboundShipment = (): UseQueryResult<Invoice, unknown> => {
   const { id = '' } = useParams();
   const api = useInboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
   const queries = getInboundShipmentDetailViewApi(api, storeId);
   return useQuery(['invoice', id], () => {
     return queries.onRead(id);
@@ -190,7 +190,7 @@ export const useInboundShipmentSelector = <T = Invoice>(
 ): UseQueryResult<T, unknown> => {
   const { id = '' } = useParams();
   const api = useInboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
   const queries = getInboundShipmentDetailViewApi(api, storeId);
   return useQuery(
     ['invoice', id],
@@ -208,7 +208,7 @@ const getUpdateInbound =
 
 const useOptimisticInboundUpdate = () => {
   const api = useInboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
   const queries = getInboundShipmentDetailViewApi(api, storeId);
   const queryClient = useQueryClient();
   const { id } = useParams();
@@ -362,7 +362,7 @@ export const useSaveInboundLines = () => {
   const queryClient = useQueryClient();
   const { id } = useParams();
   const api = useInboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
 
   return useMutation(getSaveInboundShipmentLines(api, storeId), {
     onSettled: () => queryClient.invalidateQueries(['invoice', id]),
@@ -413,7 +413,7 @@ export const useDeleteInboundLine = (): UseMutationResult<
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
   const api = useInboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthState();
   const mutation = getDeleteInboundLinesQuery(api, id, storeId);
   return useMutation(mutation, {
     onMutate: async (ids: string[]) => {

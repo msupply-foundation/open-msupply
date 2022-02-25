@@ -11,6 +11,7 @@ import {
   Column,
   getDataSorter,
   SortBy,
+  useAuthState,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
 import { getStockListViewApi } from './api';
@@ -25,10 +26,11 @@ export const StockListView: FC = () => {
     key: 'itemName',
     direction: 'asc',
   });
+  const { storeId } = useAuthState();
   const { data, isLoading } = useListData(
     { initialSortBy: { key: 'itemName' } },
     ['stock', 'list'],
-    getStockListViewApi(api)
+    getStockListViewApi(api, storeId)
   );
   const onChangeSortBy = (column: Column<StockRow>) => {
     const isDesc = column.key === sortBy.key ? !sortBy.isDesc : false;

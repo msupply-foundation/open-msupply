@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   generateUUID,
+  isEqual,
   Item,
   StockLine,
   useParams,
@@ -77,6 +78,7 @@ export const createDraftOutboundLine = ({
 interface UseDraftOutboundLinesControl {
   draftOutboundLines: DraftOutboundLine[];
   updateQuantity: (batchId: string, quantity: number) => void;
+  isDirty: boolean;
   isLoading: boolean;
   setDraftOutboundLines: React.Dispatch<
     React.SetStateAction<DraftOutboundLine[]>
@@ -95,6 +97,9 @@ export const useDraftOutboundLines = (
   const [draftOutboundLines, setDraftOutboundLines] = useState<
     DraftOutboundLine[]
   >([]);
+  const [initialOutboundLines, setInitialOutboundLines] = useState<
+    DraftOutboundLine[] | undefined
+  >();
 
   useEffect(() => {
     if (!item) {
@@ -128,6 +133,10 @@ export const useDraftOutboundLines = (
     if (draftOutboundLines?.length === 0) {
       draftOutboundLines.push(createPlaceholderRow(invoiceId, item?.id));
     }
+
+    if (!initialOutboundLines) {
+      setInitialOutboundLines(draftOutboundLines);
+    }
   }, [draftOutboundLines]);
 
   const onChangeRowQuantity = useCallback(
@@ -137,9 +146,14 @@ export const useDraftOutboundLines = (
     [draftOutboundLines]
   );
 
+  const isDirty =
+    !!initialOutboundLines &&
+    !isEqual(initialOutboundLines, draftOutboundLines);
+
   return {
     draftOutboundLines,
     isLoading: isLoading || outboundLinesLoading,
+    isDirty,
     setDraftOutboundLines,
     updateQuantity: onChangeRowQuantity,
   };

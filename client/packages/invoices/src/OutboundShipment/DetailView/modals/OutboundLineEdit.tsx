@@ -1,5 +1,4 @@
 import React from 'react';
-
 import {
   DialogButton,
   Grid,
@@ -10,6 +9,7 @@ import {
   useTranslation,
   ModalMode,
   useBufferState,
+  NavigationPrompt,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
@@ -52,6 +52,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     draftOutboundLines,
     updateQuantity,
     setDraftOutboundLines,
+    isDirty,
     isLoading,
   } = useDraftOutboundLines(currentItem);
   const packSizeController = usePackSizeController(draftOutboundLines);
@@ -100,6 +101,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       width={900}
     >
       <Grid container gap={0.5}>
+        <NavigationPrompt isUnsaved={isDirty} />
         <OutboundLineEditForm
           disabled={mode === ModalMode.Update || isDisabled}
           packSizeController={packSizeController}
