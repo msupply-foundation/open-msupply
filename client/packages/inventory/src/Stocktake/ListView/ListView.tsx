@@ -50,7 +50,7 @@ export const StocktakeListView: FC = () => {
 
   return (
     <>
-      <Toolbar data={data?.nodes} filter={filter} />
+      <Toolbar filter={filter} />
       <AppBarButtons />
 
       <DataTable
