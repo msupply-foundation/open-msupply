@@ -88,7 +88,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
     if (selectedPackSize === -1)
       selectedPackSize = ifTheSameElseDefault(
         lines.filter(
-          ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+          ({ type }) => type !== InvoiceLineNodeType.UnallocatedStock
         ),
         'packSize',
         -1
