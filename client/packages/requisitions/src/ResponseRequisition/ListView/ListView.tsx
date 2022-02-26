@@ -28,7 +28,6 @@ export const ResponseRequisitionListView: FC = () => {
       },
       'status',
       'comment',
-      'selection',
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
@@ -36,7 +35,7 @@ export const ResponseRequisitionListView: FC = () => {
 
   return (
     <>
-      <Toolbar onDelete={() => {}} data={data?.nodes} filter={filter} />
+      <Toolbar filter={filter} />
       <AppBarButtons />
 
       <DataTable

@@ -22,6 +22,14 @@ export type UpdateRequestRequisitionMutationVariables = Types.Exact<{
 
 export type UpdateRequestRequisitionMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateRequestRequisitionError' } };
 
+export type DeleteRequestRequisitionMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.DeleteRequestRequisitionInput;
+}>;
+
+
+export type DeleteRequestRequisitionMutation = { __typename: 'Mutations', deleteRequestRequisition: { __typename: 'DeleteRequestRequisitionError', error: { __typename: 'CannotDeleteRequisitionWithLines', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordDoesNotExist', description: string } } | { __typename: 'DeleteResponse', id: string } };
+
 export type RequestRequisitionLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } };
 
 export type RequestRequisitionFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
@@ -166,6 +174,34 @@ export const UpdateRequestRequisitionDocument = gql`
   }
 }
     `;
+export const DeleteRequestRequisitionDocument = gql`
+    mutation deleteRequestRequisition($storeId: String!, $input: DeleteRequestRequisitionInput!) {
+  deleteRequestRequisition(input: $input, storeId: $storeId) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+    ... on DeleteRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on CannotDeleteRequisitionWithLines {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on RecordDoesNotExist {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+    `;
 export const RequestRequisitionDocument = gql`
     query requestRequisition($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
@@ -274,6 +310,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     updateRequestRequisition(variables: UpdateRequestRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateRequestRequisitionMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestRequisitionMutation>(UpdateRequestRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequestRequisition');
     },
+    deleteRequestRequisition(variables: DeleteRequestRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteRequestRequisitionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestRequisitionMutation>(DeleteRequestRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequestRequisition');
+    },
     requestRequisition(variables: RequestRequisitionQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestRequisitionQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestRequisitionQuery>(RequestRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requestRequisition');
     },
@@ -321,6 +360,23 @@ export const mockInsertRequestRequisitionMutation = (resolver: ResponseResolver<
 export const mockUpdateRequestRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateRequestRequisitionMutationVariables>, GraphQLContext<UpdateRequestRequisitionMutation>, any>) =>
   graphql.mutation<UpdateRequestRequisitionMutation, UpdateRequestRequisitionMutationVariables>(
     'updateRequestRequisition',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteRequestRequisitionMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ deleteRequestRequisition })
+ *   )
+ * })
+ */
+export const mockDeleteRequestRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteRequestRequisitionMutationVariables>, GraphQLContext<DeleteRequestRequisitionMutation>, any>) =>
+  graphql.mutation<DeleteRequestRequisitionMutation, DeleteRequestRequisitionMutationVariables>(
+    'deleteRequestRequisition',
     resolver
   )
 
