@@ -13,13 +13,14 @@ import { useOutboundLines } from '../../../api';
 
 export const createPlaceholderRow = (
   invoiceId: string,
-  itemId = ''
+  itemId = '',
+  id = generateUUID()
 ): DraftOutboundLine => ({
   __typename: 'InvoiceLineNode',
   availableNumberOfPacks: 0,
   batch: 'Placeholder',
   costPricePerPack: 0,
-  id: generateUUID(),
+  id,
   itemId,
   onHold: false,
   packSize: 1,
