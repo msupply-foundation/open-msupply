@@ -53,7 +53,7 @@ export const useStocktakes = () => {
 
   return {
     ...useQuery(
-      ['stocktake', api.storeId, queryParams],
+      ['stocktake', 'list', api.storeId, queryParams],
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
@@ -259,4 +259,18 @@ export const useStocktakeRows = (isGrouped = true) => {
     onChangeSortBy,
     sortBy,
   };
+};
+
+export const useDeleteStocktakes = () => {
+  const api = useStocktakeApi();
+  return useMutation(api.deleteStocktakes);
+};
+
+export const useDeleteSelectedStocktakes = () => {
+  const api = useStocktakeApi();
+  const queryClient = useQueryClient();
+
+  return useMutation(api.deleteStocktakes, {
+    onSuccess: () => queryClient.invalidateQueries(['stocktake', 'list']),
+  });
 };

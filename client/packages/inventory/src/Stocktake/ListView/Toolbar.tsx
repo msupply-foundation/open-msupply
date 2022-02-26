@@ -11,13 +11,13 @@ import {
   FilterController,
 } from '@openmsupply-client/common';
 import { canDeleteStocktake } from '../../utils';
-import { StocktakeRowFragment } from '../api';
+import { StocktakeRowFragment, useDeleteSelectedStocktakes } from '../api';
 
 export const Toolbar: FC<{
-  onDelete: (toDelete: StocktakeRowFragment[]) => void;
   filter: FilterController;
   data?: StocktakeRowFragment[];
-}> = ({ onDelete, data, filter }) => {
+}> = ({ data, filter }) => {
+  const { mutate } = useDeleteSelectedStocktakes();
   const t = useTranslation('inventory');
 
   const { success, info } = useNotification();
@@ -37,7 +37,7 @@ export const Toolbar: FC<{
         const cannotDeleteSnack = info(t('messages.cant-delete-stocktakes'));
         cannotDeleteSnack();
       } else {
-        onDelete(selectedRows);
+        mutate(selectedRows);
         const deletedMessage = t('messages.deleted-stocktakes', {
           number: numberSelected,
         });
