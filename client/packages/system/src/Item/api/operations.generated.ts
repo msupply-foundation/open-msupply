@@ -83,6 +83,7 @@ export const ItemsWithStockLinesDocument = gql`
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
+    storeId: $storeId
   ) {
     ... on ItemConnector {
       __typename
