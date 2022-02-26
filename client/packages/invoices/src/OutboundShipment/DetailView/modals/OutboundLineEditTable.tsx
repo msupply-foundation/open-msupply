@@ -15,6 +15,7 @@ import {
   ReadOnlyInput,
   InvoiceNodeStatus,
   Box,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController } from './hooks';
@@ -122,10 +123,12 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   const t = useTranslation(['distribution', 'common']);
   const { status } = useOutboundFields('status');
 
-  const placeholderRow = rows.find(({ id }) => id === 'placeholder');
+  const placeholderRow = rows.find(
+    ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+  );
 
   const rowsWithoutPlaceholder = rows
-    .filter(({ id }) => id !== 'placeholder')
+    .filter(({ type }) => type !== InvoiceLineNodeType.UnallocatedStock)
     .sort(sortByExpiry);
 
   const isRequestedPackSize = (packSize: number) =>
@@ -191,20 +194,26 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
             {noStockRows.map(batch => (
               <BatchesRow batch={batch} key={batch.id} disabled />
             ))}
-            <TableRow>
-              <BasicCell align="right" sx={{ paddingTop: '3px' }}>
-                {t('label.placeholder')}
-              </BasicCell>
-              <BasicCell sx={{ paddingTop: '3px' }}>
-                <NumericTextInput
-                  onChange={event => {
-                    onChange('placeholder', Number(event.target.value), 1);
-                  }}
-                  value={placeholderRow?.numberOfPacks ?? 0}
-                  disabled={status !== InvoiceNodeStatus.New}
-                />
-              </BasicCell>
-            </TableRow>
+            {placeholderRow ? (
+              <TableRow>
+                <BasicCell align="right" sx={{ paddingTop: '3px' }}>
+                  {t('label.placeholder')}
+                </BasicCell>
+                <BasicCell sx={{ paddingTop: '3px' }}>
+                  <NumericTextInput
+                    onChange={event => {
+                      onChange(
+                        placeholderRow.id,
+                        Number(event.target.value),
+                        1
+                      );
+                    }}
+                    value={placeholderRow.numberOfPacks}
+                    disabled={status !== InvoiceNodeStatus.New}
+                  />
+                </BasicCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

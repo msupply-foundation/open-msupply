@@ -3,11 +3,15 @@ export const ifTheSameElseDefault = <T, K extends keyof T, J>(
   key: K,
   defaultValue: J
 ): J | T[K] => {
-  const value = someEntities[0]?.[key];
-  const allTheSame = someEntities.every(entity => {
+  if (someEntities.length === 0) {
+    return defaultValue;
+  }
+  const entities = someEntities as [T, ...T[]];
+  const value = entities[0][key];
+  const allTheSame = entities.every(entity => {
     return entity[key] === value;
   });
-  return allTheSame && value != undefined ? value : defaultValue;
+  return allTheSame ? value : defaultValue;
 };
 
 export const arrayToRecord = <T extends { id: string }>(
