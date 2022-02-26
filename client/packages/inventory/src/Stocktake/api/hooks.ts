@@ -271,6 +271,7 @@ export const useDeleteSelectedStocktakes = () => {
   const { data: rows } = useStocktakes();
   const { success, info } = useNotification();
   const { mutate } = useDeleteStocktakes();
+  const queryClient = useQueryClient();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -301,8 +302,6 @@ export const useDeleteSelectedStocktakes = () => {
       selectRowsSnack();
     }
   };
-
-  const queryClient = useQueryClient();
 
   return deleteAction;
 };

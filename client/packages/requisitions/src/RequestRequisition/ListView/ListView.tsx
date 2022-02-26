@@ -82,7 +82,7 @@ export const RequestRequisitionListView: FC = () => {
           });
         }}
       />
-      <Toolbar onDelete={() => {}} data={data?.nodes} filter={filter} />
+      <Toolbar filter={filter} />
       <AppBarButtons onCreate={modalController.toggleOn} />
 
       <DataTable
