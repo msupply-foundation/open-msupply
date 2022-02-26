@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+
 import {
   useNavigate,
   useTranslation,
@@ -29,6 +30,7 @@ import {
   StocktakeRowFragment,
   StocktakeLineFragment,
 } from './operations.generated';
+import { canDeleteStocktake } from '../../utils';
 
 export const useStocktakeApi = (): StocktakeApi => {
   const { client } = useOmSupplyApi();
@@ -96,8 +98,6 @@ export const useIsStocktakeDisabled = (): boolean => {
   const { status } = useStocktakeFields('status');
   return status === StocktakeNodeStatus.Finalised;
 };
-
-import { useCallback } from 'react';
 
 export const useStocktakeDetailQueryKey = (): ['stocktake', string] => {
   const { stocktakeNumber = '' } = useParams();
@@ -267,10 +267,42 @@ export const useDeleteStocktakes = () => {
 };
 
 export const useDeleteSelectedStocktakes = () => {
-  const api = useStocktakeApi();
+  const t = useTranslation('inventory');
+  const { data: rows } = useStocktakes();
+  const { success, info } = useNotification();
+  const { mutate } = useDeleteStocktakes();
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as StocktakeRowFragment[],
+  }));
+
+  const deleteAction = () => {
+    const numberSelected = selectedRows.length;
+    if (selectedRows && numberSelected > 0) {
+      const canDeleteRows = selectedRows.every(canDeleteStocktake);
+      if (!canDeleteRows) {
+        const cannotDeleteSnack = info(t('messages.cant-delete-stocktakes'));
+        cannotDeleteSnack();
+      } else {
+        mutate(selectedRows, {
+          onSuccess: () => queryClient.invalidateQueries(['stocktake', 'list']),
+        });
+        const deletedMessage = t('messages.deleted-stocktakes', {
+          number: numberSelected,
+        });
+        const successSnack = success(deletedMessage);
+        successSnack();
+      }
+    } else {
+      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
+      selectRowsSnack();
+    }
+  };
+
   const queryClient = useQueryClient();
 
-  return useMutation(api.deleteStocktakes, {
-    onSuccess: () => queryClient.invalidateQueries(['stocktake', 'list']),
-  });
+  return deleteAction;
 };
