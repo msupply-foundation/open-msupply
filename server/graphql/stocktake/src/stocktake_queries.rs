@@ -9,7 +9,7 @@ use graphql_core::simple_generic_errors::{
 use graphql_core::standard_graphql_error::{
     list_error_to_gql_err, validate_auth, StandardGraphqlError,
 };
-use graphql_core::ContextExt;
+use graphql_core::{ContextExt, map_filter};
 use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeFilter;
 use repository::*;
@@ -204,19 +204,6 @@ impl StocktakeSortInput {
             desc: self.desc,
         }
     }
-}
-
-macro_rules! map_filter {
-    ($from:ident, $f:expr) => {{
-        EqualFilter {
-            equal_to: $from.equal_to.map($f),
-            not_equal_to: $from.not_equal_to.map($f),
-            equal_any: $from
-                .equal_any
-                .map(|inputs| inputs.into_iter().map($f).collect()),
-            not_equal_all: None,
-        }
-    }};
 }
 
 impl From<StocktakeFilterInput> for StocktakeFilter {
