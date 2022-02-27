@@ -1,10 +1,8 @@
-use super::{map_filter, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode};
+use super::{InvoiceLineConnector, NameNode, RequisitionNode, StoreNode};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
-use graphql_core::generic_filters::{
-    DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, SimpleStringFilterInput,
-};
+
 use graphql_core::loader::InvoiceByIdLoader;
 use graphql_core::{
     loader::{
@@ -15,8 +13,8 @@ use graphql_core::{
     ContextExt,
 };
 use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, InvoiceStatsRow};
-use repository::{DatetimeFilter, EqualFilter, SimpleStringFilter};
-use repository::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField};
+
+use repository::Invoice;
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 

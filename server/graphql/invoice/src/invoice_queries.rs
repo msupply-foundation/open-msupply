@@ -11,8 +11,8 @@ use graphql_core::{
 };
 use graphql_types::types::{InvoiceConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType};
 use repository::{
-    DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSortField, PaginationOption,
-    SimpleStringFilter, InvoiceSort,
+    DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, PaginationOption,
+    SimpleStringFilter,
 };
 
 #[derive(Union)]

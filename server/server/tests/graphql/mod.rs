@@ -7,11 +7,10 @@ use service::{auth_data::AuthData, service_provider::ServiceProvider, token_buck
 
 use std::sync::RwLock;
 
-use actix_web::{test::read_body, web::Data};
-use serde::{de::DeserializeOwned, Serialize};
+use actix_web::web::Data;
 use serde_json::Value;
 
-pub mod common;
+mod common;
 // mod inbound_shipment_delete;
 // mod inbound_shipment_insert;
 // mod inbound_shipment_line_delete;
@@ -47,58 +46,6 @@ mod stocktake_line_update;
 mod stocktake_query;
 mod stocktake_update;
 mod unallocated_line;
-
-pub async fn get_gql_result<IN, OUT>(settings: &Settings, query: IN) -> OUT
-where
-    IN: Serialize,
-    OUT: DeserializeOwned,
-{
-    let connection_manager = get_storage_connection_manager(&settings.database);
-    let connection_manager_data = actix_web::web::Data::new(connection_manager.clone());
-
-    let service_provider_data =
-        actix_web::web::Data::new(ServiceProvider::new(connection_manager.clone()));
-
-    let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
-    let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
-
-    let auth_data = Data::new(AuthData {
-        auth_token_secret: settings.auth.token_secret.to_owned(),
-        token_bucket: RwLock::new(TokenBucket::new()),
-        // TODO: configure ssl
-        debug_no_ssl: true,
-        debug_no_access_control: true,
-    });
-
-    let mut app = actix_web::test::init_service(
-        actix_web::App::new()
-            .data(connection_manager_data.clone())
-            .data(loader_registry.clone())
-            .configure(graphql_config(
-                connection_manager_data,
-                loader_registry,
-                service_provider_data,
-                auth_data,
-            )),
-    )
-    .await;
-
-    let res = actix_web::test::TestRequest::post()
-        .header("content-type", "application/json")
-        .set_json(&query)
-        .uri("/graphql")
-        .send_request(&mut app)
-        .await;
-
-    let body = read_body(res).await;
-
-    let body_as_string = String::from_utf8(body.clone().to_vec()).unwrap();
-
-    match serde_json::from_slice(&body) {
-        Ok(result) => result,
-        Err(error) => panic!("failed to deserialize: {} {:#?}", body_as_string, error),
-    }
-}
 
 async fn run_gql_query(
     settings: &Settings,
