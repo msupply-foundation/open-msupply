@@ -17,13 +17,9 @@ mod names;
 mod pagination;
 mod requisition;
 mod stocktake_batch;
-mod stocktake_delete;
-mod stocktake_insert;
 mod stocktake_line_delete;
 mod stocktake_line_insert;
 mod stocktake_line_update;
-mod stocktake_query;
-mod stocktake_update;
 
 async fn run_gql_query(
     settings: &Settings,

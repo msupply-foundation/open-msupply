@@ -3,7 +3,7 @@ use graphql_core::pagination::PaginationInput;
 use graphql_general_queries::store::*;
 use graphql_general_queries::*;
 use graphql_requisition::requisition_queries::*;
-use graphql_stocktake::stocktake_queries::*;
+
 use graphql_types::types::*;
 
 #[derive(Default)]
@@ -99,35 +99,6 @@ impl Queries {
         #[graphql(desc = "Expiring soon threshold")] days_till_expired: Option<i32>,
     ) -> Result<StockCounts> {
         stock_counts(timezone_offset, days_till_expired)
-    }
-
-    pub async fn stocktake(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        id: String,
-    ) -> Result<StocktakeResponse> {
-        stocktake(ctx, &store_id, &id)
-    }
-
-    pub async fn stocktake_by_number(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        stocktake_number: i64,
-    ) -> Result<StocktakeResponse> {
-        stocktake_by_number(ctx, &store_id, stocktake_number)
-    }
-
-    pub async fn stocktakes(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        page: Option<PaginationInput>,
-        filter: Option<StocktakeFilterInput>,
-        sort: Option<Vec<StocktakeSortInput>>,
-    ) -> Result<StocktakesResponse> {
-        stocktakes(ctx, &store_id, page, filter, sort)
     }
 
     pub async fn requisition(
