@@ -4,30 +4,6 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ItemsWithStockLinesQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
-  key: Types.ItemSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
-  filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  storeId: Types.Scalars['String'];
-}>;
-
-
-export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
-
-export type NamesQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  key: Types.NameSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
-  filter?: Types.InputMaybe<Types.NameFilterInput>;
-}>;
-
-
-export type NamesQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
-
 export type LocationsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   sort?: Types.InputMaybe<Array<Types.LocationSortInput> | Types.LocationSortInput>;
@@ -90,76 +66,6 @@ export type MasterListsQueryVariables = Types.Exact<{
 export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListLineNode', id: string, itemId: string, item: { __typename: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
 
 
-export const ItemsWithStockLinesDocument = gql`
-    query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
-  items(
-    storeId: $storeId
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    __typename
-    ... on ItemConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        code
-        id
-        isVisible
-        name
-        unitName
-        availableBatches(storeId: $storeId) {
-          __typename
-          totalCount
-          nodes {
-            __typename
-            availableNumberOfPacks
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemId
-            packSize
-            sellPricePerPack
-            totalNumberOfPacks
-            onHold
-            note
-            storeId
-            locationName
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-export const NamesDocument = gql`
-    query names($storeId: String!, $key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
-  names(
-    storeId: $storeId
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on NameConnector {
-      __typename
-      nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-        store {
-          id
-          code
-        }
-      }
-      totalCount
-    }
-  }
-}
-    `;
 export const LocationsDocument = gql`
     query locations($storeId: String!, $sort: [LocationSortInput!]) {
   locations(storeId: $storeId, sort: $sort) {
@@ -421,12 +327,6 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsWithStockLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines');
-    },
-    names(variables: NamesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<NamesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names');
-    },
     locations(variables: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations');
     },
@@ -451,40 +351,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockItemsWithStockLinesQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ items })
- *   )
- * })
- */
-export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsWithStockLinesQueryVariables>, GraphQLContext<ItemsWithStockLinesQuery>, any>) =>
-  graphql.query<ItemsWithStockLinesQuery, ItemsWithStockLinesQueryVariables>(
-    'itemsWithStockLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockNamesQuery((req, res, ctx) => {
- *   const { storeId, key, desc, first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ names })
- *   )
- * })
- */
-export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQueryVariables>, GraphQLContext<NamesQuery>, any>) =>
-  graphql.query<NamesQuery, NamesQueryVariables>(
-    'names',
-    resolver
-  )
 
 /**
  * @param resolver a function that accepts a captured request and may return a mocked response.
