@@ -1,12 +1,14 @@
 use crate::{
+    invoice::query::get_invoice,
+    service_provider::ServiceContext,
     sync_processor::{process_records, Record},
     WithDBError,
 };
-use repository::Name;
 use repository::{
     schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
-    StockLineRowRepository, StorageConnection, TransactionError,
+    StockLineRowRepository,
 };
+use repository::{Invoice, Name};
 
 mod generate;
 mod validate;
@@ -31,11 +33,15 @@ pub struct UpdateInboundShipment {
     pub colour: Option<String>,
 }
 
+type OutError = UpdateInboundShipmentError;
+
 pub fn update_inbound_shipment(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
+    _store_id: &str,
     patch: UpdateInboundShipment,
-) -> Result<String, UpdateInboundShipmentError> {
-    let update_invoice = connection
+) -> Result<Invoice, OutError> {
+    let invoice = ctx
+        .connection
         .transaction_sync(|connection| {
             let (invoice, other_party) = validate(&patch, connection)?;
             let (lines_and_invoice_lines_option, update_invoice) =
@@ -52,24 +58,23 @@ pub fn update_inbound_shipment(
                     invoice_line_respository.upsert_one(&line)?;
                 }
             }
-            Ok(update_invoice)
+
+            get_invoice(ctx, None, &update_invoice.id)
+                .map_err(|error| OutError::DatabaseError(error))?
+                .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
-        .map_err(
-            |error: TransactionError<UpdateInboundShipmentError>| match error {
-                TransactionError::Transaction { msg, level } => {
-                    RepositoryError::TransactionError { msg, level }.into()
-                }
-                TransactionError::Inner(error) => error,
-            },
-        )?;
+        .map_err(|error| error.to_inner_error())?;
 
     // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
     println!(
         "{:#?}",
-        process_records(connection, vec![Record::InvoiceRow(update_invoice.clone())],)
+        process_records(
+            &ctx.connection,
+            vec![Record::InvoiceRow(invoice.invoice_row.clone())],
+        )
     );
 
-    Ok(update_invoice.id)
+    Ok(invoice)
 }
 
 #[derive(Debug)]
@@ -83,6 +88,7 @@ pub enum UpdateInboundShipmentError {
     CannotReverseInvoiceStatus,
     CannotEditFinalised,
     CannotChangeStatusOfInvoiceOnHold,
+    UpdatedInvoiceDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentError {

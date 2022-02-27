@@ -1,10 +1,8 @@
 use async_graphql::*;
-use graphql_batch_mutations::{
-    batch_inbound_shipment::*, batch_outbound_shipment::*, batch_stocktake::*,
-};
+use graphql_batch_mutations::batch_stocktake::*;
 use graphql_core::ContextExt;
 use graphql_general_mutations::*;
-use graphql_invoice::mutations::{inbound_shipment::*, outbound_shipment::*};
+use graphql_invoice::mutations::{inbound_shipment, outbound_shipment};
 use graphql_invoice_line::mutations::{inbound_shipment_line::*, outbound_shipment_line::*};
 use graphql_location::mutations::*;
 use graphql_requisition::mutations::{request_requisition, response_requisition};
@@ -54,28 +52,27 @@ impl Mutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: InsertOutboundShipmentInput,
-    ) -> InsertOutboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_insert_outbound_shipment_response(connection_manager, &store_id, input)
+        input: outbound_shipment::InsertInput,
+    ) -> Result<outbound_shipment::InsertResponse> {
+        outbound_shipment::insert(ctx, &store_id, input)
     }
 
     async fn update_outbound_shipment(
         &self,
         ctx: &Context<'_>,
-        input: UpdateOutboundShipmentInput,
-    ) -> UpdateOutboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_update_outbound_shipment_response(connection_manager, input)
+        store_id: String,
+        input: outbound_shipment::UpdateInput,
+    ) -> Result<outbound_shipment::UpdateResponse> {
+        outbound_shipment::update(ctx, &store_id, input)
     }
 
     async fn delete_outbound_shipment(
         &self,
         ctx: &Context<'_>,
+        store_id: String,
         id: String,
-    ) -> DeleteOutboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_delete_outbound_shipment_response(connection_manager, id)
+    ) -> Result<outbound_shipment::DeleteResponse> {
+        outbound_shipment::delete(ctx, &store_id, &id)
     }
 
     async fn insert_outbound_shipment_line(
@@ -160,28 +157,27 @@ impl Mutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: InsertInboundShipmentInput,
-    ) -> InsertInboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_insert_inbound_shipment_response(connection_manager, &store_id, input)
+        input: inbound_shipment::InsertInput,
+    ) -> Result<inbound_shipment::InsertResponse> {
+        inbound_shipment::insert(ctx, &store_id, input)
     }
 
     async fn update_inbound_shipment(
         &self,
         ctx: &Context<'_>,
-        input: UpdateInboundShipmentInput,
-    ) -> UpdateInboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_update_inbound_shipment_response(connection_manager, input)
+        store_id: String,
+        input: inbound_shipment::UpdateInput,
+    ) -> Result<inbound_shipment::UpdateResponse> {
+        inbound_shipment::update(ctx, &store_id, input)
     }
 
     async fn delete_inbound_shipment(
         &self,
         ctx: &Context<'_>,
-        input: DeleteInboundShipmentInput,
-    ) -> DeleteInboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_delete_inbound_shipment_response(connection_manager, input)
+        store_id: String,
+        input: inbound_shipment::DeleteInput,
+    ) -> Result<inbound_shipment::DeleteResponse> {
+        inbound_shipment::delete(ctx, &store_id, input)
     }
 
     async fn insert_inbound_shipment_line(
@@ -211,25 +207,25 @@ impl Mutations {
         get_delete_inbound_shipment_line_response(connection_manager, input)
     }
 
-    async fn batch_inbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: BatchInboundShipmentInput,
-    ) -> BatchInboundShipmentResponse {
-        let connection_manager = ctx.get_connection_manager();
+    // async fn batch_inbound_shipment(
+    //     &self,
+    //     ctx: &Context<'_>,
+    //     store_id: String,
+    //     input: BatchInboundShipmentInput,
+    // ) -> BatchInboundShipmentResponse {
+    //     let connection_manager = ctx.get_connection_manager();
 
-        get_batch_inbound_shipment_response(connection_manager, &store_id, input)
-    }
+    //     get_batch_inbound_shipment_response(connection_manager, &store_id, input)
+    // }
 
-    async fn batch_outbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: BatchOutboundShipmentInput,
-    ) -> Result<BatchOutboundShipmentResponse> {
-        get_batch_outbound_shipment_response(ctx, &store_id, input)
-    }
+    // async fn batch_outbound_shipment(
+    //     &self,
+    //     ctx: &Context<'_>,
+    //     store_id: String,
+    //     input: BatchOutboundShipmentInput,
+    // ) -> Result<BatchOutboundShipmentResponse> {
+    //     get_batch_outbound_shipment_response(ctx, &store_id, input)
+    // }
 
     async fn insert_stocktake(
         &self,

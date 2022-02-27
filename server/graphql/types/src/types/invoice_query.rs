@@ -5,10 +5,11 @@ use dataloader::DataLoader;
 use graphql_core::generic_filters::{
     DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, SimpleStringFilterInput,
 };
+use graphql_core::loader::InvoiceByIdLoader;
 use graphql_core::{
     loader::{
-        InvoiceLineQueryLoader, InvoiceQueryLoader, InvoiceStatsLoader, NameByIdLoader,
-        RequisitionsByIdLoader, StoreLoader,
+        InvoiceLineQueryLoader, InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader,
+        StoreLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -18,90 +19,6 @@ use repository::{DatetimeFilter, EqualFilter, SimpleStringFilter};
 use repository::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(rename_items = "camelCase")]
-pub enum InvoiceSortFieldInput {
-    Type,
-    OtherPartyName,
-    InvoiceNumber,
-    Comment,
-    Status,
-    CreatedDatetime,
-    AllocatedDatetime,
-    PickedDatetime,
-    ShippedDatetime,
-    DeliveredDatetime,
-    VerifiedDatetime,
-}
-
-#[derive(InputObject)]
-pub struct InvoiceSortInput {
-    /// Sort query result by `key`
-    key: InvoiceSortFieldInput,
-    /// Sort query result is sorted descending or ascending (if not provided the default is
-    /// ascending)
-    desc: Option<bool>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterInvoiceTypeInput {
-    pub equal_to: Option<InvoiceNodeType>,
-    pub equal_any: Option<Vec<InvoiceNodeType>>,
-    pub not_equal_to: Option<InvoiceNodeType>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterInvoiceStatusInput {
-    pub equal_to: Option<InvoiceNodeStatus>,
-    pub equal_any: Option<Vec<InvoiceNodeStatus>>,
-    pub not_equal_to: Option<InvoiceNodeStatus>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct InvoiceFilterInput {
-    pub id: Option<EqualFilterStringInput>,
-    pub invoice_number: Option<EqualFilterBigNumberInput>,
-    pub name_id: Option<EqualFilterStringInput>,
-    pub store_id: Option<EqualFilterStringInput>,
-    pub r#type: Option<EqualFilterInvoiceTypeInput>,
-    pub status: Option<EqualFilterInvoiceStatusInput>,
-    pub comment: Option<SimpleStringFilterInput>,
-    pub their_reference: Option<EqualFilterStringInput>,
-    pub created_datetime: Option<DatetimeFilterInput>,
-    pub allocated_datetime: Option<DatetimeFilterInput>,
-    pub picked_datetime: Option<DatetimeFilterInput>,
-    pub shipped_datetime: Option<DatetimeFilterInput>,
-    pub delivered_datetime: Option<DatetimeFilterInput>,
-    pub verified_datetime: Option<DatetimeFilterInput>,
-    pub requisition_id: Option<EqualFilterStringInput>,
-    pub linked_invoice_id: Option<EqualFilterStringInput>,
-}
-
-impl From<InvoiceFilterInput> for InvoiceFilter {
-    fn from(f: InvoiceFilterInput) -> Self {
-        InvoiceFilter {
-            id: f.id.map(EqualFilter::from),
-            invoice_number: f.invoice_number.map(EqualFilter::from),
-            name_id: f.name_id.map(EqualFilter::from),
-            store_id: f.store_id.map(EqualFilter::from),
-            r#type: f.r#type.map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
-            status: f
-                .status
-                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
-            comment: f.comment.map(SimpleStringFilter::from),
-            their_reference: f.their_reference.map(EqualFilter::from),
-            created_datetime: f.created_datetime.map(DatetimeFilter::from),
-            allocated_datetime: f.allocated_datetime.map(DatetimeFilter::from),
-            picked_datetime: f.picked_datetime.map(DatetimeFilter::from),
-            shipped_datetime: f.shipped_datetime.map(DatetimeFilter::from),
-            delivered_datetime: f.delivered_datetime.map(DatetimeFilter::from),
-            verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
-            requisition_id: f.requisition_id.map(EqualFilter::from),
-            linked_invoice_id: f.linked_invoice_id.map(EqualFilter::from),
-        }
-    }
-}
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -271,7 +188,7 @@ impl InvoiceNode {
             return Ok(None);
         };
 
-        let loader = ctx.get_loader::<DataLoader<InvoiceQueryLoader>>();
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
         Ok(loader
             .load_one(linked_invoice_id.to_string())
             .await?
@@ -322,11 +239,6 @@ impl InvoiceNode {
             .extend(),
         )
     }
-}
-
-#[derive(Union)]
-pub enum InvoicesResponse {
-    Response(InvoiceConnector),
 }
 
 impl InvoiceNode {
@@ -392,31 +304,6 @@ impl InvoiceConnector {
         InvoiceConnector {
             total_count: usize_to_u32(invoices.len()),
             nodes: invoices.into_iter().map(InvoiceNode::from_domain).collect(),
-        }
-    }
-}
-
-impl InvoiceSortInput {
-    pub fn to_domain(self) -> InvoiceSort {
-        use InvoiceSortField as to;
-        use InvoiceSortFieldInput as from;
-        let key = match self.key {
-            from::Type => to::Type,
-            from::OtherPartyName => to::OtherPartyName,
-            from::InvoiceNumber => to::InvoiceNumber,
-            from::Comment => to::Comment,
-            from::Status => to::Status,
-            from::CreatedDatetime => to::CreatedDatetime,
-            from::AllocatedDatetime => to::AllocatedDatetime,
-            from::PickedDatetime => to::PickedDatetime,
-            from::ShippedDatetime => to::ShippedDatetime,
-            from::DeliveredDatetime => to::DeliveredDatetime,
-            from::VerifiedDatetime => to::VerifiedDatetime,
-        };
-
-        InvoiceSort {
-            key,
-            desc: self.desc,
         }
     }
 }

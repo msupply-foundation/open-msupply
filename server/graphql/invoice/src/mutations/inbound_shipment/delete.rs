@@ -1,18 +1,17 @@
 use async_graphql::*;
-
-use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
-};
-use graphql_core::simple_generic_errors::{DatabaseError, RecordNotFound};
+use graphql_core::simple_generic_errors::CannotEditInvoice;
+use graphql_core::simple_generic_errors::RecordNotFound;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
-use graphql_types::types::{DeleteResponse, InvoiceLineConnector};
-use repository::StorageConnectionManager;
-use service::invoice::{
-    delete_inbound_shipment, DeleteInboundShipment, DeleteInboundShipmentError,
+use graphql_types::types::{DeleteResponse as GenericDeleteResponse, InvoiceLineConnector};
+use service::invoice::inbound_shipment::{
+    DeleteInboundShipment as ServiceInput, DeleteInboundShipmentError as ServiceError,
 };
 
 #[derive(InputObject)]
-pub struct DeleteInboundShipmentInput {
+#[graphql(name = "DeleteInboundShipmentInput")]
+pub struct DeleteInput {
     pub id: String,
 }
 
@@ -23,67 +22,70 @@ pub struct DeleteError {
 }
 
 #[derive(Union)]
-pub enum DeleteInboundShipmentResponse {
+#[graphql(name = "DeleteInboundShipmentResponse")]
+pub enum DeleteResponse {
     Error(DeleteError),
-    Response(DeleteResponse),
+    Response(GenericDeleteResponse),
 }
 
-pub fn get_delete_inbound_shipment_response(
-    connection_manager: &StorageConnectionManager,
-    input: DeleteInboundShipmentInput,
-) -> DeleteInboundShipmentResponse {
-    use DeleteInboundShipmentResponse::*;
-    match delete_inbound_shipment(connection_manager, input.into()) {
-        Ok(id) => Response(DeleteResponse(id)),
-        Err(error) => error.into(),
-    }
+pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let response = match service_provider.invoice_service.delete_inbound_shipment(
+        &service_context,
+        store_id,
+        input.to_domain(),
+    ) {
+        Ok(deleted_id) => DeleteResponse::Response(GenericDeleteResponse(deleted_id)),
+        Err(error) => DeleteResponse::Error(DeleteError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(response)
 }
 
 #[derive(Interface)]
 #[graphql(name = "DeleteInboundShipmentErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteErrorInterface {
-    DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
-    NotAnInboundShipment(NotAnInboundShipment),
-    InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
 }
 
-impl From<DeleteInboundShipmentInput> for DeleteInboundShipment {
-    fn from(input: DeleteInboundShipmentInput) -> Self {
-        DeleteInboundShipment { id: input.id }
+impl DeleteInput {
+    fn to_domain(self) -> ServiceInput {
+        let DeleteInput { id } = self;
+        ServiceInput { id }
     }
 }
 
-impl From<DeleteInboundShipmentError> for DeleteInboundShipmentResponse {
-    fn from(error: DeleteInboundShipmentError) -> Self {
-        use DeleteErrorInterface as OutError;
-        let error = match error {
-            DeleteInboundShipmentError::InvoiceDoesNotExist => {
-                OutError::RecordNotFound(RecordNotFound {})
-            }
-            DeleteInboundShipmentError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
+fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
 
-            DeleteInboundShipmentError::NotAnInboundShipment => {
-                OutError::NotAnInboundShipment(NotAnInboundShipment {})
-            }
-            DeleteInboundShipmentError::NotThisStoreInvoice => {
-                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
-            }
-            DeleteInboundShipmentError::CannotEditFinalised => {
-                OutError::CannotEditInvoice(CannotEditInvoice {})
-            }
-            DeleteInboundShipmentError::InvoiceLinesExists(lines) => {
-                OutError::CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines(
-                    InvoiceLineConnector::from_vec(lines),
-                ))
-            }
-        };
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+        }
+        ServiceError::CannotEditFinalised => {
+            return Ok(DeleteErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+        ServiceError::InvoiceLinesExists(lines) => {
+            return Ok(DeleteErrorInterface::CannotDeleteInvoiceWithLines(
+                CannotDeleteInvoiceWithLines(InvoiceLineConnector::from_vec(lines)),
+            ))
+        }
+        // Standard Graphql Errors
+        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
 
-        DeleteInboundShipmentResponse::Error(DeleteError { error })
-    }
+    Err(graphql_error.extend())
 }

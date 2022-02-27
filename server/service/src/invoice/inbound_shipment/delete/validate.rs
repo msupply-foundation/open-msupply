@@ -10,8 +10,8 @@ use repository::{
 use super::{DeleteInboundShipment, DeleteInboundShipmentError};
 
 pub fn validate(
-    input: &DeleteInboundShipment,
     connection: &StorageConnection,
+    input: &DeleteInboundShipment,
 ) -> Result<InvoiceRow, DeleteInboundShipmentError> {
     let invoice = check_invoice_exists(&input.id, connection)?;
 

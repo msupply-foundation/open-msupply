@@ -1,6 +1,8 @@
+use crate::invoice::query::get_invoice;
+use crate::service_provider::ServiceContext;
 use crate::WithDBError;
-use repository::Name;
-use repository::{InvoiceRepository, RepositoryError, StorageConnection, TransactionError};
+use repository::{Invoice, Name};
+use repository::{InvoiceRepository, RepositoryError};
 
 mod generate;
 mod validate;
@@ -17,27 +19,25 @@ pub struct InsertInboundShipment {
     pub colour: Option<String>,
 }
 
+type OutError = InsertInboundShipmentError;
+
 pub fn insert_inbound_shipment(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     store_id: &str,
     input: InsertInboundShipment,
-) -> Result<String, InsertInboundShipmentError> {
-    let new_invoice = connection
+) -> Result<Invoice, OutError> {
+    let invoice = ctx
+        .connection
         .transaction_sync(|connection| {
             let other_party = validate(&input, &connection)?;
             let new_invoice = generate(connection, store_id, input, other_party)?;
             InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
-            Ok(new_invoice)
+            get_invoice(ctx, None, &new_invoice.id)
+                .map_err(|error| OutError::DatabaseError(error))?
+                .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
-        .map_err(
-            |error: TransactionError<InsertInboundShipmentError>| match error {
-                TransactionError::Transaction { msg, level } => {
-                    RepositoryError::TransactionError { msg, level }.into()
-                }
-                TransactionError::Inner(error) => error,
-            },
-        )?;
-    Ok(new_invoice.id)
+        .map_err(|error| error.to_inner_error())?;
+    Ok(invoice)
 }
 
 #[derive(Debug)]
@@ -45,6 +45,7 @@ pub enum InsertInboundShipmentError {
     InvoiceAlreadyExists,
     DatabaseError(RepositoryError),
     OtherPartyDoesNotExist,
+    NewlyCreatedInvoiceDoesNotExist,
     OtherPartyNotASupplier(Name),
 }
 

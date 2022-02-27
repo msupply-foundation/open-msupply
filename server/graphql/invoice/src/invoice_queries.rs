@@ -1,11 +1,19 @@
 use async_graphql::*;
 use graphql_core::{
+    generic_filters::{
+        DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
+        SimpleStringFilterInput,
+    },
+    pagination::PaginationInput,
     simple_generic_errors::{NodeError, NodeErrorInterface},
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{InvoiceNode, InvoiceNodeType};
-use repository::StorageConnectionManager;
-use service::invoice::get_invoice as get_invoice_service;
+use graphql_types::types::{InvoiceConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType};
+use repository::{
+    DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSortField, PaginationOption,
+    SimpleStringFilter, InvoiceSort,
+};
 
 #[derive(Union)]
 pub enum InvoiceResponse {
@@ -13,15 +21,114 @@ pub enum InvoiceResponse {
     Response(InvoiceNode),
 }
 
-pub fn get_invoice(
-    connection_manager: &StorageConnectionManager,
-    store_id: Option<&str>,
-    id: String,
-) -> InvoiceResponse {
-    match get_invoice_service(connection_manager, store_id, id) {
-        Ok(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
-        Err(error) => InvoiceResponse::Error(error.into()),
-    }
+#[derive(Union)]
+pub enum InvoicesResponse {
+    Response(InvoiceConnector),
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum InvoiceSortFieldInput {
+    Type,
+    OtherPartyName,
+    InvoiceNumber,
+    Comment,
+    Status,
+    CreatedDatetime,
+    AllocatedDatetime,
+    PickedDatetime,
+    ShippedDatetime,
+    DeliveredDatetime,
+    VerifiedDatetime,
+}
+
+#[derive(InputObject)]
+pub struct InvoiceSortInput {
+    /// Sort query result by `key`
+    key: InvoiceSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterInvoiceTypeInput {
+    pub equal_to: Option<InvoiceNodeType>,
+    pub equal_any: Option<Vec<InvoiceNodeType>>,
+    pub not_equal_to: Option<InvoiceNodeType>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterInvoiceStatusInput {
+    pub equal_to: Option<InvoiceNodeStatus>,
+    pub equal_any: Option<Vec<InvoiceNodeStatus>>,
+    pub not_equal_to: Option<InvoiceNodeStatus>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct InvoiceFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub invoice_number: Option<EqualFilterBigNumberInput>,
+    pub name_id: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
+    pub r#type: Option<EqualFilterInvoiceTypeInput>,
+    pub status: Option<EqualFilterInvoiceStatusInput>,
+    pub comment: Option<SimpleStringFilterInput>,
+    pub their_reference: Option<EqualFilterStringInput>,
+    pub created_datetime: Option<DatetimeFilterInput>,
+    pub allocated_datetime: Option<DatetimeFilterInput>,
+    pub picked_datetime: Option<DatetimeFilterInput>,
+    pub shipped_datetime: Option<DatetimeFilterInput>,
+    pub delivered_datetime: Option<DatetimeFilterInput>,
+    pub verified_datetime: Option<DatetimeFilterInput>,
+    pub requisition_id: Option<EqualFilterStringInput>,
+    pub linked_invoice_id: Option<EqualFilterStringInput>,
+}
+
+pub fn get_invoice(ctx: &Context<'_>, store_id: Option<&str>, id: &str) -> Result<InvoiceResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+    let invoice_service = &service_provider.invoice_service;
+
+    let invoice_option = invoice_service.get_invoice(&service_context, store_id, id)?;
+
+    let response = match invoice_option {
+        Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
+        None => InvoiceResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
+    };
+
+    Ok(response)
+}
+
+pub fn get_invoices(
+    ctx: &Context<'_>,
+    store_id: &str,
+    page: Option<PaginationInput>,
+    filter: Option<InvoiceFilterInput>,
+    sort: Option<Vec<InvoiceSortInput>>,
+) -> Result<InvoicesResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let invoices = service_provider
+        .invoice_service
+        .get_invoices(
+            &service_context,
+            Some(&store_id),
+            page.map(PaginationOption::from),
+            filter.map(|filter| filter.to_domain()),
+            // Currently only one sort option is supported, use the first from the list.
+            sort.map(|mut sort_list| sort_list.pop())
+                .flatten()
+                .map(|sort| sort.to_domain()),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(InvoicesResponse::Response(InvoiceConnector::from_domain(
+        invoices,
+    )))
 }
 
 pub fn get_invoice_by_number(
@@ -49,4 +156,69 @@ pub fn get_invoice_by_number(
     };
 
     Ok(response)
+}
+
+macro_rules! map_filter {
+    ($from:ident, $f:expr) => {{
+        EqualFilter {
+            equal_to: $from.equal_to.map($f),
+            not_equal_to: $from.not_equal_to.map($f),
+            equal_any: $from
+                .equal_any
+                .map(|inputs| inputs.into_iter().map($f).collect()),
+            not_equal_all: None,
+        }
+    }};
+}
+
+impl InvoiceFilterInput {
+    pub fn to_domain(self) -> InvoiceFilter {
+        InvoiceFilter {
+            id: self.id.map(EqualFilter::from),
+            invoice_number: self.invoice_number.map(EqualFilter::from),
+            name_id: self.name_id.map(EqualFilter::from),
+            store_id: self.store_id.map(EqualFilter::from),
+            r#type: self
+                .r#type
+                .map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
+            status: self
+                .status
+                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
+            comment: self.comment.map(SimpleStringFilter::from),
+            their_reference: self.their_reference.map(EqualFilter::from),
+            created_datetime: self.created_datetime.map(DatetimeFilter::from),
+            allocated_datetime: self.allocated_datetime.map(DatetimeFilter::from),
+            picked_datetime: self.picked_datetime.map(DatetimeFilter::from),
+            shipped_datetime: self.shipped_datetime.map(DatetimeFilter::from),
+            delivered_datetime: self.delivered_datetime.map(DatetimeFilter::from),
+            verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
+            requisition_id: self.requisition_id.map(EqualFilter::from),
+            linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
+        }
+    }
+}
+
+impl InvoiceSortInput {
+    pub fn to_domain(self) -> InvoiceSort {
+        use InvoiceSortField as to;
+        use InvoiceSortFieldInput as from;
+        let key = match self.key {
+            from::Type => to::Type,
+            from::OtherPartyName => to::OtherPartyName,
+            from::InvoiceNumber => to::InvoiceNumber,
+            from::Comment => to::Comment,
+            from::Status => to::Status,
+            from::CreatedDatetime => to::CreatedDatetime,
+            from::AllocatedDatetime => to::AllocatedDatetime,
+            from::PickedDatetime => to::PickedDatetime,
+            from::ShippedDatetime => to::ShippedDatetime,
+            from::DeliveredDatetime => to::DeliveredDatetime,
+            from::VerifiedDatetime => to::VerifiedDatetime,
+        };
+
+        InvoiceSort {
+            key,
+            desc: self.desc,
+        }
+    }
 }
