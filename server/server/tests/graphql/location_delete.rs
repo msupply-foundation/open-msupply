@@ -1,8 +1,11 @@
 mod graphql {
-    use crate::graphql::{assert_graphql_query, unallocated_line::successfull_invoice_line};
+    use crate::graphql::assert_graphql_query;
     use repository::{
-        mock::{mock_stock_line_a, MockDataInserts},
-        StockLine, StorageConnectionManager,
+        mock::{
+            mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines, mock_stock_line_a,
+            MockDataInserts,
+        },
+        InvoiceLine, StockLine, StorageConnectionManager,
     };
     use serde_json::json;
     use server::test_utils::setup_all;
@@ -132,6 +135,14 @@ mod graphql {
             }
           }
         "#;
+
+        pub fn successfull_invoice_line() -> InvoiceLine {
+            InvoiceLine {
+                invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
+                invoice_row: mock_outbound_shipment_a(),
+                location_row_option: None,
+            }
+        }
 
         let test_service = TestService(Box::new(|_| {
             Err(DeleteLocationError::LocationInUse(LocationInUse {
