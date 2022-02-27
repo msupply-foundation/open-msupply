@@ -22,7 +22,7 @@ mod graphql {
         .await;
 
         let query = r#"mutation DeleteOutboundShipment($input: UpdateOutboundShipmentInput!) {
-            updateOutboundShipment(input: $input) {
+            updateOutboundShipment(input: $input, storeId: \"store_a\") {
                 ... on UpdateOutboundShipmentError {
                   error {
                     __typename

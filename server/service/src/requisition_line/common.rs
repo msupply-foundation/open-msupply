@@ -13,10 +13,14 @@ pub fn check_requisition_line_exists(
 
 pub fn check_item_exists_in_requisition(
     connection: &StorageConnection,
-    id: &str,
+    requisition_id: &str,
+    item_id: &str,
 ) -> Result<Option<RequisitionLine>, RepositoryError> {
-    let mut lines = RequisitionLineRepository::new(connection)
-        .query_by_filter(RequisitionLineFilter::new().item_id(EqualFilter::equal_to(id)))?;
+    let mut lines = RequisitionLineRepository::new(connection).query_by_filter(
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_id))
+            .item_id(EqualFilter::equal_to(item_id)),
+    )?;
 
     Ok(lines.pop())
 }

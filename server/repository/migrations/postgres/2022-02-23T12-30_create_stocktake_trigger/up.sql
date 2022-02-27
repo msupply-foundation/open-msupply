@@ -1,3 +1,3 @@
-CREATE TRIGGER stocktake_insert_trigger
+CREATE TRIGGER stocktake_trigger
   AFTER INSERT OR UPDATE OR DELETE ON stocktake
   FOR EACH ROW EXECUTE PROCEDURE update_changelog();

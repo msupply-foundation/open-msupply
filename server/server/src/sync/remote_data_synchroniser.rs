@@ -13,7 +13,7 @@ use super::{
 };
 
 #[derive(Error, Debug)]
-#[error("{msg}")]
+#[error("{msg}: {source}")]
 pub struct RemoteSyncError {
     msg: &'static str,
     source: anyhow::Error,
@@ -88,9 +88,15 @@ impl RemoteDataSynchroniser {
         loop {
             info!("Pulling remote sync records...");
             let sync_batch = self.sync_api_v5.get_queued_records().await?;
+            let number_of_pulled_records = sync_batch
+                .data
+                .as_deref()
+                .map(|ref it| it.len())
+                .unwrap_or(0) as u32;
+            let remaining = sync_batch.queue_length - number_of_pulled_records;
             info!(
-                "Pulled remote sync records ({} remaining)",
-                sync_batch.queue_length
+                "Pulled {} remote sync records ({} remaining)",
+                number_of_pulled_records, remaining
             );
 
             if let Some(data) = sync_batch.data {
@@ -105,7 +111,7 @@ impl RemoteDataSynchroniser {
                 info!("Acknowledged remote sync records");
             }
 
-            if sync_batch.queue_length <= 0 {
+            if remaining <= 0 {
                 break;
             }
         }
@@ -213,7 +219,7 @@ mod tests {
     use crate::sync::{
         translation_remote::test_data::{
             check_records_against_database, extract_sync_buffer_rows,
-            number::get_test_number_records, stock_line::get_test_stock_line_records,
+            get_all_remote_pull_test_records,
         },
         SyncApiV5, SyncCredentials,
     };
@@ -226,19 +232,17 @@ mod tests {
     async fn test_integrate_remote_records() {
         let (_, connection, _, _) = test_db::setup_all(
             "omsupply-database-integrate_remote_records",
-            MockDataInserts::none().stores().names().units().items(),
+            // can't use all mocks because there will b
+            MockDataInserts::all(),
         )
         .await;
 
         // use test records with cursors that are out of order
-        let mut test_records = Vec::new();
-        test_records.append(&mut get_test_number_records());
-        test_records.append(&mut get_test_stock_line_records());
-
+        let test_records = get_all_remote_pull_test_records();
         let buffer_rows = extract_sync_buffer_rows(&test_records);
         RemoteSyncBufferRepository::new(&connection)
             .upsert_many(&buffer_rows)
-            .expect("Failed to insert central sync records into sync buffer");
+            .expect("Failed to insert remote sync records into sync buffer");
 
         let sync = RemoteDataSynchroniser {
             sync_api_v5: SyncApiV5::new(
@@ -248,7 +252,7 @@ mod tests {
             ),
         };
         sync.integrate_remote_records(&connection)
-            .expect("Failed to integrate central records");
+            .expect("Failed to integrate remote records");
 
         check_records_against_database(&connection, test_records);
     }

@@ -53,6 +53,7 @@ pub fn delete_outbound_shipment_line(
     Ok(line.id)
 }
 
+#[derive(Debug)]
 pub enum DeleteOutboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),

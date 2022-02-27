@@ -51,7 +51,7 @@ mod graphql {
         // Test errors
         let query = r#"
       query {
-          locations {
+          locations (storeId: \"store_a\") {
             ... on LocationConnector {
               nodes {
                 id
@@ -98,7 +98,7 @@ mod graphql {
       query(
           $page: PaginationInput
         ) {
-          locations(page: $page) {
+          locations(page: $page, storeId: \"store_a\") {
             __typename
           }
         }
