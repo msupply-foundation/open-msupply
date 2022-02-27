@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use repository::schema::ChangelogTableName;
 use serde::{Deserialize, Deserializer};
 
@@ -67,4 +67,15 @@ pub fn date_and_time_to_datatime(date: NaiveDate, seconds: i64) -> NaiveDateTime
         date,
         NaiveTime::from_hms(0, 0, 0) + Duration::seconds(seconds),
     )
+}
+
+pub fn date_from_date_time(date_time: NaiveDateTime) -> NaiveDate {
+    NaiveDate::from_ymd(date_time.year(), date_time.month(), date_time.day())
+}
+
+/// returns the time part in seconds
+pub fn time_sec_from_date_time(date_time: NaiveDateTime) -> i64 {
+    let time = date_time.time();
+    let seconds = 60 * 60 * time.hour() + 60 * time.minute() + time.second();
+    seconds as i64
 }
