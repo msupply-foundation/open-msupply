@@ -13,7 +13,8 @@ use graphql_core::loader::LoaderRegistry;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
-use graphql_stocktake::{StocktakeQueries, StocktakeMutations};
+use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
+use graphql_stocktake_line::StocktakeLineMutations;
 use mutations::Mutations;
 use queries::Queries;
 use repository::StorageConnectionManager;
@@ -35,6 +36,7 @@ pub struct FullMutation(
     pub InvoiceLineMutations,
     pub LocationMutations,
     pub StocktakeMutations,
+    pub StocktakeLineMutations,
 );
 
 pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
@@ -49,6 +51,7 @@ pub fn build_schema() -> Builder {
             InvoiceLineMutations,
             LocationMutations,
             StocktakeMutations,
+            StocktakeLineMutations,
         ),
         EmptySubscription,
     )

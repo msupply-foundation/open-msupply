@@ -74,3 +74,85 @@ pub fn do_delete_stocktake_line(
         }
     }
 }
+
+#[cfg(test)]
+mod graphql {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use serde_json::json;
+
+    use service::{
+        service_provider::{ServiceContext, ServiceProvider},
+        stocktake_line::{delete::DeleteStocktakeLineError, StocktakeLineServiceTrait},
+    };
+
+    use crate::StocktakeLineMutations;
+
+    type ServiceMethod = dyn Fn(&ServiceContext, &str, &str) -> Result<String, DeleteStocktakeLineError>
+        + Sync
+        + Send;
+
+    pub struct TestService(pub Box<ServiceMethod>);
+
+    impl StocktakeLineServiceTrait for TestService {
+        fn delete_stocktake_line(
+            &self,
+            ctx: &ServiceContext,
+            store_id: &str,
+            stocktake_line_id: &str,
+        ) -> Result<String, DeleteStocktakeLineError> {
+            (self.0)(ctx, store_id, stocktake_line_id)
+        }
+    }
+
+    pub fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        service_provider.stocktake_line_service = Box::new(test_service);
+        service_provider
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_stocktake_line_delete() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            EmptyMutation,
+            StocktakeLineMutations,
+            "omsupply-database-gql-stocktake_line_delete",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let query = r#"mutation DeleteStocktakeLine($storeId: String, $input: DeleteStocktakeLineInput!) {
+            deleteStocktakeLine(storeId: $storeId, input: $input) {
+                ... on DeleteStocktakeLineNode {                    
+                        id
+                }
+            }
+        }"#;
+
+        // success
+        let test_service = TestService(Box::new(|_, _, _| Ok("id1".to_string())));
+        let variables = Some(json!({
+            "storeId": "store id",
+            "input": {
+                "id": "id1",
+            }
+        }));
+        let expected = json!({
+            "deleteStocktakeLine": {
+              "id": "id1",
+            }
+          }
+        );
+        assert_graphql_query!(
+            &settings,
+            query,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+}
