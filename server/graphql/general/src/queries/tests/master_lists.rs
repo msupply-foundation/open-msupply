@@ -1,17 +1,21 @@
 mod graphql {
-    use crate::graphql::assert_graphql_query;
+
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
         mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
         MasterList, MasterListFilter, MasterListSort, StorageConnectionManager,
     };
     use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
     use serde_json::{json, Value};
-    use server::test_utils::setup_all;
+
     use service::{
         master_list::MasterListServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
         ListError, ListResult,
     };
+
+    use crate::GeneralQueries;
 
     type GetMasterLists = dyn Fn(
             Option<PaginationOption>,
@@ -46,8 +50,13 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_masterlists_success() {
-        let (_, _, connection_manager, settings) =
-            setup_all("test_graphql_masterlists_success", MockDataInserts::all()).await;
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            GeneralQueries,
+            EmptyMutation,
+            "test_graphql_masterlists_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"
         query {
@@ -162,8 +171,13 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_masterlists_filters() {
-        let (_, _, connection_manager, settings) =
-            setup_all("test_graphql_masterlist_filters", MockDataInserts::all()).await;
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            GeneralQueries,
+            EmptyMutation,
+            "test_graphql_masterlist_filters",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"
         query(

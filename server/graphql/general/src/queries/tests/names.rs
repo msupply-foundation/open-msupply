@@ -1,12 +1,12 @@
 mod graphql {
-    use crate::graphql::assert_graphql_query;
+
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        get_storage_connection_manager,
         mock::{
             mock_name_linked_to_store, mock_name_not_linked_to_store, mock_store_linked_to_name,
             MockDataInserts,
         },
-        test_db,
         {
             mock::{mock_name_store_joins, mock_names, mock_stores},
             schema::{NameRow, NameStoreJoinRow, StoreRow},
@@ -14,14 +14,18 @@ mod graphql {
         },
     };
     use serde_json::json;
-    use server::test_utils::{get_test_settings, setup_all};
+
+    use crate::GeneralQueries;
 
     #[actix_rt::test]
     async fn test_graphql_names_query() {
-        let settings = get_test_settings("omsupply-database-gql-names-query");
-        test_db::setup(&settings.database).await;
-        let connection_manager = get_storage_connection_manager(&settings.database);
-        let connection = connection_manager.connection().unwrap();
+        let (_, connection, _, settings) = setup_graphl_test(
+            GeneralQueries,
+            EmptyMutation,
+            "omsupply-database-gql-names-query",
+            MockDataInserts::none(),
+        )
+        .await;
 
         // setup
         let name_repository = NameRepository::new(&connection);
@@ -131,8 +135,13 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_names_query_loaders() {
-        let (_, _, _, settings) =
-            setup_all("test_graphql_names_query_loaders", MockDataInserts::all()).await;
+        let (_, _, _, settings) = setup_graphl_test(
+            GeneralQueries,
+            EmptyMutation,
+            "test_graphql_names_query_loaders",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"query Names($filter: NameFilterInput!) {
               names(filter: $filter){

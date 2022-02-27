@@ -1,6 +1,9 @@
 mod mutations;
 mod queries;
 
+#[cfg(test)]
+mod tests;
+
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use actix_web::{guard::fn_guard, HttpResponse, Result};
@@ -11,6 +14,7 @@ use async_graphql_actix_web::{Request, Response};
 use graphql_batch_mutations::BatchMutations;
 use graphql_core::auth_data_from_request;
 use graphql_core::loader::LoaderRegistry;
+use graphql_general::{GeneralMutations, GeneralQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
@@ -28,6 +32,7 @@ pub struct FullQuery(
     pub InvoiceQueries,
     pub LocationQueries,
     pub StocktakeQueries,
+    pub GeneralQueries,
 );
 
 #[derive(MergedObject, Default)]
@@ -39,6 +44,7 @@ pub struct FullMutation(
     pub StocktakeMutations,
     pub StocktakeLineMutations,
     pub BatchMutations,
+    pub GeneralMutations,
 );
 
 pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
@@ -46,7 +52,13 @@ type Builder = SchemaBuilder<FullQuery, FullMutation, EmptySubscription>;
 
 pub fn build_schema() -> Builder {
     Schema::build(
-        FullQuery(Queries, InvoiceQueries, LocationQueries, StocktakeQueries),
+        FullQuery(
+            Queries,
+            InvoiceQueries,
+            LocationQueries,
+            StocktakeQueries,
+            GeneralQueries,
+        ),
         FullMutation(
             Mutations,
             InvoiceMutations,
@@ -55,6 +67,7 @@ pub fn build_schema() -> Builder {
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,
+            GeneralMutations,
         ),
         EmptySubscription,
     )
