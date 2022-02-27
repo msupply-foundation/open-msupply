@@ -3,17 +3,22 @@ pub mod loader;
 pub mod pagination;
 pub mod simple_generic_errors;
 pub mod standard_graphql_error;
+pub mod test_helpers;
+
+use std::sync::RwLock;
 
 use actix_web::cookie::Cookie;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_graphql::Context;
-use repository::StorageConnectionManager;
+use repository::database_settings::DatabaseSettings;
+use repository::{get_storage_connection_manager, StorageConnectionManager};
 use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 
-use loader::LoaderRegistry;
+use loader::{get_loaders, LoaderRegistry};
+use service::token_bucket::TokenBucket;
 
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
 pub trait ContextExt {
@@ -77,4 +82,18 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
         auth_token,
         refresh_token,
     }
+}
+
+#[macro_export]
+macro_rules! map_filter {
+    ($from:ident, $f:expr) => {{
+        repository::EqualFilter {
+            equal_to: $from.equal_to.map($f),
+            not_equal_to: $from.not_equal_to.map($f),
+            equal_any: $from
+                .equal_any
+                .map(|inputs| inputs.into_iter().map($f).collect()),
+            not_equal_all: None,
+        }
+    }};
 }

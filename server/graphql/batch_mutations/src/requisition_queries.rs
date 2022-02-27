@@ -1,10 +1,10 @@
 use async_graphql::*;
-use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{
         DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
         SimpleStringFilterInput,
     },
+    map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -13,6 +13,7 @@ use graphql_core::{
 use graphql_types::types::{
     RequisitionConnector, RequisitionNode, RequisitionNodeStatus, RequisitionNodeType,
 };
+use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{RequisitionFilter, RequisitionSort, RequisitionSortField};
 use service::permission_validation::{Resource, ResourceAccessRequest};
 
@@ -198,19 +199,6 @@ impl RequisitionSortInput {
             desc: self.desc,
         }
     }
-}
-
-macro_rules! map_filter {
-    ($from:ident, $f:expr) => {{
-        EqualFilter {
-            equal_to: $from.equal_to.map($f),
-            not_equal_to: $from.not_equal_to.map($f),
-            equal_any: $from
-                .equal_any
-                .map(|inputs| inputs.into_iter().map($f).collect()),
-            not_equal_all: None,
-        }
-    }};
 }
 
 impl RequisitionFilterInput {
