@@ -6,11 +6,10 @@ use crate::{
     },
     service_provider::ServiceContext,
 };
-use domain::EqualFilter;
 use repository::{
     schema::{RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
-    StorageConnection,
+    StorageConnection, EqualFilter,
 };
 
 #[derive(Debug, PartialEq)]
