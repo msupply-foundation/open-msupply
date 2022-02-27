@@ -10,7 +10,6 @@ use std::sync::RwLock;
 use actix_web::web::Data;
 use serde_json::Value;
 
-mod common;
 // mod inbound_shipment_line_delete;
 // mod inbound_shipment_line_insert;
 // mod inbound_shipment_line_update;
@@ -96,18 +95,6 @@ async fn run_gql_query(
     let res = actix_web::test::read_response(&mut app, req).await;
     let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
     serde_json::from_str::<Value>(&body).expect(body.as_str())
-}
-
-async fn assert_gql_not_found(
-    settings: &Settings,
-    query: &str,
-    variables: &Option<serde_json::Value>,
-    service_provider_override: Option<ServiceProvider>,
-) -> serde_json::Value {
-    let actual = run_gql_query(settings, query, variables, service_provider_override).await;
-    let error_message = actual["data"].to_string();
-    assert!(error_message.contains("RecordNotFound"));
-    actual
 }
 
 macro_rules! assert_graphql_query {

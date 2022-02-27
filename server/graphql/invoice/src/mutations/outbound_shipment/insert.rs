@@ -105,18 +105,15 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
 #[cfg(test)]
 mod graphql {
-    use async_graphql::EmptyMutation;
-    use chrono::{DateTime, Utc};
+
     use graphql_core::test_helpers::setup_graphl_test;
-    use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, get_invoice_lines_inline,
-    };
+    use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
+    use repository::mock::MockDataInserts;
     use repository::mock::{
         mock_name_linked_to_store, mock_name_not_linked_to_store,
         mock_outbound_shipment_number_store_a, mock_store_linked_to_name,
     };
-    use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceQueryRepository};
-    use repository::{EqualFilter, InvoiceRepository};
+    use repository::InvoiceRepository;
     use serde_json::json;
     use util::uuid::uuid;
 

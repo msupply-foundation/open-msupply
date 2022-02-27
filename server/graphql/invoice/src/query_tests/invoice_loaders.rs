@@ -1,14 +1,14 @@
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
-    use chrono::{DateTime, Utc};
+
+    use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    use graphql_core::{assert_graphql_query, get_invoice_lines_inline};
     use repository::mock::{
         mock_invoice_loader_invoice1, mock_invoice_loader_invoice2, mock_invoice_loader_requistion1,
     };
-    use repository::EqualFilter;
-    use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceQueryRepository};
+
+    use repository::mock::MockDataInserts;
     use serde_json::json;
 
     use crate::InvoiceQueries;

@@ -5,20 +5,17 @@ pub mod simple_generic_errors;
 pub mod standard_graphql_error;
 pub mod test_helpers;
 
-use std::sync::RwLock;
-
 use actix_web::cookie::Cookie;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_graphql::Context;
-use repository::database_settings::DatabaseSettings;
-use repository::{get_storage_connection_manager, StorageConnectionManager};
+
+use repository::StorageConnectionManager;
 use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 
-use loader::{get_loaders, LoaderRegistry};
-use service::token_bucket::TokenBucket;
+use loader::LoaderRegistry;
 
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
 pub trait ContextExt {
