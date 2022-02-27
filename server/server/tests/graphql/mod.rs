@@ -12,12 +12,12 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
 
 pub mod common;
-mod inbound_shipment_delete;
-mod inbound_shipment_insert;
-mod inbound_shipment_line_delete;
-mod inbound_shipment_line_insert;
-mod inbound_shipment_line_update;
-mod inbound_shipment_update;
+// mod inbound_shipment_delete;
+// mod inbound_shipment_insert;
+// mod inbound_shipment_line_delete;
+// mod inbound_shipment_line_insert;
+// mod inbound_shipment_line_update;
+// mod inbound_shipment_update;
 mod invoice_by_number;
 mod invoice_loaders;
 mod invoice_query;
@@ -30,12 +30,12 @@ mod location_update;
 mod locations;
 mod master_lists;
 mod names;
-mod outbound_shipment_delete;
-mod outbound_shipment_insert;
-mod outbound_shipment_line_delete;
-mod outbound_shipment_line_insert;
-mod outbound_shipment_line_update;
-mod outbound_shipment_update;
+// mod outbound_shipment_delete;
+// mod outbound_shipment_insert;
+// mod outbound_shipment_line_delete;
+// mod outbound_shipment_line_insert;
+// mod outbound_shipment_line_update;
+// mod outbound_shipment_update;
 mod pagination;
 mod requisition;
 mod stocktake_batch;
@@ -261,106 +261,3 @@ macro_rules! assert_standard_graphql_error {
 
 pub(crate) use assert_graphql_query;
 pub(crate) use assert_standard_graphql_error;
-
-use chrono::{DateTime as ChronoDateTime, NaiveDate, Utc};
-use graphql_client::GraphQLQuery;
-type DateTime = ChronoDateTime<Utc>;
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct InsertInboundShipmentFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct UpdateInboundShipmentFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct DeleteInboundShipmentFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct InsertInboundShipmentLineFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct UpdateInboundShipmentLineFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct InvoiceFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct DeleteInboundShipmentLineFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct UpdateOutboundShipmentLineFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct InsertOutboundShipmentLineFull;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "../graphql/graphql_schema/schema.graphql",
-    query_path = "../graphql/graphql_schema/query.graphql",
-    response_derives = "Debug,PartialEq,Clone,Serialize",
-    variables_derives = "Debug,PartialEq,Clone",
-    normalization = "Rust"
-)]
-pub struct DeleteOutboundShipmentLineFull;
