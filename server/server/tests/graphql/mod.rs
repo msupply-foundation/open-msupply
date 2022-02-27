@@ -19,7 +19,6 @@ mod common;
 // mod inbound_shipment_update;
 mod invoice_by_number;
 mod invoice_loaders;
-mod invoice_query;
 mod invoices;
 mod item_stats;
 mod items;
