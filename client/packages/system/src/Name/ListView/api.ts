@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 
 const onRead =
-  (api: OmSupplyApi, type: 'customer' | 'supplier') =>
+  (api: OmSupplyApi, type: 'customer' | 'supplier', storeId: string) =>
   async ({
     first,
     offset,
@@ -28,6 +28,7 @@ const onRead =
       offset,
       key,
       desc: sortBy.isDesc,
+      storeId,
       filter: {
         [type === 'customer' ? 'isCustomer' : 'isSupplier']: true,
       },
@@ -38,12 +39,13 @@ const onRead =
 
 export const getNameListViewApi = (
   api: OmSupplyApi,
-  type: 'customer' | 'supplier'
+  type: 'customer' | 'supplier',
+  storeId: string
 ): ListApi<Name> => ({
   onRead:
     ({ first, offset, sortBy }) =>
     () =>
-      onRead(api, type)({ first, offset, sortBy }),
+      onRead(api, type, storeId)({ first, offset, sortBy }),
   // TODO: Mutations!
   onDelete: async () => [''],
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment

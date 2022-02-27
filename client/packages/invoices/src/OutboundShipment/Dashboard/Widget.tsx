@@ -32,7 +32,7 @@ export const OutboundShipmentWidget: React.FC = () => {
   );
   const { data, isLoading } = useQuery(
     ['outound-shipment', 'count'],
-    getOutboundShipmentCountQueryFn(api),
+    getOutboundShipmentCountQueryFn(api, storeId),
     { retry: false }
   );
 

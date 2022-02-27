@@ -140,7 +140,18 @@ export const useIsRequestRequisitionDisabled = (): boolean => {
 };
 
 export const useSaveRequestLines = () => {
+  const { requisitionNumber = '' } = useParams();
   const { store } = useHostContext();
+  const queryClient = useQueryClient();
   const api = useRequestRequisitionApi();
-  return useMutation(RequestRequisitionQueries.upsertLine(api, store.id));
+
+  return useMutation(RequestRequisitionQueries.upsertLine(api, store.id), {
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        'requisition',
+        store.id,
+        requisitionNumber,
+      ]);
+    },
+  });
 };

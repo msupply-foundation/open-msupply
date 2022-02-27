@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import {
+  useAuthState,
   MutateOptions,
   Item,
   UseMutationResult,
@@ -202,9 +203,9 @@ export const useInboundShipmentSelector = <T = Invoice>(
 };
 
 const getUpdateInbound =
-  (api: InboundShipmentApi) =>
+  (api: InboundShipmentApi, storeId: string) =>
   async (patch: Partial<Invoice> & { id: string }) =>
-    api.updateInboundShipment({ input: invoiceToInput(patch) });
+    api.updateInboundShipment({ input: invoiceToInput(patch), storeId });
 
 const useOptimisticInboundUpdate = () => {
   const api = useInboundShipmentApi();
@@ -253,6 +254,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
       | undefined
   ) => Promise<void>;
 } => {
+  const { storeId } = useAuthState();
   const queryClient = useQueryClient();
   const { id = '' } = useParams();
   const api = useInboundShipmentApi();
@@ -276,7 +278,8 @@ export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
   const { data } = useInboundShipmentSelector(select);
 
   const { mutate } = useMutation(
-    (patch: Partial<Invoice>) => getUpdateInbound(api)({ id, ...patch }),
+    (patch: Partial<Invoice>) =>
+      getUpdateInbound(api, storeId)({ id, ...patch }),
     {
       onMutate: async (patch: Partial<Invoice>) => {
         await queryClient.cancelQueries(['invoice', id]);

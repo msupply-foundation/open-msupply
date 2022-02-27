@@ -1,3 +1,15 @@
+fragment ItemWithStats on ItemNode {
+  id
+  name
+  code
+  unitName
+  stats(storeId: $storeId) {
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
+}
+
 mutation updateResponseRequisition(
   $storeId: String!
   $input: UpdateResponseRequisitionInput!
@@ -14,7 +26,7 @@ fragment ResponseRequisitionLine on RequisitionLineNode {
   id
   itemId
   requestedQuantity
-  suggestedQuantity
+  supplyQuantity
   itemStats {
     __typename
     availableStockOnHand
@@ -115,6 +127,37 @@ query responseRequisitions(
       totalCount
       nodes {
         ...ResponseRequisitionRow
+      }
+    }
+  }
+}
+
+mutation updateResponseRequisitionLine(
+  $storeId: String!
+  $input: UpdateResponseRequisitionLineInput!
+) {
+  updateResponseRequisitionLine(input: $input, storeId: $storeId) {
+    ... on RequisitionLineNode {
+      __typename
+      id
+    }
+    ... on UpdateResponseRequisitionLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on RecordDoesNotExist {
+          __typename
+          description
+        }
       }
     }
   }
