@@ -3,7 +3,6 @@ use graphql_batch_mutations::batch_stocktake::*;
 
 use graphql_general_mutations::*;
 
-use graphql_location::mutations::*;
 use graphql_requisition::mutations::{request_requisition, response_requisition};
 use graphql_requisition_line::mutations::{request_requisition_line, response_requisition_line};
 use graphql_stocktake::mutations::{delete::*, insert::*, update::*};
@@ -21,34 +20,6 @@ impl Mutations {
     ) -> UserRegisterResponse {
         user_register(ctx, input)
     }
-
-    async fn insert_location(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertLocationInput,
-    ) -> InsertLocationResponse {
-        insert_location(ctx, &store_id, input)
-    }
-
-    async fn update_location(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdateLocationInput,
-    ) -> UpdateLocationResponse {
-        update_location(ctx, &store_id, input)
-    }
-
-    async fn delete_location(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: DeleteLocationInput,
-    ) -> DeleteLocationResponse {
-        delete_location(ctx, &store_id, input)
-    }
-
     // async fn batch_inbound_shipment(
     //     &self,
     //     ctx: &Context<'_>,
