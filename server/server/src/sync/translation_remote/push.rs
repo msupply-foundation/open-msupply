@@ -5,7 +5,9 @@ use repository::{
 };
 
 use crate::sync::{
-    translation_remote::{number::NumberTranslation, table_name_to_central},
+    translation_remote::{
+        name_store_join::NameStoreJoinTranslation, number::NumberTranslation, table_name_to_central,
+    },
     SyncTranslationError,
 };
 
@@ -58,8 +60,10 @@ pub fn translate_changelog(
 ) -> Result<(), SyncTranslationError> {
     match changelog.row_action {
         ChangelogAction::Upsert => {
-            let translations: Vec<Box<dyn RemotePushUpsertTranslation>> =
-                vec![Box::new(NumberTranslation {})];
+            let translations: Vec<Box<dyn RemotePushUpsertTranslation>> = vec![
+                Box::new(NumberTranslation {}),
+                Box::new(NameStoreJoinTranslation {}),
+            ];
             for translation in translations {
                 if let Some(records) = translation.try_translate_push(connection, changelog)? {
                     for record in records {

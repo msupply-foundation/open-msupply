@@ -6,7 +6,7 @@ use repository::{
 };
 
 use self::{
-    name_store_join::get_test_name_store_join_records,
+    name_store_join::{get_test_name_store_join_records, get_test_push_name_store_join_records},
     number::{get_test_number_records, get_test_push_number_records},
     stock_line::get_test_stock_line_records,
     stocktake::get_test_stocktake_records,
@@ -170,5 +170,6 @@ pub fn get_all_remote_pull_test_records() -> Vec<TestSyncRecord> {
 pub fn get_all_remote_push_test_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut get_test_push_number_records());
+    test_records.append(&mut get_test_push_name_store_join_records());
     test_records
 }
