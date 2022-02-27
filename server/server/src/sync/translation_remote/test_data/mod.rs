@@ -114,7 +114,7 @@ pub fn check_records_against_database(
                         comparison_record
                     )
                 }
-                IntegrationUpsertRecord::Shipment(comparison_record) => {
+                IntegrationUpsertRecord::Invoice(comparison_record) => {
                     assert_eq!(
                         InvoiceRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
@@ -122,7 +122,7 @@ pub fn check_records_against_database(
                         comparison_record
                     )
                 }
-                IntegrationUpsertRecord::ShipmentLine(comparison_record) => {
+                IntegrationUpsertRecord::InvoiceLine(comparison_record) => {
                     assert_eq!(
                         InvoiceLineRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)

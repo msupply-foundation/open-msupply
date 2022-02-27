@@ -11,8 +11,8 @@ use repository::{
 
 use crate::sync::{
     translation_remote::{
+        invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
         name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
-        shipment::ShipmentTranslation, shipment_line::ShipmentLineTranslation,
         stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
         stocktake_line::StocktakeLineTranslation,
     },
@@ -24,8 +24,8 @@ pub enum IntegrationUpsertRecord {
     Number(NumberRow),
     StockLine(StockLineRow),
     NameStoreJoin(NameStoreJoinRow),
-    Shipment(InvoiceRow),
-    ShipmentLine(InvoiceLineRow),
+    Invoice(InvoiceRow),
+    InvoiceLine(InvoiceLineRow),
     Stocktake(StocktakeRow),
     StocktakeLine(StocktakeLineRow),
 }
@@ -85,8 +85,8 @@ fn do_translation(
         Box::new(NumberTranslation {}),
         Box::new(StockLineTranslation {}),
         Box::new(NameStoreJoinTranslation {}),
-        Box::new(ShipmentTranslation {}),
-        Box::new(ShipmentLineTranslation {}),
+        Box::new(InvoiceTranslation {}),
+        Box::new(InvoiceLineTranslation {}),
         Box::new(StocktakeTranslation {}),
         Box::new(StocktakeLineTranslation {}),
     ];
@@ -112,8 +112,8 @@ fn integrate_record(
         IntegrationUpsertRecord::NameStoreJoin(record) => {
             NameStoreJoinRepository::new(con).upsert_one(record)
         }
-        IntegrationUpsertRecord::Shipment(record) => InvoiceRepository::new(con).upsert_one(record),
-        IntegrationUpsertRecord::ShipmentLine(record) => {
+        IntegrationUpsertRecord::Invoice(record) => InvoiceRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::InvoiceLine(record) => {
             InvoiceLineRowRepository::new(con).upsert_one(record)
         }
         IntegrationUpsertRecord::Stocktake(record) => {

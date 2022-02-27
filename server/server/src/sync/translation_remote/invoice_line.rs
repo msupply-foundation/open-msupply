@@ -55,8 +55,8 @@ struct LegacyTransLineRow {
     note: Option<String>,
 }
 
-pub struct ShipmentLineTranslation {}
-impl RemotePullTranslation for ShipmentLineTranslation {
+pub struct InvoiceLineTranslation {}
+impl RemotePullTranslation for InvoiceLineTranslation {
     fn try_translate_pull(
         &self,
         connection: &StorageConnection,
@@ -92,13 +92,13 @@ impl RemotePullTranslation for ShipmentLineTranslation {
                 })
             }
         };
-        let line_type = to_shipment_line_type(&data._type).ok_or(SyncTranslationError {
+        let line_type = to_invoice_line_type(&data._type).ok_or(SyncTranslationError {
             table_name,
             source: anyhow::Error::msg(format!("Unsupported trans_line type: {:?}", data._type)),
             record: sync_record.data.clone(),
         })?;
         Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::ShipmentLine(InvoiceLineRow {
+            IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
                 id: data.ID,
                 invoice_id: data.transaction_ID,
                 item_id: data.item_ID,
@@ -123,7 +123,7 @@ impl RemotePullTranslation for ShipmentLineTranslation {
     }
 }
 
-fn to_shipment_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowType> {
+fn to_invoice_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowType> {
     let invoice_line_type = match _type {
         LegacyTransLineType::StockIn => InvoiceLineRowType::StockIn,
         LegacyTransLineType::StockOut => InvoiceLineRowType::StockOut,

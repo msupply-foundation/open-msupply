@@ -88,8 +88,8 @@ struct LegacyTransactRow {
     confirm_time: i64,
 }
 
-pub struct ShipmentTranslation {}
-impl RemotePullTranslation for ShipmentTranslation {
+pub struct InvoiceTranslation {}
+impl RemotePullTranslation for InvoiceTranslation {
     fn try_translate_pull(
         &self,
         connection: &StorageConnection,
@@ -119,28 +119,27 @@ impl RemotePullTranslation for ShipmentTranslation {
         let name_store_id =
             name.and_then(|name| name.store_id().map(|store_id| store_id.to_string()));
 
-        let shipment_type = shipment_type(&data._type).ok_or(SyncTranslationError {
+        let invoice_type = invoice_type(&data._type).ok_or(SyncTranslationError {
             table_name,
-            source: anyhow::Error::msg(format!("Unsupported shipment type: {:?}", data._type)),
+            source: anyhow::Error::msg(format!("Unsupported invoice type: {:?}", data._type)),
             record: sync_record.data.clone(),
         })?;
-        let shipment_status =
-            shipment_status(&shipment_type, &data).ok_or(SyncTranslationError {
-                table_name,
-                source: anyhow::Error::msg(format!("Unsupported shipment type: {:?}", data._type)),
-                record: sync_record.data.clone(),
-            })?;
+        let invoice_status = invoice_status(&invoice_type, &data).ok_or(SyncTranslationError {
+            table_name,
+            source: anyhow::Error::msg(format!("Unsupported invoice type: {:?}", data._type)),
+            record: sync_record.data.clone(),
+        })?;
 
         let confirm_time = data.confirm_time;
         Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Shipment(InvoiceRow {
+            IntegrationUpsertRecord::Invoice(InvoiceRow {
                 id: data.ID,
                 store_id: data.store_ID,
                 name_id: data.name_ID,
                 name_store_id,
                 invoice_number: data.invoice_num,
-                r#type: shipment_type,
-                status: shipment_status,
+                r#type: invoice_type,
+                status: invoice_status,
                 on_hold: data.hold,
                 comment: data.comment,
                 their_reference: data.their_ref,
@@ -164,7 +163,7 @@ impl RemotePullTranslation for ShipmentTranslation {
     }
 }
 
-fn shipment_type(_type: &LegacyTransactType) -> Option<InvoiceRowType> {
+fn invoice_type(_type: &LegacyTransactType) -> Option<InvoiceRowType> {
     match _type {
         LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
@@ -172,12 +171,12 @@ fn shipment_type(_type: &LegacyTransactType) -> Option<InvoiceRowType> {
     }
 }
 
-fn shipment_status(
-    shipment_type: &InvoiceRowType,
+fn invoice_status(
+    invoice_type: &InvoiceRowType,
     data: &LegacyTransactRow,
 ) -> Option<InvoiceRowStatus> {
-    let status = match shipment_type {
-        InvoiceRowType::OutboundShipment => shipment_status_for_outbound(
+    let status = match invoice_type {
+        InvoiceRowType::OutboundShipment => invoice_status_for_outbound(
             &data.status,
             data.arrival_date_actual.is_some(),
             data.ship_date.is_some(),
@@ -213,7 +212,7 @@ fn shipment_status_for_inbound(
     }
 }
 
-fn shipment_status_for_outbound(
+fn invoice_status_for_outbound(
     status: &LegacyTransactStatus,
     delivered: bool,
     shipped: bool,
