@@ -1,5 +1,7 @@
 mod graphql {
+    use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
+    use graphql_core::{assert_standard_graphql_error, test_helpers::setup_graphl_test, assert_graphql_query};
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition_all_fields, MockDataInserts},
         schema::{RequisitionRowStatus, RequisitionRowType},
@@ -8,14 +10,14 @@ mod graphql {
     };
     use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
     use serde_json::json;
-    use server::test_utils::setup_all;
+
     use service::{
         requisition::RequisitionServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
         ListError, ListResult,
     };
 
-    use crate::graphql::{assert_graphql_query, assert_standard_graphql_error};
+    use crate::RequisitionQueries;
 
     type GetRequisition = dyn Fn(
             Option<PaginationOption>,
@@ -50,9 +52,14 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_get_requisitions() {
-        let (_, _, connection_manager, settings) =
-            setup_all("test_graphql_get_requisitions", MockDataInserts::all()).await;
+    async fn test_graphql_get_requisition() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            RequisitionQueries,
+            EmptyMutation,
+            "test_graphql_get_requisition",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"
         query($page: PaginationInput, $filter: RequisitionFilterInput, $sort: [RequisitionSortInput!]) {
@@ -168,8 +175,8 @@ mod graphql {
                 colour,
                 their_reference,
                 comment,
-                store_id: _,
                 linked_requisition_id: _,
+                store_id: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));

@@ -1,17 +1,19 @@
-mod graphql {
+mod test {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
         schema::RequisitionRowType,
         RepositoryError, Requisition, StorageConnectionManager,
     };
     use serde_json::json;
-    use server::test_utils::setup_all;
+
     use service::{
         requisition::RequisitionServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    use crate::graphql::assert_graphql_query;
+    use crate::RequisitionQueries;
 
     type GetRequisitionByNumber = dyn Fn(u32, RequisitionRowType) -> Result<Option<Requisition>, RepositoryError>
         + Sync
@@ -42,7 +44,9 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_get_requisition_by_number() {
-        let (_, _, connection_manager, settings) = setup_all(
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            RequisitionQueries,
+            EmptyMutation,
             "test_graphql_get_requisition_by_number",
             MockDataInserts::all(),
         )
