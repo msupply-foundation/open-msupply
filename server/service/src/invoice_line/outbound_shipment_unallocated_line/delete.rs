@@ -81,7 +81,7 @@ mod test_delete {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.outbound_shipment_line;
+        let service = service_provider.invoice_line_service;
 
         // Line Does not Exist
         assert_eq!(
@@ -114,7 +114,7 @@ mod test_delete {
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider.context().unwrap();
-        let service = service_provider.outbound_shipment_line;
+        let service = service_provider.invoice_line_service;
 
         let mut line_to_delete = mock_unallocated_line();
         // Succesfull delete

@@ -1,4 +1,4 @@
-use crate::WithDBError;
+use crate::{service_provider::ServiceContext, WithDBError};
 use repository::{
     schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
     StockLineRowRepository, StorageConnectionManager, TransactionError,
@@ -13,13 +13,15 @@ pub struct DeleteOutboundShipmentLine {
     pub invoice_id: String,
 }
 
-pub fn delete_outbound_shipment_line(
-    connection_manager: &StorageConnectionManager,
-    input: DeleteOutboundShipmentLine,
-) -> Result<String, DeleteOutboundShipmentLineError> {
-    let connection = connection_manager.connection()?;
+type OutError = DeleteOutboundShipmentLineError;
 
-    let line = connection
+pub fn delete_outbound_shipment_line(
+    ctx: &ServiceContext,
+    _store_id: &str,
+    input: DeleteOutboundShipmentLine,
+) -> Result<String, OutError> {
+    let line_id = ctx
+        .connection
         .transaction_sync(|connection| {
             let line = validate(&input, &connection)?;
             let stock_line_id_option = line.stock_line_id.clone();
@@ -40,19 +42,14 @@ pub fn delete_outbound_shipment_line(
 
                 stock_line_repository.upsert_one(&stock_line)?;
             }
-            Ok(line)
+
+            Ok(line.id) as Result<String, OutError>
         })
-        .map_err(
-            |error: TransactionError<DeleteOutboundShipmentLineError>| match error {
-                TransactionError::Transaction { msg, level } => {
-                    RepositoryError::TransactionError { msg, level }.into()
-                }
-                TransactionError::Inner(error) => error,
-            },
-        )?;
-    Ok(line.id)
+        .map_err(|error| error.to_inner_error())?;
+    Ok(line_id)
 }
 
+#[derive(Debug)]
 pub enum DeleteOutboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),

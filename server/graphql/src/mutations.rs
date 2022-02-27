@@ -3,7 +3,7 @@ use graphql_batch_mutations::batch_stocktake::*;
 use graphql_core::ContextExt;
 use graphql_general_mutations::*;
 use graphql_invoice::mutations::{inbound_shipment, outbound_shipment};
-use graphql_invoice_line::mutations::{inbound_shipment_line::*, outbound_shipment_line::*};
+use graphql_invoice_line::mutations::{inbound_shipment_line, outbound_shipment_line};
 use graphql_location::mutations::*;
 use graphql_requisition::mutations::{request_requisition, response_requisition};
 use graphql_requisition_line::mutations::{request_requisition_line, response_requisition_line};
@@ -78,79 +78,82 @@ impl Mutations {
     async fn insert_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: InsertOutboundShipmentLineInput,
-    ) -> InsertOutboundShipmentLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_insert_outbound_shipment_line_response(connection_manager, input)
+        store_id: String,
+        input: outbound_shipment_line::line::InsertInput,
+    ) -> Result<outbound_shipment_line::line::InsertResponse> {
+        outbound_shipment_line::line::insert(ctx, &store_id, input)
     }
 
     async fn update_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: UpdateOutboundShipmentLineInput,
-    ) -> UpdateOutboundShipmentLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_update_outbound_shipment_line_response(connection_manager, input)
+        store_id: String,
+        input: outbound_shipment_line::line::UpdateInput,
+    ) -> Result<outbound_shipment_line::line::UpdateResponse> {
+        outbound_shipment_line::line::update(ctx, &store_id, input)
     }
 
     async fn delete_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: DeleteOutboundShipmentLineInput,
-    ) -> DeleteOutboundShipmentLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_delete_outbound_shipment_line_response(connection_manager, input)
+        store_id: String,
+        input: outbound_shipment_line::line::DeleteInput,
+    ) -> Result<outbound_shipment_line::line::DeleteResponse> {
+        outbound_shipment_line::line::delete(ctx, &store_id, input)
     }
 
     async fn insert_outbound_shipment_service_line(
         &self,
         ctx: &Context<'_>,
-        input: InsertOutboundShipmentServiceLineInput,
-    ) -> InsertOutboundShipmentServiceLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_insert_outbound_shipment_service_line_response(connection_manager, input)
+        store_id: String,
+        input: outbound_shipment_line::service_line::InsertInput,
+    ) -> Result<outbound_shipment_line::service_line::InsertResponse> {
+        outbound_shipment_line::service_line::insert(ctx, &store_id, input)
     }
 
     async fn update_outbound_shipment_service_line(
         &self,
         ctx: &Context<'_>,
-        input: UpdateOutboundShipmentServiceLineInput,
-    ) -> UpdateOutboundShipmentServiceLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_update_outbound_shipment_service_line_response(connection_manager, input)
+        store_id: String,
+        input: outbound_shipment_line::service_line::UpdateInput,
+    ) -> Result<outbound_shipment_line::service_line::UpdateResponse> {
+        outbound_shipment_line::service_line::update(ctx, &store_id, input)
     }
 
     async fn delete_outbound_shipment_service_line(
         &self,
         ctx: &Context<'_>,
-        input: DeleteOutboundShipmentServiceLineInput,
-    ) -> DeleteOutboundShipmentServiceLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_delete_outbound_shipment_service_line_response(connection_manager, input)
+        store_id: String,
+        input: outbound_shipment_line::service_line::DeleteInput,
+    ) -> Result<outbound_shipment_line::service_line::DeleteResponse> {
+        outbound_shipment_line::service_line::delete(ctx, &store_id, input)
     }
 
     async fn insert_outbound_shipment_unallocated_line(
         &self,
         ctx: &Context<'_>,
-        input: unallocated_line::InsertInput,
-    ) -> Result<unallocated_line::InsertResponse> {
-        unallocated_line::insert(ctx, input)
+        store_id: String,
+        input: outbound_shipment_line::unallocated_line::InsertInput,
+    ) -> Result<outbound_shipment_line::unallocated_line::InsertResponse> {
+        outbound_shipment_line::unallocated_line::insert(ctx, &store_id, input)
     }
 
     async fn update_outbound_shipment_unallocated_line(
         &self,
         ctx: &Context<'_>,
-        input: unallocated_line::UpdateInput,
-    ) -> Result<unallocated_line::UpdateResponse> {
-        unallocated_line::update(ctx, input)
+        store_id: String,
+        input: outbound_shipment_line::unallocated_line::UpdateInput,
+    ) -> Result<outbound_shipment_line::unallocated_line::UpdateResponse> {
+        outbound_shipment_line::unallocated_line::update(ctx, &store_id, input)
     }
 
     async fn delete_outbound_shipment_unallocated_line(
         &self,
         ctx: &Context<'_>,
-        input: unallocated_line::DeleteInput,
-    ) -> Result<unallocated_line::DeleteResponse> {
-        unallocated_line::delete(ctx, input)
+        store_id: String,
+        input: outbound_shipment_line::unallocated_line::DeleteInput,
+    ) -> Result<outbound_shipment_line::unallocated_line::DeleteResponse> {
+        outbound_shipment_line::unallocated_line::delete(ctx, &store_id, input)
     }
 
     async fn insert_inbound_shipment(
@@ -183,28 +186,28 @@ impl Mutations {
     async fn insert_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: InsertInboundShipmentLineInput,
-    ) -> InsertInboundShipmentLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_insert_inbound_shipment_line_response(connection_manager, input)
+        store_id: String,
+        input: inbound_shipment_line::InsertInput,
+    ) -> Result<inbound_shipment_line::InsertResponse> {
+        inbound_shipment_line::insert(ctx, &store_id, input)
     }
 
     async fn update_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: UpdateInboundShipmentLineInput,
-    ) -> UpdateInboundShipmentLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_update_inbound_shipment_line_response(connection_manager, input)
+        store_id: String,
+        input: inbound_shipment_line::UpdateInput,
+    ) -> Result<inbound_shipment_line::UpdateResponse> {
+        inbound_shipment_line::update(ctx, &store_id, input)
     }
 
     async fn delete_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
-        input: DeleteInboundShipmentLineInput,
-    ) -> DeleteInboundShipmentLineResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_delete_inbound_shipment_line_response(connection_manager, input)
+        store_id: String,
+        input: inbound_shipment_line::DeleteInput,
+    ) -> Result<inbound_shipment_line::DeleteResponse> {
+        inbound_shipment_line::delete(ctx, &store_id, input)
     }
 
     // async fn batch_inbound_shipment(

@@ -1,7 +1,8 @@
 use async_graphql::*;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
-use graphql_types::types::get_invoice_line_response;
 use graphql_types::types::get_stock_line_response;
+use graphql_types::types::InvoiceLineNode;
 use graphql_types::types::InvoiceLineResponse;
 use graphql_types::types::StockLineResponse;
 
@@ -29,10 +30,19 @@ impl StockLineAlreadyExistsInInvoice {
         "Stock line is already reference by an invoice line of this invoice"
     }
 
-    pub async fn line(&self, ctx: &Context<'_>) -> InvoiceLineResponse {
-        let connection_manager = ctx.get_connection_manager();
+    pub async fn line(&self, ctx: &Context<'_>) -> Result<InvoiceLineNode> {
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context()?;
 
-        get_invoice_line_response(connection_manager, self.0.clone())
+        let invoice_line = service_provider
+            .invoice_line_service
+            .get_invoice_line(&service_context, &self.0)?
+            .ok_or(StandardGraphqlError::InternalError(format!(
+                "cannot get invoice_line {}",
+                &self.0
+            )))?;
+
+        Ok(InvoiceLineNode::from_domain(invoice_line))
     }
 }
 
@@ -71,12 +81,24 @@ impl NotEnoughStockForReduction {
         "Not enought stock for reduction"
     }
 
-    pub async fn line(&self, ctx: &Context<'_>) -> Option<InvoiceLineResponse> {
-        let connection_manager = ctx.get_connection_manager();
+    pub async fn line(&self, ctx: &Context<'_>) -> Result<Option<InvoiceLineNode>> {
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context()?;
 
-        self.line_id
-            .as_ref()
-            .map(|line_id| get_invoice_line_response(connection_manager, line_id.clone()))
+        let invoice_line_id = match &self.line_id {
+            Some(invoice_line_id) => invoice_line_id.to_string(),
+            None => return Ok(None),
+        };
+
+        let invoice_line = service_provider
+            .invoice_line_service
+            .get_invoice_line(&service_context, &invoice_line_id)?
+            .ok_or(StandardGraphqlError::InternalError(format!(
+                "cannot get invoice_line {}",
+                &invoice_line_id
+            )))?;
+
+        Ok(Some(InvoiceLineNode::from_domain(invoice_line)))
     }
 
     pub async fn batch(&self, ctx: &Context<'_>) -> StockLineResponse {

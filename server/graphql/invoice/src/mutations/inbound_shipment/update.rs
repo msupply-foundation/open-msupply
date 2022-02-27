@@ -52,7 +52,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         store_id,
         input.to_domain(),
     ) {
-        Ok(requisition) => UpdateResponse::Response(InvoiceNode::from_domain(requisition)),
+        Ok(invoice) => UpdateResponse::Response(InvoiceNode::from_domain(invoice)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
         }),

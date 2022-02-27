@@ -1,8 +1,8 @@
-use crate::WithDBError;
+use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnection,
-    TransactionError,
+    InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
+    StorageConnection, TransactionError,
 };
 
 mod generate;
@@ -27,11 +27,15 @@ pub struct InsertInboundShipmentLine {
     pub tax: Option<f64>,
 }
 
+type OutError = InsertInboundShipmentLineError;
+
 pub fn insert_inbound_shipment_line(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
+    _store_id: &str,
     input: InsertInboundShipmentLine,
-) -> Result<String, InsertInboundShipmentLineError> {
-    let new_line = connection
+) -> Result<InvoiceLine, OutError> {
+    let new_line = ctx
+        .connection
         .transaction_sync(|connection| {
             let (item, invoice) = validate(&input, &connection)?;
             let (new_line, new_batch_option) = generate(input, item, invoice);
@@ -40,17 +44,13 @@ pub fn insert_inbound_shipment_line(
                 StockLineRowRepository::new(&connection).upsert_one(&new_batch)?;
             }
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
-            Ok(new_line)
+
+            get_invoice_line(ctx, &new_line.id)
+                .map_err(|error| OutError::DatabaseError(error))?
+                .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
-        .map_err(
-            |error: TransactionError<InsertInboundShipmentLineError>| match error {
-                TransactionError::Transaction { msg, level } => {
-                    RepositoryError::TransactionError { msg, level }.into()
-                }
-                TransactionError::Inner(error) => error,
-            },
-        )?;
-    Ok(new_line.id)
+        .map_err(|error| error.to_inner_error())?;
+    Ok(new_line)
 }
 
 #[derive(Debug)]
@@ -65,6 +65,7 @@ pub enum InsertInboundShipmentLineError {
     ItemNotFound,
     PackSizeBelowOne,
     NumberOfPacksBelowOne,
+    NewlyCreatedLineDoesNotExist,
 }
 
 impl From<RepositoryError> for InsertInboundShipmentLineError {

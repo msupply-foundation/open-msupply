@@ -3,12 +3,9 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
-use graphql_core::loader::InvoiceByIdLoader;
+use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader};
 use graphql_core::{
-    loader::{
-        InvoiceLineQueryLoader, InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader,
-        StoreLoader,
-    },
+    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -194,7 +191,7 @@ impl InvoiceNode {
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
-        let loader = ctx.get_loader::<DataLoader<InvoiceLineQueryLoader>>();
+        let loader = ctx.get_loader::<DataLoader<InvoiceLineByInvoiceIdLoader>>();
         let result_option = loader.load_one(self.row().id.to_string()).await?;
 
         Ok(InvoiceLineConnector::from_vec(

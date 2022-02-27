@@ -6,14 +6,17 @@ use graphql_core::simple_generic_errors::{
     InvoiceDoesNotBelongToCurrentStore, NodeError, NotAnInboundShipment, Range, RangeError,
     RangeField, RecordAlreadyExist,
 };
-use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::ContextExt;
+use graphql_types::types::{InvoiceLineNode, InvoiceLineResponse};
 use repository::StorageConnectionManager;
-use service::invoice_line::{
-    insert_inbound_shipment_line, InsertInboundShipmentLine, InsertInboundShipmentLineError,
+use service::invoice_line::inbound_shipment_line::{
+    InsertInboundShipmentLine as ServiceInput, InsertInboundShipmentLineError as ServiceError,
 };
 
 #[derive(InputObject)]
-pub struct InsertInboundShipmentLineInput {
+#[graphql(name = "InsertInboundShipmentLineInput")]
+pub struct InsertInput {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
@@ -36,50 +39,40 @@ pub struct InsertError {
 }
 
 #[derive(Union)]
-pub enum InsertInboundShipmentLineResponse {
+#[graphql(name = "InsertInboundShipmentLineResponse")]
+pub enum InsertResponse {
     Error(InsertError),
-    NodeError(NodeError),
     Response(InvoiceLineNode),
 }
 
-pub fn get_insert_inbound_shipment_line_response(
-    connection_manager: &StorageConnectionManager,
-    input: InsertInboundShipmentLineInput,
-) -> InsertInboundShipmentLineResponse {
-    use InsertInboundShipmentLineResponse::*;
-    let connection = match connection_manager.connection() {
-        Ok(con) => con,
-        Err(err) => {
-            return InsertInboundShipmentLineResponse::Error(InsertError {
-                error: InsertErrorInterface::DatabaseError(DatabaseError(err)),
-            })
-        }
+pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let response = match service_provider
+        .invoice_line_service
+        .insert_inbound_shipment_line(&service_context, store_id, input.to_domain())
+    {
+        Ok(invoice_line) => InsertResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
     };
-    match insert_inbound_shipment_line(&connection, input.into()) {
-        Ok(id) => match get_invoice_line_response(connection_manager, id) {
-            InvoiceLineResponse::Response(node) => Response(node),
-            InvoiceLineResponse::Error(err) => NodeError(err),
-        },
-        Err(error) => error.into(),
-    }
+
+    Ok(response)
 }
 
 #[derive(Interface)]
 #[graphql(name = "InsertInboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum InsertErrorInterface {
-    DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
-    RecordAlreadyExist(RecordAlreadyExist),
-    RangeError(RangeError),
     CannotEditInvoice(CannotEditInvoice),
-    NotAnInboundShipment(NotAnInboundShipment),
-    InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
 }
 
-impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
-    fn from(
-        InsertInboundShipmentLineInput {
+impl InsertInput {
+    fn to_domain(self) -> ServiceInput {
+        let InsertInput {
             id,
             invoice_id,
             item_id,
@@ -93,9 +86,9 @@ impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
             total_before_tax,
             total_after_tax,
             tax,
-        }: InsertInboundShipmentLineInput,
-    ) -> Self {
-        InsertInboundShipmentLine {
+        } = self;
+
+        ServiceInput {
             id,
             invoice_id,
             item_id,
@@ -113,46 +106,35 @@ impl From<InsertInboundShipmentLineInput> for InsertInboundShipmentLine {
     }
 }
 
-impl From<InsertInboundShipmentLineError> for InsertInboundShipmentLineResponse {
-    fn from(error: InsertInboundShipmentLineError) -> Self {
-        use InsertErrorInterface as OutError;
-        let error = match error {
-            InsertInboundShipmentLineError::LineAlreadyExists => {
-                OutError::RecordAlreadyExist(RecordAlreadyExist {})
-            }
-            InsertInboundShipmentLineError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
-            InsertInboundShipmentLineError::InvoiceDoesNotExist => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
-            }
-            InsertInboundShipmentLineError::NotAnInboundShipment => {
-                OutError::NotAnInboundShipment(NotAnInboundShipment {})
-            }
-            InsertInboundShipmentLineError::NotThisStoreInvoice => {
-                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
-            }
-            InsertInboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditInvoice(CannotEditInvoice {})
-            }
-            InsertInboundShipmentLineError::ItemNotFound => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
-            }
-            InsertInboundShipmentLineError::NumberOfPacksBelowOne => {
-                OutError::RangeError(RangeError {
-                    field: RangeField::NumberOfPacks,
-                    range: Range::Min(1),
-                })
-            }
-            InsertInboundShipmentLineError::PackSizeBelowOne => OutError::RangeError(RangeError {
-                field: RangeField::PackSize,
-                range: Range::Min(1),
-            }),
-            InsertInboundShipmentLineError::LocationDoesNotExist => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::LocationId))
-            }
-        };
+fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
 
-        InsertInboundShipmentLineResponse::Error(InsertError { error })
-    }
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )))
+        }
+
+        ServiceError::CannotEditFinalised => {
+            return Ok(InsertErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+
+        // Standard Graphql Errors
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
+        ServiceError::PackSizeBelowOne => BadUserInput(formatted_error),
+        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::ItemNotFound => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }

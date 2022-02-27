@@ -1,14 +1,22 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError, InternalError,
-    InvoiceLineBelongsToAnotherInvoice, NodeErrorInterface, NotAnOutboundShipment, RecordNotFound,
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::{
+    simple_generic_errors::{
+        CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError, InternalError,
+        InvoiceLineBelongsToAnotherInvoice, NodeErrorInterface, NotAnOutboundShipment,
+        RecordNotFound,
+    },
+    ContextExt,
 };
-use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
+use graphql_types::types::{InvoiceLineNode, InvoiceLineResponse};
 use repository::StorageConnectionManager;
 use service::invoice_line::{
-    update_outbound_shipment_service_line, ShipmentTaxUpdate, UpdateOutboundShipmentServiceLine,
-    UpdateOutboundShipmentServiceLineError,
+    outbound_shipment_service_line::{
+        UpdateOutboundShipmentServiceLine as ServiceInput,
+        UpdateOutboundShipmentServiceLineError as ServiceError,
+    },
+    ShipmentTaxUpdate,
 };
 
 use crate::mutations::outbound_shipment_line::TaxUpdate;
@@ -16,7 +24,8 @@ use crate::mutations::outbound_shipment_line::TaxUpdate;
 use super::NotAServiceItem;
 
 #[derive(InputObject)]
-pub struct UpdateOutboundShipmentServiceLineInput {
+#[graphql(name = "UpdateOutboundShipmentServiceLineInput")]
+pub struct UpdateInput {
     pub id: String,
     invoice_id: String,
     item_id: Option<String>,
@@ -27,43 +36,21 @@ pub struct UpdateOutboundShipmentServiceLineInput {
     note: Option<String>,
 }
 
-pub fn get_update_outbound_shipment_service_line_response(
-    connection_manager: &StorageConnectionManager,
-    input: UpdateOutboundShipmentServiceLineInput,
-) -> UpdateOutboundShipmentServiceLineResponse {
-    use UpdateOutboundShipmentServiceLineResponse::*;
+pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
 
-    let id = match update_outbound_shipment_service_line(
-        connection_manager,
-        UpdateOutboundShipmentServiceLine {
-            id: input.id,
-            invoice_id: input.invoice_id,
-            item_id: input.item_id,
-            name: input.name,
-            total_before_tax: input.total_before_tax,
-            total_after_tax: input.total_after_tax,
-            tax: input.tax.map(|tax| ShipmentTaxUpdate {
-                percentage: tax.percentage,
-            }),
-            note: input.note,
-        },
-    ) {
-        Ok(id) => id,
-        Err(error) => return error.into(),
+    let response = match service_provider
+        .invoice_line_service
+        .update_outbound_shipment_service_line(&service_context, store_id, input.to_domain())
+    {
+        Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
     };
 
-    match get_invoice_line_response(connection_manager, id) {
-        InvoiceLineResponse::Response(node) => Response(node),
-        InvoiceLineResponse::Error(err) => {
-            let error = match err.error {
-                NodeErrorInterface::DatabaseError(err) => UpdateErrorInterface::DatabaseError(err),
-                NodeErrorInterface::RecordNotFound(_) => UpdateErrorInterface::InternalError(
-                    InternalError("Update item went missing!".to_string()),
-                ),
-            };
-            UpdateOutboundShipmentServiceLineResponse::Error(UpdateError { error })
-        }
-    }
+    Ok(response)
 }
 
 #[derive(SimpleObject)]
@@ -73,7 +60,8 @@ pub struct UpdateError {
 }
 
 #[derive(Union)]
-pub enum UpdateOutboundShipmentServiceLineResponse {
+#[graphql(name = "UpdateOutboundShipmentServiceLineResponse")]
+pub enum UpdateResponse {
     Error(UpdateError),
     Response(InvoiceLineNode),
 }
@@ -82,46 +70,67 @@ pub enum UpdateOutboundShipmentServiceLineResponse {
 #[graphql(name = "UpdateOutboundShipmentServiceLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
-    InternalError(InternalError),
-    DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
-    NotAnOutboundShipment(NotAnOutboundShipment),
-    InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     CannotEditInvoice(CannotEditInvoice),
-    NotAServiceItem(NotAServiceItem),
 }
 
-impl From<UpdateOutboundShipmentServiceLineError> for UpdateOutboundShipmentServiceLineResponse {
-    fn from(error: UpdateOutboundShipmentServiceLineError) -> Self {
-        use UpdateErrorInterface as OutError;
-        let error = match error {
-            UpdateOutboundShipmentServiceLineError::LineDoesNotExist => {
-                OutError::RecordNotFound(RecordNotFound {})
-            }
-            UpdateOutboundShipmentServiceLineError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
-            UpdateOutboundShipmentServiceLineError::InvoiceDoesNotExist => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
-            }
-            UpdateOutboundShipmentServiceLineError::NotAnOutboundShipment => {
-                OutError::NotAnOutboundShipment(NotAnOutboundShipment {})
-            }
-            UpdateOutboundShipmentServiceLineError::NotThisInvoiceLine(_invoice_id) => {
-                OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice {})
-            }
-            UpdateOutboundShipmentServiceLineError::CannotEditFinalised => {
-                OutError::CannotEditInvoice(CannotEditInvoice {})
-            }
-            UpdateOutboundShipmentServiceLineError::ItemNotFound => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
-            }
-            UpdateOutboundShipmentServiceLineError::NotAServiceItem => {
-                OutError::NotAServiceItem(NotAServiceItem)
-            }
-        };
+impl UpdateInput {
+    fn to_domain(self) -> ServiceInput {
+        let UpdateInput {
+            id,
+            invoice_id,
+            item_id,
+            name,
+            total_before_tax,
+            total_after_tax,
+            tax,
+            note,
+        } = self;
 
-        UpdateOutboundShipmentServiceLineResponse::Error(UpdateError { error })
+        ServiceInput {
+            id,
+            invoice_id,
+            item_id,
+            name,
+            total_before_tax,
+            total_after_tax,
+            tax: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
+            }),
+            note,
+        }
     }
+}
+
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )))
+        }
+        ServiceError::CannotEditFinalised => {
+            return Ok(UpdateErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+        ServiceError::LineDoesNotExist => {
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+        }
+        // Standard Graphql Errors
+        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
+        ServiceError::ItemNotFound => BadUserInput(formatted_error),
+        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
+        ServiceError::NotAServiceItem => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
