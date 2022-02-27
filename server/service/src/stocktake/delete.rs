@@ -1,7 +1,6 @@
-use domain::EqualFilter;
 use repository::{
     RepositoryError, StocktakeLineFilter, StocktakeLineRepository, StocktakeRowRepository,
-    StorageConnection, TransactionError,
+    StorageConnection, TransactionError, EqualFilter,
 };
 
 use crate::{

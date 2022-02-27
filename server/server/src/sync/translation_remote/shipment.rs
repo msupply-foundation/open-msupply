@@ -1,8 +1,7 @@
 use chrono::NaiveDate;
-use domain::{name::NameFilter, EqualFilter};
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, RemoteSyncBufferRow},
-    NameQueryRepository, StorageConnection,
+    EqualFilter, NameFilter, NameQueryRepository, StorageConnection,
 };
 
 use serde::Deserialize;
@@ -109,14 +108,15 @@ impl RemotePullTranslation for ShipmentTranslation {
                 }
             })?;
 
-        let name_store_join = NameQueryRepository::new(connection)
+        let name = NameQueryRepository::new(connection)
             .query_one(NameFilter::new().id(EqualFilter::equal_to(&data.name_ID)))
             .map_err(|err| SyncTranslationError {
                 table_name,
                 source: err.into(),
                 record: sync_record.data.clone(),
             })?;
-        let name_store_id = name_store_join.and_then(|name| name.store_id);
+        let name_store_id =
+            name.and_then(|name| name.store_id().map(|store_id| store_id.to_string()));
 
         let shipment_type = shipment_type(&data._type).ok_or(SyncTranslationError {
             table_name,
