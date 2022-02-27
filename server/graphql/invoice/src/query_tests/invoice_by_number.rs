@@ -1,18 +1,18 @@
-mod graphql {
-    use repository::{
-        mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a, MockDataInserts},
-        schema::InvoiceRowType,
-        Invoice, RepositoryError, StorageConnectionManager,
-    };
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
+    use chrono::{DateTime, Utc};
+    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::{assert_graphql_query, get_invoice_lines_inline};
+    use repository::mock::{mock_outbound_shipment_a, mock_name_store_a, mock_store_a};
+    use repository::schema::InvoiceRowType;
+    use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceQueryRepository};
+    use repository::{EqualFilter, Invoice, RepositoryError, StorageConnectionManager};
     use serde_json::json;
-    use server::test_utils::setup_all;
-    use service::{
-        invoice::InvoiceServiceTrait,
-        service_provider::{ServiceContext, ServiceProvider},
-    };
+    use service::invoice::InvoiceServiceTrait;
+    use service::service_provider::{ServiceContext, ServiceProvider};
 
-    use crate::graphql::assert_graphql_query;
-
+    use crate::InvoiceQueries;
     type GetInvoiceByNumber =
         dyn Fn(u32, InvoiceRowType) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
 
@@ -41,8 +41,13 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_get_invoice_by_number() {
-        let (_, _, connection_manager, settings) =
-            setup_all("test_graphql_get_invoice_by_number", MockDataInserts::all()).await;
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            InvoiceQueries,
+            EmptyMutation,
+            "test_graphql_get_invoice_by_number",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"
         query {

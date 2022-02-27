@@ -1751,8 +1751,10 @@ dependencies = [
 name = "graphql_invoice"
 version = "0.1.0"
 dependencies = [
+ "actix-rt",
  "actix-web",
  "anymap",
+ "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",

@@ -1,16 +1,27 @@
-mod graphql {
-    use crate::graphql::assert_graphql_query;
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
+    use chrono::{DateTime, Utc};
+    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::{assert_graphql_query, get_invoice_lines_inline};
     use repository::mock::{
-        mock_invoice_loader_invoice1, mock_invoice_loader_invoice2,
-        mock_invoice_loader_requistion1, MockDataInserts,
+        mock_invoice_loader_invoice1, mock_invoice_loader_invoice2, mock_invoice_loader_requistion1,
     };
+    use repository::EqualFilter;
+    use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceQueryRepository};
     use serde_json::json;
-    use server::test_utils::setup_all;
+
+    use crate::InvoiceQueries;
 
     #[actix_rt::test]
     async fn test_graphql_invoice_loaders() {
-        let (_, _, _, settings) =
-            setup_all("test_graphql_invoice_loaders", MockDataInserts::all()).await;
+        let (_, _, _, settings) = setup_graphl_test(
+            InvoiceQueries,
+            EmptyMutation,
+            "test_graphql_invoice_loaders",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"
         query($filter: InvoiceFilterInput) {
