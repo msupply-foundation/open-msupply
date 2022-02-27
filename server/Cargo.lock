@@ -1634,16 +1634,17 @@ dependencies = [
 name = "graphql"
 version = "0.1.0"
 dependencies = [
+ "actix-rt",
  "actix-web",
  "anymap",
+ "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_batch_mutations",
  "graphql_core",
- "graphql_general_mutations",
- "graphql_general_queries",
+ "graphql_general",
  "graphql_invoice",
  "graphql_invoice_line",
  "graphql_location",
@@ -1708,32 +1709,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql_general_mutations"
+name = "graphql_general"
 version = "0.1.0"
 dependencies = [
+ "actix-rt",
  "actix-web",
  "anymap",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.130",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_general_queries"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "anymap",
+ "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",

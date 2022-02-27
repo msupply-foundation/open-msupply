@@ -10,11 +10,6 @@ use std::sync::RwLock;
 use actix_web::web::Data;
 use serde_json::Value;
 
-mod item_stats;
-mod items;
-mod master_lists;
-mod names;
-mod pagination;
 mod requisition;
 
 async fn run_gql_query(

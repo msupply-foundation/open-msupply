@@ -1,5 +1,4 @@
 use async_graphql::*;
-use graphql_general_mutations::*;
 use graphql_requisition::mutations::{request_requisition, response_requisition};
 use graphql_requisition_line::mutations::{request_requisition_line, response_requisition_line};
 
@@ -8,14 +7,6 @@ pub struct Mutations;
 
 #[Object]
 impl Mutations {
-    async fn register_user(
-        &self,
-        ctx: &Context<'_>,
-        input: UserRegisterInput,
-    ) -> UserRegisterResponse {
-        user_register(ctx, input)
-    }
-
     async fn insert_request_requisition(
         &self,
         ctx: &Context<'_>,

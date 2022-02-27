@@ -1,11 +1,14 @@
 mod graphql {
-    use crate::graphql::{assert_graphql_query, assert_standard_graphql_error};
+    use async_graphql::EmptyMutation;
+    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
+    use graphql_location::LocationQueries;
     use repository::PaginationOption;
     use repository::{
         mock::MockDataInserts, Location, LocationFilter, LocationSort, StorageConnectionManager,
     };
     use serde_json::json;
-    use server::test_utils::setup_all;
+
     use service::{
         location::LocationServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
@@ -45,8 +48,13 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_locations_pagination() {
-        let (_, _, connection_manager, settings) =
-            setup_all("test_graphql_locations_pagination", MockDataInserts::all()).await;
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            LocationQueries,
+            EmptyMutation,
+            "test_graphql_locations_pagination",
+            MockDataInserts::all(),
+        )
+        .await;
 
         // Test errors
         let query = r#"

@@ -1,12 +1,20 @@
 mod graphql {
-    use crate::graphql::assert_graphql_query;
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::mock::MockDataInserts;
     use serde_json::json;
-    use server::test_utils::setup_all;
+
+    use crate::GeneralQueries;
 
     #[actix_rt::test]
     async fn test_graphql_items_query() {
-        let (_, _, _, settings) = setup_all("test_items_query", MockDataInserts::all()).await;
+        let (_, _, _, settings) = setup_graphl_test(
+            GeneralQueries,
+            EmptyMutation,
+            "test_items_query",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"query items($itemFilter: ItemFilterInput!) {
             items(filter: $itemFilter) {
