@@ -7,7 +7,8 @@ use repository::{
 use crate::sync::{
     translation_remote::{
         name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
-        stock_line::StockLineTranslation, stocktake::StocktakeTranslation, table_name_to_central,
+        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
+        stocktake_line::StocktakeLineTranslation, table_name_to_central,
     },
     SyncTranslationError,
 };
@@ -66,6 +67,7 @@ pub fn translate_changelog(
                 Box::new(NameStoreJoinTranslation {}),
                 Box::new(StockLineTranslation {}),
                 Box::new(StocktakeTranslation {}),
+                Box::new(StocktakeLineTranslation {}),
             ];
             for translation in translations {
                 if let Some(records) = translation.try_translate_push(connection, changelog)? {
