@@ -1,6 +1,3 @@
-mod mutations;
-mod queries;
-
 #[cfg(test)]
 mod tests;
 
@@ -18,26 +15,26 @@ use graphql_general::{GeneralMutations, GeneralQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_requisition::{RequisitionMutations, RequisitionQueries};
+use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::StocktakeLineMutations;
-use mutations::Mutations;
-use queries::Queries;
+
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 
 #[derive(MergedObject, Default)]
 pub struct FullQuery(
-    pub Queries,
     pub InvoiceQueries,
     pub LocationQueries,
     pub StocktakeQueries,
     pub GeneralQueries,
+    pub RequisitionQueries,
 );
 
 #[derive(MergedObject, Default)]
 pub struct FullMutation(
-    pub Mutations,
     pub InvoiceMutations,
     pub InvoiceLineMutations,
     pub LocationMutations,
@@ -45,6 +42,8 @@ pub struct FullMutation(
     pub StocktakeLineMutations,
     pub BatchMutations,
     pub GeneralMutations,
+    pub RequisitionMutations,
+    pub RequisitionLineMutations,
 );
 
 pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
@@ -53,14 +52,13 @@ type Builder = SchemaBuilder<FullQuery, FullMutation, EmptySubscription>;
 pub fn build_schema() -> Builder {
     Schema::build(
         FullQuery(
-            Queries,
             InvoiceQueries,
             LocationQueries,
             StocktakeQueries,
             GeneralQueries,
+            RequisitionQueries,
         ),
         FullMutation(
-            Mutations,
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
@@ -68,6 +66,8 @@ pub fn build_schema() -> Builder {
             StocktakeLineMutations,
             BatchMutations,
             GeneralMutations,
+            RequisitionMutations,
+            RequisitionLineMutations,
         ),
         EmptySubscription,
     )

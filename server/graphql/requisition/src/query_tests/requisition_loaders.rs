@@ -1,5 +1,6 @@
-mod graphql {
-
+mod test {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::mock::{
         mock_invoice1_linked_to_requisition, mock_invoice2_linked_to_requisition,
         mock_invoice3_linked_to_requisition, mock_name_a, mock_name_store_a,
@@ -7,14 +8,18 @@ mod graphql {
         MockDataInserts,
     };
     use serde_json::json;
-    use server::test_utils::setup_all;
 
-    use crate::graphql::assert_graphql_query;
+    use crate::RequisitionQueries;
 
     #[actix_rt::test]
     async fn test_graphql_requisition_loaders() {
-        let (_, _, _, settings) =
-            setup_all("test_graphql_requisition_loaders", MockDataInserts::all()).await;
+        let (_, _, _, settings) = setup_graphl_test(
+            RequisitionQueries,
+            EmptyMutation,
+            "test_graphql_requisition_loaders",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"
         query($filter: RequisitionFilterInput) {
@@ -126,8 +131,13 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_requisition_line() {
-        let (_, _, _, settings) =
-            setup_all("test_graphql_requisition_line", MockDataInserts::all()).await;
+        let (_, _, _, settings) = setup_graphl_test(
+            RequisitionQueries,
+            EmptyMutation,
+            "test_graphql_requisition_line",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let query = r#"
         query($filter: RequisitionFilterInput) {
@@ -198,7 +208,9 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_requisition_line_loaders() {
-        let (_, _, _, settings) = setup_all(
+        let (_, _, _, settings) = setup_graphl_test(
+            RequisitionQueries,
+            EmptyMutation,
             "test_graphql_requisition_line_loaders",
             MockDataInserts::all(),
         )
