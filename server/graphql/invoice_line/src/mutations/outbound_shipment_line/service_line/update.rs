@@ -2,15 +2,11 @@ use async_graphql::*;
 
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
-    simple_generic_errors::{
-        CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError, InternalError,
-        InvoiceLineBelongsToAnotherInvoice, NodeErrorInterface, NotAnOutboundShipment,
-        RecordNotFound,
-    },
+    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
     ContextExt,
 };
-use graphql_types::types::{InvoiceLineNode, InvoiceLineResponse};
-use repository::StorageConnectionManager;
+use graphql_types::types::InvoiceLineNode;
+
 use service::invoice_line::{
     outbound_shipment_service_line::{
         UpdateOutboundShipmentServiceLine as ServiceInput,
@@ -20,8 +16,6 @@ use service::invoice_line::{
 };
 
 use crate::mutations::outbound_shipment_line::TaxUpdate;
-
-use super::NotAServiceItem;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateOutboundShipmentServiceLineInput")]
@@ -129,7 +123,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotAServiceItem => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
-        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

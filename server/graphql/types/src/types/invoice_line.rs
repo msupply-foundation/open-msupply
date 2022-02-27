@@ -10,7 +10,7 @@ use graphql_core::{
 };
 use repository::{
     schema::{InvoiceLineRow, InvoiceLineRowType},
-    InvoiceLine, StorageConnectionManager,
+    InvoiceLine,
 };
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};

@@ -1,8 +1,5 @@
 use crate::{service_provider::ServiceContext, WithDBError};
-use repository::{
-    InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
-    StorageConnectionManager, TransactionError,
-};
+use repository::{InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
 mod validate;
 
