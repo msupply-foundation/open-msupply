@@ -1,5 +1,4 @@
 use async_graphql::*;
-use graphql_batch_mutations::batch_stocktake::*;
 use graphql_general_mutations::*;
 use graphql_requisition::mutations::{request_requisition, response_requisition};
 use graphql_requisition_line::mutations::{request_requisition_line, response_requisition_line};
@@ -15,34 +14,6 @@ impl Mutations {
         input: UserRegisterInput,
     ) -> UserRegisterResponse {
         user_register(ctx, input)
-    }
-    // async fn batch_inbound_shipment(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    //     input: BatchInboundShipmentInput,
-    // ) -> BatchInboundShipmentResponse {
-    //     let connection_manager = ctx.get_connection_manager();
-
-    //     get_batch_inbound_shipment_response(connection_manager, &store_id, input)
-    // }
-
-    // async fn batch_outbound_shipment(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    //     input: BatchOutboundShipmentInput,
-    // ) -> Result<BatchOutboundShipmentResponse> {
-    //     get_batch_outbound_shipment_response(ctx, &store_id, input)
-    // }
-
-    async fn batch_stocktake(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: BatchStocktakeInput,
-    ) -> Result<BatchStocktakeResponse> {
-        batch_stocktake(ctx, &store_id, input)
     }
 
     async fn insert_request_requisition(

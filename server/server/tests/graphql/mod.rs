@@ -16,7 +16,6 @@ mod master_lists;
 mod names;
 mod pagination;
 mod requisition;
-mod stocktake_batch;
 
 async fn run_gql_query(
     settings: &Settings,
