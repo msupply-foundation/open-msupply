@@ -1,12 +1,8 @@
 use crate::mutations::outbound_shipment::CannotChangeStatusOfInvoiceOnHold;
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
-};
-use graphql_core::simple_generic_errors::{
-    CannotReverseInvoiceStatus, DatabaseError, RecordNotFound,
-};
+use graphql_core::simple_generic_errors::CannotEditInvoice;
+use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, RecordNotFound};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::OtherPartyNotASupplier;
