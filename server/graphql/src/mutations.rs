@@ -5,7 +5,6 @@ use graphql_general_mutations::*;
 
 use graphql_requisition::mutations::{request_requisition, response_requisition};
 use graphql_requisition_line::mutations::{request_requisition_line, response_requisition_line};
-use graphql_stocktake::mutations::{delete::*, insert::*, update::*};
 use graphql_stocktake_line::mutations::{delete::*, insert::*, update::*};
 
 #[derive(Default)]
@@ -39,33 +38,6 @@ impl Mutations {
     // ) -> Result<BatchOutboundShipmentResponse> {
     //     get_batch_outbound_shipment_response(ctx, &store_id, input)
     // }
-
-    async fn insert_stocktake(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertStocktakeInput,
-    ) -> Result<InsertStocktakeResponse> {
-        insert_stocktake(ctx, &store_id, input)
-    }
-
-    async fn update_stocktake(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdateStocktakeInput,
-    ) -> Result<UpdateStocktakeResponse> {
-        update_stocktake(ctx, &store_id, input)
-    }
-
-    async fn delete_stocktake(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: DeleteStocktakeInput,
-    ) -> Result<DeleteStocktakeResponse> {
-        delete_stocktake(ctx, &store_id, input)
-    }
 
     async fn insert_stocktake_line(
         &self,
