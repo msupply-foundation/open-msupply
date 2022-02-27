@@ -133,7 +133,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => InternalError(formatted_error),
+        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
