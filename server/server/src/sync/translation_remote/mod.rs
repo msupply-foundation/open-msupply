@@ -2,10 +2,10 @@ use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use repository::schema::ChangelogTableName;
 use serde::{Deserialize, Deserializer};
 
+mod invoice;
+mod invoice_line;
 mod name_store_join;
 mod number;
-mod shipment;
-mod shipment_line;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;

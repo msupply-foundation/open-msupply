@@ -131,7 +131,7 @@ pub fn get_test_trans_line_records() -> Vec<TestSyncRecord> {
     vec![
         TestSyncRecord {
             translated_record: Some(IntegrationRecord::from_upsert(
-                IntegrationUpsertRecord::ShipmentLine(InvoiceLineRow {
+                IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
                     id: TRANS_LINE_1.0.to_string(),
                     invoice_id: "outbound_shipment_a".to_string(),
                     item_id: mock_item_a().id,
@@ -163,7 +163,7 @@ pub fn get_test_trans_line_records() -> Vec<TestSyncRecord> {
         },
         TestSyncRecord {
             translated_record: Some(IntegrationRecord::from_upsert(
-                IntegrationUpsertRecord::ShipmentLine(InvoiceLineRow {
+                IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
                     id: TRANS_LINE_2.0.to_string(),
                     invoice_id: "outbound_shipment_a".to_string(),
                     item_id: mock_item_a().id,
