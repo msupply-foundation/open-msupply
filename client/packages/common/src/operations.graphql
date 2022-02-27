@@ -144,19 +144,6 @@ mutation deleteLocation($storeId: String!, $input: DeleteLocationInput!) {
   }
 }
 
-query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(page: { first: $first, offset: $offset }, filter: $filter) {
-    ... on StoreConnector {
-      __typename
-      totalCount
-      nodes {
-        code
-        id
-      }
-    }
-  }
-}
-
 query authToken($username: String!, $password: String!) {
   authToken(password: $password, username: $username) {
     ... on AuthToken {
