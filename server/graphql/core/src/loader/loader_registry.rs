@@ -36,12 +36,12 @@ pub async fn get_loaders(
         connection_manager: connection_manager.clone(),
     });
 
-    let invoice_query_loader = DataLoader::new(InvoiceQueryLoader {
-        connection_manager: connection_manager.clone(),
+    let invoice_by_id_loader = DataLoader::new(InvoiceByIdLoader {
+        service_provider: service_provider.clone(),
     });
 
     let invoice_by_requisition_id_loader = DataLoader::new(InvoiceByRequisitionIdLoader {
-        connection_manager: connection_manager.clone(),
+        service_provider: service_provider.clone(),
     });
 
     let invoice_line_loader = DataLoader::new(InvoiceLineLoader {
@@ -114,7 +114,7 @@ pub async fn get_loaders(
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_loader);
-    loaders.insert(invoice_query_loader);
+    loaders.insert(invoice_by_id_loader);
     loaders.insert(invoice_by_requisition_id_loader);
     loaders.insert(invoice_line_loader);
     loaders.insert(invoice_line_query_loader);

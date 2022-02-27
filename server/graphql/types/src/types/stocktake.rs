@@ -4,7 +4,7 @@ use repository::schema::{StocktakeRow, StocktakeStatus};
 use serde::Serialize;
 
 use graphql_core::{
-    loader::{InvoiceQueryLoader, StocktakeLineByStocktakeIdLoader},
+    loader::{InvoiceByIdLoader, StocktakeLineByStocktakeIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -62,7 +62,7 @@ impl StocktakeNode {
 
     pub async fn inventory_adjustment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
         if let Some(ref adjustment_id) = self.stocktake.inventory_adjustment_id {
-            let loader = ctx.get_loader::<DataLoader<InvoiceQueryLoader>>();
+            let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
             let invoice = loader.load_one(adjustment_id.clone()).await?.ok_or(
                 StandardGraphqlError::InternalError(format!(
                     "Cannot find inventory adjustment {}",

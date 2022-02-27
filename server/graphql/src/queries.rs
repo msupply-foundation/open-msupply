@@ -8,9 +8,8 @@ use graphql_invoice::invoice_queries::*;
 use graphql_requisition::requisition_queries::*;
 use graphql_stocktake::stocktake_queries::*;
 use graphql_types::types::*;
+use repository::LocationFilter;
 use repository::PaginationOption;
-use repository::{InvoiceFilter, LocationFilter};
-use service::invoice::get_invoices;
 
 pub struct Queries;
 
@@ -126,9 +125,8 @@ impl Queries {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "id of the invoice")] id: String,
-    ) -> InvoiceResponse {
-        let connection_manager = ctx.get_connection_manager();
-        get_invoice(connection_manager, Some(&store_id), id)
+    ) -> Result<InvoiceResponse> {
+        get_invoice(ctx, Some(&store_id), &id)
     }
 
     pub async fn invoice_by_number(
@@ -150,22 +148,7 @@ impl Queries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        let connection_manager = ctx.get_connection_manager();
-        let invoices = get_invoices(
-            connection_manager,
-            Some(&store_id),
-            page.map(PaginationOption::from),
-            filter.map(InvoiceFilter::from),
-            // Currently only one sort option is supported, use the first from the list.
-            sort.map(|mut sort_list| sort_list.pop())
-                .flatten()
-                .map(|sort| sort.to_domain()),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
-
-        Ok(InvoicesResponse::Response(InvoiceConnector::from_domain(
-            invoices,
-        )))
+        get_invoices(ctx, &store_id, page, filter, sort)
     }
 
     pub async fn invoice_counts(

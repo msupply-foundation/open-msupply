@@ -1,4 +1,3 @@
-use crate::invoice_queries::{get_invoice, InvoiceResponse};
 use crate::mutations::outbound_shipment::CannotChangeStatusOfInvoiceOnHold;
 use async_graphql::*;
 
@@ -6,20 +5,20 @@ use graphql_core::simple_generic_errors::{
     CannotEditInvoice, InvoiceDoesNotBelongToCurrentStore, NotAnInboundShipment,
 };
 use graphql_core::simple_generic_errors::{
-    CannotReverseInvoiceStatus, DatabaseError, ForeignKey, ForeignKeyError, NodeError,
-    RecordNotFound,
+    CannotReverseInvoiceStatus, DatabaseError, RecordNotFound,
 };
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::ContextExt;
 use graphql_types::generic_errors::OtherPartyNotASupplier;
 use graphql_types::types::{InvoiceNode, NameNode};
-use repository::StorageConnectionManager;
-
-use service::invoice::{
-    update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentError,
+use service::invoice::inbound_shipment::{
+    UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
     UpdateInboundShipmentStatus,
 };
 
 #[derive(InputObject)]
-pub struct UpdateInboundShipmentInput {
+#[graphql(name = "UpdateInboundShipmentInput")]
+pub struct UpdateInput {
     pub id: String,
     pub other_party_id: Option<String>,
     pub status: Option<UpdateInboundShipmentStatusInput>,
@@ -35,16 +34,6 @@ pub enum UpdateInboundShipmentStatusInput {
     Verified,
 }
 
-impl UpdateInboundShipmentStatusInput {
-    pub fn to_domain(&self) -> UpdateInboundShipmentStatus {
-        use UpdateInboundShipmentStatus::*;
-        match self {
-            UpdateInboundShipmentStatusInput::Delivered => Delivered,
-            UpdateInboundShipmentStatusInput::Verified => Verified,
-        }
-    }
-}
-
 #[derive(SimpleObject)]
 #[graphql(name = "UpdateInboundShipmentError")]
 pub struct UpdateError {
@@ -52,52 +41,44 @@ pub struct UpdateError {
 }
 
 #[derive(Union)]
-pub enum UpdateInboundShipmentResponse {
+#[graphql(name = "UpdateInboundShipmentResponse")]
+pub enum UpdateResponse {
     Error(UpdateError),
-    NodeError(NodeError),
     Response(InvoiceNode),
 }
 
-pub fn get_update_inbound_shipment_response(
-    connection_manager: &StorageConnectionManager,
-    input: UpdateInboundShipmentInput,
-) -> UpdateInboundShipmentResponse {
-    use UpdateInboundShipmentResponse::*;
-    let connection = match connection_manager.connection() {
-        Ok(con) => con,
-        Err(err) => {
-            return UpdateInboundShipmentResponse::Error(UpdateError {
-                error: UpdateErrorInterface::DatabaseError(DatabaseError(err)),
-            })
-        }
+pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let response = match service_provider.invoice_service.update_inbound_shipment(
+        &service_context,
+        store_id,
+        input.to_domain(),
+    ) {
+        Ok(requisition) => UpdateResponse::Response(InvoiceNode::from_domain(requisition)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
     };
-    match update_inbound_shipment(&connection, input.into()) {
-        Ok(id) => match get_invoice(connection_manager, None, id) {
-            InvoiceResponse::Response(node) => Response(node),
-            InvoiceResponse::Error(err) => NodeError(err),
-        },
-        Err(error) => error.into(),
-    }
+
+    Ok(response)
 }
 
 #[derive(Interface)]
 #[graphql(name = "UpdateInboundShipmentErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
-    DatabaseError(DatabaseError),
-    ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
     CannotEditInvoice(CannotEditInvoice),
-    NotAnInboundShipment(NotAnInboundShipment),
-    InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
 }
 
-impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
-    fn from(
-        UpdateInboundShipmentInput {
+impl UpdateInput {
+    fn to_domain(self) -> ServiceInput {
+        let UpdateInput {
             id,
             other_party_id,
             status,
@@ -105,9 +86,9 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
             comment,
             their_reference,
             colour,
-        }: UpdateInboundShipmentInput,
-    ) -> Self {
-        UpdateInboundShipment {
+        } = self;
+
+        ServiceInput {
             id,
             other_party_id,
             status: status.map(|status| status.to_domain()),
@@ -119,39 +100,53 @@ impl From<UpdateInboundShipmentInput> for UpdateInboundShipment {
     }
 }
 
-impl From<UpdateInboundShipmentError> for UpdateInboundShipmentResponse {
-    fn from(error: UpdateInboundShipmentError) -> Self {
-        use UpdateErrorInterface as OutError;
-        let error = match error {
-            UpdateInboundShipmentError::InvoiceDoesNotExist => {
-                OutError::RecordNotFound(RecordNotFound {})
-            }
-            UpdateInboundShipmentError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
-            UpdateInboundShipmentError::OtherPartyDoesNotExist => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
-            }
-            UpdateInboundShipmentError::OtherPartyNotASupplier(name) => {
-                OutError::OtherPartyNotASupplier(OtherPartyNotASupplier(NameNode { name }))
-            }
-            UpdateInboundShipmentError::NotAnInboundShipment => {
-                OutError::NotAnInboundShipment(NotAnInboundShipment {})
-            }
-            UpdateInboundShipmentError::NotThisStoreInvoice => {
-                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
-            }
-            UpdateInboundShipmentError::CannotReverseInvoiceStatus => {
-                OutError::CannotReverseInvoiceStatus(CannotReverseInvoiceStatus {})
-            }
-            UpdateInboundShipmentError::CannotEditFinalised => {
-                OutError::CannotEditInvoice(CannotEditInvoice {})
-            }
-            UpdateInboundShipmentError::CannotChangeStatusOfInvoiceOnHold => {
-                OutError::CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold {})
-            }
-        };
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
 
-        UpdateInboundShipmentResponse::Error(UpdateError { error })
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+        }
+        ServiceError::CannotReverseInvoiceStatus => {
+            return Ok(UpdateErrorInterface::CannotReverseInvoiceStatus(
+                CannotReverseInvoiceStatus {},
+            ))
+        }
+        ServiceError::CannotEditFinalised => {
+            return Ok(UpdateErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+
+        ServiceError::CannotChangeStatusOfInvoiceOnHold => {
+            return Ok(UpdateErrorInterface::CannotChangeStatusOfInvoiceOnHold(
+                CannotChangeStatusOfInvoiceOnHold {},
+            ))
+        }
+        ServiceError::OtherPartyNotASupplier(name) => {
+            return Ok(UpdateErrorInterface::OtherPartyNotASupplier(
+                OtherPartyNotASupplier(NameNode { name }),
+            ))
+        }
+        // Standard Graphql Errors
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::OtherPartyDoesNotExist => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
+}
+
+impl UpdateInboundShipmentStatusInput {
+    pub fn to_domain(&self) -> UpdateInboundShipmentStatus {
+        use UpdateInboundShipmentStatus::*;
+        match self {
+            UpdateInboundShipmentStatusInput::Delivered => Delivered,
+            UpdateInboundShipmentStatusInput::Verified => Verified,
+        }
     }
 }

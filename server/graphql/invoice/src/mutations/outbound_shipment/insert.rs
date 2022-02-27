@@ -1,44 +1,24 @@
 use super::{OtherPartyCannotBeThisStoreError, OtherPartyNotACustomerError};
-use crate::invoice_queries::{get_invoice, InvoiceResponse};
 use async_graphql::*;
-
-use graphql_core::simple_generic_errors::{
-    DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordAlreadyExist,
-};
-use graphql_types::types::{InvoiceNode, InvoiceNodeStatus, NameNode};
-use repository::{schema::InvoiceRowStatus, StorageConnectionManager};
-use service::invoice::{
-    insert_outbound_shipment, InsertOutboundShipment, InsertOutboundShipmentError,
+use graphql_core::simple_generic_errors::{DatabaseError, ForeignKeyError, NodeError};
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::ContextExt;
+use graphql_types::types::{InvoiceNode, NameNode};
+use service::invoice::outbound_shipment::{
+    InsertOutboundShipment as ServiceInput, InsertOutboundShipmentError as ServiceError,
 };
 
 #[derive(InputObject)]
-pub struct InsertOutboundShipmentInput {
+#[graphql(name = "InsertOutboundShipmentInput")]
+pub struct InsertInput {
     /// The new invoice id provided by the client
     pub id: String,
     /// The other party must be an customer of the current store
     other_party_id: String,
-    status: Option<InvoiceNodeStatus>,
     on_hold: Option<bool>,
     comment: Option<String>,
     their_reference: Option<String>,
     colour: Option<String>,
-}
-
-impl From<InsertOutboundShipmentInput> for InsertOutboundShipment {
-    fn from(input: InsertOutboundShipmentInput) -> Self {
-        InsertOutboundShipment {
-            id: input.id,
-            other_party_id: input.other_party_id,
-            status: input
-                .status
-                .map(|s| s.to_domain())
-                .unwrap_or(InvoiceRowStatus::New),
-            on_hold: input.on_hold,
-            comment: input.comment,
-            their_reference: input.their_reference,
-            colour: input.colour,
-        }
-    }
 }
 
 #[derive(SimpleObject)]
@@ -48,66 +28,77 @@ pub struct InsertError {
 }
 
 #[derive(Union)]
-pub enum InsertOutboundShipmentResponse {
+#[graphql(name = "InsertOutboundShipmentResponse")]
+pub enum InsertResponse {
     Error(InsertError),
     NodeError(NodeError),
     Response(InvoiceNode),
 }
 
-pub fn get_insert_outbound_shipment_response(
-    connection_manager: &StorageConnectionManager,
-    store_id: &str,
-    input: InsertOutboundShipmentInput,
-) -> InsertOutboundShipmentResponse {
-    use InsertOutboundShipmentResponse::*;
-    let connection = match connection_manager.connection() {
-        Ok(con) => con,
-        Err(err) => {
-            return InsertOutboundShipmentResponse::Error(InsertError {
-                error: InsertErrorInterface::DatabaseError(DatabaseError(err)),
-            })
-        }
+pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let response = match service_provider.invoice_service.insert_outbound_shipment(
+        &service_context,
+        store_id,
+        input.to_domain(),
+    ) {
+        Ok(requisition) => InsertResponse::Response(InvoiceNode::from_domain(requisition)),
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
     };
-    match insert_outbound_shipment(&connection, store_id, input.into()) {
-        Ok(id) => match get_invoice(connection_manager, None, id) {
-            InvoiceResponse::Response(node) => Response(node),
-            InvoiceResponse::Error(err) => NodeError(err),
-        },
-        Err(error) => error.into(),
+
+    Ok(response)
+}
+
+impl InsertInput {
+    fn to_domain(self) -> ServiceInput {
+        let InsertInput {
+            id,
+            other_party_id,
+            on_hold,
+            comment,
+            their_reference,
+            colour,
+        }: InsertInput = self;
+
+        ServiceInput {
+            id,
+            other_party_id,
+            on_hold,
+            comment,
+            their_reference,
+            colour,
+        }
     }
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
-    InvoiceAlreadyExists(RecordAlreadyExist),
-    ForeignKeyError(ForeignKeyError),
-    OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError),
     OtherPartyNotACustomer(OtherPartyNotACustomerError),
-    DatabaseError(DatabaseError),
 }
 
-impl From<InsertOutboundShipmentError> for InsertOutboundShipmentResponse {
-    fn from(error: InsertOutboundShipmentError) -> Self {
-        use InsertErrorInterface as OutError;
-        let error = match error {
-            InsertOutboundShipmentError::OtherPartyCannotBeThisStore => {
-                OutError::OtherPartyCannotBeThisStore(OtherPartyCannotBeThisStoreError {})
-            }
-            InsertOutboundShipmentError::OtherPartyIdNotFound(_) => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::OtherPartyId))
-            }
-            InsertOutboundShipmentError::OtherPartyNotACustomer(name) => {
-                OutError::OtherPartyNotACustomer(OtherPartyNotACustomerError(NameNode { name }))
-            }
-            InsertOutboundShipmentError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
-            InsertOutboundShipmentError::InvoiceAlreadyExists => {
-                OutError::InvoiceAlreadyExists(RecordAlreadyExist {})
-            }
-        };
+fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
 
-        InsertOutboundShipmentResponse::Error(InsertError { error })
-    }
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::OtherPartyNotACustomer(name) => {
+            return Ok(InsertErrorInterface::OtherPartyNotACustomer(
+                OtherPartyNotACustomerError(NameNode { name }),
+            ))
+        }
+        // Standard Graphql Errors
+        ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::OtherPartyCannotBeThisStore => BadUserInput(formatted_error),
+        ServiceError::OtherPartyIdNotFound(_) => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }

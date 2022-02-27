@@ -1,28 +1,42 @@
+use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
 use repository::schema::InvoiceStatsRow;
 use repository::EqualFilter;
-use repository::{Invoice, InvoiceFilter, InvoiceLineRepository, InvoiceQueryRepository};
+use repository::{Invoice, InvoiceFilter, InvoiceLineRepository};
 use repository::{RepositoryError, StorageConnectionManager};
-use service::invoice::get_invoices;
+use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
 use crate::standard_graphql_error::StandardGraphqlError;
 
-pub struct InvoiceQueryLoader {
-    pub connection_manager: StorageConnectionManager,
+pub struct InvoiceByIdLoader {
+    pub service_provider: Data<ServiceProvider>,
 }
 
 #[async_trait::async_trait]
-impl Loader<String> for InvoiceQueryLoader {
+impl Loader<String> for InvoiceByIdLoader {
     type Value = Invoice;
-    type Error = RepositoryError;
+    type Error = async_graphql::Error;
 
-    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = InvoiceQueryRepository::new(&connection);
-        Ok(repo
-            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_any(keys.to_owned())))?
+    async fn load(
+        &self,
+        invoice_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let service_context = self.service_provider.context()?;
+
+        let filter = InvoiceFilter::new().id(EqualFilter::equal_any(
+            invoice_ids.iter().map(String::clone).collect(),
+        ));
+
+        let invoices = self
+            .service_provider
+            .invoice_service
+            .get_invoices(&service_context, None, None, Some(filter), None)
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(invoices
+            .rows
             .into_iter()
             .map(|invoice| (invoice.invoice_row.id.clone(), invoice))
             .collect())
@@ -57,7 +71,7 @@ impl Loader<String> for InvoiceStatsLoader {
 }
 
 pub struct InvoiceByRequisitionIdLoader {
-    pub connection_manager: StorageConnectionManager,
+    pub service_provider: Data<ServiceProvider>,
 }
 
 #[async_trait::async_trait]
@@ -69,11 +83,16 @@ impl Loader<String> for InvoiceByRequisitionIdLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let service_context = self.service_provider.context()?;
+
         let filter = InvoiceFilter::new().requisition_id(EqualFilter::equal_any(
             requisition_ids.iter().map(String::clone).collect(),
         ));
 
-        let invoices = get_invoices(&self.connection_manager, None, None, Some(filter), None)
+        let invoices = self
+            .service_provider
+            .invoice_service
+            .get_invoices(&service_context, None, None, Some(filter), None)
             .map_err(StandardGraphqlError::from_list_error)?;
 
         let mut result: HashMap<String, Vec<Invoice>> = HashMap::new();

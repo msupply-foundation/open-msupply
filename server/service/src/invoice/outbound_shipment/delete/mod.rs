@@ -1,25 +1,32 @@
-use repository::{
-    InvoiceLine, InvoiceRepository, RepositoryError, StorageConnectionManager, TransactionError,
-};
+use repository::{InvoiceLine, InvoiceRepository, RepositoryError, TransactionError};
 
 pub mod validate;
 
 use validate::validate;
 
-use crate::WithDBError;
+use crate::{service_provider::ServiceContext, WithDBError};
+
+type OutError = DeleteOutboundShipmentError;
 
 pub fn delete_outbound_shipment(
-    connection_manager: &StorageConnectionManager,
-    id: String,
+    ctx: &ServiceContext,
+    _store_id: &str,
+    id: &str,
 ) -> Result<String, DeleteOutboundShipmentError> {
-    let connection = connection_manager.connection()?;
-    connection.transaction_sync(|connection| {
-        validate(&id, &connection)?;
-        InvoiceRepository::new(&connection).delete(&id)?;
-        Ok(())
-    })?;
-    Ok(id)
+    let invoice_id = ctx
+        .connection
+        .transaction_sync(|connection| {
+            validate(&id, &connection)?;
+            match InvoiceRepository::new(&connection).delete(&id) {
+                Ok(_) => Ok(id),
+                Err(error) => Err(OutError::DatabaseError(error)),
+            }
+        })
+        .map_err(|error| error.to_inner_error())?;
+    Ok(invoice_id.to_string())
 }
+
+#[derive(Debug)]
 
 pub enum DeleteOutboundShipmentError {
     InvoiceDoesNotExist,

@@ -1,8 +1,8 @@
-use repository::Name;
 use repository::{
     schema::InvoiceRowStatus, InvoiceLine, InvoiceRepository, RepositoryError,
-    StockLineRowRepository, StorageConnection, TransactionError,
+    StockLineRowRepository, TransactionError,
 };
+use repository::{Invoice, Name};
 
 pub mod generate;
 pub mod validate;
@@ -10,6 +10,8 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use crate::invoice::query::get_invoice;
+use crate::service_provider::ServiceContext;
 use crate::sync_processor::{process_records, Record};
 
 pub enum UpdateOutboundShipmentStatus {
@@ -42,34 +44,47 @@ pub enum UpdateOutboundShipmentError {
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
+    UpdatedInvoicenDoesNotExist,
 }
 
-pub fn update_outbound_shipment(
-    connection: &StorageConnection,
-    patch: UpdateOutboundShipment,
-) -> Result<String, UpdateOutboundShipmentError> {
-    let update_invoice = connection.transaction_sync(|connection| {
-        let (invoice, other_party_option) = validate(&patch, &connection)?;
-        let (stock_lines_option, update_invoice) =
-            generate(invoice, other_party_option, patch, &connection)?;
+type OutError = UpdateOutboundShipmentError;
 
-        InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
-        if let Some(stock_lines) = stock_lines_option {
-            let repository = StockLineRowRepository::new(&connection);
-            for stock_line in stock_lines {
-                repository.upsert_one(&stock_line)?;
+pub fn update_outbound_shipment(
+    ctx: &ServiceContext,
+    _store_id: &str,
+    patch: UpdateOutboundShipment,
+) -> Result<Invoice, OutError> {
+    let invoice = ctx
+        .connection
+        .transaction_sync(|connection| {
+            let (invoice, other_party_option) = validate(&patch, &connection)?;
+            let (stock_lines_option, update_invoice) =
+                generate(invoice, other_party_option, patch, &connection)?;
+
+            InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
+            if let Some(stock_lines) = stock_lines_option {
+                let repository = StockLineRowRepository::new(&connection);
+                for stock_line in stock_lines {
+                    repository.upsert_one(&stock_line)?;
+                }
             }
-        }
-        Ok(update_invoice)
-    })?;
+
+            get_invoice(ctx, None, &update_invoice.id)
+                .map_err(|error| OutError::DatabaseError(error))?
+                .ok_or(OutError::UpdatedInvoicenDoesNotExist)
+        })
+        .map_err(|error| error.to_inner_error())?;
 
     // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
     println!(
         "{:#?}",
-        process_records(connection, vec![Record::InvoiceRow(update_invoice.clone())],)
+        process_records(
+            &ctx.connection,
+            vec![Record::InvoiceRow(invoice.invoice_row.clone())],
+        )
     );
 
-    Ok(update_invoice.id)
+    Ok(invoice)
 }
 
 impl From<RepositoryError> for UpdateOutboundShipmentError {
