@@ -10,9 +10,6 @@ use std::sync::RwLock;
 use actix_web::web::Data;
 use serde_json::Value;
 
-// mod inbound_shipment_line_delete;
-// mod inbound_shipment_line_insert;
-// mod inbound_shipment_line_update;
 mod item_stats;
 mod items;
 mod location_delete;
@@ -21,9 +18,6 @@ mod location_update;
 mod locations;
 mod master_lists;
 mod names;
-// mod outbound_shipment_line_delete;
-// mod outbound_shipment_line_insert;
-// mod outbound_shipment_line_update;
 mod pagination;
 mod requisition;
 mod stocktake_batch;
@@ -34,7 +28,6 @@ mod stocktake_line_insert;
 mod stocktake_line_update;
 mod stocktake_query;
 mod stocktake_update;
-mod unallocated_line;
 
 async fn run_gql_query(
     settings: &Settings,

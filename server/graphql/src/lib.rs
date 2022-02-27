@@ -11,6 +11,7 @@ use async_graphql_actix_web::{Request, Response};
 use graphql_core::auth_data_from_request;
 use graphql_core::loader::LoaderRegistry;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
+use graphql_invoice_line::InvoiceLineMutations;
 use mutations::Mutations;
 use queries::Queries;
 use repository::StorageConnectionManager;
@@ -21,7 +22,11 @@ use service::service_provider::ServiceProvider;
 pub struct FullQuery(pub Queries, pub InvoiceQueries);
 
 #[derive(MergedObject, Default)]
-pub struct FullMutation(pub Mutations, pub InvoiceMutations);
+pub struct FullMutation(
+    pub Mutations,
+    pub InvoiceMutations,
+    pub InvoiceLineMutations,
+);
 
 pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
 type Builder = SchemaBuilder<FullQuery, FullMutation, EmptySubscription>;
@@ -29,7 +34,7 @@ type Builder = SchemaBuilder<FullQuery, FullMutation, EmptySubscription>;
 pub fn build_schema() -> Builder {
     Schema::build(
         FullQuery(Queries, InvoiceQueries),
-        FullMutation(Mutations, InvoiceMutations),
+        FullMutation(Mutations, InvoiceMutations, InvoiceLineMutations),
         EmptySubscription,
     )
 }
