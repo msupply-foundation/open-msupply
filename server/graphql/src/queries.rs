@@ -1,14 +1,10 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::ContextExt;
 use graphql_general_queries::store::*;
 use graphql_general_queries::*;
 use graphql_requisition::requisition_queries::*;
 use graphql_stocktake::stocktake_queries::*;
 use graphql_types::types::*;
-use repository::LocationFilter;
-use repository::PaginationOption;
 
 #[derive(Default)]
 pub struct Queries;
@@ -64,36 +60,6 @@ impl Queries {
         #[graphql(desc = "Filter option")] filter: Option<StoreFilterInput>,
     ) -> Result<StoresResponse> {
         stores(ctx, page, filter)
-    }
-
-    /// Query omSupply "locations" entries
-    pub async fn locations(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<LocationFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<LocationSortInput>>,
-    ) -> Result<LocationsResponse> {
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context()?;
-
-        let locations = service_provider
-            .location_service
-            .get_locations(
-                &service_context,
-                page.map(PaginationOption::from),
-                filter.map(LocationFilter::from),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.map(|mut sort_list| sort_list.pop())
-                    .flatten()
-                    .map(|sort| sort.to_domain()),
-            )
-            .map_err(StandardGraphqlError::from_list_error)?;
-
-        Ok(LocationsResponse::Response(LocationConnector::from_domain(
-            locations,
-        )))
     }
 
     /// Query omSupply "master_lists" entries

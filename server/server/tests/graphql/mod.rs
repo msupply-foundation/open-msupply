@@ -12,10 +12,6 @@ use serde_json::Value;
 
 mod item_stats;
 mod items;
-mod location_delete;
-mod location_insert;
-mod location_update;
-mod locations;
 mod master_lists;
 mod names;
 mod pagination;
