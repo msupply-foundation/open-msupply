@@ -8,6 +8,7 @@ use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::MergedObject;
 use async_graphql::{EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{Request, Response};
+use graphql_batch_mutations::BatchMutations;
 use graphql_core::auth_data_from_request;
 use graphql_core::loader::LoaderRegistry;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
@@ -37,6 +38,7 @@ pub struct FullMutation(
     pub LocationMutations,
     pub StocktakeMutations,
     pub StocktakeLineMutations,
+    pub BatchMutations,
 );
 
 pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
@@ -52,6 +54,7 @@ pub fn build_schema() -> Builder {
             LocationMutations,
             StocktakeMutations,
             StocktakeLineMutations,
+            BatchMutations,
         ),
         EmptySubscription,
     )
