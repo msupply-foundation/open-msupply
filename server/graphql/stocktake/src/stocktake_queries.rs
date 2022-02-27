@@ -9,7 +9,7 @@ use graphql_core::simple_generic_errors::{
 use graphql_core::standard_graphql_error::{
     list_error_to_gql_err, validate_auth, StandardGraphqlError,
 };
-use graphql_core::{ContextExt, map_filter};
+use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeFilter;
 use repository::*;
