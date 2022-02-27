@@ -1,4 +1,4 @@
-use repository::{Invoice, Name};
+use repository::{Invoice, InvoiceRepository, Name};
 use repository::{RepositoryError, TransactionError};
 
 pub mod generate;
@@ -39,9 +39,12 @@ pub fn insert_outbound_shipment(
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
-        .transaction_sync(|invoice| {
-            let other_party = validate(&input, invoice)?;
-            let new_invoice = generate(invoice, store_id, input, other_party)?;
+        .transaction_sync(|connection| {
+            let other_party = validate(&input, connection)?;
+            let new_invoice = generate(connection, store_id, input, other_party)?;
+
+            InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
+
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)

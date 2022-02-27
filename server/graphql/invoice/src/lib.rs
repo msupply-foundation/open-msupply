@@ -1,9 +1,15 @@
-mod invoice_queries;
-use self::invoice_queries::*;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::*;
-pub mod mutations;
+
+mod invoice_queries;
+use self::invoice_queries::*;
+
+mod mutations;
+use self::mutations::{inbound_shipment, outbound_shipment};
+
+#[cfg(test)]
+mod query_tests;
 
 #[derive(Default, Clone)]
 pub struct InvoiceQueries;
@@ -39,5 +45,65 @@ impl InvoiceQueries {
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
         get_invoices(ctx, &store_id, page, filter, sort)
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct InvoiceMutations;
+
+#[Object]
+impl InvoiceMutations {
+    async fn insert_outbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_shipment::InsertInput,
+    ) -> Result<outbound_shipment::InsertResponse> {
+        outbound_shipment::insert(ctx, &store_id, input)
+    }
+
+    async fn update_outbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_shipment::UpdateInput,
+    ) -> Result<outbound_shipment::UpdateResponse> {
+        outbound_shipment::update(ctx, &store_id, input)
+    }
+
+    async fn delete_outbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<outbound_shipment::DeleteResponse> {
+        outbound_shipment::delete(ctx, &store_id, &id)
+    }
+
+    async fn insert_inbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::InsertInput,
+    ) -> Result<inbound_shipment::InsertResponse> {
+        inbound_shipment::insert(ctx, &store_id, input)
+    }
+
+    async fn update_inbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::UpdateInput,
+    ) -> Result<inbound_shipment::UpdateResponse> {
+        inbound_shipment::update(ctx, &store_id, input)
+    }
+
+    async fn delete_inbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::DeleteInput,
+    ) -> Result<inbound_shipment::DeleteResponse> {
+        inbound_shipment::delete(ctx, &store_id, input)
     }
 }

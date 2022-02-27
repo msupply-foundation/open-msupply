@@ -1,17 +1,21 @@
-#![allow(where_clauses_object_safety)]
-
-mod graphql {
-    use crate::graphql::{assert_graphql_query, common::get_invoice_lines_inline};
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
     use chrono::{DateTime, Utc};
+    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::{assert_graphql_query, get_invoice_lines_inline};
     use repository::EqualFilter;
     use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceQueryRepository};
     use serde_json::json;
-    use server::test_utils::setup_all;
+
+    use crate::InvoiceQueries;
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_pricing() {
-        let (_, connection, _, settings) = setup_all(
-            "omsupply-database-gql-invoices-query-pricing",
+        let (_, connection, _, settings) = setup_graphl_test(
+            InvoiceQueries,
+            EmptyMutation,
+            "test_graphql_invoices_query_pricing",
             MockDataInserts::all(),
         )
         .await;
@@ -61,8 +65,10 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_filters() {
-        let (_, connection, _, settings) = setup_all(
-            "omsupply-database-gql-invoices-query-filters",
+        let (_, connection, _, settings) = setup_graphl_test(
+            InvoiceQueries,
+            EmptyMutation,
+            "test_graphql_invoices_query_filters",
             MockDataInserts::all(),
         )
         .await;
@@ -178,8 +184,10 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_sort() {
-        let (_, connection, _, settings) = setup_all(
-            "omsupply-database-gql-invoices-query-sort",
+        let (_, connection, _, settings) = setup_graphl_test(
+            InvoiceQueries,
+            EmptyMutation,
+            "test_graphql_invoices_query_sort",
             MockDataInserts::all(),
         )
         .await;

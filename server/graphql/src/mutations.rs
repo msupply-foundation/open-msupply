@@ -2,13 +2,14 @@ use async_graphql::*;
 use graphql_batch_mutations::batch_stocktake::*;
 
 use graphql_general_mutations::*;
-use graphql_invoice::mutations::{inbound_shipment, outbound_shipment};
 use graphql_invoice_line::mutations::{inbound_shipment_line, outbound_shipment_line};
 use graphql_location::mutations::*;
 use graphql_requisition::mutations::{request_requisition, response_requisition};
 use graphql_requisition_line::mutations::{request_requisition_line, response_requisition_line};
 use graphql_stocktake::mutations::{delete::*, insert::*, update::*};
 use graphql_stocktake_line::mutations::{delete::*, insert::*, update::*};
+
+#[derive(Default)]
 pub struct Mutations;
 
 #[Object]
@@ -46,33 +47,6 @@ impl Mutations {
         input: DeleteLocationInput,
     ) -> DeleteLocationResponse {
         delete_location(ctx, &store_id, input)
-    }
-
-    async fn insert_outbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: outbound_shipment::InsertInput,
-    ) -> Result<outbound_shipment::InsertResponse> {
-        outbound_shipment::insert(ctx, &store_id, input)
-    }
-
-    async fn update_outbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: outbound_shipment::UpdateInput,
-    ) -> Result<outbound_shipment::UpdateResponse> {
-        outbound_shipment::update(ctx, &store_id, input)
-    }
-
-    async fn delete_outbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        id: String,
-    ) -> Result<outbound_shipment::DeleteResponse> {
-        outbound_shipment::delete(ctx, &store_id, &id)
     }
 
     async fn insert_outbound_shipment_line(
@@ -154,33 +128,6 @@ impl Mutations {
         input: outbound_shipment_line::unallocated_line::DeleteInput,
     ) -> Result<outbound_shipment_line::unallocated_line::DeleteResponse> {
         outbound_shipment_line::unallocated_line::delete(ctx, &store_id, input)
-    }
-
-    async fn insert_inbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: inbound_shipment::InsertInput,
-    ) -> Result<inbound_shipment::InsertResponse> {
-        inbound_shipment::insert(ctx, &store_id, input)
-    }
-
-    async fn update_inbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: inbound_shipment::UpdateInput,
-    ) -> Result<inbound_shipment::UpdateResponse> {
-        inbound_shipment::update(ctx, &store_id, input)
-    }
-
-    async fn delete_inbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: inbound_shipment::DeleteInput,
-    ) -> Result<inbound_shipment::DeleteResponse> {
-        inbound_shipment::delete(ctx, &store_id, input)
     }
 
     async fn insert_inbound_shipment_line(
