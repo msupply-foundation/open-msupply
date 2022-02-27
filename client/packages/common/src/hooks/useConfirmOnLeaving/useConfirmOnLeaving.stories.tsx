@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Grid } from '@mui/material';
 import { Story } from '@storybook/react';
-import { NavigationPrompt } from './NavigationPrompt';
-import { ToggleButton } from '../../buttons';
+import { useConfirmOnLeaving } from './useConfirmOnLeaving';
+import { ToggleButton } from '@common/components';
 
 export default {
-  title: 'Navigation/NavigationPrompt',
-  component: NavigationPrompt,
+  title: 'Hooks/useConfirmOnLeaving',
+  component: useConfirmOnLeaving,
 };
 
 const Template: Story = () => {
   const [isUnsaved, setIsUnsaved] = useState(false);
+  useConfirmOnLeaving(isUnsaved);
 
   return (
     <Grid>
@@ -20,7 +21,6 @@ const Template: Story = () => {
         label="Prompt if leaving this page"
         value="dirty"
       />
-      <NavigationPrompt isUnsaved={isUnsaved} />
     </Grid>
   );
 };

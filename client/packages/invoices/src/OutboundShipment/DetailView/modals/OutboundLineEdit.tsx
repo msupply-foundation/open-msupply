@@ -9,7 +9,7 @@ import {
   useTranslation,
   ModalMode,
   useBufferState,
-  NavigationPrompt,
+  useDirtyCheck,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
@@ -52,11 +52,11 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     draftOutboundLines,
     updateQuantity,
     setDraftOutboundLines,
-    isDirty,
     isLoading,
   } = useDraftOutboundLines(currentItem);
   const packSizeController = usePackSizeController(draftOutboundLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
+  const { markDirty } = useDirtyCheck();
 
   const onNext = () => {
     setCurrentItem(next);
@@ -68,6 +68,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       status,
       draftOutboundLines
     )(newVal, packSize);
+    markDirty(true);
     setDraftOutboundLines(newAllocateQuantities ?? draftOutboundLines);
   };
 
@@ -101,7 +102,6 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       width={900}
     >
       <Grid container gap={0.5}>
-        <NavigationPrompt isUnsaved={isDirty} />
         <OutboundLineEditForm
           disabled={mode === ModalMode.Update || isDisabled}
           packSizeController={packSizeController}
