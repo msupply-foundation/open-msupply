@@ -5,6 +5,7 @@ import {
   RequisitionNodeType,
   UpdateResponseRequisitionInput,
   UpdateResponseRequisitionStatusInput,
+  UpdateResponseRequisitionLineInput,
 } from '@openmsupply-client/common';
 
 import {
@@ -13,21 +14,30 @@ import {
   ResponseRequisitionRowFragment,
   ResponseRequisitionsQuery,
 } from './operations.generated';
+import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
 
 export type ResponseRequisitionApi = ReturnType<typeof getSdk>;
 
-export const requisitionToInput = (
-  requisition: Partial<ResponseRequisitionFragment> & { id: string }
-): UpdateResponseRequisitionInput => {
-  return {
-    id: requisition.id,
-    comment: requisition.comment,
-    theirReference: requisition.theirReference,
-    colour: requisition.colour,
-    status: requisition.status
-      ? UpdateResponseRequisitionStatusInput.Finalised
-      : undefined,
-  };
+const responseParser = {
+  toUpdateInput: (
+    requisition: Partial<ResponseRequisitionFragment> & { id: string }
+  ): UpdateResponseRequisitionInput => {
+    return {
+      id: requisition.id,
+      comment: requisition.comment,
+      theirReference: requisition.theirReference,
+      colour: requisition.colour,
+      status: requisition.status
+        ? UpdateResponseRequisitionStatusInput.Finalised
+        : undefined,
+    };
+  },
+  toUpdateLineInput: (
+    patch: DraftResponseLine
+  ): UpdateResponseRequisitionLineInput => ({
+    id: patch.id,
+    supplyQuantity: patch.supplyQuantity,
+  }),
 };
 
 export const ResponseRequisitionQueries = {
@@ -86,11 +96,8 @@ export const ResponseRequisitionQueries = {
     async (
       patch: Partial<ResponseRequisitionFragment> & { id: string }
     ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
-      const input = requisitionToInput(patch);
-      const result = await api.updateResponseRequisition({
-        storeId,
-        input,
-      });
+      const input = responseParser.toUpdateInput(patch);
+      const result = await api.updateResponseRequisition({ storeId, input });
 
       const { updateResponseRequisition } = result;
 
@@ -99,5 +106,20 @@ export const ResponseRequisitionQueries = {
       }
 
       throw new Error('Unable to update requisition');
+    },
+  updateLine:
+    (api: ResponseRequisitionApi, storeId: string) =>
+    async (patch: DraftResponseLine) => {
+      const result = await api.updateResponseRequisitionLine({
+        storeId,
+        input: responseParser.toUpdateLineInput(patch),
+      });
+
+      if (
+        result.updateResponseRequisitionLine.__typename ===
+        'RequisitionLineNode'
+      ) {
+        return result.updateResponseRequisitionLine;
+      } else throw new Error('Could not update response line');
     },
 };

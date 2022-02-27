@@ -41,6 +41,7 @@ export type InsertOutboundShipmentMutation = { __typename: 'Mutations', insertOu
 
 export type UpdateOutboundShipmentMutationVariables = Types.Exact<{
   input: Types.UpdateOutboundShipmentInput;
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -71,6 +72,7 @@ export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
 export type DeleteOutboundShipmentLinesMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type InvoiceCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
 }>;
 
@@ -337,8 +339,8 @@ export const InsertOutboundShipmentDocument = gql`
 }
     `;
 export const UpdateOutboundShipmentDocument = gql`
-    mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
-  updateOutboundShipment(input: $input) {
+    mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!, $storeId: String!) {
+  updateOutboundShipment(input: $input, storeId: $storeId) {
     ... on InvoiceNode {
       __typename
       id
@@ -471,8 +473,8 @@ export const DeleteOutboundShipmentLinesDocument = gql`
 }
     `;
 export const InvoiceCountsDocument = gql`
-    query invoiceCounts($timezoneOffset: Int) {
-  invoiceCounts(timezoneOffset: $timezoneOffset) {
+    query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
+  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
     outbound {
       created {
         today
@@ -512,7 +514,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentLinesMutation>(DeleteOutboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipmentLines');
     },
-    invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
+    invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
     }
   };
@@ -575,7 +577,7 @@ export const mockInsertOutboundShipmentMutation = (resolver: ResponseResolver<Gr
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockUpdateOutboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
+ *   const { input, storeId } = req.variables;
  *   return res(
  *     ctx.data({ updateOutboundShipment })
  *   )
@@ -643,7 +645,7 @@ export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolv
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { timezoneOffset } = req.variables;
+ *   const { storeId, timezoneOffset } = req.variables;
  *   return res(
  *     ctx.data({ invoiceCounts })
  *   )

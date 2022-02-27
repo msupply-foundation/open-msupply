@@ -97,7 +97,7 @@ export const useLocationList = (): UseQueryResult<
 > &
   QueryParamsState<Location> => {
   const { api } = useOmSupplyApi();
-
+  const { storeId } = useAuthState();
   const queryParams = useQueryParams<Location>({
     initialSortBy: { key: 'name' },
   });
@@ -105,6 +105,7 @@ export const useLocationList = (): UseQueryResult<
   const result = useQuery(['location', 'list', queryParams], async () => {
     const response = await api.locations({
       sort: [toSortInput(queryParams.sortBy)],
+      storeId,
     });
     const locations = response.locations;
     return locations;

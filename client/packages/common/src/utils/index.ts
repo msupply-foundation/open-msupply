@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
 import { isEqual } from 'lodash';
 
+export * from './quantities';
 export * from './formatters';
 export * from './testing';
 export * from './debounce';

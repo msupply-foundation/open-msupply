@@ -1,3 +1,4 @@
+import { useQueryClient } from 'react-query';
 import { useMemo } from 'react';
 import {
   useHostContext,
@@ -14,6 +15,7 @@ import {
   usePagination,
   getDataSorter,
   useQueryParams,
+  useMutation,
 } from '@openmsupply-client/common';
 import { ResponseRequisitionQueries } from './api';
 import {
@@ -54,7 +56,7 @@ export const useResponseRequisition =
     const { requisitionNumber = '' } = useParams();
     const { store } = useHostContext();
     const api = useResponseRequisitionApi();
-    return useQuery(['requisition', requisitionNumber], () =>
+    return useQuery(['requisition', store.id, requisitionNumber], () =>
       ResponseRequisitionQueries.get.byNumber(api)(
         Number(requisitionNumber),
         store.id
@@ -72,7 +74,7 @@ export const useResponseRequisitionFields = <
   const { requisitionNumber = '' } = useParams();
   const api = useResponseRequisitionApi();
   return useFieldsSelector(
-    ['requisition', requisitionNumber],
+    ['requisition', store.id, requisitionNumber],
     () =>
       ResponseRequisitionQueries.get.byNumber(api)(
         Number(requisitionNumber),
@@ -123,4 +125,20 @@ export const useResponseRequisitionLines =
 export const useIsResponseRequisitionDisabled = (): boolean => {
   const { status } = useResponseRequisitionFields('status');
   return status === RequisitionNodeStatus.Finalised;
+};
+
+export const useSaveResponseLines = () => {
+  const { requisitionNumber = '' } = useParams();
+  const { store } = useHostContext();
+  const queryClient = useQueryClient();
+  const api = useResponseRequisitionApi();
+
+  return useMutation(ResponseRequisitionQueries.updateLine(api, store.id), {
+    onSuccess: () =>
+      queryClient.invalidateQueries([
+        'requisition',
+        store.id,
+        requisitionNumber,
+      ]),
+  });
 };

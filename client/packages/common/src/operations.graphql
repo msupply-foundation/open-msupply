@@ -7,6 +7,7 @@ query itemsWithStockLines(
   $storeId: String!
 ) {
   items(
+    storeId: $storeId
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
@@ -48,6 +49,7 @@ query itemsWithStockLines(
 }
 
 query names(
+  $storeId: String!
   $key: NameSortFieldInput!
   $desc: Boolean
   $first: Int
@@ -55,6 +57,7 @@ query names(
   $filter: NameFilterInput
 ) {
   names(
+    storeId: $storeId
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
@@ -77,8 +80,8 @@ query names(
   }
 }
 
-query locations($sort: [LocationSortInput!]) {
-  locations(sort: $sort) {
+query locations($storeId: String!, $sort: [LocationSortInput!]) {
+  locations(storeId: $storeId, sort: $sort) {
     __typename
     ... on LocationConnector {
       __typename

@@ -1,4 +1,3 @@
-import { DraftRequestRequisitionLine } from './../DetailView/RequestLineEdit/RequestLineEdit';
 import {
   FilterBy,
   SortBy,
@@ -13,6 +12,7 @@ import {
   RequestRequisitionFragment,
   RequestRequisitionsQuery,
 } from './operations.generated';
+import { DraftRequestRequisitionLine } from './../DetailView/RequestLineEdit/hooks';
 
 export type RequestRequisitionApi = ReturnType<typeof getSdk>;
 
