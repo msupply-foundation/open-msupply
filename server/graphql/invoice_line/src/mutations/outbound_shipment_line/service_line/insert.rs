@@ -1,16 +1,12 @@
 use async_graphql::*;
 
-use super::NotAServiceItem;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
-    simple_generic_errors::{
-        CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError, InternalError,
-        NodeErrorInterface, NotAnOutboundShipment, RecordAlreadyExist,
-    },
+    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError},
     ContextExt,
 };
-use graphql_types::types::{InvoiceLineNode, InvoiceLineResponse};
-use repository::StorageConnectionManager;
+use graphql_types::types::InvoiceLineNode;
+
 use service::invoice_line::outbound_shipment_service_line::{
     InsertOutboundShipmentServiceLine as ServiceInput,
     InsertOutboundShipmentServiceLineError as ServiceError,

@@ -1,13 +1,11 @@
 use async_graphql::*;
 use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError,
-    InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NotAnOutboundShipment,
-    RecordNotFound,
+    CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound,
 };
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
-use repository::StorageConnectionManager;
+
 use service::invoice_line::outbound_shipment_line::{
     DeleteOutboundShipmentLine as ServiceInput, DeleteOutboundShipmentLineError as ServiceError,
 };

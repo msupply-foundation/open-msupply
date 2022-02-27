@@ -1,8 +1,5 @@
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
-use repository::{
-    InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
-    StorageConnection, TransactionError,
-};
+use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
 mod generate;
 mod validate;

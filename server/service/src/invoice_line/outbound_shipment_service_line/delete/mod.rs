@@ -1,9 +1,7 @@
 use crate::{
     invoice_line::DeleteOutboundShipmentLine, service_provider::ServiceContext, WithDBError,
 };
-use repository::{
-    InvoiceLineRowRepository, RepositoryError, StorageConnectionManager, TransactionError,
-};
+use repository::{InvoiceLineRowRepository, RepositoryError};
 
 mod validate;
 

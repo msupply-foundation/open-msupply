@@ -1,21 +1,17 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError,
-    InvoiceDoesNotBelongToCurrentStore, NodeError, NotAnOutboundShipment, Range, RangeError,
-    RangeField, RecordAlreadyExist,
-};
+use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
-use graphql_types::types::{InvoiceLineNode, InvoiceLineResponse};
-use repository::StorageConnectionManager;
+use graphql_types::types::InvoiceLineNode;
+
 use service::invoice_line::outbound_shipment_line::{
     InsertOutboundShipmentLine as ServiceInput, InsertOutboundShipmentLineError as ServiceError,
 };
 
 use super::{
-    ItemDoesNotMatchStockLine, LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
-    StockLineAlreadyExistsInInvoice, StockLineDoesNotBelongToCurrentStore, StockLineIsOnHold,
+    LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
+    StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 
 #[derive(InputObject)]

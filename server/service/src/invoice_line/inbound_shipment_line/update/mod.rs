@@ -1,9 +1,6 @@
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 use chrono::NaiveDate;
-use repository::{
-    InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
-    StorageConnectionManager, TransactionError,
-};
+use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
 mod generate;
 mod validate;
