@@ -1,10 +1,10 @@
-import { StockRow } from './../types';
 import {
   useAuthState,
   useOmSupplyApi,
   useQuery,
   useQueryParams,
 } from '@openmsupply-client/common';
+import { StockRow } from './../types';
 import { getSdk } from './operations.generated';
 import { getStockQueries } from './api';
 
