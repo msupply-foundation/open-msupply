@@ -1,24 +1,17 @@
 use chrono::NaiveDate;
-use repository::schema::{RemoteSyncBufferRow, StockLineRow};
-
-use serde::{Deserialize, Deserializer};
-
-use crate::sync::translation_central::SyncTranslationError;
-
-use super::{
-    IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation, TRANSLATION_RECORD_ITEM_LINE,
+use repository::{
+    schema::{RemoteSyncBufferRow, StockLineRow},
+    StorageConnection,
 };
 
-fn empty_str_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
-    let s: Option<String> = Option::deserialize(d)?;
-    Ok(s.filter(|s| !s.is_empty()))
-}
+use serde::Deserialize;
 
-fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
-    let s: Option<String> = Option::deserialize(d)?;
-    Ok(s.filter(|s| s != "0000-00-00")
-        .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
-}
+use crate::sync::SyncTranslationError;
+
+use super::{
+    empty_str_as_option, zero_date_as_option, IntegrationRecord, IntegrationUpsertRecord,
+    RemotePullTranslation, TRANSLATION_RECORD_ITEM_LINE,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -45,6 +38,7 @@ pub struct StockLineTranslation {}
 impl RemotePullTranslation for StockLineTranslation {
     fn try_translate_pull(
         &self,
+        _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
     ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_ITEM_LINE;
@@ -57,7 +51,7 @@ impl RemotePullTranslation for StockLineTranslation {
             serde_json::from_str::<LegacyStockLineRow>(&sync_record.data).map_err(|source| {
                 SyncTranslationError {
                     table_name,
-                    source,
+                    source: source.into(),
                     record: sync_record.data.clone(),
                 }
             })?;
@@ -79,27 +73,5 @@ impl RemotePullTranslation for StockLineTranslation {
                 note: data.note,
             }),
         )))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::sync::translation_remote::{
-        stock_line::StockLineTranslation, test_data::stock_line::get_test_stock_line_records,
-        RemotePullTranslation,
-    };
-
-    #[test]
-    fn test_stock_line_translation() {
-        for record in get_test_stock_line_records() {
-            assert_eq!(
-                StockLineTranslation {}
-                    .try_translate_pull(&record.remote_sync_buffer_row)
-                    .unwrap(),
-                record.translated_record,
-                "{}",
-                record.identifier
-            );
-        }
     }
 }

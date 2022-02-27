@@ -59,7 +59,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: InsertOutboundShipmentUnallocatedLineInput!) {
-            insertOutboundShipmentUnallocatedLine(input: $input) {
+            insertOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
               ... on InsertOutboundShipmentUnallocatedLineError {
                 error {
                   __typename
@@ -116,7 +116,7 @@ mod graphql {
         // ForeignKeyError (invoice does not exists)
         let mutation = r#"
         mutation ($input: InsertOutboundShipmentUnallocatedLineInput!) {
-            insertOutboundShipmentUnallocatedLine(input: $input) {
+            insertOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 ... on InsertOutboundShipmentUnallocatedLineError {
                     error {
                     __typename
@@ -159,7 +159,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: InsertOutboundShipmentUnallocatedLineInput!) {
-            insertOutboundShipmentUnallocatedLine(input: $input) {
+            insertOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 __typename
             }
           }
@@ -228,7 +228,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: InsertOutboundShipmentUnallocatedLineInput!) {
-            insertOutboundShipmentUnallocatedLine(input: $input) {
+            insertOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 ... on InvoiceLineNode {
                     id
                     invoiceId

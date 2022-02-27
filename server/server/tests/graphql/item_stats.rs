@@ -12,7 +12,7 @@ mod graphql {
 
         let query = r#"
         query($filter: ItemFilterInput) {
-          items(filter: $filter) {
+          items(filter: $filter, storeId: \"store_a\") {
             ... on ItemConnector {
               nodes {
                 id

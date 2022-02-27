@@ -51,7 +51,7 @@ mod graphql {
 
         let query = r#"
         query {
-            locations {
+            locations(storeId: \"store_a\") {
               ... on LocationConnector {
                 nodes {
                   id
@@ -156,7 +156,7 @@ mod graphql {
             $sort: [LocationSortInput]
             $filter: LocationFilterInput
           ) {
-            locations(sort: $sort, filter: $filter) {
+            locations(sort: $sort, filter: $filter, storeId: \"store_a\") {
               __typename
             }
           }

@@ -9,7 +9,7 @@ mod graphql {
         let (_, _, _, settings) = setup_all("test_items_query", MockDataInserts::all()).await;
 
         let query = r#"query items($itemFilter: ItemFilterInput!) {
-            items(filter: $itemFilter) {
+            items(filter: $itemFilter, storeId: \"store_a\") {
                 ... on ItemConnector {
                   nodes {
                       id

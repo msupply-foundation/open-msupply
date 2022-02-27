@@ -10,7 +10,15 @@ pub enum ChangelogAction {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
+    Number,
+    StockLine,
+    NameStoreJoin,
+    Invoice,
+    InvoiceLine,
     Stocktake,
+    StocktakeLine,
+    Requisition,
+    RequisitionLine,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq)]
