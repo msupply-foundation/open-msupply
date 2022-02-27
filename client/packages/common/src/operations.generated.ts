@@ -36,15 +36,6 @@ export type DeleteLocationMutationVariables = Types.Exact<{
 
 export type DeleteLocationMutation = { __typename: 'Mutations', deleteLocation: { __typename: 'DeleteLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'LocationInUse', description: string, stockLines: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, itemId: string }> }, invoiceLines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string }> } } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } };
 
-export type StoresQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
-  filter?: Types.InputMaybe<Types.StoreFilterInput>;
-}>;
-
-
-export type StoresQuery = { __typename: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, id: string }> } };
-
 export type AuthTokenQueryVariables = Types.Exact<{
   username: Types.Scalars['String'];
   password: Types.Scalars['String'];
@@ -216,20 +207,6 @@ export const DeleteLocationDocument = gql`
   }
 }
     `;
-export const StoresDocument = gql`
-    query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(page: {first: $first, offset: $offset}, filter: $filter) {
-    ... on StoreConnector {
-      __typename
-      totalCount
-      nodes {
-        code
-        id
-      }
-    }
-  }
-}
-    `;
 export const AuthTokenDocument = gql`
     query authToken($username: String!, $password: String!) {
   authToken(password: $password, username: $username) {
@@ -339,9 +316,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteLocation(variables: DeleteLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteLocationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteLocationMutation>(DeleteLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLocation');
     },
-    stores(variables?: StoresQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StoresQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StoresQuery>(StoresDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stores');
-    },
     authToken(variables: AuthTokenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AuthTokenQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AuthTokenQuery>(AuthTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'authToken');
     },
@@ -417,23 +391,6 @@ export const mockUpdateLocationMutation = (resolver: ResponseResolver<GraphQLReq
 export const mockDeleteLocationMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteLocationMutationVariables>, GraphQLContext<DeleteLocationMutation>, any>) =>
   graphql.mutation<DeleteLocationMutation, DeleteLocationMutationVariables>(
     'deleteLocation',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStoresQuery((req, res, ctx) => {
- *   const { first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ stores })
- *   )
- * })
- */
-export const mockStoresQuery = (resolver: ResponseResolver<GraphQLRequest<StoresQueryVariables>, GraphQLContext<StoresQuery>, any>) =>
-  graphql.query<StoresQuery, StoresQueryVariables>(
-    'stores',
     resolver
   )
 
