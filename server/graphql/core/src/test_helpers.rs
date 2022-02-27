@@ -125,7 +125,7 @@ fn graphql_config<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clo
         ));
     }
 }
-
+// TODO should really re-export dev deps (actix_rt, assert_json_dif, to avoid need to import in consumer)
 #[macro_export]
 macro_rules! assert_graphql_query {
     ($settings:expr, $query:expr, $variables:expr, $expected_inner:expr, $service_provider_override:expr) => {{
