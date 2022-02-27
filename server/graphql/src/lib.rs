@@ -5,21 +5,30 @@ use actix_web::web::Data;
 use actix_web::HttpRequest;
 use actix_web::{guard::fn_guard, HttpResponse, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
+use async_graphql::MergedObject;
 use async_graphql::{EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{Request, Response};
 use graphql_core::auth_data_from_request;
 use graphql_core::loader::LoaderRegistry;
+use graphql_invoice::InvoiceQueries;
 use mutations::Mutations;
 use queries::Queries;
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 
-pub type Schema = async_graphql::Schema<Queries, Mutations, async_graphql::EmptySubscription>;
-type Builder = SchemaBuilder<Queries, Mutations, EmptySubscription>;
+#[derive(MergedObject, Default)]
+pub struct FullQuery(pub Queries, pub InvoiceQueries);
+
+pub type Schema = async_graphql::Schema<FullQuery, Mutations, async_graphql::EmptySubscription>;
+type Builder = SchemaBuilder<FullQuery, Mutations, EmptySubscription>;
 
 pub fn build_schema() -> Builder {
-    Schema::build(Queries, Mutations, EmptySubscription)
+    Schema::build(
+        FullQuery(Queries, InvoiceQueries),
+        Mutations,
+        EmptySubscription,
+    )
 }
 
 pub fn config(
