@@ -4,7 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::InvoiceLineNode;
-use service::invoice_line::{
+use service::invoice_line::outbound_shipment_unallocated_line::{
     UpdateOutboundShipmentUnallocatedLine as ServiceInput,
     UpdateOutboundShipmentUnallocatedLineError as ServiceError,
 };
@@ -42,14 +42,14 @@ impl From<UpdateInput> for ServiceInput {
     }
 }
 
-pub fn update(ctx: &Context<'_>, input: UpdateInput) -> Result<UpdateResponse> {
+pub fn update(ctx: &Context<'_>, _store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     let id = input.id.clone();
 
     let response = match service_provider
-        .outbound_shipment_line
+        .invoice_line_service
         .update_outbound_shipment_unallocated_line(&service_context, input.into())
     {
         Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),

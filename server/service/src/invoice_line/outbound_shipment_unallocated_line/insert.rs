@@ -7,12 +7,10 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
+use crate::invoice_line::query::get_invoice_line;
 use crate::{
     invoice::check_invoice_exists_option,
-    invoice_line::{
-        get_invoice_line_ctx,
-        validate::{check_item_exists_option, check_line_does_not_exists_new},
-    },
+    invoice_line::validate::{check_item_exists_option, check_line_does_not_exists_new},
     service_provider::ServiceContext,
     u32_to_i32,
 };
@@ -52,7 +50,7 @@ pub fn insert_outbound_shipment_unallocated_line(
             let new_line = generate(input, item_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
 
-            get_invoice_line_ctx(ctx, new_line.id)
+            get_invoice_line(ctx, &new_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
@@ -184,7 +182,7 @@ mod test_insert {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.outbound_shipment_line;
+        let service = service_provider.invoice_line_service;
 
         let new_outbound_shipment = mock_new_invoice_with_unallocated_line();
         let existing_invoice_line = mock_unallocated_line();
@@ -296,7 +294,7 @@ mod test_insert {
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider.context().unwrap();
-        let service = service_provider.outbound_shipment_line;
+        let service = service_provider.invoice_line_service;
 
         // Successful insert
         let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();

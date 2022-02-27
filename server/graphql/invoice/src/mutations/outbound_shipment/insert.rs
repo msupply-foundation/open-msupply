@@ -44,7 +44,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         store_id,
         input.to_domain(),
     ) {
-        Ok(requisition) => InsertResponse::Response(InvoiceNode::from_domain(requisition)),
+        Ok(invoice) => InsertResponse::Response(InvoiceNode::from_domain(invoice)),
         Err(error) => InsertResponse::Error(InsertError {
             error: map_error(error)?,
         }),

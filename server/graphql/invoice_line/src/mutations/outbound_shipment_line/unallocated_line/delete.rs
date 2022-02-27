@@ -4,7 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
-use service::invoice_line::{
+use service::invoice_line::outbound_shipment_unallocated_line::{
     DeleteOutboundShipmentUnallocatedLine as ServiceInput,
     DeleteOutboundShipmentUnallocatedLineError as ServiceError,
 };
@@ -41,14 +41,14 @@ impl From<DeleteInput> for ServiceInput {
     }
 }
 
-pub fn delete(ctx: &Context<'_>, input: DeleteInput) -> Result<DeleteResponse> {
+pub fn delete(ctx: &Context<'_>, _store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     let id = input.id.clone();
 
     let response = match service_provider
-        .outbound_shipment_line
+        .invoice_line_service
         .delete_outbound_shipment_unallocated_line(&service_context, input.into())
     {
         Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),

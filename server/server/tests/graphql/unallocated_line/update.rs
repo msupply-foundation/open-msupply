@@ -8,9 +8,11 @@ mod graphql {
     use server::test_utils::setup_all;
     use service::{
         invoice_line::{
-            OutboundShipmentLineServiceTrait,
-            UpdateOutboundShipmentUnallocatedLine as ServiceInput,
-            UpdateOutboundShipmentUnallocatedLineError as ServiceError,
+            outbound_shipment_unallocated_line::{
+                UpdateOutboundShipmentUnallocatedLine as ServiceInput,
+                UpdateOutboundShipmentUnallocatedLineError as ServiceError,
+            },
+            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -19,7 +21,7 @@ mod graphql {
 
     pub struct TestService(pub Box<UpdateLineMethod>);
 
-    impl OutboundShipmentLineServiceTrait for TestService {
+    impl InvoiceLineServiceTrait for TestService {
         fn update_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
@@ -34,7 +36,7 @@ mod graphql {
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone());
-        service_provider.outbound_shipment_line = Box::new(test_service);
+        service_provider.invoice_line_service = Box::new(test_service);
         service_provider
     }
 
@@ -57,7 +59,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: UpdateOutboundShipmentUnallocatedLineInput!) {
-            updateOutboundShipmentUnallocatedLine(input: $input) {
+            updateOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
               ... on UpdateOutboundShipmentUnallocatedLineError {
                 error {
                   __typename
@@ -98,7 +100,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: UpdateOutboundShipmentUnallocatedLineInput!) {
-            updateOutboundShipmentUnallocatedLine(input: $input) {
+            updateOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 __typename
             }
           }
@@ -134,7 +136,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: UpdateOutboundShipmentUnallocatedLineInput!) {
-            updateOutboundShipmentUnallocatedLine(input: $input) {
+            updateOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 ... on InvoiceLineNode {
                     id
                     invoiceId

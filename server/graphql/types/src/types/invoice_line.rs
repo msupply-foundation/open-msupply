@@ -13,7 +13,7 @@ use repository::{
     InvoiceLine, StorageConnectionManager,
 };
 use serde::Serialize;
-use service::{invoice_line::get_invoice_line, usize_to_u32, ListResult};
+use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -140,18 +140,6 @@ pub enum InvoiceLinesResponse {
 pub enum InvoiceLineResponse {
     Error(NodeError),
     Response(InvoiceLineNode),
-}
-
-pub fn get_invoice_line_response(
-    connection_manager: &StorageConnectionManager,
-    id: String,
-) -> InvoiceLineResponse {
-    match get_invoice_line(connection_manager, id) {
-        Ok(invoice_line) => {
-            InvoiceLineResponse::Response(InvoiceLineNode::from_domain(invoice_line))
-        }
-        Err(error) => InvoiceLineResponse::Error(error.into()),
-    }
 }
 
 impl InvoiceLineConnector {

@@ -8,9 +8,11 @@ mod graphql {
     use server::test_utils::setup_all;
     use service::{
         invoice_line::{
-            InsertOutboundShipmentUnallocatedLine as ServiceInput,
-            InsertOutboundShipmentUnallocatedLineError as ServiceError,
-            OutboundShipmentLineServiceTrait,
+            outbound_shipment_unallocated_line::{
+                InsertOutboundShipmentUnallocatedLine as ServiceInput,
+                InsertOutboundShipmentUnallocatedLineError as ServiceError,
+            },
+            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -19,7 +21,7 @@ mod graphql {
 
     pub struct TestService(pub Box<InsertLineMethod>);
 
-    impl OutboundShipmentLineServiceTrait for TestService {
+    impl InvoiceLineServiceTrait for TestService {
         fn insert_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
@@ -34,7 +36,7 @@ mod graphql {
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone());
-        service_provider.outbound_shipment_line = Box::new(test_service);
+        service_provider.invoice_line_service = Box::new(test_service);
         service_provider
     }
 
@@ -59,7 +61,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: InsertOutboundShipmentUnallocatedLineInput!) {
-            insertOutboundShipmentUnallocatedLine(input: $input) {
+            insertOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
               ... on InsertOutboundShipmentUnallocatedLineError {
                 error {
                   __typename
@@ -116,7 +118,7 @@ mod graphql {
         // ForeignKeyError (invoice does not exists)
         let mutation = r#"
         mutation ($input: InsertOutboundShipmentUnallocatedLineInput!) {
-            insertOutboundShipmentUnallocatedLine(input: $input) {
+            insertOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 ... on InsertOutboundShipmentUnallocatedLineError {
                     error {
                     __typename
@@ -159,7 +161,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: InsertOutboundShipmentUnallocatedLineInput!) {
-            insertOutboundShipmentUnallocatedLine(input: $input) {
+            insertOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 __typename
             }
           }
@@ -228,7 +230,7 @@ mod graphql {
 
         let mutation = r#"
         mutation ($input: InsertOutboundShipmentUnallocatedLineInput!) {
-            insertOutboundShipmentUnallocatedLine(input: $input) {
+            insertOutboundShipmentUnallocatedLine(input: $input, storeId: \"store_a\") {
                 ... on InvoiceLineNode {
                     id
                     invoiceId

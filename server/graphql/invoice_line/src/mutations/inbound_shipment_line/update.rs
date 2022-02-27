@@ -5,16 +5,19 @@ use graphql_core::simple_generic_errors::{
     InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NodeError,
     NotAnInboundShipment, Range, RangeError, RangeField, RecordNotFound,
 };
-use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::ContextExt;
+use graphql_types::types::{InvoiceLineNode, InvoiceLineResponse, InvoiceNode};
 use repository::StorageConnectionManager;
-use service::invoice_line::{
-    update_inbound_shipment_line, UpdateInboundShipmentLine, UpdateInboundShipmentLineError,
+use service::invoice_line::inbound_shipment_line::{
+    UpdateInboundShipmentLine as ServiceInput, UpdateInboundShipmentLineError as ServiceError,
 };
 
 use super::BatchIsReserved;
 
 #[derive(InputObject)]
-pub struct UpdateInboundShipmentLineInput {
+#[graphql(name = "UpdateInboundShipmentLineInput")]
+pub struct UpdateInput {
     pub id: String,
     pub invoice_id: String,
     pub item_id: Option<String>,
@@ -34,44 +37,43 @@ pub struct UpdateError {
 }
 
 #[derive(Union)]
-pub enum UpdateInboundShipmentLineResponse {
+#[graphql(name = "UpdateInboundShipmentLineResponse")]
+pub enum UpdateResponse {
     Error(UpdateError),
-    NodeError(NodeError),
     Response(InvoiceLineNode),
 }
 
-pub fn get_update_inbound_shipment_line_response(
-    connection_manager: &StorageConnectionManager,
-    input: UpdateInboundShipmentLineInput,
-) -> UpdateInboundShipmentLineResponse {
-    use UpdateInboundShipmentLineResponse::*;
-    match update_inbound_shipment_line(connection_manager, input.into()) {
-        Ok(id) => match get_invoice_line_response(connection_manager, id) {
-            InvoiceLineResponse::Response(node) => Response(node),
-            InvoiceLineResponse::Error(err) => NodeError(err),
-        },
-        Err(error) => error.into(),
-    }
+pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let response = match service_provider
+        .invoice_line_service
+        .update_inbound_shipment_line(&service_context, store_id, input.to_domain())
+    {
+        Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(response)
 }
 
 #[derive(Interface)]
 #[graphql(name = "UpdateInboundShipmentLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
-    DatabaseError(DatabaseError),
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
-    InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
-    InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     NotAnInboundShipment(NotAnInboundShipment),
     BatchIsReserved(BatchIsReserved),
-    RangeError(RangeError),
 }
 
-impl From<UpdateInboundShipmentLineInput> for UpdateInboundShipmentLine {
-    fn from(
-        UpdateInboundShipmentLineInput {
+impl UpdateInput {
+    fn to_domain(self) -> ServiceInput {
+        let UpdateInput {
             id,
             invoice_id,
             item_id,
@@ -82,9 +84,9 @@ impl From<UpdateInboundShipmentLineInput> for UpdateInboundShipmentLine {
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
-        }: UpdateInboundShipmentLineInput,
-    ) -> Self {
-        UpdateInboundShipmentLine {
+        } = self;
+
+        ServiceInput {
             id,
             invoice_id,
             item_id,
@@ -99,52 +101,39 @@ impl From<UpdateInboundShipmentLineInput> for UpdateInboundShipmentLine {
     }
 }
 
-impl From<UpdateInboundShipmentLineError> for UpdateInboundShipmentLineResponse {
-    fn from(error: UpdateInboundShipmentLineError) -> Self {
-        use UpdateErrorInterface as OutError;
-        let error = match error {
-            UpdateInboundShipmentLineError::LineDoesNotExist => {
-                OutError::RecordNotFound(RecordNotFound {})
-            }
-            UpdateInboundShipmentLineError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
-            UpdateInboundShipmentLineError::InvoiceDoesNotExist => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
-            }
-            UpdateInboundShipmentLineError::NotAnInboundShipment => {
-                OutError::NotAnInboundShipment(NotAnInboundShipment {})
-            }
-            UpdateInboundShipmentLineError::NotThisStoreInvoice => {
-                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
-            }
-            UpdateInboundShipmentLineError::CannotEditFinalised => {
-                OutError::CannotEditInvoice(CannotEditInvoice {})
-            }
-            UpdateInboundShipmentLineError::ItemNotFound => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
-            }
-            UpdateInboundShipmentLineError::NumberOfPacksBelowOne => {
-                OutError::RangeError(RangeError {
-                    field: RangeField::NumberOfPacks,
-                    range: Range::Min(1),
-                })
-            }
-            UpdateInboundShipmentLineError::PackSizeBelowOne => OutError::RangeError(RangeError {
-                field: RangeField::PackSize,
-                range: Range::Min(1),
-            }),
-            UpdateInboundShipmentLineError::BatchIsReserved => {
-                OutError::BatchIsReserved(BatchIsReserved {})
-            }
-            UpdateInboundShipmentLineError::NotThisInvoiceLine(_invoice_id) => {
-                OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice {})
-            }
-            UpdateInboundShipmentLineError::LocationDoesNotExist => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::LocationId))
-            }
-        };
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
 
-        UpdateInboundShipmentLineResponse::Error(UpdateError { error })
-    }
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::LineDoesNotExist => {
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+        }
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )))
+        }
+        ServiceError::CannotEditFinalised => {
+            return Ok(UpdateErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+        ServiceError::BatchIsReserved => {
+            return Ok(UpdateErrorInterface::BatchIsReserved(BatchIsReserved {}))
+        }
+        // Standard Graphql Errors
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
+        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
+        ServiceError::PackSizeBelowOne => BadUserInput(formatted_error),
+        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::ItemNotFound => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }

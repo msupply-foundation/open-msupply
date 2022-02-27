@@ -1,5 +1,5 @@
 use super::*;
-use crate::loader::{InvoiceLineLoader, ItemLoader, StoreLoader, UserAccountLoader};
+use crate::loader::{ItemLoader, StoreLoader, UserAccountLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
@@ -44,16 +44,12 @@ pub async fn get_loaders(
         service_provider: service_provider.clone(),
     });
 
-    let invoice_line_loader = DataLoader::new(InvoiceLineLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let invoice_line_query_loader = DataLoader::new(InvoiceLineQueryLoader {
-        connection_manager: connection_manager.clone(),
+    let invoice_line_by_invoice_id_loader = DataLoader::new(InvoiceLineByInvoiceIdLoader {
+        service_provider: service_provider.clone(),
     });
 
     let invoice_line_for_requisition_line = DataLoader::new(InvoiceLineForRequisitionLine {
-        connection_manager: connection_manager.clone(),
+        service_provider: service_provider.clone(),
     });
 
     let invoice_line_stats_loader = DataLoader::new(InvoiceStatsLoader {
@@ -116,8 +112,7 @@ pub async fn get_loaders(
     loaders.insert(store_loader);
     loaders.insert(invoice_by_id_loader);
     loaders.insert(invoice_by_requisition_id_loader);
-    loaders.insert(invoice_line_loader);
-    loaders.insert(invoice_line_query_loader);
+    loaders.insert(invoice_line_by_invoice_id_loader);
     loaders.insert(invoice_line_stats_loader);
     loaders.insert(invoice_line_for_requisition_line);
     loaders.insert(stock_line_by_item_id_and_store_id_loader);
