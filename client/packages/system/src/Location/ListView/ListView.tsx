@@ -1,50 +1,15 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   TableProvider,
   DataTable,
   useColumns,
   createTableStore,
-  useToggle,
-  ModalMode,
+  useEditModal,
 } from '@openmsupply-client/common';
-import { useLocationList } from './api';
+import { useLocations, LocationRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
-import { Location } from '../types';
 import { Toolbar } from './Toolbar';
-interface EditModalState<T> {
-  entity: T | null;
-  mode: ModalMode | null;
-  onOpen: (entity?: T | null) => void;
-  onClose: () => void;
-  isOpen: boolean;
-}
-
-function useEditModal<T>(): EditModalState<T> {
-  const modalControl = useToggle(false);
-  const [entity, setEntity] = useState<T | null>(null);
-  const [mode, setMode] = useState<ModalMode | null>(null);
-
-  const onOpen = (entity: T | null = null) => {
-    setEntity(entity);
-    setMode(entity ? ModalMode.Update : ModalMode.Create);
-    modalControl.toggleOn();
-  };
-
-  const onClose = () => {
-    setMode(null);
-    setEntity(null);
-    modalControl.toggleOff();
-  };
-
-  return {
-    onOpen,
-    onClose,
-    entity,
-    mode,
-    isOpen: modalControl.isOn,
-  };
-}
 
 export const LocationListView: FC = () => {
   const {
@@ -55,9 +20,9 @@ export const LocationListView: FC = () => {
     onChangeSortBy,
     sortBy,
     filter,
-  } = useLocationList();
+  } = useLocations();
 
-  const columns = useColumns<Location>(
+  const columns = useColumns<LocationRowFragment>(
     ['code', 'name', 'selection'],
     {
       onChangeSortBy,
@@ -65,7 +30,8 @@ export const LocationListView: FC = () => {
     },
     [onChangeSortBy, sortBy]
   );
-  const { isOpen, entity, mode, onClose, onOpen } = useEditModal<Location>();
+  const { isOpen, entity, mode, onClose, onOpen } =
+    useEditModal<LocationRowFragment>();
   const locations = data?.nodes ?? [];
   return (
     <TableProvider createStore={createTableStore}>
