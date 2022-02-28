@@ -37,7 +37,7 @@ export const ResponseLineEdit = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={hasNext}
+          disabled={!hasNext}
           variant="next"
           onClick={() => {
             next && setCurrentLine(next);
