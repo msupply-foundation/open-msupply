@@ -9,16 +9,30 @@ use crate::{
         },
         LocationRow, StockLineRow,
     },
-};
-use domain::{
-    stock_line::{StockLine, StockLineFilter, StockLineSort},
-    Pagination,
+    DateFilter, EqualFilter, Pagination, Sort,
 };
 
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct StockLine {
+    pub stock_line_row: StockLineRow,
+    pub location_row: Option<LocationRow>,
+}
+
+#[derive(Debug)]
+pub struct StockLineFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub item_id: Option<EqualFilter<String>>,
+    pub location_id: Option<EqualFilter<String>>,
+    pub expiry_date: Option<DateFilter>,
+    pub store_id: Option<EqualFilter<String>>,
+}
+
+pub type StockLineSort = Sort<()>;
 
 type StockLineJoin = (StockLineRow, Option<LocationRow>);
 pub struct StockLineRepository<'a> {
@@ -78,40 +92,54 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
     query
 }
 
-pub fn to_domain(
-    (
-        StockLineRow {
-            id,
-            item_id,
-            store_id,
-            location_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            expiry_date,
-            on_hold,
-            note,
-        },
-        location_row_option,
-    ): StockLineJoin,
-) -> StockLine {
+pub fn to_domain((stock_line_row, location_row): StockLineJoin) -> StockLine {
     StockLine {
-        id,
-        item_id,
-        store_id,
-        location_id,
-        batch,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        available_number_of_packs,
-        total_number_of_packs,
-        expiry_date,
-        on_hold,
-        note,
-        location_name: location_row_option.map(|location_row| location_row.name),
+        stock_line_row,
+        location_row,
+    }
+}
+
+impl StockLineFilter {
+    pub fn new() -> StockLineFilter {
+        StockLineFilter {
+            id: None,
+            item_id: None,
+            location_id: None,
+            expiry_date: None,
+            store_id: None,
+        }
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
+        self
+    }
+
+    pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.location_id = Some(filter);
+        self
+    }
+
+    pub fn expiry_date(mut self, filter: DateFilter) -> Self {
+        self.expiry_date = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
+}
+
+impl StockLine {
+    pub fn location_name(&self) -> Option<&str> {
+        self.location_row
+            .as_ref()
+            .map(|location_row| location_row.name.as_str())
     }
 }

@@ -1,8 +1,8 @@
-use domain::{EqualFilter, PaginationOption};
 use repository::{
     schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter,
     RequisitionRepository, RequisitionSort,
 };
+use repository::{EqualFilter, PaginationOption};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
@@ -61,7 +61,7 @@ pub fn get_requisition_by_number(
 
 #[cfg(test)]
 mod test {
-    use domain::EqualFilter;
+    use repository::EqualFilter;
     use repository::{
         mock::{
             mock_request_draft_requisition, mock_request_draft_requisition2,

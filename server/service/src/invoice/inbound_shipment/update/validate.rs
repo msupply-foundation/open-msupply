@@ -1,12 +1,15 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_other_party_id, InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceStatusError,
-    WrongInvoiceType,
+    check_other_party_id, InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceRowStatusError,
+    WrongInvoiceRowType,
 };
-use domain::{inbound_shipment::UpdateInboundShipment, invoice::InvoiceType, name::Name};
-use repository::{schema::InvoiceRow, StorageConnection};
+use repository::Name;
+use repository::{
+    schema::{InvoiceRow, InvoiceRowType},
+    StorageConnection,
+};
 
-use super::UpdateInboundShipmentError;
+use super::{UpdateInboundShipment, UpdateInboundShipmentError};
 
 pub fn validate(
     patch: &UpdateInboundShipment,
@@ -16,7 +19,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
 
@@ -25,7 +28,7 @@ pub fn validate(
             let other_party = check_other_party_id(connection, &other_party_id)?
                 .ok_or(OtherPartyDoesNotExist {})?;
 
-            if !other_party.is_supplier {
+            if !other_party.is_supplier() {
                 return Err(OtherPartyNotASupplier(other_party));
             };
             Some(other_party)
@@ -36,8 +39,8 @@ pub fn validate(
     Ok((invoice, other_party_option))
 }
 
-impl From<WrongInvoiceType> for UpdateInboundShipmentError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for UpdateInboundShipmentError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         UpdateInboundShipmentError::NotAnInboundShipment
     }
 }
@@ -54,14 +57,14 @@ impl From<InvoiceDoesNotExist> for UpdateInboundShipmentError {
     }
 }
 
-impl From<InvoiceStatusError> for UpdateInboundShipmentError {
-    fn from(error: InvoiceStatusError) -> Self {
+impl From<InvoiceRowStatusError> for UpdateInboundShipmentError {
+    fn from(error: InvoiceRowStatusError) -> Self {
         use UpdateInboundShipmentError::*;
         match error {
-            InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold => {
+            InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
                 CannotChangeStatusOfInvoiceOnHold
             }
-            InvoiceStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
+            InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         }
     }
 }

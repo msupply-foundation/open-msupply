@@ -1,5 +1,4 @@
 use crate::WithDBError;
-use domain::inbound_shipment::DeleteInboundShipmentLine;
 use repository::{
     InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
     TransactionError,
@@ -8,6 +7,10 @@ use repository::{
 mod validate;
 
 use validate::validate;
+pub struct DeleteInboundShipmentLine {
+    pub id: String,
+    pub invoice_id: String,
+}
 
 pub fn delete_inbound_shipment_line(
     connection_manager: &StorageConnectionManager,

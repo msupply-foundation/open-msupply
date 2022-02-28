@@ -1,5 +1,4 @@
 use async_graphql::*;
-use domain::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{
         DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
@@ -13,6 +12,7 @@ use graphql_core::{
 use graphql_types::types::{
     RequisitionConnector, RequisitionNode, RequisitionNodeStatus, RequisitionNodeType,
 };
+use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{RequisitionFilter, RequisitionSort, RequisitionSortField};
 use service::permission_validation::{Resource, ResourceAccessRequest};
 

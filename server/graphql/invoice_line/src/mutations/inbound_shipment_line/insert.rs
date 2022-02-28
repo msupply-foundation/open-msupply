@@ -1,7 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use domain::inbound_shipment::InsertInboundShipmentLine;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError,
     InvoiceDoesNotBelongToCurrentStore, NodeError, NotAnInboundShipment, Range, RangeError,
@@ -9,7 +8,9 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_types::types::{get_invoice_line_response, InvoiceLineNode, InvoiceLineResponse};
 use repository::StorageConnectionManager;
-use service::invoice_line::{insert_inbound_shipment_line, InsertInboundShipmentLineError};
+use service::invoice_line::{
+    insert_inbound_shipment_line, InsertInboundShipmentLine, InsertInboundShipmentLineError,
+};
 
 #[derive(InputObject)]
 pub struct InsertInboundShipmentLineInput {

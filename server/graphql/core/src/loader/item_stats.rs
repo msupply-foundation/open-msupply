@@ -1,7 +1,7 @@
 use super::ItemStatsLoaderInput;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{ItemStats, ItemStatsFilter};
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;

@@ -16,7 +16,7 @@ use self::{
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 
-use domain::PaginationOption;
+use repository::PaginationOption;
 use repository::{RequisitionLine, RequisitionLineFilter};
 
 pub mod common;

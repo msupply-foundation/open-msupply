@@ -1,5 +1,5 @@
-use domain::{Pagination, PaginationOption, DEFAULT_LIMIT};
 use repository::RepositoryError;
+use repository::{Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use std::convert::TryInto;
 
 pub mod auth_data;
@@ -108,13 +108,13 @@ pub fn get_default_pagination(
             offset: pagination.offset.unwrap_or(0),
             limit: match pagination.limit {
                 Some(limit) => check_limit(limit)?,
-                None => DEFAULT_LIMIT,
+                None => DEFAULT_PAGINATION_LIMIT,
             },
         }
     } else {
         Pagination {
             offset: 0,
-            limit: DEFAULT_LIMIT,
+            limit: DEFAULT_PAGINATION_LIMIT,
         }
     };
 

@@ -5,9 +5,29 @@ use crate::schema::diesel_schema::{location, location::dsl as location_dsl};
 use crate::schema::LocationRow;
 use crate::DBType;
 
+use crate::{EqualFilter, Pagination, Sort};
 use diesel::prelude::*;
-use domain::location::{Location, LocationFilter, LocationSort, LocationSortField};
-use domain::Pagination;
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Location {
+    pub location_row: LocationRow,
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct LocationFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub name: Option<EqualFilter<String>>,
+    pub code: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum LocationSortField {
+    Name,
+    Code,
+}
+
+pub type LocationSort = Sort<LocationSortField>;
 
 pub struct LocationRepository<'a> {
     connection: &'a StorageConnection,
@@ -78,19 +98,37 @@ fn create_filtered_query(filter: Option<LocationFilter>) -> BoxedLocationQuery {
     query
 }
 
-pub fn to_domain(
-    LocationRow {
-        id,
-        name,
-        code,
-        on_hold,
-        store_id: _,
-    }: LocationRow,
-) -> Location {
-    Location {
-        id,
-        name,
-        code,
-        on_hold,
+pub fn to_domain(location_row: LocationRow) -> Location {
+    Location { location_row }
+}
+
+impl LocationFilter {
+    pub fn new() -> LocationFilter {
+        LocationFilter {
+            id: None,
+            name: None,
+            code: None,
+            store_id: None,
+        }
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: EqualFilter<String>) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
     }
 }

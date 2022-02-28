@@ -10,10 +10,21 @@ use crate::{
         ItemIsVisibleRow, ItemRow, ItemRowType, UnitRow,
     },
 };
-use domain::{
-    item::{Item, ItemSort, ItemSortField},
-    EqualFilter, Pagination, SimpleStringFilter,
-};
+use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Item {
+    pub item_row: ItemRow,
+    pub item_is_visible_row: ItemIsVisibleRow,
+    pub unit_row: Option<UnitRow>,
+}
+
+pub enum ItemSortField {
+    Name,
+    Code,
+}
+
+pub type ItemSort = Sort<ItemSortField>;
 
 #[derive(Clone)]
 pub struct ItemFilter {
@@ -119,13 +130,11 @@ impl<'a> ItemQueryRepository<'a> {
     }
 }
 
-fn to_domain((item_row, item_is_visible_row, unit_row_option): ItemAndMasterList) -> Item {
+fn to_domain((item_row, item_is_visible_row, unit_row): ItemAndMasterList) -> Item {
     Item {
-        id: item_row.id,
-        name: item_row.name,
-        code: item_row.code,
-        is_visible: item_is_visible_row.is_visible,
-        unit_name: unit_row_option.map(|unit| unit.name),
+        item_row,
+        item_is_visible_row,
+        unit_row,
     }
 }
 
@@ -155,6 +164,19 @@ pub fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
     query
 }
 
+impl Item {
+    // From master list
+    pub fn is_visible(&self) -> bool {
+        self.item_is_visible_row.is_visible
+    }
+
+    pub fn unit_name(&self) -> Option<&str> {
+        self.unit_row
+            .as_ref()
+            .map(|unit_row| unit_row.name.as_str())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::convert::TryFrom;
@@ -162,7 +184,7 @@ mod tests {
     use crate::{
         db_diesel::item_query::ItemFilter,
         schema::ItemRowType,
-        test_db,
+        test_db, EqualFilter, Pagination, DEFAULT_PAGINATION_LIMIT,
         {
             db_diesel::{
                 MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
@@ -172,14 +194,14 @@ mod tests {
             ItemQueryRepository, ItemRepository, NameRepository,
         },
     };
-    use domain::{
-        item::{Item, ItemSort, ItemSortField},
-        EqualFilter, Pagination, DEFAULT_LIMIT,
-    };
+
+    use super::{Item, ItemSort, ItemSortField};
 
     impl PartialEq<ItemRow> for Item {
         fn eq(&self, other: &ItemRow) -> bool {
-            self.id == other.id && self.name == other.name && self.code == other.code
+            self.item_row.id == other.id
+                && self.item_row.name == other.name
+                && self.item_row.code == other.code
         }
     }
 
@@ -212,7 +234,7 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_LIMIT).unwrap();
+        let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
 
         // Test
         // .count()
@@ -235,7 +257,7 @@ mod tests {
             .query(
                 Pagination {
                     offset: 10,
-                    limit: DEFAULT_LIMIT,
+                    limit: DEFAULT_PAGINATION_LIMIT,
                 },
                 None,
                 None,
@@ -459,8 +481,8 @@ mod tests {
         let results = item_query_repository
             .query(Pagination::new(), None, None)
             .unwrap();
-        assert!(results[0].is_visible);
-        assert!(results[1].is_visible);
+        assert!(results[0].is_visible());
+        assert!(results[1].is_visible());
 
         // After adding second join (item3 and item4 visible)
         MasterListNameJoinRepository::new(&storage_connection)
@@ -469,8 +491,8 @@ mod tests {
         let results = item_query_repository
             .query(Pagination::new(), None, None)
             .unwrap();
-        assert!(results[2].is_visible);
-        assert!(results[3].is_visible);
+        assert!(results[2].is_visible());
+        assert!(results[3].is_visible());
 
         // test is_visible filter:
         let results = item_query_repository
@@ -525,12 +547,17 @@ mod tests {
             )
             .unwrap();
 
-        items.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        items.sort_by(|a, b| {
+            a.item_row
+                .name
+                .to_lowercase()
+                .cmp(&b.item_row.name.to_lowercase())
+        });
 
         for (count, item) in items.iter().enumerate() {
             assert_eq!(
-                item.name.clone().to_lowercase(),
-                sorted[count].name.clone().to_lowercase(),
+                item.item_row.name.clone().to_lowercase(),
+                sorted[count].item_row.name.clone().to_lowercase(),
             );
         }
 
@@ -545,12 +572,17 @@ mod tests {
             )
             .unwrap();
 
-        items.sort_by(|b, a| a.code.to_lowercase().cmp(&b.code.to_lowercase()));
+        items.sort_by(|b, a| {
+            a.item_row
+                .code
+                .to_lowercase()
+                .cmp(&b.item_row.code.to_lowercase())
+        });
 
         for (count, item) in items.iter().enumerate() {
             assert_eq!(
-                item.code.clone().to_lowercase(),
-                sorted[count].code.clone().to_lowercase(),
+                item.item_row.code.clone().to_lowercase(),
+                sorted[count].item_row.code.clone().to_lowercase(),
             );
         }
     }

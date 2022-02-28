@@ -1,16 +1,14 @@
 mod graphql {
-    use crate::graphql::assert_graphql_query;
-    use domain::{
-        invoice_line::{InvoiceLine, InvoiceLineType},
-        location::DeleteLocation,
-        stock_line::StockLine,
+    use crate::graphql::{assert_graphql_query, unallocated_line::successfull_invoice_line};
+    use repository::{
+        mock::{mock_stock_line_a, MockDataInserts},
+        StockLine, StorageConnectionManager,
     };
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
         location::{
-            delete::{DeleteLocationError, LocationInUse},
+            delete::{DeleteLocation, DeleteLocationError, LocationInUse},
             LocationServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -138,54 +136,24 @@ mod graphql {
         let test_service = TestService(Box::new(|_| {
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines: vec![StockLine {
-                    id: "stock_line_id".to_owned(),
-                    item_id: "n/a".to_owned(),
-                    store_id: "n/a".to_owned(),
-                    location_id: None,
-                    location_name: None,
-                    batch: None,
-                    pack_size: 1,
-                    cost_price_per_pack: 1.0,
-                    sell_price_per_pack: 1.0,
-                    available_number_of_packs: 1,
-                    total_number_of_packs: 1,
-                    expiry_date: None,
-                    on_hold: false,
-                    note: None,
+                    stock_line_row: mock_stock_line_a(),
+                    location_row: None,
                 }],
-                invoice_lines: vec![InvoiceLine {
-                    id: "invoice_line_id".to_owned(),
-                    stock_line_id: None,
-                    invoice_id: "n/a".to_owned(),
-                    location_id: None,
-                    location_name: None,
-                    item_id: "n/a".to_owned(),
-                    item_name: "n/a".to_owned(),
-                    item_code: "n/a".to_owned(),
-                    r#type: InvoiceLineType::StockIn,
-                    number_of_packs: 1,
-                    pack_size: 1,
-                    cost_price_per_pack: 1.0,
-                    sell_price_per_pack: 1.0,
-                    batch: None,
-                    expiry_date: None,
-                    note: None,
-                    requisition_id: None,
-                }],
+                invoice_lines: vec![successfull_invoice_line()],
             }))
         }));
 
         // let invoice_line_ids = stock_lines.iter();
-
+        let out_line = successfull_invoice_line();
         let expected = json!({
             "deleteLocation": {
               "error": {
                 "__typename": "LocationInUse",
                 "stockLines": {
-                  "nodes": [{"id": "stock_line_id"}]
+                  "nodes": [{"id": mock_stock_line_a().id}]
                 },
                 "invoiceLines": {
-                  "nodes": [{"id": "invoice_line_id"}]
+                  "nodes": [{"id": out_line.invoice_line_row.id}]
                 }
               }
             }

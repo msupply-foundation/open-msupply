@@ -1,6 +1,4 @@
-use domain::item::Item;
-use domain::{EqualFilter, Pagination};
-use repository::{ItemFilter, ItemQueryRepository};
+use repository::{EqualFilter, Item, ItemFilter, ItemQueryRepository, Pagination};
 use repository::{RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
@@ -30,7 +28,7 @@ impl Loader<String> for ItemLoader {
             )?
             .into_iter()
             .map(|item| {
-                let id = item.id.clone();
+                let id = item.item_row.id.clone();
                 let item = item;
                 (id, item)
             })

@@ -1,6 +1,4 @@
 use async_graphql::*;
-use domain::master_list::{MasterListFilter, MasterListSort};
-use domain::{EqualFilter, PaginationOption, SimpleStringFilter};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
@@ -8,10 +6,11 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::MasterListNode;
-use repository::MasterList;
+use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{MasterList, MasterListFilter, MasterListSort};
 use service::ListResult;
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "domain::master_list::MasterListSortField")]
+#[graphql(remote = "repository::MasterListSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum MasterListSortFieldInput {
     Name,

@@ -2,7 +2,7 @@ mod graphql {
     use crate::graphql::assert_graphql_query;
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_loaction_1, mock_stock_line_a, MockDataInserts},
+        mock::{mock_location_1, mock_stock_line_a, MockDataInserts},
         schema::StocktakeLineRow,
         StocktakeLine, StorageConnectionManager,
     };
@@ -82,7 +82,7 @@ mod graphql {
                     note: Some("note".to_string()),
                 },
                 stock_line: Some(mock_stock_line_a()),
-                location: Some(mock_loaction_1()),
+                location: Some(mock_location_1()),
             })
         }));
         let variables = Some(json!({

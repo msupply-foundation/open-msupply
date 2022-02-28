@@ -1,8 +1,9 @@
 use crate::{invoice_line::generate_batch, u32_to_i32};
-use domain::inbound_shipment::InsertInboundShipmentLine;
 use repository::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
+
+use super::InsertInboundShipmentLine;
 
 pub fn generate(
     input: InsertInboundShipmentLine,

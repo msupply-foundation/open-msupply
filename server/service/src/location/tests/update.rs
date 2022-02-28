@@ -1,12 +1,14 @@
 #[cfg(test)]
 mod query {
-    use domain::{
-        location::{LocationFilter, UpdateLocation},
-        EqualFilter,
+    use repository::EqualFilter;
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, LocationFilter, LocationRepository,
     };
-    use repository::{mock::MockDataInserts, test_db::setup_all, LocationRepository};
 
-    use crate::{location::update::UpdateLocationError, service_provider::ServiceProvider};
+    use crate::{
+        location::update::{UpdateLocation, UpdateLocationError},
+        service_provider::ServiceProvider,
+    };
 
     #[actix_rt::test]
     async fn location_service_update_errors() {
@@ -48,7 +50,7 @@ mod query {
                 &context,
                 "store_a",
                 UpdateLocation {
-                    id: locations_not_in_store[0].id.clone(),
+                    id: locations_not_in_store[0].location_row.id.clone(),
                     code: None,
                     name: None,
                     on_hold: None
@@ -63,8 +65,8 @@ mod query {
                 &context,
                 "store_a",
                 UpdateLocation {
-                    id: locations_in_store[0].id.clone(),
-                    code: Some(locations_in_store[1].code.clone()),
+                    id: locations_in_store[0].location_row.id.clone(),
+                    code: Some(locations_in_store[1].location_row.code.clone()),
                     name: None,
                     on_hold: None
                 },
@@ -94,7 +96,7 @@ mod query {
                 &context,
                 "store_a",
                 UpdateLocation {
-                    id: location.id.clone(),
+                    id: location.location_row.id.clone(),
                     code: None,
                     name: None,
                     on_hold: None
@@ -105,26 +107,28 @@ mod query {
 
         assert_eq!(
             location_repository
-                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&location.id)))
+                .query_by_filter(
+                    LocationFilter::new().id(EqualFilter::equal_to(&location.location_row.id))
+                )
                 .unwrap()[0],
             location
         );
 
         // Success with all changes and code that is not unique accross stores
         let mut location = locations_in_store[1].clone();
-        location.code = "new_location_code".to_owned();
-        location.name = "new_location_name".to_owned();
-        location.on_hold = !location.on_hold;
+        location.location_row.code = "new_location_code".to_owned();
+        location.location_row.name = "new_location_name".to_owned();
+        location.location_row.on_hold = !location.location_row.on_hold;
 
         assert_eq!(
             service.update_location(
                 &context,
                 "store_a",
                 UpdateLocation {
-                    id: location.id.clone(),
-                    code: Some(location.code.clone()),
-                    name: Some(location.name.clone()),
-                    on_hold: Some(location.on_hold),
+                    id: location.location_row.id.clone(),
+                    code: Some(location.location_row.code.clone()),
+                    name: Some(location.location_row.name.clone()),
+                    on_hold: Some(location.location_row.on_hold),
                 },
             ),
             Ok(location.clone())
@@ -132,7 +136,9 @@ mod query {
 
         assert_eq!(
             location_repository
-                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&location.id)))
+                .query_by_filter(
+                    LocationFilter::new().id(EqualFilter::equal_to(&location.location_row.id))
+                )
                 .unwrap()[0],
             location
         );

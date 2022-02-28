@@ -13,65 +13,54 @@ use crate::{
     },
     RepositoryError,
 };
-use domain::{
-    invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus, InvoiceType},
-    Pagination,
-};
+use crate::{DatetimeFilter, EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
     prelude::*,
 };
 
-impl From<InvoiceRowStatus> for InvoiceStatus {
-    fn from(status: InvoiceRowStatus) -> Self {
-        use InvoiceStatus::*;
-        match status {
-            InvoiceRowStatus::New => New,
-            InvoiceRowStatus::Allocated => Allocated,
-            InvoiceRowStatus::Picked => Picked,
-            InvoiceRowStatus::Shipped => Shipped,
-            InvoiceRowStatus::Delivered => Delivered,
-            InvoiceRowStatus::Verified => Verified,
-        }
-    }
+#[derive(PartialEq, Debug, Clone)]
+pub struct Invoice {
+    pub invoice_row: InvoiceRow,
+    pub name_row: NameRow,
+    pub store_row: StoreRow,
+}
+#[derive(Clone)]
+pub struct InvoiceFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub invoice_number: Option<EqualFilter<i64>>,
+    pub name_id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
+    pub r#type: Option<EqualFilter<InvoiceRowType>>,
+    pub status: Option<EqualFilter<InvoiceRowStatus>>,
+    pub comment: Option<SimpleStringFilter>,
+    pub their_reference: Option<EqualFilter<String>>,
+    pub created_datetime: Option<DatetimeFilter>,
+    pub allocated_datetime: Option<DatetimeFilter>,
+    pub picked_datetime: Option<DatetimeFilter>,
+    pub shipped_datetime: Option<DatetimeFilter>,
+    pub delivered_datetime: Option<DatetimeFilter>,
+    pub verified_datetime: Option<DatetimeFilter>,
+    pub requisition_id: Option<EqualFilter<String>>,
+    pub linked_invoice_id: Option<EqualFilter<String>>,
 }
 
-impl From<InvoiceRowType> for InvoiceType {
-    fn from(r#type: InvoiceRowType) -> Self {
-        use InvoiceType::*;
-        match r#type {
-            InvoiceRowType::OutboundShipment => OutboundShipment,
-            InvoiceRowType::InboundShipment => InboundShipment,
-            InvoiceRowType::InventoryAdjustment => InventoryAdjustment,
-        }
-    }
+pub enum InvoiceSortField {
+    Type,
+    OtherPartyName,
+    InvoiceNumber,
+    Comment,
+    Status,
+    CreatedDatetime,
+    AllocatedDatetime,
+    PickedDatetime,
+    ShippedDatetime,
+    DeliveredDatetime,
+    VerifiedDatetime,
 }
 
-impl From<InvoiceStatus> for InvoiceRowStatus {
-    fn from(status: InvoiceStatus) -> Self {
-        use InvoiceRowStatus::*;
-        match status {
-            InvoiceStatus::New => New,
-            InvoiceStatus::Allocated => Allocated,
-            InvoiceStatus::Picked => Picked,
-            InvoiceStatus::Shipped => Shipped,
-            InvoiceStatus::Delivered => Delivered,
-            InvoiceStatus::Verified => Verified,
-        }
-    }
-}
-
-impl From<InvoiceType> for InvoiceRowType {
-    fn from(r#type: InvoiceType) -> Self {
-        use InvoiceRowType::*;
-        match r#type {
-            InvoiceType::OutboundShipment => OutboundShipment,
-            InvoiceType::InboundShipment => InboundShipment,
-            InvoiceType::InventoryAdjustment => InventoryAdjustment,
-        }
-    }
-}
+pub type InvoiceSort = Sort<InvoiceSortField>;
 
 pub struct InvoiceQueryRepository<'a> {
     connection: &'a StorageConnection,
@@ -165,27 +154,11 @@ impl<'a> InvoiceQueryRepository<'a> {
     }
 }
 
-fn to_domain((invoice_row, name_row, _store_row): InvoiceQueryJoin) -> Invoice {
+fn to_domain((invoice_row, name_row, store_row): InvoiceQueryJoin) -> Invoice {
     Invoice {
-        id: invoice_row.id.to_owned(),
-        other_party_name: name_row.name,
-        other_party_id: name_row.id,
-        other_party_store_id: invoice_row.name_store_id,
-        status: InvoiceStatus::from(invoice_row.status),
-        on_hold: invoice_row.on_hold,
-        r#type: InvoiceType::from(invoice_row.r#type),
-        invoice_number: invoice_row.invoice_number,
-        their_reference: invoice_row.their_reference,
-        comment: invoice_row.comment,
-        created_datetime: invoice_row.created_datetime,
-        allocated_datetime: invoice_row.allocated_datetime,
-        picked_datetime: invoice_row.picked_datetime,
-        shipped_datetime: invoice_row.shipped_datetime,
-        delivered_datetime: invoice_row.delivered_datetime,
-        verified_datetime: invoice_row.verified_datetime,
-        colour: invoice_row.colour,
-        linked_invoice_id: invoice_row.linked_invoice_id,
-        requisition_id: invoice_row.requisition_id,
+        invoice_row,
+        name_row,
+        store_row,
     }
 }
 
@@ -208,18 +181,8 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
         apply_simple_string_filter!(query, f.comment, invoice_dsl::comment);
         apply_equal_filter!(query, f.linked_invoice_id, invoice_dsl::linked_invoice_id);
 
-        if let Some(value) = f.r#type {
-            if let Some(eq) = value.equal_to {
-                let eq = InvoiceRowType::from(eq.clone());
-                query = query.filter(invoice_dsl::type_.eq(eq));
-            }
-        }
-        if let Some(value) = f.status {
-            if let Some(eq) = value.equal_to {
-                let eq = InvoiceRowStatus::from(eq.clone());
-                query = query.filter(invoice_dsl::status.eq(eq));
-            }
-        }
+        apply_equal_filter!(query, f.r#type, invoice_dsl::type_);
+        apply_equal_filter!(query, f.status, invoice_dsl::status);
 
         apply_date_time_filter!(query, f.created_datetime, invoice_dsl::created_datetime);
         apply_date_time_filter!(query, f.allocated_datetime, invoice_dsl::allocated_datetime);
@@ -230,16 +193,185 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
     }
     query
 }
+
+impl InvoiceRowStatus {
+    pub fn equal_to(&self) -> EqualFilter<InvoiceRowStatus> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<InvoiceRowStatus> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: Some(self.clone()),
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+
+    pub fn equal_any(value: Vec<InvoiceRowStatus>) -> EqualFilter<InvoiceRowStatus> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: Some(value),
+            not_equal_all: None,
+        }
+    }
+}
+
+impl InvoiceRowType {
+    pub fn equal_to(&self) -> EqualFilter<InvoiceRowType> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<InvoiceRowType> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: Some(self.clone()),
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+
+    pub fn equal_any(value: Vec<InvoiceRowType>) -> EqualFilter<InvoiceRowType> {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: Some(value),
+            not_equal_all: None,
+        }
+    }
+}
+
+impl InvoiceFilter {
+    pub fn new() -> InvoiceFilter {
+        InvoiceFilter {
+            id: None,
+            invoice_number: None,
+            name_id: None,
+            store_id: None,
+            r#type: None,
+            status: None,
+            comment: None,
+            their_reference: None,
+            created_datetime: None,
+            allocated_datetime: None,
+            picked_datetime: None,
+            shipped_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
+            requisition_id: None,
+            linked_invoice_id: None,
+        }
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<InvoiceRowType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn invoice_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.invoice_number = Some(filter);
+        self
+    }
+
+    pub fn status(mut self, filter: EqualFilter<InvoiceRowStatus>) -> Self {
+        self.status = Some(filter);
+        self
+    }
+
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+
+    pub fn allocated_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.allocated_datetime = Some(filter);
+        self
+    }
+
+    pub fn picked_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.picked_datetime = Some(filter);
+        self
+    }
+
+    pub fn shipped_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.shipped_datetime = Some(filter);
+        self
+    }
+
+    pub fn delivered_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.delivered_datetime = Some(filter);
+        self
+    }
+
+    pub fn verified_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.verified_datetime = Some(filter);
+        self
+    }
+
+    pub fn requisition_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.requisition_id = Some(filter);
+        self
+    }
+
+    pub fn linked_invoice_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.linked_invoice_id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
+}
+
+impl InvoiceRowStatus {
+    pub fn index(&self) -> u8 {
+        match self {
+            InvoiceRowStatus::New => 1,
+            InvoiceRowStatus::Allocated => 2,
+            InvoiceRowStatus::Picked => 3,
+            InvoiceRowStatus::Shipped => 4,
+            InvoiceRowStatus::Delivered => 5,
+            InvoiceRowStatus::Verified => 6,
+        }
+    }
+}
+
+impl Invoice {
+    pub fn other_party_name(&self) -> &str {
+        &self.name_row.name
+    }
+    pub fn other_party_id(&self) -> &str {
+        &self.invoice_row.name_id
+    }
+    pub fn other_party_store_id(&self) -> &Option<String> {
+        &self.invoice_row.name_store_id
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::cmp::Ordering;
 
-    use super::InvoiceQueryRepository;
+    use super::{InvoiceQueryRepository, InvoiceSort, InvoiceSortField};
+    use crate::Pagination;
     use crate::{mock::MockDataInserts, test_db};
-    use domain::{
-        invoice::{InvoiceSort, InvoiceSortField},
-        Pagination,
-    };
 
     #[actix_rt::test]
     async fn test_invoice_query_sort() {
@@ -260,20 +392,24 @@ mod tests {
             )
             .unwrap();
 
-        invoices.sort_by(|a, b| match (&a.comment, &b.comment) {
-            (None, None) => Ordering::Equal,
-            (Some(_), None) => Ordering::Greater,
-            (None, Some(_)) => Ordering::Less,
-            (Some(a), Some(b)) => a.to_lowercase().cmp(&b.to_lowercase()),
-        });
+        invoices.sort_by(
+            |a, b| match (&a.invoice_row.comment, &b.invoice_row.comment) {
+                (None, None) => Ordering::Equal,
+                (Some(_), None) => Ordering::Greater,
+                (None, Some(_)) => Ordering::Less,
+                (Some(a), Some(b)) => a.to_lowercase().cmp(&b.to_lowercase()),
+            },
+        );
 
         for (count, invoice) in invoices.iter().enumerate() {
             assert_eq!(
                 invoice
+                    .invoice_row
                     .comment
                     .clone()
                     .map(|comment| comment.to_lowercase()),
                 sorted[count]
+                    .invoice_row
                     .comment
                     .clone()
                     .map(|comment| comment.to_lowercase()),

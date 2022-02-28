@@ -7,9 +7,9 @@ use graphql_types::{
     types::{DeleteResponse, InvoiceLineConnector},
 };
 use repository::StorageConnectionManager;
-use service::invoice::{delete_outbound_shipment, DeleteOutboundShipmentError};
 
 use async_graphql::*;
+use service::invoice::{delete_outbound_shipment, DeleteOutboundShipmentError};
 
 #[derive(SimpleObject)]
 #[graphql(name = "DeleteOutboundShipmentError")]

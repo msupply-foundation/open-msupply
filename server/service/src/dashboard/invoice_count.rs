@@ -1,9 +1,9 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
-use domain::{
-    invoice::{InvoiceFilter, InvoiceStatus, InvoiceType},
-    DatetimeFilter,
+use repository::DatetimeFilter;
+use repository::{
+    schema::{InvoiceRowStatus, InvoiceRowType},
+    InvoiceFilter, InvoiceQueryRepository, RepositoryError,
 };
-use repository::{InvoiceQueryRepository, RepositoryError};
 
 use crate::service_provider::ServiceContext;
 
@@ -28,8 +28,8 @@ pub trait InvoiceCountServiceTrait: Send + Sync {
     fn invoices_count(
         &self,
         ctx: &ServiceContext,
-        invoice_type: &InvoiceType,
-        invoice_status: &InvoiceStatus,
+        invoice_type: &InvoiceRowType,
+        invoice_status: &InvoiceRowStatus,
         range: &CountTimeRange,
         now: &DateTime<Utc>,
         timezone_offset: &FixedOffset,
@@ -84,8 +84,8 @@ pub struct InvoiceCountService {}
 
 fn invoices_count(
     repo: &InvoiceQueryRepository,
-    invoice_type: &InvoiceType,
-    invoice_status: &InvoiceStatus,
+    invoice_type: &InvoiceRowType,
+    invoice_status: &InvoiceRowStatus,
     oldest: NaiveDateTime,
     earliest: Option<NaiveDateTime>,
 ) -> Result<i64, RepositoryError> {
@@ -99,16 +99,20 @@ fn invoices_count(
     }
     let mut invoice_filter = InvoiceFilter::new().r#type(invoice_type.equal_to());
     match invoice_status {
-        InvoiceStatus::New => invoice_filter = invoice_filter.created_datetime(datetime_filter),
-        InvoiceStatus::Allocated => {
+        InvoiceRowStatus::New => invoice_filter = invoice_filter.created_datetime(datetime_filter),
+        InvoiceRowStatus::Allocated => {
             invoice_filter = invoice_filter.allocated_datetime(datetime_filter)
         }
-        InvoiceStatus::Picked => invoice_filter = invoice_filter.picked_datetime(datetime_filter),
-        InvoiceStatus::Shipped => invoice_filter = invoice_filter.shipped_datetime(datetime_filter),
-        InvoiceStatus::Delivered => {
+        InvoiceRowStatus::Picked => {
+            invoice_filter = invoice_filter.picked_datetime(datetime_filter)
+        }
+        InvoiceRowStatus::Shipped => {
+            invoice_filter = invoice_filter.shipped_datetime(datetime_filter)
+        }
+        InvoiceRowStatus::Delivered => {
             invoice_filter = invoice_filter.delivered_datetime(datetime_filter)
         }
-        InvoiceStatus::Verified => {
+        InvoiceRowStatus::Verified => {
             invoice_filter = invoice_filter.verified_datetime(datetime_filter)
         }
     }
@@ -119,8 +123,8 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
     fn invoices_count(
         &self,
         ctx: &ServiceContext,
-        invoice_type: &InvoiceType,
-        invoice_status: &InvoiceStatus,
+        invoice_type: &InvoiceRowType,
+        invoice_status: &InvoiceRowStatus,
         range: &CountTimeRange,
         now: &DateTime<Utc>,
         timezone_offset: &FixedOffset,
@@ -150,8 +154,8 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let repo = InvoiceQueryRepository::new(&ctx.connection);
         Ok(repo.count(Some(
             InvoiceFilter::new()
-                .r#type(InvoiceType::OutboundShipment.equal_to())
-                .status(InvoiceStatus::Picked.equal_to()),
+                .r#type(InvoiceRowType::OutboundShipment.equal_to())
+                .status(InvoiceRowStatus::Picked.equal_to()),
         ))?)
     }
 }
@@ -191,10 +195,10 @@ mod invoice_count_service_test {
         invoice_repo.upsert_one(&invoice_1).unwrap();
 
         let repo = InvoiceQueryRepository::new(&connection);
-        let status = InvoiceStatus::New;
+        let status = InvoiceRowStatus::New;
 
         // oldest > item1.created_datetime
-        let item1_type: InvoiceType = invoice_1.r#type.into();
+        let item1_type: InvoiceRowType = invoice_1.r#type.into();
         let count =
             invoices_count(&repo, &item1_type, &status, Utc::now().naive_local(), None).unwrap();
         assert_eq!(0, count);
@@ -246,8 +250,8 @@ mod invoice_count_service_test {
         let today = service
             .invoices_count(
                 &ctx,
-                &InvoiceType::InboundShipment,
-                &InvoiceStatus::New,
+                &InvoiceRowType::InboundShipment,
+                &InvoiceRowStatus::New,
                 &CountTimeRange::Today,
                 &test_now,
                 &nz_tz_offset,
@@ -257,8 +261,8 @@ mod invoice_count_service_test {
         let this_week = service
             .invoices_count(
                 &ctx,
-                &InvoiceType::InboundShipment,
-                &InvoiceStatus::New,
+                &InvoiceRowType::InboundShipment,
+                &InvoiceRowStatus::New,
                 &CountTimeRange::ThisWeek,
                 &test_now,
                 &nz_tz_offset,
@@ -272,8 +276,8 @@ mod invoice_count_service_test {
         let today = service
             .invoices_count(
                 &ctx,
-                &InvoiceType::InboundShipment,
-                &InvoiceStatus::New,
+                &InvoiceRowType::InboundShipment,
+                &InvoiceRowStatus::New,
                 &CountTimeRange::Today,
                 &test_now,
                 &utc_offset,
@@ -283,8 +287,8 @@ mod invoice_count_service_test {
         let this_week = service
             .invoices_count(
                 &ctx,
-                &InvoiceType::InboundShipment,
-                &InvoiceStatus::New,
+                &InvoiceRowType::InboundShipment,
+                &InvoiceRowStatus::New,
                 &CountTimeRange::ThisWeek,
                 &test_now,
                 &utc_offset,

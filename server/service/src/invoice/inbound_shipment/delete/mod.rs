@@ -1,11 +1,6 @@
-use domain::{
-    inbound_shipment::{DeleteInboundShipment, DeleteInboundShipmentLine},
-    invoice_line::InvoiceLine,
-    EqualFilter,
-};
 use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
-    StorageConnectionManager, TransactionError,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+    RepositoryError, StorageConnectionManager, TransactionError,
 };
 
 mod validate;
@@ -13,9 +8,15 @@ mod validate;
 use validate::validate;
 
 use crate::{
-    invoice_line::{delete_inbound_shipment_line, DeleteInboundShipmentLineError},
+    invoice_line::{
+        delete_inbound_shipment_line, DeleteInboundShipmentLine, DeleteInboundShipmentLineError,
+    },
     WithDBError,
 };
+
+pub struct DeleteInboundShipment {
+    pub id: String,
+}
 
 pub fn delete_inbound_shipment(
     connection_manager: &StorageConnectionManager,
@@ -44,12 +45,12 @@ pub fn delete_inbound_shipment(
         delete_inbound_shipment_line(
             connection_manager,
             DeleteInboundShipmentLine {
-                id: line.id.clone(),
+                id: line.invoice_line_row.id.clone(),
                 invoice_id: input.id.clone(),
             },
         )
         .map_err(|error| DeleteInboundShipmentError::LineDeleteError {
-            line_id: line.id,
+            line_id: line.invoice_line_row.id,
             error,
         })?;
     }

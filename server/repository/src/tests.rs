@@ -340,23 +340,18 @@ mod repository_test {
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRepository, ItemRepository, ItemStatsFilter,
-        ItemStatsRepository, KeyValueStoreRepository, MasterListLineRepository,
-        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameQueryRepository, NameRepository, NumberRowRepository,
-        OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
-        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
-        RequisitionRowRepository, StockLineRepository, StockLineRowRepository,
-        StocktakeRowRepository, StoreRowRepository, UserAccountRepository,
+        ItemStatsRepository, KeyValueStoreRepository, MasterListFilter, MasterListLineFilter,
+        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
+        MasterListRepository, MasterListRowRepository, NameFilter, NameQueryRepository,
+        NameRepository, NameSort, NameSortField, NumberRowRepository, OutboundShipmentRepository,
+        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
+        StockLineFilter, StockLineRepository, StockLineRowRepository, StocktakeRowRepository,
+        StoreRowRepository, UserAccountRepository,
     };
+    use crate::{DateFilter, EqualFilter, Pagination, SimpleStringFilter};
     use chrono::{Duration, Utc};
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use domain::{
-        master_list::MasterListFilter,
-        master_list_line::MasterListLineFilter,
-        name::{NameFilter, NameSort, NameSortField},
-        stock_line::StockLineFilter,
-        DateFilter, EqualFilter, Pagination, SimpleStringFilter,
-    };
     use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
     #[actix_rt::test]
@@ -409,7 +404,7 @@ mod repository_test {
             )
             .unwrap();
         assert_eq!(result.len(), 1);
-        assert_eq!(result.get(0).unwrap().name, "name_1");
+        assert_eq!(result.get(0).unwrap().name_row.name, "name_1");
 
         let result = repo
             .query(
@@ -532,7 +527,7 @@ mod repository_test {
                 }),
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().code, "code2");
+        assert_eq!(result.get(0).unwrap().name_row.code, "code2");
     }
 
     #[actix_rt::test]

@@ -1,7 +1,7 @@
 macro_rules! get_invoice_inline {
     ($filter:expr, $connection:expr) => {{
         repository::InvoiceQueryRepository::new($connection)
-            .query(Pagination::one(), Some($filter), None)
+            .query(repository::Pagination::one(), Some($filter), None)
             .unwrap()
             .pop()
             .unwrap()
@@ -35,7 +35,7 @@ macro_rules! get_invoice_line_inline {
 macro_rules! get_name_inline {
     ($filter:expr, $connection:expr) => {{
         repository::NameQueryRepository::new($connection)
-            .query(Pagination::one(), Some($filter), None)
+            .query(repository::Pagination::one(), Some($filter), None)
             .unwrap()
             .pop()
             .unwrap()

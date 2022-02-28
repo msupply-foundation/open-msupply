@@ -22,7 +22,7 @@ pub fn generate(
     let new_invoice = InvoiceRow {
         id: uuid(),
         name_id: requisition_row.name_id,
-        name_store_id: other_party.store_id,
+        name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_owned(),
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, &store_id)?,
         r#type: InvoiceRowType::OutboundShipment,

@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type,
-        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceType,
+        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceRowType,
     },
     invoice_line::{
         check_location_exists,
@@ -13,13 +13,12 @@ use crate::{
         LocationDoesNotExist, PackSizeBelowOne,
     },
 };
-use domain::{inbound_shipment::InsertInboundShipmentLine, invoice::InvoiceType};
 use repository::{
-    schema::{InvoiceRow, ItemRow},
+    schema::{InvoiceRow, InvoiceRowType, ItemRow},
     StorageConnection,
 };
 
-use super::InsertInboundShipmentLineError;
+use super::{InsertInboundShipmentLine, InsertInboundShipmentLineError};
 
 pub fn validate(
     input: &InsertInboundShipmentLine,
@@ -33,7 +32,7 @@ pub fn validate(
     check_location_exists(&input.location_id, connection)?;
 
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
-    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     // TODO: InvoiceDoesNotBelongToCurrentStore
@@ -73,8 +72,8 @@ impl From<LineAlreadyExists> for InsertInboundShipmentLineError {
     }
 }
 
-impl From<WrongInvoiceType> for InsertInboundShipmentLineError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for InsertInboundShipmentLineError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         InsertInboundShipmentLineError::NotAnInboundShipment
     }
 }

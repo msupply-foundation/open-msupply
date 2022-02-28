@@ -354,7 +354,7 @@ mod repository_test {
     };
     use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use domain::{
+    use crate::{
         master_list_line::MasterListLineFilter,
         name::{NameFilter, NameSort, NameSortField},
         stock_line::StockLineFilter,
@@ -1069,7 +1069,7 @@ mod repository_test {
 
     #[cfg(test)]
     mod test {
-        use domain::{master_list_line::MasterListLineFilter, EqualFilter};
+        use crate::{master_list_line::MasterListLineFilter, EqualFilter};
 >>>>>>> 50c96129 (Add minimal change log (only for stock_take and sqlite))
 
         // Test insert

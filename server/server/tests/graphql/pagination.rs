@@ -1,10 +1,9 @@
 mod graphql {
     use crate::graphql::{assert_graphql_query, assert_standard_graphql_error};
-    use domain::{
-        location::{Location, LocationFilter, LocationSort},
-        PaginationOption,
+    use repository::PaginationOption;
+    use repository::{
+        mock::MockDataInserts, Location, LocationFilter, LocationSort, StorageConnectionManager,
     };
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{

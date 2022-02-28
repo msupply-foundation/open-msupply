@@ -1,11 +1,9 @@
 use chrono::NaiveDate;
-use domain::{
-    stock_line::{StockLine, StockLineFilter},
-    EqualFilter,
-};
+use repository::EqualFilter;
 use repository::{
-    schema::StocktakeLineRow, RepositoryError, StockLineRepository, StocktakeLine,
-    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRowRepository, StorageConnection,
+    schema::StocktakeLineRow, RepositoryError, StockLine, StockLineFilter, StockLineRepository,
+    StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRowRepository,
+    StorageConnection,
 };
 
 use crate::{
@@ -98,7 +96,7 @@ fn check_stock_line_xor_item(
 
     // extract item_id
     if let Some(stock_line) = stock_line {
-        return Some(stock_line.item_id.clone());
+        return Some(stock_line.stock_line_row.item_id.clone());
     }
     input.item_id.clone()
 }
@@ -137,7 +135,11 @@ fn validate(
         None
     };
     if let Some(stock_line) = &stock_line {
-        if !check_stock_line_is_unique(connection, &input.stocktake_id, &stock_line.id)? {
+        if !check_stock_line_is_unique(
+            connection,
+            &input.stocktake_id,
+            &stock_line.stock_line_row.id,
+        )? {
             return Err(InsertStocktakeLineError::StockLineAlreadyExistsInStocktake);
         }
     }
@@ -179,7 +181,7 @@ fn generate(
     }: InsertStocktakeLineInput,
 ) -> StocktakeLineRow {
     let snapshot_number_of_packs = if let Some(stock_line) = stock_line {
-        stock_line.total_number_of_packs
+        stock_line.stock_line_row.total_number_of_packs
     } else {
         0
     };

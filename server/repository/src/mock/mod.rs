@@ -40,7 +40,7 @@ pub use invoice_line::*;
 pub use item::*;
 pub use location::*;
 pub use name::*;
-pub use name_store_join::mock_name_store_joins;
+pub use name_store_join::*;
 pub use number::*;
 pub use stock_line::*;
 pub use stocktake::*;

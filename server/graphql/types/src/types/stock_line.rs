@@ -2,9 +2,8 @@ use super::LocationNode;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
-use domain::stock_line::StockLine;
 use graphql_core::{loader::LocationByIdLoader, simple_generic_errors::NodeError, ContextExt};
-use repository::StorageConnectionManager;
+use repository::{schema::StockLineRow, StockLine, StorageConnectionManager};
 use service::{stock_line::get_stock_line, usize_to_u32, ListResult};
 
 pub struct StockLineNode {
@@ -20,51 +19,51 @@ pub struct StockLineConnector {
 #[Object]
 impl StockLineNode {
     pub async fn id(&self) -> &str {
-        &self.stock_line.id
+        &self.row().id
     }
     pub async fn item_id(&self) -> &str {
-        &self.stock_line.item_id
+        &self.row().item_id
     }
     pub async fn store_id(&self) -> &str {
-        &self.stock_line.store_id
+        &self.row().store_id
     }
     pub async fn batch(&self) -> &Option<String> {
-        &self.stock_line.batch
+        &self.row().batch
     }
     pub async fn pack_size(&self) -> i32 {
-        self.stock_line.pack_size
+        self.row().pack_size
     }
     pub async fn cost_price_per_pack(&self) -> f64 {
-        self.stock_line.cost_price_per_pack
+        self.row().cost_price_per_pack
     }
     pub async fn sell_price_per_pack(&self) -> f64 {
-        self.stock_line.sell_price_per_pack
+        self.row().sell_price_per_pack
     }
     pub async fn available_number_of_packs(&self) -> i32 {
-        self.stock_line.available_number_of_packs
+        self.row().available_number_of_packs
     }
     pub async fn total_number_of_packs(&self) -> i32 {
-        self.stock_line.total_number_of_packs
+        self.row().total_number_of_packs
     }
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
-        &self.stock_line.expiry_date
+        &self.row().expiry_date
     }
     pub async fn on_hold(&self) -> bool {
-        self.stock_line.on_hold
+        self.row().on_hold
     }
     pub async fn note(&self) -> &Option<String> {
-        &self.stock_line.note
+        &self.row().note
     }
     pub async fn location_id(&self) -> &Option<String> {
-        &self.stock_line.location_id
+        &self.row().location_id
     }
-    pub async fn location_name(&self) -> &Option<String> {
-        &self.stock_line.location_name
+    pub async fn location_name(&self) -> Option<&str> {
+        self.stock_line.location_name()
     }
     async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
         let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
-        let location_id = match &self.stock_line.location_id {
+        let location_id = match &self.row().location_id {
             None => return Ok(None),
             Some(location_id) => location_id,
         };
@@ -99,6 +98,10 @@ pub fn get_stock_line_response(
 impl StockLineNode {
     pub fn from_domain(stock_line: StockLine) -> StockLineNode {
         StockLineNode { stock_line }
+    }
+
+    pub fn row(&self) -> &StockLineRow {
+        &self.stock_line.stock_line_row
     }
 }
 

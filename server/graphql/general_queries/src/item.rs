@@ -1,8 +1,4 @@
 use async_graphql::*;
-use domain::{
-    item::{ItemSort, ItemSortField},
-    EqualFilter, PaginationOption, SimpleStringFilter,
-};
 use graphql_core::{
     generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
@@ -10,11 +6,12 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::ItemConnector;
-use repository::ItemFilter;
+use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::item::get_items;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "domain::item::ItemSortField")]
+#[graphql(remote = "repository::ItemSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum ItemSortFieldInput {
     Name,

@@ -2,14 +2,16 @@ use super::{ItemNode, LocationNode, StockLineNode};
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use domain::invoice_line::{InvoiceLine, InvoiceLineType};
 use graphql_core::{
     loader::{ItemLoader, LocationByIdLoader, StockLineByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::StorageConnectionManager;
+use repository::{
+    schema::{InvoiceLineRow, InvoiceLineRowType},
+    InvoiceLine, StorageConnectionManager,
+};
 use serde::Serialize;
 use service::{invoice_line::get_invoice_line, usize_to_u32, ListResult};
 
@@ -22,13 +24,13 @@ pub enum InvoiceLineNodeType {
     Service,
 }
 impl InvoiceLineNodeType {
-    pub fn from_domain(domain_type: &InvoiceLineType) -> Self {
+    pub fn from_domain(domain_type: &InvoiceLineRowType) -> Self {
         use InvoiceLineNodeType::*;
         match domain_type {
-            InvoiceLineType::StockIn => StockIn,
-            InvoiceLineType::StockOut => StockOut,
-            InvoiceLineType::UnallocatedStock => UnallocatedStock,
-            InvoiceLineType::Service => Service,
+            InvoiceLineRowType::StockIn => StockIn,
+            InvoiceLineRowType::StockOut => StockOut,
+            InvoiceLineRowType::UnallocatedStock => UnallocatedStock,
+            InvoiceLineRowType::Service => Service,
         }
     }
 }
@@ -46,66 +48,67 @@ pub struct InvoiceLineConnector {
 #[Object]
 impl InvoiceLineNode {
     pub async fn id(&self) -> &str {
-        &self.invoice_line.id
+        &self.row().id
     }
     pub async fn invoice_id(&self) -> &str {
-        &self.invoice_line.invoice_id
+        &self.row().invoice_id
     }
     pub async fn item_id(&self) -> &str {
-        &self.invoice_line.item_id
+        &self.row().item_id
     }
     pub async fn item_name(&self) -> &str {
-        &self.invoice_line.item_name
+        &self.row().item_name
     }
     pub async fn item_code(&self) -> &str {
-        &self.invoice_line.item_code
+        &self.row().item_code
     }
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader.load_one(self.invoice_line.item_id.clone()).await?;
+        let item_option = loader.load_one(self.row().item_id.clone()).await?;
 
         item_option.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item ({}) linked to invoice_line ({})",
-                &self.invoice_line.item_id, &self.invoice_line.id
+                &self.row().item_id,
+                &self.row().id
             ))
             .extend(),
         )
     }
     pub async fn pack_size(&self) -> i32 {
-        self.invoice_line.pack_size
+        self.row().pack_size
     }
     pub async fn number_of_packs(&self) -> i32 {
-        self.invoice_line.number_of_packs
+        self.row().number_of_packs
     }
     pub async fn cost_price_per_pack(&self) -> f64 {
-        self.invoice_line.cost_price_per_pack
+        self.row().cost_price_per_pack
     }
     pub async fn sell_price_per_pack(&self) -> f64 {
-        self.invoice_line.sell_price_per_pack
+        self.row().sell_price_per_pack
     }
     pub async fn batch(&self) -> &Option<String> {
-        &self.invoice_line.batch
+        &self.row().batch
     }
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
-        &self.invoice_line.expiry_date
+        &self.row().expiry_date
     }
     pub async fn note(&self) -> &Option<String> {
-        &self.invoice_line.note
+        &self.row().note
     }
-    pub async fn location_name(&self) -> &Option<String> {
-        &self.invoice_line.location_name
+    pub async fn location_name(&self) -> Option<&str> {
+        self.invoice_line.location_name()
     }
     pub async fn location_id(&self) -> &Option<String> {
-        &self.invoice_line.location_id
+        &self.row().location_id
     }
     pub async fn r#type(&self) -> InvoiceLineNodeType {
-        InvoiceLineNodeType::from_domain(&self.invoice_line.r#type)
+        InvoiceLineNodeType::from_domain(&self.row().r#type)
     }
     async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
         let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
-        let location_id = match &self.invoice_line.location_id {
+        let location_id = match &self.row().location_id {
             None => return Ok(None),
             Some(location_id) => location_id,
         };
@@ -117,7 +120,7 @@ impl InvoiceLineNode {
     async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
 
-        let stock_line_id = match &self.invoice_line.stock_line_id {
+        let stock_line_id = match &self.row().stock_line_id {
             None => return Ok(None),
             Some(stock_line_id) => stock_line_id,
         };
@@ -184,5 +187,9 @@ impl InvoiceLineConnector {
 impl InvoiceLineNode {
     pub fn from_domain(invoice_line: InvoiceLine) -> InvoiceLineNode {
         InvoiceLineNode { invoice_line }
+    }
+
+    pub fn row(&self) -> &InvoiceLineRow {
+        &self.invoice_line.invoice_line_row
     }
 }

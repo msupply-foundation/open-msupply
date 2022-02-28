@@ -1,24 +1,20 @@
 use crate::WithDBError;
-use domain::{
-    invoice::{InvoiceStatus, InvoiceType},
-    invoice_line::InvoiceLine,
-    name::{Name, NameFilter},
-    EqualFilter,
-};
+use repository::EqualFilter;
 use repository::{
-    schema::{InvoiceRow, InvoiceRowType},
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, NameQueryRepository,
+    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, NameQueryRepository,
     RepositoryError, StorageConnection,
 };
+use repository::{Name, NameFilter};
 
-pub struct WrongInvoiceType;
+pub struct WrongInvoiceRowType;
 
 pub fn check_invoice_type(
     invoice: &InvoiceRow,
-    r#type: InvoiceType,
-) -> Result<(), WrongInvoiceType> {
+    r#type: InvoiceRowType,
+) -> Result<(), WrongInvoiceRowType> {
     if invoice.r#type != r#type.into() {
-        Err(WrongInvoiceType {})
+        Err(WrongInvoiceRowType {})
     } else {
         Ok(())
     }
@@ -27,23 +23,23 @@ pub fn check_invoice_type(
 pub struct InvoiceIsNotEditable;
 
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNotEditable> {
-    let status = InvoiceStatus::from(invoice.status.clone());
+    let status = InvoiceRowStatus::from(invoice.status.clone());
     let is_editable = match &invoice.r#type {
         InvoiceRowType::OutboundShipment => match status {
-            InvoiceStatus::New => true,
-            InvoiceStatus::Allocated => true,
-            InvoiceStatus::Picked => true,
-            InvoiceStatus::Shipped => false,
-            InvoiceStatus::Delivered => false,
-            InvoiceStatus::Verified => false,
+            InvoiceRowStatus::New => true,
+            InvoiceRowStatus::Allocated => true,
+            InvoiceRowStatus::Picked => true,
+            InvoiceRowStatus::Shipped => false,
+            InvoiceRowStatus::Delivered => false,
+            InvoiceRowStatus::Verified => false,
         },
         InvoiceRowType::InboundShipment => match status {
-            InvoiceStatus::New => true,
-            InvoiceStatus::Shipped => true,
-            InvoiceStatus::Delivered => true,
-            InvoiceStatus::Allocated => false,
-            InvoiceStatus::Picked => false,
-            InvoiceStatus::Verified => false,
+            InvoiceRowStatus::New => true,
+            InvoiceRowStatus::Shipped => true,
+            InvoiceRowStatus::Delivered => true,
+            InvoiceRowStatus::Allocated => false,
+            InvoiceRowStatus::Picked => false,
+            InvoiceRowStatus::Verified => false,
         },
         InvoiceRowType::InventoryAdjustment => false,
     };
@@ -54,27 +50,27 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNo
         Err(InvoiceIsNotEditable {})
     }
 }
-pub enum InvoiceStatusError {
+pub enum InvoiceRowStatusError {
     CannotChangeStatusOfInvoiceOnHold,
     CannotReverseInvoiceStatus,
 }
 
 pub fn check_invoice_status(
     invoice: &InvoiceRow,
-    status_option: Option<InvoiceStatus>,
+    status_option: Option<InvoiceRowStatus>,
     on_hold_option: &Option<bool>,
-) -> Result<(), InvoiceStatusError> {
+) -> Result<(), InvoiceRowStatusError> {
     if let Some(new_status) = status_option {
-        let existing_status: InvoiceStatus = invoice.status.clone().into();
+        let existing_status: InvoiceRowStatus = invoice.status.clone().into();
         // When we update invoice, error will trigger if
         // * invoice is currently on hold and is not being change to be not on hold
         let is_not_on_hold = !invoice.on_hold || !on_hold_option.unwrap_or(true);
 
         if new_status != existing_status && !is_not_on_hold {
-            return Err(InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold);
+            return Err(InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold);
         }
         if new_status.index() < existing_status.index() {
-            return Err(InvoiceStatusError::CannotReverseInvoiceStatus);
+            return Err(InvoiceRowStatusError::CannotReverseInvoiceStatus);
         }
     }
 

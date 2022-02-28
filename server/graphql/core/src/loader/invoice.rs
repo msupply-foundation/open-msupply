@@ -1,9 +1,8 @@
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use domain::invoice::{Invoice, InvoiceFilter};
-use domain::EqualFilter;
 use repository::schema::InvoiceStatsRow;
-use repository::{InvoiceLineRepository, InvoiceQueryRepository};
+use repository::EqualFilter;
+use repository::{Invoice, InvoiceFilter, InvoiceLineRepository, InvoiceQueryRepository};
 use repository::{RepositoryError, StorageConnectionManager};
 use service::invoice::get_invoices;
 use std::collections::HashMap;
@@ -25,7 +24,7 @@ impl Loader<String> for InvoiceQueryLoader {
         Ok(repo
             .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_any(keys.to_owned())))?
             .into_iter()
-            .map(|invoice| (invoice.id.clone(), invoice))
+            .map(|invoice| (invoice.invoice_row.id.clone(), invoice))
             .collect())
     }
 }
@@ -79,7 +78,7 @@ impl Loader<String> for InvoiceByRequisitionIdLoader {
 
         let mut result: HashMap<String, Vec<Invoice>> = HashMap::new();
         for invoice in invoices.rows {
-            if let Some(requisition_id) = &invoice.requisition_id {
+            if let Some(requisition_id) = &invoice.invoice_row.requisition_id {
                 let list = result
                     .entry(requisition_id.clone())
                     .or_insert_with(|| Vec::<Invoice>::new());

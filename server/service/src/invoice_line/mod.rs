@@ -1,6 +1,7 @@
 pub mod query;
 pub mod validate;
-use domain::invoice_line::InvoiceLine;
+
+use repository::InvoiceLine;
 
 use crate::service_provider::ServiceContext;
 
@@ -46,3 +47,8 @@ pub trait OutboundShipmentLineServiceTrait: Sync + Send {
 
 pub struct OutboundShipmentLineService {}
 impl OutboundShipmentLineServiceTrait for OutboundShipmentLineService {}
+
+pub struct ShipmentTaxUpdate {
+    /// Set or unset the tax value
+    pub percentage: Option<f64>,
+}

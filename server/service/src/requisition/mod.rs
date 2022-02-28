@@ -16,10 +16,10 @@ use self::{
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
-use domain::{invoice::Invoice, PaginationOption};
+use repository::PaginationOption;
 use repository::{
-    schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter, RequisitionLine,
-    RequisitionSort,
+    schema::RequisitionRowType, Invoice, RepositoryError, Requisition, RequisitionFilter,
+    RequisitionLine, RequisitionSort,
 };
 
 pub mod common;

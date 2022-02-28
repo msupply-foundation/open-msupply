@@ -2,11 +2,8 @@ use self::query::get_master_lists;
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
-use domain::{
-    master_list::{MasterListFilter, MasterListSort},
-    PaginationOption,
-};
-use repository::MasterList;
+use repository::PaginationOption;
+use repository::{MasterList, MasterListFilter, MasterListSort};
 
 pub mod query;
 

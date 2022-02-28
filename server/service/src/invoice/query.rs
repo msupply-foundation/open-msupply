@@ -2,11 +2,11 @@ use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     SingleRecordError,
 };
-use domain::{
-    invoice::{Invoice, InvoiceFilter, InvoiceSort, InvoiceType},
-    EqualFilter, PaginationOption,
+use repository::{
+    schema::InvoiceRowType, Invoice, InvoiceFilter, InvoiceQueryRepository, InvoiceSort,
+    RepositoryError, StorageConnectionManager,
 };
-use repository::{InvoiceQueryRepository, RepositoryError, StorageConnectionManager};
+use repository::{EqualFilter, PaginationOption};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -54,7 +54,7 @@ pub fn get_invoice_by_number(
     ctx: &ServiceContext,
     store_id: &str,
     invoice_number: u32,
-    r#type: InvoiceType,
+    r#type: InvoiceRowType,
 ) -> Result<Option<Invoice>, RepositoryError> {
     let mut result = InvoiceQueryRepository::new(&ctx.connection).query_by_filter(
         InvoiceFilter::new()
@@ -68,9 +68,9 @@ pub fn get_invoice_by_number(
 
 #[cfg(test)]
 mod test_query {
-    use domain::invoice::InvoiceType;
     use repository::{
         mock::{mock_unique_number_inbound_shipment, MockDataInserts},
+        schema::InvoiceRowType,
         test_db::setup_all,
     };
 
@@ -87,7 +87,12 @@ mod test_query {
 
         // Not found
         assert_eq!(
-            service.get_invoice_by_number(&context, "store_a", 200, InvoiceType::OutboundShipment),
+            service.get_invoice_by_number(
+                &context,
+                "store_a",
+                200,
+                InvoiceRowType::OutboundShipment
+            ),
             Ok(None)
         );
 
@@ -99,7 +104,7 @@ mod test_query {
                 &context,
                 "store_a",
                 invoice_to_find.invoice_number as u32,
-                InvoiceType::OutboundShipment,
+                InvoiceRowType::OutboundShipment,
             ),
             Ok(None)
         );
@@ -110,11 +115,11 @@ mod test_query {
                 &context,
                 "store_a",
                 invoice_to_find.invoice_number as u32,
-                InvoiceType::InboundShipment,
+                InvoiceRowType::InboundShipment,
             )
             .unwrap()
             .unwrap();
 
-        assert_eq!(found_invoice.id, invoice_to_find.id);
+        assert_eq!(found_invoice.invoice_row.id, invoice_to_find.id);
     }
 }

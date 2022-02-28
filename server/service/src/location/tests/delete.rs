@@ -1,17 +1,13 @@
 #[cfg(test)]
 mod query {
-    use domain::{
-        location::{DeleteLocation, LocationFilter},
-        stock_line::StockLineFilter,
-        EqualFilter,
-    };
+    use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, InvoiceLineFilter, InvoiceLineRepository,
-        LocationRepository, StockLineRepository,
+        LocationFilter, LocationRepository, StockLineFilter, StockLineRepository,
     };
 
     use crate::{
-        location::delete::{DeleteLocationError, LocationInUse},
+        location::delete::{DeleteLocation, DeleteLocationError, LocationInUse},
         service_provider::ServiceProvider,
     };
 
@@ -51,7 +47,7 @@ mod query {
                 &context,
                 "store_a",
                 DeleteLocation {
-                    id: locations_not_in_store[0].id.clone(),
+                    id: locations_not_in_store[0].location_row.id.clone(),
                 },
             ),
             Err(DeleteLocationError::LocationDoesNotBelongToCurrentStore)

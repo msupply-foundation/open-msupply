@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type,
-        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceType,
+        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceRowType,
     },
     invoice_line::{
         check_batch, check_location_exists, check_pack_size,
@@ -12,13 +12,12 @@ use crate::{
         BatchIsReserved, LocationDoesNotExist, PackSizeBelowOne,
     },
 };
-use domain::{inbound_shipment::UpdateInboundShipmentLine, invoice::InvoiceType};
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, ItemRow},
+    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow},
     StorageConnection,
 };
 
-use super::UpdateInboundShipmentLineError;
+use super::{UpdateInboundShipmentLine, UpdateInboundShipmentLineError};
 
 pub fn validate(
     input: &UpdateInboundShipmentLine,
@@ -32,7 +31,7 @@ pub fn validate(
 
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     check_line_belongs_to_invoice(&line, &invoice)?;
-    check_invoice_type(&invoice, InvoiceType::InboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     check_batch(&line, connection)?;
@@ -87,8 +86,8 @@ impl From<LineDoesNotExist> for UpdateInboundShipmentLineError {
     }
 }
 
-impl From<WrongInvoiceType> for UpdateInboundShipmentLineError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for UpdateInboundShipmentLineError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         UpdateInboundShipmentLineError::NotAnInboundShipment
     }
 }

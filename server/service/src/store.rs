@@ -1,4 +1,4 @@
-use domain::PaginationOption;
+use repository::PaginationOption;
 use repository::{schema::StoreRow, StoreFilter, StoreRepository, StoreSort};
 
 use crate::{

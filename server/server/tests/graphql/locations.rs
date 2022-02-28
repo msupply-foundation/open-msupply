@@ -1,10 +1,10 @@
 mod graphql {
     use crate::graphql::assert_graphql_query;
-    use domain::{
-        location::{Location, LocationFilter, LocationSort, LocationSortField},
-        EqualFilter, PaginationOption, Sort,
+    use repository::{
+        mock::MockDataInserts, schema::LocationRow, Location, LocationFilter, LocationSort,
+        LocationSortField, StorageConnectionManager,
     };
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
@@ -76,10 +76,13 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(ListResult {
                 rows: vec![Location {
-                    id: "location_on_hold".to_owned(),
-                    name: "test_name".to_owned(),
-                    code: "test_code".to_owned(),
-                    on_hold: true,
+                    location_row: LocationRow {
+                        id: "location_on_hold".to_owned(),
+                        name: "test_name".to_owned(),
+                        code: "test_code".to_owned(),
+                        on_hold: true,
+                        store_id: "store_a".to_owned(),
+                    },
                 }],
                 count: 1,
             })

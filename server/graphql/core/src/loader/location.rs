@@ -1,6 +1,7 @@
-use domain::location::{Location, LocationFilter};
-use domain::EqualFilter;
-use repository::{LocationRepository, RepositoryError, StorageConnectionManager};
+use repository::EqualFilter;
+use repository::{
+    Location, LocationFilter, LocationRepository, RepositoryError, StorageConnectionManager,
+};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -24,7 +25,7 @@ impl Loader<String> for LocationByIdLoader {
 
         Ok(result
             .into_iter()
-            .map(|location| (location.id.clone(), location))
+            .map(|location| (location.location_row.id.clone(), location))
             .collect())
     }
 }

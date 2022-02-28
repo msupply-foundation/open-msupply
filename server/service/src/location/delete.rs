@@ -1,14 +1,9 @@
 use super::validate::check_location_exists;
 use crate::service_provider::ServiceContext;
-use domain::{
-    invoice_line::InvoiceLine,
-    location::DeleteLocation,
-    stock_line::{StockLine, StockLineFilter},
-    EqualFilter,
-};
+use repository::EqualFilter;
 use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, LocationRowRepository, RepositoryError,
-    StockLineRepository, StorageConnection,
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, LocationRowRepository, RepositoryError,
+    StockLine, StockLineFilter, StockLineRepository, StorageConnection,
 };
 #[derive(PartialEq, Debug)]
 pub struct LocationInUse {
@@ -22,6 +17,10 @@ pub enum DeleteLocationError {
     LocationDoesNotBelongToCurrentStore,
     LocationInUse(LocationInUse),
     DatabaseError(RepositoryError),
+}
+
+pub struct DeleteLocation {
+    pub id: String,
 }
 
 pub fn delete_location(

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
-use domain::EqualFilter;
+use repository::EqualFilter;
 use repository::{Requisition, RequisitionFilter};
 use service::service_provider::ServiceProvider;
 

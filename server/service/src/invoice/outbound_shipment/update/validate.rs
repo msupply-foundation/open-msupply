@@ -1,17 +1,15 @@
 use crate::invoice::{
     check_invoice_is_editable, check_invoice_status, check_other_party_id, InvoiceIsNotEditable,
-    InvoiceStatusError,
+    InvoiceRowStatusError,
 };
-use domain::{
-    invoice::InvoiceStatus, name::Name, outbound_shipment::UpdateOutboundShipment, EqualFilter,
-};
+use repository::EqualFilter;
 use repository::{
     schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, Name, RepositoryError,
     StorageConnection,
 };
 
-use super::UpdateOutboundShipmentError;
+use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
 
 pub fn validate(
     patch: &UpdateOutboundShipment,
@@ -31,7 +29,7 @@ pub fn validate(
             let other_party = check_other_party_id(connection, &other_party_id)?
                 .ok_or(OtherPartyDoesNotExists {})?;
 
-            if !other_party.is_customer {
+            if !other_party.is_customer() {
                 return Err(OtherPartyNotACustomer(other_party));
             };
             Some(other_party)
@@ -59,14 +57,14 @@ fn check_invoice_exists(
 fn check_can_change_status_to_allocated(
     connection: &StorageConnection,
     invoice_row: &InvoiceRow,
-    status_option: Option<InvoiceStatus>,
+    status_option: Option<InvoiceRowStatus>,
 ) -> Result<(), UpdateOutboundShipmentError> {
     if invoice_row.status != InvoiceRowStatus::New {
         return Ok(());
     };
 
     if let Some(new_status) = status_option {
-        if new_status == InvoiceStatus::New {
+        if new_status == InvoiceRowStatus::New {
             return Ok(());
         }
 
@@ -108,14 +106,14 @@ impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentError {
     }
 }
 
-impl From<InvoiceStatusError> for UpdateOutboundShipmentError {
-    fn from(error: InvoiceStatusError) -> Self {
+impl From<InvoiceRowStatusError> for UpdateOutboundShipmentError {
+    fn from(error: InvoiceRowStatusError) -> Self {
         use UpdateOutboundShipmentError::*;
         match error {
-            InvoiceStatusError::CannotChangeStatusOfInvoiceOnHold => {
+            InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
                 CannotChangeStatusOfInvoiceOnHold
             }
-            InvoiceStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
+            InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         }
     }
 }

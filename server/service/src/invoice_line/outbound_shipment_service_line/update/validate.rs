@@ -1,13 +1,12 @@
-use domain::invoice::InvoiceType;
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, ItemRow, ItemRowType},
+    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType},
     StorageConnection,
 };
 
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceType,
+        InvoiceIsNotEditable, WrongInvoiceRowType,
     },
     invoice_line::validate::{
         check_item, check_line_belongs_to_invoice, check_line_exists, ItemNotFound,
@@ -36,7 +35,7 @@ pub fn validate(
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
 
     check_line_belongs_to_invoice(&line, &invoice)?;
-    check_invoice_type(&invoice, InvoiceType::OutboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     Ok((line, invoice, item))
@@ -60,8 +59,8 @@ impl From<NotInvoiceLine> for UpdateOutboundShipmentServiceLineError {
     }
 }
 
-impl From<WrongInvoiceType> for UpdateOutboundShipmentServiceLineError {
-    fn from(_: WrongInvoiceType) -> Self {
+impl From<WrongInvoiceRowType> for UpdateOutboundShipmentServiceLineError {
+    fn from(_: WrongInvoiceRowType) -> Self {
         UpdateOutboundShipmentServiceLineError::NotAnOutboundShipment
     }
 }

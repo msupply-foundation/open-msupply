@@ -1,5 +1,5 @@
 use async_graphql::*;
-use domain::location::UpdateLocation;
+
 use graphql_core::{
     simple_generic_errors::{
         DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound, UniqueValueKey,
@@ -9,7 +9,7 @@ use graphql_core::{
 };
 use graphql_types::types::LocationNode;
 use repository::RepositoryError;
-use service::location::update::UpdateLocationError as InError;
+use service::location::update::{UpdateLocation, UpdateLocationError as InError};
 
 pub fn update_location(
     ctx: &Context<'_>,

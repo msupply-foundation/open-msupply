@@ -1,15 +1,3 @@
-pub mod inbound_shipment;
-pub mod invoice;
-pub mod invoice_line;
-pub mod item;
-pub mod location;
-pub mod master_list;
-pub mod master_list_line;
-pub mod name;
-pub mod outbound_shipment;
-pub mod shipment_tax_update;
-pub mod stock_line;
-
 use chrono::{NaiveDate, NaiveDateTime};
 
 #[derive(Clone, PartialEq, Debug)]
@@ -155,7 +143,7 @@ pub struct Sort<T> {
     pub desc: Option<bool>,
 }
 
-pub const DEFAULT_LIMIT: u32 = 100;
+pub const DEFAULT_PAGINATION_LIMIT: u32 = 100;
 
 #[derive(Debug, PartialEq)]
 pub struct PaginationOption {
@@ -172,7 +160,7 @@ impl Pagination {
     pub fn new() -> Pagination {
         Pagination {
             offset: 0,
-            limit: DEFAULT_LIMIT,
+            limit: DEFAULT_PAGINATION_LIMIT,
         }
     }
 

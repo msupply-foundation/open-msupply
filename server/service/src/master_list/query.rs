@@ -1,8 +1,5 @@
-use domain::{
-    master_list::{MasterListFilter, MasterListSort},
-    PaginationOption,
-};
-use repository::{MasterList, MasterListRepository};
+use repository::PaginationOption;
+use repository::{MasterList, MasterListFilter, MasterListRepository, MasterListSort};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,

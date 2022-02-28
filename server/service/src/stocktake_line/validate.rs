@@ -1,7 +1,7 @@
-use domain::{location::LocationFilter, EqualFilter};
+use repository::EqualFilter;
 use repository::{
-    schema::StocktakeLineRow, ItemFilter, ItemQueryRepository, LocationRepository, RepositoryError,
-    StocktakeLineRowRepository, StorageConnection,
+    schema::StocktakeLineRow, ItemFilter, ItemQueryRepository, LocationFilter, LocationRepository,
+    RepositoryError, StocktakeLineRowRepository, StorageConnection,
 };
 
 pub fn check_stocktake_line_exist(

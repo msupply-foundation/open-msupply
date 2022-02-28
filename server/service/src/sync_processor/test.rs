@@ -2,7 +2,7 @@
 mod test_update {
 
     use chrono::Utc;
-    use domain::{invoice::InvoiceFilter, EqualFilter};
+    use repository::EqualFilter;
     use repository::{
         mock::{
             mock_picked_invoice_sync_processor,
@@ -11,8 +11,8 @@ mod test_update {
         },
         schema::{InvoiceRowStatus, InvoiceRowType, RequisitionRowStatus, RequisitionRowType},
         test_db::setup_all,
-        InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository, RequisitionFilter,
-        RequisitionRepository, RequisitionRowRepository,
+        InvoiceFilter, InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository,
+        RequisitionFilter, RequisitionRepository, RequisitionRowRepository,
     };
 
     use crate::{
@@ -143,7 +143,7 @@ mod test_update {
             .unwrap();
 
         let new_invoice = InvoiceRepository::new(&connection)
-            .find_one_by_id(&new_invoice.id)
+            .find_one_by_id(&new_invoice.invoice_row.id)
             .unwrap();
 
         assert_eq!(new_invoice.store_id, "store_b");

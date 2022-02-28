@@ -1,13 +1,10 @@
 mod graphql {
     use crate::graphql::assert_graphql_query;
-    use domain::{
-        master_list::{MasterListFilter, MasterListSort},
-        EqualFilter, PaginationOption, SimpleStringFilter,
-    };
     use repository::{
         mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
-        MasterList, StorageConnectionManager,
+        MasterList, MasterListFilter, MasterListSort, StorageConnectionManager,
     };
+    use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
     use serde_json::{json, Value};
     use server::test_utils::setup_all;
     use service::{

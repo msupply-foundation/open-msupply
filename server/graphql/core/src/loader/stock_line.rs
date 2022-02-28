@@ -1,6 +1,7 @@
-use domain::stock_line::{StockLine, StockLineFilter};
-use domain::EqualFilter;
-use repository::{RepositoryError, StockLineRepository, StorageConnectionManager};
+use repository::EqualFilter;
+use repository::{
+    RepositoryError, StockLine, StockLineFilter, StockLineRepository, StorageConnectionManager,
+};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -30,7 +31,7 @@ impl Loader<String> for StockLineByLocationIdLoader {
 
         let mut result_map = HashMap::new();
         for stock_line in result {
-            if let Some(location_id) = &stock_line.location_id {
+            if let Some(location_id) = &stock_line.stock_line_row.location_id {
                 result_map
                     .entry(location_id.clone())
                     .or_insert(Vec::new())
@@ -78,7 +79,7 @@ impl Loader<IdAndStoreId> for StockLineByItemAndStoreIdLoader {
         for stock_line in result {
             result_map
                 .entry(IdAndStoreId {
-                    id: stock_line.item_id.clone(),
+                    id: stock_line.stock_line_row.item_id.clone(),
                     store_id: store_id.clone(),
                 })
                 .or_insert(Vec::new())
@@ -106,7 +107,7 @@ impl Loader<String> for StockLineByIdLoader {
 
         Ok(result
             .into_iter()
-            .map(|stock_line| (stock_line.id.clone(), stock_line))
+            .map(|stock_line| (stock_line.stock_line_row.id.clone(), stock_line))
             .collect())
     }
 }

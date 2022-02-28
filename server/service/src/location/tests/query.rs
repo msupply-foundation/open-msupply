@@ -1,10 +1,9 @@
 #[cfg(test)]
 mod query {
-    use domain::{
-        location::{LocationFilter, LocationSortField},
-        EqualFilter, PaginationOption, Sort,
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, LocationFilter, LocationSortField,
     };
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{EqualFilter, PaginationOption, Sort};
 
     use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
 
@@ -62,8 +61,8 @@ mod query {
             .get_location(&context, "location_on_hold".to_owned())
             .unwrap();
 
-        assert_eq!(result.id, "location_on_hold");
-        assert_eq!(result.on_hold, true);
+        assert_eq!(result.location_row.id, "location_on_hold");
+        assert_eq!(result.location_row.on_hold, true);
     }
 
     #[actix_rt::test]
@@ -85,7 +84,7 @@ mod query {
             .unwrap();
 
         assert_eq!(result.count, 1);
-        assert_eq!(result.rows[0].id, "location_1");
+        assert_eq!(result.rows[0].location_row.id, "location_1");
 
         let result = service
             .get_locations(
@@ -100,8 +99,8 @@ mod query {
             .unwrap();
 
         assert_eq!(result.count, 2);
-        assert_eq!(result.rows[0].id, "location_1");
-        assert_eq!(result.rows[1].id, "location_on_hold");
+        assert_eq!(result.rows[0].location_row.id, "location_1");
+        assert_eq!(result.rows[1].location_row.id, "location_on_hold");
     }
 
     #[actix_rt::test]
@@ -131,7 +130,7 @@ mod query {
         let result_names: Vec<String> = result
             .rows
             .into_iter()
-            .map(|location| location.name)
+            .map(|location| location.location_row.name)
             .collect();
         let sorted_names: Vec<String> = locations
             .into_iter()
@@ -159,7 +158,7 @@ mod query {
         let result_names: Vec<String> = result
             .rows
             .into_iter()
-            .map(|location| location.name)
+            .map(|location| location.location_row.name)
             .collect();
         let sorted_names: Vec<String> = locations
             .into_iter()

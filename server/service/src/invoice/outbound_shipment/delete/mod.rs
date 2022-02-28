@@ -1,9 +1,6 @@
-use domain::{
-    invoice_line::InvoiceLine, outbound_shipment::DeleteOutboundShipmentLine, EqualFilter,
-};
 use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
-    StorageConnectionManager, TransactionError,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+    RepositoryError, StorageConnectionManager, TransactionError,
 };
 
 pub mod validate;
@@ -11,7 +8,9 @@ pub mod validate;
 use validate::validate;
 
 use crate::{
-    invoice_line::{delete_outbound_shipment_line, DeleteOutboundShipmentLineError},
+    invoice_line::{
+        delete_outbound_shipment_line, DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
+    },
     WithDBError,
 };
 
@@ -32,12 +31,12 @@ pub fn delete_outbound_shipment(
         delete_outbound_shipment_line(
             connection_manager,
             DeleteOutboundShipmentLine {
-                id: line.id.clone(),
+                id: line.invoice_line_row.id.clone(),
                 invoice_id: id.clone(),
             },
         )
         .map_err(|error| DeleteOutboundShipmentError::LineDeleteError {
-            line_id: line.id,
+            line_id: line.invoice_line_row.id,
             error,
         })?;
     }

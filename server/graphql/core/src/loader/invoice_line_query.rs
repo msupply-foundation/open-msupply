@@ -2,8 +2,8 @@ use super::{extract_unique_requisition_and_item_ids, RequisitionAndItemId};
 use crate::standard_graphql_error::StandardGraphqlError;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use domain::{invoice_line::InvoiceLine, EqualFilter};
-use repository::{InvoiceLineFilter, InvoiceLineRepository, StorageConnectionManager};
+use repository::EqualFilter;
+use repository::{InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, StorageConnectionManager};
 use std::collections::HashMap;
 
 pub struct InvoiceLineQueryLoader {
@@ -31,7 +31,7 @@ impl Loader<String> for InvoiceLineQueryLoader {
         let mut map: HashMap<String, Vec<InvoiceLine>> = HashMap::new();
         for line in all_invoice_lines {
             let list = map
-                .entry(line.invoice_id.clone())
+                .entry(line.invoice_line_row.invoice_id.clone())
                 .or_insert_with(|| Vec::<InvoiceLine>::new());
             list.push(line);
         }
@@ -68,10 +68,10 @@ impl Loader<RequisitionAndItemId> for InvoiceLineForRequisitionLine {
 
         let mut map: HashMap<RequisitionAndItemId, Vec<InvoiceLine>> = HashMap::new();
         for line in all_invoice_lines {
-            if let Some(requisition_id) = &line.requisition_id {
+            if let Some(requisition_id) = &line.invoice_row.requisition_id {
                 let list = map
                     .entry(RequisitionAndItemId {
-                        item_id: line.item_id.clone(),
+                        item_id: line.invoice_line_row.item_id.clone(),
                         requisition_id: requisition_id.clone(),
                     })
                     .or_insert_with(|| Vec::<InvoiceLine>::new());

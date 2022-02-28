@@ -1,10 +1,9 @@
 use crate::u32_to_i32;
-use domain::outbound_shipment::InsertOutboundShipmentLine;
 use repository::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
 
-use super::InsertOutboundShipmentLineError;
+use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};
 
 pub fn generate(
     input: InsertOutboundShipmentLine,

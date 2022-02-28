@@ -1,7 +1,6 @@
 use crate::invoice_queries::{get_invoice, InvoiceResponse};
 
 use async_graphql::*;
-use domain::inbound_shipment::InsertInboundShipment;
 
 use graphql_core::simple_generic_errors::{
     DatabaseError, ForeignKey, ForeignKeyError, NodeError, RecordAlreadyExist,
@@ -9,7 +8,9 @@ use graphql_core::simple_generic_errors::{
 use graphql_types::generic_errors::OtherPartyNotASupplier;
 use graphql_types::types::{InvoiceNode, NameNode};
 use repository::StorageConnectionManager;
-use service::invoice::{insert_inbound_shipment, InsertInboundShipmentError};
+use service::invoice::{
+    insert_inbound_shipment, InsertInboundShipment, InsertInboundShipmentError,
+};
 
 #[derive(InputObject)]
 pub struct InsertInboundShipmentInput {

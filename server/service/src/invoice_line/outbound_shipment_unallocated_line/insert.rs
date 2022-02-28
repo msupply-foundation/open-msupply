@@ -1,10 +1,10 @@
-use domain::{invoice_line::InvoiceLine, EqualFilter};
+use repository::EqualFilter;
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType, ItemRow, ItemRowType,
     },
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, RepositoryError,
-    StorageConnection,
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 use crate::{
@@ -317,10 +317,10 @@ mod test_insert {
             )
             .unwrap();
 
-        assert_eq!(result.id, "new_line");
+        assert_eq!(result.invoice_line_row.id, "new_line");
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id(&result.id)
+                .find_one_by_id(&result.invoice_line_row.id)
                 .unwrap(),
             InvoiceLineRow {
                 id: "new_line".to_owned(),

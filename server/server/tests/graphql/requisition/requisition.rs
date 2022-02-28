@@ -1,12 +1,12 @@
 mod graphql {
     use chrono::NaiveDate;
-    use domain::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition_all_fields, MockDataInserts},
         schema::{RequisitionRowStatus, RequisitionRowType},
         Requisition, RequisitionFilter, RequisitionSort, RequisitionSortField,
         StorageConnectionManager,
     };
+    use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
     use serde_json::json;
     use server::test_utils::setup_all;
     use service::{
