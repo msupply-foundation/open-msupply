@@ -6,10 +6,10 @@ use repository::{
 
 use crate::sync::{
     translation_remote::{
-        invoice::InvoiceTranslation, name_store_join::NameStoreJoinTranslation,
-        number::NumberTranslation, stock_line::StockLineTranslation,
-        stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
-        table_name_to_central,
+        invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
+        name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
+        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
+        stocktake_line::StocktakeLineTranslation, table_name_to_central,
     },
     SyncTranslationError,
 };
@@ -68,6 +68,7 @@ pub fn translate_changelog(
                 Box::new(StockLineTranslation {}),
                 Box::new(NameStoreJoinTranslation {}),
                 Box::new(InvoiceTranslation {}),
+                Box::new(InvoiceLineTranslation {}),
                 Box::new(StocktakeTranslation {}),
                 Box::new(StocktakeLineTranslation {}),
             ];

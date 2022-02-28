@@ -1,21 +1,24 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType, RemoteSyncBufferRow},
-    ItemRepository, StorageConnection,
+    schema::{
+        ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowType, RemoteSyncBufferRow,
+    },
+    InvoiceLineRowRepository, ItemRepository, StorageConnection,
 };
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::sync::SyncTranslationError;
 
 use super::{
     empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
+    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_TRANS_LINE,
 };
 
-#[derive(Deserialize, Debug)]
-enum LegacyTransLineType {
+#[derive(Deserialize, Serialize, Debug)]
+pub enum LegacyTransLineType {
     #[serde(rename = "stock_in")]
     StockIn,
     #[serde(rename = "stock_out")]
@@ -29,30 +32,30 @@ enum LegacyTransLineType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct LegacyTransLineRow {
-    ID: String,
-    transaction_ID: String,
-    item_ID: String,
-    item_name: String,
+#[derive(Deserialize, Serialize)]
+pub struct LegacyTransLineRow {
+    pub ID: String,
+    pub transaction_ID: String,
+    pub item_ID: String,
+    pub item_name: String,
     // stock line id
     #[serde(deserialize_with = "empty_str_as_option")]
-    item_line_ID: Option<String>,
+    pub item_line_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
-    location_ID: Option<String>,
+    pub location_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
-    batch: Option<String>,
+    pub batch: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
-    expiry_date: Option<NaiveDate>,
-    pack_size: i32,
-    cost_price: f64,
-    sell_price: f64,
+    pub expiry_date: Option<NaiveDate>,
+    pub pack_size: i32,
+    pub cost_price: f64,
+    pub sell_price: f64,
     #[serde(rename = "type")]
-    _type: LegacyTransLineType,
+    pub _type: LegacyTransLineType,
     // number of packs
-    quantity: i32,
+    pub quantity: i32,
     #[serde(deserialize_with = "empty_str_as_option")]
-    note: Option<String>,
+    pub note: Option<String>,
 }
 
 pub struct InvoiceLineTranslation {}
@@ -116,7 +119,7 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 total_after_tax: data.cost_price * data.quantity as f64,
                 tax: None,
                 r#type: line_type,
-                number_of_packs: data.quantity,
+                number_of_packs: data.quantity / data.pack_size,
                 note: data.note,
             }),
         )))
@@ -132,4 +135,78 @@ fn to_invoice_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowTyp
         LegacyTransLineType::NonStock => return None,
     };
     Some(invoice_line_type)
+}
+
+impl RemotePushUpsertTranslation for InvoiceLineTranslation {
+    fn try_translate_push(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+        if changelog.table_name != ChangelogTableName::InvoiceLine {
+            return Ok(None);
+        }
+        let table_name = TRANSLATION_RECORD_TRANS_LINE;
+
+        let InvoiceLineRow {
+            id,
+            invoice_id,
+            item_id,
+            item_name,
+            // TODO
+            item_code: _,
+            stock_line_id,
+            location_id,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            total_before_tax: _,
+            total_after_tax: _,
+            // TODO
+            tax: _,
+            r#type,
+            number_of_packs,
+            note,
+        } = InvoiceLineRowRepository::new(connection)
+            .find_one_by_id(&changelog.row_id)
+            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?;
+
+        let legacy_row = LegacyTransLineRow {
+            ID: id.clone(),
+            transaction_ID: invoice_id,
+            item_ID: item_id,
+            item_name,
+            item_line_ID: stock_line_id,
+            location_ID: location_id,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price: cost_price_per_pack,
+            sell_price: sell_price_per_pack,
+            _type: to_legacy_invoice_line_type(&r#type),
+            quantity: pack_size * number_of_packs,
+            note,
+        };
+
+        Ok(Some(vec![PushUpsertRecord {
+            sync_id: changelog.id,
+            // TODO:
+            store_id: None,
+            table_name,
+            record_id: id,
+            data: serde_json::to_value(&legacy_row)
+                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+        }]))
+    }
+}
+
+fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineType {
+    match _type {
+        InvoiceLineRowType::StockIn => LegacyTransLineType::StockIn,
+        InvoiceLineRowType::StockOut => LegacyTransLineType::StockOut,
+        InvoiceLineRowType::UnallocatedStock => LegacyTransLineType::Placeholder,
+        InvoiceLineRowType::Service => LegacyTransLineType::Service,
+    }
 }
