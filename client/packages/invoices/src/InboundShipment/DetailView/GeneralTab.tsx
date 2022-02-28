@@ -10,7 +10,7 @@ import {
   MiniTable,
 } from '@openmsupply-client/common';
 import { InboundShipmentItem, InvoiceLine } from '../../types';
-import { useInboundItems, useInboundLines } from './api';
+import { useInboundItems, useInboundLines } from '../api';
 import { useExpansionColumns, useInboundShipmentColumns } from './columns';
 
 interface GeneralTabProps<T extends DomainObject> {

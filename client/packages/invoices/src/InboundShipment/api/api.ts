@@ -9,6 +9,7 @@ import {
   UpdateInboundShipmentInput,
   formatNaiveDate,
   UpdateInboundShipmentStatusInput,
+  useOmSupplyApi,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine } from '../../types';
 import { InvoiceRow } from './../../types';
@@ -16,6 +17,11 @@ import { Sdk, getSdk } from './operations.generated';
 import { DraftInboundLine } from '../DetailView/modals/InboundLineEdit';
 
 export type InboundShipmentApi = ReturnType<typeof getSdk>;
+
+export const useInboundShipmentApi = () => {
+  const { client } = useOmSupplyApi();
+  return getSdk(client);
+};
 
 const getPatchStatus = (
   patch: Partial<Invoice>
@@ -218,5 +224,18 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         updateInboundShipmentLines,
       },
     });
+  },
+  dashboard: {
+    shipmentCount: async (): Promise<{
+      today: number;
+      thisWeek: number;
+    }> => {
+      const result = await sdk.invoiceCounts({ storeId });
+
+      return {
+        thisWeek: result.invoiceCounts.inbound.created?.thisWeek ?? 0,
+        today: result.invoiceCounts.inbound.created?.today ?? 0,
+      };
+    },
   },
 });

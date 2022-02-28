@@ -19,7 +19,7 @@ import {
   useInboundItems,
   useInboundLines,
   useIsInboundEditable,
-} from './api';
+} from '../api';
 import { InboundShipmentItem, InvoiceLine } from '../../types';
 
 export const Toolbar: FC = () => {
