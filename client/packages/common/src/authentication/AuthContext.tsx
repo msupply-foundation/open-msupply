@@ -1,10 +1,19 @@
-import React, { createContext, FC, useEffect, useMemo, useRef } from 'react';
+import React, {
+  createContext,
+  FC,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Store, User } from '@common/types';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes, differenceInMinutes } from 'date-fns';
 import { useOmSupplyApi } from '../api';
-import { useGetRefreshToken } from './hooks';
+import { useGetRefreshToken } from './api/hooks';
+import { useGetAuthToken } from './api/hooks/useGetAuthToken';
+import { AuthenticationResponse } from './api';
 
 const COOKIE_LIFETIME_MINUTES = 60;
 
@@ -21,12 +30,17 @@ type MRUCredentials = {
 };
 
 interface AuthControl {
-  onLoggedIn: (user: User, token: string, store?: Store) => void;
+  isLoggingIn: boolean;
+  login: (
+    username: string,
+    password: string,
+    store?: Store
+  ) => Promise<AuthenticationResponse>;
+  mostRecentlyUsedCredentials?: MRUCredentials | null;
+  store?: Store;
   storeId: string;
   token?: string;
   user?: User;
-  store?: Store;
-  mostRecentlyUsedCredentials?: MRUCredentials | null;
 }
 
 export const getAuthCookie = (): AuthCookie => {
@@ -67,7 +81,11 @@ const useRefreshingAuth = () => {
 };
 
 const AuthContext = createContext<AuthControl>({
-  onLoggedIn: () => {},
+  isLoggingIn: false,
+  login: () =>
+    new Promise(() => ({
+      token: '',
+    })),
   storeId: '',
 });
 
@@ -77,18 +95,28 @@ export const AuthProvider: FC = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
   const { setHeader } = useOmSupplyApi();
-  const { token, store, user } = getAuthCookie();
-  const storeId = store?.id ?? '';
+  const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
+  const { token, store: storeCookie, user } = getAuthCookie();
+  const [localStore, setLocalStore] = useState<Store | undefined>(storeCookie);
+  const storeId = localStore?.id ?? '';
 
   useRefreshingAuth();
 
-  const onLoggedIn = (user: User, token: string, store?: Store) => {
-    setMRUCredentials({ username: user.name, store: store });
-
+  const login = async (username: string, password: string, store?: Store) => {
+    const response = await mutateAsync({ username, password });
     const expires = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
-    const authCookie = { expires, store, token, user };
+    const authCookie = {
+      expires,
+      store,
+      token: response.token,
+      user: { id: '', name: username },
+    };
 
+    setMRUCredentials({ username, store: store });
+    if (!!token) setLocalStore(store);
     Cookies.set('auth', JSON.stringify(authCookie), { expires });
+
+    return response;
   };
 
   useEffect(() => {
@@ -97,14 +125,15 @@ export const AuthProvider: FC = ({ children }) => {
 
   const val = useMemo(
     () => ({
-      onLoggedIn,
+      isLoggingIn,
+      login,
       storeId,
       token,
       user,
-      store,
+      store: localStore,
       mostRecentlyUsedCredentials,
     }),
-    [onLoggedIn, store, token, user, mostRecentlyUsedCredentials]
+    [login, localStore, token, user, mostRecentlyUsedCredentials, isLoggingIn]
   );
 
   return <Provider value={val}>{children}</Provider>;
