@@ -1,6 +1,4 @@
 import create from 'zustand';
-import { getAuthCookie } from '../authentication';
-import { Store, User } from '../types';
 
 type HostContext = {
   setAppSessionDetailsRef: (ref: React.MutableRefObject<null> | null) => void;
@@ -17,15 +15,8 @@ type HostContext = {
 
   setDetailPanelRef: (ref: React.MutableRefObject<null> | null) => void;
   detailPanelRef: React.MutableRefObject<null> | null;
-
-  setStore: (store: Store) => void;
-  store: Store;
-
-  setUser: (user: User) => void;
-  user: User;
 };
 
-const authCookie = getAuthCookie();
 export const useHostContext = create<HostContext>(set => ({
   setAppSessionDetailsRef: (refOrNull: React.MutableRefObject<null> | null) =>
     set(state => ({ ...state, appSessionDetailsRef: refOrNull })),
@@ -46,10 +37,4 @@ export const useHostContext = create<HostContext>(set => ({
   setDetailPanelRef: (refOrNull: React.MutableRefObject<null> | null) =>
     set(state => ({ ...state, detailPanelRef: refOrNull })),
   detailPanelRef: null,
-
-  setStore: store => set(state => ({ ...state, store })),
-  store: authCookie.store ?? { id: '', code: '' },
-
-  setUser: user => set(state => ({ ...state, user })),
-  user: authCookie.user ?? { id: '', name: '' },
 }));

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import {
-  useHostContext,
+  useAuthContext,
   RequisitionNodeStatus,
   useParams,
   useOmSupplyApi,
@@ -32,13 +32,13 @@ export const useResponseRequisitions = () => {
   const queryParams = useQueryParams<ResponseRequisitionRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
-  const { store } = useHostContext();
+  const { storeId } = useAuthContext();
   const api = useResponseRequisitionApi();
 
   return {
     ...useQuery(
-      ['requisition', store.id, queryParams],
-      ResponseRequisitionQueries.get.list(api, store.id, {
+      ['requisition', storeId, queryParams],
+      ResponseRequisitionQueries.get.list(api, storeId, {
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
@@ -52,12 +52,12 @@ export const useResponseRequisitions = () => {
 export const useResponseRequisition =
   (): UseQueryResult<ResponseRequisitionFragment> => {
     const { requisitionNumber = '' } = useParams();
-    const { store } = useHostContext();
+    const { storeId } = useAuthContext();
     const api = useResponseRequisitionApi();
     return useQuery(['requisition', requisitionNumber], () =>
       ResponseRequisitionQueries.get.byNumber(api)(
         Number(requisitionNumber),
-        store.id
+        storeId
       )
     );
   };
@@ -67,7 +67,7 @@ export const useResponseRequisitionFields = <
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<ResponseRequisitionFragment, KeyOfRequisition> => {
-  const { store } = useHostContext();
+  const { storeId } = useAuthContext();
   const { data } = useResponseRequisition();
   const { requisitionNumber = '' } = useParams();
   const api = useResponseRequisitionApi();
@@ -76,12 +76,12 @@ export const useResponseRequisitionFields = <
     () =>
       ResponseRequisitionQueries.get.byNumber(api)(
         Number(requisitionNumber),
-        store.id
+        storeId
       ),
     (patch: Partial<ResponseRequisitionFragment>) =>
       ResponseRequisitionQueries.update(
         api,
-        store.id
+        storeId
       )({ ...patch, id: data?.id ?? '' }),
     keys
   );

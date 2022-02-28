@@ -1,7 +1,7 @@
 import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
 import { i18n, TOptions } from 'i18next';
-import { useHostContext } from '../hooks';
 import { LocaleKey } from './locales';
+import { useAuthContext } from '../authentication';
 
 export type SupportedLocales = 'en' | 'fr' | 'ar';
 export type LocaleProps = Record<string, unknown>;
@@ -54,6 +54,6 @@ export const useI18N = (): i18n => {
 
 /* removing this unused method breaks things */
 export const useUserName = (): string => {
-  const { user } = useHostContext();
-  return user?.name;
+  const { user } = useAuthContext();
+  return user?.name ?? '';
 };

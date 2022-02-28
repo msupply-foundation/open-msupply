@@ -16,7 +16,7 @@ import {
   groupBy,
   getColumnSorter,
   useSortBy,
-  useHostContext,
+  useAuthContext,
   useQueryParams,
   useTableStore,
 } from '@openmsupply-client/common';
@@ -32,9 +32,9 @@ import {
 
 export const useStocktakeApi = (): StocktakeApi => {
   const { client } = useOmSupplyApi();
-  const { store } = useHostContext();
-  const queries = getStocktakeQueries(getSdk(client), store.id);
-  return { ...queries, storeId: store.id };
+  const { storeId } = useAuthContext();
+  const queries = getStocktakeQueries(getSdk(client), storeId);
+  return { ...queries, storeId };
 };
 
 export const useStocktake = (): UseQueryResult<StocktakeFragment> => {
