@@ -4,6 +4,7 @@ use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceNode, NameNode};
+use repository::Invoice;
 use service::invoice::outbound_shipment::{
     InsertOutboundShipment as ServiceInput, InsertOutboundShipmentError as ServiceError,
 };
@@ -39,18 +40,22 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider.invoice_service.insert_outbound_shipment(
+    map_response(service_provider.invoice_service.insert_outbound_shipment(
         &service_context,
         store_id,
         input.to_domain(),
-    ) {
-        Ok(invoice) => InsertResponse::Response(InvoiceNode::from_domain(invoice)),
+    ))
+}
+
+pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<InsertResponse> {
+    let result = match from {
+        Ok(invoice_line) => InsertResponse::Response(InvoiceNode::from_domain(invoice_line)),
         Err(error) => InsertResponse::Error(InsertError {
             error: map_error(error)?,
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
 impl InsertInput {

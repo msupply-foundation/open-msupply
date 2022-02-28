@@ -10,6 +10,7 @@ use validate::validate;
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 
+#[derive(Clone, Debug, Default)]
 pub struct InsertOutboundShipment {
     pub id: String,
     pub other_party_id: String,

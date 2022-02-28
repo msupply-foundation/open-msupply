@@ -10,7 +10,7 @@ use crate::{
     service_provider::ServiceContext,
     WithDBError,
 };
-
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdateOutboundShipmentServiceLine {
     pub id: String,
     pub invoice_id: String,

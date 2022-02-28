@@ -14,7 +14,7 @@ use crate::{
     service_provider::ServiceContext,
     u32_to_i32,
 };
-
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct InsertOutboundShipmentUnallocatedLine {
     pub id: String,
     pub invoice_id: String,
@@ -41,6 +41,7 @@ type OutError = InsertOutboundShipmentUnallocatedLineError;
 
 pub fn insert_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
+    _store_id: &str,
     input: InsertOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLine, OutError> {
     let line = ctx
@@ -193,6 +194,7 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: existing_invoice_line.id.clone(),
                     invoice_id: "".to_owned(),
@@ -207,6 +209,7 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: "invalid".to_owned(),
@@ -221,6 +224,7 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: mock_inbound_shipment_a().id.clone(),
@@ -235,6 +239,7 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: mock_allocated_invoice().id.clone(),
@@ -249,6 +254,7 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -262,6 +268,7 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -275,6 +282,7 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -306,6 +314,7 @@ mod test_insert {
         let result = service
             .insert_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: "new_line".to_owned(),
                     invoice_id: invoice_id.clone(),

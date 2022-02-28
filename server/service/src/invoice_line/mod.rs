@@ -122,31 +122,34 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn insert_outbound_shipment_unallocated_line(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: InsertOutboundShipmentUnallocatedLine,
     ) -> Result<InvoiceLine, InsertOutboundShipmentUnallocatedLineError> {
-        insert_outbound_shipment_unallocated_line(ctx, input)
+        insert_outbound_shipment_unallocated_line(ctx, store_id, input)
     }
 
     fn update_outbound_shipment_unallocated_line(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: UpdateOutboundShipmentUnallocatedLine,
     ) -> Result<InvoiceLine, UpdateOutboundShipmentUnallocatedLineError> {
-        update_outbound_shipment_unallocated_line(ctx, input)
+        update_outbound_shipment_unallocated_line(ctx, store_id, input)
     }
 
     fn delete_outbound_shipment_unallocated_line(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: DeleteOutboundShipmentUnallocatedLine,
     ) -> Result<String, DeleteOutboundShipmentUnallocatedLineError> {
-        delete_outbound_shipment_unallocated_line(ctx, input)
+        delete_outbound_shipment_unallocated_line(ctx, store_id, input)
     }
 }
 
 pub struct InvoiceLineService {}
 impl InvoiceLineServiceTrait for InvoiceLineService {}
-
+#[derive(Clone, Debug, PartialEq)]
 pub struct ShipmentTaxUpdate {
     /// Set or unset the tax value
     pub percentage: Option<f64>,

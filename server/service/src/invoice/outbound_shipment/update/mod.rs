@@ -13,13 +13,13 @@ use validate::validate;
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 use crate::sync_processor::{process_records, Record};
-
+#[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentStatus {
     Allocated,
     Picked,
     Shipped,
 }
-
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateOutboundShipment {
     pub id: String,
     pub other_party_id: Option<String>,

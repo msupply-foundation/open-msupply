@@ -101,7 +101,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        id: &str,
+        id: String,
     ) -> Result<String, DeleteOutboundShipmentError> {
         delete_outbound_shipment(ctx, store_id, id)
     }
@@ -113,6 +113,15 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: BatchInboundShipment,
     ) -> Result<BatchInboundShipmentResult, RepositoryError> {
         batch_inbound_shipment(ctx, store_id, input)
+    }
+
+    fn batch_outbound_shipment(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: BatchOutboundShipment,
+    ) -> Result<BatchOutboundShipmentResult, RepositoryError> {
+        batch_outbound_shipment(ctx, store_id, input)
     }
 }
 

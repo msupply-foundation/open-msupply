@@ -24,22 +24,26 @@ pub enum DeleteResponse {
     Response(GenericDeleteResponse),
 }
 
-pub fn delete(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<DeleteResponse> {
+pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider.invoice_service.delete_outbound_shipment(
+    map_response(service_provider.invoice_service.delete_outbound_shipment(
         &service_context,
         store_id,
         id,
-    ) {
-        Ok(deleted_id) => DeleteResponse::Response(GenericDeleteResponse(deleted_id)),
+    ))
+}
+
+pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
+    let result = match from {
+        Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),
         Err(error) => DeleteResponse::Error(DeleteError {
             error: map_error(error)?,
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
 #[derive(Interface)]

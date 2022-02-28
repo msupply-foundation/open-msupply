@@ -4,6 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::InvoiceLineNode;
+use repository::InvoiceLine;
 use service::invoice_line::outbound_shipment_unallocated_line::{
     UpdateOutboundShipmentUnallocatedLine as ServiceInput,
     UpdateOutboundShipmentUnallocatedLineError as ServiceError,
@@ -36,34 +37,43 @@ pub enum UpdateResponse {
     Response(InvoiceLineNode),
 }
 
-impl From<UpdateInput> for ServiceInput {
-    fn from(UpdateInput { id, quantity }: UpdateInput) -> Self {
+impl UpdateInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let UpdateInput { id, quantity } = self;
+
         ServiceInput { id, quantity }
     }
 }
 
-pub fn update(ctx: &Context<'_>, _store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let id = input.id.clone();
+    map_response(
+        service_provider
+            .invoice_line_service
+            .update_outbound_shipment_unallocated_line(
+                &service_context,
+                store_id,
+                input.to_domain(),
+            ),
+    )
+}
 
-    let response = match service_provider
-        .invoice_line_service
-        .update_outbound_shipment_unallocated_line(&service_context, input.into())
-    {
+pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<UpdateResponse> {
+    let result = match from {
         Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {
-            error: map_error(&id, error)?,
+            error: map_error(error)?,
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
-fn map_error(id: &str, error: ServiceError) -> Result<UpdateErrorInterface> {
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("Update unallocated line {}: {:#?}", id, error);
+    let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
@@ -87,7 +97,10 @@ mod graphql {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
-    use repository::{mock::{MockDataInserts, mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_a}, InvoiceLine, StorageConnectionManager};
+    use repository::{
+        mock::{mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines, MockDataInserts},
+        InvoiceLine, StorageConnectionManager,
+    };
     use serde_json::json;
 
     use service::{
@@ -111,6 +124,7 @@ mod graphql {
         fn update_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
+            _: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)
@@ -199,13 +213,8 @@ mod graphql {
         // LineIsNotUnallocatedLine
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineIsNotUnallocatedLine)));
         let expected_message = "Bad user input";
-        let expected_extensions = json!({
-            "details":
-                format!(
-                    "Update unallocated line n/a: {:#?}",
-                    ServiceError::LineIsNotUnallocatedLine
-                )
-        });
+        let expected_extensions =
+            json!({ "details": format!("{:#?}", ServiceError::LineIsNotUnallocatedLine) });
         assert_standard_graphql_error!(
             &settings,
             &mutation,
