@@ -10,57 +10,43 @@ import {
   UpdateInboundShipmentInput,
   formatNaiveDate,
   UpdateInboundShipmentStatusInput,
-  useOmSupplyApi,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine } from '../../types';
 import { InvoiceRow } from './../../types';
-import { Sdk, getSdk } from './operations.generated';
+import { Sdk } from './operations.generated';
 import { DraftInboundLine } from '../DetailView/modals/InboundLineEdit';
 
-export type InboundShipmentApi = ReturnType<typeof getSdk>;
-
-export const useInboundShipmentApi = () => {
-  const { client } = useOmSupplyApi();
-  return getSdk(client);
-};
-
-const getPatchStatus = (
-  patch: Partial<Invoice>
-): UpdateInboundShipmentStatusInput | undefined => {
-  switch (patch.status) {
-    case InvoiceNodeStatus.Verified:
-      return UpdateInboundShipmentStatusInput.Verified;
-    case InvoiceNodeStatus.Delivered:
-      return UpdateInboundShipmentStatusInput.Delivered;
-    default:
-      return undefined;
-  }
-};
-
-const getSortDesc = (sortBy: SortBy<InvoiceRow>): boolean => {
-  return !!sortBy.isDesc;
-};
-
-const getSortKey = (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
-  switch (sortBy.key) {
-    case 'createdDatetime': {
-      return InvoiceSortFieldInput.CreatedDatetime;
-    }
-
-    case 'comment': {
-      return InvoiceSortFieldInput.Comment;
-    }
-    case 'invoiceNumber': {
-      return InvoiceSortFieldInput.InvoiceNumber;
-    }
-    case 'status':
-    default: {
-      return InvoiceSortFieldInput.Status;
-    }
-  }
-};
-
 const inboundParsers = {
+  toStatus: (
+    patch: Partial<Invoice>
+  ): UpdateInboundShipmentStatusInput | undefined => {
+    switch (patch.status) {
+      case InvoiceNodeStatus.Verified:
+        return UpdateInboundShipmentStatusInput.Verified;
+      case InvoiceNodeStatus.Delivered:
+        return UpdateInboundShipmentStatusInput.Delivered;
+      default:
+        return undefined;
+    }
+  },
+  toSortField: (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
+    switch (sortBy.key) {
+      case 'createdDatetime': {
+        return InvoiceSortFieldInput.CreatedDatetime;
+      }
+
+      case 'comment': {
+        return InvoiceSortFieldInput.Comment;
+      }
+      case 'invoiceNumber': {
+        return InvoiceSortFieldInput.InvoiceNumber;
+      }
+      case 'status':
+      default: {
+        return InvoiceSortFieldInput.Status;
+      }
+    }
+  },
   toUpdate: (
     patch: Partial<Invoice> & { id: string }
   ): UpdateInboundShipmentInput => {
@@ -68,7 +54,7 @@ const inboundParsers = {
       id: patch.id,
       colour: patch.colour,
       comment: patch.comment,
-      status: getPatchStatus(patch),
+      status: inboundParsers.toStatus(patch),
       onHold: patch.onHold,
       otherPartyId: patch.otherParty?.id,
       theirReference: patch.theirReference,
@@ -133,8 +119,8 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.invoices({
         first,
         offset,
-        key: getSortKey(sortBy),
-        desc: getSortDesc(sortBy),
+        key: inboundParsers.toSortField(sortBy),
+        desc: !!sortBy.isDesc,
         filter,
         storeId,
       });
