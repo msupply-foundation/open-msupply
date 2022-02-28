@@ -119,13 +119,11 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       offset,
       sortBy,
       filterBy,
-      storeId,
     }: {
       first: number;
       offset: number;
       sortBy: SortBy<InvoiceRow>;
       filterBy: FilterBy | null;
-      storeId: string;
     }) => {
       const result = await sdk.invoices({
         first,
