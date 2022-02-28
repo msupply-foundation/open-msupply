@@ -105,6 +105,15 @@ pub trait InvoiceServiceTrait: Sync + Send {
     ) -> Result<String, DeleteOutboundShipmentError> {
         delete_outbound_shipment(ctx, store_id, id)
     }
+
+    fn batch_inbound_shipment(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: BatchInboundShipment,
+    ) -> Result<BatchInboundShipmentResult, RepositoryError> {
+        batch_inbound_shipment(ctx, store_id, input)
+    }
 }
 
 pub struct InvoiceService;
