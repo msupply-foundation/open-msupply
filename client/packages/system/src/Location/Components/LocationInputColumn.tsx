@@ -4,11 +4,10 @@ import {
   ColumnDefinition,
   isProduction,
 } from '@openmsupply-client/common';
-import { Location } from '../types';
 import { LocationSearchInput } from './LocationSearchInput';
-
+import { LocationRowFragment } from '../api';
 interface LocationObject extends DomainObject {
-  location: Location;
+  location: LocationRowFragment;
 }
 
 const hasRequiredFields = (
@@ -45,9 +44,12 @@ export const getLocationInputColumn = <
     }
   },
   Cell: ({ rowData, column, rows, columnIndex, rowIndex }) => {
-    const value = column.accessor({ rowData, rows }) as Location | null;
+    const value = column.accessor({
+      rowData,
+      rows,
+    }) as LocationRowFragment | null;
 
-    const onChange = (location: Location | null) => {
+    const onChange = (location: LocationRowFragment | null) => {
       column.setter({ ...rowData, location });
     };
 

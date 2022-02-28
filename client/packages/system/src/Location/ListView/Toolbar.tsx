@@ -10,8 +10,7 @@ import {
   FilterController,
   AlertModal,
 } from '@openmsupply-client/common';
-import { useLocationDelete } from './api';
-import { Location } from '../types';
+import { LocationRowFragment, useLocationDelete } from '../api';
 
 type DeleteError = {
   locationName: string;
@@ -19,7 +18,7 @@ type DeleteError = {
 };
 
 export const Toolbar: FC<{
-  data: Location[];
+  data: LocationRowFragment[];
   filter: FilterController;
 }> = ({ data }) => {
   const t = useTranslation('inventory');
@@ -30,7 +29,7 @@ export const Toolbar: FC<{
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as Location[],
+      .filter(Boolean) as LocationRowFragment[],
   }));
 
   const deleteAction = () => {
