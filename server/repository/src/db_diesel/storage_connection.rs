@@ -34,6 +34,11 @@ pub enum TransactionError<E> {
     Inner(E),
 }
 
+pub enum OkWithRollback<T> {
+    Ok(T),
+    OkWithRollback(T),
+}
+
 impl<E> TransactionError<E> {
     pub fn to_inner_error(self) -> E
     where
@@ -129,6 +134,18 @@ impl StorageConnection {
         self.transaction_sync_etc(f, true)
     }
 
+    /// Executes operations in transaction. A new transaction is only started if not already in a
+    /// transaction and can be manually rolled back
+    pub fn transaction_sync_with_rollback<'a, T, E, F>(
+        &'a self,
+        f: F,
+    ) -> Result<T, TransactionError<E>>
+    where
+        F: FnOnce(&'a StorageConnection) -> Result<OkWithRollback<T>, E>,
+    {
+        self.transaction_sync_etc_with_rollback(f, true)
+    }
+
     /// # Arguments
     /// * `reuse_tx` - if true and the connection is currently in a transaction no new nested
     /// transaction is started.
@@ -140,18 +157,41 @@ impl StorageConnection {
     where
         F: FnOnce(&'a StorageConnection) -> Result<T, E>,
     {
+        self.transaction_sync_etc_with_rollback(
+            |connection| match f(connection) {
+                Ok(ok) => Ok(OkWithRollback::Ok(ok)),
+                Err(error) => Err(error),
+            },
+            reuse_tx,
+        )
+    }
+
+    /// # Arguments
+    /// * `reuse_tx` - if true and the connection is currently in a transaction no new nested
+    /// transaction is started.
+    pub fn transaction_sync_etc_with_rollback<'a, T, E, F>(
+        &'a self,
+        f: F,
+        reuse_tx: bool,
+    ) -> Result<T, TransactionError<E>>
+    where
+        F: FnOnce(&'a StorageConnection) -> Result<OkWithRollback<T>, E>,
+    {
         let current_level = self.transaction_level.get();
         if current_level > 0 && reuse_tx {
+            // Can only rollback when returning from top level transaction callback
             return match f(self) {
-                Ok(ok) => Ok(ok),
+                Ok(OkWithRollback::Ok(ok)) => Ok(ok),
+                Ok(OkWithRollback::OkWithRollback(ok)) => Ok(ok),
                 Err(err) => Err(TransactionError::Inner(err)),
             };
         }
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
 
+        println!("starting transaction {}", current_level);
         transaction_manager.begin_transaction(con).map_err(|err| {
-            error!("Failed to rollback tx: {:?}", err);
+            error!("Failed to start tx: {:?}", err);
             TransactionError::Transaction {
                 msg: "Failed to start tx".to_string(),
                 level: current_level + 1,
@@ -161,9 +201,9 @@ impl StorageConnection {
         self.transaction_level.set(current_level + 1);
         let result = f(self);
         self.transaction_level.set(current_level);
-
+        println!("finished {}", current_level);
         match result {
-            Ok(value) => {
+            Ok(OkWithRollback::Ok(value)) => {
                 transaction_manager.commit_transaction(con).map_err(|err| {
                     error!("Failed to end tx: {:?}", err);
                     TransactionError::Transaction {
@@ -171,6 +211,18 @@ impl StorageConnection {
                         level: current_level + 1,
                     }
                 })?;
+                Ok(value)
+            }
+            Ok(OkWithRollback::OkWithRollback(value)) => {
+                transaction_manager
+                    .rollback_transaction(con)
+                    .map_err(|err| {
+                        error!("Failed to rollback tx: {:?}", err);
+                        TransactionError::Transaction {
+                            msg: "Failed to rollback tx".to_string(),
+                            level: current_level + 1,
+                        }
+                    })?;
                 Ok(value)
             }
             Err(e) => {
