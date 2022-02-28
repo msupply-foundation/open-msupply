@@ -77,7 +77,7 @@ impl InvoiceMutations {
         store_id: String,
         id: String,
     ) -> Result<outbound_shipment::DeleteResponse> {
-        outbound_shipment::delete(ctx, &store_id, &id)
+        outbound_shipment::delete(ctx, &store_id, id)
     }
 
     async fn insert_inbound_shipment(

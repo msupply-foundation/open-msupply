@@ -7,6 +7,7 @@ use graphql_core::{
 };
 use graphql_types::types::InvoiceLineNode;
 
+use repository::InvoiceLine;
 use service::invoice_line::{
     outbound_shipment_service_line::{
         UpdateOutboundShipmentServiceLine as ServiceInput,
@@ -34,17 +35,22 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider
-        .invoice_line_service
-        .update_outbound_shipment_service_line(&service_context, store_id, input.to_domain())
-    {
+    map_response(
+        service_provider
+            .invoice_line_service
+            .update_outbound_shipment_service_line(&service_context, store_id, input.to_domain()),
+    )
+}
+
+pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<UpdateResponse> {
+    let result = match from {
         Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
 #[derive(SimpleObject)]

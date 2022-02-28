@@ -7,14 +7,13 @@ use repository::{
     schema::{InvoiceLineRow, InvoiceLineRowType},
     InvoiceLine, InvoiceLineRowRepository, RepositoryError, StorageConnection,
 };
-
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateOutboundShipmentUnallocatedLine {
     pub id: String,
     pub quantity: u32,
 }
 
-#[derive(Debug, PartialEq)]
-
+#[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentUnallocatedLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
@@ -27,6 +26,7 @@ type OutError = UpdateOutboundShipmentUnallocatedLineError;
 
 pub fn update_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
+    _store_id: &str,
     input: UpdateOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLine, OutError> {
     let line = ctx
@@ -106,6 +106,7 @@ mod test_update {
         assert_eq!(
             service.update_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 UpdateOutboundShipmentUnallocatedLine {
                     id: "invalid".to_owned(),
                     quantity: 0
@@ -118,6 +119,7 @@ mod test_update {
         assert_eq!(
             service.update_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 UpdateOutboundShipmentUnallocatedLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     quantity: 0
@@ -142,6 +144,7 @@ mod test_update {
         let result = service
             .update_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 UpdateOutboundShipmentUnallocatedLine {
                     id: line_to_update.id.clone(),
                     quantity: 20,

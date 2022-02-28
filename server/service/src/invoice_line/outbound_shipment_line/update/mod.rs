@@ -13,7 +13,7 @@ mod validate;
 
 use generate::generate;
 use validate::validate;
-
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateOutboundShipmentLine {
     pub id: String,
     pub invoice_id: String,

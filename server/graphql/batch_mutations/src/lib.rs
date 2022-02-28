@@ -6,6 +6,9 @@ use async_graphql::*;
 use batch_inbound_shipment::{
     batch_inbound_shipment, BatchInboundShipmentInput, BatchInboundShipmentResponse,
 };
+use batch_outbound_shipment::{
+    batch_outbound_shipment, BatchOutboundShipmentInput, BatchOutboundShipmentResponse,
+};
 
 #[derive(Default, Clone)]
 pub struct BatchMutations;
@@ -21,14 +24,14 @@ impl BatchMutations {
         batch_inbound_shipment(ctx, &store_id, input)
     }
 
-    // async fn batch_outbound_shipment(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    //     input: BatchOutboundShipmentInput,
-    // ) -> Result<BatchOutboundShipmentResponse> {
-    //     get_batch_outbound_shipment_response(ctx, &store_id, input)
-    // }
+    async fn batch_outbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: BatchOutboundShipmentInput,
+    ) -> Result<BatchOutboundShipmentResponse> {
+        batch_outbound_shipment(ctx, &store_id, input)
+    }
 
     async fn batch_stocktake(
         &self,

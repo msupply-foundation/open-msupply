@@ -11,7 +11,7 @@ type OutError = DeleteOutboundShipmentError;
 pub fn delete_outbound_shipment(
     ctx: &ServiceContext,
     _store_id: &str,
-    id: &str,
+    id: String,
 ) -> Result<String, DeleteOutboundShipmentError> {
     let invoice_id = ctx
         .connection
@@ -23,10 +23,10 @@ pub fn delete_outbound_shipment(
             }
         })
         .map_err(|error| error.to_inner_error())?;
-    Ok(invoice_id.to_string())
+    Ok(invoice_id)
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 
 pub enum DeleteOutboundShipmentError {
     InvoiceDoesNotExist,

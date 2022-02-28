@@ -10,9 +10,10 @@ use service::invoice_line::inbound_shipment_line::InsertInboundShipmentLine;
 use service::invoice_line::inbound_shipment_line::InsertInboundShipmentLineError;
 use service::invoice_line::inbound_shipment_line::UpdateInboundShipmentLine;
 use service::invoice_line::inbound_shipment_line::UpdateInboundShipmentLineError;
+use service::InputWithResult;
 use service::{
     invoice::inbound_shipment::{
-        BatchInboundShipment, BatchInboundShipmentResult, InputWithResult, InsertInboundShipment,
+        BatchInboundShipment, BatchInboundShipmentResult, InsertInboundShipment,
         InsertInboundShipmentError, UpdateInboundShipment, UpdateInboundShipmentError,
     },
     invoice_line::inbound_shipment_line::{
@@ -317,8 +318,8 @@ mod test {
         invoice::{
             inbound_shipment::{
                 BatchInboundShipment, BatchInboundShipmentResult, DeleteInboundShipment,
-                DeleteInboundShipmentError, InputWithResult, InsertInboundShipment,
-                InsertInboundShipmentError, UpdateInboundShipment, UpdateInboundShipmentError,
+                DeleteInboundShipmentError, InsertInboundShipment, InsertInboundShipmentError,
+                UpdateInboundShipment, UpdateInboundShipmentError,
             },
             InvoiceServiceTrait,
         },
@@ -327,7 +328,7 @@ mod test {
             InsertInboundShipmentLineError, UpdateInboundShipmentLine,
             UpdateInboundShipmentLineError,
         },
-        service_provider::{ServiceContext, ServiceProvider},
+        service_provider::{ServiceContext, ServiceProvider}, InputWithResult,
     };
     use util::inline_init;
 

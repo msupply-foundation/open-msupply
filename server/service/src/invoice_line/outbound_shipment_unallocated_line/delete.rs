@@ -5,6 +5,7 @@ use repository::{
 
 use crate::{invoice_line::validate::check_line_exists_option, service_provider::ServiceContext};
 
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteOutboundShipmentUnallocatedLine {
     pub id: String,
 }
@@ -22,6 +23,7 @@ type OutError = DeleteOutboundShipmentUnallocatedLineError;
 
 pub fn delete_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
+    _store_id: &str,
     input: DeleteOutboundShipmentUnallocatedLine,
 ) -> Result<String, OutError> {
     let id = ctx
@@ -87,6 +89,7 @@ mod test_delete {
         assert_eq!(
             service.delete_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: "invalid".to_owned()
                 },
@@ -98,6 +101,7 @@ mod test_delete {
         assert_eq!(
             service.delete_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -121,6 +125,7 @@ mod test_delete {
         let result = service
             .delete_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: line_to_delete.id.clone(),
                 },

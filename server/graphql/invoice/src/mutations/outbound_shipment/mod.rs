@@ -1,7 +1,7 @@
-mod delete;
+pub mod delete;
 mod error;
-mod insert;
-mod update;
+pub mod insert;
+pub mod update;
 
 pub use delete::*;
 pub use error::*;

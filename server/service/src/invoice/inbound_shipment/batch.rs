@@ -7,6 +7,7 @@ use crate::{
         InsertInboundShipmentLineError, UpdateInboundShipmentLine, UpdateInboundShipmentLineError,
     },
     service_provider::ServiceContext,
+    InputWithResult,
 };
 
 use super::{
@@ -24,12 +25,6 @@ pub struct BatchInboundShipment {
     pub update_shipment: Option<Vec<UpdateInboundShipment>>,
     pub delete_shipment: Option<Vec<DeleteInboundShipment>>,
     pub continue_on_error: Option<bool>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct InputWithResult<I, R> {
-    pub input: I,
-    pub result: R,
 }
 
 #[derive(Debug)]
@@ -198,10 +193,10 @@ mod test {
     use crate::{
         invoice::inbound_shipment::{
             BatchInboundShipment, DeleteInboundShipment, DeleteInboundShipmentError,
-            InputWithResult, InsertInboundShipment,
+            InsertInboundShipment,
         },
         invoice_line::inbound_shipment_line::InsertInboundShipmentLine,
-        service_provider::ServiceProvider,
+        service_provider::ServiceProvider, InputWithResult,
     };
 
     #[actix_rt::test]

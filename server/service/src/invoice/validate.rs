@@ -13,7 +13,7 @@ pub fn check_invoice_type(
     invoice: &InvoiceRow,
     r#type: InvoiceRowType,
 ) -> Result<(), WrongInvoiceRowType> {
-    if invoice.r#type != r#type.into() {
+    if invoice.r#type != r#type {
         Err(WrongInvoiceRowType {})
     } else {
         Ok(())

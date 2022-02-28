@@ -35,34 +35,42 @@ pub enum DeleteResponse {
     Response(GenericDeleteResponse),
 }
 
-impl From<DeleteInput> for ServiceInput {
-    fn from(DeleteInput { id }: DeleteInput) -> Self {
+impl DeleteInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let DeleteInput { id } = self;
         ServiceInput { id }
     }
 }
 
-pub fn delete(ctx: &Context<'_>, _store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let id = input.id.clone();
+    map_response(
+        service_provider
+            .invoice_line_service
+            .delete_outbound_shipment_unallocated_line(
+                &service_context,
+                store_id,
+                input.to_domain(),
+            ),
+    )
+}
 
-    let response = match service_provider
-        .invoice_line_service
-        .delete_outbound_shipment_unallocated_line(&service_context, input.into())
-    {
+pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
+    let result = match from {
         Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),
         Err(error) => DeleteResponse::Error(DeleteError {
-            error: map_error(&id, error)?,
+            error: map_error(error)?,
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
-fn map_error(id: &str, error: ServiceError) -> Result<DeleteErrorInterface> {
+fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("Delete unallocated line {}: {:#?}", id, error);
+    let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
@@ -109,6 +117,7 @@ mod graphql {
         fn delete_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
+            _: &str,
             input: ServiceInput,
         ) -> Result<String, ServiceError> {
             self.0(input)
@@ -196,13 +205,8 @@ mod graphql {
         // LineIsNotUnallocatedLine
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineIsNotUnallocatedLine)));
         let expected_message = "Bad user input";
-        let expected_extensions = json!({
-            "details":
-                format!(
-                    "Delete unallocated line n/a: {:#?}",
-                    ServiceError::LineIsNotUnallocatedLine
-                )
-        });
+        let expected_extensions =
+            json!({ "details": format!("{:#?}", ServiceError::LineIsNotUnallocatedLine) });
         assert_standard_graphql_error!(
             &settings,
             &mutation,

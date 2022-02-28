@@ -9,6 +9,7 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode, NameNode};
 
+use repository::Invoice;
 use service::invoice::outbound_shipment::{
     UpdateOutboundShipment as ServiceInput, UpdateOutboundShipmentError as ServiceError,
     UpdateOutboundShipmentStatus,
@@ -57,18 +58,22 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider.invoice_service.update_outbound_shipment(
+    map_response(service_provider.invoice_service.update_outbound_shipment(
         &service_context,
         store_id,
         input.to_domain(),
-    ) {
-        Ok(invoice) => UpdateResponse::Response(InvoiceNode::from_domain(invoice)),
+    ))
+}
+
+pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateResponse> {
+    let result = match from {
+        Ok(invoice_line) => UpdateResponse::Response(InvoiceNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
 #[derive(Interface)]

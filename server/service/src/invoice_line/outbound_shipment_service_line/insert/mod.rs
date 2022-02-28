@@ -7,6 +7,7 @@ use validate::validate;
 
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct InsertOutboundShipmentServiceLine {
     pub id: String,
     pub invoice_id: String,
