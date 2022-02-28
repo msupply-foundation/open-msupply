@@ -1,21 +1,14 @@
-import React, {
-  createContext,
-  FC,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { createContext, FC, useEffect, useMemo, useState } from 'react';
 import { Store, User } from '@common/types';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
-import { addMinutes, differenceInMinutes } from 'date-fns';
+import { addMinutes } from 'date-fns';
 import { useOmSupplyApi } from '../api';
 import { useGetRefreshToken } from './api/hooks';
 import { useGetAuthToken } from './api/hooks/useGetAuthToken';
 import { AuthenticationResponse } from './api';
 
-const COOKIE_LIFETIME_MINUTES = 60;
+export const COOKIE_LIFETIME_MINUTES = 60;
 
 interface AuthCookie {
   expires?: Date;
@@ -58,26 +51,8 @@ export const getAuthCookie = (): AuthCookie => {
 };
 
 const useRefreshingAuth = () => {
-  const { mutate: refreshToken } = useGetRefreshToken();
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  const { expires, token } = getAuthCookie();
-  const cookieLifetimeInMinutes = differenceInMinutes(
-    new Date(expires ?? ''),
-    new Date()
-  );
-  const timeoutInterval =
-    (cookieLifetimeInMinutes > 0 ? cookieLifetimeInMinutes : 0.3) * 60 * 1000;
-
-  React.useEffect(() => {
-    if (token) {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(refreshToken, timeoutInterval);
-    }
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [token]);
+  const { token } = getAuthCookie();
+  useGetRefreshToken(token);
 };
 
 const AuthContext = createContext<AuthControl>({
