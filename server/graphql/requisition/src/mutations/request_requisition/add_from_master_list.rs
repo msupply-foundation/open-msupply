@@ -74,7 +74,7 @@ pub fn add_from_master_list(
 }
 
 impl AddFromMasterListInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let AddFromMasterListInput {
             request_requisition_id,
             master_list_id,

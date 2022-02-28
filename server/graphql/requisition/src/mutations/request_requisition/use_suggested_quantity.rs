@@ -72,7 +72,7 @@ pub fn use_suggested_quantity(
 }
 
 impl UseSuggestedQuantityInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let UseSuggestedQuantityInput {
             request_requisition_id,
         } = self;

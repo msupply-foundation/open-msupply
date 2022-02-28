@@ -1,4 +1,4 @@
-mod mutations;
+pub mod mutations;
 use self::mutations::{inbound_shipment_line, outbound_shipment_line};
 use async_graphql::*;
 

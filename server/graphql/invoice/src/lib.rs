@@ -5,7 +5,7 @@ use graphql_types::types::*;
 mod invoice_queries;
 use self::invoice_queries::*;
 
-mod mutations;
+pub mod mutations;
 use self::mutations::{inbound_shipment, outbound_shipment};
 
 #[cfg(test)]

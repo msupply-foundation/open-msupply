@@ -70,7 +70,7 @@ pub enum UpdateErrorInterface {
 }
 
 impl UpdateInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
             invoice_id,

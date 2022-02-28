@@ -71,7 +71,7 @@ pub fn supply_requested_quantity(
 }
 
 impl SupplyRequestedQuantityInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let SupplyRequestedQuantityInput {
             response_requisition_id,
         } = self;

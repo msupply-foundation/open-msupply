@@ -57,7 +57,7 @@ pub enum DeleteErrorInterface {
 }
 
 impl DeleteInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let DeleteInput { id, invoice_id } = self;
         ServiceInput { id, invoice_id }
     }
