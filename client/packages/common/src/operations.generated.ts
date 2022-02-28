@@ -17,6 +17,7 @@ export type ItemsWithStockLinesQueryVariables = Types.Exact<{
 export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
 
 export type NamesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   key: Types.NameSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -28,6 +29,7 @@ export type NamesQueryVariables = Types.Exact<{
 export type NamesQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
 export type LocationsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   sort?: Types.InputMaybe<Array<Types.LocationSortInput> | Types.LocationSortInput>;
 }>;
 
@@ -91,6 +93,7 @@ export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typenam
 export const ItemsWithStockLinesDocument = gql`
     query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
   items(
+    storeId: $storeId
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
@@ -132,8 +135,9 @@ export const ItemsWithStockLinesDocument = gql`
 }
     `;
 export const NamesDocument = gql`
-    query names($key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
+    query names($storeId: String!, $key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
   names(
+    storeId: $storeId
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
@@ -157,8 +161,8 @@ export const NamesDocument = gql`
 }
     `;
 export const LocationsDocument = gql`
-    query locations($sort: [LocationSortInput!]) {
-  locations(sort: $sort) {
+    query locations($storeId: String!, $sort: [LocationSortInput!]) {
+  locations(storeId: $storeId, sort: $sort) {
     __typename
     ... on LocationConnector {
       __typename
@@ -423,7 +427,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     names(variables: NamesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<NamesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names');
     },
-    locations(variables?: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
+    locations(variables: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations');
     },
     insertLocation(variables: InsertLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertLocationMutation> {
@@ -470,7 +474,7 @@ export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLR
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockNamesQuery((req, res, ctx) => {
- *   const { key, desc, first, offset, filter } = req.variables;
+ *   const { storeId, key, desc, first, offset, filter } = req.variables;
  *   return res(
  *     ctx.data({ names })
  *   )
@@ -487,7 +491,7 @@ export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQu
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockLocationsQuery((req, res, ctx) => {
- *   const { sort } = req.variables;
+ *   const { storeId, sort } = req.variables;
  *   return res(
  *     ctx.data({ locations })
  *   )
