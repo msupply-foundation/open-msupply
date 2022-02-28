@@ -40,7 +40,7 @@ export const StockCountsDocument = gql`
     `;
 export const ItemStatsDocument = gql`
     query itemStats($storeId: String!) {
-  items(filter: {isVisible: {equalTo: true}}) {
+  items(storeId: $storeId, filter: {isVisible: {equalTo: true}}) {
     ... on ItemConnector {
       nodes {
         ...ItemStats

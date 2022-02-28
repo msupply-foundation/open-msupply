@@ -772,7 +772,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = AuthTokenErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
+export type InternalError = AuthTokenErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & InsertLocationErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UserRegisterErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -838,7 +838,6 @@ export type InvoiceIsNotEditable = UpdateErrorInterface & {
 export type InvoiceLineBelongsToAnotherInvoice = DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename: 'InvoiceLineBelongsToAnotherInvoice';
   description: Scalars['String'];
-  invoice: InvoiceResponse;
 };
 
 export type InvoiceLineConnector = {
@@ -1296,11 +1295,13 @@ export type MutationsCreateRequisitionShipmentArgs = {
 
 export type MutationsDeleteInboundShipmentArgs = {
   input: DeleteInboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsDeleteInboundShipmentLineArgs = {
   input: DeleteInboundShipmentLineInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1312,21 +1313,25 @@ export type MutationsDeleteLocationArgs = {
 
 export type MutationsDeleteOutboundShipmentArgs = {
   id: Scalars['String'];
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsDeleteOutboundShipmentLineArgs = {
   input: DeleteOutboundShipmentLineInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsDeleteOutboundShipmentServiceLineArgs = {
   input: DeleteOutboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
   input: DeleteOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1362,6 +1367,7 @@ export type MutationsInsertInboundShipmentArgs = {
 
 export type MutationsInsertInboundShipmentLineArgs = {
   input: InsertInboundShipmentLineInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1379,16 +1385,19 @@ export type MutationsInsertOutboundShipmentArgs = {
 
 export type MutationsInsertOutboundShipmentLineArgs = {
   input: InsertOutboundShipmentLineInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsInsertOutboundShipmentServiceLineArgs = {
   input: InsertOutboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
   input: InsertOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1429,11 +1438,13 @@ export type MutationsSupplyRequestedQuantityArgs = {
 
 export type MutationsUpdateInboundShipmentArgs = {
   input: UpdateInboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsUpdateInboundShipmentLineArgs = {
   input: UpdateInboundShipmentLineInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1445,21 +1456,25 @@ export type MutationsUpdateLocationArgs = {
 
 export type MutationsUpdateOutboundShipmentArgs = {
   input: UpdateOutboundShipmentInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsUpdateOutboundShipmentLineArgs = {
   input: UpdateOutboundShipmentLineInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsUpdateOutboundShipmentServiceLineArgs = {
   input: UpdateOutboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
 };
 
 
 export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
   input: UpdateOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -1695,6 +1710,7 @@ export type QueriesInvoiceByNumberArgs = {
 
 
 export type QueriesInvoiceCountsArgs = {
+  storeId: Scalars['String'];
   timezoneOffset?: InputMaybe<Scalars['Int']>;
 };
 
@@ -1711,6 +1727,7 @@ export type QueriesItemsArgs = {
   filter?: InputMaybe<ItemFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1718,6 +1735,7 @@ export type QueriesLocationsArgs = {
   filter?: InputMaybe<LocationFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<LocationSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1725,6 +1743,7 @@ export type QueriesMasterListsArgs = {
   filter?: InputMaybe<MasterListFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<MasterListSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1732,6 +1751,7 @@ export type QueriesNamesArgs = {
   filter?: InputMaybe<NameFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<NameSortInput>>;
+  storeId: Scalars['String'];
 };
 
 

@@ -8,12 +8,14 @@ import {
   useColumns,
   createTableStore,
   useOmSupplyApi,
+  useAuthState,
 } from '@openmsupply-client/common';
 import { getNameListViewApi } from './api';
 
 export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   type,
 }) => {
+  const { storeId } = useAuthState();
   const navigate = useNavigate();
   const { api } = useOmSupplyApi();
   const {
@@ -27,7 +29,7 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   } = useListData(
     { initialSortBy: { key: 'name' } },
     ['names', 'list'],
-    getNameListViewApi(api, type)
+    getNameListViewApi(api, type, storeId)
   );
 
   const columns = useColumns<Name>(

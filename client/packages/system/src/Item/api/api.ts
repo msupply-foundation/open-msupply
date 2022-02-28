@@ -13,6 +13,7 @@ export const ItemQueries = {
     list:
       (
         api: ItemApi,
+        storeId: string,
         {
           first,
           offset,
@@ -37,6 +38,7 @@ export const ItemQueries = {
           offset,
           key,
           desc: sortBy.isDesc,
+          storeId,
         });
 
         const items = result.items;

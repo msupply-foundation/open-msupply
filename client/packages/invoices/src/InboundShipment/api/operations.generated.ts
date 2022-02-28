@@ -31,6 +31,7 @@ export type InvoiceQueryVariables = Types.Exact<{
 export type InvoiceQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, status: Types.InvoiceNodeStatus, theirReference?: string | null, type: Types.InvoiceNodeType, otherPartyId: string, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemCode: string, itemId: string, itemName: string, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, locationName?: string | null, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, isVisible: boolean, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableMonthsOfStockOnHand: number, availableStockOnHand: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, costPricePerPack: number, itemId: string, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, expiryDate?: string | null }> } }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean, stock: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', id: string, costPricePerPack: number, itemId: string, availableNumberOfPacks: number, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number }> } } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type UpdateInboundShipmentMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   input: Types.UpdateInboundShipmentInput;
 }>;
 
@@ -43,7 +44,7 @@ export type DeleteInboundShipmentsMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteInboundShipmentsMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+export type DeleteInboundShipmentsMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type InsertInboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String'];
@@ -71,6 +72,7 @@ export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
 export type DeleteInboundShipmentLinesMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type InvoiceCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
 }>;
 
@@ -280,8 +282,8 @@ export const InvoiceDocument = gql`
 }
     ${InboundShipmentFragmentDoc}`;
 export const UpdateInboundShipmentDocument = gql`
-    mutation updateInboundShipment($input: UpdateInboundShipmentInput!) {
-  updateInboundShipment(input: $input) {
+    mutation updateInboundShipment($storeId: String!, $input: UpdateInboundShipmentInput!) {
+  updateInboundShipment(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -462,8 +464,8 @@ export const DeleteInboundShipmentLinesDocument = gql`
 }
     `;
 export const InvoiceCountsDocument = gql`
-    query invoiceCounts($timezoneOffset: Int) {
-  invoiceCounts(timezoneOffset: $timezoneOffset) {
+    query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
+  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
     inbound {
       created {
         today
@@ -502,7 +504,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteInboundShipmentLines(variables: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines');
     },
-    invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
+    invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
     }
   };
@@ -548,7 +550,7 @@ export const mockInvoiceQuery = (resolver: ResponseResolver<GraphQLRequest<Invoi
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockUpdateInboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
+ *   const { storeId, input } = req.variables;
  *   return res(
  *     ctx.data({ updateInboundShipment })
  *   )
@@ -633,7 +635,7 @@ export const mockDeleteInboundShipmentLinesMutation = (resolver: ResponseResolve
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { timezoneOffset } = req.variables;
+ *   const { storeId, timezoneOffset } = req.variables;
  *   return res(
  *     ctx.data({ invoiceCounts })
  *   )
