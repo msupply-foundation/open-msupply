@@ -1,85 +1,3 @@
-query itemsWithStockLines(
-  $first: Int
-  $offset: Int
-  $key: ItemSortFieldInput!
-  $desc: Boolean
-  $filter: ItemFilterInput
-  $storeId: String!
-) {
-  items(
-    storeId: $storeId
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    __typename
-    ... on ItemConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        code
-        id
-        isVisible
-        name
-        unitName
-        availableBatches(storeId: $storeId) {
-          __typename
-          totalCount
-          nodes {
-            __typename
-            availableNumberOfPacks
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemId
-            packSize
-            sellPricePerPack
-            totalNumberOfPacks
-            onHold
-            note
-            storeId
-            locationName
-          }
-        }
-      }
-    }
-  }
-}
-
-query names(
-  $storeId: String!
-  $key: NameSortFieldInput!
-  $desc: Boolean
-  $first: Int
-  $offset: Int
-  $filter: NameFilterInput
-) {
-  names(
-    storeId: $storeId
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on NameConnector {
-      __typename
-      nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-        store {
-          id
-          code
-        }
-      }
-      totalCount
-    }
-  }
-}
-
 query locations($storeId: String!, $sort: [LocationSortInput!]) {
   locations(storeId: $storeId, sort: $sort) {
     __typename
@@ -226,19 +144,6 @@ mutation deleteLocation($storeId: String!, $input: DeleteLocationInput!) {
   }
 }
 
-query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(page: { first: $first, offset: $offset }, filter: $filter) {
-    ... on StoreConnector {
-      __typename
-      totalCount
-      nodes {
-        code
-        id
-      }
-    }
-  }
-}
-
 query authToken($username: String!, $password: String!) {
   authToken(password: $password, username: $username) {
     ... on AuthToken {
@@ -267,67 +172,6 @@ query authToken($username: String!, $password: String!) {
           fullError
         }
         description
-      }
-    }
-  }
-}
-
-query masterLists(
-  $first: Int
-  $offset: Int
-  $key: MasterListSortFieldInput!
-  $desc: Boolean
-  $filter: MasterListFilterInput
-  $storeId: String!
-) {
-  masterLists(
-    filter: $filter
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-  ) {
-    ... on MasterListConnector {
-      __typename
-      totalCount
-      nodes {
-        name
-        code
-        description
-        id
-        lines {
-          __typename
-          totalCount
-          nodes {
-            id
-            itemId
-            item {
-              code
-              id
-              unitName
-              name
-              isVisible
-              availableBatches(storeId: $storeId) {
-                __typename
-                totalCount
-                nodes {
-                  __typename
-                  availableNumberOfPacks
-                  batch
-                  costPricePerPack
-                  expiryDate
-                  itemId
-                  id
-                  totalNumberOfPacks
-                  storeId
-                  sellPricePerPack
-                  packSize
-                  onHold
-                  note
-                  locationName
-                }
-              }
-            }
-          }
-        }
       }
     }
   }
