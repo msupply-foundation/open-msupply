@@ -15,7 +15,7 @@ use repository::{
     RepositoryError, RequisitionLine, RequisitionLineRowRepository, StorageConnection,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisitionLine {
     pub id: String,
     pub item_id: String,

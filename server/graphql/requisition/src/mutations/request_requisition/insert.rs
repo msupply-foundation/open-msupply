@@ -6,6 +6,7 @@ use graphql_types::{
     generic_errors::OtherPartyNotASupplier,
     types::{NameNode, RequisitionNode},
 };
+use repository::Requisition;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
@@ -57,17 +58,22 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider
-        .requisition_service
-        .insert_request_requisition(&service_context, store_id, input.to_domain())
-    {
+    map_response(
+        service_provider
+            .requisition_service
+            .insert_request_requisition(&service_context, store_id, input.to_domain()),
+    )
+}
+
+pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<InsertResponse> {
+    let result = match from {
         Ok(requisition) => InsertResponse::Response(RequisitionNode::from_domain(requisition)),
         Err(error) => InsertResponse::Error(InsertError {
             error: map_error(error)?,
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
 impl InsertInput {

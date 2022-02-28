@@ -1677,6 +1677,8 @@ dependencies = [
  "graphql_core",
  "graphql_invoice",
  "graphql_invoice_line",
+ "graphql_requisition",
+ "graphql_requisition_line",
  "graphql_stocktake",
  "graphql_stocktake_line",
  "graphql_types",

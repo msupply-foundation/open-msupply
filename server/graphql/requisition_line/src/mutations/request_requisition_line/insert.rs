@@ -5,6 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::RequisitionLineNode;
+use repository::RequisitionLine;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
     requisition_line::request_requisition_line::{
@@ -55,10 +56,15 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider
-        .requisition_line_service
-        .insert_request_requisition_line(&service_context, store_id, input.to_domain())
-    {
+    map_response(
+        service_provider
+            .requisition_line_service
+            .insert_request_requisition_line(&service_context, store_id, input.to_domain()),
+    )
+}
+
+pub fn map_response(from: Result<RequisitionLine, ServiceError>) -> Result<InsertResponse> {
+    let result = match from {
         Ok(requisition_line) => {
             InsertResponse::Response(RequisitionLineNode::from_domain(requisition_line))
         }
@@ -67,7 +73,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
 impl InsertInput {

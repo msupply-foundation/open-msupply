@@ -1,4 +1,4 @@
-mod mutations;
+pub mod mutations;
 use self::mutations::{request_requisition_line, response_requisition_line};
 use async_graphql::*;
 #[derive(Default, Clone)]

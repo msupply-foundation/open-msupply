@@ -6,6 +6,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::RequisitionNode;
+use repository::Requisition;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
@@ -64,17 +65,22 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider
-        .requisition_service
-        .update_request_requisition(&service_context, store_id, input.to_domain())
-    {
+    map_response(
+        service_provider
+            .requisition_service
+            .update_request_requisition(&service_context, store_id, input.to_domain()),
+    )
+}
+
+pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<UpdateResponse> {
+    let result = match from {
         Ok(requisition) => UpdateResponse::Response(RequisitionNode::from_domain(requisition)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
         }),
     };
 
-    Ok(response)
+    Ok(result)
 }
 
 impl UpdateInput {
