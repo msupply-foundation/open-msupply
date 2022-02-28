@@ -72,7 +72,7 @@ pub fn create_requisition_shipment(
 }
 
 impl CreateRequisitionShipmentInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let CreateRequisitionShipmentInput {
             response_requisition_id,
         } = self;

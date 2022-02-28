@@ -69,7 +69,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
 }
 
 impl DeleteInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let DeleteInput { id } = self;
         ServiceInput { id }
     }

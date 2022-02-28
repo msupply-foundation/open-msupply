@@ -71,7 +71,7 @@ pub enum InsertErrorInterface {
 }
 
 impl InsertInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
             invoice_id,

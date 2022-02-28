@@ -7,6 +7,7 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
 
+use repository::InvoiceLine;
 use service::invoice_line::inbound_shipment_line::{
     UpdateInboundShipmentLine as ServiceInput, UpdateInboundShipmentLineError as ServiceError,
 };
@@ -70,7 +71,7 @@ pub enum UpdateErrorInterface {
 }
 
 impl UpdateInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
             invoice_id,
@@ -97,6 +98,17 @@ impl UpdateInput {
             number_of_packs,
         }
     }
+}
+
+pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<UpdateResponse> {
+    let result = match from {
+        Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {

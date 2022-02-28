@@ -7,6 +7,7 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::OtherPartyNotASupplier;
 use graphql_types::types::{InvoiceNode, NameNode};
+use repository::Invoice;
 use service::invoice::inbound_shipment::{
     UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
     UpdateInboundShipmentStatus,
@@ -47,18 +48,11 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider.invoice_service.update_inbound_shipment(
+    map_response(service_provider.invoice_service.update_inbound_shipment(
         &service_context,
         store_id,
         input.to_domain(),
-    ) {
-        Ok(invoice) => UpdateResponse::Response(InvoiceNode::from_domain(invoice)),
-        Err(error) => UpdateResponse::Error(UpdateError {
-            error: map_error(error)?,
-        }),
-    };
-
-    Ok(response)
+    ))
 }
 
 #[derive(Interface)]
@@ -73,7 +67,7 @@ pub enum UpdateErrorInterface {
 }
 
 impl UpdateInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
             other_party_id,
@@ -94,6 +88,17 @@ impl UpdateInput {
             colour,
         }
     }
+}
+
+pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateResponse> {
+    let result = match from {
+        Ok(invoice) => UpdateResponse::Response(InvoiceNode::from_domain(invoice)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {

@@ -35,17 +35,11 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider
-        .invoice_line_service
-        .delete_inbound_shipment_line(&service_context, store_id, input.to_domain())
-    {
-        Ok(deleted_id) => DeleteResponse::Response(GenericDeleteResponse(deleted_id)),
-        Err(error) => DeleteResponse::Error(DeleteError {
-            error: map_error(error)?,
-        }),
-    };
-
-    Ok(response)
+    map_response(
+        service_provider
+            .invoice_line_service
+            .delete_inbound_shipment_line(&service_context, store_id, input.to_domain()),
+    )
 }
 
 #[derive(Interface)]
@@ -59,10 +53,21 @@ pub enum DeleteErrorInterface {
 }
 
 impl DeleteInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let DeleteInput { id, invoice_id } = self;
         ServiceInput { id, invoice_id }
     }
+}
+
+pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
+    let result = match from {
+        Ok(deleted_id) => DeleteResponse::Response(GenericDeleteResponse(deleted_id)),
+        Err(error) => DeleteResponse::Error(DeleteError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {

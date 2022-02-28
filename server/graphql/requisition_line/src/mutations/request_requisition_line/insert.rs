@@ -71,7 +71,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 }
 
 impl InsertInput {
-    fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
             item_id,
