@@ -3,13 +3,14 @@ import {
   useDialog,
   DialogButton,
   BasicSpinner,
+  useBufferState,
 } from '@openmsupply-client/common';
 import { ResponseLineEditForm } from './ResponseLineEditForm';
 import {
   useIsResponseRequisitionDisabled,
   ResponseRequisitionLineFragment,
 } from '../../api';
-import { useDraftRequisitionLine } from './hooks';
+import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 
 interface ResponseLineEditProps {
   isOpen: boolean;
@@ -22,16 +23,29 @@ export const ResponseLineEdit = ({
   onClose,
   line,
 }: ResponseLineEditProps) => {
+  const [currentLine, setCurrentLine] = useBufferState(line);
   const isDisabled = useIsResponseRequisitionDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
-  const { draft, isLoading, save, update } = useDraftRequisitionLine(line);
+  const { draft, isLoading, save, update } =
+    useDraftRequisitionLine(currentLine);
+  const { next, hasNext } = useNextResponseLine(currentLine);
 
   return (
     <Modal
       title={''}
       contentProps={{ sx: { padding: 0 } }}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      nextButton={<DialogButton variant="next" onClick={() => {}} />}
+      nextButton={
+        <DialogButton
+          disabled={!hasNext}
+          variant="next"
+          onClick={() => {
+            next && setCurrentLine(next);
+            // Returning true triggers the animation/slide out
+            return true;
+          }}
+        />
+      }
       okButton={
         <DialogButton
           variant="ok"

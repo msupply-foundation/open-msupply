@@ -119,6 +119,7 @@ export const ResponseLineEditForm = ({
             Input={
               <NumericTextInput
                 disabled={disabled}
+                autoFocus
                 value={draftLine.supplyQuantity}
                 width={150}
                 onChange={e =>
