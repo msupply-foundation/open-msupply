@@ -2,7 +2,6 @@ import { DomainObject } from './../../types/index';
 import { usePagination, PaginationState } from '../usePagination';
 import { useSortBy, SortState, SortRule } from '../useSortBy';
 import { useFilterBy, FilterState, FilterBy } from '../useFilterBy';
-import { useLocalStorage } from '../../localStorage';
 
 export interface QueryParams<T extends DomainObject>
   extends SortState<T>,
@@ -17,7 +16,6 @@ export interface QueryParamsState<T extends DomainObject>
   sort: SortState<T>;
   filter: FilterState;
   queryParams: QueryParams<T>;
-  storeId: string;
 }
 
 export const useQueryParams = <T extends DomainObject>({
@@ -30,7 +28,6 @@ export const useQueryParams = <T extends DomainObject>({
   const filter = useFilterBy(initialFilterBy);
   const sort = useSortBy(initialSortBy);
   const pagination = usePagination();
-  const [storeId] = useLocalStorage('/authentication/storeid', '');
 
   const queryParams: QueryParams<T> = {
     ...pagination,
@@ -49,6 +46,5 @@ export const useQueryParams = <T extends DomainObject>({
     filter,
     pagination,
     queryParams,
-    storeId: storeId ?? '',
   };
 };

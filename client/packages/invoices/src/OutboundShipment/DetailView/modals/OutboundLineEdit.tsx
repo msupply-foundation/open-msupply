@@ -56,7 +56,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   } = useDraftOutboundLines(currentItem);
   const packSizeController = usePackSizeController(draftOutboundLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
-  const { markDirty } = useDirtyCheck();
+  const { setIsDirty } = useDirtyCheck();
 
   const onNext = () => {
     setCurrentItem(next);
@@ -68,7 +68,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       status,
       draftOutboundLines
     )(newVal, packSize);
-    markDirty(true);
+    setIsDirty(true);
     setDraftOutboundLines(newAllocateQuantities ?? draftOutboundLines);
   };
 

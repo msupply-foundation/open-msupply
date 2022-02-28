@@ -87,7 +87,7 @@ const useDraftInboundLines = (itemId: string) => {
   const { id } = useInboundFields('id');
   const { mutateAsync, isLoading } = useSaveInboundLines();
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
-  const { isDirty, markDirty } = useDirtyCheck();
+  const { isDirty, setIsDirty } = useDirtyCheck();
   useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
@@ -104,7 +104,7 @@ const useDraftInboundLines = (itemId: string) => {
 
   const addDraftLine = () => {
     const newLine = createDraftInvoiceLine(itemId, id);
-    markDirty(true);
+    setIsDirty(true);
     setDraftLines([...draftLines, newLine]);
   };
 
@@ -116,7 +116,7 @@ const useDraftInboundLines = (itemId: string) => {
         const newBatch = { ...batch, ...patch, isUpdated: true };
         const index = draftLines.indexOf(batch);
         draftLines[index] = newBatch;
-        markDirty(true);
+        setIsDirty(true);
         setDraftLines([...draftLines]);
       }
     },
@@ -124,7 +124,7 @@ const useDraftInboundLines = (itemId: string) => {
   );
 
   const saveLines = async () => {
-    markDirty(false);
+    setIsDirty(false);
     await mutateAsync(draftLines);
   };
 

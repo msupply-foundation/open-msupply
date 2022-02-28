@@ -19,7 +19,6 @@ import {
   useSortBy,
   getDataSorter,
   useDebounceCallback,
-  useAuthState,
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { Invoice, InvoiceLine } from '../../types';
