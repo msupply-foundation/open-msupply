@@ -3,12 +3,13 @@ import create from 'zustand';
 
 import { AppRoute } from '@openmsupply-client/config';
 import {
+  AuthenticationError,
   Store,
   useAuthContext,
   useLocation,
   useNavigate,
 } from '@openmsupply-client/common';
-import { AuthenticationError, useAuthToken } from './api';
+// import { AuthenticationError } from '.';
 
 interface LoginForm {
   error?: AuthenticationError;
@@ -44,8 +45,7 @@ export const useLoginForm = (
   const state = useLoginFormState();
   const navigate = useNavigate();
   const location = useLocation();
-  const { mostRecentlyUsedCredentials, onLoggedIn } = useAuthContext();
-  const { login, isLoading: isLoggingIn } = useAuthToken();
+  const { mostRecentlyUsedCredentials, login, isLoggingIn } = useAuthContext();
   const {
     password,
     setPassword,
@@ -57,26 +57,17 @@ export const useLoginForm = (
     setError,
   } = state;
 
-  const onLogin = () => {
-    login(
-      { username, password },
-      {
-        onSuccess: ({ error, token }) => {
-          setError(error);
-          setPassword('');
+  const onLogin = async () => {
+    const { error, token } = await login(username, password, store);
+    setError(error);
+    setPassword('');
+    if (!token) return;
 
-          if (!token) return;
-
-          onLoggedIn({ id: '', name: username }, token, store);
-
-          // navigate back, if redirected by the <RequireAuthentication /> component
-          // or to the dashboard as a default
-          const state = location.state as State | undefined;
-          const from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
-          navigate(from, { replace: true });
-        },
-      }
-    );
+    // navigate back, if redirected by the <RequireAuthentication /> component
+    // or to the dashboard as a default
+    const state = location.state as State | undefined;
+    const from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
+    navigate(from, { replace: true });
   };
 
   const isValid = !!username && !!password && !!store?.id;
