@@ -4,7 +4,7 @@ import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   Store,
-  useAuthState,
+  useAuthContext,
   useLocalStorage,
   useLocation,
   useNavigate,
@@ -45,7 +45,7 @@ export const useLoginForm = (
   const state = useLoginFormState();
   const navigate = useNavigate();
   const location = useLocation();
-  const { onLoggedIn } = useAuthState();
+  const { onLoggedIn } = useAuthContext();
   const [mostRecentlyUsedCredentials] = useLocalStorage('/mru/credentials');
   const { login, isLoading: isLoggingIn } = useAuthToken();
   const {

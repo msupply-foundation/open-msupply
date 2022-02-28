@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import React, { createContext, FC, useEffect, useMemo } from 'react';
+import { Store, User } from '@common/types';
 import { useLocalStorage } from '../localStorage';
-import { Store, User } from '../types';
-import { useHostContext } from './useHostContext';
+import { useHostContext } from '../hooks/useHostContext';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns';
 import { useOmSupplyApi } from '../api';
@@ -27,8 +27,21 @@ export const getAuthCookie = (): AuthCookie => {
   }
   return emptyCookie;
 };
+interface AuthControl {
+  onLoggedIn: (user: User, token: string, store?: Store) => void;
+  storeId?: string;
+  token?: string;
+  user?: User;
+  store?: Store;
+}
 
-export const useAuthState = () => {
+const AuthContext = createContext<AuthControl>({
+  onLoggedIn: () => {},
+});
+
+const { Provider } = AuthContext;
+
+export const AuthProvider: FC = ({ children }) => {
   const { setStore, setUser } = useHostContext();
   const [, setMRUCredentials] = useLocalStorage('/mru/credentials');
   const { setHeader } = useOmSupplyApi();
@@ -50,5 +63,15 @@ export const useAuthState = () => {
     setHeader('Authorization', `Bearer ${token}`);
   }, [token]);
 
-  return { onLoggedIn, storeId, token, user, store };
+  const val = useMemo(
+    () => ({ onLoggedIn, storeId, token, user, store }),
+    [onLoggedIn, store, token, user]
+  );
+
+  return <Provider value={val}>{children}</Provider>;
+};
+
+export const useAuthContext = (): AuthControl => {
+  const authControl = React.useContext(AuthContext);
+  return authControl;
 };

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import {
-  useAuthState,
+  useAuthContext,
   useQueryParams,
   useQueryClient,
   RequisitionNodeStatus,
@@ -34,7 +34,7 @@ export const useRequestRequisitions = () => {
   const queryParams = useQueryParams<RequestRequisitionRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
-  const { store } = useAuthState();
+  const { store } = useAuthContext();
   const api = useRequestRequisitionApi();
 
   return {
