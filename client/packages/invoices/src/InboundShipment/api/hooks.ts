@@ -1,6 +1,11 @@
 import { useCallback } from 'react';
 import { toItem } from '@openmsupply-client/system';
 import {
+  useQueryParams,
+  useTableStore,
+  useTranslation,
+  useNotification,
+  useNavigate,
   Item,
   getDataSorter,
   useSortBy,
@@ -13,8 +18,13 @@ import {
   useMutation,
   useFieldsSelector,
 } from '@openmsupply-client/common';
-import { inboundLinesToSummaryItems } from './../../utils';
-import { Invoice, InvoiceLine, InboundShipmentItem } from './../../types';
+import { canDeleteInvoice, inboundLinesToSummaryItems } from './../../utils';
+import {
+  Invoice,
+  InvoiceLine,
+  InboundShipmentItem,
+  InvoiceRow,
+} from './../../types';
 import { getSdk } from './operations.generated';
 import { getInboundQueries } from './api';
 
@@ -145,4 +155,78 @@ export const useDeleteInboundLine = () => {
       queryClient.invalidateQueries(['invoice', id]);
     },
   });
+};
+
+export const useInbounds = () => {
+  const queryParams = useQueryParams<InvoiceRow>({
+    initialSortBy: { key: 'otherPartyName' },
+  });
+  const { store } = useAuthState();
+  const api = useInboundApi();
+
+  return {
+    ...useQuery(['invoice', 'list', store?.id, queryParams], () =>
+      api.get.list({
+        first: queryParams.first,
+        offset: queryParams.offset,
+        sortBy: queryParams.sortBy,
+        filterBy: queryParams.filter.filterBy,
+      })
+    ),
+    ...queryParams,
+  };
+};
+
+export const useCreateInbound = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const api = useInboundApi();
+  return useMutation(api.insert, {
+    onSuccess: id => {
+      navigate(id);
+      queryClient.invalidateQueries(['invoice']);
+    },
+  });
+};
+
+export const useDeleteSelectedInbounds = () => {
+  const queryClient = useQueryClient();
+  const { data: rows } = useInbounds();
+  const api = useInboundApi();
+  const { mutate } = useMutation(api.delete);
+  const t = useTranslation('replenishment');
+
+  const { success, info } = useNotification();
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as InvoiceRow[],
+  }));
+
+  const deleteAction = () => {
+    const numberSelected = selectedRows.length;
+    if (selectedRows && numberSelected > 0) {
+      const canDeleteRows = selectedRows.every(canDeleteInvoice);
+      if (!canDeleteRows) {
+        const cannotDeleteSnack = info(t('messages.cant-delete-invoices'));
+        cannotDeleteSnack();
+      } else {
+        mutate(selectedRows, {
+          onSuccess: () => queryClient.invalidateQueries(['invoice']),
+        });
+        const deletedMessage = t('messages.deleted-invoices', {
+          number: numberSelected,
+        });
+        const successSnack = success(deletedMessage);
+        successSnack();
+      }
+    } else {
+      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
+      selectRowsSnack();
+    }
+  };
+
+  return deleteAction;
 };
