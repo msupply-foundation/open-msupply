@@ -12,7 +12,7 @@ pub enum UpdateLocationError {
     LocationDoesNotExist,
     CodeAlreadyExists,
     LocationDoesNotBelongToCurrentStore,
-    UpdatedRecordDoesNotExist,
+    UpdatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
 
@@ -88,7 +88,7 @@ impl From<SingleRecordError> for UpdateLocationError {
         use UpdateLocationError::*;
         match error {
             SingleRecordError::DatabaseError(error) => DatabaseError(error),
-            SingleRecordError::NotFound(_) => UpdatedRecordDoesNotExist,
+            SingleRecordError::NotFound(_) => UpdatedRecordNotFound,
         }
     }
 }

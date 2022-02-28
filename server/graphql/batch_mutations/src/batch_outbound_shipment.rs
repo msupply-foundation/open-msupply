@@ -888,7 +888,7 @@ mod test {
                   "id": "id9",
                   "response": {
                     "error": {
-                      "__typename": "RecordDoesNotExist"
+                      "__typename": "RecordNotFound"
                     }
                   }
                 }
@@ -898,7 +898,7 @@ mod test {
                   "id": "id10",
                   "response": {
                     "error": {
-                      "__typename": "RecordDoesNotExist"
+                      "__typename": "RecordNotFound"
                     }
                   }
                 }

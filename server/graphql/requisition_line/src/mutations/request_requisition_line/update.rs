@@ -1,8 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        CannotEditRequisition, ForeignKey, ForeignKeyError, RecordDoesNotExist,
-    },
+    simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -27,7 +25,7 @@ pub struct UpdateInput {
 #[graphql(name = "UpdateRequestRequisitionLineErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     RequisitionDoesNotExist(ForeignKeyError),
     CannotEditRequisition(CannotEditRequisition),
 }
@@ -97,9 +95,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionLineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordDoesNotExist(
-                RecordDoesNotExist {},
-            ))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::RequisitionDoesNotExist => {
             return Ok(UpdateErrorInterface::RequisitionDoesNotExist(
@@ -202,7 +198,7 @@ mod test {
           }
         "#;
 
-        // RecordDoesNotExist
+        // RecordNotFound
         let test_service = TestService(Box::new(|_, _| {
             Err(ServiceError::RequisitionLineDoesNotExist)
         }));
@@ -210,7 +206,7 @@ mod test {
         let expected = json!({
             "updateRequestRequisitionLine": {
               "error": {
-                "__typename": "RecordDoesNotExist"
+                "__typename": "RecordNotFound"
               }
             }
           }
