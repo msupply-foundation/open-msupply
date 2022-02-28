@@ -1,7 +1,6 @@
 import React, { createContext, FC, useEffect, useMemo, useRef } from 'react';
 import { Store, User } from '@common/types';
 import { useLocalStorage } from '../localStorage';
-import { useHostContext } from '../hooks/useHostContext';
 import Cookies from 'js-cookie';
 import { addMinutes, differenceInMinutes } from 'date-fns';
 import { useOmSupplyApi } from '../api';
@@ -16,12 +15,18 @@ interface AuthCookie {
   user?: User;
 }
 
+type MRUCredentials = {
+  store?: Store;
+  username?: string;
+};
+
 interface AuthControl {
   onLoggedIn: (user: User, token: string, store?: Store) => void;
-  storeId?: string;
+  storeId: string;
   token?: string;
   user?: User;
   store?: Store;
+  mostRecentlyUsedCredentials?: MRUCredentials | null;
 }
 
 export const getAuthCookie = (): AuthCookie => {
@@ -63,13 +68,14 @@ const useRefreshingAuth = () => {
 
 const AuthContext = createContext<AuthControl>({
   onLoggedIn: () => {},
+  storeId: '',
 });
 
 const { Provider } = AuthContext;
 
 export const AuthProvider: FC = ({ children }) => {
-  const { setStore, setUser } = useHostContext();
-  const [, setMRUCredentials] = useLocalStorage('/mru/credentials');
+  const [mostRecentlyUsedCredentials, setMRUCredentials] =
+    useLocalStorage('/mru/credentials');
   const { setHeader } = useOmSupplyApi();
   const { token, store, user } = getAuthCookie();
   const storeId = store?.id ?? '';
@@ -83,8 +89,6 @@ export const AuthProvider: FC = ({ children }) => {
     const authCookie = { expires, store, token, user };
 
     Cookies.set('auth', JSON.stringify(authCookie), { expires });
-    setUser(user);
-    if (store) setStore(store);
   };
 
   useEffect(() => {
@@ -92,8 +96,15 @@ export const AuthProvider: FC = ({ children }) => {
   }, [token]);
 
   const val = useMemo(
-    () => ({ onLoggedIn, storeId, token, user, store }),
-    [onLoggedIn, store, token, user]
+    () => ({
+      onLoggedIn,
+      storeId,
+      token,
+      user,
+      store,
+      mostRecentlyUsedCredentials,
+    }),
+    [onLoggedIn, store, token, user, mostRecentlyUsedCredentials]
   );
 
   return <Provider value={val}>{children}</Provider>;

@@ -15,7 +15,6 @@ import {
   SortController,
   useSortBy,
   getDataSorter,
-  useHostContext,
 } from '@openmsupply-client/common';
 import { RequestRequisitionQueries } from './api';
 import {
@@ -53,10 +52,10 @@ export const useRequestRequisitions = () => {
 
 export const useCreateRequestRequisition = () => {
   const queryClient = useQueryClient();
-  const { store } = useHostContext();
+  const { storeId } = useAuthContext();
   const navigate = useNavigate();
   const api = useRequestRequisitionApi();
-  return useMutation(RequestRequisitionQueries.create(api, store.id), {
+  return useMutation(RequestRequisitionQueries.create(api, storeId), {
     onSuccess: ({ requisitionNumber }) => {
       navigate(String(requisitionNumber));
       queryClient.invalidateQueries(['requisition']);
@@ -67,12 +66,12 @@ export const useCreateRequestRequisition = () => {
 export const useRequestRequisition =
   (): UseQueryResult<RequestRequisitionFragment> => {
     const { requisitionNumber = '' } = useParams();
-    const { store } = useHostContext();
+    const { storeId } = useAuthContext();
     const api = useRequestRequisitionApi();
-    return useQuery(['requisition', store.id, requisitionNumber], () =>
+    return useQuery(['requisition', storeId, requisitionNumber], () =>
       RequestRequisitionQueries.get.byNumber(api)(
         Number(requisitionNumber),
-        store.id
+        storeId
       )
     );
   };
@@ -82,21 +81,21 @@ export const useRequestRequisitionFields = <
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<RequestRequisitionFragment, KeyOfRequisition> => {
-  const { store } = useHostContext();
+  const { storeId } = useAuthContext();
   const { data } = useRequestRequisition();
   const { requisitionNumber = '' } = useParams();
   const api = useRequestRequisitionApi();
   return useFieldsSelector(
-    ['requisition', store.id, requisitionNumber],
+    ['requisition', storeId, requisitionNumber],
     () =>
       RequestRequisitionQueries.get.byNumber(api)(
         Number(requisitionNumber),
-        store.id
+        storeId
       ),
     (patch: Partial<RequestRequisitionFragment>) =>
       RequestRequisitionQueries.update(
         api,
-        store.id
+        storeId
       )({ ...patch, id: data?.id ?? '' }),
     keys
   );
@@ -141,15 +140,15 @@ export const useIsRequestRequisitionDisabled = (): boolean => {
 
 export const useSaveRequestLines = () => {
   const { requisitionNumber = '' } = useParams();
-  const { store } = useHostContext();
+  const { storeId } = useAuthContext();
   const queryClient = useQueryClient();
   const api = useRequestRequisitionApi();
 
-  return useMutation(RequestRequisitionQueries.upsertLine(api, store.id), {
+  return useMutation(RequestRequisitionQueries.upsertLine(api, storeId), {
     onSuccess: () => {
       queryClient.invalidateQueries([
         'requisition',
-        store.id,
+        storeId,
         requisitionNumber,
       ]);
     },
