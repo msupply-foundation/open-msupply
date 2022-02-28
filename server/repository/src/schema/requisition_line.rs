@@ -1,6 +1,6 @@
 use super::diesel_schema::requisition_line;
 
-#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq)]
+#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
 #[table_name = "requisition_line"]
 pub struct RequisitionLineRow {
     pub id: String,

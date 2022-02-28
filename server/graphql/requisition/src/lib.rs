@@ -1,4 +1,4 @@
-mod mutations;
+pub mod mutations;
 mod requisition_queries;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
