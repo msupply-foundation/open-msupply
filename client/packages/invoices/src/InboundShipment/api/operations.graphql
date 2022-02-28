@@ -209,6 +209,34 @@ query invoice($id: String!, $storeId: String!) {
   }
 }
 
+query inboundByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: INBOUND_SHIPMENT
+  ) {
+    ... on InvoiceNode {
+      ...InboundShipment
+    }
+
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+      }
+    }
+  }
+}
+
 mutation updateInboundShipment(
   $storeId: String!
   $input: UpdateInboundShipmentInput!
@@ -280,6 +308,7 @@ mutation insertInboundShipment(
     __typename
     ... on InvoiceNode {
       id
+      invoiceNumber
     }
     ... on InsertInboundShipmentError {
       __typename

@@ -1,4 +1,5 @@
 import {
+  InvoiceNodeType,
   InvoiceSortFieldInput,
   FilterBy,
   SortBy,
@@ -125,12 +126,16 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       sortBy: SortBy<InvoiceRow>;
       filterBy: FilterBy | null;
     }) => {
+      const filter = {
+        ...filterBy,
+        type: { equalTo: InvoiceNodeType.InboundShipment },
+      };
       const result = await sdk.invoices({
         first,
         offset,
         key: getSortKey(sortBy),
         desc: getSortDesc(sortBy),
-        filter: filterBy,
+        filter,
         storeId,
       });
       return result.invoices;
@@ -164,7 +169,38 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error(result.invoice.__typename);
     },
-    byNumber: () => {},
+    byNumber: async (invoiceNumber: string) => {
+      const result = await sdk.inboundByNumber({
+        invoiceNumber: Number(invoiceNumber),
+        storeId,
+      });
+
+      const invoice = result.invoiceByNumber;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        const lineNodes = invoice.lines.nodes;
+        const lines: InvoiceLine[] = lineNodes.map(line => {
+          const stockLine = line.stockLine;
+          const location = line.location;
+
+          return {
+            ...line,
+            stockLine,
+            location,
+            stockLineId: stockLine?.id ?? '',
+            invoiceId: invoice.id,
+            unitName: line.item?.unitName ?? '',
+          };
+        });
+
+        return {
+          ...invoice,
+          lines,
+        };
+      }
+
+      throw new Error('Could not find invoice!');
+    },
   },
   delete: async (invoices: InvoiceRow[]): Promise<string[]> => {
     const result = await sdk.deleteInboundShipments({
@@ -180,7 +216,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not delete invoices');
   },
-  insert: async (invoice: Partial<Invoice>): Promise<string> => {
+  insert: async (invoice: Partial<Invoice>): Promise<number> => {
     const result = await sdk.insertInboundShipment({
       id: invoice.id ?? '',
       otherPartyId: invoice?.otherPartyId ?? '',
@@ -190,7 +226,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     const { insertInboundShipment } = result;
 
     if (insertInboundShipment.__typename === 'InvoiceNode') {
-      return insertInboundShipment.id;
+      return insertInboundShipment.invoiceNumber;
     }
 
     throw new Error(insertInboundShipment.error.description);
