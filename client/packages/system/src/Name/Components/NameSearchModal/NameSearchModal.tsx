@@ -1,7 +1,6 @@
 import React, { FC, useMemo } from 'react';
-import { Name, useTranslation } from '@openmsupply-client/common';
-import { ListSearch } from '@common/components';
-import { useNames } from '../../hooks';
+import { ListSearch, Name, useTranslation } from '@openmsupply-client/common';
+import { useNamesSearch } from '../../api';
 
 interface NameSearchProps {
   open: boolean;
@@ -26,7 +25,7 @@ export const NameSearchModal: FC<NameSearchProps> = ({
   // special names.
   const isCustomerLookup = type === 'customer';
   const filter = isCustomerLookup ? { isCustomer: true } : { isSupplier: true };
-  const { data, isLoading } = useNames(filter);
+  const { data, isLoading } = useNamesSearch(filter);
   const t = useTranslation(['app', 'common']);
 
   const filteredData = useMemo(() => {

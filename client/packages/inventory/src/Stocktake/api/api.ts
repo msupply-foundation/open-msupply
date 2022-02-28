@@ -149,7 +149,7 @@ export const getStocktakeQueries = (
 
     throw new Error('Could not update stocktake');
   },
-  deleteStocktakes: () => async (stocktakes: StocktakeRowFragment[]) => {
+  deleteStocktakes: async (stocktakes: StocktakeRowFragment[]) => {
     const result = await queries.deleteStocktakes({
       ids: stocktakes.map(stocktake => ({ id: stocktake.id })),
       storeId,

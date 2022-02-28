@@ -58,7 +58,7 @@ export const ResponseLineEditFormLayout = ({
       direction="row"
       justifyContent="space-between"
       bgcolor="background.toolbar"
-      padding={2}
+      padding={4}
       boxShadow={theme => theme.shadows[2]}
     >
       <Grid item xs={4}>

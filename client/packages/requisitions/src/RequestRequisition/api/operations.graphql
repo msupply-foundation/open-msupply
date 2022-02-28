@@ -35,6 +35,36 @@ mutation updateRequestRequisition(
   }
 }
 
+mutation deleteRequestRequisition(
+  $storeId: String!
+  $input: DeleteRequestRequisitionInput!
+) {
+  deleteRequestRequisition(input: $input, storeId: $storeId) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+    ... on DeleteRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on CannotDeleteRequisitionWithLines {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on RecordDoesNotExist {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
 fragment RequestRequisitionLine on RequisitionLineNode {
   id
   itemId
