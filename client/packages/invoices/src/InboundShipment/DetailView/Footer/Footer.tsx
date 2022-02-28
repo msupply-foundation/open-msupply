@@ -13,11 +13,7 @@ import {
 import React, { FC } from 'react';
 import { getStatusTranslator, inboundStatuses } from '../../../utils';
 import { Invoice } from '../../../types';
-import {
-  useInboundShipment,
-  useInboundFields,
-  useIsInboundEditable,
-} from '.././api';
+import { useInbound, useInboundFields, useIsInboundEditable } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
 const createStatusLog = (invoice: Invoice) => {
@@ -58,7 +54,7 @@ export const Footer: FC = () => {
   const navigate = useNavigate();
   const { onHold, update } = useInboundFields('onHold');
   const isEditable = useIsInboundEditable();
-  const { data } = useInboundShipment();
+  const { data } = useInbound();
   const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
   return (

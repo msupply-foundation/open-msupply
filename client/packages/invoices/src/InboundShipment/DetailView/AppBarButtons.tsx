@@ -7,7 +7,7 @@ import {
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useIsInboundEditable } from './api';
+import { useIsInboundEditable } from '../api';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;

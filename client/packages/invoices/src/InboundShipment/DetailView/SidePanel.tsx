@@ -14,11 +14,7 @@ import {
   ColorSelectButton,
   useBufferState,
 } from '@openmsupply-client/common';
-import {
-  useInboundFields,
-  useInboundShipment,
-  useIsInboundEditable,
-} from './api';
+import { useInboundFields, useInbound, useIsInboundEditable } from '../api';
 
 const AdditionalInfoSection: FC = () => {
   const { comment, colour, update } = useInboundFields(['comment', 'colour']);
@@ -31,7 +27,6 @@ const AdditionalInfoSection: FC = () => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          {/* <PanelField>{draft.enteredByName}</PanelField> */}
         </PanelRow>
 
         <PanelRow>
@@ -108,7 +103,7 @@ const RelatedDocumentsSection: FC = () => {
 };
 
 export const SidePanel: FC = () => {
-  const { data } = useInboundShipment();
+  const { data } = useInbound();
   const { success } = useNotification();
   const t = useTranslation('common');
 

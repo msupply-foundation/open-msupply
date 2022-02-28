@@ -8,7 +8,7 @@ import {
   BasicTextInput,
 } from '@openmsupply-client/common';
 import { ItemSearchInput } from '@openmsupply-client/system';
-import { useInboundItems } from '../../api';
+import { useInboundItems } from '../../../api';
 
 interface InboundLineEditProps {
   item: Item | null;

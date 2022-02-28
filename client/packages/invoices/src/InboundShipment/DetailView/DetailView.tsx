@@ -12,7 +12,6 @@ import {
 } from '@openmsupply-client/common';
 import { toItem } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
-import { useDraftInbound } from './api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -20,9 +19,10 @@ import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InvoiceLine, InboundShipmentItem } from '../../types';
+import { useInbound } from '../api';
 
 export const DetailView: FC = () => {
-  const { draft, isLoading } = useDraftInbound();
+  const { data, isLoading } = useInbound();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<Item>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
@@ -41,7 +41,7 @@ export const DetailView: FC = () => {
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
-      {draft ? (
+      {data ? (
         <TableProvider createStore={createTableStore}>
           <AppBarButtons onAddItem={() => onOpen()} />
 
