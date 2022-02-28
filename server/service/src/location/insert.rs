@@ -10,7 +10,7 @@ use repository::{
 pub enum InsertLocationError {
     LocationAlreadyExists,
     LocationWithCodeAlreadyExists,
-    CreatedRecordDoesNotExist,
+    CreatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
 
@@ -92,7 +92,7 @@ impl From<SingleRecordError> for InsertLocationError {
         use InsertLocationError::*;
         match error {
             SingleRecordError::DatabaseError(error) => DatabaseError(error),
-            SingleRecordError::NotFound(_) => CreatedRecordDoesNotExist,
+            SingleRecordError::NotFound(_) => CreatedRecordNotFound,
         }
     }
 }

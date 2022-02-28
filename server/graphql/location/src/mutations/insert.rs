@@ -92,7 +92,7 @@ impl From<InError> for InsertLocationError {
             InError::LocationWithCodeAlreadyExists => {
                 OutError::UniqueValueViolation(UniqueValueViolation(UniqueValueKey::Code))
             }
-            InError::CreatedRecordDoesNotExist => OutError::InternalError(InternalError(
+            InError::CreatedRecordNotFound => OutError::InternalError(InternalError(
                 "Could not find record after creation".to_owned(),
             )),
             InError::DatabaseError(error) => OutError::DatabaseError(DatabaseError(error)),
@@ -254,7 +254,7 @@ mod test {
          "#;
 
         let test_service = TestService(Box::new(|_| {
-            Err(InsertLocationError::CreatedRecordDoesNotExist)
+            Err(InsertLocationError::CreatedRecordNotFound)
         }));
 
         let expected = json!({

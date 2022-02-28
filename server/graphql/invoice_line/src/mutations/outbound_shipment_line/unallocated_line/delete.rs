@@ -1,7 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordDoesNotExist, standard_graphql_error::StandardGraphqlError,
-    ContextExt,
+    simple_generic_errors::RecordNotFound, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::invoice_line::outbound_shipment_unallocated_line::{
@@ -19,7 +18,7 @@ pub struct DeleteInput {
 #[graphql(name = "DeleteOutboundShipmentUnallocatedLineErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
 }
 
 #[derive(SimpleObject)]
@@ -75,9 +74,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordDoesNotExist(
-                RecordDoesNotExist {},
-            ))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
@@ -163,13 +160,13 @@ mod graphql {
           }
         "#;
 
-        // RecordDoesNotExist
+        // RecordNotFound
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineDoesNotExist)));
 
         let expected = json!({
             "deleteOutboundShipmentUnallocatedLine": {
               "error": {
-                "__typename": "RecordDoesNotExist"
+                "__typename": "RecordNotFound"
               }
             }
           }

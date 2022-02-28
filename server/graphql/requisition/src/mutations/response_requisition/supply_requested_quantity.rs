@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, RecordDoesNotExist},
+    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -22,7 +22,7 @@ pub struct SupplyRequestedQuantityInput {
 #[graphql(name = "SupplyRequestedQuantityErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
 }
 
@@ -88,8 +88,8 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordDoesNotExist(
-                RecordDoesNotExist {},
+            return Ok(DeleteErrorInterface::RecordNotFound(
+                RecordNotFound {},
             ))
         }
         ServiceError::CannotEditRequisition => {
@@ -193,7 +193,7 @@ mod test {
         let expected = json!({
             "supplyRequestedQuantity": {
               "error": {
-                "__typename": "RecordDoesNotExist"
+                "__typename": "RecordNotFound"
               }
             }
           }

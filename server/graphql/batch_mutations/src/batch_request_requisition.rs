@@ -480,7 +480,7 @@ mod test {
                   "id": "id3",
                   "response": {
                     "error": {
-                      "__typename": "RecordDoesNotExist"
+                      "__typename": "RecordNotFound"
                     }
                   }
                 }
@@ -490,7 +490,7 @@ mod test {
                   "id": "id4",
                   "response": {
                     "error": {
-                      "__typename": "RecordDoesNotExist"
+                      "__typename": "RecordNotFound"
                     }
                   }
                 }
@@ -500,7 +500,7 @@ mod test {
                   "id": "id5",
                   "response": {
                     "error": {
-                      "__typename": "RecordDoesNotExist"
+                      "__typename": "RecordNotFound"
                     }
                   }
                 }
@@ -510,7 +510,7 @@ mod test {
                   "id": "id6",
                   "response": {
                     "error": {
-                      "__typename": "RecordDoesNotExist"
+                      "__typename": "RecordNotFound"
                     }
                   }
                 }

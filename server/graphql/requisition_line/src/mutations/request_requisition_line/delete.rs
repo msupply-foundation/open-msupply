@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, RecordDoesNotExist},
+    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -23,7 +23,7 @@ pub struct DeleteInput {
 #[graphql(name = "DeleteRequestRequisitionLineErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
 }
 
@@ -84,9 +84,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionLineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordDoesNotExist(
-                RecordDoesNotExist {},
-            ))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::CannotEditRequisition => {
             return Ok(DeleteErrorInterface::CannotEditRequisition(
@@ -180,7 +178,7 @@ mod test {
           }
         "#;
 
-        // RecordDoesNotExist
+        // RecordNotFound
         let test_service = TestService(Box::new(|_, _| {
             Err(ServiceError::RequisitionLineDoesNotExist)
         }));
@@ -188,7 +186,7 @@ mod test {
         let expected = json!({
             "deleteRequestRequisitionLine": {
               "error": {
-                "__typename": "RecordDoesNotExist"
+                "__typename": "RecordNotFound"
               }
             }
           }

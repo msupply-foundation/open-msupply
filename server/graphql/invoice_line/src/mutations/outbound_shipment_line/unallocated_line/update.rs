@@ -1,7 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordDoesNotExist, standard_graphql_error::StandardGraphqlError,
-    ContextExt,
+    simple_generic_errors::RecordNotFound, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
@@ -21,7 +20,7 @@ pub struct UpdateInput {
 #[graphql(name = "UpdateOutboundShipmentUnallocatedLineErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
-    RecordDoesNotExist(RecordDoesNotExist),
+    RecordNotFound(RecordNotFound),
 }
 
 #[derive(SimpleObject)]
@@ -78,9 +77,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordDoesNotExist(
-                RecordDoesNotExist {},
-            ))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
@@ -171,13 +168,13 @@ mod graphql {
           }
         "#;
 
-        // RecordDoesNotExist
+        // RecordNotFound
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineDoesNotExist)));
 
         let expected = json!({
             "updateOutboundShipmentUnallocatedLine": {
               "error": {
-                "__typename": "RecordDoesNotExist"
+                "__typename": "RecordNotFound"
               }
             }
           }
