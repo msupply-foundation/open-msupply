@@ -24,11 +24,11 @@ export const ResponseLineEdit = ({
   line,
 }: ResponseLineEditProps) => {
   const [currentLine, setCurrentLine] = useBufferState(line);
-  const disabled = useIsResponseRequisitionDisabled();
+  const isDisabled = useIsResponseRequisitionDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentLine);
-  const { next, isDisabled } = useNextResponseLine(currentLine);
+  const { next, hasNext } = useNextResponseLine(currentLine);
 
   return (
     <Modal
@@ -37,7 +37,7 @@ export const ResponseLineEdit = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={isDisabled}
+          disabled={hasNext}
           variant="next"
           onClick={() => {
             next && setCurrentLine(next);
@@ -62,7 +62,7 @@ export const ResponseLineEdit = ({
         <ResponseLineEditForm
           draftLine={draft}
           update={update}
-          disabled={disabled}
+          disabled={isDisabled}
         />
       ) : (
         <BasicSpinner />
