@@ -21,7 +21,7 @@ const InvoiceService: FC = () => {
   ).build();
 
   const inboundShipmentRoute = RouteBuilder.create(AppRoute.InboundShipment)
-    .addPart(':id')
+    .addPart(':invoiceNumber')
     .build();
 
   return (
