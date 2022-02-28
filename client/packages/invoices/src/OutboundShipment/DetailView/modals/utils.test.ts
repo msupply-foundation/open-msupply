@@ -35,7 +35,7 @@ const getPackSizeTwo = ({ invoiceLine, stockLine }: Params = {}) =>
 const getPlaceholder = (
   line?: Partial<DraftOutboundLine>
 ): DraftOutboundLine => ({
-  ...createPlaceholderRow(''),
+  ...createPlaceholderRow('', undefined, 'placeholder'),
   ...line,
 });
 

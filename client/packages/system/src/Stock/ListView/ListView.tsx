@@ -2,10 +2,8 @@ import React, { FC } from 'react';
 import {
   TableProvider,
   DataTable,
-  useListData,
   useColumns,
   createTableStore,
-  useOmSupplyApi,
   usePagination,
   useTranslation,
   Column,
@@ -14,24 +12,18 @@ import {
   useAuthState,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
-import { getStockListViewApi } from './api';
+import { useStockLines } from '../api';
 import { StockRow } from '../types';
 
 export const StockListView: FC = () => {
   const { pagination } = usePagination();
   const t = useTranslation('common');
-  const { api } = useOmSupplyApi();
   const [filterString, setFilterString] = React.useState<string>('');
   const [sortBy, setSortBy] = React.useState<SortBy<StockRow>>({
     key: 'itemName',
     direction: 'asc',
   });
-  const { storeId } = useAuthState();
-  const { data, isLoading } = useListData(
-    { initialSortBy: { key: 'itemName' } },
-    ['stock', 'list'],
-    getStockListViewApi(api, storeId)
-  );
+  const { data, isLoading } = useStockLines();
   const onChangeSortBy = (column: Column<StockRow>) => {
     const isDesc = column.key === sortBy.key ? !sortBy.isDesc : false;
     setSortBy({ key: column.key, isDesc, direction: isDesc ? 'desc' : 'asc' });
@@ -61,8 +53,9 @@ export const StockListView: FC = () => {
   };
 
   const filteredSortedData =
-    data?.filter(filterData).sort(getDataSorter(sortBy.key, !!sortBy.isDesc)) ??
-    [];
+    data?.nodes
+      .filter(filterData)
+      .sort(getDataSorter(sortBy.key, !!sortBy.isDesc)) ?? [];
 
   return (
     <TableProvider createStore={createTableStore}>

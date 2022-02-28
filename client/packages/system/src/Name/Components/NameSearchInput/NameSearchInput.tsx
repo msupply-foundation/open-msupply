@@ -5,7 +5,7 @@ import {
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@common/components';
-import { useNames } from '../../hooks';
+import { useNamesSearch } from '../../api';
 
 const filterOptions = {
   stringify: (name: Name) => `${name.code} ${name.name}`,
@@ -31,7 +31,7 @@ export const NameSearchInput: FC<NameSearchInputProps> = ({
 }) => {
   const isCustomerLookup = type === 'customer';
   const filter = isCustomerLookup ? { isCustomer: true } : { isSupplier: true };
-  const { data, isLoading } = useNames(filter);
+  const { data, isLoading } = useNamesSearch(filter);
   const [buffer, setBuffer] = useBufferState(value);
 
   const filteredData = useMemo(() => {
