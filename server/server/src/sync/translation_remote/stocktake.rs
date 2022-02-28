@@ -132,7 +132,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             comment,
             invad_additions_ID: inventory_adjustment_id,
             serial_number: stocktake_number,
-            stock_take_created_date: date_from_date_time(created_datetime),
+            stock_take_created_date: date_from_date_time(&created_datetime),
         };
 
         Ok(Some(vec![PushUpsertRecord {
