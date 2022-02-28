@@ -12,7 +12,7 @@ use self::{
     stocktake::{get_test_push_stocktake_records, get_test_stocktake_records},
     stocktake_line::{get_test_push_stocktake_line_records, get_test_stocktake_line_records},
     trans_line::get_test_trans_line_records,
-    transact::get_test_transact_records,
+    transact::{get_test_push_transact_records, get_test_transact_records},
 };
 
 use super::pull::{IntegrationRecord, IntegrationUpsertRecord};
@@ -172,6 +172,7 @@ pub fn get_all_remote_push_test_records() -> Vec<TestSyncPushRecord> {
     test_records.append(&mut get_test_push_number_records());
     test_records.append(&mut get_test_push_name_store_join_records());
     test_records.append(&mut get_test_push_stock_line_records());
+    test_records.append(&mut get_test_push_transact_records());
     test_records.append(&mut get_test_push_stocktake_records());
     test_records.append(&mut get_test_push_stocktake_line_records());
     test_records
