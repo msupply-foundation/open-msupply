@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  useTranslation,
   useAuthState,
   useQueryParams,
   useQueryClient,
@@ -16,6 +17,8 @@ import {
   useSortBy,
   getDataSorter,
   useHostContext,
+  useNotification,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { RequestRequisitionQueries } from './api';
 import {
@@ -24,6 +27,7 @@ import {
   RequestRequisitionLineFragment,
   RequestRequisitionRowFragment,
 } from './operations.generated';
+import { canDeleteRequestRequisition } from '../../utils';
 
 export const useRequestRequisitionApi = () => {
   const { client } = useOmSupplyApi();
@@ -39,7 +43,7 @@ export const useRequestRequisitions = () => {
 
   return {
     ...useQuery(
-      ['requisition', store?.id, queryParams],
+      ['requisition', 'list', store?.id, queryParams],
       RequestRequisitionQueries.get.list(api, store?.id ?? '', {
         first: queryParams.first,
         offset: queryParams.offset,
@@ -154,4 +158,54 @@ export const useSaveRequestLines = () => {
       ]);
     },
   });
+};
+
+export const useDeleteRequisitions = () => {
+  const { store } = useHostContext();
+  const api = useRequestRequisitionApi();
+  return useMutation(
+    RequestRequisitionQueries.deleteRequisitions(api, store.id)
+  );
+};
+
+export const useDeleteSelectedRequisitions = () => {
+  const queryClient = useQueryClient();
+  const { data: rows } = useRequestRequisitions();
+  const { mutate } = useDeleteRequisitions();
+  const t = useTranslation('replenishment');
+
+  const { success, info } = useNotification();
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as RequestRequisitionRowFragment[],
+  }));
+
+  const deleteAction = () => {
+    const numberSelected = selectedRows.length;
+    if (selectedRows && numberSelected > 0) {
+      const canDeleteRows = selectedRows.every(canDeleteRequestRequisition);
+      if (!canDeleteRows) {
+        const cannotDeleteSnack = info(t('messages.cant-delete-requisitions'));
+        cannotDeleteSnack();
+      } else {
+        mutate(selectedRows, {
+          onSuccess: () =>
+            queryClient.invalidateQueries(['requisition', 'list']),
+        });
+        const deletedMessage = t('messages.deleted-requisitions', {
+          number: numberSelected,
+        });
+        const successSnack = success(deletedMessage);
+        successSnack();
+      }
+    } else {
+      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
+      selectRowsSnack();
+    }
+  };
+
+  return deleteAction;
 };
