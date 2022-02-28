@@ -43,7 +43,7 @@ export type DeleteInboundShipmentsMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteInboundShipmentsMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+export type DeleteInboundShipmentsMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type InsertInboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String'];

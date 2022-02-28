@@ -269,6 +269,47 @@ query authToken($username: String!, $password: String!) {
   }
 }
 
+query refreshToken {
+  refreshToken {
+    ... on RefreshToken {
+      __typename
+      token
+    }
+    ... on RefreshTokenError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on TokenExpired {
+          __typename
+          description
+        }
+        ... on NotARefreshToken {
+          __typename
+          description
+        }
+        ... on NoRefreshTokenProvided {
+          __typename
+          description
+        }
+        ... on InvalidToken {
+          __typename
+          description
+        }
+        ... on InternalError {
+          __typename
+          description
+          fullError
+        }
+      }
+    }
+  }
+}
+
 query masterLists(
   $first: Int
   $offset: Int
