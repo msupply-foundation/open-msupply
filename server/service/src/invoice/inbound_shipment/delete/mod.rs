@@ -6,6 +6,7 @@ use validate::validate;
 
 use crate::{service_provider::ServiceContext, WithDBError};
 
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DeleteInboundShipment {
     pub id: String,
 }
@@ -31,7 +32,7 @@ pub fn delete_inbound_shipment(
     Ok(invoice_id)
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DeleteInboundShipmentError {
     InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
