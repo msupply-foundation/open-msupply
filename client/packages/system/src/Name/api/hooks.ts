@@ -20,7 +20,6 @@ export const useNamesSearch = ({
   isCustomer,
 }: {
   isCustomer?: boolean;
-  isSupplier?: boolean;
 }): UseQueryResult<{
   nodes: Name[];
   totalCount: number;
