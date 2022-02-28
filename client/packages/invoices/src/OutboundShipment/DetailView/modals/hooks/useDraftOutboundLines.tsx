@@ -126,7 +126,7 @@ export const useDraftOutboundLines = (
         })
         .sort(sortByExpiry);
 
-      const placeholder = lines.find(
+      const placeholder = lines?.find(
         ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
       );
 

@@ -9,7 +9,6 @@ import {
   Column,
   getDataSorter,
   SortBy,
-  useAuthState,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
 import { useStockLines } from '../api';
