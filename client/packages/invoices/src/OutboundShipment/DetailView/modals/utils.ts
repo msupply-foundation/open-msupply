@@ -1,4 +1,8 @@
-import { InvoiceNodeStatus, isExpired } from '@openmsupply-client/common';
+import {
+  InvoiceLineNodeType,
+  InvoiceNodeStatus,
+  isExpired,
+} from '@openmsupply-client/common';
 import { DraftOutboundLine } from './../../../types';
 
 export const sortByExpiry = (a: DraftOutboundLine, b: DraftOutboundLine) => {
@@ -85,9 +89,12 @@ export const allocateQuantities =
     // If there is only one batch row, then it is the placeholder.
     // Assign all of the new value and short circuit.
     if (draftOutboundLines.length === 1) {
+      const placeholder = draftOutboundLines.find(
+        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+      );
       return issueStock(
         draftOutboundLines,
-        'placeholder',
+        placeholder?.id ?? '',
         newValue * (issuePackSize || 1)
       );
     }
@@ -163,7 +170,7 @@ export const allocateQuantities =
 
     if (status === InvoiceNodeStatus.New) {
       const placeholderIdx = newDraftOutboundLines.findIndex(
-        ({ id }) => id === 'placeholder'
+        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
       );
       const placeholder = newDraftOutboundLines[placeholderIdx];
 
