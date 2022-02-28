@@ -4,6 +4,8 @@ use repository::{InvoiceLineRowRepository, RepositoryError, StockLineRowReposito
 mod validate;
 
 use validate::validate;
+
+#[derive(Clone, Debug, Default)]
 pub struct DeleteInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,

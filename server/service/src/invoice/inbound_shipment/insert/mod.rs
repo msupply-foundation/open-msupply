@@ -10,6 +10,7 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
+#[derive(Clone, Debug, Default)]
 pub struct InsertInboundShipment {
     pub id: String,
     pub other_party_id: String,

@@ -8,6 +8,7 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
+#[derive(Clone, Debug, Default)]
 pub struct InsertInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
