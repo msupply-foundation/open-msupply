@@ -1,10 +1,11 @@
-import { useRef } from 'react';
+import create from 'zustand';
 
-export const useDirtyCheck = () => {
-  const isDirty = useRef(false);
-  const markDirty = (dirty: boolean) => {
-    isDirty.current = dirty;
-  };
-
-  return { isDirty: isDirty.current, markDirty };
+type DirtyState = {
+  isDirty: boolean;
+  setIsDirty: (open: boolean) => void;
 };
+
+export const useDirtyCheck = create<DirtyState>(set => ({
+  isDirty: false,
+  setIsDirty: isDirty => set(state => ({ ...state, isDirty })),
+}));

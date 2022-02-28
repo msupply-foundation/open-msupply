@@ -93,7 +93,7 @@ export const useDraftOutboundLines = (
     item?.id ?? ''
   );
   const { data, isLoading } = useStockLines(item?.code ?? '');
-  const { isDirty, markDirty } = useDirtyCheck();
+  const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftOutboundLines, setDraftOutboundLines] = useState<
     DraftOutboundLine[]
   >([]);
@@ -108,10 +108,9 @@ export const useDraftOutboundLines = (
     if (!data) return;
 
     setDraftOutboundLines(() => {
-      if (!lines) return [];
       const rows = data
         .map(batch => {
-          const invoiceLine = lines.find(
+          const invoiceLine = (lines ?? []).find(
             ({ stockLineId }) => stockLineId === batch.id
           );
 
@@ -136,7 +135,7 @@ export const useDraftOutboundLines = (
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
-      markDirty(true);
+      setIsDirty(true);
       setDraftOutboundLines(issueStock(draftOutboundLines, batchId, value));
     },
     [draftOutboundLines]

@@ -1,6 +1,6 @@
 import { ItemFragment } from './../../operations.generated';
 import { useQuery, UseQueryResult } from 'react-query';
-import { Item, useQueryParams } from '@openmsupply-client/common';
+import { Item, useAuthState, useQueryParams } from '@openmsupply-client/common';
 import { useEffect } from 'react';
 import { useItemApi } from './../useItemApi/useItemApi';
 import { mapItemNodes } from '../../../utils';
@@ -9,19 +9,19 @@ import { ItemQueries } from './../../api';
 // TODO: Use itemID to filter when possible.
 export const useItem = (itemCode: string): UseQueryResult<Item> => {
   const api = useItemApi();
-  const { filterBy, filter, queryParams, first, offset, sortBy, storeId } =
+  const { storeId } = useAuthState();
+  const { filterBy, filter, queryParams, first, offset, sortBy } =
     useQueryParams<ItemFragment>({
       initialSortBy: { key: 'name' },
       initialFilterBy: { code: { equalTo: itemCode } },
     });
 
   const queryState = useQuery(['item', itemCode, queryParams], async () => {
-    const result = await ItemQueries.get.listWithStockLines(api, {
+    const result = await ItemQueries.get.listWithStockLines(api, storeId, {
       sortBy,
       filterBy,
       first,
       offset,
-      storeId,
     });
 
     const { nodes, totalCount } = mapItemNodes(result);
