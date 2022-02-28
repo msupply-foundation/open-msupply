@@ -34,7 +34,9 @@ const inboundParsers = {
       case 'createdDatetime': {
         return InvoiceSortFieldInput.CreatedDatetime;
       }
-
+      case 'otherPartyName': {
+        return InvoiceSortFieldInput.OtherPartyName;
+      }
       case 'comment': {
         return InvoiceSortFieldInput.Comment;
       }
