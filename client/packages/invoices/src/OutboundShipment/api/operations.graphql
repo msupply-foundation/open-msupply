@@ -352,6 +352,7 @@ mutation upsertOutboundShipment(
   $input: BatchOutboundShipmentInput!
 ) {
   batchOutboundShipment(storeId: $storeId, input: $input) {
+    __typename
     insertOutboundShipmentUnallocatedLines {
       id
       response {
