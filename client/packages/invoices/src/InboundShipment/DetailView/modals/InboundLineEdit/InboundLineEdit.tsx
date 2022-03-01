@@ -28,7 +28,7 @@ import {
   useInboundFields,
   useSaveInboundLines,
   useNextItem,
-} from '../../api';
+} from '../../../api';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 
 interface InboundLineEditProps {

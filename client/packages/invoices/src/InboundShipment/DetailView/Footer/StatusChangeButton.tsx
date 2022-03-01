@@ -9,7 +9,7 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import { getStatusTranslation, getNextInboundStatus } from '../../../utils';
-import { useIsInboundEditable, useInboundFields } from '../api';
+import { useIsInboundEditable, useInboundFields } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
