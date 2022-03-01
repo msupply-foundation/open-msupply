@@ -3,6 +3,7 @@ use repository::schema::{RemoteSyncBufferAction, RemoteSyncBufferRow, StockLineR
 
 use crate::sync::translation_remote::{
     test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    TRANSLATION_RECORD_ITEM_LINE,
 };
 
 const ITEM_LINE_1: (&'static str, &'static str) = (
@@ -94,8 +95,6 @@ const ITEM_LINE_2: (&'static str, &'static str) = (
 );
 
 #[allow(dead_code)]
-const RECORD_TYPE: &'static str = "item_line";
-#[allow(dead_code)]
 pub fn get_test_stock_line_records() -> Vec<TestSyncRecord> {
     vec![
         TestSyncRecord {
@@ -119,7 +118,7 @@ pub fn get_test_stock_line_records() -> Vec<TestSyncRecord> {
             identifier: "Stock line 1",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Stock_line_10".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_ITEM_LINE.to_string(),
                 record_id: ITEM_LINE_1.0.to_string(),
                 data: ITEM_LINE_1.1.to_string(),
                 action: RemoteSyncBufferAction::Update,
@@ -146,7 +145,7 @@ pub fn get_test_stock_line_records() -> Vec<TestSyncRecord> {
             identifier: "Stock line 2",
             remote_sync_buffer_row: RemoteSyncBufferRow {
                 id: "Stock_line_20".to_string(),
-                table_name: RECORD_TYPE.to_string(),
+                table_name: TRANSLATION_RECORD_ITEM_LINE.to_string(),
                 record_id: ITEM_LINE_2.0.to_string(),
                 data: ITEM_LINE_2.1.to_string(),
                 action: RemoteSyncBufferAction::Update,

@@ -1,5 +1,5 @@
-use crate::sync::translation_central::{
-    SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN,
+use crate::sync::{
+    translation_central::TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN, SyncTranslationError,
 };
 use repository::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
 
@@ -26,7 +26,7 @@ impl LegacyListMasterNameJoinRow {
         let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data).map_err(
             |source| SyncTranslationError {
                 table_name,
-                source,
+                source: source.into(),
                 record: sync_record.data.clone(),
             },
         )?;

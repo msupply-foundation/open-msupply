@@ -1,6 +1,6 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_is_empty, check_invoice_type,
-    InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
+    InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
 };
 use repository::{
     schema::{InvoiceRow, InvoiceRowType},
@@ -18,7 +18,8 @@ pub fn validate(
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
-    check_invoice_is_empty(&input.id, connection)?;
+
+    // check_invoice_is_empty(&input.id, connection)?; https://github.com/openmsupply/remote-server/issues/839
 
     Ok(invoice)
 }
