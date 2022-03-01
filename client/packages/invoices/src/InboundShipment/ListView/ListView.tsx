@@ -9,6 +9,7 @@ import {
   InvoiceNodeStatus,
   generateUUID,
   useTranslation,
+  useCurrency,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -20,6 +21,7 @@ import { useInbounds, useCreateInbound } from '../api';
 export const InboundListView: FC = () => {
   const { mutate } = useCreateInbound();
   const navigate = useNavigate();
+  const { c } = useCurrency();
   const {
     data,
     isLoading,
@@ -48,7 +50,9 @@ export const InboundListView: FC = () => {
       'comment',
       [
         'totalAfterTax',
-        { accessor: ({ rowData }) => rowData.pricing.totalAfterTax },
+        {
+          accessor: ({ rowData }) => c(rowData.pricing.totalAfterTax).format(),
+        },
       ],
       'selection',
     ],

@@ -74,7 +74,7 @@ query itemsListView(
   $storeId: String!
 ) {
   items(
-    store: $storeId
+    storeId: $storeId
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
