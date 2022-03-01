@@ -11,7 +11,7 @@ import { DraftOutboundLine } from '../../../../types';
 import { sortByExpiry, issueStock } from '../utils';
 import { useOutboundLines, useOutboundFields } from '../../../api';
 import {
-  PartialOutboundLineFragment,
+  OutboundLineFragment,
   PartialStockLineFragment,
 } from '../../../api/operations.generated';
 
@@ -34,7 +34,7 @@ export const createPlaceholderRow = (
 
 interface DraftOutboundLineSeeds {
   invoiceId: string;
-  invoiceLine: PartialOutboundLineFragment;
+  invoiceLine: OutboundLineFragment;
 }
 
 export const createDraftOutboundLineFromStockLine = ({

@@ -2,17 +2,14 @@ import {
   InboundLineFragment,
   PartialInboundLineFragment,
 } from './InboundShipment/api';
-import {
-  OutboundShipmentLineFragment,
-  PartialOutboundLineFragment,
-} from './OutboundShipment/api';
+import { OutboundLineFragment } from './OutboundShipment/api';
 
 export interface DraftInboundLine extends PartialInboundLineFragment {
   isCreated?: boolean;
   isUpdated?: boolean;
 }
 
-export interface DraftOutboundLine extends PartialOutboundLineFragment {
+export interface DraftOutboundLine extends OutboundLineFragment {
   isCreated: boolean;
   isUpdated: boolean;
 }
@@ -26,5 +23,5 @@ export type InboundItem = {
 export type OutboundItem = {
   id: string;
   itemId: string;
-  lines: [OutboundShipmentLineFragment, ...OutboundShipmentLineFragment[]];
+  lines: [OutboundLineFragment, ...OutboundLineFragment[]];
 };

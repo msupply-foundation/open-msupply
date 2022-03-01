@@ -11,28 +11,26 @@ import {
   useCurrency,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
-import { OutboundShipmentLineFragment } from '../api/operations.generated';
+import { OutboundLineFragment } from '../api/operations.generated';
 
 interface UseOutboundColumnOptions {
-  sortBy: SortBy<OutboundShipmentLineFragment | OutboundItem>;
+  sortBy: SortBy<OutboundLineFragment | OutboundItem>;
   onChangeSortBy: (
-    column: Column<OutboundShipmentLineFragment | OutboundItem>
-  ) => SortBy<OutboundShipmentLineFragment | OutboundItem>;
+    column: Column<OutboundLineFragment | OutboundItem>
+  ) => SortBy<OutboundLineFragment | OutboundItem>;
 }
 
 const expansionColumn = getRowExpandColumn<
-  OutboundShipmentLineFragment | OutboundItem
+  OutboundLineFragment | OutboundItem
 >();
 const notePopoverColumn = getNotePopoverColumn<
-  OutboundShipmentLineFragment | OutboundItem
+  OutboundLineFragment | OutboundItem
 >();
 
 export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseOutboundColumnOptions): Column<
-  OutboundShipmentLineFragment | OutboundItem
->[] => {
+}: UseOutboundColumnOptions): Column<OutboundLineFragment | OutboundItem>[] => {
   const { c } = useCurrency();
   return useColumns(
     [
@@ -63,17 +61,19 @@ export const useOutboundColumns = ({
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
-              return ifTheSameElseDefault(lines, 'itemCode', '');
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'code', '');
             } else {
-              return row.itemCode;
+              return row.item.code;
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'itemCode', '');
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'code', '');
             } else {
-              return rowData.itemCode;
+              return rowData.item.code;
             }
           },
         },
@@ -84,17 +84,19 @@ export const useOutboundColumns = ({
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
-              return ifTheSameElseDefault(lines, 'itemName', '');
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'name', '');
             } else {
-              return row.itemName;
+              return row.item.name;
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'itemName', '');
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'name', '');
             } else {
-              return rowData.itemName;
+              return rowData.item.name;
             }
           },
         },

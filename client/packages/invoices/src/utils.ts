@@ -5,10 +5,7 @@ import {
   useTranslation,
   groupBy,
 } from '@openmsupply-client/common';
-import {
-  OutboundShipmentRowFragment,
-  OutboundShipmentFragment,
-} from './OutboundShipment/api';
+import { OutboundRowFragment, OutboundFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
 
@@ -94,9 +91,7 @@ export const getStatusTranslator =
     );
   };
 
-export const isInvoiceEditable = (
-  outbound: OutboundShipmentFragment
-): boolean => {
+export const isInvoiceEditable = (outbound: OutboundFragment): boolean => {
   return outbound.status === 'NEW' || outbound.status === 'ALLOCATED';
 };
 
@@ -128,8 +123,6 @@ export const inboundLinesToSummaryItems = (
     createSummaryItem(itemId, lines)
   );
 };
-export const canDeleteInvoice = (
-  invoice: OutboundShipmentRowFragment
-): boolean =>
+export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;

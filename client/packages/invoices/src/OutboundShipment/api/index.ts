@@ -1,11 +1,8 @@
 export {
-  OutboundShipmentFragment,
-  PartialLocationFragment,
+  OutboundFragment,
   PartialStockLineFragment,
-  PartialItemFragment,
-  PartialOutboundLineFragment,
-  OutboundShipmentLineFragment,
-  OutboundShipmentRowFragment,
+  OutboundLineFragment,
+  OutboundRowFragment,
 } from './operations.generated';
 
 export * from './api';
