@@ -13,13 +13,14 @@ import {
 import { toItem } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { OutboundLineEdit } from './modals/OutboundLineEdit';
-import { InvoiceItem, InvoiceLine } from '../../types';
+import { InvoiceItem } from '../../types';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
+import { OutboundShipmentLineFragment } from '../api/operations.generated';
 
 export const DetailView: FC = () => {
   const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Item>();
@@ -27,7 +28,7 @@ export const DetailView: FC = () => {
   const t = useTranslation('distribution');
   const navigate = useNavigate();
   const onRowClick = useCallback(
-    (item: InvoiceLine | InvoiceItem) => {
+    (item: OutboundShipmentLineFragment | InvoiceItem) => {
       onOpen(toItem(item));
     },
     [toItem, onOpen]

@@ -10,15 +10,16 @@ import {
   InvoiceNodeStatus,
   UpdateOutboundShipmentStatusInput,
   InsertOutboundShipmentLineInput,
-  InsertOutboundShipmentInput,
   UpdateOutboundShipmentLineInput,
   InvoiceLineNodeType,
   InvoiceSortFieldInput,
 } from '@openmsupply-client/common';
-import { DraftOutboundLine, Invoice, InvoiceLine } from '../../types';
+import { DraftOutboundLine } from '../../types';
 import {
   getSdk,
   OutboundShipmentRowFragment,
+  OutboundShipmentFragment,
+  InsertOutboundShipmentMutationVariables,
   Sdk,
 } from './operations.generated';
 
@@ -47,7 +48,7 @@ const outboundParsers = {
       }
     }
   },
-  toStatus: (patch: RecordPatch<Invoice>) => {
+  toStatus: (patch: RecordPatch<OutboundShipmentRowFragment>) => {
     switch (patch.status) {
       case InvoiceNodeStatus.Allocated:
         return UpdateOutboundShipmentStatusInput.Allocated;
@@ -60,12 +61,16 @@ const outboundParsers = {
     }
   },
   toInsert: (
-    patch: Partial<OutboundShipmentRowFragment>
-  ): InsertOutboundShipmentInput => ({
-    id: patch.id ?? '',
-    otherPartyId: patch.otherPartyId ?? '',
+    patch: Omit<InsertOutboundShipmentMutationVariables, 'storeId'>,
+    storeId: string
+  ): InsertOutboundShipmentMutationVariables => ({
+    id: patch.id,
+    otherPartyId: patch.otherPartyId,
+    storeId,
   }),
-  toUpdate: (patch: RecordPatch<Invoice>): UpdateOutboundShipmentInput => ({
+  toUpdate: (
+    patch: RecordPatch<OutboundShipmentFragment>
+  ): UpdateOutboundShipmentInput => ({
     id: patch.id,
     colour: patch.colour,
     comment: patch.comment,
@@ -146,30 +151,19 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.invoices;
     },
-    byId: async (id: string): Promise<Invoice> => {
+    byId: async (id: string): Promise<OutboundShipmentFragment> => {
       const result = await sdk.invoice({ id, storeId });
       const invoice = result.invoice;
 
       if (invoice.__typename === 'InvoiceNode') {
-        const lineNodes = invoice.lines;
-        const lines: InvoiceLine[] = lineNodes.nodes.map(line => {
-          return {
-            ...line,
-            stockLineId: line.stockLine?.id ?? '',
-            invoiceId: invoice.id,
-            unitName: line.item?.unitName ?? '',
-          };
-        });
-
-        return {
-          ...invoice,
-          lines,
-        };
+        return invoice;
       } else {
         throw new Error('Could not find invoice');
       }
     },
-    byNumber: async (invoiceNumber: string): Promise<Invoice> => {
+    byNumber: async (
+      invoiceNumber: string
+    ): Promise<OutboundShipmentFragment> => {
       const result = await sdk.outboundByNumber({
         invoiceNumber: Number(invoiceNumber),
         storeId,
@@ -177,31 +171,18 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       const invoice = result.invoiceByNumber;
 
       if (invoice.__typename === 'InvoiceNode') {
-        const lineNodes = invoice.lines;
-        const lines: InvoiceLine[] = lineNodes.nodes.map(line => {
-          return {
-            ...line,
-            stockLineId: line.stockLine?.id ?? '',
-            invoiceId: invoice.id,
-            unitName: line.item?.unitName ?? '',
-          };
-        });
-
-        return {
-          ...invoice,
-          lines,
-        };
+        return invoice;
       } else {
         throw new Error('Could not find invoice');
       }
     },
   },
   insert: async (
-    invoice: Partial<OutboundShipmentRowFragment>
+    invoice: Omit<InsertOutboundShipmentMutationVariables, 'storeId'>
   ): Promise<number> => {
     const result = await sdk.insertOutboundShipment({
-      id: invoice.id ?? '',
-      otherPartyId: invoice?.otherPartyId ?? '',
+      id: invoice.id,
+      otherPartyId: invoice.otherPartyId,
       storeId,
     });
 
@@ -229,8 +210,8 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not delete invoices');
   },
   update: async (
-    patch: RecordPatch<Invoice>
-  ): Promise<RecordPatch<Invoice>> => {
+    patch: RecordPatch<OutboundShipmentFragment>
+  ): Promise<RecordPatch<OutboundShipmentFragment>> => {
     const result = await sdk.upsertOutboundShipment({
       storeId,
       input: {

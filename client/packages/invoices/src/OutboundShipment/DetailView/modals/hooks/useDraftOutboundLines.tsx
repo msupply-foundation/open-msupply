@@ -4,12 +4,11 @@ import {
   InvoiceLineNodeType,
   Item,
   StockLine,
-  useParams,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { InvoiceLine, DraftOutboundLine } from '../../../../types';
 import { sortByExpiry, issueStock } from '../utils';
-import { useOutboundLines } from '../../../api';
+import { useOutboundLines, useOutboundFields } from '../../../api';
 
 export const createPlaceholderRow = (
   invoiceId: string,
@@ -90,7 +89,7 @@ interface UseDraftOutboundLinesControl {
 export const useDraftOutboundLines = (
   item: Item | null
 ): UseDraftOutboundLinesControl => {
-  const { id: invoiceId = '' } = useParams();
+  const { id: invoiceId } = useOutboundFields('id');
   const { data: lines, isLoading: outboundLinesLoading } = useOutboundLines(
     item?.id ?? ''
   );
@@ -112,7 +111,7 @@ export const useDraftOutboundLines = (
       const rows = data
         .map(batch => {
           const invoiceLine = lines.find(
-            ({ stockLineId }) => stockLineId === batch.id
+            ({ stockLine }) => stockLine?.id === batch.id
           );
 
           return createDraftOutboundLine({
@@ -137,7 +136,7 @@ export const useDraftOutboundLines = (
 
       return rows;
     });
-  }, [data, lines, item]);
+  }, [data, lines, item, invoiceId]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {

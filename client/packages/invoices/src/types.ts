@@ -1,4 +1,9 @@
 import {
+  OutboundShipmentLineFragment,
+  // OutboundShipmentFragment,
+} from './OutboundShipment/api/operations.generated';
+import { LocationRowFragment } from '@openmsupply-client/system/src/Location/api/operations.generated';
+import {
   Column,
   StockLine,
   InvoiceNode,
@@ -8,7 +13,6 @@ import {
   Name,
   InvoiceLineNode,
 } from '@openmsupply-client/common';
-import { LocationRowFragment } from '@openmsupply-client/system';
 
 /**
  * Invoice, InvoiceRow and InvoiceLine extend the GQL types, mostly. GQL types for related entities
@@ -173,5 +177,5 @@ export type InboundShipmentItem = {
 export type InvoiceItem = {
   id: string;
   itemId: string;
-  lines: [InvoiceLine, ...InvoiceLine[]];
+  lines: [OutboundShipmentLineFragment, ...OutboundShipmentLineFragment[]];
 };
