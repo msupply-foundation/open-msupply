@@ -186,13 +186,14 @@ impl RemoteDataSynchroniser {
                 "Remote push: Translate {} changelogs to push records...",
                 changelogs.len()
             );
+            let last_changelog_id = changelogs.last().map(|log| log.id).unwrap_or(cursor as i64);
             let records = translate_changelogs_to_push_records(connection, changelogs)?;
 
             self.sync_api_v3
                 .post_queued_records(self.site_id, self.central_server_site_id, &records)
                 .await?;
 
-            state.update_push_cursor(cursor + 1)?;
+            state.update_push_cursor(last_changelog_id as u32 + 1)?;
             info!(
                 "Remote push: {} records pushed to central server",
                 records.len()
