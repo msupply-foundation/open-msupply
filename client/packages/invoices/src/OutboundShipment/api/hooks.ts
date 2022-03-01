@@ -24,7 +24,7 @@ import {
   useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { Invoice, InvoiceItem } from '../../types';
+import { Invoice, OutboundItem } from '../../types';
 import { getOutboundQueries } from './api';
 import { useOutboundColumns } from '../DetailView/columns';
 import {
@@ -205,7 +205,7 @@ export const useOutboundLines = (
   return useOutboundSelector(selectLines);
 };
 
-export const useOutboundItems = (): UseQueryResult<InvoiceItem[]> => {
+export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
   const selectLines = useCallback((invoice: OutboundShipmentFragment) => {
     const { lines } = invoice;
 
@@ -221,7 +221,7 @@ export const useOutboundItems = (): UseQueryResult<InvoiceItem[]> => {
 
 export const useOutboundRows = (isGrouped = true) => {
   const { sortBy, onChangeSortBy } = useSortBy<
-    OutboundShipmentLineFragment | InvoiceItem
+    OutboundShipmentLineFragment | OutboundItem
   >({
     key: 'itemName',
   });
@@ -325,7 +325,7 @@ export const useDeleteSelectedLines = (): {
           Object.keys(state.rowState)
             .filter(id => state.rowState[id]?.isSelected)
             .map(selectedId => items?.find(({ id }) => selectedId === id))
-            .filter(Boolean) as InvoiceItem[]
+            .filter(Boolean) as OutboundItem[]
         )
           .map(({ lines }) => lines)
           .flat()

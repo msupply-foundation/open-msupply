@@ -4,15 +4,11 @@ import {
   useTranslation,
   groupBy,
 } from '@openmsupply-client/common';
-import { OutboundShipmentRowFragment } from './OutboundShipment/api/operations.generated';
 import {
-  OutboundShipment,
-  OutboundShipmentRow,
-  OutboundShipmentSummaryItem,
-  InboundShipmentItem,
-  Invoice,
-  InvoiceLine,
-} from './types';
+  OutboundShipmentRowFragment,
+  OutboundShipmentFragment,
+} from './OutboundShipment/api/operations.generated';
+import { InboundShipmentItem, Invoice, InvoiceLine } from './types';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -96,19 +92,15 @@ export const getStatusTranslator =
     );
   };
 
-export const isInvoiceEditable = (outbound: OutboundShipment): boolean => {
+export const isInvoiceEditable = (
+  outbound: OutboundShipmentFragment
+): boolean => {
   return outbound.status === 'NEW' || outbound.status === 'ALLOCATED';
 };
 
 export const isInboundEditable = (inbound: Invoice): boolean => {
   // return inbound.status !== 'VERIFIED' && inbound.status !== 'DELIVERED';
   return inbound.status === 'NEW';
-};
-
-export const flattenOutboundItems = (
-  summaryItems: OutboundShipmentSummaryItem[]
-): OutboundShipmentRow[] => {
-  return summaryItems.map(({ batches }) => Object.values(batches)).flat();
 };
 
 export const createSummaryItem = (
