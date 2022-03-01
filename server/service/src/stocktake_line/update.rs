@@ -145,23 +145,16 @@ impl From<RepositoryError> for UpdateStocktakeLineError {
 mod stocktake_line_test {
     use repository::{
         mock::{
-            mock_item_a, mock_item_a_lines, mock_locations, mock_new_stock_line_for_stocktake_a,
-            mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a,
-            mock_stocktake_line_finalised, mock_store_a, mock_store_b, MockDataInserts,
+            mock_locations, mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a,
+            MockDataInserts,
         },
         schema::StocktakeLineRow,
         test_db::setup_all,
     };
-    use util::uuid::uuid;
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake_line::{
-            delete::DeleteStocktakeLineError,
-            insert::{InsertStocktakeLineError, InsertStocktakeLineInput},
-            query::GetStocktakeLinesError,
-            update::{UpdateStocktakeLineError, UpdateStocktakeLineInput},
-        },
+        stocktake_line::update::{UpdateStocktakeLineError, UpdateStocktakeLineInput},
     };
 
     #[actix_rt::test]
