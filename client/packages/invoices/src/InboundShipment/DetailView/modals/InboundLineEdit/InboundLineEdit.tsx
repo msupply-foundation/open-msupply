@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useCallback, useState, useEffect } from 'react';
 import {
   Divider,
   TableContainer,
@@ -17,6 +17,8 @@ import {
   Item,
   useNotification,
   ModalMode,
+  useDirtyCheck,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { InvoiceLine } from '../../../../types';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
@@ -84,9 +86,11 @@ const useDraftInboundLines = (itemId: string) => {
   const lines = useInboundLines(itemId);
   const { id } = useInboundFields('id');
   const { mutateAsync, isLoading } = useSaveInboundLines();
-  const [draftLines, setDraftLines] = React.useState<DraftInboundLine[]>([]);
+  const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
+  const { isDirty, setIsDirty } = useDirtyCheck();
+  useConfirmOnLeaving(isDirty);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (lines && itemId) {
       const drafts = lines.map(line =>
         createDraftInvoiceLine(line.itemId, line.invoiceId, line)
@@ -100,10 +104,11 @@ const useDraftInboundLines = (itemId: string) => {
 
   const addDraftLine = () => {
     const newLine = createDraftInvoiceLine(itemId, id);
+    setIsDirty(true);
     setDraftLines([...draftLines, newLine]);
   };
 
-  const updateDraftLine = React.useCallback(
+  const updateDraftLine = useCallback(
     (patch: Partial<DraftInboundLine> & { id: string }) => {
       const batch = draftLines.find(line => line.id === patch.id);
 
@@ -111,6 +116,7 @@ const useDraftInboundLines = (itemId: string) => {
         const newBatch = { ...batch, ...patch, isUpdated: true };
         const index = draftLines.indexOf(batch);
         draftLines[index] = newBatch;
+        setIsDirty(true);
         setDraftLines([...draftLines]);
       }
     },
@@ -118,6 +124,7 @@ const useDraftInboundLines = (itemId: string) => {
   );
 
   const saveLines = async () => {
+    setIsDirty(false);
     await mutateAsync(draftLines);
   };
 

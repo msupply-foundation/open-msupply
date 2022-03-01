@@ -54,12 +54,13 @@ export const onRead =
   };
 
 export const onUpdate =
-  (api: OutboundShipmentApi) =>
+  (api: OutboundShipmentApi, storeId: string) =>
   async (
     patch: Partial<OutboundShipmentRowFragment> & { id: string }
   ): Promise<string> => {
     const result = await api.updateOutboundShipment({
       input: invoiceToInput(patch),
+      storeId,
     });
 
     const { updateOutboundShipment } = result;
@@ -110,7 +111,7 @@ export const getOutboundShipmentListViewApi = (
   omSupplyApi: OutboundShipmentApi,
   storeId: string
 ): ListApi<OutboundShipmentRowFragment> => ({
-  onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
+  onRead: ({ first, offset, sortBy, filterBy }) => {
     const queryParams: InvoicesQueryVariables = {
       first,
       offset,
@@ -124,8 +125,6 @@ export const getOutboundShipmentListViewApi = (
     return () => onReadFn(queryParams);
   },
   onDelete: onDelete(omSupplyApi, storeId),
-  onUpdate: onUpdate(
-    omSupplyApi // storeId
-  ),
+  onUpdate: onUpdate(omSupplyApi, storeId),
   onCreate: onCreate(omSupplyApi, storeId),
 });

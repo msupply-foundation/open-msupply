@@ -1,0 +1,31 @@
+query names(
+  $storeId: String!
+  $key: NameSortFieldInput!
+  $desc: Boolean
+  $first: Int
+  $offset: Int
+  $filter: NameFilterInput
+) {
+  names(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        code
+        id
+        isCustomer
+        isSupplier
+        name
+        store {
+          id
+          code
+        }
+      }
+      totalCount
+    }
+  }
+}

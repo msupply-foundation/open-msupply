@@ -10,17 +10,24 @@ import {
   ToggleButton,
   InlineSpinner,
 } from '@openmsupply-client/common';
-import { Location } from '../../types';
-import { useLocationInsert, useNextLocation, useLocationUpdate } from '../api';
+import {
+  useLocationInsert,
+  useNextLocation,
+  useLocationUpdate,
+  LocationRowFragment,
+} from '../../api';
 interface LocationEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
 
-  location: Location | null;
+  location: LocationRowFragment | null;
 }
 
-const createNewLocation = (seed?: Location | null) => ({
+const createNewLocation = (
+  seed?: LocationRowFragment | null
+): LocationRowFragment => ({
+  __typename: 'LocationNode',
   id: generateUUID(),
   name: '',
   code: '',
@@ -29,25 +36,25 @@ const createNewLocation = (seed?: Location | null) => ({
 });
 
 interface UseDraftLocationControl {
-  draft: Location;
-  onUpdate: (patch: Partial<Location>) => void;
+  draft: LocationRowFragment;
+  onUpdate: (patch: Partial<LocationRowFragment>) => void;
   onChangeLocation: () => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
 }
 
 const useDraftLocation = (
-  seed: Location | null,
+  seed: LocationRowFragment | null,
   mode: ModalMode | null
 ): UseDraftLocationControl => {
-  const [location, setLocation] = useState<Location>(() =>
+  const [location, setLocation] = useState<LocationRowFragment>(() =>
     createNewLocation(seed)
   );
   const nextLocation = useNextLocation(location);
   const { mutate: insert, isLoading: insertIsLoading } = useLocationInsert();
   const { mutate: update, isLoading: updateIsLoading } = useLocationUpdate();
 
-  const onUpdate = (patch: Partial<Location>) => {
+  const onUpdate = (patch: Partial<LocationRowFragment>) => {
     setLocation({ ...location, ...patch });
   };
 
@@ -118,6 +125,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
       {!isLoading ? (
         <Grid flexDirection="column" display="flex" gap={2}>
           <BasicTextInput
+            autoFocus
             value={draft.name}
             onChange={e => onUpdate({ name: e.target.value })}
             label={t('label.name')}
