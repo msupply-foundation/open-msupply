@@ -49,7 +49,7 @@ pub fn delete_outbound_shipment_line(
     Ok(line_id)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum DeleteOutboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
