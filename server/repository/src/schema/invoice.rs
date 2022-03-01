@@ -1,6 +1,7 @@
 use super::diesel_schema::invoice;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
+use util::Defaults;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -50,25 +51,26 @@ pub struct InvoiceRow {
 impl Default for InvoiceRow {
     fn default() -> Self {
         Self {
-            id: String::default(),
-            name_id: String::default(),
-            name_store_id: None,
-            store_id: String::default(),
-            invoice_number: 0,
+            created_datetime: Defaults::naive_date_time(),
             r#type: InvoiceRowType::InboundShipment,
             status: InvoiceRowStatus::New,
-            on_hold: false,
-            comment: None,
-            their_reference: None,
-            created_datetime: NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0),
-            allocated_datetime: None,
-            picked_datetime: None,
-            shipped_datetime: None,
-            delivered_datetime: None,
-            verified_datetime: None,
-            colour: None,
-            requisition_id: None,
-            linked_invoice_id: None,
+            // Defaults
+            id: Default::default(),
+            name_id: Default::default(),
+            name_store_id: Default::default(),
+            store_id: Default::default(),
+            invoice_number: Default::default(),
+            on_hold: Default::default(),
+            comment: Default::default(),
+            their_reference: Default::default(),
+            allocated_datetime: Default::default(),
+            picked_datetime: Default::default(),
+            shipped_datetime: Default::default(),
+            delivered_datetime: Default::default(),
+            verified_datetime: Default::default(),
+            colour: Default::default(),
+            requisition_id: Default::default(),
+            linked_invoice_id: Default::default(),
         }
     }
 }
