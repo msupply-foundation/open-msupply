@@ -46,6 +46,7 @@ impl GeneralQueries {
     pub async fn names(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<NameFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -67,6 +68,7 @@ impl GeneralQueries {
     pub async fn master_lists(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<MasterListFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -79,6 +81,7 @@ impl GeneralQueries {
     pub async fn items(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<ItemFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -89,6 +92,7 @@ impl GeneralQueries {
 
     pub async fn invoice_counts(
         &self,
+        _store_id: String,
         #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
     ) -> Result<InvoiceCounts> {
         invoice_counts(timezone_offset)
@@ -96,6 +100,7 @@ impl GeneralQueries {
 
     pub async fn stock_counts(
         &self,
+        _store_id: String,
         #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
         #[graphql(desc = "Expiring soon threshold")] days_till_expired: Option<i32>,
     ) -> Result<StockCounts> {

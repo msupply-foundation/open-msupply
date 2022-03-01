@@ -22,6 +22,7 @@ impl LocationQueries {
     pub async fn locations(
         &self,
         ctx: &Context<'_>,
+        _store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<LocationFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
@@ -145,7 +146,7 @@ mod test {
 
         let query = r#"
         query {
-            locations {
+            locations(storeId: \"store_a\") {
               ... on LocationConnector {
                 nodes {
                   id
@@ -255,7 +256,7 @@ mod test {
             $sort: [LocationSortInput]
             $filter: LocationFilterInput
           ) {
-            locations(sort: $sort, filter: $filter) {
+            locations(sort: $sort, filter: $filter, storeId: \"store_a\") {
               __typename
             }
           }
