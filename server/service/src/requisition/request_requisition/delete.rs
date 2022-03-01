@@ -1,10 +1,15 @@
 use crate::{
-    requisition::common::{check_requisition_exists, get_lines_for_requisition},
+    requisition::common::check_requisition_exists,
+    requisition_line::request_requisition_line::{
+        delete_request_requisition_line, DeleteRequestRequisitionLine,
+        DeleteRequestRequisitionLineError,
+    },
     service_provider::ServiceContext,
 };
 use repository::{
     schema::{RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionRowRepository, StorageConnection,
+    RepositoryError, RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
+    StorageConnection, EqualFilter,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -20,6 +25,10 @@ pub enum DeleteRequestRequisitionError {
     CannotEditRequisition,
     CannotDeleteRequisitionWithLines,
     NotARequestRequisition,
+    LineDeleteError {
+        line_id: String,
+        error: DeleteRequestRequisitionLineError,
+    },
     DatabaseError(RepositoryError),
 }
 
@@ -34,6 +43,28 @@ pub fn delete_request_requisition(
         .connection
         .transaction_sync(|connection| {
             validate(connection, store_id, &input)?;
+
+            // TODO https://github.com/openmsupply/remote-server/issues/839
+            let lines = RequisitionLineRepository::new(&connection).query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&input.id)),
+            )?;
+            for line in lines {
+                delete_request_requisition_line(
+                    ctx,
+                    store_id,
+                    DeleteRequestRequisitionLine {
+                        id: line.requisition_line_row.id.clone(),
+                    },
+                )
+                .map_err(|error| {
+                    DeleteRequestRequisitionError::LineDeleteError {
+                        line_id: line.requisition_line_row.id,
+                        error,
+                    }
+                })?;
+            }
+            // End TODO
+
             match RequisitionRowRepository::new(&connection).delete(&input.id) {
                 Ok(_) => Ok(input.id),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -63,10 +94,10 @@ fn validate(
     if requisition_row.r#type != RequisitionRowType::Request {
         return Err(OutError::NotARequestRequisition);
     }
-
-    if !get_lines_for_requisition(connection, &input.id)?.is_empty() {
-        return Err(OutError::CannotDeleteRequisitionWithLines);
-    }
+    // TODO https://github.com/openmsupply/remote-server/issues/839
+    // if !get_lines_for_requisition(connection, &input.id)?.is_empty() {
+    //     return Err(OutError::CannotDeleteRequisitionWithLines);
+    // }
 
     Ok(())
 }
@@ -83,8 +114,7 @@ mod test_delete {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_draft_response_requisition_for_update_test,
-            mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
+            mock_draft_response_requisition_for_update_test, mock_sent_request_requisition,
             MockDataInserts,
         },
         test_db::setup_all,
@@ -154,20 +184,20 @@ mod test_delete {
             ),
             Err(ServiceError::NotARequestRequisition)
         );
-
+        // TODO https://github.com/openmsupply/remote-server/issues/839
         // CannotDeleteRequisitionWithLines
-        assert_eq!(
-            service.delete_request_requisition(
-                &context,
-                "store_a",
-                DeleteRequestRequisition {
-                    id: mock_request_draft_requisition_calculation_test()
-                        .requisition
-                        .id,
-                },
-            ),
-            Err(ServiceError::CannotDeleteRequisitionWithLines)
-        );
+        // assert_eq!(
+        //     service.delete_request_requisition(
+        //         &context,
+        //         "store_a",
+        //         DeleteRequestRequisition {
+        //             id: mock_request_draft_requisition_calculation_test()
+        //                 .requisition
+        //                 .id,
+        //         },
+        //     ),
+        //     Err(ServiceError::CannotDeleteRequisitionWithLines)
+        // );
     }
 
     #[actix_rt::test]

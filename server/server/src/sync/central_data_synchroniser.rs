@@ -1,17 +1,17 @@
 use crate::sync::{
     sync_api_v5::CentralSyncBatchV5,
-    translation_central::{import_sync_records, SyncImportError, TRANSLATION_RECORDS},
+    translation_central::{import_sync_records, TRANSLATION_RECORDS},
     SyncApiV5, SyncConnectionError,
 };
 use log::info;
 use repository::{
     schema::{CentralSyncBufferRow, KeyValueType},
-    CentralSyncBufferRepository, KeyValueStoreRepository, NameStoreJoinRepository, RepositoryError,
-    StorageConnection, TransactionError,
+    CentralSyncBufferRepository, KeyValueStoreRepository, RepositoryError, StorageConnection,
+    TransactionError,
 };
 use thiserror::Error;
 
-use super::sync_api_v5::CentralSyncRecordV5;
+use super::{sync_api_v5::CentralSyncRecordV5, SyncImportError};
 
 #[derive(Error, Debug)]
 pub enum CentralSyncError {
@@ -140,15 +140,6 @@ impl CentralDataSynchroniser {
             .await
             .map_err(|source| CentralSyncError::ImportCentralSyncRecordsError { source })?;
         info!("Successfully Imported central sync buffer records",);
-
-        // TODO needs to be done for M1 as name_store_joins are not synced yet but are required in API
-        // these records should actually sync from server in remote sync
-        if records.len() > 0 {
-            match NameStoreJoinRepository::new(connection).m1_add() {
-                Ok(_) => {}
-                Err(_) => {}
-            };
-        }
 
         info!("Clearing central sync buffer");
         central_sync_buffer_repository

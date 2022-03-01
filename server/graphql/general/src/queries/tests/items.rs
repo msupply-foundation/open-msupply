@@ -17,7 +17,7 @@ mod graphql {
         .await;
 
         let query = r#"query items($itemFilter: ItemFilterInput!) {
-            items(filter: $itemFilter) {
+            items(filter: $itemFilter, storeId: \"store_a\") {
                 ... on ItemConnector {
                   nodes {
                       id

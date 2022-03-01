@@ -20,6 +20,7 @@ mod test_item_stats_repository;
 mod test_master_list_repository;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
+mod test_remote_pull;
 mod test_requisition_line_repository;
 mod test_requisition_queries;
 mod test_requisition_repository;
@@ -51,6 +52,7 @@ pub use test_item_stats_repository::*;
 pub use test_master_list_repository::*;
 pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
+pub use test_remote_pull::*;
 pub use test_requisition_line_repository::*;
 pub use test_requisition_queries::*;
 pub use test_requisition_repository::*;
@@ -320,7 +322,8 @@ fn all_mock_data() -> MockDataCollection {
         mock_test_master_list_repository(),
     );
     data.insert("mock_test_sync_processor", mock_test_sync_processor());
-    data.insert("mock_test_invoice_loaders()", mock_test_invoice_loaders());
+    data.insert("mock_test_invoice_loaders", mock_test_invoice_loaders());
+    data.insert("mock_test_remote_pull", mock_test_remote_pull());
     data
 }
 

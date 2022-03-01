@@ -87,7 +87,9 @@ fn validate(
         return Err(OutError::NotARequestRequisition);
     }
 
-    if let Some(_) = check_item_exists_in_requisition(connection, &input.item_id)? {
+    if let Some(_) =
+        check_item_exists_in_requisition(connection, &input.requisition_id, &input.item_id)?
+    {
         return Err(OutError::ItemAlreadyExistInRequisition);
     }
 
@@ -131,9 +133,9 @@ mod test {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_draft_response_requisition_for_update_test, mock_item_stats_item2,
-            mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            MockDataInserts,
+            mock_draft_response_requisition_for_update_test, mock_item_c, mock_item_stats_item2,
+            mock_request_draft_requisition, mock_request_draft_requisition_calculation_test,
+            mock_sent_request_requisition, MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository,
@@ -309,5 +311,19 @@ mod test {
         assert_eq!(line.available_stock_on_hand, 22);
         assert_eq!(line.average_monthly_consumption, 5);
         assert_eq!(line.suggested_quantity, 10 * 5 - 22);
+
+        // Check with item_c which exists in another requisition
+        let result = service.insert_request_requisition_line(
+            &context,
+            "store_a",
+            InsertRequestRequisitionLine {
+                requisition_id: mock_request_draft_requisition().id,
+                id: "new requisition line id2".to_owned(),
+                item_id: mock_item_c().id,
+                requested_quantity: Some(20),
+            },
+        );
+
+        assert!(matches!(result, Ok(_)), "{:#?}", result);
     }
 }

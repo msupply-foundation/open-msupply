@@ -68,6 +68,9 @@ pub fn do_delete_stocktake(
                 ServiceError::CannotEditFinalised => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                ServiceError::LineDeleteError { .. } => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
             };
             Err(graphql_error.extend())
         }

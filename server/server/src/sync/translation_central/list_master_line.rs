@@ -1,4 +1,4 @@
-use crate::sync::translation_central::{SyncTranslationError, TRANSLATION_RECORD_LIST_MASTER_LINE};
+use crate::sync::{translation_central::TRANSLATION_RECORD_LIST_MASTER_LINE, SyncTranslationError};
 use repository::schema::{CentralSyncBufferRow, MasterListLineRow};
 
 use serde::Deserialize;
@@ -23,7 +23,7 @@ impl LegacyListMasterLineRow {
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data).map_err(
             |source| SyncTranslationError {
                 table_name,
-                source,
+                source: source.into(),
                 record: sync_record.data.clone(),
             },
         )?;

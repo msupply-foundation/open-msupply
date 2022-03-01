@@ -1,14 +1,12 @@
+use super::DeleteOutboundShipmentError;
+use crate::invoice::{
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
+    InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
+};
 use repository::{
     schema::{InvoiceRow, InvoiceRowType},
     StorageConnection,
 };
-
-use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_is_empty, check_invoice_type,
-    InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
-};
-
-use super::DeleteOutboundShipmentError;
 
 pub fn validate(
     id: &str,
@@ -19,7 +17,8 @@ pub fn validate(
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
-    check_invoice_is_empty(&id, connection)?;
+
+    // check_invoice_is_empty(&id, connection)?; https://github.com/openmsupply/remote-server/issues/839
 
     Ok(invoice)
 }

@@ -60,7 +60,7 @@ mod graphql {
 
         let query = r#"
         query {
-            masterLists {
+            masterLists(storeId: \"store_a\") {
               ... on MasterListConnector {
                 nodes {
                   id
@@ -183,7 +183,7 @@ mod graphql {
         query(
             $filter: MasterListFilterInput
           ) {
-            masterLists(filter: $filter) {
+            masterLists(filter: $filter, storeId: \"store_a\") {
               __typename
             }
           }
