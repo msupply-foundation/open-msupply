@@ -4,11 +4,11 @@ import {
   getRowExpandColumn,
   getNotePopoverColumn,
   ColumnAlign,
-  ColumnFormat,
   GenericColumnKey,
   SortBy,
   Column,
   ifTheSameElseDefault,
+  useCurrency,
 } from '@openmsupply-client/common';
 import { InvoiceLine, InvoiceItem } from '../../types';
 
@@ -25,8 +25,10 @@ const notePopoverColumn = getNotePopoverColumn<InvoiceLine | InvoiceItem>();
 export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseOutboundColumnOptions): Column<InvoiceLine | InvoiceItem>[] =>
-  useColumns(
+}: UseOutboundColumnOptions): Column<InvoiceLine | InvoiceItem>[] => {
+  const { c } = useCurrency();
+
+  return useColumns(
     [
       [
         notePopoverColumn,
@@ -163,7 +165,7 @@ export const useOutboundColumns = ({
       [
         'itemUnit',
         {
-          width: 180,
+          width: 100,
           getSortValue: row => {
             if ('lines' in row) {
               return '';
@@ -183,7 +185,7 @@ export const useOutboundColumns = ({
       [
         'numberOfPacks',
         {
-          width: 180,
+          width: 150,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -205,7 +207,7 @@ export const useOutboundColumns = ({
       [
         'packSize',
         {
-          width: 50,
+          width: 150,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -228,58 +230,72 @@ export const useOutboundColumns = ({
       {
         label: 'label.unit-price',
         key: 'sellPricePerUnit',
-        width: 100,
+        width: 200,
         align: ColumnAlign.Right,
-        format: ColumnFormat.Currency,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
-            Object.values(rowData.lines).reduce(
-              (sum, batch) =>
-                sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
-              0
-            );
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+                0
+              )
+            ).format();
           } else {
-            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+            return c(
+              (rowData.sellPricePerPack ?? 0) / rowData.packSize
+            ).format();
           }
         },
         getSortValue: rowData => {
           if ('lines' in rowData) {
-            return Object.values(rowData.lines).reduce(
-              (sum, batch) =>
-                sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
-              0
-            );
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+                0
+              )
+            ).format();
           } else {
-            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+            return c(
+              (rowData.sellPricePerPack ?? 0) / rowData.packSize
+            ).format();
           }
         },
       },
       {
         label: 'label.line-total',
         key: 'lineTotal',
-        width: 100,
+        width: 200,
         align: ColumnAlign.Right,
-        format: ColumnFormat.Currency,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
-            return Object.values(rowData.lines).reduce(
-              (sum, batch) =>
-                sum + batch.sellPricePerPack * batch.numberOfPacks,
-              0
-            );
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + batch.sellPricePerPack * batch.numberOfPacks,
+                0
+              )
+            ).format();
           } else {
-            return rowData.sellPricePerPack * rowData.numberOfPacks;
+            const x = c(
+              rowData.sellPricePerPack * rowData.numberOfPacks
+            ).format();
+            return x;
           }
         },
         getSortValue: row => {
           if ('lines' in row) {
-            return Object.values(row.lines).reduce(
-              (sum, batch) =>
-                sum + batch.sellPricePerPack * batch.numberOfPacks,
-              0
-            );
+            return c(
+              Object.values(row.lines).reduce(
+                (sum, batch) =>
+                  sum + batch.sellPricePerPack * batch.numberOfPacks,
+                0
+              )
+            ).format();
           } else {
-            return row.sellPricePerPack * row.numberOfPacks;
+            const x = c(row.sellPricePerPack * row.numberOfPacks).format();
+            return x;
           }
         },
       },
@@ -289,3 +305,4 @@ export const useOutboundColumns = ({
     { onChangeSortBy, sortBy },
     [sortBy]
   );
+};
