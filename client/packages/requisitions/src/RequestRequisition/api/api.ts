@@ -1,4 +1,5 @@
 import {
+  RequisitionNodeType,
   FilterBy,
   SortBy,
   RequisitionNodeStatus,
@@ -9,28 +10,50 @@ import {
 import { DraftRequestRequisitionLine } from './../DetailView/RequestLineEdit/hooks';
 import {
   RequestRequisitionRowFragment,
-  getSdk,
   RequestRequisitionFragment,
-  RequestRequisitionsQuery,
+  Sdk,
 } from './operations.generated';
 
-export type RequestRequisitionApi = ReturnType<typeof getSdk>;
+const requestParser = {
+  toStatus: (
+    patch: Partial<RequestRequisitionFragment> & { id: string }
+  ): UpdateRequestRequisitionStatusInput | undefined => {
+    switch (patch.status) {
+      case RequisitionNodeStatus.Sent:
+        return UpdateRequestRequisitionStatusInput.Sent;
+      default:
+        return undefined;
+    }
+  },
+  toSortField: (
+    sortBy: SortBy<RequestRequisitionRowFragment>
+  ): RequisitionSortFieldInput => {
+    switch (sortBy.key) {
+      case 'createdDatetime': {
+        return RequisitionSortFieldInput.CreatedDatetime;
+      }
+      case 'otherPartyName': {
+        return RequisitionSortFieldInput.OtherPartyName;
+      }
+      case 'requisitionNumber': {
+        return RequisitionSortFieldInput.RequisitionNumber;
+      }
+      case 'status': {
+        return RequisitionSortFieldInput.Status;
+      }
 
-const requisitionParser = {
-  toDeleteInput: (line: RequestRequisitionRowFragment) => {
+      case 'sentDatetime':
+      case 'finalisedDatetime':
+      case 'comment':
+      default: {
+        return RequisitionSortFieldInput.CreatedDatetime;
+      }
+    }
+  },
+  toDelete: (line: RequestRequisitionRowFragment) => {
     return { id: line.id };
   },
-  toInsertLineInput: (line: DraftRequestRequisitionLine) => ({
-    id: line.id,
-    itemId: line.itemId,
-    requisitionId: line.requisitionId,
-    requestedQuantity: line.requestedQuantity,
-  }),
-  toUpdateLineInput: (line: DraftRequestRequisitionLine) => ({
-    id: line.id,
-    requestedQuantity: line.requestedQuantity,
-  }),
-  toUpdateInput: (
+  toUpdate: (
     requisition: Partial<RequestRequisitionFragment> & { id: string }
   ): UpdateRequestRequisitionInput => {
     return {
@@ -39,157 +62,151 @@ const requisitionParser = {
       comment: requisition.comment,
       theirReference: requisition.theirReference,
       colour: requisition.colour,
-      status:
-        requisition.status === RequisitionNodeStatus.Sent
-          ? UpdateRequestRequisitionStatusInput.Sent
-          : undefined,
+      status: requestParser.toStatus(requisition),
     };
   },
+  toInsertLine: (line: DraftRequestRequisitionLine) => ({
+    id: line.id,
+    itemId: line.itemId,
+    requisitionId: line.requisitionId,
+    requestedQuantity: line.requestedQuantity,
+  }),
+  toUpdateLine: (line: DraftRequestRequisitionLine) => ({
+    id: line.id,
+    requestedQuantity: line.requestedQuantity,
+  }),
 };
 
-export const RequestRequisitionQueries = {
+export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list:
-      (
-        api: RequestRequisitionApi,
-        storeId: string,
-        {
-          first,
-          offset,
-          sortBy,
-          filter,
-        }: {
-          first: number;
-          offset: number;
-          sortBy: SortBy<RequestRequisitionRowFragment>;
-          filter: FilterBy | null;
-        }
-      ) =>
-      async (): Promise<RequestRequisitionsQuery['requisitions']> => {
-        const result = await api.requestRequisitions({
-          storeId,
-          page: { offset, first },
-          sort: {
-            key: sortBy.key as RequisitionSortFieldInput,
-            desc: !!sortBy.isDesc,
-          },
-          filter: { ...filter },
-        });
-        return result.requisitions;
-      },
-    byNumber:
-      (api: RequestRequisitionApi) =>
-      async (
-        requisitionNumber: number,
-        storeId: string
-      ): Promise<RequestRequisitionFragment> => {
-        const result = await api.requestRequisition({
-          storeId,
-          requisitionNumber,
-        });
+    list: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: {
+      first: number;
+      offset: number;
+      sortBy: SortBy<RequestRequisitionRowFragment>;
+      filterBy: FilterBy | null;
+    }) => {
+      const filter = {
+        ...filterBy,
+        type: { equalTo: RequisitionNodeType.Request },
+      };
+      const result = await sdk.requestRequisitions({
+        storeId,
+        page: { offset, first },
+        sort: {
+          key: requestParser.toSortField(sortBy),
+          desc: !!sortBy.isDesc,
+        },
+        filter,
+      });
+      return result.requisitions;
+    },
+    byNumber: async (
+      requisitionNumber: string
+    ): Promise<RequestRequisitionFragment> => {
+      const result = await sdk.requestRequisition({
+        storeId,
+        requisitionNumber: Number(requisitionNumber),
+      });
 
-        if (result.requisitionByNumber.__typename === 'RequisitionNode') {
-          return result.requisitionByNumber;
-        }
-
-        throw new Error('Record not found');
-      },
-  },
-  upsertLine:
-    (api: RequestRequisitionApi, storeId: string) =>
-    async (draftLine: DraftRequestRequisitionLine) => {
-      let result;
-      if (draftLine.isCreated) {
-        const input = requisitionParser.toInsertLineInput(draftLine);
-        result = await api.insertRequestRequisitionLine({
-          storeId,
-          input,
-        });
-
-        const { insertRequestRequisitionLine } = result;
-        if (insertRequestRequisitionLine.__typename === 'RequisitionLineNode') {
-          return insertRequestRequisitionLine;
-        }
-      } else {
-        const input = requisitionParser.toUpdateLineInput(draftLine);
-        result = await api.updateRequestRequisitionLine({
-          storeId,
-          input,
-        });
-
-        const { updateRequestRequisitionLine } = result;
-        if (updateRequestRequisitionLine.__typename === 'RequisitionLineNode') {
-          return updateRequestRequisitionLine;
-        }
+      if (result.requisitionByNumber.__typename === 'RequisitionNode') {
+        return result.requisitionByNumber;
       }
 
-      throw new Error('Unable to update requisition');
+      throw new Error('Record not found');
     },
-  update:
-    (api: RequestRequisitionApi, storeId: string) =>
-    async (
-      patch: Partial<RequestRequisitionFragment> & { id: string }
-    ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
-      const input = requisitionParser.toUpdateInput(patch);
-      const result = await api.updateRequestRequisition({
+  },
+  upsertLine: async (draftLine: DraftRequestRequisitionLine) => {
+    let result;
+    if (draftLine.isCreated) {
+      const input = requestParser.toInsertLine(draftLine);
+      result = await sdk.insertRequestRequisitionLine({
         storeId,
         input,
       });
 
-      const { updateRequestRequisition } = result;
-
-      if (updateRequestRequisition.__typename === 'RequisitionNode') {
-        return updateRequestRequisition;
+      const { insertRequestRequisitionLine } = result;
+      if (insertRequestRequisitionLine.__typename === 'RequisitionLineNode') {
+        return insertRequestRequisitionLine;
       }
-
-      throw new Error('Unable to update requisition');
-    },
-  create:
-    (api: RequestRequisitionApi, storeId: string) =>
-    async ({
-      id,
-      otherPartyId,
-    }: {
-      id: string;
-      otherPartyId: string;
-    }): Promise<{
-      __typename: 'RequisitionNode';
-      id: string;
-      requisitionNumber: number;
-    }> => {
-      const result = await api.insertRequestRequisition({
+    } else {
+      const input = requestParser.toUpdateLine(draftLine);
+      result = await sdk.updateRequestRequisitionLine({
         storeId,
-        input: {
-          id,
-          otherPartyId,
-          maxMonthsOfStock: 1,
-          minMonthsOfStock: 1,
-        },
+        input,
       });
 
-      const { insertRequestRequisition } = result;
-
-      if (insertRequestRequisition.__typename === 'RequisitionNode') {
-        return insertRequestRequisition;
+      const { updateRequestRequisitionLine } = result;
+      if (updateRequestRequisitionLine.__typename === 'RequisitionLineNode') {
+        return updateRequestRequisitionLine;
       }
+    }
 
-      throw new Error('Unable to create requisition');
-    },
-  deleteRequisitions:
-    (api: RequestRequisitionApi, storeId: string) =>
-    async (requisitions: RequestRequisitionRowFragment[]) => {
-      const promises = requisitions.map(requisition => {
-        const input = requisitionParser.toDeleteInput(requisition);
-        return api.deleteRequestRequisition({ input, storeId });
-      });
-      const results = await Promise.all(promises);
+    throw new Error('Unable to update requisition');
+  },
+  update: async (
+    patch: Partial<RequestRequisitionFragment> & { id: string }
+  ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
+    const input = requestParser.toUpdate(patch);
+    const result = await sdk.updateRequestRequisition({
+      storeId,
+      input,
+    });
 
-      const success = results.every(({ deleteRequestRequisition }) => {
-        return deleteRequestRequisition.__typename === 'DeleteResponse';
-      });
+    const { updateRequestRequisition } = result;
 
-      if (success) return results;
+    if (updateRequestRequisition.__typename === 'RequisitionNode') {
+      return updateRequestRequisition;
+    }
 
-      throw new Error('Could not delete requisitions');
-    },
-};
+    throw new Error('Unable to update requisition');
+  },
+  create: async ({
+    id,
+    otherPartyId,
+  }: {
+    id: string;
+    otherPartyId: string;
+  }): Promise<{
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  }> => {
+    const result = await sdk.insertRequestRequisition({
+      storeId,
+      input: {
+        id,
+        otherPartyId,
+        maxMonthsOfStock: 1,
+        minMonthsOfStock: 1,
+      },
+    });
+
+    const { insertRequestRequisition } = result;
+
+    if (insertRequestRequisition.__typename === 'RequisitionNode') {
+      return insertRequestRequisition;
+    }
+
+    throw new Error('Unable to create requisition');
+  },
+  deleteRequisitions: async (requisitions: RequestRequisitionRowFragment[]) => {
+    const promises = requisitions.map(requisition => {
+      const input = requestParser.toDelete(requisition);
+      return sdk.deleteRequestRequisition({ input, storeId });
+    });
+    const results = await Promise.all(promises);
+
+    const success = results.every(({ deleteRequestRequisition }) => {
+      return deleteRequestRequisition.__typename === 'DeleteResponse';
+    });
+
+    if (success) return results;
+
+    throw new Error('Could not delete requisition');
+  },
+});

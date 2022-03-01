@@ -1,4 +1,5 @@
 import {
+  RequisitionNodeStatus,
   SortBy,
   FilterBy,
   RequisitionSortFieldInput,
@@ -9,17 +10,49 @@ import {
 } from '@openmsupply-client/common';
 
 import {
-  getSdk,
   ResponseRequisitionFragment,
   ResponseRequisitionRowFragment,
-  ResponseRequisitionsQuery,
+  Sdk,
 } from './operations.generated';
 import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
 
-export type ResponseRequisitionApi = ReturnType<typeof getSdk>;
-
 const responseParser = {
-  toUpdateInput: (
+  toStatus: (
+    patch: Partial<ResponseRequisitionFragment> & { id: string }
+  ): UpdateResponseRequisitionStatusInput | undefined => {
+    switch (patch.status) {
+      case RequisitionNodeStatus.Finalised:
+        return UpdateResponseRequisitionStatusInput.Finalised;
+      default:
+        return undefined;
+    }
+  },
+  toSortField: (
+    sortBy: SortBy<ResponseRequisitionRowFragment>
+  ): RequisitionSortFieldInput => {
+    switch (sortBy.key) {
+      case 'createdDatetime': {
+        return RequisitionSortFieldInput.CreatedDatetime;
+      }
+      case 'otherPartyName': {
+        return RequisitionSortFieldInput.OtherPartyName;
+      }
+      case 'requisitionNumber': {
+        return RequisitionSortFieldInput.RequisitionNumber;
+      }
+      case 'status': {
+        return RequisitionSortFieldInput.Status;
+      }
+
+      case 'sentDatetime':
+      case 'finalisedDatetime':
+      case 'comment':
+      default: {
+        return RequisitionSortFieldInput.CreatedDatetime;
+      }
+    }
+  },
+  toUpdate: (
     requisition: Partial<ResponseRequisitionFragment> & { id: string }
   ): UpdateResponseRequisitionInput => {
     return {
@@ -27,12 +60,10 @@ const responseParser = {
       comment: requisition.comment,
       theirReference: requisition.theirReference,
       colour: requisition.colour,
-      status: requisition.status
-        ? UpdateResponseRequisitionStatusInput.Finalised
-        : undefined,
+      status: responseParser.toStatus(requisition),
     };
   },
-  toUpdateLineInput: (
+  toUpdateLine: (
     patch: DraftResponseLine
   ): UpdateResponseRequisitionLineInput => ({
     id: patch.id,
@@ -40,86 +71,72 @@ const responseParser = {
   }),
 };
 
-export const ResponseRequisitionQueries = {
+export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list:
-      (
-        api: ResponseRequisitionApi,
-        storeId: string,
-        {
-          first,
-          offset,
-          sortBy,
-          filter,
-        }: {
-          first: number;
-          offset: number;
-          sortBy: SortBy<ResponseRequisitionRowFragment>;
-          filter: FilterBy | null;
-        }
-      ) =>
-      async (): Promise<ResponseRequisitionsQuery['requisitions']> => {
-        const result = await api.responseRequisitions({
-          storeId,
-          page: { offset, first },
-          sort: {
-            key: sortBy.key as RequisitionSortFieldInput,
-            desc: !!sortBy.isDesc,
-          },
-          filter: {
-            ...filter,
-            type: { equalTo: RequisitionNodeType.Response },
-          },
-        });
-        return result.requisitions;
-      },
-    byNumber:
-      (api: ResponseRequisitionApi) =>
-      async (
-        requisitionNumber: number,
-        storeId: string
-      ): Promise<ResponseRequisitionFragment> => {
-        const result = await api.responseRequisition({
-          storeId,
-          requisitionNumber,
-        });
-
-        if (result.requisitionByNumber.__typename === 'RequisitionNode') {
-          return result.requisitionByNumber;
-        }
-
-        throw new Error('Record not found');
-      },
-  },
-  update:
-    (api: ResponseRequisitionApi, storeId: string) =>
-    async (
-      patch: Partial<ResponseRequisitionFragment> & { id: string }
-    ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
-      const input = responseParser.toUpdateInput(patch);
-      const result = await api.updateResponseRequisition({ storeId, input });
-
-      const { updateResponseRequisition } = result;
-
-      if (updateResponseRequisition.__typename === 'RequisitionNode') {
-        return updateResponseRequisition;
-      }
-
-      throw new Error('Unable to update requisition');
-    },
-  updateLine:
-    (api: ResponseRequisitionApi, storeId: string) =>
-    async (patch: DraftResponseLine) => {
-      const result = await api.updateResponseRequisitionLine({
+    list: async ({
+      first,
+      offset,
+      sortBy,
+      filter,
+    }: {
+      first: number;
+      offset: number;
+      sortBy: SortBy<ResponseRequisitionRowFragment>;
+      filter: FilterBy | null;
+    }) => {
+      const result = await sdk.responseRequisitions({
         storeId,
-        input: responseParser.toUpdateLineInput(patch),
+        page: { offset, first },
+        sort: {
+          key: responseParser.toSortField(sortBy),
+          desc: !!sortBy.isDesc,
+        },
+        filter: {
+          ...filter,
+          type: { equalTo: RequisitionNodeType.Response },
+        },
+      });
+      return result.requisitions;
+    },
+    byNumber: async (
+      requisitionNumber: string
+    ): Promise<ResponseRequisitionFragment> => {
+      const result = await sdk.responseRequisition({
+        storeId,
+        requisitionNumber: Number(requisitionNumber),
       });
 
-      if (
-        result.updateResponseRequisitionLine.__typename ===
-        'RequisitionLineNode'
-      ) {
-        return result.updateResponseRequisitionLine;
-      } else throw new Error('Could not update response line');
+      if (result.requisitionByNumber.__typename === 'RequisitionNode') {
+        return result.requisitionByNumber;
+      }
+
+      throw new Error('Record not found');
     },
-};
+  },
+  update: async (
+    patch: Partial<ResponseRequisitionFragment> & { id: string }
+  ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
+    const input = responseParser.toUpdate(patch);
+    const result = await sdk.updateResponseRequisition({ storeId, input });
+
+    const { updateResponseRequisition } = result;
+
+    if (updateResponseRequisition.__typename === 'RequisitionNode') {
+      return updateResponseRequisition;
+    }
+
+    throw new Error('Unable to update requisition');
+  },
+  updateLine: async (patch: DraftResponseLine) => {
+    const result = await sdk.updateResponseRequisitionLine({
+      storeId,
+      input: responseParser.toUpdateLine(patch),
+    });
+
+    if (
+      result.updateResponseRequisitionLine.__typename === 'RequisitionLineNode'
+    ) {
+      return result.updateResponseRequisitionLine;
+    } else throw new Error('Could not update response line');
+  },
+});

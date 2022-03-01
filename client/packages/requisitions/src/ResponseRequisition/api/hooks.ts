@@ -1,6 +1,6 @@
-import { useQueryClient } from 'react-query';
 import { useMemo } from 'react';
 import {
+  useQueryClient,
   useAuthContext,
   RequisitionNodeStatus,
   useParams,
@@ -17,7 +17,7 @@ import {
   useQueryParams,
   useMutation,
 } from '@openmsupply-client/common';
-import { ResponseRequisitionQueries } from './api';
+import { getResponseQueries } from './api';
 import {
   getSdk,
   ResponseRequisitionFragment,
@@ -25,23 +25,24 @@ import {
   ResponseRequisitionRowFragment,
 } from './operations.generated';
 
-export const useResponseRequisitionApi = () => {
+export const useResponseApi = () => {
   const { client } = useOmSupplyApi();
-  const { store } = useAuthContext();
+  const sdk = getSdk(client);
+  const { storeId } = useAuthContext();
+  const queries = getResponseQueries(sdk, storeId);
 
-  return { ...getSdk(client), store, storeId: store?.id ?? '' };
+  return { ...queries, storeId };
 };
 
 export const useResponseRequisitions = () => {
   const queryParams = useQueryParams<ResponseRequisitionRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
-  const api = useResponseRequisitionApi();
+  const api = useResponseApi();
 
   return {
-    ...useQuery(
-      ['requisition', api.storeId, queryParams],
-      ResponseRequisitionQueries.get.list(api, api.storeId, {
+    ...useQuery(['requisition', api.storeId, queryParams], () =>
+      api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
@@ -55,12 +56,9 @@ export const useResponseRequisitions = () => {
 export const useResponseRequisition =
   (): UseQueryResult<ResponseRequisitionFragment> => {
     const { requisitionNumber = '' } = useParams();
-    const api = useResponseRequisitionApi();
+    const api = useResponseApi();
     return useQuery(['requisition', api.storeId, requisitionNumber], () =>
-      ResponseRequisitionQueries.get.byNumber(api)(
-        Number(requisitionNumber),
-        api.storeId
-      )
+      api.get.byNumber(requisitionNumber)
     );
   };
 
@@ -71,19 +69,12 @@ export const useResponseRequisitionFields = <
 ): FieldSelectorControl<ResponseRequisitionFragment, KeyOfRequisition> => {
   const { data } = useResponseRequisition();
   const { requisitionNumber = '' } = useParams();
-  const api = useResponseRequisitionApi();
+  const api = useResponseApi();
   return useFieldsSelector(
     ['requisition', api.storeId, requisitionNumber],
-    () =>
-      ResponseRequisitionQueries.get.byNumber(api)(
-        Number(requisitionNumber),
-        api.storeId
-      ),
+    () => api.get.byNumber(requisitionNumber),
     (patch: Partial<ResponseRequisitionFragment>) =>
-      ResponseRequisitionQueries.update(
-        api,
-        api.storeId
-      )({ ...patch, id: data?.id ?? '' }),
+      api.update({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
@@ -129,9 +120,9 @@ export const useIsResponseRequisitionDisabled = (): boolean => {
 export const useSaveResponseLines = () => {
   const { requisitionNumber = '' } = useParams();
   const queryClient = useQueryClient();
-  const api = useResponseRequisitionApi();
+  const api = useResponseApi();
 
-  return useMutation(ResponseRequisitionQueries.updateLine(api, api.storeId), {
+  return useMutation(api.updateLine, {
     onSuccess: () =>
       queryClient.invalidateQueries([
         'requisition',

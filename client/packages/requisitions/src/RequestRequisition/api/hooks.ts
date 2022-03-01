@@ -19,7 +19,7 @@ import {
   useNotification,
   useTableStore,
 } from '@openmsupply-client/common';
-import { RequestRequisitionQueries } from './api';
+import { getRequestQueries } from './api';
 import {
   getSdk,
   RequestRequisitionFragment,
@@ -28,26 +28,26 @@ import {
 } from './operations.generated';
 import { canDeleteRequestRequisition } from '../../utils';
 
-export const useRequestRequisitionApi = () => {
+export const useRequestApi = () => {
   const { client } = useOmSupplyApi();
-  return getSdk(client);
+  const { storeId } = useAuthContext();
+  const queries = getRequestQueries(getSdk(client), storeId);
+  return { ...queries, storeId };
 };
 
 export const useRequestRequisitions = () => {
   const queryParams = useQueryParams<RequestRequisitionRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
-  const { store } = useAuthContext();
-  const api = useRequestRequisitionApi();
+  const api = useRequestApi();
 
   return {
-    ...useQuery(
-      ['requisition', 'list', store?.id, queryParams],
-      RequestRequisitionQueries.get.list(api, store?.id ?? '', {
+    ...useQuery(['requisition', 'list', api.storeId, queryParams], () =>
+      api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
-        filter: queryParams.filter.filterBy,
+        filterBy: queryParams.filter.filterBy,
       })
     ),
     ...queryParams,
@@ -56,10 +56,9 @@ export const useRequestRequisitions = () => {
 
 export const useCreateRequestRequisition = () => {
   const queryClient = useQueryClient();
-  const { storeId } = useAuthContext();
   const navigate = useNavigate();
-  const api = useRequestRequisitionApi();
-  return useMutation(RequestRequisitionQueries.create(api, storeId), {
+  const api = useRequestApi();
+  return useMutation(api.create, {
     onSuccess: ({ requisitionNumber }) => {
       navigate(String(requisitionNumber));
       queryClient.invalidateQueries(['requisition']);
@@ -70,13 +69,9 @@ export const useCreateRequestRequisition = () => {
 export const useRequestRequisition =
   (): UseQueryResult<RequestRequisitionFragment> => {
     const { requisitionNumber = '' } = useParams();
-    const { storeId } = useAuthContext();
-    const api = useRequestRequisitionApi();
-    return useQuery(['requisition', storeId, requisitionNumber], () =>
-      RequestRequisitionQueries.get.byNumber(api)(
-        Number(requisitionNumber),
-        storeId
-      )
+    const api = useRequestApi();
+    return useQuery(['requisition', api.storeId, requisitionNumber], () =>
+      api.get.byNumber(requisitionNumber)
     );
   };
 
@@ -85,22 +80,15 @@ export const useRequestRequisitionFields = <
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<RequestRequisitionFragment, KeyOfRequisition> => {
-  const { storeId } = useAuthContext();
   const { data } = useRequestRequisition();
   const { requisitionNumber = '' } = useParams();
-  const api = useRequestRequisitionApi();
+  const api = useRequestApi();
   return useFieldsSelector(
-    ['requisition', storeId, requisitionNumber],
-    () =>
-      RequestRequisitionQueries.get.byNumber(api)(
-        Number(requisitionNumber),
-        storeId
-      ),
+    ['requisition', api.storeId, requisitionNumber],
+    () => api.get.byNumber(requisitionNumber),
+
     (patch: Partial<RequestRequisitionFragment>) =>
-      RequestRequisitionQueries.update(
-        api,
-        storeId
-      )({ ...patch, id: data?.id ?? '' }),
+      api.update({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
@@ -144,15 +132,14 @@ export const useIsRequestRequisitionDisabled = (): boolean => {
 
 export const useSaveRequestLines = () => {
   const { requisitionNumber = '' } = useParams();
-  const { storeId } = useAuthContext();
   const queryClient = useQueryClient();
-  const api = useRequestRequisitionApi();
+  const api = useRequestApi();
 
-  return useMutation(RequestRequisitionQueries.upsertLine(api, storeId), {
+  return useMutation(api.upsertLine, {
     onSuccess: () => {
       queryClient.invalidateQueries([
         'requisition',
-        storeId,
+        api.storeId,
         requisitionNumber,
       ]);
     },
@@ -160,11 +147,8 @@ export const useSaveRequestLines = () => {
 };
 
 export const useDeleteRequisitions = () => {
-  const { storeId } = useAuthContext();
-  const api = useRequestRequisitionApi();
-  return useMutation(
-    RequestRequisitionQueries.deleteRequisitions(api, storeId)
-  );
+  const api = useRequestApi();
+  return useMutation(api.deleteRequisitions);
 };
 
 export const useDeleteSelectedRequisitions = () => {
