@@ -1,69 +1,49 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
-import { getOutboundShipmentListViewApi } from '../ListView/api';
 import {
   ButtonWithIcon,
   Grid,
   PlusCircleIcon,
-  useListData,
   useNotification,
   useQuery,
   useTranslation,
   StatsPanel,
   Widget,
-  useNavigate,
-  useAuthContext,
+  generateUUID,
+  useToggle,
 } from '@openmsupply-client/common';
-import { getOutboundShipmentCountQueryFn } from './api';
-import { useOutboundShipmentApi } from '../api';
+import { useOutboundApi, useCreateOutbound } from '../api';
 
 export const OutboundShipmentWidget: React.FC = () => {
+  const modalControl = useToggle(false);
   const { error } = useNotification();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
   const t = useTranslation(['app', 'dashboard']);
-  const { storeId } = useAuthContext();
 
-  const api = useOutboundShipmentApi();
-  const { onCreate, invalidate } = useListData(
-    { initialSortBy: { key: 'otherPartyName' } },
-    'invoice',
-    getOutboundShipmentListViewApi(api, storeId)
-  );
+  const api = useOutboundApi();
   const { data, isLoading } = useQuery(
-    ['outound-shipment', 'count'],
-    getOutboundShipmentCountQueryFn(api, storeId),
+    ['outbound-shipment', 'count'],
+    api.dashboard.shipmentCount,
     { retry: false }
   );
+
+  const { mutate: onCreate } = useCreateOutbound();
 
   return (
     <>
       <NameSearchModal
         type="customer"
-        open={open}
-        onClose={() => setOpen(false)}
+        open={modalControl.isOn}
+        onClose={modalControl.toggleOff}
         onChange={async name => {
-          setOpen(false);
-
-          const createInvoice = async () => {
-            const invoice = {
-              id: String(Math.ceil(Math.random() * 1000000)),
-              nameId: name?.id,
-            };
-
-            try {
-              const result = await onCreate(invoice);
-              invalidate();
-              navigate(`/distribution/outbound-shipment/${result}`);
-            } catch (e) {
-              const errorSnack = error(
-                'Failed to create invoice! ' + (e as Error).message
-              );
-              errorSnack();
-            }
-          };
-
-          createInvoice();
+          modalControl.toggleOff();
+          try {
+            await onCreate({ id: generateUUID(), otherPartyId: name?.id });
+          } catch (e) {
+            const errorSnack = error(
+              'Failed to create invoice! ' + (e as Error).message
+            );
+            errorSnack();
+          }
         }}
       />
 
@@ -98,7 +78,7 @@ export const OutboundShipmentWidget: React.FC = () => {
               color="secondary"
               Icon={<PlusCircleIcon />}
               label={t('button.new-outbound-shipment')}
-              onClick={() => setOpen(true)}
+              onClick={modalControl.toggleOn}
             />
           </Grid>
         </Grid>

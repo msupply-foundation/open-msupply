@@ -3,52 +3,38 @@ import {
   useNavigate,
   DataTable,
   useColumns,
-  useListData,
   getNameAndColorColumn,
   TableProvider,
   createTableStore,
   useNotification,
   useTranslation,
   InvoiceNodeStatus,
+  generateUUID,
   useCurrency,
-  useAuthContext,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getOutboundShipmentListViewApi } from './api';
-import { useOutboundShipmentApi } from '../api';
+import { useOutbounds, useCreateOutbound, useUpdateOutbound } from '../api';
 import { OutboundShipmentRowFragment } from '../api/operations.generated';
 
 export const OutboundShipmentListViewComponent: FC = () => {
+  const { mutate: onUpdate } = useUpdateOutbound();
+  const { mutate: onCreate } = useCreateOutbound();
   const t = useTranslation('common');
   const navigate = useNavigate();
   const { error } = useNotification();
-  const api = useOutboundShipmentApi();
-  const { storeId } = useAuthContext();
 
   const {
-    totalCount,
     data,
     isLoading,
-    onDelete,
-    onUpdate,
     sortBy,
     onChangeSortBy,
-    onCreate,
     onChangePage,
     pagination,
     filter,
-    invalidate,
-  } = useListData(
-    {
-      initialSortBy: { key: 'otherPartyName' },
-      initialFilterBy: { type: { equalTo: 'OUTBOUND_SHIPMENT' } },
-    },
-    'invoice',
-    getOutboundShipmentListViewApi(api, storeId)
-  );
+  } = useOutbounds();
 
   const { c } = useCurrency();
   const columns = useColumns<OutboundShipmentRowFragment>(
@@ -86,40 +72,28 @@ export const OutboundShipmentListViewComponent: FC = () => {
         onClose={() => setOpen(false)}
         onChange={async name => {
           setOpen(false);
-
-          const createInvoice = async () => {
-            const invoice = {
-              id: String(Math.ceil(Math.random() * 1000000)),
-              otherPartyId: name?.id,
-            };
-
-            try {
-              const result = await onCreate(invoice);
-              invalidate();
-              navigate(result);
-            } catch (e) {
-              const errorSnack = error(
-                'Failed to create invoice! ' + (e as Error).message
-              );
-              errorSnack();
-            }
-          };
-
-          createInvoice();
+          try {
+            await onCreate({ id: generateUUID(), otherPartyId: name?.id });
+          } catch (e) {
+            const errorSnack = error(
+              'Failed to create invoice! ' + (e as Error).message
+            );
+            errorSnack();
+          }
         }}
       />
 
-      <Toolbar onDelete={onDelete} data={data} filter={filter} />
+      <Toolbar filter={filter} />
       <AppBarButtons onCreate={setOpen} />
 
       <DataTable
-        pagination={{ ...pagination, total: totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data ?? []}
+        data={data?.nodes ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(row.id);
+          navigate(String(row.invoiceNumber));
         }}
       />
     </>
