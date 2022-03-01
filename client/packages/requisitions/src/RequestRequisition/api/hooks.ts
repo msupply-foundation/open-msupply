@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
+  useAuthContext,
   useTranslation,
-  useAuthState,
   useQueryParams,
   useQueryClient,
   RequisitionNodeStatus,
@@ -30,7 +30,7 @@ import { canDeleteRequestRequisition } from '../../utils';
 
 export const useRequestApi = () => {
   const { client } = useOmSupplyApi();
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const queries = getRequestQueries(getSdk(client), storeId);
   return { ...queries, storeId };
 };

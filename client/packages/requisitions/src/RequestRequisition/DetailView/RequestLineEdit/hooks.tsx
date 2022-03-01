@@ -86,14 +86,14 @@ export const useNextRequestLine = (
   const { lines } = useRequestRequisitionLines();
 
   const nextState: {
-    isDisabled: boolean;
+    hasNext: boolean;
     next: null | ItemWithStatsFragment;
-  } = { isDisabled: false, next: null };
+  } = { hasNext: true, next: null };
 
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
   const next = lines[idx + 1];
   if (!next) {
-    nextState.isDisabled = true;
+    nextState.hasNext = false;
     return nextState;
   }
 

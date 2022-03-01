@@ -21,7 +21,7 @@ const AdditionalInfoSection: FC = () => {
   const isDisabled = useIsOutboundDisabled();
   const { colour, comment, update } = useOutboundFields(['colour', 'comment']);
   const [colorBuffer, setColorBuffer] = useBufferState(colour);
-  const [commentBuffer, setCommentBuffer] = useBufferState(comment);
+  const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>

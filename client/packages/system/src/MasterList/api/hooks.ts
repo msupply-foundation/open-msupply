@@ -1,7 +1,7 @@
 import {
   useQuery,
   useOmSupplyApi,
-  useAuthState,
+  useAuthContext,
   useQueryParams,
 } from '@openmsupply-client/common';
 import { MasterListRow } from './../types';
@@ -10,7 +10,7 @@ import { getMasterListQueries } from './api';
 
 export const useMasterListApi = () => {
   const { client } = useOmSupplyApi();
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const sdk = getSdk(client);
   const queries = getMasterListQueries(sdk, storeId);
 

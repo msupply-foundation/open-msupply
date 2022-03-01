@@ -3,7 +3,6 @@ import {
   RouteBuilder,
   useQueryParams,
   useNavigate,
-  useAuthState,
   useTranslation,
   useNotification,
   useQueryClient,
@@ -22,6 +21,7 @@ import {
   useMutation,
   UseMutationResult,
   useTableStore,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Invoice, InvoiceItem } from '../../types';
@@ -39,7 +39,7 @@ import { canDeleteInvoice } from '../../utils';
 export const useOutboundApi = () => {
   const { client } = useOmSupplyApi();
   const sdk = getSdk(client);
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const queries = getOutboundQueries(sdk, storeId);
   return { ...queries, storeId };
 };
