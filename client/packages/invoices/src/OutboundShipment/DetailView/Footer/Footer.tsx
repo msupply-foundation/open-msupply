@@ -16,11 +16,11 @@ import {
   useIsOutboundDisabled,
   useOutbound,
   useOutboundFields,
-  OutboundShipmentFragment,
+  OutboundFragment,
 } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
-const createStatusLog = (invoice: OutboundShipmentFragment) => {
+const createStatusLog = (invoice: OutboundFragment) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
 
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {

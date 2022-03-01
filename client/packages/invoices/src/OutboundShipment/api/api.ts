@@ -17,8 +17,8 @@ import {
 import { DraftOutboundLine } from '../../types';
 import {
   getSdk,
-  OutboundShipmentRowFragment,
-  OutboundShipmentFragment,
+  OutboundRowFragment,
+  OutboundFragment,
   InsertOutboundShipmentMutationVariables,
   Sdk,
 } from './operations.generated';
@@ -26,9 +26,7 @@ import {
 export type OutboundShipmentApi = ReturnType<typeof getSdk>;
 
 const outboundParsers = {
-  toSortKey: (
-    sortBy: SortBy<OutboundShipmentRowFragment>
-  ): InvoiceSortFieldInput => {
+  toSortKey: (sortBy: SortBy<OutboundRowFragment>): InvoiceSortFieldInput => {
     switch (sortBy.key) {
       case 'createdDatetime': {
         return InvoiceSortFieldInput.CreatedDatetime;
@@ -48,7 +46,7 @@ const outboundParsers = {
       }
     }
   },
-  toStatus: (patch: RecordPatch<OutboundShipmentRowFragment>) => {
+  toStatus: (patch: RecordPatch<OutboundRowFragment>) => {
     switch (patch.status) {
       case InvoiceNodeStatus.Allocated:
         return UpdateOutboundShipmentStatusInput.Allocated;
@@ -69,7 +67,7 @@ const outboundParsers = {
     storeId,
   }),
   toUpdate: (
-    patch: RecordPatch<OutboundShipmentFragment>
+    patch: RecordPatch<OutboundFragment>
   ): UpdateOutboundShipmentInput => ({
     id: patch.id,
     colour: patch.colour,
@@ -131,10 +129,10 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     }: {
       first: number;
       offset: number;
-      sortBy: SortBy<OutboundShipmentRowFragment>;
+      sortBy: SortBy<OutboundRowFragment>;
       filterBy: FilterBy | null;
     }): Promise<{
-      nodes: OutboundShipmentRowFragment[];
+      nodes: OutboundRowFragment[];
       totalCount: number;
     }> => {
       const filter = {
@@ -151,7 +149,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.invoices;
     },
-    byId: async (id: string): Promise<OutboundShipmentFragment> => {
+    byId: async (id: string): Promise<OutboundFragment> => {
       const result = await sdk.invoice({ id, storeId });
       const invoice = result.invoice;
 
@@ -161,9 +159,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         throw new Error('Could not find invoice');
       }
     },
-    byNumber: async (
-      invoiceNumber: string
-    ): Promise<OutboundShipmentFragment> => {
+    byNumber: async (invoiceNumber: string): Promise<OutboundFragment> => {
       const result = await sdk.outboundByNumber({
         invoiceNumber: Number(invoiceNumber),
         storeId,
@@ -194,9 +190,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not insert invoice');
   },
-  delete: async (
-    invoices: OutboundShipmentRowFragment[]
-  ): Promise<string[]> => {
+  delete: async (invoices: OutboundRowFragment[]): Promise<string[]> => {
     const result = await sdk.deleteOutboundShipments({
       storeId,
       deleteOutboundShipments: invoices.map(invoice => invoice.id),
@@ -210,8 +204,8 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not delete invoices');
   },
   update: async (
-    patch: RecordPatch<OutboundShipmentFragment>
-  ): Promise<RecordPatch<OutboundShipmentFragment>> => {
+    patch: RecordPatch<OutboundFragment>
+  ): Promise<RecordPatch<OutboundFragment>> => {
     const result = await sdk.upsertOutboundShipment({
       storeId,
       input: {
