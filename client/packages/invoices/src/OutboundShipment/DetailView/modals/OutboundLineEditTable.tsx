@@ -16,6 +16,7 @@ import {
   InvoiceNodeStatus,
   Box,
   InvoiceLineNodeType,
+  useCurrencyFormat,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController } from './hooks';
@@ -42,8 +43,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
 
   const expiryDate = batch.expiryDate ? d(new Date(batch.expiryDate)) : '';
   const isDisabled = !!disabled;
-
-  // TODO format currency correctly
+  const sellPricePerPack = useCurrencyFormat(batch.sellPricePerPack);
   return (
     <TableRow sx={{ color: isDisabled ? 'gray.main' : 'black' }}>
       <BasicCell sx={{ width: '88px' }}>
@@ -78,7 +78,7 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
         {expiryDate}
       </BasicCell>
       <BasicCell>{batch.locationName}</BasicCell>
-      <BasicCell align="right">${batch.sellPricePerPack}</BasicCell>
+      <BasicCell align="right">{sellPricePerPack}</BasicCell>
       <BasicCell align="center">{batch.onHold ? '✓' : ''}</BasicCell>
     </TableRow>
   );

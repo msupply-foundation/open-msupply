@@ -1,6 +1,8 @@
+import { isProduction } from './../utils/index';
 import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
 import { i18n, TOptions } from 'i18next';
 import { LocaleKey } from './locales';
+import currency from 'currency.js';
 import { useAuthContext } from '../authentication';
 
 export type SupportedLocales = 'en' | 'fr' | 'ar';
@@ -22,6 +24,63 @@ export interface TypedTFunction<Keys> {
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   const { t } = useTranslationNext(ns);
   return (key, options) => (key ? t(key, options) : '');
+};
+
+const currencyOptions = {
+  en: {
+    symbol: '$',
+    separator: ',',
+    decimal: '.',
+    precision: 2,
+    pattern: '!#',
+    negativePattern: '-!#',
+  },
+  fr: {
+    symbol: 'XOF',
+    separator: '.',
+    decimal: ',',
+    precision: 2,
+    pattern: '# !',
+    negativePattern: '-# !',
+  },
+  ar: {
+    symbol: 'ر.ق.',
+    separator: ',',
+    decimal: '.',
+    precision: 2,
+    pattern: '!#',
+    negativePattern: '-!#',
+  },
+};
+
+export const useCurrentLanguage = (): SupportedLocales => {
+  const { i18n } = useTranslationNext();
+  const { language } = i18n;
+
+  if (language === 'en' || language === 'fr' || language === 'ar') {
+    return language;
+  }
+
+  if (!isProduction()) {
+    throw new Error(`Language '${language}' not supported`);
+  }
+
+  return 'en';
+};
+
+export const useCurrency = () => {
+  const language = useCurrentLanguage();
+  const options = currencyOptions[language];
+  return {
+    c: (value: currency.Any) => currency(value, options),
+    options,
+    language,
+  };
+};
+
+export const useCurrencyFormat = (value: currency.Any) => {
+  const { c } = useCurrency();
+  return c(value).format();
 };
 
 export const useFormatDate = (): ((

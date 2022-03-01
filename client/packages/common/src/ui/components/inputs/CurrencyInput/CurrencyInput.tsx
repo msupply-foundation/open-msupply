@@ -1,8 +1,9 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import { styled } from '@mui/material/styles';
 import RCInput, {
   CurrencyInputProps as RCInputProps,
 } from 'react-currency-input-field';
+import { useCurrency } from '@common/intl';
 
 interface CurrencyInputProps extends RCInputProps {
   onChangeNumber: (value: number) => void;
@@ -24,49 +25,18 @@ const StyledCurrencyInput = styled(RCInput)(({ theme }) => ({
   },
 }));
 
-// TODO: I think the implementation of this could be swapped out by making a
-// headless component that uses something like currency.js in a custom hook
-// to manage the currency value. Then you could use whatever input component
-// you liked. That would just take a little more time than I have right now!
 export const CurrencyInput: FC<CurrencyInputProps> = ({
   allowNegativeValue = false,
-  prefix = '$',
-  decimalSeparator = '.',
-  decimalsLimit = 2,
   allowDecimals = true,
-  decimalScale = 2,
-  value = 0,
+  defaultValue = 0,
   onChangeNumber,
   maxWidth,
   ...restOfProps
 }) => {
-  // Buffer the internal input value so we can account for the decimal separator
-  // which, when input will result in the input being NaN (e.g. '42.') when cast
-  // to a number. In this case, we want to keep the value as '42.' in the input
-  // but not persisted. Though, whenever I have an uncontrolled component I
-  // generally will always regret it, so sync the passed value up with the buffer.
-  const [buffer, setBuffer] = React.useState<string | undefined>(String(value));
-  useEffect(() => {
-    if (value !== Number(buffer)) {
-      setBuffer(String(value));
-    }
-  }, [value]);
+  const { c, options, language } = useCurrency();
 
-  // Call the onChangeNumber prop when the buffer changes to a valid number, which
-  // is essentially in every case except when the number ends in a decimal. If the user
-  // loses focus when the buffer is in this invalid state, the currency input will
-  // append two zeros so will always result in a valid number.
-  useEffect(() => {
-    // circuit break when the value is equal to the buffer - we don't need to do anything.
-    if (Number(buffer) === value) return;
-
-    if (buffer == null) {
-      return onChangeNumber(0);
-    }
-    if (!Number.isNaN(buffer)) {
-      return onChangeNumber(Number(buffer));
-    }
-  }, [buffer, value]);
+  const prefix = language !== 'fr' ? options.symbol : '';
+  const suffix = language === 'fr' ? options.symbol : '';
 
   return (
     <StyledCurrencyInput
@@ -77,17 +47,17 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
             ? theme.palette.background.toolbar
             : theme.palette.background.menu,
       }}
-      value={buffer}
+      defaultValue={defaultValue}
       onValueChange={newValue => {
-        setBuffer(newValue);
+        onChangeNumber(c(newValue ?? '').value);
       }}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
-      decimalSeparator={decimalSeparator}
-      decimalsLimit={decimalsLimit}
+      suffix={suffix}
+      decimalSeparator={options.decimal}
+      groupSeparator={options.separator}
+      decimalsLimit={options.precision}
       allowDecimals={allowDecimals}
-      decimalScale={decimalScale}
-      transformRawValue={value => value.replace(/[^0-9.]/g, '')}
       {...restOfProps}
     />
   );

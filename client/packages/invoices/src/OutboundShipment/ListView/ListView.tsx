@@ -10,6 +10,7 @@ import {
   useNotification,
   useTranslation,
   InvoiceNodeStatus,
+  useCurrency,
   useAuthContext,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
@@ -49,6 +50,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     getOutboundShipmentListViewApi(api, storeId)
   );
 
+  const { c } = useCurrency();
   const columns = useColumns<OutboundShipmentRowFragment>(
     [
       [getNameAndColorColumn(), { setter: onUpdate }],
@@ -61,12 +63,11 @@ export const OutboundShipmentListViewComponent: FC = () => {
       ],
       'invoiceNumber',
       'createdDatetime',
-      // 'allocatedDatetime',
       'comment',
       [
         'totalAfterTax',
         {
-          accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
+          accessor: ({ rowData }) => c(rowData.pricing.totalAfterTax).format(),
         },
       ],
       'selection',

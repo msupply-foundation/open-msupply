@@ -24,7 +24,11 @@ const Template: ComponentStory<typeof CurrencyInput> = () => {
       </Grid>
       <Grid item>
         <Typography>Disabled</Typography>
-        <CurrencyInput value={value1} disabled onChangeNumber={() => {}} />
+        <CurrencyInput
+          defaultValue={value1}
+          disabled
+          onChangeNumber={() => {}}
+        />
       </Grid>
     </Grid>
   );

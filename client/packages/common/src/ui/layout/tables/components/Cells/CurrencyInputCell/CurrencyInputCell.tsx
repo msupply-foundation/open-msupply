@@ -23,7 +23,7 @@ export const CurrencyInputCell = <T extends DomainObject>({
     <CurrencyInput
       autoFocus={autoFocus}
       maxWidth={column.width}
-      value={buffer}
+      defaultValue={buffer}
       onChangeNumber={newNumber => {
         setBuffer(newNumber);
         updater({ ...rowData, [column.key]: Number(newNumber) });
