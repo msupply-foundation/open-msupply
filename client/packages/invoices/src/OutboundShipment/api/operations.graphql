@@ -207,7 +207,7 @@ query outboundByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
-    filter: { type: { equalTo: OUTBOUND_SHIPMENT } }
+    type: OUTBOUND_SHIPMENT
   ) {
     __typename
     ... on NodeError {
