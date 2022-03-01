@@ -44,6 +44,10 @@ impl StocktakeNode {
         &self.stocktake.description
     }
 
+    pub async fn is_locked(&self) -> bool {
+        self.stocktake.is_locked
+    }
+
     pub async fn status(&self) -> StocktakeNodeStatus {
         StocktakeNodeStatus::from_domain(&self.stocktake.status)
     }
