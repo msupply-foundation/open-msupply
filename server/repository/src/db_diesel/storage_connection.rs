@@ -189,7 +189,6 @@ impl StorageConnection {
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
 
-        println!("starting transaction {}", current_level);
         transaction_manager.begin_transaction(con).map_err(|err| {
             error!("Failed to start tx: {:?}", err);
             TransactionError::Transaction {
@@ -201,7 +200,7 @@ impl StorageConnection {
         self.transaction_level.set(current_level + 1);
         let result = f(self);
         self.transaction_level.set(current_level);
-        println!("finished {}", current_level);
+
         match result {
             Ok(OkWithRollback::Ok(value)) => {
                 transaction_manager.commit_transaction(con).map_err(|err| {

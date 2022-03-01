@@ -18,6 +18,7 @@ pub struct InsertStocktakeInput {
     pub comment: Option<String>,
     pub description: Option<String>,
     pub created_datetime: NaiveDateTime,
+    pub is_locked: Option<bool>,
 }
 
 #[derive(Union)]
@@ -76,6 +77,7 @@ fn to_domain(
         comment,
         description,
         created_datetime,
+        is_locked,
     }: InsertStocktakeInput,
 ) -> InsertStocktake {
     InsertStocktake {
@@ -83,6 +85,7 @@ fn to_domain(
         comment,
         description,
         created_datetime,
+        is_locked,
     }
 }
 
@@ -163,6 +166,7 @@ mod test {
                 created_datetime: NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0),
                 finalised_datetime: Some(NaiveDate::from_ymd(2022, 1, 23).and_hms(15, 16, 0)),
                 inventory_adjustment_id: Some("inv id".to_string()),
+                is_locked: false,
             })
         }));
         let variables = Some(json!({

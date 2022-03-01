@@ -258,6 +258,7 @@ table! {
         created_datetime -> Timestamp,
         finalised_datetime -> Nullable<Timestamp>,
         inventory_adjustment_id -> Nullable<Text>,
+        is_locked -> Bool,
     }
 }
 

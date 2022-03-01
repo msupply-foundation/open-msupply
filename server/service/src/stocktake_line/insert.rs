@@ -17,6 +17,7 @@ use crate::{
     validate::check_store_id_matches,
 };
 
+#[derive(Default)]
 pub struct InsertStocktakeLineInput {
     pub id: String,
     pub stocktake_id: String,
@@ -48,6 +49,7 @@ pub enum InsertStocktakeLineError {
     /// Either stock line xor item must be set (not both)
     StockLineXOrItem,
     ItemDoesNotExist,
+    StocktakeIsLocked,
 }
 
 fn check_stocktake_line_does_not_exist(
@@ -127,6 +129,10 @@ fn validate(
     }
     if !check_stocktake_line_does_not_exist(connection, &input.id)? {
         return Err(InsertStocktakeLineError::StocktakeLineAlreadyExists);
+    }
+
+    if stocktake.is_locked {
+        return Err(InsertStocktakeLineError::StocktakeIsLocked);
     }
 
     let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
@@ -234,12 +240,13 @@ impl From<RepositoryError> for InsertStocktakeLineError {
 mod stocktake_line_test {
     use repository::{
         mock::{
-            mock_item_a, mock_item_a_lines, mock_new_stock_line_for_stocktake_a, mock_stocktake_a,
-            mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a, MockDataInserts,
+            mock_item_a, mock_item_a_lines, mock_locked_stocktake,
+            mock_new_stock_line_for_stocktake_a, mock_stocktake_a, mock_stocktake_finalised,
+            mock_stocktake_line_a, mock_store_a, MockDataInserts,
         },
         test_db::setup_all,
     };
-    use util::uuid::uuid;
+    use util::{inline_init, uuid::uuid};
 
     use crate::{
         service_provider::ServiceProvider,
@@ -262,21 +269,12 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                InsertStocktakeLineInput {
-                    id: uuid(),
-                    stocktake_id: "invalid".to_string(),
-                    stock_line_id: Some(stock_line_a.id),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = uuid();
+                    r.stocktake_id = "invalid".to_string();
+                    r.stock_line_id = Some(stock_line_a.id);
+                    r.counted_number_of_packs = Some(17);
+                }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::StocktakeDoesNotExist);
@@ -288,21 +286,12 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 "invalid_store",
-                InsertStocktakeLineInput {
-                    id: uuid(),
-                    stocktake_id: stocktake_a.id,
-                    stock_line_id: Some(stock_line_a.id),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = uuid();
+                    r.stocktake_id = stocktake_a.id;
+                    r.stock_line_id = Some(stock_line_a.id);
+                    r.counted_number_of_packs = Some(17);
+                }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::InvalidStore);
@@ -315,21 +304,12 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                InsertStocktakeLineInput {
-                    id: uuid(),
-                    stocktake_id: stocktake_a.id,
-                    stock_line_id: Some(stock_line_a.id),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = uuid();
+                    r.stocktake_id = stocktake_a.id;
+                    r.stock_line_id = Some(stock_line_a.id);
+                    r.counted_number_of_packs = Some(17);
+                }),
             )
             .unwrap_err();
         assert_eq!(
@@ -345,21 +325,13 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                InsertStocktakeLineInput {
-                    id: uuid(),
-                    stocktake_id: stocktake_a.id,
-                    stock_line_id: Some(stock_line.id),
-                    location_id: Some("invalid".to_string()),
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = uuid();
+                    r.stocktake_id = stocktake_a.id;
+                    r.stock_line_id = Some(stock_line.id);
+                    r.location_id = Some("invalid".to_string());
+                    r.counted_number_of_packs = Some(17);
+                }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::LocationDoesNotExist);
@@ -373,24 +345,31 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                InsertStocktakeLineInput {
-                    id: stocktake_line_a.id,
-                    stocktake_id: stocktake_a.id,
-                    stock_line_id: Some(stock_line.id),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = stocktake_line_a.id;
+                    r.stocktake_id = stocktake_a.id;
+                    r.stock_line_id = Some(stock_line.id);
+                    r.counted_number_of_packs = Some(17);
+                }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::StocktakeLineAlreadyExists);
+
+        // error StocktakeIsLocked
+        let store_a = mock_store_a();
+        let stocktake_a = mock_locked_stocktake();
+
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                &store_a.id,
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = "n/a".to_string();
+                    r.stocktake_id = stocktake_a.id;
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::StocktakeIsLocked);
 
         // check CannotEditFinalised
         let store_a = mock_store_a();
@@ -400,21 +379,12 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                InsertStocktakeLineInput {
-                    id: uuid(),
-                    stocktake_id: stocktake_finalised.id,
-                    stock_line_id: Some(stock_line.id),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = uuid();
+                    r.stocktake_id = stocktake_finalised.id;
+                    r.stock_line_id = Some(stock_line.id);
+                    r.counted_number_of_packs = Some(17);
+                }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::CannotEditFinalised);
@@ -427,21 +397,12 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                InsertStocktakeLineInput {
-                    id: uuid(),
-                    stocktake_id: stocktake_a.id,
-                    stock_line_id: Some(stock_line.id),
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: None,
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = uuid();
+                    r.stocktake_id = stocktake_a.id;
+                    r.stock_line_id = Some(stock_line.id);
+                    r.counted_number_of_packs = Some(17);
+                }),
             )
             .unwrap();
 
@@ -453,21 +414,12 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                InsertStocktakeLineInput {
-                    id: uuid(),
-                    stocktake_id: stocktake_a.id,
-                    stock_line_id: None,
-                    location_id: None,
-                    batch: None,
-                    comment: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    counted_number_of_packs: Some(17),
-                    item_id: Some(item_a.id),
-                    expiry_date: None,
-                    pack_size: None,
-                    note: None,
-                },
+                inline_init(|r: &mut InsertStocktakeLineInput| {
+                    r.id = uuid();
+                    r.stocktake_id = stocktake_a.id;
+                    r.counted_number_of_packs = Some(17);
+                    r.item_id = Some(item_a.id);
+                }),
             )
             .unwrap();
     }

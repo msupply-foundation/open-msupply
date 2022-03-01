@@ -69,6 +69,10 @@ pub fn do_delete_stocktake_line(
                 DeleteStocktakeLineError::CannotEditFinalised => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                // TODO should be standard error (can lock concurrently)
+                DeleteStocktakeLineError::StocktakeIsLocked => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
             };
             Err(graphql_error.extend())
         }
@@ -78,7 +82,9 @@ pub fn do_delete_stocktake_line(
 #[cfg(test)]
 mod graphql {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
 
@@ -133,14 +139,31 @@ mod graphql {
             }
         }"#;
 
-        // success
-        let test_service = TestService(Box::new(|_, _, _| Ok("id1".to_string())));
         let variables = Some(json!({
             "storeId": "store id",
             "input": {
                 "id": "id1",
             }
         }));
+
+        // Stocktake is locked mapping
+        let test_service = TestService(Box::new(|_, _, _| {
+            Err(DeleteStocktakeLineError::StocktakeIsLocked)
+        }));
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // success
+        let test_service = TestService(Box::new(|_, _, _| Ok("id1".to_string())));
+
         let expected = json!({
             "deleteStocktakeLine": {
               "id": "id1",

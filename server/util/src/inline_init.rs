@@ -27,6 +27,37 @@ where
     t
 }
 
+/// ```
+/// # use util::inline_edit;
+///
+/// #[derive(Clone, Debug, PartialEq)]
+/// struct Check {
+///     id: String,
+///     description: String,
+/// }
+///
+/// let record = Check {
+///     id: "id1".to_string(),
+///     description: "".to_string(),
+/// };
+///
+/// assert_eq!(
+///     inline_edit(&record, |input: &mut Check| input.id = "id2".to_string()),
+///     Check {
+///        id: "id2".to_string(),
+///        description: "".to_string()
+///     }
+/// );
+pub fn inline_edit<T, F>(record: &T, f: F) -> T
+where
+    T: Clone,
+    F: FnOnce(&mut T) -> (),
+{
+    let mut t = record.clone();
+    f(&mut t);
+    t
+}
+
 pub struct Defaults;
 
 impl Defaults {

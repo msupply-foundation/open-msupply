@@ -34,6 +34,7 @@ struct LegacyStocktakeRow {
     Description: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     comment: Option<String>,
+    Locked: bool,
 
     #[serde(deserialize_with = "empty_str_as_option")]
     invad_additions_ID: Option<String>,
@@ -81,6 +82,7 @@ impl RemotePullTranslation for StocktakeTranslation {
                 finalised_datetime: None,
                 // TODO what is the correct mapping:
                 inventory_adjustment_id: data.invad_additions_ID,
+                is_locked: data.Locked,
             }),
         )))
     }

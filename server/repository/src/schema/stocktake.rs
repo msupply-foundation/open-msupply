@@ -23,6 +23,7 @@ pub struct StocktakeRow {
     pub finalised_datetime: Option<NaiveDateTime>,
     /// reference to the inventory adjustment shipment
     pub inventory_adjustment_id: Option<String>,
+    pub is_locked: bool,
 }
 
 impl Default for StocktakeStatus {
@@ -44,6 +45,7 @@ impl Default for StocktakeRow {
             description: Default::default(),
             finalised_datetime: Default::default(),
             inventory_adjustment_id: Default::default(),
+            is_locked: Default::default(),
         }
     }
 }

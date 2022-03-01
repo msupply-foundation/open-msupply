@@ -1,5 +1,6 @@
 use async_graphql::*;
 
+use graphql_core::simple_generic_errors::StocktakeIsLocked;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{StocktakeLineConnector, StocktakeNode, StocktakeNodeStatus};
@@ -18,6 +19,7 @@ pub struct UpdateStocktakeInput {
     pub comment: Option<String>,
     pub description: Option<String>,
     pub status: Option<StocktakeNodeStatus>,
+    pub is_locked: Option<bool>,
 }
 
 pub struct SnapshotCountCurrentCountMismatch(Vec<StocktakeLine>);
@@ -36,6 +38,7 @@ impl SnapshotCountCurrentCountMismatch {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateStocktakeErrorInterface {
     SnapshotCountCurrentCountMismatch(SnapshotCountCurrentCountMismatch),
+    StocktakeIsLocked(StocktakeIsLocked),
 }
 
 #[derive(SimpleObject)]
@@ -95,7 +98,11 @@ fn map_error(err: ServiceError, id: &str) -> Result<UpdateStocktakeErrorInterfac
                 ),
             )
         }
-
+        ServiceError::StocktakeIsLocked => {
+            return Ok(UpdateStocktakeErrorInterface::StocktakeIsLocked(
+                StocktakeIsLocked {},
+            ))
+        }
         // standard gql errors:
         ServiceError::DatabaseError(err) => err.into(),
         ServiceError::InternalError(err) => StandardGraphqlError::InternalError(err),
@@ -114,6 +121,7 @@ fn to_domain(
         comment,
         description,
         status,
+        is_locked,
     }: UpdateStocktakeInput,
 ) -> UpdateStocktake {
     UpdateStocktake {
@@ -121,6 +129,7 @@ fn to_domain(
         comment,
         description,
         status: status.map(|s| s.to_domain()),
+        is_locked,
     }
 }
 
@@ -198,18 +207,42 @@ mod graphql {
             }
         }"#;
 
-        // SnapshotCountCurrentCountMismatch
-        let test_service = TestService(Box::new(|_, _, _| {
-            Err(UpdateStocktakeError::SnapshotCountCurrentCountMismatch(
-                vec![],
-            ))
-        }));
         let variables = Some(json!({
             "storeId": "store id",
             "input": {
                 "id": "stocktake id"
             }
         }));
+
+        // Stocktake is locked mapping
+        let test_service = TestService(Box::new(|_, _, _| {
+            Err(UpdateStocktakeError::StocktakeIsLocked)
+        }));
+
+        let expected = json!({
+            "updateStocktake": {
+              "error": {
+                "__typename": "StocktakeIsLocked"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            query,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // SnapshotCountCurrentCountMismatch
+        let test_service = TestService(Box::new(|_, _, _| {
+            Err(UpdateStocktakeError::SnapshotCountCurrentCountMismatch(
+                vec![],
+            ))
+        }));
+
         let expected = json!({
             "updateStocktake": {
               "error": {
@@ -238,14 +271,10 @@ mod graphql {
                 created_datetime: NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0),
                 finalised_datetime: Some(NaiveDate::from_ymd(2022, 1, 23).and_hms(15, 16, 0)),
                 inventory_adjustment_id: Some("inv id".to_string()),
+                is_locked: false,
             })
         }));
-        let variables = Some(json!({
-            "storeId": "store id",
-            "input": {
-                "id": "id1"
-            }
-        }));
+
         let expected = json!({
             "updateStocktake": {
               "id": "id1",
