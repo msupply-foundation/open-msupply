@@ -15,7 +15,7 @@
   "label.new-location": "New Location",
   "label.stocktake-date": "Stocktake Date",
   "label.suggested": "Suggested",
-  "messages.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'Suggested'",
+  "messages.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'New'",
   "messages.select-rows-to-delete": "Select rows to delete",
   "messages.click-to-return": "Unable to find a stocktake with that ID. Click OK to return to the stocktake list",
   "messages.deleted-stocktakes": "Deleted {{number}} stocktakes",

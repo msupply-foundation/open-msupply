@@ -13,6 +13,7 @@ export const ItemQueries = {
     list:
       (
         api: ItemApi,
+        storeId: string,
         {
           first,
           offset,
@@ -37,6 +38,7 @@ export const ItemQueries = {
           offset,
           key,
           desc: sortBy.isDesc,
+          storeId,
         });
 
         const items = result.items;
@@ -45,18 +47,17 @@ export const ItemQueries = {
       },
     listWithStockLines: async (
       api: ItemApi,
+      storeId: string,
       {
         first,
         offset,
         sortBy,
         filterBy,
-        storeId,
       }: {
         first: number;
         offset: number;
         sortBy: SortBy<ItemFragment>;
         filterBy: FilterBy | null;
-        storeId: string;
       }
     ) => {
       const result = await api.itemsWithStockLines({

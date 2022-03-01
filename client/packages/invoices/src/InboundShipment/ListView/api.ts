@@ -52,7 +52,7 @@ export const getInboundShipmentListViewApi = (
   api: InboundShipmentApi,
   storeId: string
 ): ListApi<InvoiceRow> => ({
-  onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
+  onRead: ({ first, offset, sortBy, filterBy }) => {
     const queryParams: InvoicesQueryVariables = {
       first,
       offset,
@@ -85,6 +85,7 @@ export const getInboundShipmentListViewApi = (
   ): Promise<string> => {
     const result = await api.updateInboundShipment({
       input: invoiceToInput(patch),
+      storeId,
     });
 
     const { updateInboundShipment } = result;

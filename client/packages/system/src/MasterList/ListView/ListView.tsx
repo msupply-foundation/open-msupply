@@ -4,21 +4,15 @@ import {
   DataTable,
   useColumns,
   createTableStore,
-  useOmSupplyApi,
-  useListData,
   useNavigate,
-  useAuthContext,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
-import { getMasterListListViewApi } from './api';
 import { AppBarButtons } from './AppBarButtons';
 import { MasterListRow } from '../types';
+import { useMasterLists } from '../api';
 
 export const MasterListListView: FC = () => {
-  const { store } = useAuthContext();
-  const { api } = useOmSupplyApi();
   const {
-    totalCount,
     data,
     isLoading,
     onChangePage,
@@ -26,11 +20,7 @@ export const MasterListListView: FC = () => {
     sortBy,
     onChangeSortBy,
     filter,
-  } = useListData(
-    { initialSortBy: { key: 'name' } },
-    ['master-list', 'list'],
-    getMasterListListViewApi(api, store?.id ?? '')
-  );
+  } = useMasterLists();
 
   const navigate = useNavigate();
   const columns = useColumns<MasterListRow>(
@@ -47,10 +37,10 @@ export const MasterListListView: FC = () => {
       <Toolbar filter={filter} />
       <AppBarButtons />
       <DataTable
-        pagination={{ ...pagination, total: totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={onChangePage}
         columns={columns}
-        data={data ?? []}
+        data={data?.nodes}
         isLoading={isLoading}
         onRowClick={row => navigate(`/inventory/master-lists/${row.id}`)}
       />

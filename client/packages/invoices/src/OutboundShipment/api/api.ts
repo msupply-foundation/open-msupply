@@ -1,5 +1,7 @@
 import { DraftOutboundLine } from './../../types';
 import {
+  UpdateOutboundShipmentUnallocatedLineInput,
+  InsertOutboundShipmentUnallocatedLineInput,
   DeleteOutboundShipmentLineInput,
   RecordPatch,
   UpdateOutboundShipmentInput,
@@ -7,18 +9,63 @@ import {
   UpdateOutboundShipmentStatusInput,
   InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { Invoice, InvoiceLine } from '../../types';
-import { getSdk, InvoiceQuery } from './operations.generated';
+import { getSdk } from './operations.generated';
 
 export type OutboundShipmentApi = ReturnType<typeof getSdk>;
 
-const invoiceGuard = (invoiceQuery: InvoiceQuery) => {
-  if (invoiceQuery.invoice.__typename === 'InvoiceNode') {
-    return invoiceQuery.invoice;
-  }
-
-  throw new Error(invoiceQuery.invoice.error.description);
+const outboundParsers = {
+  toUpdate: (patch: RecordPatch<Invoice>): UpdateOutboundShipmentInput => ({
+    id: patch.id,
+    colour: patch.colour,
+    comment: patch.comment,
+    status: getPatchStatus(patch),
+    onHold: patch.onHold,
+    otherPartyId: patch.otherParty?.id,
+    theirReference: patch.theirReference,
+  }),
+  toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
+    return {
+      id: line.id,
+      itemId: line.itemId,
+      numberOfPacks: line.numberOfPacks,
+      stockLineId: line.stockLineId,
+      invoiceId: line.invoiceId,
+      totalAfterTax: 0,
+      totalBeforeTax: 0,
+    };
+  },
+  toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
+    return {
+      id: line.id,
+      invoiceId: line.invoiceId,
+      numberOfPacks: line.numberOfPacks,
+      stockLineId: line.stockLineId,
+    };
+  },
+  toInsertPlaceholder: (
+    line: DraftOutboundLine
+  ): InsertOutboundShipmentUnallocatedLineInput => ({
+    id: line.id,
+    quantity: line.numberOfPacks,
+    invoiceId: line.invoiceId,
+    itemId: line.itemId,
+  }),
+  toUpdatePlaceholder: (
+    line: DraftOutboundLine
+  ): UpdateOutboundShipmentUnallocatedLineInput => ({
+    id: line.id,
+    quantity: line.numberOfPacks,
+  }),
+  toDeleteLine: (
+    invoiceId: string,
+    id: string
+  ): DeleteOutboundShipmentLineInput => ({
+    invoiceId,
+    id,
+  }),
 };
 
 const getPatchStatus = (patch: RecordPatch<Invoice>) => {
@@ -34,71 +81,32 @@ const getPatchStatus = (patch: RecordPatch<Invoice>) => {
   }
 };
 
-const invoiceToInput = (
-  patch: RecordPatch<Invoice>
-): UpdateOutboundShipmentInput => ({
-  id: patch.id,
-  colour: patch.colour,
-  comment: patch.comment,
-  status: getPatchStatus(patch),
-  onHold: patch.onHold,
-  otherPartyId: patch.otherParty?.id,
-  theirReference: patch.theirReference,
-});
-
-const getCreateDeleteOutboundLineInput =
-  (invoiceId: string) =>
-  (id: string): DeleteOutboundShipmentLineInput => {
-    return { id, invoiceId };
-  };
-
-const createInsertOutboundLineInput = (
-  line: DraftOutboundLine
-): InsertOutboundShipmentLineInput => {
-  return {
-    id: line.id,
-    itemId: line.itemId,
-    numberOfPacks: line.numberOfPacks,
-    stockLineId: line.stockLineId,
-    invoiceId: line.invoiceId,
-    totalAfterTax: 0,
-    totalBeforeTax: 0,
-  };
-};
-
-const createUpdateOutboundLineInput = (
-  line: DraftOutboundLine
-): UpdateOutboundShipmentLineInput => {
-  return {
-    id: line.id,
-    invoiceId: line.invoiceId,
-    numberOfPacks: line.numberOfPacks,
-    stockLineId: line.stockLineId,
-  };
-};
-
 export const OutboundApi = {
   get: {
     byId:
       (api: OutboundShipmentApi, storeId: string) =>
       async (id: string): Promise<Invoice> => {
         const result = await api.invoice({ id, storeId });
+        const invoice = result.invoice;
 
-        const invoice = invoiceGuard(result);
-        const lineNodes = invoice.lines;
-        const lines: InvoiceLine[] = lineNodes.nodes.map(line => {
+        if (invoice.__typename === 'InvoiceNode') {
+          const lineNodes = invoice.lines;
+          const lines: InvoiceLine[] = lineNodes.nodes.map(line => {
+            return {
+              ...line,
+              stockLineId: line.stockLine?.id ?? '',
+              invoiceId: invoice.id,
+              unitName: line.item?.unitName ?? '',
+            };
+          });
+
           return {
-            ...line,
-            stockLineId: line.stockLine?.id ?? '',
-            invoiceId: invoice.id,
-            unitName: line.item?.unitName ?? '',
+            ...invoice,
+            lines,
           };
-        });
-
-        return {
-          ...invoice,
-          lines,
-        };
+        } else {
+          throw new Error('Could not find invoice');
+        }
       },
   },
   update:
@@ -107,7 +115,7 @@ export const OutboundApi = {
       const result = await api.upsertOutboundShipment({
         storeId,
         input: {
-          updateOutboundShipments: [invoiceToInput(patch)],
+          updateOutboundShipments: [outboundParsers.toUpdate(patch)],
         },
       });
 
@@ -130,13 +138,36 @@ export const OutboundApi = {
   updateLines:
     (api: OutboundShipmentApi, storeId: string) =>
     async (draftStocktakeLines: DraftOutboundLine[]) => {
+      const filtered = draftStocktakeLines.filter(
+        ({ numberOfPacks }) => numberOfPacks > 0
+      );
       const input = {
-        insertOutboundShipmentLines: draftStocktakeLines
-          .filter(({ isCreated }) => isCreated)
-          .map(createInsertOutboundLineInput),
-        updateOutboundShipmentLines: draftStocktakeLines
-          .filter(({ isCreated, isUpdated }) => !isCreated && isUpdated)
-          .map(createUpdateOutboundLineInput),
+        insertOutboundShipmentLines: filtered
+          .filter(
+            ({ type, isCreated }) =>
+              isCreated && type === InvoiceLineNodeType.StockOut
+          )
+          .map(outboundParsers.toInsertLine),
+        updateOutboundShipmentLines: filtered
+          .filter(
+            ({ type, isCreated, isUpdated }) =>
+              !isCreated && isUpdated && type === InvoiceLineNodeType.StockOut
+          )
+          .map(outboundParsers.toUpdateLine),
+        insertOutboundShipmentUnallocatedLines: filtered
+          .filter(
+            ({ type, isCreated }) =>
+              type === InvoiceLineNodeType.UnallocatedStock && isCreated
+          )
+          .map(outboundParsers.toInsertPlaceholder),
+        updateOutboundShipmentUnallocatedLines: filtered
+          .filter(
+            ({ type, isCreated, isUpdated }) =>
+              type === InvoiceLineNodeType.UnallocatedStock &&
+              !isCreated &&
+              isUpdated
+          )
+          .map(outboundParsers.toUpdatePlaceholder),
       };
 
       const result = await api.upsertOutboundShipment({ storeId, input });
@@ -146,10 +177,11 @@ export const OutboundApi = {
   deleteLines:
     (api: OutboundShipmentApi, invoiceId: string, storeId: string) =>
     async (ids: string[]) => {
-      const createDeleteLineInput = getCreateDeleteOutboundLineInput(invoiceId);
       return api.deleteOutboundShipmentLines({
         storeId,
-        deleteOutboundShipmentLines: ids.map(createDeleteLineInput),
+        deleteOutboundShipmentLines: ids.map(id =>
+          outboundParsers.toDeleteLine(invoiceId, id)
+        ),
       });
     },
 };

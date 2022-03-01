@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   useTranslation,
+  InvoiceLineNodeType,
   ifTheSameElseDefault,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../../types';
@@ -86,7 +87,9 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
     // the placeholder to find either the distinct pack size or use 'any'.
     if (selectedPackSize === -1)
       selectedPackSize = ifTheSameElseDefault(
-        lines.filter(({ id }) => id !== 'placeholder'),
+        lines.filter(
+          ({ type }) => type !== InvoiceLineNodeType.UnallocatedStock
+        ),
         'packSize',
         -1
       );

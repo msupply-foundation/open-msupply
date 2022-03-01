@@ -6,17 +6,20 @@ import {
   UpdateRequestRequisitionStatusInput,
   RequisitionSortFieldInput,
 } from '@openmsupply-client/common';
+import { DraftRequestRequisitionLine } from './../DetailView/RequestLineEdit/hooks';
 import {
   RequestRequisitionRowFragment,
   getSdk,
   RequestRequisitionFragment,
   RequestRequisitionsQuery,
 } from './operations.generated';
-import { DraftRequestRequisitionLine } from './../DetailView/RequestLineEdit/hooks';
 
 export type RequestRequisitionApi = ReturnType<typeof getSdk>;
 
 const requisitionParser = {
+  toDeleteInput: (line: RequestRequisitionRowFragment) => {
+    return { id: line.id };
+  },
   toInsertLineInput: (line: DraftRequestRequisitionLine) => ({
     id: line.id,
     itemId: line.itemId,
@@ -171,5 +174,22 @@ export const RequestRequisitionQueries = {
       }
 
       throw new Error('Unable to create requisition');
+    },
+  deleteRequisitions:
+    (api: RequestRequisitionApi, storeId: string) =>
+    async (requisitions: RequestRequisitionRowFragment[]) => {
+      const promises = requisitions.map(requisition => {
+        const input = requisitionParser.toDeleteInput(requisition);
+        return api.deleteRequestRequisition({ input, storeId });
+      });
+      const results = await Promise.all(promises);
+
+      const success = results.every(({ deleteRequestRequisition }) => {
+        return deleteRequestRequisition.__typename === 'DeleteResponse';
+      });
+
+      if (success) return results;
+
+      throw new Error('Could not delete requisitions');
     },
 };

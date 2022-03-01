@@ -1,297 +1,31 @@
-query itemsWithStockLines(
-  $first: Int
-  $offset: Int
-  $key: ItemSortFieldInput!
-  $desc: Boolean
-  $filter: ItemFilterInput
-  $storeId: String!
-) {
-  items(
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    __typename
-    ... on ItemConnector {
+query authToken($username: String!, $password: String!) {
+  authToken(password: $password, username: $username) {
+    ... on AuthToken {
       __typename
-      totalCount
-      nodes {
-        __typename
-        code
-        id
-        isVisible
-        name
-        unitName
-        availableBatches(storeId: $storeId) {
-          __typename
-          totalCount
-          nodes {
-            __typename
-            availableNumberOfPacks
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemId
-            packSize
-            sellPricePerPack
-            totalNumberOfPacks
-            onHold
-            note
-            storeId
-            locationName
-          }
-        }
-      }
+      token
     }
-  }
-}
-
-query names(
-  $key: NameSortFieldInput!
-  $desc: Boolean
-  $first: Int
-  $offset: Int
-  $filter: NameFilterInput
-) {
-  names(
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on NameConnector {
-      __typename
-      nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-        store {
-          id
-          code
-        }
-      }
-      totalCount
-    }
-  }
-}
-
-query locations($sort: [LocationSortInput!]) {
-  locations(sort: $sort) {
-    __typename
-    ... on LocationConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        id
-        name
-        onHold
-        code
-      }
-    }
-  }
-}
-
-mutation insertLocation($input: InsertLocationInput!, $storeId: String!) {
-  insertLocation(input: $input, storeId: $storeId) {
-    ... on InsertLocationError {
+    ... on AuthTokenError {
       __typename
       error {
-        description
+        ... on UserNameDoesNotExist {
+          __typename
+          description
+        }
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
         ... on InternalError {
           __typename
           description
           fullError
         }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
-        }
-        ... on UniqueValueViolation {
-          __typename
-          description
-          field
-        }
-      }
-    }
-    ... on LocationNode {
-      id
-      name
-      code
-      onHold
-    }
-  }
-}
-
-mutation updateLocation($input: UpdateLocationInput!, $storeId: String!) {
-  updateLocation(input: $input, storeId: $storeId) {
-    ... on UpdateLocationError {
-      __typename
-      error {
         description
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordBelongsToAnotherStore {
-          __typename
-          description
-        }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on UniqueValueViolation {
-          __typename
-          description
-          field
-        }
-      }
-    }
-    ... on LocationNode {
-      id
-      name
-      onHold
-      code
-    }
-  }
-}
-
-mutation deleteLocation($storeId: String!, $input: DeleteLocationInput!) {
-  deleteLocation(storeId: $storeId, input: $input) {
-    ... on DeleteLocationError {
-      __typename
-      error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on RecordBelongsToAnotherStore {
-          __typename
-          description
-        }
-        ... on LocationInUse {
-          __typename
-          description
-          stockLines {
-            ... on StockLineConnector {
-              __typename
-              nodes {
-                __typename
-                id
-                itemId
-              }
-              totalCount
-            }
-          }
-          invoiceLines {
-            ... on InvoiceLineConnector {
-              __typename
-              nodes {
-                __typename
-                id
-              }
-            }
-            totalCount
-          }
-        }
-      }
-    }
-    ... on DeleteResponse {
-      __typename
-      id
-    }
-  }
-}
-
-query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(page: { first: $first, offset: $offset }, filter: $filter) {
-    ... on StoreConnector {
-      __typename
-      totalCount
-      nodes {
-        code
-        id
-      }
-    }
-  }
-}
-
-query masterLists(
-  $first: Int
-  $offset: Int
-  $key: MasterListSortFieldInput!
-  $desc: Boolean
-  $filter: MasterListFilterInput
-  $storeId: String!
-) {
-  masterLists(
-    filter: $filter
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-  ) {
-    ... on MasterListConnector {
-      __typename
-      totalCount
-      nodes {
-        name
-        code
-        description
-        id
-        lines {
-          __typename
-          totalCount
-          nodes {
-            id
-            itemId
-            item {
-              code
-              id
-              unitName
-              name
-              isVisible
-              availableBatches(storeId: $storeId) {
-                __typename
-                totalCount
-                nodes {
-                  __typename
-                  availableNumberOfPacks
-                  batch
-                  costPricePerPack
-                  expiryDate
-                  itemId
-                  id
-                  totalNumberOfPacks
-                  storeId
-                  sellPricePerPack
-                  packSize
-                  onHold
-                  note
-                  locationName
-                }
-              }
-            }
-          }
-        }
       }
     }
   }

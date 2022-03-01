@@ -41,6 +41,7 @@ export type InsertOutboundShipmentMutation = { __typename: 'Mutations', insertOu
 
 export type UpdateOutboundShipmentMutationVariables = Types.Exact<{
   input: Types.UpdateOutboundShipmentInput;
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -60,7 +61,7 @@ export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertOutboundShipmentMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename: 'InsertOutboundShipmentServiceLineResponseWithId', id: string }> | null, insertOutboundShipmentUnallocatedLines?: Array<{ __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string }> | null, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string }> | null } };
+export type UpsertOutboundShipmentMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentUnallocatedLines?: Array<{ __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'UnallocatedLineForItemAlreadyExists', description: string } | { __typename: 'UnallocatedLinesOnlyEditableInNewInvoice', description: string } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAServiceItem', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentUnallocatedLineError' } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'ItemDoesNotMatchStockLine', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'RangeError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineDoesNotBelongToCurrentStore', description: string } | { __typename: 'StockLineIsOnHold', description: string } } | { __typename: 'InvoiceLineNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename: 'InsertOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'NotAServiceItem', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertOutboundShipments?: Array<{ __typename: 'InsertOutboundShipmentResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename: 'OtherPartyNotACustomerError', description: string } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'ItemDoesNotMatchStockLine', description: string } | { __typename: 'LineDoesNotReferenceStockLine', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'RangeError', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineDoesNotBelongToCurrentStore', description: string } | { __typename: 'StockLineIsOnHold', description: string } } }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAServiceItem', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentUnallocatedLineError', error: { __typename: 'RecordDoesNotExist', description: string } } }> | null, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename: 'CanOnlyEditInvoicesInLoggedInStoreError', description: string } | { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'DatabaseError', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'InvoiceLineHasNoStockLineError', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'OtherPartyCannotBeThisStoreError', description: string } | { __typename: 'OtherPartyNotACustomerError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
 
 export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -71,6 +72,7 @@ export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
 export type DeleteOutboundShipmentLinesMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceDoesNotBelongToCurrentStore', description: string } | { __typename: 'InvoiceLineBelongsToAnotherInvoice', description: string } | { __typename: 'NotAnOutboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type InvoiceCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
 }>;
 
@@ -94,6 +96,7 @@ export const OutboundShipmentLineFragmentDoc = gql`
   invoiceId
   locationName
   sellPricePerPack
+  type
   item {
     __typename
     id
@@ -337,8 +340,8 @@ export const InsertOutboundShipmentDocument = gql`
 }
     `;
 export const UpdateOutboundShipmentDocument = gql`
-    mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!) {
-  updateOutboundShipment(input: $input) {
+    mutation updateOutboundShipment($input: UpdateOutboundShipmentInput!, $storeId: String!) {
+  updateOutboundShipment(input: $input, storeId: $storeId) {
     ... on InvoiceNode {
       __typename
       id
@@ -384,35 +387,170 @@ export const DeleteOutboundShipmentsDocument = gql`
 export const UpsertOutboundShipmentDocument = gql`
     mutation upsertOutboundShipment($storeId: String!, $input: BatchOutboundShipmentInput!) {
   batchOutboundShipment(storeId: $storeId, input: $input) {
+    insertOutboundShipmentUnallocatedLines {
+      id
+      response {
+        ... on InsertOutboundShipmentUnallocatedLineError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on InvoiceLineNode {
+          id
+        }
+      }
+    }
     deleteOutboundShipmentLines {
       id
+      response {
+        ... on DeleteOutboundShipmentLineError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
     }
     deleteOutboundShipmentServiceLines {
       id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteOutboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
     deleteOutboundShipmentUnallocatedLines {
       id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+    deleteOutboundShipments {
+      id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteOutboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
     insertOutboundShipmentLines {
       id
+      response {
+        ... on InsertOutboundShipmentLineError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on NodeError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
     insertOutboundShipmentServiceLines {
       id
+      response {
+        ... on InsertOutboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
-    insertOutboundShipmentUnallocatedLines {
+    insertOutboundShipments {
       id
+      response {
+        ... on InsertOutboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on NodeError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
     updateOutboundShipmentLines {
       id
+      response {
+        ... on NodeError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on UpdateOutboundShipmentLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
     updateOutboundShipmentServiceLines {
       id
+      response {
+        ... on UpdateOutboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
     updateOutboundShipmentUnallocatedLines {
       id
+      response {
+        ... on UpdateOutboundShipmentUnallocatedLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
     updateOutboundShipments {
       id
+      response {
+        ... on UpdateOutboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on NodeError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
   }
 }
@@ -471,8 +609,8 @@ export const DeleteOutboundShipmentLinesDocument = gql`
 }
     `;
 export const InvoiceCountsDocument = gql`
-    query invoiceCounts($timezoneOffset: Int) {
-  invoiceCounts(timezoneOffset: $timezoneOffset) {
+    query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
+  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
     outbound {
       created {
         today
@@ -512,7 +650,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentLinesMutation>(DeleteOutboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipmentLines');
     },
-    invoiceCounts(variables?: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
+    invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts');
     }
   };
@@ -575,7 +713,7 @@ export const mockInsertOutboundShipmentMutation = (resolver: ResponseResolver<Gr
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockUpdateOutboundShipmentMutation((req, res, ctx) => {
- *   const { input } = req.variables;
+ *   const { input, storeId } = req.variables;
  *   return res(
  *     ctx.data({ updateOutboundShipment })
  *   )
@@ -643,7 +781,7 @@ export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolv
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { timezoneOffset } = req.variables;
+ *   const { storeId, timezoneOffset } = req.variables;
  *   return res(
  *     ctx.data({ invoiceCounts })
  *   )

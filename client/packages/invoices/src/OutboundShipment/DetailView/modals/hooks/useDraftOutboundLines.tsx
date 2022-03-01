@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   generateUUID,
+  InvoiceLineNodeType,
   Item,
   StockLine,
+  useConfirmOnLeaving,
+  useDirtyCheck,
   useParams,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
@@ -12,13 +15,14 @@ import { useOutboundLines } from '../../../api';
 
 export const createPlaceholderRow = (
   invoiceId: string,
-  itemId = ''
+  itemId = '',
+  id = generateUUID()
 ): DraftOutboundLine => ({
   __typename: 'InvoiceLineNode',
   availableNumberOfPacks: 0,
   batch: 'Placeholder',
   costPricePerPack: 0,
-  id: 'placeholder',
+  id,
   itemId,
   onHold: false,
   packSize: 1,
@@ -26,12 +30,13 @@ export const createPlaceholderRow = (
   storeId: '',
   totalNumberOfPacks: 0,
   numberOfPacks: 0,
-  isCreated: false,
+  isCreated: true,
   isUpdated: false,
   stockLineId: 'placeholder',
   invoiceId,
   itemCode: '',
   itemName: '',
+  type: InvoiceLineNodeType.UnallocatedStock,
 });
 
 interface DraftOutboundLineSeeds {
@@ -48,6 +53,7 @@ export const createDraftOutboundLine = ({
   __typename: 'InvoiceLineNode',
   isCreated: !invoiceLine,
   isUpdated: false,
+  type: InvoiceLineNodeType.StockOut,
   numberOfPacks: 0,
   ...stockLine,
   ...invoiceLine,
@@ -91,10 +97,12 @@ export const useDraftOutboundLines = (
     item?.id ?? ''
   );
   const { data, isLoading } = useStockLines(item?.code ?? '');
-
+  const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftOutboundLines, setDraftOutboundLines] = useState<
     DraftOutboundLine[]
   >([]);
+
+  useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
     if (!item) {
@@ -104,10 +112,9 @@ export const useDraftOutboundLines = (
     if (!data) return;
 
     setDraftOutboundLines(() => {
-      if (!lines) return [];
       const rows = data
         .map(batch => {
-          const invoiceLine = lines.find(
+          const invoiceLine = (lines ?? []).find(
             ({ stockLineId }) => stockLineId === batch.id
           );
 
@@ -119,19 +126,25 @@ export const useDraftOutboundLines = (
         })
         .sort(sortByExpiry);
 
-      rows.push(createPlaceholderRow(invoiceId, item?.id));
+      const placeholder = lines?.find(
+        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+      );
+
+      if (placeholder) {
+        rows.push(
+          createDraftOutboundLine({ invoiceId, invoiceLine: placeholder })
+        );
+      } else {
+        rows.push(createPlaceholderRow(invoiceId, item.id));
+      }
+
       return rows;
     });
   }, [data, lines, item]);
 
-  useEffect(() => {
-    if (draftOutboundLines?.length === 0) {
-      draftOutboundLines.push(createPlaceholderRow(invoiceId, item?.id));
-    }
-  }, [draftOutboundLines]);
-
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
+      setIsDirty(true);
       setDraftOutboundLines(issueStock(draftOutboundLines, batchId, value));
     },
     [draftOutboundLines]
