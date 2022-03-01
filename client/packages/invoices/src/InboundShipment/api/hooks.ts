@@ -19,13 +19,13 @@ import {
   useFieldsSelector,
 } from '@openmsupply-client/common';
 import { canDeleteInvoice, inboundLinesToSummaryItems } from './../../utils';
+import { InboundItem } from './../../types';
 import {
-  Invoice,
-  InvoiceLine,
-  InboundShipmentItem,
-  InvoiceRow,
-} from './../../types';
-import { getSdk } from './operations.generated';
+  getSdk,
+  InboundFragment,
+  InboundLineFragment,
+  InboundRowFragment,
+} from './operations.generated';
 import { getInboundQueries } from './api';
 
 export const useInboundApi = () => {
@@ -53,8 +53,8 @@ export const useIsInboundEditable = (): boolean => {
   return status === 'NEW' || status === 'SHIPPED' || status === 'DELIVERED';
 };
 
-export const useInboundShipmentSelector = <T = Invoice>(
-  select?: (data: Invoice) => T
+export const useInboundShipmentSelector = <T = InboundFragment>(
+  select?: (data: InboundFragment) => T
 ) => {
   const invoiceNumber = useInvoiceNumber();
   const api = useInboundApi();
@@ -68,28 +68,27 @@ export const useInboundShipmentSelector = <T = Invoice>(
   );
 };
 
-export const useInboundFields = <KeyOfInvoice extends keyof Invoice>(
+export const useInboundFields = <KeyOfInvoice extends keyof InboundFragment>(
   keyOrKeys: KeyOfInvoice | KeyOfInvoice[]
-): FieldSelectorControl<Invoice, KeyOfInvoice> => {
+): FieldSelectorControl<InboundFragment, KeyOfInvoice> => {
   const { data } = useInbound();
   const invoiceNumber = useInvoiceNumber();
   const api = useInboundApi();
   return useFieldsSelector(
     ['invoice', api.storeId, invoiceNumber],
     () => api.get.byNumber(invoiceNumber),
-    (patch: Partial<Invoice>) => api.update({ ...patch, id: data?.id ?? '' }),
+    (patch: Partial<InboundFragment>) =>
+      api.update({ ...patch, id: data?.id ?? '' }),
     keyOrKeys
   );
 };
 
-export const useInboundLines = (itemId?: string): InvoiceLine[] => {
+export const useInboundLines = (itemId?: string): InboundLineFragment[] => {
   const selectItems = useCallback(
-    (invoice: Invoice) => {
+    (invoice: InboundFragment) => {
       return itemId
-        ? invoice.lines.filter(
-            ({ itemId: invoiceLineItemId }) => itemId === invoiceLineItemId
-          )
-        : invoice.lines;
+        ? invoice.lines.nodes.filter(({ item }) => itemId === item.id)
+        : invoice.lines.nodes;
     },
     [itemId]
   );
@@ -100,13 +99,13 @@ export const useInboundLines = (itemId?: string): InvoiceLine[] => {
 };
 
 export const useInboundItems = () => {
-  const { sortBy, onChangeSortBy } = useSortBy<InboundShipmentItem>({
+  const { sortBy, onChangeSortBy } = useSortBy<InboundItem>({
     key: 'itemName',
   });
 
-  const selectItems = useCallback((invoice: Invoice) => {
-    return inboundLinesToSummaryItems(invoice.lines).sort(
-      getDataSorter(sortBy.key as keyof InboundShipmentItem, !!sortBy.isDesc)
+  const selectItems = useCallback((invoice: InboundFragment) => {
+    return inboundLinesToSummaryItems(invoice.lines.nodes).sort(
+      getDataSorter(sortBy.key as keyof InboundItem, !!sortBy.isDesc)
     );
   }, []);
 
@@ -148,20 +147,25 @@ export const useDeleteInboundLine = () => {
     onMutate: async (ids: string[]) => {
       await queryClient.cancelQueries(['invoice', api.storeId, invoiceNumber]);
 
-      const previous = queryClient.getQueryData<Invoice>([
+      const previous = queryClient.getQueryData<InboundFragment>([
         'invoice',
         api.storeId,
         invoiceNumber,
       ]);
 
       if (previous) {
-        queryClient.setQueryData<Invoice>(
+        const filteredLines = previous.lines.nodes.filter(
+          ({ id: lineId }) => !ids.includes(lineId)
+        );
+        queryClient.setQueryData<InboundFragment>(
           ['invoice', api.storeId, invoiceNumber],
           {
             ...previous,
-            lines: previous.lines.filter(
-              ({ id: lineId }) => !ids.includes(lineId)
-            ),
+            lines: {
+              __typename: 'InvoiceLineConnector',
+              nodes: filteredLines,
+              totalCount: filteredLines.length,
+            },
           }
         );
       }
@@ -181,7 +185,7 @@ export const useDeleteInboundLine = () => {
 };
 
 export const useInbounds = () => {
-  const queryParams = useQueryParams<InvoiceRow>({
+  const queryParams = useQueryParams<InboundRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
   const api = useInboundApi();
@@ -224,7 +228,7 @@ export const useDeleteSelectedInbounds = () => {
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as InvoiceRow[],
+      .filter(Boolean) as InboundRowFragment[],
   }));
 
   const deleteAction = () => {

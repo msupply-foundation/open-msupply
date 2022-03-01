@@ -11,7 +11,7 @@ import {
   Theme,
   alpha,
 } from '@openmsupply-client/common';
-import { DraftInboundLine } from './InboundLineEdit';
+import { DraftInboundLine } from '../../../../types';
 import { getLocationInputColumn } from '@openmsupply-client/system';
 
 interface TableProps {

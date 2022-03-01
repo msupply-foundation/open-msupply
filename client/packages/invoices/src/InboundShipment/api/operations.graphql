@@ -1,4 +1,23 @@
-fragment InboundShipmentLine on InvoiceLineNode {
+fragment PartialInboundLine on InvoiceLineNode {
+  id
+  batch
+  costPricePerPack
+  sellPricePerPack
+  expiryDate
+  numberOfPacks
+  packSize
+  itemId
+  invoiceId
+
+  location {
+    id
+    code
+    name
+    onHold
+  }
+}
+
+fragment InboundLine on InvoiceLineNode {
   __typename
   type
   batch
@@ -80,7 +99,7 @@ fragment InboundShipmentLine on InvoiceLineNode {
   }
 }
 
-fragment InboundShipment on InvoiceNode {
+fragment Inbound on InvoiceNode {
   __typename
   id
   comment
@@ -102,7 +121,7 @@ fragment InboundShipment on InvoiceNode {
   lines {
     __typename
     nodes {
-      ...InboundShipmentLine
+      ...InboundLine
     }
     totalCount
   }
@@ -127,7 +146,7 @@ fragment InboundShipment on InvoiceNode {
   }
 }
 
-fragment InboundShipmentRow on InvoiceNode {
+fragment InboundRow on InvoiceNode {
   __typename
   comment
   createdDatetime
@@ -173,7 +192,7 @@ query invoices(
       __typename
       totalCount
       nodes {
-        ...InboundShipmentRow
+        ...InboundRow
       }
     }
   }
@@ -182,7 +201,7 @@ query invoices(
 query invoice($id: String!, $storeId: String!) {
   invoice(id: $id, storeId: $storeId) {
     ... on InvoiceNode {
-      ...InboundShipment
+      ...Inbound
     }
 
     ... on NodeError {
@@ -210,7 +229,7 @@ query inboundByNumber($invoiceNumber: Int!, $storeId: String!) {
     type: INBOUND_SHIPMENT
   ) {
     ... on InvoiceNode {
-      ...InboundShipment
+      ...Inbound
     }
 
     ... on NodeError {

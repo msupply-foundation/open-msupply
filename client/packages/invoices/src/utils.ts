@@ -1,3 +1,4 @@
+import { InboundRowFragment } from './InboundShipment/api/operations.generated';
 import {
   LocaleKey,
   InvoiceNodeStatus,
@@ -7,8 +8,9 @@ import {
 import {
   OutboundShipmentRowFragment,
   OutboundShipmentFragment,
-} from './OutboundShipment/api/operations.generated';
-import { InboundShipmentItem, Invoice, InvoiceLine } from './types';
+} from './OutboundShipment/api';
+import { InboundLineFragment } from './InboundShipment/api';
+import { InboundItem } from './types';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -98,16 +100,15 @@ export const isInvoiceEditable = (
   return outbound.status === 'NEW' || outbound.status === 'ALLOCATED';
 };
 
-export const isInboundEditable = (inbound: Invoice): boolean => {
-  // return inbound.status !== 'VERIFIED' && inbound.status !== 'DELIVERED';
+export const isInboundEditable = (inbound: InboundRowFragment): boolean => {
   return inbound.status === 'NEW';
 };
 
 export const createSummaryItem = (
   itemId: string,
-  lines: [InvoiceLine, ...InvoiceLine[]]
-): InboundShipmentItem => {
-  const item: InboundShipmentItem = {
+  lines: [InboundLineFragment, ...InboundLineFragment[]]
+): InboundItem => {
+  const item: InboundItem = {
     // TODO: Could generate a unique UUID here if wanted for the id. But not needed for now.
     // the lines all have the itemID in common, so we can use that. Have added the itemID also
     // as it is explicit that this is the itemID in common for all of the invoice lines.
@@ -120,8 +121,8 @@ export const createSummaryItem = (
 };
 
 export const inboundLinesToSummaryItems = (
-  lines: InvoiceLine[]
-): InboundShipmentItem[] => {
+  lines: InboundLineFragment[]
+): InboundItem[] => {
   const grouped = groupBy(lines, 'itemId');
   return Object.entries(grouped).map(([itemId, lines]) =>
     createSummaryItem(itemId, lines)
