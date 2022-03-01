@@ -78,7 +78,7 @@ const useDraftInboundLines = (itemId: string) => {
   useEffect(() => {
     if (lines && itemId) {
       const drafts = lines.map(line =>
-        createDraftInvoiceLine(line.itemId, line.invoiceId, line)
+        createDraftInvoiceLine(line.item.id, line.invoiceId, line)
       );
       if (drafts.length === 0) drafts.push(createDraftInvoiceLine(itemId, id));
       setDraftLines(drafts);
