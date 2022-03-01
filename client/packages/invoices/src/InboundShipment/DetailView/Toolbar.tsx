@@ -19,8 +19,9 @@ import {
   useInboundItems,
   useInboundLines,
   useIsInboundEditable,
+  InboundLineFragment,
 } from '../api';
-import { InboundShipmentItem, InvoiceLine } from '../../types';
+import { InboundItem } from '../../types';
 
 export const Toolbar: FC = () => {
   const isEditable = useIsInboundEditable();
@@ -44,7 +45,7 @@ export const Toolbar: FC = () => {
           Object.keys(state.rowState)
             .filter(id => state.rowState[id]?.isSelected)
             .map(selectedId => data?.find(({ id }) => selectedId === id))
-            .filter(Boolean) as InboundShipmentItem[]
+            .filter(Boolean) as InboundItem[]
         )
           .map(({ lines }) => lines)
           .flat()
@@ -56,7 +57,7 @@ export const Toolbar: FC = () => {
           Object.keys(state.rowState)
             .filter(id => state.rowState[id]?.isSelected)
             .map(selectedId => lines.find(({ id }) => selectedId === id))
-            .filter(Boolean) as InvoiceLine[]
+            .filter(Boolean) as InboundLineFragment[]
         ).map(({ id }) => id),
       };
     }

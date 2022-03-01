@@ -11,14 +11,17 @@ import {
   formatNaiveDate,
   UpdateInboundShipmentStatusInput,
 } from '@openmsupply-client/common';
-import { Invoice, InvoiceLine } from '../../types';
-import { InvoiceRow } from './../../types';
-import { Sdk } from './operations.generated';
-import { DraftInboundLine } from '../DetailView/modals/InboundLineEdit';
+import { DraftInboundLine } from './../../types';
+import {
+  Sdk,
+  InboundFragment,
+  InboundRowFragment,
+  InsertInboundShipmentMutationVariables,
+} from './operations.generated';
 
 const inboundParsers = {
   toStatus: (
-    patch: Partial<Invoice>
+    patch: Partial<InboundFragment>
   ): UpdateInboundShipmentStatusInput | undefined => {
     switch (patch.status) {
       case InvoiceNodeStatus.Verified:
@@ -29,7 +32,7 @@ const inboundParsers = {
         return undefined;
     }
   },
-  toSortField: (sortBy: SortBy<InvoiceRow>): InvoiceSortFieldInput => {
+  toSortField: (sortBy: SortBy<InboundRowFragment>): InvoiceSortFieldInput => {
     switch (sortBy.key) {
       case 'createdDatetime': {
         return InvoiceSortFieldInput.CreatedDatetime;
@@ -50,7 +53,7 @@ const inboundParsers = {
     }
   },
   toUpdate: (
-    patch: Partial<Invoice> & { id: string }
+    patch: Partial<InboundFragment> & { id: string }
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
@@ -111,7 +114,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     }: {
       first: number;
       offset: number;
-      sortBy: SortBy<InvoiceRow>;
+      sortBy: SortBy<InboundRowFragment>;
       filterBy: FilterBy | null;
     }) => {
       const filter = {
@@ -128,31 +131,13 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.invoices;
     },
-    byId: async (id: string): Promise<Invoice> => {
+    byId: async (id: string): Promise<InboundRowFragment> => {
       const result = await sdk.invoice({ id, storeId });
 
       const invoice = result.invoice;
 
       if (invoice.__typename === 'InvoiceNode') {
-        const lineNodes = invoice.lines.nodes;
-        const lines: InvoiceLine[] = lineNodes.map(line => {
-          const stockLine = line.stockLine;
-          const location = line.location;
-
-          return {
-            ...line,
-            stockLine,
-            location,
-            stockLineId: stockLine?.id ?? '',
-            invoiceId: invoice.id,
-            unitName: line.item?.unitName ?? '',
-          };
-        });
-
-        return {
-          ...invoice,
-          lines,
-        };
+        return invoice;
       }
 
       throw new Error(result.invoice.__typename);
@@ -166,31 +151,13 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       const invoice = result.invoiceByNumber;
 
       if (invoice.__typename === 'InvoiceNode') {
-        const lineNodes = invoice.lines.nodes;
-        const lines: InvoiceLine[] = lineNodes.map(line => {
-          const stockLine = line.stockLine;
-          const location = line.location;
-
-          return {
-            ...line,
-            stockLine,
-            location,
-            stockLineId: stockLine?.id ?? '',
-            invoiceId: invoice.id,
-            unitName: line.item?.unitName ?? '',
-          };
-        });
-
-        return {
-          ...invoice,
-          lines,
-        };
+        return invoice;
       }
 
       throw new Error('Could not find invoice!');
     },
   },
-  delete: async (invoices: InvoiceRow[]): Promise<string[]> => {
+  delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
     const result = await sdk.deleteInboundShipments({
       storeId,
       deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
@@ -204,10 +171,12 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not delete invoices');
   },
-  insert: async (invoice: Partial<Invoice>): Promise<number> => {
+  insert: async (
+    patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>
+  ): Promise<number> => {
     const result = await sdk.insertInboundShipment({
-      id: invoice.id ?? '',
-      otherPartyId: invoice?.otherPartyId ?? '',
+      id: patch.id,
+      otherPartyId: patch?.otherPartyId,
       storeId,
     });
 
@@ -219,7 +188,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error(insertInboundShipment.error.description);
   },
-  update: async (patch: Partial<Invoice> & { id: string }) =>
+  update: async (patch: Partial<InboundFragment> & { id: string }) =>
     sdk.updateInboundShipment({
       input: inboundParsers.toUpdate(patch),
       storeId,

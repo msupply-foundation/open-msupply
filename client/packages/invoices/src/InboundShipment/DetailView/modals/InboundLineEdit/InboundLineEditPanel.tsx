@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 
 import { styled, TabPanel, Box } from '@openmsupply-client/common';
-import { DraftInboundLine } from './InboundLineEdit';
+import { DraftInboundLine } from '../../../../types';
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',

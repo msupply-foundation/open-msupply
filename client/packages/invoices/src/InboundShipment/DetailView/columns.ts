@@ -9,12 +9,13 @@ import {
   useColumns,
   Column,
 } from '@openmsupply-client/common';
-import { InvoiceLine, InboundShipmentItem } from './../../types';
+import { InboundItem } from './../../types';
+import { InboundLineFragment } from '../api';
 
 export const useInboundShipmentColumns = (): Column<
-  InvoiceLine | InboundShipmentItem
+  InboundLineFragment | InboundItem
 >[] =>
-  useColumns<InvoiceLine | InboundShipmentItem>(
+  useColumns<InboundLineFragment | InboundItem>(
     [
       [
         getNotePopoverColumn(),
@@ -167,7 +168,7 @@ export const useInboundShipmentColumns = (): Column<
     []
   );
 
-export const useExpansionColumns = (): Column<InvoiceLine>[] =>
+export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
   useColumns([
     'batch',
     'expiryDate',

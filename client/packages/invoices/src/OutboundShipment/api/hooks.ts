@@ -24,7 +24,7 @@ import {
   useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { Invoice, OutboundItem } from '../../types';
+import { OutboundItem } from '../../types';
 import { getOutboundQueries } from './api';
 import { useOutboundColumns } from '../DetailView/columns';
 import {
@@ -73,7 +73,7 @@ export const useOutbounds = () => {
   };
 };
 
-export const useOutbound = (): UseQueryResult<Invoice> => {
+export const useOutbound = (): UseQueryResult<OutboundShipmentFragment> => {
   const outboundNumber = useOutboundNumber();
   const api = useOutboundApi();
   const queryKey = useOutboundDetailQueryKey();
@@ -273,7 +273,7 @@ export const useDeleteInboundLine = (): UseMutationResult<
   DeleteOutboundShipmentLinesMutation,
   unknown,
   string[],
-  { previous?: Invoice; ids: string[] }
+  { previous?: OutboundShipmentFragment; ids: string[] }
 > => {
   // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
   // input object should not require the invoice ID. Waiting for an API change.
@@ -286,14 +286,19 @@ export const useDeleteInboundLine = (): UseMutationResult<
     onMutate: async (ids: string[]) => {
       await queryClient.cancelQueries(queryKey);
 
-      const previous = queryClient.getQueryData<Invoice>(queryKey);
-
+      const previous =
+        queryClient.getQueryData<OutboundShipmentFragment>(queryKey);
       if (previous) {
-        queryClient.setQueryData<Invoice>(queryKey, {
+        const nodes = previous.lines.nodes.filter(
+          ({ id: lineId }) => !ids.includes(lineId)
+        );
+        queryClient.setQueryData<OutboundShipmentFragment>(queryKey, {
           ...previous,
-          lines: previous.lines.filter(
-            ({ id: lineId }) => !ids.includes(lineId)
-          ),
+          lines: {
+            __typename: 'InvoiceLineConnector',
+            nodes,
+            totalCount: nodes.length,
+          },
         });
       }
 

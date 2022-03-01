@@ -8,8 +8,7 @@ import {
   FilterController,
   SearchBar,
 } from '@openmsupply-client/common';
-import { InvoiceRow } from '../../types';
-import { useDeleteSelectedInbounds } from '../api';
+import { useDeleteSelectedInbounds, InboundRowFragment } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
@@ -17,7 +16,7 @@ export const Toolbar: FC<{
   const t = useTranslation();
   const onDelete = useDeleteSelectedInbounds();
 
-  const key = 'comment' as keyof InvoiceRow;
+  const key = 'comment' as keyof InboundRowFragment;
   const filterString = filter.filterBy?.[key]?.like as string;
 
   return (
