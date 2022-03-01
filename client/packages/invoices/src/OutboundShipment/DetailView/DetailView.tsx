@@ -13,7 +13,7 @@ import {
 import { toItem } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { OutboundLineEdit } from './modals/OutboundLineEdit';
-import { InvoiceItem } from '../../types';
+import { OutboundItem } from '../../types';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -28,7 +28,7 @@ export const DetailView: FC = () => {
   const t = useTranslation('distribution');
   const navigate = useNavigate();
   const onRowClick = useCallback(
-    (item: OutboundShipmentLineFragment | InvoiceItem) => {
+    (item: OutboundShipmentLineFragment | OutboundItem) => {
       onOpen(toItem(item));
     },
     [toItem, onOpen]

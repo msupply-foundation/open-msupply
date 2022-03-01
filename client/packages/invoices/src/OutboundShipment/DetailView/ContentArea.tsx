@@ -8,7 +8,7 @@ import {
   MiniTable,
   useIsGrouped,
 } from '@openmsupply-client/common';
-import { InvoiceItem } from '../../types';
+import { OutboundItem } from '../../types';
 import { useOutboundRows } from '../api';
 import { useOutboundColumns } from './columns';
 import { OutboundShipmentLineFragment } from '../api/operations.generated';
@@ -18,7 +18,7 @@ interface GeneralTabProps<T> {
 }
 
 const Expand: FC<{
-  rowData: OutboundShipmentLineFragment | InvoiceItem;
+  rowData: OutboundShipmentLineFragment | OutboundItem;
 }> = ({ rowData }) => {
   const columns = useColumns([
     'batch',
@@ -39,7 +39,7 @@ const Expand: FC<{
 };
 
 export const ContentAreaComponent: FC<
-  GeneralTabProps<OutboundShipmentLineFragment | InvoiceItem>
+  GeneralTabProps<OutboundShipmentLineFragment | OutboundItem>
 > = ({ onRowClick }) => {
   const t = useTranslation('distribution');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
