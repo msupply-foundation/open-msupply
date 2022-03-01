@@ -1,3 +1,55 @@
+fragment PartialLocation on LocationNode {
+  id
+  name
+  code
+  onHold
+}
+
+fragment PartialStockLine on StockLineNode {
+  id
+  itemId
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  sellPricePerPack
+  packSize
+  expiryDate
+  location {
+    ...PartialLocation
+  }
+}
+
+fragment PartialItem on ItemNode {
+  id
+  name
+  code
+  unitName
+}
+
+fragment PartialOutboundLine on InvoiceLineNode {
+  __typename
+  id
+  type
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  invoiceId
+  sellPricePerPack
+
+  stockLine {
+    ...PartialStockLine
+  }
+
+  item {
+    ...PartialItem
+  }
+
+  location {
+    ...PartialLocation
+  }
+}
+
 fragment OutboundShipmentLine on InvoiceLineNode {
   __typename
   type

@@ -10,24 +10,30 @@ import {
   ifTheSameElseDefault,
   useCurrency,
 } from '@openmsupply-client/common';
-import { InvoiceLine, InvoiceItem } from '../../types';
+import { OutboundItem } from '../../types';
+import { OutboundShipmentLineFragment } from '../api/operations.generated';
 
 interface UseOutboundColumnOptions {
-  sortBy: SortBy<InvoiceLine | InvoiceItem>;
+  sortBy: SortBy<OutboundShipmentLineFragment | OutboundItem>;
   onChangeSortBy: (
-    column: Column<InvoiceLine | InvoiceItem>
-  ) => SortBy<InvoiceLine | InvoiceItem>;
+    column: Column<OutboundShipmentLineFragment | OutboundItem>
+  ) => SortBy<OutboundShipmentLineFragment | OutboundItem>;
 }
 
-const expansionColumn = getRowExpandColumn<InvoiceLine | InvoiceItem>();
-const notePopoverColumn = getNotePopoverColumn<InvoiceLine | InvoiceItem>();
+const expansionColumn = getRowExpandColumn<
+  OutboundShipmentLineFragment | OutboundItem
+>();
+const notePopoverColumn = getNotePopoverColumn<
+  OutboundShipmentLineFragment | OutboundItem
+>();
 
 export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseOutboundColumnOptions): Column<InvoiceLine | InvoiceItem>[] => {
+}: UseOutboundColumnOptions): Column<
+  OutboundShipmentLineFragment | OutboundItem
+>[] => {
   const { c } = useCurrency();
-
   return useColumns(
     [
       [

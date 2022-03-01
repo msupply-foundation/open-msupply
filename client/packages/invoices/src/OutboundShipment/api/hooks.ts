@@ -24,13 +24,15 @@ import {
   useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
+import { Invoice, OutboundItem } from '../../types';
 import { getOutboundQueries } from './api';
 import { useOutboundColumns } from '../DetailView/columns';
 import {
   getSdk,
   DeleteOutboundShipmentLinesMutation,
   OutboundShipmentRowFragment,
+  OutboundShipmentFragment,
+  OutboundShipmentLineFragment,
 } from './operations.generated';
 import { canDeleteInvoice } from '../../utils';
 
@@ -147,9 +149,11 @@ export const useDeleteSelectedOutbounds = () => {
   return deleteAction;
 };
 
-export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
-  keys: KeyOfInvoice | KeyOfInvoice[]
-): FieldSelectorControl<Invoice, KeyOfInvoice> => {
+export const useOutboundFields = <
+  KeyOfOutbound extends keyof OutboundShipmentFragment
+>(
+  keys: KeyOfOutbound | KeyOfOutbound[]
+): FieldSelectorControl<OutboundShipmentFragment, KeyOfOutbound> => {
   const { data } = useOutbound();
   const api = useOutboundApi();
   const queryKey = useOutboundDetailQueryKey();
@@ -157,7 +161,8 @@ export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
   return useFieldsSelector(
     queryKey,
     () => api.get.byNumber(queryKey[1]),
-    (patch: Partial<Invoice>) => api.update({ ...patch, id: data?.id ?? '' }),
+    (patch: Partial<OutboundShipmentFragment>) =>
+      api.update({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
@@ -172,7 +177,7 @@ export const useIsOutboundDisabled = (): boolean => {
 };
 
 const useOutboundSelector = <ReturnType>(
-  select: (data: Invoice) => ReturnType
+  select: (data: OutboundShipmentFragment) => ReturnType
 ) => {
   const queryKey = useOutboundDetailQueryKey();
   const api = useOutboundApi();
@@ -185,14 +190,14 @@ const useOutboundSelector = <ReturnType>(
 
 export const useOutboundLines = (
   itemId?: string
-): UseQueryResult<InvoiceLine[], unknown> => {
+): UseQueryResult<OutboundShipmentLineFragment[], unknown> => {
   const selectLines = useCallback(
-    (invoice: Invoice) => {
+    (invoice: OutboundShipmentFragment) => {
       return itemId
-        ? invoice.lines.filter(
+        ? invoice.lines.nodes.filter(
             ({ itemId: invoiceLineItemId }) => itemId === invoiceLineItemId
           )
-        : invoice.lines;
+        : invoice.lines.nodes;
     },
     [itemId]
   );
@@ -200,20 +205,24 @@ export const useOutboundLines = (
   return useOutboundSelector(selectLines);
 };
 
-export const useOutboundItems = (): UseQueryResult<InvoiceItem[]> => {
-  const selectLines = useCallback((invoice: Invoice) => {
+export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
+  const selectLines = useCallback((invoice: OutboundShipmentFragment) => {
     const { lines } = invoice;
 
-    return Object.entries(groupBy(lines, 'itemId')).map(([itemId, lines]) => {
-      return { id: itemId, itemId, lines };
-    });
+    return Object.entries(groupBy(lines.nodes, 'itemId')).map(
+      ([itemId, lines]) => {
+        return { id: itemId, itemId, lines };
+      }
+    );
   }, []);
 
   return useOutboundSelector(selectLines);
 };
 
 export const useOutboundRows = (isGrouped = true) => {
-  const { sortBy, onChangeSortBy } = useSortBy<InvoiceLine | InvoiceItem>({
+  const { sortBy, onChangeSortBy } = useSortBy<
+    OutboundShipmentLineFragment | OutboundItem
+  >({
     key: 'itemName',
   });
   const { data: lines } = useOutboundLines();
@@ -231,10 +240,10 @@ export const useOutboundRows = (isGrouped = true) => {
   }, [items, sortBy.key, sortBy.isDesc]);
 
   const sortedLines = useMemo(() => {
-    const sorter = getDataSorter<InvoiceLine, keyof InvoiceLine>(
-      sortBy.key as keyof InvoiceLine,
-      !!sortBy.isDesc
-    );
+    const sorter = getDataSorter<
+      OutboundShipmentLineFragment,
+      keyof OutboundShipmentLineFragment
+    >(sortBy.key as keyof OutboundShipmentLineFragment, !!sortBy.isDesc);
     return [...(lines ?? [])].sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc]);
 
@@ -316,7 +325,7 @@ export const useDeleteSelectedLines = (): {
           Object.keys(state.rowState)
             .filter(id => state.rowState[id]?.isSelected)
             .map(selectedId => items?.find(({ id }) => selectedId === id))
-            .filter(Boolean) as InvoiceItem[]
+            .filter(Boolean) as OutboundItem[]
         )
           .map(({ lines }) => lines)
           .flat()
@@ -328,7 +337,7 @@ export const useDeleteSelectedLines = (): {
           Object.keys(state.rowState)
             .filter(id => state.rowState[id]?.isSelected)
             .map(selectedId => lines.find(({ id }) => selectedId === id))
-            .filter(Boolean) as InvoiceLine[]
+            .filter(Boolean) as OutboundShipmentLineFragment[]
         ).map(({ id }) => id),
       };
     }

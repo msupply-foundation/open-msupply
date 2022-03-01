@@ -137,10 +137,10 @@ describe('useNextItem', () => {
   });
 
   it('eventually equals an object where the next item is equal to the next item in sorted order.', () => {
-    const invoice = getInvoice();
-    invoice.lines.nodes = getLines();
-    const handler = graphql.query('invoice', (_, res, ctx) => {
-      return res(ctx.data({ invoice }));
+    const invoiceByNumber = getInvoice();
+    invoiceByNumber.lines.nodes = getLines();
+    const handler = graphql.query('outboundByNumber', (_, res, ctx) => {
+      return res(ctx.data({ invoiceByNumber }));
     });
     server.use(handler);
     const result = renderHook(() => useNextItem('a'), {
@@ -149,17 +149,17 @@ describe('useNextItem', () => {
 
     return result.waitForNextUpdate().then(() => {
       expect(result.result.current.next).toEqual(
-        expect.objectContaining({ id: invoice.lines.nodes[1]?.id })
+        expect.objectContaining({ id: invoiceByNumber.lines.nodes[1]?.id })
       );
       expect(result.result.current.disabled).toEqual(false);
     });
   });
 
   it('returns a null item and a disabled state when the current item is the "last" of the sorted list of items.', async () => {
-    const handler = graphql.query('invoice', (_, res, ctx) => {
-      const invoice = getInvoice();
-      invoice.lines.nodes = getLines();
-      return res(ctx.data({ invoice }));
+    const handler = graphql.query('outboundByNumber', (_, res, ctx) => {
+      const invoiceByNumber = getInvoice();
+      invoiceByNumber.lines.nodes = getLines();
+      return res(ctx.data({ invoiceByNumber }));
     });
 
     server.use(handler);

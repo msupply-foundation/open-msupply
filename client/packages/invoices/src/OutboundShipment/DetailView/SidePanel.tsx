@@ -28,7 +28,6 @@ const AdditionalInfoSection: FC = () => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          {/* <PanelField>{draft.enteredByName}</PanelField> */}
         </PanelRow>
 
         <PanelRow>
