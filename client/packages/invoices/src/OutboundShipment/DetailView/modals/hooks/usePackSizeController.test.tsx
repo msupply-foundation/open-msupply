@@ -3,153 +3,177 @@ import { createDraftOutboundLine } from './useDraftOutboundLines';
 import { DraftOutboundLine } from 'packages/invoices/src/types';
 import { usePackSizeController } from './usePackSizeController';
 import { act } from '@testing-library/react';
+import { InvoiceLineNodeType } from '@openmsupply-client/common';
+
+type TestLineParams = {
+  id: string;
+  itemId: string;
+  packSize: number;
+  totalNumberOfPacks: number;
+  availableNumberOfPacks: number;
+  numberOfPacks: number;
+  onHold?: boolean;
+};
+
+const createTestLine = ({
+  itemId,
+  packSize,
+  totalNumberOfPacks,
+  availableNumberOfPacks,
+  numberOfPacks,
+  id,
+  onHold = false,
+}: TestLineParams): DraftOutboundLine =>
+  createDraftOutboundLine({
+    invoiceId: '',
+    invoiceLine: {
+      id,
+      sellPricePerPack: 0,
+      item: {
+        id: itemId,
+        code: '',
+        name: '',
+        unitName: '',
+        __typename: 'ItemNode',
+      },
+      type: InvoiceLineNodeType.StockOut,
+      packSize,
+      invoiceId: '',
+      __typename: 'InvoiceLineNode',
+      numberOfPacks,
+      stockLine: {
+        __typename: 'StockLineNode',
+        id: 'a',
+        totalNumberOfPacks,
+        availableNumberOfPacks,
+        onHold,
+        sellPricePerPack: 0,
+        itemId,
+        packSize,
+      },
+    },
+  });
 
 const singlePackSizeLines: DraftOutboundLine[] = [
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '1',
-      packSize: 1,
-      totalNumberOfPacks: 1,
-      availableNumberOfPacks: 1,
-    },
-    invoiceLine: { numberOfPacks: 1 },
+  createTestLine({
+    id: '1',
+    packSize: 1,
+    totalNumberOfPacks: 1,
+    availableNumberOfPacks: 1,
+    numberOfPacks: 1,
+    itemId: '1',
   }),
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '1',
-      packSize: 1,
-      totalNumberOfPacks: 1,
-      availableNumberOfPacks: 1,
-    },
-    invoiceLine: { numberOfPacks: 1 },
+  createTestLine({
+    id: '2',
+    packSize: 1,
+    totalNumberOfPacks: 1,
+    availableNumberOfPacks: 1,
+    numberOfPacks: 1,
+    itemId: '1',
   }),
 ];
 
 const multiplePackSizeLines: DraftOutboundLine[] = [
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '2',
-      packSize: 1,
-      totalNumberOfPacks: 1,
-      availableNumberOfPacks: 1,
-    },
-    invoiceLine: { numberOfPacks: 1 },
+  createTestLine({
+    id: '1',
+    packSize: 1,
+    totalNumberOfPacks: 1,
+    availableNumberOfPacks: 1,
+    numberOfPacks: 1,
+    itemId: '2',
   }),
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '2',
-      packSize: 2,
-      totalNumberOfPacks: 1,
-      availableNumberOfPacks: 1,
-    },
-    invoiceLine: { numberOfPacks: 1 },
+  createTestLine({
+    id: '2',
+    packSize: 2,
+    totalNumberOfPacks: 1,
+    availableNumberOfPacks: 1,
+    numberOfPacks: 1,
+    itemId: '2',
   }),
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '2',
-      packSize: 3,
-      totalNumberOfPacks: 0,
-      availableNumberOfPacks: 0,
-    },
-    invoiceLine: { numberOfPacks: 0 },
+  createTestLine({
+    id: '3',
+    packSize: 3,
+    totalNumberOfPacks: 0,
+    availableNumberOfPacks: 0,
+    numberOfPacks: 0,
+    itemId: '2',
   }),
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '2',
-      packSize: 4,
-      totalNumberOfPacks: 1,
-      availableNumberOfPacks: 1,
-      onHold: true,
-    },
-    invoiceLine: { numberOfPacks: 1 },
+  createTestLine({
+    id: '4',
+    packSize: 4,
+    totalNumberOfPacks: 1,
+    availableNumberOfPacks: 1,
+    numberOfPacks: 1,
+    onHold: true,
+    itemId: '2',
   }),
 ];
 
 const multipleWithOneAssigned: DraftOutboundLine[] = [
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '3',
-      packSize: 1,
-      totalNumberOfPacks: 1,
-      availableNumberOfPacks: 1,
-    },
-    invoiceLine: { numberOfPacks: 1 },
+  createTestLine({
+    id: '1',
+    packSize: 1,
+    totalNumberOfPacks: 1,
+    availableNumberOfPacks: 1,
+    numberOfPacks: 1,
+    itemId: '3',
   }),
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '3',
-      packSize: 2,
-      totalNumberOfPacks: 0,
-      availableNumberOfPacks: 0,
-    },
-    invoiceLine: { numberOfPacks: 0 },
+  createTestLine({
+    id: '2',
+    packSize: 2,
+    totalNumberOfPacks: 0,
+    availableNumberOfPacks: 0,
+    numberOfPacks: 0,
+    itemId: '3',
   }),
 ];
 
 const singleLineWithNoneAssigned: DraftOutboundLine[] = [
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '3',
-      packSize: 2,
-      totalNumberOfPacks: 10,
-      availableNumberOfPacks: 10,
-    },
-    invoiceLine: { numberOfPacks: 0 },
+  createTestLine({
+    id: '1',
+    packSize: 2,
+    totalNumberOfPacks: 10,
+    availableNumberOfPacks: 10,
+    numberOfPacks: 0,
+    itemId: '3',
   }),
 ];
 
 const multipleLinesWithNoneAssigned: DraftOutboundLine[] = [
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '1',
-      packSize: 2,
-      totalNumberOfPacks: 10,
-      availableNumberOfPacks: 10,
-    },
-    invoiceLine: { numberOfPacks: 0 },
+  createTestLine({
+    id: '1',
+    packSize: 2,
+    totalNumberOfPacks: 10,
+    availableNumberOfPacks: 10,
+    numberOfPacks: 0,
+    itemId: '1',
   }),
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '2',
-      packSize: 2,
-      totalNumberOfPacks: 10,
-      availableNumberOfPacks: 10,
-    },
-    invoiceLine: { numberOfPacks: 0 },
+  createTestLine({
+    id: '1',
+    packSize: 2,
+    totalNumberOfPacks: 10,
+    availableNumberOfPacks: 10,
+    numberOfPacks: 0,
+    itemId: '2',
   }),
 ];
 
 const multipleLinesWithNoneAssignedMultiplePackSizes: DraftOutboundLine[] = [
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '1',
-      packSize: 1,
-      totalNumberOfPacks: 10,
-      availableNumberOfPacks: 10,
-    },
-    invoiceLine: { numberOfPacks: 0 },
+  createTestLine({
+    id: '1',
+    packSize: 1,
+    totalNumberOfPacks: 10,
+    availableNumberOfPacks: 10,
+    numberOfPacks: 0,
+    itemId: '1',
   }),
-  createDraftOutboundLine({
-    invoiceId: '',
-    stockLine: {
-      itemId: '2',
-      packSize: 2,
-      totalNumberOfPacks: 10,
-      availableNumberOfPacks: 10,
-    },
-    invoiceLine: { numberOfPacks: 0 },
+  createTestLine({
+    id: '1',
+    packSize: 2,
+    totalNumberOfPacks: 10,
+    availableNumberOfPacks: 10,
+    numberOfPacks: 0,
+    itemId: '2',
   }),
 ];
 

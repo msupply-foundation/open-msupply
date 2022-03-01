@@ -1,5 +1,6 @@
 import {
   OutboundShipmentLineFragment,
+  PartialOutboundLineFragment,
   // OutboundShipmentFragment,
 } from './OutboundShipment/api/operations.generated';
 import { LocationRowFragment } from '@openmsupply-client/system/src/Location/api/operations.generated';
@@ -68,9 +69,7 @@ export interface BatchRow extends StockLine {
   numberOfPacks: number;
 }
 
-export interface DraftOutboundLine
-  extends InvoiceLine,
-    Omit<StockLine, 'expiryDate' | 'location'> {
+export interface DraftOutboundLine extends PartialOutboundLineFragment {
   isCreated: boolean;
   isUpdated: boolean;
 }

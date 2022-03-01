@@ -3,80 +3,90 @@ import {
   generateUUID,
   InvoiceLineNodeType,
   Item,
-  StockLine,
   useConfirmOnLeaving,
   useDirtyCheck,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
-import { InvoiceLine, DraftOutboundLine } from '../../../../types';
+import { DraftOutboundLine } from '../../../../types';
 import { sortByExpiry, issueStock } from '../utils';
 import { useOutboundLines, useOutboundFields } from '../../../api';
+import {
+  PartialOutboundLineFragment,
+  PartialStockLineFragment,
+} from '../../../api/operations.generated';
 
 export const createPlaceholderRow = (
   invoiceId: string,
-  itemId = '',
   id = generateUUID()
 ): DraftOutboundLine => ({
   __typename: 'InvoiceLineNode',
-  availableNumberOfPacks: 0,
-  batch: 'Placeholder',
-  costPricePerPack: 0,
+  batch: '',
   id,
-  itemId,
-  onHold: false,
   packSize: 1,
   sellPricePerPack: 0,
-  storeId: '',
-  totalNumberOfPacks: 0,
   numberOfPacks: 0,
   isCreated: true,
   isUpdated: false,
-  stockLineId: 'placeholder',
   invoiceId,
-  itemCode: '',
-  itemName: '',
   type: InvoiceLineNodeType.UnallocatedStock,
+  item: { id: '', code: '', name: '', __typename: 'ItemNode' },
 });
 
 interface DraftOutboundLineSeeds {
   invoiceId: string;
-  stockLine?: Partial<StockLine> | null;
-  invoiceLine?: Partial<InvoiceLine> | null;
+  invoiceLine: PartialOutboundLineFragment;
 }
 
-export const createDraftOutboundLine = ({
+export const createDraftOutboundLineFromStockLine = ({
   invoiceId,
   stockLine,
-  invoiceLine,
-}: DraftOutboundLineSeeds): DraftOutboundLine => ({
-  __typename: 'InvoiceLineNode',
-  isCreated: !invoiceLine,
+}: {
+  invoiceId: string;
+  stockLine: PartialStockLineFragment;
+}): DraftOutboundLine => ({
+  isCreated: true,
   isUpdated: false,
   type: InvoiceLineNodeType.StockOut,
   numberOfPacks: 0,
-  ...stockLine,
-  ...invoiceLine,
-  id: invoiceLine?.id ?? generateUUID(),
-  availableNumberOfPacks:
-    (stockLine?.availableNumberOfPacks || 0) +
-    (invoiceLine?.numberOfPacks || 0),
-  invoiceId,
-  stockLineId: stockLine?.id ?? '',
-  location: invoiceLine?.location,
-  expiryDate: invoiceLine?.expiryDate || stockLine?.expiryDate,
-  costPricePerPack: stockLine?.costPricePerPack ?? 0,
+  location: stockLine?.location,
+  expiryDate: stockLine?.expiryDate,
   sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
-  itemId: stockLine?.itemId ?? '',
   packSize: stockLine?.packSize ?? 0,
-  onHold: stockLine?.onHold ?? false,
-  storeId: stockLine?.storeId ?? '',
-  totalNumberOfPacks: stockLine?.totalNumberOfPacks ?? 0,
+  id: generateUUID(),
+  invoiceId,
 
-  // TODO: When small changes to the API don't take weeks: Add itemCode and itemName
-  // to StockLineNode so these are accurate. These currently aren't actually
-  // used, so having an empty string is fine.
-  itemCode: invoiceLine?.itemCode ?? '',
-  itemName: invoiceLine?.itemName ?? '',
+  __typename: 'InvoiceLineNode',
+
+  // TODO: StockLineNode.Item needed from API to fill this correctly.
+  item: {
+    id: stockLine?.itemId ?? '',
+    name: '',
+    code: '',
+    __typename: 'ItemNode',
+  },
+
+  stockLine,
+});
+
+export const createDraftOutboundLine = ({
+  invoiceLine,
+}: DraftOutboundLineSeeds): DraftOutboundLine => ({
+  isCreated: !invoiceLine,
+  isUpdated: false,
+  ...invoiceLine,
+  // When creating a draft outbound from an existing outbound line, add the available quantity
+  // to the number of packs. This is because the available quantity has been adjusted for outbound
+  // lines that have been saved.
+  ...(invoiceLine.stockLine
+    ? {
+        stockLine: {
+          ...invoiceLine.stockLine,
+          availableNumberOfPacks:
+            invoiceLine.stockLine.availableNumberOfPacks +
+            invoiceLine.numberOfPacks,
+        },
+      }
+    : {}),
 });
 
 interface UseDraftOutboundLinesControl {
@@ -117,11 +127,17 @@ export const useDraftOutboundLines = (
             ({ stockLine }) => stockLine?.id === batch.id
           );
 
-          return createDraftOutboundLine({
-            invoiceLine,
-            stockLine: batch,
-            invoiceId,
-          });
+          if (invoiceLine) {
+            return createDraftOutboundLine({
+              invoiceLine,
+              invoiceId,
+            });
+          } else {
+            return createDraftOutboundLineFromStockLine({
+              stockLine: batch,
+              invoiceId,
+            });
+          }
         })
         .sort(sortByExpiry);
 

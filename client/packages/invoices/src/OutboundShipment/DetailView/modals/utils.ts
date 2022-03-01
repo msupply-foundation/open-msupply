@@ -40,8 +40,8 @@ export const sumAvailableQuantity = (
   draftOutboundLines: DraftOutboundLine[]
 ) => {
   const sum = draftOutboundLines.reduce(
-    (acc, { availableNumberOfPacks, packSize }) =>
-      acc + availableNumberOfPacks * packSize,
+    (acc, { stockLine, packSize }) =>
+      acc + (stockLine?.availableNumberOfPacks ?? 0) * packSize,
     0
   );
 
@@ -109,10 +109,10 @@ export const allocateQuantities =
     }));
     const validBatches = newDraftOutboundLines
       .filter(
-        ({ expiryDate, packSize, onHold, availableNumberOfPacks }) =>
+        ({ expiryDate, packSize, stockLine }) =>
           (issuePackSize ? packSize === issuePackSize : true) &&
-          availableNumberOfPacks > 0 &&
-          !onHold &&
+          (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
+          !stockLine?.onHold &&
           !(!!expiryDate && isExpired(new Date(expiryDate)))
       )
       .sort(sortByExpiry);
@@ -126,7 +126,8 @@ export const allocateQuantities =
       if (toAllocate < 0) return null;
 
       const availableUnits =
-        draftOutboundLine.availableNumberOfPacks * draftOutboundLine.packSize;
+        (draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0) *
+        draftOutboundLine.packSize;
       const unitsToAllocate = Math.min(toAllocate, availableUnits);
       const allocatedNumberOfPacks = Math.ceil(
         unitsToAllocate / draftOutboundLine.packSize
