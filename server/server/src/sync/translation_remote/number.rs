@@ -83,7 +83,7 @@ impl RemotePushUpsertTranslation for NumberTranslation {
                 changelog,
             ))?;
 
-        let name = match make_number_name(&r#type, &store_id) {
+        let name = match to_number_name(&r#type, &store_id) {
             Some(name) => name,
             None => return Ok(None),
         };
@@ -119,7 +119,7 @@ fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
     Some((number_type, store))
 }
 
-fn make_number_name(number_type: &NumberRowType, store_id: &str) -> Option<String> {
+fn to_number_name(number_type: &NumberRowType, store_id: &str) -> Option<String> {
     let number_str = match number_type {
         NumberRowType::InboundShipment => "supplier_invoice_number",
         NumberRowType::OutboundShipment => "customer_invoice_number",
