@@ -15,15 +15,6 @@ export interface Name extends NameNode {
   isSupplier: boolean;
 }
 
-export interface ItemRow extends DomainObject {
-  id: string;
-  isVisible: boolean;
-  code: string;
-  name: string;
-  availableQuantity: number;
-  unitName?: string;
-}
-
 export interface Item extends ItemNode, DomainObject {
   id: string;
   isVisible: boolean;
