@@ -1,5 +1,7 @@
-import { DraftOutboundLine } from './../../types';
 import {
+  InvoiceNodeType,
+  FilterBy,
+  SortBy,
   UpdateOutboundShipmentUnallocatedLineInput,
   InsertOutboundShipmentUnallocatedLineInput,
   DeleteOutboundShipmentLineInput,
@@ -8,20 +10,66 @@ import {
   InvoiceNodeStatus,
   UpdateOutboundShipmentStatusInput,
   InsertOutboundShipmentLineInput,
+  InsertOutboundShipmentInput,
   UpdateOutboundShipmentLineInput,
   InvoiceLineNodeType,
+  InvoiceSortFieldInput,
 } from '@openmsupply-client/common';
-import { Invoice, InvoiceLine } from '../../types';
-import { getSdk } from './operations.generated';
+import { DraftOutboundLine, Invoice, InvoiceLine } from '../../types';
+import {
+  getSdk,
+  OutboundShipmentRowFragment,
+  Sdk,
+} from './operations.generated';
 
 export type OutboundShipmentApi = ReturnType<typeof getSdk>;
 
 const outboundParsers = {
+  toSortKey: (
+    sortBy: SortBy<OutboundShipmentRowFragment>
+  ): InvoiceSortFieldInput => {
+    switch (sortBy.key) {
+      case 'createdDatetime': {
+        return InvoiceSortFieldInput.CreatedDatetime;
+      }
+      case 'otherPartyName': {
+        return InvoiceSortFieldInput.OtherPartyName;
+      }
+      case 'comment': {
+        return InvoiceSortFieldInput.Comment;
+      }
+      case 'invoiceNumber': {
+        return InvoiceSortFieldInput.InvoiceNumber;
+      }
+      case 'status':
+      default: {
+        return InvoiceSortFieldInput.Status;
+      }
+    }
+  },
+  toStatus: (patch: RecordPatch<Invoice>) => {
+    switch (patch.status) {
+      case InvoiceNodeStatus.Allocated:
+        return UpdateOutboundShipmentStatusInput.Allocated;
+      case InvoiceNodeStatus.Picked:
+        return UpdateOutboundShipmentStatusInput.Picked;
+      case InvoiceNodeStatus.Shipped:
+        return UpdateOutboundShipmentStatusInput.Shipped;
+      default:
+        return undefined;
+    }
+  },
+  toInsert: (
+    patch: Partial<OutboundShipmentRowFragment>
+  ): InsertOutboundShipmentInput => ({
+    id: patch.id ?? '',
+    otherPartyId: patch.otherPartyId ?? '',
+  }),
   toUpdate: (patch: RecordPatch<Invoice>): UpdateOutboundShipmentInput => ({
     id: patch.id,
     colour: patch.colour,
     comment: patch.comment,
-    status: getPatchStatus(patch),
+    status: outboundParsers.toStatus(patch),
     onHold: patch.onHold,
     otherPartyId: patch.otherParty?.id,
     theirReference: patch.theirReference,
@@ -68,120 +116,169 @@ const outboundParsers = {
   }),
 };
 
-const getPatchStatus = (patch: RecordPatch<Invoice>) => {
-  switch (patch.status) {
-    case InvoiceNodeStatus.Allocated:
-      return UpdateOutboundShipmentStatusInput.Allocated;
-    case InvoiceNodeStatus.Picked:
-      return UpdateOutboundShipmentStatusInput.Picked;
-    case InvoiceNodeStatus.Shipped:
-      return UpdateOutboundShipmentStatusInput.Shipped;
-    default:
-      return undefined;
-  }
-};
-
-export const OutboundApi = {
+export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    byId:
-      (api: OutboundShipmentApi, storeId: string) =>
-      async (id: string): Promise<Invoice> => {
-        const result = await api.invoice({ id, storeId });
-        const invoice = result.invoice;
-
-        if (invoice.__typename === 'InvoiceNode') {
-          const lineNodes = invoice.lines;
-          const lines: InvoiceLine[] = lineNodes.nodes.map(line => {
-            return {
-              ...line,
-              stockLineId: line.stockLine?.id ?? '',
-              invoiceId: invoice.id,
-              unitName: line.item?.unitName ?? '',
-            };
-          });
-
-          return {
-            ...invoice,
-            lines,
-          };
-        } else {
-          throw new Error('Could not find invoice');
-        }
-      },
-  },
-  update:
-    (api: OutboundShipmentApi, storeId: string) =>
-    async (patch: RecordPatch<Invoice>): Promise<RecordPatch<Invoice>> => {
-      const result = await api.upsertOutboundShipment({
-        storeId,
-        input: {
-          updateOutboundShipments: [outboundParsers.toUpdate(patch)],
-        },
-      });
-
-      const { batchOutboundShipment } = result;
-
-      if (
-        batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse'
-      ) {
-        const { updateOutboundShipments } = batchOutboundShipment;
-        if (
-          updateOutboundShipments?.[0]?.__typename ===
-          'UpdateOutboundShipmentResponseWithId'
-        ) {
-          return patch;
-        }
-      }
-
-      throw new Error('Unable to update invoice');
-    },
-  updateLines:
-    (api: OutboundShipmentApi, storeId: string) =>
-    async (draftStocktakeLines: DraftOutboundLine[]) => {
-      const filtered = draftStocktakeLines.filter(
-        ({ numberOfPacks }) => numberOfPacks > 0
-      );
-      const input = {
-        insertOutboundShipmentLines: filtered
-          .filter(
-            ({ type, isCreated }) =>
-              isCreated && type === InvoiceLineNodeType.StockOut
-          )
-          .map(outboundParsers.toInsertLine),
-        updateOutboundShipmentLines: filtered
-          .filter(
-            ({ type, isCreated, isUpdated }) =>
-              !isCreated && isUpdated && type === InvoiceLineNodeType.StockOut
-          )
-          .map(outboundParsers.toUpdateLine),
-        insertOutboundShipmentUnallocatedLines: filtered
-          .filter(
-            ({ type, isCreated }) =>
-              type === InvoiceLineNodeType.UnallocatedStock && isCreated
-          )
-          .map(outboundParsers.toInsertPlaceholder),
-        updateOutboundShipmentUnallocatedLines: filtered
-          .filter(
-            ({ type, isCreated, isUpdated }) =>
-              type === InvoiceLineNodeType.UnallocatedStock &&
-              !isCreated &&
-              isUpdated
-          )
-          .map(outboundParsers.toUpdatePlaceholder),
+    list: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: {
+      first: number;
+      offset: number;
+      sortBy: SortBy<OutboundShipmentRowFragment>;
+      filterBy: FilterBy | null;
+    }): Promise<{
+      nodes: OutboundShipmentRowFragment[];
+      totalCount: number;
+    }> => {
+      const filter = {
+        ...filterBy,
+        type: { equalTo: InvoiceNodeType.OutboundShipment },
       };
-
-      const result = await api.upsertOutboundShipment({ storeId, input });
-
-      return result;
-    },
-  deleteLines:
-    (api: OutboundShipmentApi, invoiceId: string, storeId: string) =>
-    async (ids: string[]) => {
-      return api.deleteOutboundShipmentLines({
+      const result = await sdk.invoices({
+        first,
+        offset,
+        key: outboundParsers.toSortKey(sortBy),
+        desc: !!sortBy.isDesc,
+        filter,
         storeId,
-        deleteOutboundShipmentLines: ids.map(id =>
-          outboundParsers.toDeleteLine(invoiceId, id)
-        ),
       });
+      return result.invoices;
     },
-};
+    byId: async (id: string): Promise<Invoice> => {
+      const result = await sdk.invoice({ id, storeId });
+      const invoice = result.invoice;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        const lineNodes = invoice.lines;
+        const lines: InvoiceLine[] = lineNodes.nodes.map(line => {
+          return {
+            ...line,
+            stockLineId: line.stockLine?.id ?? '',
+            invoiceId: invoice.id,
+            unitName: line.item?.unitName ?? '',
+          };
+        });
+
+        return {
+          ...invoice,
+          lines,
+        };
+      } else {
+        throw new Error('Could not find invoice');
+      }
+    },
+  },
+  insert: async (
+    invoice: Partial<OutboundShipmentRowFragment>
+  ): Promise<string> => {
+    const result = await sdk.insertOutboundShipment({
+      id: invoice.id ?? '',
+      otherPartyId: invoice?.otherPartyId ?? '',
+      storeId,
+    });
+
+    const { insertOutboundShipment } = result;
+
+    if (insertOutboundShipment.__typename === 'InvoiceNode') {
+      return insertOutboundShipment.id;
+    }
+
+    throw new Error('Could not insert invoice');
+  },
+  delete: async (
+    invoices: OutboundShipmentRowFragment[]
+  ): Promise<string[]> => {
+    const result = await sdk.deleteOutboundShipments({
+      storeId,
+      deleteOutboundShipments: invoices.map(invoice => invoice.id),
+    });
+
+    const { batchOutboundShipment } = result;
+    if (batchOutboundShipment.deleteOutboundShipments) {
+      return batchOutboundShipment.deleteOutboundShipments.map(({ id }) => id);
+    }
+
+    throw new Error('Could not delete invoices');
+  },
+  update: async (
+    patch: RecordPatch<Invoice>
+  ): Promise<RecordPatch<Invoice>> => {
+    const result = await sdk.upsertOutboundShipment({
+      storeId,
+      input: {
+        updateOutboundShipments: [outboundParsers.toUpdate(patch)],
+      },
+    });
+
+    const { batchOutboundShipment } = result;
+
+    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+      const { updateOutboundShipments } = batchOutboundShipment;
+      if (
+        updateOutboundShipments?.[0]?.__typename ===
+        'UpdateOutboundShipmentResponseWithId'
+      ) {
+        return patch;
+      }
+    }
+
+    throw new Error('Unable to update invoice');
+  },
+  updateLines: async (draftStocktakeLines: DraftOutboundLine[]) => {
+    const filtered = draftStocktakeLines.filter(
+      ({ numberOfPacks }) => numberOfPacks > 0
+    );
+    const input = {
+      insertOutboundShipmentLines: filtered
+        .filter(
+          ({ type, isCreated }) =>
+            isCreated && type === InvoiceLineNodeType.StockOut
+        )
+        .map(outboundParsers.toInsertLine),
+      updateOutboundShipmentLines: filtered
+        .filter(
+          ({ type, isCreated, isUpdated }) =>
+            !isCreated && isUpdated && type === InvoiceLineNodeType.StockOut
+        )
+        .map(outboundParsers.toUpdateLine),
+      insertOutboundShipmentUnallocatedLines: filtered
+        .filter(
+          ({ type, isCreated }) =>
+            type === InvoiceLineNodeType.UnallocatedStock && isCreated
+        )
+        .map(outboundParsers.toInsertPlaceholder),
+      updateOutboundShipmentUnallocatedLines: filtered
+        .filter(
+          ({ type, isCreated, isUpdated }) =>
+            type === InvoiceLineNodeType.UnallocatedStock &&
+            !isCreated &&
+            isUpdated
+        )
+        .map(outboundParsers.toUpdatePlaceholder),
+    };
+
+    const result = await sdk.upsertOutboundShipment({ storeId, input });
+
+    return result;
+  },
+  deleteLines: (invoiceId: string) => async (ids: string[]) => {
+    return sdk.deleteOutboundShipmentLines({
+      storeId,
+      deleteOutboundShipmentLines: ids.map(id =>
+        outboundParsers.toDeleteLine(invoiceId, id)
+      ),
+    });
+  },
+  dashboard: {
+    shipmentCount: async (): Promise<{
+      toBePicked: number;
+    }> => {
+      const result = await sdk.invoiceCounts({ storeId });
+      return {
+        toBePicked: result.invoiceCounts.outbound.toBePicked ?? 0,
+      };
+    },
+  },
+});

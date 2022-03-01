@@ -1,61 +1,22 @@
-import React, { FC, useEffect, useRef } from 'react';
+import React, { FC } from 'react';
 import {
-  useNotification,
   DropdownMenu,
   DropdownMenuItem,
   useTranslation,
   DeleteIcon,
-  useTableStore,
   AppBarContentPortal,
   SearchBar,
   FilterController,
 } from '@openmsupply-client/common';
 import { InvoiceRow } from '../../types';
-import { canDeleteInvoice } from '../../utils';
-import { OutboundShipmentRowFragment } from '../api/operations.generated';
+import { useDeleteSelectedOutbounds } from '../api';
 
 export const Toolbar: FC<{
-  onDelete: (toDelete: OutboundShipmentRowFragment[]) => void;
   filter: FilterController;
-  data?: OutboundShipmentRowFragment[];
-}> = ({ onDelete, data, filter }) => {
+}> = ({ filter }) => {
   const t = useTranslation('distribution');
 
-  const { success, info } = useNotification();
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as OutboundShipmentRowFragment[],
-  }));
-
-  const deleteAction = () => {
-    const numberSelected = selectedRows.length;
-    if (selectedRows && numberSelected > 0) {
-      const canDeleteRows = selectedRows.every(canDeleteInvoice);
-      if (!canDeleteRows) {
-        const cannotDeleteSnack = info(t('messages.cant-delete-invoices'));
-        cannotDeleteSnack();
-      } else {
-        onDelete(selectedRows);
-        const deletedMessage = t('messages.deleted-invoices', {
-          number: numberSelected,
-        });
-        const successSnack = success(deletedMessage);
-        successSnack();
-      }
-    } else {
-      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
-      selectRowsSnack();
-    }
-  };
-
-  const ref = useRef(deleteAction);
-
-  useEffect(() => {
-    ref.current = deleteAction;
-  }, [selectedRows]);
+  const onDelete = useDeleteSelectedOutbounds();
 
   const key = 'comment' as keyof InvoiceRow;
   const filterString = filter.filterBy?.[key]?.like as string;
@@ -78,7 +39,7 @@ export const Toolbar: FC<{
       />
 
       <DropdownMenu label="Select">
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
           {t('button.delete-lines')}
         </DropdownMenuItem>
       </DropdownMenu>

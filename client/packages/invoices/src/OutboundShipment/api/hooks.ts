@@ -1,5 +1,9 @@
 import { useMemo, useCallback } from 'react';
 import {
+  RouteBuilder,
+  useQueryParams,
+  useNavigate,
+  useAuthState,
   useTranslation,
   useNotification,
   useQueryClient,
@@ -18,19 +22,24 @@ import {
   useMutation,
   UseMutationResult,
   useTableStore,
-  useQueryParams,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { Invoice, InvoiceLine, InvoiceItem } from '../../types';
-import { OutboundApi } from './api';
+import { getOutboundQueries } from './api';
 import { useOutboundColumns } from '../DetailView/columns';
 import {
   getSdk,
   DeleteOutboundShipmentLinesMutation,
+  OutboundShipmentRowFragment,
 } from './operations.generated';
+import { canDeleteInvoice } from '../../utils';
 
-export const useOutboundShipmentApi = () => {
+export const useOutboundApi = () => {
   const { client } = useOmSupplyApi();
-  return getSdk(client);
+  const sdk = getSdk(client);
+  const { storeId } = useAuthState();
+  const queries = getOutboundQueries(sdk, storeId);
+  return { ...queries, storeId };
 };
 
 export const useOutboundDetailQueryKey = (): ['invoice', string] => {
@@ -38,28 +47,112 @@ export const useOutboundDetailQueryKey = (): ['invoice', string] => {
   return ['invoice', id];
 };
 
+export const useOutbounds = () => {
+  const queryParams = useQueryParams<OutboundShipmentRowFragment>({
+    initialSortBy: { key: 'otherPartyName' },
+  });
+  const api = useOutboundApi();
+
+  return {
+    ...useQuery(['invoice', 'list', api.storeId, queryParams], () =>
+      api.get.list({
+        first: queryParams.first,
+        offset: queryParams.offset,
+        sortBy: queryParams.sortBy,
+        filterBy: queryParams.filter.filterBy,
+      })
+    ),
+    ...queryParams,
+  };
+};
+
 export const useOutbound = (): UseQueryResult<Invoice> => {
   const { id = '' } = useParams();
-  const api = useOutboundShipmentApi();
+  const api = useOutboundApi();
   const queryKey = useOutboundDetailQueryKey();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
 
-  return useQuery(queryKey, () => OutboundApi.get.byId(api, storeId)(id));
+  return useQuery(queryKey, () => api.get.byId(id));
+};
+
+export const useUpdateOutbound = () => {
+  const queryClient = useQueryClient();
+  const api = useOutboundApi();
+  return useMutation(api.update, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['invoice']);
+    },
+  });
+};
+
+export const useCreateOutbound = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const api = useOutboundApi();
+  return useMutation(api.insert, {
+    onSuccess: invoiceNumber => {
+      const route = RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.OutboundShipment)
+        .addPart(String(invoiceNumber))
+        .build();
+      navigate(route, { replace: true });
+      queryClient.invalidateQueries(['invoice']);
+    },
+  });
+};
+
+export const useDeleteSelectedOutbounds = () => {
+  const queryClient = useQueryClient();
+  const { data: rows } = useOutbounds();
+  const api = useOutboundApi();
+  const { mutate } = useMutation(api.delete);
+  const t = useTranslation('replenishment');
+
+  const { success, info } = useNotification();
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as OutboundShipmentRowFragment[],
+  }));
+
+  const deleteAction = () => {
+    const numberSelected = selectedRows.length;
+    if (selectedRows && numberSelected > 0) {
+      const canDeleteRows = selectedRows.every(canDeleteInvoice);
+      if (!canDeleteRows) {
+        const cannotDeleteSnack = info(t('messages.cant-delete-invoices'));
+        cannotDeleteSnack();
+      } else {
+        mutate(selectedRows, {
+          onSuccess: () => queryClient.invalidateQueries(['invoice']),
+        });
+        const deletedMessage = t('messages.deleted-invoices', {
+          number: numberSelected,
+        });
+        const successSnack = success(deletedMessage);
+        successSnack();
+      }
+    } else {
+      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
+      selectRowsSnack();
+    }
+  };
+
+  return deleteAction;
 };
 
 export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
   keys: KeyOfInvoice | KeyOfInvoice[]
 ): FieldSelectorControl<Invoice, KeyOfInvoice> => {
-  const { id = '' } = useParams();
-  const api = useOutboundShipmentApi();
+  const { data } = useOutbound();
+  const api = useOutboundApi();
   const queryKey = useOutboundDetailQueryKey();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
 
   return useFieldsSelector(
     queryKey,
-    () => OutboundApi.get.byId(api, storeId)(id),
-    (patch: Partial<Invoice>) =>
-      OutboundApi.update(api, storeId)({ ...patch, id }),
+    () => api.get.byId(data?.id ?? ''),
+    (patch: Partial<Invoice>) => api.update({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
@@ -77,13 +170,8 @@ const useOutboundSelector = <ReturnType>(
   select: (data: Invoice) => ReturnType
 ) => {
   const queryKey = useOutboundDetailQueryKey();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
-  const api = useOutboundShipmentApi();
-  return useQuerySelector(
-    queryKey,
-    () => OutboundApi.get.byId(api, storeId)(queryKey[1]),
-    select
-  );
+  const api = useOutboundApi();
+  return useQuerySelector(queryKey, () => api.get.byId(queryKey[1]), select);
 };
 
 export const useOutboundLines = (
@@ -155,9 +243,8 @@ export const useOutboundRows = (isGrouped = true) => {
 export const useSaveOutboundLines = () => {
   const queryKey = useOutboundDetailQueryKey();
   const queryClient = useQueryClient();
-  const api = useOutboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
-  return useMutation(OutboundApi.updateLines(api, storeId), {
+  const api = useOutboundApi();
+  return useMutation(api.updateLines, {
     onSuccess: () => {
       queryClient.invalidateQueries(queryKey);
     },
@@ -173,18 +260,18 @@ export const useDeleteInboundLine = (): UseMutationResult<
   // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
   // input object should not require the invoice ID. Waiting for an API change.
   const { id = '' } = useParams();
+  const queryKey = useOutboundDetailQueryKey();
   const queryClient = useQueryClient();
-  const api = useOutboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
-  const mutation = OutboundApi.deleteLines(api, id, storeId);
-  return useMutation(mutation, {
-    onMutate: async (ids: string[]) => {
-      await queryClient.cancelQueries(['invoice', id]);
+  const api = useOutboundApi();
 
-      const previous = queryClient.getQueryData<Invoice>(['invoice', id]);
+  return useMutation(api.deleteLines(id), {
+    onMutate: async (ids: string[]) => {
+      await queryClient.cancelQueries(queryKey);
+
+      const previous = queryClient.getQueryData<Invoice>(queryKey);
 
       if (previous) {
-        queryClient.setQueryData<Invoice>(['invoice', id], {
+        queryClient.setQueryData<Invoice>(queryKey, {
           ...previous,
           lines: previous.lines.filter(
             ({ id: lineId }) => !ids.includes(lineId)
@@ -195,10 +282,10 @@ export const useDeleteInboundLine = (): UseMutationResult<
       return { previous, ids };
     },
     onError: (_, __, context) => {
-      queryClient.setQueryData(['invoice', id], context?.previous);
+      queryClient.setQueryData(queryKey, context?.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['invoice', id]);
+      queryClient.invalidateQueries(queryKey);
     },
   });
 };
