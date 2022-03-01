@@ -98,7 +98,7 @@ export const ItemsWithStockLinesDocument = gql`
 export const ItemsListViewDocument = gql`
     query itemsListView($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
   items(
-    store: $storeId
+    storeId: $storeId
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter

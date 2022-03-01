@@ -31,7 +31,7 @@ export const RequestLineEdit = ({
   const [currentItem, setCurrentItem] = useBufferState(item);
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentItem);
-  const { next, isDisabled } = useNextRequestLine(currentItem);
+  const { next, hasNext } = useNextRequestLine(currentItem);
 
   return (
     <Modal
@@ -40,7 +40,7 @@ export const RequestLineEdit = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={isDisabled || mode === ModalMode.Create}
+          disabled={!hasNext || mode === ModalMode.Create}
           variant="next"
           onClick={() => {
             next && setCurrentItem(next);

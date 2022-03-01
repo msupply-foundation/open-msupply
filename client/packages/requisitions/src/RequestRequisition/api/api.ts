@@ -190,6 +190,6 @@ export const RequestRequisitionQueries = {
 
       if (success) return results;
 
-      throw new Error('Could not delete requisition');
+      throw new Error('Could not delete requisitions');
     },
 };
