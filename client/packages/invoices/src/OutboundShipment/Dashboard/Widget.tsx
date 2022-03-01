@@ -12,7 +12,7 @@ import {
   StatsPanel,
   Widget,
   useNavigate,
-  useAuthState,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { getOutboundShipmentCountQueryFn } from './api';
 import { useOutboundShipmentApi } from '../api';
@@ -22,7 +22,7 @@ export const OutboundShipmentWidget: React.FC = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const t = useTranslation(['app', 'dashboard']);
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
 
   const api = useOutboundShipmentApi();
   const { onCreate, invalidate } = useListData(

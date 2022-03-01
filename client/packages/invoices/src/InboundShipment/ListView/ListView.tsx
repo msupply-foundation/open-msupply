@@ -11,7 +11,7 @@ import {
   useNotification,
   generateUUID,
   useTranslation,
-  useAuthState,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { getInboundShipmentListViewApi } from './api';
 import { NameSearchModal } from '@openmsupply-client/system';
@@ -25,7 +25,7 @@ export const InboundListView: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const api = useInboundShipmentApi();
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const {
     totalCount,
     data,

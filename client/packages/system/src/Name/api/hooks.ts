@@ -2,7 +2,7 @@ import {
   useQueryParams,
   useOmSupplyApi,
   Name,
-  useAuthState,
+  useAuthContext,
   useQuery,
   UseQueryResult,
 } from '@openmsupply-client/common';
@@ -10,7 +10,7 @@ import { getNameQueries } from './api';
 import { getSdk } from './operations.generated';
 
 const useNamesApi = () => {
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const { client } = useOmSupplyApi();
   const queries = getNameQueries(getSdk(client), storeId);
   return { ...queries, storeId };
