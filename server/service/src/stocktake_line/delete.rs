@@ -16,6 +16,7 @@ pub enum DeleteStocktakeLineError {
     InvalidStore,
     StocktakeLineDoesNotExist,
     CannotEditFinalised,
+    StocktakeIsLocked,
 }
 
 fn validate(
@@ -36,6 +37,11 @@ fn validate(
             )))
         }
     };
+
+    if stocktake.is_locked {
+        return Err(DeleteStocktakeLineError::StocktakeIsLocked);
+    }
+
     if !check_stocktake_not_finalised(&stocktake.status) {
         return Err(DeleteStocktakeLineError::CannotEditFinalised);
     }
@@ -71,8 +77,8 @@ impl From<RepositoryError> for DeleteStocktakeLineError {
 mod stocktake_line_test {
     use repository::{
         mock::{
-            mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a, mock_store_b,
-            MockDataInserts,
+            mock_locked_stocktake_line, mock_stocktake_line_a, mock_stocktake_line_finalised,
+            mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
     };
@@ -118,6 +124,14 @@ mod stocktake_line_test {
             .delete_stocktake_line(&context, &store_a.id, &existing_line.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeLineError::CannotEditFinalised);
+
+        // error StocktakeIsLocked
+        let store_a = mock_store_a();
+        let existing_line = mock_locked_stocktake_line();
+        let error = service
+            .delete_stocktake_line(&context, &store_a.id, &existing_line.id)
+            .unwrap_err();
+        assert_eq!(error, DeleteStocktakeLineError::StocktakeIsLocked);
 
         // success
         let store_a = mock_store_a();

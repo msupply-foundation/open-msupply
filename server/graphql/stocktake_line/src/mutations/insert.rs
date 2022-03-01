@@ -94,6 +94,10 @@ pub fn do_insert_stocktake_line(
                 InsertStocktakeLineError::CannotEditFinalised => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                // TODO should be standard error
+                InsertStocktakeLineError::StocktakeIsLocked => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 InsertStocktakeLineError::StockLineXOrItem => {
                     StandardGraphqlError::BadUserInput(format!(
                         "Either a stock line id or item id must be set (not both), {:#?}",
@@ -147,7 +151,9 @@ fn to_domain(
 mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{
         mock::{mock_location_1, mock_stock_line_a, MockDataInserts},
         schema::StocktakeLineRow,
@@ -212,6 +218,40 @@ mod test {
             }
         }"#;
 
+        let variables = Some(json!({
+            "storeId": "store id",
+            "input": {
+                "id": "id1",
+                "stocktakeId": "stocktake id",
+                "stockLineId": "stock line id",
+                "locationId": "location id",
+                "countedNumberOfPacks": 20,
+                "comment": "comment",
+                "itemId": "item id",
+                "batch": "batch",
+                "expiryDate": "2023-01-22",
+                "packSize": 10,
+                "costPricePerPack": 10.0,
+                "sellPricePerPack": 12.0,
+                "note": "note"
+            }
+        }));
+
+        // Stocktake is locked mapping
+        let test_service = TestService(Box::new(|_, _, _| {
+            Err(InsertStocktakeLineError::StocktakeIsLocked)
+        }));
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
         // success
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(StocktakeLine {
@@ -235,24 +275,7 @@ mod test {
                 location: Some(mock_location_1()),
             })
         }));
-        let variables = Some(json!({
-            "storeId": "store id",
-            "input": {
-                "id": "id1",
-                "stocktakeId": "stocktake id",
-                "stockLineId": "stock line id",
-                "locationId": "location id",
-                "countedNumberOfPacks": 20,
-                "comment": "comment",
-                "itemId": "item id",
-                "batch": "batch",
-                "expiryDate": "2023-01-22",
-                "packSize": 10,
-                "costPricePerPack": 10.0,
-                "sellPricePerPack": 12.0,
-                "note": "note"
-            }
-        }));
+
         let expected = json!({
             "insertStocktakeLine": {
               "id": "id1",

@@ -1,12 +1,11 @@
 use chrono::NaiveDateTime;
-use repository::schema::StocktakeStatus;
 use repository::EqualFilter;
 use repository::{
     schema::{NumberRowType, StocktakeRow},
     RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository, StocktakeRowRepository,
     StorageConnection,
 };
-use util::inline_init;
+use util::{inline_init, Defaults};
 
 use crate::{number::next_number, service_provider::ServiceContext, validate::check_store_exists};
 
@@ -17,6 +16,7 @@ pub struct InsertStocktakeInput {
     pub comment: Option<String>,
     pub description: Option<String>,
     pub created_datetime: NaiveDateTime,
+    pub is_locked: Option<bool>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -58,6 +58,7 @@ fn generate(
         comment,
         description,
         created_datetime,
+        is_locked,
     }: InsertStocktakeInput,
 ) -> Result<StocktakeRow, RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
@@ -69,7 +70,7 @@ fn generate(
         r.description = description;
         r.created_datetime = created_datetime;
         r.store_id = store_id.to_string();
-        r.status = StocktakeStatus::New
+        r.is_locked = is_locked.unwrap_or(false);
     }))
 }
 
@@ -100,13 +101,26 @@ impl From<RepositoryError> for InsertStocktakeError {
     }
 }
 
+impl Default for InsertStocktakeInput {
+    fn default() -> Self {
+        Self {
+            created_datetime: Defaults::naive_date_time(),
+            id: Default::default(),
+            comment: Default::default(),
+            description: Default::default(),
+            is_locked: Default::default(),
+        }
+    }
+}
+
 #[cfg(test)]
-mod stocktake_test {
+mod test {
     use chrono::Utc;
     use repository::{
         mock::{mock_stocktake_a, mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
+    use util::inline_init;
 
     use crate::{
         service_provider::ServiceProvider,
@@ -129,12 +143,10 @@ mod stocktake_test {
             .insert_stocktake(
                 &context,
                 &store_a.id,
-                InsertStocktakeInput {
-                    id: existing_stocktake.id,
-                    comment: None,
-                    description: None,
-                    created_datetime: Utc::now().naive_utc(),
-                },
+                inline_init(|i: &mut InsertStocktakeInput| {
+                    i.id = existing_stocktake.id;
+                    i.created_datetime = Utc::now().naive_utc();
+                }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeError::StocktakeAlreadyExists);
@@ -149,6 +161,7 @@ mod stocktake_test {
                     comment: None,
                     description: None,
                     created_datetime: Utc::now().naive_utc(),
+                    is_locked: None,
                 },
             )
             .unwrap_err();
@@ -160,12 +173,10 @@ mod stocktake_test {
             .insert_stocktake(
                 &context,
                 &store_a.id,
-                InsertStocktakeInput {
-                    id: "new_stocktake".to_string(),
-                    comment: None,
-                    description: None,
-                    created_datetime: Utc::now().naive_utc(),
-                },
+                inline_init(|i: &mut InsertStocktakeInput| {
+                    i.id = "new_stocktake".to_string();
+                    i.created_datetime = Utc::now().naive_utc();
+                }),
             )
             .unwrap();
     }

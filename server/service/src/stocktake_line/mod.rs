@@ -15,6 +15,7 @@ pub mod insert;
 pub mod query;
 pub mod update;
 pub mod validate;
+
 pub trait StocktakeLineServiceTrait: Sync + Send {
     fn get_stocktake_lines(
         &self,

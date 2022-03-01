@@ -10,7 +10,6 @@ pub fn mock_stocktake_without_lines() -> StocktakeRow {
         r.id = "stocktake_without_lines".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 1;
-        r.status = StocktakeStatus::New;
         r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 30, 0, 0);
     })
 }
@@ -49,6 +48,27 @@ pub fn mock_stocktake_line_finalised() -> StocktakeLineRow {
     })
 }
 
+// locked
+
+pub fn mock_locked_stocktake() -> StocktakeRow {
+    inline_init(|r: &mut StocktakeRow| {
+        r.id = "locked_stocktake".to_string();
+        r.store_id = "store_a".to_string();
+        r.status = StocktakeStatus::New;
+        r.is_locked = true;
+    })
+}
+
+pub fn mock_locked_stocktake_line() -> StocktakeLineRow {
+    let stock_line = mock_stock_line_a();
+    inline_init(|r: &mut StocktakeLineRow| {
+        r.id = "locked stocktake_line_row".to_string();
+        r.stocktake_id = mock_locked_stocktake().id;
+        r.stock_line_id = Some(stock_line.id);
+        r.item_id = stock_line.item_id;
+    })
+}
+
 // stock surplus
 
 pub fn mock_stocktake_stock_surplus() -> StocktakeRow {
@@ -56,7 +76,6 @@ pub fn mock_stocktake_stock_surplus() -> StocktakeRow {
         r.id = "mock_stocktake_stock_surplus".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 4;
-        r.status = StocktakeStatus::New;
         r.created_datetime = NaiveDate::from_ymd(2021, 12, 22).and_hms_milli(12, 31, 0, 0);
     })
 }
@@ -98,7 +117,6 @@ pub fn mock_stocktake_stock_deficit() -> StocktakeRow {
         r.id = "mock_stocktake_stock_deficit".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 1;
-        r.status = StocktakeStatus::New;
         r.created_datetime = NaiveDate::from_ymd(2021, 12, 22).and_hms_milli(12, 31, 0, 0);
     })
 }
@@ -140,7 +158,6 @@ pub fn mock_stocktake_no_lines() -> StocktakeRow {
         r.id = "mock_stocktake_no_lines".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 5;
-        r.status = StocktakeStatus::New;
         r.created_datetime = NaiveDate::from_ymd(2022, 1, 6).and_hms_milli(15, 31, 0, 0);
     })
 }
@@ -152,7 +169,6 @@ pub fn mock_stocktake_no_count_change() -> StocktakeRow {
         r.id = "mock_stocktake_no_count_change".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 8;
-        r.status = StocktakeStatus::New;
         r.created_datetime = NaiveDate::from_ymd(2022, 1, 6).and_hms_milli(16, 31, 0, 0);
     })
 }
@@ -178,7 +194,6 @@ pub fn mock_stocktake_full_edit() -> StocktakeRow {
         r.stocktake_number = 6;
         r.comment = Some("comment_0".to_string());
         r.description = Some("description_0".to_string());
-        r.status = StocktakeStatus::New;
         r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 32, 0, 0);
     })
 }
@@ -190,7 +205,6 @@ pub fn mock_stocktake_new_stock_line() -> StocktakeRow {
         r.id = "mock_stocktake_new_stock_line".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 7;
-        r.status = StocktakeStatus::New;
         r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 33, 0, 0);
     })
 }
@@ -221,6 +235,7 @@ pub fn test_stocktake_data() -> MockData {
         mock_stocktake_no_count_change(),
         mock_stocktake_full_edit(),
         mock_stocktake_new_stock_line(),
+        mock_locked_stocktake(),
     ];
     data.stocktake_lines = vec![
         mock_stocktake_line_finalised(),
@@ -228,6 +243,7 @@ pub fn test_stocktake_data() -> MockData {
         mock_stocktake_line_stock_deficit(),
         mock_stocktake_line_no_count_change(),
         mock_stocktake_line_new_stock_line(),
+        mock_locked_stocktake_line(),
     ];
     data.stock_lines = vec![
         mock_stock_line_stocktake_surplus(),
