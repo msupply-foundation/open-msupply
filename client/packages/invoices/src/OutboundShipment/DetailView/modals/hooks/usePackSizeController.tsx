@@ -13,8 +13,8 @@ const distinctSortedPackSizes = (lines: DraftOutboundLine[]): number[] =>
     new Set(
       lines
         .filter(
-          ({ onHold, availableNumberOfPacks }) =>
-            availableNumberOfPacks > 0 && !onHold
+          ({ stockLine }) =>
+            (stockLine?.availableNumberOfPacks ?? 0) > 0 && !stockLine?.onHold
         )
         .reduce((sizes, { packSize }) => [...sizes, packSize], [] as number[])
         .sort((a: number, b: number) => a - b)
@@ -54,7 +54,8 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
     | undefined
   >();
 
-  const itemId = ifTheSameElseDefault(lines, 'itemId', '');
+  const items = lines.map(({ item }) => item);
+  const itemId = ifTheSameElseDefault(items, 'id', '');
   useEffect(() => {
     setSelected(undefined);
   }, [itemId]);

@@ -50,7 +50,10 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
         <NumericTextInput
           onChange={event => {
             const value = Math.max(Number(event.target.value), 0);
-            const newValue = Math.min(value, batch.availableNumberOfPacks);
+            const newValue = Math.min(
+              value,
+              batch.stockLine?.availableNumberOfPacks ?? 0
+            );
             onChange?.(batch.id, newValue, batch.packSize);
           }}
           value={batch.numberOfPacks}
@@ -64,8 +67,12 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
           value={String(batch.numberOfPacks * batch.packSize)}
         />
       </BasicCell>
-      <BasicCell align="right">{batch.availableNumberOfPacks}</BasicCell>
-      <BasicCell align="right">{batch.totalNumberOfPacks}</BasicCell>
+      <BasicCell align="right">
+        {batch.stockLine?.availableNumberOfPacks ?? 0}
+      </BasicCell>
+      <BasicCell align="right">
+        {batch.stockLine?.totalNumberOfPacks ?? 0}
+      </BasicCell>
       <BasicCell>{batch.batch}</BasicCell>
       <BasicCell
         sx={{
@@ -77,9 +84,9 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
       >
         {expiryDate}
       </BasicCell>
-      <BasicCell>{batch.locationName}</BasicCell>
+      <BasicCell>{batch.location?.name}</BasicCell>
       <BasicCell align="right">{sellPricePerPack}</BasicCell>
-      <BasicCell align="center">{batch.onHold ? '✓' : ''}</BasicCell>
+      <BasicCell align="center">{batch.stockLine?.onHold ? '✓' : ''}</BasicCell>
     </TableRow>
   );
 };
@@ -141,12 +148,12 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   const wrongPackSizeRows: DraftOutboundLine[] = [];
 
   rowsWithoutPlaceholder.forEach(row => {
-    if (row.onHold) {
+    if (!!row.stockLine?.onHold) {
       onHoldRows.push(row);
       return;
     }
 
-    if (row.availableNumberOfPacks === 0) {
+    if (row.stockLine?.availableNumberOfPacks === 0) {
       noStockRows.push(row);
       return;
     }

@@ -82,9 +82,9 @@ const outboundParsers = {
   toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
     return {
       id: line.id,
-      itemId: line.itemId,
+      itemId: line.item.id,
       numberOfPacks: line.numberOfPacks,
-      stockLineId: line.stockLineId,
+      stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
       totalAfterTax: 0,
       totalBeforeTax: 0,
@@ -95,7 +95,7 @@ const outboundParsers = {
       id: line.id,
       invoiceId: line.invoiceId,
       numberOfPacks: line.numberOfPacks,
-      stockLineId: line.stockLineId,
+      stockLineId: line.stockLine?.id ?? '',
     };
   },
   toInsertPlaceholder: (
@@ -104,7 +104,7 @@ const outboundParsers = {
     id: line.id,
     quantity: line.numberOfPacks,
     invoiceId: line.invoiceId,
-    itemId: line.itemId,
+    itemId: line.item.id,
   }),
   toUpdatePlaceholder: (
     line: DraftOutboundLine
