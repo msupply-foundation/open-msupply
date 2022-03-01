@@ -80,7 +80,7 @@ pub fn do_delete_stocktake(
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
-    use graphql_core::{test_helpers::setup_graphl_test, assert_graphql_query};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
 

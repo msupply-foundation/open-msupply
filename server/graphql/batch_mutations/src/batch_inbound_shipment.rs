@@ -328,7 +328,8 @@ mod test {
             InsertInboundShipmentLineError, UpdateInboundShipmentLine,
             UpdateInboundShipmentLineError,
         },
-        service_provider::{ServiceContext, ServiceProvider}, InputWithResult,
+        service_provider::{ServiceContext, ServiceProvider},
+        InputWithResult,
     };
     use util::inline_init;
 

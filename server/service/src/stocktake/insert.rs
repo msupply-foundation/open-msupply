@@ -104,25 +104,13 @@ impl From<RepositoryError> for InsertStocktakeError {
 mod stocktake_test {
     use chrono::Utc;
     use repository::{
-        mock::{
-            mock_stock_line_a, mock_stocktake_a, mock_stocktake_finalised_without_lines,
-            mock_stocktake_full_edit, mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
-            mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
-            mock_stocktake_stock_deficit, mock_stocktake_stock_surplus,
-            mock_stocktake_without_lines, mock_store_a, MockDataInserts,
-        },
-        schema::{InvoiceLineRowType, StocktakeRow, StocktakeStatus},
+        mock::{mock_stocktake_a, mock_store_a, MockDataInserts},
         test_db::setup_all,
-        InvoiceLineRowRepository, StockLineRowRepository, StocktakeLine,
     };
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake::{
-            delete::DeleteStocktakeError,
-            insert::{InsertStocktakeError, InsertStocktakeInput},
-            update::{UpdateStocktakeError, UpdateStocktakeInput},
-        },
+        stocktake::insert::{InsertStocktakeError, InsertStocktakeInput},
     };
 
     #[actix_rt::test]

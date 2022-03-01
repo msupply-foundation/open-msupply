@@ -89,28 +89,16 @@ impl From<RepositoryError> for DeleteStocktakeError {
 
 #[cfg(test)]
 mod stocktake_test {
-    use chrono::Utc;
+
     use repository::{
         mock::{
-            mock_stock_line_a, mock_stocktake_a, mock_stocktake_finalised_without_lines,
-            mock_stocktake_full_edit, mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
-            mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
-            mock_stocktake_stock_deficit, mock_stocktake_stock_surplus,
-            mock_stocktake_without_lines, mock_store_a, MockDataInserts,
+            mock_stocktake_finalised_without_lines, mock_stocktake_without_lines, mock_store_a,
+            MockDataInserts,
         },
-        schema::{InvoiceLineRowType, StocktakeRow, StocktakeStatus},
         test_db::setup_all,
-        InvoiceLineRowRepository, StockLineRowRepository, StocktakeLine,
     };
 
-    use crate::{
-        service_provider::ServiceProvider,
-        stocktake::{
-            delete::DeleteStocktakeError,
-            insert::{InsertStocktakeError, InsertStocktakeInput},
-            update::{UpdateStocktakeError, UpdateStocktakeInput},
-        },
-    };
+    use crate::{service_provider::ServiceProvider, stocktake::delete::DeleteStocktakeError};
 
     #[actix_rt::test]
     async fn delete_stocktake() {

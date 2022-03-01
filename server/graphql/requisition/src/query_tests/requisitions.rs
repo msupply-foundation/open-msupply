@@ -1,7 +1,9 @@
 mod graphql {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
-    use graphql_core::{test_helpers::setup_graphl_test, assert_standard_graphql_error, assert_graphql_query};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition_all_fields, MockDataInserts},
         schema::{RequisitionRowStatus, RequisitionRowType},

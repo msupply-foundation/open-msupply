@@ -196,7 +196,8 @@ mod test {
             InsertInboundShipment,
         },
         invoice_line::inbound_shipment_line::InsertInboundShipmentLine,
-        service_provider::ServiceProvider, InputWithResult,
+        service_provider::ServiceProvider,
+        InputWithResult,
     };
 
     #[actix_rt::test]

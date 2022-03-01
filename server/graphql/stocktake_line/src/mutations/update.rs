@@ -122,7 +122,7 @@ fn to_domain(
 mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
-    use graphql_core::{test_helpers::setup_graphl_test, assert_graphql_query};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
         mock::{mock_location_1, mock_stock_line_a, MockDataInserts},
         schema::StocktakeLineRow,
