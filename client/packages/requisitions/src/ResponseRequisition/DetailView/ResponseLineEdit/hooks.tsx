@@ -52,14 +52,14 @@ export const useNextResponseLine = (
 ) => {
   const { lines } = useResponseRequisitionLines();
   const nextState: {
-    isDisabled: boolean;
+    hasNext: boolean;
     next: null | ResponseRequisitionLineFragment;
-  } = { isDisabled: false, next: null };
+  } = { hasNext: true, next: null };
 
   const idx = lines.findIndex(l => l.id === currentItem.id);
   const next = lines[idx + 1];
   if (!next) {
-    nextState.isDisabled = true;
+    nextState.hasNext = false;
     return nextState;
   }
 

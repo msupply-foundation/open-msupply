@@ -13,7 +13,7 @@ import {
   useQueryClient,
   useParams,
   useQuery,
-  useAuthState,
+  useAuthContext,
   useOmSupplyApi,
   useMutation,
   useFieldsSelector,
@@ -29,7 +29,7 @@ import { getSdk } from './operations.generated';
 import { getInboundQueries } from './api';
 
 export const useInboundApi = () => {
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const { client } = useOmSupplyApi();
   const queries = getInboundQueries(getSdk(client), storeId);
   return { ...queries, storeId };
@@ -184,11 +184,10 @@ export const useInbounds = () => {
   const queryParams = useQueryParams<InvoiceRow>({
     initialSortBy: { key: 'otherPartyName' },
   });
-  const { store } = useAuthState();
   const api = useInboundApi();
 
   return {
-    ...useQuery(['invoice', 'list', store?.id, queryParams], () =>
+    ...useQuery(['invoice', 'list', api.storeId, queryParams], () =>
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,

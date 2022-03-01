@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
-  useAuthState,
   useQueryClient,
+  useAuthContext,
   RequisitionNodeStatus,
   useParams,
   useOmSupplyApi,
@@ -28,7 +28,7 @@ import {
 export const useResponseApi = () => {
   const { client } = useOmSupplyApi();
   const sdk = getSdk(client);
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const queries = getResponseQueries(sdk, storeId);
 
   return { ...queries, storeId };
