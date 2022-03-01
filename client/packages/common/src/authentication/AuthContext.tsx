@@ -100,7 +100,6 @@ export const AuthProvider: FC = ({ children }) => {
 
   const logout = () => {
     Cookies.remove('auth');
-    Cookies.remove('refresh_token');
     setLocalStore(undefined);
   };
 
