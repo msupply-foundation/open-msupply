@@ -10,12 +10,9 @@ import {
 import { DraftRequestRequisitionLine } from './../DetailView/RequestLineEdit/hooks';
 import {
   RequestRequisitionRowFragment,
-  getSdk,
   RequestRequisitionFragment,
   Sdk,
 } from './operations.generated';
-
-export type RequestRequisitionApi = ReturnType<typeof getSdk>;
 
 const requestParser = {
   toStatus: (

@@ -10,14 +10,11 @@ import {
 } from '@openmsupply-client/common';
 
 import {
-  getSdk,
   ResponseRequisitionFragment,
   ResponseRequisitionRowFragment,
   Sdk,
 } from './operations.generated';
 import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
-
-export type ResponseRequisitionApi = ReturnType<typeof getSdk>;
 
 const responseParser = {
   toStatus: (
