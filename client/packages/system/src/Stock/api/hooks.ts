@@ -1,5 +1,5 @@
 import {
-  useAuthState,
+  useAuthContext,
   useOmSupplyApi,
   useQuery,
   useQueryParams,
@@ -10,7 +10,7 @@ import { getStockQueries } from './api';
 
 export const useStockApi = () => {
   const { client } = useOmSupplyApi();
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const queries = getStockQueries(getSdk(client), storeId);
   return { ...queries, storeId };
 };

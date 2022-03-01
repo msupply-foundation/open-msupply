@@ -1,7 +1,7 @@
 import { useQueryClient } from 'react-query';
 import { useMemo } from 'react';
 import {
-  useAuthState,
+  useAuthContext,
   RequisitionNodeStatus,
   useParams,
   useOmSupplyApi,
@@ -27,7 +27,7 @@ import {
 
 export const useResponseRequisitionApi = () => {
   const { client } = useOmSupplyApi();
-  const { store } = useAuthState();
+  const { store } = useAuthContext();
 
   return { ...getSdk(client), store, storeId: store?.id ?? '' };
 };
@@ -36,7 +36,6 @@ export const useResponseRequisitions = () => {
   const queryParams = useQueryParams<ResponseRequisitionRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
-
   const api = useResponseRequisitionApi();
 
   return {

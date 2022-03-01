@@ -16,6 +16,7 @@ import {
   IntlProvider,
   RandomLoader,
   ConfirmationModalProvider,
+  AuthProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Login, Viewport } from './components';
@@ -37,23 +38,25 @@ const Host: FC = () => (
         <ErrorBoundary Fallback={GenericErrorFallback}>
           <QueryClientProvider client={queryClient}>
             <OmSupplyApiProvider url={Environment.API_URL}>
-              <AppThemeProvider>
-                <ConfirmationModalProvider>
-                  <BrowserRouter>
-                    <Viewport>
-                      <Box display="flex" style={{ minHeight: '100%' }}>
-                        <Routes>
-                          <Route
-                            path={RouteBuilder.create(AppRoute.Login).build()}
-                            element={<Login />}
-                          />
-                          <Route path="*" element={<Site />} />
-                        </Routes>
-                      </Box>
-                    </Viewport>
-                  </BrowserRouter>
-                </ConfirmationModalProvider>
-              </AppThemeProvider>
+              <AuthProvider>
+                <AppThemeProvider>
+                  <ConfirmationModalProvider>
+                    <BrowserRouter>
+                      <Viewport>
+                        <Box display="flex" style={{ minHeight: '100%' }}>
+                          <Routes>
+                            <Route
+                              path={RouteBuilder.create(AppRoute.Login).build()}
+                              element={<Login />}
+                            />
+                            <Route path="*" element={<Site />} />
+                          </Routes>
+                        </Box>
+                      </Viewport>
+                    </BrowserRouter>
+                  </ConfirmationModalProvider>
+                </AppThemeProvider>
+              </AuthProvider>
               <ReactQueryDevtools initialIsOpen />
             </OmSupplyApiProvider>
           </QueryClientProvider>
