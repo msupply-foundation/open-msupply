@@ -1,5 +1,5 @@
-import { RequisitionNodeStatus } from './../../../../common/src/types/schema';
 import {
+  RequisitionNodeStatus,
   SortBy,
   FilterBy,
   RequisitionSortFieldInput,
