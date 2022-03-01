@@ -26,48 +26,30 @@ export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   return (key, options) => (key ? t(key, options) : '');
 };
 
-// This custom formatter will truncate cents to two digits when there are none.
-// However, still allows a large precision.
-// Without this custom formatter, a value of 12 would be formatted as
-// 12.00000 if the precision was 5, for example. With this change, the format
-// would be 12.00. With a precision of 2, then currency values would be
-// truncated to be a maximum of two decimal places.
-const formatter: currency.Format = (currency?, options?): string => {
-  const { decimal = '.' } = options ?? {};
-  if (!currency) return '';
-  if (!currency.cents()) {
-    return `${currency.value}${decimal}${'0'.repeat(2)}`;
-  }
-  return String(parseFloat(String(currency.value)));
-};
-
 const currencyOptions = {
   en: {
     symbol: '$',
     separator: ',',
     decimal: '.',
-    precision: 10,
+    precision: 2,
     pattern: '!#',
     negativePattern: '-!#',
-    format: formatter,
   },
   fr: {
     symbol: 'XOF',
     separator: '.',
     decimal: ',',
-    precision: 10,
+    precision: 2,
     pattern: '# !',
-    negativePattern: '-!#',
-    format: formatter,
+    negativePattern: '-# !',
   },
   ar: {
     symbol: 'ر.ق.',
     separator: ',',
     decimal: '.',
-    precision: 10,
+    precision: 2,
     pattern: '!#',
     negativePattern: '-!#',
-    format: formatter,
   },
 };
 

@@ -12,6 +12,7 @@ import {
   generateUUID,
   useTranslation,
   useQueryParams,
+  useCurrency,
 } from '@openmsupply-client/common';
 import { getInboundShipmentListViewApi } from './api';
 import { NameSearchModal } from '@openmsupply-client/system';
@@ -23,6 +24,7 @@ import { useInboundShipmentApi } from '../api';
 
 export const InboundListView: FC = () => {
   const navigate = useNavigate();
+  const { c } = useCurrency();
   const { error } = useNotification();
   const api = useInboundShipmentApi();
   const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
@@ -65,7 +67,9 @@ export const InboundListView: FC = () => {
       'comment',
       [
         'totalAfterTax',
-        { accessor: ({ rowData }) => rowData.pricing.totalAfterTax },
+        {
+          accessor: ({ rowData }) => c(rowData.pricing.totalAfterTax).format(),
+        },
       ],
       'selection',
     ],
