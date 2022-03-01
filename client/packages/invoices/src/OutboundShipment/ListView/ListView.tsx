@@ -10,6 +10,7 @@ import {
   useTranslation,
   InvoiceNodeStatus,
   generateUUID,
+  useCurrency,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getStatusTranslator } from '../../utils';
@@ -35,6 +36,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     filter,
   } = useOutbounds();
 
+  const { c } = useCurrency();
   const columns = useColumns<OutboundShipmentRowFragment>(
     [
       [getNameAndColorColumn(), { setter: onUpdate }],
@@ -51,7 +53,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       [
         'totalAfterTax',
         {
-          accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
+          accessor: ({ rowData }) => c(rowData.pricing.totalAfterTax).format(),
         },
       ],
       'selection',

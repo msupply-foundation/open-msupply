@@ -6,6 +6,7 @@ import {
   useQuery,
   UseQueryResult,
   useQueryClient,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useItemApi } from './../useItemApi';
 import { getItemSortField, mapItemNodes } from '../../../utils';
@@ -25,18 +26,18 @@ export const useItemsList = (initialListParameters: {
 }> => {
   const queryClient = useQueryClient();
   const api = useItemApi();
-  const { filterBy, filter, queryParams, first, offset, sortBy, storeId } =
+  const { storeId } = useAuthContext();
+  const { filterBy, filter, queryParams, first, offset, sortBy } =
     useQueryParams(initialListParameters);
 
   const queryState = useQuery(
     ['item', 'list', queryParams],
     async () => {
-      const result = await ItemQueries.get.listWithStockLines(api, {
+      const result = await ItemQueries.get.listWithStockLines(api, storeId, {
         sortBy,
         filterBy,
         first,
         offset,
-        storeId,
       });
 
       return mapItemNodes(result);

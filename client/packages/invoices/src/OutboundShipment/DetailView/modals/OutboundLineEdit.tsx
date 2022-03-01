@@ -9,6 +9,7 @@ import {
   useTranslation,
   ModalMode,
   useBufferState,
+  useDirtyCheck,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
@@ -55,6 +56,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   } = useDraftOutboundLines(currentItem);
   const packSizeController = usePackSizeController(draftOutboundLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
+  const { setIsDirty } = useDirtyCheck();
 
   const onNext = () => {
     setCurrentItem(next);
@@ -66,6 +68,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       status,
       draftOutboundLines
     )(newVal, packSize);
+    setIsDirty(true);
     setDraftOutboundLines(newAllocateQuantities ?? draftOutboundLines);
   };
 

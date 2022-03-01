@@ -1,7 +1,7 @@
 import { useQueryClient, useMutation } from 'react-query';
 import {
   useOmSupplyApi,
-  useAuthState,
+  useAuthContext,
   useQueryParams,
   useQuery,
 } from '@openmsupply-client/common';
@@ -9,7 +9,7 @@ import { getLocationQueries } from './api';
 import { getSdk, LocationRowFragment } from './operations.generated';
 
 export const useLocationApi = () => {
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const { client } = useOmSupplyApi();
   const sdk = getSdk(client);
   const queries = getLocationQueries(sdk, storeId);
