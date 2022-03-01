@@ -241,13 +241,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     const { batchOutboundShipment } = result;
 
     if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
-      const { updateOutboundShipments } = batchOutboundShipment;
-      if (
-        updateOutboundShipments?.[0]?.__typename ===
-        'UpdateOutboundShipmentResponseWithId'
-      ) {
-        return patch;
-      }
+      return patch;
     }
 
     throw new Error('Unable to update invoice');
