@@ -66,3 +66,80 @@ impl From<RepositoryError> for DeleteStocktakeLineError {
         DeleteStocktakeLineError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod stocktake_line_test {
+    use repository::{
+        mock::{
+            mock_item_a, mock_item_a_lines, mock_locations, mock_new_stock_line_for_stocktake_a,
+            mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a,
+            mock_stocktake_line_finalised, mock_store_a, mock_store_b, MockDataInserts,
+        },
+        schema::StocktakeLineRow,
+        test_db::setup_all,
+    };
+    use util::uuid::uuid;
+
+    use crate::{
+        service_provider::ServiceProvider,
+        stocktake_line::{
+            delete::DeleteStocktakeLineError,
+            insert::{InsertStocktakeLineError, InsertStocktakeLineInput},
+            query::GetStocktakeLinesError,
+            update::{UpdateStocktakeLineError, UpdateStocktakeLineInput},
+        },
+    };
+
+    #[actix_rt::test]
+    async fn delete_stocktake_line() {
+        let (_, _, connection_manager, _) =
+            setup_all("delete_stocktake_line", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.stocktake_line_service;
+
+        // error: stocktake line does not exist
+        let store_a = mock_store_a();
+        let error = service
+            .delete_stocktake_line(&context, &store_a.id, "invalid")
+            .unwrap_err();
+        assert_eq!(error, DeleteStocktakeLineError::StocktakeLineDoesNotExist);
+
+        // error: invalid store
+        let existing_line = mock_stocktake_line_a();
+        let error = service
+            .delete_stocktake_line(&context, "invalid", &existing_line.id)
+            .unwrap_err();
+        assert_eq!(error, DeleteStocktakeLineError::InvalidStore);
+        // error: invalid store
+        let store_b = mock_store_b();
+        let existing_line = mock_stocktake_line_a();
+        let error = service
+            .delete_stocktake_line(&context, &store_b.id, &existing_line.id)
+            .unwrap_err();
+        assert_eq!(error, DeleteStocktakeLineError::InvalidStore);
+
+        // error CannotEditFinalised
+        let store_a = mock_store_a();
+        let existing_line = mock_stocktake_line_finalised();
+        let error = service
+            .delete_stocktake_line(&context, &store_a.id, &existing_line.id)
+            .unwrap_err();
+        assert_eq!(error, DeleteStocktakeLineError::CannotEditFinalised);
+
+        // success
+        let store_a = mock_store_a();
+        let existing_line = mock_stocktake_line_a();
+        let deleted_id = service
+            .delete_stocktake_line(&context, &store_a.id, &existing_line.id)
+            .unwrap();
+        assert_eq!(existing_line.id, deleted_id);
+        assert_eq!(
+            service
+                .get_stocktake_line(&context, existing_line.id)
+                .unwrap(),
+            None
+        );
+    }
+}

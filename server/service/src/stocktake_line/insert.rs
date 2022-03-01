@@ -229,3 +229,253 @@ impl From<RepositoryError> for InsertStocktakeLineError {
         InsertStocktakeLineError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod stocktake_line_test {
+    use repository::{
+        mock::{
+            mock_item_a, mock_item_a_lines, mock_locations, mock_new_stock_line_for_stocktake_a,
+            mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a,
+            mock_stocktake_line_finalised, mock_store_a, mock_store_b, MockDataInserts,
+        },
+        schema::StocktakeLineRow,
+        test_db::setup_all,
+    };
+    use util::uuid::uuid;
+
+    use crate::{
+        service_provider::ServiceProvider,
+        stocktake_line::{
+            delete::DeleteStocktakeLineError,
+            insert::{InsertStocktakeLineError, InsertStocktakeLineInput},
+            query::GetStocktakeLinesError,
+            update::{UpdateStocktakeLineError, UpdateStocktakeLineInput},
+        },
+    };
+
+    #[actix_rt::test]
+    async fn insert_stocktake_line() {
+        let (_, _, connection_manager, _) =
+            setup_all("insert_stocktake_line", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.stocktake_line_service;
+
+        // error: StocktakeDoesNotExist,
+        let store_a = mock_store_a();
+        let stock_line_a = mock_item_a_lines()[0].clone();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                &store_a.id,
+                InsertStocktakeLineInput {
+                    id: uuid(),
+                    stocktake_id: "invalid".to_string(),
+                    stock_line_id: Some(stock_line_a.id),
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::StocktakeDoesNotExist);
+
+        // error: InvalidStore,
+        let stocktake_a = mock_stocktake_a();
+        let stock_line_a = mock_item_a_lines()[0].clone();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                "invalid_store",
+                InsertStocktakeLineInput {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line_a.id),
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::InvalidStore);
+
+        // error StockLineAlreadyExistsInStocktake
+        let store_a = mock_store_a();
+        let stocktake_a = mock_stocktake_a();
+        let stock_line_a = mock_item_a_lines()[0].clone();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                &store_a.id,
+                InsertStocktakeLineInput {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line_a.id),
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(
+            error,
+            InsertStocktakeLineError::StockLineAlreadyExistsInStocktake
+        );
+
+        // error LocationDoesNotExist
+        let store_a = mock_store_a();
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_new_stock_line_for_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                &store_a.id,
+                InsertStocktakeLineInput {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line.id),
+                    location_id: Some("invalid".to_string()),
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::LocationDoesNotExist);
+
+        // error StocktakeLineAlreadyExists
+        let store_a = mock_store_a();
+        let stocktake_a = mock_stocktake_a();
+        let stocktake_line_a = mock_stocktake_line_a();
+        let stock_line = mock_new_stock_line_for_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                &store_a.id,
+                InsertStocktakeLineInput {
+                    id: stocktake_line_a.id,
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line.id),
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::StocktakeLineAlreadyExists);
+
+        // check CannotEditFinalised
+        let store_a = mock_store_a();
+        let stocktake_finalised = mock_stocktake_finalised();
+        let stock_line = mock_new_stock_line_for_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                &store_a.id,
+                InsertStocktakeLineInput {
+                    id: uuid(),
+                    stocktake_id: stocktake_finalised.id,
+                    stock_line_id: Some(stock_line.id),
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::CannotEditFinalised);
+
+        // success with stock_line_id
+        let store_a = mock_store_a();
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_new_stock_line_for_stocktake_a();
+        service
+            .insert_stocktake_line(
+                &context,
+                &store_a.id,
+                InsertStocktakeLineInput {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line.id),
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap();
+
+        // success with item_id
+        let store_a = mock_store_a();
+        let stocktake_a = mock_stocktake_a();
+        let item_a = mock_item_a();
+        service
+            .insert_stocktake_line(
+                &context,
+                &store_a.id,
+                InsertStocktakeLineInput {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: None,
+                    location_id: None,
+                    batch: None,
+                    comment: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    counted_number_of_packs: Some(17),
+                    item_id: Some(item_a.id),
+                    expiry_date: None,
+                    pack_size: None,
+                    note: None,
+                },
+            )
+            .unwrap();
+    }
+}
