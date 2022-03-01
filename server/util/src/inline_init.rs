@@ -1,3 +1,5 @@
+use chrono::{NaiveDate, NaiveDateTime};
+
 /// ```
 /// # use util::inline_init;
 ///
@@ -15,12 +17,20 @@
 ///     }
 /// );
 /// ```
-pub fn inline_init<T, F>(mut f: F) -> T
+pub fn inline_init<T, F>(f: F) -> T
 where
     T: Default,
-    F: FnMut(&mut T) -> (),
+    F: FnOnce(&mut T) -> (),
 {
     let mut t = T::default();
     f(&mut t);
     t
+}
+
+pub struct Defaults;
+
+impl Defaults {
+    pub fn naive_date_time() -> NaiveDateTime {
+        NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0)
+    }
 }
