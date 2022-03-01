@@ -4,7 +4,7 @@ import {
   Grid,
   PlusCircleIcon,
   StatsPanel,
-  useAuthState,
+  useAuthContext,
   useQuery,
   useTranslation,
   Widget,
@@ -14,7 +14,7 @@ import { useInboundShipmentApi } from '../api';
 
 export const InboundShipmentWidget: React.FC = () => {
   const api = useInboundShipmentApi();
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const t = useTranslation(['app', 'dashboard']);
   const { data, isLoading } = useQuery(
     ['inbound-shipment', 'count'],

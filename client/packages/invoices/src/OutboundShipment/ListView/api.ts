@@ -111,7 +111,7 @@ export const getOutboundShipmentListViewApi = (
   omSupplyApi: OutboundShipmentApi,
   storeId: string
 ): ListApi<OutboundShipmentRowFragment> => ({
-  onRead: ({ first, offset, sortBy, filterBy, storeId }) => {
+  onRead: ({ first, offset, sortBy, filterBy }) => {
     const queryParams: InvoicesQueryVariables = {
       first,
       offset,

@@ -4,12 +4,12 @@ import {
   HomeIcon,
   styled,
   Typography,
-  useHostContext,
+  useAuthContext,
   UserIcon,
 } from '@openmsupply-client/common';
 
 export const Footer: React.FC = () => {
-  const { user, store } = useHostContext();
+  const { user, store } = useAuthContext();
   const PaddedCell = styled(Box)({ display: 'flex' });
   const iconStyles = { color: 'gray.main', height: '16px', width: '16px' };
   const textStyles = {
@@ -20,13 +20,13 @@ export const Footer: React.FC = () => {
 
   return (
     <Box gap={2} display="flex" flex={1} alignItems="center">
-      {store.code && (
+      {store?.code && (
         <PaddedCell>
           <HomeIcon sx={iconStyles} />
           <Typography sx={textStyles}>{store.code}</Typography>
         </PaddedCell>
       )}
-      {user.name && (
+      {user?.name && (
         <PaddedCell>
           <UserIcon sx={iconStyles} />
           <Typography sx={textStyles}>{user.name}</Typography>
