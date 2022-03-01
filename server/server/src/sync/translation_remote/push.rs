@@ -7,7 +7,8 @@ use repository::{
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        number::NumberTranslation, stock_line::StockLineTranslation,
+        number::NumberTranslation, requisition::RequisitionTranslation,
+        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
         stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
         table_name_to_central,
     },
@@ -72,6 +73,8 @@ pub fn translate_changelog(
                 Box::new(InvoiceLineTranslation {}),
                 Box::new(StocktakeTranslation {}),
                 Box::new(StocktakeLineTranslation {}),
+                Box::new(RequisitionTranslation {}),
+                Box::new(RequisitionLineTranslation {}),
             ];
             for translation in translations {
                 if let Some(records) = translation.try_translate_push(connection, changelog)? {

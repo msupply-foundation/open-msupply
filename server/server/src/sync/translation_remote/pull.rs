@@ -1,18 +1,20 @@
 use log::{info, warn};
 use repository::{
     schema::{
-        InvoiceLineRow, InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow,
-        StocktakeLineRow, StocktakeRow,
+        InvoiceLineRow, InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow,
+        RequisitionLineRow, RequisitionRow, StockLineRow, StocktakeLineRow, StocktakeRow,
     },
     InvoiceLineRowRepository, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
-    RepositoryError, StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository,
-    StorageConnection, TransactionError,
+    RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
+    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
+    TransactionError,
 };
 
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        number::NumberTranslation, stock_line::StockLineTranslation,
+        number::NumberTranslation, requisition::RequisitionTranslation,
+        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
         stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
     },
     SyncImportError, SyncTranslationError,
@@ -27,6 +29,8 @@ pub enum IntegrationUpsertRecord {
     InvoiceLine(InvoiceLineRow),
     Stocktake(StocktakeRow),
     StocktakeLine(StocktakeLineRow),
+    Requisition(RequisitionRow),
+    RequisitionLine(RequisitionLineRow),
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct IntegrationRecord {
@@ -89,6 +93,8 @@ fn do_translation(
         Box::new(InvoiceLineTranslation {}),
         Box::new(StocktakeTranslation {}),
         Box::new(StocktakeLineTranslation {}),
+        Box::new(RequisitionTranslation {}),
+        Box::new(RequisitionLineTranslation {}),
     ];
     for translation in translations {
         if let Some(mut result) = translation.try_translate_pull(connection, sync_record)? {
@@ -121,6 +127,12 @@ fn integrate_record(
         }
         IntegrationUpsertRecord::StocktakeLine(record) => {
             StocktakeLineRowRepository::new(con).upsert_one(record)
+        }
+        IntegrationUpsertRecord::Requisition(record) => {
+            RequisitionRowRepository::new(con).upsert_one(record)
+        }
+        IntegrationUpsertRecord::RequisitionLine(record) => {
+            RequisitionLineRowRepository::new(con).upsert_one(record)
         }
     }
 }

@@ -6,6 +6,8 @@ mod invoice;
 mod invoice_line;
 mod name_store_join;
 mod number;
+mod requisition;
+mod requisition_line;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
@@ -24,6 +26,8 @@ pub const TRANSLATION_RECORD_TRANSACT: &'static str = "transact";
 pub const TRANSLATION_RECORD_TRANS_LINE: &'static str = "trans_line";
 pub const TRANSLATION_RECORD_STOCKTAKE: &'static str = "Stock_take";
 pub const TRANSLATION_RECORD_STOCKTAKE_LINE: &'static str = "Stock_take_lines";
+pub const TRANSLATION_RECORD_REQUISITION: &'static str = "requisition";
+pub const TRANSLATION_RECORD_REQUISITION_LINE: &'static str = "requisition_line";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
@@ -35,6 +39,8 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_TRANS_LINE,
     TRANSLATION_RECORD_STOCKTAKE,
     TRANSLATION_RECORD_STOCKTAKE_LINE,
+    TRANSLATION_RECORD_REQUISITION,
+    TRANSLATION_RECORD_REQUISITION_LINE,
 ];
 
 pub fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
@@ -46,8 +52,8 @@ pub fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
         ChangelogTableName::InvoiceLine => TRANSLATION_RECORD_TRANS_LINE,
         ChangelogTableName::Stocktake => TRANSLATION_RECORD_STOCKTAKE,
         ChangelogTableName::StocktakeLine => TRANSLATION_RECORD_STOCKTAKE_LINE,
-        ChangelogTableName::Requisition => todo!(),
-        ChangelogTableName::RequisitionLine => todo!(),
+        ChangelogTableName::Requisition => TRANSLATION_RECORD_REQUISITION,
+        ChangelogTableName::RequisitionLine => TRANSLATION_RECORD_REQUISITION_LINE,
     }
 }
 
