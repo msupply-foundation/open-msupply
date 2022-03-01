@@ -63,3 +63,69 @@ impl From<RepositoryError> for GetStocktakeLinesError {
         GetStocktakeLinesError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod stocktake_line_test {
+    use repository::{
+        mock::{
+            mock_item_a, mock_item_a_lines, mock_locations, mock_new_stock_line_for_stocktake_a,
+            mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a,
+            mock_stocktake_line_finalised, mock_store_a, mock_store_b, MockDataInserts,
+        },
+        schema::StocktakeLineRow,
+        test_db::setup_all,
+    };
+    use util::uuid::uuid;
+
+    use crate::{
+        service_provider::ServiceProvider,
+        stocktake_line::{
+            delete::DeleteStocktakeLineError,
+            insert::{InsertStocktakeLineError, InsertStocktakeLineInput},
+            query::GetStocktakeLinesError,
+            update::{UpdateStocktakeLineError, UpdateStocktakeLineInput},
+        },
+    };
+
+    #[actix_rt::test]
+    async fn query_stocktake_line() {
+        let (_, _, connection_manager, _) =
+            setup_all("query_stocktake_line", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.stocktake_line_service;
+
+        // error: InvalidStore,
+        let error = service
+            .get_stocktake_lines(
+                &context,
+                "invalid store",
+                &mock_stocktake_a().id,
+                None,
+                None,
+                None,
+            )
+            .unwrap_err();
+        assert_eq!(error, GetStocktakeLinesError::InvalidStore);
+
+        // error: InvalidStocktake,
+        let error = service
+            .get_stocktake_lines(&context, &mock_store_a().id, "invalid", None, None, None)
+            .unwrap_err();
+        assert_eq!(error, GetStocktakeLinesError::InvalidStocktake);
+
+        // success
+        let result = service
+            .get_stocktake_lines(
+                &context,
+                &mock_store_a().id,
+                &mock_stocktake_a().id,
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+        assert!(result.count > 0);
+    }
+}
