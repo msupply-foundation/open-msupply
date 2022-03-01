@@ -203,9 +203,9 @@ query invoice($id: String!, $storeId: String!) {
   }
 }
 
-query outboundByNumber($id: String!, $storeId: String!) {
+query outboundByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
-    id: $id
+    invoiceNumber: $invoiceNumber
     storeId: $storeId
     filter: { type: { equalTo: OUTBOUND_SHIPMENT } }
   ) {
@@ -243,6 +243,7 @@ mutation insertOutboundShipment(
     __typename
     ... on InvoiceNode {
       id
+      invoiceNumber
     }
     ... on InsertOutboundShipmentError {
       __typename
@@ -342,7 +343,6 @@ mutation deleteOutboundShipments(
     deleteOutboundShipments {
       __typename
       id
-      invoiceNumber
     }
   }
 }

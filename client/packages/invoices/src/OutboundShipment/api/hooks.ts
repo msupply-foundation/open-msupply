@@ -42,9 +42,14 @@ export const useOutboundApi = () => {
   return { ...queries, storeId };
 };
 
+export const useOutboundNumber = () => {
+  const { invoiceNumber = '' } = useParams();
+  return invoiceNumber;
+};
+
 export const useOutboundDetailQueryKey = (): ['invoice', string] => {
-  const { id = '' } = useParams();
-  return ['invoice', id];
+  const outboundNumber = useOutboundNumber();
+  return ['invoice', outboundNumber];
 };
 
 export const useOutbounds = () => {
@@ -67,11 +72,11 @@ export const useOutbounds = () => {
 };
 
 export const useOutbound = (): UseQueryResult<Invoice> => {
-  const { id = '' } = useParams();
+  const outboundNumber = useOutboundNumber();
   const api = useOutboundApi();
   const queryKey = useOutboundDetailQueryKey();
 
-  return useQuery(queryKey, () => api.get.byId(id));
+  return useQuery(queryKey, () => api.get.byNumber(outboundNumber));
 };
 
 export const useUpdateOutbound = () => {
@@ -259,12 +264,12 @@ export const useDeleteInboundLine = (): UseMutationResult<
 > => {
   // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
   // input object should not require the invoice ID. Waiting for an API change.
-  const { id = '' } = useParams();
+  const { data } = useOutbound();
   const queryKey = useOutboundDetailQueryKey();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
 
-  return useMutation(api.deleteLines(id), {
+  return useMutation(api.deleteLines(data?.id ?? ''), {
     onMutate: async (ids: string[]) => {
       await queryClient.cancelQueries(queryKey);
 

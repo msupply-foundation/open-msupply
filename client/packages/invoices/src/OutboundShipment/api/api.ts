@@ -169,10 +169,36 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         throw new Error('Could not find invoice');
       }
     },
+    byNumber: async (invoiceNumber: string): Promise<Invoice> => {
+      const result = await sdk.outboundByNumber({
+        invoiceNumber: Number(invoiceNumber),
+        storeId,
+      });
+      const invoice = result.invoiceByNumber;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        const lineNodes = invoice.lines;
+        const lines: InvoiceLine[] = lineNodes.nodes.map(line => {
+          return {
+            ...line,
+            stockLineId: line.stockLine?.id ?? '',
+            invoiceId: invoice.id,
+            unitName: line.item?.unitName ?? '',
+          };
+        });
+
+        return {
+          ...invoice,
+          lines,
+        };
+      } else {
+        throw new Error('Could not find invoice');
+      }
+    },
   },
   insert: async (
     invoice: Partial<OutboundShipmentRowFragment>
-  ): Promise<string> => {
+  ): Promise<number> => {
     const result = await sdk.insertOutboundShipment({
       id: invoice.id ?? '',
       otherPartyId: invoice?.otherPartyId ?? '',
@@ -182,7 +208,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     const { insertOutboundShipment } = result;
 
     if (insertOutboundShipment.__typename === 'InvoiceNode') {
-      return insertOutboundShipment.id;
+      return insertOutboundShipment.invoiceNumber;
     }
 
     throw new Error('Could not insert invoice');
