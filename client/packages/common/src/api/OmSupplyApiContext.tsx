@@ -6,7 +6,7 @@ import { getSdk } from '../operations.generated';
 export const createOmSupplyApi = (
   url: string
 ): { api: OmSupplyApi; client: GraphQLClient } => {
-  const client = new GraphQLClient(url, { credentials: 'same-origin' });
+  const client = new GraphQLClient(url, { credentials: 'include' });
   const api = getSdk(client);
   return { client, api };
 };

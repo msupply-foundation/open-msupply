@@ -11,7 +11,7 @@ export const RequireAuthentication = ({ children }) => {
   const location = useLocation();
   // const isProduction = process.env['NODE_ENV'] === 'production';
 
-  // if (!token) && isProduction) {
+  // if (!token && isProduction) {
   if (!token) {
     return (
       <Navigate to={`/${AppRoute.Login}`} state={{ from: location }} replace />
