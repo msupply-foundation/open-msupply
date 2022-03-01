@@ -156,7 +156,7 @@ export const useOutboundFields = <KeyOfInvoice extends keyof Invoice>(
 
   return useFieldsSelector(
     queryKey,
-    () => api.get.byId(data?.id ?? ''),
+    () => api.get.byNumber(queryKey[1]),
     (patch: Partial<Invoice>) => api.update({ ...patch, id: data?.id ?? '' }),
     keys
   );
@@ -176,7 +176,11 @@ const useOutboundSelector = <ReturnType>(
 ) => {
   const queryKey = useOutboundDetailQueryKey();
   const api = useOutboundApi();
-  return useQuerySelector(queryKey, () => api.get.byId(queryKey[1]), select);
+  return useQuerySelector(
+    queryKey,
+    () => api.get.byNumber(queryKey[1]),
+    select
+  );
 };
 
 export const useOutboundLines = (
