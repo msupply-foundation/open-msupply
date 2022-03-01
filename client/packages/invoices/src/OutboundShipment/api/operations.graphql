@@ -124,11 +124,6 @@ fragment OutboundRow on InvoiceNode {
   pricing {
     __typename
     totalAfterTax
-    totalBeforeTax
-    stockTotalBeforeTax
-    stockTotalAfterTax
-    serviceTotalAfterTax
-    serviceTotalBeforeTax
   }
 }
 

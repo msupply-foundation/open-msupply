@@ -1,10 +1,10 @@
 import {
   InboundLineFragment,
-  PartialInboundLineFragment,
+  DraftInboundLineFragment,
 } from './InboundShipment/api';
 import { OutboundLineFragment } from './OutboundShipment/api';
 
-export interface DraftInboundLine extends PartialInboundLineFragment {
+export interface DraftInboundLine extends DraftInboundLineFragment {
   isCreated?: boolean;
   isUpdated?: boolean;
 }

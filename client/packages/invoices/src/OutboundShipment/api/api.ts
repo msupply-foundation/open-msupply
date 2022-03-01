@@ -67,14 +67,14 @@ const outboundParsers = {
     storeId,
   }),
   toUpdate: (
-    patch: RecordPatch<OutboundFragment>
+    patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
   ): UpdateOutboundShipmentInput => ({
     id: patch.id,
     colour: patch.colour,
     comment: patch.comment,
     status: outboundParsers.toStatus(patch),
-    onHold: patch.onHold,
-    otherPartyId: patch.otherParty?.id,
+    onHold: 'onHold' in patch ? patch.onHold : undefined,
+    otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
     theirReference: patch.theirReference,
   }),
   toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
@@ -204,8 +204,10 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not delete invoices');
   },
   update: async (
-    patch: RecordPatch<OutboundFragment>
-  ): Promise<RecordPatch<OutboundFragment>> => {
+    patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
+  ): Promise<
+    RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
+  > => {
     const result = await sdk.upsertOutboundShipment({
       storeId,
       input: {

@@ -1,4 +1,12 @@
-fragment PartialInboundLine on InvoiceLineNode {
+fragment PartialLocation on LocationNode {
+  __typename
+  id
+  code
+  name
+  onHold
+}
+
+fragment DraftInboundLine on InvoiceLineNode {
   id
   batch
   costPricePerPack
@@ -10,30 +18,22 @@ fragment PartialInboundLine on InvoiceLineNode {
   invoiceId
 
   location {
-    id
-    code
-    name
-    onHold
+    ...PartialLocation
   }
 }
 
 fragment InboundLine on InvoiceLineNode {
   __typename
+  id
   type
   batch
   costPricePerPack
+  sellPricePerPack
   expiryDate
-  id
-  itemCode
-  itemId
-  itemName
   numberOfPacks
   packSize
   note
   invoiceId
-  locationName
-  sellPricePerPack
-  type
 
   item {
     __typename
@@ -42,44 +42,10 @@ fragment InboundLine on InvoiceLineNode {
     code
     isVisible
     unitName
-    availableBatches(storeId: $storeId) {
-      totalCount
-      nodes {
-        id
-        availableNumberOfPacks
-        costPricePerPack
-        itemId
-        onHold
-        packSize
-        sellPricePerPack
-        storeId
-        totalNumberOfPacks
-        expiryDate
-      }
-    }
   }
 
   location {
-    __typename
-    id
-    name
-    code
-    onHold
-    stock {
-      __typename
-      totalCount
-      nodes {
-        id
-        costPricePerPack
-        itemId
-        availableNumberOfPacks
-        onHold
-        packSize
-        sellPricePerPack
-        storeId
-        totalNumberOfPacks
-      }
-    }
+    ...PartialLocation
   }
 
   stockLine {
@@ -151,26 +117,14 @@ fragment InboundRow on InvoiceNode {
   comment
   createdDatetime
   allocatedDatetime
-  deliveredDatetime
-  pickedDatetime
-  shippedDatetime
-  verifiedDatetime
   id
   invoiceNumber
-  otherPartyId
   otherPartyName
-  theirReference
-  type
   status
   colour
   pricing {
     __typename
     totalAfterTax
-    totalBeforeTax
-    stockTotalBeforeTax
-    stockTotalAfterTax
-    serviceTotalAfterTax
-    serviceTotalBeforeTax
   }
 }
 

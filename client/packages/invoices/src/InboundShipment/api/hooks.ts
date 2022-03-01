@@ -17,8 +17,9 @@ import {
   useOmSupplyApi,
   useMutation,
   useFieldsSelector,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { canDeleteInvoice, inboundLinesToSummaryItems } from './../../utils';
+import { inboundLinesToSummaryItems } from './../../utils';
 import { InboundItem } from './../../types';
 import {
   getSdk,
@@ -234,7 +235,9 @@ export const useDeleteSelectedInbounds = () => {
   const deleteAction = () => {
     const numberSelected = selectedRows.length;
     if (selectedRows && numberSelected > 0) {
-      const canDeleteRows = selectedRows.every(canDeleteInvoice);
+      const canDeleteRows = selectedRows.every(
+        ({ status }) => status === InvoiceNodeStatus.New
+      );
       if (!canDeleteRows) {
         const cannotDeleteSnack = info(t('messages.cant-delete-invoices'));
         cannotDeleteSnack();
