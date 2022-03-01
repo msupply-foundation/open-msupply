@@ -289,7 +289,7 @@ export const OutboundByNumberDocument = gql`
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
-    filter: {type: {equalTo: OUTBOUND_SHIPMENT}}
+    type: OUTBOUND_SHIPMENT
   ) {
     __typename
     ... on NodeError {
