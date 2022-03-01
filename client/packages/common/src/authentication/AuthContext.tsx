@@ -1,4 +1,4 @@
-import React, { createContext, FC, useEffect, useMemo, useState } from 'react';
+import React, { createContext, FC, useMemo, useState } from 'react';
 import { Store, User } from '@common/types';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
@@ -29,6 +29,7 @@ interface AuthControl {
     password: string,
     store?: Store
   ) => Promise<AuthenticationResponse>;
+  logout: () => void;
   mostRecentlyUsedCredentials?: MRUCredentials | null;
   store?: Store;
   storeId: string;
@@ -50,9 +51,10 @@ export const getAuthCookie = (): AuthCookie => {
   return emptyCookie;
 };
 
-const useRefreshingAuth = () => {
-  const { token } = getAuthCookie();
-  useGetRefreshToken(token);
+const useRefreshingAuth = (token?: string) => {
+  const { setHeader } = useOmSupplyApi();
+  setHeader('Authorization', `Bearer ${token}`);
+  useGetRefreshToken(token ?? '');
 };
 
 const AuthContext = createContext<AuthControl>({
@@ -61,6 +63,7 @@ const AuthContext = createContext<AuthControl>({
     new Promise(() => ({
       token: '',
     })),
+  logout: () => {},
   storeId: '',
 });
 
@@ -69,46 +72,57 @@ const { Provider } = AuthContext;
 export const AuthProvider: FC = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
-  const { setHeader } = useOmSupplyApi();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
-  const { token, store: storeCookie, user } = getAuthCookie();
-  const [localStore, setLocalStore] = useState<Store | undefined>(storeCookie);
+  const { token: cookieToken, store: cookieStore, user } = getAuthCookie();
+  const [localStore, setLocalStore] = useState<Store | undefined>(cookieStore);
+  const [localToken, setLocalToken] = useState<string | undefined>(cookieToken);
   const storeId = localStore?.id ?? '';
 
-  useRefreshingAuth();
+  useRefreshingAuth(localToken);
 
   const login = async (username: string, password: string, store?: Store) => {
-    const response = await mutateAsync({ username, password });
+    const { token, error } = await mutateAsync({ username, password });
     const expires = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
     const authCookie = {
       expires,
       store,
-      token: response.token,
+      token: token,
       user: { id: '', name: username },
     };
 
     setMRUCredentials({ username, store: store });
     if (!!token) setLocalStore(store);
+    setLocalToken(token);
     Cookies.set('auth', JSON.stringify(authCookie), { expires });
 
-    return response;
+    return { token, error };
   };
 
-  useEffect(() => {
-    setHeader('Authorization', `Bearer ${token}`);
-  }, [token]);
+  const logout = () => {
+    Cookies.remove('auth');
+    Cookies.remove('refresh_token');
+    setLocalStore(undefined);
+  };
 
   const val = useMemo(
     () => ({
       isLoggingIn,
       login,
+      logout,
       storeId,
-      token,
+      token: localToken,
       user,
       store: localStore,
       mostRecentlyUsedCredentials,
     }),
-    [login, localStore, token, user, mostRecentlyUsedCredentials, isLoggingIn]
+    [
+      login,
+      localStore,
+      localToken,
+      user,
+      mostRecentlyUsedCredentials,
+      isLoggingIn,
+    ]
   );
 
   return <Provider value={val}>{children}</Provider>;
