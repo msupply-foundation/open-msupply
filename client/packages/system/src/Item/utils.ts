@@ -50,7 +50,5 @@ export const toItem = (line: ItemLike): Item => ({
     averageMonthlyConsumption: 0,
     availableStockOnHand: 0,
   },
-  unitName:
-    ('lines' in line ? line.lines[0].item?.unitName : line.item?.unitName) ??
-    '',
+  unitName: '',
 });

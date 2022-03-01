@@ -1,5 +1,3 @@
-import { ItemNode } from '@common/types';
-
 export interface ItemRow {
   id: string;
   code: string;
@@ -12,7 +10,6 @@ export interface ItemLikeLine {
   itemId: string;
   itemName: string;
   itemCode: string;
-  item?: ItemNode;
 }
 
 export interface ItemLikeAggregate {
