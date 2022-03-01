@@ -1,5 +1,5 @@
 import {
-  useAuthState,
+  useAuthContext,
   useQueryParams,
   useQuery,
 } from '@openmsupply-client/common';
@@ -8,7 +8,7 @@ import { ItemRowFragment } from '../../operations.generated';
 import { ItemQueries } from '../../api';
 
 export const useItemListView = () => {
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
   const queryParams = useQueryParams<ItemRowFragment>({
     initialSortBy: { key: 'name' },
   });

@@ -10,7 +10,7 @@ import {
   useNotification,
   useTranslation,
   InvoiceNodeStatus,
-  useAuthState,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getStatusTranslator } from '../../utils';
@@ -25,7 +25,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const api = useOutboundShipmentApi();
-  const { storeId } = useAuthState();
+  const { storeId } = useAuthContext();
 
   const {
     totalCount,
