@@ -10,8 +10,8 @@ import {
   useNotification,
   useTranslation,
   InvoiceNodeStatus,
-  useQueryParams,
   useCurrency,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system/src/Name';
 import { getStatusTranslator } from '../../utils';
@@ -26,7 +26,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const api = useOutboundShipmentApi();
-  const { storeId } = useQueryParams({ initialSortBy: { key: 'id' } });
+  const { storeId } = useAuthContext();
 
   const {
     totalCount,
