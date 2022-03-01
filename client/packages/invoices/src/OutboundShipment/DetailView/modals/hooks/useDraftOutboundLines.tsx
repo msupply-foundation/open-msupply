@@ -4,6 +4,8 @@ import {
   InvoiceLineNodeType,
   Item,
   StockLine,
+  useConfirmOnLeaving,
+  useDirtyCheck,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { InvoiceLine, DraftOutboundLine } from '../../../../types';
@@ -94,10 +96,12 @@ export const useDraftOutboundLines = (
     item?.id ?? ''
   );
   const { data, isLoading } = useStockLines(item?.code ?? '');
-
+  const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftOutboundLines, setDraftOutboundLines] = useState<
     DraftOutboundLine[]
   >([]);
+
+  useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
     if (!item) {
@@ -107,10 +111,9 @@ export const useDraftOutboundLines = (
     if (!data) return;
 
     setDraftOutboundLines(() => {
-      if (!lines) return [];
       const rows = data
         .map(batch => {
-          const invoiceLine = lines.find(
+          const invoiceLine = lines?.find(
             ({ stockLine }) => stockLine?.id === batch.id
           );
 
@@ -122,7 +125,7 @@ export const useDraftOutboundLines = (
         })
         .sort(sortByExpiry);
 
-      const placeholder = lines.find(
+      const placeholder = lines?.find(
         ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
       );
 
@@ -140,6 +143,7 @@ export const useDraftOutboundLines = (
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
+      setIsDirty(true);
       setDraftOutboundLines(issueStock(draftOutboundLines, batchId, value));
     },
     [draftOutboundLines]
