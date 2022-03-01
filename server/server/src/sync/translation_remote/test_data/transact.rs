@@ -109,10 +109,10 @@ fn transact_1_pull_record() -> TestSyncRecord {
                 allocated_datetime: None,
                 picked_datetime: None,
                 shipped_datetime: None,
-                delivered_datetime: None,
-                verified_datetime: Some(
+                delivered_datetime: Some(
                     NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0) + Duration::seconds(47046),
                 ),
+                verified_datetime: None,
                 colour: Some("#000000".to_string()),
                 requisition_id: None,
                 linked_invoice_id: None,
@@ -152,7 +152,7 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             entry_date: NaiveDate::from_ymd(2021, 7, 30),
             entry_time: 47046,
             ship_date: None,
-            arrival_date_actual: None,
+            arrival_date_actual: Some(NaiveDate::from_ymd(2021, 7, 30)),
             confirm_date: Some(NaiveDate::from_ymd(2021, 7, 30)),
             confirm_time: 47046
         }),

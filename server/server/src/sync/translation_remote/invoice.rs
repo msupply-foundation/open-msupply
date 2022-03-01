@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -133,8 +133,8 @@ impl RemotePullTranslation for InvoiceTranslation {
             source: anyhow::Error::msg(format!("Unsupported invoice type: {:?}", data._type)),
             record: sync_record.data.clone(),
         })?;
+        let confirm_mapping = map_legacy_confirm_time(&invoice_type, &data);
 
-        let confirm_time = data.confirm_time;
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Invoice(InvoiceRow {
                 id: data.ID,
@@ -149,16 +149,12 @@ impl RemotePullTranslation for InvoiceTranslation {
                 their_reference: data.their_ref,
                 created_datetime: date_and_time_to_datatime(data.entry_date, data.entry_time),
                 allocated_datetime: None,
-                picked_datetime: None,
+                picked_datetime: confirm_mapping.picked_datetime,
                 shipped_datetime: data
                     .ship_date
                     .map(|ship_date| date_and_time_to_datatime(ship_date, 0)),
-                delivered_datetime: data
-                    .arrival_date_actual
-                    .map(|arrival| date_and_time_to_datatime(arrival, 0)),
-                verified_datetime: data
-                    .confirm_date
-                    .map(|confirm_date| date_and_time_to_datatime(confirm_date, confirm_time)),
+                delivered_datetime: confirm_mapping.delivered_datetime,
+                verified_datetime: None,
                 colour: Some(format!("#{:06X}", data.Colour)),
                 requisition_id: data.requisition_ID,
                 linked_invoice_id: data.linked_transaction_id,
@@ -175,67 +171,96 @@ fn invoice_type(_type: &LegacyTransactType) -> Option<InvoiceRowType> {
     }
 }
 
+/// Helper struct for mapping legacy confirm time to new fields
+struct ConfirmTimeMapping {
+    picked_datetime: Option<NaiveDateTime>,
+    delivered_datetime: Option<NaiveDateTime>,
+}
+fn map_legacy_confirm_time(
+    invoice_type: &InvoiceRowType,
+    data: &LegacyTransactRow,
+) -> ConfirmTimeMapping {
+    let confirm_time = data.confirm_time;
+    let confirm_datetime = data
+        .confirm_date
+        .map(|confirm_date| date_and_time_to_datatime(confirm_date, confirm_time));
+
+    match invoice_type {
+        InvoiceRowType::OutboundShipment => ConfirmTimeMapping {
+            picked_datetime: confirm_datetime,
+            delivered_datetime: None,
+        },
+        InvoiceRowType::InboundShipment => ConfirmTimeMapping {
+            picked_datetime: None,
+            delivered_datetime: confirm_datetime,
+        },
+        InvoiceRowType::InventoryAdjustment => todo!(),
+    }
+}
+fn to_legacy_confirm_time(
+    invoice_type: &InvoiceRowType,
+    picked_datetime: Option<NaiveDateTime>,
+    delivered_datetime: Option<NaiveDateTime>,
+) -> (Option<NaiveDate>, i64) {
+    let time = match invoice_type {
+        InvoiceRowType::OutboundShipment => picked_datetime,
+        InvoiceRowType::InboundShipment => delivered_datetime,
+        // TODO:
+        InvoiceRowType::InventoryAdjustment => None,
+    };
+
+    let date = time.map(|time| date_from_date_time(&time));
+    let seconds = time.map(|time| time_sec_from_date_time(&time)).unwrap_or(0);
+    (date, seconds)
+}
+
 fn invoice_status(
     invoice_type: &InvoiceRowType,
     data: &LegacyTransactRow,
 ) -> Option<InvoiceRowStatus> {
+    let shipped = data.ship_date.is_some();
     let status = match invoice_type {
-        InvoiceRowType::OutboundShipment => invoice_status_for_outbound(
-            &data.status,
-            data.arrival_date_actual.is_some(),
-            data.ship_date.is_some(),
-        ),
-        InvoiceRowType::InboundShipment => invoice_status_for_inbound(
-            &data.status,
-            data.their_ref.is_none(),
-            data.ship_date.is_some(),
-        ),
+        // outbound
+        InvoiceRowType::OutboundShipment => {
+            let delivered = data.arrival_date_actual.is_some();
+            match data.status {
+                LegacyTransactStatus::Nw => InvoiceRowStatus::New,
+                // TODO could also mean Allocated
+                LegacyTransactStatus::Sg => InvoiceRowStatus::New,
+                LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
+                LegacyTransactStatus::Fn => {
+                    if shipped {
+                        InvoiceRowStatus::Shipped
+                    } else if delivered {
+                        InvoiceRowStatus::Delivered
+                    } else {
+                        InvoiceRowStatus::Verified
+                    }
+                }
+            }
+        }
+        // inbound
+        InvoiceRowType::InboundShipment => {
+            let manual_created = data.their_ref.is_none();
+            match data.status {
+                LegacyTransactStatus::Nw => {
+                    if manual_created {
+                        InvoiceRowStatus::New
+                    } else if !shipped {
+                        InvoiceRowStatus::Picked
+                    } else {
+                        InvoiceRowStatus::Shipped
+                    }
+                }
+                LegacyTransactStatus::Sg => InvoiceRowStatus::New,
+                LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
+                LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
+            }
+        }
+
         InvoiceRowType::InventoryAdjustment => return None,
     };
     Some(status)
-}
-
-fn invoice_status_for_inbound(
-    status: &LegacyTransactStatus,
-    manual_created: bool,
-    shipped: bool,
-) -> InvoiceRowStatus {
-    match status {
-        LegacyTransactStatus::Nw => {
-            if manual_created {
-                InvoiceRowStatus::New
-            } else if !shipped {
-                InvoiceRowStatus::Picked
-            } else {
-                InvoiceRowStatus::Shipped
-            }
-        }
-        LegacyTransactStatus::Sg => InvoiceRowStatus::New,
-        LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
-        LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
-    }
-}
-
-fn invoice_status_for_outbound(
-    status: &LegacyTransactStatus,
-    delivered: bool,
-    shipped: bool,
-) -> InvoiceRowStatus {
-    match status {
-        LegacyTransactStatus::Nw => InvoiceRowStatus::New,
-        // TODO could also mean Allocated
-        LegacyTransactStatus::Sg => InvoiceRowStatus::New,
-        LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
-        LegacyTransactStatus::Fn => {
-            if shipped {
-                InvoiceRowStatus::Shipped
-            } else if delivered {
-                InvoiceRowStatus::Delivered
-            } else {
-                InvoiceRowStatus::Verified
-            }
-        }
-    }
 }
 
 impl RemotePushUpsertTranslation for InvoiceTranslation {
@@ -265,10 +290,10 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             // TODO:
             allocated_datetime: _,
             // TODO:
-            picked_datetime: _,
+            picked_datetime,
             shipped_datetime,
             delivered_datetime,
-            verified_datetime,
+            verified_datetime: _,
             colour,
             requisition_id,
             linked_invoice_id,
@@ -286,6 +311,7 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             anyhow::Error::msg(format!("Invalid invoice status: {:?}", r#status)),
             changelog,
         ))?;
+        let confirm_datetime = to_legacy_confirm_time(&r#type, picked_datetime, delivered_datetime);
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
             name_ID: name_id,
@@ -307,11 +333,8 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             // TODO losing the time here:
             arrival_date_actual: delivered_datetime
                 .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
-            confirm_date: verified_datetime
-                .map(|verified_datetime| date_from_date_time(&verified_datetime)),
-            confirm_time: verified_datetime
-                .map(|verified_datetime| time_sec_from_date_time(&verified_datetime))
-                .unwrap_or(0),
+            confirm_date: confirm_datetime.0,
+            confirm_time: confirm_datetime.1,
         };
 
         Ok(Some(vec![PushUpsertRecord {
