@@ -10,15 +10,15 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::invoice_line::{
-    outbound_shipment_service_line::{
-        UpdateOutboundShipmentServiceLine as ServiceInput,
-        UpdateOutboundShipmentServiceLineError as ServiceError,
+    inbound_shipment_service_line::{
+        UpdateInboundShipmentServiceLine as ServiceInput,
+        UpdateInboundShipmentServiceLineError as ServiceError,
     },
     ShipmentTaxUpdate,
 };
 
 #[derive(InputObject)]
-#[graphql(name = "UpdateOutboundShipmentServiceLineInput")]
+#[graphql(name = "UpdateInboundShipmentServiceLineInput")]
 pub struct UpdateInput {
     pub id: String,
     invoice_id: String,
@@ -37,7 +37,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(
         service_provider
             .invoice_line_service
-            .update_outbound_shipment_service_line(&service_context, store_id, input.to_domain()),
+            .update_inbound_shipment_service_line(&service_context, store_id, input.to_domain()),
     )
 }
 
@@ -53,20 +53,20 @@ pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<UpdateRes
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "UpdateOutboundShipmentServiceLineError")]
+#[graphql(name = "UpdateInboundShipmentServiceLineError")]
 pub struct UpdateError {
     pub error: UpdateErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "UpdateOutboundShipmentServiceLineResponse")]
+#[graphql(name = "UpdateInboundShipmentServiceLineResponse")]
 pub enum UpdateResponse {
     Error(UpdateError),
     Response(InvoiceLineNode),
 }
 
 #[derive(Interface)]
-#[graphql(name = "UpdateOutboundShipmentServiceLineErrorInterface")]
+#[graphql(name = "UpdateInboundShipmentServiceLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
@@ -122,7 +122,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
+        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
         ServiceError::NotAServiceItem => BadUserInput(formatted_error),
@@ -145,8 +145,8 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            outbound_shipment_service_line::{
-                UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError,
+            inbound_shipment_service_line::{
+                UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError,
             },
             InvoiceLineServiceTrait, ShipmentTaxUpdate,
         },
@@ -154,8 +154,8 @@ mod test {
     };
     use util::inline_init;
 
-    type ServiceInput = UpdateOutboundShipmentServiceLine;
-    type ServiceError = UpdateOutboundShipmentServiceLineError;
+    type ServiceInput = UpdateInboundShipmentServiceLine;
+    type ServiceError = UpdateInboundShipmentServiceLineError;
 
     type UpdateLineMethod =
         dyn Fn(&str, ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
@@ -163,7 +163,7 @@ mod test {
     pub struct TestService(pub Box<UpdateLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn update_outbound_shipment_service_line(
+        fn update_inbound_shipment_service_line(
             &self,
             _: &ServiceContext,
             store_id: &str,
@@ -183,19 +183,19 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_update_outbound_shipment_service_line() {
+    async fn test_graphql_update_inbound_shipment_service_line() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceLineMutations,
-            "test_graphql_update_outbound_shipment_service_line",
+            "test_graphql_update_inbound_shipment_service_line",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: UpdateOutboundShipmentServiceLineInput!, $storeId: String) {
-            updateOutboundShipmentServiceLine(storeId: $storeId, input: $input) {
-              ... on UpdateOutboundShipmentServiceLineError {
+        mutation ($input: UpdateInboundShipmentServiceLineInput!, $storeId: String) {
+            updateInboundShipmentServiceLine(storeId: $storeId, input: $input) {
+              ... on UpdateInboundShipmentServiceLineError {
                 error {
                   __typename
                 }
@@ -216,7 +216,7 @@ mod test {
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::LineDoesNotExist)));
 
         let expected = json!({
-            "updateOutboundShipmentServiceLine": {
+            "updateInboundShipmentServiceLine": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -236,7 +236,7 @@ mod test {
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
-            "updateOutboundShipmentServiceLine": {
+            "updateInboundShipmentServiceLine": {
               "error": {
                 "__typename": "ForeignKeyError"
               }
@@ -256,7 +256,7 @@ mod test {
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditInvoice)));
 
         let expected = json!({
-            "updateOutboundShipmentServiceLine": {
+            "updateInboundShipmentServiceLine": {
               "error": {
                 "__typename": "CannotEditInvoice"
               }
@@ -272,8 +272,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnOutboundShipment)));
+        // NotAnInboundShipment
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -336,18 +336,18 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_update_outbound_service_line_success() {
+    async fn test_graphql_update_inbound_service_line_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceLineMutations,
-            "test_graphql_update_outbound_service_line_success",
+            "test_graphql_update_inbound_service_line_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: UpdateOutboundShipmentServiceLineInput!, $storeId: String) {
-            updateOutboundShipmentServiceLine(storeId: $storeId, input: $input) {
+        mutation ($input: UpdateInboundShipmentServiceLineInput!, $storeId: String) {
+            updateInboundShipmentServiceLine(storeId: $storeId, input: $input) {
               ... on InvoiceLineNode {
                 id
               }
@@ -395,7 +395,7 @@ mod test {
         });
 
         let expected = json!({
-            "updateOutboundShipmentServiceLine": {
+            "updateInboundShipmentServiceLine": {
                 "id": "update line id input"
             }
           }

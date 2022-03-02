@@ -7,6 +7,7 @@ pub struct InvoiceLineMutations;
 
 #[Object]
 impl InvoiceLineMutations {
+    // Outbound
     async fn insert_outbound_shipment_line(
         &self,
         ctx: &Context<'_>,
@@ -88,6 +89,8 @@ impl InvoiceLineMutations {
         outbound_shipment_line::unallocated_line::delete(ctx, &store_id, input)
     }
 
+    // Inbound
+
     async fn insert_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
@@ -113,5 +116,32 @@ impl InvoiceLineMutations {
         input: inbound_shipment_line::line::DeleteInput,
     ) -> Result<inbound_shipment_line::line::DeleteResponse> {
         inbound_shipment_line::line::delete(ctx, &store_id, input)
+    }
+
+    async fn insert_inbound_shipment_service_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::service_line::InsertInput,
+    ) -> Result<inbound_shipment_line::service_line::InsertResponse> {
+        inbound_shipment_line::service_line::insert(ctx, &store_id, input)
+    }
+
+    async fn update_inbound_shipment_service_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::service_line::UpdateInput,
+    ) -> Result<inbound_shipment_line::service_line::UpdateResponse> {
+        inbound_shipment_line::service_line::update(ctx, &store_id, input)
+    }
+
+    async fn delete_inbound_shipment_service_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::service_line::DeleteInput,
+    ) -> Result<inbound_shipment_line::service_line::DeleteResponse> {
+        inbound_shipment_line::service_line::delete(ctx, &store_id, input)
     }
 }

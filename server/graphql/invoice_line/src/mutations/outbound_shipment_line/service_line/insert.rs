@@ -309,11 +309,11 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_insert_request_invoice_line_success() {
+    async fn test_graphql_insert_outbound_service_line_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceLineMutations,
-            "test_graphql_insert_request_invoice_line_success",
+            "test_graphql_insert_outbound_service_line_success",
             MockDataInserts::all(),
         )
         .await;
