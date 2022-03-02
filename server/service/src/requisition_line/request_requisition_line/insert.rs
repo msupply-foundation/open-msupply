@@ -21,6 +21,7 @@ pub struct InsertRequestRequisitionLine {
     pub item_id: String,
     pub requisition_id: String,
     pub requested_quantity: Option<u32>,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -109,6 +110,7 @@ fn generate(
         requisition_id: _,
         item_id,
         requested_quantity,
+        comment,
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
     let mut new_requisition_line =
@@ -118,6 +120,7 @@ fn generate(
 
     new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0) as i32;
     new_requisition_line.id = id;
+    new_requisition_line.comment = comment.or(new_requisition_line.comment);
 
     Ok(new_requisition_line)
 }
