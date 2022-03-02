@@ -1,9 +1,7 @@
-import { SortBy, NameSortFieldInput, Name } from '@openmsupply-client/common';
-import { getSdk } from './operations.generated';
+import { SortBy, NameSortFieldInput } from '@openmsupply-client/common';
+import { Sdk, NameRowFragment } from './operations.generated';
 
-type NameSdk = ReturnType<typeof getSdk>;
-
-export const getNameQueries = (sdk: NameSdk, storeId: string) => ({
+export const getNameQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     list: async ({
       type = 'supplier',
@@ -14,9 +12,9 @@ export const getNameQueries = (sdk: NameSdk, storeId: string) => ({
       type?: 'supplier' | 'customer';
       first?: number;
       offset?: number;
-      sortBy?: SortBy<Name>;
+      sortBy?: SortBy<NameRowFragment>;
     }): Promise<{
-      nodes: Name[];
+      nodes: NameRowFragment[];
       totalCount: number;
     }> => {
       const key =

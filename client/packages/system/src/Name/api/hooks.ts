@@ -1,13 +1,11 @@
 import {
   useQueryParams,
   useOmSupplyApi,
-  Name,
   useAuthContext,
   useQuery,
-  UseQueryResult,
 } from '@openmsupply-client/common';
 import { getNameQueries } from './api';
-import { getSdk } from './operations.generated';
+import { getSdk, NameRowFragment } from './operations.generated';
 
 const useNamesApi = () => {
   const { storeId } = useAuthContext();
@@ -16,14 +14,7 @@ const useNamesApi = () => {
   return { ...queries, storeId };
 };
 
-export const useNamesSearch = ({
-  isCustomer,
-}: {
-  isCustomer?: boolean;
-}): UseQueryResult<{
-  nodes: Name[];
-  totalCount: number;
-}> => {
+export const useNamesSearch = ({ isCustomer }: { isCustomer?: boolean }) => {
   const api = useNamesApi();
   // TODO: Paginate and name/code filtering.
   return useQuery(['name', 'list', api.storeId, isCustomer], async () => {
@@ -37,7 +28,7 @@ export const useNamesSearch = ({
 
 export const useNames = (type: 'customer' | 'supplier') => {
   const api = useNamesApi();
-  const queryParams = useQueryParams<Name>({
+  const queryParams = useQueryParams<NameRowFragment>({
     initialSortBy: { key: 'name' },
   });
   return {

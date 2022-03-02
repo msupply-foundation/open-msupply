@@ -1,4 +1,4 @@
-import { StockLineNode, NameNode } from './schema';
+// import { NameNode } from './schema';
 
 export * from './utility';
 export * from './schema';
@@ -7,17 +7,13 @@ type RecordWithId = { id: string };
 
 export type DomainObject = RecordWithId;
 
-export interface Name extends NameNode {
-  id: string;
-  code: string;
-  name: string;
-  isCustomer: boolean;
-  isSupplier: boolean;
-}
-
-export interface StockLine
-  extends DomainObject,
-    Omit<StockLineNode, '__typename'> {}
+// export interface Name extends NameNode {
+//   id: string;
+//   code: string;
+//   name: string;
+//   isCustomer: boolean;
+//   isSupplier: boolean;
+// }
 
 export type Test = {
   id: string;
