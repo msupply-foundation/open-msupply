@@ -1,5 +1,8 @@
 use super::{OutError, UpdateRequestRequisition};
-use crate::requisition::{common::check_requisition_exists, request_requisition::check_other_party_exists};
+use crate::requisition::{
+    common::check_requisition_exists,
+    request_requisition::{check_other_party, OtherPartyErrors},
+};
 use repository::{
     schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     StorageConnection,
@@ -30,20 +33,15 @@ pub fn validate(
         Some(other_party_id) => other_party_id,
     };
 
-    let other_party = check_other_party_exists(connection, &other_party_id)?
-        .ok_or(OutError::OtherPartyDoesNotExist)?;
-
-    if !other_party.is_supplier() {
-        return Err(OutError::OtherPartyNotASupplier(other_party));
-    }
-
-    let other_party_store_id = other_party
-        .store_id()
-        .ok_or(OutError::OtherPartyIsNotAStore)?;
-
-    if store_id == other_party_store_id {
-        return Err(OutError::OtherPartyIsThisStore);
-    }
+    check_other_party(connection, store_id, &other_party_id).map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OutError::OtherPartyDoesNotExist {},
+        OtherPartyErrors::OtherPartyNotASupplier(name) => OutError::OtherPartyNotASupplier(name),
+        OtherPartyErrors::OtherPartyIsNotAStore => OutError::OtherPartyIsNotAStore,
+        OtherPartyErrors::OtherPartyIsThisStore => OutError::OtherPartyIsThisStore,
+        OtherPartyErrors::DatabaseError(repository_error) => {
+            OutError::DatabaseError(repository_error)
+        }
+    })?;
 
     Ok(requisition_row)
 }
