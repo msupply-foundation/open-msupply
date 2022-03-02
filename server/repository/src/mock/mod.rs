@@ -25,6 +25,7 @@ mod test_requisition_line_repository;
 mod test_requisition_queries;
 mod test_requisition_repository;
 mod test_requisition_service;
+mod test_service_lines;
 mod test_stocktake;
 mod test_stocktake_line;
 mod test_sync_processor;
@@ -57,6 +58,7 @@ pub use test_requisition_line_repository::*;
 pub use test_requisition_queries::*;
 pub use test_requisition_repository::*;
 pub use test_requisition_service::*;
+pub use test_service_lines::*;
 pub use test_stocktake::*;
 pub use test_stocktake_line::*;
 pub use test_sync_processor::*;
@@ -324,6 +326,7 @@ fn all_mock_data() -> MockDataCollection {
     data.insert("mock_test_sync_processor", mock_test_sync_processor());
     data.insert("mock_test_invoice_loaders", mock_test_invoice_loaders());
     data.insert("mock_test_remote_pull", mock_test_remote_pull());
+    data.insert("mock_test_service_item", mock_test_service_item());
     data
 }
 

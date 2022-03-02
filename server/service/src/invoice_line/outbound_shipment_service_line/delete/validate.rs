@@ -5,14 +5,13 @@ use crate::{
     },
     invoice_line::{
         validate::{
-            check_item, check_line_belongs_to_invoice, check_line_exists, ItemNotFound,
-            LineDoesNotExist, NotInvoiceLine,
+            check_line_belongs_to_invoice, check_line_exists, LineDoesNotExist, NotInvoiceLine,
         },
         DeleteOutboundShipmentLine,
     },
 };
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRowType, ItemRowType},
+    schema::{InvoiceLineRow, InvoiceRowType},
     StorageConnection,
 };
 
@@ -25,22 +24,11 @@ pub fn validate(
     let line = check_line_exists(&input.id, connection)?;
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
 
-    let item = check_item(&line.item_id, connection)?;
-    if item.r#type != ItemRowType::Service {
-        return Err(DeleteOutboundShipmentServiceLineError::NotAServiceItem);
-    }
-
     check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     Ok(line)
-}
-
-impl From<ItemNotFound> for DeleteOutboundShipmentServiceLineError {
-    fn from(_: ItemNotFound) -> Self {
-        DeleteOutboundShipmentServiceLineError::ItemNotFound
-    }
 }
 
 impl From<LineDoesNotExist> for DeleteOutboundShipmentServiceLineError {
@@ -57,7 +45,7 @@ impl From<WrongInvoiceRowType> for DeleteOutboundShipmentServiceLineError {
 
 impl From<InvoiceIsNotEditable> for DeleteOutboundShipmentServiceLineError {
     fn from(_: InvoiceIsNotEditable) -> Self {
-        DeleteOutboundShipmentServiceLineError::CannotEditFinalised
+        DeleteOutboundShipmentServiceLineError::CannotEditInvoice
     }
 }
 
