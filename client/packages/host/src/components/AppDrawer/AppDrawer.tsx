@@ -18,7 +18,6 @@ import {
   useTranslation,
   AppNavLink,
   useIsMediumScreen,
-  useDebounceCallback,
   useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
@@ -29,8 +28,6 @@ import {
   ReplenishmentNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
-
-const HOVER_DEBOUNCE_TIME = 500;
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -144,20 +141,18 @@ export const AppDrawer: React.FC = () => {
     if (!isMediumScreen && !drawer.isOpen) drawer.open();
   }, [isMediumScreen]);
 
-  const onHoverOut = useDebounceCallback(
-    () => {
-      drawer.close();
-      drawer.setHoverOpen(false);
-    },
-    [],
-    HOVER_DEBOUNCE_TIME
-  );
+  const onHoverOut = () => {
+    if (!drawer.hoverOpen) return;
+
+    drawer.close();
+    drawer.setHoverOpen(false);
+  };
 
   const onHoverOver = () => {
-    if (!drawer.isOpen) {
-      drawer.open();
-      drawer.setHoverOpen(true);
-    }
+    if (drawer.isOpen) return;
+
+    drawer.open();
+    drawer.setHoverOpen(true);
   };
 
   return (
