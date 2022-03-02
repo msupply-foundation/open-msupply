@@ -205,7 +205,7 @@ export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
   const selectLines = useCallback((invoice: OutboundFragment) => {
     const { lines } = invoice;
 
-    return Object.entries(groupBy(lines.nodes, 'itemId')).map(
+    return Object.entries(groupBy(lines.nodes, line => line.item.id)).map(
       ([itemId, lines]) => {
         return { id: itemId, itemId, lines };
       }

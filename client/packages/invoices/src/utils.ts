@@ -118,7 +118,7 @@ export const createSummaryItem = (
 export const inboundLinesToSummaryItems = (
   lines: InboundLineFragment[]
 ): InboundItem[] => {
-  const grouped = groupBy(lines, 'itemId');
+  const grouped = groupBy(lines, line => line.item.id);
   return Object.entries(grouped).map(([itemId, lines]) =>
     createSummaryItem(itemId, lines)
   );
