@@ -10,7 +10,6 @@ import {
   InvoiceLineNodeType,
   useRowStyle,
   AppSxProp,
-  alpha,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { useOutboundRows } from '../api';
@@ -42,7 +41,7 @@ const Expand: FC<{
 };
 
 export const useHighlightPlaceholderRows = (
-  rows: OutboundLineFragment[] | OutboundItem[]
+  rows: OutboundLineFragment[] | OutboundItem[] | undefined
 ) => {
   const { setRowStyles } = useRowStyle();
 
@@ -78,7 +77,7 @@ export const useHighlightPlaceholderRows = (
     }
 
     const style: AppSxProp = {
-      backgroundColor: theme => alpha(theme.palette.error.main, 0.1),
+      color: theme => theme.palette.secondary.light,
     };
     setRowStyles(placeholders, style);
   }, [rows, setRowStyles]);
@@ -88,10 +87,10 @@ export const ContentAreaComponent: FC<
   GeneralTabProps<OutboundLineFragment | OutboundItem>
 > = ({ onRowClick }) => {
   const t = useTranslation('distribution');
-
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const { rows, onChangeSortBy, sortBy } = useOutboundRows(isGrouped);
   const columns = useOutboundColumns({ onChangeSortBy, sortBy });
+  useHighlightPlaceholderRows(rows);
 
   if (!rows) return null;
 
