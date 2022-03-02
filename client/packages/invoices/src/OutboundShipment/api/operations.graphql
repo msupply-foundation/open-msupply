@@ -1,10 +1,3 @@
-fragment PartialLocation on LocationNode {
-  id
-  name
-  code
-  onHold
-}
-
 fragment PartialStockLine on StockLineNode {
   id
   itemId
@@ -15,18 +8,15 @@ fragment PartialStockLine on StockLineNode {
   packSize
   expiryDate
   location {
-    ...PartialLocation
+    __typename
+    id
+    name
+    code
+    onHold
   }
 }
 
-fragment PartialItem on ItemNode {
-  id
-  name
-  code
-  unitName
-}
-
-fragment PartialOutboundLine on InvoiceLineNode {
+fragment OutboundLine on InvoiceLineNode {
   __typename
   id
   type
@@ -36,60 +26,14 @@ fragment PartialOutboundLine on InvoiceLineNode {
   packSize
   invoiceId
   sellPricePerPack
-
-  stockLine {
-    ...PartialStockLine
-  }
-
-  item {
-    ...PartialItem
-  }
-
-  location {
-    ...PartialLocation
-  }
-}
-
-fragment OutboundShipmentLine on InvoiceLineNode {
-  __typename
-  type
-  batch
-  costPricePerPack
-  expiryDate
-  id
-  itemCode
-  itemId
-  itemName
-  numberOfPacks
-  packSize
   note
-  invoiceId
-  locationName
-  sellPricePerPack
-  type
 
   item {
     __typename
     id
     name
     code
-    isVisible
     unitName
-    availableBatches(storeId: $storeId) {
-      totalCount
-      nodes {
-        id
-        availableNumberOfPacks
-        costPricePerPack
-        itemId
-        onHold
-        packSize
-        sellPricePerPack
-        storeId
-        totalNumberOfPacks
-        expiryDate
-      }
-    }
   }
 
   location {
@@ -98,41 +42,22 @@ fragment OutboundShipmentLine on InvoiceLineNode {
     name
     code
     onHold
-    stock {
-      __typename
-      totalCount
-      nodes {
-        id
-        costPricePerPack
-        itemId
-        availableNumberOfPacks
-        onHold
-        packSize
-        sellPricePerPack
-        storeId
-        totalNumberOfPacks
-      }
-    }
   }
 
   stockLine {
     __typename
-    availableNumberOfPacks
-    batch
-    costPricePerPack
-    expiryDate
     id
     itemId
-    packSize
-    sellPricePerPack
-    storeId
+    availableNumberOfPacks
     totalNumberOfPacks
     onHold
-    note
+    sellPricePerPack
+    packSize
+    expiryDate
   }
 }
 
-fragment OutboundShipment on InvoiceNode {
+fragment Outbound on InvoiceNode {
   __typename
   id
   comment
@@ -154,7 +79,7 @@ fragment OutboundShipment on InvoiceNode {
   lines {
     __typename
     nodes {
-      ...OutboundShipmentLine
+      ...OutboundLine
     }
     totalCount
   }
@@ -179,7 +104,7 @@ fragment OutboundShipment on InvoiceNode {
   }
 }
 
-fragment OutboundShipmentRow on InvoiceNode {
+fragment OutboundRow on InvoiceNode {
   __typename
   comment
   createdDatetime
@@ -199,11 +124,6 @@ fragment OutboundShipmentRow on InvoiceNode {
   pricing {
     __typename
     totalAfterTax
-    totalBeforeTax
-    stockTotalBeforeTax
-    stockTotalAfterTax
-    serviceTotalAfterTax
-    serviceTotalBeforeTax
   }
 }
 
@@ -224,7 +144,7 @@ query invoices(
     ... on InvoiceConnector {
       __typename
       nodes {
-        ...OutboundShipmentRow
+        ...OutboundRow
       }
       totalCount
     }
@@ -250,7 +170,7 @@ query invoice($id: String!, $storeId: String!) {
       }
     }
     ... on InvoiceNode {
-      ...OutboundShipment
+      ...Outbound
     }
   }
 }
@@ -278,7 +198,7 @@ query outboundByNumber($invoiceNumber: Int!, $storeId: String!) {
       }
     }
     ... on InvoiceNode {
-      ...OutboundShipment
+      ...Outbound
     }
   }
 }

@@ -9,12 +9,13 @@ import {
   useColumns,
   Column,
 } from '@openmsupply-client/common';
-import { InvoiceLine, InboundShipmentItem } from './../../types';
+import { InboundItem } from './../../types';
+import { InboundLineFragment, PartialLocationFragment } from '../api';
 
 export const useInboundShipmentColumns = (): Column<
-  InvoiceLine | InboundShipmentItem
+  InboundLineFragment | InboundItem
 >[] =>
-  useColumns<InvoiceLine | InboundShipmentItem>(
+  useColumns<InboundLineFragment | InboundItem>(
     [
       [
         getNotePopoverColumn(),
@@ -43,9 +44,10 @@ export const useInboundShipmentColumns = (): Column<
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'itemCode', '');
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'code', '');
             } else {
-              return rowData.itemCode;
+              return rowData.item.code;
             }
           },
         },
@@ -56,9 +58,10 @@ export const useInboundShipmentColumns = (): Column<
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'itemName', '');
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'name', '');
             } else {
-              return rowData.itemName;
+              return rowData.item.name;
             }
           },
         },
@@ -101,9 +104,12 @@ export const useInboundShipmentColumns = (): Column<
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'locationName', '');
+              const locations = lines
+                .map(({ location }) => location)
+                .filter(Boolean) as PartialLocationFragment[];
+              return ifTheSameElseDefault(locations, 'name', '');
             } else {
-              return rowData?.locationName;
+              return rowData.location?.name ?? '';
             }
           },
         },
@@ -167,7 +173,7 @@ export const useInboundShipmentColumns = (): Column<
     []
   );
 
-export const useExpansionColumns = (): Column<InvoiceLine>[] =>
+export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
   useColumns([
     'batch',
     'expiryDate',

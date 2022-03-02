@@ -14,9 +14,8 @@ import {
 import { NameSearchModal } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { InvoiceRow } from '../../types';
 import { getStatusTranslator } from '../../utils';
-import { useInbounds, useCreateInbound } from '../api';
+import { useInbounds, useCreateInbound, InboundRowFragment } from '../api';
 
 export const InboundListView: FC = () => {
   const { mutate } = useCreateInbound();
@@ -34,7 +33,7 @@ export const InboundListView: FC = () => {
 
   const t = useTranslation();
 
-  const columns = useColumns<InvoiceRow>(
+  const columns = useColumns<InboundRowFragment>(
     [
       [getNameAndColorColumn(), { setter: () => {} }],
       [

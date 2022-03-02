@@ -1,15 +1,9 @@
-export interface ItemRow {
-  id: string;
-  code: string;
-  name: string;
-}
+import { ItemRowFragment } from './api';
 
 export type ItemLike = ItemLikeLine | ItemLikeAggregate;
 
 export interface ItemLikeLine {
-  itemId: string;
-  itemName: string;
-  itemCode: string;
+  item: ItemRowFragment;
 }
 
 export interface ItemLikeAggregate {

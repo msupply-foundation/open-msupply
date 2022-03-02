@@ -17,7 +17,7 @@ import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbounds, useCreateOutbound, useUpdateOutbound } from '../api';
-import { OutboundShipmentRowFragment } from '../api/operations.generated';
+import { OutboundRowFragment } from '../api/operations.generated';
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useUpdateOutbound();
@@ -37,7 +37,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   } = useOutbounds();
 
   const { c } = useCurrency();
-  const columns = useColumns<OutboundShipmentRowFragment>(
+  const columns = useColumns<OutboundRowFragment>(
     [
       [getNameAndColorColumn(), { setter: onUpdate }],
       [

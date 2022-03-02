@@ -34,9 +34,9 @@ export const mapItemNodes = (
 
 export const toItem = (line: ItemLike): Item => ({
   __typename: 'ItemNode',
-  id: 'lines' in line ? line.lines[0].itemId : line.itemId,
-  name: 'lines' in line ? line.lines[0].itemName : line.itemName,
-  code: 'lines' in line ? line.lines[0].itemCode : line.itemCode,
+  id: 'lines' in line ? line.lines[0].item.id : line.item.id,
+  name: 'lines' in line ? line.lines[0].item.name : line.item.name,
+  code: 'lines' in line ? line.lines[0].item.code : line.item.code,
   isVisible: true,
   availableBatches: {
     __typename: 'StockLineConnector',
@@ -50,5 +50,7 @@ export const toItem = (line: ItemLike): Item => ({
     averageMonthlyConsumption: 0,
     availableStockOnHand: 0,
   },
-  unitName: '',
+  unitName:
+    ('lines' in line ? line.lines[0].item?.unitName : line.item?.unitName) ??
+    '',
 });
