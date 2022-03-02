@@ -150,7 +150,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   },
   update: async (
     patch: Partial<RequestRequisitionFragment> & { id: string }
-  ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
+  ) => {
     const input = requestParser.toUpdate(patch);
     const result = await sdk.updateRequestRequisition({
       storeId,
