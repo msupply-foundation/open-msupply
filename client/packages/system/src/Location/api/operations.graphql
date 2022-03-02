@@ -1,4 +1,5 @@
 fragment LocationRow on LocationNode {
+  __typename
   id
   name
   onHold

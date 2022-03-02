@@ -40,6 +40,7 @@ export type DeleteLocationMutation = { __typename: 'Mutations', deleteLocation: 
 
 export const LocationRowFragmentDoc = gql`
     fragment LocationRow on LocationNode {
+  __typename
   id
   name
   onHold
