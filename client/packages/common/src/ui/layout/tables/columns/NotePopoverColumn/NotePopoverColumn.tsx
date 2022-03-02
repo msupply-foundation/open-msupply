@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { ColumnAlign, ColumnDefinition } from '../types';
 import { MessageSquareIcon } from '@common/icons';
 import { PaperPopover, PaperPopoverSection } from '@common/components';
@@ -29,7 +29,7 @@ const hasRequiredFields = (
   (variableToCheck as NoteObject).header !== undefined &&
   (variableToCheck as NoteObject).body !== undefined;
 
-export const getNotePopoverColumn = <T extends DomainObject>(
+export const getNotePopoverColumn = <T extends RecordWithId>(
   label?: string
 ): ColumnDefinition<T> => ({
   key: 'note',

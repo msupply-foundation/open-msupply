@@ -1,5 +1,5 @@
 import { ReactNode, FC } from 'react';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { Pagination, SortRule } from '@common/hooks';
 import { Column } from './columns/types';
 
@@ -14,7 +14,7 @@ export interface QueryResponse<T> {
   totalLength: number;
 }
 
-export interface TableProps<T extends DomainObject> {
+export interface TableProps<T extends RecordWithId> {
   columns: Column<T>[];
   data?: T[];
   isLoading?: boolean;

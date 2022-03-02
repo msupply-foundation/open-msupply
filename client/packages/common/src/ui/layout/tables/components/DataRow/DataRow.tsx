@@ -2,11 +2,11 @@ import React, { FC } from 'react';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { useExpanded, useIsDisabled, useRowStyle } from '../../context';
 import { Collapse, Fade } from '@mui/material';
 
-interface DataRowProps<T extends DomainObject> {
+interface DataRowProps<T extends RecordWithId> {
   columns: Column<T>[];
   rows: T[];
   onClick?: (rowData: T) => void;
@@ -17,7 +17,7 @@ interface DataRowProps<T extends DomainObject> {
   rowIndex: number;
 }
 
-export const DataRow = <T extends DomainObject>({
+export const DataRow = <T extends RecordWithId>({
   columns,
   onClick,
   rowData,
