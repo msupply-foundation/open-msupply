@@ -12,6 +12,9 @@ use self::query::*;
 pub mod inbound_shipment_line;
 use self::inbound_shipment_line::*;
 
+pub mod inbound_shipment_service_line;
+use self::inbound_shipment_service_line::*;
+
 pub mod outbound_shipment_line;
 use self::outbound_shipment_line::*;
 
@@ -38,6 +41,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         get_invoice_lines(ctx, filter)
     }
 
+    // Outbound
     fn insert_outbound_shipment_line(
         &self,
         ctx: &ServiceContext,
@@ -65,6 +69,34 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         delete_outbound_shipment_line(ctx, store_id, input)
     }
 
+    fn insert_inbound_shipment_service_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: InsertInboundShipmentServiceLine,
+    ) -> Result<InvoiceLine, InsertInboundShipmentServiceLineError> {
+        insert_inbound_shipment_service_line(ctx, store_id, input)
+    }
+
+    fn update_inbound_shipment_service_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateInboundShipmentServiceLine,
+    ) -> Result<InvoiceLine, UpdateInboundShipmentServiceLineError> {
+        update_inbound_shipment_service_line(ctx, store_id, input)
+    }
+
+    fn delete_inbound_shipment_service_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: DeleteInboundShipmentLine,
+    ) -> Result<String, DeleteInboundShipmentServiceLineError> {
+        delete_inbound_shipment_service_line(ctx, store_id, input)
+    }
+
+    // Inbound
     fn insert_inbound_shipment_line(
         &self,
         ctx: &ServiceContext,

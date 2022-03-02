@@ -1,5 +1,5 @@
 use crate::{
-    invoice_line::DeleteOutboundShipmentLine, service_provider::ServiceContext, WithDBError,
+    invoice_line::DeleteInboundShipmentLine, service_provider::ServiceContext, WithDBError,
 };
 use repository::{InvoiceLineRowRepository, RepositoryError};
 
@@ -7,12 +7,12 @@ mod validate;
 
 use validate::validate;
 
-type OutError = DeleteOutboundShipmentServiceLineError;
+type OutError = DeleteInboundShipmentServiceLineError;
 
-pub fn delete_outbound_shipment_service_line(
+pub fn delete_inbound_shipment_service_line(
     ctx: &ServiceContext,
     _store_id: &str,
-    input: DeleteOutboundShipmentLine,
+    input: DeleteInboundShipmentLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
@@ -27,25 +27,25 @@ pub fn delete_outbound_shipment_service_line(
 }
 
 #[derive(Debug, PartialEq)]
-pub enum DeleteOutboundShipmentServiceLineError {
+pub enum DeleteInboundShipmentServiceLineError {
     LineDoesNotExist,
     InvoiceDoesNotExist,
-    NotAnOutboundShipment,
+    NotAnInboundShipment,
     CannotEditInvoice,
     NotThisInvoiceLine(String),
     // Internal
     DatabaseError(RepositoryError),
 }
 
-impl From<RepositoryError> for DeleteOutboundShipmentServiceLineError {
+impl From<RepositoryError> for DeleteInboundShipmentServiceLineError {
     fn from(error: RepositoryError) -> Self {
-        DeleteOutboundShipmentServiceLineError::DatabaseError(error)
+        DeleteInboundShipmentServiceLineError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for DeleteOutboundShipmentServiceLineError
+impl<ERR> From<WithDBError<ERR>> for DeleteInboundShipmentServiceLineError
 where
-    ERR: Into<DeleteOutboundShipmentServiceLineError>,
+    ERR: Into<DeleteInboundShipmentServiceLineError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {
@@ -59,10 +59,10 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_draft_inbound_service_line, mock_draft_outbound_service_line,
-            mock_draft_outbound_shipped_service_line,
-            mock_draft_outbound_shipped_with_service_lines, mock_draft_outbound_with_service_lines,
-            mock_full_draft_outbound_shipment_a, MockDataInserts, mock_draft_inbound_shipment_with_service_lines,
+            mock_draft_inbound_service_line, mock_draft_inbound_shipment_with_service_lines,
+            mock_draft_inbound_verified_service_line,
+            mock_draft_inbound_verified_with_service_lines, mock_draft_outbound_service_line,
+            mock_draft_outbound_with_service_lines, mock_outbound_shipment_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -70,18 +70,18 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        invoice_line::outbound_shipment_line::DeleteOutboundShipmentLine,
+        invoice_line::inbound_shipment_line::DeleteInboundShipmentLine,
         service_provider::ServiceProvider,
     };
 
-    use super::DeleteOutboundShipmentServiceLineError;
+    use super::DeleteInboundShipmentServiceLineError;
 
-    type ServiceError = DeleteOutboundShipmentServiceLineError;
+    type ServiceError = DeleteInboundShipmentServiceLineError;
 
     #[actix_rt::test]
-    async fn delete_outbound_shipment_service_line_errors() {
+    async fn delete_inbound_shipment_service_line_errors() {
         let (_, _, connection_manager, _) = setup_all(
-            "delete_outbound_shipment_service_line_errors",
+            "delete_inbound_shipment_service_line_errors",
             MockDataInserts::all(),
         )
         .await;
@@ -90,14 +90,14 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_line_service;
 
-        let draft_shipment = mock_full_draft_outbound_shipment_a();
+        let draft_shipment = mock_outbound_shipment_c();
 
         // LineDoesNotExist
         assert_eq!(
-            service.delete_outbound_shipment_service_line(
+            service.delete_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
+                inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = "invalid".to_string();
                 }),
             ),
@@ -106,53 +106,53 @@ mod test {
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.delete_outbound_shipment_service_line(
+            service.delete_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
-                    r.id = mock_draft_outbound_service_line().id;
+                inline_init(|r: &mut DeleteInboundShipmentLine| {
+                    r.id = mock_draft_inbound_service_line().id;
                     r.invoice_id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        // NotAnOutboundShipment
+        // NotAnInboundShipment
         assert_eq!(
-            service.delete_outbound_shipment_service_line(
+            service.delete_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                    r.id = mock_draft_inbound_service_line().id;
+                inline_init(|r: &mut DeleteInboundShipmentLine| {
+                    r.invoice_id = mock_draft_outbound_with_service_lines().id;
+                    r.id = mock_draft_outbound_service_line().id;
                 }),
             ),
-            Err(ServiceError::NotAnOutboundShipment)
+            Err(ServiceError::NotAnInboundShipment)
         );
 
         // NotThisInvoiceLine
         assert_eq!(
-            service.delete_outbound_shipment_service_line(
+            service.delete_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                    r.invoice_id = draft_shipment.invoice.id.clone();
+                inline_init(|r: &mut DeleteInboundShipmentLine| {
+                    r.id = mock_draft_inbound_service_line().id;
+                    r.invoice_id = draft_shipment.id.clone();
                 }),
             ),
             Err(ServiceError::NotThisInvoiceLine(
-                mock_draft_outbound_with_service_lines().id
+                mock_draft_inbound_shipment_with_service_lines().id
             ))
         );
 
         // CannotEditInvoice
         assert_eq!(
-            service.delete_outbound_shipment_service_line(
+            service.delete_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
-                    r.id = mock_draft_outbound_shipped_service_line().id;
-                    r.invoice_id = mock_draft_outbound_shipped_with_service_lines().id;
+                inline_init(|r: &mut DeleteInboundShipmentLine| {
+                    r.id = mock_draft_inbound_verified_service_line().id;
+                    r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
                 }),
             ),
             Err(ServiceError::CannotEditInvoice)
@@ -160,9 +160,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn delete_outbound_shipment_service_line_success() {
+    async fn delete_inbound_shipment_service_line_success() {
         let (_, connection, connection_manager, _) = setup_all(
-            "delete_outbound_shipment_service_line_service",
+            "delete_inbound_shipment_service_line_service",
             MockDataInserts::all(),
         )
         .await;
@@ -172,19 +172,19 @@ mod test {
         let service = service_provider.invoice_line_service;
 
         service
-            .delete_outbound_shipment_service_line(
+            .delete_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                    r.invoice_id = mock_draft_outbound_with_service_lines().id;
+                inline_init(|r: &mut DeleteInboundShipmentLine| {
+                    r.id = mock_draft_inbound_service_line().id;
+                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                 }),
             )
             .unwrap();
 
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option(&mock_draft_outbound_service_line().id)
+                .find_one_by_id_option(&mock_draft_inbound_service_line().id)
                 .unwrap(),
             None
         );
