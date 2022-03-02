@@ -34,6 +34,14 @@ export const useResponseApi = () => {
   return { ...queries, storeId };
 };
 
+export const useUpdateResponseRequisition = () => {
+  const queryClient = useQueryClient();
+  const api = useResponseApi();
+  return useMutation(api.update, {
+    onSuccess: () => queryClient.invalidateQueries(['requisition']),
+  });
+};
+
 export const useResponseRequisitions = () => {
   const queryParams = useQueryParams<ResponseRequisitionRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
