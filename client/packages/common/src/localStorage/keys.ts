@@ -1,5 +1,4 @@
 import { SupportedLocales } from '@common/intl';
-import { Store } from '@common/types';
 import { ThemeOptions } from '@mui/material';
 
 export type GroupByItem = {
@@ -7,7 +6,7 @@ export type GroupByItem = {
   inboundShipment?: boolean;
 };
 type AuthenticationCredentials = {
-  store?: Store;
+  store?: { id: string; code: string } | undefined;
   username: string;
 };
 

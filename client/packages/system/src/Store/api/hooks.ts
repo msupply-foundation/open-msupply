@@ -1,6 +1,4 @@
 import {
-  UseQueryResult,
-  Store,
   useOmSupplyApi,
   useQueryParams,
   useQuery,
@@ -15,10 +13,7 @@ const useStoreApi = () => {
   return queries;
 };
 
-export const useStores = (): UseQueryResult<{
-  nodes: Store[];
-  totalCount: number;
-}> => {
+export const useStores = () => {
   const api = useStoreApi();
   const initialListParameters = { initialSortBy: { key: 'code' } };
   const { filterBy, queryParams, first, offset } = useQueryParams(
