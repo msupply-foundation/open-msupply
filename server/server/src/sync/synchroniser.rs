@@ -77,7 +77,9 @@ impl Synchroniser {
             .map_err(|source| CentralSyncError::DBConnectionError { source })?;
 
         // first pull data from the central server
-        self.central_data.pull(&connection).await?;
+        self.central_data
+            .pull_and_integrate_records(&connection)
+            .await?;
 
         self.remote_data.initial_pull(&connection).await?;
 
@@ -91,11 +93,18 @@ impl Synchroniser {
             .connection()
             .map_err(|source| CentralSyncError::DBConnectionError { source })?;
 
-        // check if there is new data on the central server
-        self.central_data.pull(&connection).await?;
-
-        // TODO pull changes from remote server
+        // First push before pulling. This avoids problems with the existing central server
+        // implementation...
         self.remote_data.push_changes(&connection).await?;
+        self.remote_data.pull(&connection).await?;
+
+        // Check if there is new data on the central server. Do this after pulling the remote data
+        // in case the just pulled remote data requires the new central data.
+        self.central_data
+            .pull_and_integrate_records(&connection)
+            .await?;
+
+        self.remote_data.integrate_records(&connection).await?;
         Ok(())
     }
 

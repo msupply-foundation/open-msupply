@@ -69,24 +69,8 @@ impl RemoteDataSynchroniser {
             info!("Initialised remote sync records");
         }
 
-        info!("Pull remote records...");
-        self.pull_and_store_remote_records(connection)
-            .await
-            .map_err(|error| RemoteSyncError {
-                msg: "Failed to pull remote records",
-                source: error,
-            })?;
-        info!("Successfully pulled remote records");
-
-        info!("Integrate remote records...");
-        self.integrate_remote_records(connection)
-            .map_err(|error| RemoteSyncError {
-                msg: "Failed to integrate remote records",
-                source: error,
-            })?;
-        info!("Successfully integrate remote records");
-
-        state.set_initial_remote_data_synced()?;
+        self.pull(connection).await?;
+        self.integrate_records(connection).await?;
 
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
@@ -96,15 +80,42 @@ impl RemoteDataSynchroniser {
             .unwrap_or(0) as u32;
         state.update_push_cursor(cursor + 1)?;
 
+        state.set_initial_remote_data_synced()?;
         Ok(())
     }
 
-    /// Initalises the sync queue on the central server, pulls all records and stores them in the
-    /// DB.
-    pub async fn pull_and_store_remote_records(
+    /// Pull all records from the central server
+    pub async fn pull(&self, connection: &StorageConnection) -> Result<(), RemoteSyncError> {
+        info!("Pull remote records...");
+        self.pull_records(connection)
+            .await
+            .map_err(|error| RemoteSyncError {
+                msg: "Failed to pull remote records",
+                source: error,
+            })?;
+        info!("Successfully pulled remote records");
+
+        Ok(())
+    }
+
+    /// Integrate previously pulled records
+    pub async fn integrate_records(
         &self,
         connection: &StorageConnection,
-    ) -> anyhow::Result<()> {
+    ) -> Result<(), RemoteSyncError> {
+        info!("Integrate remote records...");
+        self.do_integrate_records(connection)
+            .map_err(|error| RemoteSyncError {
+                msg: "Failed to integrate remote records",
+                source: error,
+            })?;
+        info!("Successfully integrate remote records");
+
+        Ok(())
+    }
+
+    /// Pulls all records and stores them in the RemoteSyncBufferRepository
+    async fn pull_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         loop {
             info!("Pulling remote sync records...");
             let sync_batch = self.sync_api_v5.get_queued_records().await?;
@@ -139,7 +150,7 @@ impl RemoteDataSynchroniser {
         Ok(())
     }
 
-    fn integrate_remote_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn do_integrate_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         let remote_sync_buffer_repository = RemoteSyncBufferRepository::new(&connection);
 
         let mut records: Vec<RemoteSyncBufferRow> = Vec::new();
@@ -362,7 +373,7 @@ mod tests {
             site_id,
             central_server_site_id,
         };
-        sync.integrate_remote_records(&connection)
+        sync.do_integrate_records(&connection)
             .expect("Failed to integrate remote records");
 
         check_records_against_database(&connection, test_records);
