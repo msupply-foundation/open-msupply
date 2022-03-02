@@ -64,6 +64,9 @@ export const useHighlightPlaceholderRows = (
           line => line.type === InvoiceLineNodeType.UnallocatedStock
         );
         if (hasPlaceholder) {
+          // Add both the OutboundItem and the individual lines, as
+          // this will cause the item to be highlighted as well as the
+          // lines within the expansion when grouped.
           row.lines.forEach(line => {
             if (line.type === InvoiceLineNodeType.UnallocatedStock) {
               placeholders.push(line.id);

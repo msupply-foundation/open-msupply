@@ -7,6 +7,7 @@ import {
   ifTheSameElseDefault,
   useColumns,
   Column,
+  getUnitQuantity,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../types';
@@ -146,10 +147,7 @@ export const useInboundShipmentColumns = (): Column<
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return lines.reduce(
-                (acc, line) => line.packSize * line.numberOfPacks + acc,
-                0
-              );
+              return lines.reduce(getUnitQuantity, 0);
             } else {
               return rowData.packSize * rowData.numberOfPacks;
             }

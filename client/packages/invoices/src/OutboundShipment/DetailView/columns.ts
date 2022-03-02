@@ -1,4 +1,5 @@
 import {
+  getUnitQuantity,
   formatExpiryDateString,
   useColumns,
   getRowExpandColumn,
@@ -264,11 +265,7 @@ export const useOutboundColumns = ({
         align: ColumnAlign.Right,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
-            const { lines } = rowData;
-            return lines.reduce(
-              (acc, line) => line.packSize * line.numberOfPacks + acc,
-              0
-            );
+            return rowData.lines.reduce(getUnitQuantity, 0);
           } else {
             return rowData.packSize * rowData.numberOfPacks;
           }
