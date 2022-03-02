@@ -10,18 +10,20 @@ import {
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import {
+  useUpdateResponseRequisition,
   useResponseRequisitions,
   ResponseRequisitionRowFragment,
 } from '../api';
 
 export const ResponseRequisitionListView: FC = () => {
+  const { mutate: onUpdate } = useUpdateResponseRequisition();
   const navigate = useNavigate();
   const { data, onChangeSortBy, sortBy, onChangePage, pagination, filter } =
     useResponseRequisitions();
 
   const columns = useColumns<ResponseRequisitionRowFragment>(
     [
-      [getNameAndColorColumn(), { setter: () => {} }],
+      [getNameAndColorColumn(), { setter: onUpdate }],
       {
         key: 'requisitionNumber',
         label: 'label.number',

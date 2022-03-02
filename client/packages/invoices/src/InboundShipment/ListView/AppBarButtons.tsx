@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import {
+  generateUUID,
   DownloadIcon,
   PlusCircleIcon,
   PrinterIcon,
@@ -8,13 +9,14 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
+  useToggle,
 } from '@openmsupply-client/common';
+import { NameSearchModal } from '@openmsupply-client/system';
+import { useCreateInbound } from '../api';
 
-interface AppBarButtonsProps {
-  onCreate: (toggle: boolean) => void;
-}
-
-export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
+export const AppBarButtons: FC = () => {
+  const modalController = useToggle();
+  const { mutate: onCreate } = useCreateInbound();
   const { info, success } = useNotification();
   const t = useTranslation('replenishment');
 
@@ -24,7 +26,7 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-shipment')}
-          onClick={() => onCreate(true)}
+          onClick={modalController.toggleOn}
         />
         <ButtonWithIcon
           Icon={<DownloadIcon />}
@@ -37,6 +39,18 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
           onClick={info('No printer detected')}
         />
       </Grid>
+      <NameSearchModal
+        type="supplier"
+        open={modalController.isOn}
+        onClose={modalController.toggleOff}
+        onChange={async name => {
+          modalController.toggleOff();
+          onCreate({
+            id: generateUUID(),
+            otherPartyId: name?.id,
+          });
+        }}
+      />
     </AppBarButtonsPortal>
   );
 };

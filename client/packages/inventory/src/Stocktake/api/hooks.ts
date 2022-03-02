@@ -76,19 +76,30 @@ export const useInsertStocktake = () => {
   });
 };
 
+export const useUpdateStocktake = () => {
+  const queryClient = useQueryClient();
+  const api = useStocktakeApi();
+  return useMutation(api.update, {
+    onSuccess: () => {
+      return queryClient.invalidateQueries(['stocktake']);
+    },
+  });
+};
+
 export const useStocktakeFields = <
   KeyOfStocktake extends keyof StocktakeFragment
 >(
   keys: KeyOfStocktake | KeyOfStocktake[]
 ): FieldSelectorControl<StocktakeFragment, KeyOfStocktake> => {
   const { stocktakeNumber = '' } = useParams();
+  const { mutateAsync } = useUpdateStocktake();
   const { data } = useStocktake();
   const api = useStocktakeApi();
   return useFieldsSelector(
     ['stocktake', stocktakeNumber],
     () => api.get.byNumber(Number(stocktakeNumber)),
     (patch: Partial<StocktakeFragment>) =>
-      api.update({ ...patch, id: data?.id ?? '' }),
+      mutateAsync({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };

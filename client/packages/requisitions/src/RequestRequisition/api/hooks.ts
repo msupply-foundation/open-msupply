@@ -66,6 +66,14 @@ export const useCreateRequestRequisition = () => {
   });
 };
 
+export const useUpdateRequestRequisition = () => {
+  const queryClient = useQueryClient();
+  const api = useRequestApi();
+  return useMutation(api.update, {
+    onSuccess: () => queryClient.invalidateQueries(['requisition']),
+  });
+};
+
 export const useRequestRequisition =
   (): UseQueryResult<RequestRequisitionFragment> => {
     const { requisitionNumber = '' } = useParams();
