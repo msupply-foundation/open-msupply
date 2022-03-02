@@ -1,6 +1,30 @@
 import currency from 'currency.js';
 import { useCurrentLanguage } from './intlHelpers';
 
+const trimCents = (centsString: string) => {
+  const trimmed = String(Number(centsString)).slice(1);
+
+  // If the result is an empty string, return .00
+  if (!trimmed) {
+    return `${centsString[0]}00`;
+  }
+
+  // Otherwise, add a single zero
+  if (trimmed.length === 2) {
+    return `${trimmed}0`;
+  }
+
+  // Other cases, return the full string
+  return trimmed;
+};
+
+/**
+ * This custom formatter is a slight modifiction to the default within
+ * currency.js here: https://github.com/scurker/currency.js/blob/66b7a0c6860d5d30efe8edbf4f8ea016149eab55/src/currency.js#L96-L105
+ *
+ * All it does differently is String(Number(`${decimal}${cents}`)).slice(1)
+ */
+
 export const format: currency.Format = (
   currency,
   opts
@@ -26,7 +50,7 @@ export const format: currency.Format = (
 
   // Add the separator to the end of each dollar group.
   const dollarsString = dollars.replace(groups, `$1${separator}`);
-  const centsString = String(Number(`${decimal}${cents}`)).slice(1);
+  const centsString = trimCents(`${decimal}${cents}`);
 
   // Combine together..
   const moneyString = `${dollarsString}${centsString}`;
