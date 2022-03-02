@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { TableStore, useIsGrouped } from './TableContext';
 import { act } from 'react-dom/test-utils';
 import { renderHook } from '@testing-library/react-hooks';
-import { TableProvider, createTableStore } from './TableContext';
+import { useIsGrouped } from './hooks';
+import { TableStore, TableProvider, createTableStore } from './TableContext';
 import { LocalStorage } from '../../../../localStorage';
 
 const useStore = createTableStore();
@@ -250,52 +250,52 @@ describe('TableContext - setting selected rows', () => {
   });
 });
 
-describe("TableContext - grouping rows", () => {
-    it('after setting active rows, the grouped state is unchanged', () => {
-      const { result } = renderHook<unknown, TableStore>(useStore);
+describe('TableContext - grouping rows', () => {
+  it('after setting active rows, the grouped state is unchanged', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
 
-      const { setActiveRows, setIsGrouped } = result.current;
+    const { setActiveRows, setIsGrouped } = result.current;
 
-      const firstResult = result?.all?.[0];
-      if (!(firstResult instanceof Error)) {
-        expect(firstResult?.isGrouped).toBe(false);
-      }
+    const firstResult = result?.all?.[0];
+    if (!(firstResult instanceof Error)) {
+      expect(firstResult?.isGrouped).toBe(false);
+    }
 
-      act(() => {
-        setIsGrouped(true);
-        setActiveRows(['a', 'b', 'c']);
-      });
-
-      const secondResult = result?.all?.[1];
-      if (!(secondResult instanceof Error)) {
-        expect(secondResult?.isGrouped).toBe(true);
-      }
-
-      expect.assertions(2);
+    act(() => {
+      setIsGrouped(true);
+      setActiveRows(['a', 'b', 'c']);
     });
 
-    it('calling setIsGrouped correctly sets the grouped state', () => {
-      const { result } = renderHook<unknown, TableStore>(useStore);
+    const secondResult = result?.all?.[1];
+    if (!(secondResult instanceof Error)) {
+      expect(secondResult?.isGrouped).toBe(true);
+    }
 
-      const { setIsGrouped } = result.current;
+    expect.assertions(2);
+  });
 
-      const firstResult = result?.all?.[0];
-      if (!(firstResult instanceof Error)) {
-        expect(firstResult?.isGrouped).toBe(false);
-      }
+  it('calling setIsGrouped correctly sets the grouped state', () => {
+    const { result } = renderHook<unknown, TableStore>(useStore);
 
-      act(() => {
-        setIsGrouped(true);
-      });
+    const { setIsGrouped } = result.current;
 
-      const secondResult = result?.all?.[1];
-      if (!(secondResult instanceof Error)) {
-        expect(secondResult?.isGrouped).toBe(true);
-      }
+    const firstResult = result?.all?.[0];
+    if (!(firstResult instanceof Error)) {
+      expect(firstResult?.isGrouped).toBe(false);
+    }
 
-      expect.assertions(2);
+    act(() => {
+      setIsGrouped(true);
     });
-})
+
+    const secondResult = result?.all?.[1];
+    if (!(secondResult instanceof Error)) {
+      expect(secondResult?.isGrouped).toBe(true);
+    }
+
+    expect.assertions(2);
+  });
+});
 
 describe('useIsGrouped', () => {
   const Wrapper: FC = ({ children }) => {
