@@ -24,7 +24,19 @@ describe('currency formatting', () => {
   it('does drop trailing zeroes', () => {
     const { result } = renderHook(useCurrency);
 
-    const f1 = result.current.c(111.1).format();
-    expect(f1).toBe('$111.1');
+    const f1 = result.current.c('111.11000').format();
+    expect(f1).toBe('$111.11');
+  });
+  it('has a minimum of two trailing zeroes, adding one if needed', () => {
+    const { result } = renderHook(useCurrency);
+
+    const f1 = result.current.c('111.1000').format();
+    expect(f1).toBe('$111.10');
+  });
+  it('has a minimum of two trailing zeroes, adding two if needed', () => {
+    const { result } = renderHook(useCurrency);
+
+    const f1 = result.current.c(111).format();
+    expect(f1).toBe('$111.00');
   });
 });
