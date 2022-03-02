@@ -40,13 +40,13 @@ pub fn insert_outbound_shipment_service_line(
     Ok(new_line)
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum InsertOutboundShipmentServiceLineError {
     LineAlreadyExists,
     InvoiceDoesNotExist,
     NotAnOutboundShipment,
     //NotThisStoreInvoice,
-    CannotEditFinalised,
+    CannotEditInvoice,
     ItemNotFound,
     NotAServiceItem,
     // Internal
@@ -77,7 +77,10 @@ where
 mod test {
 
     use repository::{
-        mock::{mock_full_draft_outbound_shipment_a, mock_item_service_item, MockDataInserts},
+        mock::{
+            mock_full_draft_outbound_shipment_a, mock_inbound_shipment_c, mock_item_a,
+            mock_item_service_item, mock_outbound_shipment_shipped, MockDataInserts,
+        },
         test_db::setup_all,
         InvoiceLineRowRepository, ItemFilter, ItemQueryRepository, SimpleStringFilter,
     };
@@ -87,6 +90,99 @@ mod test {
         invoice_line::outbound_shipment_service_line::InsertOutboundShipmentServiceLine,
         service_provider::ServiceProvider,
     };
+
+    use super::InsertOutboundShipmentServiceLineError;
+
+    type ServiceError = InsertOutboundShipmentServiceLineError;
+
+    #[actix_rt::test]
+    async fn insert_outbound_shipment_service_line_errors() {
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_outbound_shipment_service_line_errors",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_line_service;
+
+        let draft_shipment = mock_full_draft_outbound_shipment_a();
+
+        // LineAlreadyExists
+        assert_eq!(
+            service.insert_outbound_shipment_service_line(
+                &context,
+                "store_a",
+                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                    r.id = draft_shipment.lines[0].line.id.clone();
+                }),
+            ),
+            Err(ServiceError::LineAlreadyExists)
+        );
+
+        // InvoiceDoesNotExist
+        assert_eq!(
+            service.insert_outbound_shipment_service_line(
+                &context,
+                "store_a",
+                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                    r.invoice_id = "invalid".to_string();
+                }),
+            ),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
+
+        // NotAnOutboundShipment
+        assert_eq!(
+            service.insert_outbound_shipment_service_line(
+                &context,
+                "store_a",
+                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                    r.invoice_id = mock_inbound_shipment_c().id;
+                }),
+            ),
+            Err(ServiceError::NotAnOutboundShipment)
+        );
+
+        // CannotEditInvoice
+        assert_eq!(
+            service.insert_outbound_shipment_service_line(
+                &context,
+                "store_a",
+                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                    r.invoice_id = mock_outbound_shipment_shipped().id;
+                }),
+            ),
+            Err(ServiceError::CannotEditInvoice)
+        );
+
+        // ItemNotFound
+        assert_eq!(
+            service.insert_outbound_shipment_service_line(
+                &context,
+                "store_a",
+                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                    r.invoice_id = draft_shipment.invoice.id.clone();
+                    r.item_id = Some("invalid".to_string())
+                }),
+            ),
+            Err(ServiceError::ItemNotFound)
+        );
+
+        // NotAServiceItem
+        assert_eq!(
+            service.insert_outbound_shipment_service_line(
+                &context,
+                "store_a",
+                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                    r.invoice_id = draft_shipment.invoice.id.clone();
+                    r.item_id = Some(mock_item_a().id)
+                }),
+            ),
+            Err(ServiceError::NotAServiceItem)
+        );
+    }
 
     #[actix_rt::test]
     async fn insert_outbound_shipment_service_line_success() {
@@ -127,6 +223,7 @@ mod test {
             line,
             inline_edit(&line, |mut u| {
                 u.item_id = default_service_item.item_row.id;
+                u.item_name = default_service_item.item_row.name;
                 u
             })
         );
@@ -171,5 +268,3 @@ mod test {
         );
     }
 }
-
-// TODO tests

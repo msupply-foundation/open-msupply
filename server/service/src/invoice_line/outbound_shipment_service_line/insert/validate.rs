@@ -82,6 +82,6 @@ impl From<WrongInvoiceRowType> for OutError {
 
 impl From<InvoiceIsNotEditable> for OutError {
     fn from(_: InvoiceIsNotEditable) -> Self {
-        OutError::CannotEditFinalised
+        OutError::CannotEditInvoice
     }
 }
