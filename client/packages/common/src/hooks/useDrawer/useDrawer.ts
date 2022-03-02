@@ -1,5 +1,5 @@
 import create from 'zustand';
-import LocalStorage from '../localStorage/LocalStorage';
+import LocalStorage from '../../localStorage/LocalStorage';
 
 type DrawerController = {
   hoverOpen: boolean;
