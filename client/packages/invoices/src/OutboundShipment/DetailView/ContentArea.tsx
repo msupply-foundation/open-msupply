@@ -41,14 +41,10 @@ const Expand: FC<{
   }
 };
 
-export const ContentAreaComponent: FC<
-  GeneralTabProps<OutboundLineFragment | OutboundItem>
-> = ({ onRowClick }) => {
-  const t = useTranslation('distribution');
+export const useHighlightPlaceholderRows = (
+  rows: OutboundLineFragment[] | OutboundItem[]
+) => {
   const { setRowStyles } = useRowStyle();
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
-  const { rows, onChangeSortBy, sortBy } = useOutboundRows(isGrouped);
-  const columns = useOutboundColumns({ onChangeSortBy, sortBy });
 
   useEffect(() => {
     if (!rows) return;
@@ -82,7 +78,17 @@ export const ContentAreaComponent: FC<
       backgroundColor: theme => alpha(theme.palette.error.main, 0.1),
     };
     setRowStyles(placeholders, style);
-  }, [rows]);
+  }, [rows, setRowStyles]);
+};
+
+export const ContentAreaComponent: FC<
+  GeneralTabProps<OutboundLineFragment | OutboundItem>
+> = ({ onRowClick }) => {
+  const t = useTranslation('distribution');
+
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
+  const { rows, onChangeSortBy, sortBy } = useOutboundRows(isGrouped);
+  const columns = useOutboundColumns({ onChangeSortBy, sortBy });
 
   if (!rows) return null;
 
