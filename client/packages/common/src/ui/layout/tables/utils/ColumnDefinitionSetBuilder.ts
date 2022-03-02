@@ -181,7 +181,6 @@ const getColumnLookup = <T extends DomainObject>(): Record<
     key: 'sellPricePerPack',
     width: 100,
     align: ColumnAlign.Right,
-    format: ColumnFormat.Currency,
   },
   sellPricePerUnit: {
     label: 'label.unit-price',
