@@ -123,7 +123,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         ...filterBy,
         type: { equalTo: InvoiceNodeType.InboundShipment },
       };
-      console.log('getting list');
+
       const result = await sdk.invoices({
         first,
         offset,
