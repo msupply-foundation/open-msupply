@@ -94,6 +94,11 @@ const outboundParsers = {
       invoiceId: line.invoiceId,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
+      tax: { percentage: 10 },
+      totalAfterTax:
+        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0) * 1.1,
+      totalBeforeTax:
+        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
     };
   },
   toInsertPlaceholder: (
