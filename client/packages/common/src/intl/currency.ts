@@ -22,7 +22,11 @@ const trimCents = (centsString: string) => {
  * This custom formatter is a slight modifiction to the default within
  * currency.js here: https://github.com/scurker/currency.js/blob/66b7a0c6860d5d30efe8edbf4f8ea016149eab55/src/currency.js#L96-L105
  *
- * All it does differently is String(Number(`${decimal}${cents}`)).slice(1)
+ * All it does differently is add the trimming of cents with trimCents.
+ *
+ * Without this, using a high precision i.e. 4, will have a currency formatter to always have
+ * at least 4 decimal digits.
+ *
  */
 
 export const format: currency.Format = (
