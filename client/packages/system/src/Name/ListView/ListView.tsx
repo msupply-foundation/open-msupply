@@ -3,11 +3,10 @@ import {
   useNavigate,
   TableProvider,
   DataTable,
-  Name,
   useColumns,
   createTableStore,
 } from '@openmsupply-client/common';
-import { useNames } from '../api';
+import { useNames, NameRowFragment } from '../api';
 
 export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   type,
@@ -16,7 +15,7 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   const { data, isLoading, onChangePage, pagination, sortBy, onChangeSortBy } =
     useNames(type);
 
-  const columns = useColumns<Name>(
+  const columns = useColumns<NameRowFragment>(
     ['name', 'code'],
     {
       sortBy,

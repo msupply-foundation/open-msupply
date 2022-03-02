@@ -12,7 +12,7 @@ import {
   generateUUID,
   useCurrency,
 } from '@openmsupply-client/common';
-import { NameSearchModal } from '@openmsupply-client/system/src/Name';
+import { NameSearchModal } from '@openmsupply-client/system';
 import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';

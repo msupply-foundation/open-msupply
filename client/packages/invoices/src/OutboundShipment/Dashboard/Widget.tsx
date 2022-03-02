@@ -1,5 +1,5 @@
 import React from 'react';
-import { NameSearchModal } from '@openmsupply-client/system/src/Name';
+import { NameSearchModal } from '@openmsupply-client/system';
 import {
   ButtonWithIcon,
   Grid,
