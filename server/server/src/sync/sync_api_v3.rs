@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
+
 use reqwest::{
     header::{HeaderMap, ACCEPT, CONTENT_LENGTH},
     Client, Url,
@@ -15,9 +17,34 @@ pub struct SyncApiV3 {
     credentials: SyncCredentials,
 }
 
-fn extra_headers(side_id: u32) -> anyhow::Result<HeaderMap> {
+#[derive(Debug, Deserialize)]
+pub struct SyncApiV3ErrorResponse {
+    error: String,
+    lines: Vec<HashMap<String, String>>,
+}
+
+/// Check response is not an error
+fn validate_response(response: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
+    match response.get("error") {
+        Some(error_msg) => {
+            if let Some(error_msg) = error_msg.as_str() {
+                if error_msg != "" {
+                    let error = serde_json::from_value::<SyncApiV3ErrorResponse>(response)?;
+                    return Err(anyhow::Error::msg(format!(
+                        "post_queued_records failed: {:?}",
+                        error
+                    )));
+                }
+            }
+        }
+        None => {}
+    }
+    Ok(response)
+}
+
+fn extra_headers(hardware_id: &str) -> anyhow::Result<HeaderMap> {
     let mut headers = HeaderMap::new();
-    headers.insert("msupply-site-uuid", format!("{}", side_id).parse()?);
+    headers.insert("msupply-site-uuid", format!("{}", hardware_id).parse()?);
     headers.insert(CONTENT_LENGTH, "application/json".parse()?);
     headers.insert(ACCEPT, "application/json".parse()?);
     Ok(headers)
@@ -85,11 +112,11 @@ impl SyncApiV3 {
         server_url: Url,
         credentials: SyncCredentials,
         client: Client,
-        site_id: u32,
+        hardware_id: &str,
     ) -> anyhow::Result<Self> {
         Ok(SyncApiV3 {
             server_url,
-            extra_headers: extra_headers(site_id)?,
+            extra_headers: extra_headers(hardware_id)?,
             client,
             credentials,
         })
@@ -116,6 +143,7 @@ impl SyncApiV3 {
             .error_for_status()?;
 
         let response = response.json().await?;
+        let response = validate_response(response)?;
         Ok(response)
     }
 
@@ -145,6 +173,8 @@ impl SyncApiV3 {
             .error_for_status()?;
 
         let response = response.json().await?;
+        let response = validate_response(response)?;
+        let response = serde_json::from_value(response)?;
         Ok(response)
     }
 
@@ -171,6 +201,7 @@ impl SyncApiV3 {
             .error_for_status()?;
 
         let response = response.json().await?;
+        let response = validate_response(response)?;
         Ok(response)
     }
 
@@ -197,6 +228,7 @@ impl SyncApiV3 {
             .error_for_status()?;
 
         let response = response.json().await?;
+        let response = validate_response(response)?;
         Ok(response)
     }
 }
