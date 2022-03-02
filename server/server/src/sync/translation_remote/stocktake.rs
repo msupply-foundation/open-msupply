@@ -8,8 +8,8 @@ use serde::Deserialize;
 use crate::sync::SyncTranslationError;
 
 use super::{
-    date_and_time_to_datatime, empty_str_as_option, IntegrationRecord, IntegrationUpsertRecord,
-    RemotePullTranslation, TRANSLATION_RECORD_STOCKTAKE,
+    date_and_time_to_datatime, empty_str_as_option, zero_date_as_option, IntegrationRecord,
+    IntegrationUpsertRecord, RemotePullTranslation, TRANSLATION_RECORD_STOCKTAKE,
 };
 
 #[derive(Deserialize)]
@@ -44,6 +44,9 @@ struct LegacyStocktakeRow {
     // invad_reductions_ID: Option<String>,
     serial_number: i64,
     stock_take_created_date: NaiveDate,
+    #[serde(rename = "stock_take_date")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    stocktake_date: Option<NaiveDate>,
     store_ID: String,
 }
 
@@ -83,6 +86,7 @@ impl RemotePullTranslation for StocktakeTranslation {
                 // TODO what is the correct mapping:
                 inventory_adjustment_id: data.invad_additions_ID,
                 is_locked: data.Locked,
+                stocktake_date: data.stocktake_date,
             }),
         )))
     }

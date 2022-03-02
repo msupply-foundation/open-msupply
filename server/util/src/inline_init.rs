@@ -38,24 +38,28 @@ where
 ///
 /// let record = Check {
 ///     id: "id1".to_string(),
-///     description: "".to_string(),
+///     description: "desc".to_string(),
 /// };
 ///
+/// let new_id = Some("new_id".to_string());
+///
 /// assert_eq!(
-///     inline_edit(&record, |input: &mut Check| input.id = "id2".to_string()),
+///     inline_edit(&record, |mut input: Check| {
+///       input.id = new_id.unwrap_or(input.id);
+///       input
+///     }),
 ///     Check {
-///        id: "id2".to_string(),
-///        description: "".to_string()
+///        id: "new_id".to_string(),
+///        description: "desc".to_string()
 ///     }
 /// );
+/// ```
 pub fn inline_edit<T, F>(record: &T, f: F) -> T
 where
     T: Clone,
-    F: FnOnce(&mut T) -> (),
+    F: FnOnce(T) -> T,
 {
-    let mut t = record.clone();
-    f(&mut t);
-    t
+    f(record.clone())
 }
 
 pub struct Defaults;

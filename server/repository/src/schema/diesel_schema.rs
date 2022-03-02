@@ -256,6 +256,7 @@ table! {
         description -> Nullable<Text>,
         status -> crate::schema::stocktake::StocktakeStatusMapping,
         created_datetime -> Timestamp,
+        stocktake_date -> Nullable<Date>,
         finalised_datetime -> Nullable<Timestamp>,
         inventory_adjustment_id -> Nullable<Text>,
         is_locked -> Bool,

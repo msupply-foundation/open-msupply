@@ -1,5 +1,5 @@
 use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, NaiveDate};
 use repository::schema::{StocktakeRow, StocktakeStatus};
 use serde::Serialize;
 
@@ -54,6 +54,10 @@ impl StocktakeNode {
 
     pub async fn created_datetime(&self) -> &NaiveDateTime {
         &self.stocktake.created_datetime
+    }
+
+    pub async fn stocktake_date(&self) -> &Option<NaiveDate> {
+        &self.stocktake.stocktake_date
     }
 
     pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
