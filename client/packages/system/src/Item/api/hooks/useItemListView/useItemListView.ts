@@ -5,7 +5,6 @@ import {
 } from '@openmsupply-client/common';
 import { useItemApi } from './../useItemApi';
 import { ItemRowFragment } from '../../operations.generated';
-import { ItemQueries } from '../../api';
 
 export const useItemListView = () => {
   const { storeId } = useAuthContext();
@@ -17,7 +16,7 @@ export const useItemListView = () => {
   return {
     ...useQuery(
       ['item', 'list', storeId, queryParams],
-      ItemQueries.get.list(api, storeId, {
+      api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,

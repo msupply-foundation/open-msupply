@@ -1,4 +1,4 @@
-import { StockLineNode, ItemNode, NameNode } from './schema';
+import { StockLineNode, NameNode } from './schema';
 
 export * from './utility';
 export * from './schema';
@@ -13,15 +13,6 @@ export interface Name extends NameNode {
   name: string;
   isCustomer: boolean;
   isSupplier: boolean;
-}
-
-export interface Item extends ItemNode, DomainObject {
-  id: string;
-  isVisible: boolean;
-  code: string;
-  name: string;
-  availableQuantity: number;
-  unitName: string;
 }
 
 export interface StockLine

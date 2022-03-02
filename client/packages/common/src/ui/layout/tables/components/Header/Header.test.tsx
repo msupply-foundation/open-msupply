@@ -3,8 +3,13 @@ import { waitFor, render } from '@testing-library/react';
 import { HeaderCell, HeaderRow } from './Header';
 import userEvent from '@testing-library/user-event';
 import { useColumns } from '../../hooks';
-import { Item } from '@common/types';
 import { TestingProvider } from '../../../../../utils';
+
+type Item = {
+  id: string;
+  status: string;
+  packSize: number;
+};
 
 describe('HeaderRow', () => {
   const Example: FC<{

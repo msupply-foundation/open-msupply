@@ -1,40 +1,14 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC } from 'react';
 import {
-  Item,
+  useToggle,
   useFormatNumber,
   useTranslation,
   styled,
   Autocomplete,
   defaultOptionMapper,
 } from '@openmsupply-client/common';
-import { useItemsList, ItemRowFragment } from '../../api';
-
-// This is casting an `ItemRowFragment` into an `Item` which is the type that the
-// `Autocomplete` expects. This allows a caller to pass just an `ItemFragment`,
-// which is essentially all that is needed: the id of the item and the name.
-const toItem = (fragment: ItemRowFragment | null): Item | null => {
-  if (!fragment) return null;
-  return {
-    __typename: 'ItemNode',
-    id: fragment.id,
-    name: fragment.name,
-    code: fragment.code,
-    unitName: fragment.unitName ?? '',
-    isVisible: true,
-    availableBatches: {
-      __typename: 'StockLineConnector',
-      nodes: [],
-      totalCount: 0,
-    },
-    availableQuantity: 0,
-    stats: {
-      __typename: 'ItemStatsNode',
-      availableMonthsOfStockOnHand: 0,
-      averageMonthlyConsumption: 0,
-      availableStockOnHand: 0,
-    },
-  };
-};
+import { ItemRowWithStatsFragment } from '../../api/operations.generated';
+import { useItemWithStats } from 'packages/system/src/Item/api/hooks/useItemsWithStats/useItemWithStats';
 
 const ItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.gray.main,
@@ -42,13 +16,16 @@ const ItemOption = styled('li')(({ theme }) => ({
 }));
 
 const filterOptions = {
-  stringify: (item: Item) => `${item.code} ${item.name}`,
+  stringify: (item: ItemRowWithStatsFragment) => `${item.code} ${item.name}`,
   limit: 100,
 };
 
 const getOptionRenderer =
   (label: string, formatNumber: (value: number) => string) =>
-  (props: React.HTMLAttributes<HTMLLIElement>, item: Item) =>
+  (
+    props: React.HTMLAttributes<HTMLLIElement>,
+    item: ItemRowWithStatsFragment
+  ) =>
     (
       <ItemOption {...props} key={item.code}>
         <span style={{ whiteSpace: 'nowrap', width: 100 }}>{item.code}</span>
@@ -59,57 +36,31 @@ const getOptionRenderer =
             textAlign: 'right',
             whiteSpace: 'nowrap',
           }}
-        >{`${formatNumber(item.availableQuantity)} ${label}`}</span>
+        >{`${formatNumber(item.stats.availableStockOnHand)} ${label}`}</span>
       </ItemOption>
     );
 
 interface ItemSearchInputProps {
-  onChange: (item: Item | null) => void;
-  currentItem?: ItemRowFragment | null;
-  currentItemName?: string;
+  onChange: (item: ItemRowWithStatsFragment | null) => void;
+  currentItemId?: string | null;
   disabled?: boolean;
-  extraFilter?: (item: Item) => boolean;
+  extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
   width?: number;
 }
 
 export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   onChange,
-  currentItem,
+  currentItemId,
   disabled = false,
   extraFilter,
   width = 850,
 }) => {
-  const [filter, setFilter] = useState<{
-    searchTerm: string;
-    field: string;
-  } | null>(null);
-
-  const { data, isLoading, onFilterByName } = useItemsList({
-    initialSortBy: { key: 'name' },
-  });
+  const { data, isLoading } = useItemWithStats();
   const t = useTranslation('common');
   const formatNumber = useFormatNumber();
 
-  useEffect(() => {
-    if (!filter) return;
-    onFilterByName(filter.searchTerm ?? '');
-  }, [filter]);
-
-  const value = currentItem ?? null;
-  const [open, setOpen] = useState(false);
-  const [buffer, setBuffer] = React.useState(toItem(value));
-
-  useEffect(() => {
-    if (value && buffer && open) {
-      setBuffer(null);
-      setFilter({
-        searchTerm: '',
-        field: 'name',
-      });
-    } else if (!open) {
-      setBuffer(toItem(value));
-    }
-  }, [open, value]);
+  const value = data?.nodes.find(({ id }) => id === currentItemId) ?? null;
+  const selectControl = useToggle();
 
   const options = extraFilter
     ? data?.nodes?.filter(extraFilter) ?? []
@@ -118,24 +69,13 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   return (
     <Autocomplete
       disabled={disabled}
-      onOpen={() => {
-        setOpen(true);
-      }}
-      onClose={() => {
-        setOpen(false);
-      }}
+      onOpen={selectControl.toggleOn}
+      onClose={selectControl.toggleOff}
       filterOptionConfig={filterOptions}
       loading={isLoading}
-      value={buffer ? { ...buffer, label: buffer.name ?? '' } : null}
+      value={value ? { ...value, label: value.name ?? '' } : null}
       noOptionsText={t('error.no-items')}
-      onInputChange={(_, value, reason) => {
-        if (reason === 'input') {
-          setFilter({ searchTerm: value, field: 'name' });
-        }
-      }}
-      onChange={(_, item) => {
-        onChange(item);
-      }}
+      onChange={(_, item) => onChange(item)}
       options={defaultOptionMapper(options, 'name')}
       getOptionLabel={option => `${option.code}     ${option.name}`}
       renderOption={getOptionRenderer(t('label.units'), formatNumber)}
