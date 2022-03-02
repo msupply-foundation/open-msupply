@@ -220,10 +220,7 @@ export const useUpdateInbound = () => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
   return useMutation(api.update, {
-    onSuccess: () => {
-      console.log('onsuccess');
-      return queryClient.invalidateQueries(['invoice']);
-    },
+    onSuccess: () => queryClient.invalidateQueries(['invoice']),
   });
 };
 
