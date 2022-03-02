@@ -369,7 +369,7 @@ mod tests {
         let central_server_site_id = 2;
         let sync = RemoteDataSynchroniser {
             sync_api_v5: SyncApiV5::new(url.clone(), credentials.clone(), client.clone()),
-            sync_api_v3: SyncApiV3::new(url, credentials, client, site_id).unwrap(),
+            sync_api_v3: SyncApiV3::new(url, credentials, client, "").unwrap(),
             site_id,
             central_server_site_id,
         };
