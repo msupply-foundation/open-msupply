@@ -92,26 +92,26 @@ impl InvoiceLineMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: inbound_shipment_line::InsertInput,
-    ) -> Result<inbound_shipment_line::InsertResponse> {
-        inbound_shipment_line::insert(ctx, &store_id, input)
+        input: inbound_shipment_line::line::InsertInput,
+    ) -> Result<inbound_shipment_line::line::InsertResponse> {
+        inbound_shipment_line::line::insert(ctx, &store_id, input)
     }
 
     async fn update_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: inbound_shipment_line::UpdateInput,
-    ) -> Result<inbound_shipment_line::UpdateResponse> {
-        inbound_shipment_line::update(ctx, &store_id, input)
+        input: inbound_shipment_line::line::UpdateInput,
+    ) -> Result<inbound_shipment_line::line::UpdateResponse> {
+        inbound_shipment_line::line::update(ctx, &store_id, input)
     }
 
     async fn delete_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: inbound_shipment_line::DeleteInput,
-    ) -> Result<inbound_shipment_line::DeleteResponse> {
-        inbound_shipment_line::delete(ctx, &store_id, input)
+        input: inbound_shipment_line::line::DeleteInput,
+    ) -> Result<inbound_shipment_line::line::DeleteResponse> {
+        inbound_shipment_line::line::delete(ctx, &store_id, input)
     }
 }

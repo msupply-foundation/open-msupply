@@ -36,15 +36,15 @@ use service::{
 ))]
 #[graphql(concrete(
     name = "InsertInboundShipmentLineResponseWithId",
-    params(inbound_shipment_line::InsertResponse)
+    params(inbound_shipment_line::line::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateInboundShipmentLineResponseWithId",
-    params(inbound_shipment_line::UpdateResponse)
+    params(inbound_shipment_line::line::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteInboundShipmentLineResponseWithId",
-    params(inbound_shipment_line::DeleteResponse)
+    params(inbound_shipment_line::line::DeleteResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
@@ -55,11 +55,11 @@ pub struct MutationWithId<T: OutputType> {
 pub struct BatchInboundShipmentResponse {
     insert_inbound_shipments: Option<Vec<MutationWithId<inbound_shipment::InsertResponse>>>,
     insert_inbound_shipment_lines:
-        Option<Vec<MutationWithId<inbound_shipment_line::InsertResponse>>>,
+        Option<Vec<MutationWithId<inbound_shipment_line::line::InsertResponse>>>,
     update_inbound_shipment_lines:
-        Option<Vec<MutationWithId<inbound_shipment_line::UpdateResponse>>>,
+        Option<Vec<MutationWithId<inbound_shipment_line::line::UpdateResponse>>>,
     delete_inbound_shipment_lines:
-        Option<Vec<MutationWithId<inbound_shipment_line::DeleteResponse>>>,
+        Option<Vec<MutationWithId<inbound_shipment_line::line::DeleteResponse>>>,
     update_inbound_shipments: Option<Vec<MutationWithId<inbound_shipment::UpdateResponse>>>,
     delete_inbound_shipments: Option<Vec<MutationWithId<inbound_shipment::DeleteResponse>>>,
 }
@@ -67,9 +67,9 @@ pub struct BatchInboundShipmentResponse {
 #[derive(InputObject)]
 pub struct BatchInboundShipmentInput {
     pub insert_inbound_shipments: Option<Vec<inbound_shipment::InsertInput>>,
-    pub insert_inbound_shipment_lines: Option<Vec<inbound_shipment_line::InsertInput>>,
-    pub update_inbound_shipment_lines: Option<Vec<inbound_shipment_line::UpdateInput>>,
-    pub delete_inbound_shipment_lines: Option<Vec<inbound_shipment_line::DeleteInput>>,
+    pub insert_inbound_shipment_lines: Option<Vec<inbound_shipment_line::line::InsertInput>>,
+    pub update_inbound_shipment_lines: Option<Vec<inbound_shipment_line::line::UpdateInput>>,
+    pub delete_inbound_shipment_lines: Option<Vec<inbound_shipment_line::line::DeleteInput>>,
     pub update_inbound_shipments: Option<Vec<inbound_shipment::UpdateInput>>,
     pub delete_inbound_shipments: Option<Vec<inbound_shipment::DeleteInput>>,
     pub continue_on_error: Option<bool>,
@@ -155,15 +155,15 @@ impl BatchInboundShipmentResponse {
             .collect();
 
         let insert_inbound_shipment_lines_result: Result<
-            Vec<MutationWithId<inbound_shipment_line::InsertResponse>>,
+            Vec<MutationWithId<inbound_shipment_line::line::InsertResponse>>,
         > = insert_line.into_iter().map(map_insert_line).collect();
 
         let update_inbound_shipment_lines_result: Result<
-            Vec<MutationWithId<inbound_shipment_line::UpdateResponse>>,
+            Vec<MutationWithId<inbound_shipment_line::line::UpdateResponse>>,
         > = update_line.into_iter().map(map_update_line).collect();
 
         let delete_inbound_shipment_lines_result: Result<
-            Vec<MutationWithId<inbound_shipment_line::DeleteResponse>>,
+            Vec<MutationWithId<inbound_shipment_line::line::DeleteResponse>>,
         > = delete_line.into_iter().map(map_delete_line).collect();
 
         let update_inbound_shipments_result: Result<
@@ -249,8 +249,8 @@ fn map_insert_line(
         InsertInboundShipmentLine,
         Result<InvoiceLine, InsertInboundShipmentLineError>,
     >,
-) -> Result<MutationWithId<inbound_shipment_line::InsertResponse>> {
-    let response = match inbound_shipment_line::insert::map_response(from.result) {
+) -> Result<MutationWithId<inbound_shipment_line::line::InsertResponse>> {
+    let response = match inbound_shipment_line::line::insert::map_response(from.result) {
         Ok(response) => response,
         Err(standard_error) => {
             let input_string = format!("{:#?}", from.input);
@@ -269,8 +269,8 @@ fn map_update_line(
         UpdateInboundShipmentLine,
         Result<InvoiceLine, UpdateInboundShipmentLineError>,
     >,
-) -> Result<MutationWithId<inbound_shipment_line::UpdateResponse>> {
-    let response = match inbound_shipment_line::update::map_response(from.result) {
+) -> Result<MutationWithId<inbound_shipment_line::line::UpdateResponse>> {
+    let response = match inbound_shipment_line::line::update::map_response(from.result) {
         Ok(response) => response,
         Err(standard_error) => {
             let input_string = format!("{:#?}", from.input);
@@ -289,8 +289,8 @@ fn map_delete_line(
         DeleteInboundShipmentLine,
         Result<String, DeleteInboundShipmentLineError>,
     >,
-) -> Result<MutationWithId<inbound_shipment_line::DeleteResponse>> {
-    let response = match inbound_shipment_line::delete::map_response(from.result) {
+) -> Result<MutationWithId<inbound_shipment_line::line::DeleteResponse>> {
+    let response = match inbound_shipment_line::line::delete::map_response(from.result) {
         Ok(response) => response,
         Err(standard_error) => {
             let input_string = format!("{:#?}", from.input);
