@@ -5,28 +5,26 @@ import {
   TableProvider,
   createTableStore,
   getNameAndColorColumn,
-  useToggle,
-  generateUUID,
   useNavigate,
   BasicSpinner,
   useTranslation,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import { NameSearchModal } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import {
   RequestRequisitionRowFragment,
-  useCreateRequestRequisition,
+  useUpdateRequestRequisition,
   useRequestRequisitions,
 } from '../api';
 import { getRequisitionTranslator } from '../../utils';
 
 export const RequestRequisitionListView: FC = () => {
-  const modalController = useToggle(false);
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
-  const { mutate } = useCreateRequestRequisition();
+
+  const { mutate: onUpdate } = useUpdateRequestRequisition();
+
   const {
     data,
     isLoading,
@@ -38,7 +36,7 @@ export const RequestRequisitionListView: FC = () => {
   } = useRequestRequisitions();
   const columns = useColumns<RequestRequisitionRowFragment>(
     [
-      [getNameAndColorColumn(), { setter: () => {} }],
+      [getNameAndColorColumn(), { setter: onUpdate }],
       {
         key: 'requisitionNumber',
         label: 'label.number',
@@ -70,20 +68,8 @@ export const RequestRequisitionListView: FC = () => {
 
   return (
     <>
-      <NameSearchModal
-        type="supplier"
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
-        onChange={async name => {
-          modalController.toggleOff();
-          mutate({
-            id: generateUUID(),
-            otherPartyId: name?.id,
-          });
-        }}
-      />
       <Toolbar filter={filter} />
-      <AppBarButtons onCreate={modalController.toggleOn} />
+      <AppBarButtons />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}

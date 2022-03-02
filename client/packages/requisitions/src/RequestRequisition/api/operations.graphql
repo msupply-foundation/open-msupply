@@ -31,6 +31,7 @@ mutation updateRequestRequisition(
     ... on RequisitionNode {
       __typename
       id
+      requisitionNumber
     }
   }
 }
