@@ -11,7 +11,7 @@ use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceCont
 pub struct InsertOutboundShipmentServiceLine {
     pub id: String,
     pub invoice_id: String,
-    pub item_id: String,
+    pub item_id: Option<String>,
     pub name: Option<String>,
     pub total_before_tax: f64,
     pub total_after_tax: f64,
@@ -43,14 +43,16 @@ pub fn insert_outbound_shipment_service_line(
 #[derive(Debug)]
 pub enum InsertOutboundShipmentServiceLineError {
     LineAlreadyExists,
-    DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
     NotAnOutboundShipment,
     //NotThisStoreInvoice,
     CannotEditFinalised,
     ItemNotFound,
     NotAServiceItem,
+    // Internal
     NewlyCreatedLineDoesNotExist,
+    CannotFindDefaultServiceItem,
+    DatabaseError(RepositoryError),
 }
 
 impl From<RepositoryError> for InsertOutboundShipmentServiceLineError {
@@ -70,3 +72,104 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use repository::{
+        mock::{mock_full_draft_outbound_shipment_a, mock_item_service_item, MockDataInserts},
+        test_db::setup_all,
+        InvoiceLineRowRepository, ItemFilter, ItemQueryRepository, SimpleStringFilter,
+    };
+    use util::{constants::DEFAULT_SERVICE_ITEM_CODE, inline_edit, inline_init};
+
+    use crate::{
+        invoice_line::outbound_shipment_service_line::InsertOutboundShipmentServiceLine,
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn insert_outbound_shipment_service_line_success() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_outbound_shipment_service_line_service",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_line_service;
+
+        // Default service line
+        service
+            .insert_outbound_shipment_service_line(
+                &context,
+                "store_a",
+                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                    r.id = "new_line_id".to_string();
+                    r.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
+                }),
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id_option("new_line_id")
+            .unwrap()
+            .unwrap();
+
+        let default_service_item = ItemQueryRepository::new(&connection)
+            .query_one(
+                ItemFilter::new().code(SimpleStringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE)),
+            )
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            line,
+            inline_edit(&line, |mut u| {
+                u.item_id = default_service_item.item_row.id;
+                u
+            })
+        );
+
+        // Specified service line
+
+        service
+            .insert_outbound_shipment_service_line(
+                &context,
+                "store_a",
+                InsertOutboundShipmentServiceLine {
+                    id: "new_line2_id".to_string(),
+                    invoice_id: mock_full_draft_outbound_shipment_a().invoice.id,
+                    item_id: Some(mock_item_service_item().id),
+                    name: Some("modified name".to_string()),
+                    total_before_tax: 0.3,
+                    total_after_tax: 0.2,
+                    tax: Some(0.1),
+                    note: Some("note".to_string()),
+                },
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id_option("new_line2_id")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            line,
+            inline_edit(&line, |mut u| {
+                u.id = "new_line2_id".to_string();
+                u.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
+                u.item_id = mock_item_service_item().id;
+                u.item_name = "modified name".to_string();
+                u.total_before_tax = 0.3;
+                u.total_after_tax = 0.2;
+                u.tax = Some(0.1);
+                u.note = Some("note".to_string());
+                u
+            })
+        );
+    }
+}
+
+// TODO tests
