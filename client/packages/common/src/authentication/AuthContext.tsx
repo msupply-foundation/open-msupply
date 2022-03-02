@@ -1,5 +1,4 @@
 import React, { createContext, FC, useMemo, useState } from 'react';
-import { Store, User } from '@common/types';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns';
@@ -9,6 +8,16 @@ import { useGetAuthToken } from './api/hooks/useGetAuthToken';
 import { AuthenticationResponse } from './api';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
+
+type User = {
+  id: string;
+  name: string;
+};
+
+interface Store {
+  id: string;
+  code: string;
+}
 
 interface AuthCookie {
   expires?: Date;
