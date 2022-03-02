@@ -1,4 +1,4 @@
-import { useItem } from '../useItem/useItem';
+import { useItem } from '../useItem';
 
 export const useStockLines = (itemId: string | undefined) => {
   const queryState = useItem(itemId);
