@@ -4,12 +4,13 @@ use crate::{
     service_provider::ServiceContext,
 };
 use chrono::Utc;
-use repository::EqualFilter;
+use repository::Name;
 use repository::{
     schema::{NumberRowType, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    NameQueryRepository, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
-use repository::{Name, NameFilter};
+
+use super::check_other_party_exists;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisition {
@@ -30,6 +31,7 @@ pub enum InsertRequestRequisitionError {
     OtherPartyDoesNotExist,
     OtherPartyIsThisStore,
     OtherPartyIsNotAStore,
+    // Internal
     NewlyCreatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
 }
@@ -121,18 +123,6 @@ impl From<RepositoryError> for InsertRequestRequisitionError {
     fn from(error: RepositoryError) -> Self {
         InsertRequestRequisitionError::DatabaseError(error)
     }
-}
-
-pub fn check_other_party_exists(
-    connection: &StorageConnection,
-    other_party_id: &str,
-) -> Result<Option<Name>, RepositoryError> {
-    // TODO store_id check
-    let result = NameQueryRepository::new(connection)
-        .query_by_filter(NameFilter::new().id(EqualFilter::equal_to(other_party_id)))?
-        .pop();
-
-    Ok(result)
 }
 
 #[cfg(test)]

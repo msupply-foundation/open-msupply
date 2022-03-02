@@ -5,7 +5,10 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::RequisitionNode;
+use graphql_types::{
+    generic_errors::OtherPartyNotASupplier,
+    types::{NameNode, RequisitionNode},
+};
 use repository::Requisition;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
@@ -25,6 +28,7 @@ pub struct UpdateInput {
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: Option<f64>,
     pub status: Option<UpdateRequestRequisitionStatusInput>,
+    pub other_party_id: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -37,6 +41,7 @@ pub enum UpdateRequestRequisitionStatusInput {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
+    OtherPartyNotASupplier(OtherPartyNotASupplier),
     CannotEditRequisition(CannotEditRequisition),
 }
 
@@ -93,6 +98,7 @@ impl UpdateInput {
             max_months_of_stock,
             min_months_of_stock,
             status,
+            other_party_id,
         } = self;
 
         ServiceInput {
@@ -103,6 +109,7 @@ impl UpdateInput {
             max_months_of_stock,
             min_months_of_stock,
             status: status.map(|status| status.to_domain()),
+            other_party_id,
         }
     }
 }
@@ -121,9 +128,17 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotEditRequisition {},
             ))
         }
+        ServiceError::OtherPartyNotASupplier(name) => {
+            return Ok(UpdateErrorInterface::OtherPartyNotASupplier(
+                OtherPartyNotASupplier(NameNode { name }),
+            ))
+        }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
+        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::OtherPartyIsThisStore => BadUserInput(formatted_error),
+        ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
         ServiceError::UpdatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
@@ -148,7 +163,7 @@ mod test {
     };
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
-        Requisition, StorageConnectionManager,
+        Name, Requisition, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -297,6 +312,68 @@ mod test {
             None,
             Some(service_provider(test_service, &connection_manager))
         );
+
+        // OtherPartyNotASupplier
+        let test_service = TestService(Box::new(|_, _| {
+            Err(ServiceError::OtherPartyNotASupplier(Name {
+                name_row: mock_name_a(),
+                name_store_join_row: None,
+                store_row: None,
+            }))
+        }));
+
+        let expected = json!({
+            "updateRequestRequisition": {
+              "error": {
+                "__typename": "OtherPartyNotASupplier"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // OtherPartyDoesNotExist
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyDoesNotExist)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // OtherPartyIsThisStore
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsThisStore)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // OtherPartyIsNotAStore
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsNotAStore)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 
     #[actix_rt::test]
@@ -331,6 +408,7 @@ mod test {
                     comment: Some("comment input".to_string()),
                     max_months_of_stock: Some(1.0),
                     min_months_of_stock: Some(2.0),
+                    other_party_id: Some("other_party_id".to_string()),
                     status: Some(UpdateRequestRequstionStatus::Sent)
                 }
             );
@@ -348,7 +426,8 @@ mod test {
             "colour": "colour input",
             "theirReference": "reference input",
             "comment": "comment input",
-            "status": "SENT"
+            "status": "SENT",
+            "otherPartyId": "other_party_id"
           },
           "storeId": "store_a"
         });

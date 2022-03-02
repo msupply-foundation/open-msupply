@@ -282,7 +282,7 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // OtherPartyIsNotAStore
+        // NewlyCreatedRequisitionDoesNotExist
         let test_service = TestService(Box::new(|_, _| {
             Err(ServiceError::NewlyCreatedRequisitionDoesNotExist)
         }));

@@ -1,6 +1,9 @@
 mod generate;
 pub use self::generate::*;
 
+mod validate;
+pub use self::validate::*;
+
 mod insert;
 pub use self::insert::*;
 
