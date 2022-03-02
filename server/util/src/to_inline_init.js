@@ -12,7 +12,7 @@ const lines = fs.readFileSync(file_path, 'utf-8').split('\n');
 let result = [];
 
 // \\"n\\/a\\"\\.to_owned\\(\\) = match '"n/a".to_string()'
-let defaults = ['None', 'false', '0', '\\"n\\/a\\"\\.to_owned\\(\\)']
+let defaults = ['None', 'false', '0', '0.0', '\\"n\\/a\\"\\.to_owned\\(\\)']
 
 // (?<!(struct|->) ) = no strarting with `struct ` or '-> '
 const findStartRegex = `(?<!(struct|->) )${type} {`;
@@ -45,7 +45,7 @@ const replace = (start_index, startMatch) => {
     const findEndRegex = `^[ ]+}`;
     const findFalseEndRegex = `^[ ]+}: `;
     let firstLine = lines[start_index];
-    const startOfFieldRegex = `^[ ]+[\\w_]+:`;
+    const startOfFieldRegex = `^[ ]+[\\w_#]+:`;
 
     changedResult.push(firstLine.replace(startMatch[0], `inline_init(|r: &mut ${type}|{`))
     notChangedResult.push(firstLine)

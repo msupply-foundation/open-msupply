@@ -96,6 +96,10 @@ impl<'a> ItemQueryRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
+    pub fn query_one(&self, filter: ItemFilter) -> Result<Option<Item>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
     pub fn query_by_filter(&self, filter: ItemFilter) -> Result<Vec<Item>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }

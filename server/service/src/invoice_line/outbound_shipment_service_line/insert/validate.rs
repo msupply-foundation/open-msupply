@@ -1,7 +1,8 @@
 use repository::{
     schema::{InvoiceRow, InvoiceRowType, ItemRow, ItemRowType},
-    StorageConnection,
+    ItemFilter, ItemQueryRepository, RepositoryError, SimpleStringFilter, StorageConnection,
 };
+use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
 use crate::{
     invoice::{
@@ -15,15 +16,27 @@ use crate::{
 
 use super::{InsertOutboundShipmentServiceLine, InsertOutboundShipmentServiceLineError};
 
+type OutError = InsertOutboundShipmentServiceLineError;
+
 pub fn validate(
     input: &InsertOutboundShipmentServiceLine,
     connection: &StorageConnection,
-) -> Result<(ItemRow, InvoiceRow), InsertOutboundShipmentServiceLineError> {
+) -> Result<(ItemRow, InvoiceRow), OutError> {
     check_line_does_not_exists(&input.id, connection)?;
-    let item = check_item(&input.item_id, connection)?;
-    if item.r#type != ItemRowType::Service {
-        return Err(InsertOutboundShipmentServiceLineError::NotAServiceItem);
-    }
+
+    let item = match &input.item_id {
+        None => {
+            get_default_service_item(connection)?.ok_or(OutError::CannotFindDefaultServiceItem)?
+        }
+        Some(item_id) => {
+            let item = check_item(item_id, connection)?;
+            if item.r#type != ItemRowType::Service {
+                return Err(OutError::NotAServiceItem);
+            }
+            item
+        }
+    };
+
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     // TODO:
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
@@ -33,32 +46,42 @@ pub fn validate(
     Ok((item, invoice))
 }
 
-impl From<LineAlreadyExists> for InsertOutboundShipmentServiceLineError {
+fn get_default_service_item(
+    connection: &StorageConnection,
+) -> Result<Option<ItemRow>, RepositoryError> {
+    let item_row = ItemQueryRepository::new(connection)
+        .query_one(ItemFilter::new().code(SimpleStringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE)))?
+        .map(|item| item.item_row);
+
+    Ok(item_row)
+}
+
+impl From<LineAlreadyExists> for OutError {
     fn from(_: LineAlreadyExists) -> Self {
-        InsertOutboundShipmentServiceLineError::LineAlreadyExists
+        OutError::LineAlreadyExists
     }
 }
 
-impl From<ItemNotFound> for InsertOutboundShipmentServiceLineError {
+impl From<ItemNotFound> for OutError {
     fn from(_: ItemNotFound) -> Self {
-        InsertOutboundShipmentServiceLineError::ItemNotFound
+        OutError::ItemNotFound
     }
 }
 
-impl From<InvoiceDoesNotExist> for InsertOutboundShipmentServiceLineError {
+impl From<InvoiceDoesNotExist> for OutError {
     fn from(_: InvoiceDoesNotExist) -> Self {
-        InsertOutboundShipmentServiceLineError::InvoiceDoesNotExist
+        OutError::InvoiceDoesNotExist
     }
 }
 
-impl From<WrongInvoiceRowType> for InsertOutboundShipmentServiceLineError {
+impl From<WrongInvoiceRowType> for OutError {
     fn from(_: WrongInvoiceRowType) -> Self {
-        InsertOutboundShipmentServiceLineError::NotAnOutboundShipment
+        OutError::NotAnOutboundShipment
     }
 }
 
-impl From<InvoiceIsNotEditable> for InsertOutboundShipmentServiceLineError {
+impl From<InvoiceIsNotEditable> for OutError {
     fn from(_: InvoiceIsNotEditable) -> Self {
-        InsertOutboundShipmentServiceLineError::CannotEditFinalised
+        OutError::CannotEditFinalised
     }
 }
