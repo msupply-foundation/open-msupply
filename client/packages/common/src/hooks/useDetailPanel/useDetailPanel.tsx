@@ -1,8 +1,8 @@
 import React from 'react';
 import create from 'zustand';
 import { useTranslation } from '@common/intl';
-import { SidebarIcon, ButtonWithIcon } from '../ui';
-import LocalStorage from '../localStorage/LocalStorage';
+import { SidebarIcon, ButtonWithIcon } from '../../ui';
+import LocalStorage from '../../localStorage/LocalStorage';
 
 type DetailPanelController = {
   hasUserSet: boolean;
