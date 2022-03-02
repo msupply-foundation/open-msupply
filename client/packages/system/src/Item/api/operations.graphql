@@ -1,9 +1,40 @@
+fragment StockLine on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemId
+  location {
+    code
+    id
+    name
+    onHold
+  }
+  note
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+}
+
 fragment ItemRow on ItemNode {
   __typename
   id
   code
   name
   unitName
+}
+
+fragment ItemRowWithStats on ItemNode {
+  ...ItemRow
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
 }
 
 fragment Item on ItemNode {
@@ -83,6 +114,57 @@ query itemsListView(
       __typename
       nodes {
         ...ItemRow
+      }
+      totalCount
+    }
+  }
+}
+
+query itemsWithStats($storeId: String!) {
+  items(storeId: $storeId) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        code
+        id
+        isVisible
+        name
+        unitName
+        stats(storeId: $storeId) {
+          __typename
+          averageMonthlyConsumption
+          availableStockOnHand
+          availableMonthsOfStockOnHand
+        }
+      }
+    }
+  }
+}
+
+query itemById($storeId: String!, $itemId: String!) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        code
+        id
+        isVisible
+        name
+        unitName
+        stats(storeId: $storeId) {
+          __typename
+          averageMonthlyConsumption
+          availableStockOnHand
+          availableMonthsOfStockOnHand
+        }
+        availableBatches(storeId: $storeId) {
+          totalCount
+          nodes {
+            ...StockLine
+          }
+        }
       }
       totalCount
     }

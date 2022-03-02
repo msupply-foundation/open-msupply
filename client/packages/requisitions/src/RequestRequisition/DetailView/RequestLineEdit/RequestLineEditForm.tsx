@@ -7,14 +7,17 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ItemSearchInput } from '@openmsupply-client/system';
-import { useRequestRequisitionLines, ItemWithStatsFragment } from '../../api';
+import {
+  ItemSearchInput,
+  ItemRowWithStatsFragment,
+} from '@openmsupply-client/system';
+import { useRequestRequisitionLines } from '../../api';
 import { DraftRequestRequisitionLine } from './hooks';
 
 interface RequestLineEditFormProps {
-  item: ItemWithStatsFragment | null;
+  item: ItemRowWithStatsFragment | null;
   disabled: boolean;
-  onChangeItem: (item: ItemWithStatsFragment) => void;
+  onChangeItem: (item: ItemRowWithStatsFragment) => void;
   update: (patch: Partial<DraftRequestRequisitionLine>) => void;
   draftLine: DraftRequestRequisitionLine | null;
 }
@@ -87,8 +90,8 @@ export const RequestLineEditForm = ({
           <ItemSearchInput
             width={300}
             disabled={disabled}
-            currentItem={item}
-            onChange={(newItem: ItemWithStatsFragment | null) =>
+            currentItemId={item?.id}
+            onChange={(newItem: ItemRowWithStatsFragment | null) =>
               newItem && onChangeItem(newItem)
             }
             extraFilter={itemToFind => {

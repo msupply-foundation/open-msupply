@@ -1,12 +1,10 @@
 import { useCallback } from 'react';
-import { toItem } from '@openmsupply-client/system';
 import {
   useQueryParams,
   useTableStore,
   useTranslation,
   useNotification,
   useNavigate,
-  Item,
   getDataSorter,
   useSortBy,
   FieldSelectorControl,
@@ -19,15 +17,16 @@ import {
   useFieldsSelector,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
+import { ItemRowFragment } from '@openmsupply-client/system';
 import { inboundLinesToSummaryItems } from './../../utils';
 import { InboundItem } from './../../types';
+import { getInboundQueries } from './api';
 import {
   getSdk,
   InboundFragment,
   InboundLineFragment,
   InboundRowFragment,
 } from './operations.generated';
-import { getInboundQueries } from './api';
 
 export const useInboundApi = () => {
   const { storeId } = useAuthContext();
@@ -115,7 +114,7 @@ export const useInboundItems = () => {
   return { data, sortBy, onSort: onChangeSortBy };
 };
 
-export const useNextItem = (currentItemId: string): Item | null => {
+export const useNextItem = (currentItemId: string): ItemRowFragment | null => {
   const { data } = useInboundItems();
 
   if (!data) return null;
@@ -123,7 +122,7 @@ export const useNextItem = (currentItemId: string): Item | null => {
   const nextItem = data?.[(currentIndex + 1) % data.length];
   if (!nextItem) return null;
 
-  return toItem(nextItem);
+  return nextItem.lines[0].item;
 };
 
 export const useSaveInboundLines = () => {

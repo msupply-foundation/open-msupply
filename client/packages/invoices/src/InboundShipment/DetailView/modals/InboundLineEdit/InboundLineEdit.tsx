@@ -14,12 +14,12 @@ import {
   DialogButton,
   useDialog,
   generateUUID,
-  Item,
   useNotification,
   ModalMode,
   useDirtyCheck,
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
+import { ItemRowFragment } from '@openmsupply-client/system';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
 import { InboundLineEditForm } from './InboundLineEditForm';
@@ -33,7 +33,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 
 interface InboundLineEditProps {
-  item: Item | null;
+  item: ItemRowFragment | null;
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
@@ -130,7 +130,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
 }) => {
   const t = useTranslation('replenishment');
   const { error } = useNotification();
-  const [currentItem, setCurrentItem] = useState<Item | null>(item);
+  const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
   const nextItem = useNextItem(currentItem?.id ?? '');
   const isMediumScreen = useIsMediumScreen();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);

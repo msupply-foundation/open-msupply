@@ -1,29 +1,50 @@
 import {
-  Item,
   SortBy,
   ItemSortFieldInput,
   FilterBy,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, ItemFragment } from './operations.generated';
-import { ItemApi } from './hooks';
+import { Sdk, ItemRowFragment, ItemFragment } from './operations.generated';
 import { getItemSortField } from '../utils';
 
-export const ItemQueries = {
+export const getItemQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list:
-      (
-        api: ItemApi,
-        storeId: string,
-        {
-          first,
-          offset,
-          sortBy,
-        }: {
-          first: number;
-          offset: number;
-          sortBy: SortBy<Item>;
+    byId: async (itemId: string) => {
+      const result = await sdk.itemById({ storeId, itemId });
+
+      const { items } = result;
+
+      if (items.__typename === 'ItemConnector') {
+        if (items.nodes.length) {
+          return items.nodes[0];
         }
-      ) =>
+      }
+
+      throw new Error('Item not found');
+    },
+    listWithStats: async () => {
+      const result = await sdk.itemsWithStats({ storeId });
+
+      console.log(result);
+
+      const { items } = result;
+
+      if (result.items.__typename === 'ItemConnector') {
+        return items;
+      }
+
+      throw new Error('Could not fetch items');
+    },
+
+    list:
+      ({
+        first,
+        offset,
+        sortBy,
+      }: {
+        first: number;
+        offset: number;
+        sortBy: SortBy<ItemRowFragment>;
+      }) =>
       async (): Promise<{
         nodes: ItemRowFragment[];
         totalCount: number;
@@ -33,7 +54,7 @@ export const ItemQueries = {
             ? ItemSortFieldInput.Name
             : ItemSortFieldInput.Code;
 
-        const result = await api.itemsListView({
+        const result = await sdk.itemsListView({
           first,
           offset,
           key,
@@ -45,22 +66,18 @@ export const ItemQueries = {
 
         return items;
       },
-    listWithStockLines: async (
-      api: ItemApi,
-      storeId: string,
-      {
-        first,
-        offset,
-        sortBy,
-        filterBy,
-      }: {
-        first: number;
-        offset: number;
-        sortBy: SortBy<ItemFragment>;
-        filterBy: FilterBy | null;
-      }
-    ) => {
-      const result = await api.itemsWithStockLines({
+    listWithStockLines: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: {
+      first: number;
+      offset: number;
+      sortBy: SortBy<ItemFragment>;
+      filterBy: FilterBy | null;
+    }) => {
+      const result = await sdk.itemsWithStockLines({
         key: getItemSortField(sortBy.key),
         filter: filterBy,
         first,
@@ -75,4 +92,4 @@ export const ItemQueries = {
       throw new Error('Could not fetch item');
     },
   },
-};
+});

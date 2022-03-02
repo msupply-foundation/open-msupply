@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import {
   TableProvider,
   createTableStore,
-  Item,
   useEditModal,
   DetailViewSkeleton,
   AlertModal,
@@ -10,8 +9,8 @@ import {
   RouteBuilder,
   useTranslation,
 } from '@openmsupply-client/common';
-import { toItem } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
+import { toItemRow, ItemRowFragment } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -23,14 +22,14 @@ import { useInbound, InboundLineFragment } from '../api';
 
 export const DetailView: FC = () => {
   const { data, isLoading } = useInbound();
-  const { onOpen, onClose, mode, entity, isOpen } = useEditModal<Item>();
+  const { onOpen, onClose, mode, entity, isOpen } =
+    useEditModal<ItemRowFragment>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
-      const item = toItem(line);
-      onOpen(item);
+      onOpen(toItemRow(line));
     },
     [onOpen]
   );

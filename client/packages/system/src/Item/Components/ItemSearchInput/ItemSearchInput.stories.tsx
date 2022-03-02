@@ -1,7 +1,7 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { ItemSearchInput } from './ItemSearchInput';
-import { Item } from '@openmsupply-client/common';
+import { ItemRowWithStatsFragment } from '../../api';
 
 export default {
   title: 'Item/ItemSearchInput',
@@ -9,11 +9,12 @@ export default {
 };
 
 const Template: Story = () => {
-  const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
+  const [selectedItem, setSelectedItem] =
+    React.useState<ItemRowWithStatsFragment | null>(null);
 
   return (
     <ItemSearchInput
-      currentItem={selectedItem ?? undefined}
+      currentItemId={selectedItem?.id ?? undefined}
       onChange={item => {
         setSelectedItem(item);
       }}

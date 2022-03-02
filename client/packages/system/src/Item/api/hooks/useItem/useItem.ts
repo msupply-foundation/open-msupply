@@ -1,47 +1,9 @@
-import { ItemFragment } from './../../operations.generated';
-import { useQuery, UseQueryResult } from 'react-query';
-import {
-  Item,
-  useAuthContext,
-  useQueryParams,
-} from '@openmsupply-client/common';
-import { useEffect } from 'react';
-import { useItemApi } from './../useItemApi/useItemApi';
-import { mapItemNodes } from '../../../utils';
-import { ItemQueries } from './../../api';
+import { useQuery } from 'react-query';
+import { useItemApi } from './../useItemApi';
 
-// TODO: Use itemID to filter when possible.
-export const useItem = (itemCode: string): UseQueryResult<Item> => {
+export const useItem = (itemId: string | undefined) => {
   const api = useItemApi();
-  const { storeId } = useAuthContext();
-  const { filterBy, filter, queryParams, first, offset, sortBy } =
-    useQueryParams<ItemFragment>({
-      initialSortBy: { key: 'name' },
-      initialFilterBy: { code: { equalTo: itemCode } },
-    });
-
-  const queryState = useQuery(['item', itemCode, queryParams], async () => {
-    const result = await ItemQueries.get.listWithStockLines(api, storeId, {
-      sortBy,
-      filterBy,
-      first,
-      offset,
-    });
-
-    const { nodes, totalCount } = mapItemNodes(result);
-
-    // TODO: This shouldn't be a problem when we are filtering by the item id.
-    // when we filter by the item id, we should have an error returned, rather
-    // than an empty item connector, in which case the error would be thrown
-    // from higher in the call chain.
-    if (!totalCount) throw new Error("Couldn't find item");
-
-    return nodes[0] as Item;
+  return useQuery(['item', itemId], () => api.get.byId(itemId ?? ''), {
+    enabled: !!itemId,
   });
-
-  useEffect(() => {
-    filter.onChangeStringFilterRule('code', 'equalTo', itemCode);
-  }, [itemCode]);
-
-  return queryState;
 };
