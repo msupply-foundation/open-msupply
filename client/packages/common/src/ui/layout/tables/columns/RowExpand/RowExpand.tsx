@@ -3,7 +3,7 @@ import React from 'react';
 import { ColumnAlign, ColumnDefinition } from '../types';
 import { useExpanded, useTableStore } from '../../context';
 import { IconButton } from '@common/components';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { ChevronDownIcon, ChevronsDownIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
@@ -13,7 +13,7 @@ type RowExpandLabels = {
 };
 
 export const getRowExpandColumn = <
-  T extends DomainObject & { canExpand?: boolean; lines?: T[] }
+  T extends RecordWithId & { canExpand?: boolean; lines?: T[] }
 >(
   labels?: RowExpandLabels
 ): ColumnDefinition<T> => ({

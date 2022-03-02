@@ -1,16 +1,16 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
 import { ColorSelectButton } from '@common/components';
 
-interface DomainObjectWithRequiredFields extends DomainObject {
+interface RecordWithIdWithRequiredFields extends RecordWithId {
   colour?: string | null;
   otherPartyName: string;
 }
 
 export const getNameAndColorColumn = <
-  T extends DomainObjectWithRequiredFields
+  T extends RecordWithIdWithRequiredFields
 >(): ColumnDefinition<T> => ({
   label: 'label.name',
   width: 350,

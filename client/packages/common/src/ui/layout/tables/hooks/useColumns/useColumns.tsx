@@ -1,5 +1,5 @@
 import { DependencyList, useMemo } from 'react';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import {
   ColumnDataAccessor,
   ColumnDefinition,
@@ -13,7 +13,7 @@ import { getDateOrNull } from '../../../../../utils';
 import { SortBy } from '@common/hooks';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
 
-const getColumnWidths = <T extends DomainObject>(
+const getColumnWidths = <T extends RecordWithId>(
   column: ColumnDefinition<T>
 ) => {
   const getDefaultWidth = () => {
@@ -52,7 +52,7 @@ const getSortType = (column: { format?: ColumnFormat }) => {
  * If the key is not a value of the domain object, then you should provide your own data accessor.
  */
 const getDefaultAccessor =
-  <T extends DomainObject>(
+  <T extends RecordWithId>(
     column: ColumnDefinition<T>
   ): ColumnDataAccessor<T> =>
   ({ rowData }) => {
@@ -62,7 +62,7 @@ const getDefaultAccessor =
   };
 
 const getDefaultColumnSetter =
-  <T extends DomainObject>(column: ColumnDefinition<T>) =>
+  <T extends RecordWithId>(column: ColumnDefinition<T>) =>
   () => {
     if (process.env['NODE_ENV']) {
       throw new Error(
@@ -75,7 +75,7 @@ const getDefaultColumnSetter =
     }
   };
 
-const getDefaultFormatter = <T extends DomainObject>(
+const getDefaultFormatter = <T extends RecordWithId>(
   column: ColumnDefinition<T>
 ) => {
   switch (column.format) {
@@ -102,7 +102,7 @@ const getDefaultFormatter = <T extends DomainObject>(
   }
 };
 
-const getDefaultColumnAlign = <T extends DomainObject>(
+const getDefaultColumnAlign = <T extends RecordWithId>(
   column: ColumnDefinition<T>
 ) => {
   const { format } = column;
@@ -128,18 +128,18 @@ const getDefaultColumnAlign = <T extends DomainObject>(
   return ColumnAlign.Left;
 };
 
-interface ColumnOptions<T extends DomainObject> {
+interface ColumnOptions<T extends RecordWithId> {
   onChangeSortBy?: (column: Column<T>) => void;
   sortBy?: SortBy<T>;
 }
 
-export type ColumnDescription<T extends DomainObject> =
+export type ColumnDescription<T extends RecordWithId> =
   | ColumnDefinition<T>
   | ColumnKey
   | [ColumnKey | ColumnDefinition<T>, Omit<ColumnDefinition<T>, 'key'>]
   | [ColumnKey];
 
-export const createColumnWithDefaults = <T extends DomainObject>(
+export const createColumnWithDefaults = <T extends RecordWithId>(
   column: ColumnDefinition<T>,
   options?: ColumnOptions<T>
 ): Column<T> => {
@@ -169,7 +169,7 @@ export const createColumnWithDefaults = <T extends DomainObject>(
   return { ...defaults, ...column };
 };
 
-export const createColumns = <T extends DomainObject>(
+export const createColumns = <T extends RecordWithId>(
   columnsToCreate: ColumnDescription<T>[],
   options?: ColumnOptions<T>
 ): Column<T>[] => {
@@ -182,7 +182,7 @@ export const createColumns = <T extends DomainObject>(
   });
 };
 
-export const useColumns = <T extends DomainObject>(
+export const useColumns = <T extends RecordWithId>(
   columnsToCreate: ColumnDescription<T>[],
   options?: ColumnOptions<T>,
   depsArray: DependencyList = []

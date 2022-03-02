@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Column } from '../../ui/layout/tables';
-import { DomainObject } from '../../types';
+import { RecordWithId } from '../../types';
 export interface SortRule<T> {
   key: keyof T | string;
   isDesc?: boolean;
@@ -10,19 +10,19 @@ export interface SortBy<T> extends SortRule<T> {
   direction: 'asc' | 'desc';
   getSortValue?: (row: T) => string | number;
 }
-export interface SortController<T extends DomainObject> {
+export interface SortController<T extends RecordWithId> {
   sortBy: SortBy<T>;
   onChangeSortBy: (newSortRule: Column<T>) => SortBy<T>;
 }
 
-export interface SortState<T extends DomainObject> extends SortController<T> {
+export interface SortState<T extends RecordWithId> extends SortController<T> {
   sort: SortController<T>;
 }
 
 const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
   isDesc ? 'desc' : 'asc';
 
-export const useSortBy = <T extends DomainObject>({
+export const useSortBy = <T extends RecordWithId>({
   key: initialSortKey,
   isDesc: initialIsDesc = false,
 }: SortRule<T>): SortState<T> => {

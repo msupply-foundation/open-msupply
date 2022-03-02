@@ -2,7 +2,7 @@ import React, { FC, useMemo } from 'react';
 import {
   DataTable,
   usePagination,
-  DomainObject,
+  RecordWithId,
   useTranslation,
   useIsGrouped,
   Box,
@@ -13,7 +13,7 @@ import { InboundItem } from '../../types';
 import { useInboundItems, useInboundLines, InboundLineFragment } from '../api';
 import { useExpansionColumns, useInboundShipmentColumns } from './columns';
 
-interface GeneralTabProps<T extends DomainObject> {
+interface GeneralTabProps<T extends RecordWithId> {
   onRowClick?: (rowData: T) => void;
 }
 
