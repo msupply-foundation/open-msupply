@@ -73,13 +73,13 @@ export const useInboundFields = <KeyOfInvoice extends keyof InboundFragment>(
   keyOrKeys: KeyOfInvoice | KeyOfInvoice[]
 ): FieldSelectorControl<InboundFragment, KeyOfInvoice> => {
   const { data } = useInbound();
+  const { mutateAsync } = useUpdateInbound();
   const invoiceNumber = useInvoiceNumber();
   const api = useInboundApi();
   return useFieldsSelector(
     ['invoice', api.storeId, invoiceNumber],
     () => api.get.byNumber(invoiceNumber),
-    (patch: Partial<InboundFragment>) =>
-      api.update({ ...patch, id: data?.id ?? '' }),
+    patch => mutateAsync({ ...patch, id: data?.id ?? '' }),
     keyOrKeys
   );
 };
@@ -212,6 +212,17 @@ export const useCreateInbound = () => {
     onSuccess: invoiceNumber => {
       navigate(String(invoiceNumber));
       queryClient.invalidateQueries(['invoice']);
+    },
+  });
+};
+
+export const useUpdateInbound = () => {
+  const queryClient = useQueryClient();
+  const api = useInboundApi();
+  return useMutation(api.update, {
+    onSuccess: () => {
+      console.log('onsuccess');
+      return queryClient.invalidateQueries(['invoice']);
     },
   });
 };
