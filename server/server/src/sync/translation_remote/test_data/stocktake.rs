@@ -45,6 +45,7 @@ pub fn get_test_stocktake_records() -> Vec<TestSyncRecord> {
                 finalised_datetime: None,
                 inventory_adjustment_id: Some("inbound_shipment_a".to_string()),
                 is_locked: false,
+                stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
             }),
         )),
         identifier: "Stocktake 1",

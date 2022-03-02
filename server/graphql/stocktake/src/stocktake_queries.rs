@@ -299,7 +299,9 @@ mod test {
                         description
                         status
                         createdDatetime
+                        stocktakeDate
                         finalisedDatetime
+                        isLocked
                         inventoryAdjustmentId
                         lines {
                             totalCount
@@ -321,6 +323,8 @@ mod test {
                     r.description = Some("description".to_string());
                     r.status = StocktakeStatus::Finalised;
                     r.created_datetime = NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0);
+                    r.stocktake_date = Some(NaiveDate::from_ymd(2022, 1, 23));
+                    r.is_locked = true;
                     r.finalised_datetime =
                         Some(NaiveDate::from_ymd(2022, 1, 23).and_hms(15, 16, 0));
                     r.inventory_adjustment_id = Some("inv id".to_string());
@@ -342,8 +346,10 @@ mod test {
               "description": "description",
               "status": "FINALISED",
               "createdDatetime": "2022-01-22T15:16:00",
+              "stocktakeDate": "2022-01-23",
               "finalisedDatetime": "2022-01-23T15:16:00",
               "inventoryAdjustmentId": "inv id",
+              "isLocked": true,
               "lines": {
                 "totalCount": 0
               }
