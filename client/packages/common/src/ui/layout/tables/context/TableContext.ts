@@ -1,12 +1,15 @@
+import isEqual from 'lodash/isEqual';
 import { useLocalStorage, GroupByItem } from './../../../../localStorage';
 import { useCallback, useEffect } from 'react';
 import create, { UseStore } from 'zustand';
 import createContext from 'zustand/context';
+import { AppSxProp } from '../../../../styles';
 
 export interface RowState {
   isSelected: boolean;
   isExpanded: boolean;
   isDisabled: boolean;
+  style?: AppSxProp;
 }
 
 export interface TableStore {
@@ -22,6 +25,8 @@ export interface TableStore {
   setActiveRows: (id: string[]) => void;
   setDisabledRows: (id: string[]) => void;
   setIsGrouped: (grouped: boolean) => void;
+  setRowStyle: (id: string, style: AppSxProp) => void;
+  setRowStyles: (ids: string[], style: AppSxProp) => void;
 }
 
 export const { Provider: TableProvider, useStore: useTableStore } =
@@ -57,6 +62,52 @@ export const createTableStore = (): UseStore<TableStore> =>
             state.rowState
           ),
         };
+      });
+    },
+    setRowStyle: (id, style) => {
+      set(state => ({
+        ...state,
+        rowState: {
+          ...state.rowState,
+          [id]: {
+            isSelected: false,
+            isExpanded: false,
+            isDisabled: false,
+            ...state.rowState[id],
+            style,
+          },
+        },
+      }));
+    },
+    setRowStyles: (ids: string[], style: AppSxProp) => {
+      set(state => {
+        const { rowState } = state;
+
+        // Reset all styles and replace with the new style
+        // for the IDs passed.
+        Object.keys(rowState).forEach(id => {
+          const maybeRowState = rowState[id];
+          rowState[id] = {
+            isSelected: false,
+            isExpanded: false,
+            isDisabled: false,
+            ...maybeRowState,
+            style: null,
+          };
+        });
+
+        ids.forEach(id => {
+          const maybeRowState = rowState[id];
+          rowState[id] = {
+            isSelected: false,
+            isExpanded: false,
+            isDisabled: false,
+            ...maybeRowState,
+            style,
+          };
+        });
+
+        return { ...state, rowState: { ...rowState } };
       });
     },
 
@@ -258,6 +309,36 @@ export const useDisabled = (rowId: string): UseDisabledControl => {
   ) =>
     oldState?.isDisabled === newState?.isDisabled &&
     oldState.rowId === newState.rowId;
+
+  return useTableStore(selector, equalityFn);
+};
+
+export interface UseRowStyleControl {
+  rowId?: string;
+  rowStyle: AppSxProp;
+  setRowStyle: (id: string, rowStyle: AppSxProp) => void;
+  setRowStyles: (ids: string[], rowStyle: AppSxProp) => void;
+}
+
+export const useRowStyle = (rowId?: string): UseRowStyleControl => {
+  const selector = useCallback(
+    (state: TableStore) => {
+      return {
+        rowId,
+        rowStyle: rowId ? state.rowState[rowId]?.style ?? {} : {},
+        setRowStyle: (id: string, style: AppSxProp) =>
+          state.setRowStyle(id, style),
+        setRowStyles: (ids: string[], style: AppSxProp) =>
+          state.setRowStyles(ids, style),
+      };
+    },
+    [rowId]
+  );
+
+  const equalityFn = (
+    oldState: ReturnType<typeof selector>,
+    newState: ReturnType<typeof selector>
+  ) => isEqual(oldState.rowStyle, newState.rowStyle);
 
   return useTableStore(selector, equalityFn);
 };
