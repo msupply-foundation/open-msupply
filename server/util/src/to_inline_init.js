@@ -1,4 +1,3 @@
-@@ -0, 0 + 1, 106 @@
 // Disclamer: script is not bulletproof, make sure you commit your changes before running it
 // so that script changes to file can be discarded without loosing your work
 
