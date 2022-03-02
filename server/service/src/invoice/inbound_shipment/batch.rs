@@ -263,7 +263,7 @@ pub fn batch_inbound_shipment(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_inbound_shipment_b, mock_item_a, mock_name_a, MockDataInserts},
+        mock::{mock_inbound_shipment_b, mock_item_a, mock_name_a, MockDataInserts, mock_outbound_shipment_b},
         test_db::setup_all,
         InvoiceLineRowRepository, InvoiceRepository,
     };
@@ -289,7 +289,7 @@ mod test {
         let service = service_provider.invoice_service;
 
         let delete_shipment_input = inline_init(|input: &mut DeleteInboundShipment| {
-            input.id = mock_inbound_shipment_b().id;
+            input.id = mock_outbound_shipment_b().id;
         });
 
         let mut input = BatchInboundShipment {
