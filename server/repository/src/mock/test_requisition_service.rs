@@ -1,5 +1,4 @@
 use chrono::NaiveDate;
-use util::inline_init;
 
 use crate::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -121,16 +120,16 @@ pub fn mock_sent_request_requisition() -> RequisitionRow {
 }
 
 pub fn mock_sent_request_requisition_line() -> RequisitionLineRow {
-    inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_sent_request_requisition_line".to_owned();
-        r.requisition_id = mock_sent_request_requisition().id;
-        r.item_id = mock_item_a().id;
-        r.requested_quantity = 10;
-        r.suggested_quantity = 5;
-        r.supply_quantity = 0;
-        r.available_stock_on_hand = 1;
-        r.average_monthly_consumption = 1;
-    })
+    RequisitionLineRow {
+        id: "mock_sent_request_requisition_line".to_owned(),
+        requisition_id: mock_sent_request_requisition().id,
+        item_id: mock_item_a().id,
+        requested_quantity: 10,
+        suggested_quantity: 5,
+        supply_quantity: 0,
+        available_stock_on_hand: 1,
+        average_monthly_consumption: 1,
+    }
 }
 
 pub fn mock_finalised_response_requisition() -> RequisitionRow {
@@ -154,16 +153,16 @@ pub fn mock_finalised_response_requisition() -> RequisitionRow {
 }
 
 pub fn mock_finalised_request_requisition_line() -> RequisitionLineRow {
-    inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_finalised_request_requisition_line".to_owned();
-        r.requisition_id = mock_finalised_response_requisition().id;
-        r.item_id = mock_item_a().id;
-        r.requested_quantity = 10;
-        r.suggested_quantity = 5;
-        r.supply_quantity = 0;
-        r.available_stock_on_hand = 1;
-        r.average_monthly_consumption = 1;
-    })
+    RequisitionLineRow {
+        id: "mock_finalised_request_requisition_line".to_owned(),
+        requisition_id: mock_finalised_response_requisition().id,
+        item_id: mock_item_a().id,
+        requested_quantity: 10,
+        suggested_quantity: 5,
+        supply_quantity: 0,
+        available_stock_on_hand: 1,
+        average_monthly_consumption: 1,
+    }
 }
 
 pub fn mock_draft_response_requisition_for_update_test() -> RequisitionRow {
@@ -207,16 +206,16 @@ pub fn mock_new_response_requisition() -> RequisitionRow {
 }
 
 pub fn mock_draft_response_requisition_for_update_test_line() -> RequisitionLineRow {
-    inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_draft_response_requisition_for_update_test_line".to_owned();
-        r.requisition_id = mock_draft_response_requisition_for_update_test().id;
-        r.item_id = mock_item_a().id;
-        r.requested_quantity = 10;
-        r.suggested_quantity = 5;
-        r.supply_quantity = 0;
-        r.available_stock_on_hand = 1;
-        r.average_monthly_consumption = 1;
-    })
+    RequisitionLineRow {
+        id: "mock_draft_response_requisition_for_update_test_line".to_owned(),
+        requisition_id: mock_draft_response_requisition_for_update_test().id,
+        item_id: mock_item_a().id,
+        requested_quantity: 10,
+        suggested_quantity: 5,
+        supply_quantity: 0,
+        available_stock_on_hand: 1,
+        average_monthly_consumption: 1,
+    }
 }
 
 pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition {
@@ -244,46 +243,46 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             linked_requisition_id: None,
         },
         lines: vec![
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = line1_id;
-                r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_a().id;
-                r.requested_quantity = 10;
-                r.suggested_quantity = 5;
-                r.supply_quantity = 0;
-                r.available_stock_on_hand = 1;
-                r.average_monthly_consumption = 1;
-            }),
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = line2_id;
-                r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_b().id;
-                r.requested_quantity = 10;
-                r.suggested_quantity = 5;
-                r.supply_quantity = 0;
-                r.available_stock_on_hand = 1;
-                r.average_monthly_consumption = 0;
-            }),
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = line3_id;
-                r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_c().id;
-                r.requested_quantity = 10;
-                r.suggested_quantity = 5;
-                r.supply_quantity = 0;
-                r.available_stock_on_hand = 6;
-                r.average_monthly_consumption = 1;
-            }),
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = line4_id;
-                r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_d().id;
-                r.requested_quantity = 10;
-                r.suggested_quantity = 200;
-                r.supply_quantity = 0;
-                r.available_stock_on_hand = 20;
-                r.average_monthly_consumption = 1;
-            }),
+            RequisitionLineRow {
+                id: line1_id,
+                requisition_id: requisition_id.clone(),
+                item_id: mock_item_a().id,
+                requested_quantity: 10,
+                suggested_quantity: 5,
+                supply_quantity: 0,
+                available_stock_on_hand: 1,
+                average_monthly_consumption: 1,
+            },
+            RequisitionLineRow {
+                id: line2_id,
+                requisition_id: requisition_id.clone(),
+                item_id: mock_item_b().id,
+                requested_quantity: 10,
+                suggested_quantity: 5,
+                supply_quantity: 0,
+                available_stock_on_hand: 1,
+                average_monthly_consumption: 0,
+            },
+            RequisitionLineRow {
+                id: line3_id,
+                requisition_id: requisition_id.clone(),
+                item_id: mock_item_c().id,
+                requested_quantity: 10,
+                suggested_quantity: 5,
+                supply_quantity: 0,
+                available_stock_on_hand: 6,
+                average_monthly_consumption: 1,
+            },
+            RequisitionLineRow {
+                id: line4_id,
+                requisition_id: requisition_id.clone(),
+                item_id: mock_item_d().id,
+                requested_quantity: 10,
+                suggested_quantity: 200,
+                supply_quantity: 0,
+                available_stock_on_hand: 20,
+                average_monthly_consumption: 1,
+            },
         ],
     }
 }
@@ -365,26 +364,26 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             linked_requisition_id: None,
         },
         lines: vec![
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = line1_id;
-                r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_a().id;
-                r.requested_quantity = 10;
-                r.suggested_quantity = 5;
-                r.supply_quantity = 50;
-                r.available_stock_on_hand = 1;
-                r.average_monthly_consumption = 1;
-            }),
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = line2_id;
-                r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_b().id;
-                r.requested_quantity = 11;
-                r.suggested_quantity = 5;
-                r.supply_quantity = 100;
-                r.available_stock_on_hand = 1;
-                r.average_monthly_consumption = 0;
-            }),
+            RequisitionLineRow {
+                id: line1_id,
+                requisition_id: requisition_id.clone(),
+                item_id: mock_item_a().id,
+                requested_quantity: 10,
+                suggested_quantity: 5,
+                supply_quantity: 50,
+                available_stock_on_hand: 1,
+                average_monthly_consumption: 1,
+            },
+            RequisitionLineRow {
+                id: line2_id,
+                requisition_id: requisition_id.clone(),
+                item_id: mock_item_b().id,
+                requested_quantity: 11,
+                suggested_quantity: 5,
+                supply_quantity: 100,
+                available_stock_on_hand: 1,
+                average_monthly_consumption: 0,
+            },
         ],
     }
 }
