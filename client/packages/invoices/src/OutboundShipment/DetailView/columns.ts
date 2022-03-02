@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { OutboundLineFragment } from '../api/operations.generated';
+import { LocationRowFragment } from '@openmsupply-client/system';
 
 interface UseOutboundColumnOptions {
   sortBy: SortBy<OutboundLineFragment | OutboundItem>;
@@ -156,16 +157,22 @@ export const useOutboundColumns = ({
           width: 180,
           getSortValue: row => {
             if ('lines' in row) {
-              return '';
+              const locations = row.lines
+                .map(({ location }) => location)
+                .filter(Boolean) as LocationRowFragment[];
+              return ifTheSameElseDefault(locations, 'name', '');
             } else {
-              return row.numberOfPacks ?? '';
+              return row.location?.name ?? '';
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              return '';
+              const locations = rowData.lines
+                .map(({ location }) => location)
+                .filter(Boolean) as LocationRowFragment[];
+              return ifTheSameElseDefault(locations, 'name', '');
             } else {
-              return rowData.numberOfPacks;
+              return rowData.location?.name ?? '';
             }
           },
         },
@@ -173,19 +180,19 @@ export const useOutboundColumns = ({
       [
         'itemUnit',
         {
-          width: 100,
           getSortValue: row => {
             if ('lines' in row) {
-              return '';
+              return row.lines[0].item.unitName ?? '';
             } else {
-              return row.numberOfPacks ?? '';
+              return row.item.unitName ?? '';
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              return '';
+              const items = rowData.lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'unitName', '') ?? '';
             } else {
-              return rowData.numberOfPacks;
+              return rowData.item.unitName ?? '';
             }
           },
         },
@@ -197,15 +204,31 @@ export const useOutboundColumns = ({
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
-              return ifTheSameElseDefault(lines, 'numberOfPacks', '') ?? '';
+              const packSize = ifTheSameElseDefault(lines, 'packSize', '');
+              if (packSize) {
+                return lines.reduce(
+                  (acc, value) => acc + value.numberOfPacks,
+                  0
+                );
+              } else {
+                return '';
+              }
             } else {
-              return row.numberOfPacks ?? '';
+              return row.numberOfPacks;
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'numberOfPacks', '');
+              const packSize = ifTheSameElseDefault(lines, 'packSize', '');
+              if (packSize) {
+                return lines.reduce(
+                  (acc, value) => acc + value.numberOfPacks,
+                  0
+                );
+              } else {
+                return '';
+              }
             } else {
               return rowData.numberOfPacks;
             }
@@ -234,7 +257,23 @@ export const useOutboundColumns = ({
           },
         },
       ],
-      'unitQuantity',
+      {
+        label: 'label.unit-quantity',
+        key: 'unitQuantity',
+        width: 100,
+        align: ColumnAlign.Right,
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return lines.reduce(
+              (acc, line) => line.packSize * line.numberOfPacks + acc,
+              0
+            );
+          } else {
+            return rowData.packSize * rowData.numberOfPacks;
+          }
+        },
+      },
       {
         label: 'label.unit-price',
         key: 'sellPricePerUnit',

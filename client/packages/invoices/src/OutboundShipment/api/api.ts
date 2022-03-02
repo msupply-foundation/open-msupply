@@ -110,6 +110,9 @@ const outboundParsers = {
     id: line.id,
     quantity: line.numberOfPacks,
   }),
+  toDeletePlaceholder: (line: DraftOutboundLine) => ({
+    id: line.id,
+  }),
   toDeleteLine: (
     invoiceId: string,
     id: string
@@ -224,36 +227,42 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Unable to update invoice');
   },
   updateLines: async (draftStocktakeLines: DraftOutboundLine[]) => {
-    const filtered = draftStocktakeLines.filter(
-      ({ numberOfPacks }) => numberOfPacks > 0
-    );
     const input = {
-      insertOutboundShipmentLines: filtered
+      insertOutboundShipmentLines: draftStocktakeLines
         .filter(
           ({ type, isCreated }) =>
             isCreated && type === InvoiceLineNodeType.StockOut
         )
         .map(outboundParsers.toInsertLine),
-      updateOutboundShipmentLines: filtered
+      updateOutboundShipmentLines: draftStocktakeLines
         .filter(
           ({ type, isCreated, isUpdated }) =>
             !isCreated && isUpdated && type === InvoiceLineNodeType.StockOut
         )
         .map(outboundParsers.toUpdateLine),
-      insertOutboundShipmentUnallocatedLines: filtered
+      insertOutboundShipmentUnallocatedLines: draftStocktakeLines
         .filter(
-          ({ type, isCreated }) =>
-            type === InvoiceLineNodeType.UnallocatedStock && isCreated
+          ({ type, isCreated, numberOfPacks }) =>
+            type === InvoiceLineNodeType.UnallocatedStock &&
+            isCreated &&
+            numberOfPacks > 0
         )
         .map(outboundParsers.toInsertPlaceholder),
-      updateOutboundShipmentUnallocatedLines: filtered
+      updateOutboundShipmentUnallocatedLines: draftStocktakeLines
         .filter(
-          ({ type, isCreated, isUpdated }) =>
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
             type === InvoiceLineNodeType.UnallocatedStock &&
             !isCreated &&
-            isUpdated
+            isUpdated &&
+            numberOfPacks > 0
         )
         .map(outboundParsers.toUpdatePlaceholder),
+      deleteOutboundShipmentUnallocatedLines: draftStocktakeLines
+        .filter(
+          ({ type, numberOfPacks }) =>
+            type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks === 0
+        )
+        .map(outboundParsers.toDeletePlaceholder),
     };
 
     const result = await sdk.upsertOutboundShipment({ storeId, input });
