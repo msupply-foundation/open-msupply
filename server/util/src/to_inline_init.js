@@ -90,7 +90,7 @@ const replace = (start_index, startMatch) => {
         }
 
         let endsWithDefault = defaults.some(d => {
-            const endsWithDefautlMatch = current_line.match(new RegExp(`$ {d},$`));
+            const endsWithDefautlMatch = current_line.match(new RegExp(` ${d},$`));
             return endsWithDefautlMatch?.length > 0;
         });
 
