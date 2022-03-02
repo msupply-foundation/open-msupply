@@ -34,7 +34,7 @@ export const format: currency.Format = (
   opts
   // opts: currency.Options & { groups: RegExp } - this is the correct type.
 ) => {
-  if (!currency) return ':)';
+  if (!currency) return '';
   const {
     pattern = '',
     negativePattern = '',
