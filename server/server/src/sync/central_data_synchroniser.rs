@@ -151,7 +151,10 @@ impl CentralDataSynchroniser {
         Ok(())
     }
 
-    pub async fn pull(&self, connection: &StorageConnection) -> Result<(), CentralSyncError> {
+    pub async fn pull_and_integrate_records(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<(), CentralSyncError> {
         info!("Syncing central records...");
         self.pull_central_records(connection).await?;
         info!("Successfully synced central records");
