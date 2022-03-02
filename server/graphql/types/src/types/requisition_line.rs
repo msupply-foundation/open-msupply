@@ -38,6 +38,10 @@ impl RequisitionLineNode {
         &self.row().item_id
     }
 
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
+    }
+
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
         let item_option = loader.load_one(self.row().item_id.clone()).await?;

@@ -9,6 +9,7 @@ mod test_update {
         test_db::setup_all,
         InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
     };
+    use util::inline_init;
 
     use crate::{
         requisition::response_requisition::{
@@ -139,10 +140,10 @@ mod test_update {
             .update_response_requisition_line(
                 &context,
                 "store_a",
-                UpdateResponseRequisitionLine {
-                    id: mock_new_response_requisition_test().lines[0].id.clone(),
-                    supply_quantity: Some(100),
-                },
+                inline_init(|r: &mut UpdateResponseRequisitionLine| {
+                    r.id = mock_new_response_requisition_test().lines[0].id.clone();
+                    r.supply_quantity = Some(100);
+                }),
             )
             .unwrap();
 

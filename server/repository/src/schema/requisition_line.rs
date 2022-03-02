@@ -11,4 +11,5 @@ pub struct RequisitionLineRow {
     pub supply_quantity: i32,
     pub available_stock_on_hand: i32,
     pub average_monthly_consumption: i32,
+    pub comment: Option<String>,
 }
