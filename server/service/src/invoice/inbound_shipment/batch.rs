@@ -263,7 +263,7 @@ pub fn batch_inbound_shipment(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_inbound_shipment_b, mock_item_a, mock_name_a, MockDataInserts, mock_outbound_shipment_b},
+        mock::{mock_item_a, mock_name_a, mock_outbound_shipment_b, MockDataInserts},
         test_db::setup_all,
         InvoiceLineRowRepository, InvoiceRepository,
     };
