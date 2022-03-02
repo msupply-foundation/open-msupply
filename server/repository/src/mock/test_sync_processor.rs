@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use util::inline_init;
 
 use crate::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -56,26 +57,26 @@ pub fn mock_sent_requistion_sync_processor() -> FullMockRequisition {
             linked_requisition_id: None,
         },
         lines: vec![
-            RequisitionLineRow {
-                id: line1_id,
-                requisition_id: requisition_id.clone(),
-                item_id: mock_item_a().id,
-                requested_quantity: 2,
-                suggested_quantity: 3,
-                supply_quantity: 0,
-                available_stock_on_hand: 1,
-                average_monthly_consumption: 1,
-            },
-            RequisitionLineRow {
-                id: line2_id,
-                requisition_id: requisition_id.clone(),
-                item_id: mock_item_b().id,
-                requested_quantity: 5,
-                suggested_quantity: 6,
-                supply_quantity: 0,
-                available_stock_on_hand: 1,
-                average_monthly_consumption: 0,
-            },
+            inline_init(|r: &mut RequisitionLineRow| {
+                r.id = line1_id;
+                r.requisition_id = requisition_id.clone();
+                r.item_id = mock_item_a().id;
+                r.requested_quantity = 2;
+                r.suggested_quantity = 3;
+                r.supply_quantity = 0;
+                r.available_stock_on_hand = 1;
+                r.average_monthly_consumption = 1;
+            }),
+            inline_init(|r: &mut RequisitionLineRow| {
+                r.id = line2_id;
+                r.requisition_id = requisition_id.clone();
+                r.item_id = mock_item_b().id;
+                r.requested_quantity = 5;
+                r.suggested_quantity = 6;
+                r.supply_quantity = 0;
+                r.available_stock_on_hand = 1;
+                r.average_monthly_consumption = 0;
+            }),
         ],
     }
 }

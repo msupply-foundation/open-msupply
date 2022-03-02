@@ -1,4 +1,3 @@
-@@ -0, 0 + 1, 106 @@
 // Disclamer: script is not bulletproof, make sure you commit your changes before running it
 // so that script changes to file can be discarded without loosing your work
 
@@ -12,7 +11,8 @@ const type = argv[3];
 const lines = fs.readFileSync(file_path, 'utf-8').split('\n');
 let result = [];
 
-let defaults = ['None', 'false', '0']
+// \\"n\\/a\\"\\.to_owned\\(\\) = match '"n/a".to_string()'
+let defaults = ['None', 'false', '0', '\\"n\\/a\\"\\.to_owned\\(\\)']
 
 // (?<!(struct|->) ) = no strarting with `struct ` or '-> '
 const findStartRegex = `(?<!(struct|->) )${type} {`;
@@ -90,7 +90,7 @@ const replace = (start_index, startMatch) => {
         }
 
         let endsWithDefault = defaults.some(d => {
-            const endsWithDefautlMatch = current_line.match(new RegExp(`${d},$`));
+            const endsWithDefautlMatch = current_line.match(new RegExp(`$ {d},$`));
             return endsWithDefautlMatch?.length > 0;
         });
 
