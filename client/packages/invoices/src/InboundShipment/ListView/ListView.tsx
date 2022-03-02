@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -7,18 +7,16 @@ import {
   TableProvider,
   createTableStore,
   InvoiceNodeStatus,
-  generateUUID,
   useTranslation,
   useCurrency,
 } from '@openmsupply-client/common';
-import { NameSearchModal } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStatusTranslator } from '../../utils';
-import { useInbounds, useCreateInbound, InboundRowFragment } from '../api';
+import { useInbounds, useUpdateInbound, InboundRowFragment } from '../api';
 
 export const InboundListView: FC = () => {
-  const { mutate } = useCreateInbound();
+  const { mutate: onUpdate } = useUpdateInbound();
   const navigate = useNavigate();
   const { c } = useCurrency();
   const {
@@ -35,7 +33,7 @@ export const InboundListView: FC = () => {
 
   const columns = useColumns<InboundRowFragment>(
     [
-      [getNameAndColorColumn(), { setter: () => {} }],
+      [getNameAndColorColumn(), { setter: onUpdate }],
       [
         'status',
         {
@@ -59,25 +57,10 @@ export const InboundListView: FC = () => {
     [sortBy]
   );
 
-  const [open, setOpen] = useState(false);
-
   return (
     <>
-      <NameSearchModal
-        type="supplier"
-        open={open}
-        onClose={() => setOpen(false)}
-        onChange={async name => {
-          setOpen(false);
-          mutate({
-            id: generateUUID(),
-            otherPartyId: name?.id,
-          });
-        }}
-      />
-
       <Toolbar filter={filter} />
-      <AppBarButtons onCreate={setOpen} />
+      <AppBarButtons />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}

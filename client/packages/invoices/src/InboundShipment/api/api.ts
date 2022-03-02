@@ -1,4 +1,5 @@
 import {
+  RecordPatch,
   InvoiceNodeType,
   InvoiceSortFieldInput,
   FilterBy,
@@ -21,7 +22,7 @@ import {
 
 const inboundParsers = {
   toStatus: (
-    patch: Partial<InboundFragment>
+    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
   ): UpdateInboundShipmentStatusInput | undefined => {
     switch (patch.status) {
       case InvoiceNodeStatus.Verified:
@@ -53,16 +54,17 @@ const inboundParsers = {
     }
   },
   toUpdate: (
-    patch: Partial<InboundFragment> & { id: string }
+    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
       colour: patch.colour,
       comment: patch.comment,
       status: inboundParsers.toStatus(patch),
-      onHold: patch.onHold,
-      otherPartyId: patch.otherParty?.id,
-      theirReference: patch.theirReference,
+      onHold: 'onHold' in patch ? patch.onHold : undefined,
+      otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
+      theirReference:
+        'theirReference' in patch ? patch.theirReference : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -121,6 +123,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         ...filterBy,
         type: { equalTo: InvoiceNodeType.InboundShipment },
       };
+      console.log('getting list');
       const result = await sdk.invoices({
         first,
         offset,
@@ -188,7 +191,9 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error(insertInboundShipment.error.description);
   },
-  update: async (patch: Partial<InboundFragment> & { id: string }) =>
+  update: async (
+    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
+  ) =>
     sdk.updateInboundShipment({
       input: inboundParsers.toUpdate(patch),
       storeId,
