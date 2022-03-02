@@ -17,6 +17,7 @@ import {
 
 export const createPlaceholderRow = (
   invoiceId: string,
+  itemId: string,
   id = generateUUID()
 ): DraftOutboundLine => ({
   __typename: 'InvoiceLineNode',
@@ -29,7 +30,7 @@ export const createPlaceholderRow = (
   isUpdated: false,
   invoiceId,
   type: InvoiceLineNodeType.UnallocatedStock,
-  item: { id: '', code: '', name: '', __typename: 'ItemNode' },
+  item: { id: itemId, code: '', name: '', __typename: 'ItemNode' },
 });
 
 interface DraftOutboundLineSeeds {

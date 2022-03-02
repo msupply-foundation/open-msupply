@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useTranslation,
@@ -7,6 +7,10 @@ import {
   useColumns,
   MiniTable,
   useIsGrouped,
+  InvoiceLineNodeType,
+  useRowStyle,
+  AppSxProp,
+  alpha,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { useOutboundRows } from '../api';
@@ -27,7 +31,6 @@ const Expand: FC<{
     'itemUnit',
     'numberOfPacks',
     'packSize',
-    'unitQuantity',
     'sellPricePerUnit',
   ]);
 
@@ -42,9 +45,44 @@ export const ContentAreaComponent: FC<
   GeneralTabProps<OutboundLineFragment | OutboundItem>
 > = ({ onRowClick }) => {
   const t = useTranslation('distribution');
+  const { setRowStyles } = useRowStyle();
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const { rows, onChangeSortBy, sortBy } = useOutboundRows(isGrouped);
   const columns = useOutboundColumns({ onChangeSortBy, sortBy });
+
+  useEffect(() => {
+    if (!rows) return;
+    const placeholders = [];
+
+    // This is a verbose .filter() on `rows` to find the placeholder lines.
+    // There is an issue with using `filter()` on a type which is
+    // A[] | B[]
+    // https://github.com/microsoft/TypeScript/issues/44373
+    for (const row of rows) {
+      if ('type' in row) {
+        if (row.type === InvoiceLineNodeType.UnallocatedStock) {
+          placeholders.push(row.id);
+        }
+      } else {
+        const hasPlaceholder = row.lines.some(
+          line => line.type === InvoiceLineNodeType.UnallocatedStock
+        );
+        if (hasPlaceholder) {
+          row.lines.forEach(line => {
+            if (line.type === InvoiceLineNodeType.UnallocatedStock) {
+              placeholders.push(line.id);
+            }
+          });
+          placeholders.push(row.id);
+        }
+      }
+    }
+
+    const style: AppSxProp = {
+      backgroundColor: theme => alpha(theme.palette.error.main, 0.1),
+    };
+    setRowStyles(placeholders, style);
+  }, [rows]);
 
   if (!rows) return null;
 
