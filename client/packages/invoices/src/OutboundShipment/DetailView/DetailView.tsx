@@ -20,7 +20,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
-import { OutboundShipmentLineFragment } from '../api/operations.generated';
+import { OutboundLineFragment } from '../api/operations.generated';
 
 export const DetailView: FC = () => {
   const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Item>();
@@ -28,7 +28,7 @@ export const DetailView: FC = () => {
   const t = useTranslation('distribution');
   const navigate = useNavigate();
   const onRowClick = useCallback(
-    (item: OutboundShipmentLineFragment | OutboundItem) => {
+    (item: OutboundLineFragment | OutboundItem) => {
       onOpen(toItem(item));
     },
     [toItem, onOpen]

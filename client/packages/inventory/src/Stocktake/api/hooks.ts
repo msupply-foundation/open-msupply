@@ -1,5 +1,4 @@
 import { useMemo, useCallback } from 'react';
-
 import {
   useNavigate,
   useTranslation,
@@ -24,13 +23,13 @@ import {
 import { StocktakeSummaryItem } from '../../types';
 import { StocktakeApi, getStocktakeQueries } from './api';
 import { useStocktakeColumns } from '../DetailView';
+import { canDeleteStocktake } from '../../utils';
 import {
   getSdk,
   StocktakeFragment,
   StocktakeRowFragment,
   StocktakeLineFragment,
 } from './operations.generated';
-import { canDeleteStocktake } from '../../utils';
 
 export const useStocktakeApi = (): StocktakeApi => {
   const { client } = useOmSupplyApi();

@@ -20,7 +20,7 @@ import {
   useDirtyCheck,
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
-import { InvoiceLine } from '../../../../types';
+import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import {
@@ -28,8 +28,9 @@ import {
   useInboundFields,
   useSaveInboundLines,
   useNextItem,
+  InboundLineFragment,
 } from '../../../api';
-import { InboundLineEditPanel } from './InboundLineEditPanel';
+import { DraftInboundLine } from '../../../../types';
 
 interface InboundLineEditProps {
   item: Item | null;
@@ -44,29 +45,13 @@ enum Tabs {
   Location = 'Location',
 }
 
-export type DraftInboundLine = Pick<
-  InvoiceLine,
-  | 'id'
-  | 'batch'
-  | 'costPricePerPack'
-  | 'sellPricePerPack'
-  | 'expiryDate'
-  | 'location'
-  | 'numberOfPacks'
-  | 'packSize'
-  | 'itemId'
-  | 'invoiceId'
-> & {
-  isCreated?: boolean;
-  isUpdated?: boolean;
-};
-
 const createDraftInvoiceLine = (
   itemId: string,
   invoiceId: string,
-  seed?: InvoiceLine
+  seed?: InboundLineFragment
 ): DraftInboundLine => {
   const draftLine: DraftInboundLine = {
+    __typename: 'InvoiceLineNode',
     id: generateUUID(),
     itemId,
     invoiceId,
@@ -93,7 +78,7 @@ const useDraftInboundLines = (itemId: string) => {
   useEffect(() => {
     if (lines && itemId) {
       const drafts = lines.map(line =>
-        createDraftInvoiceLine(line.itemId, line.invoiceId, line)
+        createDraftInvoiceLine(line.item.id, line.invoiceId, line)
       );
       if (drafts.length === 0) drafts.push(createDraftInvoiceLine(itemId, id));
       setDraftLines(drafts);

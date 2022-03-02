@@ -9,8 +9,8 @@ import {
   Switch,
   MiniTable,
 } from '@openmsupply-client/common';
-import { InboundShipmentItem, InvoiceLine } from '../../types';
-import { useInboundItems, useInboundLines } from '../api';
+import { InboundItem } from '../../types';
+import { useInboundItems, useInboundLines, InboundLineFragment } from '../api';
 import { useExpansionColumns, useInboundShipmentColumns } from './columns';
 
 interface GeneralTabProps<T extends DomainObject> {
@@ -20,7 +20,7 @@ interface GeneralTabProps<T extends DomainObject> {
 const Expando = ({
   rowData,
 }: {
-  rowData: InvoiceLine | InboundShipmentItem;
+  rowData: InboundLineFragment | InboundItem;
 }) => {
   const expandoColumns = useExpansionColumns();
   if ('lines' in rowData && rowData.lines.length > 1) {
@@ -31,7 +31,7 @@ const Expando = ({
 };
 
 export const GeneralTab: FC<
-  GeneralTabProps<InboundShipmentItem | InvoiceLine>
+  GeneralTabProps<InboundItem | InboundLineFragment>
 > = React.memo(({ onRowClick }) => {
   const { pagination } = usePagination();
   const t = useTranslation('replenishment');

@@ -7,18 +7,19 @@ import {
   useColumns,
   MiniTable,
   useIsGrouped,
+  getUnitQuantity,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { useOutboundRows } from '../api';
 import { useOutboundColumns } from './columns';
-import { OutboundShipmentLineFragment } from '../api/operations.generated';
+import { OutboundLineFragment } from '../api/operations.generated';
 
 interface GeneralTabProps<T> {
   onRowClick?: (rowData: T) => void;
 }
 
 const Expand: FC<{
-  rowData: OutboundShipmentLineFragment | OutboundItem;
+  rowData: OutboundLineFragment | OutboundItem;
 }> = ({ rowData }) => {
   const columns = useColumns([
     'batch',
@@ -27,7 +28,19 @@ const Expand: FC<{
     'itemUnit',
     'numberOfPacks',
     'packSize',
-    'unitQuantity',
+    [
+      'unitQuantity',
+      {
+        accessor: () => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return lines.reduce(getUnitQuantity, 0);
+          } else {
+            return 10 + rowData.packSize * rowData.numberOfPacks;
+          }
+        },
+      },
+    ],
     'sellPricePerUnit',
   ]);
 
@@ -39,7 +52,7 @@ const Expand: FC<{
 };
 
 export const ContentAreaComponent: FC<
-  GeneralTabProps<OutboundShipmentLineFragment | OutboundItem>
+  GeneralTabProps<OutboundLineFragment | OutboundItem>
 > = ({ onRowClick }) => {
   const t = useTranslation('distribution');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');

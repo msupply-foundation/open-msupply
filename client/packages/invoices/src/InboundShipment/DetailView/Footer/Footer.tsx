@@ -12,11 +12,15 @@ import {
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { getStatusTranslator, inboundStatuses } from '../../../utils';
-import { Invoice } from '../../../types';
-import { useInbound, useInboundFields, useIsInboundEditable } from '../../api';
+import {
+  InboundFragment,
+  useInbound,
+  useInboundFields,
+  useIsInboundEditable,
+} from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
-const createStatusLog = (invoice: Invoice) => {
+const createStatusLog = (invoice: InboundFragment) => {
   const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
     [InvoiceNodeStatus.New]: null,

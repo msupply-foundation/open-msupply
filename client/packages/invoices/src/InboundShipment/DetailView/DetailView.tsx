@@ -18,8 +18,8 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { GeneralTab } from './GeneralTab';
 import { InboundLineEdit } from './modals/InboundLineEdit';
-import { InvoiceLine, InboundShipmentItem } from '../../types';
-import { useInbound } from '../api';
+import { InboundItem } from '../../types';
+import { useInbound, InboundLineFragment } from '../api';
 
 export const DetailView: FC = () => {
   const { data, isLoading } = useInbound();
@@ -28,7 +28,7 @@ export const DetailView: FC = () => {
   const t = useTranslation('replenishment');
 
   const onRowClick = React.useCallback(
-    (line: InboundShipmentItem | InvoiceLine) => {
+    (line: InboundItem | InboundLineFragment) => {
       const item = toItem(line);
       onOpen(item);
     },
