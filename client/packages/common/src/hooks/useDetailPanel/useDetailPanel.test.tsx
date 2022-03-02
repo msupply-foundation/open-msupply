@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import { useDetailPanel } from './useDetailPanel';
 import userEvent from '@testing-library/user-event';
-import { setScreenSize_ONLY_FOR_TESTING } from '../utils/testing';
+import { setScreenSize_ONLY_FOR_TESTING } from '../../utils/testing';
 
 describe('useDetailPanel', () => {
   const DetailPanelExample: FC = () => {
