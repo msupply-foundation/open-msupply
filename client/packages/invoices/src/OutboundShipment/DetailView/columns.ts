@@ -9,6 +9,7 @@ import {
   Column,
   ifTheSameElseDefault,
   useCurrency,
+  getUnitQuantity,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { OutboundLineFragment } from '../api/operations.generated';
@@ -234,7 +235,19 @@ export const useOutboundColumns = ({
           },
         },
       ],
-      'unitQuantity',
+      [
+        'unitQuantity',
+        {
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return lines.reduce(getUnitQuantity, 0);
+            } else {
+              return rowData.packSize * rowData.numberOfPacks;
+            }
+          },
+        },
+      ],
       {
         label: 'label.unit-price',
         key: 'sellPricePerUnit',
