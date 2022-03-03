@@ -31,7 +31,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
         <Grid item flex={1}>
           <ItemSearchInput
             disabled={mode === ModalMode.Update}
-            currentItem={item}
+            currentItemId={item?.id}
             onChange={onChangeItem}
             extraFilter={itemToCheck => {
               const itemAlreadyInStocktake = items?.some(

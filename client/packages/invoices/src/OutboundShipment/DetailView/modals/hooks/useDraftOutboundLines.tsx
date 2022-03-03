@@ -2,11 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   generateUUID,
   InvoiceLineNodeType,
-  Item,
   useConfirmOnLeaving,
   useDirtyCheck,
 } from '@openmsupply-client/common';
-import { useStockLines } from '@openmsupply-client/system';
+import { useStockLines, ItemRowFragment } from '@openmsupply-client/system';
 import { DraftOutboundLine } from '../../../../types';
 import { sortByExpiry, issueStock } from '../utils';
 import { useOutboundLines, useOutboundFields } from '../../../api';
@@ -100,13 +99,13 @@ interface UseDraftOutboundLinesControl {
 }
 
 export const useDraftOutboundLines = (
-  item: Item | null
+  item: ItemRowFragment | null
 ): UseDraftOutboundLinesControl => {
   const { id: invoiceId } = useOutboundFields('id');
   const { data: lines, isLoading: outboundLinesLoading } = useOutboundLines(
     item?.id ?? ''
   );
-  const { data, isLoading } = useStockLines(item?.code ?? '');
+  const { data, isLoading } = useStockLines(item?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftOutboundLines, setDraftOutboundLines] = useState<
     DraftOutboundLine[]
@@ -122,7 +121,7 @@ export const useDraftOutboundLines = (
     if (!data) return;
 
     setDraftOutboundLines(() => {
-      const rows = data
+      const rows = data.nodes
         .map(batch => {
           const invoiceLine = lines?.find(
             ({ stockLine }) => stockLine?.id === batch.id

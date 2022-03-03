@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Grid,
-  Item,
   BasicTextInput,
   ModalLabel,
   ModalRow,
@@ -13,15 +12,15 @@ import {
   Box,
   Typography,
 } from '@openmsupply-client/common';
-import { ItemSearchInput } from '@openmsupply-client/system';
+import { ItemSearchInput, ItemRowFragment } from '@openmsupply-client/system';
 import { PackSizeController } from './hooks';
 import { useOutboundRows } from '../../api';
 
 interface OutboundLineEditFormProps {
   allocatedQuantity: number;
   availableQuantity: number;
-  item: Item | null;
-  onChangeItem: (newItem: Item | null) => void;
+  item: ItemRowFragment | null;
+  onChangeItem: (newItem: ItemRowFragment | null) => void;
   onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
   disabled: boolean;
@@ -49,7 +48,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
         <Grid item flex={1}>
           <ItemSearchInput
             disabled={disabled}
-            currentItem={item}
+            currentItemId={item?.id}
             onChange={onChangeItem}
             extraFilter={item => !items?.some(({ id }) => id === item.id)}
           />

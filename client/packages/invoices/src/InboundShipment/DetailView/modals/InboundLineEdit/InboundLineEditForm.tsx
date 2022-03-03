@@ -1,19 +1,18 @@
 import React, { FC } from 'react';
 import {
-  Item,
   ModalRow,
   ModalLabel,
   Grid,
   useTranslation,
   BasicTextInput,
 } from '@openmsupply-client/common';
-import { ItemSearchInput } from '@openmsupply-client/system';
+import { ItemRowFragment, ItemSearchInput } from '@openmsupply-client/system';
 import { useInboundItems } from '../../../api';
 
 interface InboundLineEditProps {
-  item: Item | null;
+  item: ItemRowFragment | null;
   disabled: boolean;
-  onChangeItem: (item: Item) => void;
+  onChangeItem: (item: ItemRowFragment) => void;
 }
 
 export const InboundLineEditForm: FC<InboundLineEditProps> = ({
@@ -31,8 +30,8 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
         <Grid item flex={1}>
           <ItemSearchInput
             disabled={disabled}
-            currentItem={item}
-            onChange={(newItem: Item | null) =>
+            currentItemId={item?.id}
+            onChange={(newItem: ItemRowFragment | null) =>
               newItem && onChangeItem(newItem)
             }
             extraFilter={item => {

@@ -1,9 +1,10 @@
-import { useOmSupplyApi } from '@openmsupply-client/common';
+import { getItemQueries } from './../../api';
+import { useAuthContext, useOmSupplyApi } from '@openmsupply-client/common';
 import { getSdk } from '../../operations.generated';
 
-export type ItemApi = ReturnType<typeof getSdk>;
-
-export const useItemApi = (): ItemApi => {
+export const useItemApi = () => {
   const { client } = useOmSupplyApi();
-  return getSdk(client);
+  const { storeId } = useAuthContext();
+  const queries = getItemQueries(getSdk(client), storeId);
+  return { ...queries, storeId };
 };

@@ -2,7 +2,6 @@ import React from 'react';
 import {
   DialogButton,
   Grid,
-  Item,
   useDialog,
   InlineSpinner,
   Box,
@@ -11,6 +10,7 @@ import {
   useBufferState,
   useDirtyCheck,
 } from '@openmsupply-client/common';
+import { ItemRowFragment } from '@openmsupply-client/system';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
 import {
@@ -31,7 +31,7 @@ import {
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: Item | null;
+  item: ItemRowFragment | null;
   mode: ModalMode | null;
 }
 
