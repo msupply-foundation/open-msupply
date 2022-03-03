@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { toItemRow, ItemRowFragment } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
-import { OutboundLineEdit } from './modals/OutboundLineEdit';
+import { OutboundLineEdit } from './OutboundLineEdit';
 import { OutboundItem } from '../../types';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
