@@ -2,9 +2,7 @@ import {
   RequisitionNodeStatus,
   LocaleKey,
   useTranslation,
-  RequisitionNodeType,
 } from '@openmsupply-client/common';
-import { RequestRowFragment } from './RequestRequisition/api';
 
 export const requestStatuses = [
   RequisitionNodeStatus.Draft,
@@ -35,17 +33,6 @@ export const getRequisitionTranslator =
   (currentStatus: RequisitionNodeStatus): string =>
     t(getStatusTranslation(currentStatus));
 
-export const getRequestRequisitionStatuses = (): RequisitionNodeStatus[] => [
-  RequisitionNodeStatus.Draft,
-  RequisitionNodeStatus.New,
-  RequisitionNodeStatus.Sent,
-];
-
-export const getResponseRequisitionStatuses = (): RequisitionNodeStatus[] => [
-  RequisitionNodeStatus.New,
-  RequisitionNodeStatus.Finalised,
-];
-
 export const getNextRequestStatus = (
   currentStatus: RequisitionNodeStatus
 ): RequisitionNodeStatus | null => {
@@ -56,7 +43,7 @@ export const getNextRequestStatus = (
   return nextStatus ?? null;
 };
 
-export const getNextResponseRequisitionStatus = (
+export const getNextResponseStatus = (
   currentStatus: RequisitionNodeStatus
 ): RequisitionNodeStatus | null => {
   const currentStatusIdx = responseStatuses.findIndex(
@@ -65,7 +52,3 @@ export const getNextResponseRequisitionStatus = (
   const nextStatus = responseStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
-
-export const canDeleteRequest = (requisitionRow: RequestRowFragment): boolean =>
-  requisitionRow.status === RequisitionNodeStatus.Draft &&
-  requisitionRow.type === RequisitionNodeType.Request;

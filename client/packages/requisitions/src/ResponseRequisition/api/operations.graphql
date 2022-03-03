@@ -10,7 +10,7 @@ fragment ItemWithStats on ItemNode {
   }
 }
 
-mutation updateResponseRequisition(
+mutation updateResponse(
   $storeId: String!
   $input: UpdateResponseRequisitionInput!
 ) {
@@ -78,7 +78,7 @@ fragment Response on RequisitionNode {
     }
   }
 }
-query responseRequisition($storeId: String!, $requisitionNumber: Int!) {
+query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
     type: RESPONSE
@@ -116,7 +116,7 @@ fragment ResponseRow on RequisitionNode {
   otherPartyId
 }
 
-query responseRequisitions(
+query responses(
   $storeId: String!
   $filter: RequisitionFilterInput
   $page: PaginationInput
@@ -132,7 +132,7 @@ query responseRequisitions(
   }
 }
 
-mutation updateResponseRequisitionLine(
+mutation updateResponseLine(
   $storeId: String!
   $input: UpdateResponseRequisitionLineInput!
 ) {

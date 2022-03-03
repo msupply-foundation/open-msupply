@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   useSaveResponseLines,
-  useResponseRequisitionFields,
-  useResponseRequisitionLines,
+  useResponseFields,
+  useResponseLines,
   ResponseLineFragment,
 } from '../../api';
 
@@ -22,7 +22,7 @@ const createDraftLine = (
 });
 
 export const useDraftRequisitionLine = (line: ResponseLineFragment) => {
-  const { id: reqId } = useResponseRequisitionFields('id');
+  const { id: reqId } = useResponseFields('id');
   const { mutate: save, isLoading } = useSaveResponseLines();
 
   const [draft, setDraft] = useState<DraftResponseLine>(
@@ -43,7 +43,7 @@ export const useDraftRequisitionLine = (line: ResponseLineFragment) => {
 };
 
 export const useNextResponseLine = (currentItem: ResponseLineFragment) => {
-  const { lines } = useResponseRequisitionLines();
+  const { lines } = useResponseLines();
   const nextState: {
     hasNext: boolean;
     next: null | ResponseLineFragment;

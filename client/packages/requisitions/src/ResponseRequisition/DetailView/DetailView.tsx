@@ -15,13 +15,13 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { useResponseRequisition, ResponseLineFragment } from '../api';
+import { useResponse, ResponseLineFragment } from '../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 
 export const DetailView: FC = () => {
   const { onOpen, onClose, entity, isOpen } =
     useEditModal<ResponseLineFragment>();
-  const { data, isLoading } = useResponseRequisition();
+  const { data, isLoading } = useResponse();
   const navigate = useNavigate();
   const t = useTranslation('distribution');
 
