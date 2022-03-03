@@ -1,7 +1,7 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { NameSearchInput } from './NameSearchInput';
-import { Name } from '@openmsupply-client/common';
+import { NameRowFragment } from '../../api';
 
 export default {
   title: 'Name/NameSearchInput',
@@ -9,7 +9,8 @@ export default {
 };
 
 const Template: Story = () => {
-  const [selectedName, setSelectedName] = React.useState<Name | null>(null);
+  const [selectedName, setSelectedName] =
+    React.useState<NameRowFragment | null>(null);
 
   return (
     <NameSearchInput

@@ -4,6 +4,8 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+export type StoreRowFragment = { __typename: 'StoreNode', code: string, id: string };
+
 export type StoresQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -13,7 +15,12 @@ export type StoresQueryVariables = Types.Exact<{
 
 export type StoresQuery = { __typename: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, id: string }> } };
 
-
+export const StoreRowFragmentDoc = gql`
+    fragment StoreRow on StoreNode {
+  code
+  id
+}
+    `;
 export const StoresDocument = gql`
     query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
   stores(page: {first: $first, offset: $offset}, filter: $filter) {
@@ -21,13 +28,12 @@ export const StoresDocument = gql`
       __typename
       totalCount
       nodes {
-        code
-        id
+        ...StoreRow
       }
     }
   }
 }
-    `;
+    ${StoreRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 

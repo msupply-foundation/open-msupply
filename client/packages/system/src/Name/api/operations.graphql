@@ -1,3 +1,15 @@
+fragment NameRow on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  name
+  store {
+    id
+    code
+  }
+}
+
 query names(
   $storeId: String!
   $key: NameSortFieldInput!
@@ -15,15 +27,7 @@ query names(
     ... on NameConnector {
       __typename
       nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-        store {
-          id
-          code
-        }
+        ...NameRow
       }
       totalCount
     }
