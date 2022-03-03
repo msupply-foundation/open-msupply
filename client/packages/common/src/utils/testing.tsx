@@ -42,13 +42,18 @@ export const TestingRouterContext: FC = ({ children }) => (
   </TestingRouter>
 );
 
-export const TestingProvider: FC = ({ children }) => (
+export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
+  children,
+  locale = 'en',
+}) => (
   <QueryClientProvider client={queryClient}>
     <OmSupplyApiProvider url={Environment.API_URL}>
       <SnackbarProvider maxSnack={3}>
-        <TableProvider createStore={createTableStore}>
-          <AppThemeProvider>{children}</AppThemeProvider>
-        </TableProvider>
+        <IntlTestProvider locale={locale}>
+          <TableProvider createStore={createTableStore}>
+            <AppThemeProvider>{children}</AppThemeProvider>
+          </TableProvider>
+        </IntlTestProvider>
       </SnackbarProvider>
     </OmSupplyApiProvider>
   </QueryClientProvider>
