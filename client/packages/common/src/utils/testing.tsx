@@ -67,19 +67,23 @@ export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
 );
 
 export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
-  <QueryClientProvider client={queryClient}>
-    <OmSupplyApiProvider url={Environment.API_URL}>
-      <SnackbarProvider maxSnack={3}>
-        <IntlTestProvider locale="en">
-          <TableProvider createStore={createTableStore}>
-            <AppThemeProvider>
-              <ConfirmationModalProvider>{children}</ConfirmationModalProvider>
-            </AppThemeProvider>
-          </TableProvider>
-        </IntlTestProvider>
-      </SnackbarProvider>
-    </OmSupplyApiProvider>
-  </QueryClientProvider>
+  <React.Suspense fallback={<span>?</span>}>
+    <QueryClientProvider client={queryClient}>
+      <OmSupplyApiProvider url={Environment.API_URL}>
+        <SnackbarProvider maxSnack={3}>
+          <IntlTestProvider locale="en">
+            <TableProvider createStore={createTableStore}>
+              <AppThemeProvider>
+                <ConfirmationModalProvider>
+                  {children}
+                </ConfirmationModalProvider>
+              </AppThemeProvider>
+            </TableProvider>
+          </IntlTestProvider>
+        </SnackbarProvider>
+      </OmSupplyApiProvider>
+    </QueryClientProvider>
+  </React.Suspense>
 );
 
 function createMatchMedia(width: number) {
