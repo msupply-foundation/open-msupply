@@ -1,7 +1,7 @@
 import { ColumnDefinitionSetBuilder } from './ColumnDefinitionSetBuilder';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 
-interface Invoice extends DomainObject {
+interface Invoice extends RecordWithId {
   id: string;
   invoiceNumber: string;
   status: string;

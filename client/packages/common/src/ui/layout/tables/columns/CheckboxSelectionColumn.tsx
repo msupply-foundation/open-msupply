@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { Checkbox } from '@common/components';
 import { useTableStore, TableStore } from '../context';
 import { ColumnAlign, ColumnDefinition, GenericColumnKey } from './types';
@@ -29,7 +29,7 @@ const useCheckbox = (rowId: string) => {
 };
 
 export const getCheckboxSelectionColumn = <
-  T extends DomainObject
+  T extends RecordWithId
 >(): ColumnDefinition<T> => ({
   key: GenericColumnKey.Selection,
   sortable: false,

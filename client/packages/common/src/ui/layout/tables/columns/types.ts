@@ -1,9 +1,9 @@
 import { JSXElementConstructor } from 'react';
 import { SortBy } from '@common/hooks';
 import { useTranslation, useFormatDate, LocaleKey } from '@common/intl';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 
-export interface CellProps<T extends DomainObject> {
+export interface CellProps<T extends RecordWithId> {
   rowData: T;
   rows: T[];
   columns: Column<T>[];
@@ -13,7 +13,7 @@ export interface CellProps<T extends DomainObject> {
   rowIndex: number;
 }
 
-export interface HeaderProps<T extends DomainObject> {
+export interface HeaderProps<T extends RecordWithId> {
   column: Column<T>;
 }
 
@@ -31,7 +31,7 @@ export enum ColumnAlign {
   Center = 'center',
 }
 
-export type ColumnDataAccessor<T extends DomainObject> = (params: {
+export type ColumnDataAccessor<T extends RecordWithId> = (params: {
   rowData: T;
   rows: T[];
 }) => unknown;
@@ -54,7 +54,7 @@ export enum GenericColumnKey {
   Selection = 'selection',
 }
 
-export interface Column<T extends DomainObject> {
+export interface Column<T extends RecordWithId> {
   key: keyof T | GenericColumnKey | string;
   accessor: ColumnDataAccessor<T>;
 
@@ -88,7 +88,7 @@ export interface Column<T extends DomainObject> {
   setter: ColumnDataSetter<T>;
 }
 
-export interface ColumnDefinition<T extends DomainObject>
+export interface ColumnDefinition<T extends RecordWithId>
   extends Partial<Omit<Column<T>, 'key'>> {
   key: keyof T | GenericColumnKey | string;
 }

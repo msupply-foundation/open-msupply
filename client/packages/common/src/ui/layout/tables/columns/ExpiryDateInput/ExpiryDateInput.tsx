@@ -1,11 +1,11 @@
 import React from 'react';
 import { ExpiryDateInput } from '@common/components';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { isTypeOf, isProduction } from '@common/utils';
 import { ColumnDefinition } from '../../columns';
 
 export const getExpiryDateInputColumn = <
-  T extends DomainObject
+  T extends RecordWithId
 >(): ColumnDefinition<T> => ({
   key: 'expiryDateInput',
   label: 'label.expiry',

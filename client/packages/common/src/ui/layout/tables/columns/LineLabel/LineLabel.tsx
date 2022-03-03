@@ -1,10 +1,10 @@
 import React from 'react';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { ColumnAlign, ColumnDefinition } from '../types';
 import { useTranslation } from '@common/intl';
 
 export const getLineLabelColumn = <
-  T extends DomainObject
+  T extends RecordWithId
 >(): ColumnDefinition<T> => ({
   key: 'lineLabel',
   sortable: false,
