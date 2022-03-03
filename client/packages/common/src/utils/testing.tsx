@@ -9,6 +9,11 @@ import { TableProvider, createTableStore } from '../ui/layout/tables';
 import { IntlTestProvider, OmSupplyApiProvider } from '..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../ui/components/modals';
+import {
+  renderHook,
+  RenderHookOptions,
+  RenderHookResult,
+} from '@testing-library/react-hooks';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,17 +51,19 @@ export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
   children,
   locale = 'en',
 }) => (
-  <QueryClientProvider client={queryClient}>
-    <OmSupplyApiProvider url={Environment.API_URL}>
-      <SnackbarProvider maxSnack={3}>
-        <IntlTestProvider locale={locale}>
-          <TableProvider createStore={createTableStore}>
-            <AppThemeProvider>{children}</AppThemeProvider>
-          </TableProvider>
-        </IntlTestProvider>
-      </SnackbarProvider>
-    </OmSupplyApiProvider>
-  </QueryClientProvider>
+  <React.Suspense fallback={<span>?</span>}>
+    <QueryClientProvider client={queryClient}>
+      <OmSupplyApiProvider url={Environment.API_URL}>
+        <SnackbarProvider maxSnack={3}>
+          <IntlTestProvider locale={locale}>
+            <TableProvider createStore={createTableStore}>
+              <AppThemeProvider>{children}</AppThemeProvider>
+            </TableProvider>
+          </IntlTestProvider>
+        </SnackbarProvider>
+      </OmSupplyApiProvider>
+    </QueryClientProvider>
+  </React.Suspense>
 );
 
 export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
@@ -91,3 +98,17 @@ function createMatchMedia(width: number) {
 export const setScreenSize_ONLY_FOR_TESTING = (screenSize: number): void => {
   window.matchMedia = createMatchMedia(screenSize);
 };
+
+export const renderHookWithProvider = <Props, Result>(
+  hook: (props: Props) => Result,
+  options?: {
+    renderHookOptions?: RenderHookOptions<Props>;
+    providerProps?: { locale: 'en' | 'fr' | 'ar' };
+  }
+): RenderHookResult<Props, Result> =>
+  renderHook(hook, {
+    ...options?.renderHookOptions,
+    wrapper: ({ children }) => (
+      <TestingProvider {...options?.providerProps}>{children}</TestingProvider>
+    ),
+  });
