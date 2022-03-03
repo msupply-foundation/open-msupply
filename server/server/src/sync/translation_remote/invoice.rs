@@ -32,8 +32,18 @@ pub enum LegacyTransactType {
     // supplier credit
     #[serde(rename = "sc")]
     Sc,
-    #[serde(other)]
-    Other,
+    /// repack (A stock line is broken down into smaller pack sizes)
+    #[serde(rename = "sr")]
+    Sr,
+    /// build- an internal transaction where you manufacture (build) items from raw materials in stock.
+    #[serde(rename = "bu")]
+    Bu,
+    /// receipt (cash receipt) from a customer (a customer pays for invoices issued)
+    #[serde(rename = "rc")]
+    Rc,
+    /// payment (cash payment) to a supplier
+    #[serde(rename = "ps")]
+    Ps,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -50,6 +60,13 @@ pub enum LegacyTransactStatus {
     /// finalised
     #[serde(rename = "fn")]
     Fn,
+    /// The order has been received over the internet (a “web” order), and it is currently being
+    /// processed
+    #[serde(rename = "wp")]
+    Wp,
+    /// The order has been received over the internet (a “web” order), and it is finalised
+    #[serde(rename = "wf")]
+    Wf,
 }
 
 #[allow(non_snake_case)]
@@ -237,6 +254,8 @@ fn invoice_status(
                         InvoiceRowStatus::Verified
                     }
                 }
+                LegacyTransactStatus::Wp => return None,
+                LegacyTransactStatus::Wf => return None,
             }
         }
         // inbound
@@ -255,6 +274,8 @@ fn invoice_status(
                 LegacyTransactStatus::Sg => InvoiceRowStatus::New,
                 LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
                 LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
+                LegacyTransactStatus::Wp => return None,
+                LegacyTransactStatus::Wf => return None,
             }
         }
 
