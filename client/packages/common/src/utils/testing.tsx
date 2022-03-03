@@ -13,7 +13,7 @@ import {
   renderHook,
   RenderHookOptions,
   RenderHookResult,
-} from '@testing-library/react-hooks';
+} from '@testing-library/react-hooks/dom';
 
 const queryClient = new QueryClient({
   defaultOptions: {
