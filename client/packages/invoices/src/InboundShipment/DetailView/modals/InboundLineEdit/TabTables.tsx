@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import {
   DataTable,
   useColumns,
-  NumberInputCell,
   CurrencyInputCell,
   getExpiryDateInputColumn,
   TextInputCell,
@@ -10,6 +9,8 @@ import {
   useTheme,
   Theme,
   alpha,
+  PositiveNumberInputCell,
+  NonZeroNumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { getLocationInputColumn } from '@openmsupply-client/system';
@@ -28,6 +29,7 @@ const getBatchColumn = (
   {
     width: 150,
     maxWidth: 150,
+    maxLength: 50,
     Cell: TextInputCell,
     setter: updateDraftLine,
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
@@ -58,13 +60,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
       [
         'numberOfPacks',
         {
-          Cell: NumberInputCell,
+          Cell: PositiveNumberInputCell,
           width: 100,
           label: 'label.num-packs',
           setter: updateDraftLine,
         },
       ],
-      ['packSize', { Cell: NumberInputCell, setter: updateDraftLine }],
+      ['packSize', { Cell: NonZeroNumberInputCell, setter: updateDraftLine }],
       [
         'unitQuantity',
         { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
