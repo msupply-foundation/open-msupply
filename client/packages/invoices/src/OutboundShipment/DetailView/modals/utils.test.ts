@@ -65,7 +65,7 @@ const createTestLine = ({
 const getPlaceholder = (
   line?: Partial<DraftOutboundLine>
 ): DraftOutboundLine => ({
-  ...createPlaceholderRow('', 'placeholder'),
+  ...createPlaceholderRow('', 'placeholder', 'placeholder'),
   ...line,
 });
 

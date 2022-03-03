@@ -1,11 +1,3 @@
-fragment PartialLocation on LocationNode {
-  __typename
-  id
-  code
-  name
-  onHold
-}
-
 fragment DraftInboundLine on InvoiceLineNode {
   id
   batch
@@ -18,7 +10,11 @@ fragment DraftInboundLine on InvoiceLineNode {
   invoiceId
 
   location {
-    ...PartialLocation
+    __typename
+    name
+    id
+    code
+    onHold
   }
 }
 
@@ -45,7 +41,11 @@ fragment InboundLine on InvoiceLineNode {
   }
 
   location {
-    ...PartialLocation
+    __typename
+    name
+    id
+    code
+    onHold
   }
 
   stockLine {

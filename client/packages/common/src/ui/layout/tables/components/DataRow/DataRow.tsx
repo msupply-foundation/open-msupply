@@ -3,7 +3,7 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
 import { DomainObject } from '@common/types';
-import { useExpanded, useDisabled } from '../../context';
+import { useExpanded, useIsDisabled, useRowStyle } from '../../context';
 import { Collapse, Fade } from '@mui/material';
 
 interface DataRowProps<T extends DomainObject> {
@@ -29,7 +29,8 @@ export const DataRow = <T extends DomainObject>({
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
-  const { isDisabled } = useDisabled(rowData.id);
+  const { isDisabled } = useIsDisabled(rowData.id);
+  const { rowStyle } = useRowStyle(rowData.id);
 
   const onRowClick = () => onClick && onClick(rowData);
   const minWidth = columns.reduce((sum, { minWidth }) => sum + minWidth, 0);
@@ -51,6 +52,7 @@ export const DataRow = <T extends DomainObject>({
               : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
             display: 'flex',
             flex: '1 0 auto',
+            ...rowStyle,
           }}
           onClick={onRowClick}
           hover={hasOnClick}

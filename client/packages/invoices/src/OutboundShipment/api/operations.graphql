@@ -373,6 +373,12 @@ mutation upsertOutboundShipment(
         ... on DeleteResponse {
           id
         }
+        ... on DeleteOutboundShipmentUnallocatedLineError {
+          __typename
+          error {
+            description
+          }
+        }
       }
     }
     deleteOutboundShipments {

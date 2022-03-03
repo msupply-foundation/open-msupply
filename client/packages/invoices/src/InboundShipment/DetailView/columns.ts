@@ -3,14 +3,15 @@ import {
   getRowExpandColumn,
   GenericColumnKey,
   getSumOfKeyReducer,
-  getUnitQuantity,
   getNotePopoverColumn,
   ifTheSameElseDefault,
   useColumns,
   Column,
+  getUnitQuantity,
 } from '@openmsupply-client/common';
+import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../types';
-import { InboundLineFragment, PartialLocationFragment } from '../api';
+import { InboundLineFragment } from '../api';
 
 export const useInboundShipmentColumns = (): Column<
   InboundLineFragment | InboundItem
@@ -106,7 +107,7 @@ export const useInboundShipmentColumns = (): Column<
               const { lines } = rowData;
               const locations = lines
                 .map(({ location }) => location)
-                .filter(Boolean) as PartialLocationFragment[];
+                .filter(Boolean) as LocationRowFragment[];
               return ifTheSameElseDefault(locations, 'name', '');
             } else {
               return rowData.location?.name ?? '';
