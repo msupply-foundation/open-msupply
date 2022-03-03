@@ -4,6 +4,8 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+export type NameRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
+
 export type NamesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   key: Types.NameSortFieldInput;
@@ -16,7 +18,19 @@ export type NamesQueryVariables = Types.Exact<{
 
 export type NamesQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
-
+export const NameRowFragmentDoc = gql`
+    fragment NameRow on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  name
+  store {
+    id
+    code
+  }
+}
+    `;
 export const NamesDocument = gql`
     query names($storeId: String!, $key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
   names(
@@ -28,21 +42,13 @@ export const NamesDocument = gql`
     ... on NameConnector {
       __typename
       nodes {
-        code
-        id
-        isCustomer
-        isSupplier
-        name
-        store {
-          id
-          code
-        }
+        ...NameRow
       }
       totalCount
     }
   }
 }
-    `;
+    ${NameRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 

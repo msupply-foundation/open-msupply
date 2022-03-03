@@ -1,11 +1,11 @@
 import React, { FC, useMemo } from 'react';
-import { ListSearch, Name, useTranslation } from '@openmsupply-client/common';
-import { useNamesSearch } from '../../api';
+import { ListSearch, useTranslation } from '@openmsupply-client/common';
+import { useNamesSearch, NameRowFragment } from '../../api';
 
 interface NameSearchProps {
   open: boolean;
   onClose: () => void;
-  onChange: (name: Name) => void;
+  onChange: (name: NameRowFragment) => void;
   onlyShowStores?: boolean;
   type: 'customer' | 'supplier';
 }
@@ -45,7 +45,7 @@ export const NameSearchModal: FC<NameSearchProps> = ({
           : t('suppliers')
       }
       optionKey="name"
-      onChange={(_, name: Name | null) => {
+      onChange={(_, name: NameRowFragment | null) => {
         if (name) onChange(name);
       }}
     />

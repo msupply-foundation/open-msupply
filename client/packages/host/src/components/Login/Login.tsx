@@ -8,13 +8,12 @@ import {
   useTranslation,
   AutocompleteRenderInputParams,
   defaultOptionMapper,
-  Store,
   LoadingButton,
   AlertIcon,
 } from '@openmsupply-client/common';
 import { LoginIcon } from './LoginIcon';
 import { LoginTextInput } from './LoginTextInput';
-import { useStores } from '@openmsupply-client/system';
+import { useStores, StoreRowFragment } from '@openmsupply-client/system';
 import { useLoginForm } from './hooks';
 
 const StoreAutocompleteInput: React.FC<
@@ -31,7 +30,7 @@ const StoreAutocompleteInput: React.FC<
   );
 };
 
-const storeSorter = (a: Store, b: Store) => {
+const storeSorter = (a: StoreRowFragment, b: StoreRowFragment) => {
   if (a.code < b.code) return -1;
   if (a.code > b.code) return 1;
   return 0;

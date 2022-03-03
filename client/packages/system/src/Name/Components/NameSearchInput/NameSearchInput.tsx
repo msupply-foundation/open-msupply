@@ -1,21 +1,21 @@
 import React, { FC, useMemo } from 'react';
-import { Name, useBufferState } from '@openmsupply-client/common';
+import { useBufferState } from '@openmsupply-client/common';
 import {
   Autocomplete,
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@common/components';
-import { useNamesSearch } from '../../api';
+import { useNamesSearch, NameRowFragment } from '../../api';
 
 const filterOptions = {
-  stringify: (name: Name) => `${name.code} ${name.name}`,
+  stringify: (name: NameRowFragment) => `${name.code} ${name.name}`,
   limit: 100,
 };
 
 interface NameSearchInputProps {
-  onChange: (name: Name) => void;
+  onChange: (name: NameRowFragment) => void;
   width?: number;
-  value: Name | null;
+  value: NameRowFragment | null;
   disabled?: boolean;
   onlyShowStores?: boolean;
   type: 'customer' | 'supplier';
