@@ -29,6 +29,18 @@ export interface TableStore {
 export const { Provider: TableProvider, useStore: useTableStore } =
   createContext<TableStore>();
 
+const getRowState = (
+  state: TableStore,
+  id: string,
+  updates: Partial<RowState>
+): RowState => ({
+  isSelected: state.rowState[id]?.isSelected ?? false,
+  isExpanded: state.rowState[id]?.isExpanded ?? false,
+  isDisabled: state.rowState[id]?.isDisabled ?? false,
+  style: state.rowState[id]?.style ?? {},
+  ...updates,
+});
+
 export const createTableStore = (): UseStore<TableStore> =>
   create<TableStore>(set => ({
     rowState: {},
@@ -66,13 +78,7 @@ export const createTableStore = (): UseStore<TableStore> =>
         ...state,
         rowState: {
           ...state.rowState,
-          [id]: {
-            isSelected: false,
-            isExpanded: false,
-            isDisabled: false,
-            ...state.rowState[id],
-            style,
-          },
+          [id]: getRowState(state, id, { style }),
         },
       }));
     },
@@ -80,28 +86,14 @@ export const createTableStore = (): UseStore<TableStore> =>
       set(state => {
         const { rowState } = state;
 
-        // Reset all styles and replace with the new style
-        // for the IDs passed.
+        // Reset all styles within the state.
         Object.keys(rowState).forEach(id => {
-          const maybeRowState = rowState[id];
-          rowState[id] = {
-            isSelected: false,
-            isExpanded: false,
-            isDisabled: false,
-            ...maybeRowState,
-            style: null,
-          };
+          rowState[id] = getRowState(state, id, { style: {} });
         });
 
+        // Set new styles for the ids passed.
         ids.forEach(id => {
-          const maybeRowState = rowState[id];
-          rowState[id] = {
-            isSelected: false,
-            isExpanded: false,
-            isDisabled: false,
-            ...maybeRowState,
-            style,
-          };
+          rowState[id] = getRowState(state, id, { style });
         });
 
         return { ...state, rowState: { ...rowState } };
@@ -114,22 +106,12 @@ export const createTableStore = (): UseStore<TableStore> =>
 
         // Reset the disabled row states.
         Object.keys(rowState).forEach(id => {
-          rowState[id] = {
-            isSelected: rowState[id]?.isSelected ?? false,
-            isExpanded: rowState[id]?.isExpanded ?? false,
-            isDisabled: false,
-          };
+          rowState[id] = getRowState(state, id, { isDisabled: false });
         });
 
         // then set the disabled row state for all of the rows passed in.
         ids.forEach(id => {
-          const maybeRowState = rowState[id];
-          if (maybeRowState) {
-            rowState[id] = {
-              ...maybeRowState,
-              isDisabled: true,
-            };
-          }
+          rowState[id] = getRowState(state, id, { isDisabled: true });
         });
 
         return { ...state, rowState: { ...rowState } };
@@ -138,20 +120,12 @@ export const createTableStore = (): UseStore<TableStore> =>
 
     setActiveRows: (ids: string[]) => {
       set(state => {
-        const { rowState } = state;
-
         // Create a new row state, which is setting any newly active rows to unselected.
         const newRowState: Record<string, RowState> = ids.reduce(
           (newRowState, id) => {
             return {
               ...newRowState,
-
-              [id]: {
-                ...rowState[id],
-                isSelected: rowState[id]?.isSelected ?? false,
-                isExpanded: false,
-                isDisabled: state.rowState[id]?.isDisabled ?? false,
-              },
+              [id]: getRowState(state, id, { isExpanded: false }),
             };
           },
           {}
@@ -196,12 +170,7 @@ export const createTableStore = (): UseStore<TableStore> =>
           numberSelected: newNumberSelected,
           rowState: {
             ...state.rowState,
-            [id]: {
-              ...state.rowState[id],
-              isSelected,
-              isExpanded: state.rowState[id]?.isExpanded ?? false,
-              isDisabled: state.rowState[id]?.isDisabled ?? false,
-            },
+            [id]: getRowState(state, id, { isSelected }),
           },
         };
       });
@@ -211,20 +180,15 @@ export const createTableStore = (): UseStore<TableStore> =>
       set(state => {
         const { numberExpanded, rowState } = state;
 
-        const newExpanded = !rowState[id]?.isExpanded;
-        const newNumberExpanded = numberExpanded + (newExpanded ? 1 : -1);
+        const isExpanded = !rowState[id]?.isExpanded;
+        const newNumberExpanded = numberExpanded + (isExpanded ? 1 : -1);
 
         return {
           ...state,
           numberExpanded: newNumberExpanded,
           rowState: {
             ...rowState,
-            [id]: {
-              ...rowState[id],
-              isSelected: rowState[id]?.isSelected ?? false,
-              isDisabled: state.rowState[id]?.isDisabled ?? false,
-              isExpanded: newExpanded,
-            },
+            [id]: getRowState(state, id, { isExpanded }),
           },
         };
       });
@@ -243,12 +207,7 @@ export const createTableStore = (): UseStore<TableStore> =>
           rowState: Object.keys(state.rowState).reduce(
             (newState, id) => ({
               ...newState,
-              [id]: {
-                ...state.rowState[id],
-                isExpanded,
-                isSelected: state.rowState[id]?.isSelected ?? false,
-                isDisabled: state.rowState[id]?.isDisabled ?? false,
-              },
+              [id]: getRowState(state, id, { isExpanded }),
             }),
             state.rowState
           ),
