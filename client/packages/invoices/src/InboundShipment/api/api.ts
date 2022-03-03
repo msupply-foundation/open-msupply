@@ -179,7 +179,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   ): Promise<number> => {
     const result = await sdk.insertInboundShipment({
       id: patch.id,
-      otherPartyId: patch?.otherPartyId,
+      otherPartyId: patch.otherPartyId,
       storeId,
     });
 

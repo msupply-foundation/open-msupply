@@ -258,19 +258,19 @@ export const useOutboundColumns = ({
           },
         },
       ],
-      {
-        label: 'label.unit-quantity',
-        key: 'unitQuantity',
-        width: 100,
-        align: ColumnAlign.Right,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            return rowData.lines.reduce(getUnitQuantity, 0);
-          } else {
-            return rowData.packSize * rowData.numberOfPacks;
-          }
+      [
+        'unitQuantity',
+        {
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return lines.reduce(getUnitQuantity, 0);
+            } else {
+              return rowData.packSize * rowData.numberOfPacks;
+            }
+          },
         },
-      },
+      ],
       {
         label: 'label.unit-price',
         key: 'sellPricePerUnit',
