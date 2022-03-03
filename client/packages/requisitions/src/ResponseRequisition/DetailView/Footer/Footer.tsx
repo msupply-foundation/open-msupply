@@ -7,7 +7,7 @@ import {
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { responseStatuses, getRequisitionTranslator } from '../../../utils';
-import { ResponseFragment, useResponseRequisition } from '../../api';
+import { ResponseFragment, useResponse } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
 export const createStatusLog = (requisition: ResponseFragment) => {
@@ -23,7 +23,7 @@ export const createStatusLog = (requisition: ResponseFragment) => {
 };
 
 export const Footer: FC = () => {
-  const { data } = useResponseRequisition();
+  const { data } = useResponse();
   const t = useTranslation('distribution');
 
   return (

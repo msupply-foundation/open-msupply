@@ -6,17 +6,17 @@ import {
 } from '@openmsupply-client/common';
 import { ResponseLineFragment } from './../api';
 
-interface UseResponseRequisitionColumnOptions {
+interface UseResponseColumnOptions {
   sortBy: SortBy<ResponseLineFragment>;
   onChangeSortBy: (
     column: Column<ResponseLineFragment>
   ) => SortBy<ResponseLineFragment>;
 }
 
-export const useResponseRequisitionColumns = ({
+export const useResponseColumns = ({
   onChangeSortBy,
   sortBy,
-}: UseResponseRequisitionColumnOptions): Column<ResponseLineFragment>[] =>
+}: UseResponseColumnOptions): Column<ResponseLineFragment>[] =>
   useColumns<ResponseLineFragment>(
     [
       ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],

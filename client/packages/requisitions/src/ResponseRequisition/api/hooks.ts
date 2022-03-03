@@ -34,7 +34,7 @@ export const useResponseApi = () => {
   return { ...queries, storeId };
 };
 
-export const useUpdateResponseRequisition = () => {
+export const useUpdateResponse = () => {
   const queryClient = useQueryClient();
   const api = useResponseApi();
   return useMutation(api.update, {
@@ -42,7 +42,7 @@ export const useUpdateResponseRequisition = () => {
   });
 };
 
-export const useResponseRequisitions = () => {
+export const useResponses = () => {
   const queryParams = useQueryParams<ResponseRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
@@ -61,7 +61,7 @@ export const useResponseRequisitions = () => {
   };
 };
 
-export const useResponseRequisition = (): UseQueryResult<ResponseFragment> => {
+export const useResponse = (): UseQueryResult<ResponseFragment> => {
   const { requisitionNumber = '' } = useParams();
   const api = useResponseApi();
   return useQuery(['requisition', api.storeId, requisitionNumber], () =>
@@ -69,12 +69,12 @@ export const useResponseRequisition = (): UseQueryResult<ResponseFragment> => {
   );
 };
 
-export const useResponseRequisitionFields = <
+export const useResponseFields = <
   KeyOfRequisition extends keyof ResponseFragment
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<ResponseFragment, KeyOfRequisition> => {
-  const { data } = useResponseRequisition();
+  const { data } = useResponse();
   const { requisitionNumber = '' } = useParams();
   const api = useResponseApi();
   return useFieldsSelector(
@@ -86,37 +86,36 @@ export const useResponseRequisitionFields = <
   );
 };
 
-interface UseResponseRequisitionLinesController
+interface UseResponseLinesController
   extends SortController<ResponseLineFragment>,
     PaginationState {
   lines: ResponseLineFragment[];
 }
 
-export const useResponseRequisitionLines =
-  (): UseResponseRequisitionLinesController => {
-    const { sortBy, onChangeSortBy } = useSortBy<ResponseLineFragment>({
-      key: 'itemName',
-      isDesc: false,
-    });
-    const pagination = usePagination(20);
-    const { lines } = useResponseRequisitionFields('lines');
+export const useResponseLines = (): UseResponseLinesController => {
+  const { sortBy, onChangeSortBy } = useSortBy<ResponseLineFragment>({
+    key: 'itemName',
+    isDesc: false,
+  });
+  const pagination = usePagination(20);
+  const { lines } = useResponseFields('lines');
 
-    const sorted = useMemo(() => {
-      const sorted = [...(lines.nodes ?? [])].sort(
-        getDataSorter(sortBy.key as keyof ResponseLineFragment, !!sortBy.isDesc)
-      );
+  const sorted = useMemo(() => {
+    const sorted = [...(lines.nodes ?? [])].sort(
+      getDataSorter(sortBy.key as keyof ResponseLineFragment, !!sortBy.isDesc)
+    );
 
-      return sorted.slice(
-        pagination.offset,
-        pagination.first + pagination.offset
-      );
-    }, [sortBy, lines, pagination]);
+    return sorted.slice(
+      pagination.offset,
+      pagination.first + pagination.offset
+    );
+  }, [sortBy, lines, pagination]);
 
-    return { lines: sorted, sortBy, onChangeSortBy, ...pagination };
-  };
+  return { lines: sorted, sortBy, onChangeSortBy, ...pagination };
+};
 
-export const useIsResponseRequisitionDisabled = (): boolean => {
-  const { status } = useResponseRequisitionFields('status');
+export const useIsResponseDisabled = (): boolean => {
+  const { status } = useResponseFields('status');
   return status === RequisitionNodeStatus.Finalised;
 };
 

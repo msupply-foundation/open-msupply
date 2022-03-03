@@ -8,7 +8,6 @@ import {
   UpdateResponseRequisitionStatusInput,
   UpdateResponseRequisitionLineInput,
 } from '@openmsupply-client/common';
-
 import {
   ResponseFragment,
   ResponseRowFragment,
@@ -84,7 +83,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       sortBy: SortBy<ResponseRowFragment>;
       filter: FilterBy | null;
     }) => {
-      const result = await sdk.responseRequisitions({
+      const result = await sdk.responses({
         storeId,
         page: { offset, first },
         sort: {
@@ -99,7 +98,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       return result.requisitions;
     },
     byNumber: async (requisitionNumber: string): Promise<ResponseFragment> => {
-      const result = await sdk.responseRequisition({
+      const result = await sdk.responseByNumber({
         storeId,
         requisitionNumber: Number(requisitionNumber),
       });
@@ -115,7 +114,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     patch: Partial<ResponseFragment> & { id: string }
   ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
     const input = responseParser.toUpdate(patch);
-    const result = await sdk.updateResponseRequisition({ storeId, input });
+    const result = await sdk.updateResponse({ storeId, input });
 
     const { updateResponseRequisition } = result;
 
@@ -126,7 +125,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Unable to update requisition');
   },
   updateLine: async (patch: DraftResponseLine) => {
-    const result = await sdk.updateResponseRequisitionLine({
+    const result = await sdk.updateResponseLine({
       storeId,
       input: responseParser.toUpdateLine(patch),
     });

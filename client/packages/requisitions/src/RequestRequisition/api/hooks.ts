@@ -4,7 +4,6 @@ import {
   useTranslation,
   useQueryParams,
   useQueryClient,
-  RequisitionNodeStatus,
   useNavigate,
   useMutation,
   useParams,
@@ -18,6 +17,7 @@ import {
   getDataSorter,
   useNotification,
   useTableStore,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { getRequestQueries } from './api';
 import {
@@ -26,7 +26,6 @@ import {
   RequestLineFragment,
   RequestRowFragment,
 } from './operations.generated';
-import { canDeleteRequest } from '../../utils';
 
 export const useRequestApi = () => {
   const { client } = useOmSupplyApi();
@@ -171,7 +170,9 @@ export const useDeleteSelectedRequisitions = () => {
   const deleteAction = () => {
     const numberSelected = selectedRows.length;
     if (selectedRows && numberSelected > 0) {
-      const canDeleteRows = selectedRows.every(canDeleteRequest);
+      const canDeleteRows = selectedRows.every(
+        ({ status }) => status === RequisitionNodeStatus.Draft
+      );
       if (!canDeleteRows) {
         const cannotDeleteSnack = info(t('messages.cant-delete-requisitions'));
         cannotDeleteSnack();

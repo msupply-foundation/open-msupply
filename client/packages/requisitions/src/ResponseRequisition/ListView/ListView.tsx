@@ -9,17 +9,13 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import {
-  useUpdateResponseRequisition,
-  useResponseRequisitions,
-  ResponseRowFragment,
-} from '../api';
+import { useUpdateResponse, useResponses, ResponseRowFragment } from '../api';
 
 export const ResponseRequisitionListView: FC = () => {
-  const { mutate: onUpdate } = useUpdateResponseRequisition();
+  const { mutate: onUpdate } = useUpdateResponse();
   const navigate = useNavigate();
   const { data, onChangeSortBy, sortBy, onChangePage, pagination, filter } =
-    useResponseRequisitions();
+    useResponses();
 
   const columns = useColumns<ResponseRowFragment>(
     [

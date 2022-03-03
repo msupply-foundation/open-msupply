@@ -8,14 +8,8 @@ import {
   useConfirmationModal,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import {
-  getNextResponseRequisitionStatus,
-  getStatusTranslation,
-} from '../../../utils';
-import {
-  useIsResponseRequisitionDisabled,
-  useResponseRequisitionFields,
-} from '../../api';
+import { getNextResponseStatus, getStatusTranslation } from '../../../utils';
+import { useIsResponseDisabled, useResponseFields } from '../../api';
 
 const getStatusOptions = (
   currentStatus: RequisitionNodeStatus,
@@ -50,7 +44,7 @@ const getNextStatusOption = (
 ): SplitButtonOption<RequisitionNodeStatus> | null => {
   if (!status) return options[0] ?? null;
 
-  const nextStatus = getNextResponseRequisitionStatus(status);
+  const nextStatus = getNextResponseStatus(status);
   const nextStatusOption = options.find(o => o.value === nextStatus);
   return nextStatusOption || null;
 };
@@ -64,7 +58,7 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = useResponseRequisitionFields('status');
+  const { status, update } = useResponseFields('status');
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
 
@@ -110,7 +104,7 @@ const useStatusChangeButton = () => {
 export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, onGetConfirmation } =
     useStatusChangeButton();
-  const isDisabled = useIsResponseRequisitionDisabled();
+  const isDisabled = useIsResponseDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
