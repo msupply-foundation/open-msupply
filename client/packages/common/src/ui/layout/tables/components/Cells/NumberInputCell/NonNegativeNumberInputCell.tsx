@@ -1,11 +1,12 @@
 import React from 'react';
 import { CellProps } from '../../../columns';
 import { BasicTextInput } from '@common/components';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
 import { NumUtils } from 'packages/common/src/utils/NumUtils';
 
-export const NonZeroNumberInputCell = <T extends DomainObject>({
+// where NonNegative is n >=0
+export const NonNegativeNumberInputCell = <T extends RecordWithId>({
   rowData,
   column,
   rows,
@@ -26,7 +27,7 @@ export const NonZeroNumberInputCell = <T extends DomainObject>({
       type="number"
       value={buffer}
       onChange={e => {
-        const newValue = NumUtils.parseString(e.target.value, 1);
+        const newValue = NumUtils.parseString(e.target.value);
         setBuffer(newValue.toString());
         updater({ ...rowData, [column.key]: newValue });
       }}
