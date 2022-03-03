@@ -1,8 +1,8 @@
-mod insert;
+pub mod insert;
 pub use insert::*;
 
-mod update;
+pub mod update;
 pub use update::*;
 
-mod delete;
+pub mod delete;
 pub use delete::*;

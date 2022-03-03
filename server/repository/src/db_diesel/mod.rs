@@ -68,7 +68,7 @@ pub use stocktake::*;
 pub use stocktake_line::*;
 pub use stocktake_line_row::*;
 pub use stocktake_row::*;
-pub use storage_connection::{StorageConnection, StorageConnectionManager, TransactionError};
+pub use storage_connection::*;
 pub use store::*;
 pub use store_row::StoreRowRepository;
 pub use unit_row::UnitRowRepository;

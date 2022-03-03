@@ -5,6 +5,7 @@ use repository::{
 
 use crate::{invoice_line::validate::check_line_exists_option, service_provider::ServiceContext};
 
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteOutboundShipmentUnallocatedLine {
     pub id: String,
 }
@@ -22,6 +23,7 @@ type OutError = DeleteOutboundShipmentUnallocatedLineError;
 
 pub fn delete_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
+    _store_id: &str,
     input: DeleteOutboundShipmentUnallocatedLine,
 ) -> Result<String, OutError> {
     let id = ctx
@@ -81,12 +83,13 @@ mod test_delete {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.outbound_shipment_line;
+        let service = service_provider.invoice_line_service;
 
         // Line Does not Exist
         assert_eq!(
             service.delete_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: "invalid".to_owned()
                 },
@@ -98,6 +101,7 @@ mod test_delete {
         assert_eq!(
             service.delete_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -114,13 +118,14 @@ mod test_delete {
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider.context().unwrap();
-        let service = service_provider.outbound_shipment_line;
+        let service = service_provider.invoice_line_service;
 
         let mut line_to_delete = mock_unallocated_line();
         // Succesfull delete
         let result = service
             .delete_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: line_to_delete.id.clone(),
                 },

@@ -7,7 +7,7 @@ use repository::{
     RepositoryError, RequisitionLineRowRepository, StorageConnection,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct DeleteRequestRequisitionLine {
     pub id: String,
 }

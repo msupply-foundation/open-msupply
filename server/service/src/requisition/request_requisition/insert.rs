@@ -11,7 +11,7 @@ use repository::{
 };
 use repository::{Name, NameFilter};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisition {
     pub id: String,
     pub other_party_id: String,

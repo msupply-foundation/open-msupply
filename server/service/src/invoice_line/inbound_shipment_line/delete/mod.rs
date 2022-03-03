@@ -1,23 +1,25 @@
-use crate::WithDBError;
-use repository::{
-    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
-    TransactionError,
-};
+use crate::{service_provider::ServiceContext, WithDBError};
+use repository::{InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
 mod validate;
 
 use validate::validate;
+
+#[derive(Clone, Debug, Default)]
 pub struct DeleteInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
 }
 
+type OutError = DeleteInboundShipmentLineError;
+
 pub fn delete_inbound_shipment_line(
-    connection_manager: &StorageConnectionManager,
+    ctx: &ServiceContext,
+    _store_id: &str,
     input: DeleteInboundShipmentLine,
-) -> Result<String, DeleteInboundShipmentLineError> {
-    let connection = connection_manager.connection()?;
-    let line = connection
+) -> Result<String, OutError> {
+    let line_id = ctx
+        .connection
         .transaction_sync(|connection| {
             let line = validate(&input, &connection)?;
 
@@ -28,20 +30,13 @@ pub fn delete_inbound_shipment_line(
             if let Some(id) = delete_batch_id_option {
                 StockLineRowRepository::new(&connection).delete(&id)?;
             }
-            Ok(line)
-        })
-        .map_err(
-            |error: TransactionError<DeleteInboundShipmentLineError>| match error {
-                TransactionError::Transaction { msg, level } => {
-                    RepositoryError::TransactionError { msg, level }.into()
-                }
-                TransactionError::Inner(error) => error,
-            },
-        )?;
-    Ok(line.id)
-}
 
-#[derive(Debug)]
+            Ok(line.id) as Result<String, OutError>
+        })
+        .map_err(|error| error.to_inner_error())?;
+    Ok(line_id)
+}
+#[derive(Debug, PartialEq)]
 pub enum DeleteInboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),

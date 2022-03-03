@@ -1,21 +1,18 @@
 use async_graphql::*;
+use graphql_core::ContextExt;
+use service::invoice_line::outbound_shipment_service_line::DeleteOutboundShipmentServiceLineError as ServiceError;
 
 use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, DatabaseError, ForeignKey, ForeignKeyError,
-    InvoiceDoesNotBelongToCurrentStore, InvoiceLineBelongsToAnotherInvoice, NotAnOutboundShipment,
-    RecordNotFound,
+    CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound,
 };
-use graphql_types::types::DeleteResponse;
-use repository::StorageConnectionManager;
-use service::invoice_line::{
-    delete_outbound_shipment_service_line, DeleteOutboundShipmentLine,
-    DeleteOutboundShipmentServiceLineError,
-};
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
-use super::NotAServiceItem;
+use service::invoice_line::outbound_shipment_line::DeleteOutboundShipmentLine as ServiceInput;
 
 #[derive(InputObject)]
-pub struct DeleteOutboundShipmentServiceLineInput {
+#[graphql(name = "DeleteOutboundShipmentServiceLineInput")]
+pub struct DeleteInput {
     pub id: String,
     pub invoice_id: String,
 }
@@ -27,75 +24,77 @@ pub struct DeleteError {
 }
 
 #[derive(Union)]
-pub enum DeleteOutboundShipmentServiceLineResponse {
+#[graphql(name = "DeleteOutboundShipmentServiceLineResponse")]
+pub enum DeleteResponse {
     Error(DeleteError),
-    Response(DeleteResponse),
+    Response(GenericDeleteResponse),
 }
 
-pub fn get_delete_outbound_shipment_service_line_response(
-    connection_manager: &StorageConnectionManager,
-    input: DeleteOutboundShipmentServiceLineInput,
-) -> DeleteOutboundShipmentServiceLineResponse {
-    use DeleteOutboundShipmentServiceLineResponse::*;
-    match delete_outbound_shipment_service_line(
-        connection_manager,
-        DeleteOutboundShipmentLine {
-            id: input.id,
-            invoice_id: input.invoice_id,
-        },
-    ) {
-        Ok(id) => Response(DeleteResponse(id)),
-        Err(error) => error.into(),
-    }
+pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    map_response(
+        service_provider
+            .invoice_line_service
+            .delete_outbound_shipment_service_line(&service_context, store_id, input.to_domain()),
+    )
+}
+
+pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
+    let result = match from {
+        Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),
+        Err(error) => DeleteResponse::Error(DeleteError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
 #[derive(Interface)]
 #[graphql(name = "DeleteOutboundShipmentServiceLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteErrorInterface {
-    DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
-    NotAnOutboundShipment(NotAnOutboundShipment),
-    InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore),
-    InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice),
     CannotEditInvoice(CannotEditInvoice),
-    NotAServiceItem(NotAServiceItem),
 }
 
-impl From<DeleteOutboundShipmentServiceLineError> for DeleteOutboundShipmentServiceLineResponse {
-    fn from(error: DeleteOutboundShipmentServiceLineError) -> Self {
-        use DeleteErrorInterface as OutError;
-        let error = match error {
-            DeleteOutboundShipmentServiceLineError::LineDoesNotExist => {
-                OutError::RecordNotFound(RecordNotFound {})
-            }
-            DeleteOutboundShipmentServiceLineError::DatabaseError(error) => {
-                OutError::DatabaseError(DatabaseError(error))
-            }
-            DeleteOutboundShipmentServiceLineError::InvoiceDoesNotExist => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::InvoiceId))
-            }
-            DeleteOutboundShipmentServiceLineError::NotAnOutboundShipment => {
-                OutError::NotAnOutboundShipment(NotAnOutboundShipment {})
-            }
-            DeleteOutboundShipmentServiceLineError::NotThisStoreInvoice => {
-                OutError::InvoiceDoesNotBelongToCurrentStore(InvoiceDoesNotBelongToCurrentStore {})
-            }
-            DeleteOutboundShipmentServiceLineError::CannotEditFinalised => {
-                OutError::CannotEditInvoice(CannotEditInvoice {})
-            }
-            DeleteOutboundShipmentServiceLineError::NotThisInvoiceLine(_invoice_id) => {
-                OutError::InvoiceLineBelongsToAnotherInvoice(InvoiceLineBelongsToAnotherInvoice {})
-            }
-            DeleteOutboundShipmentServiceLineError::NotAServiceItem => {
-                OutError::NotAServiceItem(NotAServiceItem)
-            }
-            DeleteOutboundShipmentServiceLineError::ItemNotFound => {
-                OutError::ForeignKeyError(ForeignKeyError(ForeignKey::ItemId))
-            }
-        };
-
-        DeleteOutboundShipmentServiceLineResponse::Error(DeleteError { error })
+impl DeleteInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let DeleteInput { id, invoice_id } = self;
+        ServiceInput { id, invoice_id }
     }
+}
+
+fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::LineDoesNotExist => {
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+        }
+        ServiceError::CannotEditFinalised => {
+            return Ok(DeleteErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(DeleteErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )))
+        }
+        // Standard Graphql Errors
+        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
+        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::ItemNotFound => BadUserInput(formatted_error),
+        ServiceError::NotAServiceItem => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
