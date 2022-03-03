@@ -10,6 +10,7 @@ import {
   InvoiceLineNodeType,
   useRowStyle,
   AppSxProp,
+  getUnitQuantity,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { useOutboundRows } from '../api';
@@ -30,6 +31,19 @@ const Expand: FC<{
     'itemUnit',
     'numberOfPacks',
     'packSize',
+    [
+      'unitQuantity',
+      {
+        accessor: () => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return lines.reduce(getUnitQuantity, 0);
+          } else {
+            return rowData.packSize * rowData.numberOfPacks;
+          }
+        },
+      },
+    ],
     'sellPricePerUnit',
   ]);
 
