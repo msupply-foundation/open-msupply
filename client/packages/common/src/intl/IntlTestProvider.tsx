@@ -28,9 +28,15 @@ export const IntlTestProvider: FC<IntlTestProviderProps> = ({
     },
   };
 
+  // Suppressing i18next logging which pollutes the test output
+  // with information about language changes etc.
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  // i18next.logger = { log: () => {} };
+
   i18next.use(initReactI18next).init({
     resources,
-    debug: true,
+    debug: false,
     lng: locale,
     fallbackLng: 'en',
     ns: ['app', 'common'],

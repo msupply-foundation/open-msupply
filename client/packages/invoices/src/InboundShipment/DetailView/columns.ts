@@ -8,6 +8,7 @@ import {
   useColumns,
   Column,
   getUnitQuantity,
+  useCurrency,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../types';
@@ -15,8 +16,9 @@ import { InboundLineFragment } from '../api';
 
 export const useInboundShipmentColumns = (): Column<
   InboundLineFragment | InboundItem
->[] =>
-  useColumns<InboundLineFragment | InboundItem>(
+>[] => {
+  const { c } = useCurrency();
+  return useColumns<InboundLineFragment | InboundItem>(
     [
       [
         getNotePopoverColumn(),
@@ -121,9 +123,11 @@ export const useInboundShipmentColumns = (): Column<
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'sellPricePerPack', '');
+              return c(
+                ifTheSameElseDefault(lines, 'sellPricePerPack', '')
+              ).format();
             } else {
-              return rowData.sellPricePerPack;
+              return c(rowData.sellPricePerPack).format();
             }
           },
         },
@@ -173,6 +177,7 @@ export const useInboundShipmentColumns = (): Column<
     {},
     []
   );
+};
 
 export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
   useColumns([

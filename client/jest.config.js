@@ -11,9 +11,8 @@ module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest-setup.ts'],
   moduleNameMapper: {
-    'react-i18next': '<rootDir>/__mocks__/react-i18next.ts',
     ...pathsToModuleNameMapper(compilerOptions.paths, {
-      prefix: '<rootDir>',
+      prefix: '<rootDir>/',
     }),
   },
 };
