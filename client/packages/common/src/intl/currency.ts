@@ -2,24 +2,24 @@ import currency from 'currency.js';
 import { useCurrentLanguage } from './intlHelpers';
 
 const trimCents = (centsString: string) => {
-  const trimmed = String(Number(centsString)).slice(1);
+  const trimmed = Number(`.${centsString}`);
 
   // If the result is an empty string, return .00
   if (!trimmed) {
-    return `${centsString[0]}00`;
+    return '00';
   }
 
-  // Otherwise, add a single zero
-  if (trimmed.length === 2) {
-    return `${trimmed}0`;
+  // Trimmed is some number with just one decimal place.
+  if (String(trimmed).length < 4) {
+    return `${String(trimmed)[2]}0`;
   }
 
-  // Other cases, return the full string
-  return trimmed;
+  // Other cases, return the full string, excluding the decimal
+  return String(trimmed).slice(2);
 };
 
 /**
- * This custom formatter is a slight modifiction to the default within
+ * This custom formatter is a slight modification to the default within
  * currency.js here: https://github.com/scurker/currency.js/blob/66b7a0c6860d5d30efe8edbf4f8ea016149eab55/src/currency.js#L96-L105
  *
  * All it does differently is add the trimming of cents with trimCents.
@@ -48,13 +48,14 @@ export const format: currency.Format = (
   } = opts ?? {};
 
   // Split the currency string into cents and dollars.
+
   const [dollars = '', cents = ''] = ('' + currency)
     .replace(/^-/, '')
-    .split(decimal);
+    .split('.');
 
   // Add the separator to the end of each dollar group.
   const dollarsString = dollars.replace(groups, `$1${separator}`);
-  const centsString = trimCents(`${decimal}${cents}`);
+  const centsString = `${decimal}${trimCents(cents)}`;
 
   // Combine together..
   const moneyString = `${dollarsString}${centsString}`;
@@ -80,7 +81,7 @@ const currencyOptions = {
     symbol: 'XOF',
     separator: '.',
     decimal: ',',
-    precision: 2,
+    precision: 10,
     pattern: '# !',
     negativePattern: '-# !',
     format,
@@ -89,7 +90,7 @@ const currencyOptions = {
     symbol: 'ر.ق.',
     separator: ',',
     decimal: '.',
-    precision: 2,
+    precision: 10,
     pattern: '!#',
     negativePattern: '-!#',
     format,
