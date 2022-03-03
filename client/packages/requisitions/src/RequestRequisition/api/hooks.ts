@@ -22,11 +22,11 @@ import {
 import { getRequestQueries } from './api';
 import {
   getSdk,
-  RequestRequisitionFragment,
-  RequestRequisitionLineFragment,
-  RequestRequisitionRowFragment,
+  RequestFragment,
+  RequestLineFragment,
+  RequestRowFragment,
 } from './operations.generated';
-import { canDeleteRequestRequisition } from '../../utils';
+import { canDeleteRequest } from '../../utils';
 
 export const useRequestApi = () => {
   const { client } = useOmSupplyApi();
@@ -35,8 +35,8 @@ export const useRequestApi = () => {
   return { ...queries, storeId };
 };
 
-export const useRequestRequisitions = () => {
-  const queryParams = useQueryParams<RequestRequisitionRowFragment>({
+export const useRequests = () => {
+  const queryParams = useQueryParams<RequestRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
   const api = useRequestApi();
@@ -54,11 +54,11 @@ export const useRequestRequisitions = () => {
   };
 };
 
-export const useCreateRequestRequisition = () => {
+export const useInsertRequest = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const api = useRequestApi();
-  return useMutation(api.create, {
+  return useMutation(api.insert, {
     onSuccess: ({ requisitionNumber }) => {
       navigate(String(requisitionNumber));
       queryClient.invalidateQueries(['requisition']);
@@ -66,7 +66,7 @@ export const useCreateRequestRequisition = () => {
   });
 };
 
-export const useUpdateRequestRequisition = () => {
+export const useUpdateRequest = () => {
   const queryClient = useQueryClient();
   const api = useRequestApi();
   return useMutation(api.update, {
@@ -74,64 +74,58 @@ export const useUpdateRequestRequisition = () => {
   });
 };
 
-export const useRequestRequisition =
-  (): UseQueryResult<RequestRequisitionFragment> => {
-    const { requisitionNumber = '' } = useParams();
-    const api = useRequestApi();
-    return useQuery(['requisition', api.storeId, requisitionNumber], () =>
-      api.get.byNumber(requisitionNumber)
-    );
-  };
+export const useRequest = (): UseQueryResult<RequestFragment> => {
+  const { requisitionNumber = '' } = useParams();
+  const api = useRequestApi();
+  return useQuery(['requisition', api.storeId, requisitionNumber], () =>
+    api.get.byNumber(requisitionNumber)
+  );
+};
 
-export const useRequestRequisitionFields = <
-  KeyOfRequisition extends keyof RequestRequisitionFragment
+export const useRequestFields = <
+  KeyOfRequisition extends keyof RequestFragment
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
-): FieldSelectorControl<RequestRequisitionFragment, KeyOfRequisition> => {
-  const { data } = useRequestRequisition();
+): FieldSelectorControl<RequestFragment, KeyOfRequisition> => {
+  const { data } = useRequest();
   const { requisitionNumber = '' } = useParams();
   const api = useRequestApi();
   return useFieldsSelector(
     ['requisition', api.storeId, requisitionNumber],
     () => api.get.byNumber(requisitionNumber),
 
-    (patch: Partial<RequestRequisitionFragment>) =>
+    (patch: Partial<RequestFragment>) =>
       api.update({ ...patch, id: data?.id ?? '' }),
     keys
   );
 };
 
 interface UseRequestRequisitionLinesController
-  extends SortController<RequestRequisitionLineFragment> {
-  lines: RequestRequisitionLineFragment[];
+  extends SortController<RequestLineFragment> {
+  lines: RequestLineFragment[];
 }
 
-export const useRequestRequisitionLines =
-  (): UseRequestRequisitionLinesController => {
-    const { sortBy, onChangeSortBy } =
-      useSortBy<RequestRequisitionLineFragment>({
-        key: 'itemName',
-        isDesc: false,
-      });
+export const useRequestLines = (): UseRequestRequisitionLinesController => {
+  const { sortBy, onChangeSortBy } = useSortBy<RequestLineFragment>({
+    key: 'itemName',
+    isDesc: false,
+  });
 
-    const { lines } = useRequestRequisitionFields('lines');
+  const { lines } = useRequestFields('lines');
 
-    const sorted = useMemo(() => {
-      return (
-        lines?.nodes.sort(
-          getDataSorter(
-            sortBy.key as keyof RequestRequisitionLineFragment,
-            !!sortBy.isDesc
-          )
-        ) ?? []
-      );
-    }, [sortBy, lines]);
+  const sorted = useMemo(() => {
+    return (
+      lines?.nodes.sort(
+        getDataSorter(sortBy.key as keyof RequestLineFragment, !!sortBy.isDesc)
+      ) ?? []
+    );
+  }, [sortBy, lines]);
 
-    return { lines: sorted, sortBy, onChangeSortBy };
-  };
+  return { lines: sorted, sortBy, onChangeSortBy };
+};
 
-export const useIsRequestRequisitionDisabled = (): boolean => {
-  const { status } = useRequestRequisitionFields('status');
+export const useIsRequestDisabled = (): boolean => {
+  const { status } = useRequestFields('status');
   return (
     status === RequisitionNodeStatus.Finalised ||
     status === RequisitionNodeStatus.Sent
@@ -154,15 +148,15 @@ export const useSaveRequestLines = () => {
   });
 };
 
-export const useDeleteRequisitions = () => {
+export const useDeleteRequests = () => {
   const api = useRequestApi();
-  return useMutation(api.deleteRequisitions);
+  return useMutation(api.deleteRequests);
 };
 
 export const useDeleteSelectedRequisitions = () => {
   const queryClient = useQueryClient();
-  const { data: rows } = useRequestRequisitions();
-  const { mutate } = useDeleteRequisitions();
+  const { data: rows } = useRequests();
+  const { mutate } = useDeleteRequests();
   const t = useTranslation('replenishment');
 
   const { success, info } = useNotification();
@@ -171,13 +165,13 @@ export const useDeleteSelectedRequisitions = () => {
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as RequestRequisitionRowFragment[],
+      .filter(Boolean) as RequestRowFragment[],
   }));
 
   const deleteAction = () => {
     const numberSelected = selectedRows.length;
     if (selectedRows && numberSelected > 0) {
-      const canDeleteRows = selectedRows.every(canDeleteRequestRequisition);
+      const canDeleteRows = selectedRows.every(canDeleteRequest);
       if (!canDeleteRows) {
         const cannotDeleteSnack = info(t('messages.cant-delete-requisitions'));
         cannotDeleteSnack();

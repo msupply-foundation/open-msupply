@@ -12,18 +12,14 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import {
-  RequestRequisitionRowFragment,
-  useUpdateRequestRequisition,
-  useRequestRequisitions,
-} from '../api';
+import { RequestRowFragment, useUpdateRequest, useRequests } from '../api';
 import { getRequisitionTranslator } from '../../utils';
 
 export const RequestRequisitionListView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 
-  const { mutate: onUpdate } = useUpdateRequestRequisition();
+  const { mutate: onUpdate } = useUpdateRequest();
 
   const {
     data,
@@ -33,8 +29,8 @@ export const RequestRequisitionListView: FC = () => {
     filter,
     pagination,
     onChangePage,
-  } = useRequestRequisitions();
-  const columns = useColumns<RequestRequisitionRowFragment>(
+  } = useRequests();
+  const columns = useColumns<RequestRowFragment>(
     [
       [getNameAndColorColumn(), { setter: onUpdate }],
       {
@@ -56,7 +52,7 @@ export const RequestRequisitionListView: FC = () => {
   );
 
   const onRowClick = useCallback(
-    (row: RequestRequisitionRowFragment) => {
+    (row: RequestRowFragment) => {
       navigate(String(row.requisitionNumber));
     },
     [navigate]

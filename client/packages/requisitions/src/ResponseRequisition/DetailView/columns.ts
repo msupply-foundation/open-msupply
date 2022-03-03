@@ -4,20 +4,20 @@ import {
   SortBy,
   Column,
 } from '@openmsupply-client/common';
-import { ResponseRequisitionLineFragment } from './../api';
+import { ResponseLineFragment } from './../api';
 
 interface UseResponseRequisitionColumnOptions {
-  sortBy: SortBy<ResponseRequisitionLineFragment>;
+  sortBy: SortBy<ResponseLineFragment>;
   onChangeSortBy: (
-    column: Column<ResponseRequisitionLineFragment>
-  ) => SortBy<ResponseRequisitionLineFragment>;
+    column: Column<ResponseLineFragment>
+  ) => SortBy<ResponseLineFragment>;
 }
 
 export const useResponseRequisitionColumns = ({
   onChangeSortBy,
   sortBy,
-}: UseResponseRequisitionColumnOptions): Column<ResponseRequisitionLineFragment>[] =>
-  useColumns<ResponseRequisitionLineFragment>(
+}: UseResponseRequisitionColumnOptions): Column<ResponseLineFragment>[] =>
+  useColumns<ResponseLineFragment>(
     [
       ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
       ['itemName', { accessor: ({ rowData }) => rowData.item.name }],

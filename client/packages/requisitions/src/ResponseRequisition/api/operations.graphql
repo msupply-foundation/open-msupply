@@ -22,7 +22,7 @@ mutation updateResponseRequisition(
   }
 }
 
-fragment ResponseRequisitionLine on RequisitionLineNode {
+fragment ResponseLine on RequisitionLineNode {
   id
   itemId
   requestedQuantity
@@ -41,7 +41,7 @@ fragment ResponseRequisitionLine on RequisitionLineNode {
   }
 }
 
-fragment ResponseRequisition on RequisitionNode {
+fragment Response on RequisitionNode {
   __typename
   id
   type
@@ -62,7 +62,7 @@ fragment ResponseRequisition on RequisitionNode {
     ... on RequisitionLineConnector {
       totalCount
       nodes {
-        ...ResponseRequisitionLine
+        ...ResponseLine
       }
     }
   }
@@ -86,7 +86,7 @@ query responseRequisition($storeId: String!, $requisitionNumber: Int!) {
   ) {
     __typename
     ... on RequisitionNode {
-      ...ResponseRequisition
+      ...Response
       otherParty {
         __typename
         ... on NameNode {
@@ -101,7 +101,7 @@ query responseRequisition($storeId: String!, $requisitionNumber: Int!) {
   }
 }
 
-fragment ResponseRequisitionRow on RequisitionNode {
+fragment ResponseRow on RequisitionNode {
   colour
   comment
   createdDatetime
@@ -126,7 +126,7 @@ query responseRequisitions(
     ... on RequisitionConnector {
       totalCount
       nodes {
-        ...ResponseRequisitionRow
+        ...ResponseRow
       }
     }
   }

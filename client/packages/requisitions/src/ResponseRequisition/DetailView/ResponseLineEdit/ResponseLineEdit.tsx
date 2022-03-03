@@ -8,14 +8,14 @@ import {
 import { ResponseLineEditForm } from './ResponseLineEditForm';
 import {
   useIsResponseRequisitionDisabled,
-  ResponseRequisitionLineFragment,
+  ResponseLineFragment,
 } from '../../api';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 
 interface ResponseLineEditProps {
   isOpen: boolean;
   onClose: () => void;
-  line: ResponseRequisitionLineFragment;
+  line: ResponseLineFragment;
 }
 
 export const ResponseLineEdit = ({

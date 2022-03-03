@@ -10,7 +10,7 @@ fragment ItemWithStats on ItemNode {
   }
 }
 
-mutation insertRequestRequisition(
+mutation insertRequest(
   $storeId: String!
   $input: InsertRequestRequisitionInput!
 ) {
@@ -23,7 +23,7 @@ mutation insertRequestRequisition(
   }
 }
 
-mutation updateRequestRequisition(
+mutation updateRequest(
   $storeId: String!
   $input: UpdateRequestRequisitionInput!
 ) {
@@ -36,7 +36,7 @@ mutation updateRequestRequisition(
   }
 }
 
-mutation deleteRequestRequisition(
+mutation deleteRequest(
   $storeId: String!
   $input: DeleteRequestRequisitionInput!
 ) {
@@ -66,7 +66,7 @@ mutation deleteRequestRequisition(
   }
 }
 
-fragment RequestRequisitionLine on RequisitionLineNode {
+fragment RequestLine on RequisitionLineNode {
   id
   itemId
   requestedQuantity
@@ -82,7 +82,7 @@ fragment RequestRequisitionLine on RequisitionLineNode {
   }
 }
 
-fragment RequestRequisition on RequisitionNode {
+fragment Request on RequisitionNode {
   __typename
   id
   type
@@ -103,7 +103,7 @@ fragment RequestRequisition on RequisitionNode {
 
     totalCount
     nodes {
-      ...RequestRequisitionLine
+      ...RequestLine
     }
   }
   otherParty {
@@ -118,7 +118,7 @@ fragment RequestRequisition on RequisitionNode {
     }
   }
 }
-query requestRequisition($storeId: String!, $requisitionNumber: Int!) {
+query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
     type: REQUEST
@@ -126,7 +126,7 @@ query requestRequisition($storeId: String!, $requisitionNumber: Int!) {
   ) {
     __typename
     ... on RequisitionNode {
-      ...RequestRequisition
+      ...Request
       otherParty {
         __typename
         ... on NameNode {
@@ -141,7 +141,7 @@ query requestRequisition($storeId: String!, $requisitionNumber: Int!) {
   }
 }
 
-fragment RequestRequisitionRow on RequisitionNode {
+fragment RequestRow on RequisitionNode {
   colour
   comment
   createdDatetime
@@ -156,7 +156,7 @@ fragment RequestRequisitionRow on RequisitionNode {
   otherPartyId
 }
 
-query requestRequisitions(
+query requests(
   $storeId: String!
   $filter: RequisitionFilterInput
   $page: PaginationInput
@@ -166,13 +166,13 @@ query requestRequisitions(
     ... on RequisitionConnector {
       totalCount
       nodes {
-        ...RequestRequisitionRow
+        ...RequestRow
       }
     }
   }
 }
 
-mutation insertRequestRequisitionLine(
+mutation insertRequestLine(
   $storeId: String!
   $input: InsertRequestRequisitionLineInput!
 ) {
@@ -203,7 +203,7 @@ mutation insertRequestRequisitionLine(
   }
 }
 
-mutation updateRequestRequisitionLine(
+mutation updateRequestLine(
   $storeId: String!
   $input: UpdateRequestRequisitionLineInput!
 ) {

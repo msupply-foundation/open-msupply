@@ -12,7 +12,7 @@ import { AppBarButtons } from './AppBarButtons';
 import {
   useUpdateResponseRequisition,
   useResponseRequisitions,
-  ResponseRequisitionRowFragment,
+  ResponseRowFragment,
 } from '../api';
 
 export const ResponseRequisitionListView: FC = () => {
@@ -21,7 +21,7 @@ export const ResponseRequisitionListView: FC = () => {
   const { data, onChangeSortBy, sortBy, onChangePage, pagination, filter } =
     useResponseRequisitions();
 
-  const columns = useColumns<ResponseRequisitionRowFragment>(
+  const columns = useColumns<ResponseRowFragment>(
     [
       [getNameAndColorColumn(), { setter: onUpdate }],
       {
