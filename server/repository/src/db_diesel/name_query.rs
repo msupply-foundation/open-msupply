@@ -17,7 +17,7 @@ use diesel::{
     prelude::*,
 };
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct Name {
     pub name_row: NameRow,
     pub name_store_join_row: Option<NameStoreJoinRow>,

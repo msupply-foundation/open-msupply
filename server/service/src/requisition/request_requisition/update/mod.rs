@@ -14,12 +14,12 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UpdateRequestRequstionStatus {
     Sent,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateRequestRequisition {
     pub id: String,
     pub colour: Option<String>,

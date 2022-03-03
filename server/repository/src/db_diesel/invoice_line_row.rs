@@ -58,6 +58,19 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(result)
     }
 
+    // TODO replace find_one_by_id with this one
+    pub fn find_one_by_id_option(
+        &self,
+        invoice_line_id: &str,
+    ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
+        use crate::schema::diesel_schema::invoice_line::dsl::*;
+        let result = invoice_line
+            .filter(id.eq(invoice_line_id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_invoice_and_batch_id(
         &self,
         stock_line_id: &str,

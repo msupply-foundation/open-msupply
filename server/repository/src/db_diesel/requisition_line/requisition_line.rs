@@ -21,7 +21,7 @@ use super::RequisitionLineFilter;
 
 pub type RequisitionLineJoin = (RequisitionLineRow, RequisitionRow);
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct RequisitionLine {
     pub requisition_line_row: RequisitionLineRow,
     pub requisition_row: RequisitionRow,

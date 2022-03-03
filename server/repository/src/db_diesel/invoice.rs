@@ -51,6 +51,19 @@ impl<'a> InvoiceRepository<'a> {
         result.map_err(|err| RepositoryError::from(err))
     }
 
+    // TODO replace find_one_by_id with this one
+    pub fn find_one_by_id_option(
+        &self,
+        invoice_id: &str,
+    ) -> Result<Option<InvoiceRow>, RepositoryError> {
+        use crate::schema::diesel_schema::invoice::dsl::*;
+        let result = invoice
+            .filter(id.eq(invoice_id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceRow>, RepositoryError> {
         use crate::schema::diesel_schema::invoice::dsl::*;
         let result = invoice
