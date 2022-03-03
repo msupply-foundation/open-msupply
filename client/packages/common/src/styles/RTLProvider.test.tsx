@@ -1,40 +1,23 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import React, { FC } from 'react';
 import { act } from 'react-dom/test-utils';
-import { useI18N } from '@common/intl';
-import { LocalStorage } from '../localStorage';
-import { RTLProvider } from './RTLProvider';
-
-const RTLProviderExample: FC = () => {
-  const i18n = useI18N();
-  const changeLanguage = (language: string) => {
-    i18n.changeLanguage(language);
-  };
-
-  return (
-    <RTLProvider>
-      <span>some text</span>{' '}
-      <button onClick={() => changeLanguage('ar')}>changeLanguage</button>
-    </RTLProvider>
-  );
-};
+import { useI18N, useRtl } from '@common/intl';
+import { renderHookWithProvider } from '@common/utils';
 
 describe('RTLProvider', () => {
   it('Sets the direction of the body to be rtl when a rtl language is the current locale', () => {
+    const useHook = () => {
+      const isRtl = useRtl();
+      const i18n = useI18N();
+
+      return { isRtl, i18n };
+    };
+    const { result } = renderHookWithProvider(useHook);
+
+    expect(result.current.isRtl).toBe(false);
+
     act(() => {
-      LocalStorage.setItem('/localisation/locale', 'ar');
+      result.current.i18n.changeLanguage('ar');
     });
 
-    const { getByRole } = render(<RTLProviderExample />);
-
-    act(() => {
-      const node = getByRole('button', { name: /changeLanguage/ });
-      node.click();
-    });
-
-    waitFor(() => {
-      const node = screen.queryByText('some text')?.closest('div');
-      expect(node).toHaveStyle('direction: rtl');
-    });
+    expect(result.current.isRtl).toBe(true);
   });
 });
