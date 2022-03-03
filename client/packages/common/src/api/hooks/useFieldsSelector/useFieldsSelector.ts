@@ -26,7 +26,7 @@ export type FieldSelectorControl<
 };
 
 export const useFieldsSelector = <Entity, KeyOfEntity extends keyof Entity>(
-  queryKey: unknown[],
+  queryKey: readonly unknown[],
   queryFn: () => Promise<Entity>,
   mutateFn: (patch: Partial<Entity>) => Promise<unknown>,
   keyOrKeys: KeyOfEntity | KeyOfEntity[],

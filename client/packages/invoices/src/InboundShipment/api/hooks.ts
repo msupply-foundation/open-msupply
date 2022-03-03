@@ -20,7 +20,7 @@ import {
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { inboundLinesToSummaryItems } from './../../utils';
 import { InboundItem } from './../../types';
-import { getInboundQueries } from './api';
+import { getInboundQueries, ListParams } from './api';
 import {
   getSdk,
   InboundFragment,
@@ -30,9 +30,16 @@ import {
 
 export const useInboundApi = () => {
   const { storeId } = useAuthContext();
+  const keys = {
+    base: () => ['inbound'] as const,
+    detail: (id: string) => [...keys.base(), storeId, id] as const,
+    list: (params: ListParams) =>
+      [...keys.base(), storeId, 'list', params] as const,
+  };
+
   const { client } = useOmSupplyApi();
   const queries = getInboundQueries(getSdk(client), storeId);
-  return { ...queries, storeId };
+  return { ...queries, storeId, keys };
 };
 
 const useInvoiceNumber = () => {
@@ -43,7 +50,7 @@ const useInvoiceNumber = () => {
 export const useInbound = () => {
   const invoiceNumber = useInvoiceNumber();
   const api = useInboundApi();
-  return useQuery(['invoice', api.storeId, invoiceNumber], () =>
+  return useQuery(api.keys.detail(invoiceNumber), () =>
     api.get.byNumber(invoiceNumber)
   );
 };
@@ -60,7 +67,7 @@ export const useInboundShipmentSelector = <T = InboundFragment>(
   const api = useInboundApi();
 
   return useQuery(
-    ['invoice', api.storeId, invoiceNumber],
+    api.keys.detail(invoiceNumber),
     () => api.get.byNumber(invoiceNumber),
     {
       select,
@@ -76,7 +83,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof InboundFragment>(
   const invoiceNumber = useInvoiceNumber();
   const api = useInboundApi();
   return useFieldsSelector(
-    ['invoice', api.storeId, invoiceNumber],
+    api.keys.detail(invoiceNumber),
     () => api.get.byNumber(invoiceNumber),
     patch => mutateAsync({ ...patch, id: data?.id ?? '' }),
     keyOrKeys
@@ -131,7 +138,7 @@ export const useSaveInboundLines = () => {
   const api = useInboundApi();
   return useMutation(api.upsertLines, {
     onSettled: () =>
-      queryClient.invalidateQueries(['invoice', api.storeId, invoiceNumber]),
+      queryClient.invalidateQueries(api.keys.detail(invoiceNumber)),
   });
 };
 
@@ -145,20 +152,18 @@ export const useDeleteInboundLine = () => {
 
   return useMutation((ids: string[]) => api.deleteLines(data?.id ?? '', ids), {
     onMutate: async (ids: string[]) => {
-      await queryClient.cancelQueries(['invoice', api.storeId, invoiceNumber]);
+      await queryClient.cancelQueries(api.keys.detail(invoiceNumber));
 
-      const previous = queryClient.getQueryData<InboundFragment>([
-        'invoice',
-        api.storeId,
-        invoiceNumber,
-      ]);
+      const previous = queryClient.getQueryData<InboundFragment>(
+        api.keys.detail(invoiceNumber)
+      );
 
       if (previous) {
         const filteredLines = previous.lines.nodes.filter(
           ({ id: lineId }) => !ids.includes(lineId)
         );
         queryClient.setQueryData<InboundFragment>(
-          ['invoice', api.storeId, invoiceNumber],
+          api.keys.detail(invoiceNumber),
           {
             ...previous,
             lines: {
@@ -174,12 +179,12 @@ export const useDeleteInboundLine = () => {
     },
     onError: (_, __, context) => {
       queryClient.setQueryData(
-        ['invoice', api.storeId, invoiceNumber],
+        api.keys.detail(invoiceNumber),
         context?.previous
       );
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['invoice', api.storeId, invoiceNumber]);
+      queryClient.invalidateQueries(api.keys.detail(invoiceNumber));
     },
   });
 };
@@ -191,7 +196,7 @@ export const useInbounds = () => {
   const api = useInboundApi();
 
   return {
-    ...useQuery(['invoice', 'list', api.storeId, queryParams], () =>
+    ...useQuery(api.keys.list(queryParams), () =>
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
@@ -210,7 +215,7 @@ export const useCreateInbound = () => {
   return useMutation(api.insert, {
     onSuccess: invoiceNumber => {
       navigate(String(invoiceNumber));
-      queryClient.invalidateQueries(['invoice']);
+      queryClient.invalidateQueries(api.keys.base());
     },
   });
 };
@@ -219,7 +224,7 @@ export const useUpdateInbound = () => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
   return useMutation(api.update, {
-    onSuccess: () => queryClient.invalidateQueries(['invoice']),
+    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
   });
 };
 
