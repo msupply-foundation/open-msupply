@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  DomainObject,
+  RecordWithId,
   ColumnDefinition,
   isProduction,
 } from '@openmsupply-client/common';
 import { LocationSearchInput } from './LocationSearchInput';
 import { LocationRowFragment } from '../api';
-interface LocationObject extends DomainObject {
+interface LocationObject extends RecordWithId {
   location: LocationRowFragment;
 }
 
@@ -16,7 +16,7 @@ const hasRequiredFields = (
   'location' in (variableToCheck as LocationObject);
 
 export const getLocationInputColumn = <
-  T extends DomainObject
+  T extends RecordWithId
 >(): ColumnDefinition<T> => ({
   key: 'locationInput',
   label: 'label.location',

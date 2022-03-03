@@ -1,10 +1,10 @@
 import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
 import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { formatExpiryDate } from '@common/utils';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
 
-const createColumn = <T extends DomainObject>(
+const createColumn = <T extends RecordWithId>(
   column: ColumnDefinition<T>
 ): ColumnDefinition<T> => {
   return column;
@@ -41,7 +41,7 @@ export type ColumnKey =
   | 'stocktakeDatetime'
   | 'monthlyConsumption';
 
-const getColumnLookup = <T extends DomainObject>(): Record<
+const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
   ColumnDefinition<T>
 > => ({
@@ -214,7 +214,7 @@ const getColumnLookup = <T extends DomainObject>(): Record<
   },
 });
 
-export class ColumnDefinitionSetBuilder<T extends DomainObject> {
+export class ColumnDefinitionSetBuilder<T extends RecordWithId> {
   columns: ColumnDefinition<T>[];
 
   currentOrder: number;

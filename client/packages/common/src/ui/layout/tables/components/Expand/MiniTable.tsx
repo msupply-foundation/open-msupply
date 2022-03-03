@@ -1,15 +1,15 @@
 import React, { JSXElementConstructor } from 'react';
 import { Column } from './../../columns/types';
 import { Box, alpha } from '@mui/material';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { DataTable } from '../../DataTable';
 
-interface MiniTableProps<T extends DomainObject> {
+interface MiniTableProps<T extends RecordWithId> {
   rows: T[];
   columns: Column<T>[];
 }
 
-export const MiniTable = <T extends DomainObject>({
+export const MiniTable = <T extends RecordWithId>({
   rows,
   columns,
 }: MiniTableProps<T>): React.ReactElement<

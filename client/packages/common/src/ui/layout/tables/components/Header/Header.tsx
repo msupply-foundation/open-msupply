@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { TableCell, TableRow, TableSortLabel } from '@mui/material';
 import { Column } from '../../columns/types';
 import { SortDescIcon } from '@common/icons';
-import { DomainObject } from '@common/types';
+import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
 
 export const HeaderRow: FC<{ dense?: boolean }> = ({ dense, ...props }) => (
@@ -17,12 +17,12 @@ export const HeaderRow: FC<{ dense?: boolean }> = ({ dense, ...props }) => (
   />
 );
 
-interface HeaderCellProps<T extends DomainObject> {
+interface HeaderCellProps<T extends RecordWithId> {
   column: Column<T>;
   dense?: boolean;
 }
 
-export const HeaderCell = <T extends DomainObject>({
+export const HeaderCell = <T extends RecordWithId>({
   column,
   dense = false,
 }: HeaderCellProps<T>): JSX.Element => {
