@@ -20,6 +20,13 @@ import {
   InsertInboundShipmentMutationVariables,
 } from './operations.generated';
 
+export type ListParams = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<InboundRowFragment>;
+  filterBy: FilterBy | null;
+};
+
 const inboundParsers = {
   toStatus: (
     patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
@@ -108,17 +115,7 @@ const inboundParsers = {
 
 export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({
-      first,
-      offset,
-      sortBy,
-      filterBy,
-    }: {
-      first: number;
-      offset: number;
-      sortBy: SortBy<InboundRowFragment>;
-      filterBy: FilterBy | null;
-    }) => {
+    list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
       const filter = {
         ...filterBy,
         type: { equalTo: InvoiceNodeType.InboundShipment },
