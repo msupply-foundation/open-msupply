@@ -6,7 +6,7 @@ import {
   CurrencyInputCell,
   useTranslation,
   getExpiryDateInputColumn,
-  NonZeroNumberInputCell,
+  NonNegativeNumberInputCell,
   PositiveNumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './hooks';
@@ -34,14 +34,14 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'packSize',
       label: 'label.pack-size',
       width: 100,
-      Cell: NonZeroNumberInputCell,
+      Cell: PositiveNumberInputCell,
       setter: update,
     },
     {
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 100,
-      Cell: PositiveNumberInputCell,
+      Cell: NonNegativeNumberInputCell,
       setter: update,
     },
     [expiryDateColumn, { setter: update, width: 100 }],
