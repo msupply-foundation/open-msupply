@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import {
   DataTable,
   useColumns,
-  NumberInputCell,
   CurrencyInputCell,
   getExpiryDateInputColumn,
   TextInputCell,
@@ -10,6 +9,7 @@ import {
   useTheme,
   Theme,
   alpha,
+  PositiveNumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { getLocationInputColumn } from '@openmsupply-client/system';
@@ -58,13 +58,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
       [
         'numberOfPacks',
         {
-          Cell: NumberInputCell,
+          Cell: PositiveNumberInputCell,
           width: 100,
           label: 'label.num-packs',
           setter: updateDraftLine,
         },
       ],
-      ['packSize', { Cell: NumberInputCell, setter: updateDraftLine }],
+      ['packSize', { Cell: PositiveNumberInputCell, setter: updateDraftLine }],
       [
         'unitQuantity',
         { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
