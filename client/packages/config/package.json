@@ -13,7 +13,5 @@
   "scripts": {
     "tsc": "tsc"
   },
-  "dependencies": {
-    "@openmsupply-client/requisitions": "^0.0.0"
-  }
+  "dependencies": {}
 }
