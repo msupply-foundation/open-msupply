@@ -1,17 +1,14 @@
 import {
-  Item,
+  ItemNode,
   FilterBy,
   useQueryParams,
   SortRule,
   useQuery,
   UseQueryResult,
   useQueryClient,
-  useAuthContext,
 } from '@openmsupply-client/common';
 import { useItemApi } from './../useItemApi';
-import { getItemSortField, mapItemNodes } from '../../../utils';
 import { ItemFragment } from './../../operations.generated';
-import { ItemQueries } from './../../api';
 
 export const useItemsList = (initialListParameters: {
   initialFilterBy?: FilterBy;
@@ -21,26 +18,25 @@ export const useItemsList = (initialListParameters: {
   onFilterByName: (name: string) => void;
   prefetchListByName: (name: string) => void;
 } & UseQueryResult<{
-  nodes: Item[];
+  nodes: ItemNode[];
   totalCount: number;
 }> => {
   const queryClient = useQueryClient();
   const api = useItemApi();
-  const { storeId } = useAuthContext();
   const { filterBy, filter, queryParams, first, offset, sortBy } =
     useQueryParams(initialListParameters);
 
   const queryState = useQuery(
     ['item', 'list', queryParams],
     async () => {
-      const result = await ItemQueries.get.listWithStockLines(api, storeId, {
+      const result = await api.get.listWithStockLines({
         sortBy,
         filterBy,
         first,
         offset,
       });
 
-      return mapItemNodes(result);
+      return result.items;
     },
     {
       keepPreviousData: true,
@@ -55,12 +51,11 @@ export const useItemsList = (initialListParameters: {
     await queryClient.prefetchQuery(
       ['items', 'list', prefetchQueryParams],
       () =>
-        api.itemsWithStockLines({
-          key: getItemSortField(queryParams.sortBy.key),
-          filter: prefetchQueryParams.filterBy,
+        api.get.listWithStockLines({
+          sortBy,
+          filterBy: prefetchQueryParams.filterBy,
           first: prefetchQueryParams.pagination.first,
           offset: prefetchQueryParams.pagination.offset,
-          storeId,
         })
     );
   };

@@ -2,7 +2,6 @@ import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
-  Item,
   useEditModal,
   DetailViewSkeleton,
   AlertModal,
@@ -10,7 +9,7 @@ import {
   RouteBuilder,
   useTranslation,
 } from '@openmsupply-client/common';
-import { toItem } from '@openmsupply-client/system';
+import { toItemRow, ItemRowFragment } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { OutboundLineEdit } from './modals/OutboundLineEdit';
 import { OutboundItem } from '../../types';
@@ -23,15 +22,16 @@ import { AppRoute } from '@openmsupply-client/config';
 import { OutboundLineFragment } from '../api/operations.generated';
 
 export const DetailView: FC = () => {
-  const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Item>();
+  const { entity, mode, onOpen, onClose, isOpen } =
+    useEditModal<ItemRowFragment>();
   const { data, isLoading } = useOutbound();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: OutboundLineFragment | OutboundItem) => {
-      onOpen(toItem(item));
+      onOpen(toItemRow(item));
     },
-    [toItem, onOpen]
+    [toItemRow, onOpen]
   );
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;

@@ -1,11 +1,10 @@
-import { Item } from '@openmsupply-client/common';
-import { toItem } from '@openmsupply-client/system';
+import { ItemRowFragment, toItemRow } from '@openmsupply-client/system';
 import { useOutboundRows } from '../../../api';
 
 export const useNextItem = (
   currentItemId?: string
-): { next: Item | null; disabled: boolean } => {
-  const next: Item | null = null;
+): { next: ItemRowFragment | null; disabled: boolean } => {
+  const next: ItemRowFragment | null = null;
   const disabled = true;
 
   const { items } = useOutboundRows();
@@ -22,7 +21,7 @@ export const useNextItem = (
   }
 
   return {
-    next: toItem(nextItem.lines[0]),
+    next: toItemRow(nextItem),
     disabled: currentIdx === numberOfItems - 1,
   };
 };

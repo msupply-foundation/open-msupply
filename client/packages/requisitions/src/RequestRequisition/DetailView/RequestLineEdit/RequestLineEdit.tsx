@@ -6,18 +6,16 @@ import {
   BasicSpinner,
   useBufferState,
 } from '@openmsupply-client/common';
+import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
-import {
-  useIsRequestRequisitionDisabled,
-  ItemWithStatsFragment,
-} from '../../api';
+import { useIsRequestRequisitionDisabled } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
 
 interface RequestLineEditProps {
   isOpen: boolean;
   onClose: () => void;
   mode: ModalMode | null;
-  item: ItemWithStatsFragment | null;
+  item: ItemRowWithStatsFragment | null;
 }
 
 export const RequestLineEdit = ({

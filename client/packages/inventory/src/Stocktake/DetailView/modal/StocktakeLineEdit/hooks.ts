@@ -1,13 +1,12 @@
+import React, { useEffect, Dispatch, SetStateAction } from 'react';
+import { RecordPatch, generateUUID } from '@openmsupply-client/common';
+import {
+  useStockLines,
+  ItemRowFragment,
+  StockLineFragment,
+} from '@openmsupply-client/system';
 import { useStocktakeFields } from './../../../api/hooks';
 import { StocktakeLineFragment } from './../../../api/operations.generated';
-import React, { useEffect, Dispatch, SetStateAction } from 'react';
-import {
-  StockLine,
-  RecordPatch,
-  generateUUID,
-} from '@openmsupply-client/common';
-import { useStockLines, ItemRowFragment } from '@openmsupply-client/system';
-
 import {
   useStocktakeRows,
   useStocktakeLines,
@@ -58,7 +57,7 @@ const createDraftLine = (
 
 const stockLineToDraftLine = (
   stocktakeId: string,
-  line: StockLine
+  line: StockLineFragment
 ): DraftStocktakeLine => {
   return {
     stocktakeId,
@@ -96,7 +95,7 @@ const useDraftStocktakeLines = (
 
   useEffect(() => {
     const uncountedLines =
-      stockLines?.filter(
+      stockLines?.nodes.filter(
         ({ id }) =>
           !stocktakeLines?.some(({ stockLine }) => stockLine?.id === id)
       ) ?? [];

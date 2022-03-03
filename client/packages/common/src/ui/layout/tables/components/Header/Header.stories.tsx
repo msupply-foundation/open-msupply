@@ -4,7 +4,6 @@ import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
 import { useSortBy } from '@common/hooks';
 import { useColumns } from '../../hooks';
-import { Item } from '@common/types';
 
 export default {
   title: 'Table/HeaderRow',
@@ -12,7 +11,11 @@ export default {
 } as ComponentMeta<typeof HeaderRow>;
 
 const Template: Story = () => {
-  const { onChangeSortBy, sortBy } = useSortBy<Item>({ key: 'name' });
+  const { onChangeSortBy, sortBy } = useSortBy<{
+    id: string;
+    name: string;
+    packSize: number;
+  }>({ key: 'name' });
 
   const [column1, column2] = useColumns(
     ['name', 'packSize'],
