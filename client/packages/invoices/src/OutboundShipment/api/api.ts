@@ -84,8 +84,11 @@ const outboundParsers = {
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
-      totalAfterTax: 0,
-      totalBeforeTax: 0,
+      tax: 0,
+      totalAfterTax:
+        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
+      totalBeforeTax:
+        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
     };
   },
   toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
@@ -94,6 +97,11 @@ const outboundParsers = {
       invoiceId: line.invoiceId,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
+      tax: { percentage: 0 },
+      totalAfterTax:
+        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
+      totalBeforeTax:
+        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
     };
   },
   toInsertPlaceholder: (

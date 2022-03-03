@@ -13,8 +13,13 @@ import {
   useTranslation,
   ColorSelectButton,
   useBufferState,
+  useToggle,
+  IconButton,
+  EditIcon,
+  useCurrency,
 } from '@openmsupply-client/common';
 import { useOutboundFields, useOutbound, useIsOutboundDisabled } from '../api';
+import { OutboundServiceLineEdit } from './OutboundServiceLineEdit';
 
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
@@ -106,6 +111,69 @@ const RelatedDocumentsSection: FC = () => {
   );
 };
 
+export const PricingSection = () => {
+  const t = useTranslation('distribution');
+  const serviceLineModal = useToggle(false);
+  const { c } = useCurrency();
+  const { pricing } = useOutboundFields(['pricing']);
+
+  return (
+    <DetailPanelSection title={t('heading.charges')}>
+      <Grid container gap={0.5}>
+        <OutboundServiceLineEdit
+          isOpen={serviceLineModal.isOn}
+          onClose={serviceLineModal.toggleOff}
+        />
+
+        <PanelRow>
+          <PanelLabel fontWeight="bold">
+            {t('heading.stock-charges')}
+          </PanelLabel>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('heading.sub-total')}</PanelLabel>
+          <PanelField>{c(pricing.stockTotalBeforeTax).format()}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('heading.total')}</PanelLabel>
+          <PanelField>{c(pricing.stockTotalAfterTax).format()}</PanelField>
+        </PanelRow>
+        <PanelRow style={{ marginTop: 12 }}>
+          <PanelLabel fontWeight="bold">
+            {t('heading.service-charges')}
+          </PanelLabel>
+          <PanelField>
+            <IconButton
+              icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
+              label={t('label.edit')}
+              onClick={serviceLineModal.toggleOn}
+            />
+          </PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('heading.sub-total')}</PanelLabel>
+          <PanelField>{c(pricing.serviceTotalBeforeTax).format()}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('heading.total')}</PanelLabel>
+          <PanelField>{c(pricing.serviceTotalAfterTax).format()}</PanelField>
+        </PanelRow>
+        <PanelRow style={{ marginTop: 12 }}>
+          <PanelLabel fontWeight="bold">{t('heading.totals')}</PanelLabel>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('heading.sub-total')}</PanelLabel>
+          <PanelField>{c(pricing.totalBeforeTax).format()}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('heading.total')}</PanelLabel>
+          <PanelField>{c(pricing.totalAfterTax).format()}</PanelField>
+        </PanelRow>
+      </Grid>
+    </DetailPanelSection>
+  );
+};
+
 export const SidePanel: FC = () => {
   const { success } = useNotification();
   const t = useTranslation('distribution');
@@ -128,6 +196,7 @@ export const SidePanel: FC = () => {
     >
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
+      <PricingSection />
     </DetailPanelPortal>
   );
 };

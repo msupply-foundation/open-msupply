@@ -1,7 +1,7 @@
 import React from 'react';
-import { Grid } from '@mui/material';
+import Grid, { GridProps } from '@mui/material/Grid';
 
-export const PanelLabel: React.FC = props => (
+export const PanelLabel: React.FC<GridProps> = props => (
   <Grid
     item
     flex={2}
