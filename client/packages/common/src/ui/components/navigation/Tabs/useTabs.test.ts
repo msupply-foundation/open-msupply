@@ -3,8 +3,6 @@ import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-dom/test-utils';
 
 describe('useTabs', () => {
-  it('', () => expect(true).toBe(true));
-
   it('returns an the correct initial tab', () => {
     const { result: result1 } = renderHook(() => useTabs('1'));
     expect(result1.current.currentTab).toBe('1');
