@@ -138,13 +138,13 @@ export const PricingSection = () => {
           <PanelLabel>{t('heading.total')}</PanelLabel>
           <PanelField>{c(pricing.stockTotalAfterTax).format()}</PanelField>
         </PanelRow>
-        <PanelRow>
+        <PanelRow style={{ marginTop: 12 }}>
           <PanelLabel fontWeight="bold">
             {t('heading.service-charges')}
           </PanelLabel>
           <PanelField>
             <IconButton
-              icon={<EditIcon />}
+              icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
               label={t('label.edit')}
               onClick={serviceLineModal.toggleOn}
             />
@@ -158,7 +158,7 @@ export const PricingSection = () => {
           <PanelLabel>{t('heading.total')}</PanelLabel>
           <PanelField>{c(pricing.serviceTotalAfterTax).format()}</PanelField>
         </PanelRow>
-        <PanelRow>
+        <PanelRow style={{ marginTop: 12 }}>
           <PanelLabel fontWeight="bold">{t('heading.totals')}</PanelLabel>
         </PanelRow>
         <PanelRow>
