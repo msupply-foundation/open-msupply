@@ -1,5 +1,8 @@
+import { AppRoute } from '@openmsupply-client/config';
 import { useMemo } from 'react';
 import {
+  RouteBuilder,
+  useNavigate,
   useQueryClient,
   useAuthContext,
   RequisitionNodeStatus,
@@ -16,6 +19,8 @@ import {
   getDataSorter,
   useQueryParams,
   useMutation,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { getResponseQueries } from './api';
 import {
@@ -131,5 +136,48 @@ export const useSaveResponseLines = () => {
         api.storeId,
         requisitionNumber,
       ]),
+  });
+};
+
+const useOpenInNewTab = () => {
+  const navigate = useNavigate();
+  const { origin } = window.location;
+  return (url: string) => {
+    const to = `${origin}${url}`;
+    console.log(origin);
+    console.log(to);
+    const win = window.open(to, '_blank');
+    if (win) {
+      win.focus();
+    } else {
+      navigate(to);
+    }
+  };
+};
+
+export const useCreateOutboundFromResponse = () => {
+  const { error, warning } = useNotification();
+  const t = useTranslation('distribution');
+  const openInNewTab = useOpenInNewTab();
+  const { id } = useResponseFields('id');
+  const api = useResponseApi();
+  return useMutation(() => api.createOutboundFromResponse(id), {
+    onSuccess: (invoiceNumber: number) => {
+      openInNewTab(
+        RouteBuilder.create(AppRoute.Distribution)
+          .addPart(AppRoute.OutboundShipment)
+          .addPart(String(invoiceNumber))
+          .build()
+      );
+    },
+    onError: e => {
+      const errorObj = e as Error;
+      console.log(errorObj);
+      if (errorObj.message === 'NothingRemainingToSupply') {
+        warning(t('warning.nothing-to-supply'))();
+      } else {
+        error(t('error.failed-to-create-outbound'))();
+      }
+    },
   });
 };

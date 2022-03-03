@@ -2,11 +2,14 @@
   "button.delete-lines": "Delete selected lines",
   "button.new-outbound-shipment": "New Outbound Shipment",
   "button.new-shipment": "New Shipment",
+  "button.create-shipment": "Create Shipment",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "button.select-a-color": "Select a color",
   "dev.log-draft": "Log draft",
   "error.requisition-not-found": "Requisition not found",
   "error.shipment-not-found": "Shipment not found",
+  "warning.nothing-to-supply": "Nothing left to supply!",
+  "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
   "heading.comment": "Comment",
   "heading.edit-item": "Edit Item",
   "heading.order": "Order",
@@ -18,6 +21,7 @@
   "heading.sub-total": "Sub total",
   "heading.total": "Total",
   "heading.stock-details": "Stock details",
+  "heading.create-outbound-shipment": "Create Outbound Shipment",
   "label.add-batch": "Add batch",
   "label.allocated": "Allocated",
   "label.allocation": "Allocation",
@@ -49,5 +53,6 @@
   "messages.deleted-requisitions": "Deleted {{number}} requisitions",
   "messages.error-saving-shipment": "Error saving shipment 🥺",
   "messages.select-rows-to-delete": "Select rows to delete",
-  "messages.shipment-saved": "Shipment saved 🥳"
+  "messages.shipment-saved": "Shipment saved 🥳",
+  "messages.create-outbound-from-requisition": "Are you sure you want to create an Outbound Shipment from this Customer Requisition?"
 }

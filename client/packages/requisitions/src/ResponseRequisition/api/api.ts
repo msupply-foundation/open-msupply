@@ -136,4 +136,23 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       return result.updateResponseRequisitionLine;
     } else throw new Error('Could not update response line');
   },
+  createOutboundFromResponse: async (responseId: string): Promise<number> => {
+    const result = await sdk.createOutboundFromResponse({
+      storeId,
+      responseId,
+    });
+
+    if (result.createRequisitionShipment.__typename === 'InvoiceNode') {
+      return result.createRequisitionShipment.invoiceNumber;
+    }
+
+    if (
+      result.createRequisitionShipment.__typename ===
+      'CreateRequisitionShipmentError'
+    ) {
+      throw new Error(result.createRequisitionShipment.error.__typename);
+    }
+
+    throw new Error('Could not create outbound');
+  },
 });
