@@ -3,10 +3,11 @@ import {
   RecordPatch,
   DataTable,
   useColumns,
-  NumberInputCell,
   CurrencyInputCell,
   useTranslation,
   getExpiryDateInputColumn,
+  NonZeroNumberInputCell,
+  PositiveNumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './hooks';
 interface StocktakeLineEditTableProps {
@@ -33,14 +34,14 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'packSize',
       label: 'label.pack-size',
       width: 100,
-      Cell: NumberInputCell,
+      Cell: NonZeroNumberInputCell,
       setter: update,
     },
     {
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 100,
-      Cell: NumberInputCell,
+      Cell: PositiveNumberInputCell,
       setter: update,
     },
     [expiryDateColumn, { setter: update, width: 100 }],
