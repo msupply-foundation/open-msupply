@@ -4,7 +4,7 @@ use repository::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         RemoteSyncBufferRow,
     },
-    InvoiceRepository, NameQueryRepository, StorageConnection,
+    EqualFilter, InvoiceRepository, NameFilter, NameQueryRepository, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};
