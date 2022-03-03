@@ -20,6 +20,9 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             password: "password".to_string(),
             url: "http://localhost:5432".to_string(),
             interval: 100000000,
+            central_server_site_id: 0,
+            site_id: 1,
+            site_hardware_id: "".to_string(),
         },
         auth: AuthSettings {
             token_secret: "testtokensecret".to_string(),

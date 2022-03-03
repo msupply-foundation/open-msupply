@@ -16,6 +16,14 @@ impl<'a> NumberRowRepository<'a> {
         NumberRowRepository { connection }
     }
 
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<NumberRow>, RepositoryError> {
+        let result = number_dsl::number
+            .filter(number_dsl::id.eq(id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_one_by_type_and_store(
         &self,
         r#type: &NumberRowType,

@@ -1,12 +1,18 @@
 use chrono::NaiveDate;
 use repository::schema::{
-    RemoteSyncBufferAction, RemoteSyncBufferRow, StocktakeRow, StocktakeStatus,
+    ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
+    StocktakeRow, StocktakeStatus,
 };
+use serde_json::json;
 
 use crate::sync::translation_remote::{
-    test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    pull::{IntegrationRecord, IntegrationUpsertRecord},
+    stocktake::{LegacyStocktakeRow, LegacyStocktakeStatus},
+    test_data::TestSyncRecord,
     TRANSLATION_RECORD_STOCKTAKE,
 };
+
+use super::TestSyncPushRecord;
 
 const STOCKTAKE_1: (&'static str, &'static str) = (
     "0a375950f0d211eb8dddb54df6d741bc",
@@ -29,10 +35,8 @@ const STOCKTAKE_1: (&'static str, &'static str) = (
       "type": ""
     }"#,
 );
-
-#[allow(dead_code)]
-pub fn get_test_stocktake_records() -> Vec<TestSyncRecord> {
-    vec![TestSyncRecord {
+fn stocktake_pull_record() -> TestSyncRecord {
+    TestSyncRecord {
         translated_record: Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Stocktake(StocktakeRow {
                 id: STOCKTAKE_1.0.to_string(),
@@ -54,5 +58,35 @@ pub fn get_test_stocktake_records() -> Vec<TestSyncRecord> {
             data: STOCKTAKE_1.1.to_string(),
             action: RemoteSyncBufferAction::Update,
         },
-    }]
+    }
+}
+fn stocktake_push_record() -> TestSyncPushRecord {
+    TestSyncPushRecord {
+        change_log: ChangelogRow {
+            id: 2,
+            table_name: ChangelogTableName::Stocktake,
+            row_id: STOCKTAKE_1.0.to_string(),
+            row_action: ChangelogAction::Upsert,
+        },
+        push_data: json!(LegacyStocktakeRow {
+            ID: STOCKTAKE_1.0.to_string(),
+            store_ID: "store_a".to_string(),
+            status: LegacyStocktakeStatus::Fn,
+            Description: Some("Test".to_string()),
+            comment: None,
+            invad_additions_ID: Some("inbound_shipment_a".to_string()),
+            serial_number: 3,
+            stock_take_created_date: NaiveDate::from_ymd(2021, 07, 30)
+        }),
+    }
+}
+
+#[allow(dead_code)]
+pub fn get_test_stocktake_records() -> Vec<TestSyncRecord> {
+    vec![stocktake_pull_record()]
+}
+
+#[allow(dead_code)]
+pub fn get_test_push_stocktake_records() -> Vec<TestSyncPushRecord> {
+    vec![stocktake_push_record()]
 }

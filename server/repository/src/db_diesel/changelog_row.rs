@@ -29,4 +29,12 @@ impl<'a> ChangelogRepository<'a> {
             .load(&self.connection.connection)?;
         Ok(result)
     }
+
+    pub fn latest_changelog(&self) -> Result<Option<ChangelogRow>, RepositoryError> {
+        let result = changelog_deduped_dsl::changelog_deduped
+            .order(changelog_deduped_dsl::id.desc())
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
 }
