@@ -4,9 +4,9 @@ import {
   useTranslation,
   RequisitionNodeType,
 } from '@openmsupply-client/common';
-import { RequestRequisitionRowFragment } from './RequestRequisition/api';
+import { RequestRowFragment } from './RequestRequisition/api';
 
-export const requestRequisitionStatuses = [
+export const requestStatuses = [
   RequisitionNodeStatus.Draft,
   RequisitionNodeStatus.Sent,
   RequisitionNodeStatus.Finalised,
@@ -14,7 +14,7 @@ export const requestRequisitionStatuses = [
 
 // TODO: When response requisitions can be manually created, the status of DRAFT
 // becomes possible and such will need to be handled.
-export const responseRequisitionStatuses = [
+export const responseStatuses = [
   RequisitionNodeStatus.New,
   RequisitionNodeStatus.Finalised,
 ];
@@ -46,28 +46,26 @@ export const getResponseRequisitionStatuses = (): RequisitionNodeStatus[] => [
   RequisitionNodeStatus.Finalised,
 ];
 
-export const getNextRequestRequisitionStatus = (
+export const getNextRequestStatus = (
   currentStatus: RequisitionNodeStatus
 ): RequisitionNodeStatus | null => {
-  const currentStatusIdx = requestRequisitionStatuses.findIndex(
+  const currentStatusIdx = requestStatuses.findIndex(
     status => currentStatus === status
   );
-  const nextStatus = requestRequisitionStatuses[currentStatusIdx + 1];
+  const nextStatus = requestStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
 export const getNextResponseRequisitionStatus = (
   currentStatus: RequisitionNodeStatus
 ): RequisitionNodeStatus | null => {
-  const currentStatusIdx = responseRequisitionStatuses.findIndex(
+  const currentStatusIdx = responseStatuses.findIndex(
     status => currentStatus === status
   );
-  const nextStatus = responseRequisitionStatuses[currentStatusIdx + 1];
+  const nextStatus = responseStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
-export const canDeleteRequestRequisition = (
-  requisitionRow: RequestRequisitionRowFragment
-): boolean =>
+export const canDeleteRequest = (requisitionRow: RequestRowFragment): boolean =>
   requisitionRow.status === RequisitionNodeStatus.Draft &&
   requisitionRow.type === RequisitionNodeType.Request;

@@ -16,17 +16,14 @@ import {
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
 // import { RequisitionLine } from '../../types';
-import {
-  useRequestRequisitionFields,
-  useIsRequestRequisitionDisabled,
-} from '../api';
+import { useRequestFields, useIsRequestDisabled } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['replenishment', 'common']);
 
   // const { success, info } = useNotification();
-  const isDisabled = useIsRequestRequisitionDisabled();
-  const { theirReference, update, otherParty } = useRequestRequisitionFields([
+  const isDisabled = useIsRequestDisabled();
+  const { theirReference, update, otherParty } = useRequestFields([
     'theirReference',
     'otherParty',
   ]);

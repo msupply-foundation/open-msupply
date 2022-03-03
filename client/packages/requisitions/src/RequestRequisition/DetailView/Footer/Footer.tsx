@@ -6,14 +6,11 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
-import {
-  getRequisitionTranslator,
-  requestRequisitionStatuses,
-} from '../../../utils';
-import { RequestRequisitionFragment, useRequestRequisition } from '../../api';
+import { getRequisitionTranslator, requestStatuses } from '../../../utils';
+import { RequestFragment, useRequest } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
-export const createStatusLog = (requisition: RequestRequisitionFragment) => {
+export const createStatusLog = (requisition: RequestFragment) => {
   const statusLog: Record<RequisitionNodeStatus, null | undefined | string> = {
     [RequisitionNodeStatus.Draft]: requisition.createdDatetime,
     [RequisitionNodeStatus.Sent]: requisition.sentDatetime,
@@ -26,7 +23,7 @@ export const createStatusLog = (requisition: RequestRequisitionFragment) => {
 };
 
 export const Footer: FC = () => {
-  const { data } = useRequestRequisition();
+  const { data } = useRequest();
   const t = useTranslation('replenishment');
 
   return (
@@ -41,7 +38,7 @@ export const Footer: FC = () => {
             height={64}
           >
             <StatusCrumbs
-              statuses={requestRequisitionStatuses}
+              statuses={requestStatuses}
               statusLog={createStatusLog(data)}
               statusFormatter={getRequisitionTranslator(t)}
             />

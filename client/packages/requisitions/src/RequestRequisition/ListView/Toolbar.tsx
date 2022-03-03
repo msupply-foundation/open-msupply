@@ -8,10 +8,7 @@ import {
   SearchBar,
   FilterController,
 } from '@openmsupply-client/common';
-import {
-  RequestRequisitionRowFragment,
-  useDeleteSelectedRequisitions,
-} from '../api';
+import { RequestRowFragment, useDeleteSelectedRequisitions } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
@@ -19,7 +16,7 @@ export const Toolbar: FC<{
   const onDelete = useDeleteSelectedRequisitions();
   const t = useTranslation('replenishment');
 
-  const key = 'comment' as keyof RequestRequisitionRowFragment;
+  const key = 'comment' as keyof RequestRowFragment;
   const filterString = filter.filterBy?.[key]?.like as string;
 
   return (

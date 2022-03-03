@@ -10,15 +10,15 @@ import {
 } from '@openmsupply-client/common';
 
 import {
-  ResponseRequisitionFragment,
-  ResponseRequisitionRowFragment,
+  ResponseFragment,
+  ResponseRowFragment,
   Sdk,
 } from './operations.generated';
 import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
 
 const responseParser = {
   toStatus: (
-    patch: Partial<ResponseRequisitionFragment> & { id: string }
+    patch: Partial<ResponseFragment> & { id: string }
   ): UpdateResponseRequisitionStatusInput | undefined => {
     switch (patch.status) {
       case RequisitionNodeStatus.Finalised:
@@ -28,7 +28,7 @@ const responseParser = {
     }
   },
   toSortField: (
-    sortBy: SortBy<ResponseRequisitionRowFragment>
+    sortBy: SortBy<ResponseRowFragment>
   ): RequisitionSortFieldInput => {
     switch (sortBy.key) {
       case 'createdDatetime': {
@@ -53,7 +53,7 @@ const responseParser = {
     }
   },
   toUpdate: (
-    requisition: Partial<ResponseRequisitionFragment> & { id: string }
+    requisition: Partial<ResponseFragment> & { id: string }
   ): UpdateResponseRequisitionInput => {
     return {
       id: requisition.id,
@@ -81,7 +81,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }: {
       first: number;
       offset: number;
-      sortBy: SortBy<ResponseRequisitionRowFragment>;
+      sortBy: SortBy<ResponseRowFragment>;
       filter: FilterBy | null;
     }) => {
       const result = await sdk.responseRequisitions({
@@ -98,9 +98,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.requisitions;
     },
-    byNumber: async (
-      requisitionNumber: string
-    ): Promise<ResponseRequisitionFragment> => {
+    byNumber: async (requisitionNumber: string): Promise<ResponseFragment> => {
       const result = await sdk.responseRequisition({
         storeId,
         requisitionNumber: Number(requisitionNumber),
@@ -114,7 +112,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     },
   },
   update: async (
-    patch: Partial<ResponseRequisitionFragment> & { id: string }
+    patch: Partial<ResponseFragment> & { id: string }
   ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
     const input = responseParser.toUpdate(patch);
     const result = await sdk.updateResponseRequisition({ storeId, input });

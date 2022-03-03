@@ -17,7 +17,7 @@ import { NameSearchInput } from '@openmsupply-client/system';
 import {
   useResponseRequisitionFields,
   useIsResponseRequisitionDisabled,
-  ResponseRequisitionLineFragment,
+  ResponseLineFragment,
 } from '../api';
 
 export const Toolbar: FC = () => {
@@ -31,7 +31,7 @@ export const Toolbar: FC = () => {
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => lines.nodes.find(({ id }) => selectedId === id))
-      .filter(Boolean) as ResponseRequisitionLineFragment[],
+      .filter(Boolean) as ResponseLineFragment[],
   }));
 
   const deleteAction = () => {
