@@ -10,6 +10,7 @@ import {
   Theme,
   alpha,
   PositiveNumberInputCell,
+  NonZeroNumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { getLocationInputColumn } from '@openmsupply-client/system';
@@ -28,6 +29,7 @@ const getBatchColumn = (
   {
     width: 150,
     maxWidth: 150,
+    maxLength: 50,
     Cell: TextInputCell,
     setter: updateDraftLine,
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
@@ -64,7 +66,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
           setter: updateDraftLine,
         },
       ],
-      ['packSize', { Cell: PositiveNumberInputCell, setter: updateDraftLine }],
+      ['packSize', { Cell: NonZeroNumberInputCell, setter: updateDraftLine }],
       [
         'unitQuantity',
         { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
