@@ -1,6 +1,13 @@
 import { SortBy, NameSortFieldInput } from '@openmsupply-client/common';
 import { Sdk, NameRowFragment } from './operations.generated';
 
+export type ListParams = {
+  type?: 'supplier' | 'customer';
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<NameRowFragment>;
+};
+
 export const getNameQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     list: async ({
@@ -8,12 +15,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
-    }: {
-      type?: 'supplier' | 'customer';
-      first?: number;
-      offset?: number;
-      sortBy?: SortBy<NameRowFragment>;
-    }): Promise<{
+    }: ListParams): Promise<{
       nodes: NameRowFragment[];
       totalCount: number;
     }> => {
