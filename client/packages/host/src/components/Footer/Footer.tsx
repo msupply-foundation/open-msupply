@@ -7,6 +7,7 @@ import {
   useAuthContext,
   UserIcon,
 } from '@openmsupply-client/common';
+import { StoreSelector } from './StoreSelector';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
@@ -20,12 +21,12 @@ export const Footer: React.FC = () => {
 
   return (
     <Box gap={2} display="flex" flex={1} alignItems="center">
-      {store?.code && (
+      <StoreSelector>
         <PaddedCell>
           <HomeIcon sx={iconStyles} />
           <Typography sx={textStyles}>{store.code}</Typography>
         </PaddedCell>
-      )}
+      </StoreSelector>
       {user?.name && (
         <PaddedCell>
           <UserIcon sx={iconStyles} />
