@@ -17,7 +17,7 @@ pub use synchroniser::Synchroniser;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-#[error("Failed to translate {table_name} sync record: {record}, error: {source}")]
+#[error("Failed to translate {table_name} sync record: {record}")]
 pub struct SyncTranslationError {
     pub table_name: &'static str,
     pub source: anyhow::Error,
@@ -26,12 +26,12 @@ pub struct SyncTranslationError {
 
 #[derive(Error, Debug)]
 pub enum SyncImportError {
-    #[error("Failed to translate sync records: {source}")]
+    #[error("Failed to translate sync records")]
     TranslationError {
         #[from]
         source: SyncTranslationError,
     },
-    #[error("Failed to integrate sync records: {source}")]
+    #[error("Failed to integrate sync records")]
     IntegrationError {
         source: RepositoryError,
         extra: String,
