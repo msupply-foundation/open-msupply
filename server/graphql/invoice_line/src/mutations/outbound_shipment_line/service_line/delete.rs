@@ -98,3 +98,5 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
     Err(graphql_error.extend())
 }
+
+// TODO tests
