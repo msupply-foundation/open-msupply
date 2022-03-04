@@ -2,7 +2,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useMemo } from 'react';
 import {
   RouteBuilder,
-  useNavigate,
+  useOpenInNewTab,
   useQueryClient,
   useAuthContext,
   RequisitionNodeStatus,
@@ -139,22 +139,6 @@ export const useSaveResponseLines = () => {
   });
 };
 
-const useOpenInNewTab = () => {
-  const navigate = useNavigate();
-  const { origin } = window.location;
-  return (url: string) => {
-    const to = `${origin}${url}`;
-    console.log(origin);
-    console.log(to);
-    const win = window.open(to, '_blank');
-    if (win) {
-      win.focus();
-    } else {
-      navigate(to);
-    }
-  };
-};
-
 export const useCreateOutboundFromResponse = () => {
   const { error, warning } = useNotification();
   const t = useTranslation('distribution');
@@ -172,7 +156,6 @@ export const useCreateOutboundFromResponse = () => {
     },
     onError: e => {
       const errorObj = e as Error;
-      console.log(errorObj);
       if (errorObj.message === 'NothingRemainingToSupply') {
         warning(t('warning.nothing-to-supply'))();
       } else {
