@@ -1,5 +1,6 @@
 use async_graphql::*;
 
+use graphql_core::generic_inputs::TaxUpdate;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
@@ -14,8 +15,6 @@ use service::invoice_line::{
     },
     ShipmentTaxUpdate,
 };
-
-use crate::mutations::outbound_shipment_line::TaxUpdate;
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,

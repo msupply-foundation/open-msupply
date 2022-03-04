@@ -1,4 +1,5 @@
 pub mod generic_filters;
+pub mod generic_inputs;
 pub mod loader;
 pub mod pagination;
 pub mod simple_generic_errors;

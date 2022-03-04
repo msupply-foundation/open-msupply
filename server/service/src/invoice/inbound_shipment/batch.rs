@@ -1,10 +1,20 @@
 use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
-    invoice_line::inbound_shipment_line::{
-        delete_inbound_shipment_line, insert_inbound_shipment_line, update_inbound_shipment_line,
-        DeleteInboundShipmentLine, DeleteInboundShipmentLineError, InsertInboundShipmentLine,
-        InsertInboundShipmentLineError, UpdateInboundShipmentLine, UpdateInboundShipmentLineError,
+    invoice_line::{
+        inbound_shipment_line::{
+            delete_inbound_shipment_line, insert_inbound_shipment_line,
+            update_inbound_shipment_line, DeleteInboundShipmentLine,
+            DeleteInboundShipmentLineError, InsertInboundShipmentLine,
+            InsertInboundShipmentLineError, UpdateInboundShipmentLine,
+            UpdateInboundShipmentLineError,
+        },
+        inbound_shipment_service_line::{
+            delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
+            update_inbound_shipment_service_line, DeleteInboundShipmentServiceLineError,
+            InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError,
+            UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError,
+        },
     },
     service_provider::ServiceContext,
     InputWithResult, WithDBError,
@@ -22,6 +32,9 @@ pub struct BatchInboundShipment {
     pub insert_line: Option<Vec<InsertInboundShipmentLine>>,
     pub update_line: Option<Vec<UpdateInboundShipmentLine>>,
     pub delete_line: Option<Vec<DeleteInboundShipmentLine>>,
+    pub insert_service_line: Option<Vec<InsertInboundShipmentServiceLine>>,
+    pub update_service_line: Option<Vec<UpdateInboundShipmentServiceLine>>,
+    pub delete_service_line: Option<Vec<DeleteInboundShipmentLine>>,
     pub update_shipment: Option<Vec<UpdateInboundShipment>>,
     pub delete_shipment: Option<Vec<DeleteInboundShipment>>,
     pub continue_on_error: Option<bool>,
@@ -45,6 +58,24 @@ pub struct BatchInboundShipmentResult {
     >,
     pub delete_line: Vec<
         InputWithResult<DeleteInboundShipmentLine, Result<String, DeleteInboundShipmentLineError>>,
+    >,
+    pub insert_service_line: Vec<
+        InputWithResult<
+            InsertInboundShipmentServiceLine,
+            Result<InvoiceLine, InsertInboundShipmentServiceLineError>,
+        >,
+    >,
+    pub update_service_line: Vec<
+        InputWithResult<
+            UpdateInboundShipmentServiceLine,
+            Result<InvoiceLine, UpdateInboundShipmentServiceLineError>,
+        >,
+    >,
+    pub delete_service_line: Vec<
+        InputWithResult<
+            DeleteInboundShipmentLine,
+            Result<String, DeleteInboundShipmentServiceLineError>,
+        >,
     >,
     pub update_shipment:
         Vec<InputWithResult<UpdateInboundShipment, Result<Invoice, UpdateInboundShipmentError>>>,
@@ -96,9 +127,14 @@ pub fn batch_inbound_shipment(
                 insert_line: vec![],
                 update_line: vec![],
                 delete_line: vec![],
+                insert_service_line: vec![],
+                update_service_line: vec![],
+                delete_service_line: vec![],
                 update_shipment: vec![],
                 delete_shipment: vec![],
             };
+
+            // Insert Shipment
 
             let (has_error, results) = do_mutations(
                 ctx,
@@ -111,6 +147,8 @@ pub fn batch_inbound_shipment(
             if has_error && !continue_on_error {
                 return Err(WithDBError::err(result));
             }
+
+            // Normal Line
 
             let (has_error, results) = do_mutations(
                 ctx,
@@ -147,6 +185,47 @@ pub fn batch_inbound_shipment(
             if has_error && !continue_on_error {
                 return Err(WithDBError::err(result));
             }
+
+            // Service Line
+
+            let (has_error, results) = do_mutations(
+                ctx,
+                store_id,
+                input.insert_service_line.unwrap_or(vec![]),
+                insert_inbound_shipment_service_line,
+            );
+            result.insert_service_line = results;
+
+            if has_error && !continue_on_error {
+                return Ok(OkWithRollback::OkWithRollback(result));
+            }
+
+            let (has_error, results) = do_mutations(
+                ctx,
+                store_id,
+                input.update_service_line.unwrap_or(vec![]),
+                update_inbound_shipment_service_line,
+            );
+            result.update_service_line = results;
+
+            if has_error && !continue_on_error {
+                return Ok(OkWithRollback::OkWithRollback(result));
+            }
+
+            let (has_error, results) = do_mutations(
+                ctx,
+                store_id,
+                input.delete_service_line.unwrap_or(vec![]),
+                delete_inbound_shipment_service_line,
+            );
+            result.delete_service_line = results;
+
+            // Update and delete shipment
+
+            if has_error && !continue_on_error {
+                return Ok(OkWithRollback::OkWithRollback(result));
+            }
+
             let (has_error, results) = do_mutations(
                 ctx,
                 store_id,
@@ -234,6 +313,9 @@ mod test {
             update_shipment: None,
             delete_shipment: Some(vec![delete_shipment_input.clone()]),
             continue_on_error: None,
+            insert_service_line: None,
+            update_service_line: None,
+            delete_service_line: None,
         };
 
         // Test rollback

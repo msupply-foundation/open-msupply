@@ -7,7 +7,7 @@ use crate::{
         validate::{
             check_line_belongs_to_invoice, check_line_exists, LineDoesNotExist, NotInvoiceLine,
         },
-        DeleteOutboundShipmentLine,
+        DeleteInboundShipmentLine,
     },
 };
 use repository::{
@@ -15,48 +15,48 @@ use repository::{
     StorageConnection,
 };
 
-use super::DeleteOutboundShipmentServiceLineError;
+use super::DeleteInboundShipmentServiceLineError;
 
 pub fn validate(
-    input: &DeleteOutboundShipmentLine,
+    input: &DeleteInboundShipmentLine,
     connection: &StorageConnection,
-) -> Result<InvoiceLineRow, DeleteOutboundShipmentServiceLineError> {
+) -> Result<InvoiceLineRow, DeleteInboundShipmentServiceLineError> {
     let line = check_line_exists(&input.id, connection)?;
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
 
     check_line_belongs_to_invoice(&line, &invoice)?;
-    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     Ok(line)
 }
 
-impl From<LineDoesNotExist> for DeleteOutboundShipmentServiceLineError {
+impl From<LineDoesNotExist> for DeleteInboundShipmentServiceLineError {
     fn from(_: LineDoesNotExist) -> Self {
-        DeleteOutboundShipmentServiceLineError::LineDoesNotExist
+        DeleteInboundShipmentServiceLineError::LineDoesNotExist
     }
 }
 
-impl From<WrongInvoiceRowType> for DeleteOutboundShipmentServiceLineError {
+impl From<WrongInvoiceRowType> for DeleteInboundShipmentServiceLineError {
     fn from(_: WrongInvoiceRowType) -> Self {
-        DeleteOutboundShipmentServiceLineError::NotAnOutboundShipment
+        DeleteInboundShipmentServiceLineError::NotAnInboundShipment
     }
 }
 
-impl From<InvoiceIsNotEditable> for DeleteOutboundShipmentServiceLineError {
+impl From<InvoiceIsNotEditable> for DeleteInboundShipmentServiceLineError {
     fn from(_: InvoiceIsNotEditable) -> Self {
-        DeleteOutboundShipmentServiceLineError::CannotEditInvoice
+        DeleteInboundShipmentServiceLineError::CannotEditInvoice
     }
 }
 
-impl From<NotInvoiceLine> for DeleteOutboundShipmentServiceLineError {
+impl From<NotInvoiceLine> for DeleteInboundShipmentServiceLineError {
     fn from(error: NotInvoiceLine) -> Self {
-        DeleteOutboundShipmentServiceLineError::NotThisInvoiceLine(error.0)
+        DeleteInboundShipmentServiceLineError::NotThisInvoiceLine(error.0)
     }
 }
 
-impl From<InvoiceDoesNotExist> for DeleteOutboundShipmentServiceLineError {
+impl From<InvoiceDoesNotExist> for DeleteInboundShipmentServiceLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
-        DeleteOutboundShipmentServiceLineError::InvoiceDoesNotExist
+        DeleteInboundShipmentServiceLineError::InvoiceDoesNotExist
     }
 }

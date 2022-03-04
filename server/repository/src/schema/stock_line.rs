@@ -2,7 +2,7 @@ use super::diesel_schema::stock_line;
 
 use chrono::NaiveDate;
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "stock_line"]
 pub struct StockLineRow {
     pub id: String,
