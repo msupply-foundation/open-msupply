@@ -1,7 +1,7 @@
 import React from 'react';
 import { usePopover } from '../BasePopover';
 
-export interface PopoverProps {
+interface PopoverProps {
   Content: React.ReactElement<any, any>;
   placement?: 'top' | 'bottom' | 'left' | 'right';
 }
