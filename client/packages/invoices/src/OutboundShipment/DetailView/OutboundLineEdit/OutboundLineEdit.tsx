@@ -93,7 +93,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
               await mutate(draftOutboundLines);
               onClose();
             } catch (e) {
-              console.log(e);
+              // console.log(e);
             }
           }}
         />

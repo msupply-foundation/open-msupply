@@ -21,7 +21,7 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
-import { StocktakeApi, getStocktakeQueries } from './api';
+import { getStocktakeQueries, ListParams } from './api';
 import { useStocktakeColumns } from '../DetailView';
 import { canDeleteStocktake } from '../../utils';
 import {
@@ -31,18 +31,30 @@ import {
   StocktakeLineFragment,
 } from './operations.generated';
 
-export const useStocktakeApi = (): StocktakeApi => {
+export const useStocktakeApi = () => {
+  const keys = {
+    base: () => ['stocktake'] as const,
+    detail: (id: string) => [...keys.base(), storeId, id] as const,
+    list: () => [...keys.base(), storeId, 'list'] as const,
+    paramList: (params: ListParams) => [...keys.list(), params] as const,
+  };
+
   const { client } = useOmSupplyApi();
   const { storeId } = useAuthContext();
   const queries = getStocktakeQueries(getSdk(client), storeId);
-  return { ...queries, storeId };
+  return { ...queries, storeId, keys };
+};
+
+const useStocktakeNumber = () => {
+  const { stocktakeNumber = '' } = useParams();
+  return stocktakeNumber;
 };
 
 export const useStocktake = (): UseQueryResult<StocktakeFragment> => {
-  const { stocktakeNumber = '' } = useParams();
+  const stocktakeNumber = useStocktakeNumber();
   const api = useStocktakeApi();
-  return useQuery(['stocktake', stocktakeNumber], () =>
-    api.get.byNumber(Number(stocktakeNumber))
+  return useQuery(api.keys.detail(stocktakeNumber), () =>
+    api.get.byNumber(stocktakeNumber)
   );
 };
 
@@ -54,12 +66,12 @@ export const useStocktakes = () => {
 
   return {
     ...useQuery(
-      ['stocktake', 'list', api.storeId, queryParams],
+      api.keys.paramList(queryParams),
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
-        filter: queryParams.filter.filterBy,
+        filterBy: queryParams.filter.filterBy,
       })
     ),
     ...queryParams,
@@ -67,11 +79,13 @@ export const useStocktakes = () => {
 };
 
 export const useInsertStocktake = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const api = useStocktakeApi();
   return useMutation(api.insertStocktake, {
     onSuccess: ({ stocktakeNumber }) => {
       navigate(String(stocktakeNumber));
+      return queryClient.invalidateQueries(api.keys.base());
     },
   });
 };
@@ -80,9 +94,7 @@ export const useUpdateStocktake = () => {
   const queryClient = useQueryClient();
   const api = useStocktakeApi();
   return useMutation(api.update, {
-    onSuccess: () => {
-      return queryClient.invalidateQueries(['stocktake']);
-    },
+    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
   });
 };
 
@@ -91,13 +103,13 @@ export const useStocktakeFields = <
 >(
   keys: KeyOfStocktake | KeyOfStocktake[]
 ): FieldSelectorControl<StocktakeFragment, KeyOfStocktake> => {
-  const { stocktakeNumber = '' } = useParams();
+  const stocktakeNumber = useStocktakeNumber();
   const { mutateAsync } = useUpdateStocktake();
   const { data } = useStocktake();
   const api = useStocktakeApi();
   return useFieldsSelector(
-    ['stocktake', stocktakeNumber],
-    () => api.get.byNumber(Number(stocktakeNumber)),
+    api.keys.detail(stocktakeNumber),
+    () => api.get.byNumber(stocktakeNumber),
     (patch: Partial<StocktakeFragment>) =>
       mutateAsync({ ...patch, id: data?.id ?? '' }),
     keys
@@ -109,19 +121,15 @@ export const useIsStocktakeDisabled = (): boolean => {
   return status === StocktakeNodeStatus.Finalised;
 };
 
-export const useStocktakeDetailQueryKey = (): ['stocktake', string] => {
-  const { stocktakeNumber = '' } = useParams();
-  return ['stocktake', stocktakeNumber];
-};
-
 const useStocktakeSelector = <ReturnType>(
   select: (data: StocktakeFragment) => ReturnType
 ) => {
-  const queryKey = useStocktakeDetailQueryKey();
+  const stocktakeNumber = useStocktakeNumber();
+
   const api = useStocktakeApi();
   return useQuerySelector(
-    queryKey,
-    () => api.get.byNumber(Number(queryKey[1])),
+    api.keys.detail(stocktakeNumber),
+    () => api.get.byNumber(stocktakeNumber),
     select
   );
 };
@@ -162,27 +170,28 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
 };
 
 export const useSaveStocktakeLines = () => {
-  const queryKey = useStocktakeDetailQueryKey();
+  const stocktakeNumber = useStocktakeNumber();
   const queryClient = useQueryClient();
   const api = useStocktakeApi();
   return useMutation(api.updateLines, {
-    onSuccess: () => {
-      queryClient.invalidateQueries(queryKey);
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries(api.keys.detail(stocktakeNumber)),
   });
 };
 
 export const useDeleteStocktakeLine = () => {
+  const queryClient = useQueryClient();
+  const stocktakeNumber = useStocktakeNumber();
+
   const api = useStocktakeApi();
-  return useMutation(api.deleteLines);
+  return useMutation(api.deleteLines, {
+    onSuccess: () =>
+      queryClient.invalidateQueries(api.keys.detail(stocktakeNumber)),
+  });
 };
 
-export const useDeleteSelectedLines = (): {
-  onDelete: () => Promise<void>;
-} => {
-  const queryKey = useStocktakeDetailQueryKey();
+export const useDeleteSelectedLines = (): { onDelete: () => Promise<void> } => {
   const { success, info } = useNotification();
-  const queryClient = useQueryClient();
   const { items, lines } = useStocktakeRows();
   const { mutate } = useDeleteStocktakeLine();
   const t = useTranslation('inventory');
@@ -215,11 +224,8 @@ export const useDeleteSelectedLines = (): {
     if (selectedRows && selectedRows?.length > 0) {
       const number = selectedRows?.length;
       const successSnack = success(t('messages.deleted-lines', { number }));
-      mutate(selectedRows, {
-        onSuccess: () => {
-          queryClient.invalidateQueries(queryKey);
-          successSnack();
-        },
+      await mutate(selectedRows, {
+        onSuccess: successSnack,
       });
     } else {
       const infoSnack = info(t('label.select-rows-to-delete-them'));
@@ -272,8 +278,11 @@ export const useStocktakeRows = (isGrouped = true) => {
 };
 
 export const useDeleteStocktakes = () => {
+  const queryClient = useQueryClient();
   const api = useStocktakeApi();
-  return useMutation(api.deleteStocktakes);
+  return useMutation(api.deleteStocktakes, {
+    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+  });
 };
 
 export const useDeleteSelectedStocktakes = () => {
@@ -281,7 +290,6 @@ export const useDeleteSelectedStocktakes = () => {
   const { data: rows } = useStocktakes();
   const { success, info } = useNotification();
   const { mutate } = useDeleteStocktakes();
-  const queryClient = useQueryClient();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -298,14 +306,12 @@ export const useDeleteSelectedStocktakes = () => {
         const cannotDeleteSnack = info(t('messages.cant-delete-stocktakes'));
         cannotDeleteSnack();
       } else {
-        mutate(selectedRows, {
-          onSuccess: () => queryClient.invalidateQueries(['stocktake', 'list']),
-        });
         const deletedMessage = t('messages.deleted-stocktakes', {
           number: numberSelected,
         });
         const successSnack = success(deletedMessage);
         successSnack();
+        mutate(selectedRows, { onSuccess: successSnack });
       }
     } else {
       const selectRowsSnack = info(t('messages.select-rows-to-delete'));

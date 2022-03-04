@@ -16,14 +16,18 @@ import {
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../types';
 import {
-  getSdk,
   OutboundRowFragment,
   OutboundFragment,
   InsertOutboundShipmentMutationVariables,
   Sdk,
 } from './operations.generated';
 
-export type OutboundShipmentApi = ReturnType<typeof getSdk>;
+export type ListParams = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<OutboundRowFragment>;
+  filterBy: FilterBy | null;
+};
 
 const outboundParsers = {
   toSortKey: (sortBy: SortBy<OutboundRowFragment>): InvoiceSortFieldInput => {
@@ -137,12 +141,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       offset,
       sortBy,
       filterBy,
-    }: {
-      first: number;
-      offset: number;
-      sortBy: SortBy<OutboundRowFragment>;
-      filterBy: FilterBy | null;
-    }): Promise<{
+    }: ListParams): Promise<{
       nodes: OutboundRowFragment[];
       totalCount: number;
     }> => {

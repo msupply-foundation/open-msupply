@@ -27,7 +27,7 @@ export const useItemsList = (initialListParameters: {
     useQueryParams(initialListParameters);
 
   const queryState = useQuery(
-    ['item', 'list', queryParams],
+    api.keys.paramList(queryParams),
     async () => {
       const result = await api.get.listWithStockLines({
         sortBy,
