@@ -103,9 +103,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(
-                RecordNotFound {},
-            ))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::CannotEditRequisition => {
             return Ok(UpdateErrorInterface::CannotEditRequisition(

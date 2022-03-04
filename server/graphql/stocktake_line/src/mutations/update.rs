@@ -79,6 +79,10 @@ pub fn do_update_stocktake_line(
                 UpdateStocktakeLineError::LocationDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                // TODO should be standard error
+                UpdateStocktakeLineError::StocktakeIsLocked => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 UpdateStocktakeLineError::CannotEditFinalised => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -122,7 +126,9 @@ fn to_domain(
 mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
-    use graphql_core::{test_helpers::setup_graphl_test, assert_graphql_query};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{
         mock::{mock_location_1, mock_stock_line_a, MockDataInserts},
         schema::StocktakeLineRow,
@@ -187,6 +193,38 @@ mod test {
           }
       }"#;
 
+        let variables = Some(json!({
+            "storeId": "store id",
+            "input": {
+                "id": "id1",
+                "locationId": "location id",
+                "snapshotNumberOfPacks": 20,
+                "countedNumberOfPacks": 20,
+                "comment": "comment",
+                "batch": "batch",
+                "expiryDate": "2023-01-22",
+                "packSize": 10,
+                "costPricePerPack": 10.0,
+                "sellPricePerPack": 12.0,
+                "note": "note"
+            }
+        }));
+
+        // Stocktake is locked mapping
+        let test_service = TestService(Box::new(|_, _, _| {
+            Err(UpdateStocktakeLineError::StocktakeIsLocked)
+        }));
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
         // success
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(StocktakeLine {
@@ -210,22 +248,7 @@ mod test {
                 location: Some(mock_location_1()),
             })
         }));
-        let variables = Some(json!({
-            "storeId": "store id",
-            "input": {
-                "id": "id1",
-                "locationId": "location id",
-                "snapshotNumberOfPacks": 20,
-                "countedNumberOfPacks": 20,
-                "comment": "comment",
-                "batch": "batch",
-                "expiryDate": "2023-01-22",
-                "packSize": 10,
-                "costPricePerPack": 10.0,
-                "sellPricePerPack": 12.0,
-                "note": "note"
-            }
-        }));
+
         let expected = json!({
             "updateStocktakeLine": {
               "id": "id1",

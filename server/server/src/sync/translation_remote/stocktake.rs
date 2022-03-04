@@ -35,6 +35,8 @@ pub struct LegacyStocktakeRow {
     pub Description: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
+    #[serde(rename = "Locked")]
+    pub is_locked: bool,
 
     #[serde(deserialize_with = "empty_str_as_option")]
     pub invad_additions_ID: Option<String>,
@@ -82,6 +84,7 @@ impl RemotePullTranslation for StocktakeTranslation {
                 finalised_datetime: None,
                 // TODO what is the correct mapping:
                 inventory_adjustment_id: data.invad_additions_ID,
+                is_locked: data.is_locked,
             }),
         )))
     }
@@ -115,6 +118,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             created_datetime,
             finalised_datetime: _,
             inventory_adjustment_id,
+            is_locked,
         } = StocktakeRowRepository::new(connection)
             .find_one_by_id(&changelog.row_id)
             .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
@@ -130,6 +134,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             status: legacy_stocktake_status(&status),
             Description: description,
             comment,
+            is_locked,
             invad_additions_ID: inventory_adjustment_id,
             serial_number: stocktake_number,
             stock_take_created_date: date_from_date_time(&created_datetime),

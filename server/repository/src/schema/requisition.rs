@@ -1,6 +1,7 @@
 use super::diesel_schema::requisition;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
+use util::Defaults;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -41,21 +42,22 @@ pub struct RequisitionRow {
 impl Default for RequisitionRow {
     fn default() -> Self {
         Self {
-            id: "".to_string(),
-            requisition_number: 1,
-            name_id: "".to_string(),
-            store_id: "".to_string(),
             r#type: RequisitionRowType::Request,
             status: RequisitionRowStatus::Draft,
-            created_datetime: NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0),
-            sent_datetime: None,
-            finalised_datetime: None,
-            colour: None,
-            comment: None,
-            their_reference: None,
-            max_months_of_stock: 1.5,
-            min_months_of_stock: 1.5,
-            linked_requisition_id: None,
+            created_datetime: Defaults::naive_date_time(),
+            // Defaults
+            id: Default::default(),
+            requisition_number: Default::default(),
+            name_id: Default::default(),
+            store_id: Default::default(),
+            sent_datetime: Default::default(),
+            finalised_datetime: Default::default(),
+            colour: Default::default(),
+            comment: Default::default(),
+            their_reference: Default::default(),
+            max_months_of_stock: Default::default(),
+            min_months_of_stock: Default::default(),
+            linked_requisition_id: Default::default(),
         }
     }
 }

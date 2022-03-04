@@ -8,8 +8,8 @@ use crate::{
 };
 use repository::{
     schema::{RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
-    StorageConnection, EqualFilter,
+    EqualFilter, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]

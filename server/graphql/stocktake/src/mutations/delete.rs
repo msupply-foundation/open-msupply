@@ -71,6 +71,10 @@ pub fn do_delete_stocktake(
                 ServiceError::LineDeleteError { .. } => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
+                // TODO should be standard error (can lock concurrently)
+                ServiceError::StocktakeIsLocked => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
             };
             Err(graphql_error.extend())
         }
@@ -80,7 +84,9 @@ pub fn do_delete_stocktake(
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
-    use graphql_core::{test_helpers::setup_graphl_test, assert_graphql_query};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
 
@@ -125,23 +131,39 @@ mod test {
             MockDataInserts::all(),
         )
         .await;
-
         let query = r#"mutation DeleteStocktake($storeId: String, $input: DeleteStocktakeInput!) {
-          deleteStocktake(storeId: $storeId, input: $input) {
-              ... on DeleteStocktakeNode {                    
-                      id
-              }
-          }
-      }"#;
+            deleteStocktake(storeId: $storeId, input: $input) {
+                ... on DeleteStocktakeNode {                    
+                        id
+                }
+            }
+        }"#;
 
-        // success
-        let test_service = TestService(Box::new(|_, _, _| Ok("id1".to_string())));
         let variables = Some(json!({
             "storeId": "store id",
             "input": {
                 "id": "id1"
             }
         }));
+
+        // Stocktake is locked mapping
+        let test_service = TestService(Box::new(|_, _, _| {
+            Err(DeleteStocktakeError::StocktakeIsLocked)
+        }));
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // success
+        let test_service = TestService(Box::new(|_, _, _| Ok("id1".to_string())));
+
         let expected = json!({
             "deleteStocktake": {
               "id": "id1",

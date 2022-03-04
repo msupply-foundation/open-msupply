@@ -15,6 +15,7 @@ use crate::{
     validate::check_store_id_matches,
 };
 
+#[derive(Default)]
 pub struct UpdateStocktakeLineInput {
     pub id: String,
     pub location_id: Option<String>,
@@ -38,6 +39,7 @@ pub enum UpdateStocktakeLineError {
     StocktakeLineDoesNotExist,
     LocationDoesNotExist,
     CannotEditFinalised,
+    StocktakeIsLocked,
 }
 
 fn validate(
@@ -59,6 +61,10 @@ fn validate(
     };
     if !check_stocktake_not_finalised(&stocktake.status) {
         return Err(UpdateStocktakeLineError::CannotEditFinalised);
+    }
+
+    if stocktake.is_locked {
+        return Err(UpdateStocktakeLineError::StocktakeIsLocked);
     }
 
     if !check_store_id_matches(store_id, &stocktake.store_id) {
@@ -138,5 +144,176 @@ pub fn update_stocktake_line(
 impl From<RepositoryError> for UpdateStocktakeLineError {
     fn from(error: RepositoryError) -> Self {
         UpdateStocktakeLineError::DatabaseError(error)
+    }
+}
+
+#[cfg(test)]
+mod stocktake_line_test {
+    use repository::{
+        mock::{
+            mock_locations, mock_locked_stocktake_line, mock_stocktake_line_a,
+            mock_stocktake_line_finalised, mock_store_a, MockDataInserts,
+        },
+        schema::StocktakeLineRow,
+        test_db::setup_all,
+    };
+    use util::inline_init;
+
+    use crate::{
+        service_provider::ServiceProvider,
+        stocktake_line::update::{UpdateStocktakeLineError, UpdateStocktakeLineInput},
+    };
+
+    #[actix_rt::test]
+    async fn update_stocktake_line() {
+        let (_, _, connection_manager, _) =
+            setup_all("update_stocktake_line", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.stocktake_line_service;
+
+        // error: StocktakeLineDoesNotExist
+        let store_a = mock_store_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                &store_a.id,
+                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                    r.id = "invalid".to_string();
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::StocktakeLineDoesNotExist);
+
+        // error: InvalidStore
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                "invalid",
+                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                    r.id = stocktake_line_a.id;
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::InvalidStore);
+
+        // error: LocationDoesNotExist
+        let store_a = mock_store_a();
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                &store_a.id,
+                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                    r.id = stocktake_line_a.id;
+                    r.location_id = Some("invalid".to_string());
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::LocationDoesNotExist);
+
+        // error CannotEditFinalised
+        let store_a = mock_store_a();
+        let stocktake_line_a = mock_stocktake_line_finalised();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                &store_a.id,
+                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                    r.id = stocktake_line_a.id;
+                    r.comment = Some(
+                        "Trying to edit a stocktake line of a finalised stocktake".to_string(),
+                    );
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::CannotEditFinalised);
+
+        // error StocktakeIsLocked
+        let store_a = mock_store_a();
+        let stocktake_line_a = mock_locked_stocktake_line();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                &store_a.id,
+                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                    r.id = stocktake_line_a.id;
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::StocktakeIsLocked);
+
+        // error CannotEditFinalised
+        let store_a = mock_store_a();
+        let stocktake_line_a = mock_stocktake_line_finalised();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                &store_a.id,
+                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                    r.id = stocktake_line_a.id;
+                    r.comment = Some(
+                        "Trying to edit a stocktake line of a finalised stocktake".to_string(),
+                    );
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::CannotEditFinalised);
+
+        // success: no update
+        let store_a = mock_store_a();
+        let stocktake_line_a = mock_stocktake_line_a();
+        let result = service
+            .update_stocktake_line(
+                &context,
+                &store_a.id,
+                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                    r.id = stocktake_line_a.id.clone();
+                }),
+            )
+            .unwrap();
+        assert_eq!(result.line, stocktake_line_a);
+
+        // success: full update
+        let store_a = mock_store_a();
+        let stocktake_line_a = mock_stocktake_line_a();
+        let location = mock_locations()[0].clone();
+        let result = service
+            .update_stocktake_line(
+                &context,
+                &store_a.id,
+                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                    r.id = stocktake_line_a.id.clone();
+                    r.location_id = Some(location.id.clone());
+                    r.batch = Some("test_batch".to_string());
+                    r.comment = Some("test comment".to_string());
+                    r.cost_price_per_pack = Some(20.0);
+                    r.sell_price_per_pack = Some(25.0);
+                    r.snapshot_number_of_packs = Some(10);
+                    r.counted_number_of_packs = Some(14);
+                }),
+            )
+            .unwrap();
+        assert_eq!(
+            result.line,
+            StocktakeLineRow {
+                id: stocktake_line_a.id,
+                stocktake_id: stocktake_line_a.stocktake_id,
+                stock_line_id: Some(stocktake_line_a.stock_line_id.unwrap()),
+                location_id: Some(location.id),
+                batch: Some("test_batch".to_string()),
+                comment: Some("test comment".to_string()),
+                cost_price_per_pack: Some(20.0),
+                sell_price_per_pack: Some(25.0),
+                snapshot_number_of_packs: 10,
+                counted_number_of_packs: Some(14),
+                item_id: stocktake_line_a.item_id,
+                expiry_date: None,
+                pack_size: None,
+                note: None,
+            }
+        );
     }
 }

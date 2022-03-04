@@ -189,6 +189,14 @@ impl NotAnInboundShipment {
     }
 }
 
+pub struct StocktakeIsLocked;
+#[Object]
+impl StocktakeIsLocked {
+    pub async fn description(&self) -> &'static str {
+        "Stocktake is locked"
+    }
+}
+
 pub struct NotAnOutboundShipment;
 #[Object]
 impl NotAnOutboundShipment {

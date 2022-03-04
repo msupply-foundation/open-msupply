@@ -1,8 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        CannotEditRequisition, ForeignKey, ForeignKeyError, RecordNotFound,
-    },
+    simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -91,9 +89,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionLineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(
-                RecordNotFound {},
-            ))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::RequisitionDoesNotExist => {
             return Ok(UpdateErrorInterface::RequisitionDoesNotExist(
