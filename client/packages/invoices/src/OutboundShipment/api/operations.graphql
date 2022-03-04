@@ -221,20 +221,6 @@ mutation insertOutboundShipment(
       __typename
       error {
         description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-          key
-        }
-        ... on OtherPartyCannotBeThisStoreError {
-          __typename
-          description
-        }
         ... on OtherPartyNotACustomerError {
           __typename
           description
@@ -245,10 +231,6 @@ mutation insertOutboundShipment(
             isSupplier
             name
           }
-        }
-        ... on RecordAlreadyExist {
-          __typename
-          description
         }
       }
     }
@@ -275,30 +257,58 @@ mutation updateOutboundShipment(
   $storeId: String!
 ) {
   updateOutboundShipment(input: $input, storeId: $storeId) {
-    ... on InvoiceNode {
+    ... on UpdateOutboundShipmentError {
       __typename
-      id
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CanOnlyChangeToAllocatedWhenNoUnallocatedLines {
+          __typename
+          description
+        }
+        ... on CannotChangeStatusOfInvoiceOnHold {
+          __typename
+          description
+        }
+        ... on CannotReverseInvoiceStatus {
+          __typename
+          description
+        }
+        ... on InvoiceIsNotEditable {
+          __typename
+          description
+        }
+        ... on NotAnOutboundShipmentError {
+          __typename
+          description
+        }
+        ... on OtherPartyNotACustomerError {
+          __typename
+          description
+        }
+      }
     }
     ... on NodeError {
       __typename
       error {
         description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
         ... on DatabaseError {
           __typename
           description
           fullError
         }
-        ... on RecordNotFound {
-          __typename
-          description
-        }
       }
     }
-    ... on UpdateOutboundShipmentError {
-      __typename
-      error {
-        description
-      }
+    ... on InvoiceNode {
+      id
+      invoiceNumber
     }
   }
 }
@@ -313,8 +323,30 @@ mutation deleteOutboundShipments(
   ) {
     __typename
     deleteOutboundShipments {
-      __typename
       id
+      response {
+        ... on DeleteOutboundShipmentError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteInvoiceWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
     }
   }
 }
@@ -324,7 +356,6 @@ mutation upsertOutboundShipment(
   $input: BatchOutboundShipmentInput!
 ) {
   batchOutboundShipment(storeId: $storeId, input: $input) {
-    __typename
     insertOutboundShipmentUnallocatedLines {
       id
       response {
@@ -346,6 +377,19 @@ mutation upsertOutboundShipment(
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
           }
         }
         ... on DeleteResponse {
@@ -363,6 +407,19 @@ mutation upsertOutboundShipment(
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
           }
         }
       }
@@ -377,6 +434,10 @@ mutation upsertOutboundShipment(
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
           }
         }
       }
@@ -391,6 +452,18 @@ mutation upsertOutboundShipment(
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteInvoiceWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
           }
         }
       }
@@ -399,12 +472,6 @@ mutation upsertOutboundShipment(
       id
       response {
         ... on InsertOutboundShipmentLineError {
-          __typename
-          error {
-            description
-          }
-        }
-        ... on NodeError {
           __typename
           error {
             description
@@ -436,6 +503,15 @@ mutation upsertOutboundShipment(
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
           }
         }
       }
@@ -443,16 +519,59 @@ mutation upsertOutboundShipment(
     updateOutboundShipmentLines {
       id
       response {
-        ... on NodeError {
-          __typename
-          error {
-            description
-          }
-        }
         ... on UpdateOutboundShipmentLineError {
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+            ... on LocationIsOnHold {
+              __typename
+              description
+            }
+            ... on LocationNotFound {
+              __typename
+              description
+            }
+            ... on NotEnoughStockForReduction {
+              __typename
+              batch {
+                ... on NodeError {
+                  __typename
+                  error {
+                    description
+                    ... on RecordNotFound {
+                      __typename
+                      description
+                    }
+                    ... on DatabaseError {
+                      __typename
+                      description
+                      fullError
+                    }
+                  }
+                }
+              }
+            }
+            ... on StockLineAlreadyExistsInInvoice {
+              __typename
+              description
+            }
+            ... on StockLineIsOnHold {
+              __typename
+              description
+            }
           }
         }
       }
@@ -464,6 +583,19 @@ mutation upsertOutboundShipment(
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
           }
         }
       }
@@ -475,6 +607,10 @@ mutation upsertOutboundShipment(
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
           }
         }
       }
