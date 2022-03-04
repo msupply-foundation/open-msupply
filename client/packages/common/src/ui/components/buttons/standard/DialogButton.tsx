@@ -9,6 +9,7 @@ interface DialogButtonProps {
   disabled?: boolean;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   variant: DialogButtonVariant;
+  autoFocus?: boolean;
 }
 
 const getButtonProps = (
@@ -44,12 +45,14 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   onClick,
   variant,
   disabled = false,
+  autoFocus = false,
 }) => {
   const t = useTranslation('common');
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
 
   return (
     <ButtonWithIcon
+      autoFocus={autoFocus}
       color="secondary"
       disabled={disabled}
       onClick={onClick}

@@ -186,7 +186,7 @@ mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
           __typename
           description
         }
-        ... on RecordDoesNotExist {
+        ... on RecordNotFound {
           __typename
           description
         }

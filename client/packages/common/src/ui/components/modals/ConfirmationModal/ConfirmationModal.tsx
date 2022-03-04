@@ -65,6 +65,7 @@ export const ConfirmationModal = ({
           </Grid>
           <Grid item>
             <LoadingButton
+              autoFocus
               color="secondary"
               isLoading={loading}
               onClick={async () => {

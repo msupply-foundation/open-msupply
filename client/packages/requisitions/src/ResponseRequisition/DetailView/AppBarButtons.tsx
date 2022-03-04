@@ -23,13 +23,13 @@ export const AppBarButtonsComponent: FC = () => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('button.create-shipment')}
+          onClick={confirmOutboundCreation}
+        />
         {OpenButton}
       </Grid>
-      <ButtonWithIcon
-        Icon={<PlusCircleIcon />}
-        label={t('button.create-shipment')}
-        onClick={confirmOutboundCreation}
-      />
     </AppBarButtonsPortal>
   );
 };
