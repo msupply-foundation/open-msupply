@@ -16,7 +16,7 @@ export type NamesQueryVariables = Types.Exact<{
 }>;
 
 
-export type NamesQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+export type NamesQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
 export const NameRowFragmentDoc = gql`
     fragment NameRow on NameNode {
