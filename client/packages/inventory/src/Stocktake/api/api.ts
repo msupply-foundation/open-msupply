@@ -8,7 +8,6 @@ import {
   SortBy,
   FilterBy,
   StocktakeSortFieldInput,
-  formatNaiveDateTime,
 } from '@openmsupply-client/common';
 import {
   getSdk,
@@ -169,7 +168,6 @@ export const getStocktakeQueries = (
   insertStocktake: async () => {
     const result = await queries.insertStocktake({
       input: {
-        createdDatetime: formatNaiveDateTime(new Date()) ?? '',
         id: generateUUID(),
       },
       storeId,
