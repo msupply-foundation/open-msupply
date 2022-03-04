@@ -8,6 +8,8 @@ import {
 } from '@openmsupply-client/common';
 import { Sdk, LocationRowFragment } from './operations.generated';
 
+export type ListParams = { sortBy: SortBy<LocationRowFragment> };
+
 const locationParsers = {
   toSortInput: (sortBy: SortBy<LocationRowFragment>): LocationSortInput => {
     return { desc: sortBy.isDesc, key: sortBy.key as LocationSortFieldInput };
@@ -31,7 +33,7 @@ const locationParsers = {
 
 export const getLocationQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({ sortBy }: { sortBy: SortBy<LocationRowFragment> }) => {
+    list: async ({ sortBy }: ListParams) => {
       const response = await sdk.locations({
         sort: [locationParsers.toSortInput(sortBy)],
         storeId,
