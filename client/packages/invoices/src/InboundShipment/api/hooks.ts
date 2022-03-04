@@ -33,8 +33,8 @@ export const useInboundApi = () => {
   const keys = {
     base: () => ['inbound'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
-    list: (params: ListParams) =>
-      [...keys.base(), storeId, 'list', params] as const,
+    list: () => [...keys.base(), storeId, 'list'] as const,
+    paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
 
   const { client } = useOmSupplyApi();
@@ -60,7 +60,7 @@ export const useIsInboundEditable = (): boolean => {
   return status === 'NEW' || status === 'SHIPPED' || status === 'DELIVERED';
 };
 
-export const useInboundShipmentSelector = <T = InboundFragment>(
+export const useInboundSelector = <T = InboundFragment>(
   select?: (data: InboundFragment) => T
 ) => {
   const invoiceNumber = useInvoiceNumber();
@@ -69,9 +69,7 @@ export const useInboundShipmentSelector = <T = InboundFragment>(
   return useQuery(
     api.keys.detail(invoiceNumber),
     () => api.get.byNumber(invoiceNumber),
-    {
-      select,
-    }
+    { select }
   );
 };
 
@@ -100,7 +98,7 @@ export const useInboundLines = (itemId?: string): InboundLineFragment[] => {
     [itemId]
   );
 
-  const { data } = useInboundShipmentSelector(selectItems);
+  const { data } = useInboundSelector(selectItems);
 
   return data ?? [];
 };
@@ -116,7 +114,7 @@ export const useInboundItems = () => {
     );
   }, []);
 
-  const { data } = useInboundShipmentSelector(selectItems);
+  const { data } = useInboundSelector(selectItems);
 
   return { data, sortBy, onSort: onChangeSortBy };
 };
@@ -196,7 +194,7 @@ export const useInbounds = () => {
   const api = useInboundApi();
 
   return {
-    ...useQuery(api.keys.list(queryParams), () =>
+    ...useQuery(api.keys.paramList(queryParams), () =>
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
@@ -208,14 +206,14 @@ export const useInbounds = () => {
   };
 };
 
-export const useCreateInbound = () => {
+export const useInsertInbound = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const api = useInboundApi();
   return useMutation(api.insert, {
     onSuccess: invoiceNumber => {
       navigate(String(invoiceNumber));
-      queryClient.invalidateQueries(api.keys.base());
+      return queryClient.invalidateQueries(api.keys.base());
     },
   });
 };
