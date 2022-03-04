@@ -24,15 +24,15 @@ export const Footer: React.FC = () => {
       <StoreSelector>
         <PaddedCell>
           <HomeIcon sx={iconStyles} />
-          <Typography sx={textStyles}>{store.code}</Typography>
+          <Typography sx={textStyles}>{store?.code}</Typography>
         </PaddedCell>
       </StoreSelector>
-      {user?.name && (
+      {user ? (
         <PaddedCell>
           <UserIcon sx={iconStyles} />
           <Typography sx={textStyles}>{user.name}</Typography>
         </PaddedCell>
-      )}
+      ) : null}
     </Box>
   );
 };
