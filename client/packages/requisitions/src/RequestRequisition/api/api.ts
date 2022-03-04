@@ -7,16 +7,16 @@ import {
   UpdateRequestRequisitionStatusInput,
   RequisitionSortFieldInput,
 } from '@openmsupply-client/common';
-import { DraftRequestRequisitionLine } from './../DetailView/RequestLineEdit/hooks';
+import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
-  RequestRequisitionRowFragment,
-  RequestRequisitionFragment,
+  RequestRowFragment,
+  RequestFragment,
   Sdk,
 } from './operations.generated';
 
 const requestParser = {
   toStatus: (
-    patch: Partial<RequestRequisitionFragment> & { id: string }
+    patch: Partial<RequestFragment> & { id: string }
   ): UpdateRequestRequisitionStatusInput | undefined => {
     switch (patch.status) {
       case RequisitionNodeStatus.Sent:
@@ -26,7 +26,7 @@ const requestParser = {
     }
   },
   toSortField: (
-    sortBy: SortBy<RequestRequisitionRowFragment>
+    sortBy: SortBy<RequestRowFragment>
   ): RequisitionSortFieldInput => {
     switch (sortBy.key) {
       case 'createdDatetime': {
@@ -50,11 +50,11 @@ const requestParser = {
       }
     }
   },
-  toDelete: (line: RequestRequisitionRowFragment) => {
+  toDelete: (line: RequestRowFragment) => {
     return { id: line.id };
   },
   toUpdate: (
-    requisition: Partial<RequestRequisitionFragment> & { id: string }
+    requisition: Partial<RequestFragment> & { id: string }
   ): UpdateRequestRequisitionInput => {
     return {
       id: requisition.id,
@@ -65,13 +65,13 @@ const requestParser = {
       status: requestParser.toStatus(requisition),
     };
   },
-  toInsertLine: (line: DraftRequestRequisitionLine) => ({
+  toInsertLine: (line: DraftRequestLine) => ({
     id: line.id,
     itemId: line.itemId,
     requisitionId: line.requisitionId,
     requestedQuantity: line.requestedQuantity,
   }),
-  toUpdateLine: (line: DraftRequestRequisitionLine) => ({
+  toUpdateLine: (line: DraftRequestLine) => ({
     id: line.id,
     requestedQuantity: line.requestedQuantity,
   }),
@@ -87,14 +87,14 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     }: {
       first: number;
       offset: number;
-      sortBy: SortBy<RequestRequisitionRowFragment>;
+      sortBy: SortBy<RequestRowFragment>;
       filterBy: FilterBy | null;
     }) => {
       const filter = {
         ...filterBy,
         type: { equalTo: RequisitionNodeType.Request },
       };
-      const result = await sdk.requestRequisitions({
+      const result = await sdk.requests({
         storeId,
         page: { offset, first },
         sort: {
@@ -105,10 +105,8 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.requisitions;
     },
-    byNumber: async (
-      requisitionNumber: string
-    ): Promise<RequestRequisitionFragment> => {
-      const result = await sdk.requestRequisition({
+    byNumber: async (requisitionNumber: string): Promise<RequestFragment> => {
+      const result = await sdk.requestByNumber({
         storeId,
         requisitionNumber: Number(requisitionNumber),
       });
@@ -120,11 +118,11 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Record not found');
     },
   },
-  upsertLine: async (draftLine: DraftRequestRequisitionLine) => {
+  upsertLine: async (draftLine: DraftRequestLine) => {
     let result;
     if (draftLine.isCreated) {
       const input = requestParser.toInsertLine(draftLine);
-      result = await sdk.insertRequestRequisitionLine({
+      result = await sdk.insertRequestLine({
         storeId,
         input,
       });
@@ -135,7 +133,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       }
     } else {
       const input = requestParser.toUpdateLine(draftLine);
-      result = await sdk.updateRequestRequisitionLine({
+      result = await sdk.updateRequestLine({
         storeId,
         input,
       });
@@ -148,11 +146,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
-  update: async (
-    patch: Partial<RequestRequisitionFragment> & { id: string }
-  ) => {
+  update: async (patch: Partial<RequestFragment> & { id: string }) => {
     const input = requestParser.toUpdate(patch);
-    const result = await sdk.updateRequestRequisition({
+    const result = await sdk.updateRequest({
       storeId,
       input,
     });
@@ -165,7 +161,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
-  create: async ({
+  insert: async ({
     id,
     otherPartyId,
   }: {
@@ -176,7 +172,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     id: string;
     requisitionNumber: number;
   }> => {
-    const result = await sdk.insertRequestRequisition({
+    const result = await sdk.insertRequest({
       storeId,
       input: {
         id,
@@ -194,10 +190,10 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
-  deleteRequisitions: async (requisitions: RequestRequisitionRowFragment[]) => {
+  deleteRequests: async (requisitions: RequestRowFragment[]) => {
     const promises = requisitions.map(requisition => {
       const input = requestParser.toDelete(requisition);
-      return sdk.deleteRequestRequisition({ input, storeId });
+      return sdk.deleteRequest({ input, storeId });
     });
     const results = await Promise.all(promises);
 

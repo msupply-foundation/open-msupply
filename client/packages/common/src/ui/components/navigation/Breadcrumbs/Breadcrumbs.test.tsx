@@ -75,7 +75,7 @@ describe('Breadcrumbs', () => {
       </TestingProvider>
     );
 
-    const node = getByText(/outbound-shipment/i);
+    const node = getByText(/outbound shipment/i);
     const closestAnchor = node.closest('a');
 
     expect(closestAnchor).toEqual(null);

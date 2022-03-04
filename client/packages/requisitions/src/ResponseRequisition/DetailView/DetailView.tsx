@@ -15,21 +15,18 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import {
-  useResponseRequisition,
-  ResponseRequisitionLineFragment,
-} from '../api';
+import { useResponse, ResponseLineFragment } from '../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 
 export const DetailView: FC = () => {
   const { onOpen, onClose, entity, isOpen } =
-    useEditModal<ResponseRequisitionLineFragment>();
-  const { data, isLoading } = useResponseRequisition();
+    useEditModal<ResponseLineFragment>();
+  const { data, isLoading } = useResponse();
   const navigate = useNavigate();
   const t = useTranslation('distribution');
 
   const onRowClick = useCallback(
-    (line: ResponseRequisitionLineFragment) => {
+    (line: ResponseLineFragment) => {
       onOpen(line);
     },
     [onOpen]

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { act, render } from '@testing-library/react';
 import { BasePopover } from './BasePopover';
 import userEvent from '@testing-library/user-event';
+import { TestingProvider } from '@common/utils';
 
 type VirtualElement = { getBoundingClientRect: () => DOMRect };
 
@@ -33,7 +34,11 @@ describe('BasePopover', () => {
   };
 
   it('Displays the tooltip content when opened', () => {
-    const { queryByRole } = render(<Example />);
+    const { queryByRole } = render(
+      <TestingProvider>
+        <Example />
+      </TestingProvider>
+    );
 
     const notTooltip = queryByRole('tooltip');
 

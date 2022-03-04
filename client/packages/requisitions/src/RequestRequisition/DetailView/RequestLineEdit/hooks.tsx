@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { generateUUID } from '@openmsupply-client/common';
 import {
   useSaveRequestLines,
-  useRequestRequisitionFields,
-  useRequestRequisitionLines,
-  RequestRequisitionLineFragment,
+  useRequestFields,
+  useRequestLines,
+  RequestLineFragment,
   ItemWithStatsFragment,
 } from '../../api';
 
-export type DraftRequestRequisitionLine = Omit<
-  RequestRequisitionLineFragment,
+export type DraftRequestLine = Omit<
+  RequestLineFragment,
   '__typename' | 'item' | 'itemStats'
 > & {
   isCreated: boolean;
@@ -19,7 +19,7 @@ export type DraftRequestRequisitionLine = Omit<
 const createDraftFromItem = (
   item: ItemWithStatsFragment,
   requisitionId: string
-): DraftRequestRequisitionLine => {
+): DraftRequestLine => {
   const { stats } = item;
   const { averageMonthlyConsumption, availableStockOnHand } = stats;
 
@@ -38,9 +38,9 @@ const createDraftFromItem = (
 };
 
 const createDraftFromRequestLine = (
-  line: RequestRequisitionLineFragment,
+  line: RequestLineFragment,
   id: string
-): DraftRequestRequisitionLine => ({
+): DraftRequestLine => ({
   ...line,
   requisitionId: id,
   itemId: line.item.id,
@@ -50,11 +50,11 @@ const createDraftFromRequestLine = (
 });
 
 export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
-  const { lines } = useRequestRequisitionLines();
-  const { id: reqId } = useRequestRequisitionFields('id');
+  const { lines } = useRequestLines();
+  const { id: reqId } = useRequestFields('id');
   const { mutate: save, isLoading } = useSaveRequestLines();
 
-  const [draft, setDraft] = useState<DraftRequestRequisitionLine | null>(null);
+  const [draft, setDraft] = useState<DraftRequestLine | null>(null);
 
   useEffect(() => {
     if (lines && item) {
@@ -71,7 +71,7 @@ export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
     }
   }, [lines, item, reqId]);
 
-  const update = (patch: Partial<DraftRequestRequisitionLine>) => {
+  const update = (patch: Partial<DraftRequestLine>) => {
     if (draft) {
       setDraft({ ...draft, ...patch });
     }
@@ -83,7 +83,7 @@ export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
 export const useNextRequestLine = (
   currentItem: ItemWithStatsFragment | null
 ) => {
-  const { lines } = useRequestRequisitionLines();
+  const { lines } = useRequestLines();
 
   const nextState: {
     hasNext: boolean;

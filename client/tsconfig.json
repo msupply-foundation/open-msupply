@@ -1,5 +1,4 @@
 {
-  "files": ["./types/react-table-config.d.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

@@ -4,13 +4,15 @@ import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
-  Store,
   useAuthContext,
   useLocation,
   useNavigate,
 } from '@openmsupply-client/common';
-// import { AuthenticationError } from '.';
 
+interface Store {
+  id: string;
+  code: string;
+}
 interface LoginForm {
   error?: AuthenticationError;
   password: string;
