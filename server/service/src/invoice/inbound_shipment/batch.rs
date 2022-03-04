@@ -1,4 +1,4 @@
-use repository::{Invoice, InvoiceLine, OkWithRollback, RepositoryError};
+use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
     invoice_line::{
@@ -17,7 +17,7 @@ use crate::{
         },
     },
     service_provider::ServiceContext,
-    InputWithResult,
+    InputWithResult, WithDBError,
 };
 
 use super::{
@@ -120,7 +120,7 @@ pub fn batch_inbound_shipment(
 ) -> Result<BatchInboundShipmentResult, RepositoryError> {
     let result = ctx
         .connection
-        .transaction_sync_with_rollback(|_| {
+        .transaction_sync(|_| {
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut result = BatchInboundShipmentResult {
                 insert_shipment: vec![],
@@ -145,7 +145,7 @@ pub fn batch_inbound_shipment(
             result.insert_shipment = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             // Normal Line
@@ -159,7 +159,7 @@ pub fn batch_inbound_shipment(
             result.insert_line = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -171,7 +171,7 @@ pub fn batch_inbound_shipment(
             result.update_line = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -183,7 +183,7 @@ pub fn batch_inbound_shipment(
             result.delete_line = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             // Service Line
@@ -235,7 +235,7 @@ pub fn batch_inbound_shipment(
             result.update_shipment = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -246,16 +246,18 @@ pub fn batch_inbound_shipment(
             );
             result.delete_shipment = results;
 
-            let result: Result<OkWithRollback<BatchInboundShipmentResult>, RepositoryError> =
-                if has_error && !continue_on_error {
-                    Ok(OkWithRollback::OkWithRollback(result))
-                } else {
-                    Ok(OkWithRollback::Ok(result))
-                };
+            if has_error && !continue_on_error {
+                return Err(WithDBError::err(result));
+            }
 
-            result
+            Ok(result)
+                as Result<BatchInboundShipmentResult, WithDBError<BatchInboundShipmentResult>>
         })
-        .map_err(|error| error.to_inner_error())?;
+        .map_err(|error| error.to_inner_error())
+        .or_else(|error| match error {
+            WithDBError::DatabaseError(repository_error) => Err(repository_error),
+            WithDBError::Error(batch_response) => Ok(batch_response),
+        })?;
 
     Ok(result)
 }

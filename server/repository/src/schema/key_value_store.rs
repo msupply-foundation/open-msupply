@@ -10,6 +10,7 @@ pub enum KeyValueType {
     /// Indicates if the remote data has been pulled and integrated from the central server
     /// Possible value: "true"
     RemoteSyncInitilisationFinished,
+    RemoteSyncPushCursor,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
