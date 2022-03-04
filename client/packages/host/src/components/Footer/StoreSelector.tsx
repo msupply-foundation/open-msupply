@@ -23,7 +23,7 @@ export const StoreSelector: FC = ({ children }) => {
   };
   const stores = (data?.nodes ?? []).sort(storeSorter);
 
-  if (!store?.code) return undefined;
+  if (!store?.code) return null;
 
   if (stores.length < 2) return <>{children}</>;
 
