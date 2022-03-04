@@ -1,19 +1,15 @@
 import React from 'react';
 import { DataTable, useTranslation } from '@openmsupply-client/common';
-import { useResponseRequisitionColumns } from './columns';
-import {
-  useResponseRequisitionLines,
-  ResponseRequisitionLineFragment,
-} from '../api';
+import { useResponseColumns } from './columns';
+import { useResponseLines, ResponseLineFragment } from '../api';
 
 interface ContentAreaProps {
-  onRowClick: (line: ResponseRequisitionLineFragment) => void;
+  onRowClick: (line: ResponseLineFragment) => void;
 }
 
 export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
-  const { lines, onChangeSortBy, sortBy, pagination } =
-    useResponseRequisitionLines();
-  const columns = useResponseRequisitionColumns({ sortBy, onChangeSortBy });
+  const { lines, onChangeSortBy, sortBy, pagination } = useResponseLines();
+  const columns = useResponseColumns({ sortBy, onChangeSortBy });
   const t = useTranslation('common');
 
   return (

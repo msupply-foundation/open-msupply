@@ -11,15 +11,15 @@ import {
   ItemSearchInput,
   ItemRowWithStatsFragment,
 } from '@openmsupply-client/system';
-import { useRequestRequisitionLines } from '../../api';
-import { DraftRequestRequisitionLine } from './hooks';
+import { useRequestLines } from '../../api';
+import { DraftRequestLine } from './hooks';
 
 interface RequestLineEditFormProps {
   item: ItemRowWithStatsFragment | null;
   disabled: boolean;
   onChangeItem: (item: ItemRowWithStatsFragment) => void;
-  update: (patch: Partial<DraftRequestRequisitionLine>) => void;
-  draftLine: DraftRequestRequisitionLine | null;
+  update: (patch: Partial<DraftRequestLine>) => void;
+  draftLine: DraftRequestLine | null;
 }
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => {
@@ -79,7 +79,7 @@ export const RequestLineEditForm = ({
   draftLine,
 }: RequestLineEditFormProps) => {
   const t = useTranslation(['replenishment', 'common']);
-  const { lines } = useRequestRequisitionLines();
+  const { lines } = useRequestLines();
   return (
     <RequestLineEditFormLayout
       Left={

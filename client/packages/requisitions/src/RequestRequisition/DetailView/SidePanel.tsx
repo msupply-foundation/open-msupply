@@ -14,18 +14,11 @@ import {
   ColorSelectButton,
   useBufferState,
 } from '@openmsupply-client/common';
-import {
-  useIsRequestRequisitionDisabled,
-  useRequestRequisition,
-  useRequestRequisitionFields,
-} from '../api';
+import { useIsRequestDisabled, useRequest, useRequestFields } from '../api';
 
 const AdditionalInfoSection: FC = () => {
-  const isDisabled = useIsRequestRequisitionDisabled();
-  const { colour, comment, update } = useRequestRequisitionFields([
-    'colour',
-    'comment',
-  ]);
+  const isDisabled = useIsRequestDisabled();
+  const { colour, comment, update } = useRequestFields(['colour', 'comment']);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const t = useTranslation('common');
 
@@ -66,7 +59,7 @@ const RelatedDocumentsSection: FC = () => {
 };
 
 export const SidePanel: FC = () => {
-  const { data } = useRequestRequisition();
+  const { data } = useRequest();
   const { success } = useNotification();
   const t = useTranslation(['replenishment', 'common']);
 
