@@ -154,7 +154,7 @@ mutation updateResponseLine(
           description
           key
         }
-        ... on RecordDoesNotExist {
+        ... on RecordNotFound {
           __typename
           description
         }
