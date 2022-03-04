@@ -14,18 +14,11 @@ import {
   useBufferState,
   BufferedTextArea,
 } from '@openmsupply-client/common';
-import {
-  useIsResponseRequisitionDisabled,
-  useResponseRequisitionFields,
-  useResponseRequisition,
-} from '../api';
+import { useIsResponseDisabled, useResponseFields, useResponse } from '../api';
 
 const AdditionalInfoSection: FC = () => {
-  const isDisabled = useIsResponseRequisitionDisabled();
-  const { colour, comment, update } = useResponseRequisitionFields([
-    'colour',
-    'comment',
-  ]);
+  const isDisabled = useIsResponseDisabled();
+  const { colour, comment, update } = useResponseFields(['colour', 'comment']);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const t = useTranslation('common');
 
@@ -68,7 +61,7 @@ const RelatedDocumentsSection: FC = () => {
 export const SidePanel: FC = () => {
   const { success } = useNotification();
   const t = useTranslation(['distribution', 'common']);
-  const { data } = useResponseRequisition();
+  const { data } = useResponse();
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');

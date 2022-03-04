@@ -13,10 +13,10 @@ import {
   useToggle,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system';
-import { useCreateRequestRequisition } from '../api';
+import { useInsertRequest } from '../api';
 
 export const AppBarButtons: FC = () => {
-  const { mutate: onCreate } = useCreateRequestRequisition();
+  const { mutate: onCreate } = useInsertRequest();
   const modalController = useToggle();
   const { info, success } = useNotification();
   const t = useTranslation('common');

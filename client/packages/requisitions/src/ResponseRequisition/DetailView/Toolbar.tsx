@@ -15,23 +15,26 @@ import {
 import { NameSearchInput } from '@openmsupply-client/system';
 
 import {
-  useResponseRequisitionFields,
-  useIsResponseRequisitionDisabled,
-  ResponseRequisitionLineFragment,
+  useResponseFields,
+  useIsResponseDisabled,
+  ResponseLineFragment,
 } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
-  const isDisabled = useIsResponseRequisitionDisabled();
-  const { lines, otherParty, theirReference, update } =
-    useResponseRequisitionFields(['lines', 'otherParty', 'theirReference']);
+  const isDisabled = useIsResponseDisabled();
+  const { lines, otherParty, theirReference, update } = useResponseFields([
+    'lines',
+    'otherParty',
+    'theirReference',
+  ]);
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => lines.nodes.find(({ id }) => selectedId === id))
-      .filter(Boolean) as ResponseRequisitionLineFragment[],
+      .filter(Boolean) as ResponseLineFragment[],
   }));
 
   const deleteAction = () => {

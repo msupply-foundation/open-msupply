@@ -10,11 +10,7 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
-import {
-  RequestRequisitionLineFragment,
-  useRequestRequisition,
-  useIsRequestRequisitionDisabled,
-} from '../api';
+import { RequestLineFragment, useRequest, useIsRequestDisabled } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer/Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -24,15 +20,15 @@ import { AppRoute } from '@openmsupply-client/config';
 import { RequestLineEdit } from './RequestLineEdit';
 
 export const DetailView: FC = () => {
-  const { data, isLoading } = useRequestRequisition();
+  const { data, isLoading } = useRequest();
   const { onOpen, onClose, mode, entity, isOpen } =
     useEditModal<ItemRowWithStatsFragment>();
-  const isDisabled = useIsRequestRequisitionDisabled();
+  const isDisabled = useIsRequestDisabled();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 
   const onRowClick = React.useCallback(
-    (line: RequestRequisitionLineFragment) => {
+    (line: RequestLineFragment) => {
       onOpen(line.item);
     },
     [onOpen]
