@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { RecordWithId } from '@common/types';
 import { ColumnAlign, ColumnDefinition } from '../types';
 import { MessageSquareIcon } from '@common/icons';
-import { PaperPopover, PaperPopoverSection } from '@common/components';
+import { PaperHoverPopover, PaperPopoverSection } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { isProduction } from '@common/utils';
 
@@ -71,7 +71,7 @@ export const getNotePopoverColumn = <T extends RecordWithId>(
     }
 
     return value ? (
-      <PaperPopover
+      <PaperHoverPopover
         width={400}
         Content={
           <PaperPopoverSection label={label ?? t('label.notes')}>
@@ -82,7 +82,7 @@ export const getNotePopoverColumn = <T extends RecordWithId>(
         }
       >
         <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-      </PaperPopover>
+      </PaperHoverPopover>
     ) : null;
   },
 });
