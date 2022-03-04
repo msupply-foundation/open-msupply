@@ -6,6 +6,13 @@ import {
 import { Sdk } from './operations.generated';
 import { MasterList, MasterListRow } from './../types';
 
+export type ListParams = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<MasterList>;
+  filterBy: FilterBy | null;
+};
+
 const getMasterListSortField = (
   sortField: string
 ): MasterListSortFieldInput => {
@@ -21,12 +28,7 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
       offset,
       sortBy,
       filterBy,
-    }: {
-      first: number;
-      offset: number;
-      sortBy: SortBy<MasterList>;
-      filterBy: FilterBy | null;
-    }): Promise<{
+    }: ListParams): Promise<{
       nodes: MasterListRow[];
       totalCount: number;
     }> => {
