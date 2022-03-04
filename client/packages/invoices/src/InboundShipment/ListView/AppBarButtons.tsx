@@ -12,11 +12,11 @@ import {
   useToggle,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system';
-import { useCreateInbound } from '../api';
+import { useInsertInbound } from '../api';
 
 export const AppBarButtons: FC = () => {
   const modalController = useToggle();
-  const { mutate: onCreate } = useCreateInbound();
+  const { mutate: onCreate } = useInsertInbound();
   const { info, success } = useNotification();
   const t = useTranslation('replenishment');
 

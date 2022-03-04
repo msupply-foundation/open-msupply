@@ -6,6 +6,13 @@ import {
 import { Sdk, ItemRowFragment, ItemFragment } from './operations.generated';
 import { getItemSortField } from '../utils';
 
+export type ListParams<T> = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<T>;
+  filterBy?: FilterBy | null;
+};
+
 export const getItemQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     byId: async (itemId: string) => {
@@ -24,8 +31,6 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
     listWithStats: async () => {
       const result = await sdk.itemsWithStats({ storeId });
 
-      console.log(result);
-
       const { items } = result;
 
       if (result.items.__typename === 'ItemConnector') {
@@ -36,15 +41,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
     },
 
     list:
-      ({
-        first,
-        offset,
-        sortBy,
-      }: {
-        first: number;
-        offset: number;
-        sortBy: SortBy<ItemRowFragment>;
-      }) =>
+      ({ first, offset, sortBy }: ListParams<ItemRowFragment>) =>
       async (): Promise<{
         nodes: ItemRowFragment[];
         totalCount: number;
@@ -71,12 +68,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       offset,
       sortBy,
       filterBy,
-    }: {
-      first: number;
-      offset: number;
-      sortBy: SortBy<ItemFragment>;
-      filterBy: FilterBy | null;
-    }) => {
+    }: ListParams<ItemFragment>) => {
       const result = await sdk.itemsWithStockLines({
         key: getItemSortField(sortBy.key),
         filter: filterBy,

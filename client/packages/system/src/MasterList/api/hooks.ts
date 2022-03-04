@@ -6,15 +6,21 @@ import {
 } from '@openmsupply-client/common';
 import { MasterListRow } from './../types';
 import { getSdk } from './operations.generated';
-import { getMasterListQueries } from './api';
+import { getMasterListQueries, ListParams } from './api';
 
 export const useMasterListApi = () => {
-  const { client } = useOmSupplyApi();
   const { storeId } = useAuthContext();
+  const keys = {
+    base: () => ['master-list'] as const,
+    detail: (id: string) => [...keys.base(), storeId, id] as const,
+    list: () => [...keys.base(), storeId, 'list'] as const,
+    paramList: (params: ListParams) => [...keys.list(), params] as const,
+  };
+  const { client } = useOmSupplyApi();
   const sdk = getSdk(client);
   const queries = getMasterListQueries(sdk, storeId);
 
-  return { ...queries, storeId };
+  return { ...queries, storeId, keys };
 };
 
 export const useMasterLists = () => {
@@ -24,7 +30,7 @@ export const useMasterLists = () => {
   const api = useMasterListApi();
 
   return {
-    ...useQuery(['master-list', 'list', api.storeId, queryParams], () =>
+    ...useQuery(api.keys.paramList(queryParams), () =>
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
