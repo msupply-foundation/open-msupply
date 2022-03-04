@@ -1,9 +1,17 @@
-use repository::schema::{NameStoreJoinRow, RemoteSyncBufferAction, RemoteSyncBufferRow};
+use repository::schema::{
+    ChangelogAction, ChangelogRow, ChangelogTableName, NameStoreJoinRow, RemoteSyncBufferAction,
+    RemoteSyncBufferRow,
+};
+use serde_json::json;
 
 use crate::sync::translation_remote::{
-    test_data::TestSyncRecord, IntegrationRecord, IntegrationUpsertRecord,
+    name_store_join::LegacyNameStoreJoinRow,
+    pull::{IntegrationRecord, IntegrationUpsertRecord},
+    test_data::TestSyncRecord,
     TRANSLATION_RECORD_NAME_STORE_JOIN,
 };
+
+use super::TestSyncPushRecord;
 
 const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
     "66607B6E7F2A47E782B8AC6743F71A8A",
@@ -17,6 +25,42 @@ const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
       "store_ID": "store_a"
   }"#,
 );
+fn name_store_join_1_pull_record() -> TestSyncRecord {
+    TestSyncRecord {
+        translated_record: Some(IntegrationRecord::from_upsert(
+            IntegrationUpsertRecord::NameStoreJoin(NameStoreJoinRow {
+                id: NAME_STORE_JOIN_1.0.to_string(),
+                store_id: "store_a".to_string(),
+                name_id: "name_store_a".to_string(),
+                name_is_customer: false,
+                name_is_supplier: true,
+            }),
+        )),
+        identifier: "Name store join 1",
+        remote_sync_buffer_row: RemoteSyncBufferRow {
+            id: "name_store_join_1".to_string(),
+            table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
+            record_id: NAME_STORE_JOIN_1.0.to_string(),
+            data: NAME_STORE_JOIN_1.1.to_string(),
+            action: RemoteSyncBufferAction::Update,
+        },
+    }
+}
+fn name_store_join1_push_record() -> TestSyncPushRecord {
+    TestSyncPushRecord {
+        change_log: ChangelogRow {
+            id: 2,
+            table_name: ChangelogTableName::NameStoreJoin,
+            row_id: NAME_STORE_JOIN_1.0.to_string(),
+            row_action: ChangelogAction::Upsert,
+        },
+        push_data: json!(LegacyNameStoreJoinRow {
+            ID: NAME_STORE_JOIN_1.0.to_string(),
+            store_ID: "store_a".to_string(),
+            name_ID: "name_store_a".to_string()
+        }),
+    }
+}
 
 const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
     "BE65A4A05E4D47E88303D6105A7872CC",
@@ -30,47 +74,55 @@ const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
       "store_ID": "store_b"
   }"#,
 );
+fn name_store_join_2_pull_record() -> TestSyncRecord {
+    TestSyncRecord {
+        translated_record: Some(IntegrationRecord::from_upsert(
+            IntegrationUpsertRecord::NameStoreJoin(NameStoreJoinRow {
+                id: NAME_STORE_JOIN_2.0.to_string(),
+                store_id: "store_b".to_string(),
+                name_id: "name_store_b".to_string(),
+                name_is_customer: false,
+                name_is_supplier: false,
+            }),
+        )),
+        identifier: "Name store join 2",
+        remote_sync_buffer_row: RemoteSyncBufferRow {
+            id: "name_store_join_2".to_string(),
+            table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
+            record_id: NAME_STORE_JOIN_2.0.to_string(),
+            data: NAME_STORE_JOIN_2.1.to_string(),
+            action: RemoteSyncBufferAction::Update,
+        },
+    }
+}
+fn name_store_join_2_push_record() -> TestSyncPushRecord {
+    TestSyncPushRecord {
+        change_log: ChangelogRow {
+            id: 2,
+            table_name: ChangelogTableName::NameStoreJoin,
+            row_id: NAME_STORE_JOIN_2.0.to_string(),
+            row_action: ChangelogAction::Upsert,
+        },
+        push_data: json!(LegacyNameStoreJoinRow {
+            ID: NAME_STORE_JOIN_2.0.to_string(),
+            store_ID: "store_b".to_string(),
+            name_ID: "name_store_b".to_string()
+        }),
+    }
+}
 
 #[allow(dead_code)]
 pub fn get_test_name_store_join_records() -> Vec<TestSyncRecord> {
     vec![
-        TestSyncRecord {
-            translated_record: Some(IntegrationRecord::from_upsert(
-                IntegrationUpsertRecord::NameStoreJoin(NameStoreJoinRow {
-                    id: NAME_STORE_JOIN_1.0.to_string(),
-                    store_id: "store_a".to_string(),
-                    name_id: "name_store_a".to_string(),
-                    name_is_customer: false,
-                    name_is_supplier: true,
-                }),
-            )),
-            identifier: "Name store join 1",
-            remote_sync_buffer_row: RemoteSyncBufferRow {
-                id: "name_store_join_1".to_string(),
-                table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
-                record_id: NAME_STORE_JOIN_1.0.to_string(),
-                data: NAME_STORE_JOIN_1.1.to_string(),
-                action: RemoteSyncBufferAction::Update,
-            },
-        },
-        TestSyncRecord {
-            translated_record: Some(IntegrationRecord::from_upsert(
-                IntegrationUpsertRecord::NameStoreJoin(NameStoreJoinRow {
-                    id: NAME_STORE_JOIN_2.0.to_string(),
-                    store_id: "store_b".to_string(),
-                    name_id: "name_store_b".to_string(),
-                    name_is_customer: false,
-                    name_is_supplier: false,
-                }),
-            )),
-            identifier: "Name store join 2",
-            remote_sync_buffer_row: RemoteSyncBufferRow {
-                id: "name_store_join_2".to_string(),
-                table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
-                record_id: NAME_STORE_JOIN_2.0.to_string(),
-                data: NAME_STORE_JOIN_2.1.to_string(),
-                action: RemoteSyncBufferAction::Update,
-            },
-        },
+        name_store_join_1_pull_record(),
+        name_store_join_2_pull_record(),
+    ]
+}
+
+#[allow(dead_code)]
+pub fn get_test_push_name_store_join_records() -> Vec<TestSyncPushRecord> {
+    vec![
+        name_store_join1_push_record(),
+        name_store_join_2_push_record(),
     ]
 }
