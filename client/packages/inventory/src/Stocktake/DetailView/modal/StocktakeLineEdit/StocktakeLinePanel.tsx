@@ -102,6 +102,7 @@ export const StocktakeLinePanel: FC<StocktakeLinePanelProps> = ({
                   >
                     <BasicTextInput
                       value={batch}
+                      InputProps={{ inputProps: { maxLength: 50 } }}
                       onChange={e =>
                         update({ id: line.id, batch: e.target.value })
                       }
