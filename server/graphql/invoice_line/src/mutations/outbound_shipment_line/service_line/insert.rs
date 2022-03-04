@@ -18,7 +18,7 @@ use service::invoice_line::outbound_shipment_service_line::{
 pub struct InsertInput {
     pub id: String,
     pub invoice_id: String,
-    pub item_id: String,
+    pub item_id: Option<String>,
     name: Option<String>,
     total_before_tax: f64,
     total_after_tax: f64,
@@ -118,7 +118,10 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::NotAServiceItem => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::CannotFindDefaultServiceItem => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
 }
+
+// TODO tests
