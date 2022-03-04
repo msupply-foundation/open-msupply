@@ -52,7 +52,7 @@ export type CreateOutboundFromResponseMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateOutboundFromResponseMutation = { __typename: 'Mutations', createRequisitionShipment: { __typename: 'CreateRequisitionShipmentError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'NothingRemainingToSupply', description: string } | { __typename: 'RecordDoesNotExist', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type CreateOutboundFromResponseMutation = { __typename: 'FullMutation', createRequisitionShipment: { __typename: 'CreateRequisitionShipmentError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'NothingRemainingToSupply', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export const ItemWithStatsFragmentDoc = gql`
     fragment ItemWithStats on ItemNode {
@@ -241,7 +241,7 @@ export const CreateOutboundFromResponseDocument = gql`
           __typename
           description
         }
-        ... on RecordDoesNotExist {
+        ... on RecordNotFound {
           __typename
           description
         }
