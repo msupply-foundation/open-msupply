@@ -18,6 +18,7 @@ use service::{
 pub struct UpdateInput {
     pub id: String,
     pub supply_quantity: Option<u32>,
+    pub comment: Option<String>,
 }
 
 #[derive(Interface)]
@@ -73,11 +74,13 @@ impl UpdateInput {
         let UpdateInput {
             id,
             supply_quantity,
+            comment,
         } = self;
 
         ServiceInput {
             id,
             supply_quantity,
+            comment,
         }
     }
 }
@@ -321,7 +324,8 @@ mod test {
                 input,
                 ServiceInput {
                     id: "update line id input".to_string(),
-                    supply_quantity: Some(1)
+                    supply_quantity: Some(1),
+                    comment: Some("comment".to_string()),
                 }
             );
             Ok(RequisitionLine {
@@ -333,7 +337,8 @@ mod test {
         let variables = json!({
           "input": {
             "id": "update line id input",
-            "supplyQuantity": 1
+            "supplyQuantity": 1,
+            "comment": "comment"
           },
           "storeId": "store_a"
         });

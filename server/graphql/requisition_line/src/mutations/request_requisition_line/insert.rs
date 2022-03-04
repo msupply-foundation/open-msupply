@@ -21,6 +21,7 @@ pub struct InsertInput {
     pub item_id: String,
     pub requisition_id: String,
     pub requested_quantity: Option<u32>,
+    pub comment: Option<String>,
 }
 
 #[derive(Interface)]
@@ -83,6 +84,7 @@ impl InsertInput {
             item_id,
             requisition_id,
             requested_quantity,
+            comment,
         } = self;
 
         ServiceInput {
@@ -90,6 +92,7 @@ impl InsertInput {
             item_id,
             requisition_id,
             requested_quantity,
+            comment,
         }
     }
 }
@@ -389,7 +392,8 @@ mod test {
                     id: "new line id input".to_string(),
                     item_id: "item id input".to_string(),
                     requisition_id: "requisition id input".to_string(),
-                    requested_quantity: Some(1)
+                    requested_quantity: Some(1),
+                    comment: Some("comment".to_string())
                 }
             );
             Ok(RequisitionLine {
@@ -403,7 +407,8 @@ mod test {
             "id": "new line id input",
             "requisitionId": "requisition id input",
             "itemId": "item id input",
-            "requestedQuantity": 1
+            "requestedQuantity": 1,
+            "comment": "comment"
           },
           "storeId": "store_a"
         });

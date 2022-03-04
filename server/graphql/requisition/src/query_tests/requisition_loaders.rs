@@ -153,6 +153,7 @@ mod test {
                         requestedQuantity
                         supplyQuantity
                         suggestedQuantity
+                        comment
                         itemStats {
                             averageMonthlyConsumption
                             availableStockOnHand
@@ -189,8 +190,9 @@ mod test {
                             "id": &response_requisition.lines[0].id,
                             "itemId":&response_requisition.lines[0].item_id,
                             "requestedQuantity": &response_requisition.lines[0].requested_quantity,
-                            "supplyQuantity":&response_requisition.lines[0].supply_quantity,
-                            "suggestedQuantity":&response_requisition.lines[0].suggested_quantity,
+                            "supplyQuantity": &response_requisition.lines[0].supply_quantity,
+                            "suggestedQuantity": &response_requisition.lines[0].suggested_quantity,
+                            "comment": &response_requisition.lines[0].comment,
                             "itemStats": {
                                 "averageMonthlyConsumption": &response_requisition.lines[0].average_monthly_consumption,
                                 "availableStockOnHand": &response_requisition.lines[0].available_stock_on_hand,

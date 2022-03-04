@@ -8,11 +8,13 @@ use repository::{
     schema::{RequisitionLineRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLine, RequisitionLineRowRepository, StorageConnection,
 };
+use util::inline_edit;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct UpdateResponseRequisitionLine {
     pub id: String,
     pub supply_quantity: Option<u32>,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -79,32 +81,18 @@ fn validate(
 }
 
 fn generate(
-    RequisitionLineRow {
-        id,
-        requisition_id,
-        item_id,
-        requested_quantity,
-        suggested_quantity,
-        supply_quantity,
-        available_stock_on_hand,
-        average_monthly_consumption,
-    }: RequisitionLineRow,
+    existing: RequisitionLineRow,
     UpdateResponseRequisitionLine {
         id: _,
         supply_quantity: updated_supply_quantity,
+        comment: updated_comment,
     }: UpdateResponseRequisitionLine,
 ) -> RequisitionLineRow {
-    RequisitionLineRow {
-        supply_quantity: updated_supply_quantity.unwrap_or(supply_quantity as u32) as i32,
-        // not changed
-        id,
-        requisition_id,
-        item_id,
-        suggested_quantity,
-        requested_quantity,
-        available_stock_on_hand,
-        average_monthly_consumption,
-    }
+    inline_edit(&existing, |mut u| {
+        u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity as u32) as i32;
+        u.comment = updated_comment.or(u.comment);
+        u
+    })
 }
 
 impl From<RepositoryError> for UpdateResponseRequisitionLineError {
@@ -123,6 +111,7 @@ mod test {
         test_db::setup_all,
         RequisitionLineRowRepository,
     };
+    use util::{inline_edit, inline_init};
 
     use crate::{
         requisition_line::response_requisition_line::{
@@ -148,10 +137,9 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 "store_a",
-                UpdateResponseRequisitionLine {
-                    id: "invalid".to_owned(),
-                    supply_quantity: None,
-                },
+                inline_init(|r: &mut UpdateResponseRequisitionLine| {
+                    r.id = "invalid".to_owned();
+                }),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
         );
@@ -161,10 +149,9 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 "store_b",
-                UpdateResponseRequisitionLine {
-                    id: mock_new_response_requisition_test().lines[0].id.clone(),
-                    supply_quantity: None,
-                },
+                inline_init(|r: &mut UpdateResponseRequisitionLine| {
+                    r.id = mock_new_response_requisition_test().lines[0].id.clone();
+                }),
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
@@ -174,10 +161,9 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 "store_a",
-                UpdateResponseRequisitionLine {
-                    id: mock_finalised_request_requisition_line().id,
-                    supply_quantity: None,
-                },
+                inline_init(|r: &mut UpdateResponseRequisitionLine| {
+                    r.id = mock_finalised_request_requisition_line().id;
+                }),
             ),
             Err(ServiceError::CannotEditRequisition)
         );
@@ -187,10 +173,9 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 "store_a",
-                UpdateResponseRequisitionLine {
-                    id: mock_sent_request_requisition_line().id,
-                    supply_quantity: None,
-                },
+                inline_init(|r: &mut UpdateResponseRequisitionLine| {
+                    r.id = mock_sent_request_requisition_line().id;
+                }),
             ),
             Err(ServiceError::NotAResponseRequisition)
         );
@@ -208,7 +193,7 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_line_service;
 
-        let mut test_line = mock_new_response_requisition_test().lines[0].clone();
+        let test_line = mock_new_response_requisition_test().lines[0].clone();
 
         service
             .update_response_requisition_line(
@@ -217,6 +202,7 @@ mod test {
                 UpdateResponseRequisitionLine {
                     id: test_line.id.clone(),
                     supply_quantity: Some(99),
+                    comment: Some("comment".to_string()),
                 },
             )
             .unwrap();
@@ -226,8 +212,13 @@ mod test {
             .unwrap()
             .unwrap();
 
-        test_line.supply_quantity = 99;
-
-        assert_eq!(test_line, line);
+        assert_eq!(
+            line,
+            inline_edit(&test_line, |mut u| {
+                u.supply_quantity = 99;
+                u.comment = Some("comment".to_string());
+                u
+            })
+        );
     }
 }
