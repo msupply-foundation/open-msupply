@@ -1,4 +1,4 @@
-use repository::{OkWithRollback, RepositoryError, Requisition, RequisitionLine};
+use repository::{RepositoryError, Requisition, RequisitionLine};
 
 use crate::{
     requisition_line::request_requisition_line::{
@@ -9,7 +9,7 @@ use crate::{
         UpdateRequestRequisitionLineError,
     },
     service_provider::ServiceContext,
-    InputWithResult,
+    InputWithResult, WithDBError,
 };
 
 use super::{
@@ -103,7 +103,7 @@ pub fn batch_request_requisition(
 ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
     let result = ctx
         .connection
-        .transaction_sync_with_rollback(|_| {
+        .transaction_sync(|_| {
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut result = BatchRequestRequisitionResult {
                 insert_requisition: vec![],
@@ -123,7 +123,7 @@ pub fn batch_request_requisition(
             result.insert_requisition = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -135,7 +135,7 @@ pub fn batch_request_requisition(
             result.insert_line = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -147,7 +147,7 @@ pub fn batch_request_requisition(
             result.update_line = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -159,7 +159,7 @@ pub fn batch_request_requisition(
             result.delete_line = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
             let (has_error, results) = do_mutations(
                 ctx,
@@ -170,7 +170,7 @@ pub fn batch_request_requisition(
             result.update_requisition = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -181,16 +181,18 @@ pub fn batch_request_requisition(
             );
             result.delete_requisition = results;
 
-            let result: Result<OkWithRollback<BatchRequestRequisitionResult>, RepositoryError> =
-                if has_error && !continue_on_error {
-                    Ok(OkWithRollback::OkWithRollback(result))
-                } else {
-                    Ok(OkWithRollback::Ok(result))
-                };
+            if has_error && !continue_on_error {
+                return Err(WithDBError::err(result));
+            }
 
-            result
+            Ok(result)
+                as Result<BatchRequestRequisitionResult, WithDBError<BatchRequestRequisitionResult>>
         })
-        .map_err(|error| error.to_inner_error())?;
+        .map_err(|error| error.to_inner_error())
+        .or_else(|error| match error {
+            WithDBError::DatabaseError(repository_error) => Err(repository_error),
+            WithDBError::Error(batch_response) => Ok(batch_response),
+        })?;
 
     Ok(result)
 }

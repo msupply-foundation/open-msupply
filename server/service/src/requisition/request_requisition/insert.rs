@@ -10,7 +10,7 @@ use repository::{
     RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 
-use super::check_other_party_exists;
+use super::{check_other_party, OtherPartyErrors};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisition {
@@ -67,20 +67,15 @@ fn validate(
         return Err(OutError::RequisitionAlreadyExists);
     }
 
-    let other_party = check_other_party_exists(connection, &input.other_party_id)?
-        .ok_or(OutError::OtherPartyDoesNotExist)?;
-
-    if !other_party.is_supplier() {
-        return Err(OutError::OtherPartyNotASupplier(other_party));
-    }
-
-    let other_party_store_id = other_party
-        .store_id()
-        .ok_or(OutError::OtherPartyIsNotAStore)?;
-
-    if store_id == other_party_store_id {
-        return Err(OutError::OtherPartyIsThisStore);
-    }
+    check_other_party(connection, store_id, &input.other_party_id).map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OutError::OtherPartyDoesNotExist {},
+        OtherPartyErrors::OtherPartyNotASupplier(name) => OutError::OtherPartyNotASupplier(name),
+        OtherPartyErrors::OtherPartyIsNotAStore => OutError::OtherPartyIsNotAStore,
+        OtherPartyErrors::OtherPartyIsThisStore => OutError::OtherPartyIsThisStore,
+        OtherPartyErrors::DatabaseError(repository_error) => {
+            OutError::DatabaseError(repository_error)
+        }
+    })?;
 
     Ok(())
 }

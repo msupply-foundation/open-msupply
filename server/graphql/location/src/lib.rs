@@ -13,11 +13,6 @@ pub struct LocationQueries;
 
 #[Object]
 impl LocationQueries {
-    #[allow(non_snake_case)]
-    pub async fn apiVersion(&self) -> String {
-        "1.0".to_string()
-    }
-
     /// Query omSupply "locations" entries
     pub async fn locations(
         &self,
