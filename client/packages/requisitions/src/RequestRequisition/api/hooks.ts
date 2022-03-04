@@ -19,7 +19,7 @@ import {
   useTableStore,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import { getRequestQueries } from './api';
+import { getRequestQueries, ListParams } from './api';
 import {
   getSdk,
   RequestFragment,
@@ -28,10 +28,17 @@ import {
 } from './operations.generated';
 
 export const useRequestApi = () => {
+  const keys = {
+    base: () => ['request'] as const,
+    detail: (id: string) => [...keys.base(), storeId, id] as const,
+    list: () => [...keys.base(), storeId, 'list'] as const,
+    paramList: (params: ListParams) => [...keys.list(), params] as const,
+  };
+
   const { client } = useOmSupplyApi();
   const { storeId } = useAuthContext();
   const queries = getRequestQueries(getSdk(client), storeId);
-  return { ...queries, storeId };
+  return { ...queries, storeId, keys };
 };
 
 export const useRequests = () => {
@@ -41,7 +48,7 @@ export const useRequests = () => {
   const api = useRequestApi();
 
   return {
-    ...useQuery(['requisition', 'list', api.storeId, queryParams], () =>
+    ...useQuery(api.keys.paramList(queryParams), () =>
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
@@ -53,6 +60,11 @@ export const useRequests = () => {
   };
 };
 
+const useRequestNumber = () => {
+  const { requisitionNumber = '' } = useParams();
+  return requisitionNumber;
+};
+
 export const useInsertRequest = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -60,7 +72,7 @@ export const useInsertRequest = () => {
   return useMutation(api.insert, {
     onSuccess: ({ requisitionNumber }) => {
       navigate(String(requisitionNumber));
-      queryClient.invalidateQueries(['requisition']);
+      queryClient.invalidateQueries(api.keys.base());
     },
   });
 };
@@ -69,15 +81,15 @@ export const useUpdateRequest = () => {
   const queryClient = useQueryClient();
   const api = useRequestApi();
   return useMutation(api.update, {
-    onSuccess: () => queryClient.invalidateQueries(['requisition']),
+    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
   });
 };
 
 export const useRequest = (): UseQueryResult<RequestFragment> => {
-  const { requisitionNumber = '' } = useParams();
+  const requestNumber = useRequestNumber();
   const api = useRequestApi();
-  return useQuery(['requisition', api.storeId, requisitionNumber], () =>
-    api.get.byNumber(requisitionNumber)
+  return useQuery(api.keys.detail(requestNumber), () =>
+    api.get.byNumber(requestNumber)
   );
 };
 
@@ -87,11 +99,11 @@ export const useRequestFields = <
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<RequestFragment, KeyOfRequisition> => {
   const { data } = useRequest();
-  const { requisitionNumber = '' } = useParams();
+  const requestNumber = useRequestNumber();
   const api = useRequestApi();
   return useFieldsSelector(
-    ['requisition', api.storeId, requisitionNumber],
-    () => api.get.byNumber(requisitionNumber),
+    api.keys.detail(requestNumber),
+    () => api.get.byNumber(requestNumber),
 
     (patch: Partial<RequestFragment>) =>
       api.update({ ...patch, id: data?.id ?? '' }),
@@ -132,28 +144,26 @@ export const useIsRequestDisabled = (): boolean => {
 };
 
 export const useSaveRequestLines = () => {
-  const { requisitionNumber = '' } = useParams();
+  const requestNumber = useRequestNumber();
   const queryClient = useQueryClient();
   const api = useRequestApi();
 
   return useMutation(api.upsertLine, {
     onSuccess: () => {
-      queryClient.invalidateQueries([
-        'requisition',
-        api.storeId,
-        requisitionNumber,
-      ]);
+      queryClient.invalidateQueries(api.keys.detail(requestNumber));
     },
   });
 };
 
 export const useDeleteRequests = () => {
+  const queryClient = useQueryClient();
   const api = useRequestApi();
-  return useMutation(api.deleteRequests);
+  return useMutation(api.deleteRequests, {
+    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+  });
 };
 
 export const useDeleteSelectedRequisitions = () => {
-  const queryClient = useQueryClient();
   const { data: rows } = useRequests();
   const { mutate } = useDeleteRequests();
   const t = useTranslation('replenishment');
@@ -177,10 +187,7 @@ export const useDeleteSelectedRequisitions = () => {
         const cannotDeleteSnack = info(t('messages.cant-delete-requisitions'));
         cannotDeleteSnack();
       } else {
-        mutate(selectedRows, {
-          onSuccess: () =>
-            queryClient.invalidateQueries(['requisition', 'list']),
-        });
+        mutate(selectedRows);
         const deletedMessage = t('messages.deleted-requisitions', {
           number: numberSelected,
         });

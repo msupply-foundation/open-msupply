@@ -14,6 +14,13 @@ import {
   Sdk,
 } from './operations.generated';
 
+export type ListParams = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<RequestRowFragment>;
+  filterBy: FilterBy | null;
+};
+
 const requestParser = {
   toStatus: (
     patch: Partial<RequestFragment> & { id: string }
@@ -79,17 +86,7 @@ const requestParser = {
 
 export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({
-      first,
-      offset,
-      sortBy,
-      filterBy,
-    }: {
-      first: number;
-      offset: number;
-      sortBy: SortBy<RequestRowFragment>;
-      filterBy: FilterBy | null;
-    }) => {
+    list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
       const filter = {
         ...filterBy,
         type: { equalTo: RequisitionNodeType.Request },
