@@ -15,6 +15,13 @@ import {
 } from './operations.generated';
 import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
 
+export type ListParams = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<ResponseRowFragment>;
+  filterBy: FilterBy | null;
+};
+
 const responseParser = {
   toStatus: (
     patch: Partial<ResponseFragment> & { id: string }
@@ -72,17 +79,7 @@ const responseParser = {
 
 export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({
-      first,
-      offset,
-      sortBy,
-      filter,
-    }: {
-      first: number;
-      offset: number;
-      sortBy: SortBy<ResponseRowFragment>;
-      filter: FilterBy | null;
-    }) => {
+    list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
       const result = await sdk.responses({
         storeId,
         page: { offset, first },
@@ -91,7 +88,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
           desc: !!sortBy.isDesc,
         },
         filter: {
-          ...filter,
+          ...filterBy,
           type: { equalTo: RequisitionNodeType.Response },
         },
       });
