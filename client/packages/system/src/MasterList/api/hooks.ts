@@ -4,8 +4,7 @@ import {
   useAuthContext,
   useQueryParams,
 } from '@openmsupply-client/common';
-import { MasterListRow } from './../types';
-import { getSdk } from './operations.generated';
+import { getSdk, MasterListRowFragment } from './operations.generated';
 import { getMasterListQueries, ListParams } from './api';
 
 export const useMasterListApi = () => {
@@ -23,20 +22,25 @@ export const useMasterListApi = () => {
   return { ...queries, storeId, keys };
 };
 
-export const useMasterLists = () => {
-  const queryParams = useQueryParams<MasterListRow>({
+export const useMasterLists = ({ enabled } = { enabled: true }) => {
+  const queryParams = useQueryParams<MasterListRowFragment>({
     initialSortBy: { key: 'name' },
   });
   const api = useMasterListApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.list({
-        first: queryParams.first,
-        offset: queryParams.offset,
-        sortBy: queryParams.sortBy,
-        filterBy: queryParams.filter.filterBy,
-      })
+    ...useQuery(
+      api.keys.paramList(queryParams),
+      () =>
+        api.get.list({
+          first: queryParams.first,
+          offset: queryParams.offset,
+          sortBy: queryParams.sortBy,
+          filterBy: queryParams.filter.filterBy,
+        }),
+      {
+        enabled,
+      }
     ),
     ...queryParams,
   };

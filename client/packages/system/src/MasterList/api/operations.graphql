@@ -1,3 +1,11 @@
+fragment MasterListRow on MasterListNode {
+  __typename
+  name
+  code
+  description
+  id
+}
+
 query masterLists(
   $first: Int
   $offset: Int
@@ -16,45 +24,7 @@ query masterLists(
       __typename
       totalCount
       nodes {
-        name
-        code
-        description
-        id
-        lines {
-          __typename
-          totalCount
-          nodes {
-            id
-            itemId
-            item {
-              code
-              id
-              unitName
-              name
-              isVisible
-              availableBatches(storeId: $storeId) {
-                __typename
-                totalCount
-                nodes {
-                  __typename
-                  availableNumberOfPacks
-                  batch
-                  costPricePerPack
-                  expiryDate
-                  itemId
-                  id
-                  totalNumberOfPacks
-                  storeId
-                  sellPricePerPack
-                  packSize
-                  onHold
-                  note
-                  locationName
-                }
-              }
-            }
-          }
-        }
+        ...MasterListRow
       }
     }
   }
