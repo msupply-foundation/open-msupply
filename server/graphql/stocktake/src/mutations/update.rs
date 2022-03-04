@@ -1,5 +1,6 @@
 use async_graphql::*;
 
+use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::StocktakeIsLocked;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -19,6 +20,7 @@ pub struct UpdateStocktakeInput {
     pub comment: Option<String>,
     pub description: Option<String>,
     pub status: Option<StocktakeNodeStatus>,
+    pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
 }
 
@@ -122,6 +124,7 @@ fn to_domain(
         description,
         status,
         is_locked,
+        stocktake_date,
     }: UpdateStocktakeInput,
 ) -> UpdateStocktake {
     UpdateStocktake {
@@ -129,6 +132,7 @@ fn to_domain(
         comment,
         description,
         status: status.map(|s| s.to_domain()),
+        stocktake_date,
         is_locked,
     }
 }
@@ -269,6 +273,7 @@ mod graphql {
                 description: Some("description".to_string()),
                 status: StocktakeStatus::Finalised,
                 created_datetime: NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0),
+                stocktake_date: Some(NaiveDate::from_ymd(2022, 01, 24)),
                 finalised_datetime: Some(NaiveDate::from_ymd(2022, 1, 23).and_hms(15, 16, 0)),
                 inventory_adjustment_id: Some("inv id".to_string()),
                 is_locked: false,

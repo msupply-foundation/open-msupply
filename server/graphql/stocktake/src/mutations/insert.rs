@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
+use chrono::NaiveDate;
 
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -17,8 +17,8 @@ pub struct InsertStocktakeInput {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
-    pub created_datetime: NaiveDateTime,
     pub is_locked: Option<bool>,
+    pub stocktake_date: Option<NaiveDate>,
 }
 
 #[derive(Union)]
@@ -76,7 +76,7 @@ fn to_domain(
         id,
         comment,
         description,
-        created_datetime,
+        stocktake_date,
         is_locked,
     }: InsertStocktakeInput,
 ) -> InsertStocktake {
@@ -84,7 +84,7 @@ fn to_domain(
         id,
         comment,
         description,
-        created_datetime,
+        stocktake_date,
         is_locked,
     }
 }
@@ -95,9 +95,7 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        mock::MockDataInserts,
-        schema::{StocktakeRow, StocktakeStatus},
-        Stocktake, StorageConnectionManager,
+        mock::MockDataInserts, schema::StocktakeRow, Stocktake, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -107,6 +105,7 @@ mod test {
             StocktakeServiceTrait,
         },
     };
+    use util::inline_init;
 
     use crate::StocktakeMutations;
 
@@ -155,27 +154,28 @@ mod test {
         }"#;
 
         // success
-        let test_service = TestService(Box::new(|_, _, _| {
-            Ok(StocktakeRow {
-                id: "id1".to_string(),
-                stocktake_number: 123,
-                store_id: "store id".to_string(),
-                comment: Some("comment".to_string()),
-                description: Some("description".to_string()),
-                status: StocktakeStatus::Finalised,
-                created_datetime: NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0),
-                finalised_datetime: Some(NaiveDate::from_ymd(2022, 1, 23).and_hms(15, 16, 0)),
-                inventory_adjustment_id: Some("inv id".to_string()),
-                is_locked: false,
-            })
+        let test_service = TestService(Box::new(|_, _, input| {
+            assert_eq!(
+                input,
+                InsertStocktakeInput {
+                    id: "id1".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd(2022, 01, 03)),
+                    is_locked: Some(true)
+                }
+            );
+            // StocktakeNode result is checked in queries
+            Ok(inline_init(|r: &mut StocktakeRow| r.id = "id1".to_string()))
         }));
         let variables = Some(json!({
             "storeId": "store id",
             "input": {
-                "id": "id1",
-                "comment": "comment",
-                "description": "description",
-                "createdDatetime": "2022-01-22T15:16:00",
+              "id": "id1",
+              "comment": "comment",
+              "description": "description",
+              "stocktakeDate": "2022-01-03",
+              "isLocked": true
             }
         }));
         let expected = json!({

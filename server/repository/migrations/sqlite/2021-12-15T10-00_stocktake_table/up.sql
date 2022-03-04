@@ -6,6 +6,7 @@ CREATE TABLE stocktake (
     description TEXT,
     status TEXT CHECK (status IN ('NEW', 'FINALISED')) NOT NULL,
     created_datetime TEXT NOT NULL,
+    stocktake_date TEXT,
     finalised_datetime TEXT,
     is_locked BOOLEAN,
     inventory_adjustment_id TEXT REFERENCES invoice(id)

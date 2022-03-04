@@ -1,5 +1,5 @@
 use super::diesel_schema::stocktake;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel_derive_enum::DbEnum;
 use util::Defaults;
 
@@ -20,6 +20,7 @@ pub struct StocktakeRow {
     pub description: Option<String>,
     pub status: StocktakeStatus,
     pub created_datetime: NaiveDateTime,
+    pub stocktake_date: Option<NaiveDate>,
     pub finalised_datetime: Option<NaiveDateTime>,
     /// reference to the inventory adjustment shipment
     pub inventory_adjustment_id: Option<String>,
@@ -41,6 +42,7 @@ impl Default for StocktakeRow {
             id: Default::default(),
             store_id: Default::default(),
             stocktake_number: Default::default(),
+            stocktake_date: Default::default(),
             comment: Default::default(),
             description: Default::default(),
             finalised_datetime: Default::default(),

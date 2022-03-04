@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -9,7 +9,7 @@ use repository::{
     StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
 };
 use repository::{EqualFilter, SimpleStringFilter};
-use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, uuid::uuid};
+use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
     number::next_number, service_provider::ServiceContext, stocktake::query::get_stocktake,
@@ -24,6 +24,7 @@ pub struct UpdateStocktakeInput {
     pub comment: Option<String>,
     pub description: Option<String>,
     pub status: Option<StocktakeStatus>,
+    pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
 }
 
@@ -273,6 +274,7 @@ fn generate(
         description: input_description,
         status: input_status,
         is_locked: input_is_locked,
+        stocktake_date: input_stocktake_date,
     }: UpdateStocktakeInput,
     existing: StocktakeRow,
     stocktake_lines: Vec<StocktakeLine>,
@@ -280,20 +282,14 @@ fn generate(
 ) -> Result<StocktakeGenerateJob, UpdateStocktakeError> {
     if input_status != Some(StocktakeStatus::Finalised) {
         // just update the existing stocktake
-        let stocktake = StocktakeRow {
-            // Input
-            description: input_description.or(existing.description),
-            status: input_status.unwrap_or(existing.status),
-            inventory_adjustment_id: None,
-            comment: input_comment.or(existing.comment),
-            is_locked: input_is_locked.unwrap_or(false),
-            // Existing
-            id: existing.id,
-            store_id: existing.store_id,
-            stocktake_number: existing.stocktake_number,
-            created_datetime: existing.created_datetime,
-            finalised_datetime: None,
-        };
+        let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
+            u.description = input_description.or(u.description);
+            u.status = input_status.unwrap_or(u.status);
+            u.comment = input_comment.or(u.comment);
+            u.is_locked = input_is_locked.unwrap_or(false);
+            u.stocktake_date = input_stocktake_date.or(u.stocktake_date);
+            u
+        });
         return Ok(StocktakeGenerateJob {
             stocktake: stocktake,
             inventory_adjustment: None,
@@ -354,20 +350,14 @@ fn generate(
         linked_invoice_id: None,
     };
 
-    let stocktake = StocktakeRow {
-        // New
-        finalised_datetime: Some(now),
-        inventory_adjustment_id: Some(shipment.id.clone()),
-        // Existing
-        id: existing.id,
-        store_id: existing.store_id,
-        stocktake_number: existing.stocktake_number,
-        comment: input_comment.or(existing.comment),
-        description: input_description.or(existing.description),
-        status: input_status.unwrap_or(existing.status),
-        created_datetime: existing.created_datetime,
-        is_locked: existing.is_locked,
-    };
+    let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
+        u.description = input_description.or(u.description);
+        u.status = input_status.unwrap_or(u.status);
+        u.comment = input_comment.or(u.comment);
+        u.finalised_datetime = Some(now);
+        u.inventory_adjustment_id = Some(shipment.id.clone());
+        u
+    });
 
     Ok(StocktakeGenerateJob {
         stocktake,
@@ -425,6 +415,7 @@ impl From<RepositoryError> for UpdateStocktakeError {
 #[cfg(test)]
 mod test {
 
+    use chrono::NaiveDate;
     use repository::{
         mock::{
             mock_locked_stocktake, mock_stock_line_a, mock_stocktake_a,
@@ -648,9 +639,10 @@ mod test {
                 .find_one_by_id(&stocktake.id)
                 .unwrap()
                 .unwrap(),
-            inline_edit(&stocktake, |r: &mut StocktakeRow| {
+            inline_edit(&stocktake, |mut r: StocktakeRow| {
                 r.is_locked = true;
                 r.comment = Some("New comment".to_string());
+                r
             })
         );
 
@@ -674,9 +666,10 @@ mod test {
                 .find_one_by_id(&stocktake.id)
                 .unwrap()
                 .unwrap(),
-            inline_edit(&stocktake, |r: &mut StocktakeRow| {
+            inline_edit(&stocktake, |mut r: StocktakeRow| {
                 r.is_locked = false;
                 r.comment = Some("Comment".to_string());
+                r
             })
         );
         // success: all changes (not finalised)
@@ -686,26 +679,25 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
-                    i.id = stocktake.id.clone();
-                    i.comment = Some("comment_1".to_string());
-                    i.description = Some("description_1".to_string());
-                    i.status = Some(StocktakeStatus::New);
-                }),
+                UpdateStocktakeInput {
+                    id: stocktake.id.clone(),
+                    comment: Some("comment_1".to_string()),
+                    description: Some("description_1".to_string()),
+                    status: Some(StocktakeStatus::New),
+                    stocktake_date: Some(NaiveDate::from_ymd(2019, 03, 20)),
+                    is_locked: Some(false),
+                },
             )
             .unwrap();
+
         assert_eq!(
             result,
-            inline_init(|i: &mut StocktakeRow| {
-                i.id = stocktake.id;
-                i.store_id = store_a.id;
-                i.stocktake_number = stocktake.stocktake_number;
+            inline_edit(&stocktake, |mut i: StocktakeRow| {
                 i.comment = Some("comment_1".to_string());
                 i.description = Some("description_1".to_string());
-                i.status = stocktake.status;
-                i.created_datetime = stocktake.created_datetime;
-                i.finalised_datetime = stocktake.finalised_datetime;
-                i.inventory_adjustment_id = stocktake.inventory_adjustment_id;
+                i.stocktake_date = Some(NaiveDate::from_ymd(2019, 03, 20));
+                i.is_locked = false;
+                i
             }),
         );
 

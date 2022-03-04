@@ -423,7 +423,6 @@ mod graphql {
               "insertStocktakes": [
                 {
                   "id": "batch_stocktake_1",
-                  "createdDatetime": "2022-02-09T15:16:00",
                 },
               ],
               "insertStocktakeLines": [
