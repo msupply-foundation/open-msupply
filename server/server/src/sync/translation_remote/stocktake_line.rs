@@ -1,41 +1,43 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::{RemoteSyncBufferRow, StocktakeLineRow},
-    StorageConnection,
+    schema::{ChangelogRow, ChangelogTableName, RemoteSyncBufferRow, StocktakeLineRow},
+    StockLineRowRepository, StocktakeLineRowRepository, StorageConnection,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::sync::SyncTranslationError;
 
 use super::{
-    empty_str_as_option, zero_date_as_option, IntegrationRecord, IntegrationUpsertRecord,
-    RemotePullTranslation, TRANSLATION_RECORD_STOCKTAKE_LINE,
+    empty_str_as_option,
+    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
+    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    zero_date_as_option, TRANSLATION_RECORD_STOCKTAKE_LINE,
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct LegacyStocktakeLineRow {
-    ID: String,
-    stock_take_ID: String,
+#[derive(Deserialize, Serialize)]
+pub struct LegacyStocktakeLineRow {
+    pub ID: String,
+    pub stock_take_ID: String,
 
     #[serde(deserialize_with = "empty_str_as_option")]
-    location_id: Option<String>,
+    pub location_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
-    comment: Option<String>,
-    snapshot_qty: i32,
-    snapshot_packsize: i32,
-    stock_take_qty: i32,
-    is_edited: bool,
+    pub comment: Option<String>,
+    pub snapshot_qty: i32,
+    pub snapshot_packsize: i32,
+    pub stock_take_qty: i32,
+    pub is_edited: bool,
     // TODO is this optional?
     #[serde(deserialize_with = "empty_str_as_option")]
-    item_line_ID: Option<String>,
-    item_ID: String,
+    pub item_line_ID: Option<String>,
+    pub item_ID: String,
     #[serde(deserialize_with = "empty_str_as_option")]
-    Batch: Option<String>,
+    pub Batch: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
-    expiry: Option<NaiveDate>,
-    cost_price: f64,
-    sell_price: f64,
+    pub expiry: Option<NaiveDate>,
+    pub cost_price: f64,
+    pub sell_price: f64,
 }
 
 pub struct StocktakeLineTranslation {}
@@ -44,7 +46,7 @@ impl RemotePullTranslation for StocktakeLineTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_STOCKTAKE_LINE;
 
         if sync_record.table_name != table_name {
@@ -83,5 +85,93 @@ impl RemotePullTranslation for StocktakeLineTranslation {
                 note: None,
             }),
         )))
+    }
+}
+
+impl RemotePushUpsertTranslation for StocktakeLineTranslation {
+    fn try_translate_push(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+        if changelog.table_name != ChangelogTableName::StocktakeLine {
+            return Ok(None);
+        }
+        let table_name = TRANSLATION_RECORD_STOCKTAKE_LINE;
+
+        let StocktakeLineRow {
+            id,
+            stocktake_id,
+            stock_line_id,
+            location_id,
+            comment,
+            snapshot_number_of_packs,
+            counted_number_of_packs,
+            item_id,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            note: _,
+        } = StocktakeLineRowRepository::new(connection)
+            .find_one_by_id(&changelog.row_id)
+            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
+            .ok_or(to_push_translation_error(
+                table_name,
+                anyhow::Error::msg("Stocktake row not found"),
+                changelog,
+            ))?;
+
+        let stock_line = match &stock_line_id {
+            Some(stock_line_id) => Some(
+                StockLineRowRepository::new(connection)
+                    .find_one_by_id(&stock_line_id)
+                    .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            ),
+            None => None,
+        };
+        let legacy_row = LegacyStocktakeLineRow {
+            ID: id.clone(),
+            stock_take_ID: stocktake_id,
+            location_id,
+            comment,
+            snapshot_qty: snapshot_number_of_packs,
+            stock_take_qty: counted_number_of_packs.unwrap_or(0),
+            is_edited: counted_number_of_packs.is_some(),
+            item_line_ID: stock_line_id,
+            item_ID: item_id,
+            snapshot_packsize: stock_line
+                .as_ref()
+                .map(|it| it.pack_size)
+                .or(pack_size)
+                .unwrap_or(0),
+            Batch: stock_line
+                .as_ref()
+                .and_then(|it| it.batch.clone())
+                .or(batch),
+            expiry: stock_line
+                .as_ref()
+                .and_then(|it| it.expiry_date)
+                .or(expiry_date),
+            cost_price: stock_line
+                .as_ref()
+                .map(|it| it.cost_price_per_pack)
+                .or(cost_price_per_pack)
+                .unwrap_or(0.0),
+            sell_price: stock_line
+                .map(|it| it.sell_price_per_pack)
+                .or(sell_price_per_pack)
+                .unwrap_or(0.0),
+        };
+
+        Ok(Some(vec![PushUpsertRecord {
+            sync_id: changelog.id,
+            store_id: None,
+            table_name,
+            record_id: id,
+            data: serde_json::to_value(&legacy_row)
+                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+        }]))
     }
 }

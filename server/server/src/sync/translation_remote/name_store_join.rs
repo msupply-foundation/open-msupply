@@ -1,23 +1,24 @@
 use repository::{
-    schema::{NameStoreJoinRow, RemoteSyncBufferRow},
-    NameRepository, StorageConnection,
+    schema::{ChangelogRow, ChangelogTableName, NameStoreJoinRow, RemoteSyncBufferRow},
+    NameRepository, NameStoreJoinRepository, StorageConnection,
 };
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::sync::SyncTranslationError;
 
 use super::{
-    IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation,
+    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
+    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     TRANSLATION_RECORD_NAME_STORE_JOIN,
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct LegacyNameStoreJoinRow {
-    ID: String,
-    store_ID: String,
-    name_ID: String,
+#[derive(Deserialize, Serialize)]
+pub struct LegacyNameStoreJoinRow {
+    pub ID: String,
+    pub store_ID: String,
+    pub name_ID: String,
 }
 
 pub struct NameStoreJoinTranslation {}
@@ -26,7 +27,7 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<super::IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<super::pull::IntegrationRecord>, SyncTranslationError> {
         let table_name = TRANSLATION_RECORD_NAME_STORE_JOIN;
 
         if sync_record.table_name != table_name {
@@ -67,5 +68,48 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
                 name_is_supplier: name.is_supplier,
             }),
         )))
+    }
+}
+
+impl RemotePushUpsertTranslation for NameStoreJoinTranslation {
+    fn try_translate_push(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+        if changelog.table_name != ChangelogTableName::NameStoreJoin {
+            return Ok(None);
+        }
+        let table_name = TRANSLATION_RECORD_NAME_STORE_JOIN;
+
+        let NameStoreJoinRow {
+            id,
+            name_id,
+            store_id,
+            name_is_customer: _,
+            name_is_supplier: _,
+        } = NameStoreJoinRepository::new(connection)
+            .find_one_by_id(&changelog.row_id)
+            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
+            .ok_or(to_push_translation_error(
+                table_name,
+                anyhow::Error::msg("Number row not found"),
+                changelog,
+            ))?;
+
+        let legacy_row = LegacyNameStoreJoinRow {
+            ID: id.clone(),
+            store_ID: store_id.clone(),
+            name_ID: name_id,
+        };
+
+        Ok(Some(vec![PushUpsertRecord {
+            sync_id: changelog.id,
+            store_id: Some(store_id),
+            table_name,
+            record_id: id,
+            data: serde_json::to_value(&legacy_row)
+                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+        }]))
     }
 }

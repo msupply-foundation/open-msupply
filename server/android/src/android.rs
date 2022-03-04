@@ -99,6 +99,9 @@ pub mod android {
                         username: "username".to_string(),
                         password: "password".to_string(),
                         interval: 300,
+                        central_server_site_id: 1,
+                        site_id: 2,
+                        site_hardware_id: "".to_string(),
                     },
                     auth: AuthSettings {
                         // TODO:
