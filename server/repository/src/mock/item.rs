@@ -91,7 +91,7 @@ pub fn mock_item_service_item() -> ItemRow {
     }
 }
 
-pub fn devault_service_item() -> ItemRow {
+pub fn mock_default_service_item() -> ItemRow {
     ItemRow {
         id: String::from("devault_service_item"),
         name: String::from("Service charge"),
@@ -112,6 +112,6 @@ pub fn mock_items() -> Vec<ItemRow> {
         item_query_test1(),
         item_query_test2(),
         mock_item_service_item(),
-        devault_service_item(),
+        mock_default_service_item(),
     ]
 }

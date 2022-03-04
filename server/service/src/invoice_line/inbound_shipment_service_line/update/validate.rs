@@ -14,12 +14,12 @@ use crate::{
     },
 };
 
-use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
+use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError};
 
 pub fn validate(
-    input: &UpdateOutboundShipmentServiceLine,
+    input: &UpdateInboundShipmentServiceLine,
     connection: &StorageConnection,
-) -> Result<(InvoiceLineRow, InvoiceRow, ItemRow), UpdateOutboundShipmentServiceLineError> {
+) -> Result<(InvoiceLineRow, InvoiceRow, ItemRow), UpdateInboundShipmentServiceLineError> {
     let line = check_line_exists(&input.id, connection)?;
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
 
@@ -29,50 +29,50 @@ pub fn validate(
         check_item(&line.item_id, connection)?
     };
     if item.r#type != ItemRowType::Service {
-        return Err(UpdateOutboundShipmentServiceLineError::NotAServiceItem);
+        return Err(UpdateInboundShipmentServiceLineError::NotAServiceItem);
     }
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
 
     check_line_belongs_to_invoice(&line, &invoice)?;
-    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     Ok((line, invoice, item))
 }
 
-impl From<LineDoesNotExist> for UpdateOutboundShipmentServiceLineError {
+impl From<LineDoesNotExist> for UpdateInboundShipmentServiceLineError {
     fn from(_: LineDoesNotExist) -> Self {
-        UpdateOutboundShipmentServiceLineError::LineDoesNotExist
+        UpdateInboundShipmentServiceLineError::LineDoesNotExist
     }
 }
 
-impl From<InvoiceDoesNotExist> for UpdateOutboundShipmentServiceLineError {
+impl From<InvoiceDoesNotExist> for UpdateInboundShipmentServiceLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
-        UpdateOutboundShipmentServiceLineError::InvoiceDoesNotExist
+        UpdateInboundShipmentServiceLineError::InvoiceDoesNotExist
     }
 }
 
-impl From<NotInvoiceLine> for UpdateOutboundShipmentServiceLineError {
+impl From<NotInvoiceLine> for UpdateInboundShipmentServiceLineError {
     fn from(error: NotInvoiceLine) -> Self {
-        UpdateOutboundShipmentServiceLineError::NotThisInvoiceLine(error.0)
+        UpdateInboundShipmentServiceLineError::NotThisInvoiceLine(error.0)
     }
 }
 
-impl From<WrongInvoiceRowType> for UpdateOutboundShipmentServiceLineError {
+impl From<WrongInvoiceRowType> for UpdateInboundShipmentServiceLineError {
     fn from(_: WrongInvoiceRowType) -> Self {
-        UpdateOutboundShipmentServiceLineError::NotAnOutboundShipment
+        UpdateInboundShipmentServiceLineError::NotAnInboundShipment
     }
 }
 
-impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentServiceLineError {
+impl From<InvoiceIsNotEditable> for UpdateInboundShipmentServiceLineError {
     fn from(_: InvoiceIsNotEditable) -> Self {
-        UpdateOutboundShipmentServiceLineError::CannotEditInvoice
+        UpdateInboundShipmentServiceLineError::CannotEditInvoice
     }
 }
 
-impl From<ItemNotFound> for UpdateOutboundShipmentServiceLineError {
+impl From<ItemNotFound> for UpdateInboundShipmentServiceLineError {
     fn from(_: ItemNotFound) -> Self {
-        UpdateOutboundShipmentServiceLineError::ItemNotFound
+        UpdateInboundShipmentServiceLineError::ItemNotFound
     }
 }

@@ -8,7 +8,7 @@ use validate::validate;
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct InsertOutboundShipmentServiceLine {
+pub struct InsertInboundShipmentServiceLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: Option<String>,
@@ -19,12 +19,12 @@ pub struct InsertOutboundShipmentServiceLine {
     pub note: Option<String>,
 }
 
-type OutError = InsertOutboundShipmentServiceLineError;
+type OutError = InsertInboundShipmentServiceLineError;
 
-pub fn insert_outbound_shipment_service_line(
+pub fn insert_inbound_shipment_service_line(
     ctx: &ServiceContext,
     _store_id: &str,
-    input: InsertOutboundShipmentServiceLine,
+    input: InsertInboundShipmentServiceLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
@@ -41,10 +41,10 @@ pub fn insert_outbound_shipment_service_line(
 }
 
 #[derive(Debug, PartialEq)]
-pub enum InsertOutboundShipmentServiceLineError {
+pub enum InsertInboundShipmentServiceLineError {
     LineAlreadyExists,
     InvoiceDoesNotExist,
-    NotAnOutboundShipment,
+    NotAnInboundShipment,
     //NotThisStoreInvoice,
     CannotEditInvoice,
     ItemNotFound,
@@ -55,15 +55,15 @@ pub enum InsertOutboundShipmentServiceLineError {
     DatabaseError(RepositoryError),
 }
 
-impl From<RepositoryError> for InsertOutboundShipmentServiceLineError {
+impl From<RepositoryError> for InsertInboundShipmentServiceLineError {
     fn from(error: RepositoryError) -> Self {
-        InsertOutboundShipmentServiceLineError::DatabaseError(error)
+        InsertInboundShipmentServiceLineError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for InsertOutboundShipmentServiceLineError
+impl<ERR> From<WithDBError<ERR>> for InsertInboundShipmentServiceLineError
 where
-    ERR: Into<InsertOutboundShipmentServiceLineError>,
+    ERR: Into<InsertInboundShipmentServiceLineError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {
@@ -78,8 +78,9 @@ mod test {
 
     use repository::{
         mock::{
-            mock_full_draft_outbound_shipment_a, mock_inbound_shipment_c, mock_item_a,
-            mock_item_service_item, mock_outbound_shipment_shipped, MockDataInserts,
+            mock_draft_inbound_service_line, mock_draft_inbound_shipment_with_service_lines,
+            mock_draft_inbound_verified_with_service_lines, mock_item_a, mock_item_service_item,
+            mock_outbound_shipment_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository, ItemFilter, ItemQueryRepository, SimpleStringFilter,
@@ -87,18 +88,18 @@ mod test {
     use util::{constants::DEFAULT_SERVICE_ITEM_CODE, inline_edit, inline_init};
 
     use crate::{
-        invoice_line::outbound_shipment_service_line::InsertOutboundShipmentServiceLine,
+        invoice_line::inbound_shipment_service_line::InsertInboundShipmentServiceLine,
         service_provider::ServiceProvider,
     };
 
-    use super::InsertOutboundShipmentServiceLineError;
+    use super::InsertInboundShipmentServiceLineError;
 
-    type ServiceError = InsertOutboundShipmentServiceLineError;
+    type ServiceError = InsertInboundShipmentServiceLineError;
 
     #[actix_rt::test]
-    async fn insert_outbound_shipment_service_line_errors() {
+    async fn insert_inbound_shipment_service_line_errors() {
         let (_, _, connection_manager, _) = setup_all(
-            "insert_outbound_shipment_service_line_errors",
+            "insert_inbound_shipment_service_line_errors",
             MockDataInserts::all(),
         )
         .await;
@@ -107,15 +108,13 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_line_service;
 
-        let draft_shipment = mock_full_draft_outbound_shipment_a();
-
         // LineAlreadyExists
         assert_eq!(
-            service.insert_outbound_shipment_service_line(
+            service.insert_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.id = draft_shipment.lines[0].line.id.clone();
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
+                    r.id = mock_draft_inbound_service_line().id
                 }),
             ),
             Err(ServiceError::LineAlreadyExists)
@@ -123,35 +122,35 @@ mod test {
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.insert_outbound_shipment_service_line(
+            service.insert_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        // NotAnOutboundShipment
+        // NotAnInboundShipment
         assert_eq!(
-            service.insert_outbound_shipment_service_line(
+            service.insert_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = mock_inbound_shipment_c().id;
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
+                    r.invoice_id = mock_outbound_shipment_c().id;
                 }),
             ),
-            Err(ServiceError::NotAnOutboundShipment)
+            Err(ServiceError::NotAnInboundShipment)
         );
 
         // CannotEditInvoice
         assert_eq!(
-            service.insert_outbound_shipment_service_line(
+            service.insert_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = mock_outbound_shipment_shipped().id;
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
+                    r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
                 }),
             ),
             Err(ServiceError::CannotEditInvoice)
@@ -159,11 +158,11 @@ mod test {
 
         // ItemNotFound
         assert_eq!(
-            service.insert_outbound_shipment_service_line(
+            service.insert_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = draft_shipment.invoice.id.clone();
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
+                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some("invalid".to_string())
                 }),
             ),
@@ -172,11 +171,11 @@ mod test {
 
         // NotAServiceItem
         assert_eq!(
-            service.insert_outbound_shipment_service_line(
+            service.insert_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = draft_shipment.invoice.id.clone();
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
+                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some(mock_item_a().id)
                 }),
             ),
@@ -185,9 +184,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn insert_outbound_shipment_service_line_success() {
+    async fn insert_inbound_shipment_service_line_success() {
         let (_, connection, connection_manager, _) = setup_all(
-            "insert_outbound_shipment_service_line_service",
+            "insert_inbound_shipment_service_line_service",
             MockDataInserts::all(),
         )
         .await;
@@ -198,12 +197,12 @@ mod test {
 
         // Default service line
         service
-            .insert_outbound_shipment_service_line(
+            .insert_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.id = "new_line_id".to_string();
-                    r.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
+                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                 }),
             )
             .unwrap();
@@ -229,14 +228,13 @@ mod test {
         );
 
         // Specified service line
-
         service
-            .insert_outbound_shipment_service_line(
+            .insert_inbound_shipment_service_line(
                 &context,
                 "store_a",
-                InsertOutboundShipmentServiceLine {
+                InsertInboundShipmentServiceLine {
                     id: "new_line2_id".to_string(),
-                    invoice_id: mock_full_draft_outbound_shipment_a().invoice.id,
+                    invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: 0.3,
@@ -256,7 +254,7 @@ mod test {
             line,
             inline_edit(&line, |mut u| {
                 u.id = "new_line2_id".to_string();
-                u.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
+                u.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                 u.item_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 0.3;

@@ -5,7 +5,7 @@ mod validate;
 
 use validate::validate;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,

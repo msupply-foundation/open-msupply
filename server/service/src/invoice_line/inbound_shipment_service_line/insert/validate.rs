@@ -14,12 +14,12 @@ use crate::{
     },
 };
 
-use super::{InsertOutboundShipmentServiceLine, InsertOutboundShipmentServiceLineError};
+use super::{InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError};
 
-type OutError = InsertOutboundShipmentServiceLineError;
+type OutError = InsertInboundShipmentServiceLineError;
 
 pub fn validate(
-    input: &InsertOutboundShipmentServiceLine,
+    input: &InsertInboundShipmentServiceLine,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), OutError> {
     check_line_does_not_exists(&input.id, connection)?;
@@ -40,7 +40,7 @@ pub fn validate(
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
     // TODO:
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
+    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
     Ok((item, invoice))
@@ -76,7 +76,7 @@ impl From<InvoiceDoesNotExist> for OutError {
 
 impl From<WrongInvoiceRowType> for OutError {
     fn from(_: WrongInvoiceRowType) -> Self {
-        OutError::NotAnOutboundShipment
+        OutError::NotAnInboundShipment
     }
 }
 
