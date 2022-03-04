@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -12,7 +12,8 @@ use serde::{Deserialize, Serialize};
 use crate::sync::SyncTranslationError;
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, empty_str_as_option,
+    date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
+    naive_time,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     time_sec_from_date_time, zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
@@ -94,9 +95,11 @@ pub struct LegacyTransactRow {
     pub linked_transaction_id: Option<String>,
 
     /// creation time
+    #[serde(serialize_with = "date_to_isostring")]
     pub entry_date: NaiveDate, // e.g. "2021-07-30",
     /// time in seconds
-    pub entry_time: i64, // e.g. 47046,
+    #[serde(deserialize_with = "naive_time")]
+    pub entry_time: NaiveTime, // e.g. 47046,
     /// shipped_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
     pub ship_date: Option<NaiveDate>, // "0000-00-00",
@@ -164,7 +167,7 @@ impl RemotePullTranslation for InvoiceTranslation {
                 on_hold: data.hold,
                 comment: data.comment,
                 their_reference: data.their_ref,
-                created_datetime: date_and_time_to_datatime(data.entry_date, data.entry_time),
+                created_datetime: NaiveDateTime::new(data.entry_date, data.entry_time),
                 allocated_datetime: None,
                 picked_datetime: confirm_mapping.picked_datetime,
                 shipped_datetime: data
@@ -346,8 +349,8 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             Colour: colour.map(|colour| parse_html_colour(&colour)).unwrap_or(0),
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
-            entry_date: date_from_date_time(&created_datetime),
-            entry_time: time_sec_from_date_time(&created_datetime),
+            entry_date: created_datetime.date(),
+            entry_time: created_datetime.time(),
             // TODO losing the time here:
             ship_date: shipped_datetime
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
