@@ -1,13 +1,8 @@
-import {
-  useAuthContext,
-  useQueryParams,
-  useQuery,
-} from '@openmsupply-client/common';
+import { useQueryParams, useQuery } from '@openmsupply-client/common';
 import { useItemApi } from './../useItemApi';
 import { ItemRowFragment } from '../../operations.generated';
 
 export const useItemListView = () => {
-  const { storeId } = useAuthContext();
   const queryParams = useQueryParams<ItemRowFragment>({
     initialSortBy: { key: 'name' },
   });
@@ -15,7 +10,7 @@ export const useItemListView = () => {
 
   return {
     ...useQuery(
-      ['item', 'list', storeId, queryParams],
+      api.keys.paramList(queryParams),
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
