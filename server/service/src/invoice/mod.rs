@@ -8,7 +8,6 @@ use repository::RepositoryError;
 use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
-use crate::WithDBError;
 
 pub mod query;
 use self::query::*;
