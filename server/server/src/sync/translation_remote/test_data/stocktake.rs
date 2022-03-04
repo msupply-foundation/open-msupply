@@ -79,7 +79,8 @@ fn stocktake_push_record() -> TestSyncPushRecord {
             invad_additions_ID: Some("inbound_shipment_a".to_string()),
             serial_number: 3,
             stock_take_created_date: NaiveDate::from_ymd(2021, 07, 30),
-            is_locked: false
+            is_locked: false,
+            stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
         }),
     }
 }
