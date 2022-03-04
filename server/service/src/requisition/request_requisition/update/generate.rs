@@ -8,31 +8,17 @@ use repository::{
     schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus},
     RepositoryError, RequisitionLine, StorageConnection,
 };
+use util::inline_edit;
 
 pub fn generate(
     connection: &StorageConnection,
-    RequisitionRow {
-        id,
-        requisition_number,
-        name_id,
-        store_id,
-        r#type,
-        status,
-        created_datetime,
-        sent_datetime,
-        finalised_datetime,
-        colour,
-        comment,
-        their_reference,
-        max_months_of_stock,
-        min_months_of_stock,
-        linked_requisition_id,
-    }: RequisitionRow,
+    existing: RequisitionRow,
     UpdateRequestRequisition {
         id: _,
         colour: update_colour,
         status: update_status,
         comment: update_comment,
+        other_party_id: update_other_party_id,
         their_reference: update_their_reference,
         max_months_of_stock: update_max_months_of_stock,
         min_months_of_stock: update_threashold_months_of_stock,
@@ -40,40 +26,34 @@ pub fn generate(
 ) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
     // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
     let update_threashold_months_of_stock =
-        update_threashold_months_of_stock.unwrap_or(min_months_of_stock);
-    let update_max_months_of_stock = update_max_months_of_stock.unwrap_or(max_months_of_stock);
+        update_threashold_months_of_stock.unwrap_or(existing.min_months_of_stock);
+    let update_max_months_of_stock =
+        update_max_months_of_stock.unwrap_or(existing.max_months_of_stock);
 
-    let should_recalculate = update_threashold_months_of_stock != min_months_of_stock
-        || update_max_months_of_stock != max_months_of_stock;
+    let should_recalculate = update_threashold_months_of_stock != existing.min_months_of_stock
+        || update_max_months_of_stock != existing.max_months_of_stock;
 
-    let updated_requisition_row = RequisitionRow {
+    let updated_requisition_row = inline_edit(&existing, |mut u| {
         // Only sent status is available in UpdateRequestRequstionStatus
-        status: if update_status.is_some() {
+        u.status = if update_status.is_some() {
             RequisitionRowStatus::Sent
         } else {
-            status
-        },
-        sent_datetime: if update_status.is_some() {
+            u.status
+        };
+        u.sent_datetime = if update_status.is_some() {
             Some(Utc::now().naive_utc())
         } else {
-            sent_datetime
-        },
-        colour: update_colour.or(colour),
-        comment: update_comment.or(comment),
-        their_reference: update_their_reference.or(their_reference),
-        min_months_of_stock: update_threashold_months_of_stock,
-        max_months_of_stock: update_max_months_of_stock,
+            u.sent_datetime
+        };
+        u.colour = update_colour.or(u.colour);
+        u.comment = update_comment.or(u.comment);
+        u.their_reference = update_their_reference.or(u.their_reference);
+        u.min_months_of_stock = update_threashold_months_of_stock;
+        u.max_months_of_stock = update_max_months_of_stock;
+        u.name_id = update_other_party_id.unwrap_or(u.name_id);
 
-        // not changed
-        id,
-        requisition_number,
-        name_id,
-        store_id,
-        r#type,
-        created_datetime,
-        finalised_datetime,
-        linked_requisition_id,
-    };
+        u
+    });
 
     let updated_requisition_lines = if should_recalculate {
         generate_updated_lines(

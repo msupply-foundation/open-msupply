@@ -105,6 +105,7 @@ table! {
         supply_quantity -> Integer,
         available_stock_on_hand -> Integer ,
         average_monthly_consumption -> Integer,
+        comment -> Nullable<Text>,
     }
 }
 
