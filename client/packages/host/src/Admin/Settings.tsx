@@ -37,13 +37,13 @@ export const Settings: React.FC = () => {
       setCustomTheme(themeOptions);
       navigate(0);
     } catch (e) {
-      error(`${t('error.something-wrong')} ${e.message}`)();
+      error(`${t('error.something-wrong')} ${(e as Error).message}`)();
     }
   };
 
   const onToggleCustomTheme = (checked: boolean) => {
     if (!checked) {
-      setCustomTheme(null);
+      setCustomTheme({});
     }
   };
 
@@ -53,13 +53,13 @@ export const Settings: React.FC = () => {
       setCustomLogo(value.text);
       //      navigate(0);
     } catch (e) {
-      error(`${t('error.something-wrong')} ${e.message}`)();
+      error(`${t('error.something-wrong')} ${(e as Error).message}`)();
     }
   };
 
   const onToggleCustomLogo = (checked: boolean) => {
     if (!checked) {
-      setCustomLogo(null);
+      setCustomLogo('');
     }
   };
 
