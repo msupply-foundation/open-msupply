@@ -7,6 +7,7 @@ import {
   useDetailPanel,
 } from '@openmsupply-client/common';
 import { DetailPanel, DetailPanelPortal } from './DetailPanel';
+import { TestingProvider } from '@common/utils';
 
 describe('DetailPanel', () => {
   const DetailPanelExample: FC = ({ children }) => {
@@ -38,16 +39,22 @@ describe('DetailPanel', () => {
   beforeEach(() => setScreenSize_ONLY_FOR_TESTING(1000));
 
   it('Does not render when empty', () => {
-    const { queryByTestId } = render(<DetailPanelExample />);
+    const { queryByTestId } = render(
+      <TestingProvider>
+        <DetailPanelExample />
+      </TestingProvider>
+    );
 
     expect(queryByTestId('detail-panel')).toHaveStyle({ width: 0 });
   });
 
   it('Does not show by default on a small screen', () => {
     const { queryByTestId } = render(
-      <DetailPanelExample>
-        <DetailPanelPortal />
-      </DetailPanelExample>
+      <TestingProvider>
+        <DetailPanelExample>
+          <DetailPanelPortal />
+        </DetailPanelExample>
+      </TestingProvider>
     );
 
     expect(queryByTestId('detail-panel')).toHaveStyle({ width: 0 });
@@ -57,9 +64,11 @@ describe('DetailPanel', () => {
     setScreenSize_ONLY_FOR_TESTING(2000);
 
     const { queryByTestId } = render(
-      <DetailPanelExample>
-        <DetailPanelPortal />
-      </DetailPanelExample>
+      <TestingProvider>
+        <DetailPanelExample>
+          <DetailPanelPortal />
+        </DetailPanelExample>
+      </TestingProvider>
     );
 
     expect(queryByTestId('detail-panel')).not.toHaveStyle({ width: 0 });
@@ -67,9 +76,11 @@ describe('DetailPanel', () => {
 
   it('Does show when opened', () => {
     const { queryByTestId, getByRole } = render(
-      <DetailPanelExample>
-        <DetailPanelPortal />
-      </DetailPanelExample>
+      <TestingProvider>
+        <DetailPanelExample>
+          <DetailPanelPortal />
+        </DetailPanelExample>
+      </TestingProvider>
     );
 
     act(() => {
@@ -81,9 +92,11 @@ describe('DetailPanel', () => {
 
   it('Does render the correct number of sections', () => {
     const { queryAllByText, getByRole } = render(
-      <DetailPanelExample>
-        <DetailPanelWithTwoSections />
-      </DetailPanelExample>
+      <TestingProvider>
+        <DetailPanelExample>
+          <DetailPanelWithTwoSections />
+        </DetailPanelExample>
+      </TestingProvider>
     );
 
     act(() => {
@@ -95,9 +108,11 @@ describe('DetailPanel', () => {
 
   it('Does render the correct sections', () => {
     const { getByRole } = render(
-      <DetailPanelExample>
-        <DetailPanelWithTwoSections />
-      </DetailPanelExample>
+      <TestingProvider>
+        <DetailPanelExample>
+          <DetailPanelWithTwoSections />
+        </DetailPanelExample>
+      </TestingProvider>
     );
 
     act(() => {
@@ -113,9 +128,11 @@ describe('DetailPanel', () => {
 
   it('renders the children of a section once expanded', () => {
     const { getByRole, getByTestId } = render(
-      <DetailPanelExample>
-        <DetailPanelWithTwoSections />
-      </DetailPanelExample>
+      <TestingProvider>
+        <DetailPanelExample>
+          <DetailPanelWithTwoSections />
+        </DetailPanelExample>
+      </TestingProvider>
     );
 
     act(() => {

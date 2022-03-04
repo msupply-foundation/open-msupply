@@ -3,7 +3,7 @@ import { CellProps } from '../../../columns';
 import { BasicTextInput } from '@common/components';
 import { RecordWithId } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
-import { NumUtils } from 'packages/common/src/utils/NumUtils';
+import { NumUtils } from '@common/utils';
 
 // where NonNegative is n >=0
 export const NonNegativeNumberInputCell = <T extends RecordWithId>({

@@ -1,9 +1,11 @@
-import { renderHook } from '@testing-library/react-hooks';
 import { createDraftOutboundLine } from './useDraftOutboundLines';
 import { DraftOutboundLine } from 'packages/invoices/src/types';
 import { usePackSizeController } from './usePackSizeController';
 import { act } from '@testing-library/react';
-import { InvoiceLineNodeType } from '@openmsupply-client/common';
+import {
+  InvoiceLineNodeType,
+  renderHookWithProvider,
+} from '@openmsupply-client/common';
 
 type TestLineParams = {
   id: string;
@@ -179,14 +181,14 @@ const multipleLinesWithNoneAssignedMultiplePackSizes: DraftOutboundLine[] = [
 
 describe('usePackSizeController', () => {
   it('returns the correct distinct pack sizes of available batches', () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multiplePackSizeLines)
     );
     expect(result.current.packSizes).toEqual([1, 2]);
   });
 
   it('returns the correct pack sizes options including an option for "any"', () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multiplePackSizeLines)
     );
     expect(result.current.options).toEqual([
@@ -197,7 +199,7 @@ describe('usePackSizeController', () => {
   });
 
   it('selects the correct pack size', () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multiplePackSizeLines)
     );
 
@@ -209,7 +211,7 @@ describe('usePackSizeController', () => {
   });
 
   it('has an initial selected state of "any" when there are multiple different pack sizes available', () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multiplePackSizeLines)
     );
 
@@ -217,7 +219,7 @@ describe('usePackSizeController', () => {
   });
 
   it('ignores setting of pack sizes which are invalid', () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multiplePackSizeLines)
     );
 
@@ -229,7 +231,7 @@ describe('usePackSizeController', () => {
   });
 
   it('sets the pack size to any when selected', async () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multiplePackSizeLines)
     );
 
@@ -253,7 +255,7 @@ describe('usePackSizeController', () => {
   });
 
   it('sets the initial pack size of a set of lines which all have the same pack size, to the only available pack size', () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(singlePackSizeLines)
     );
 
@@ -264,45 +266,27 @@ describe('usePackSizeController', () => {
   });
 
   it('has an initial value of undefined when the array is empty', () => {
-    const { result } = renderHook(() => usePackSizeController([]));
+    const { result } = renderHookWithProvider(() => usePackSizeController([]));
 
     expect(result.current.selected).toEqual(undefined);
   });
 
   it('has an initial value of the unique pack size with assigned packs, not any', () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multipleWithOneAssigned)
     );
 
     expect(result.current.selected).toEqual({ label: '1', value: 1 });
   });
 
-  it('resets the selected if the set of lines changes to a set with a different itemID', async () => {
-    const { result, rerender } = renderHook(
-      ({ lines }) => usePackSizeController(lines),
-      {
-        initialProps: { lines: singlePackSizeLines },
-      }
-    );
-
-    expect(result.current.selected).toEqual({
-      label: '1',
-      value: 1,
-    });
-
-    rerender({ lines: multiplePackSizeLines });
-
-    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
-  });
-
   it('has an initial value of undefined when the array is empty', () => {
-    const { result } = renderHook(() => usePackSizeController([]));
+    const { result } = renderHookWithProvider(() => usePackSizeController([]));
 
     expect(result.current.selected).toEqual(undefined);
   });
 
   it('has an initial value of the unique pack size with assigned packs, not any', () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multipleWithOneAssigned)
     );
 
@@ -310,7 +294,7 @@ describe('usePackSizeController', () => {
   });
 
   it('has an initial value of the unique pack size with no assigned packs', async () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(singleLineWithNoneAssigned)
     );
 
@@ -318,7 +302,7 @@ describe('usePackSizeController', () => {
   });
 
   it('has an initial value of the unique pack size with no assigned packs', async () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multipleLinesWithNoneAssigned)
     );
 
@@ -326,7 +310,7 @@ describe('usePackSizeController', () => {
   });
 
   it('has an initial value of the unique pack size with no assigned packs', async () => {
-    const { result } = renderHook(() =>
+    const { result } = renderHookWithProvider(() =>
       usePackSizeController(multipleLinesWithNoneAssignedMultiplePackSizes)
     );
 
