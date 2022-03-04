@@ -197,7 +197,7 @@ pub fn batch_inbound_shipment(
             result.insert_service_line = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -209,7 +209,7 @@ pub fn batch_inbound_shipment(
             result.update_service_line = results;
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
@@ -223,7 +223,7 @@ pub fn batch_inbound_shipment(
             // Update and delete shipment
 
             if has_error && !continue_on_error {
-                return Ok(OkWithRollback::OkWithRollback(result));
+                return Err(WithDBError::err(result));
             }
 
             let (has_error, results) = do_mutations(
