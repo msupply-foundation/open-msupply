@@ -6,14 +6,11 @@ import {
   AppFooterPortal,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import {
-  responseRequisitionStatuses,
-  getRequisitionTranslator,
-} from '../../../utils';
-import { ResponseRequisitionFragment, useResponseRequisition } from '../../api';
+import { responseStatuses, getRequisitionTranslator } from '../../../utils';
+import { ResponseFragment, useResponse } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
-export const createStatusLog = (requisition: ResponseRequisitionFragment) => {
+export const createStatusLog = (requisition: ResponseFragment) => {
   const statusLog: Record<RequisitionNodeStatus, null | undefined | string> = {
     [RequisitionNodeStatus.New]: requisition.createdDatetime,
     [RequisitionNodeStatus.Finalised]: requisition.finalisedDatetime,
@@ -26,7 +23,7 @@ export const createStatusLog = (requisition: ResponseRequisitionFragment) => {
 };
 
 export const Footer: FC = () => {
-  const { data } = useResponseRequisition();
+  const { data } = useResponse();
   const t = useTranslation('distribution');
 
   return (
@@ -41,7 +38,7 @@ export const Footer: FC = () => {
             height={64}
           >
             <StatusCrumbs
-              statuses={responseRequisitionStatuses}
+              statuses={responseStatuses}
               statusLog={createStatusLog(data)}
               statusFormatter={getRequisitionTranslator(t)}
             />

@@ -1,20 +1,17 @@
 import { useEffect, useState } from 'react';
 import {
   useSaveResponseLines,
-  useResponseRequisitionFields,
-  useResponseRequisitionLines,
-  ResponseRequisitionLineFragment,
+  useResponseFields,
+  useResponseLines,
+  ResponseLineFragment,
 } from '../../api';
 
-export type DraftResponseLine = Omit<
-  ResponseRequisitionLineFragment,
-  '__typename'
-> & {
+export type DraftResponseLine = Omit<ResponseLineFragment, '__typename'> & {
   requisitionId: string;
 };
 
 const createDraftLine = (
-  line: ResponseRequisitionLineFragment,
+  line: ResponseLineFragment,
   requisitionId: string
 ): DraftResponseLine => ({
   ...line,
@@ -24,10 +21,8 @@ const createDraftLine = (
   supplyQuantity: line.supplyQuantity,
 });
 
-export const useDraftRequisitionLine = (
-  line: ResponseRequisitionLineFragment
-) => {
-  const { id: reqId } = useResponseRequisitionFields('id');
+export const useDraftRequisitionLine = (line: ResponseLineFragment) => {
+  const { id: reqId } = useResponseFields('id');
   const { mutate: save, isLoading } = useSaveResponseLines();
 
   const [draft, setDraft] = useState<DraftResponseLine>(
@@ -47,13 +42,11 @@ export const useDraftRequisitionLine = (
   return { draft, isLoading, save: () => draft && save(draft), update };
 };
 
-export const useNextResponseLine = (
-  currentItem: ResponseRequisitionLineFragment
-) => {
-  const { lines } = useResponseRequisitionLines();
+export const useNextResponseLine = (currentItem: ResponseLineFragment) => {
+  const { lines } = useResponseLines();
   const nextState: {
     hasNext: boolean;
-    next: null | ResponseRequisitionLineFragment;
+    next: null | ResponseLineFragment;
   } = { hasNext: true, next: null };
 
   const idx = lines.findIndex(l => l.id === currentItem.id);

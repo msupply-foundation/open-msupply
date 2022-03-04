@@ -20,7 +20,7 @@ describe('AppDrawer', () => {
       </TestingProvider>
     );
 
-    const button = getByRole('button', { name: /button.close-the-menu/i });
+    const button = getByRole('button', { name: /close the menu/i });
     const drawer = getByTestId('drawer');
 
     act(() => {
@@ -41,7 +41,7 @@ describe('AppDrawer', () => {
       </TestingProvider>
     );
 
-    const button = getByRole('button', { name: /button.open-the-menu/i });
+    const button = getByRole('button', { name: /open the menu/i });
     const drawer = getByTestId('drawer');
 
     act(() => {
@@ -65,11 +65,8 @@ describe('AppDrawer', () => {
     await waitFor(() => {
       expect(getByText(/distribution/i)).toBeVisible();
       expect(getByText(/dashboard/i)).toBeVisible();
-      // expect(getByText(/suppliers/i)).toBeVisible();
       expect(getByText(/inventory/i)).toBeVisible();
-      // expect(getByText(/tools/i)).toBeVisible();
       expect(getByText(/reports/i)).toBeVisible();
-      // expect(getByText(/messages/i)).toBeVisible();
     });
   });
   it('Text is invisible when the menu is collapsed', async () => {
@@ -83,7 +80,7 @@ describe('AppDrawer', () => {
     );
 
     const button = screen.getByRole('button', {
-      name: /button.close-the-menu/i,
+      name: /close the menu/i,
     });
 
     act(() => {

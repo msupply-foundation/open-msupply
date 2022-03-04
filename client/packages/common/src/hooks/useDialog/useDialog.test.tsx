@@ -12,7 +12,7 @@ describe('useDialog', () => {
     return (
       <div>
         <Modal
-          title="heading.add-item"
+          title="add item"
           cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
         >
           <div>dialog body context</div>
@@ -41,7 +41,7 @@ describe('useDialog', () => {
 
     act(() => getByRole('button', { name: 'show dialog' }).click());
 
-    const node = getByRole(/dialog/, { name: /heading.add-item/i });
+    const node = getByRole(/dialog/, { name: /add item/i });
     expect(node).toBeInTheDocument();
   });
 
@@ -52,9 +52,9 @@ describe('useDialog', () => {
       </TestingProvider>
     );
 
-    act(() => getByRole('button', { name: 'show dialog' }).click());
+    act(() => getByRole('button', { name: /show dialog/i }).click());
 
-    expect(getByRole('button', { name: 'button.cancel' })).toBeInTheDocument();
+    expect(getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
   it('Dialog is hidden when cancelled', async () => {
@@ -64,9 +64,9 @@ describe('useDialog', () => {
       </TestingProvider>
     );
 
-    act(() => getByRole('button', { name: 'show dialog' }).click());
+    act(() => getByRole('button', { name: /show dialog/i }).click());
 
-    act(() => getByRole('button', { name: 'button.cancel' }).click());
+    act(() => getByRole('button', { name: /cancel/i }).click());
 
     await waitFor(() => {
       expect(queryByText(/dialog body context/i)).not.toBeInTheDocument();

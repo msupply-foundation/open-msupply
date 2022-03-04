@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
-import { useIsRequestRequisitionDisabled } from '../../api';
+import { useIsRequestDisabled } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
 
 interface RequestLineEditProps {
@@ -24,7 +24,7 @@ export const RequestLineEdit = ({
   mode,
   item,
 }: RequestLineEditProps) => {
-  const disabled = useIsRequestRequisitionDisabled();
+  const disabled = useIsRequestDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const { draft, isLoading, save, update } =

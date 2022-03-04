@@ -6,29 +6,29 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ItemWithStatsFragment = { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } };
 
-export type UpdateResponseRequisitionMutationVariables = Types.Exact<{
+export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.UpdateResponseRequisitionInput;
 }>;
 
 
-export type UpdateResponseRequisitionMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError' } };
+export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError' } };
 
-export type ResponseRequisitionLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } };
+export type ResponseLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } };
 
-export type ResponseRequisitionFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
+export type ResponseFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
 
-export type ResponseRequisitionQueryVariables = Types.Exact<{
+export type ResponseByNumberQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   requisitionNumber: Types.Scalars['Int'];
 }>;
 
 
-export type ResponseRequisitionQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } }> } } };
+export type ResponseByNumberQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } }> } } };
 
-export type ResponseRequisitionRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string };
+export type ResponseRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string };
 
-export type ResponseRequisitionsQueryVariables = Types.Exact<{
+export type ResponsesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -36,15 +36,15 @@ export type ResponseRequisitionsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ResponseRequisitionsQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string }> } };
+export type ResponsesQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string }> } };
 
-export type UpdateResponseRequisitionLineMutationVariables = Types.Exact<{
+export type UpdateResponseLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.UpdateResponseRequisitionLineInput;
 }>;
 
 
-export type UpdateResponseRequisitionLineMutation = { __typename: 'Mutations', updateResponseRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordDoesNotExist', description: string } } };
+export type UpdateResponseLineMutation = { __typename: 'Mutations', updateResponseRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordDoesNotExist', description: string } } };
 
 export const ItemWithStatsFragmentDoc = gql`
     fragment ItemWithStats on ItemNode {
@@ -59,8 +59,8 @@ export const ItemWithStatsFragmentDoc = gql`
   }
 }
     `;
-export const ResponseRequisitionLineFragmentDoc = gql`
-    fragment ResponseRequisitionLine on RequisitionLineNode {
+export const ResponseLineFragmentDoc = gql`
+    fragment ResponseLine on RequisitionLineNode {
   id
   itemId
   requestedQuantity
@@ -79,8 +79,8 @@ export const ResponseRequisitionLineFragmentDoc = gql`
   }
 }
     `;
-export const ResponseRequisitionFragmentDoc = gql`
-    fragment ResponseRequisition on RequisitionNode {
+export const ResponseFragmentDoc = gql`
+    fragment Response on RequisitionNode {
   __typename
   id
   type
@@ -101,7 +101,7 @@ export const ResponseRequisitionFragmentDoc = gql`
     ... on RequisitionLineConnector {
       totalCount
       nodes {
-        ...ResponseRequisitionLine
+        ...ResponseLine
       }
     }
   }
@@ -117,9 +117,9 @@ export const ResponseRequisitionFragmentDoc = gql`
     }
   }
 }
-    ${ResponseRequisitionLineFragmentDoc}`;
-export const ResponseRequisitionRowFragmentDoc = gql`
-    fragment ResponseRequisitionRow on RequisitionNode {
+    ${ResponseLineFragmentDoc}`;
+export const ResponseRowFragmentDoc = gql`
+    fragment ResponseRow on RequisitionNode {
   colour
   comment
   createdDatetime
@@ -134,8 +134,8 @@ export const ResponseRequisitionRowFragmentDoc = gql`
   otherPartyId
 }
     `;
-export const UpdateResponseRequisitionDocument = gql`
-    mutation updateResponseRequisition($storeId: String!, $input: UpdateResponseRequisitionInput!) {
+export const UpdateResponseDocument = gql`
+    mutation updateResponse($storeId: String!, $input: UpdateResponseRequisitionInput!) {
   updateResponseRequisition(input: $input, storeId: $storeId) {
     ... on RequisitionNode {
       __typename
@@ -144,8 +144,8 @@ export const UpdateResponseRequisitionDocument = gql`
   }
 }
     `;
-export const ResponseRequisitionDocument = gql`
-    query responseRequisition($storeId: String!, $requisitionNumber: Int!) {
+export const ResponseByNumberDocument = gql`
+    query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
     type: RESPONSE
@@ -153,7 +153,7 @@ export const ResponseRequisitionDocument = gql`
   ) {
     __typename
     ... on RequisitionNode {
-      ...ResponseRequisition
+      ...Response
       otherParty {
         __typename
         ... on NameNode {
@@ -167,21 +167,21 @@ export const ResponseRequisitionDocument = gql`
     }
   }
 }
-    ${ResponseRequisitionFragmentDoc}`;
-export const ResponseRequisitionsDocument = gql`
-    query responseRequisitions($storeId: String!, $filter: RequisitionFilterInput, $page: PaginationInput, $sort: [RequisitionSortInput!]) {
+    ${ResponseFragmentDoc}`;
+export const ResponsesDocument = gql`
+    query responses($storeId: String!, $filter: RequisitionFilterInput, $page: PaginationInput, $sort: [RequisitionSortInput!]) {
   requisitions(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
     ... on RequisitionConnector {
       totalCount
       nodes {
-        ...ResponseRequisitionRow
+        ...ResponseRow
       }
     }
   }
 }
-    ${ResponseRequisitionRowFragmentDoc}`;
-export const UpdateResponseRequisitionLineDocument = gql`
-    mutation updateResponseRequisitionLine($storeId: String!, $input: UpdateResponseRequisitionLineInput!) {
+    ${ResponseRowFragmentDoc}`;
+export const UpdateResponseLineDocument = gql`
+    mutation updateResponseLine($storeId: String!, $input: UpdateResponseRequisitionLineInput!) {
   updateResponseRequisitionLine(input: $input, storeId: $storeId) {
     ... on RequisitionLineNode {
       __typename
@@ -217,17 +217,17 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    updateResponseRequisition(variables: UpdateResponseRequisitionMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateResponseRequisitionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseRequisitionMutation>(UpdateResponseRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseRequisition');
+    updateResponse(variables: UpdateResponseMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateResponseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseMutation>(UpdateResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponse');
     },
-    responseRequisition(variables: ResponseRequisitionQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ResponseRequisitionQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ResponseRequisitionQuery>(ResponseRequisitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseRequisition');
+    responseByNumber(variables: ResponseByNumberQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ResponseByNumberQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ResponseByNumberQuery>(ResponseByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseByNumber');
     },
-    responseRequisitions(variables: ResponseRequisitionsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ResponseRequisitionsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ResponseRequisitionsQuery>(ResponseRequisitionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseRequisitions');
+    responses(variables: ResponsesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ResponsesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ResponsesQuery>(ResponsesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responses');
     },
-    updateResponseRequisitionLine(variables: UpdateResponseRequisitionLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateResponseRequisitionLineMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseRequisitionLineMutation>(UpdateResponseRequisitionLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseRequisitionLine');
+    updateResponseLine(variables: UpdateResponseLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateResponseLineMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseLineMutation>(UpdateResponseLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseLine');
     }
   };
 }
@@ -237,16 +237,16 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockUpdateResponseRequisitionMutation((req, res, ctx) => {
+ * mockUpdateResponseMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
  *     ctx.data({ updateResponseRequisition })
  *   )
  * })
  */
-export const mockUpdateResponseRequisitionMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateResponseRequisitionMutationVariables>, GraphQLContext<UpdateResponseRequisitionMutation>, any>) =>
-  graphql.mutation<UpdateResponseRequisitionMutation, UpdateResponseRequisitionMutationVariables>(
-    'updateResponseRequisition',
+export const mockUpdateResponseMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateResponseMutationVariables>, GraphQLContext<UpdateResponseMutation>, any>) =>
+  graphql.mutation<UpdateResponseMutation, UpdateResponseMutationVariables>(
+    'updateResponse',
     resolver
   )
 
@@ -254,16 +254,16 @@ export const mockUpdateResponseRequisitionMutation = (resolver: ResponseResolver
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockResponseRequisitionQuery((req, res, ctx) => {
+ * mockResponseByNumberQuery((req, res, ctx) => {
  *   const { storeId, requisitionNumber } = req.variables;
  *   return res(
  *     ctx.data({ requisitionByNumber })
  *   )
  * })
  */
-export const mockResponseRequisitionQuery = (resolver: ResponseResolver<GraphQLRequest<ResponseRequisitionQueryVariables>, GraphQLContext<ResponseRequisitionQuery>, any>) =>
-  graphql.query<ResponseRequisitionQuery, ResponseRequisitionQueryVariables>(
-    'responseRequisition',
+export const mockResponseByNumberQuery = (resolver: ResponseResolver<GraphQLRequest<ResponseByNumberQueryVariables>, GraphQLContext<ResponseByNumberQuery>, any>) =>
+  graphql.query<ResponseByNumberQuery, ResponseByNumberQueryVariables>(
+    'responseByNumber',
     resolver
   )
 
@@ -271,16 +271,16 @@ export const mockResponseRequisitionQuery = (resolver: ResponseResolver<GraphQLR
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockResponseRequisitionsQuery((req, res, ctx) => {
+ * mockResponsesQuery((req, res, ctx) => {
  *   const { storeId, filter, page, sort } = req.variables;
  *   return res(
  *     ctx.data({ requisitions })
  *   )
  * })
  */
-export const mockResponseRequisitionsQuery = (resolver: ResponseResolver<GraphQLRequest<ResponseRequisitionsQueryVariables>, GraphQLContext<ResponseRequisitionsQuery>, any>) =>
-  graphql.query<ResponseRequisitionsQuery, ResponseRequisitionsQueryVariables>(
-    'responseRequisitions',
+export const mockResponsesQuery = (resolver: ResponseResolver<GraphQLRequest<ResponsesQueryVariables>, GraphQLContext<ResponsesQuery>, any>) =>
+  graphql.query<ResponsesQuery, ResponsesQueryVariables>(
+    'responses',
     resolver
   )
 
@@ -288,15 +288,15 @@ export const mockResponseRequisitionsQuery = (resolver: ResponseResolver<GraphQL
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockUpdateResponseRequisitionLineMutation((req, res, ctx) => {
+ * mockUpdateResponseLineMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
  *     ctx.data({ updateResponseRequisitionLine })
  *   )
  * })
  */
-export const mockUpdateResponseRequisitionLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateResponseRequisitionLineMutationVariables>, GraphQLContext<UpdateResponseRequisitionLineMutation>, any>) =>
-  graphql.mutation<UpdateResponseRequisitionLineMutation, UpdateResponseRequisitionLineMutationVariables>(
-    'updateResponseRequisitionLine',
+export const mockUpdateResponseLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateResponseLineMutationVariables>, GraphQLContext<UpdateResponseLineMutation>, any>) =>
+  graphql.mutation<UpdateResponseLineMutation, UpdateResponseLineMutationVariables>(
+    'updateResponseLine',
     resolver
   )

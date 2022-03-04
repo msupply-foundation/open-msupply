@@ -4,12 +4,12 @@ import {
   SearchBar,
   FilterController,
 } from '@openmsupply-client/common';
-import { ResponseRequisitionRowFragment } from '../api';
+import { ResponseRowFragment } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const key = 'comment' as keyof ResponseRequisitionRowFragment;
+  const key = 'comment' as keyof ResponseRowFragment;
   const filterString = filter.filterBy?.[key]?.like as string;
 
   return (

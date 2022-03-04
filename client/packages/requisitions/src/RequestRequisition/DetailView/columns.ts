@@ -1,4 +1,4 @@
-import { RequestRequisitionLineFragment } from '../api/operations.generated';
+import { RequestLineFragment } from '../api/operations.generated';
 import {
   useTranslation,
   ColumnAlign,
@@ -9,19 +9,19 @@ import {
   suggestedQuantity,
 } from '@openmsupply-client/common';
 
-interface UseRequestRequisitionColumnOptions {
-  sortBy: SortBy<RequestRequisitionLineFragment>;
+interface UseRequestColumnOptions {
+  sortBy: SortBy<RequestLineFragment>;
   onChangeSortBy: (
-    column: Column<RequestRequisitionLineFragment>
-  ) => SortBy<RequestRequisitionLineFragment>;
+    column: Column<RequestLineFragment>
+  ) => SortBy<RequestLineFragment>;
 }
 
-export const useRequestRequisitionColumns = ({
+export const useRequestColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseRequestRequisitionColumnOptions): Column<RequestRequisitionLineFragment>[] => {
+}: UseRequestColumnOptions): Column<RequestLineFragment>[] => {
   const t = useTranslation('common');
-  return useColumns<RequestRequisitionLineFragment>(
+  return useColumns<RequestLineFragment>(
     [
       [
         'itemCode',

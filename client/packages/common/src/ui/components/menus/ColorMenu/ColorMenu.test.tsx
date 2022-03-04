@@ -22,7 +22,7 @@ describe('ColorMenu', () => {
     };
 
     return (
-      <TestingProvider>
+      <>
         <ColorMenu
           onClose={handleClose}
           anchorEl={anchorEl}
@@ -42,7 +42,7 @@ describe('ColorMenu', () => {
           }
           onClick={handleClick}
         />
-      </TestingProvider>
+      </>
     );
   };
 
@@ -50,7 +50,9 @@ describe('ColorMenu', () => {
     const fn = jest.fn();
 
     const { getByRole, getByLabelText } = render(
-      <TestColorMenu onClick={fn} />
+      <TestingProvider>
+        <TestColorMenu onClick={fn} />
+      </TestingProvider>
     );
 
     const button = getByRole('button');
@@ -78,7 +80,9 @@ describe('ColorMenu', () => {
     const fn = jest.fn();
 
     const { getByRole, getByLabelText } = render(
-      <TestColorMenu onClick={fn} />
+      <TestingProvider>
+        <TestColorMenu onClick={fn} />
+      </TestingProvider>
     );
 
     const button = getByRole('button');
