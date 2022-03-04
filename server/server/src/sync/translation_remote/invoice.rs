@@ -12,11 +12,11 @@ use serde::{Deserialize, Serialize};
 use crate::sync::SyncTranslationError;
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
-    naive_time,
+    date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
+    empty_str_as_option, naive_time,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
-    time_sec_from_date_time, zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
+    zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -102,14 +102,18 @@ pub struct LegacyTransactRow {
     pub entry_time: NaiveTime, // e.g. 47046,
     /// shipped_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub ship_date: Option<NaiveDate>, // "0000-00-00",
     /// delivered_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub arrival_date_actual: Option<NaiveDate>,
     /// verified_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub confirm_date: Option<NaiveDate>,
-    pub confirm_time: i64,
+    #[serde(deserialize_with = "naive_time")]
+    pub confirm_time: NaiveTime,
 }
 
 pub struct InvoiceTranslation {}
@@ -200,10 +204,9 @@ fn map_legacy_confirm_time(
     invoice_type: &InvoiceRowType,
     data: &LegacyTransactRow,
 ) -> ConfirmTimeMapping {
-    let confirm_time = data.confirm_time;
     let confirm_datetime = data
         .confirm_date
-        .map(|confirm_date| date_and_time_to_datatime(confirm_date, confirm_time));
+        .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
     match invoice_type {
         InvoiceRowType::OutboundShipment => ConfirmTimeMapping {
@@ -221,17 +224,19 @@ fn to_legacy_confirm_time(
     invoice_type: &InvoiceRowType,
     picked_datetime: Option<NaiveDateTime>,
     delivered_datetime: Option<NaiveDateTime>,
-) -> (Option<NaiveDate>, i64) {
-    let time = match invoice_type {
+) -> (Option<NaiveDate>, NaiveTime) {
+    let datetime = match invoice_type {
         InvoiceRowType::OutboundShipment => picked_datetime,
         InvoiceRowType::InboundShipment => delivered_datetime,
         // TODO:
         InvoiceRowType::InventoryAdjustment => None,
     };
 
-    let date = time.map(|time| date_from_date_time(&time));
-    let seconds = time.map(|time| time_sec_from_date_time(&time)).unwrap_or(0);
-    (date, seconds)
+    let date = datetime.map(|datetime| datetime.date());
+    let time = datetime
+        .map(|datetime| datetime.time())
+        .unwrap_or(NaiveTime::from_hms(0, 0, 0));
+    (date, time)
 }
 
 fn invoice_status(
