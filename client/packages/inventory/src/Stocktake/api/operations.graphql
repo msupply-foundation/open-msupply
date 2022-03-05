@@ -52,6 +52,7 @@ fragment Stocktake on StocktakeNode {
   finalisedDatetime
   status
   description
+  isLocked
   lines {
     __typename
     totalCount

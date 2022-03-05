@@ -24,21 +24,18 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
-const stocktakeParsers = {
-  stocktake: {
-    toUpdateInput: (
-      patch: RecordPatch<StocktakeFragment>
-    ): UpdateStocktakeInput => {
-      return {
-        description: patch.description,
-        status: patch.status,
-        comment: patch.comment,
-        id: patch.id,
-      };
-    },
+const stocktakeParser = {
+  toUpdate: (patch: RecordPatch<StocktakeFragment>): UpdateStocktakeInput => {
+    return {
+      description: patch.description,
+      status: patch.status,
+      comment: patch.comment,
+      id: patch.id,
+      isLocked: patch.isLocked,
+    };
   },
   line: {
-    toUpdateLineInput: (line: DraftStocktakeLine): UpdateStocktakeLineInput => {
+    toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => {
       return {
         batch: line.batch ?? '',
         packSize: line.packSize ?? 1,
@@ -52,7 +49,7 @@ const stocktakeParsers = {
           : undefined,
       };
     },
-    toInsertInput: (line: DraftStocktakeLine): InsertStocktakeLineInput => {
+    toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => {
       return {
         batch: line.batch ?? '',
         packSize: line.packSize ?? 1,
@@ -113,10 +110,10 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
       storeId,
       insertStocktakeLines: draftStocktakeLines
         .filter(({ isCreated }) => isCreated)
-        .map(stocktakeParsers.line.toInsertInput),
+        .map(stocktakeParser.line.toInsert),
       updateStocktakeLines: draftStocktakeLines
         .filter(({ isCreated, isUpdated }) => !isCreated && isUpdated)
-        .map(stocktakeParsers.line.toUpdateLineInput),
+        .map(stocktakeParser.line.toUpdate),
     };
 
     const result = await sdk.upsertStocktakeLines(input);
@@ -126,7 +123,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
   update: async (
     patch: RecordPatch<StocktakeFragment>
   ): Promise<UpdateStocktakeInput> => {
-    const input = stocktakeParsers.stocktake.toUpdateInput(patch);
+    const input = stocktakeParser.toUpdate(patch);
     const result = await sdk.updateStocktake({ input, storeId });
 
     const { updateStocktake } = result;
