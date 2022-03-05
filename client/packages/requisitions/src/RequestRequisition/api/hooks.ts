@@ -206,6 +206,7 @@ export const useDeleteSelectedRequisitions = () => {
 };
 
 export const useAddFromMasterList = () => {
+  const { error } = useNotification();
   const queryClient = useQueryClient();
   const { id: requestId, requisitionNumber } = useRequestFields([
     'id',
@@ -227,7 +228,30 @@ export const useAddFromMasterList = () => {
     id: masterListId,
   }: MasterListRowFragment) => {
     getConfirmation({
-      onConfirm: () => mutationState.mutateAsync({ masterListId, requestId }),
+      onConfirm: () =>
+        mutationState.mutate(
+          { masterListId, requestId },
+          {
+            onError: e => {
+              const { message } = e as Error;
+              switch (message) {
+                case 'CannotEditRequisition': {
+                  return error('Cannot edit requisition')();
+                }
+                case 'RecordNotFound': {
+                  return error('This master list has been deleted!')();
+                }
+                case 'MasterListNotFoundForThisStore': {
+                  return error(
+                    "Uh oh this is not the master list you're looking for"
+                  )();
+                }
+                default:
+                  return error('Could not add items to requisition')();
+              }
+            },
+          }
+        ),
     });
   };
 
