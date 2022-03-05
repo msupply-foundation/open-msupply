@@ -205,7 +205,6 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     const { batchRequestRequisition } = result;
 
     if (batchRequestRequisition.deleteRequestRequisitions) {
-      console.log(batchRequestRequisition.deleteRequestRequisitions.length);
       return batchRequestRequisition.deleteRequestRequisitions.length;
     }
 
