@@ -1,9 +1,8 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-
+import { useToggle } from '@common/hooks';
 import { AlertModal } from './AlertModal';
 import { Button } from '@mui/material';
-import { useToggle } from '../../hooks';
 
 export default {
   title: 'Modals/AlertModal',
