@@ -38,7 +38,7 @@ export type ColumnKey =
   | 'lineTotal'
   | 'stocktakeNumber'
   | 'description'
-  | 'stocktakeDatetime'
+  | 'stocktakeDate'
   | 'monthlyConsumption';
 
 const getColumnLookup = <T extends RecordWithId>(): Record<
@@ -114,9 +114,9 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     format: ColumnFormat.Date,
     width: 100,
   },
-  stocktakeDatetime: {
+  stocktakeDate: {
     label: 'label.date',
-    key: 'stocktakeDatetime',
+    key: 'stocktakeDate',
     format: ColumnFormat.Date,
     width: 100,
   },
