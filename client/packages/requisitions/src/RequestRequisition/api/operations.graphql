@@ -66,32 +66,32 @@ mutation updateRequest(
 
 mutation deleteRequest(
   $storeId: String!
-  $input: DeleteRequestRequisitionInput!
+  $input: BatchRequestRequisitionInput!
 ) {
-  deleteRequestRequisition(input: $input, storeId: $storeId) {
-    ... on DeleteResponse {
-      __typename
+  batchRequestRequisition(storeId: $storeId, input: $input) {
+    deleteRequestRequisitions {
       id
-    }
-    ... on DeleteRequestRequisitionError {
-      __typename
-      error {
-        description
-        ... on CannotDeleteRequisitionWithLines {
+      response {
+        ... on DeleteRequestRequisitionError {
           __typename
-          description
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteRequisitionWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
         }
-        ... on CannotEditRequisition {
-          __typename
-          description
-        }
-        ... on RecordDoesNotExist {
-          __typename
-          description
-        }
-        ... on RecordNotFound {
-          __typename
-          description
+        ... on DeleteResponse {
+          id
         }
       }
     }
