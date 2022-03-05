@@ -21,7 +21,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
 }) => {
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('distribution');
-  const c = useToggle();
+  const modalController = useToggle();
 
   return (
     <AppBarButtonsPortal>
@@ -29,11 +29,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.add-from-master-list')}
-          onClick={c.toggleOn}
+          onClick={modalController.toggleOn}
         />
         <MasterListSearchModal
-          open={c.isOn}
-          onClose={c.toggleOff}
+          open={modalController.isOn}
+          onClose={modalController.toggleOff}
           onChange={masterList => console.log(masterList)}
         />
         <ButtonWithIcon
