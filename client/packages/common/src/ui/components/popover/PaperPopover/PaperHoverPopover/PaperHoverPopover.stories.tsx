@@ -1,13 +1,13 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { PaperPopover } from './PaperPopover';
+import { PaperHoverPopover } from './PaperHoverPopover';
 import { PaperPopoverSection } from '@common/components';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from '@common/intl';
 
 export default {
-  title: 'Popover/PaperPopover',
-  component: PaperPopover,
+  title: 'Popover/PaperHoverPopover',
+  component: PaperHoverPopover,
 };
 
 const Example: Story = () => {
@@ -15,7 +15,7 @@ const Example: Story = () => {
 
   return (
     <>
-      <PaperPopover
+      <PaperHoverPopover
         Content={
           <PaperPopoverSection label={t('admin')}>
             Some content here!
@@ -31,7 +31,7 @@ const Example: Story = () => {
         >
           <Typography>Hover me!</Typography>
         </Box>
-      </PaperPopover>
+      </PaperHoverPopover>
     </>
   );
 };

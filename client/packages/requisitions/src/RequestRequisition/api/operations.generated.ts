@@ -12,7 +12,7 @@ export type InsertRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertRequestMutation = { __typename: 'FullMutation', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+export type InsertRequestMutation = { __typename: 'FullMutation', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError', error: { __typename: 'OtherPartyNotASupplier', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
 export type UpdateRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -20,19 +20,19 @@ export type UpdateRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateRequestMutation = { __typename: 'FullMutation', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError' } };
+export type UpdateRequestMutation = { __typename: 'FullMutation', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  input: Types.DeleteRequestRequisitionInput;
+  input: Types.BatchRequestRequisitionInput;
 }>;
 
 
-export type DeleteRequestMutation = { __typename: 'FullMutation', deleteRequestRequisition: { __typename: 'DeleteRequestRequisitionError', error: { __typename: 'CannotDeleteRequisitionWithLines', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } };
+export type DeleteRequestMutation = { __typename: 'FullMutation', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitions?: Array<{ __typename: 'DeleteRequestRequisitionResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionError', error: { __typename: 'CannotDeleteRequisitionWithLines', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } };
+export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } };
 
-export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
+export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
 
 export type RequestByNumberQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -40,7 +40,7 @@ export type RequestByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type RequestByNumberQuery = { __typename: 'FullQuery', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } }> } } };
+export type RequestByNumberQuery = { __typename: 'FullQuery', requisitionByNumber: { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } }> } } };
 
 export type RequestRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string };
 
@@ -89,6 +89,7 @@ export const RequestLineFragmentDoc = gql`
   itemId
   requestedQuantity
   suggestedQuantity
+  comment
   itemStats {
     __typename
     availableStockOnHand
@@ -161,6 +162,16 @@ export const InsertRequestDocument = gql`
       id
       requisitionNumber
     }
+    ... on InsertRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
     `;
@@ -172,21 +183,11 @@ export const UpdateRequestDocument = gql`
       id
       requisitionNumber
     }
-  }
-}
-    `;
-export const DeleteRequestDocument = gql`
-    mutation deleteRequest($storeId: String!, $input: DeleteRequestRequisitionInput!) {
-  deleteRequestRequisition(input: $input, storeId: $storeId) {
-    ... on DeleteResponse {
-      __typename
-      id
-    }
-    ... on DeleteRequestRequisitionError {
+    ... on UpdateRequestRequisitionError {
       __typename
       error {
         description
-        ... on CannotDeleteRequisitionWithLines {
+        ... on RecordNotFound {
           __typename
           description
         }
@@ -194,9 +195,41 @@ export const DeleteRequestDocument = gql`
           __typename
           description
         }
-        ... on RecordDoesNotExist {
+        ... on OtherPartyNotASupplier {
           __typename
           description
+        }
+      }
+    }
+  }
+}
+    `;
+export const DeleteRequestDocument = gql`
+    mutation deleteRequest($storeId: String!, $input: BatchRequestRequisitionInput!) {
+  batchRequestRequisition(storeId: $storeId, input: $input) {
+    deleteRequestRequisitions {
+      id
+      response {
+        ... on DeleteRequestRequisitionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteRequisitionWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
         }
       }
     }
@@ -223,6 +256,10 @@ export const RequestByNumberDocument = gql`
           isSupplier
         }
       }
+    }
+    ... on RecordNotFound {
+      __typename
+      description
     }
   }
 }
@@ -288,7 +325,7 @@ export const UpdateRequestLineDocument = gql`
           description
           key
         }
-        ... on RecordDoesNotExist {
+        ... on RecordNotFound {
           __typename
           description
         }
@@ -371,7 +408,7 @@ export const mockUpdateRequestMutation = (resolver: ResponseResolver<GraphQLRequ
  * mockDeleteRequestMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
- *     ctx.data({ deleteRequestRequisition })
+ *     ctx.data({ batchRequestRequisition })
  *   )
  * })
  */

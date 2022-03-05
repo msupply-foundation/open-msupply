@@ -20,6 +20,16 @@ mutation insertRequest(
       id
       requisitionNumber
     }
+    ... on InsertRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 
@@ -33,23 +43,11 @@ mutation updateRequest(
       id
       requisitionNumber
     }
-  }
-}
-
-mutation deleteRequest(
-  $storeId: String!
-  $input: DeleteRequestRequisitionInput!
-) {
-  deleteRequestRequisition(input: $input, storeId: $storeId) {
-    ... on DeleteResponse {
-      __typename
-      id
-    }
-    ... on DeleteRequestRequisitionError {
+    ... on UpdateRequestRequisitionError {
       __typename
       error {
         description
-        ... on CannotDeleteRequisitionWithLines {
+        ... on RecordNotFound {
           __typename
           description
         }
@@ -57,9 +55,43 @@ mutation deleteRequest(
           __typename
           description
         }
-        ... on RecordDoesNotExist {
+        ... on OtherPartyNotASupplier {
           __typename
           description
+        }
+      }
+    }
+  }
+}
+
+mutation deleteRequest(
+  $storeId: String!
+  $input: BatchRequestRequisitionInput!
+) {
+  batchRequestRequisition(storeId: $storeId, input: $input) {
+    deleteRequestRequisitions {
+      id
+      response {
+        ... on DeleteRequestRequisitionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteRequisitionWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
         }
       }
     }
@@ -71,6 +103,8 @@ fragment RequestLine on RequisitionLineNode {
   itemId
   requestedQuantity
   suggestedQuantity
+  comment
+
   itemStats {
     __typename
     availableStockOnHand
@@ -137,6 +171,10 @@ query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
           isSupplier
         }
       }
+    }
+    ... on RecordNotFound {
+      __typename
+      description
     }
   }
 }
@@ -225,7 +263,7 @@ mutation updateRequestLine(
           description
           key
         }
-        ... on RecordDoesNotExist {
+        ... on RecordNotFound {
           __typename
           description
         }
