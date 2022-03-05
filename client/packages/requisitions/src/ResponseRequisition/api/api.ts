@@ -74,6 +74,7 @@ const responseParser = {
   ): UpdateResponseRequisitionLineInput => ({
     id: patch.id,
     supplyQuantity: patch.supplyQuantity,
+    comment: patch.comment,
   }),
 };
 

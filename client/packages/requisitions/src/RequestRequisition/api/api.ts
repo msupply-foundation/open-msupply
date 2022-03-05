@@ -1,4 +1,6 @@
 import {
+  UpdateRequestRequisitionLineInput,
+  InsertRequestRequisitionLineInput,
   RequisitionNodeType,
   FilterBy,
   SortBy,
@@ -72,15 +74,21 @@ const requestParser = {
       status: requestParser.toStatus(requisition),
     };
   },
-  toInsertLine: (line: DraftRequestLine) => ({
+  toInsertLine: (
+    line: DraftRequestLine
+  ): InsertRequestRequisitionLineInput => ({
     id: line.id,
     itemId: line.itemId,
     requisitionId: line.requisitionId,
     requestedQuantity: line.requestedQuantity,
+    comment: line.comment,
   }),
-  toUpdateLine: (line: DraftRequestLine) => ({
+  toUpdateLine: (
+    line: DraftRequestLine
+  ): UpdateRequestRequisitionLineInput => ({
     id: line.id,
     requestedQuantity: line.requestedQuantity,
+    comment: line.comment,
   }),
 };
 

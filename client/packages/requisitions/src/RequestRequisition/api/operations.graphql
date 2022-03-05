@@ -103,6 +103,8 @@ fragment RequestLine on RequisitionLineNode {
   itemId
   requestedQuantity
   suggestedQuantity
+  comment
+
   itemStats {
     __typename
     availableStockOnHand
@@ -260,10 +262,6 @@ mutation updateRequestLine(
           __typename
           description
           key
-        }
-        ... on RecordDoesNotExist {
-          __typename
-          description
         }
         ... on RecordNotFound {
           __typename
