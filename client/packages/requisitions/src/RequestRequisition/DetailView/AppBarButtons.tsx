@@ -6,7 +6,9 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
+  useToggle,
 } from '@openmsupply-client/common';
+import { MasterListSearchModal } from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
   isDisabled: boolean;
@@ -18,11 +20,22 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation('common');
+  const t = useTranslation('distribution');
+  const c = useToggle();
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('button.add-from-master-list')}
+          onClick={c.toggleOn}
+        />
+        <MasterListSearchModal
+          open={c.isOn}
+          onClose={c.toggleOff}
+          onChange={masterList => console.log(masterList)}
+        />
         <ButtonWithIcon
           disabled={isDisabled}
           label={t('button.add-item')}
