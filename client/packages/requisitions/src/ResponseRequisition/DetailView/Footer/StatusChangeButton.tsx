@@ -115,7 +115,7 @@ export const StatusChangeButton = () => {
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={onGetConfirmation}
+      onClick={() => onGetConfirmation()}
     />
   );
 };

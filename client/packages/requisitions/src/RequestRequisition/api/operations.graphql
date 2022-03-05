@@ -271,3 +271,37 @@ mutation updateRequestLine(
     }
   }
 }
+
+mutation addFromMasterList(
+  $storeId: String!
+  $requestId: String!
+  $masterListId: String!
+) {
+  addFromMasterList(
+    input: { requestRequisitionId: $requestId, masterListId: $masterListId }
+    storeId: $storeId
+  ) {
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on AddFromMasterListError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
