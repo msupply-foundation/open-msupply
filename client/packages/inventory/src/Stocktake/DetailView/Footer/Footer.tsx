@@ -9,6 +9,7 @@ import {
 import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
 import { StocktakeFragment, useStocktake } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
+import { StocktakeLockButton } from './StocktakeLockButton';
 
 const createStatusLog = (stocktake: StocktakeFragment) => {
   return {
@@ -32,6 +33,7 @@ export const Footer: FC = () => {
             alignItems="center"
             height={64}
           >
+            <StocktakeLockButton />
             <StatusCrumbs
               statuses={stocktakeStatuses}
               statusLog={createStatusLog(data)}
