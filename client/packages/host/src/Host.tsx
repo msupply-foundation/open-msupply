@@ -17,6 +17,7 @@ import {
   RandomLoader,
   ConfirmationModalProvider,
   AuthProvider,
+  AlertModalProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Login, Viewport } from './components';
@@ -41,19 +42,23 @@ const Host: FC = () => (
               <AuthProvider>
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
-                    <BrowserRouter>
-                      <Viewport>
-                        <Box display="flex" style={{ minHeight: '100%' }}>
-                          <Routes>
-                            <Route
-                              path={RouteBuilder.create(AppRoute.Login).build()}
-                              element={<Login />}
-                            />
-                            <Route path="*" element={<Site />} />
-                          </Routes>
-                        </Box>
-                      </Viewport>
-                    </BrowserRouter>
+                    <AlertModalProvider>
+                      <BrowserRouter>
+                        <Viewport>
+                          <Box display="flex" style={{ minHeight: '100%' }}>
+                            <Routes>
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Login
+                                ).build()}
+                                element={<Login />}
+                              />
+                              <Route path="*" element={<Site />} />
+                            </Routes>
+                          </Box>
+                        </Viewport>
+                      </BrowserRouter>
+                    </AlertModalProvider>
                   </ConfirmationModalProvider>
                 </AppThemeProvider>
               </AuthProvider>
