@@ -17,8 +17,6 @@ export const MasterListSearchModal: FC<MasterListSearchProps> = ({
   const { data, isLoading } = useMasterLists({ enabled: open });
   const t = useTranslation(['app', 'common']);
 
-  console.log(data);
-
   return (
     <ListSearch
       loading={isLoading}
