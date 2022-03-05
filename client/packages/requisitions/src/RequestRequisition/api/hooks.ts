@@ -221,7 +221,6 @@ export const useAddFromMasterList = () => {
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('message.confirm-add-from-master-list'),
-    onConfirm: () => {},
   });
 
   const addFromMasterList = async ({
