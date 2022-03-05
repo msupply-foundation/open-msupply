@@ -7,9 +7,15 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
+  useAlertModal,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
-import { useIsOutboundDisabled, useOutboundFields } from '../../api';
+import {
+  useOutboundLines,
+  useIsOutboundDisabled,
+  useOutboundFields,
+} from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -117,7 +123,7 @@ const useStatusChangeButton = () => {
     }
   };
 
-  const onGetConfirmation = useConfirmationModal({
+  const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
       status: selectedOption?.value
@@ -133,16 +139,41 @@ const useStatusChangeButton = () => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, onGetConfirmation };
+  return { options, selectedOption, setSelectedOption, getConfirmation };
+};
+
+const useStatusChangePlaceholderCheck = () => {
+  const t = useTranslation('distribution');
+  const { data: lines } = useOutboundLines();
+  const alert = useAlertModal({
+    title: t('heading.cannot-do-that'),
+    message: t('messages.must-allocate-all-lines'),
+  });
+
+  const hasPlaceholder = useMemo(
+    () =>
+      !!lines?.some(
+        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+      ),
+    [lines]
+  );
+
+  return { alert, hasPlaceholder };
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, onGetConfirmation } =
+  const { options, selectedOption, setSelectedOption, getConfirmation } =
     useStatusChangeButton();
+  const { hasPlaceholder, alert } = useStatusChangePlaceholderCheck();
   const isDisabled = useIsOutboundDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
+
+  const onStatusClick = () => {
+    if (hasPlaceholder) return alert();
+    return getConfirmation();
+  };
 
   return (
     <SplitButton
@@ -150,7 +181,7 @@ export const StatusChangeButton = () => {
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={() => onGetConfirmation()}
+      onClick={onStatusClick}
     />
   );
 };
