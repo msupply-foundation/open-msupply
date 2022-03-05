@@ -108,6 +108,13 @@ const outboundParsers = {
         line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
     };
   },
+  toDeleteLine: (line: {
+    id: string;
+    invoiceId: string;
+  }): DeleteOutboundShipmentLineInput => ({
+    id: line.id,
+    invoiceId: line.invoiceId,
+  }),
   toInsertPlaceholder: (
     line: DraftOutboundLine
   ): InsertOutboundShipmentUnallocatedLineInput => ({
@@ -124,13 +131,6 @@ const outboundParsers = {
   }),
   toDeletePlaceholder: (line: DraftOutboundLine) => ({
     id: line.id,
-  }),
-  toDeleteLine: (
-    invoiceId: string,
-    id: string
-  ): DeleteOutboundShipmentLineInput => ({
-    invoiceId,
-    id,
   }),
 };
 
@@ -237,16 +237,30 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     const input = {
       insertOutboundShipmentLines: draftStocktakeLines
         .filter(
-          ({ type, isCreated }) =>
-            isCreated && type === InvoiceLineNodeType.StockOut
+          ({ type, isCreated, numberOfPacks }) =>
+            isCreated &&
+            type === InvoiceLineNodeType.StockOut &&
+            numberOfPacks > 0
         )
         .map(outboundParsers.toInsertLine),
       updateOutboundShipmentLines: draftStocktakeLines
         .filter(
-          ({ type, isCreated, isUpdated }) =>
-            !isCreated && isUpdated && type === InvoiceLineNodeType.StockOut
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+            !isCreated &&
+            isUpdated &&
+            type === InvoiceLineNodeType.StockOut &&
+            numberOfPacks > 0
         )
         .map(outboundParsers.toUpdateLine),
+      deleteOutboundShipmentLines: draftStocktakeLines
+        .filter(
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+            !isCreated &&
+            isUpdated &&
+            type === InvoiceLineNodeType.StockOut &&
+            numberOfPacks === 0
+        )
+        .map(outboundParsers.toDeleteLine),
       insertOutboundShipmentUnallocatedLines: draftStocktakeLines
         .filter(
           ({ type, isCreated, numberOfPacks }) =>
@@ -266,8 +280,11 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         .map(outboundParsers.toUpdatePlaceholder),
       deleteOutboundShipmentUnallocatedLines: draftStocktakeLines
         .filter(
-          ({ type, numberOfPacks }) =>
-            type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks === 0
+          ({ type, numberOfPacks, isUpdated, isCreated }) =>
+            type === InvoiceLineNodeType.UnallocatedStock &&
+            numberOfPacks === 0 &&
+            isUpdated &&
+            !isCreated
         )
         .map(outboundParsers.toDeletePlaceholder),
     };
@@ -276,12 +293,10 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
 
     return result;
   },
-  deleteLines: (invoiceId: string) => async (ids: string[]) => {
+  deleteLines: async (lines: { id: string; invoiceId: string }[]) => {
     return sdk.deleteOutboundShipmentLines({
       storeId,
-      deleteOutboundShipmentLines: ids.map(id =>
-        outboundParsers.toDeleteLine(invoiceId, id)
-      ),
+      deleteOutboundShipmentLines: lines.map(outboundParsers.toDeleteLine),
     });
   },
   dashboard: {
