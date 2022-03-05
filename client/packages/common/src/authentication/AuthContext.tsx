@@ -40,6 +40,7 @@ interface AuthControl {
   ) => Promise<AuthenticationResponse>;
   logout: () => void;
   mostRecentlyUsedCredentials?: MRUCredentials | null;
+  setStore: (store: Store) => void;
   store?: Store;
   storeId: string;
   token?: string;
@@ -74,6 +75,7 @@ const AuthContext = createContext<AuthControl>({
     })),
   logout: () => {},
   storeId: '',
+  setStore: () => {},
 });
 
 const { Provider } = AuthContext;
@@ -107,6 +109,13 @@ export const AuthProvider: FC = ({ children }) => {
     return { token, error };
   };
 
+  const setStore = (store: Store) => {
+    if (!localToken) return;
+
+    setLocalStore(store);
+    setMRUCredentials({ username: user?.name ?? '', store: store });
+  };
+
   const logout = () => {
     Cookies.remove('auth');
     setLocalStore(undefined);
@@ -122,6 +131,7 @@ export const AuthProvider: FC = ({ children }) => {
       user,
       store: localStore,
       mostRecentlyUsedCredentials,
+      setStore,
     }),
     [
       login,
@@ -130,6 +140,7 @@ export const AuthProvider: FC = ({ children }) => {
       user,
       mostRecentlyUsedCredentials,
       isLoggingIn,
+      setStore,
     ]
   );
 

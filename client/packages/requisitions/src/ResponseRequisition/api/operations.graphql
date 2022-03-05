@@ -27,6 +27,8 @@ fragment ResponseLine on RequisitionLineNode {
   itemId
   requestedQuantity
   supplyQuantity
+  comment
+
   itemStats {
     __typename
     availableStockOnHand
@@ -154,7 +156,39 @@ mutation updateResponseLine(
           description
           key
         }
-        ... on RecordDoesNotExist {
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
+  createRequisitionShipment(
+    input: { responseRequisitionId: $responseId }
+    storeId: $storeId
+  ) {
+    __typename
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+    ... on CreateRequisitionShipmentError {
+      __typename
+      error {
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on NothingRemainingToSupply {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
           __typename
           description
         }

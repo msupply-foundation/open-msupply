@@ -5,6 +5,7 @@ fragment StocktakeRow on StocktakeNode {
   description
   createdDatetime
   finalisedDatetime
+  stocktakeDate
   stocktakeNumber
   status
 }
@@ -50,8 +51,10 @@ fragment Stocktake on StocktakeNode {
   comment
   createdDatetime
   finalisedDatetime
+  stocktakeDate
   status
   description
+  isLocked
   lines {
     __typename
     totalCount
