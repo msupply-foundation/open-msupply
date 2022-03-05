@@ -81,22 +81,6 @@ export const CommandK: FC = ({ children }) => {
   const drawer = useDrawer();
   const t = useTranslation('app');
   const actions = [
-    // {
-    //   id: 'Navigate',
-    //   name: t('cmdk.navigation-actions'),
-    //   shortcut: ['c'],
-    //   keywords: 'navigation, back',
-    //   children: [
-    //     {
-    //       id: 'navigation:go-back',
-    //       name: t('cmdk.go-back'),
-    //       shortcut: ['c'],
-    //       keywords: 'navigation, back',
-    //       perform: () => navigate(-1),
-    //       parent: 'Navigate',
-    //     },
-    //   ],
-    // },
     {
       id: 'navigation-drawer:toggle',
       name: `${t('cmdk.drawer-toggle')} (m)`,
@@ -116,12 +100,6 @@ export const CommandK: FC = ({ children }) => {
             .build()
         ),
     },
-    // {
-    //   id: 'navigation:outbound-shipment/new',
-    //   name: t('cmdk.create-outbound'),
-    //   keywords: 'distribution',
-    //   perform: () => navigate('/distribution/outbound-shipment/new'),
-    // },
     {
       id: 'navigation:inbound-shipment',
       name: `${t('cmdk.goto-inbound')} (i)`,
@@ -134,12 +112,6 @@ export const CommandK: FC = ({ children }) => {
             .build()
         ),
     },
-    // {
-    //   id: 'navigation:inbound-shipment/new',
-    //   name: t('cmdk.create-inbound'),
-    //   keywords: 'distribution',
-    //   perform: () => navigate('/replenishment/inbound-shipment/new'),
-    // },
     {
       id: 'navigation:customers',
       name: `${t('cmdk.goto-customers')} (g+c)`,
@@ -254,7 +226,7 @@ export const CommandK: FC = ({ children }) => {
       keywords: 'master lists',
       perform: () =>
         navigate(
-          RouteBuilder.create(AppRoute.Inventory)
+          RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.MasterLists)
             .build()
         ),
