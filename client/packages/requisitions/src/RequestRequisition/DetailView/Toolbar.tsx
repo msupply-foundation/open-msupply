@@ -16,10 +16,15 @@ import {
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
 // import { RequisitionLine } from '../../types';
-import { useRequestFields, useIsRequestDisabled } from '../api';
+import {
+  useRequestFields,
+  useIsRequestDisabled,
+  useDeleteRequestLines,
+} from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['replenishment', 'common']);
+  const { onDelete } = useDeleteRequestLines();
 
   // const { success, info } = useNotification();
   const isDisabled = useIsRequestDisabled();
@@ -104,7 +109,7 @@ export const Toolbar: FC = () => {
           </Box>
         </Grid>
         <DropdownMenu disabled={isDisabled} label={t('label.select')}>
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={() => {}}>
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>
         </DropdownMenu>

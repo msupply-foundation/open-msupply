@@ -79,6 +79,14 @@ export type AddFromMasterListMutationVariables = Types.Exact<{
 
 export type AddFromMasterListMutation = { __typename: 'FullMutation', addFromMasterList: { __typename: 'AddFromMasterListError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'MasterListNotFoundForThisStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'RequisitionLineConnector', totalCount: number } };
 
+export type DeleteRequestLinesMutationVariables = Types.Exact<{
+  ids?: Types.InputMaybe<Array<Types.DeleteRequestRequisitionLineInput> | Types.DeleteRequestRequisitionLineInput>;
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type DeleteRequestLinesMutation = { __typename: 'FullMutation', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitionLines?: Array<{ __typename: 'DeleteRequestRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
 export const ItemWithStatsFragmentDoc = gql`
     fragment ItemWithStats on ItemNode {
   id
@@ -374,6 +382,37 @@ export const AddFromMasterListDocument = gql`
   }
 }
     `;
+export const DeleteRequestLinesDocument = gql`
+    mutation deleteRequestLines($ids: [DeleteRequestRequisitionLineInput!], $storeId: String!) {
+  batchRequestRequisition(
+    input: {deleteRequestRequisitionLines: $ids}
+    storeId: $storeId
+  ) {
+    deleteRequestRequisitionLines {
+      id
+      response {
+        ... on DeleteRequestRequisitionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -405,6 +444,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     addFromMasterList(variables: AddFromMasterListMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AddFromMasterListMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddFromMasterListMutation>(AddFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addFromMasterList');
+    },
+    deleteRequestLines(variables: DeleteRequestLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteRequestLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestLinesMutation>(DeleteRequestLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequestLines');
     }
   };
 }
@@ -543,5 +585,22 @@ export const mockUpdateRequestLineMutation = (resolver: ResponseResolver<GraphQL
 export const mockAddFromMasterListMutation = (resolver: ResponseResolver<GraphQLRequest<AddFromMasterListMutationVariables>, GraphQLContext<AddFromMasterListMutation>, any>) =>
   graphql.mutation<AddFromMasterListMutation, AddFromMasterListMutationVariables>(
     'addFromMasterList',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteRequestLinesMutation((req, res, ctx) => {
+ *   const { ids, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ batchRequestRequisition })
+ *   )
+ * })
+ */
+export const mockDeleteRequestLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteRequestLinesMutationVariables>, GraphQLContext<DeleteRequestLinesMutation>, any>) =>
+  graphql.mutation<DeleteRequestLinesMutation, DeleteRequestLinesMutationVariables>(
+    'deleteRequestLines',
     resolver
   )
