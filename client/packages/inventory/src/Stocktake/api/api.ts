@@ -32,6 +32,9 @@ const stocktakeParser = {
       comment: patch.comment,
       id: patch.id,
       isLocked: patch.isLocked,
+      stocktakeDate: patch.stocktakeDate
+        ? formatNaiveDate(new Date(patch.stocktakeDate))
+        : undefined,
     };
   },
   line: {
