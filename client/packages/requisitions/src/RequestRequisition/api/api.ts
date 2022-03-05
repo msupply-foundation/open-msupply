@@ -13,6 +13,7 @@ import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
   RequestRowFragment,
   RequestFragment,
+  RequestLineFragment,
   Sdk,
 } from './operations.generated';
 
@@ -74,6 +75,7 @@ const requestParser = {
       status: requestParser.toStatus(requisition),
     };
   },
+  toDeleteLine: (line: RequestLineFragment) => ({ id: line.id }),
   toInsertLine: (
     line: DraftRequestLine
   ): InsertRequestRequisitionLineInput => ({
@@ -122,6 +124,16 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Record not found');
     },
+  },
+  deleteLines: async (requestLines: RequestLineFragment[]) => {
+    const ids = requestLines.map(requestParser.toDeleteLine);
+    const result = await sdk.deleteRequestLines({ ids, storeId });
+
+    if (result.batchRequestRequisition.deleteRequestRequisitionLines) {
+      return result.batchRequestRequisition.deleteRequestRequisitionLines;
+    }
+
+    throw new Error('Could not delete requisition lines!');
   },
   upsertLine: async (draftLine: DraftRequestLine) => {
     let result;
