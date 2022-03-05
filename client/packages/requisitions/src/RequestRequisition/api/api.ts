@@ -188,18 +188,19 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Unable to create requisition');
   },
   deleteRequests: async (requisitions: RequestRowFragment[]) => {
-    const promises = requisitions.map(requisition => {
-      const input = requestParser.toDelete(requisition);
-      return sdk.deleteRequest({ input, storeId });
-    });
-    const results = await Promise.all(promises);
-
-    const success = results.every(({ deleteRequestRequisition }) => {
-      return deleteRequestRequisition.__typename === 'DeleteResponse';
+    const deleteRequestRequisitions = requisitions.map(requestParser.toDelete);
+    const result = await sdk.deleteRequest({
+      storeId,
+      input: { deleteRequestRequisitions },
     });
 
-    if (success) return results;
+    const { batchRequestRequisition } = result;
 
-    throw new Error('Could not delete requisition');
+    if (batchRequestRequisition.deleteRequestRequisitions) {
+      console.log(batchRequestRequisition.deleteRequestRequisitions.length);
+      return batchRequestRequisition.deleteRequestRequisitions.length;
+    }
+
+    throw new Error('Could not delete requisitions');
   },
 });
