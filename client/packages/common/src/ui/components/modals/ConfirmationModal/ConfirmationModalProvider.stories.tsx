@@ -1,7 +1,7 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { BaseButton } from '../../buttons';
-import { useConfirmationModal } from './ConfirmationModalProvider';
+import { useConfirmationModal } from './useConfirmationModal';
 
 export default {
   title: 'Hooks/useConfirmationModal',
