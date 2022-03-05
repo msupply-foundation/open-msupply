@@ -211,4 +211,28 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not delete requisitions');
   },
+
+  addFromMasterList: async ({
+    requestId,
+    masterListId,
+  }: {
+    requestId: string;
+    masterListId: string;
+  }) => {
+    const result = await sdk.addFromMasterList({
+      requestId,
+      masterListId,
+      storeId,
+    });
+
+    if (result.addFromMasterList.__typename === 'RequisitionLineConnector') {
+      return result.addFromMasterList;
+    }
+
+    if (result.addFromMasterList.__typename === 'AddFromMasterListError') {
+      throw new Error(result.addFromMasterList.error.__typename);
+    }
+
+    throw new Error('Could not add from master list');
+  },
 });

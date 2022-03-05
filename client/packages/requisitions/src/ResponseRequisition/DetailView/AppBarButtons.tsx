@@ -26,7 +26,7 @@ export const AppBarButtonsComponent: FC = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.create-shipment')}
-          onClick={confirmOutboundCreation}
+          onClick={() => confirmOutboundCreation}
         />
         {OpenButton}
       </Grid>

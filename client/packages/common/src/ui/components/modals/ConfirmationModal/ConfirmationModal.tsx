@@ -8,7 +8,7 @@ interface ConfirmationModalProps {
   open: boolean;
   width?: number;
   height?: number;
-  onConfirm: (() => void) | (() => Promise<void>);
+  onConfirm: (() => void) | (() => Promise<void>) | undefined;
   onCancel: () => void;
   title: string;
   message: string;
@@ -69,7 +69,7 @@ export const ConfirmationModal = ({
               color="secondary"
               isLoading={loading}
               onClick={async () => {
-                const result = onConfirm();
+                const result = onConfirm && onConfirm();
                 if (result instanceof Promise) {
                   setLoading(true);
                   await result;

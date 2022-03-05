@@ -23,6 +23,8 @@
   "heading.sub-total": "Sub total",
   "heading.total": "Total",
   "heading.stock-details": "Stock details",
+  "heading.are-you-sure": "Are you sure?",
+  "message.confirm-add-from-master-list": "Are you sure you want to add all of the items from this master list?",
   "heading.create-outbound-shipment": "Create Outbound Shipment",
   "label.add-batch": "Add batch",
   "label.allocated": "Allocated",

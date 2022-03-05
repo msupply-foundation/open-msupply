@@ -70,6 +70,15 @@ export type UpdateRequestLineMutationVariables = Types.Exact<{
 
 export type UpdateRequestLineMutation = { __typename: 'FullMutation', updateRequestRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateRequestRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } };
 
+export type AddFromMasterListMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  requestId: Types.Scalars['String'];
+  masterListId: Types.Scalars['String'];
+}>;
+
+
+export type AddFromMasterListMutation = { __typename: 'FullMutation', addFromMasterList: { __typename: 'AddFromMasterListError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'MasterListNotFoundForThisStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'RequisitionLineConnector', totalCount: number } };
+
 export const ItemWithStatsFragmentDoc = gql`
     fragment ItemWithStats on ItemNode {
   id
@@ -334,6 +343,37 @@ export const UpdateRequestLineDocument = gql`
   }
 }
     `;
+export const AddFromMasterListDocument = gql`
+    mutation addFromMasterList($storeId: String!, $requestId: String!, $masterListId: String!) {
+  addFromMasterList(
+    input: {requestRequisitionId: $requestId, masterListId: $masterListId}
+    storeId: $storeId
+  ) {
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on AddFromMasterListError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -362,6 +402,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateRequestLine(variables: UpdateRequestLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateRequestLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestLineMutation>(UpdateRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequestLine');
+    },
+    addFromMasterList(variables: AddFromMasterListMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AddFromMasterListMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AddFromMasterListMutation>(AddFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addFromMasterList');
     }
   };
 }
@@ -483,5 +526,22 @@ export const mockInsertRequestLineMutation = (resolver: ResponseResolver<GraphQL
 export const mockUpdateRequestLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateRequestLineMutationVariables>, GraphQLContext<UpdateRequestLineMutation>, any>) =>
   graphql.mutation<UpdateRequestLineMutation, UpdateRequestLineMutationVariables>(
     'updateRequestLine',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAddFromMasterListMutation((req, res, ctx) => {
+ *   const { storeId, requestId, masterListId } = req.variables;
+ *   return res(
+ *     ctx.data({ addFromMasterList })
+ *   )
+ * })
+ */
+export const mockAddFromMasterListMutation = (resolver: ResponseResolver<GraphQLRequest<AddFromMasterListMutationVariables>, GraphQLContext<AddFromMasterListMutation>, any>) =>
+  graphql.mutation<AddFromMasterListMutation, AddFromMasterListMutationVariables>(
+    'addFromMasterList',
     resolver
   )

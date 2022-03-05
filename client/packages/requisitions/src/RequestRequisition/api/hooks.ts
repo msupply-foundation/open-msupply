@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  useConfirmationModal,
   useAuthContext,
   useTranslation,
   useQueryParams,
@@ -19,6 +20,7 @@ import {
   useTableStore,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
+import { MasterListRowFragment } from '@openmsupply-client/system';
 import { getRequestQueries, ListParams } from './api';
 import {
   getSdk,
@@ -201,4 +203,34 @@ export const useDeleteSelectedRequisitions = () => {
   };
 
   return deleteAction;
+};
+
+export const useAddFromMasterList = () => {
+  const queryClient = useQueryClient();
+  const { id: requestId, requisitionNumber } = useRequestFields([
+    'id',
+    'requisitionNumber',
+  ]);
+  const api = useRequestApi();
+  const mutationState = useMutation(api.addFromMasterList, {
+    onSettled: () =>
+      queryClient.invalidateQueries(api.keys.detail(String(requisitionNumber))),
+  });
+
+  const t = useTranslation('distribution');
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('message.confirm-add-from-master-list'),
+    onConfirm: () => {},
+  });
+
+  const addFromMasterList = async ({
+    id: masterListId,
+  }: MasterListRowFragment) => {
+    getConfirmation({
+      onConfirm: () => mutationState.mutateAsync({ masterListId, requestId }),
+    });
+  };
+
+  return { ...mutationState, addFromMasterList };
 };
