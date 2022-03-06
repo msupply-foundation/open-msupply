@@ -14,7 +14,7 @@ export const getEditableQuantityColumn = <
 >(): ColumnDefinition<T> => ({
   key: 'quantity',
   width: 100,
-  Cell: ({ rowData }) => {
+  Cell: ({ rowData, isDisabled }) => {
     const { quantity } = rowData;
     const [buffer, setBuffer] = useState(String(quantity));
     const [value, setValue] = useState(quantity);
@@ -52,6 +52,7 @@ export const getEditableQuantityColumn = <
           maxHeight: 40,
         }}
         error={error}
+        disabled={isDisabled}
         size="small"
         hiddenLabel
         value={buffer}
