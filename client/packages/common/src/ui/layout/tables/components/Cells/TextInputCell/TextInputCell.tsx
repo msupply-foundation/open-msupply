@@ -12,7 +12,7 @@ export const TextInputCell = <T extends RecordWithId>({
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
   );
-  const updater = useDebounceCallback(column.setter, [rowData], 500);
+  const updater = useDebounceCallback(column.setter, [column.setter], 500);
   const { maxLength } = column;
 
   return (
