@@ -1,10 +1,10 @@
+import { isStocktakeDisabled } from './../../utils';
 import { useMemo, useCallback } from 'react';
 import {
   useNavigate,
   useTranslation,
   useNotification,
   useQuerySelector,
-  StocktakeNodeStatus,
   useQueryClient,
   useParams,
   useOmSupplyApi,
@@ -117,8 +117,9 @@ export const useStocktakeFields = <
 };
 
 export const useIsStocktakeDisabled = (): boolean => {
-  const { status, isLocked } = useStocktakeFields(['status', 'isLocked']);
-  return status === StocktakeNodeStatus.Finalised || isLocked;
+  const { data } = useStocktake();
+  if (!data) return true;
+  return isStocktakeDisabled(data);
 };
 
 const useStocktakeSelector = <ReturnType>(

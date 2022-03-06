@@ -18,6 +18,7 @@ import {
 import { DraftStocktakeLine } from './hooks';
 
 interface StocktakeLineEditTableProps {
+  isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
 }
@@ -63,6 +64,7 @@ const getCountThisLineColumn = (
 export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   batches,
   update,
+  isDisabled = false,
 }) => {
   const t = useTranslation('inventory');
   const theme = useTheme();
@@ -109,6 +111,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 
   return (
     <DataTable
+      isDisabled={isDisabled}
       columns={columns}
       data={batches}
       noDataMessage={t('label.add-new-line')}
@@ -120,7 +123,9 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   batches,
   update,
+  isDisabled,
 }) => {
+  console.log(batches);
   const theme = useTheme();
   const t = useTranslation('inventory');
   const columns = useColumns<DraftStocktakeLine>([
@@ -150,6 +155,7 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
 
   return (
     <DataTable
+      isDisabled={isDisabled}
       columns={columns}
       data={batches}
       noDataMessage={t('label.add-new-line')}

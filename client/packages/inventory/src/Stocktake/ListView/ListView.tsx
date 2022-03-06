@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   StocktakeNodeStatus,
@@ -7,12 +7,21 @@ import {
   TableProvider,
   createTableStore,
   useTranslation,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getStocktakeTranslator } from '../../utils';
+import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
 import { useStocktakes } from '../api';
+
+const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
+  const { setDisabledRows } = useTableStore();
+  useEffect(() => {
+    const disabledRows = rows?.filter(isStocktakeDisabled).map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [rows]);
+};
 
 export const StocktakeListView: FC = () => {
   const navigate = useNavigate();
@@ -27,6 +36,7 @@ export const StocktakeListView: FC = () => {
     pagination,
     filter,
   } = useStocktakes();
+  useDisableStocktakeRows(data?.nodes);
 
   const statusTranslator = getStocktakeTranslator(t);
 
