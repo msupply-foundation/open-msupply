@@ -68,7 +68,7 @@ const createDraftInvoiceLine = (
   return draftLine;
 };
 const useDraftInboundLines = (itemId: string) => {
-  const lines = useInboundLines(itemId);
+  const { data: lines } = useInboundLines(itemId);
   const { id } = useInboundFields('id');
   const { mutateAsync, isLoading } = useSaveInboundLines();
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
