@@ -12,7 +12,8 @@ use serde::{Deserialize, Serialize};
 use crate::sync::SyncTranslationError;
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, empty_str_as_option,
+    date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
+    empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_REQUISITION,
@@ -72,10 +73,13 @@ pub struct LegacyRequisitionRow {
     pub r#type: LegacyRequisitionType,
     pub status: LegacyRequisitionStatus,
     // created_datetime
+    #[serde(serialize_with = "date_to_isostring")]
     pub date_entered: NaiveDate,
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub date_stock_take: Option<NaiveDate>,
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub date_order_received: Option<NaiveDate>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub requester_reference: Option<String>,

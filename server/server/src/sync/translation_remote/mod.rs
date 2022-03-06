@@ -1,6 +1,6 @@
-use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use repository::schema::ChangelogTableName;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 mod invoice;
 mod invoice_line;
@@ -79,9 +79,25 @@ pub fn date_from_date_time(date_time: &NaiveDateTime) -> NaiveDate {
     NaiveDate::from_ymd(date_time.year(), date_time.month(), date_time.day())
 }
 
-/// returns the time part in seconds
-pub fn time_sec_from_date_time(date_time: &NaiveDateTime) -> i64 {
-    let time = date_time.time();
-    let seconds = 60 * 60 * time.hour() + 60 * time.minute() + time.second();
-    seconds as i64
+/// V5 gives us a NaiveDate but V3 receives a NaiveDateTime
+fn date_to_isostring<S>(x: &NaiveDate, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    x.and_hms(0, 0, 0).serialize(s)
+}
+
+fn date_option_to_isostring<S>(x: &Option<NaiveDate>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    x.map(|date| date.and_hms(0, 0, 0)).serialize(s)
+}
+
+/// Currently v5 returns times in sec and v3 expects a time string when posting. To make it more
+/// consistent v5 behaviour might change in the future. This helper will make it easy to do the
+/// change on our side.
+pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
+    let secs = u32::deserialize(d)?;
+    Ok(NaiveTime::from_num_seconds_from_midnight(secs, 0))
 }

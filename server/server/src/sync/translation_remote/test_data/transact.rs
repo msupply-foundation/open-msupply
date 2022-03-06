@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDate};
+use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::schema::{
     ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus,
     InvoiceRowType, RemoteSyncBufferAction, RemoteSyncBufferRow,
@@ -150,11 +150,11 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             requisition_ID: None,
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd(2021, 7, 30),
-            entry_time: 47046,
+            entry_time: NaiveTime::from_hms(13, 4, 6),
             ship_date: None,
             arrival_date_actual: Some(NaiveDate::from_ymd(2021, 7, 30)),
             confirm_date: Some(NaiveDate::from_ymd(2021, 7, 30)),
-            confirm_time: 47046
+            confirm_time: NaiveTime::from_hms(13, 4, 6)
         }),
     }
 }
@@ -293,11 +293,12 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             requisition_ID: None,
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd(2021, 8, 3),
-            entry_time: 44806,
+            entry_time: NaiveTime::from_hms(12, 26, 46),
             ship_date: None,
             arrival_date_actual: None,
             confirm_date: None,
-            confirm_time: 0
+            // Note: we are loosing this value when date is None
+            confirm_time: NaiveTime::from_hms(0, 0, 0)
         }),
     }
 }
