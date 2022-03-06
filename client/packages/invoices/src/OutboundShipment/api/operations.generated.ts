@@ -732,27 +732,10 @@ export const DeleteOutboundShipmentLinesDocument = gql`
               __typename
               description
             }
-            ... on DatabaseError {
-              __typename
-              description
-              fullError
-            }
             ... on ForeignKeyError {
               __typename
               description
               key
-            }
-            ... on InvoiceDoesNotBelongToCurrentStore {
-              __typename
-              description
-            }
-            ... on InvoiceLineBelongsToAnotherInvoice {
-              __typename
-              description
-            }
-            ... on NotAnOutboundShipment {
-              __typename
-              description
             }
           }
         }
