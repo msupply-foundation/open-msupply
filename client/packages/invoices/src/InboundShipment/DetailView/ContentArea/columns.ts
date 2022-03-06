@@ -9,16 +9,20 @@ import {
   Column,
   getUnitQuantity,
   useCurrency,
+  useSortBy,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
-import { InboundItem } from './../../types';
-import { InboundLineFragment } from '../api';
+import { InboundItem } from './../../../types';
+import { InboundLineFragment } from '../../api';
 
-export const useInboundShipmentColumns = (): Column<
-  InboundLineFragment | InboundItem
->[] => {
+export const useInboundShipmentColumns = () => {
+  const { sortBy, onChangeSortBy } = useSortBy<
+    InboundLineFragment | InboundItem
+  >({
+    key: 'itemName',
+  });
   const { c } = useCurrency();
-  return useColumns<InboundLineFragment | InboundItem>(
+  const columns = useColumns<InboundLineFragment | InboundItem>(
     [
       [
         getNotePopoverColumn(),
@@ -174,9 +178,11 @@ export const useInboundShipmentColumns = (): Column<
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],
-    {},
-    []
+    { sortBy, onChangeSortBy },
+    [sortBy, onChangeSortBy]
   );
+
+  return { columns, onChangeSortBy, sortBy };
 };
 
 export const useExpansionColumns = (): Column<InboundLineFragment>[] =>

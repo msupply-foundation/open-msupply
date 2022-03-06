@@ -15,7 +15,7 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { GeneralTab } from './GeneralTab';
+import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
@@ -46,7 +46,7 @@ export const DetailView: FC = () => {
 
           <Toolbar />
 
-          <GeneralTab onRowClick={onRowClick} />
+          <ContentArea onRowClick={onRowClick} />
 
           <Footer />
           <SidePanel />
