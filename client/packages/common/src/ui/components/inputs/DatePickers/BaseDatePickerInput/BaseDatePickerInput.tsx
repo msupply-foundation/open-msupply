@@ -8,12 +8,15 @@ export const BaseDatePickerInput: FC<
 > = props => {
   return (
     <DatePicker
+      disabled={props.disabled}
       renderInput={(params: TextFieldProps) => {
-        const props: StandardTextFieldProps = {
+        const textInputProps: StandardTextFieldProps = {
           ...params,
           variant: 'standard',
         };
-        return <BasicTextInput {...props} />;
+        return (
+          <BasicTextInput disabled={!!props.disabled} {...textInputProps} />
+        );
       }}
       {...props}
     />

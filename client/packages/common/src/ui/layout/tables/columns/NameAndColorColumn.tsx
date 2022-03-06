@@ -27,7 +27,7 @@ export const getNameAndColorColumn = <
   },
   accessor: ({ rowData }) => rowData.otherPartyName,
   key: 'otherPartyName',
-  Cell: ({ rowData, column, rows }) => (
+  Cell: ({ rowData, column, rows, isDisabled }) => (
     <Box
       sx={{
         flexDirection: 'row',
@@ -37,6 +37,7 @@ export const getNameAndColorColumn = <
       }}
     >
       <ColorSelectButton
+        disabled={isDisabled}
         onChange={color => column.setter({ ...rowData, colour: color.hex })}
         color={rowData.colour}
       />

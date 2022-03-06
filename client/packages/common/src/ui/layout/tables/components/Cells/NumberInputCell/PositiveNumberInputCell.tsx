@@ -12,6 +12,7 @@ export const PositiveNumberInputCell = <T extends RecordWithId>({
   rows,
   rowIndex,
   columnIndex,
+  isDisabled = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
@@ -22,6 +23,7 @@ export const PositiveNumberInputCell = <T extends RecordWithId>({
 
   return (
     <BasicTextInput
+      disabled={isDisabled}
       autoFocus={autoFocus}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
       type="number"
