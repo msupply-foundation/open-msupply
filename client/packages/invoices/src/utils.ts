@@ -95,8 +95,12 @@ export const isInvoiceEditable = (outbound: OutboundFragment): boolean => {
   return outbound.status === 'NEW' || outbound.status === 'ALLOCATED';
 };
 
-export const isInboundEditable = (inbound: InboundRowFragment): boolean => {
-  return inbound.status === 'NEW';
+export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
+  return (
+    inbound.status !== 'NEW' &&
+    inbound.status !== 'SHIPPED' &&
+    inbound.status !== 'DELIVERED'
+  );
 };
 
 export const createSummaryItem = (

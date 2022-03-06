@@ -20,7 +20,7 @@ import {
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { inboundLinesToSummaryItems } from './../../utils';
+import { inboundLinesToSummaryItems, isInboundDisabled } from './../../utils';
 import { InboundItem } from './../../types';
 import { getInboundQueries, ListParams } from './api';
 import { useInboundShipmentColumns } from '../DetailView/ContentArea';
@@ -57,9 +57,10 @@ export const useInbound = () => {
   );
 };
 
-export const useIsInboundEditable = (): boolean => {
-  const { status } = useInboundFields('status');
-  return status === 'NEW' || status === 'SHIPPED' || status === 'DELIVERED';
+export const useIsInboundDisabled = (): boolean => {
+  const { data } = useInbound();
+  if (!data) return true;
+  return isInboundDisabled(data);
 };
 
 export const useInboundSelector = <T = InboundFragment>(
