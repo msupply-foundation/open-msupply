@@ -90,15 +90,6 @@ impl InternalError {
     }
 }
 
-pub struct RecordNotFound;
-
-#[Object]
-impl RecordNotFound {
-    pub async fn description(&self) -> &'static str {
-        "Record not found"
-    }
-}
-
 pub enum Range {
     Max(u32),
     Min(u32),
@@ -158,9 +149,9 @@ impl PaginationError {
     }
 }
 
-pub struct RecordDoesNotExist;
+pub struct RecordNotFound;
 #[Object]
-impl RecordDoesNotExist {
+impl RecordNotFound {
     pub async fn description(&self) -> &'static str {
         "Record does not exist"
     }
@@ -195,6 +186,14 @@ pub struct NotAnInboundShipment;
 impl NotAnInboundShipment {
     pub async fn description(&self) -> &'static str {
         "Invoice is not Inbound Shipment"
+    }
+}
+
+pub struct StocktakeIsLocked;
+#[Object]
+impl StocktakeIsLocked {
+    pub async fn description(&self) -> &'static str {
+        "Stocktake is locked"
     }
 }
 

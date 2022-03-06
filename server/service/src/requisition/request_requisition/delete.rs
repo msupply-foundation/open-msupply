@@ -8,11 +8,11 @@ use crate::{
 };
 use repository::{
     schema::{RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
-    StorageConnection, EqualFilter,
+    EqualFilter, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionRowRepository, StorageConnection,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct DeleteRequestRequisition {
     pub id: String,
 }

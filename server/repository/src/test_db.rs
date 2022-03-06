@@ -5,18 +5,29 @@ use crate::{
 };
 
 use diesel::r2d2::{ConnectionManager, Pool};
-use diesel_migrations::{mark_migrations_in_directory, search_for_migrations_directory};
+use diesel_migrations::mark_migrations_in_directory;
 
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
+
+/// Copy of search_for_diesel_migrations::migration_direcotyr except looking in /repository/migrations
+pub fn search_for_migrations_directory(path: &Path) -> Result<PathBuf, String> {
+    let migration_path = path.join("repository").join("migrations");
+    println!("{:#?}", migration_path.as_os_str());
+    if migration_path.is_dir() {
+        Ok(migration_path)
+    } else {
+        path.parent()
+            .map(search_for_migrations_directory)
+            .unwrap_or(Err("Failed to locate migrations directory".to_string()))
+    }
+}
 
 fn find_test_migration_directory() -> PathBuf {
     // Assume the base path is the base path of one of the project crates:
-    match search_for_migrations_directory(Path::new("../repository/migrations")) {
-        Ok(path) => path,
-        // When running from the IDE tests are run from the root dir:
-        Err(_) => search_for_migrations_directory(Path::new("./repository/migrations"))
-            .expect("Failed to locate migrations directory"),
-    }
+    search_for_migrations_directory(Path::new(&env::current_dir().unwrap())).unwrap()
 }
 
 #[cfg(feature = "postgres")]

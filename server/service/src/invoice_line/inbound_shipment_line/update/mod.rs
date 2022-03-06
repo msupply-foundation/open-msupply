@@ -1,9 +1,6 @@
-use crate::WithDBError;
+use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 use chrono::NaiveDate;
-use repository::{
-    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
-    TransactionError,
-};
+use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
 mod generate;
 mod validate;
@@ -11,6 +8,7 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
+#[derive(Clone, Debug, Default)]
 pub struct UpdateInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
@@ -24,12 +22,15 @@ pub struct UpdateInboundShipmentLine {
     pub number_of_packs: Option<u32>,
 }
 
+type OutError = UpdateInboundShipmentLineError;
+
 pub fn update_inbound_shipment_line(
-    connection_manager: &StorageConnectionManager,
+    ctx: &ServiceContext,
+    _store_id: &str,
     input: UpdateInboundShipmentLine,
-) -> Result<String, UpdateInboundShipmentLineError> {
-    let connection = connection_manager.connection()?;
-    let updated_line = connection
+) -> Result<InvoiceLine, OutError> {
+    let updated_line = ctx
+        .connection
         .transaction_sync(|connection| {
             let (line, item, invoice) = validate(&input, &connection)?;
 
@@ -47,18 +48,17 @@ pub fn update_inbound_shipment_line(
             if let Some(id) = delete_batch_id_option {
                 stock_line_respository.delete(&id)?;
             }
-            Ok(updated_line)
+
+            get_invoice_line(ctx, &updated_line.id)
+                .map_err(|error| OutError::DatabaseError(error))?
+                .ok_or(OutError::UpdatedLineDoesNotExist)
         })
-        .map_err(
-            |error: TransactionError<UpdateInboundShipmentLineError>| match error {
-                TransactionError::Transaction { msg, level } => {
-                    RepositoryError::TransactionError { msg, level }.into()
-                }
-                TransactionError::Inner(error) => error,
-            },
-        )?;
-    Ok(updated_line.id)
+        .map_err(|error| error.to_inner_error())?;
+
+    Ok(updated_line)
 }
+
+#[derive(Debug)]
 pub enum UpdateInboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
@@ -71,6 +71,7 @@ pub enum UpdateInboundShipmentLineError {
     PackSizeBelowOne,
     NumberOfPacksBelowOne,
     BatchIsReserved,
+    UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
 }
 

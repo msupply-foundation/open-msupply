@@ -1,10 +1,9 @@
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
-    SingleRecordError,
 };
 use repository::{
     schema::InvoiceRowType, Invoice, InvoiceFilter, InvoiceQueryRepository, InvoiceSort,
-    RepositoryError, StorageConnectionManager,
+    RepositoryError,
 };
 use repository::{EqualFilter, PaginationOption};
 
@@ -12,15 +11,14 @@ pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_invoices(
-    connection_manager: &StorageConnectionManager,
+    ctx: &ServiceContext,
     store_id_option: Option<&str>,
     pagination: Option<PaginationOption>,
     filter: Option<InvoiceFilter>,
     sort: Option<InvoiceSort>,
 ) -> Result<ListResult<Invoice>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let connection = connection_manager.connection()?;
-    let repository = InvoiceQueryRepository::new(&connection);
+    let repository = InvoiceQueryRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or(InvoiceFilter::new());
     filter.store_id = store_id_option.map(EqualFilter::equal_to);
@@ -32,22 +30,16 @@ pub fn get_invoices(
 }
 
 pub fn get_invoice(
-    connection_manager: &StorageConnectionManager,
+    ctx: &ServiceContext,
     store_id_option: Option<&str>,
-    id: String,
-) -> Result<Invoice, SingleRecordError> {
-    let connection = connection_manager.connection()?;
-
-    let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(&id));
+    id: &str,
+) -> Result<Option<Invoice>, RepositoryError> {
+    let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(id));
     filter.store_id = store_id_option.map(EqualFilter::equal_to);
 
-    let mut result = InvoiceQueryRepository::new(&connection).query_by_filter(filter)?;
+    let mut result = InvoiceQueryRepository::new(&ctx.connection).query_by_filter(filter)?;
 
-    if let Some(record) = result.pop() {
-        Ok(record)
-    } else {
-        Err(SingleRecordError::NotFound(id))
-    }
+    Ok(result.pop())
 }
 
 pub fn get_invoice_by_number(

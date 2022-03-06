@@ -12,7 +12,13 @@ pub enum InvoiceLineRowType {
     Service,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+impl Default for InvoiceLineRowType {
+    fn default() -> Self {
+        Self::StockIn
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "invoice_line"]
 pub struct InvoiceLineRow {
     pub id: String,

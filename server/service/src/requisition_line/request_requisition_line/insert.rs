@@ -15,12 +15,13 @@ use repository::{
     RepositoryError, RequisitionLine, RequisitionLineRowRepository, StorageConnection,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisitionLine {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
     pub requested_quantity: Option<u32>,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -109,6 +110,7 @@ fn generate(
         requisition_id: _,
         item_id,
         requested_quantity,
+        comment,
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
     let mut new_requisition_line =
@@ -118,6 +120,7 @@ fn generate(
 
     new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0) as i32;
     new_requisition_line.id = id;
+    new_requisition_line.comment = comment.or(new_requisition_line.comment);
 
     Ok(new_requisition_line)
 }
@@ -140,6 +143,7 @@ mod test {
         test_db::setup_all,
         RequisitionLineRowRepository,
     };
+    use util::{inline_edit, inline_init};
 
     use crate::{
         requisition_line::request_requisition_line::{
@@ -165,14 +169,11 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 "store_a",
-                InsertRequestRequisitionLine {
-                    requisition_id: "n/a".to_owned(),
-                    id: mock_request_draft_requisition_calculation_test().lines[0]
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.id = mock_request_draft_requisition_calculation_test().lines[0]
                         .id
-                        .clone(),
-                    item_id: "n/a".to_owned(),
-                    requested_quantity: None,
-                },
+                        .clone();
+                }),
             ),
             Err(ServiceError::RequisitionLineAlreadyExists)
         );
@@ -182,16 +183,15 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 "store_a",
-                InsertRequestRequisitionLine {
-                    requisition_id: mock_request_draft_requisition_calculation_test()
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.requisition_id = mock_request_draft_requisition_calculation_test()
                         .requisition
-                        .id,
-                    id: "new requisition line id".to_owned(),
-                    item_id: mock_request_draft_requisition_calculation_test().lines[0]
+                        .id;
+                    r.id = "new requisition line id".to_owned();
+                    r.item_id = mock_request_draft_requisition_calculation_test().lines[0]
                         .item_id
-                        .clone(),
-                    requested_quantity: None,
-                },
+                        .clone();
+                }),
             ),
             Err(ServiceError::ItemAlreadyExistInRequisition)
         );
@@ -201,12 +201,9 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 "store_a",
-                InsertRequestRequisitionLine {
-                    requisition_id: "invalid".to_owned(),
-                    id: "n/a".to_owned(),
-                    item_id: "n/a".to_owned(),
-                    requested_quantity: None,
-                },
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.requisition_id = "invalid".to_owned();
+                }),
             ),
             Err(ServiceError::RequisitionDoesNotExist)
         );
@@ -216,12 +213,9 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 "store_b",
-                InsertRequestRequisitionLine {
-                    requisition_id: mock_draft_request_requisition_for_update_test().id,
-                    id: "n/a".to_owned(),
-                    item_id: "n/a".to_owned(),
-                    requested_quantity: None,
-                },
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.requisition_id = mock_draft_request_requisition_for_update_test().id;
+                }),
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
@@ -231,12 +225,9 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 "store_a",
-                InsertRequestRequisitionLine {
-                    requisition_id: mock_sent_request_requisition().id,
-                    id: "n/a".to_owned(),
-                    item_id: "n/a".to_owned(),
-                    requested_quantity: None,
-                },
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.requisition_id = mock_sent_request_requisition().id;
+                }),
             ),
             Err(ServiceError::CannotEditRequisition)
         );
@@ -246,12 +237,9 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 "store_a",
-                InsertRequestRequisitionLine {
-                    requisition_id: mock_draft_response_requisition_for_update_test().id,
-                    id: "n/a".to_owned(),
-                    item_id: "n/a".to_owned(),
-                    requested_quantity: None,
-                },
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.requisition_id = mock_draft_response_requisition_for_update_test().id;
+                }),
             ),
             Err(ServiceError::NotARequestRequisition)
         );
@@ -261,14 +249,12 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 "store_a",
-                InsertRequestRequisitionLine {
-                    requisition_id: mock_request_draft_requisition_calculation_test()
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.requisition_id = mock_request_draft_requisition_calculation_test()
                         .requisition
-                        .id,
-                    id: "n/a".to_owned(),
-                    item_id: "invalid".to_owned(),
-                    requested_quantity: None,
-                },
+                        .id;
+                    r.item_id = "invalid".to_owned();
+                }),
             ),
             Err(ServiceError::ItemDoesNotExist)
         );
@@ -297,6 +283,7 @@ mod test {
                     id: "new requisition line id".to_owned(),
                     item_id: mock_item_stats_item2().id,
                     requested_quantity: Some(20),
+                    comment: Some("comment".to_string()),
                 },
             )
             .unwrap();
@@ -306,22 +293,29 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(line.requested_quantity, 20);
-        // as per test_item_stats_repository
-        assert_eq!(line.available_stock_on_hand, 22);
-        assert_eq!(line.average_monthly_consumption, 5);
-        assert_eq!(line.suggested_quantity, 10 * 5 - 22);
+        assert_eq!(
+            line,
+            inline_edit(&line, |mut u| {
+                u.requested_quantity = 20;
+                // as per test_item_stats_repository
+                u.available_stock_on_hand = 22;
+                u.average_monthly_consumption = 5;
+                u.suggested_quantity = 10 * 5 - 22;
+                u.comment = Some("comment".to_string());
+                u
+            })
+        );
 
         // Check with item_c which exists in another requisition
         let result = service.insert_request_requisition_line(
             &context,
             "store_a",
-            InsertRequestRequisitionLine {
-                requisition_id: mock_request_draft_requisition().id,
-                id: "new requisition line id2".to_owned(),
-                item_id: mock_item_c().id,
-                requested_quantity: Some(20),
-            },
+            inline_init(|r: &mut InsertRequestRequisitionLine| {
+                r.requisition_id = mock_request_draft_requisition().id;
+                r.id = "new requisition line id2".to_owned();
+                r.item_id = mock_item_c().id;
+                r.requested_quantity = Some(20);
+            }),
         );
 
         assert!(matches!(result, Ok(_)), "{:#?}", result);

@@ -1,9 +1,10 @@
 use self::{
     query::{get_requisition, get_requisition_by_number, get_requisitions},
     request_requisition::{
-        add_from_master_list, delete_request_requisition, insert_request_requisition,
-        update_request_requisition, use_suggested_quantity, AddFromMasterList,
-        AddFromMasterListError, DeleteRequestRequisition, DeleteRequestRequisitionError,
+        add_from_master_list, batch_request_requisition, delete_request_requisition,
+        insert_request_requisition, update_request_requisition, use_suggested_quantity,
+        AddFromMasterList, AddFromMasterListError, BatchRequestRequisition,
+        BatchRequestRequisitionResult, DeleteRequestRequisition, DeleteRequestRequisitionError,
         InsertRequestRequisition, InsertRequestRequisitionError, UpdateRequestRequisition,
         UpdateRequestRequisitionError, UseSuggestedQuantity, UseSuggestedQuantityError,
     },
@@ -128,6 +129,15 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: CreateRequisitionShipment,
     ) -> Result<Invoice, CreateRequisitionShipmentError> {
         create_requisition_shipment(ctx, store_id, input)
+    }
+
+    fn batch_request_requisition(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: BatchRequestRequisition,
+    ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
+        batch_request_requisition(ctx, store_id, input)
     }
 }
 

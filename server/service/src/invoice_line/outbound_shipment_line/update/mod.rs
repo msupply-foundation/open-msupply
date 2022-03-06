@@ -1,8 +1,11 @@
-use crate::{invoice_line::ShipmentTaxUpdate, u32_to_i32, WithDBError};
+use crate::{
+    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    service_provider::ServiceContext,
+    u32_to_i32, WithDBError,
+};
 use repository::{
     schema::{InvoiceLineRow, StockLineRow},
-    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, StorageConnectionManager,
-    TransactionError,
+    InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
 };
 
 mod generate;
@@ -10,7 +13,7 @@ mod validate;
 
 use generate::generate;
 use validate::validate;
-
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateOutboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
@@ -22,34 +25,33 @@ pub struct UpdateOutboundShipmentLine {
     pub tax: Option<ShipmentTaxUpdate>,
 }
 
+type OutError = UpdateOutboundShipmentLineError;
+
 pub fn update_outbound_shipment_line(
-    connection_manager: &StorageConnectionManager,
+    ctx: &ServiceContext,
+    _store_id: &str,
     input: UpdateOutboundShipmentLine,
-) -> Result<String, UpdateOutboundShipmentLineError> {
-    let connection = connection_manager.connection()?;
-    let new_line = connection
+) -> Result<InvoiceLine, OutError> {
+    let updated_line = ctx
+        .connection
         .transaction_sync(|connection| {
             let (line, item, batch_pair, invoice) = validate(&input, &connection)?;
 
-            let (new_line, batch_pair) = generate(input, line, item, batch_pair, invoice)?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+            let (update_line, batch_pair) = generate(input, line, item, batch_pair, invoice)?;
+            InvoiceLineRowRepository::new(&connection).upsert_one(&update_line)?;
 
             let stock_line_repo = StockLineRowRepository::new(&connection);
             stock_line_repo.upsert_one(&batch_pair.main_batch)?;
             if let Some(previous_batch) = batch_pair.previous_batch_option {
                 stock_line_repo.upsert_one(&previous_batch)?;
             }
-            Ok(new_line)
+
+            get_invoice_line(ctx, &update_line.id)
+                .map_err(|error| OutError::DatabaseError(error))?
+                .ok_or(OutError::UpdatedLineDoesNotExist)
         })
-        .map_err(
-            |error: TransactionError<UpdateOutboundShipmentLineError>| match error {
-                TransactionError::Transaction { msg, level } => {
-                    RepositoryError::TransactionError { msg, level }.into()
-                }
-                TransactionError::Inner(error) => error,
-            },
-        )?;
-    Ok(new_line.id)
+        .map_err(|error| error.to_inner_error())?;
+    Ok(updated_line)
 }
 /// During outbound shipment line update, stock line may change thus validation and updates need to apply to both batches
 pub struct BatchPair {
@@ -86,6 +88,7 @@ impl BatchPair {
     }
 }
 
+#[derive(Debug)]
 pub enum UpdateOutboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
@@ -102,6 +105,7 @@ pub enum UpdateOutboundShipmentLineError {
     LocationNotFound,
     LineDoesNotReferenceStockLine,
     BatchIsOnHold,
+    UpdatedLineDoesNotExist,
     StockLineAlreadyExistsInInvoice(String),
     ReductionBelowZero {
         stock_line_id: String,

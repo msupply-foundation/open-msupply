@@ -16,9 +16,6 @@ pub mod query;
 pub mod update;
 pub mod validate;
 
-#[cfg(test)]
-mod tests;
-
 pub trait StocktakeServiceTrait: Sync + Send {
     fn get_stocktakes(
         &self,

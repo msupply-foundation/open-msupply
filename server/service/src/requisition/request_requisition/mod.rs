@@ -1,8 +1,14 @@
 mod generate;
 pub use self::generate::*;
 
+mod validate;
+pub use self::validate::*;
+
 mod insert;
 pub use self::insert::*;
+
+mod batch;
+pub use self::batch::*;
 
 mod update;
 pub use self::update::*;

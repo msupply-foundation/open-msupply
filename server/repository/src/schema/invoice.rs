@@ -1,6 +1,7 @@
 use super::diesel_schema::invoice;
 use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
+use util::Defaults;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -45,4 +46,31 @@ pub struct InvoiceRow {
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
+}
+
+impl Default for InvoiceRow {
+    fn default() -> Self {
+        Self {
+            created_datetime: Defaults::naive_date_time(),
+            r#type: InvoiceRowType::InboundShipment,
+            status: InvoiceRowStatus::New,
+            // Defaults
+            id: Default::default(),
+            name_id: Default::default(),
+            name_store_id: Default::default(),
+            store_id: Default::default(),
+            invoice_number: Default::default(),
+            on_hold: Default::default(),
+            comment: Default::default(),
+            their_reference: Default::default(),
+            allocated_datetime: Default::default(),
+            picked_datetime: Default::default(),
+            shipped_datetime: Default::default(),
+            delivered_datetime: Default::default(),
+            verified_datetime: Default::default(),
+            colour: Default::default(),
+            requisition_id: Default::default(),
+            linked_invoice_id: Default::default(),
+        }
+    }
 }

@@ -17,6 +17,8 @@ graphql_invoice = { path = "../invoice" }
 graphql_invoice_line = { path = "../invoice_line" }
 graphql_stocktake = { path = "../stocktake" }
 graphql_stocktake_line = { path = "../stocktake_line" }
+graphql_requisition = { path = "../requisition" }
+graphql_requisition_line = { path = "../requisition_line" }
 
 actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
 anymap = "0.12"
@@ -28,6 +30,10 @@ reqwest = { version = "0.10", features = ["json"] } # Versions >=0.11 depend on 
 serde = "1.0.126"
 serde_json = "1.0.66"
 thiserror = "1.0.30"
+
+[dev-dependencies]
+actix-rt = "1.1.1" # for Tokio 0.2
+assert-json-diff = "2.0.1"
 
 [features]
 default = ["repository/sqlite"]

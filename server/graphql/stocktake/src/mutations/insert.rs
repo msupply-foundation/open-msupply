@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
+use chrono::NaiveDate;
 
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -17,7 +17,8 @@ pub struct InsertStocktakeInput {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
-    pub created_datetime: NaiveDateTime,
+    pub is_locked: Option<bool>,
+    pub stocktake_date: Option<NaiveDate>,
 }
 
 #[derive(Union)]
@@ -75,13 +76,120 @@ fn to_domain(
         id,
         comment,
         description,
-        created_datetime,
+        stocktake_date,
+        is_locked,
     }: InsertStocktakeInput,
 ) -> InsertStocktake {
     InsertStocktake {
         id,
         comment,
         description,
-        created_datetime,
+        stocktake_date,
+        is_locked,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
+    use chrono::NaiveDate;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use repository::{
+        mock::MockDataInserts, schema::StocktakeRow, Stocktake, StorageConnectionManager,
+    };
+    use serde_json::json;
+    use service::{
+        service_provider::{ServiceContext, ServiceProvider},
+        stocktake::{
+            insert::{InsertStocktakeError, InsertStocktakeInput},
+            StocktakeServiceTrait,
+        },
+    };
+    use util::inline_init;
+
+    use crate::StocktakeMutations;
+
+    type ServiceMethod = dyn Fn(&ServiceContext, &str, InsertStocktakeInput) -> Result<Stocktake, InsertStocktakeError>
+        + Sync
+        + Send;
+
+    pub struct TestService(pub Box<ServiceMethod>);
+
+    impl StocktakeServiceTrait for TestService {
+        fn insert_stocktake(
+            &self,
+            ctx: &ServiceContext,
+            store_id: &str,
+            input: InsertStocktakeInput,
+        ) -> Result<Stocktake, InsertStocktakeError> {
+            (self.0)(ctx, store_id, input)
+        }
+    }
+
+    pub fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        service_provider.stocktake_service = Box::new(test_service);
+        service_provider
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_stocktake_insert() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            EmptyMutation,
+            StocktakeMutations,
+            "omsupply-database-gql-stocktake_insert",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let query = r#"mutation InsertStocktake($storeId: String, $input: InsertStocktakeInput!) {
+            insertStocktake(storeId: $storeId, input: $input) {
+                ... on StocktakeNode {                    
+                        id
+                }
+            }
+        }"#;
+
+        // success
+        let test_service = TestService(Box::new(|_, _, input| {
+            assert_eq!(
+                input,
+                InsertStocktakeInput {
+                    id: "id1".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd(2022, 01, 03)),
+                    is_locked: Some(true)
+                }
+            );
+            // StocktakeNode result is checked in queries
+            Ok(inline_init(|r: &mut StocktakeRow| r.id = "id1".to_string()))
+        }));
+        let variables = Some(json!({
+            "storeId": "store id",
+            "input": {
+              "id": "id1",
+              "comment": "comment",
+              "description": "description",
+              "stocktakeDate": "2022-01-03",
+              "isLocked": true
+            }
+        }));
+        let expected = json!({
+            "insertStocktake": {
+              "id": "id1",
+            }
+          }
+        );
+        assert_graphql_query!(
+            &settings,
+            query,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }

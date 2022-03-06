@@ -105,6 +105,7 @@ table! {
         supply_quantity -> Integer,
         available_stock_on_hand -> Integer ,
         average_monthly_consumption -> Integer,
+        comment -> Nullable<Text>,
     }
 }
 
@@ -256,8 +257,10 @@ table! {
         description -> Nullable<Text>,
         status -> crate::schema::stocktake::StocktakeStatusMapping,
         created_datetime -> Timestamp,
+        stocktake_date -> Nullable<Date>,
         finalised_datetime -> Nullable<Timestamp>,
         inventory_adjustment_id -> Nullable<Text>,
+        is_locked -> Bool,
     }
 }
 

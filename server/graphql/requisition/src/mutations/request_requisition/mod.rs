@@ -1,14 +1,14 @@
-mod insert;
+pub mod insert;
 pub use insert::*;
 
-mod delete;
+pub mod delete;
 pub use delete::*;
 
-mod update;
+pub mod update;
 pub use update::*;
 
-mod use_suggested_quantity;
+pub mod use_suggested_quantity;
 pub use use_suggested_quantity::*;
 
-mod add_from_master_list;
+pub mod add_from_master_list;
 pub use add_from_master_list::*;

@@ -4,7 +4,7 @@ use crate::{
     sync_processor::{process_records, Record},
 };
 use repository::{
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository, Name,
 };
 
 mod generate;
@@ -14,15 +14,16 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UpdateRequestRequstionStatus {
     Sent,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateRequestRequisition {
     pub id: String,
     pub colour: Option<String>,
+    pub other_party_id: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
@@ -35,8 +36,13 @@ pub struct UpdateRequestRequisition {
 pub enum UpdateRequestRequisitionError {
     RequisitionDoesNotExist,
     NotThisStoreRequisition,
+    OtherPartyNotASupplier(Name),
+    OtherPartyDoesNotExist,
+    OtherPartyIsThisStore,
+    OtherPartyIsNotAStore,
     CannotEditRequisition,
     NotARequestRequisition,
+    // Internal
     UpdatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
 }

@@ -1,6 +1,7 @@
 use super::diesel_schema::requisition;
 use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
+use util::Defaults;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -36,4 +37,27 @@ pub struct RequisitionRow {
     pub max_months_of_stock: f64,
     pub min_months_of_stock: f64,
     pub linked_requisition_id: Option<String>,
+}
+
+impl Default for RequisitionRow {
+    fn default() -> Self {
+        Self {
+            r#type: RequisitionRowType::Request,
+            status: RequisitionRowStatus::Draft,
+            created_datetime: Defaults::naive_date_time(),
+            // Defaults
+            id: Default::default(),
+            requisition_number: Default::default(),
+            name_id: Default::default(),
+            store_id: Default::default(),
+            sent_datetime: Default::default(),
+            finalised_datetime: Default::default(),
+            colour: Default::default(),
+            comment: Default::default(),
+            their_reference: Default::default(),
+            max_months_of_stock: Default::default(),
+            min_months_of_stock: Default::default(),
+            linked_requisition_id: Default::default(),
+        }
+    }
 }
