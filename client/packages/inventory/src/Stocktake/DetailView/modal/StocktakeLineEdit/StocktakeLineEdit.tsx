@@ -8,6 +8,8 @@ import {
   Box,
   ModalMode,
   useNotification,
+  TableProvider,
+  createTableStore,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -16,6 +18,7 @@ import {
   StyledTabContainer,
   StyledTabPanel,
 } from './StocktakeLineEditTabs';
+import { useIsStocktakeDisabled } from '../../../api';
 import { BatchTable, PricingTable } from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
 interface StocktakeLineEditProps {
@@ -31,12 +34,14 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   onClose,
   isOpen,
 }) => {
+  const isDisabled = useIsStocktakeDisabled();
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
   const t = useTranslation(['common', 'inventory']);
   const { draftLines, update, addLine, isLoading, save, nextItem } =
     useStocktakeLineEdit(currentItem);
+  console.log(draftLines);
 
   const onNext = async () => {
     await save(draftLines);
@@ -56,53 +61,66 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   };
 
   return (
-    <StocktakeLineEditModal
-      onNext={onNext}
-      onOk={onOk}
-      onCancel={onClose}
-      mode={mode}
-      isOpen={isOpen}
-    >
-      {(() => {
-        if (isLoading) {
+    <TableProvider createStore={createTableStore}>
+      <StocktakeLineEditModal
+        onNext={onNext}
+        onOk={onOk}
+        onCancel={onClose}
+        mode={mode}
+        isOpen={isOpen}
+      >
+        {(() => {
+          if (isLoading) {
+            return (
+              <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
+                <BasicSpinner messageKey="saving" />
+              </Box>
+            );
+          }
+
           return (
-            <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
-              <BasicSpinner messageKey="saving" />
-            </Box>
+            <>
+              <StocktakeLineEditForm
+                item={currentItem}
+                onChangeItem={setCurrentItem}
+                mode={mode}
+              />
+              {!currentItem ? (
+                <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
+              ) : null}
+              {!!currentItem ? (
+                <>
+                  <Divider margin={5} />
+                  <StocktakeLineEditTabs
+                    isDisabled={isDisabled}
+                    onAddLine={addLine}
+                  >
+                    <StyledTabPanel value={'Batch'}>
+                      <StyledTabContainer>
+                        <BatchTable
+                          isDisabled={isDisabled}
+                          batches={draftLines}
+                          update={update}
+                        />
+                      </StyledTabContainer>
+                    </StyledTabPanel>
+
+                    <StyledTabPanel value={'Pricing'}>
+                      <StyledTabContainer>
+                        <PricingTable
+                          isDisabled={isDisabled}
+                          batches={draftLines}
+                          update={update}
+                        />
+                      </StyledTabContainer>
+                    </StyledTabPanel>
+                  </StocktakeLineEditTabs>
+                </>
+              ) : null}
+            </>
           );
-        }
-
-        return (
-          <>
-            <StocktakeLineEditForm
-              item={currentItem}
-              onChangeItem={setCurrentItem}
-              mode={mode}
-            />
-            {!currentItem ? (
-              <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
-            ) : null}
-            {!!currentItem ? (
-              <>
-                <Divider margin={5} />
-                <StocktakeLineEditTabs onAddLine={addLine}>
-                  <StyledTabPanel value={'Batch'}>
-                    <StyledTabContainer>
-                      <BatchTable batches={draftLines} update={update} />
-                    </StyledTabContainer>
-                  </StyledTabPanel>
-
-                  <StyledTabPanel value={'Pricing'}>
-                    <StyledTabContainer>
-                      <PricingTable batches={draftLines} update={update} />
-                    </StyledTabContainer>
-                  </StyledTabPanel>
-                </StocktakeLineEditTabs>
-              </>
-            ) : null}
-          </>
-        );
-      })()}
-    </StocktakeLineEditModal>
+        })()}
+      </StocktakeLineEditModal>
+    </TableProvider>
   );
 };

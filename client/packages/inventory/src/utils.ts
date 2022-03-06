@@ -39,3 +39,6 @@ export const getStocktakeTranslator =
 
 export const canDeleteStocktake = (row: StocktakeRowFragment): boolean =>
   row.status === StocktakeNodeStatus.New;
+
+export const isStocktakeDisabled = (row: StocktakeRowFragment): boolean =>
+  row.status !== StocktakeNodeStatus.New || row.isLocked;
