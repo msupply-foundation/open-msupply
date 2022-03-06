@@ -5,7 +5,7 @@ import {
   useTranslation,
   groupBy,
 } from '@openmsupply-client/common';
-import { OutboundRowFragment, OutboundFragment } from './OutboundShipment/api';
+import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
 
@@ -91,8 +91,12 @@ export const getStatusTranslator =
     );
   };
 
-export const isInvoiceEditable = (outbound: OutboundFragment): boolean => {
-  return outbound.status === 'NEW' || outbound.status === 'ALLOCATED';
+export const isOutboundDisabled = (outbound: OutboundRowFragment): boolean => {
+  return (
+    outbound.status !== InvoiceNodeStatus.Shipped &&
+    outbound.status !== InvoiceNodeStatus.Verified &&
+    outbound.status !== InvoiceNodeStatus.Delivered
+  );
 };
 
 export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {

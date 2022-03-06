@@ -1,3 +1,4 @@
+import { isRequestDisabled } from './../../utils';
 import { useMemo } from 'react';
 import {
   useConfirmationModal,
@@ -138,11 +139,9 @@ export const useRequestLines = (): UseRequestRequisitionLinesController => {
 };
 
 export const useIsRequestDisabled = (): boolean => {
-  const { status } = useRequestFields('status');
-  return (
-    status === RequisitionNodeStatus.Finalised ||
-    status === RequisitionNodeStatus.Sent
-  );
+  const { data } = useRequest();
+  if (!data) return true;
+  return isRequestDisabled(data);
 };
 
 export const useSaveRequestLines = () => {

@@ -5,7 +5,6 @@ import {
   useOpenInNewTab,
   useQueryClient,
   useAuthContext,
-  RequisitionNodeStatus,
   useParams,
   useOmSupplyApi,
   UseQueryResult,
@@ -21,6 +20,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { getResponseQueries, ListParams } from './api';
+import { isResponseDisabled } from './../../utils';
 import {
   getSdk,
   ResponseFragment,
@@ -124,8 +124,9 @@ export const useResponseLines = (): UseResponseLinesController => {
 };
 
 export const useIsResponseDisabled = (): boolean => {
-  const { status } = useResponseFields('status');
-  return status === RequisitionNodeStatus.Finalised;
+  const { data } = useResponse();
+  if (!data) return true;
+  return isResponseDisabled(data);
 };
 
 export const useSaveResponseLines = () => {

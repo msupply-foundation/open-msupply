@@ -16,6 +16,14 @@ import { AppBarButtons } from './AppBarButtons';
 import { getStatusTranslator, isInboundDisabled } from '../../utils';
 import { useInbounds, useUpdateInbound, InboundRowFragment } from '../api';
 
+const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
+  const { setDisabledRows } = useTableStore();
+  useEffect(() => {
+    const disabledRows = rows?.filter(isInboundDisabled).map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [rows]);
+};
+
 export const InboundListView: FC = () => {
   const { mutate: onUpdate } = useUpdateInbound();
   const navigate = useNavigate();
@@ -29,15 +37,7 @@ export const InboundListView: FC = () => {
     pagination,
     filter,
   } = useInbounds();
-
-  const { setDisabledRows } = useTableStore();
-
-  useEffect(() => {
-    const disabledRows = data?.nodes
-      .filter(isInboundDisabled)
-      .map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-  }, [data?.nodes]);
+  useDisableInboundRows(data?.nodes);
 
   const t = useTranslation();
 
