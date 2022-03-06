@@ -9,6 +9,7 @@ use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 use crate::sync::SyncTranslationError;
 
 use super::{
+    empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     TRANSLATION_RECORD_REQUISITION_LINE,
@@ -30,6 +31,9 @@ pub struct LegacyRequisitionLineRow {
     pub stock_on_hand: i32,
     // average_monthly_consumption: daily_usage * NUMBER_OF_DAYS_IN_A_MONTH
     pub daily_usage: f64,
+
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub comment: Option<String>,
 }
 
 pub struct RequisitionLineTranslation {}
@@ -63,6 +67,7 @@ impl RemotePullTranslation for RequisitionLineTranslation {
                 supply_quantity: data.actualQuan,
                 available_stock_on_hand: data.stock_on_hand,
                 average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH) as i32,
+                comment: data.comment,
             }),
         )))
     }
@@ -88,6 +93,7 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
             supply_quantity,
             available_stock_on_hand,
             average_monthly_consumption,
+            comment,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.row_id)
             .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
@@ -109,6 +115,7 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
             actualQuan: supply_quantity,
             stock_on_hand: available_stock_on_hand,
             daily_usage: average_monthly_consumption as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
+            comment,
         };
 
         Ok(Some(vec![PushUpsertRecord {
