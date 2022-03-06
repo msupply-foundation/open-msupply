@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -11,13 +11,22 @@ import {
   InvoiceNodeStatus,
   generateUUID,
   useCurrency,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { NameSearchModal } from '@openmsupply-client/system';
-import { getStatusTranslator } from '../../utils';
+import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbounds, useCreateOutbound, useUpdateOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
+
+const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
+  const { setDisabledRows } = useTableStore();
+  useEffect(() => {
+    const disabledRows = rows?.filter(isOutboundDisabled).map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [rows]);
+};
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useUpdateOutbound();
@@ -35,6 +44,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     pagination,
     filter,
   } = useOutbounds();
+  useDisableOutboundRows(data?.nodes);
 
   const { c } = useCurrency();
   const columns = useColumns<OutboundRowFragment>(

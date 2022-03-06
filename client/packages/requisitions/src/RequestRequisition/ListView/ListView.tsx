@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import {
   DataTable,
   useColumns,
@@ -9,11 +9,20 @@ import {
   BasicSpinner,
   useTranslation,
   RequisitionNodeStatus,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestRowFragment, useUpdateRequest, useRequests } from '../api';
-import { getRequisitionTranslator } from '../../utils';
+import { getRequisitionTranslator, isRequestDisabled } from '../../utils';
+
+const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
+  const { setDisabledRows } = useTableStore();
+  useEffect(() => {
+    const disabledRows = rows?.filter(isRequestDisabled).map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [rows]);
+};
 
 export const RequestRequisitionListView: FC = () => {
   const navigate = useNavigate();
@@ -30,6 +39,8 @@ export const RequestRequisitionListView: FC = () => {
     pagination,
     onChangePage,
   } = useRequests();
+  useDisableRequestRows(data?.nodes);
+
   const columns = useColumns<RequestRowFragment>(
     [
       [getNameAndColorColumn(), { setter: onUpdate }],
