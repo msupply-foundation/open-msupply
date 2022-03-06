@@ -265,16 +265,14 @@ export const useDeleteSelectedInbounds = () => {
 
   const { success, info } = useNotification();
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => rows?.nodes.find(({ id }) => selectedId === id))
-      .filter(Boolean) as InboundRowFragment[],
-  }));
+  const selectedRows = useTableStore(
+    state =>
+      rows?.nodes.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
+  );
 
   const deleteAction = () => {
-    const numberSelected = selectedRows.length;
-    if (selectedRows && numberSelected > 0) {
+    const number = selectedRows?.length;
+    if (selectedRows && number > 0) {
       const canDeleteRows = selectedRows.every(
         ({ status }) => status === InvoiceNodeStatus.New
       );
@@ -283,11 +281,9 @@ export const useDeleteSelectedInbounds = () => {
         cannotDeleteSnack();
       } else {
         mutate(selectedRows, {
-          onSuccess: () => queryClient.invalidateQueries(['invoice']),
+          onSettled: () => queryClient.invalidateQueries(api.keys.base()),
         });
-        const deletedMessage = t('messages.deleted-invoices', {
-          number: numberSelected,
-        });
+        const deletedMessage = t('messages.deleted-invoices', { number });
         const successSnack = success(deletedMessage);
         successSnack();
       }
