@@ -2,36 +2,27 @@ import React, { FC, useState } from 'react';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import {
   BasicSpinner,
-  useDialog,
   Divider,
-  TableContainer,
-  TabContext,
-  TabList,
-  Tab,
   useTranslation,
   useIsMediumScreen,
-  ButtonWithIcon,
-  PlusCircleIcon,
   Box,
   ModalMode,
   useNotification,
-  DialogButton,
 } from '@openmsupply-client/common';
-import { BatchTable, PricingTable } from './StocktakeLineEditTables';
-import { StocktakeLinePanel } from './StocktakeLinePanel';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
-
+import {
+  StocktakeLineEditTabs,
+  StyledTabContainer,
+  StyledTabPanel,
+} from './StocktakeLineEditTabs';
+import { BatchTable, PricingTable } from './StocktakeLineEditTables';
+import { StocktakeLineEditModal } from './StocktakeLineEditModal';
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
   mode: ModalMode | null;
   onClose: () => void;
   isOpen: boolean;
-}
-
-enum Tabs {
-  Batch = 'Batch',
-  Pricing = 'Pricing',
 }
 
 export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
@@ -41,117 +32,77 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   isOpen,
 }) => {
   const { error } = useNotification();
-  const { Modal } = useDialog({ onClose, isOpen });
   const [currentItem, setCurrentItem] = useState(item);
-  const [currentTab, setCurrentTab] = useState(Tabs.Batch);
   const isMediumScreen = useIsMediumScreen();
   const t = useTranslation(['common', 'inventory']);
-
   const { draftLines, update, addLine, isLoading, save, nextItem } =
     useStocktakeLineEdit(currentItem);
 
+  const onNext = async () => {
+    await save(draftLines);
+    if (nextItem) setCurrentItem(nextItem);
+    else onClose();
+    // Returning true here triggers the slide animation
+    return true;
+  };
+
+  const onOk = async () => {
+    try {
+      await save(draftLines);
+      onClose();
+    } catch (e) {
+      error(t('error.cant-save'))();
+    }
+  };
+
   return (
-    <Modal
-      title={
-        mode === ModalMode.Create
-          ? t('heading.add-item')
-          : t('heading.edit-item')
-      }
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      nextButton={
-        <DialogButton
-          variant="next"
-          onClick={async () => {
-            try {
-              await save(draftLines);
-              if (nextItem) setCurrentItem(nextItem);
-              else onClose();
-
-              // Returning true here triggers the slide animation
-              return true;
-            } catch (e) {
-              //
-            }
-          }}
-          disabled={mode !== ModalMode.Update}
-        />
-      }
-      okButton={
-        <DialogButton
-          variant="ok"
-          onClick={async () => {
-            try {
-              await save(draftLines);
-              onClose();
-            } catch (e) {
-              error(t('error.cant-save'))();
-            }
-          }}
-        />
-      }
-      height={600}
-      width={1024}
+    <StocktakeLineEditModal
+      onNext={onNext}
+      onOk={onOk}
+      onCancel={onClose}
+      mode={mode}
+      isOpen={isOpen}
     >
-      {!isLoading ? (
-        <>
-          <StocktakeLineEditForm
-            item={currentItem}
-            onChangeItem={setCurrentItem}
-            mode={mode}
-          />
-          <Divider margin={5} />
-          {currentItem ? (
-            <TabContext value={currentTab}>
-              <Box flex={1} display="flex" justifyContent="space-between">
-                <Box flex={1} />
-                <Box flex={1}>
-                  <TabList
-                    value={currentTab}
-                    centered
-                    onChange={(_, v) => setCurrentTab(v)}
-                  >
-                    <Tab value={Tabs.Batch} label={Tabs.Batch} />
-                    <Tab value={Tabs.Pricing} label={Tabs.Pricing} />
-                  </TabList>
-                </Box>
-                <Box flex={1} justifyContent="flex-end" display="flex">
-                  <ButtonWithIcon
-                    color="primary"
-                    variant="outlined"
-                    onClick={addLine}
-                    label={t('label.add-batch', { ns: 'inventory' })}
-                    Icon={<PlusCircleIcon />}
-                  />
-                </Box>
-              </Box>
+      {(() => {
+        if (isLoading) {
+          return (
+            <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
+              <BasicSpinner messageKey="saving" />
+            </Box>
+          );
+        }
 
-              <TableContainer>
-                <StocktakeLinePanel
-                  batches={draftLines}
-                  update={update}
-                  value={Tabs.Batch}
-                >
-                  <BatchTable batches={draftLines} update={update} />
-                </StocktakeLinePanel>
+        return (
+          <>
+            <StocktakeLineEditForm
+              item={currentItem}
+              onChangeItem={setCurrentItem}
+              mode={mode}
+            />
+            {!currentItem ? (
+              <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
+            ) : null}
+            {!!currentItem ? (
+              <>
+                <Divider margin={5} />
+                <StocktakeLineEditTabs onAddLine={addLine}>
+                  <StyledTabPanel value={'Batch'}>
+                    <StyledTabContainer>
+                      <BatchTable batches={draftLines} update={update} />
+                    </StyledTabContainer>
+                  </StyledTabPanel>
 
-                <StocktakeLinePanel
-                  batches={draftLines}
-                  update={update}
-                  value={Tabs.Pricing}
-                >
-                  <PricingTable batches={draftLines} update={update} />
-                </StocktakeLinePanel>
-              </TableContainer>
-            </TabContext>
-          ) : (
-            <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
-          )}
-        </>
-      ) : (
-        <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
-          <BasicSpinner messageKey="saving" />
-        </Box>
-      )}
-    </Modal>
+                  <StyledTabPanel value={'Pricing'}>
+                    <StyledTabContainer>
+                      <PricingTable batches={draftLines} update={update} />
+                    </StyledTabContainer>
+                  </StyledTabPanel>
+                </StocktakeLineEditTabs>
+              </>
+            ) : null}
+          </>
+        );
+      })()}
+    </StocktakeLineEditModal>
   );
 };
