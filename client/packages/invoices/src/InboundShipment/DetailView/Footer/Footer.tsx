@@ -16,7 +16,7 @@ import {
   InboundFragment,
   useInbound,
   useInboundFields,
-  useIsInboundEditable,
+  useIsInboundDisabled,
 } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
@@ -57,7 +57,7 @@ export const Footer: FC = () => {
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
   const { onHold, update } = useInboundFields('onHold');
-  const isEditable = useIsInboundEditable();
+  const isDisabled = useIsInboundDisabled();
   const { data } = useInbound();
   const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
@@ -73,7 +73,7 @@ export const Footer: FC = () => {
             height={64}
           >
             <ToggleButton
-              disabled={!isEditable}
+              disabled={isDisabled}
               value={onHoldBuffer}
               selected={onHoldBuffer}
               onClick={(_, value) => {
