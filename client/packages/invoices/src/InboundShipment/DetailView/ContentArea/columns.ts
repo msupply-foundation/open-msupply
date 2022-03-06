@@ -57,12 +57,30 @@ export const useInboundShipmentColumns = () => {
               return rowData.item.code;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'code', '');
+            } else {
+              return rowData.item.code;
+            }
+          },
         },
       ],
       [
         'itemName',
         {
           accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'name', '');
+            } else {
+              return rowData.item.name;
+            }
+          },
+          getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               const items = lines.map(({ item }) => item);
@@ -84,12 +102,34 @@ export const useInboundShipmentColumns = () => {
               return rowData.batch;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ifTheSameElseDefault(lines, 'batch', '[multiple]') ?? '';
+            } else {
+              return rowData.batch ?? '';
+            }
+          },
         },
       ],
       [
         'expiryDate',
         {
           accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const expiryDate = ifTheSameElseDefault(
+                lines,
+                'expiryDate',
+                null
+              );
+
+              return formatExpiryDateString(expiryDate);
+            } else {
+              return formatExpiryDateString(rowData.expiryDate);
+            }
+          },
+          getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               const expiryDate = ifTheSameElseDefault(
@@ -119,12 +159,33 @@ export const useInboundShipmentColumns = () => {
               return rowData.location?.name ?? '';
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const locations = lines
+                .map(({ location }) => location)
+                .filter(Boolean) as LocationRowFragment[];
+              return ifTheSameElseDefault(locations, 'name', '');
+            } else {
+              return rowData.location?.name ?? '';
+            }
+          },
         },
       ],
       [
         'sellPricePerPack',
         {
           accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return c(
+                ifTheSameElseDefault(lines, 'sellPricePerPack', '')
+              ).format();
+            } else {
+              return c(rowData.sellPricePerPack).format();
+            }
+          },
+          getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               return c(
@@ -147,6 +208,14 @@ export const useInboundShipmentColumns = () => {
               return rowData.packSize;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ifTheSameElseDefault(lines, 'packSize', '');
+            } else {
+              return rowData.packSize;
+            }
+          },
         },
       ],
       [
@@ -160,12 +229,28 @@ export const useInboundShipmentColumns = () => {
               return rowData.packSize * rowData.numberOfPacks;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return lines.reduce(getUnitQuantity, 0);
+            } else {
+              return rowData.packSize * rowData.numberOfPacks;
+            }
+          },
         },
       ],
       [
         'numberOfPacks',
         {
           accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return lines.reduce(getSumOfKeyReducer('numberOfPacks'), 0);
+            } else {
+              return rowData.numberOfPacks;
+            }
+          },
+          getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               return lines.reduce(getSumOfKeyReducer('numberOfPacks'), 0);

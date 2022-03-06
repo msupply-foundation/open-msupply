@@ -16,7 +16,6 @@ import {
   useFieldsSelector,
   groupBy,
   getColumnSorter,
-  getDataSorter,
   useSortBy,
   useMutation,
   useTableStore,
@@ -238,10 +237,12 @@ export const useOutboundRows = (isGrouped = true) => {
   }, [items, sortBy.key, sortBy.isDesc]);
 
   const sortedLines = useMemo(() => {
-    const sorter = getDataSorter<
-      OutboundLineFragment,
-      keyof OutboundLineFragment
-    >(sortBy.key as keyof OutboundLineFragment, !!sortBy.isDesc);
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    if (!currentColumn?.getSortValue) return lines;
+    const sorter = getColumnSorter(
+      currentColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
     return [...(lines ?? [])].sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc]);
 
@@ -323,7 +324,7 @@ export const useDeleteSelectedLines = (): {
         .map(({ lines }) => lines.flat())
         .flat();
     } else {
-      return lines.filter(({ id }) => state.rowState[id]?.isSelected);
+      return lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }
   });
 

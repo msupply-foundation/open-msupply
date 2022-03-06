@@ -27,7 +27,6 @@ import { useInboundShipmentColumns } from '../DetailView/ContentArea';
 import {
   getSdk,
   InboundFragment,
-  InboundLineFragment,
   InboundRowFragment,
 } from './operations.generated';
 
@@ -197,7 +196,7 @@ export const useDeleteSelectedLines = (): {
         .map(({ lines }) => lines.flat())
         .flat();
     } else {
-      return lines.filter(({ id }) => state.rowState[id]?.isSelected);
+      return lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }
   });
 
@@ -313,10 +312,12 @@ export const useInboundRows = () => {
   }, [items, sortBy.key, sortBy.isDesc]);
 
   const sortedLines = useMemo(() => {
-    const sorter = getDataSorter<
-      InboundLineFragment,
-      keyof InboundLineFragment
-    >(sortBy.key as keyof InboundLineFragment, !!sortBy.isDesc);
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    if (!currentColumn?.getSortValue) return lines;
+    const sorter = getColumnSorter(
+      currentColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
     return [...(lines ?? [])].sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc]);
 
