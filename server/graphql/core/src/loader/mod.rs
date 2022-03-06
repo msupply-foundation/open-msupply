@@ -1,6 +1,5 @@
 mod invoice;
 mod invoice_line;
-mod invoice_line_query;
 mod item;
 mod item_stats;
 mod loader_registry;
@@ -18,8 +17,7 @@ use std::{collections::HashSet, hash::Hasher};
 
 use chrono::NaiveDateTime;
 pub use invoice::*;
-pub use invoice_line::InvoiceLineLoader;
-pub use invoice_line_query::*;
+pub use invoice_line::*;
 pub use item::ItemLoader;
 pub use item_stats::*;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};

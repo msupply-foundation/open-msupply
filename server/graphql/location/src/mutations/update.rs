@@ -97,7 +97,7 @@ impl From<InError> for UpdateLocationError {
             InError::LocationDoesNotBelongToCurrentStore => {
                 OutError::RecordBelongsToAnotherStore(RecordBelongsToAnotherStore {})
             }
-            InError::UpdatedRecordDoesNotExist => OutError::InternalError(InternalError(
+            InError::UpdatedRecordNotFound => OutError::InternalError(InternalError(
                 "Could not find record after updating".to_owned(),
             )),
             InError::DatabaseError(error) => OutError::DatabaseError(DatabaseError(error)),

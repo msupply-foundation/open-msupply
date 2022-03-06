@@ -1,5 +1,5 @@
 use crate::{
-    invoice_line::{get_invoice_line_ctx, validate::check_line_exists_option},
+    invoice_line::{query::get_invoice_line, validate::check_line_exists_option},
     service_provider::ServiceContext,
     u32_to_i32,
 };
@@ -7,14 +7,13 @@ use repository::{
     schema::{InvoiceLineRow, InvoiceLineRowType},
     InvoiceLine, InvoiceLineRowRepository, RepositoryError, StorageConnection,
 };
-
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateOutboundShipmentUnallocatedLine {
     pub id: String,
     pub quantity: u32,
 }
 
-#[derive(Debug, PartialEq)]
-
+#[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentUnallocatedLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
@@ -27,6 +26,7 @@ type OutError = UpdateOutboundShipmentUnallocatedLineError;
 
 pub fn update_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
+    _store_id: &str,
     input: UpdateOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLine, OutError> {
     let line = ctx
@@ -36,7 +36,7 @@ pub fn update_outbound_shipment_unallocated_line(
             let updated_line = generate(input, line_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
 
-            get_invoice_line_ctx(ctx, updated_line.id)
+            get_invoice_line(ctx, &updated_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
@@ -100,12 +100,13 @@ mod test_update {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
-        let service = service_provider.outbound_shipment_line;
+        let service = service_provider.invoice_line_service;
 
         // Line Does not Exist
         assert_eq!(
             service.update_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 UpdateOutboundShipmentUnallocatedLine {
                     id: "invalid".to_owned(),
                     quantity: 0
@@ -118,6 +119,7 @@ mod test_update {
         assert_eq!(
             service.update_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 UpdateOutboundShipmentUnallocatedLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     quantity: 0
@@ -135,13 +137,14 @@ mod test_update {
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider.context().unwrap();
-        let service = service_provider.outbound_shipment_line;
+        let service = service_provider.invoice_line_service;
 
         let mut line_to_update = mock_unallocated_line();
         // Succesfull update
         let result = service
             .update_outbound_shipment_unallocated_line(
                 &context,
+                "store_a",
                 UpdateOutboundShipmentUnallocatedLine {
                     id: line_to_update.id.clone(),
                     quantity: 20,

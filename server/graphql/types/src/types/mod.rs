@@ -42,21 +42,6 @@ pub use self::stocktake::*;
 pub mod stocktake_line;
 pub use self::stocktake_line::*;
 
-macro_rules! map_filter {
-    ($from:ident, $f:expr) => {{
-        EqualFilter {
-            equal_to: $from.equal_to.map($f),
-            not_equal_to: $from.not_equal_to.map($f),
-            equal_any: $from
-                .equal_any
-                .map(|inputs| inputs.into_iter().map($f).collect()),
-            not_equal_all: None,
-        }
-    }};
-}
-
-pub(crate) use map_filter;
-
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

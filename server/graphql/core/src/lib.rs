@@ -3,11 +3,13 @@ pub mod loader;
 pub mod pagination;
 pub mod simple_generic_errors;
 pub mod standard_graphql_error;
+pub mod test_helpers;
 
 use actix_web::cookie::Cookie;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_graphql::Context;
+
 use repository::StorageConnectionManager;
 use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
@@ -77,4 +79,18 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
         auth_token,
         refresh_token,
     }
+}
+
+#[macro_export]
+macro_rules! map_filter {
+    ($from:ident, $f:expr) => {{
+        repository::EqualFilter {
+            equal_to: $from.equal_to.map($f),
+            not_equal_to: $from.not_equal_to.map($f),
+            equal_any: $from
+                .equal_any
+                .map(|inputs| inputs.into_iter().map($f).collect()),
+            not_equal_all: None,
+        }
+    }};
 }

@@ -1,20 +1,23 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, Utc};
 use repository::EqualFilter;
 use repository::{
-    schema::{NumberRowType, StocktakeRow, StocktakeStatus},
+    schema::{NumberRowType, StocktakeRow},
     RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository, StocktakeRowRepository,
     StorageConnection,
 };
+use util::inline_init;
 
 use crate::{number::next_number, service_provider::ServiceContext, validate::check_store_exists};
 
 use super::query::get_stocktake;
 
+#[derive(Default, Debug, PartialEq)]
 pub struct InsertStocktakeInput {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
-    pub created_datetime: NaiveDateTime,
+    pub stocktake_date: Option<NaiveDate>,
+    pub is_locked: Option<bool>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -55,22 +58,22 @@ fn generate(
         id,
         comment,
         description,
-        created_datetime,
+        stocktake_date,
+        is_locked,
     }: InsertStocktakeInput,
 ) -> Result<StocktakeRow, RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
 
-    Ok(StocktakeRow {
-        id,
-        store_id: store_id.to_string(),
-        stocktake_number,
-        comment,
-        description,
-        status: StocktakeStatus::New,
-        created_datetime,
-        finalised_datetime: None,
-        inventory_adjustment_id: None,
-    })
+    Ok(inline_init(|r: &mut StocktakeRow| {
+        r.id = id;
+        r.stocktake_number = stocktake_number;
+        r.comment = comment;
+        r.description = description;
+        r.created_datetime = Utc::now().naive_utc();
+        r.stocktake_date = stocktake_date;
+        r.store_id = store_id.to_string();
+        r.is_locked = is_locked.unwrap_or(false);
+    }))
 }
 
 pub fn insert_stocktake(
@@ -97,5 +100,99 @@ pub fn insert_stocktake(
 impl From<RepositoryError> for InsertStocktakeError {
     fn from(error: RepositoryError) -> Self {
         InsertStocktakeError::DatabaseError(error)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use chrono::{NaiveDate, Utc};
+    use repository::{
+        mock::{mock_stocktake_a, mock_store_a, MockDataInserts},
+        schema::{StocktakeRow, StocktakeStatus},
+        test_db::setup_all,
+        StocktakeRowRepository,
+    };
+    use util::{inline_edit, inline_init};
+
+    use crate::{
+        service_provider::ServiceProvider,
+        stocktake::insert::{InsertStocktakeError, InsertStocktakeInput},
+    };
+
+    #[actix_rt::test]
+    async fn insert_stocktake() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stocktake", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.stocktake_service;
+
+        // error: stocktake already exists
+        let store_a = mock_store_a();
+        let existing_stocktake = mock_stocktake_a();
+        let error = service
+            .insert_stocktake(
+                &context,
+                &store_a.id,
+                inline_init(|i: &mut InsertStocktakeInput| {
+                    i.id = existing_stocktake.id;
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeError::StocktakeAlreadyExists);
+
+        // error: store does not exist
+        let error = service
+            .insert_stocktake(
+                &context,
+                "invalid",
+                inline_init(|i: &mut InsertStocktakeInput| i.id = "new_stocktake".to_string()),
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeError::InvalidStore);
+
+        // success
+        let before_insert = Utc::now().naive_utc();
+
+        let store_a = mock_store_a();
+        service
+            .insert_stocktake(
+                &context,
+                &store_a.id,
+                InsertStocktakeInput {
+                    id: "new_stocktake".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd(2020, 01, 02)),
+                    is_locked: Some(true),
+                },
+            )
+            .unwrap();
+
+        let after_insert = Utc::now().naive_utc();
+
+        let new_row = StocktakeRowRepository::new(&connection)
+            .find_one_by_id("new_stocktake")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            new_row,
+            inline_edit(&new_row, |mut i: StocktakeRow| {
+                i.id = "new_stocktake".to_string();
+                i.comment = Some("comment".to_string());
+                i.description = Some("description".to_string());
+                i.stocktake_date = Some(NaiveDate::from_ymd(2020, 01, 02));
+                i.is_locked = true;
+                i.status = StocktakeStatus::New;
+                i.store_id = store_a.id;
+                i
+            }),
+        );
+
+        assert!(
+            new_row.created_datetime > before_insert && new_row.created_datetime < after_insert
+        );
     }
 }

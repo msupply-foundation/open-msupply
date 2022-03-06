@@ -1,9 +1,6 @@
-mod line;
-mod service_line;
+pub mod line;
+pub mod service_line;
 pub mod unallocated_line;
-
-pub use line::*;
-pub use service_line::*;
 
 use async_graphql::*;
 

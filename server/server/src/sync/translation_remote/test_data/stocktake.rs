@@ -48,6 +48,8 @@ fn stocktake_pull_record() -> TestSyncRecord {
                 created_datetime: NaiveDate::from_ymd(2021, 07, 30).and_hms(0, 0, 0),
                 finalised_datetime: None,
                 inventory_adjustment_id: Some("inbound_shipment_a".to_string()),
+                is_locked: false,
+                stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
             }),
         )),
         identifier: "Stocktake 1",
@@ -76,7 +78,9 @@ fn stocktake_push_record() -> TestSyncPushRecord {
             comment: None,
             invad_additions_ID: Some("inbound_shipment_a".to_string()),
             serial_number: 3,
-            stock_take_created_date: NaiveDate::from_ymd(2021, 07, 30)
+            stock_take_created_date: NaiveDate::from_ymd(2021, 07, 30),
+            is_locked: false,
+            stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
         }),
     }
 }

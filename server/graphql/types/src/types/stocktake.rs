@@ -1,10 +1,10 @@
 use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, NaiveDate};
 use repository::schema::{StocktakeRow, StocktakeStatus};
 use serde::Serialize;
 
 use graphql_core::{
-    loader::{InvoiceQueryLoader, StocktakeLineByStocktakeIdLoader},
+    loader::{InvoiceByIdLoader, StocktakeLineByStocktakeIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -44,12 +44,20 @@ impl StocktakeNode {
         &self.stocktake.description
     }
 
+    pub async fn is_locked(&self) -> bool {
+        self.stocktake.is_locked
+    }
+
     pub async fn status(&self) -> StocktakeNodeStatus {
         StocktakeNodeStatus::from_domain(&self.stocktake.status)
     }
 
     pub async fn created_datetime(&self) -> &NaiveDateTime {
         &self.stocktake.created_datetime
+    }
+
+    pub async fn stocktake_date(&self) -> &Option<NaiveDate> {
+        &self.stocktake.stocktake_date
     }
 
     pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
@@ -62,7 +70,7 @@ impl StocktakeNode {
 
     pub async fn inventory_adjustment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
         if let Some(ref adjustment_id) = self.stocktake.inventory_adjustment_id {
-            let loader = ctx.get_loader::<DataLoader<InvoiceQueryLoader>>();
+            let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
             let invoice = loader.load_one(adjustment_id.clone()).await?.ok_or(
                 StandardGraphqlError::InternalError(format!(
                     "Cannot find inventory adjustment {}",
