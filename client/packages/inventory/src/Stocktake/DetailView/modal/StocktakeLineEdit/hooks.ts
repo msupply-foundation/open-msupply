@@ -76,7 +76,7 @@ const useDraftStocktakeLines = (
 ): [DraftStocktakeLine[], Dispatch<SetStateAction<DraftStocktakeLine[]>>] => {
   const { id } = useStocktakeFields('id');
   const { data: stocktakeLines } = useStocktakeLines(item?.id);
-  const { data: stockLines } = useStockLines(item?.code || '');
+  const { data: stockLines } = useStockLines(item?.id || '');
 
   const [draftLines, setDraftLines] = React.useState<DraftStocktakeLine[]>([]);
 
@@ -150,7 +150,11 @@ export const useStocktakeLineEdit = (
     setDraftLines(lines => {
       return lines.map(line => {
         if (line.id === patch.id) {
-          return { ...line, ...patch, isUpdated: !line.isCreated };
+          return {
+            ...line,
+            ...patch,
+            isUpdated: !line.isCreated,
+          };
         }
         return line;
       });
