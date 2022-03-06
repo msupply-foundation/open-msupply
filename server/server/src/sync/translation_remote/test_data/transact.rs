@@ -6,7 +6,7 @@ use repository::schema::{
 use serde_json::json;
 
 use crate::sync::translation_remote::{
-    invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType},
+    invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode},
     pull::{IntegrationRecord, IntegrationUpsertRecord},
     test_data::TestSyncRecord,
     TRANSLATION_RECORD_TRANSACT,
@@ -154,7 +154,8 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             ship_date: None,
             arrival_date_actual: Some(NaiveDate::from_ymd(2021, 7, 30)),
             confirm_date: Some(NaiveDate::from_ymd(2021, 7, 30)),
-            confirm_time: NaiveTime::from_hms(13, 4, 6)
+            confirm_time: NaiveTime::from_hms(13, 4, 6),
+            mode: TransactMode::Store,
         }),
     }
 }
@@ -201,7 +202,7 @@ const TRANSACT_2: (&'static str, &'static str) = (
         "linked_goods_received_ID": "",
         "linked_transaction_id": "",
         "local_charge_distributed": 0,
-        "mode": "dispensary",
+        "mode": "store",
         "mwks_sequence_num": 0,
         "nameInsuranceJoinID": "",
         "name_ID": "name_store_b",
@@ -298,7 +299,8 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             arrival_date_actual: None,
             confirm_date: None,
             // Note: we are loosing this value when date is None
-            confirm_time: NaiveTime::from_hms(0, 0, 0)
+            confirm_time: NaiveTime::from_hms(0, 0, 0),
+            mode: TransactMode::Store,
         }),
     }
 }
