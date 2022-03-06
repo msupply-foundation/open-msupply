@@ -29,12 +29,17 @@ export const DataTableComponent = <T extends RecordWithId>({
   noDataMessage,
   ExpandContent,
   dense = false,
+  isDisabled = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
-  const { setActiveRows } = useTableStore();
+  const { setActiveRows, setDisabledRows } = useTableStore();
   useEffect(() => {
-    if (data.length) setActiveRows(data.map(({ id }) => id as string));
+    if (data.length) setActiveRows(data.map(({ id }) => id));
   }, [data]);
+
+  useEffect(() => {
+    if (isDisabled) setDisabledRows(data.map(({ id }) => id));
+  }, [isDisabled, data]);
 
   // guard against a page number being set which is greater than the data allows
   useEffect(() => {
