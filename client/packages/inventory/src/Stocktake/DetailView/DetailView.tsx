@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -28,9 +28,12 @@ export const DetailView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('inventory');
 
-  const onRowClick = (item: StocktakeLineFragment | StocktakeSummaryItem) => {
-    if (item.item) onOpen(item.item);
-  };
+  const onRowClick = useCallback(
+    (item: StocktakeLineFragment | StocktakeSummaryItem) => {
+      if (item.item) onOpen(item.item);
+    },
+    [onOpen]
+  );
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
