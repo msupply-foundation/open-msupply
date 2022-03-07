@@ -4,5 +4,5 @@ import { useItemApi } from '../useItemApi';
 export const useItemsWithStats = () => {
   const api = useItemApi();
 
-  return useQuery(['item', 'list', 'stats'], api.get.listWithStats);
+  return useQuery(api.keys.list(), api.get.listWithStats);
 };

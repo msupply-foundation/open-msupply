@@ -10,17 +10,19 @@ import {
   StocktakeSortFieldInput,
 } from '@openmsupply-client/common';
 import {
-  getSdk,
+  Sdk,
   StocktakeFragment,
   StocktakeRowFragment,
   StocktakeLineFragment,
 } from './operations.generated';
 import { DraftStocktakeLine } from './../DetailView/modal/StocktakeLineEdit/hooks';
 
-export type StocktakeApi = ReturnType<typeof getStocktakeQueries> & {
-  storeId: string;
+export type ListParams = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<StocktakeRowFragment>;
+  filterBy: FilterBy | null;
 };
-export type StocktakeQueries = ReturnType<typeof getSdk>;
 
 const stocktakeParsers = {
   stocktake: {
@@ -68,37 +70,24 @@ const stocktakeParsers = {
   },
 };
 
-export const getStocktakeQueries = (
-  queries: StocktakeQueries,
-  storeId: string
-) => ({
+export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     list:
-      ({
-        first,
-        offset,
-        sortBy,
-        filter,
-      }: {
-        first: number;
-        offset: number;
-        sortBy: SortBy<StocktakeRowFragment>;
-        filter: FilterBy | null;
-      }) =>
+      ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
-        const result = await queries.stocktakes({
+        const result = await sdk.stocktakes({
           storeId,
           page: { offset, first },
           sort: {
             key: sortBy.key as StocktakeSortFieldInput,
             desc: !!sortBy.isDesc,
           },
-          filter: { ...filter },
+          filter: filterBy,
         });
         return result.stocktakes;
       },
     byId: async (id: string): Promise<StocktakeFragment> => {
-      const result = await queries.stocktake({ stocktakeId: id, storeId });
+      const result = await sdk.stocktake({ stocktakeId: id, storeId });
 
       if (result.stocktake.__typename === 'StocktakeNode') {
         return result.stocktake;
@@ -106,9 +95,9 @@ export const getStocktakeQueries = (
 
       throw new Error('Could not find stocktake!');
     },
-    byNumber: async (stocktakeNumber: number): Promise<StocktakeFragment> => {
-      const result = await queries.stocktakeByNumber({
-        stocktakeNumber,
+    byNumber: async (stocktakeNumber: string): Promise<StocktakeFragment> => {
+      const result = await sdk.stocktakeByNumber({
+        stocktakeNumber: Number(stocktakeNumber),
         storeId,
       });
 
@@ -130,7 +119,7 @@ export const getStocktakeQueries = (
         .map(stocktakeParsers.line.toUpdateLineInput),
     };
 
-    const result = await queries.upsertStocktakeLines(input);
+    const result = await sdk.upsertStocktakeLines(input);
 
     return result;
   },
@@ -138,7 +127,7 @@ export const getStocktakeQueries = (
     patch: RecordPatch<StocktakeFragment>
   ): Promise<UpdateStocktakeInput> => {
     const input = stocktakeParsers.stocktake.toUpdateInput(patch);
-    const result = await queries.updateStocktake({ input, storeId });
+    const result = await sdk.updateStocktake({ input, storeId });
 
     const { updateStocktake } = result;
 
@@ -149,7 +138,7 @@ export const getStocktakeQueries = (
     throw new Error('Could not update stocktake');
   },
   deleteStocktakes: async (stocktakes: StocktakeRowFragment[]) => {
-    const result = await queries.deleteStocktakes({
+    const result = await sdk.deleteStocktakes({
       ids: stocktakes.map(stocktake => ({ id: stocktake.id })),
       storeId,
     });
@@ -162,11 +151,11 @@ export const getStocktakeQueries = (
   },
   deleteLines: async (stocktakeLines: StocktakeLineFragment[]) => {
     const input = { storeId, deleteStocktakeLines: stocktakeLines };
-    const result = await queries.upsertStocktakeLines(input);
+    const result = await sdk.upsertStocktakeLines(input);
     return result;
   },
   insertStocktake: async () => {
-    const result = await queries.insertStocktake({
+    const result = await sdk.insertStocktake({
       input: {
         id: generateUUID(),
       },

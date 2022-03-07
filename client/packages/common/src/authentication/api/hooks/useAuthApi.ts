@@ -1,9 +1,14 @@
 import { useOmSupplyApi } from '../../../api';
+import { getAuthQueries } from '../api';
 import { getSdk } from '../operations.generated';
 
-export type AuthApi = ReturnType<typeof getSdk>;
-
-export const useAuthApi = (): AuthApi => {
+export const useAuthApi = () => {
   const { client } = useOmSupplyApi();
-  return getSdk(client);
+  const queries = getAuthQueries(getSdk(client));
+
+  const keys = {
+    refresh: (token: string) => ['refresh', token] as const,
+  };
+
+  return { ...queries, keys };
 };

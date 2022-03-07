@@ -25,7 +25,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundItem } from '../../types';
-import { getOutboundQueries } from './api';
+import { getOutboundQueries, ListParams } from './api';
 import { useOutboundColumns } from '../DetailView/columns';
 import {
   getSdk,
@@ -37,21 +37,23 @@ import {
 import { canDeleteInvoice } from '../../utils';
 
 export const useOutboundApi = () => {
+  const keys = {
+    base: () => ['outbound'] as const,
+    detail: (id: string) => [...keys.base(), storeId, id] as const,
+    list: () => [...keys.base(), storeId, 'list'] as const,
+    paramList: (params: ListParams) => [...keys.list(), params] as const,
+  };
+
   const { client } = useOmSupplyApi();
   const sdk = getSdk(client);
   const { storeId } = useAuthContext();
   const queries = getOutboundQueries(sdk, storeId);
-  return { ...queries, storeId };
+  return { ...queries, storeId, keys };
 };
 
 export const useOutboundNumber = () => {
   const { invoiceNumber = '' } = useParams();
   return invoiceNumber;
-};
-
-export const useOutboundDetailQueryKey = (): ['invoice', string] => {
-  const outboundNumber = useOutboundNumber();
-  return ['invoice', outboundNumber];
 };
 
 export const useOutbounds = () => {
@@ -61,7 +63,7 @@ export const useOutbounds = () => {
   const api = useOutboundApi();
 
   return {
-    ...useQuery(['invoice', 'list', api.storeId, queryParams], () =>
+    ...useQuery(api.keys.paramList(queryParams), () =>
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
@@ -76,9 +78,10 @@ export const useOutbounds = () => {
 export const useOutbound = (): UseQueryResult<OutboundFragment> => {
   const outboundNumber = useOutboundNumber();
   const api = useOutboundApi();
-  const queryKey = useOutboundDetailQueryKey();
 
-  return useQuery(queryKey, () => api.get.byNumber(outboundNumber));
+  return useQuery(api.keys.detail(outboundNumber), () =>
+    api.get.byNumber(outboundNumber)
+  );
 };
 
 export const useUpdateOutbound = () => {
@@ -86,7 +89,7 @@ export const useUpdateOutbound = () => {
   const api = useOutboundApi();
   return useMutation(api.update, {
     onSuccess: () => {
-      queryClient.invalidateQueries(['invoice']);
+      queryClient.invalidateQueries(api.keys.base());
     },
   });
 };
@@ -102,7 +105,7 @@ export const useCreateOutbound = () => {
         .addPart(String(invoiceNumber))
         .build();
       navigate(route, { replace: true });
-      queryClient.invalidateQueries(['invoice']);
+      queryClient.invalidateQueries(api.keys.base());
     },
   });
 };
@@ -152,13 +155,14 @@ export const useDeleteSelectedOutbounds = () => {
 export const useOutboundFields = <KeyOfOutbound extends keyof OutboundFragment>(
   keys: KeyOfOutbound | KeyOfOutbound[]
 ): FieldSelectorControl<OutboundFragment, KeyOfOutbound> => {
+  const outboundNumber = useOutboundNumber();
   const { data } = useOutbound();
   const api = useOutboundApi();
-  const queryKey = useOutboundDetailQueryKey();
+  const queryKey = api.keys.detail(outboundNumber);
 
   return useFieldsSelector(
     queryKey,
-    () => api.get.byNumber(queryKey[1]),
+    () => api.get.byNumber(outboundNumber),
     (patch: Partial<OutboundFragment>) =>
       api.update({ ...patch, id: data?.id ?? '' }),
     keys
@@ -177,11 +181,11 @@ export const useIsOutboundDisabled = (): boolean => {
 const useOutboundSelector = <ReturnType>(
   select: (data: OutboundFragment) => ReturnType
 ) => {
-  const queryKey = useOutboundDetailQueryKey();
+  const outboundNumber = useOutboundNumber();
   const api = useOutboundApi();
   return useQuerySelector(
-    queryKey,
-    () => api.get.byNumber(queryKey[1]),
+    api.keys.detail(outboundNumber),
+    () => api.get.byNumber(outboundNumber),
     select
   );
 };
@@ -255,12 +259,12 @@ export const useOutboundRows = (isGrouped = true) => {
 };
 
 export const useSaveOutboundLines = () => {
-  const queryKey = useOutboundDetailQueryKey();
+  const outboundNumber = useOutboundNumber();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
   return useMutation(api.updateLines, {
     onSuccess: () => {
-      queryClient.invalidateQueries(queryKey);
+      queryClient.invalidateQueries(api.keys.detail(outboundNumber));
     },
   });
 };
@@ -274,14 +278,14 @@ export const useDeleteInboundLine = (): UseMutationResult<
   // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
   // input object should not require the invoice ID. Waiting for an API change.
   const { data } = useOutbound();
-  const queryKey = useOutboundDetailQueryKey();
+  const outboundNumber = useOutboundNumber();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
+  const queryKey = api.keys.detail(outboundNumber);
 
   return useMutation(api.deleteLines(data?.id ?? ''), {
     onMutate: async (ids: string[]) => {
       await queryClient.cancelQueries(queryKey);
-
       const previous = queryClient.getQueryData<OutboundFragment>(queryKey);
       if (previous) {
         const nodes = previous.lines.nodes.filter(

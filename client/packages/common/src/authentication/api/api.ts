@@ -1,5 +1,4 @@
-import { AuthApi } from './hooks';
-import { AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
+import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
   message: string;
@@ -45,26 +44,24 @@ const refreshTokenGuard = (
   return { token: '' };
 };
 
-export const AuthQueries = {
+export const getAuthQueries = (sdk: Sdk) => ({
   get: {
-    authToken:
-      (api: AuthApi) =>
-      async ({
+    authToken: async ({
+      username,
+      password,
+    }: {
+      username: string;
+      password: string;
+    }): Promise<AuthenticationResponse> => {
+      const result = await sdk.authToken({
         username,
         password,
-      }: {
-        username: string;
-        password: string;
-      }): Promise<AuthenticationResponse> => {
-        const result = await api.authToken({
-          username,
-          password,
-        });
-        return authTokenGuard(result);
-      },
-    refreshToken: (api: AuthApi) => async (): Promise<RefreshResponse> => {
-      const result = await api.refreshToken();
+      });
+      return authTokenGuard(result);
+    },
+    refreshToken: async (): Promise<RefreshResponse> => {
+      const result = await sdk.refreshToken();
       return refreshTokenGuard(result);
     },
   },
-};
+});
