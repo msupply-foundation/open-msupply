@@ -1,5 +1,7 @@
-import { useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import {
+  useIsGrouped,
+  getColumnSorter,
   useQueryParams,
   useTableStore,
   useTranslation,
@@ -21,10 +23,10 @@ import { ItemRowFragment } from '@openmsupply-client/system';
 import { inboundLinesToSummaryItems } from './../../utils';
 import { InboundItem } from './../../types';
 import { getInboundQueries, ListParams } from './api';
+import { useInboundShipmentColumns } from '../DetailView/ContentArea';
 import {
   getSdk,
   InboundFragment,
-  InboundLineFragment,
   InboundRowFragment,
 } from './operations.generated';
 
@@ -42,13 +44,13 @@ export const useInboundApi = () => {
   return { ...queries, storeId, keys };
 };
 
-const useInvoiceNumber = () => {
+const useInboundNumber = () => {
   const { invoiceNumber = '' } = useParams();
   return invoiceNumber;
 };
 
 export const useInbound = () => {
-  const invoiceNumber = useInvoiceNumber();
+  const invoiceNumber = useInboundNumber();
   const api = useInboundApi();
   return useQuery(api.keys.detail(invoiceNumber), () =>
     api.get.byNumber(invoiceNumber)
@@ -63,7 +65,7 @@ export const useIsInboundEditable = (): boolean => {
 export const useInboundSelector = <T = InboundFragment>(
   select?: (data: InboundFragment) => T
 ) => {
-  const invoiceNumber = useInvoiceNumber();
+  const invoiceNumber = useInboundNumber();
   const api = useInboundApi();
 
   return useQuery(
@@ -78,7 +80,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof InboundFragment>(
 ): FieldSelectorControl<InboundFragment, KeyOfInvoice> => {
   const { data } = useInbound();
   const { mutateAsync } = useUpdateInbound();
-  const invoiceNumber = useInvoiceNumber();
+  const invoiceNumber = useInboundNumber();
   const api = useInboundApi();
   return useFieldsSelector(
     api.keys.detail(invoiceNumber),
@@ -88,7 +90,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof InboundFragment>(
   );
 };
 
-export const useInboundLines = (itemId?: string): InboundLineFragment[] => {
+export const useInboundLines = (itemId?: string) => {
   const selectItems = useCallback(
     (invoice: InboundFragment) => {
       return itemId
@@ -98,9 +100,7 @@ export const useInboundLines = (itemId?: string): InboundLineFragment[] => {
     [itemId]
   );
 
-  const { data } = useInboundSelector(selectItems);
-
-  return data ?? [];
+  return useInboundSelector(selectItems);
 };
 
 export const useInboundItems = () => {
@@ -132,7 +132,7 @@ export const useNextItem = (currentItemId: string): ItemRowFragment | null => {
 
 export const useSaveInboundLines = () => {
   const queryClient = useQueryClient();
-  const invoiceNumber = useInvoiceNumber();
+  const invoiceNumber = useInboundNumber();
   const api = useInboundApi();
   return useMutation(api.upsertLines, {
     onSettled: () =>
@@ -140,51 +140,78 @@ export const useSaveInboundLines = () => {
   });
 };
 
-export const useDeleteInboundLine = () => {
-  // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
-  // input object should not require the invoice ID. Waiting for an API change.
-  const { data } = useInbound();
-  const invoiceNumber = useInvoiceNumber();
+export const useDeleteInboundLines = () => {
+  const inboundNumber = useInboundNumber();
   const queryClient = useQueryClient();
   const api = useInboundApi();
+  const queryKey = api.keys.detail(inboundNumber);
 
-  return useMutation((ids: string[]) => api.deleteLines(data?.id ?? '', ids), {
-    onMutate: async (ids: string[]) => {
-      await queryClient.cancelQueries(api.keys.detail(invoiceNumber));
-
-      const previous = queryClient.getQueryData<InboundFragment>(
-        api.keys.detail(invoiceNumber)
-      );
-
+  return useMutation(api.deleteLines, {
+    onMutate: async lines => {
+      await queryClient.cancelQueries(queryKey);
+      const previous = queryClient.getQueryData<InboundFragment>(queryKey);
       if (previous) {
-        const filteredLines = previous.lines.nodes.filter(
-          ({ id: lineId }) => !ids.includes(lineId)
+        const nodes = previous.lines.nodes.filter(
+          ({ id: lineId }) => !lines.find(({ id }) => lineId === id)
         );
-        queryClient.setQueryData<InboundFragment>(
-          api.keys.detail(invoiceNumber),
-          {
-            ...previous,
-            lines: {
-              __typename: 'InvoiceLineConnector',
-              nodes: filteredLines,
-              totalCount: filteredLines.length,
-            },
-          }
-        );
+        queryClient.setQueryData<InboundFragment>(queryKey, {
+          ...previous,
+          lines: {
+            __typename: 'InvoiceLineConnector',
+            nodes,
+            totalCount: nodes.length,
+          },
+        });
       }
-
-      return { previous, ids };
+      return { previous, lines };
     },
-    onError: (_, __, context) => {
-      queryClient.setQueryData(
-        api.keys.detail(invoiceNumber),
-        context?.previous
-      );
+    onError: (_error, _vars, ctx) => {
+      // Having issues typing this correctly. If typing ctx in the args list,
+      // then TS infers the wrong type for the useMutation call and all
+      // hell breaks loose.
+      const context = ctx as {
+        previous: InboundFragment;
+        lines: { id: string; invoiceId: string }[];
+      };
+      queryClient.setQueryData(queryKey, context?.previous);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries(api.keys.detail(invoiceNumber));
-    },
+    onSettled: () => queryClient.invalidateQueries(queryKey),
   });
+};
+
+export const useDeleteSelectedLines = (): {
+  onDelete: () => Promise<void>;
+} => {
+  const { success, info } = useNotification();
+  const { items, lines } = useInboundRows();
+  const { mutate } = useDeleteInboundLines();
+  const t = useTranslation('replenishment');
+
+  const selectedRows = useTableStore(state => {
+    const { isGrouped } = state;
+
+    return isGrouped
+      ? items
+          ?.filter(({ id }) => state.rowState[id]?.isSelected)
+          .map(({ lines }) => lines.flat())
+          .flat()
+      : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
+  });
+
+  const onDelete = async () => {
+    if (selectedRows && selectedRows?.length > 0) {
+      const number = selectedRows?.length;
+      const onSuccess = success(t('messages.deleted-lines', { number }));
+      mutate(selectedRows, {
+        onSuccess,
+      });
+    } else {
+      const infoSnack = info(t('label.select-rows-to-delete-them'));
+      infoSnack();
+    }
+  };
+
+  return { onDelete };
 };
 
 export const useInbounds = () => {
@@ -235,16 +262,14 @@ export const useDeleteSelectedInbounds = () => {
 
   const { success, info } = useNotification();
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as InboundRowFragment[],
-  }));
+  const selectedRows = useTableStore(
+    state =>
+      rows?.nodes.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
+  );
 
   const deleteAction = () => {
-    const numberSelected = selectedRows.length;
-    if (selectedRows && numberSelected > 0) {
+    const number = selectedRows?.length;
+    if (selectedRows && number > 0) {
       const canDeleteRows = selectedRows.every(
         ({ status }) => status === InvoiceNodeStatus.New
       );
@@ -253,11 +278,9 @@ export const useDeleteSelectedInbounds = () => {
         cannotDeleteSnack();
       } else {
         mutate(selectedRows, {
-          onSuccess: () => queryClient.invalidateQueries(['invoice']),
+          onSettled: () => queryClient.invalidateQueries(api.keys.base()),
         });
-        const deletedMessage = t('messages.deleted-invoices', {
-          number: numberSelected,
-        });
+        const deletedMessage = t('messages.deleted-invoices', { number });
         const successSnack = success(deletedMessage);
         successSnack();
       }
@@ -268,4 +291,44 @@ export const useDeleteSelectedInbounds = () => {
   };
 
   return deleteAction;
+};
+
+export const useInboundRows = () => {
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
+  const { data: lines } = useInboundLines();
+  const { data: items } = useInboundItems();
+  const { columns, onChangeSortBy, sortBy } = useInboundShipmentColumns();
+
+  const sortedItems = useMemo(() => {
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    if (!currentColumn?.getSortValue) return items;
+    const sorter = getColumnSorter(
+      currentColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
+    return [...(items ?? [])].sort(sorter);
+  }, [items, sortBy.key, sortBy.isDesc]);
+
+  const sortedLines = useMemo(() => {
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    if (!currentColumn?.getSortValue) return lines;
+    const sorter = getColumnSorter(
+      currentColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
+    return [...(lines ?? [])].sort(sorter);
+  }, [lines, sortBy.key, sortBy.isDesc]);
+
+  const rows = isGrouped ? sortedItems : sortedLines;
+
+  return {
+    isGrouped,
+    toggleIsGrouped,
+    columns,
+    rows,
+    lines: sortedLines,
+    items: sortedItems,
+    onChangeSortBy,
+    sortBy,
+  };
 };

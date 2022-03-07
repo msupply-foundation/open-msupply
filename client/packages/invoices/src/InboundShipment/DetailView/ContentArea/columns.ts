@@ -9,16 +9,20 @@ import {
   Column,
   getUnitQuantity,
   useCurrency,
+  useSortBy,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
-import { InboundItem } from './../../types';
-import { InboundLineFragment } from '../api';
+import { InboundItem } from './../../../types';
+import { InboundLineFragment } from '../../api';
 
-export const useInboundShipmentColumns = (): Column<
-  InboundLineFragment | InboundItem
->[] => {
+export const useInboundShipmentColumns = () => {
+  const { sortBy, onChangeSortBy } = useSortBy<
+    InboundLineFragment | InboundItem
+  >({
+    key: 'itemName',
+  });
   const { c } = useCurrency();
-  return useColumns<InboundLineFragment | InboundItem>(
+  const columns = useColumns<InboundLineFragment | InboundItem>(
     [
       [
         getNotePopoverColumn(),
@@ -53,12 +57,30 @@ export const useInboundShipmentColumns = (): Column<
               return rowData.item.code;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'code', '');
+            } else {
+              return rowData.item.code;
+            }
+          },
         },
       ],
       [
         'itemName',
         {
           accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const items = lines.map(({ item }) => item);
+              return ifTheSameElseDefault(items, 'name', '');
+            } else {
+              return rowData.item.name;
+            }
+          },
+          getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               const items = lines.map(({ item }) => item);
@@ -80,12 +102,34 @@ export const useInboundShipmentColumns = (): Column<
               return rowData.batch;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ifTheSameElseDefault(lines, 'batch', '[multiple]') ?? '';
+            } else {
+              return rowData.batch ?? '';
+            }
+          },
         },
       ],
       [
         'expiryDate',
         {
           accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const expiryDate = ifTheSameElseDefault(
+                lines,
+                'expiryDate',
+                null
+              );
+
+              return formatExpiryDateString(expiryDate);
+            } else {
+              return formatExpiryDateString(rowData.expiryDate);
+            }
+          },
+          getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               const expiryDate = ifTheSameElseDefault(
@@ -115,12 +159,33 @@ export const useInboundShipmentColumns = (): Column<
               return rowData.location?.name ?? '';
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const locations = lines
+                .map(({ location }) => location)
+                .filter(Boolean) as LocationRowFragment[];
+              return ifTheSameElseDefault(locations, 'name', '');
+            } else {
+              return rowData.location?.name ?? '';
+            }
+          },
         },
       ],
       [
         'sellPricePerPack',
         {
           accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return c(
+                ifTheSameElseDefault(lines, 'sellPricePerPack', '')
+              ).format();
+            } else {
+              return c(rowData.sellPricePerPack).format();
+            }
+          },
+          getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               return c(
@@ -143,12 +208,28 @@ export const useInboundShipmentColumns = (): Column<
               return rowData.packSize;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ifTheSameElseDefault(lines, 'packSize', '');
+            } else {
+              return rowData.packSize;
+            }
+          },
         },
       ],
       [
         'unitQuantity',
         {
           accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return lines.reduce(getUnitQuantity, 0);
+            } else {
+              return rowData.packSize * rowData.numberOfPacks;
+            }
+          },
+          getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               return lines.reduce(getUnitQuantity, 0);
@@ -169,14 +250,24 @@ export const useInboundShipmentColumns = (): Column<
               return rowData.numberOfPacks;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return lines.reduce(getSumOfKeyReducer('numberOfPacks'), 0);
+            } else {
+              return rowData.numberOfPacks;
+            }
+          },
         },
       ],
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],
-    {},
-    []
+    { sortBy, onChangeSortBy },
+    [sortBy, onChangeSortBy]
   );
+
+  return { columns, onChangeSortBy, sortBy };
 };
 
 export const useExpansionColumns = (): Column<InboundLineFragment>[] =>

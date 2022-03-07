@@ -9,72 +9,26 @@ import {
   DropdownMenuItem,
   DeleteIcon,
   useTranslation,
-  useNotification,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system';
 import {
-  useDeleteInboundLine,
+  useDeleteSelectedLines,
   useInboundFields,
   useInboundItems,
-  useInboundLines,
   useIsInboundEditable,
-  InboundLineFragment,
 } from '../api';
-import { InboundItem } from '../../types';
 
 export const Toolbar: FC = () => {
   const isEditable = useIsInboundEditable();
   const { data } = useInboundItems();
-  const lines = useInboundLines();
 
-  const { mutate } = useDeleteInboundLine();
+  const { onDelete } = useDeleteSelectedLines();
   const { otherParty, theirReference, update } = useInboundFields([
     'otherParty',
     'theirReference',
   ]);
 
   const t = useTranslation('replenishment');
-  const { success, info } = useNotification();
-  const { selectedRows } = useTableStore(state => {
-    const { isGrouped } = state;
-
-    if (isGrouped) {
-      return {
-        selectedRows: (
-          Object.keys(state.rowState)
-            .filter(id => state.rowState[id]?.isSelected)
-            .map(selectedId => data?.find(({ id }) => selectedId === id))
-            .filter(Boolean) as InboundItem[]
-        )
-          .map(({ lines }) => lines)
-          .flat()
-          .map(({ id }) => id),
-      };
-    } else {
-      return {
-        selectedRows: (
-          Object.keys(state.rowState)
-            .filter(id => state.rowState[id]?.isSelected)
-            .map(selectedId => lines.find(({ id }) => selectedId === id))
-            .filter(Boolean) as InboundLineFragment[]
-        ).map(({ id }) => id),
-      };
-    }
-  });
-
-  const deleteAction = async () => {
-    if (selectedRows && selectedRows?.length > 0) {
-      const number = selectedRows?.length;
-      const onSuccess = success(t('messages.deleted-lines', { number }));
-      mutate(selectedRows, {
-        onSuccess,
-      });
-    } else {
-      const infoSnack = info(t('label.select-rows-to-delete-them'));
-      infoSnack();
-    }
-  };
 
   if (!data) return null;
 
@@ -121,7 +75,7 @@ export const Toolbar: FC = () => {
           </Box>
         </Grid>
         <DropdownMenu disabled={!isEditable} label={t('label.select')}>
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>
         </DropdownMenu>

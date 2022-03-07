@@ -106,11 +106,12 @@ const inboundParsers = {
     invoiceId: line.invoiceId,
     locationId: line.location?.id,
   }),
-  toDeleteLine:
-    (invoiceId: string) =>
-    (id: string): DeleteInboundShipmentLineInput => {
-      return { id, invoiceId };
-    },
+  toDeleteLine: (line: {
+    id: string;
+    invoiceId: string;
+  }): DeleteInboundShipmentLineInput => {
+    return { id: line.id, invoiceId: line.invoiceId };
+  },
 };
 
 export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
@@ -195,26 +196,37 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       input: inboundParsers.toUpdate(patch),
       storeId,
     }),
-  deleteLines: async (invoiceId: string, ids: string[]) => {
-    const createDeleteLineInput = inboundParsers.toDeleteLine(invoiceId);
+  deleteLines: async (lines: { id: string; invoiceId: string }[]) => {
     return sdk.deleteInboundShipmentLines({
       storeId,
-      input: { deleteInboundShipmentLines: ids.map(createDeleteLineInput) },
+      input: {
+        deleteInboundShipmentLines: lines.map(inboundParsers.toDeleteLine),
+      },
     });
   },
   upsertLines: async (lines: DraftInboundLine[]) => {
     const insertInboundShipmentLines = lines
-      .filter(({ isCreated }) => isCreated)
+      .filter(({ isCreated, numberOfPacks }) => isCreated && numberOfPacks > 0)
       .map(inboundParsers.toInsertLine);
     const updateInboundShipmentLines = lines
-      .filter(({ isCreated, isUpdated }) => !isCreated && isUpdated)
+      .filter(
+        ({ isCreated, isUpdated, numberOfPacks }) =>
+          !isCreated && isUpdated && numberOfPacks > 0
+      )
       .map(inboundParsers.toUpdateLine);
+    const deleteInboundShipmentLines = lines
+      .filter(
+        ({ isCreated, isUpdated, numberOfPacks }) =>
+          !isCreated && isUpdated && numberOfPacks === 0
+      )
+      .map(inboundParsers.toDeleteLine);
 
     return sdk.upsertInboundShipment({
       storeId,
       input: {
         insertInboundShipmentLines,
         updateInboundShipmentLines,
+        deleteInboundShipmentLines,
       },
     });
   },

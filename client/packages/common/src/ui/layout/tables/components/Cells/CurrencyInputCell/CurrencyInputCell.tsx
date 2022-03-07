@@ -15,7 +15,7 @@ export const CurrencyInputCell = <T extends RecordWithId>({
     Number(Number(column.accessor({ rowData, rows })))
   );
 
-  const updater = useDebounceCallback(column.setter, [rowData], 250);
+  const updater = useDebounceCallback(column.setter, [column.setter], 250);
 
   const autoFocus = rowIndex === 0 && columnIndex === 0;
 
