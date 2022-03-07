@@ -5,6 +5,8 @@
   "button.create-shipment": "Create Shipment",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "button.select-a-color": "Select a color",
+  "button.add-from-master-list": "Add from master list",
+  "button.add-item": "Add item",
   "dev.log-draft": "Log draft",
   "error.requisition-not-found": "Requisition not found",
   "error.shipment-not-found": "Shipment not found",

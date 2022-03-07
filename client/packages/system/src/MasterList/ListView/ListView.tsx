@@ -8,8 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { MasterListRow } from '../types';
-import { useMasterLists } from '../api';
+import { useMasterLists, MasterListRowFragment } from '../api';
 
 export const MasterListListView: FC = () => {
   const {
@@ -23,7 +22,7 @@ export const MasterListListView: FC = () => {
   } = useMasterLists();
 
   const navigate = useNavigate();
-  const columns = useColumns<MasterListRow>(
+  const columns = useColumns<MasterListRowFragment>(
     ['code', 'name', 'description'],
     {
       onChangeSortBy,
@@ -42,7 +41,7 @@ export const MasterListListView: FC = () => {
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
-        onRowClick={row => navigate(`/inventory/master-lists/${row.id}`)}
+        onRowClick={row => navigate(row.id)}
       />
     </TableProvider>
   );
