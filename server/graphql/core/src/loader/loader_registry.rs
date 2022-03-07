@@ -74,7 +74,7 @@ pub async fn get_loaders(
     });
 
     let name_by_id_loader = DataLoader::new(NameByIdLoader {
-        connection_manager: connection_manager.clone(),
+        service_provider: service_provider.clone(),
     });
 
     let location_by_id_loader = DataLoader::new(LocationByIdLoader {

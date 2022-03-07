@@ -70,6 +70,18 @@ impl std::hash::Hash for IdAndStoreId {
     }
 }
 
+impl IdAndStoreId {
+    pub fn get_store_id(vec: &[IdAndStoreId]) -> Option<&str> {
+        vec.first().map(|i| i.store_id.as_str())
+    }
+
+    pub fn get_ids(vec: &[IdAndStoreId]) -> Vec<String> {
+        vec.iter()
+            .map(|item_and_store_id| item_and_store_id.id.clone())
+            .collect()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemStatsLoaderInput {
     pub item_id: String,

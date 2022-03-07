@@ -8,7 +8,6 @@ use graphql_core::{
 use graphql_types::types::NameNode;
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
-use service::name::get_names;
 use service::ListResult;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -38,19 +37,14 @@ pub struct NameFilterInput {
     pub is_customer: Option<bool>,
     /// Filter by supplier property
     pub is_supplier: Option<bool>,
-}
-
-impl From<NameFilterInput> for NameFilter {
-    fn from(f: NameFilterInput) -> Self {
-        NameFilter {
-            id: f.id.map(EqualFilter::from),
-            name: f.name.map(SimpleStringFilter::from),
-            code: f.code.map(SimpleStringFilter::from),
-            is_customer: f.is_customer,
-            is_supplier: f.is_supplier,
-            store_id: None,
-        }
-    }
+    /// Is this name a store
+    pub is_store: Option<bool>,
+    /// Code of the store if store is linked to name
+    pub store_code: Option<SimpleStringFilterInput>,
+    // Show invisible names in current store (based on store_id parameter)
+    pub show_invisible_in_current_store: Option<bool>,
+    // Show system names
+    pub show_system_names: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -64,25 +58,59 @@ pub enum NamesResponse {
     Response(NameConnector),
 }
 
-pub fn names(
+pub fn get_names(
     ctx: &Context<'_>,
+    store_id: &str,
     page: Option<PaginationInput>,
     filter: Option<NameFilterInput>,
     sort: Option<Vec<NameSortInput>>,
 ) -> Result<NamesResponse> {
-    let connection_manager = ctx.get_connection_manager();
-    let names = get_names(
-        connection_manager,
-        page.map(PaginationOption::from),
-        filter.map(NameFilter::from),
-        // Currently only one sort option is supported, use the first from the list.
-        sort.map(|mut sort_list| sort_list.pop())
-            .flatten()
-            .map(|sort| sort.to_domain()),
-    )
-    .map_err(StandardGraphqlError::from_list_error)?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let names = service_provider
+        .general_service
+        .get_names(
+            &service_context,
+            &store_id,
+            page.map(PaginationOption::from),
+            filter.map(|filter| filter.to_domain()),
+            // Currently only one sort option is supported, use the first from the list.
+            sort.map(|mut sort_list| sort_list.pop())
+                .flatten()
+                .map(|sort| sort.to_domain()),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(NamesResponse::Response(NameConnector::from_domain(names)))
+}
+
+impl NameFilterInput {
+    pub fn to_domain(self) -> NameFilter {
+        let NameFilterInput {
+            id,
+            name,
+            code,
+            is_customer,
+            is_supplier,
+            is_store,
+            store_code,
+            show_invisible_in_current_store,
+            show_system_names,
+        } = self;
+
+        NameFilter {
+            id: id.map(EqualFilter::from),
+            name: name.map(SimpleStringFilter::from),
+            code: code.map(SimpleStringFilter::from),
+            store_code: store_code.map(SimpleStringFilter::from),
+            is_customer,
+            is_supplier,
+            is_store,
+            show_invisible_in_current_store,
+            show_system_names,
+        }
+    }
 }
 
 impl NameConnector {

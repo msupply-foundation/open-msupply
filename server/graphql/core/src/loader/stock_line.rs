@@ -58,20 +58,16 @@ impl Loader<IdAndStoreId> for StockLineByItemAndStoreIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = StockLineRepository::new(&connection);
 
-        let store_id = if let Some(item_and_store_ids) = item_and_store_ids.first() {
-            &item_and_store_ids.store_id
-        } else {
-            return Ok(HashMap::new());
+        let store_id = match IdAndStoreId::get_store_id(item_and_store_ids) {
+            Some(store_id) => store_id,
+            None => return Ok(HashMap::new()),
         };
 
         let result = repo.query_by_filter(
             StockLineFilter::new()
-                .item_id(EqualFilter::equal_any(
-                    item_and_store_ids
-                        .iter()
-                        .map(|item_and_store_id| item_and_store_id.id.clone())
-                        .collect(),
-                ))
+                .item_id(EqualFilter::equal_any(IdAndStoreId::get_ids(
+                    item_and_store_ids,
+                )))
                 .store_id(EqualFilter::equal_to(store_id)),
         )?;
 
@@ -80,7 +76,7 @@ impl Loader<IdAndStoreId> for StockLineByItemAndStoreIdLoader {
             result_map
                 .entry(IdAndStoreId {
                     id: stock_line.stock_line_row.item_id.clone(),
-                    store_id: store_id.clone(),
+                    store_id: store_id.to_string(),
                 })
                 .or_insert(Vec::new())
                 .push(stock_line);
