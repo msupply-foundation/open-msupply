@@ -125,7 +125,6 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   update,
   isDisabled,
 }) => {
-  console.log(batches);
   const theme = useTheme();
   const t = useTranslation('inventory');
   const columns = useColumns<DraftStocktakeLine>([
