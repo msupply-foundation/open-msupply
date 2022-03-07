@@ -9,42 +9,23 @@ import {
   DropdownMenuItem,
   DeleteIcon,
   useTranslation,
-  // useNotification,
-  // useTableStore,
-  // DatePickerInput,
-  // useBufferState,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-// import { RequisitionLine } from '../../types';
-import { useRequestFields, useIsRequestDisabled } from '../api';
+import {
+  useRequestFields,
+  useIsRequestDisabled,
+  useDeleteRequestLines,
+} from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['replenishment', 'common']);
+  const { onDelete } = useDeleteRequestLines();
 
-  // const { success, info } = useNotification();
   const isDisabled = useIsRequestDisabled();
   const { theirReference, update, otherParty } = useRequestFields([
     'theirReference',
     'otherParty',
   ]);
-  // const [bufferedDate, setBufferedDate] = useBufferState(requisitionDate);
-
-  // const { selectedRows } = useTableStore(state => ({
-  //   selectedRows: Object.keys(state.rowState)
-  //     .filter(id => state.rowState[id]?.isSelected)
-  //     .map(selectedId => lines?.find(({ id }) => selectedId === id))
-  //     .filter(Boolean) as RequisitionLine[],
-  // }));
-
-  // const deleteAction = () => {
-  //   if (selectedRows && selectedRows?.length > 0) {
-  //     const successSnack = success(`Deleted ${selectedRows?.length} lines`);
-  //     successSnack();
-  //   } else {
-  //     const infoSnack = info(t('label.select-rows-to-delete-them'));
-  //     infoSnack();
-  //   }
-  // };
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -86,25 +67,10 @@ export const Toolbar: FC = () => {
                 }
               />
             </Box>
-            <Box display="flex" flex={1} flexDirection="column" gap={1}>
-              {/* <InputWithLabelRow
-                label={t('label.requisition-date')}
-                Input={
-                  <DatePickerInput
-                    disabled={isDisabled}
-                    value={bufferedDate ?? null}
-                    onChange={d => {
-                      setBufferedDate(d);
-                      update({ requisitionDate: d });
-                    }}
-                  />
-                }
-              /> */}
-            </Box>
           </Box>
         </Grid>
         <DropdownMenu disabled={isDisabled} label={t('label.select')}>
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={() => {}}>
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>
         </DropdownMenu>
