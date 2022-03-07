@@ -32,19 +32,13 @@ export const DataTableComponent = <T extends RecordWithId>({
   isDisabled = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
-  const { setActiveRows, setDisabledRows, rowState } = useTableStore();
-
-  console.log(rowState);
+  const { setActiveRows, setDisabledRows } = useTableStore();
 
   useEffect(() => {
     if (data.length) setActiveRows(data.map(({ id }) => id));
   }, [data]);
 
   useEffect(() => {
-    console.log(
-      'setting disabled',
-      data.map(({ id }) => id)
-    );
     if (isDisabled) setDisabledRows(data.map(({ id }) => id));
   }, [isDisabled, data]);
 

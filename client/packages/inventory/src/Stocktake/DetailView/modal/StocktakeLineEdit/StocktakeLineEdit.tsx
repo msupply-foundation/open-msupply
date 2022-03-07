@@ -41,7 +41,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const t = useTranslation(['common', 'inventory']);
   const { draftLines, update, addLine, isLoading, save, nextItem } =
     useStocktakeLineEdit(currentItem);
-  console.log(draftLines);
 
   const onNext = async () => {
     await save(draftLines);
