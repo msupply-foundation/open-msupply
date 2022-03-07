@@ -20,7 +20,7 @@ export const StocktakeLockButton: FC = () => {
     ? 'messages.unlocked-description'
     : 'messages.locked-description';
 
-  const getUpdateConfirmation = useConfirmationModal({
+  const getConfirmation = useConfirmationModal({
     onConfirm: () => update({ isLocked: !isLocked }),
     title: t('heading.are-you-sure'),
     message: t(message),
@@ -31,7 +31,7 @@ export const StocktakeLockButton: FC = () => {
       disabled={status !== StocktakeNodeStatus.New}
       value={isLocked}
       selected={isLocked}
-      onClick={() => getUpdateConfirmation()}
+      onClick={() => getConfirmation()}
       label={t('label.locked')}
     />
   );

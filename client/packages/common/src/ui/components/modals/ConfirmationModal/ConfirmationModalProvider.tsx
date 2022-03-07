@@ -44,7 +44,6 @@ export const ConfirmationModalProvider: FC = ({ children }) => {
         onConfirm={onConfirm}
         onCancel={() => {
           setState(state => ({ ...state, open: false }));
-          console.log('cancel', onCancel);
           onCancel && onCancel();
         }}
         iconType={iconType}

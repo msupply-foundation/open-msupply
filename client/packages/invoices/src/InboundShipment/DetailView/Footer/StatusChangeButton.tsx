@@ -84,7 +84,7 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = useInboundFields('status');
+  const { status, onHold, update } = useInboundFields(['status', 'onHold']);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
 
@@ -108,7 +108,7 @@ const useStatusChangeButton = () => {
     }
   };
 
-  const onGetConfirmation = useConfirmationModal({
+  const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
       status: selectedOption?.value
@@ -124,12 +124,23 @@ const useStatusChangeButton = () => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, onGetConfirmation };
+  return {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    onHold,
+  };
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, onGetConfirmation } =
-    useStatusChangeButton();
+  const {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    onHold,
+  } = useStatusChangeButton();
   const isDisabled = useIsInboundDisabled();
 
   if (!selectedOption) return null;
@@ -137,11 +148,12 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
+      isDisabled={onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={() => onGetConfirmation()}
+      onClick={() => getConfirmation()}
     />
   );
 };
