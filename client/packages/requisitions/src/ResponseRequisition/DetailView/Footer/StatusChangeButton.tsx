@@ -82,7 +82,7 @@ const useStatusChangeButton = () => {
     }
   };
 
-  const onGetConfirmation = useConfirmationModal({
+  const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
       status: selectedOption?.value
@@ -98,11 +98,11 @@ const useStatusChangeButton = () => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, onGetConfirmation };
+  return { options, selectedOption, setSelectedOption, getConfirmation };
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, onGetConfirmation } =
+  const { options, selectedOption, setSelectedOption, getConfirmation } =
     useStatusChangeButton();
   const isDisabled = useIsResponseDisabled();
 
@@ -115,7 +115,7 @@ export const StatusChangeButton = () => {
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={onGetConfirmation}
+      onClick={() => getConfirmation()}
     />
   );
 };

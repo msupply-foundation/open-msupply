@@ -75,7 +75,7 @@ const useStatusChangeButton = () => {
     }
   };
 
-  const onGetConfirmation = useConfirmationModal({
+  const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
       status: selectedOption?.value
@@ -95,19 +95,14 @@ const useStatusChangeButton = () => {
     options,
     selectedOption,
     setSelectedOption,
-    onGetConfirmation,
+    getConfirmation,
     lines,
   };
 };
 
 export const StatusChangeButton = () => {
-  const {
-    options,
-    selectedOption,
-    setSelectedOption,
-    onGetConfirmation,
-    lines,
-  } = useStatusChangeButton();
+  const { options, selectedOption, setSelectedOption, getConfirmation, lines } =
+    useStatusChangeButton();
   const isDisabled = useIsStocktakeDisabled();
 
   if (!selectedOption) return null;
@@ -120,7 +115,7 @@ export const StatusChangeButton = () => {
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={onGetConfirmation}
+      onClick={() => getConfirmation()}
     />
   );
 };

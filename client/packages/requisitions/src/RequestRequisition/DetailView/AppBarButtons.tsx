@@ -9,7 +9,7 @@ import {
   useToggle,
 } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
-
+import { useAddFromMasterList } from '../api';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: (newState: boolean) => void;
@@ -19,6 +19,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   isDisabled,
   onAddItem,
 }) => {
+  const { addFromMasterList } = useAddFromMasterList();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('distribution');
   const modalController = useToggle();
@@ -35,7 +36,10 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <MasterListSearchModal
           open={modalController.isOn}
           onClose={modalController.toggleOff}
-          onChange={masterList => console.log(masterList)}
+          onChange={masterList => {
+            modalController.toggleOff();
+            addFromMasterList(masterList);
+          }}
         />
         <ButtonWithIcon
           disabled={isDisabled}
