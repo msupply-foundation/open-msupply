@@ -9,6 +9,8 @@ import {
   BufferedTextInput,
   useBufferState,
   InputWithLabelRow,
+  DatePickerInput,
+  formatNaiveDate,
 } from '@openmsupply-client/common';
 import {
   useStocktakeFields,
@@ -17,12 +19,15 @@ import {
 } from '../api';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation(['distribution', 'common', 'inventory']);
+  const t = useTranslation('inventory');
   const isDisabled = useIsStocktakeDisabled();
-  const { description, update } = useStocktakeFields('description');
+  const { stocktakeDate, description, update } = useStocktakeFields([
+    'description',
+    'stocktakeDate',
+  ]);
   const { onDelete } = useDeleteSelectedLines();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
-
+  const [bufferedDate, setBufferedDate] = useBufferState(stocktakeDate);
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -48,7 +53,22 @@ export const Toolbar: FC = () => {
               />
             }
           />
+          <InputWithLabelRow
+            label={t('label.stocktake-date')}
+            Input={
+              <DatePickerInput
+                disabled={isDisabled}
+                value={bufferedDate ? new Date(bufferedDate) : null}
+                onChange={d => {
+                  const naiveDate = formatNaiveDate(d);
+                  setBufferedDate(naiveDate);
+                  update({ stocktakeDate: naiveDate });
+                }}
+              />
+            }
+          />
         </Grid>
+
         <Grid item>
           <DropdownMenu disabled={isDisabled} label={t('label.select')}>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
