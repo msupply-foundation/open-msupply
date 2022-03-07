@@ -3,7 +3,7 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
-use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader};
+use graphql_core::loader::{IdAndStoreId, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader};
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreLoader},
     standard_graphql_error::StandardGraphqlError,
@@ -218,17 +218,20 @@ impl InvoiceNode {
         })
     }
 
-    pub async fn other_party(&self, ctx: &Context<'_>) -> Result<NameNode> {
+    pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(self.invoice.other_party_id().to_string())
+            .load_one(IdAndStoreId {
+                id: self.row().name_id.clone(),
+                store_id,
+            })
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to invoice ({})",
-                &self.invoice.other_party_id(),
+                &self.row().name_id,
                 &self.row().id
             ))
             .extend(),
