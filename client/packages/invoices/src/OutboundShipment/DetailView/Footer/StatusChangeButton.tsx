@@ -188,7 +188,7 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
-      disabled={onHold}
+      isDisabled={onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
