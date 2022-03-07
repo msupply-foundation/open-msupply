@@ -99,37 +99,42 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
             <Box marginLeft={1} />
 
-            <Grid
-              item
-              alignItems="center"
-              display="flex"
-              justifyContent="flex-start"
-              style={{ minWidth: 125 }}
-            >
-              <InputLabel sx={{ fontSize: '12px' }}>
-                {packSizeController.selected?.value === -1
-                  ? t('label.packs-of', { count: quantity })
-                  : t('label.units-in-pack-size-of', { count: quantity })}
-              </InputLabel>
-            </Grid>
+            {packSizeController.options.length ? (
+              <>
+                <Grid
+                  item
+                  alignItems="center"
+                  display="flex"
+                  justifyContent="flex-start"
+                  style={{ minWidth: 125 }}
+                >
+                  <InputLabel sx={{ fontSize: '12px' }}>
+                    {packSizeController.selected?.value === -1
+                      ? t('label.packs-of', { count: quantity })
+                      : t('label.units-in-pack-size-of', { count: quantity })}
+                  </InputLabel>
+                </Grid>
 
-            <Box marginLeft={1} />
+                <Box marginLeft={1} />
 
-            {packSizeController.options.length && (
-              <Select
-                sx={{ width: 110 }}
-                options={packSizeController.options}
-                value={packSizeController.selected?.value ?? ''}
-                onChange={e => {
-                  const { value } = e.target;
-                  const packSize = Number(value);
-                  packSizeController.setPackSize(packSize);
-                  onChangeQuantity(quantity, packSize === -1 ? null : packSize);
-                }}
-              />
-            )}
+                <Select
+                  sx={{ width: 110 }}
+                  options={packSizeController.options}
+                  value={packSizeController.selected?.value ?? ''}
+                  onChange={e => {
+                    const { value } = e.target;
+                    const packSize = Number(value);
+                    packSizeController.setPackSize(packSize);
+                    onChangeQuantity(
+                      quantity,
+                      packSize === -1 ? null : packSize
+                    );
+                  }}
+                />
 
-            <Box marginLeft="auto" />
+                <Box marginLeft="auto" />
+              </>
+            ) : null}
           </Grid>
         </>
       ) : (
