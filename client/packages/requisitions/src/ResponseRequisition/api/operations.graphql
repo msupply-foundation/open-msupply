@@ -27,6 +27,8 @@ fragment ResponseLine on RequisitionLineNode {
   itemId
   requestedQuantity
   supplyQuantity
+  comment
+
   itemStats {
     __typename
     availableStockOnHand

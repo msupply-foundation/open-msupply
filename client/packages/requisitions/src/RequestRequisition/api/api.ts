@@ -1,4 +1,6 @@
 import {
+  UpdateRequestRequisitionLineInput,
+  InsertRequestRequisitionLineInput,
   RequisitionNodeType,
   FilterBy,
   SortBy,
@@ -72,15 +74,21 @@ const requestParser = {
       status: requestParser.toStatus(requisition),
     };
   },
-  toInsertLine: (line: DraftRequestLine) => ({
+  toInsertLine: (
+    line: DraftRequestLine
+  ): InsertRequestRequisitionLineInput => ({
     id: line.id,
     itemId: line.itemId,
     requisitionId: line.requisitionId,
     requestedQuantity: line.requestedQuantity,
+    comment: line.comment,
   }),
-  toUpdateLine: (line: DraftRequestLine) => ({
+  toUpdateLine: (
+    line: DraftRequestLine
+  ): UpdateRequestRequisitionLineInput => ({
     id: line.id,
     requestedQuantity: line.requestedQuantity,
+    comment: line.comment,
   }),
 };
 
@@ -188,18 +196,18 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Unable to create requisition');
   },
   deleteRequests: async (requisitions: RequestRowFragment[]) => {
-    const promises = requisitions.map(requisition => {
-      const input = requestParser.toDelete(requisition);
-      return sdk.deleteRequest({ input, storeId });
-    });
-    const results = await Promise.all(promises);
-
-    const success = results.every(({ deleteRequestRequisition }) => {
-      return deleteRequestRequisition.__typename === 'DeleteResponse';
+    const deleteRequestRequisitions = requisitions.map(requestParser.toDelete);
+    const result = await sdk.deleteRequest({
+      storeId,
+      input: { deleteRequestRequisitions },
     });
 
-    if (success) return results;
+    const { batchRequestRequisition } = result;
 
-    throw new Error('Could not delete requisition');
+    if (batchRequestRequisition.deleteRequestRequisitions) {
+      return batchRequestRequisition.deleteRequestRequisitions.length;
+    }
+
+    throw new Error('Could not delete requisitions');
   },
 });
