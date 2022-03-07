@@ -8,6 +8,7 @@ import {
   SortBy,
   FilterBy,
   StocktakeSortFieldInput,
+  DeleteStocktakeLineInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -25,48 +26,44 @@ export type ListParams = {
 };
 
 const stocktakeParser = {
-  toUpdate: (patch: RecordPatch<StocktakeFragment>): UpdateStocktakeInput => {
-    return {
-      description: patch.description,
-      status: patch.status,
-      comment: patch.comment,
-      id: patch.id,
-      isLocked: patch.isLocked,
-      stocktakeDate: patch.stocktakeDate
-        ? formatNaiveDate(new Date(patch.stocktakeDate))
-        : undefined,
-    };
-  },
+  toUpdate: (patch: RecordPatch<StocktakeFragment>): UpdateStocktakeInput => ({
+    description: patch.description,
+    status: patch.status,
+    comment: patch.comment,
+    id: patch.id,
+    isLocked: patch.isLocked,
+    stocktakeDate: patch.stocktakeDate
+      ? formatNaiveDate(new Date(patch.stocktakeDate))
+      : undefined,
+  }),
   line: {
-    toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => {
-      return {
-        batch: line.batch ?? '',
-        packSize: line.packSize ?? 1,
-        costPricePerPack: line.costPricePerPack,
-        countedNumberOfPacks: line.countedNumberOfPacks,
-        sellPricePerPack: line.sellPricePerPack,
-        id: line.id,
-
-        expiryDate: line.expiryDate
-          ? formatNaiveDate(new Date(line.expiryDate))
-          : undefined,
-      };
-    },
-    toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => {
-      return {
-        batch: line.batch ?? '',
-        packSize: line.packSize ?? 1,
-        costPricePerPack: line.costPricePerPack,
-        countedNumberOfPacks: line.countedNumberOfPacks,
-        id: line.id,
-        itemId: line.itemId,
-        sellPricePerPack: line.sellPricePerPack,
-        stocktakeId: line.stocktakeId,
-        expiryDate: line.expiryDate
-          ? formatNaiveDate(new Date(line.expiryDate))
-          : undefined,
-      };
-    },
+    toDelete: (line: DraftStocktakeLine): DeleteStocktakeLineInput => ({
+      id: line.id,
+    }),
+    toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => ({
+      batch: line.batch ?? '',
+      packSize: line.packSize ?? 1,
+      costPricePerPack: line.costPricePerPack,
+      countedNumberOfPacks: line.countedNumberOfPacks,
+      sellPricePerPack: line.sellPricePerPack,
+      id: line.id,
+      expiryDate: line.expiryDate
+        ? formatNaiveDate(new Date(line.expiryDate))
+        : undefined,
+    }),
+    toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
+      batch: line.batch ?? '',
+      packSize: line.packSize ?? 1,
+      costPricePerPack: line.costPricePerPack,
+      countedNumberOfPacks: line.countedNumberOfPacks,
+      id: line.id,
+      itemId: line.itemId,
+      sellPricePerPack: line.sellPricePerPack,
+      stocktakeId: line.stocktakeId,
+      expiryDate: line.expiryDate
+        ? formatNaiveDate(new Date(line.expiryDate))
+        : undefined,
+    }),
   },
 };
 
@@ -111,11 +108,20 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
   updateLines: async (draftStocktakeLines: DraftStocktakeLine[]) => {
     const input = {
       storeId,
+      deleteStocktakeLines: draftStocktakeLines
+        .filter(
+          ({ countThisLine, isUpdated, isCreated }) =>
+            !isCreated && isUpdated && !countThisLine
+        )
+        .map(stocktakeParser.line.toDelete),
       insertStocktakeLines: draftStocktakeLines
-        .filter(({ isCreated }) => isCreated)
+        .filter(({ isCreated, countThisLine }) => isCreated && countThisLine)
         .map(stocktakeParser.line.toInsert),
       updateStocktakeLines: draftStocktakeLines
-        .filter(({ isCreated, isUpdated }) => !isCreated && isUpdated)
+        .filter(
+          ({ countThisLine, isCreated, isUpdated }) =>
+            !isCreated && isUpdated && countThisLine
+        )
         .map(stocktakeParser.line.toUpdate),
     };
 
