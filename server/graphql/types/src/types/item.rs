@@ -11,7 +11,10 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{schema::ItemRow, Item};
+use repository::{
+    schema::{ItemRow, ItemRowType},
+    Item,
+};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
@@ -45,6 +48,10 @@ impl ItemNode {
 
     pub async fn unit_name(&self) -> Option<&str> {
         self.item.unit_name()
+    }
+
+    pub async fn r#type(&self) -> ItemNodeType {
+        ItemNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn stats(
@@ -100,6 +107,31 @@ pub enum ItemResponseError {
 #[derive(SimpleObject)]
 pub struct ItemError {
     pub error: ItemResponseError,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum ItemNodeType {
+    Service,
+    Stock,
+    NonStock,
+}
+
+impl ItemNodeType {
+    pub fn from_domain(from: &ItemRowType) -> ItemNodeType {
+        match from {
+            ItemRowType::Stock => ItemNodeType::Stock,
+            ItemRowType::Service => ItemNodeType::Service,
+            ItemRowType::NonStock => ItemNodeType::NonStock,
+        }
+    }
+
+    pub fn to_domain(self) -> ItemRowType {
+        match self {
+            ItemNodeType::Stock => ItemRowType::Stock,
+            ItemNodeType::Service => ItemRowType::Service,
+            ItemNodeType::NonStock => ItemRowType::NonStock,
+        }
+    }
 }
 
 #[derive(Union)]
