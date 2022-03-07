@@ -8,6 +8,7 @@ use self::{
         InsertRequestRequisition, InsertRequestRequisitionError, UpdateRequestRequisition,
         UpdateRequestRequisitionError, UseSuggestedQuantity, UseSuggestedQuantityError,
     },
+    requisition_supply_status::{get_requisitions_supply_statuses, RequisitionLineSupplyStatus},
     response_requisition::{
         create_requisition_shipment, supply_requested_quantity, update_response_requisition,
         CreateRequisitionShipment, CreateRequisitionShipmentError, SupplyRequestedQuantity,
@@ -26,6 +27,7 @@ use repository::{
 pub mod common;
 pub mod query;
 pub mod request_requisition;
+pub mod requisition_supply_status;
 pub mod response_requisition;
 
 pub trait RequisitionServiceTrait: Sync + Send {
@@ -57,6 +59,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         r#type: RequisitionRowType,
     ) -> Result<Option<Requisition>, RepositoryError> {
         get_requisition_by_number(ctx, store_id, requisition_number, r#type)
+    }
+
+    fn get_requisitions_supply_status(
+        &self,
+        ctx: &ServiceContext,
+        requisition_ids: Vec<String>,
+    ) -> Result<Vec<RequisitionLineSupplyStatus>, RepositoryError> {
+        get_requisitions_supply_statuses(&ctx.connection, requisition_ids)
     }
 
     fn insert_request_requisition(
