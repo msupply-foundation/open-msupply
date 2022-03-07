@@ -269,6 +269,14 @@ export const useOutboundColumns = ({
               return rowData.packSize * rowData.numberOfPacks;
             }
           },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return lines.reduce(getUnitQuantity, 0);
+            } else {
+              return rowData.packSize * rowData.numberOfPacks;
+            }
+          },
         },
       ],
       {
