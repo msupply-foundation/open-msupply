@@ -3,7 +3,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::mock::{
         mock_invoice1_linked_to_requisition, mock_invoice2_linked_to_requisition,
-        mock_invoice3_linked_to_requisition, mock_name_a, mock_name_store_a,
+        mock_invoice3_linked_to_requisition, mock_name_a, mock_name_b,
         mock_request_draft_requisition_all_fields, mock_response_draft_requisition_all_fields,
         MockDataInserts,
     };
@@ -22,12 +22,12 @@ mod test {
         .await;
 
         let query = r#"
-        query($filter: RequisitionFilterInput) {
-          requisitions(filter: $filter, storeId: \"store_a\") {
+        query($storeId: String!, $filter: RequisitionFilterInput) {
+          requisitions(filter: $filter, storeId: $storeId) {
             ... on RequisitionConnector {
               nodes {
                 id
-                otherParty {
+                otherParty(storeId: $storeId) {
                     id
                 }
                 requestRequisition {
@@ -49,6 +49,7 @@ mod test {
         let response_requisition = mock_response_draft_requisition_all_fields();
 
         let variables = json!({
+        "storeId": "store_a",
           "filter": {
             "id": {
                 "equalAny": [&request_requisition.requisition.id, &response_requisition.requisition.id]
@@ -70,7 +71,7 @@ mod test {
                 {
                     "id": &response_requisition.requisition.id,
                     "otherParty": {
-                        "id": mock_name_store_a().id
+                        "id": mock_name_b().id
                     },
                 }]
             }
