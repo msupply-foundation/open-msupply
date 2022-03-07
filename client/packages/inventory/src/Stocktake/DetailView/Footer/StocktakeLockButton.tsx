@@ -31,7 +31,7 @@ export const StocktakeLockButton: FC = () => {
       disabled={status !== StocktakeNodeStatus.New}
       value={isLocked}
       selected={isLocked}
-      onClick={() => getUpdateConfirmation}
+      onClick={() => getUpdateConfirmation()}
       label={t('label.locked')}
     />
   );
