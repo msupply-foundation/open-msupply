@@ -190,14 +190,12 @@ export const useDeleteSelectedLines = (): {
   const selectedRows = useTableStore(state => {
     const { isGrouped } = state;
 
-    if (isGrouped) {
-      return items
-        ?.filter(({ id }) => state.rowState[id]?.isSelected)
-        .map(({ lines }) => lines.flat())
-        .flat();
-    } else {
-      return lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    }
+    return isGrouped
+      ? items
+          ?.filter(({ id }) => state.rowState[id]?.isSelected)
+          .map(({ lines }) => lines.flat())
+          .flat()
+      : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
   });
 
   const onDelete = async () => {
