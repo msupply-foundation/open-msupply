@@ -200,7 +200,7 @@ export const UpdateResponseLineDocument = gql`
           description
           key
         }
-        ... on RecordDoesNotExist {
+        ... on RecordNotFound {
           __typename
           description
         }
