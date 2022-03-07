@@ -22,6 +22,7 @@ use service::permission_validation::{Resource, ResourceAccessRequest};
 pub enum RequisitionSortFieldInput {
     RequisitionNumber,
     Type,
+    Comment,
     Status,
     OtherPartyName,
     SentDatetime,
@@ -188,6 +189,7 @@ impl RequisitionSortInput {
             from::RequisitionNumber => to::RequisitionNumber,
             from::Type => to::Type,
             from::Status => to::Status,
+            from::Comment => to::Comment,
             from::OtherPartyName => to::OtherPartyName,
             from::SentDatetime => to::SentDatetime,
             from::CreatedDatetime => to::CreatedDatetime,
