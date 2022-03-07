@@ -117,8 +117,8 @@ export const useStocktakeFields = <
 };
 
 export const useIsStocktakeDisabled = (): boolean => {
-  const { status } = useStocktakeFields('status');
-  return status === StocktakeNodeStatus.Finalised;
+  const { status, isLocked } = useStocktakeFields(['status', 'isLocked']);
+  return status === StocktakeNodeStatus.Finalised || isLocked;
 };
 
 const useStocktakeSelector = <ReturnType>(

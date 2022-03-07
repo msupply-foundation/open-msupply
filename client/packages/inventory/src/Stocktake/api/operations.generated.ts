@@ -4,11 +4,11 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type StocktakeRowFragment = { __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeNumber: number, status: Types.StocktakeNodeStatus };
+export type StocktakeRowFragment = { __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeDate?: string | null, stocktakeNumber: number, status: Types.StocktakeNodeStatus };
 
 export type StocktakeLineFragment = { __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } };
 
-export type StocktakeFragment = { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } };
+export type StocktakeFragment = { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeDate?: string | null, status: Types.StocktakeNodeStatus, description?: string | null, isLocked: boolean, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } };
 
 export type StocktakesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -18,7 +18,7 @@ export type StocktakesQueryVariables = Types.Exact<{
 }>;
 
 
-export type StocktakesQuery = { __typename: 'FullQuery', stocktakes: { __typename: 'StocktakeConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeNumber: number, status: Types.StocktakeNodeStatus }> } };
+export type StocktakesQuery = { __typename: 'FullQuery', stocktakes: { __typename: 'StocktakeConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeDate?: string | null, stocktakeNumber: number, status: Types.StocktakeNodeStatus }> } };
 
 export type StocktakeQueryVariables = Types.Exact<{
   stocktakeId: Types.Scalars['String'];
@@ -26,7 +26,7 @@ export type StocktakeQueryVariables = Types.Exact<{
 }>;
 
 
-export type StocktakeQuery = { __typename: 'FullQuery', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } } };
+export type StocktakeQuery = { __typename: 'FullQuery', stocktake: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeDate?: string | null, status: Types.StocktakeNodeStatus, description?: string | null, isLocked: boolean, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } } };
 
 export type StocktakeByNumberQueryVariables = Types.Exact<{
   stocktakeNumber: Types.Scalars['Int'];
@@ -34,7 +34,7 @@ export type StocktakeByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type StocktakeByNumberQuery = { __typename: 'FullQuery', stocktakeByNumber: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, status: Types.StocktakeNodeStatus, description?: string | null, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } } };
+export type StocktakeByNumberQuery = { __typename: 'FullQuery', stocktakeByNumber: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: any, finalisedDatetime?: any | null, stocktakeDate?: string | null, status: Types.StocktakeNodeStatus, description?: string | null, isLocked: boolean, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } } };
 
 export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -78,6 +78,7 @@ export const StocktakeRowFragmentDoc = gql`
   description
   createdDatetime
   finalisedDatetime
+  stocktakeDate
   stocktakeNumber
   status
 }
@@ -123,8 +124,10 @@ export const StocktakeFragmentDoc = gql`
   comment
   createdDatetime
   finalisedDatetime
+  stocktakeDate
   status
   description
+  isLocked
   lines {
     __typename
     totalCount
