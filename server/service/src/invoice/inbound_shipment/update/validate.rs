@@ -12,8 +12,9 @@ use repository::{
 use super::{UpdateInboundShipment, UpdateInboundShipmentError};
 
 pub fn validate(
-    patch: &UpdateInboundShipment,
     connection: &StorageConnection,
+    store_id: &str,
+    patch: &UpdateInboundShipment,
 ) -> Result<(InvoiceRow, Option<Name>), UpdateInboundShipmentError> {
     use UpdateInboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
@@ -25,7 +26,7 @@ pub fn validate(
 
     let other_party_option = match &patch.other_party_id {
         Some(other_party_id) => {
-            let other_party = check_other_party_id(connection, &other_party_id)?
+            let other_party = check_other_party_id(connection, store_id, &other_party_id)?
                 .ok_or(OtherPartyDoesNotExist {})?;
 
             if !other_party.is_supplier() {
