@@ -172,6 +172,21 @@ impl RequisitionNode {
         Ok(InvoiceConnector::from_vec(result))
     }
 
+    /// All lines that have not been supplied
+    /// based on same logic as RequisitionLineNode.remainingQuantityToSupply
+    /// only applicable to Response requisition, Request requisition will empty connector
+    pub async fn lines_remaining_to_supply(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<RequisitionLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<RequisitionLinesByRequisitionIdLoader>>();
+        let result_option = loader.load_one(self.row().id.clone()).await?;
+
+        let result = result_option.unwrap_or(vec![]);
+
+        Ok(RequisitionLineConnector::from_vec(result))
+    }
+
     // % allocated ?
     // % shipped ?
     // lead time ?
