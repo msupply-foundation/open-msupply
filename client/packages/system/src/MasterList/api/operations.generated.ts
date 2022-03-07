@@ -4,6 +4,8 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+export type MasterListRowFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string };
+
 export type MasterListsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -14,9 +16,17 @@ export type MasterListsQueryVariables = Types.Exact<{
 }>;
 
 
-export type MasterListsQuery = { __typename: 'FullQuery', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListLineNode', id: string, itemId: string, item: { __typename: 'ItemNode', code: string, id: string, unitName?: string | null, name: string, isVisible: boolean, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, itemId: string, id: string, totalNumberOfPacks: number, storeId: string, sellPricePerPack: number, packSize: number, onHold: boolean, note?: string | null, locationName?: string | null }> } } }> } }> } };
+export type MasterListsQuery = { __typename: 'FullQuery', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string }> } };
 
-
+export const MasterListRowFragmentDoc = gql`
+    fragment MasterListRow on MasterListNode {
+  __typename
+  name
+  code
+  description
+  id
+}
+    `;
 export const MasterListsDocument = gql`
     query masterLists($first: Int, $offset: Int, $key: MasterListSortFieldInput!, $desc: Boolean, $filter: MasterListFilterInput, $storeId: String!) {
   masterLists(
@@ -29,50 +39,12 @@ export const MasterListsDocument = gql`
       __typename
       totalCount
       nodes {
-        name
-        code
-        description
-        id
-        lines {
-          __typename
-          totalCount
-          nodes {
-            id
-            itemId
-            item {
-              code
-              id
-              unitName
-              name
-              isVisible
-              availableBatches(storeId: $storeId) {
-                __typename
-                totalCount
-                nodes {
-                  __typename
-                  availableNumberOfPacks
-                  batch
-                  costPricePerPack
-                  expiryDate
-                  itemId
-                  id
-                  totalNumberOfPacks
-                  storeId
-                  sellPricePerPack
-                  packSize
-                  onHold
-                  note
-                  locationName
-                }
-              }
-            }
-          }
-        }
+        ...MasterListRow
       }
     }
   }
 }
-    `;
+    ${MasterListRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
