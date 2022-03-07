@@ -130,7 +130,14 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.deleteRequestLines({ ids, storeId });
 
     if (result.batchRequestRequisition.deleteRequestRequisitionLines) {
-      return result.batchRequestRequisition.deleteRequestRequisitionLines;
+      const failedLines =
+        result.batchRequestRequisition.deleteRequestRequisitionLines.filter(
+          line =>
+            line.response.__typename === 'DeleteRequestRequisitionLineError'
+        );
+      if (failedLines.length === 0) {
+        return result.batchRequestRequisition.deleteRequestRequisitionLines;
+      }
     }
 
     throw new Error('Could not delete requisition lines!');
@@ -217,7 +224,6 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     const { batchRequestRequisition } = result;
 
     if (batchRequestRequisition.deleteRequestRequisitions) {
-      console.log(batchRequestRequisition.deleteRequestRequisitions.length);
       return batchRequestRequisition.deleteRequestRequisitions.length;
     }
 

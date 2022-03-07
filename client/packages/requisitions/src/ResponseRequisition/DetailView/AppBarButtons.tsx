@@ -14,7 +14,7 @@ export const AppBarButtonsComponent: FC = () => {
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('distribution');
   const { mutate: createOutbound } = useCreateOutboundFromResponse();
-  const confirmOutboundCreation = useConfirmationModal({
+  const getConfirmation = useConfirmationModal({
     onConfirm: createOutbound,
     message: t('messages.create-outbound-from-requisition'),
     title: t('heading.create-outbound-shipment'),
@@ -26,7 +26,7 @@ export const AppBarButtonsComponent: FC = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.create-shipment')}
-          onClick={() => confirmOutboundCreation()}
+          onClick={() => getConfirmation()}
         />
         {OpenButton}
       </Grid>

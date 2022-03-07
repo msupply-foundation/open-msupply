@@ -63,7 +63,7 @@ export const useOutbounds = () => {
   const api = useOutboundApi();
 
   return {
-    ...useQuery(['invoice', 'list', api.storeId, queryParams], () =>
+    ...useQuery(api.keys.paramList(queryParams), () =>
       api.get.list({
         first: queryParams.first,
         offset: queryParams.offset,
