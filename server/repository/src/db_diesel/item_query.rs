@@ -148,7 +148,7 @@ type BoxedItemQuery = IntoBoxed<
     DBType,
 >;
 
-pub fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
+fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
     // Join master_list_line
     let mut query = item_dsl::item
         .inner_join(item_is_visible_dsl::item_is_visible)
