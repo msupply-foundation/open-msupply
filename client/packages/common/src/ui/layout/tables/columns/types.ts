@@ -11,6 +11,7 @@ export interface CellProps<T extends RecordWithId> {
   rowKey: string;
   columnIndex: number;
   rowIndex: number;
+  isDisabled?: boolean;
 }
 
 export interface HeaderProps<T extends RecordWithId> {

@@ -1,3 +1,4 @@
+import { isOutboundDisabled } from './../../utils';
 import { useMemo, useCallback } from 'react';
 import {
   RouteBuilder,
@@ -6,7 +7,6 @@ import {
   useTranslation,
   useNotification,
   useQueryClient,
-  InvoiceNodeStatus,
   useQuerySelector,
   useParams,
   useOmSupplyApi,
@@ -167,12 +167,9 @@ export const useOutboundFields = <KeyOfOutbound extends keyof OutboundFragment>(
 };
 
 export const useIsOutboundDisabled = (): boolean => {
-  const { status } = useOutboundFields('status');
-  return (
-    status === InvoiceNodeStatus.Shipped ||
-    status === InvoiceNodeStatus.Verified ||
-    status === InvoiceNodeStatus.Delivered
-  );
+  const { data } = useOutbound();
+  if (!data) return true;
+  return isOutboundDisabled(data);
 };
 
 const useOutboundSelector = <ReturnType>(

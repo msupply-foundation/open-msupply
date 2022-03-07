@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -9,11 +9,20 @@ import {
   InvoiceNodeStatus,
   useTranslation,
   useCurrency,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getStatusTranslator } from '../../utils';
+import { getStatusTranslator, isInboundDisabled } from '../../utils';
 import { useInbounds, useUpdateInbound, InboundRowFragment } from '../api';
+
+const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
+  const { setDisabledRows } = useTableStore();
+  useEffect(() => {
+    const disabledRows = rows?.filter(isInboundDisabled).map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [rows]);
+};
 
 export const InboundListView: FC = () => {
   const { mutate: onUpdate } = useUpdateInbound();
@@ -28,6 +37,7 @@ export const InboundListView: FC = () => {
     pagination,
     filter,
   } = useInbounds();
+  useDisableInboundRows(data?.nodes);
 
   const t = useTranslation();
 

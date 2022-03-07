@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -6,16 +6,27 @@ import {
   TableProvider,
   createTableStore,
   getNameAndColorColumn,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { isResponseDisabled } from '../../utils';
 import { useUpdateResponse, useResponses, ResponseRowFragment } from '../api';
+
+const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
+  const { setDisabledRows } = useTableStore();
+  useEffect(() => {
+    const disabledRows = rows?.filter(isResponseDisabled).map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [rows]);
+};
 
 export const ResponseRequisitionListView: FC = () => {
   const { mutate: onUpdate } = useUpdateResponse();
   const navigate = useNavigate();
   const { data, onChangeSortBy, sortBy, onChangePage, pagination, filter } =
     useResponses();
+  useDisableResponseRows(data?.nodes);
 
   const columns = useColumns<ResponseRowFragment>(
     [

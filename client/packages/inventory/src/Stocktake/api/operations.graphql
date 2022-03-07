@@ -8,6 +8,7 @@ fragment StocktakeRow on StocktakeNode {
   stocktakeDate
   stocktakeNumber
   status
+  isLocked
 }
 
 fragment StocktakeLine on StocktakeLineNode {

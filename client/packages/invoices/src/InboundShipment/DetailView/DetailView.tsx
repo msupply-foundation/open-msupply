@@ -18,10 +18,11 @@ import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
-import { useInbound, InboundLineFragment } from '../api';
+import { useInbound, InboundLineFragment, useIsInboundDisabled } from '../api';
 
 export const DetailView: FC = () => {
   const { data, isLoading } = useInbound();
+  const isDisabled = useIsInboundDisabled();
   const { onOpen, onClose, mode, entity, isOpen } =
     useEditModal<ItemRowFragment>();
   const navigate = useNavigate();
@@ -53,6 +54,7 @@ export const DetailView: FC = () => {
 
           {isOpen && (
             <InboundLineEdit
+              isDisabled={isDisabled}
               isOpen={isOpen}
               onClose={onClose}
               mode={mode}

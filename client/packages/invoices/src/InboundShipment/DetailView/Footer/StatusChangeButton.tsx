@@ -9,7 +9,7 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import { getStatusTranslation, getNextInboundStatus } from '../../../utils';
-import { useIsInboundEditable, useInboundFields } from '../../api';
+import { useIsInboundDisabled, useInboundFields } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -141,7 +141,7 @@ export const StatusChangeButton = () => {
     getConfirmation,
     onHold,
   } = useStatusChangeButton();
-  const isDisabled = !useIsInboundEditable();
+  const isDisabled = useIsInboundDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;

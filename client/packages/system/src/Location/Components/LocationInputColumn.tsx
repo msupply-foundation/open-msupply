@@ -43,7 +43,7 @@ export const getLocationInputColumn = <
       }
     }
   },
-  Cell: ({ rowData, column, rows, columnIndex, rowIndex }) => {
+  Cell: ({ rowData, column, rows, columnIndex, rowIndex, isDisabled }) => {
     const value = column.accessor({
       rowData,
       rows,
@@ -58,7 +58,7 @@ export const getLocationInputColumn = <
     return (
       <LocationSearchInput
         autoFocus={autoFocus}
-        disabled={false}
+        disabled={!!isDisabled}
         value={value}
         width={column.width}
         onChange={onChange}
