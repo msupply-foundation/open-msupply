@@ -19,7 +19,6 @@ import {
   getDataSorter,
   useSortBy,
   useMutation,
-  UseMutationResult,
   useTableStore,
   useAuthContext,
 } from '@openmsupply-client/common';
@@ -29,7 +28,6 @@ import { getOutboundQueries, ListParams } from './api';
 import { useOutboundColumns } from '../DetailView/columns';
 import {
   getSdk,
-  DeleteOutboundShipmentLinesMutation,
   OutboundRowFragment,
   OutboundFragment,
   OutboundLineFragment,
@@ -269,27 +267,19 @@ export const useSaveOutboundLines = () => {
   });
 };
 
-export const useDeleteInboundLine = (): UseMutationResult<
-  DeleteOutboundShipmentLinesMutation,
-  unknown,
-  string[],
-  { previous?: OutboundFragment; ids: string[] }
-> => {
-  // TODO: Shouldn't need to get the invoice ID here from the params as the mutation
-  // input object should not require the invoice ID. Waiting for an API change.
-  const { data } = useOutbound();
+export const useDeleteInboundLines = () => {
   const outboundNumber = useOutboundNumber();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
   const queryKey = api.keys.detail(outboundNumber);
 
-  return useMutation(api.deleteLines(data?.id ?? ''), {
-    onMutate: async (ids: string[]) => {
+  return useMutation(api.deleteLines, {
+    onMutate: async lines => {
       await queryClient.cancelQueries(queryKey);
       const previous = queryClient.getQueryData<OutboundFragment>(queryKey);
       if (previous) {
         const nodes = previous.lines.nodes.filter(
-          ({ id: lineId }) => !ids.includes(lineId)
+          ({ id: lineId }) => !lines.find(({ id }) => lineId === id)
         );
         queryClient.setQueryData<OutboundFragment>(queryKey, {
           ...previous,
@@ -300,15 +290,19 @@ export const useDeleteInboundLine = (): UseMutationResult<
           },
         });
       }
-
-      return { previous, ids };
+      return { previous, lines };
     },
-    onError: (_, __, context) => {
+    onError: (_error, _vars, ctx) => {
+      // Having issues typing this correctly. If typing ctx in the args list,
+      // then TS infers the wrong type for the useMutation call and all
+      // hell breaks loose.
+      const context = ctx as {
+        previous: OutboundFragment;
+        lines: { id: string; invoiceId: string }[];
+      };
       queryClient.setQueryData(queryKey, context?.previous);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries(queryKey);
-    },
+    onSettled: () => queryClient.invalidateQueries(queryKey),
   });
 };
 
@@ -317,33 +311,19 @@ export const useDeleteSelectedLines = (): {
 } => {
   const { success, info } = useNotification();
   const { items, lines } = useOutboundRows();
-  const { mutate } = useDeleteInboundLine();
+  const { mutate } = useDeleteInboundLines();
   const t = useTranslation('distribution');
 
-  const { selectedRows } = useTableStore(state => {
+  const selectedRows = useTableStore(state => {
     const { isGrouped } = state;
 
     if (isGrouped) {
-      return {
-        selectedRows: (
-          Object.keys(state.rowState)
-            .filter(id => state.rowState[id]?.isSelected)
-            .map(selectedId => items?.find(({ id }) => selectedId === id))
-            .filter(Boolean) as OutboundItem[]
-        )
-          .map(({ lines }) => lines)
-          .flat()
-          .map(({ id }) => id),
-      };
+      return items
+        ?.filter(({ id }) => state.rowState[id]?.isSelected)
+        .map(({ lines }) => lines.flat())
+        .flat();
     } else {
-      return {
-        selectedRows: (
-          Object.keys(state.rowState)
-            .filter(id => state.rowState[id]?.isSelected)
-            .map(selectedId => lines.find(({ id }) => selectedId === id))
-            .filter(Boolean) as OutboundLineFragment[]
-        ).map(({ id }) => id),
-      };
+      return lines.filter(({ id }) => state.rowState[id]?.isSelected);
     }
   });
 
