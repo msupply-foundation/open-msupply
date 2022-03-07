@@ -1,6 +1,6 @@
 import React from 'react';
 import { ButtonProps, CircularProgress } from '@mui/material';
-import { BaseButton } from './standard/BaseButton';
+import { BaseButton } from './BaseButton';
 
 export const LoadingButton: React.FC<ButtonProps & { isLoading: boolean }> = ({
   children,
