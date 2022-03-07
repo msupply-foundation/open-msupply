@@ -26,11 +26,12 @@ pub struct Invoice {
     pub name_row: NameRow,
     pub store_row: StoreRow,
 }
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct InvoiceFilter {
     pub id: Option<EqualFilter<String>>,
     pub invoice_number: Option<EqualFilter<i64>>,
     pub name_id: Option<EqualFilter<String>>,
+    pub name: Option<SimpleStringFilter>,
     pub store_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InvoiceRowType>>,
     pub status: Option<EqualFilter<InvoiceRowStatus>>,
@@ -172,24 +173,45 @@ pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQ
         .into_boxed();
 
     if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, invoice_dsl::id);
-        apply_equal_filter!(query, f.invoice_number, invoice_dsl::invoice_number);
-        apply_equal_filter!(query, f.name_id, invoice_dsl::name_id);
-        apply_equal_filter!(query, f.store_id, invoice_dsl::store_id);
-        apply_equal_filter!(query, f.their_reference, invoice_dsl::their_reference);
-        apply_equal_filter!(query, f.requisition_id, invoice_dsl::requisition_id);
-        apply_simple_string_filter!(query, f.comment, invoice_dsl::comment);
-        apply_equal_filter!(query, f.linked_invoice_id, invoice_dsl::linked_invoice_id);
+        let InvoiceFilter {
+            id,
+            invoice_number,
+            name_id,
+            name,
+            store_id,
+            r#type,
+            status,
+            comment,
+            their_reference,
+            created_datetime,
+            allocated_datetime,
+            picked_datetime,
+            shipped_datetime,
+            delivered_datetime,
+            verified_datetime,
+            requisition_id,
+            linked_invoice_id,
+        } = f;
 
-        apply_equal_filter!(query, f.r#type, invoice_dsl::type_);
-        apply_equal_filter!(query, f.status, invoice_dsl::status);
+        apply_equal_filter!(query, id, invoice_dsl::id);
+        apply_equal_filter!(query, invoice_number, invoice_dsl::invoice_number);
+        apply_equal_filter!(query, name_id, invoice_dsl::name_id);
+        apply_simple_string_filter!(query, name, name_dsl::name_);
+        apply_equal_filter!(query, store_id, invoice_dsl::store_id);
+        apply_equal_filter!(query, their_reference, invoice_dsl::their_reference);
+        apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
+        apply_simple_string_filter!(query, comment, invoice_dsl::comment);
+        apply_equal_filter!(query, linked_invoice_id, invoice_dsl::linked_invoice_id);
 
-        apply_date_time_filter!(query, f.created_datetime, invoice_dsl::created_datetime);
-        apply_date_time_filter!(query, f.allocated_datetime, invoice_dsl::allocated_datetime);
-        apply_date_time_filter!(query, f.picked_datetime, invoice_dsl::picked_datetime);
-        apply_date_time_filter!(query, f.shipped_datetime, invoice_dsl::shipped_datetime);
-        apply_date_time_filter!(query, f.delivered_datetime, invoice_dsl::delivered_datetime);
-        apply_date_time_filter!(query, f.verified_datetime, invoice_dsl::verified_datetime);
+        apply_equal_filter!(query, r#type, invoice_dsl::type_);
+        apply_equal_filter!(query, status, invoice_dsl::status);
+
+        apply_date_time_filter!(query, created_datetime, invoice_dsl::created_datetime);
+        apply_date_time_filter!(query, allocated_datetime, invoice_dsl::allocated_datetime);
+        apply_date_time_filter!(query, picked_datetime, invoice_dsl::picked_datetime);
+        apply_date_time_filter!(query, shipped_datetime, invoice_dsl::shipped_datetime);
+        apply_date_time_filter!(query, delivered_datetime, invoice_dsl::delivered_datetime);
+        apply_date_time_filter!(query, verified_datetime, invoice_dsl::verified_datetime);
     }
     query
 }
@@ -254,24 +276,7 @@ impl InvoiceRowType {
 
 impl InvoiceFilter {
     pub fn new() -> InvoiceFilter {
-        InvoiceFilter {
-            id: None,
-            invoice_number: None,
-            name_id: None,
-            store_id: None,
-            r#type: None,
-            status: None,
-            comment: None,
-            their_reference: None,
-            created_datetime: None,
-            allocated_datetime: None,
-            picked_datetime: None,
-            shipped_datetime: None,
-            delivered_datetime: None,
-            verified_datetime: None,
-            requisition_id: None,
-            linked_invoice_id: None,
-        }
+        InvoiceFilter::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
