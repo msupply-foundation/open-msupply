@@ -27,6 +27,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          disabled={isDisabled}
           Icon={<PlusCircleIcon />}
           label={t('button.add-from-master-list')}
           onClick={modalController.toggleOn}
