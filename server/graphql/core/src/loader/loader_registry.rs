@@ -107,6 +107,16 @@ pub async fn get_loaders(
         service_provider: service_provider.clone(),
     });
 
+    let requisition_line_supply_status_loader =
+        DataLoader::new(RequisitionLineSupplyStatusLoader {
+            service_provider: service_provider.clone(),
+        });
+
+    let requisition_lines_remaining_to_supply_loader =
+        DataLoader::new(RequisitionLinesRemainingToSupplyLoader {
+            service_provider: service_provider.clone(),
+        });
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_loader);
@@ -126,6 +136,8 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
+    loaders.insert(requisition_line_supply_status_loader);
+    loaders.insert(requisition_lines_remaining_to_supply_loader);
 
     loaders
 }
