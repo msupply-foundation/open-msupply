@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { IconButton } from './IconButton';
+import { IconButton } from '.';
 import { BookIcon, SvgIconProps } from '@common/icons';
 
 const Template: ComponentStory<React.FC<SvgIconProps>> = args => (

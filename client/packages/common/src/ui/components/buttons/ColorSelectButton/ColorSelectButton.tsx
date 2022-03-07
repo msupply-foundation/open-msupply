@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
-import { ColorMenu, Color } from '../menus';
-import { IconButton } from './IconButton';
+import { ColorMenu, Color } from '../../menus';
+import { IconButton } from '../IconButton';
 import { CircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
