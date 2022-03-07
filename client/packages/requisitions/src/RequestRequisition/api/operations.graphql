@@ -305,3 +305,36 @@ mutation addFromMasterList(
     }
   }
 }
+
+mutation deleteRequestLines(
+  $ids: [DeleteRequestRequisitionLineInput!]
+  $storeId: String!
+) {
+  batchRequestRequisition(
+    input: { deleteRequestRequisitionLines: $ids }
+    storeId: $storeId
+  ) {
+    deleteRequestRequisitionLines {
+      id
+      response {
+        ... on DeleteRequestRequisitionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

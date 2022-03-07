@@ -257,3 +257,33 @@ export const useAddFromMasterList = () => {
 
   return { ...mutationState, addFromMasterList };
 };
+
+export const useDeleteRequestLines = () => {
+  const { success, info } = useNotification();
+  const { lines } = useRequestLines();
+  const api = useRequestApi();
+  const requestNumber = useRequestNumber();
+  const queryClient = useQueryClient();
+  const { mutate } = useMutation(api.deleteLines, {
+    onSettled: () =>
+      queryClient.invalidateQueries(api.keys.detail(requestNumber)),
+  });
+  const t = useTranslation('distribution');
+
+  const selectedRows = useTableStore(state =>
+    lines.filter(({ id }) => state.rowState[id]?.isSelected)
+  );
+
+  const onDelete = async () => {
+    const number = selectedRows?.length;
+    if (selectedRows && number) {
+      mutate(selectedRows, {
+        onSuccess: success(t('messages.deleted-lines', { number: number })),
+      });
+    } else {
+      info(t('label.select-rows-to-delete-them'))();
+    }
+  };
+
+  return { onDelete };
+};
