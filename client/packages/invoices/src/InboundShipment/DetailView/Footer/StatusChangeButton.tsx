@@ -84,7 +84,7 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = useInboundFields('status');
+  const { status, onHold, update } = useInboundFields(['status', 'onHold']);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
 
@@ -124,12 +124,23 @@ const useStatusChangeButton = () => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, getConfirmation };
+  return {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    onHold,
+  };
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, getConfirmation } =
-    useStatusChangeButton();
+  const {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    onHold,
+  } = useStatusChangeButton();
   const isDisabled = !useIsInboundEditable();
 
   if (!selectedOption) return null;
@@ -137,6 +148,7 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
+      isDisabled={onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
