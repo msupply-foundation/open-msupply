@@ -4,8 +4,8 @@ mod test {
     use repository::mock::{
         mock_invoice1_linked_to_requisition, mock_invoice2_linked_to_requisition,
         mock_invoice3_linked_to_requisition, mock_name_a, mock_name_store_a,
-        mock_request_draft_requisition_all_fields, mock_response_draft_requisition_all_fields,
-        MockDataInserts,
+        mock_new_response_requisition_test, mock_request_draft_requisition_all_fields,
+        mock_response_draft_requisition_all_fields, MockDataInserts,
     };
     use serde_json::json;
 
@@ -38,6 +38,11 @@ mod test {
                         id
                     }
                     totalCount
+                }
+                linesRemainingToSupply {
+                    nodes {
+                        id
+                    }
                 }
               }
             }
@@ -98,7 +103,7 @@ mod test {
 
         assert_graphql_query!(&settings, query, &Some(variables.clone()), &expected, None);
 
-        // Test shippents
+        // Test shipments
         let expected = json!({
             "requisitions": {
                 "nodes": [{
@@ -121,6 +126,37 @@ mod test {
                         }],
                         "totalCount": 1
                     },
+                }]
+            }
+        }
+        );
+
+        assert_graphql_query!(&settings, query, &Some(variables.clone()), &expected, None);
+
+        // Test lines remaining to supply
+        let variables = json!({
+          "filter": {
+            "id": {
+                "equalAny": [mock_new_response_requisition_test().requisition.id]
+            },
+          }
+        }
+        );
+
+        let expected = json!({
+            "requisitions": {
+                "nodes": [{
+                    "id": mock_new_response_requisition_test().requisition.id,
+                    "linesRemainingToSupply": {
+                         "nodes": [
+                            {
+                              "id": "mock_new_response_requisition_test1",
+                            },
+                            {
+                              "id": "mock_new_response_requisition_test2",
+                            }
+                          ]
+                    }
                 }]
             }
         }
@@ -363,6 +399,60 @@ mod test {
                                }],
                            }
                          }]
+                    }
+                }]
+            }
+        }
+        );
+
+        assert_graphql_query!(&settings, query, &Some(variables.clone()), &expected, None);
+
+        // Test remaining to supply
+
+        let query = r#"
+        query($filter: RequisitionFilterInput) {
+          requisitions(filter: $filter, storeId: \"store_a\") {
+            ... on RequisitionConnector {
+              nodes {
+                id
+                lines {
+                    nodes {
+                        id
+                        remainingQuantityToSupply
+                    }
+                }
+              }
+            }
+          }
+       }
+        "#;
+
+        let variables = json!({
+          "filter": {
+            "id": {
+                "equalAny": [mock_new_response_requisition_test().requisition.id]
+            },
+          }
+        }
+        );
+
+        // Used data from create_requistion_shipment_success tests
+
+        let expected = json!({
+            "requisitions": {
+                "nodes": [{
+                    "id": mock_new_response_requisition_test().requisition.id,
+                    "lines": {
+                         "nodes": [
+                            {
+                              "id": "mock_new_response_requisition_test1",
+                              "remainingQuantityToSupply": 44
+                            },
+                            {
+                              "id": "mock_new_response_requisition_test2",
+                              "remainingQuantityToSupply": 100
+                            }
+                          ]
                     }
                 }]
             }
