@@ -46,6 +46,14 @@ export type UpdateResponseLineMutationVariables = Types.Exact<{
 
 export type UpdateResponseLineMutation = { __typename: 'FullMutation', updateResponseRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } };
 
+export type CreateOutboundFromResponseMutationVariables = Types.Exact<{
+  responseId: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type CreateOutboundFromResponseMutation = { __typename: 'FullMutation', createRequisitionShipment: { __typename: 'CreateRequisitionShipmentError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'NothingRemainingToSupply', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+
 export const ItemWithStatsFragmentDoc = gql`
     fragment ItemWithStats on ItemNode {
   id
@@ -209,6 +217,39 @@ export const UpdateResponseLineDocument = gql`
   }
 }
     `;
+export const CreateOutboundFromResponseDocument = gql`
+    mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
+  createRequisitionShipment(
+    input: {responseRequisitionId: $responseId}
+    storeId: $storeId
+  ) {
+    __typename
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+    ... on CreateRequisitionShipmentError {
+      __typename
+      error {
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on NothingRemainingToSupply {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -228,6 +269,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateResponseLine(variables: UpdateResponseLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateResponseLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseLineMutation>(UpdateResponseLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseLine');
+    },
+    createOutboundFromResponse(variables: CreateOutboundFromResponseMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateOutboundFromResponseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateOutboundFromResponseMutation>(CreateOutboundFromResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createOutboundFromResponse');
     }
   };
 }
@@ -298,5 +342,22 @@ export const mockResponsesQuery = (resolver: ResponseResolver<GraphQLRequest<Res
 export const mockUpdateResponseLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateResponseLineMutationVariables>, GraphQLContext<UpdateResponseLineMutation>, any>) =>
   graphql.mutation<UpdateResponseLineMutation, UpdateResponseLineMutationVariables>(
     'updateResponseLine',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockCreateOutboundFromResponseMutation((req, res, ctx) => {
+ *   const { responseId, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ createRequisitionShipment })
+ *   )
+ * })
+ */
+export const mockCreateOutboundFromResponseMutation = (resolver: ResponseResolver<GraphQLRequest<CreateOutboundFromResponseMutationVariables>, GraphQLContext<CreateOutboundFromResponseMutation>, any>) =>
+  graphql.mutation<CreateOutboundFromResponseMutation, CreateOutboundFromResponseMutationVariables>(
+    'createOutboundFromResponse',
     resolver
   )

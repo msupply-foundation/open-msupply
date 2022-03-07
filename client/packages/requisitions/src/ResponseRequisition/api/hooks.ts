@@ -1,5 +1,8 @@
+import { AppRoute } from '@openmsupply-client/config';
 import { useMemo } from 'react';
 import {
+  RouteBuilder,
+  useOpenInNewTab,
   useQueryClient,
   useAuthContext,
   RequisitionNodeStatus,
@@ -14,6 +17,8 @@ import {
   getDataSorter,
   useQueryParams,
   useMutation,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { getResponseQueries, ListParams } from './api';
 import {
@@ -131,5 +136,31 @@ export const useSaveResponseLines = () => {
   return useMutation(api.updateLine, {
     onSuccess: () =>
       queryClient.invalidateQueries(api.keys.detail(responseNumber)),
+  });
+};
+
+export const useCreateOutboundFromResponse = () => {
+  const { error, warning } = useNotification();
+  const t = useTranslation('distribution');
+  const openInNewTab = useOpenInNewTab();
+  const { id } = useResponseFields('id');
+  const api = useResponseApi();
+  return useMutation(() => api.createOutboundFromResponse(id), {
+    onSuccess: (invoiceNumber: number) => {
+      openInNewTab(
+        RouteBuilder.create(AppRoute.Distribution)
+          .addPart(AppRoute.OutboundShipment)
+          .addPart(String(invoiceNumber))
+          .build()
+      );
+    },
+    onError: e => {
+      const errorObj = e as Error;
+      if (errorObj.message === 'NothingRemainingToSupply') {
+        warning(t('warning.nothing-to-supply'))();
+      } else {
+        error(t('error.failed-to-create-outbound'))();
+      }
+    },
   });
 };

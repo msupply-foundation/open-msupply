@@ -36,7 +36,7 @@ export const AlertModal: React.FC<AlertModalProps> = ({
         </Grid>
         <Grid item>{message}</Grid>
         <Grid item display="flex" justifyContent="flex-end" flex={1}>
-          <DialogButton variant="ok" onClick={onOk} />
+          <DialogButton variant="ok" onClick={onOk} autoFocus />
         </Grid>
       </Grid>
     </BasicModal>
