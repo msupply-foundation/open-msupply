@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, Typography } from '@mui/material';
-import { DialogButton } from '../components/buttons';
+import { DialogButton } from '../../buttons';
 import { AlertIcon } from '@common/icons';
 import { BasicModal } from '@common/components';
 

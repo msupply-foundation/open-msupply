@@ -7,9 +7,15 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
+  useAlertModal,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
-import { useIsOutboundDisabled, useOutboundFields } from '../../api';
+import {
+  useOutboundLines,
+  useIsOutboundDisabled,
+  useOutboundFields,
+} from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -93,7 +99,7 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = useOutboundFields('status');
+  const { status, onHold, update } = useOutboundFields(['status', 'onHold']);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
 
@@ -133,24 +139,61 @@ const useStatusChangeButton = () => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, getConfirmation };
+  return {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    onHold,
+  };
+};
+
+const useStatusChangePlaceholderCheck = () => {
+  const t = useTranslation('distribution');
+  const { data: lines } = useOutboundLines();
+  const alert = useAlertModal({
+    title: t('heading.cannot-do-that'),
+    message: t('messages.must-allocate-all-lines'),
+  });
+
+  const hasPlaceholder = useMemo(
+    () =>
+      !!lines?.some(
+        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+      ),
+    [lines]
+  );
+
+  return { alert, hasPlaceholder };
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, getConfirmation } =
-    useStatusChangeButton();
+  const {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    onHold,
+  } = useStatusChangeButton();
+  const { hasPlaceholder, alert } = useStatusChangePlaceholderCheck();
   const isDisabled = useIsOutboundDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
+  const onStatusClick = () => {
+    if (hasPlaceholder) return alert();
+    return getConfirmation();
+  };
+
   return (
     <SplitButton
+      isDisabled={onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={() => getConfirmation()}
+      onClick={onStatusClick}
     />
   );
 };

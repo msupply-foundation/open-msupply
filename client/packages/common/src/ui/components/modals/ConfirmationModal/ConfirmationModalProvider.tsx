@@ -1,48 +1,10 @@
-import React, {
-  FC,
-  useCallback,
-  useMemo,
-  useContext,
-  useState,
-  createContext,
-} from 'react';
+import React, { FC, useMemo, useState } from 'react';
+import {
+  ConfirmationModalContext,
+  ConfirmationModalState,
+  ConfirmationModalControllerState,
+} from './ConfirmationModalContext';
 import { ConfirmationModal } from './ConfirmationModal';
-
-interface ConfirmationModalState {
-  open: boolean;
-  message: string;
-  title: string;
-  iconType?: 'alert' | 'info';
-  onConfirm?: (() => void) | (() => Promise<void>);
-  onCancel?: (() => void) | (() => Promise<void>);
-}
-
-interface ConfirmationModalControllerState extends ConfirmationModalState {
-  setState: (state: ConfirmationModalState) => void;
-  setMessage: (message: string) => void;
-  setTitle: (title: string) => void;
-  setOnConfirm: (
-    onConfirm: (() => Promise<void>) | (() => void) | undefined
-  ) => void;
-  setOnCancel: (
-    onCancel: (() => Promise<void>) | (() => void) | undefined
-  ) => void;
-  setOpen: (open: boolean) => void;
-}
-
-const Context = createContext<ConfirmationModalControllerState>({
-  open: false,
-  message: '',
-  title: '',
-  iconType: 'info',
-  onConfirm: () => {},
-  setState: () => {},
-  setMessage: () => {},
-  setTitle: () => {},
-  setOnConfirm: () => {},
-  setOnCancel: () => {},
-  setOpen: () => {},
-});
 
 export const ConfirmationModalProvider: FC = ({ children }) => {
   const [confirmationModalState, setState] = useState<ConfirmationModalState>({
@@ -73,7 +35,7 @@ export const ConfirmationModalProvider: FC = ({ children }) => {
   );
 
   return (
-    <Context.Provider value={confirmationModalController}>
+    <ConfirmationModalContext.Provider value={confirmationModalController}>
       {children}
       <ConfirmationModal
         open={open}
@@ -86,38 +48,6 @@ export const ConfirmationModalProvider: FC = ({ children }) => {
         }}
         iconType={iconType}
       />
-    </Context.Provider>
+    </ConfirmationModalContext.Provider>
   );
-};
-
-type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
-export const useConfirmationModal = ({
-  onConfirm,
-  message,
-  title,
-  onCancel,
-}: PartialBy<ConfirmationModalState, 'open'>) => {
-  const { setOpen, setMessage, setOnConfirm, setOnCancel, setTitle } =
-    useContext(Context);
-
-  const trigger = (
-    paramPatch?: Partial<PartialBy<ConfirmationModalState, 'open'>>
-  ) => {
-    setMessage(paramPatch?.message ?? message);
-    setOnConfirm(paramPatch?.onConfirm ?? onConfirm);
-    setTitle(paramPatch?.title ?? title);
-    setOnCancel(paramPatch?.onCancel ?? onCancel);
-    setOpen(true);
-  };
-
-  return useCallback(trigger, [
-    message,
-    onConfirm,
-    title,
-    setMessage,
-    setOnConfirm,
-    setTitle,
-    setOpen,
-  ]);
 };
