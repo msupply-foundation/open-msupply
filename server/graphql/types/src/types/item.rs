@@ -4,8 +4,8 @@ use async_graphql::*;
 use chrono::NaiveDateTime;
 use graphql_core::{
     loader::{
-        IdAndStoreId, ItemStatsLoaderInput, ItemsStatsForItemLoader,
-        StockLineByItemAndStoreIdLoader,
+        ItemStatsLoaderInput, ItemsStatsForItemLoader, StockLineByItemAndStoreIdLoader,
+        StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
@@ -55,11 +55,11 @@ impl ItemNode {
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
-            .load_one(ItemStatsLoaderInput {
-                store_id: store_id.clone(),
+            .load_one(ItemStatsLoaderInput::new(
+                &store_id,
+                &self.row().id,
                 look_back_datetime,
-                item_id: self.row().id.to_string(),
-            })
+            ))
             .await?
             .ok_or(
                 StandardGraphqlError::InternalError(format!(
@@ -80,10 +80,10 @@ impl ItemNode {
     ) -> Result<StockLineConnector> {
         let loader = ctx.get_loader::<DataLoader<StockLineByItemAndStoreIdLoader>>();
         let result_option = loader
-            .load_one(IdAndStoreId {
-                id: self.row().id.to_string(),
-                store_id,
-            })
+            .load_one(StockLineByItemAndStoreIdLoaderInput::new(
+                &store_id,
+                &self.row().id,
+            ))
             .await?;
 
         Ok(StockLineConnector::from_vec(
