@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import {
+  Autocomplete,
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
@@ -9,6 +10,7 @@ import {
   DropdownMenuItem,
   DeleteIcon,
   useTranslation,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { NameSearchInput } from '@openmsupply-client/system/src/Name';
 import {
@@ -17,15 +19,24 @@ import {
   useDeleteRequestLines,
 } from '../api';
 
+const months = [1, 2, 3, 4, 5, 6];
+
 export const Toolbar: FC = () => {
   const t = useTranslation(['replenishment', 'common']);
-  const { onDelete } = useDeleteRequestLines();
 
+  const { onDelete } = useDeleteRequestLines();
   const isDisabled = useIsRequestDisabled();
-  const { theirReference, update, otherParty } = useRequestFields([
-    'theirReference',
-    'otherParty',
-  ]);
+  const { minMonthsOfStock, theirReference, update, otherParty } =
+    useRequestFields([
+      'minMonthsOfStock',
+      'maxMonthsOfStock',
+      'theirReference',
+      'otherParty',
+    ]);
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: 'This will change the minimum months of stock threshold',
+  });
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -48,7 +59,7 @@ export const Toolbar: FC = () => {
                       disabled={isDisabled}
                       value={otherParty ?? null}
                       onChange={otherParty => {
-                        update({ otherParty });
+                        update({ otherPartyId: otherParty.id });
                       }}
                     />
                   }
@@ -69,11 +80,44 @@ export const Toolbar: FC = () => {
             </Box>
           </Box>
         </Grid>
-        <DropdownMenu disabled={isDisabled} label={t('label.select')}>
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-            {t('button.delete-lines', { ns: 'distribution' })}
-          </DropdownMenuItem>
-        </DropdownMenu>
+        <Box
+          flexDirection="column"
+          alignItems="flex-end"
+          display="flex"
+          gap={2}
+        >
+          <InputWithLabelRow
+            labelWidth="150px"
+            labelProps={{ sx: { fontSize: 12, fontWeight: 500 } }}
+            label="Min. Months of Stock"
+            Input={
+              <Autocomplete
+                clearIcon={null}
+                isOptionEqualToValue={(a, b) => a.value === b.value}
+                value={{
+                  label: `${minMonthsOfStock} months`,
+                  value: minMonthsOfStock,
+                }}
+                width="150px"
+                options={months.map(m => ({
+                  label: `${m} months`,
+                  value: m,
+                }))}
+                onChange={(_, option) =>
+                  option &&
+                  getConfirmation({
+                    onConfirm: () => update({ minMonthsOfStock: option.value }),
+                  })
+                }
+              />
+            }
+          />
+          <DropdownMenu disabled={isDisabled} label={t('label.select')}>
+            <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+              {t('button.delete-lines', { ns: 'distribution' })}
+            </DropdownMenuItem>
+          </DropdownMenu>
+        </Box>
       </Grid>
     </AppBarContentPortal>
   );
