@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  useConfirmationModal,
   useAuthContext,
   useTranslation,
   useQueryParams,
@@ -19,6 +20,7 @@ import {
   useTableStore,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
+import { MasterListRowFragment } from '@openmsupply-client/system';
 import { getRequestQueries, ListParams } from './api';
 import {
   getSdk,
@@ -201,4 +203,57 @@ export const useDeleteSelectedRequisitions = () => {
   };
 
   return deleteAction;
+};
+
+export const useAddFromMasterList = () => {
+  const { error } = useNotification();
+  const queryClient = useQueryClient();
+  const { id: requestId, requisitionNumber } = useRequestFields([
+    'id',
+    'requisitionNumber',
+  ]);
+  const api = useRequestApi();
+  const mutationState = useMutation(api.addFromMasterList, {
+    onSettled: () =>
+      queryClient.invalidateQueries(api.keys.detail(String(requisitionNumber))),
+  });
+
+  const t = useTranslation('distribution');
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('message.confirm-add-from-master-list'),
+  });
+
+  const addFromMasterList = async ({
+    id: masterListId,
+  }: MasterListRowFragment) => {
+    getConfirmation({
+      onConfirm: () =>
+        mutationState.mutate(
+          { masterListId, requestId },
+          {
+            onError: e => {
+              const { message } = e as Error;
+              switch (message) {
+                case 'CannotEditRequisition': {
+                  return error('Cannot edit requisition')();
+                }
+                case 'RecordNotFound': {
+                  return error('This master list has been deleted!')();
+                }
+                case 'MasterListNotFoundForThisStore': {
+                  return error(
+                    "Uh oh this is not the master list you're looking for"
+                  )();
+                }
+                default:
+                  return error('Could not add items to requisition')();
+              }
+            },
+          }
+        ),
+    });
+  };
+
+  return { ...mutationState, addFromMasterList };
 };

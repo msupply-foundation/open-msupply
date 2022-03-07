@@ -59,7 +59,7 @@ const UseConfirmationModalHook: Story = () => {
     onConfirm: () => alert('confirmed!'),
   });
 
-  return <BaseButton onClick={getConfirmation}>Open Modal</BaseButton>;
+  return <BaseButton onClick={() => getConfirmation()}>Open Modal</BaseButton>;
 };
 
 export const Primary = Template.bind({});
