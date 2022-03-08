@@ -48,6 +48,10 @@ export const StocktakeLineEditTabs: FC<{
         e.preventDefault();
         setCurrentTab(Tabs.Location);
       }
+      if (e.code === 'Equal' && e.shiftKey) {
+        e.preventDefault();
+        onAddLine();
+      }
     };
 
     window.addEventListener('keydown', keybindings);
@@ -75,7 +79,7 @@ export const StocktakeLineEditTabs: FC<{
             color="primary"
             variant="outlined"
             onClick={onAddLine}
-            label={t('label.add-batch', { ns: 'inventory' })}
+            label={`${t('label.add-batch', { ns: 'inventory' })} (+)`}
             Icon={<PlusCircleIcon />}
           />
         </Box>

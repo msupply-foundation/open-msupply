@@ -174,7 +174,15 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
-    [getLocationInputColumn(), { width: 400, setter: update }],
+    [
+      getLocationInputColumn(),
+      {
+        width: 400,
+        setter: patch => update({ ...patch, countThisLine: true }),
+        accessor: ({ rowData }) =>
+          rowData.countThisLine ? rowData.location : null,
+      },
+    ],
   ]);
 
   return (
