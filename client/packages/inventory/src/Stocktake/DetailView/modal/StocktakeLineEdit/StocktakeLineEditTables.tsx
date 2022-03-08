@@ -15,6 +15,7 @@ import {
   Theme,
   useTheme,
 } from '@openmsupply-client/common';
+import { getLocationInputColumn } from '@openmsupply-client/system';
 import { DraftStocktakeLine } from './hooks';
 
 interface StocktakeLineEditTableProps {
@@ -83,7 +84,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     {
       key: 'packSize',
       label: 'label.pack-size',
-      width: 100,
+      width: 125,
       accessor: ({ rowData }) =>
         rowData.countThisLine ? rowData.packSize : '',
       Cell: PositiveNumberInputCell,
@@ -148,6 +149,38 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
         accessor: ({ rowData }) =>
           rowData.countThisLine ? rowData.costPricePerPack : '',
         setter: patch => update({ ...patch, countThisLine: true }),
+      },
+    ],
+  ]);
+
+  return (
+    <DataTable
+      isDisabled={isDisabled}
+      columns={columns}
+      data={batches}
+      noDataMessage={t('label.add-new-line')}
+      dense
+    />
+  );
+};
+
+export const LocationTable: FC<StocktakeLineEditTableProps> = ({
+  batches,
+  update,
+  isDisabled,
+}) => {
+  const theme = useTheme();
+  const t = useTranslation('inventory');
+  const columns = useColumns<DraftStocktakeLine>([
+    getCountThisLineColumn(update, theme),
+    getBatchColumn(update, theme),
+    [
+      getLocationInputColumn(),
+      {
+        width: 400,
+        setter: patch => update({ ...patch, countThisLine: true }),
+        accessor: ({ rowData }) =>
+          rowData.countThisLine ? rowData.location : null,
       },
     ],
   ]);
