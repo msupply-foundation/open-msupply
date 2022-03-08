@@ -13,7 +13,6 @@ type PackSizeOption = {
   packSize: number;
   hasAllocated: boolean;
   hasAvailableStock: boolean;
-
   isPlaceholder: boolean;
   isExpired: boolean;
   isOnHold: boolean | undefined;

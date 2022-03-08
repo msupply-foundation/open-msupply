@@ -24,6 +24,7 @@ interface OutboundLineEditFormProps {
   onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
   disabled: boolean;
+  canAutoAllocate: boolean;
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -34,14 +35,13 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   packSizeController,
   availableQuantity,
   disabled,
+  canAutoAllocate,
 }) => {
   const t = useTranslation(['distribution', 'common']);
   const quantity =
     allocatedQuantity /
     Math.abs(Number(packSizeController.selected?.value || 1));
   const { items } = useOutboundRows();
-
-  console.log(packSizeController.selected?.value);
 
   return (
     <Grid container gap="4px">
@@ -81,7 +81,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
           </Grid>
         </ModalRow>
       )}
-      {item ? (
+      {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
 
@@ -98,37 +98,45 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 );
               }}
             />
+
             <Box marginLeft={1} />
-            <>
-              <Grid
-                item
-                alignItems="center"
-                display="flex"
-                justifyContent="flex-start"
-                style={{ minWidth: 125 }}
-              >
-                <InputLabel sx={{ fontSize: '12px' }}>
-                  {packSizeController.selected?.value === -1
-                    ? t('label.packs-of', { count: quantity })
-                    : t('label.units-in-pack-size-of', { count: quantity })}
-                </InputLabel>
-              </Grid>
-              <Box marginLeft={1} />
 
-              <Select
-                sx={{ width: 110 }}
-                options={packSizeController.options}
-                value={packSizeController.selected?.value ?? ''}
-                onChange={e => {
-                  const { value } = e.target;
-                  const packSize = Number(value);
-                  packSizeController.setPackSize(packSize);
-                  onChangeQuantity(quantity, packSize === -1 ? null : packSize);
-                }}
-              />
+            {packSizeController.options.length ? (
+              <>
+                <Grid
+                  item
+                  alignItems="center"
+                  display="flex"
+                  justifyContent="flex-start"
+                  style={{ minWidth: 125 }}
+                >
+                  <InputLabel sx={{ fontSize: '12px' }}>
+                    {packSizeController.selected?.value === -1
+                      ? t('label.packs-of', { count: quantity })
+                      : t('label.units-in-pack-size-of', { count: quantity })}
+                  </InputLabel>
+                </Grid>
 
-              <Box marginLeft="auto" />
-            </>
+                <Box marginLeft={1} />
+
+                <Select
+                  sx={{ width: 110 }}
+                  options={packSizeController.options}
+                  value={packSizeController.selected?.value ?? ''}
+                  onChange={e => {
+                    const { value } = e.target;
+                    const packSize = Number(value);
+                    packSizeController.setPackSize(packSize);
+                    onChangeQuantity(
+                      quantity,
+                      packSize === -1 ? null : packSize
+                    );
+                  }}
+                />
+
+                <Box marginLeft="auto" />
+              </>
+            ) : null}
           </Grid>
         </>
       ) : (
