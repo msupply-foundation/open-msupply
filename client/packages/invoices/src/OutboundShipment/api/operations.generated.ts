@@ -432,6 +432,7 @@ export const DeleteOutboundShipmentsDocument = gql`
 export const UpsertOutboundShipmentDocument = gql`
     mutation upsertOutboundShipment($storeId: String!, $input: BatchOutboundShipmentInput!) {
   batchOutboundShipment(storeId: $storeId, input: $input) {
+    __typename
     insertOutboundShipmentUnallocatedLines {
       id
       response {
