@@ -15,6 +15,7 @@ pub mod name;
 pub mod number;
 pub mod permission_validation;
 pub mod permissions;
+pub mod report;
 pub mod requisition;
 pub mod requisition_line;
 pub mod service_provider;
