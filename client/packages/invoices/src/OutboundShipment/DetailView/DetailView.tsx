@@ -17,11 +17,12 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useOutbound } from '../api';
+import { useOutbound, useIsOutboundDisabled } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundLineFragment } from '../api/operations.generated';
 
 export const DetailView: FC = () => {
+  const isDisabled = useIsOutboundDisabled();
   const { entity, mode, onOpen, onClose, isOpen } =
     useEditModal<ItemRowFragment>();
   const { data, isLoading } = useOutbound();
@@ -53,7 +54,7 @@ export const DetailView: FC = () => {
           )}
 
           <Toolbar />
-          <ContentArea onRowClick={onRowClick} />
+          <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
           <Footer />
           <SidePanel />
         </TableProvider>

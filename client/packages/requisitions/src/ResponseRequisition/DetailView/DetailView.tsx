@@ -15,10 +15,15 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { useResponse, ResponseLineFragment } from '../api';
+import {
+  useIsResponseDisabled,
+  useResponse,
+  ResponseLineFragment,
+} from '../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 
 export const DetailView: FC = () => {
+  const isDisabled = useIsResponseDisabled();
   const { onOpen, onClose, entity, isOpen } =
     useEditModal<ResponseLineFragment>();
   const { data, isLoading } = useResponse();
@@ -38,7 +43,7 @@ export const DetailView: FC = () => {
     <TableProvider createStore={createTableStore}>
       <AppBarButtons />
       <Toolbar />
-      <ContentArea onRowClick={onRowClick} />
+      <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
       <Footer />
       <SidePanel />
       {entity && (
