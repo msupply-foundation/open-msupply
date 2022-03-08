@@ -102,7 +102,6 @@ export const isOutboundDisabled = (outbound: OutboundRowFragment): boolean => {
 export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   return (
     inbound.status === InvoiceNodeStatus.Verified ||
-    inbound.status === InvoiceNodeStatus.Shipped ||
     inbound.status === InvoiceNodeStatus.Picked
   );
 };
