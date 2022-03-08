@@ -12,6 +12,7 @@ interface StocktakeLineEditModalProps {
   onCancel: () => void;
   onOk: () => void;
   onNext: () => void;
+  hasNext: boolean;
 }
 
 export const StocktakeLineEditModal: FC<StocktakeLineEditModalProps> = ({
@@ -21,6 +22,7 @@ export const StocktakeLineEditModal: FC<StocktakeLineEditModalProps> = ({
   onCancel,
   onOk,
   onNext,
+  hasNext,
 }) => {
   const { Modal } = useDialog({ onClose: onCancel, isOpen });
   const t = useTranslation('inventory');
@@ -37,7 +39,7 @@ export const StocktakeLineEditModal: FC<StocktakeLineEditModalProps> = ({
         <DialogButton
           variant="next"
           onClick={onNext}
-          disabled={mode !== ModalMode.Update}
+          disabled={!hasNext && mode === ModalMode.Update}
         />
       }
       okButton={<DialogButton variant="ok" onClick={onOk} />}
