@@ -58,7 +58,7 @@ const createAnyOption = (t: ReturnType<typeof useTranslation>) => () => ({
   isAny: true,
   hasAllocated: false,
   hasAvailableStock: false,
-  isPlaceholder: true,
+  isPlaceholder: false,
   isExpired: false,
   isOnHold: undefined,
   value: -1,
