@@ -4,6 +4,7 @@ import {
   InvoiceLineNodeType,
   ifTheSameElseDefault,
   isExpired,
+  uniqBy,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../../types';
 
@@ -22,23 +23,6 @@ type PackSizeOption = {
 
 const isPlaceholder = (line: DraftOutboundLine): boolean =>
   line.type === InvoiceLineNodeType.UnallocatedStock;
-
-const createDistinctPackSizes = (packSizes: PackSizeOption[]) => {
-  const packSizeMap: Record<string, PackSizeOption> = {};
-  packSizes.forEach(packSizeOption => {
-    packSizeMap[String(packSizeOption.packSize)] = packSizeOption;
-  });
-
-  return Object.keys(packSizeMap)
-    .sort((a, b) => Number(a) - Number(b))
-    .reduce((acc, val) => {
-      const option = packSizeMap[val];
-      if (option) {
-        acc.push(option);
-        return acc;
-      } else return acc;
-    }, [] as PackSizeOption[]);
-};
 
 const createPackSizeOption = (line: DraftOutboundLine) => ({
   packSize: line.packSize,
@@ -97,7 +81,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   // - is not on hold.
   // - is not expired.
   // - has some available stock.
-  const validPackSizes = createDistinctPackSizes(
+  const validPackSizes = uniqBy(
     packSizes.filter(
       packSize =>
         // - is a placeholder and has allocated stock.
@@ -109,7 +93,8 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
           !packSize.isOnHold &&
           !packSize.isExpired &&
           packSize.hasAvailableStock)
-    )
+    ),
+    'packSize'
   );
 
   // Add the any option when:
