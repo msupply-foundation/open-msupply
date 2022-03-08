@@ -52,6 +52,7 @@ const createDraftLine = (
     sellPricePerPack: 0,
     costPricePerPack: 0,
     packSize: 1,
+    location: null,
   };
 };
 

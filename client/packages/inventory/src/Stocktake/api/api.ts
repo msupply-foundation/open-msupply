@@ -41,6 +41,7 @@ const stocktakeParser = {
       id: line.id,
     }),
     toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => ({
+      locationId: line.location?.id,
       batch: line.batch ?? '',
       packSize: line.packSize ?? 1,
       costPricePerPack: line.costPricePerPack,
@@ -52,6 +53,7 @@ const stocktakeParser = {
         : undefined,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
+      locationId: line.location?.id,
       batch: line.batch ?? '',
       packSize: line.packSize ?? 1,
       costPricePerPack: line.costPricePerPack,
