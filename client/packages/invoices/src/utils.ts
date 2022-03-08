@@ -93,17 +93,17 @@ export const getStatusTranslator =
 
 export const isOutboundDisabled = (outbound: OutboundRowFragment): boolean => {
   return (
-    outbound.status !== InvoiceNodeStatus.Shipped &&
-    outbound.status !== InvoiceNodeStatus.Verified &&
-    outbound.status !== InvoiceNodeStatus.Delivered
+    outbound.status === InvoiceNodeStatus.Shipped ||
+    outbound.status === InvoiceNodeStatus.Verified ||
+    outbound.status === InvoiceNodeStatus.Delivered
   );
 };
 
 export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   return (
-    inbound.status !== 'NEW' &&
-    inbound.status !== 'SHIPPED' &&
-    inbound.status !== 'DELIVERED'
+    inbound.status === InvoiceNodeStatus.Verified ||
+    inbound.status === InvoiceNodeStatus.Shipped ||
+    inbound.status === InvoiceNodeStatus.Picked
   );
 };
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   generateUUID,
   InvoiceLineNodeType,
+  InvoiceNodeStatus,
   useConfirmOnLeaving,
   useDirtyCheck,
 } from '@openmsupply-client/common';
@@ -101,7 +102,7 @@ interface UseDraftOutboundLinesControl {
 export const useDraftOutboundLines = (
   item: ItemRowFragment | null
 ): UseDraftOutboundLinesControl => {
-  const { id: invoiceId } = useOutboundFields('id');
+  const { id: invoiceId, status } = useOutboundFields(['id', 'status']);
   const { data: lines, isLoading: outboundLinesLoading } = useOutboundLines(
     item?.id ?? ''
   );
@@ -141,16 +142,17 @@ export const useDraftOutboundLines = (
         })
         .sort(sortByExpiry);
 
-      const placeholder = lines?.find(
-        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-      );
-
-      if (placeholder) {
-        rows.push(
-          createDraftOutboundLine({ invoiceId, invoiceLine: placeholder })
+      if (status === InvoiceNodeStatus.New) {
+        const placeholder = lines?.find(
+          ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
         );
-      } else {
-        rows.push(createPlaceholderRow(invoiceId, item.id));
+        if (placeholder) {
+          rows.push(
+            createDraftOutboundLine({ invoiceId, invoiceLine: placeholder })
+          );
+        } else {
+          rows.push(createPlaceholderRow(invoiceId, item.id));
+        }
       }
 
       return rows;

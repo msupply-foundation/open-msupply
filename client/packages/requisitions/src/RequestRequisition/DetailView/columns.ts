@@ -69,7 +69,7 @@ export const useRequestColumns = ({
         label: 'label.forecast-quantity',
         description: 'description.forecast-quantity',
         align: ColumnAlign.Right,
-        width: 150,
+        width: 200,
         accessor: ({ rowData }) =>
           suggestedQuantity(
             rowData.itemStats.averageMonthlyConsumption,

@@ -24,6 +24,7 @@ interface OutboundLineEditFormProps {
   onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
   disabled: boolean;
+  canAutoAllocate: boolean;
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -34,6 +35,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   packSizeController,
   availableQuantity,
   disabled,
+  canAutoAllocate,
 }) => {
   const t = useTranslation(['distribution', 'common']);
   const quantity =
@@ -79,7 +81,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
           </Grid>
         </ModalRow>
       )}
-      {item ? (
+      {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
 
