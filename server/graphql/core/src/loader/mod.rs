@@ -28,7 +28,7 @@ pub use requisition::*;
 pub use requisition_line::*;
 pub use stock_line::*;
 pub use stocktake_lines::*;
-pub use store::StoreLoader;
+pub use store::*;
 pub use user_account::UserAccountLoader;
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
