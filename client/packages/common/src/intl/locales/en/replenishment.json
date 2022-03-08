@@ -27,10 +27,13 @@
   "label.new": "New",
   "label.finalised": "Finalised",
   "heading.are-you-sure": "Are you sure?",
+  "heading.stock-distribution": "Stock Distribution",
   "messages.saved": "Saved",
   "messages.confirm-status-as": "Confirm status as $t({{status}})?",
   "messages.could-not-save": "Could not Save",
   "label.stock-details": "Stock details",
   "label.order-quantity": "Order quantity",
-  "label.suggested-quantity": "Suggested quantity"
+  "label.suggested-quantity": "Suggested quantity",
+  "label.stock-on-hand": "Stock on Hand",
+  "label.suggested-order-quantity": "Suggested Order Quantity"
 }

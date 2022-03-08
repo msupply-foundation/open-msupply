@@ -10,6 +10,7 @@ import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
 import { useIsRequestDisabled } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
+import { StockDistribution } from './ItemCharts/StockDistribution';
 
 interface RequestLineEditProps {
   isOpen: boolean;
@@ -60,13 +61,19 @@ export const RequestLineEdit = ({
       width={1024}
     >
       {!isLoading ? (
-        <RequestLineEditForm
-          draftLine={draft}
-          update={update}
-          disabled={mode === ModalMode.Update || disabled}
-          onChangeItem={setCurrentItem}
-          item={currentItem}
-        />
+        <>
+          <RequestLineEditForm
+            draftLine={draft}
+            update={update}
+            disabled={mode === ModalMode.Update || disabled}
+            onChangeItem={setCurrentItem}
+            item={currentItem}
+          />
+          <StockDistribution
+            item={currentItem}
+            suggestedQuantity={draft?.suggestedQuantity}
+          />
+        </>
       ) : (
         <BasicSpinner />
       )}
