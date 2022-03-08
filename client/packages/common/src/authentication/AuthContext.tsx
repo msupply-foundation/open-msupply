@@ -61,6 +61,13 @@ export const getAuthCookie = (): AuthCookie => {
   return emptyCookie;
 };
 
+const setAuthCookie = (cookie: AuthCookie) => {
+  const expires = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
+  const authCookie = { ...cookie, expires };
+
+  Cookies.set('auth', JSON.stringify(authCookie), { expires });
+};
+
 const useRefreshingAuth = (token?: string) => {
   const { setHeader } = useOmSupplyApi();
   setHeader('Authorization', `Bearer ${token}`);
@@ -93,9 +100,7 @@ export const AuthProvider: FC = ({ children }) => {
 
   const login = async (username: string, password: string, store?: Store) => {
     const { token, error } = await mutateAsync({ username, password });
-    const expires = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
     const authCookie = {
-      expires,
       store,
       token: token,
       user: { id: '', name: username },
@@ -104,7 +109,7 @@ export const AuthProvider: FC = ({ children }) => {
     setMRUCredentials({ username, store: store });
     if (!!token) setLocalStore(store);
     setLocalToken(token);
-    Cookies.set('auth', JSON.stringify(authCookie), { expires });
+    setAuthCookie(authCookie);
 
     return { token, error };
   };
@@ -114,6 +119,8 @@ export const AuthProvider: FC = ({ children }) => {
 
     setLocalStore(store);
     setMRUCredentials({ username: user?.name ?? '', store: store });
+    const authCookie = getAuthCookie();
+    setAuthCookie({ ...authCookie, store });
   };
 
   const logout = () => {
