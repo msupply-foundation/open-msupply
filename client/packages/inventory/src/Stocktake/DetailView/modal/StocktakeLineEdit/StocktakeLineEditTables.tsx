@@ -84,7 +84,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     {
       key: 'packSize',
       label: 'label.pack-size',
-      width: 100,
+      width: 125,
       accessor: ({ rowData }) =>
         rowData.countThisLine ? rowData.packSize : '',
       Cell: PositiveNumberInputCell,
