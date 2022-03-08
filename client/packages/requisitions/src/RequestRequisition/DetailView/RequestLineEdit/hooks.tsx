@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { generateUUID } from '@openmsupply-client/common';
+import { generateUUID, suggestedQuantity } from '@openmsupply-client/common';
 import {
   useSaveRequestLines,
-  useRequestFields,
+  useRequest,
   useRequestLines,
   RequestLineFragment,
   ItemWithStatsFragment,
+  RequestFragment,
 } from '../../api';
 
 export type DraftRequestLine = Omit<
@@ -18,31 +19,32 @@ export type DraftRequestLine = Omit<
 
 const createDraftFromItem = (
   item: ItemWithStatsFragment,
-  requisitionId: string
+  request: RequestFragment
 ): DraftRequestLine => {
   const { stats } = item;
   const { averageMonthlyConsumption, availableStockOnHand } = stats;
+  const suggested = suggestedQuantity(
+    averageMonthlyConsumption,
+    availableStockOnHand,
+    request.maxMonthsOfStock
+  );
 
-  // TODO: Use months of stock from what has been set on the requisition,
-  // not this arbitrary 3.
-  const suggested = averageMonthlyConsumption * 3 - availableStockOnHand;
-  const suggestedQuantity = Math.max(suggested, 0);
   return {
     id: generateUUID(),
-    requisitionId,
+    requisitionId: request.id,
     itemId: item.id,
-    requestedQuantity: suggestedQuantity,
-    suggestedQuantity,
+    requestedQuantity: suggested,
+    suggestedQuantity: suggested,
     isCreated: true,
   };
 };
 
 const createDraftFromRequestLine = (
   line: RequestLineFragment,
-  id: string
+  request: RequestFragment
 ): DraftRequestLine => ({
   ...line,
-  requisitionId: id,
+  requisitionId: request.id,
   itemId: line.item.id,
   requestedQuantity: line.requestedQuantity ?? line.suggestedQuantity,
   suggestedQuantity: line.suggestedQuantity,
@@ -51,25 +53,25 @@ const createDraftFromRequestLine = (
 
 export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
   const { lines } = useRequestLines();
-  const { id: reqId } = useRequestFields('id');
+  const { data } = useRequest();
   const { mutate: save, isLoading } = useSaveRequestLines();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
 
   useEffect(() => {
-    if (lines && item) {
+    if (lines && item && data) {
       const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
       );
       if (existingLine) {
-        setDraft(createDraftFromRequestLine(existingLine, reqId));
+        setDraft(createDraftFromRequestLine(existingLine, data));
       } else {
-        setDraft(createDraftFromItem(item, reqId));
+        setDraft(createDraftFromItem(item, data));
       }
     } else {
       setDraft(null);
     }
-  }, [lines, item, reqId]);
+  }, [lines, item, data]);
 
   const update = (patch: Partial<DraftRequestLine>) => {
     if (draft) {
