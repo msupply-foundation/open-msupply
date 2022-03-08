@@ -79,7 +79,11 @@ export function Autocomplete<T>({
     <BasicTextInput
       {...props}
       autoFocus={autoFocus}
-      InputProps={{ disableUnderline: false, ...props.InputProps }}
+      InputProps={{
+        disableUnderline: false,
+        style: props.disabled ? { paddingLeft: 0 } : {},
+        ...props.InputProps,
+      }}
       sx={{ width }}
     />
   );
