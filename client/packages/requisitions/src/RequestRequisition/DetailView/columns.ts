@@ -8,6 +8,7 @@ import {
   GenericColumnKey,
   suggestedQuantity,
 } from '@openmsupply-client/common';
+import { useRequestFields } from '../api';
 
 interface UseRequestColumnOptions {
   sortBy: SortBy<RequestLineFragment>;
@@ -21,6 +22,7 @@ export const useRequestColumns = ({
   onChangeSortBy,
 }: UseRequestColumnOptions): Column<RequestLineFragment>[] => {
   const t = useTranslation('common');
+  const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
   return useColumns<RequestLineFragment>(
     [
       [
@@ -35,7 +37,7 @@ export const useRequestColumns = ({
       [
         'monthlyConsumption',
         {
-          width: 200,
+          width: 150,
           accessor: ({ rowData }) =>
             rowData.itemStats.averageMonthlyConsumption,
         },
@@ -54,7 +56,7 @@ export const useRequestColumns = ({
             itemStats;
 
           const monthsString = availableMonthsOfStockOnHand
-            ? `(${availableMonthsOfStockOnHand} ${t('label.months', {
+            ? `(${availableMonthsOfStockOnHand.toFixed(2)} ${t('label.months', {
                 count: availableMonthsOfStockOnHand,
               })})`
             : '';
@@ -67,27 +69,27 @@ export const useRequestColumns = ({
         label: 'label.forecast-quantity',
         description: 'description.forecast-quantity',
         align: ColumnAlign.Right,
-        width: 200,
-        accessor: ({ rowData }) => {
-          // TODO: Use requisition months of stock here rather than hard coded
-          // '3'.
-          const suggested = suggestedQuantity(
+        width: 150,
+        accessor: ({ rowData }) =>
+          suggestedQuantity(
             rowData.itemStats.averageMonthlyConsumption,
             rowData.itemStats.availableStockOnHand,
-            3
-          );
-          if (suggested > 0) {
-            return suggested.toFixed(2);
-          } else {
-            return 0;
-          }
-        },
+            maxMonthsOfStock
+          ),
+      },
+      {
+        key: 'targetStock',
+        label: 'label.target-stock',
+        align: ColumnAlign.Right,
+        width: 150,
+        accessor: ({ rowData }) =>
+          rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       },
       {
         key: 'requestedQuantity',
         label: 'label.requested-quantity',
         align: ColumnAlign.Right,
-        width: 200,
+        width: 150,
       },
       ['comment', { width: 300 }],
       GenericColumnKey.Selection,

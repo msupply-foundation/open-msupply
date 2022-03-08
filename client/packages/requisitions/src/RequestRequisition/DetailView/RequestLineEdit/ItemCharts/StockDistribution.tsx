@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
-  ItemStatsNode,
   Tooltip,
   Typography,
   useTranslation,
@@ -9,7 +8,8 @@ import {
 import { useRequestFields } from '../../../api';
 
 export interface StockDistributionProps {
-  itemStats?: ItemStatsNode;
+  availableStockOnHand?: number;
+  averageMonthlyConsumption?: number;
   suggestedQuantity?: number;
 }
 
@@ -113,13 +113,10 @@ const MonthlyBar = ({
 };
 
 export const StockDistribution: React.FC<StockDistributionProps> = ({
-  itemStats,
+  availableStockOnHand = 0,
+  averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
 }) => {
-  if (!itemStats) return null;
-
-  const { availableStockOnHand, averageMonthlyConsumption } = itemStats;
-
   if (averageMonthlyConsumption === 0) return null;
 
   const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
@@ -133,53 +130,62 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
       ? Math.round((100 * targetQuantity) / availableStockOnHand)
       : 100;
 
-  return (
-    <Box padding={4}>
-      <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
-        {t('heading.stock-distribution')}
-      </Typography>
+  return useMemo(
+    () => (
+      <Box padding={4}>
+        <Typography
+          variant="body1"
+          fontWeight={700}
+          style={{ marginBottom: 10 }}
+        >
+          {t('heading.stock-distribution')}
+        </Typography>
 
-      <Typography variant="body1" fontWeight={700} fontSize={12}>
-        {t('heading.target-quantity')}
-      </Typography>
-      <Box
-        display="flex"
-        alignItems="flex-start"
-        width={`${monthlyConsumptionWidth}%`}
-        style={{ paddingBottom: 7 }}
-      >
-        <MonthlyBar
-          flexBasis="1px"
-          label={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''}
-          left={true}
-        />
-
-        {Array.from({ length: maxMonthsOfStock }, (_, i) => (
-          <MonthlyConsumption
-            key={i}
-            month={i + 1}
-            flexBasis={`${100 / maxMonthsOfStock}%`}
-            averageMonthlyConsumption={averageMonthlyConsumption}
-            showText={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT}
+        <Typography variant="body1" fontWeight={700} fontSize={12}>
+          {t('heading.target-quantity')}
+        </Typography>
+        <Box
+          display="flex"
+          alignItems="flex-start"
+          width={`${monthlyConsumptionWidth}%`}
+          style={{ paddingBottom: 7 }}
+        >
+          <MonthlyBar
+            flexBasis="1px"
+            label={
+              monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''
+            }
+            left={true}
           />
-        ))}
-      </Box>
 
-      <Box display="flex" alignItems="flex-start" width="100%">
-        <Divider />
-        <ValueBar
-          value={availableStockOnHand}
-          total={targetQuantity}
-          label={t('label.stock-on-hand')}
-          colour="gray.main"
-        />
-        <ValueBar
-          value={suggestedQuantity}
-          total={targetQuantity}
-          label={t('label.suggested-order-quantity')}
-          colour="primary.light"
-        />
+          {Array.from({ length: maxMonthsOfStock }, (_, i) => (
+            <MonthlyConsumption
+              key={i}
+              month={i + 1}
+              flexBasis={`${100 / maxMonthsOfStock}%`}
+              averageMonthlyConsumption={averageMonthlyConsumption}
+              showText={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT}
+            />
+          ))}
+        </Box>
+
+        <Box display="flex" alignItems="flex-start" width="100%">
+          <Divider />
+          <ValueBar
+            value={availableStockOnHand}
+            total={targetQuantity}
+            label={t('label.stock-on-hand')}
+            colour="gray.main"
+          />
+          <ValueBar
+            value={suggestedQuantity}
+            total={targetQuantity}
+            label={t('label.suggested-order-quantity')}
+            colour="primary.light"
+          />
+        </Box>
       </Box>
-    </Box>
+    ),
+    [availableStockOnHand, averageMonthlyConsumption, suggestedQuantity]
   );
 };
