@@ -15,6 +15,7 @@ import {
   Theme,
   useTheme,
 } from '@openmsupply-client/common';
+import { getLocationInputColumn } from '@openmsupply-client/system';
 import { DraftStocktakeLine } from './hooks';
 
 interface StocktakeLineEditTableProps {
@@ -150,6 +151,30 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
+  ]);
+
+  return (
+    <DataTable
+      isDisabled={isDisabled}
+      columns={columns}
+      data={batches}
+      noDataMessage={t('label.add-new-line')}
+      dense
+    />
+  );
+};
+
+export const LocationTable: FC<StocktakeLineEditTableProps> = ({
+  batches,
+  update,
+  isDisabled,
+}) => {
+  const theme = useTheme();
+  const t = useTranslation('inventory');
+  const columns = useColumns<DraftStocktakeLine>([
+    getCountThisLineColumn(update, theme),
+    getBatchColumn(update, theme),
+    [getLocationInputColumn(), { width: 400, setter: update }],
   ]);
 
   return (
