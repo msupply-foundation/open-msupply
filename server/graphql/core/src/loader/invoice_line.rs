@@ -6,7 +6,7 @@ use repository::{InvoiceLine, InvoiceLineFilter};
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
-use super::{IdPairWithPayload, RequisitionAndItemId};
+use super::{IdPair, RequisitionAndItemId};
 
 pub struct InvoiceLineByInvoiceIdLoader {
     pub service_provider: Data<ServiceProvider>,
@@ -58,8 +58,7 @@ impl Loader<RequisitionAndItemId> for InvoiceLineForRequisitionLine {
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
         let service_context = self.service_provider.context()?;
 
-        let (requisition_ids, item_ids) =
-            IdPairWithPayload::extract_unique_ids(requisition_and_item_id);
+        let (requisition_ids, item_ids) = IdPair::extract_unique_ids(requisition_and_item_id);
 
         let filter = InvoiceLineFilter::new()
             .requisition_id(EqualFilter::equal_any(requisition_ids))

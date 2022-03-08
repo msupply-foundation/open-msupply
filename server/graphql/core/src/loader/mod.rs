@@ -33,7 +33,7 @@ pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
 
 #[derive(Debug, Clone)]
-pub struct IdPairWithPayload<T>
+pub struct IdPair<T>
 where
     T: Clone,
 {
@@ -42,19 +42,19 @@ where
     pub payload: T,
 }
 
-impl<T: Clone> IdPairWithPayload<T> {
-    pub fn get_all_secondary_ids(id_pairs: &[IdPairWithPayload<T>]) -> Vec<String> {
+impl<T: Clone> IdPair<T> {
+    pub fn get_all_secondary_ids(id_pairs: &[IdPair<T>]) -> Vec<String> {
         id_pairs
             .iter()
             .map(|id_pair| id_pair.secondary_id.clone())
             .collect()
     }
 
-    fn extract_unique_ids(id_pairs: &[IdPairWithPayload<T>]) -> (Vec<String>, Vec<String>) {
+    fn extract_unique_ids(id_pairs: &[IdPair<T>]) -> (Vec<String>, Vec<String>) {
         let mut primary_ids: HashSet<String> = HashSet::new();
         let mut seconday_ids: HashSet<String> = HashSet::new();
 
-        for IdPairWithPayload {
+        for IdPair {
             primary_id,
             secondary_id,
             ..
@@ -71,15 +71,15 @@ impl<T: Clone> IdPairWithPayload<T> {
     }
 }
 
-impl<T: Clone> PartialEq for IdPairWithPayload<T> {
+impl<T: Clone> PartialEq for IdPair<T> {
     fn eq(&self, other: &Self) -> bool {
         self.primary_id == other.primary_id && self.secondary_id == other.secondary_id
     }
 }
 
-impl<T: Clone> Eq for IdPairWithPayload<T> {}
+impl<T: Clone> Eq for IdPair<T> {}
 
-impl<T: Clone> std::hash::Hash for IdPairWithPayload<T> {
+impl<T: Clone> std::hash::Hash for IdPair<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         format!("{}{}", self.primary_id, self.secondary_id).hash(state);
     }
@@ -87,7 +87,7 @@ impl<T: Clone> std::hash::Hash for IdPairWithPayload<T> {
 
 #[derive(Clone)]
 pub struct EmptyPayload;
-pub type RequisitionAndItemId = IdPairWithPayload<EmptyPayload>;
+pub type RequisitionAndItemId = IdPair<EmptyPayload>;
 impl RequisitionAndItemId {
     pub fn new(requisition_id: &str, item_id: &str) -> Self {
         RequisitionAndItemId {
