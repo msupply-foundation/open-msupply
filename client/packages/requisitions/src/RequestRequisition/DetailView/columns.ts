@@ -44,6 +44,7 @@ export const useRequestColumns = ({
       {
         key: 'availableStockOnHand',
         label: 'label.stock-on-hand',
+        description: 'description.stock-on-hand',
         align: ColumnAlign.Left,
 
         width: 200,
@@ -53,7 +54,7 @@ export const useRequestColumns = ({
             itemStats;
 
           const monthsString = availableMonthsOfStockOnHand
-            ? `${availableMonthsOfStockOnHand} (${t('label.month', {
+            ? `(${availableMonthsOfStockOnHand} ${t('label.month', {
                 count: availableMonthsOfStockOnHand,
               })})`
             : '';
@@ -64,6 +65,7 @@ export const useRequestColumns = ({
       {
         key: 'suggestedQuantity',
         label: 'label.forecast-quantity',
+        description: 'description.forecast-quantity',
         align: ColumnAlign.Right,
         width: 200,
         accessor: ({ rowData }) => {
