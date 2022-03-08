@@ -48,6 +48,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   monthlyConsumption: {
     key: 'monthlyConsumption',
     label: 'label.average-monthly-consumption',
+    description: 'description.average-monthly-consumption',
     align: ColumnAlign.Left,
     width: 100,
   },

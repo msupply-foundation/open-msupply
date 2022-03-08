@@ -60,6 +60,7 @@ export interface Column<T extends RecordWithId> {
   accessor: ColumnDataAccessor<T>;
 
   label: LocaleKey | '';
+  description: LocaleKey | '';
 
   format: ColumnFormat;
   align: ColumnAlign;
