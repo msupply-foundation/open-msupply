@@ -4,7 +4,7 @@ import { useResponseColumns } from './columns';
 import { useResponseLines, ResponseLineFragment } from '../api';
 
 interface ContentAreaProps {
-  onRowClick: (line: ResponseLineFragment) => void;
+  onRowClick: null | ((line: ResponseLineFragment) => void);
 }
 
 export const ContentArea = ({ onRowClick }: ContentAreaProps) => {

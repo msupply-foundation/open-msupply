@@ -24,9 +24,13 @@ const Expando = ({
   }
 };
 
-export const ContentArea: FC<{
-  onRowClick: (item: StocktakeSummaryItem | StocktakeLineFragment) => void;
-}> = ({ onRowClick }) => {
+interface ContentAreaProps {
+  onRowClick:
+    | null
+    | ((item: StocktakeSummaryItem | StocktakeLineFragment) => void);
+}
+
+export const ContentArea: FC<ContentAreaProps> = ({ onRowClick }) => {
   const t = useTranslation('inventory');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
   const { rows, onChangeSortBy, sortBy } = useStocktakeRows(isGrouped);
