@@ -1,7 +1,6 @@
 {
   "button.delete-lines": "Delete lines",
   "button.save-and-confirm-status": "Confirm {{status}}",
-  "dev.log-draft": "Log draft",
   "error.cant-save": "There was a problem saving.",
   "error.no-items": "No items",
   "error.stocktake-not-found": "Stocktake not found",

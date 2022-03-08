@@ -5,21 +5,15 @@ import {
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
-  DropdownMenu,
-  DropdownMenuItem,
-  DeleteIcon,
   useTranslation,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system/src/Name';
-import {
-  useRequestFields,
-  useIsRequestDisabled,
-  useDeleteRequestLines,
-} from '../api';
+import { NameSearchInput } from '@openmsupply-client/system';
+import { useRequestFields, useIsRequestDisabled } from '../../api';
+import { ToolbarDropDown } from './ToolbarDropDown';
+import { ToolbarActions } from './ToolbarActions';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation(['replenishment', 'common']);
-  const { onDelete } = useDeleteRequestLines();
+  const t = useTranslation('replenishment');
 
   const isDisabled = useIsRequestDisabled();
   const { theirReference, update, otherParty } = useRequestFields([
@@ -69,11 +63,15 @@ export const Toolbar: FC = () => {
             </Box>
           </Box>
         </Grid>
-        <DropdownMenu disabled={isDisabled} label={t('label.select')}>
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-            {t('button.delete-lines', { ns: 'distribution' })}
-          </DropdownMenuItem>
-        </DropdownMenu>
+        <Box
+          flexDirection="column"
+          alignItems="flex-end"
+          display="flex"
+          gap={2}
+        >
+          <ToolbarActions />
+          <ToolbarDropDown />
+        </Box>
       </Grid>
     </AppBarContentPortal>
   );

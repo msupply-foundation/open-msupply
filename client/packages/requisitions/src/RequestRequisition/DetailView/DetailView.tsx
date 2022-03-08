@@ -12,7 +12,7 @@ import {
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest, useIsRequestDisabled } from '../api';
 import { Toolbar } from './Toolbar';
-import { Footer } from './Footer/Footer';
+import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';

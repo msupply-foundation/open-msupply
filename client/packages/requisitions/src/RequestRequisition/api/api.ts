@@ -68,11 +68,13 @@ const requestParser = {
   ): UpdateRequestRequisitionInput => {
     return {
       id: requisition.id,
-      // otherPartyId: requisition.otherParty?.id,
+      otherPartyId: requisition.otherParty?.id,
       comment: requisition.comment,
       theirReference: requisition.theirReference,
       colour: requisition.colour,
       status: requestParser.toStatus(requisition),
+      minMonthsOfStock: requisition.minMonthsOfStock,
+      maxMonthsOfStock: requisition.maxMonthsOfStock,
     };
   },
   toDeleteLine: (line: RequestLineFragment) => ({ id: line.id }),

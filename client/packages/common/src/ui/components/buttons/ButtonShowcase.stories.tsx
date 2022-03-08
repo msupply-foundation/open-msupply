@@ -1,14 +1,19 @@
 import React, { FC, useState } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
-import { FlatButton } from './FlatButton';
-import { SplitButton } from './SplitButton';
-import { BookIcon, TruckIcon } from '@common/icons';
-import { BaseButton, ButtonWithIcon } from '.';
-import { DialogButton, IconButton } from '../buttons';
-import { Color } from '../menus';
+
+import {
+  DialogButton,
+  SplitButton,
+  BaseButton,
+  ButtonWithIcon,
+} from './standard';
+import { IconButton } from './IconButton';
 import { ToggleButton } from './ToggleButton';
 import { ColorSelectButton } from './ColorSelectButton';
+import { FlatButton } from './FlatButton/FlatButton';
+import { BookIcon, TruckIcon } from '@common/icons';
+import { Color } from '../menus';
 import { useTranslation } from '@common/intl';
 import { SplitButtonOption } from '@common/components';
 
