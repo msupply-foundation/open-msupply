@@ -12,6 +12,7 @@
 
 # test databases
 *.sqlite
+*.sqlite-journal
 
 # directories used by the server at runtime
 plugins
