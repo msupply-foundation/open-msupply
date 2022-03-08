@@ -29,6 +29,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
         <ModalLabel label={t('label.item')} justifyContent="flex-end" />
         <Grid item flex={1}>
           <ItemSearchInput
+            autoFocus={!item}
             disabled={disabled}
             currentItemId={item?.id}
             onChange={(newItem: ItemRowFragment | null) =>

@@ -30,6 +30,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
+            autoFocus={!item}
             disabled={mode === ModalMode.Update}
             currentItemId={item?.id}
             onChange={onChangeItem}
