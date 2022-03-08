@@ -88,6 +88,7 @@ export const RequestLineEditForm = ({
             {t('label.stock-details', { ns: 'replenishment' })}
           </Typography>
           <ItemSearchInput
+            autoFocus={!item}
             width={300}
             disabled={disabled}
             currentItemId={item?.id}

@@ -38,10 +38,13 @@ export const RequestLineEdit = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={!hasNext || mode === ModalMode.Create}
+          disabled={!hasNext && mode === ModalMode.Update}
           variant="next"
-          onClick={() => {
-            next && setCurrentItem(next);
+          onClick={async () => {
+            await save();
+            if (mode === ModalMode.Update && next) setCurrentItem(next);
+            else if (mode === ModalMode.Create) setCurrentItem(null);
+            else onClose();
             // Returning true here triggers the slide animation
             return true;
           }}
