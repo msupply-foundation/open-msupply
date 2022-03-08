@@ -21,7 +21,6 @@ export const ToolbarActions = () => {
   return (
     <InputWithLabelRow
       labelWidth="150px"
-      labelProps={{ sx: { fontSize: 12, fontWeight: 500 } }}
       label={t('label.min-months-of-stock')}
       Input={
         <Autocomplete
