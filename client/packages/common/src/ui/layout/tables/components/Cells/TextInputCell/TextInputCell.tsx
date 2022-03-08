@@ -8,6 +8,7 @@ export const TextInputCell = <T extends RecordWithId>({
   rowData,
   column,
   rows,
+  isDisabled = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
@@ -17,6 +18,7 @@ export const TextInputCell = <T extends RecordWithId>({
 
   return (
     <BasicTextInput
+      disabled={isDisabled}
       InputProps={maxLength ? { inputProps: { maxLength } } : undefined}
       value={buffer}
       onChange={e => {

@@ -7,7 +7,7 @@ import {
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useIsInboundEditable } from '../api';
+import { useIsInboundDisabled } from '../api';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
@@ -16,7 +16,7 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const isEditable = useIsInboundEditable();
+  const isDisabled = useIsInboundDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
 
@@ -24,7 +24,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          disabled={!isEditable}
+          disabled={isDisabled}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}

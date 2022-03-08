@@ -83,6 +83,7 @@ export const DataRow = <T extends RecordWithId>({
                 }}
               >
                 <column.Cell
+                  isDisabled={isDisabled}
                   rows={rows}
                   rowData={rowData}
                   columns={columns}

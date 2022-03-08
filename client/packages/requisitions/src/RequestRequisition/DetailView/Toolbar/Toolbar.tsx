@@ -42,7 +42,7 @@ export const Toolbar: FC = () => {
                       disabled={isDisabled}
                       value={otherParty ?? null}
                       onChange={otherParty => {
-                        update({ otherPartyId: otherParty.id });
+                        update({ otherParty });
                       }}
                     />
                   }

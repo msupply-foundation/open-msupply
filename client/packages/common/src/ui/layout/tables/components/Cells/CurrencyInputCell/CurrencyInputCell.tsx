@@ -10,6 +10,7 @@ export const CurrencyInputCell = <T extends RecordWithId>({
   column,
   rowIndex,
   columnIndex,
+  isDisabled = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     Number(Number(column.accessor({ rowData, rows })))
@@ -21,9 +22,10 @@ export const CurrencyInputCell = <T extends RecordWithId>({
 
   return (
     <CurrencyInput
+      disabled={isDisabled}
       autoFocus={autoFocus}
       maxWidth={column.width}
-      defaultValue={buffer}
+      value={buffer}
       onChangeNumber={newNumber => {
         setBuffer(newNumber);
         updater({ ...rowData, [column.key]: Number(newNumber) });

@@ -15,11 +15,11 @@ import {
   useDeleteSelectedLines,
   useInboundFields,
   useInboundItems,
-  useIsInboundEditable,
+  useIsInboundDisabled,
 } from '../api';
 
 export const Toolbar: FC = () => {
-  const isEditable = useIsInboundEditable();
+  const isDisabled = useIsInboundDisabled();
   const { data } = useInboundItems();
 
   const { onDelete } = useDeleteSelectedLines();
@@ -49,7 +49,7 @@ export const Toolbar: FC = () => {
                 Input={
                   <NameSearchInput
                     type="supplier"
-                    disabled={!isEditable}
+                    disabled={isDisabled}
                     value={otherParty}
                     onChange={name => {
                       update({ otherParty: name });
@@ -62,7 +62,7 @@ export const Toolbar: FC = () => {
               label={t('label.supplier-ref')}
               Input={
                 <BufferedTextInput
-                  disabled={!isEditable}
+                  disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
                   value={theirReference ?? ''}
@@ -74,7 +74,7 @@ export const Toolbar: FC = () => {
             />
           </Box>
         </Grid>
-        <DropdownMenu disabled={!isEditable} label={t('label.select')}>
+        <DropdownMenu disabled={isDisabled} label={t('label.select')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>
