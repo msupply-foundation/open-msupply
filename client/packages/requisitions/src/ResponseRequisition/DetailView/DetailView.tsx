@@ -21,7 +21,6 @@ import {
   ResponseLineFragment,
 } from '../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
-import {} from 'packages/requisitions/src/utils';
 
 export const DetailView: FC = () => {
   const isDisabled = useIsResponseDisabled();
