@@ -73,6 +73,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     setDraftOutboundLines(newAllocateQuantities ?? draftOutboundLines);
   };
 
+  const canAutoAllocate = !!(currentItem && draftOutboundLines.length);
+
   return (
     <Modal
       title={t(
@@ -111,12 +113,12 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           allocatedQuantity={getAllocatedQuantity(draftOutboundLines)}
           availableQuantity={sumAvailableQuantity(draftOutboundLines)}
           onChangeQuantity={onAllocate}
-          canAutoAllocate={!!(currentItem && draftOutboundLines.length)}
+          canAutoAllocate={canAutoAllocate}
         />
 
         {!!currentItem ? (
           !isLoading ? (
-            !!(currentItem && draftOutboundLines.length) ? (
+            canAutoAllocate ? (
               <OutboundLineEditTable
                 packSizeController={packSizeController}
                 onChange={updateQuantity}
