@@ -220,7 +220,7 @@ export const useAddFromMasterList = () => {
   const t = useTranslation('distribution');
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('message.confirm-add-from-master-list'),
+    message: t('messages.confirm-add-from-master-list'),
   });
 
   const addFromMasterList = async ({

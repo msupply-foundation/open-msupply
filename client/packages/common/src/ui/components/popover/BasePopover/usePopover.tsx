@@ -20,7 +20,15 @@ interface UsePopoverControl {
   Popover: FC<Partial<BasePopoverProps>>;
 }
 
-export const usePopover = (): UsePopoverControl => {
+interface UsePopoverOptions {
+  showDebounceDelay?: number;
+  hideDebounceDelay?: number;
+}
+
+export const usePopover = ({
+  showDebounceDelay = 250,
+  hideDebounceDelay = 500,
+}: UsePopoverOptions = {}): UsePopoverControl => {
   // The Popover component itself carries the state and
   // assigns callbacks to these refs which can control
   // the state. This is done so that we can control the
@@ -62,8 +70,8 @@ export const usePopover = (): UsePopoverControl => {
     isOpenCallback.current?.(false);
   };
 
-  const show = useDebounceCallback(showCallback, [], 250);
-  const hide = useDebounceCallback(hideCallback, []);
+  const show = useDebounceCallback(showCallback, [], showDebounceDelay);
+  const hide = useDebounceCallback(hideCallback, [], hideDebounceDelay);
 
   const Popover: FC<Partial<BasePopoverProps>> = React.useCallback(props => {
     const [internalAnchorEl, setInternalAnchorEl] =

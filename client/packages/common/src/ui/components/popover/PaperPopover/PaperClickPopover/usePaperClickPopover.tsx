@@ -6,7 +6,10 @@ import {
 } from './PaperClickPopover';
 
 export const usePaperClickPopover = () => {
-  const { show, hide, Popover } = usePopover();
+  const { show, hide, Popover } = usePopover({
+    hideDebounceDelay: 0,
+    showDebounceDelay: 0,
+  });
   const PaperClickPopover: FC<
     Omit<PaperClickPopoverProps, 'show' | 'hide' | 'Popover'>
   > = props => (
