@@ -59,8 +59,12 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { setIsDirty } = useDirtyCheck();
 
-  const onNext = () => {
-    setCurrentItem(next);
+  const onNext = async () => {
+    await mutate(draftOutboundLines);
+    if (mode === ModalMode.Update && next) setCurrentItem(next);
+    else if (mode === ModalMode.Create) setCurrentItem(null);
+    else onClose();
+    // Returning true here triggers the slide animation
     return true;
   };
 
@@ -81,7 +85,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={mode === ModalMode.Create || nextDisabled}
+          disabled={mode === ModalMode.Update && nextDisabled}
           variant="next"
           onClick={onNext}
         />

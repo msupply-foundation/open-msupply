@@ -46,6 +46,7 @@ interface ItemSearchInputProps {
   disabled?: boolean;
   extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
   width?: number;
+  autoFocus?: boolean;
 }
 
 export const ItemSearchInput: FC<ItemSearchInputProps> = ({
@@ -54,6 +55,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
   disabled = false,
   extraFilter,
   width = 850,
+  autoFocus = false,
 }) => {
   const { data, isLoading } = useItemsWithStats();
   const t = useTranslation('common');
@@ -68,6 +70,7 @@ export const ItemSearchInput: FC<ItemSearchInputProps> = ({
 
   return (
     <Autocomplete
+      autoFocus={autoFocus}
       disabled={disabled}
       onOpen={selectControl.toggleOn}
       onClose={selectControl.toggleOff}

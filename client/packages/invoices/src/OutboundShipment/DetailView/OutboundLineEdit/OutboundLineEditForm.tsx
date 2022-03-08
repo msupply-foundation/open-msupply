@@ -49,6 +49,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
           <ItemSearchInput
+            autoFocus={!item}
             disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
