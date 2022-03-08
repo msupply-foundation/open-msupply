@@ -68,6 +68,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         onCancel={onClose}
         mode={mode}
         isOpen={isOpen}
+        hasNext={!!nextItem}
       >
         {(() => {
           if (isLoading) {
