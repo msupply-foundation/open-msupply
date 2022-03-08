@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
-import { TableCell, TableRow, TableSortLabel } from '@mui/material';
+import { TableCell, TableRow, TableSortLabel, Tooltip } from '@mui/material';
 import { Column } from '../../columns/types';
 import { SortDescIcon } from '@common/icons';
 import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
+import { useTranslation } from '@common/intl';
 
 export const HeaderRow: FC<{ dense?: boolean }> = ({ dense, ...props }) => (
   <TableRow
@@ -36,10 +37,11 @@ export const HeaderCell = <T extends RecordWithId>({
     align,
     sortBy,
     Header,
+    description,
   } = column;
 
   const { direction, key: currentSortKey } = sortBy ?? {};
-
+  const t = useTranslation('common');
   const isSorted = key === currentSortKey;
 
   const onSort = useDebounceCallback(
@@ -48,6 +50,12 @@ export const HeaderCell = <T extends RecordWithId>({
     150
   );
 
+  const tooltip = (
+    <>
+      {!!description && <div>{t(description)}</div>}
+      {sortable && <div>{t('label.click-to-sort')}</div>}
+    </>
+  );
   return (
     <TableCell
       role="columnheader"
@@ -69,18 +77,24 @@ export const HeaderCell = <T extends RecordWithId>({
       aria-label={String(key)}
       sortDirection={isSorted ? direction : false}
     >
-      {sortable ? (
-        <TableSortLabel
-          hideSortIcon={false}
-          active={isSorted}
-          direction={direction}
-          IconComponent={SortDescIcon}
-        >
+      <Tooltip
+        title={tooltip}
+        placement="bottom"
+        style={{ whiteSpace: 'pre-line' }}
+      >
+        {sortable ? (
+          <TableSortLabel
+            hideSortIcon={false}
+            active={isSorted}
+            direction={direction}
+            IconComponent={SortDescIcon}
+          >
+            <Header column={column} />
+          </TableSortLabel>
+        ) : (
           <Header column={column} />
-        </TableSortLabel>
-      ) : (
-        <Header column={column} />
-      )}
+        )}
+      </Tooltip>
     </TableCell>
   );
 };
