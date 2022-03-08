@@ -8,6 +8,8 @@ import {
 } from '@openmsupply-client/common';
 import { createPlaceholderRow } from './useDraftOutboundLines';
 
+const pastDate = () => new Date(0).toISOString();
+
 type TestLineParams = {
   id: string;
   itemId?: string;
@@ -16,6 +18,7 @@ type TestLineParams = {
   availableNumberOfPacks?: number;
   numberOfPacks: number;
   onHold?: boolean;
+  expiryDate?: string;
 };
 
 const makePlaceholder = () => createPlaceholderRow('1', '1');
@@ -28,11 +31,13 @@ const testLine = ({
   numberOfPacks,
   id,
   onHold = false,
+  expiryDate = undefined,
 }: TestLineParams): DraftOutboundLine =>
   createDraftOutboundLine({
     invoiceId: '',
     invoiceLine: {
       id,
+      expiryDate,
       sellPricePerPack: 0,
       item: {
         id: itemId,
@@ -144,13 +149,12 @@ const multipleLinesWithNoneAssignedMultiplePackSizes: DraftOutboundLine[] = [
   makePlaceholder(),
 ];
 
-describe('usePackSizeController - multiple different pack size behaviour', () => {
+describe('usePackSizeController', () => {
   it('gives an option for all pack sizes when there are multiple.', () => {
     const lines = [
       testLine({ id: '1', numberOfPacks: 1 }),
       testLine({ id: '2', numberOfPacks: 1, packSize: 2 }),
       testLine({ id: '3', numberOfPacks: 1, packSize: 3 }),
-      // makePlaceholder(),
     ];
     const { result } = renderHookWithProvider(() =>
       usePackSizeController(lines)
@@ -160,16 +164,6 @@ describe('usePackSizeController - multiple different pack size behaviour', () =>
       -1, 1, 2, 3,
     ]);
   });
-});
-
-describe('usePackSizeController', () => {
-  // it('returns the correct distinct pack sizes of available batches', () => {
-  //   const { result } = renderHookWithProvider(() =>
-  //     usePackSizeController(multiplePackSizeLines)
-  //   );
-  //
-  //   expect(result.current.packSizes).toEqual([1, 2]);
-  // });
 
   it('returns the correct pack sizes options including an option for "any"', () => {
     const { result } = renderHookWithProvider(() =>
@@ -250,12 +244,12 @@ describe('usePackSizeController', () => {
     });
   });
 
-  it('has an initial value of undefined when the array is empty', () => {
+  it('has an initial value of any when the array is empty', () => {
     const { result } = renderHookWithProvider(() =>
       usePackSizeController([makePlaceholder()])
     );
 
-    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
+    expect(result.current.selected).toEqual({ label: '1', value: 1 });
   });
 
   it('has an initial value of the unique pack size with assigned packs, not any', () => {
@@ -280,7 +274,7 @@ describe('usePackSizeController', () => {
     const arr = [...singleLineWithNoneAssigned, placeholder];
     const { result } = renderHookWithProvider(() => usePackSizeController(arr));
 
-    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
+    expect(result.current.selected).toEqual({ label: '1', value: 1 });
   });
 
   it('has an initial value of the unique pack size with no assigned packs', async () => {
@@ -305,5 +299,66 @@ describe('usePackSizeController', () => {
     );
 
     expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
+  });
+
+  it('expired lines are not added to the pack size options, any is instead.', async () => {
+    const lines = [
+      testLine({ id: '1', numberOfPacks: 1, expiryDate: pastDate() }),
+      testLine({
+        id: '1',
+        packSize: 2,
+        numberOfPacks: 1,
+      }),
+      makePlaceholder(),
+    ];
+    const { result } = renderHookWithProvider(() =>
+      usePackSizeController(lines)
+    );
+
+    expect(result.current.options.map(({ value }) => value)).toEqual([-1, 2]);
+  });
+
+  it('still does not add expired packs into the pack size options when there is allocated stock to the expired line.', async () => {
+    const lines = [
+      testLine({ id: '1', numberOfPacks: 1, expiryDate: pastDate() }),
+      testLine({
+        id: '1',
+        packSize: 2,
+        numberOfPacks: 1,
+      }),
+      makePlaceholder(),
+    ];
+    const { result } = renderHookWithProvider(() =>
+      usePackSizeController(lines)
+    );
+
+    expect(result.current.options.map(({ value }) => value)).toEqual([-1, 2]);
+  });
+
+  it('does not use the placeholder pack size when there is only the placeholder and one other line.', async () => {
+    const lines = [
+      testLine({
+        id: '1',
+        packSize: 2,
+        numberOfPacks: 1,
+      }),
+      makePlaceholder(),
+    ];
+    const { result } = renderHookWithProvider(() =>
+      usePackSizeController(lines)
+    );
+
+    expect(result.current.options.map(({ value }) => value)).toEqual([2]);
+  });
+
+  it('has an any option when there is an expired line.', async () => {
+    const lines = [
+      testLine({ id: '1', numberOfPacks: 1, expiryDate: pastDate() }),
+    ];
+    const { result } = renderHookWithProvider(() =>
+      usePackSizeController(lines)
+    );
+
+    expect(result.current.options.map(({ value }) => value)).toEqual([-1]);
   });
 });
