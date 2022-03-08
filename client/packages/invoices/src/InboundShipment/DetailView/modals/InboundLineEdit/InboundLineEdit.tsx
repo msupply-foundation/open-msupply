@@ -183,13 +183,13 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
           <DialogButton
             variant="next"
             onClick={async () => {
-              try {
-                await saveLines();
-                setCurrentItem(mode === ModalMode.Update ? nextItem : null);
-                return true;
-              } catch (e) {
-                return false;
-              }
+              await saveLines();
+              if (mode === ModalMode.Update && nextItem) {
+                setCurrentItem(nextItem);
+              } else if (mode === ModalMode.Create) setCurrentItem(null);
+              else onClose();
+              // Returning true here triggers the slide animation
+              return true;
             }}
           />
         }

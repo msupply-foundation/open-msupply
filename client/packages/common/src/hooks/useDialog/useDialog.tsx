@@ -128,7 +128,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           sx={{ overflowX: 'hidden', ...contentSX }}
         >
           <Slide in={slideConfig.in} direction={slideConfig.direction}>
-            <div> {children}</div>
+            <div>{slideConfig.in && children}</div>
           </Slide>
         </DialogContent>
         <DialogActions

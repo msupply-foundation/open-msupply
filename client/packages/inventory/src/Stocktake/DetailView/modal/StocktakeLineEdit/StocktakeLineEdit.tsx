@@ -44,7 +44,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
 
   const onNext = async () => {
     await save(draftLines);
-    if (nextItem) setCurrentItem(nextItem);
+    if (mode === ModalMode.Update && nextItem) setCurrentItem(nextItem);
+    else if (mode === ModalMode.Create) setCurrentItem(null);
     else onClose();
     // Returning true here triggers the slide animation
     return true;
@@ -67,6 +68,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         onCancel={onClose}
         mode={mode}
         isOpen={isOpen}
+        hasNext={!!nextItem}
       >
         {(() => {
           if (isLoading) {
