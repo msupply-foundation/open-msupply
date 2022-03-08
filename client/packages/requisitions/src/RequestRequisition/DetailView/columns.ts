@@ -54,7 +54,7 @@ export const useRequestColumns = ({
             itemStats;
 
           const monthsString = availableMonthsOfStockOnHand
-            ? `(${availableMonthsOfStockOnHand} ${t('label.month', {
+            ? `(${availableMonthsOfStockOnHand} ${t('label.months', {
                 count: availableMonthsOfStockOnHand,
               })})`
             : '';
