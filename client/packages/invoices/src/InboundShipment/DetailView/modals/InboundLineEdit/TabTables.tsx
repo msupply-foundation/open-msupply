@@ -18,6 +18,7 @@ import { getLocationInputColumn } from '@openmsupply-client/system';
 interface TableProps {
   lines: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+  isDisabled?: boolean;
 }
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
@@ -51,6 +52,7 @@ const getExpiryColumn = (
 export const QuantityTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
+  isDisabled = false,
 }) => {
   const theme = useTheme();
   const columns = useColumns<DraftInboundLine>(
@@ -78,6 +80,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
 
   return (
     <DataTable
+      isDisabled={isDisabled}
       columns={columns}
       data={lines}
       noDataMessage="Add a new line"
@@ -91,6 +94,7 @@ export const QuantityTable = React.memo(QuantityTableComponent);
 export const PricingTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
+  isDisabled = false,
 }) => {
   const theme = useTheme();
   const columns = useColumns<DraftInboundLine>(
@@ -123,6 +127,7 @@ export const PricingTableComponent: FC<TableProps> = ({
 
   return (
     <DataTable
+      isDisabled={isDisabled}
       columns={columns}
       data={lines}
       noDataMessage="Add a new line"
@@ -136,6 +141,7 @@ export const PricingTable = React.memo(PricingTableComponent);
 export const LocationTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
+  isDisabled,
 }) => {
   const theme = useTheme();
   const columns = useColumns<DraftInboundLine>(
@@ -148,7 +154,9 @@ export const LocationTableComponent: FC<TableProps> = ({
     [updateDraftLine]
   );
 
-  return <DataTable columns={columns} data={lines} dense />;
+  return (
+    <DataTable columns={columns} data={lines} dense isDisabled={isDisabled} />
+  );
 };
 
 export const LocationTable = React.memo(LocationTableComponent);

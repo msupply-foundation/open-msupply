@@ -1,3 +1,4 @@
+import { RequestRowFragment } from './RequestRequisition/api/operations.generated';
 import {
   RequisitionNodeStatus,
   LocaleKey,
@@ -51,4 +52,12 @@ export const getNextResponseStatus = (
   );
   const nextStatus = responseStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
+};
+
+export const isRequestDisabled = (request: RequestRowFragment): boolean => {
+  return request.status !== RequisitionNodeStatus.Draft;
+};
+
+export const isResponseDisabled = (request: RequestRowFragment): boolean => {
+  return request.status !== RequisitionNodeStatus.New;
 };

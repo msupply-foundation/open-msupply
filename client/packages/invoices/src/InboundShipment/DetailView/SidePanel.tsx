@@ -14,11 +14,11 @@ import {
   ColorSelectButton,
   useBufferState,
 } from '@openmsupply-client/common';
-import { useInboundFields, useInbound, useIsInboundEditable } from '../api';
+import { useInboundFields, useInbound, useIsInboundDisabled } from '../api';
 
 const AdditionalInfoSection: FC = () => {
   const { comment, colour, update } = useInboundFields(['comment', 'colour']);
-  const isEditable = useIsInboundEditable();
+  const isDisabled = useIsInboundDisabled();
   const t = useTranslation(['common', 'replenishment']);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
 
@@ -33,7 +33,7 @@ const AdditionalInfoSection: FC = () => {
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
             <ColorSelectButton
-              disabled={!isEditable}
+              disabled={isDisabled}
               onChange={({ hex }) => {
                 setBufferedColor(hex);
                 update({ colour: hex });
@@ -45,7 +45,7 @@ const AdditionalInfoSection: FC = () => {
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <BufferedTextArea
-          disabled={!isEditable}
+          disabled={isDisabled}
           onChange={e => update({ comment: e.target.value })}
           value={comment}
         />

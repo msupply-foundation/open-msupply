@@ -21,7 +21,6 @@ export const ToolbarActions = () => {
   return (
     <InputWithLabelRow
       labelWidth="150px"
-      labelProps={{ sx: { fontSize: 12, fontWeight: 500 } }}
       label={t('label.min-months-of-stock')}
       Input={
         <Autocomplete
@@ -29,12 +28,12 @@ export const ToolbarActions = () => {
           clearIcon={null}
           isOptionEqualToValue={(a, b) => a.value === b.value}
           value={{
-            label: `${minMonthsOfStock} months`,
+            label: t('label.number-months', { count: minMonthsOfStock }),
             value: minMonthsOfStock,
           }}
           width="150px"
           options={months.map(numberOfMonths => ({
-            label: t('label.number-months', { numberOfMonths }),
+            label: t('label.number-months', { count: numberOfMonths }),
             value: numberOfMonths,
           }))}
           onChange={(_, option) =>

@@ -8,6 +8,7 @@ export const CheckboxCell = <T extends RecordWithId>({
   rowData,
   column,
   rows,
+  isDisabled,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
@@ -15,6 +16,7 @@ export const CheckboxCell = <T extends RecordWithId>({
 
   return (
     <Checkbox
+      disabled={isDisabled}
       checked={!!buffer}
       size="small"
       onChange={e => {

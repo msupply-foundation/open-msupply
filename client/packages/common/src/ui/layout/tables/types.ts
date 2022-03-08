@@ -15,6 +15,7 @@ export interface QueryResponse<T> {
 }
 
 export interface TableProps<T extends RecordWithId> {
+  isDisabled?: boolean;
   columns: Column<T>[];
   data?: T[];
   isLoading?: boolean;

@@ -5,14 +5,17 @@ import lastDayOfMonth from 'date-fns/lastDayOfMonth';
 interface ExpiryDateInputProps {
   value: Date | null;
   onChange: (value: Date | null) => void;
+  disabled?: boolean;
 }
 
 export const ExpiryDateInput: FC<ExpiryDateInputProps> = ({
   value,
   onChange,
+  disabled,
 }) => {
   return (
     <BaseDatePickerInput
+      disabled={disabled}
       views={['year', 'month']}
       inputFormat="MM/yyyy"
       value={value}
