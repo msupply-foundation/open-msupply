@@ -17,9 +17,14 @@ import {
   StocktakeLineEditTabs,
   StyledTabContainer,
   StyledTabPanel,
+  Tabs,
 } from './StocktakeLineEditTabs';
 import { useIsStocktakeDisabled } from '../../../api';
-import { BatchTable, PricingTable } from './StocktakeLineEditTables';
+import {
+  LocationTable,
+  BatchTable,
+  PricingTable,
+} from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
@@ -96,7 +101,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                     isDisabled={isDisabled}
                     onAddLine={addLine}
                   >
-                    <StyledTabPanel value={'Batch'}>
+                    <StyledTabPanel value={Tabs.Batch}>
                       <StyledTabContainer>
                         <BatchTable
                           isDisabled={isDisabled}
@@ -106,9 +111,19 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                       </StyledTabContainer>
                     </StyledTabPanel>
 
-                    <StyledTabPanel value={'Pricing'}>
+                    <StyledTabPanel value={Tabs.Pricing}>
                       <StyledTabContainer>
                         <PricingTable
+                          isDisabled={isDisabled}
+                          batches={draftLines}
+                          update={update}
+                        />
+                      </StyledTabContainer>
+                    </StyledTabPanel>
+
+                    <StyledTabPanel value={Tabs.Location}>
+                      <StyledTabContainer>
+                        <LocationTable
                           isDisabled={isDisabled}
                           batches={draftLines}
                           update={update}
