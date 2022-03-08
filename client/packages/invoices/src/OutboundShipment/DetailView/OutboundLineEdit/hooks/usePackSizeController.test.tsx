@@ -268,7 +268,7 @@ describe('usePackSizeController', () => {
     expect(result.current.selected).toEqual({ label: '1', value: 1 });
   });
 
-  it('xxx', () => {
+  it('has an initial value of 1 when only the placeholder row has assigned packs', () => {
     const placeholder = makePlaceholder();
     placeholder.numberOfPacks = 10;
     const arr = [...singleLineWithNoneAssigned, placeholder];

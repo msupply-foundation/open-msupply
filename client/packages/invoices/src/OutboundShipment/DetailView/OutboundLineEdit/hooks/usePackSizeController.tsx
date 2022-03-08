@@ -8,6 +8,12 @@ import {
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../../types';
 
+// Helper to sort the pack sizes by value.
+const sortPackSizes = (a: PackSizeOption, b: PackSizeOption) => {
+  if (a.value === b.value) return 0;
+  return a.value < b.value ? -1 : 1;
+};
+
 export type PackSizeController = ReturnType<typeof usePackSizeController>;
 
 type PackSizeOption = {
@@ -136,6 +142,8 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   return {
     selected: selected && { label: selected?.label, value: selected?.value },
     setPackSize,
-    options: validPackSizes.map(({ label, value }) => ({ label, value })),
+    options: validPackSizes
+      .sort(sortPackSizes)
+      .map(({ label, value }) => ({ label, value })),
   };
 };
