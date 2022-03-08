@@ -1,4 +1,4 @@
-use super::IdPairWithPayload;
+use super::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use chrono::NaiveDateTime;
@@ -12,7 +12,7 @@ pub struct ItemsStatsForItemLoader {
 }
 
 pub type ItemStatsLoaderInputPayload = Option<NaiveDateTime>;
-pub type ItemStatsLoaderInput = IdPairWithPayload<ItemStatsLoaderInputPayload>;
+pub type ItemStatsLoaderInput = IdPair<ItemStatsLoaderInputPayload>;
 impl ItemStatsLoaderInput {
     pub fn new(store_id: &str, item_id: &str, payload: ItemStatsLoaderInputPayload) -> Self {
         ItemStatsLoaderInput {
@@ -44,7 +44,7 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
         };
 
         let filter = ItemStatsFilter::new().item_id(EqualFilter::equal_any(
-            IdPairWithPayload::get_all_secondary_ids(&loader_inputs),
+            IdPair::get_all_secondary_ids(&loader_inputs),
         ));
 
         let item_stats = self.service_provider.item_stats_service.get_item_stats(
