@@ -95,7 +95,7 @@ export const ToolbarActions = () => {
       <Grid item>
         <InputWithLabelRow
           labelWidth="225px"
-          label={t('label.hide-stock-over-threshold')}
+          label={t('label.hide-stock-over-minimum')}
           Input={
             <Switch onChange={toggle} checked={on} color="gray" size="small" />
           }
