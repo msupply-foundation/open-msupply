@@ -21,7 +21,7 @@ export interface TableProps<T extends RecordWithId> {
   isLoading?: boolean;
   pagination?: Pagination & { total?: number };
   onChangePage?: (page: number) => void;
-  onRowClick?: (row: T) => void;
+  onRowClick?: null | ((row: T) => void);
   children?: ReactNode;
   noDataMessage?: string;
   ExpandContent?: FC<{ rowData: T }>;

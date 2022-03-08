@@ -47,7 +47,7 @@ export const DetailView: FC = () => {
 
           <Toolbar />
 
-          <ContentArea onRowClick={onRowClick} />
+          <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
 
           <Footer />
           <SidePanel />

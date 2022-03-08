@@ -19,9 +19,14 @@ import { StocktakeSummaryItem } from '../../types';
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
-import { StocktakeLineFragment, useStocktake } from '../api';
+import {
+  StocktakeLineFragment,
+  useStocktake,
+  useIsStocktakeDisabled,
+} from '../api';
 
 export const DetailView: FC = () => {
+  const isDisabled = useIsStocktakeDisabled();
   const { isOpen, entity, onOpen, onClose, mode } =
     useEditModal<ItemRowFragment>();
   const { data, isLoading } = useStocktake();
@@ -42,7 +47,7 @@ export const DetailView: FC = () => {
       <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
 
-      <ContentArea onRowClick={onRowClick} />
+      <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
       <Footer />
       <SidePanel />
 

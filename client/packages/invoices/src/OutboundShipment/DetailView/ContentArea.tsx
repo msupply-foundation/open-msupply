@@ -17,8 +17,8 @@ import { useOutboundRows } from '../api';
 import { useOutboundColumns } from './columns';
 import { OutboundLineFragment } from '../api/operations.generated';
 
-interface GeneralTabProps<T> {
-  onRowClick?: (rowData: T) => void;
+interface ContentAreaProps {
+  onRowClick?: null | ((rowData: OutboundLineFragment | OutboundItem) => void);
 }
 
 const Expand: FC<{
@@ -97,9 +97,7 @@ export const useHighlightPlaceholderRows = (
   }, [rows, setRowStyles]);
 };
 
-export const ContentAreaComponent: FC<
-  GeneralTabProps<OutboundLineFragment | OutboundItem>
-> = ({ onRowClick }) => {
+export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
   const t = useTranslation('distribution');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const { rows, onChangeSortBy, sortBy } = useOutboundRows(isGrouped);
