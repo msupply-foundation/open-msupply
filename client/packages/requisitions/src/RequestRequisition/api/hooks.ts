@@ -1,6 +1,7 @@
 import { isRequestDisabled } from './../../utils';
 import { useMemo } from 'react';
 import {
+  zustand,
   useConfirmationModal,
   useAuthContext,
   useTranslation,
@@ -29,6 +30,14 @@ import {
   RequestLineFragment,
   RequestRowFragment,
 } from './operations.generated';
+
+export const useHideOverStocked = zustand<{
+  on: boolean;
+  toggle: () => void;
+}>(set => ({
+  toggle: () => set(state => ({ ...state, on: !state.on })),
+  on: false,
+}));
 
 export const useRequestApi = () => {
   const keys = {
@@ -120,20 +129,31 @@ interface UseRequestRequisitionLinesController
 }
 
 export const useRequestLines = (): UseRequestRequisitionLinesController => {
+  const { on } = useHideOverStocked();
   const { sortBy, onChangeSortBy } = useSortBy<RequestLineFragment>({
     key: 'itemName',
     isDesc: false,
   });
 
-  const { lines } = useRequestFields('lines');
+  const { lines, minMonthsOfStock } = useRequestFields([
+    'lines',
+    'minMonthsOfStock',
+  ]);
 
   const sorted = useMemo(() => {
-    return (
-      lines?.nodes.sort(
-        getDataSorter(sortBy.key as keyof RequestLineFragment, !!sortBy.isDesc)
-      ) ?? []
+    const sorted = lines?.nodes.sort(
+      getDataSorter(sortBy.key as keyof RequestLineFragment, !!sortBy.isDesc)
     );
-  }, [sortBy, lines]);
+    if (on) {
+      return sorted.filter(
+        item =>
+          item.itemStats.availableStockOnHand <
+          item.itemStats.averageMonthlyConsumption * minMonthsOfStock
+      );
+    } else {
+      return sorted;
+    }
+  }, [sortBy, lines, on, minMonthsOfStock]);
 
   return { lines: sorted, sortBy, onChangeSortBy };
 };
