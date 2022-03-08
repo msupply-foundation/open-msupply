@@ -10,7 +10,7 @@ import {
 
 export type DraftRequestLine = Omit<
   RequestLineFragment,
-  '__typename' | 'item' | 'itemStats'
+  '__typename' | 'item'
 > & {
   isCreated: boolean;
   requisitionId: string;
@@ -34,6 +34,7 @@ const createDraftFromItem = (
     requestedQuantity: suggestedQuantity,
     suggestedQuantity,
     isCreated: true,
+    itemStats: item.stats,
   };
 };
 
@@ -47,6 +48,7 @@ const createDraftFromRequestLine = (
   requestedQuantity: line.requestedQuantity ?? line.suggestedQuantity,
   suggestedQuantity: line.suggestedQuantity,
   isCreated: false,
+  itemStats: line.itemStats,
 });
 
 export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {

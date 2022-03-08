@@ -1,20 +1,21 @@
 import React from 'react';
 import {
   Box,
+  ItemStatsNode,
   Tooltip,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
+import { useRequestFields } from '../../../api';
 
 export interface StockDistributionProps {
-  item: ItemRowWithStatsFragment | null;
+  itemStats?: ItemStatsNode;
   suggestedQuantity?: number;
 }
 
 const MIN_FLEX_BASIS_TO_SHOW_LABEL = 10;
 const MIN_FLEX_BASIS_TO_SHOW_VALUE = 5;
-const MIN_PERCENTAGE_TO_SHOW_ZERO = 0.15;
+const MIN_MC_WIDTH_TO_SHOW_TEXT = 5;
 
 const Divider = () => (
   <Box sx={{ backgroundColor: 'gray.dark', width: '1px', height: '45px' }} />
@@ -33,7 +34,7 @@ const ValueBar = ({
 }) => {
   if (value === 0) return null;
 
-  const flexBasis = Math.round((100 * value) / total);
+  const flexBasis = Math.min(Math.round((100 * value) / total), 100);
 
   return (
     <>
@@ -60,20 +61,77 @@ const ValueBar = ({
   );
 };
 
+const MonthlyConsumption = ({
+  month,
+  flexBasis,
+  averageMonthlyConsumption,
+  showText,
+}: {
+  month: number;
+  flexBasis: string;
+  averageMonthlyConsumption: number;
+  showText: boolean;
+}) => {
+  const t = useTranslation('common');
+  const text = ` (${month} ${t('label.months', {
+    count: month,
+  })})`;
+  const label = `${averageMonthlyConsumption * month}${showText ? text : ''}`;
+
+  return <MonthlyBar flexBasis={flexBasis} label={label} />;
+};
+
+const MonthlyBar = ({
+  label,
+  left,
+  flexBasis,
+}: {
+  label: string;
+  left?: boolean;
+  flexBasis?: string;
+}) => {
+  const directionStyle = left
+    ? { borderLeftWidth: 1, paddingLeft: 8 }
+    : { paddingLeft: 3, paddingRight: 8, borderRightWidth: 1 };
+  return (
+    <Box
+      sx={{
+        borderWidth: 0,
+        borderBottomWidth: 1,
+        borderColor: 'gray.dark',
+        borderStyle: 'solid',
+        height: '20px',
+      }}
+      style={{ ...directionStyle, textAlign: left ? undefined : 'right' }}
+      flexBasis={flexBasis}
+    >
+      <Typography variant="body1" fontSize={12} style={{ color: 'gray.dark' }}>
+        {label}
+      </Typography>
+    </Box>
+  );
+};
+
 export const StockDistribution: React.FC<StockDistributionProps> = ({
-  item,
+  itemStats,
   suggestedQuantity = 0,
 }) => {
-  if (!item) return null;
+  if (!itemStats) return null;
 
-  const { availableStockOnHand } = item.stats;
-  const targetQuantity = suggestedQuantity + availableStockOnHand;
+  const { availableStockOnHand, averageMonthlyConsumption } = itemStats;
+
+  if (averageMonthlyConsumption === 0) return null;
+
+  const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
+  const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
   const t = useTranslation('replenishment');
 
-  if (targetQuantity === 0) return null;
+  if (suggestedQuantity + availableStockOnHand === 0) return null;
 
-  const sohPercentage = availableStockOnHand / targetQuantity;
-  const showZero = sohPercentage > MIN_PERCENTAGE_TO_SHOW_ZERO;
+  const monthlyConsumptionWidth =
+    availableStockOnHand > targetQuantity
+      ? Math.round((100 * targetQuantity) / availableStockOnHand)
+      : 100;
 
   return (
     <Box padding={4}>
@@ -81,7 +139,33 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
         {t('heading.stock-distribution')}
       </Typography>
 
-      <Box display="flex" alignItems="flex-start">
+      <Typography variant="body1" fontWeight={700} fontSize={12}>
+        {t('heading.target-quantity')}
+      </Typography>
+      <Box
+        display="flex"
+        alignItems="flex-start"
+        width={`${monthlyConsumptionWidth}%`}
+        style={{ paddingBottom: 7 }}
+      >
+        <MonthlyBar
+          flexBasis="1px"
+          label={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''}
+          left={true}
+        />
+
+        {Array.from({ length: maxMonthsOfStock }, (_, i) => (
+          <MonthlyConsumption
+            key={i}
+            month={i + 1}
+            flexBasis={`${100 / maxMonthsOfStock}%`}
+            averageMonthlyConsumption={averageMonthlyConsumption}
+            showText={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT}
+          />
+        ))}
+      </Box>
+
+      <Box display="flex" alignItems="flex-start" width="100%">
         <Divider />
         <ValueBar
           value={availableStockOnHand}
@@ -96,11 +180,6 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
           colour="primary.light"
         />
       </Box>
-      {showZero && (
-        <Box style={{ position: 'relative', left: 10, top: -41 }}>
-          <Typography fontSize={12}>0</Typography>
-        </Box>
-      )}
     </Box>
   );
 };

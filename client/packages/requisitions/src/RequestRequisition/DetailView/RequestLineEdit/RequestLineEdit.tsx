@@ -70,8 +70,8 @@ export const RequestLineEdit = ({
             item={currentItem}
           />
           <StockDistribution
-            item={currentItem}
             suggestedQuantity={draft?.suggestedQuantity}
+            itemStats={draft?.itemStats}
           />
         </>
       ) : (
