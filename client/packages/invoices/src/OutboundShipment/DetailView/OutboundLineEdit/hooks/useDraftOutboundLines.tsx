@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   generateUUID,
   InvoiceLineNodeType,
+  InvoiceNodeStatus,
   useConfirmOnLeaving,
   useDirtyCheck,
 } from '@openmsupply-client/common';
@@ -141,7 +142,7 @@ export const useDraftOutboundLines = (
         })
         .sort(sortByExpiry);
 
-      if (status === 'NEW') {
+      if (status === InvoiceNodeStatus.New) {
         const placeholder = lines?.find(
           ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
         );
