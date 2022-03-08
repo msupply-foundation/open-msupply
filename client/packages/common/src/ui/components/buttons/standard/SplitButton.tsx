@@ -2,8 +2,8 @@ import React from 'react';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { ChevronDownIcon } from '../../icons';
-import { ButtonWithIcon, ButtonWithIconProps } from './standard/ButtonWithIcon';
+import { ChevronDownIcon } from '../../../icons';
+import { ButtonWithIcon, ButtonWithIconProps } from './ButtonWithIcon';
 import { ShrinkableBaseButton } from '@common/components';
 
 export interface SplitButtonOption<T> {

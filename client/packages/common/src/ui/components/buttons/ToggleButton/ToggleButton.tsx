@@ -3,7 +3,7 @@ import MuiToggleButton, {
   ToggleButtonProps as MuiToggleButtonProps,
 } from '@mui/material/ToggleButton';
 import Typography from '@mui/material/Typography';
-import { Checkbox } from '../inputs/Checkbox';
+import { Checkbox } from '../../inputs/Checkbox';
 
 interface ToggleButtonProps extends Omit<MuiToggleButtonProps, 'onClick'> {
   label: string;
