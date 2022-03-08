@@ -22,7 +22,7 @@
   "label.supplier-name": "Supplier Name",
   "label.supplier-ref": "Supplier Ref",
   "label.min-months-of-stock": "Minimum MOS",
-  "label.hide-stock-over-threshold": "Hide stock over threshold",
+  "label.hide-stock-over-minimum": "Hide stock over minimum",
   "label.max-months-of-stock": "Maximum MOS",
   "label.number-months_one": "{{count}} Month",
   "label.number-months_other": "{{count}} Months",
