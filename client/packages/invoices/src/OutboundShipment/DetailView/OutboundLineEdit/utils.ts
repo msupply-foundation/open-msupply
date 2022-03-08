@@ -88,7 +88,7 @@ export const allocateQuantities =
 
     // If there is only one batch row, then it is the placeholder.
     // Assign all of the new value and short circuit.
-    if (draftOutboundLines.length === 1) {
+    if (draftOutboundLines.length === 1 && status === InvoiceNodeStatus.New) {
       const placeholder = draftOutboundLines.find(
         ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
       );

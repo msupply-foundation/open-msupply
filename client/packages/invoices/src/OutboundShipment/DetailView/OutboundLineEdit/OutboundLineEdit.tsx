@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Typography,
   DialogButton,
   Grid,
   useDialog,
@@ -110,14 +111,20 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           allocatedQuantity={getAllocatedQuantity(draftOutboundLines)}
           availableQuantity={sumAvailableQuantity(draftOutboundLines)}
           onChangeQuantity={onAllocate}
+          canAutoAllocate={!!(currentItem && draftOutboundLines.length)}
         />
+
         {!!currentItem ? (
           !isLoading ? (
-            <OutboundLineEditTable
-              packSizeController={packSizeController}
-              onChange={updateQuantity}
-              rows={draftOutboundLines}
-            />
+            !!(currentItem && draftOutboundLines.length) ? (
+              <OutboundLineEditTable
+                packSizeController={packSizeController}
+                onChange={updateQuantity}
+                rows={draftOutboundLines}
+              />
+            ) : (
+              <NoStock />
+            )
           ) : (
             <Box
               display="flex"
@@ -132,5 +139,14 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         ) : null}
       </Grid>
     </Modal>
+  );
+};
+
+const NoStock = () => {
+  const t = useTranslation('distribution');
+  return (
+    <Box sx={{ margin: 'auto' }}>
+      <Typography>{t('messages.no-stock-available')}</Typography>
+    </Box>
   );
 };

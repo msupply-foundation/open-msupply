@@ -46,6 +46,7 @@
   "label.units-in-pack-size-of_one": "unit in pack size of",
   "label.units-in-pack-size-of_other": "units in pack size of",
   "messages.cant-delete-invoices": "Can only delete invoices with a status of 'New' or 'Allocated'",
+  "messages.no-stock-available": "There is no stock available",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",
   "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list",
