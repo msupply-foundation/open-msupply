@@ -6,7 +6,7 @@ import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TableProvider, createTableStore } from '../ui/layout/tables';
-import { IntlTestProvider, GraphQLClientProvider } from '..';
+import { IntlTestProvider, GqlProvider } from '..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../ui/components/modals';
 import {
@@ -53,7 +53,7 @@ export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
 }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
-      <GraphQLClientProvider url={Environment.API_URL}>
+      <GqlProvider url={Environment.API_URL}>
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale={locale}>
             <TableProvider createStore={createTableStore}>
@@ -61,7 +61,7 @@ export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
             </TableProvider>
           </IntlTestProvider>
         </SnackbarProvider>
-      </GraphQLClientProvider>
+      </GqlProvider>
     </QueryClientProvider>
   </React.Suspense>
 );
@@ -69,7 +69,7 @@ export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
 export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
-      <GraphQLClientProvider url={Environment.API_URL}>
+      <GqlProvider url={Environment.API_URL}>
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale="en">
             <TableProvider createStore={createTableStore}>
@@ -81,7 +81,7 @@ export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
             </TableProvider>
           </IntlTestProvider>
         </SnackbarProvider>
-      </GraphQLClientProvider>
+      </GqlProvider>
     </QueryClientProvider>
   </React.Suspense>
 );

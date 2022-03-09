@@ -1,2 +1,2 @@
-export * from './OmSupplyApiContext';
+export * from './GqlContext';
 export * from './hooks';
