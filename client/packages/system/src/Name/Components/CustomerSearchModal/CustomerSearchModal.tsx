@@ -17,7 +17,7 @@ export const CustomerSearchModal: FC<NameSearchProps> = ({
       open={open}
       options={data?.nodes ?? []}
       onClose={onClose}
-      title={t('suppliers')}
+      title={t('customers')}
       optionKey="name"
       onChange={(_, name: NameRowFragment | null) => {
         if (name) onChange(name);
