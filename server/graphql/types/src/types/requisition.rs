@@ -3,8 +3,8 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{
-        IdAndStoreId, InvoiceByRequisitionIdLoader, NameByIdLoader,
-        RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader,
+        InvoiceByRequisitionIdLoader, NameByIdLoader, RequisitionLinesByRequisitionIdLoader,
+        RequisitionsByIdLoader, NameByIdLoaderInput,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -102,10 +102,7 @@ impl RequisitionNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(IdAndStoreId {
-                id: self.row().name_id.clone(),
-                store_id,
-            })
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(

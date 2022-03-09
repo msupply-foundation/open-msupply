@@ -136,6 +136,7 @@ mod test {
 
         // Test lines remaining to supply
         let variables = json!({
+            "storeId": "store_a",
           "filter": {
             "id": {
                 "equalAny": [mock_new_response_requisition_test().requisition.id]
