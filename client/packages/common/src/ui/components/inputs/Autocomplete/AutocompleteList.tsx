@@ -35,7 +35,7 @@ export type AutocompleteListPropsWithOptionsRenderer<T> =
 export type AutocompleteListProps<T> = BaseAutocompleteListProps<T> &
   AutocompleteListPropsWithOptionsRenderer<T>;
 
-export const AutocompleteList = <T extends unknown>({
+export const AutocompleteList = <T,>({
   options,
   filterOptionConfig,
   loading,

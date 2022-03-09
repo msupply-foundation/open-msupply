@@ -10,7 +10,7 @@ import {
   DeleteIcon,
   useTranslation,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system';
+import { SupplierSearchInput } from '@openmsupply-client/system';
 import {
   useDeleteSelectedLines,
   useInboundFields,
@@ -47,8 +47,7 @@ export const Toolbar: FC = () => {
               <InputWithLabelRow
                 label={t('label.supplier-name')}
                 Input={
-                  <NameSearchInput
-                    type="supplier"
+                  <SupplierSearchInput
                     disabled={isDisabled}
                     value={otherParty}
                     onChange={name => {
