@@ -26,9 +26,9 @@ export const CreateShipmentButtonComponent = () => {
 
   const onCreateShipment = () => {
     if (linesRemainingToSupply.totalCount > 0) {
-      alert();
-    } else {
       getConfirmation();
+    } else {
+      alert();
     }
   };
 
