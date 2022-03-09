@@ -91,6 +91,11 @@ fn do_translation(
         return Ok(());
     }
 
+    log::info!(
+        "Ignore central record: table: \"{}\", record id: {}",
+        sync_record.table_name,
+        sync_record.record_id
+    );
     Ok(()) // At this point we are either ignoring records or record_types
 }
 

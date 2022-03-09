@@ -1,4 +1,4 @@
-use log::warn;
+use log::{info, warn};
 use repository::{
     schema::{ChangelogAction, ChangelogRow},
     StorageConnection,
@@ -7,10 +7,10 @@ use repository::{
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        number::NumberTranslation, requisition::RequisitionTranslation,
-        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
-        stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
-        table_name_to_central,
+        name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
+        requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
+        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
+        stocktake_line::StocktakeLineTranslation, table_name_to_central,
     },
     SyncTranslationError,
 };
@@ -24,6 +24,7 @@ pub trait RemotePushUpsertTranslation {
     ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError>;
 }
 
+#[derive(Debug)]
 pub struct PushUpsertRecord {
     pub sync_id: i64,
     pub store_id: Option<String>,
@@ -68,7 +69,7 @@ pub fn translate_changelog(
                 Box::new(NumberTranslation {}),
                 Box::new(StockLineTranslation {}),
                 // Don't push name store joins for now
-                // Box::new(NameStoreJoinTranslation {}),
+                Box::new(NameStoreJoinTranslation {}),
                 Box::new(InvoiceTranslation {}),
                 Box::new(InvoiceLineTranslation {}),
                 Box::new(StocktakeTranslation {}),
@@ -78,6 +79,7 @@ pub fn translate_changelog(
             ];
             for translation in translations {
                 if let Some(records) = translation.try_translate_push(connection, changelog)? {
+                    info!("Push record upserts: {:?}", records);
                     for record in records {
                         results.push(PushRecord::Upsert(record));
                     }
@@ -86,6 +88,10 @@ pub fn translate_changelog(
             }
         }
         ChangelogAction::Delete => {
+            info!(
+                "Push record deletion: table: \"{:?}\", record id: {}",
+                changelog.table_name, changelog.row_id
+            );
             results.push(PushRecord::Delete(PushDeleteRecord {
                 sync_id: changelog.id,
                 table_name: table_name_to_central(&changelog.table_name),

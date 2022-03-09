@@ -13,9 +13,10 @@ use repository::{
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        number::NumberTranslation, requisition::RequisitionTranslation,
-        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
-        stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
+        name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
+        requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
+        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
+        stocktake_line::StocktakeLineTranslation,
     },
     SyncImportError, SyncTranslationError,
 };
@@ -88,7 +89,7 @@ fn do_translation(
         Box::new(NumberTranslation {}),
         Box::new(StockLineTranslation {}),
         // Don't pull name store joins for now
-        // Box::new(NameStoreJoinTranslation {}),
+        Box::new(NameStoreJoinTranslation {}),
         Box::new(InvoiceTranslation {}),
         Box::new(InvoiceLineTranslation {}),
         Box::new(StocktakeTranslation {}),
