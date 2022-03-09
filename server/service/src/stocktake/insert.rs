@@ -1,12 +1,13 @@
 use chrono::{NaiveDate, Utc};
+use repository::schema::StocktakeStatus;
 use repository::EqualFilter;
 use repository::{
     schema::{NumberRowType, StocktakeRow},
     RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository, StocktakeRowRepository,
     StorageConnection,
 };
-use util::inline_init;
 
+use crate::user_account::get_default_user_id;
 use crate::{number::next_number, service_provider::ServiceContext, validate::check_store_exists};
 
 use super::query::get_stocktake;
@@ -64,16 +65,21 @@ fn generate(
 ) -> Result<StocktakeRow, RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
 
-    Ok(inline_init(|r: &mut StocktakeRow| {
-        r.id = id;
-        r.stocktake_number = stocktake_number;
-        r.comment = comment;
-        r.description = description;
-        r.created_datetime = Utc::now().naive_utc();
-        r.stocktake_date = stocktake_date;
-        r.store_id = store_id.to_string();
-        r.is_locked = is_locked.unwrap_or(false);
-    }))
+    Ok(StocktakeRow {
+        id,
+        stocktake_number,
+        comment,
+        description,
+        stocktake_date,
+        status: StocktakeStatus::New,
+        created_datetime: Utc::now().naive_utc(),
+        user_id: Some(get_default_user_id()),
+        store_id: store_id.to_string(),
+        is_locked: is_locked.unwrap_or(false),
+        // Default
+        finalised_datetime: None,
+        inventory_adjustment_id: None,
+    })
 }
 
 pub fn insert_stocktake(
@@ -117,6 +123,7 @@ mod test {
     use crate::{
         service_provider::ServiceProvider,
         stocktake::insert::{InsertStocktakeError, InsertStocktakeInput},
+        user_account::get_default_user_id,
     };
 
     #[actix_rt::test]
@@ -180,6 +187,7 @@ mod test {
         assert_eq!(
             new_row,
             inline_edit(&new_row, |mut i: StocktakeRow| {
+                i.user_id = Some(get_default_user_id());
                 i.id = "new_stocktake".to_string();
                 i.comment = Some("comment".to_string());
                 i.description = Some("description".to_string());
