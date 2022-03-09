@@ -145,7 +145,7 @@ fn requisition_response_pull_record() -> TestSyncRecord {
                 name_id: "name_store_b".to_string(),
                 store_id: "store_b".to_string(),
                 r#type: RequisitionRowType::Response,
-                status: RequisitionRowStatus::Sent,
+                status: RequisitionRowStatus::New,
                 created_datetime: NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0),
                 sent_datetime: Some(NaiveDate::from_ymd(2020, 6, 11).and_hms(0, 0, 0)),
                 finalised_datetime: None,
