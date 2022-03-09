@@ -11,7 +11,7 @@ import {
   useTranslation,
   useToggle,
 } from '@openmsupply-client/common';
-import { NameSearchModal } from '@openmsupply-client/system';
+import { SupplierSearchModal } from '@openmsupply-client/system';
 import { useInsertInbound } from '../api';
 
 export const AppBarButtons: FC = () => {
@@ -39,16 +39,12 @@ export const AppBarButtons: FC = () => {
           onClick={info('No printer detected')}
         />
       </Grid>
-      <NameSearchModal
-        type="supplier"
+      <SupplierSearchModal
         open={modalController.isOn}
         onClose={modalController.toggleOff}
         onChange={async name => {
           modalController.toggleOff();
-          onCreate({
-            id: generateUUID(),
-            otherPartyId: name?.id,
-          });
+          onCreate({ id: generateUUID(), otherPartyId: name?.id });
         }}
       />
     </AppBarButtonsPortal>
