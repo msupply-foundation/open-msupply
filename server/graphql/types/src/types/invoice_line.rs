@@ -116,8 +116,8 @@ impl InvoiceLineNode {
         self.row().sell_price_per_pack
     }
 
-    pub async fn tax_ercentage(&self) -> f64 {
-        self.row().tax
+    pub async fn text_percentage(&self) -> &Option<f64> {
+        &self.row().tax
     }
     // Location
     pub async fn location_name(&self) -> Option<&str> {
