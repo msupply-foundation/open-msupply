@@ -45,6 +45,8 @@
   "label.supply-quantity": "Quantity to supply",
   "label.units-in-pack-size-of_one": "unit in pack size of",
   "label.units-in-pack-size-of_other": "units in pack size of",
+  "messages.off-hold-confirmation": "This will re-enable status changes",
+  "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
   "messages.cant-delete-invoices": "Can only delete invoices with a status of 'New' or 'Allocated'",
   "messages.no-stock-available": "There is no stock available",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
