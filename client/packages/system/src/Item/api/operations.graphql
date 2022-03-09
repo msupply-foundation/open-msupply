@@ -44,6 +44,7 @@ fragment Item on ItemNode {
   isVisible
   name
   unitName
+  type
   availableBatches(storeId: $storeId) {
     __typename
     totalCount
