@@ -68,6 +68,11 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     ? data?.nodes?.filter(extraFilter) ?? []
     : data?.nodes ?? [];
 
+  console.log('value', value);
+
+  console.log('options', options);
+  console.log('options.length', options.length, data?.nodes.length);
+
   return (
     <Autocomplete
       autoFocus={autoFocus}

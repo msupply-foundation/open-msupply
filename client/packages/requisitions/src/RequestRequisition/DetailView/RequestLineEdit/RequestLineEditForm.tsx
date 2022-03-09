@@ -8,7 +8,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import {
-  ItemSearchInput,
+  StockItemSearchInput,
   ItemRowWithStatsFragment,
 } from '@openmsupply-client/system';
 import { useRequestLines } from '../../api';
@@ -87,7 +87,7 @@ export const RequestLineEditForm = ({
           <Typography variant="body1" fontWeight="bold">
             {t('label.stock-details', { ns: 'replenishment' })}
           </Typography>
-          <ItemSearchInput
+          <StockItemSearchInput
             autoFocus={!item}
             width={300}
             disabled={disabled}
@@ -95,12 +95,11 @@ export const RequestLineEditForm = ({
             onChange={(newItem: ItemRowWithStatsFragment | null) =>
               newItem && onChangeItem(newItem)
             }
-            extraFilter={itemToFind => {
-              const itemAlreadyInShipment = lines?.some(
-                ({ item: itemInReq }) => itemInReq.id === itemToFind.id
-              );
-              return !itemAlreadyInShipment;
-            }}
+            extraFilter={
+              disabled
+                ? undefined
+                : itemRow => !lines?.some(({ item }) => itemRow.id === item.id)
+            }
           />
 
           {item && item?.unitName ? (
