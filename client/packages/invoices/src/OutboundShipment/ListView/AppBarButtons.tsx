@@ -8,15 +8,17 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
+  useToggle,
+  generateUUID,
 } from '@openmsupply-client/common';
+import { CustomerSearchModal } from '@openmsupply-client/system';
+import { useCreateOutbound } from '../api';
 
-interface AppBarButtonsProps {
-  onCreate: (toggle: boolean) => void;
-}
-
-export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
-  const { info, success } = useNotification();
+export const AppBarButtonsComponent: FC = () => {
+  const { info, success, error } = useNotification();
+  const { mutate: onCreate } = useCreateOutbound();
   const t = useTranslation(['distribution', 'common']);
+  const modalController = useToggle();
 
   return (
     <AppBarButtonsPortal>
@@ -24,7 +26,22 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-shipment')}
-          onClick={() => onCreate(true)}
+          onClick={modalController.toggleOn}
+        />
+        <CustomerSearchModal
+          open={modalController.isOn}
+          onClose={modalController.toggleOff}
+          onChange={async name => {
+            modalController.toggleOff();
+            try {
+              await onCreate({ id: generateUUID(), otherPartyId: name?.id });
+            } catch (e) {
+              const errorSnack = error(
+                'Failed to create invoice! ' + (e as Error).message
+              );
+              errorSnack();
+            }
+          }}
         />
         <ButtonWithIcon
           Icon={<DownloadIcon />}
@@ -40,3 +57,5 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
     </AppBarButtonsPortal>
   );
 };
+
+export const AppBarButtons = React.memo(AppBarButtonsComponent);

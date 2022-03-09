@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DeleteIcon,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system';
+import { CustomerSearchInput } from '@openmsupply-client/system';
 import {
   useOutboundFields,
   useIsOutboundDisabled,
@@ -45,8 +45,7 @@ export const Toolbar: FC = () => {
               <InputWithLabelRow
                 label={t('label.customer-name')}
                 Input={
-                  <NameSearchInput
-                    type="customer"
+                  <CustomerSearchInput
                     disabled={isDisabled}
                     value={otherParty}
                     onChange={otherParty => {

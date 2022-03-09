@@ -12,7 +12,7 @@ import {
   useNotification,
   useTableStore,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system';
+import { CustomerSearchInput } from '@openmsupply-client/system';
 
 import {
   useResponseFields,
@@ -63,9 +63,8 @@ export const Toolbar: FC = () => {
                 <InputWithLabelRow
                   label={t('label.customer-name')}
                   Input={
-                    <NameSearchInput
-                      type="customer"
-                      disabled={isDisabled}
+                    <CustomerSearchInput
+                      disabled
                       value={otherParty}
                       onChange={newOtherParty => {
                         update({ otherParty: newOtherParty });
