@@ -21,17 +21,6 @@ const useNameApi = () => {
   return { ...queries, storeId, keys };
 };
 
-export const useNamesSearch = ({ isCustomer }: { isCustomer?: boolean }) => {
-  const api = useNameApi();
-  return useQuery(api.keys.list(), async () => {
-    const result = await api.get.list({
-      type: isCustomer ? 'customer' : 'supplier',
-    });
-
-    return result;
-  });
-};
-
 export const useNames = (type: 'customer' | 'supplier') => {
   const api = useNameApi();
   const queryParams = useQueryParams<NameRowFragment>({

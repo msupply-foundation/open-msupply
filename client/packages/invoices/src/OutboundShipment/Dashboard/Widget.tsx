@@ -1,5 +1,5 @@
 import React from 'react';
-import { NameSearchModal } from '@openmsupply-client/system';
+import { CustomerSearchModal } from '@openmsupply-client/system';
 import {
   ButtonWithIcon,
   Grid,
@@ -30,8 +30,7 @@ export const OutboundShipmentWidget: React.FC = () => {
 
   return (
     <>
-      <NameSearchModal
-        type="customer"
+      <CustomerSearchModal
         open={modalControl.isOn}
         onClose={modalControl.toggleOff}
         onChange={async name => {
