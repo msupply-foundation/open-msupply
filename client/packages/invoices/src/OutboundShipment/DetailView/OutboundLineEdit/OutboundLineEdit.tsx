@@ -78,6 +78,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   };
 
   const canAutoAllocate = !!(currentItem && draftOutboundLines.length);
+  const okNextDisabled =
+    (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   return (
     <Modal
@@ -87,13 +89,14 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          disabled={mode === ModalMode.Update && nextDisabled}
+          disabled={okNextDisabled}
           variant="next"
           onClick={onNext}
         />
       }
       okButton={
         <DialogButton
+          disabled={!currentItem}
           variant="ok"
           onClick={async () => {
             try {
