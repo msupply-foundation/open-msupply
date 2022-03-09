@@ -59,6 +59,9 @@ fragment Response on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+  linesRemainingToSupply {
+    totalCount
+  }
   lines {
     __typename
     ... on RequisitionLineConnector {
@@ -89,16 +92,6 @@ query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
     __typename
     ... on RequisitionNode {
       ...Response
-      otherParty(storeId: $storeId) {
-        __typename
-        ... on NameNode {
-          id
-          name
-          code
-          isCustomer
-          isSupplier
-        }
-      }
     }
   }
 }
