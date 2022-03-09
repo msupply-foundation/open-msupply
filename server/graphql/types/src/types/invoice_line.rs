@@ -53,6 +53,9 @@ impl InvoiceLineNode {
     pub async fn invoice_id(&self) -> &str {
         &self.row().invoice_id
     }
+    pub async fn r#type(&self) -> InvoiceLineNodeType {
+        InvoiceLineNodeType::from_domain(&self.row().r#type)
+    }
     // Item
     pub async fn item_id(&self) -> &str {
         &self.row().item_id
@@ -138,6 +141,7 @@ impl InvoiceLineNode {
 
         Ok(result.map(LocationNode::from_domain))
     }
+
     // Other
     pub async fn note(&self) -> &Option<String> {
         &self.row().note
