@@ -248,8 +248,8 @@ fn to_legacy_type(t: &RequisitionRowType) -> LegacyRequisitionType {
 
 fn from_legacy_status(status: &LegacyRequisitionStatus) -> Option<RequisitionRowStatus> {
     let status = match status {
-        LegacyRequisitionStatus::Sg => RequisitionRowStatus::New,
-        LegacyRequisitionStatus::Cn => RequisitionRowStatus::Sent,
+        LegacyRequisitionStatus::Sg => RequisitionRowStatus::Draft,
+        &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
         LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
         _ => return None,
     };
@@ -258,9 +258,9 @@ fn from_legacy_status(status: &LegacyRequisitionStatus) -> Option<RequisitionRow
 
 fn to_legacy_status(status: &RequisitionRowStatus) -> LegacyRequisitionStatus {
     match status {
-        RequisitionRowStatus::New => LegacyRequisitionStatus::Sg,
         RequisitionRowStatus::Draft => LegacyRequisitionStatus::Sg,
-        RequisitionRowStatus::Sent => LegacyRequisitionStatus::Cn,
+        RequisitionRowStatus::New => LegacyRequisitionStatus::Cn,
+        RequisitionRowStatus::Sent => LegacyRequisitionStatus::Fn,
         RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
     }
 }
