@@ -1,6 +1,6 @@
 import {
   useQueryParams,
-  useOmSupplyApi,
+  useGql,
   useAuthContext,
   useQuery,
 } from '@openmsupply-client/common';
@@ -15,7 +15,7 @@ const useNamesApi = () => {
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
-  const { client } = useOmSupplyApi();
+  const { client } = useGql();
   const queries = getNameQueries(getSdk(client), storeId);
 
   return { ...queries, storeId, keys };

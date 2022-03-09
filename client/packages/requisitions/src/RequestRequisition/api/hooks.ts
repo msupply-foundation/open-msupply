@@ -10,7 +10,7 @@ import {
   useNavigate,
   useMutation,
   useParams,
-  useOmSupplyApi,
+  useGql,
   UseQueryResult,
   useQuery,
   FieldSelectorControl,
@@ -47,7 +47,7 @@ export const useRequestApi = () => {
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
 
-  const { client } = useOmSupplyApi();
+  const { client } = useGql();
   const { storeId } = useAuthContext();
   const queries = getRequestQueries(getSdk(client), storeId);
   return { ...queries, storeId, keys };

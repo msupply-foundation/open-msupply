@@ -2,36 +2,33 @@ import React, { FC, useMemo, useEffect, useState, useCallback } from 'react';
 import { createContext } from 'react';
 import { GraphQLClient } from 'graphql-request';
 
-export const createOmSupplyApi = (url: string): { client: GraphQLClient } => {
+export const createGql = (url: string): { client: GraphQLClient } => {
   const client = new GraphQLClient(url, { credentials: 'include' });
   return { client };
 };
 
-interface OmSupplyApiControl {
+interface GqlControl {
   client: GraphQLClient;
   setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
 }
 
-const OmSupplyApiContext = createContext<OmSupplyApiControl>({
-  ...createOmSupplyApi(''),
+const GqlContext = createContext<GqlControl>({
+  ...createGql(''),
   setHeader: () => {},
   setUrl: () => {},
 });
 
-const { Provider, Consumer } = OmSupplyApiContext;
+const { Provider } = GqlContext;
 
 interface ApiProviderProps {
   url: string;
 }
 
-export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
-  url,
-  children,
-}) => {
+export const GqlProvider: FC<ApiProviderProps> = ({ url, children }) => {
   const [{ client }, setApi] = useState<{
     client: GraphQLClient;
-  }>(() => createOmSupplyApi(url));
+  }>(() => createGql(url));
 
   const setUrl = useCallback(
     (newUrl: string) => {
@@ -48,7 +45,7 @@ export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
   );
 
   useEffect(() => {
-    setApi(createOmSupplyApi(url));
+    setApi(createGql(url));
   }, [url]);
 
   const val = useMemo(
@@ -63,9 +60,7 @@ export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
   return <Provider value={val}>{children}</Provider>;
 };
 
-export const OmSupplyApiConsumer = Consumer;
-
-export const useOmSupplyApi = (): OmSupplyApiControl => {
-  const omSupplyApiControl = React.useContext(OmSupplyApiContext);
-  return omSupplyApiControl;
+export const useGql = (): GqlControl => {
+  const graphQLClientControl = React.useContext(GqlContext);
+  return graphQLClientControl;
 };

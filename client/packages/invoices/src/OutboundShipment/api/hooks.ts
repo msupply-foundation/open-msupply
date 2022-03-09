@@ -9,7 +9,7 @@ import {
   useQueryClient,
   useQuerySelector,
   useParams,
-  useOmSupplyApi,
+  useGql,
   UseQueryResult,
   useQuery,
   FieldSelectorControl,
@@ -41,7 +41,7 @@ export const useOutboundApi = () => {
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
 
-  const { client } = useOmSupplyApi();
+  const { client } = useGql();
   const sdk = getSdk(client);
   const { storeId } = useAuthContext();
   const queries = getOutboundQueries(sdk, storeId);
