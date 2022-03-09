@@ -21,7 +21,7 @@ graphql_core = { path = "core" }
 graphql_types = { path = "types" }
 graphql_general = { path = "general" }
 graphql_location = { path = "location" }
-graphql_printing = { path = "printing" }
+graphql_reports = { path = "reports" }
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
 graphql_requisition = { path = "requisition" }
