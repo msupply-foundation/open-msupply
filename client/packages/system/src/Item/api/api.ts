@@ -14,7 +14,7 @@ export type ListParams<T> = {
 };
 
 const itemParsers = {
-  toSort: (sortBy: SortBy<ItemRowFragment>) => {
+  toSortField: (sortBy: SortBy<ItemRowFragment>) => {
     const fields: Record<string, ItemSortFieldInput> = {
       name: ItemSortFieldInput.Name,
       code: ItemSortFieldInput.Code,
@@ -37,25 +37,30 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Item not found');
     },
-    serviceItems:
-      ({ first, offset, sortBy }: ListParams<ItemRowFragment>) =>
-      async () => {
-        const key = itemParsers.toSort(sortBy);
-        const result = await sdk.items({
-          storeId,
-          first,
-          offset,
-          key,
-          desc: sortBy.isDesc,
-          filter: { type: { equalTo: ItemNodeType.Service } },
-        });
+    serviceItems: async (params: ListParams<ItemRowFragment>) => {
+      const result = await getItemQueries(sdk, storeId).get.list({
+        ...params,
+        filterBy: {
+          ...params.filterBy,
+          type: { equalTo: ItemNodeType.Service },
+        },
+      });
+      return result;
+    },
+    stockItems: async (params: ListParams<ItemRowFragment>) => {
+      const result = await getItemQueries(sdk, storeId).get.list({
+        ...params,
+        filterBy: { ...params.filterBy, type: { equalTo: ItemNodeType.Stock } },
+      });
+      return result;
+    },
 
-        const { items } = result;
-        return items;
-      },
-
-    listWithStats: async () => {
-      const result = await sdk.itemsWithStats({ storeId });
+    itemsWithStats: async ({ sortBy }: ListParams<ItemRowFragment>) => {
+      const result = await sdk.itemsWithStats({
+        key: itemParsers.toSortField(sortBy),
+        isDesc: sortBy.isDesc,
+        storeId,
+      });
 
       const { items } = result;
 
@@ -65,29 +70,24 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Could not fetch items');
     },
+    list: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: ListParams<ItemRowFragment>) => {
+      const result = await sdk.items({
+        first,
+        offset,
+        key: itemParsers.toSortField(sortBy),
+        desc: sortBy.isDesc,
+        storeId,
+        filter: filterBy,
+      });
 
-    list:
-      ({ first, offset, sortBy }: ListParams<ItemRowFragment>) =>
-      async (): Promise<{
-        nodes: ItemRowFragment[];
-        totalCount: number;
-      }> => {
-        const key =
-          sortBy.key === 'name'
-            ? ItemSortFieldInput.Name
-            : ItemSortFieldInput.Code;
+      const items = result.items;
 
-        const result = await sdk.items({
-          first,
-          offset,
-          key,
-          desc: sortBy.isDesc,
-          storeId,
-        });
-
-        const items = result.items;
-
-        return items;
-      },
+      return items;
+    },
   },
 });

@@ -9,7 +9,9 @@ export const useItems = () => {
   const api = useItemApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), api.get.list(queryParams)),
+    ...useQuery(api.keys.paramList(queryParams), () =>
+      api.get.list(queryParams)
+    ),
     ...queryParams,
   };
 };
