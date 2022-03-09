@@ -19,12 +19,16 @@ const nameParsers = {
 export const getNameQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     internalSuppliers: async ({ sortBy }: ListParams) => {
-      const result = await getNameQueries(sdk, storeId).get.suppliers({
-        sortBy,
+      const key = nameParsers.toSort(sortBy?.key ?? '');
+
+      const result = await sdk.names({
+        key,
+        desc: !!sortBy?.isDesc,
+        storeId,
+        filter: { isSupplier: true, isStore: true },
       });
 
-      const internalSuppliers = result.nodes.filter(({ store }) => !!store);
-      return internalSuppliers;
+      return result.names;
     },
     suppliers: async ({ sortBy }: ListParams) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');

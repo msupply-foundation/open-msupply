@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -6,18 +6,15 @@ import {
   getNameAndColorColumn,
   TableProvider,
   createTableStore,
-  useNotification,
   useTranslation,
   InvoiceNodeStatus,
-  generateUUID,
   useCurrency,
   useTableStore,
 } from '@openmsupply-client/common';
-import { NameSearchModal } from '@openmsupply-client/system';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { useOutbounds, useCreateOutbound, useUpdateOutbound } from '../api';
+import { useOutbounds, useUpdateOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
 
 const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
@@ -30,10 +27,8 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useUpdateOutbound();
-  const { mutate: onCreate } = useCreateOutbound();
   const t = useTranslation('common');
   const navigate = useNavigate();
-  const { error } = useNotification();
 
   const {
     data,
@@ -72,29 +67,10 @@ export const OutboundShipmentListViewComponent: FC = () => {
     [sortBy]
   );
 
-  const [open, setOpen] = useState(false);
-
   return (
     <>
-      <NameSearchModal
-        type="customer"
-        open={open}
-        onClose={() => setOpen(false)}
-        onChange={async name => {
-          setOpen(false);
-          try {
-            await onCreate({ id: generateUUID(), otherPartyId: name?.id });
-          } catch (e) {
-            const errorSnack = error(
-              'Failed to create invoice! ' + (e as Error).message
-            );
-            errorSnack();
-          }
-        }}
-      />
-
       <Toolbar filter={filter} />
-      <AppBarButtons onCreate={setOpen} />
+      <AppBarButtons />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
