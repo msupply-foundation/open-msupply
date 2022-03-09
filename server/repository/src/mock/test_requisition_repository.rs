@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use util::inline_init;
 
 use crate::schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType};
 
@@ -12,41 +13,29 @@ pub fn mock_test_requisition_repository() -> MockData {
 }
 
 pub fn mock_request_draft_requisition() -> RequisitionRow {
-    RequisitionRow {
-        id: "mock_request_draft_requisition".to_owned(),
-        requisition_number: 1,
-        name_id: "name_a".to_owned(),
-        store_id: "store_a".to_owned(),
-        r#type: RequisitionRowType::Request,
-        status: RequisitionRowStatus::Draft,
-        created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
-        sent_datetime: None,
-        finalised_datetime: None,
-        colour: None,
-        comment: None,
-        their_reference: None,
-        max_months_of_stock: 1.0,
-        min_months_of_stock: 0.9,
-        linked_requisition_id: None,
-    }
+    inline_init(|r: &mut RequisitionRow| {
+        r.id = "mock_request_draft_requisition".to_owned();
+        r.requisition_number = 1;
+        r.name_id = "name_a".to_owned();
+        r.store_id = "store_a".to_owned();
+        r.r#type = RequisitionRowType::Request;
+        r.status = RequisitionRowStatus::Draft;
+        r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+        r.max_months_of_stock = 1.0;
+        r.min_months_of_stock = 0.9;
+    })
 }
 
 pub fn mock_request_draft_requisition2() -> RequisitionRow {
-    RequisitionRow {
-        id: "mock_request_draft_requisition2".to_owned(),
-        requisition_number: 2,
-        name_id: "name_a".to_owned(),
-        store_id: "store_a".to_owned(),
-        r#type: RequisitionRowType::Request,
-        status: RequisitionRowStatus::Draft,
-        created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
-        sent_datetime: None,
-        finalised_datetime: None,
-        colour: None,
-        comment: None,
-        their_reference: None,
-        max_months_of_stock: 1.0,
-        min_months_of_stock: 0.9,
-        linked_requisition_id: None,
-    }
+    inline_init(|r: &mut RequisitionRow| {
+        r.id = "mock_request_draft_requisition2".to_owned();
+        r.requisition_number = 2;
+        r.name_id = "name_a".to_owned();
+        r.store_id = "store_a".to_owned();
+        r.r#type = RequisitionRowType::Request;
+        r.status = RequisitionRowStatus::Draft;
+        r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+        r.max_months_of_stock = 1.0;
+        r.min_months_of_stock = 0.9;
+    })
 }

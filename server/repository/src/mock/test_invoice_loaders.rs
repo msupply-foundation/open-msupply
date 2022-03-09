@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use util::inline_init;
 
 use crate::schema::{
     InvoiceRow, InvoiceRowStatus, InvoiceRowType, RequisitionRow, RequisitionRowStatus,
@@ -16,69 +17,41 @@ pub fn mock_test_invoice_loaders() -> MockData {
 }
 
 pub fn mock_invoice_loader_requistion1() -> RequisitionRow {
-    RequisitionRow {
-        id: "mock_invoice_loader_requistion1".to_owned(),
-        requisition_number: 1,
-        name_id: "name_a".to_owned(),
-        store_id: mock_store_a().id,
-        r#type: RequisitionRowType::Request,
-        status: RequisitionRowStatus::Draft,
-        created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
-        sent_datetime: None,
-        finalised_datetime: None,
-        colour: None,
-        comment: None,
-        their_reference: None,
-        max_months_of_stock: 1.0,
-        min_months_of_stock: 0.9,
-        linked_requisition_id: None,
-    }
+    inline_init(|r: &mut RequisitionRow| {
+        r.id = "mock_invoice_loader_requistion1".to_owned();
+        r.requisition_number = 1;
+        r.name_id = "name_a".to_owned();
+        r.store_id = mock_store_a().id;
+        r.r#type = RequisitionRowType::Request;
+        r.status = RequisitionRowStatus::Draft;
+        r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+        r.max_months_of_stock = 1.0;
+        r.min_months_of_stock = 0.9;
+    })
 }
 
 pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
-    InvoiceRow {
-        id: "mock_invoice_loader_invoice1".to_string(),
-        name_id: mock_name_store_b().id,
-        store_id: mock_store_a().id,
-        invoice_number: 1,
-        requisition_id: Some(mock_invoice_loader_requistion1().id),
-        r#type: InvoiceRowType::OutboundShipment,
-        status: InvoiceRowStatus::Picked,
-        on_hold: false,
-        name_store_id: None,
-        comment: None,
-        their_reference: None,
-        created_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
-        allocated_datetime: None,
-        shipped_datetime: None,
-        colour: None,
-        linked_invoice_id: None,
-        picked_datetime: None,
-        delivered_datetime: None,
-        verified_datetime: None,
-    }
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = "mock_invoice_loader_invoice1".to_string();
+        r.name_id = mock_name_store_b().id;
+        r.store_id = mock_store_a().id;
+        r.invoice_number = 1;
+        r.requisition_id = Some(mock_invoice_loader_requistion1().id);
+        r.r#type = InvoiceRowType::OutboundShipment;
+        r.status = InvoiceRowStatus::Picked;
+        r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+    })
 }
 
 pub fn mock_invoice_loader_invoice2() -> InvoiceRow {
-    InvoiceRow {
-        id: "mock_invoice_loader_invoice2".to_string(),
-        name_id: mock_name_store_b().id,
-        store_id: mock_store_a().id,
-        invoice_number: 1,
-        requisition_id: None,
-        r#type: InvoiceRowType::OutboundShipment,
-        status: InvoiceRowStatus::Picked,
-        on_hold: false,
-        name_store_id: None,
-        comment: None,
-        their_reference: None,
-        created_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
-        allocated_datetime: None,
-        shipped_datetime: None,
-        colour: None,
-        linked_invoice_id: Some(mock_invoice_loader_invoice1().id),
-        picked_datetime: None,
-        delivered_datetime: None,
-        verified_datetime: None,
-    }
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = "mock_invoice_loader_invoice2".to_string();
+        r.name_id = mock_name_store_b().id;
+        r.store_id = mock_store_a().id;
+        r.invoice_number = 1;
+        r.r#type = InvoiceRowType::OutboundShipment;
+        r.status = InvoiceRowStatus::Picked;
+        r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+        r.linked_invoice_id = Some(mock_invoice_loader_invoice1().id);
+    })
 }
