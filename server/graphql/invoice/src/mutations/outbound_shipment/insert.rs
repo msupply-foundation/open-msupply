@@ -113,11 +113,11 @@ mod graphql {
 
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
-    use repository::mock::MockDataInserts;
     use repository::mock::{
         mock_name_linked_to_store, mock_name_not_linked_to_store,
         mock_outbound_shipment_number_store_a, mock_store_linked_to_name,
     };
+    use repository::mock::{mock_name_store_a, mock_name_store_c, MockDataInserts};
     use repository::InvoiceRepository;
     use serde_json::json;
     use util::uuid::uuid;
@@ -126,7 +126,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_insert() {
-        let (mock_data, connection, _, settings) = setup_graphl_test(
+        let (_, connection, _, settings) = setup_graphl_test(
             InvoiceQueries,
             InvoiceMutations,
             "omsupply-database-gql-outbound_shipment_insert",
@@ -134,8 +134,8 @@ mod graphql {
         )
         .await;
 
-        let other_party_supplier = &mock_data["base"].names[2];
-        let other_party_customer = &mock_data["base"].names[0];
+        let other_party_supplier = &mock_name_store_c();
+        let other_party_customer = &mock_name_store_a();
 
         let starting_invoice_number = mock_outbound_shipment_number_store_a().value;
 

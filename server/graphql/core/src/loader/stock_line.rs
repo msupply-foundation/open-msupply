@@ -7,7 +7,7 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use std::collections::HashMap;
 
-use super::IdPairWithPayload;
+use super::IdPair;
 
 pub struct StockLineByLocationIdLoader {
     pub connection_manager: StorageConnectionManager,
@@ -48,7 +48,7 @@ pub struct StockLineByItemAndStoreIdLoader {
 
 #[derive(Clone)]
 pub struct EmptyPayload;
-pub type StockLineByItemAndStoreIdLoaderInput = IdPairWithPayload<EmptyPayload>;
+pub type StockLineByItemAndStoreIdLoaderInput = IdPair<EmptyPayload>;
 impl StockLineByItemAndStoreIdLoaderInput {
     pub fn new(store_id: &str, item_id: &str) -> Self {
         StockLineByItemAndStoreIdLoaderInput {
@@ -79,9 +79,9 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
 
         let result = repo.query_by_filter(
             StockLineFilter::new()
-                .item_id(EqualFilter::equal_any(
-                    IdPairWithPayload::get_all_secondary_ids(&item_and_store_ids),
-                ))
+                .item_id(EqualFilter::equal_any(IdPair::get_all_secondary_ids(
+                    &item_and_store_ids,
+                )))
                 .store_id(EqualFilter::equal_to(store_id)),
         )?;
 

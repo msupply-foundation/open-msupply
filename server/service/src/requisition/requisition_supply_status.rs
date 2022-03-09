@@ -80,12 +80,9 @@ impl RequisitionLineSupplyStatus {
     }
 
     pub fn quantity_in_invoices(&self) -> i32 {
-        self.invoice_lines
-            .iter()
-            .try_fold(0, |sum, line| {
-                Some(sum + line.invoice_line_row.pack_size * line.invoice_line_row.number_of_packs)
-            })
-            .unwrap_or(0)
+        self.invoice_lines.iter().fold(0, |sum, line| {
+            sum + line.invoice_line_row.pack_size * line.invoice_line_row.number_of_packs
+        })
     }
 
     pub fn item_id(&self) -> &str {

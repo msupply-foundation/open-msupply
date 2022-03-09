@@ -23,7 +23,7 @@ pub use item_stats::*;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
 pub use location::LocationByIdLoader;
 pub use master_list_line::MasterListLineByMasterListId;
-pub use name::NameByIdLoader;
+pub use name::*;
 pub use requisition::*;
 pub use requisition_line::*;
 pub use requisition_supply_status::*;
@@ -33,7 +33,13 @@ pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
 
 #[derive(Debug, Clone)]
-pub struct IdPairWithPayload<T>
+/// Sometimes loaders need to take an extra parameter, like store_id or requisition_id
+/// And in some cases even further parameter is required (lookback date for ItemStats)
+/// New types can be defined for each loader based on it's needs, but to make it easier
+/// to add new complex loader inputs generic IdPair is used (don't need to impl (Hash, Eq, PartialEq)
+/// also helper methods are provided to extract unique ids from &[IdPair] that is passed to load method
+/// See StockLineByItemAndStoreIdLoaderInput for payload example
+pub struct IdPair<T>
 where
     T: Clone,
 {
@@ -42,19 +48,19 @@ where
     pub payload: T,
 }
 
-impl<T: Clone> IdPairWithPayload<T> {
-    pub fn get_all_secondary_ids(id_pairs: &[IdPairWithPayload<T>]) -> Vec<String> {
+impl<T: Clone> IdPair<T> {
+    pub fn get_all_secondary_ids(id_pairs: &[IdPair<T>]) -> Vec<String> {
         id_pairs
             .iter()
             .map(|id_pair| id_pair.secondary_id.clone())
             .collect()
     }
 
-    fn extract_unique_ids(id_pairs: &[IdPairWithPayload<T>]) -> (Vec<String>, Vec<String>) {
+    fn extract_unique_ids(id_pairs: &[IdPair<T>]) -> (Vec<String>, Vec<String>) {
         let mut primary_ids: HashSet<String> = HashSet::new();
         let mut seconday_ids: HashSet<String> = HashSet::new();
 
-        for IdPairWithPayload {
+        for IdPair {
             primary_id,
             secondary_id,
             ..
@@ -71,23 +77,24 @@ impl<T: Clone> IdPairWithPayload<T> {
     }
 }
 
-impl<T: Clone> PartialEq for IdPairWithPayload<T> {
+impl<T: Clone> PartialEq for IdPair<T> {
     fn eq(&self, other: &Self) -> bool {
         self.primary_id == other.primary_id && self.secondary_id == other.secondary_id
     }
 }
 
-impl<T: Clone> Eq for IdPairWithPayload<T> {}
+impl<T: Clone> Eq for IdPair<T> {}
 
-impl<T: Clone> std::hash::Hash for IdPairWithPayload<T> {
+impl<T: Clone> std::hash::Hash for IdPair<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         format!("{}{}", self.primary_id, self.secondary_id).hash(state);
     }
 }
 
 #[derive(Clone)]
+// Using struct instead of () to avoid conflicting new implementations
 pub struct EmptyPayload;
-pub type RequisitionAndItemId = IdPairWithPayload<EmptyPayload>;
+pub type RequisitionAndItemId = IdPair<EmptyPayload>;
 impl RequisitionAndItemId {
     pub fn new(requisition_id: &str, item_id: &str) -> Self {
         RequisitionAndItemId {
