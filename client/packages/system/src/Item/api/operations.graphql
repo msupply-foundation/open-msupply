@@ -1,3 +1,10 @@
+fragment ServiceItemRow on ItemNode {
+  __typename
+  id
+  code
+  name
+}
+
 fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
