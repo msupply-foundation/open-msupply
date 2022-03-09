@@ -1,6 +1,6 @@
 import {
   useQuery,
-  useOmSupplyApi,
+  useGql,
   useAuthContext,
   useQueryParams,
 } from '@openmsupply-client/common';
@@ -15,7 +15,7 @@ export const useMasterListApi = () => {
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
-  const { client } = useOmSupplyApi();
+  const { client } = useGql();
   const sdk = getSdk(client);
   const queries = getMasterListQueries(sdk, storeId);
 
