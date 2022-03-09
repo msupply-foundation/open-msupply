@@ -18,6 +18,7 @@ mod test_invoice_count_service;
 mod test_invoice_loaders;
 mod test_item_stats_repository;
 mod test_master_list_repository;
+mod test_name_query;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
 mod test_remote_pull;
@@ -51,6 +52,7 @@ pub use test_invoice_count_service::*;
 pub use test_invoice_loaders::*;
 pub use test_item_stats_repository::*;
 pub use test_master_list_repository::*;
+pub use test_name_query::*;
 pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
 pub use test_remote_pull::*;
@@ -327,6 +329,7 @@ fn all_mock_data() -> MockDataCollection {
     data.insert("mock_test_invoice_loaders", mock_test_invoice_loaders());
     data.insert("mock_test_remote_pull", mock_test_remote_pull());
     data.insert("mock_test_service_item", mock_test_service_item());
+    data.insert("mock_test_name_query", mock_test_name_query());
     data
 }
 

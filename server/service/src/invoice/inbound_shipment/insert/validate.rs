@@ -5,13 +5,14 @@ use repository::{InvoiceRepository, RepositoryError, StorageConnection};
 use super::{InsertInboundShipment, InsertInboundShipmentError};
 
 pub fn validate(
-    input: &InsertInboundShipment,
     connection: &StorageConnection,
+    store_id: &str,
+    input: &InsertInboundShipment,
 ) -> Result<Name, InsertInboundShipmentError> {
     use InsertInboundShipmentError::*;
     check_invoice_does_not_exists(&input.id, connection)?;
 
-    let other_party = check_other_party_id(connection, &input.other_party_id)?
+    let other_party = check_other_party_id(connection, store_id, &input.other_party_id)?
         .ok_or(OtherPartyDoesNotExist {})?;
 
     if !other_party.is_supplier() {

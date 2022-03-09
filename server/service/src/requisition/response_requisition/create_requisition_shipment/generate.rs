@@ -19,7 +19,7 @@ pub fn generate(
     requisition_row: RequisitionRow,
     fullfilments: Vec<RequisitionLineSupplyStatus>,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), OutError> {
-    let other_party = check_other_party_id(connection, &requisition_row.name_id)?
+    let other_party = check_other_party_id(connection, store_id, &requisition_row.name_id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
 
     let new_invoice = InvoiceRow {

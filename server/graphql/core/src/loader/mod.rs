@@ -23,7 +23,7 @@ pub use item_stats::*;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
 pub use location::LocationByIdLoader;
 pub use master_list_line::MasterListLineByMasterListId;
-pub use name::NameByIdLoader;
+pub use name::*;
 pub use requisition::*;
 pub use requisition_line::*;
 pub use requisition_supply_status::*;

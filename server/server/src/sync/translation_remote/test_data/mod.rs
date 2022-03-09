@@ -1,12 +1,14 @@
 use repository::{
     schema::{ChangelogRow, RemoteSyncBufferRow},
     InvoiceLineRowRepository, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
-    RepositoryError, StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository,
-    StorageConnection,
+    RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
+    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
 };
 
 use self::{
     number::{get_test_number_records, get_test_push_number_records},
+    requisition::{get_test_push_requisition_records, get_test_requisition_records},
+    requisition_line::{get_test_push_requisition_line_records, get_test_requisition_line_records},
     stock_line::{get_test_push_stock_line_records, get_test_stock_line_records},
     stocktake::{get_test_push_stocktake_records, get_test_stocktake_records},
     stocktake_line::{get_test_push_stocktake_line_records, get_test_stocktake_line_records},
@@ -18,6 +20,8 @@ use super::pull::{IntegrationRecord, IntegrationUpsertRecord};
 
 pub mod name_store_join;
 pub mod number;
+pub mod requisition;
+pub mod requisition_line;
 pub mod stock_line;
 pub mod stocktake;
 pub mod stocktake_line;
@@ -147,6 +151,24 @@ pub fn check_records_against_database(
                         comparison_record
                     )
                 }
+                IntegrationUpsertRecord::Requisition(comparison_record) => {
+                    assert_eq!(
+                        RequisitionRowRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap()
+                            .unwrap(),
+                        comparison_record
+                    )
+                }
+                IntegrationUpsertRecord::RequisitionLine(comparison_record) => {
+                    assert_eq!(
+                        RequisitionLineRowRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap()
+                            .unwrap(),
+                        comparison_record
+                    )
+                }
             }
         }
     }
@@ -162,6 +184,8 @@ pub fn get_all_remote_pull_test_records() -> Vec<TestSyncRecord> {
     test_records.append(&mut get_test_trans_line_records());
     test_records.append(&mut get_test_stocktake_records());
     test_records.append(&mut get_test_stocktake_line_records());
+    test_records.append(&mut get_test_requisition_records());
+    test_records.append(&mut get_test_requisition_line_records());
     test_records
 }
 
@@ -175,5 +199,7 @@ pub fn get_all_remote_push_test_records() -> Vec<TestSyncPushRecord> {
     test_records.append(&mut get_test_push_trans_line_records());
     test_records.append(&mut get_test_push_stocktake_records());
     test_records.append(&mut get_test_push_stocktake_line_records());
+    test_records.append(&mut get_test_push_requisition_records());
+    test_records.append(&mut get_test_push_requisition_line_records());
     test_records
 }
