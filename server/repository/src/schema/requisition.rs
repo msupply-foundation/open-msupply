@@ -25,6 +25,7 @@ pub struct RequisitionRow {
     pub requisition_number: i64,
     pub name_id: String,
     pub store_id: String,
+    pub user_id: Option<String>,
     #[column_name = "type_"]
     pub r#type: RequisitionRowType,
     pub status: RequisitionRowStatus,
@@ -47,6 +48,7 @@ impl Default for RequisitionRow {
             created_datetime: Defaults::naive_date_time(),
             // Defaults
             id: Default::default(),
+            user_id: Default::default(),
             requisition_number: Default::default(),
             name_id: Default::default(),
             store_id: Default::default(),
