@@ -1,6 +1,6 @@
 use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
 use graphql_core::{
-    loader::{IdAndStoreId, NameByIdLoader},
+    loader::{NameByIdLoader, NameByIdLoaderInput},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -27,10 +27,7 @@ impl StoreNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(IdAndStoreId {
-                id: self.store.name_id.clone(),
-                store_id,
-            })
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.store.name_id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
