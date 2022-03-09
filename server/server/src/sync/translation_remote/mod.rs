@@ -1,11 +1,13 @@
-use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use repository::schema::ChangelogTableName;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 mod invoice;
 mod invoice_line;
 mod name_store_join;
 mod number;
+mod requisition;
+mod requisition_line;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
@@ -24,6 +26,8 @@ pub const TRANSLATION_RECORD_TRANSACT: &'static str = "transact";
 pub const TRANSLATION_RECORD_TRANS_LINE: &'static str = "trans_line";
 pub const TRANSLATION_RECORD_STOCKTAKE: &'static str = "Stock_take";
 pub const TRANSLATION_RECORD_STOCKTAKE_LINE: &'static str = "Stock_take_lines";
+pub const TRANSLATION_RECORD_REQUISITION: &'static str = "requisition";
+pub const TRANSLATION_RECORD_REQUISITION_LINE: &'static str = "requisition_line";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
@@ -35,6 +39,8 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_TRANS_LINE,
     TRANSLATION_RECORD_STOCKTAKE,
     TRANSLATION_RECORD_STOCKTAKE_LINE,
+    TRANSLATION_RECORD_REQUISITION,
+    TRANSLATION_RECORD_REQUISITION_LINE,
 ];
 
 pub fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
@@ -46,8 +52,8 @@ pub fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
         ChangelogTableName::InvoiceLine => TRANSLATION_RECORD_TRANS_LINE,
         ChangelogTableName::Stocktake => TRANSLATION_RECORD_STOCKTAKE,
         ChangelogTableName::StocktakeLine => TRANSLATION_RECORD_STOCKTAKE_LINE,
-        ChangelogTableName::Requisition => todo!(),
-        ChangelogTableName::RequisitionLine => todo!(),
+        ChangelogTableName::Requisition => TRANSLATION_RECORD_REQUISITION,
+        ChangelogTableName::RequisitionLine => TRANSLATION_RECORD_REQUISITION_LINE,
     }
 }
 
@@ -73,9 +79,25 @@ pub fn date_from_date_time(date_time: &NaiveDateTime) -> NaiveDate {
     NaiveDate::from_ymd(date_time.year(), date_time.month(), date_time.day())
 }
 
-/// returns the time part in seconds
-pub fn time_sec_from_date_time(date_time: &NaiveDateTime) -> i64 {
-    let time = date_time.time();
-    let seconds = 60 * 60 * time.hour() + 60 * time.minute() + time.second();
-    seconds as i64
+/// V5 gives us a NaiveDate but V3 receives a NaiveDateTime
+fn date_to_isostring<S>(x: &NaiveDate, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    x.and_hms(0, 0, 0).serialize(s)
+}
+
+fn date_option_to_isostring<S>(x: &Option<NaiveDate>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    x.map(|date| date.and_hms(0, 0, 0)).serialize(s)
+}
+
+/// Currently v5 returns times in sec and v3 expects a time string when posting. To make it more
+/// consistent v5 behaviour might change in the future. This helper will make it easy to do the
+/// change on our side.
+pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
+    let secs = u32::deserialize(d)?;
+    Ok(NaiveTime::from_num_seconds_from_midnight(secs, 0))
 }
