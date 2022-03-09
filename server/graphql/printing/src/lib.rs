@@ -59,6 +59,7 @@ impl PrintingQueries {
         &self,
         _ctx: &Context<'_>,
         _store_id: String,
+        #[graphql(desc = "The id of the report to be printed")] _report_id: String,
         #[graphql(
             desc = "The data id that should be used for the report, e.g. the invoice id when printing an invoice"
         )]
