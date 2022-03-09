@@ -312,7 +312,7 @@ mod test {
         let (_, _, _, settings) = setup_graphl_test(
             TestQuery,
             EmptyMutation,
-            "graphql_test_invoice_line_basic",
+            "graphql_test_invoice_line_pricing",
             MockDataInserts::none(),
         )
         .await;
