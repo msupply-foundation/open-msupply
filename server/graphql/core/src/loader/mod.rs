@@ -33,6 +33,12 @@ pub use store::StoreLoader;
 pub use user_account::UserAccountLoader;
 
 #[derive(Debug, Clone)]
+/// Sometimes loaders need to take an extra parameter, like store_id or requisition_id
+/// And in some cases even further parameter is required (lookback date for ItemStats)
+/// New types can be defined for each loader based on it's needs, but to make it easier
+/// to add new complex loader inputs generic IdPair is used (don't need to impl (Hash, Eq, PartialEq)
+/// also helper methods are provided to extract unique ids from &[IdPair] that is passed to load method
+/// See StockLineByItemAndStoreIdLoaderInput for payload example
 pub struct IdPair<T>
 where
     T: Clone,
@@ -86,6 +92,7 @@ impl<T: Clone> std::hash::Hash for IdPair<T> {
 }
 
 #[derive(Clone)]
+// Using struct instead of () to avoid conflicting new implementations
 pub struct EmptyPayload;
 pub type RequisitionAndItemId = IdPair<EmptyPayload>;
 impl RequisitionAndItemId {
