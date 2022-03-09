@@ -12,7 +12,7 @@ import {
   RouteBuilder,
   ErrorBoundary,
   GenericErrorFallback,
-  GraphQLClientProvider,
+  GqlProvider,
   IntlProvider,
   RandomLoader,
   ConfirmationModalProvider,
@@ -38,7 +38,7 @@ const Host: FC = () => (
       <React.Suspense fallback={<RandomLoader />}>
         <ErrorBoundary Fallback={GenericErrorFallback}>
           <QueryClientProvider client={queryClient}>
-            <GraphQLClientProvider url={Environment.API_URL}>
+            <GqlProvider url={Environment.API_URL}>
               <AuthProvider>
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
@@ -63,7 +63,7 @@ const Host: FC = () => (
                 </AppThemeProvider>
               </AuthProvider>
               <ReactQueryDevtools initialIsOpen />
-            </GraphQLClientProvider>
+            </GqlProvider>
           </QueryClientProvider>
         </ErrorBoundary>
       </React.Suspense>

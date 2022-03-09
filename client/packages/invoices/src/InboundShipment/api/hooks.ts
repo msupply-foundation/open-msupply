@@ -14,7 +14,7 @@ import {
   useParams,
   useQuery,
   useAuthContext,
-  useGraphQLClient,
+  useGql,
   useMutation,
   useFieldsSelector,
   InvoiceNodeStatus,
@@ -39,7 +39,7 @@ export const useInboundApi = () => {
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
 
-  const { client } = useGraphQLClient();
+  const { client } = useGql();
   const queries = getInboundQueries(getSdk(client), storeId);
   return { ...queries, storeId, keys };
 };

@@ -1,9 +1,9 @@
 import { getItemQueries, ListParams } from './../../api';
-import { useAuthContext, useGraphQLClient } from '@openmsupply-client/common';
+import { useAuthContext, useGql } from '@openmsupply-client/common';
 import { getSdk } from '../../operations.generated';
 
 export const useItemApi = () => {
-  const { client } = useGraphQLClient();
+  const { client } = useGql();
   const { storeId } = useAuthContext();
 
   const keys = {
