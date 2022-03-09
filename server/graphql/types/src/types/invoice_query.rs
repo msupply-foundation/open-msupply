@@ -5,7 +5,7 @@ use dataloader::DataLoader;
 
 use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput};
 use graphql_core::{
-    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreLoader},
+    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -89,11 +89,11 @@ impl InvoiceNode {
             None => return Ok(None),
         };
 
-        let loader = ctx.get_loader::<DataLoader<StoreLoader>>();
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
         Ok(loader
             .load_one(other_party_store_id.clone())
             .await?
-            .map(StoreNode::from))
+            .map(StoreNode::from_domain))
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {

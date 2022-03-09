@@ -4,44 +4,49 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::schema::StoreRow;
+use repository::{schema::StoreRow, Store};
 
 use super::NameNode;
 
 #[derive(PartialEq, Debug)]
 pub struct StoreNode {
-    store: StoreRow,
+    store: Store,
 }
 
 #[Object]
 impl StoreNode {
     pub async fn id(&self) -> &str {
-        &self.store.id
+        &self.row().id
     }
 
     pub async fn code(&self) -> &str {
-        &self.store.code
+        &self.row().code
     }
 
     pub async fn name(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.store.name_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to store ({})",
-                &self.store.name_id, &self.store.id
+                &self.row().name_id,
+                &self.row().id
             ))
             .extend(),
         )
     }
 }
 
-impl From<StoreRow> for StoreNode {
-    fn from(store: StoreRow) -> Self {
+impl StoreNode {
+    pub fn from_domain(store: Store) -> StoreNode {
         StoreNode { store }
+    }
+
+    pub fn row(&self) -> &StoreRow {
+        &self.store.store_row
     }
 }
