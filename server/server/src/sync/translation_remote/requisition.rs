@@ -8,6 +8,7 @@ use repository::{
 };
 
 use serde::{Deserialize, Serialize};
+use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
 use crate::sync::SyncTranslationError;
 
@@ -87,6 +88,7 @@ pub struct LegacyRequisitionRow {
     pub linked_requisition_id: Option<String>,
     /// min_months_of_stock
     pub thresholdMOS: f64,
+    // TODO needs a om_max_months_of_stock value in mSupply
     pub daysToSupply: i64,
 
     /// Colour number mapped to an internal colour
@@ -139,18 +141,14 @@ impl RemotePullTranslation for RequisitionTranslation {
                 r#type: t,
                 status,
                 created_datetime: date_and_time_to_datatime(data.date_entered, 0),
-                // TODO correct?:
-                sent_datetime: data
-                    .date_order_received
-                    .map(|date| date_and_time_to_datatime(date, 0)),
+                // TODO needs new field in mSupply
+                sent_datetime: None,
                 // TODO needs new field in mSupply
                 finalised_datetime: None,
                 colour: data.colour.and_then(|colour| req_colour_to_hex(colour)),
                 comment: data.comment,
-                // TODO correct?:
                 their_reference: data.requester_reference,
-                // TODO:
-                max_months_of_stock: 0.0,
+                max_months_of_stock: data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
                 min_months_of_stock: data.thresholdMOS,
                 linked_requisition_id: data.linked_requisition_id,
             }),
@@ -177,14 +175,14 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             r#type,
             status,
             created_datetime,
-            sent_datetime,
+            // TODO:
+            sent_datetime: _,
             // TODO:
             finalised_datetime: _,
             colour,
             comment,
             their_reference,
-            // TODO
-            max_months_of_stock: _,
+            max_months_of_stock,
             min_months_of_stock,
             linked_requisition_id,
         } = RequisitionRowRepository::new(connection)
@@ -206,14 +204,12 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             date_entered: date_from_date_time(&created_datetime),
             // TODO
             date_stock_take: None,
-            // TODO is this correct?:
-            date_order_received: sent_datetime.map(|datetime| date_from_date_time(&datetime)),
-            // TODO is this correct:
+            // TODO
+            date_order_received: None,
             requester_reference: their_reference,
             linked_requisition_id,
             thresholdMOS: min_months_of_stock,
-            // TODO
-            daysToSupply: 0,
+            daysToSupply: (NUMBER_OF_DAYS_IN_A_MONTH * max_months_of_stock) as i64,
             // Note, this loses the color if colour is not supported by mSupply
             colour: colour.and_then(|colour| hex_colour_to_req_colour(&colour)),
             comment,
