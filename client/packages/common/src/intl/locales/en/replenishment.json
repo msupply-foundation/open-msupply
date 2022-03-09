@@ -30,6 +30,7 @@
   "label.suggested-quantity": "Suggested quantity",
   "label.supplier-name": "Supplier Name",
   "label.supplier-ref": "Supplier Ref",
+  "messages.off-hold-confirmation": "This will re-enable status changes",
   "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
   "messages.cant-delete-invoices": "Can only delete invoices with a status of 'New'",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
