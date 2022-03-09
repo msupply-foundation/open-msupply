@@ -3,7 +3,6 @@ import {
   useQueryParams,
   SortRule,
   useQuery,
-  UseQueryResult,
   useQueryClient,
 } from '@openmsupply-client/common';
 import { useItemApi } from './../useItemApi';
@@ -12,14 +11,7 @@ import { ItemFragment } from './../../operations.generated';
 export const useItemsList = (initialListParameters: {
   initialFilterBy?: FilterBy;
   initialSortBy: SortRule<ItemFragment>;
-}): {
-  onFilterByCode: (code: string) => void;
-  onFilterByName: (name: string) => void;
-  prefetchListByName: (name: string) => void;
-} & UseQueryResult<{
-  nodes: ItemFragment[];
-  totalCount: number;
-}> => {
+}) => {
   const queryClient = useQueryClient();
   const api = useItemApi();
   const { filterBy, filter, queryParams, first, offset, sortBy } =

@@ -11,7 +11,7 @@ interface ListSearchProps<T> extends BaseAutocompleteListProps<T> {
   optionKey: keyof T;
 }
 
-export const ListSearch = <T extends unknown>({
+export const ListSearch = <T,>({
   title,
   options,
   optionKey,

@@ -6,7 +6,7 @@ import {
   Grid,
   useTranslation,
 } from '@openmsupply-client/common';
-import { NameSearchInput } from '@openmsupply-client/system';
+import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequestFields, useIsRequestDisabled } from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
 import { ToolbarActions } from './ToolbarActions';
@@ -28,8 +28,7 @@ export const Toolbar: FC = () => {
             <InputWithLabelRow
               label={t('label.supplier-name')}
               Input={
-                <NameSearchInput
-                  type="supplier"
+                <InternalSupplierSearchInput
                   disabled={isDisabled}
                   value={otherParty ?? null}
                   onChange={otherParty => update({ otherParty })}

@@ -43,6 +43,7 @@ const getLines = (): InvoiceLineNode[] => [
     packSize: 1,
     item: {
       id: 'a',
+      type: ItemNodeType.Stock,
       __typename: 'ItemNode',
       availableBatches: {
         __typename: 'StockLineConnector',
@@ -50,7 +51,6 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
-      type: ItemNodeType.Stock,
       isVisible: true,
       name: '',
       stats: {
@@ -77,8 +77,8 @@ const getLines = (): InvoiceLineNode[] => [
     packSize: 1,
     item: {
       id: 'b',
-      __typename: 'ItemNode',
       type: ItemNodeType.Stock,
+      __typename: 'ItemNode',
       availableBatches: {
         __typename: 'StockLineConnector',
         nodes: [],
@@ -111,8 +111,8 @@ const getLines = (): InvoiceLineNode[] => [
     packSize: 1,
     item: {
       id: 'c',
-      __typename: 'ItemNode',
       type: ItemNodeType.Stock,
+      __typename: 'ItemNode',
       availableBatches: {
         __typename: 'StockLineConnector',
         nodes: [],
