@@ -9,7 +9,7 @@ import {
   List,
   PowerIcon,
   RadioIcon,
-  ReportsIcon,
+  // ReportsIcon,
   SettingsIcon,
   Theme,
   IconButton,
@@ -193,11 +193,11 @@ export const AppDrawer: React.FC = () => {
             icon={<ToolsIcon fontSize="small" color="primary" />}
             text={t('tools')}
           /> */}
-          <AppNavLink
+          {/* <AppNavLink
             to={AppRoute.Reports}
             icon={<ReportsIcon fontSize="small" color="primary" />}
             text={t('reports')}
-          />
+          /> */}
           {/* <AppNavLink
             to={AppRoute.Messages}
             icon={<MessagesIcon fontSize="small" color="primary" />}
