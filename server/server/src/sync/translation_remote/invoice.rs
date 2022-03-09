@@ -1,4 +1,5 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use log::info;
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -70,6 +71,14 @@ pub enum LegacyTransactStatus {
     Wf,
 }
 
+#[derive(Deserialize, Serialize, PartialEq, Eq)]
+pub enum TransactMode {
+    #[serde(rename = "store")]
+    Store,
+    #[serde(rename = "dispensary")]
+    Dispensary,
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyTransactRow {
@@ -114,6 +123,8 @@ pub struct LegacyTransactRow {
     pub confirm_date: Option<NaiveDate>,
     #[serde(deserialize_with = "naive_time")]
     pub confirm_time: NaiveTime,
+
+    pub mode: TransactMode,
 }
 
 pub struct InvoiceTranslation {}
@@ -136,6 +147,14 @@ impl RemotePullTranslation for InvoiceTranslation {
                     record: sync_record.data.clone(),
                 }
             })?;
+
+        if data.mode == TransactMode::Dispensary {
+            info!(
+                "Ignore transact records in dispensary mode (transact id: {})",
+                data.ID
+            );
+            return Ok(None);
+        }
 
         let name = NameQueryRepository::new(connection)
             .query_one(NameFilter::new().id(EqualFilter::equal_to(&data.name_ID)))
@@ -364,6 +383,8 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
                 .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
+
+            mode: TransactMode::Store,
         };
 
         Ok(Some(vec![PushUpsertRecord {

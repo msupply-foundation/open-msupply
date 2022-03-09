@@ -1,3 +1,4 @@
+use log::warn;
 use repository::{
     schema::{ChangelogRow, ChangelogTableName, NameStoreJoinRow, RemoteSyncBufferRow},
     NameRepository, NameStoreJoinRepository, StorageConnection,
@@ -51,11 +52,12 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
             })? {
             Some(name) => name,
             None => {
-                return Err(SyncTranslationError {
-                    table_name,
-                    source: anyhow::Error::msg(format!("Failed to get name: {}", data.name_ID)),
-                    record: sync_record.data.clone(),
-                })
+                // TODO: support patients?
+                warn!(
+                    "Failed to get name \"{}\" for name_store_join \"{}\". Potentially the name refers to a patient but patients are currently not synced.",
+                    data.name_ID, data.ID
+                );
+                return Ok(None);
             }
         };
 
