@@ -41,8 +41,6 @@ const getLines = (): InvoiceLineNode[] => [
     itemName: '',
     numberOfPacks: 0,
     packSize: 1,
-    totalAfterTax: 0,
-    totalBeforeTax: 0,
     item: {
       id: 'a',
       type: ItemNodeType.Stock,
@@ -53,7 +51,6 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
-      type: ItemNodeType.Stock,
       isVisible: true,
       name: '',
       stats: {
@@ -78,13 +75,10 @@ const getLines = (): InvoiceLineNode[] => [
     itemName: '',
     numberOfPacks: 0,
     packSize: 1,
-    totalAfterTax: 0,
-    totalBeforeTax: 0,
     item: {
       id: 'b',
       type: ItemNodeType.Stock,
       __typename: 'ItemNode',
-      type: ItemNodeType.Stock,
       availableBatches: {
         __typename: 'StockLineConnector',
         nodes: [],
@@ -115,13 +109,10 @@ const getLines = (): InvoiceLineNode[] => [
     itemName: '',
     numberOfPacks: 0,
     packSize: 1,
-    totalAfterTax: 0,
-    totalBeforeTax: 0,
     item: {
       id: 'c',
       type: ItemNodeType.Stock,
       __typename: 'ItemNode',
-      type: ItemNodeType.Stock,
       availableBatches: {
         __typename: 'StockLineConnector',
         nodes: [],
