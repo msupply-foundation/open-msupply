@@ -88,24 +88,26 @@ pub fn generate_linked_invoice(
 
     let result = InvoiceRow {
         id: uuid(),
-        invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
         r#type: InvoiceRowType::InboundShipment,
         name_id,
         store_id,
-        name_store_id: Some(source_invoice.store_id.clone()),
         status,
-        created_datetime: Utc::now().naive_utc(),
-        colour: None,
-        comment: None,
+        requisition_id,
+        name_store_id: Some(source_invoice.store_id.clone()),
         their_reference: source_invoice.their_reference.clone(),
         linked_invoice_id: Some(source_invoice.id.clone()),
-        on_hold: false,
-        allocated_datetime: None,
+        invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
+        created_datetime: Utc::now().naive_utc(),
         picked_datetime: source_invoice.picked_datetime,
         shipped_datetime: source_invoice.shipped_datetime,
+        // Default
+        colour: None,
+        user_id: None,
+        comment: None,
+        on_hold: false,
+        allocated_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-        requisition_id,
     };
 
     Ok(result)

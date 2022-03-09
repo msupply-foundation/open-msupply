@@ -2,6 +2,7 @@ use crate::{
     number::next_number,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
+    user_account::get_default_user_id,
 };
 use chrono::Utc;
 use repository::Name;
@@ -95,6 +96,7 @@ fn generate(
 ) -> Result<RequisitionRow, RepositoryError> {
     let result = RequisitionRow {
         id,
+        user_id: Some(get_default_user_id()),
         requisition_number: next_number(connection, &NumberRowType::RequestRequisition, &store_id)?,
         name_id: other_party_id,
         store_id: store_id.to_owned(),
@@ -135,6 +137,7 @@ mod test_insert {
         RequisitionRowRepository,
     };
 
+    use crate::user_account::get_default_user_id;
     use crate::{
         requisition::request_requisition::{
             InsertRequestRequisition, InsertRequestRequisitionError as ServiceError,
@@ -278,6 +281,7 @@ mod test_insert {
 
         let RequisitionRow {
             id,
+            user_id,
             requisition_number: _,
             name_id,
             store_id,
@@ -299,6 +303,7 @@ mod test_insert {
 
         assert_eq!(id, "new_request_requisition".to_owned());
 
+        assert_eq!(user_id, Some(get_default_user_id()));
         assert_eq!(name_id, mock_name_store_c().id);
         assert_eq!(colour, Some("new colour".to_owned()));
         assert_eq!(their_reference, Some("new their_reference".to_owned()));

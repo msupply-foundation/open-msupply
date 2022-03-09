@@ -8,6 +8,7 @@ use repository::{
     schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
+use util::inline_edit;
 
 #[derive(Debug, PartialEq)]
 pub enum UpdateResponseRequstionStatus {
@@ -89,23 +90,7 @@ pub fn validate(
 }
 
 pub fn generate(
-    RequisitionRow {
-        id,
-        requisition_number,
-        name_id,
-        store_id,
-        r#type,
-        status,
-        created_datetime,
-        sent_datetime,
-        finalised_datetime,
-        colour,
-        comment,
-        their_reference,
-        max_months_of_stock,
-        min_months_of_stock,
-        linked_requisition_id,
-    }: RequisitionRow,
+    existing: RequisitionRow,
     UpdateResponseRequisition {
         id: _,
         colour: update_colour,
@@ -114,34 +99,23 @@ pub fn generate(
         their_reference: update_their_reference,
     }: UpdateResponseRequisition,
 ) -> RequisitionRow {
-    RequisitionRow {
-        // Only finalised status is available in UpdateResponseRequstionStatus
-        status: if update_status.is_some() {
+    inline_edit(&existing, |mut r| {
+        r.status = if update_status.is_some() {
             RequisitionRowStatus::Finalised
         } else {
-            status
-        },
-        finalised_datetime: if update_status.is_some() {
+            r.status
+        };
+
+        r.finalised_datetime = if update_status.is_some() {
             Some(Utc::now().naive_utc())
         } else {
-            finalised_datetime
-        },
-        colour: update_colour.or(colour),
-        comment: update_comment.or(comment),
-        their_reference: update_their_reference.or(their_reference),
-
-        // not changed
-        id,
-        requisition_number,
-        name_id,
-        store_id,
-        r#type,
-        created_datetime,
-        sent_datetime,
-        linked_requisition_id,
-        min_months_of_stock,
-        max_months_of_stock,
-    }
+            r.finalised_datetime
+        };
+        r.colour = update_colour.or(r.colour);
+        r.comment = update_comment.or(r.comment);
+        r.their_reference = update_their_reference.or(r.their_reference);
+        r
+    })
 }
 
 impl From<RepositoryError> for UpdateResponseRequisitionError {
