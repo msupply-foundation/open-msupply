@@ -70,7 +70,8 @@ pub struct EqualFilterInvoiceStatusInput {
 pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub invoice_number: Option<EqualFilterBigNumberInput>,
-    pub name_id: Option<EqualFilterStringInput>,
+    pub other_party_name: Option<SimpleStringFilterInput>,
+    pub other_party_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterInvoiceTypeInput>,
     pub status: Option<EqualFilterInvoiceStatusInput>,
@@ -121,8 +122,7 @@ pub fn get_invoices(
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             // Currently only one sort option is supported, use the first from the list.
-            sort.map(|mut sort_list| sort_list.pop())
-                .flatten()
+            sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
@@ -164,7 +164,8 @@ impl InvoiceFilterInput {
         InvoiceFilter {
             id: self.id.map(EqualFilter::from),
             invoice_number: self.invoice_number.map(EqualFilter::from),
-            name_id: self.name_id.map(EqualFilter::from),
+            name_id: self.other_party_id.map(EqualFilter::from),
+            name: self.other_party_name.map(SimpleStringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
             r#type: self
                 .r#type

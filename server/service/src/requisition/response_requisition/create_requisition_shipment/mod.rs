@@ -17,11 +17,6 @@ pub struct CreateRequisitionShipment {
     pub response_requisition_id: String,
 }
 
-pub struct ItemFulFillment {
-    pub item_id: String,
-    pub quantity: i32,
-}
-
 #[derive(Debug, PartialEq)]
 pub enum CreateRequisitionShipmentError {
     RequisitionDoesNotExist,

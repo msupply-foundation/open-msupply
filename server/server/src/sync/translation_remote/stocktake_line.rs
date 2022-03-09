@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::sync::SyncTranslationError;
 
 use super::{
-    empty_str_as_option,
+    date_option_to_isostring, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_STOCKTAKE_LINE,
@@ -35,6 +35,7 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub Batch: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub expiry: Option<NaiveDate>,
     pub cost_price: f64,
     pub sell_price: f64,

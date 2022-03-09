@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::sync::SyncTranslationError;
 
 use super::{
-    empty_str_as_option,
+    date_option_to_isostring, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_TRANS_LINE,
@@ -46,6 +46,7 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub batch: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: i32,
     pub cost_price: f64,

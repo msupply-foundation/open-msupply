@@ -76,6 +76,9 @@ impl<'a> RequisitionRepository<'a> {
                 RequisitionSortField::Status => {
                     apply_sort!(query, sort, requisition_dsl::status);
                 }
+                RequisitionSortField::Comment => {
+                    apply_sort_no_case!(query, sort, requisition_dsl::comment);
+                }
                 RequisitionSortField::OtherPartyName => {
                     apply_sort_no_case!(query, sort, name_dsl::name_);
                 }
