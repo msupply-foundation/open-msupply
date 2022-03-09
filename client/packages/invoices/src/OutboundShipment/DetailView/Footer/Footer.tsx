@@ -1,24 +1,18 @@
-import React, { FC } from 'react';
+import React, { FC, memo } from 'react';
 import {
   Box,
   ButtonWithIcon,
   StatusCrumbs,
-  ToggleButton,
   XCircleIcon,
   useTranslation,
   AppFooterPortal,
   InvoiceNodeStatus,
   useNavigate,
-  useBufferState,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
-import {
-  useIsOutboundDisabled,
-  useOutbound,
-  useOutboundFields,
-  OutboundFragment,
-} from '../../api';
+import { useOutbound, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
+import { OnHoldButton } from './OnHoldButton';
 
 const createStatusLog = (invoice: OutboundFragment) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
@@ -54,13 +48,10 @@ const createStatusLog = (invoice: OutboundFragment) => {
   return statusLog;
 };
 
-export const Footer: FC = () => {
+export const FooterComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('distribution');
   const { data } = useOutbound();
-  const isDisabled = useIsOutboundDisabled();
-  const { onHold, update } = useOutboundFields('onHold');
-  const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
   return (
     <AppFooterPortal
@@ -73,16 +64,7 @@ export const Footer: FC = () => {
             alignItems="center"
             height={64}
           >
-            <ToggleButton
-              disabled={isDisabled}
-              value={!!onHoldBuffer}
-              selected={!!onHoldBuffer}
-              onClick={(_, value) => {
-                setOnHoldBuffer(!value);
-                update({ onHold: !value });
-              }}
-              label={t('label.hold')}
-            />
+            <OnHoldButton />
 
             <StatusCrumbs
               statuses={outboundStatuses}
@@ -108,3 +90,5 @@ export const Footer: FC = () => {
     />
   );
 };
+
+export const Footer = memo(FooterComponent);

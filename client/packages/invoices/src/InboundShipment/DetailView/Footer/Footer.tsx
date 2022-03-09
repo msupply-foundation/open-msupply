@@ -2,23 +2,18 @@ import {
   Box,
   ButtonWithIcon,
   StatusCrumbs,
-  ToggleButton,
   useTranslation,
   AppFooterPortal,
   InvoiceNodeStatus,
-  useBufferState,
   useNavigate,
   XCircleIcon,
 } from '@openmsupply-client/common';
+
 import React, { FC } from 'react';
 import { getStatusTranslator, inboundStatuses } from '../../../utils';
-import {
-  InboundFragment,
-  useInbound,
-  useInboundFields,
-  useIsInboundDisabled,
-} from '../../api';
+import { InboundFragment, useInbound } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
+import { OnHoldButton } from './OnHoldButton';
 
 const createStatusLog = (invoice: InboundFragment) => {
   const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
@@ -53,18 +48,15 @@ const createStatusLog = (invoice: InboundFragment) => {
   return statusLog;
 };
 
-export const Footer: FC = () => {
+export const FooterComponent: FC = () => {
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
-  const { onHold, update } = useInboundFields('onHold');
-  const isDisabled = useIsInboundDisabled();
   const { data } = useInbound();
-  const [onHoldBuffer, setOnHoldBuffer] = useBufferState(onHold);
 
   return (
     <AppFooterPortal
       Content={
-        !!data && (
+        data ? (
           <Box
             gap={2}
             display="flex"
@@ -72,16 +64,7 @@ export const Footer: FC = () => {
             alignItems="center"
             height={64}
           >
-            <ToggleButton
-              disabled={isDisabled}
-              value={onHoldBuffer}
-              selected={onHoldBuffer}
-              onClick={(_, value) => {
-                setOnHoldBuffer(!value);
-                update({ onHold: !value });
-              }}
-              label={t('label.hold')}
-            />
+            <OnHoldButton />
 
             <StatusCrumbs
               statuses={inboundStatuses}
@@ -102,8 +85,10 @@ export const Footer: FC = () => {
               <StatusChangeButton />
             </Box>
           </Box>
-        )
+        ) : null
       }
     />
   );
 };
+
+export const Footer = React.memo(FooterComponent);
