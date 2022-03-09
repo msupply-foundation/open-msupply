@@ -1,18 +1,14 @@
 import React from 'react';
 import {
-  AppBarButtonsPortal,
-  Grid,
-  useDetailPanel,
   ButtonWithIcon,
   PlusCircleIcon,
   useTranslation,
   useConfirmationModal,
   useAlertModal,
 } from '@openmsupply-client/common';
-import { useCreateOutboundFromResponse, useResponseFields } from '../api';
+import { useCreateOutboundFromResponse, useResponseFields } from '../../api';
 
-export const AppBarButtonsComponent = () => {
-  const { OpenButton } = useDetailPanel();
+export const CreateShipmentButtonComponent = () => {
   const { linesRemainingToSupply } = useResponseFields(
     'linesRemainingToSupply'
   );
@@ -37,17 +33,12 @@ export const AppBarButtonsComponent = () => {
   };
 
   return (
-    <AppBarButtonsPortal>
-      <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('button.create-shipment')}
-          onClick={onCreateShipment}
-        />
-        {OpenButton}
-      </Grid>
-    </AppBarButtonsPortal>
+    <ButtonWithIcon
+      Icon={<PlusCircleIcon />}
+      label={t('button.create-shipment')}
+      onClick={onCreateShipment}
+    />
   );
 };
 
-export const AppBarButtons = React.memo(AppBarButtonsComponent);
+export const CreateShipmentButton = React.memo(CreateShipmentButtonComponent);
