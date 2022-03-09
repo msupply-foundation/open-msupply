@@ -120,15 +120,25 @@ export const useInboundItems = () => {
   return { data, sortBy, onSort: onChangeSortBy };
 };
 
-export const useNextItem = (currentItemId: string): ItemRowFragment | null => {
+export const useNextItem = (
+  currentItemId: string
+): { next: ItemRowFragment | null; disabled: boolean } => {
+  const next: ItemRowFragment | null = null;
+  const disabled = true;
   const { data } = useInboundItems();
 
-  if (!data) return null;
-  const currentIndex = data.findIndex(({ itemId }) => itemId === currentItemId);
-  const nextItem = data?.[(currentIndex + 1) % data.length];
-  if (!nextItem) return null;
+  if (!data) return { next, disabled };
 
-  return nextItem.lines[0].item;
+  const numberOfItems = data.length;
+  const currentIndex = data.findIndex(({ itemId }) => itemId === currentItemId);
+  const nextIndex = currentIndex + 1;
+  const nextItem = data?.[nextIndex];
+  if (!nextItem) return { next, disabled };
+
+  return {
+    next: nextItem.lines[0].item,
+    disabled: currentIndex === numberOfItems - 1,
+  };
 };
 
 export const useSaveInboundLines = () => {
