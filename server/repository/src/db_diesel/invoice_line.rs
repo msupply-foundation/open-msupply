@@ -8,7 +8,7 @@ use crate::{
             invoice_line::dsl as invoice_line_dsl, invoice_stats::dsl as invoice_stats_dsl,
             location, location::dsl as location_dsl,
         },
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceStatsRow, LocationRow,
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow, PricingRow,
     },
 };
 use crate::{EqualFilter, Pagination};
@@ -125,8 +125,8 @@ impl<'a> InvoiceLineRepository<'a> {
     }
 
     /// Calculates invoice line stats for a given invoice ids
-    pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<InvoiceStatsRow>, RepositoryError> {
-        let results: Vec<InvoiceStatsRow> = invoice_stats_dsl::invoice_stats
+    pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<PricingRow>, RepositoryError> {
+        let results: Vec<PricingRow> = invoice_stats_dsl::invoice_stats
             .filter(invoice_stats_dsl::invoice_id.eq_any(invoice_ids))
             .load(&self.connection.connection)?;
         Ok(results)
@@ -170,5 +170,23 @@ impl InvoiceLine {
         self.location_row_option
             .as_ref()
             .map(|location_row| location_row.name.as_str())
+    }
+
+    pub fn pricing(&self) -> PricingRow {
+        let row = &self.invoice_line_row;
+        let is_stock = matches!(row.r#type, InvoiceLineRowType::StockIn)
+            || matches!(row.r#type, InvoiceLineRowType::StockOut);
+        let is_service = matches!(row.r#type, InvoiceLineRowType::Service);
+
+        PricingRow {
+            invoice_id: row.invoice_id.clone(),
+            total_before_tax: row.total_before_tax,
+            total_after_tax: row.total_after_tax,
+            stock_total_before_tax: is_stock.then(|| row.total_before_tax).unwrap_or(0.0),
+            stock_total_after_tax: is_stock.then(|| row.total_after_tax).unwrap_or(0.0),
+            service_total_before_tax: is_service.then(|| row.total_before_tax).unwrap_or(0.0),
+            service_total_after_tax: is_service.then(|| row.total_after_tax).unwrap_or(0.0),
+            tax_percentage: row.tax,
+        }
     }
 }

@@ -9,7 +9,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, InvoiceStatsRow};
+use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
 
 use repository::Invoice;
 use serde::Serialize;
@@ -199,9 +199,9 @@ impl InvoiceNode {
         ))
     }
 
-    pub async fn pricing(&self, ctx: &Context<'_>) -> Result<InvoicePricingNode> {
+    pub async fn pricing(&self, ctx: &Context<'_>) -> Result<PricingNode> {
         let loader = ctx.get_loader::<DataLoader<InvoiceStatsLoader>>();
-        let default = InvoiceStatsRow {
+        let default = PricingRow {
             invoice_id: self.row().id.clone(),
             total_before_tax: 0.0,
             total_after_tax: 0.0,
@@ -209,11 +209,12 @@ impl InvoiceNode {
             stock_total_after_tax: 0.0,
             service_total_before_tax: 0.0,
             service_total_after_tax: 0.0,
+            tax_percentage: None,
         };
 
         let result_option = loader.load_one(self.row().id.to_string()).await?;
 
-        Ok(InvoicePricingNode {
+        Ok(PricingNode {
             invoice_pricing: result_option.unwrap_or(default),
         })
     }
@@ -246,12 +247,12 @@ impl InvoiceNode {
 }
 
 // INVOICE LINE PRICING
-pub struct InvoicePricingNode {
-    invoice_pricing: InvoiceStatsRow,
+pub struct PricingNode {
+    pub invoice_pricing: PricingRow,
 }
 
 #[Object]
-impl InvoicePricingNode {
+impl PricingNode {
     // total
 
     pub async fn total_before_tax(&self) -> f64 {
@@ -280,6 +281,12 @@ impl InvoicePricingNode {
 
     pub async fn service_total_after_tax(&self) -> f64 {
         self.invoice_pricing.service_total_after_tax
+    }
+
+    // tax
+
+    pub async fn tax_percentage(&self) -> &Option<f64> {
+        &self.invoice_pricing.tax_percentage
     }
 }
 

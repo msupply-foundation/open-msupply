@@ -785,7 +785,7 @@ type InvoiceNode {
 	"""
 	linkedShipment: InvoiceNode
 	lines: InvoiceLineConnector!
-	pricing: InvoicePricingNode!
+	pricing: PricingNode!
 	otherParty: NameNode!
 }
 enum InvoiceNodeStatus {
@@ -801,7 +801,7 @@ enum InvoiceNodeType {
 	INBOUND_SHIPMENT
 	INVENTORY_ADJUSTMENT
 }
-type InvoicePricingNode {
+type PricingNode {
 	totalBeforeTax: Float!
 	totalAfterTax: Float!
 	stockTotalBeforeTax: Float!

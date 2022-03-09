@@ -1,5 +1,4 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use log::info;
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
