@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
   Grid,
@@ -7,11 +7,15 @@ import {
   PlusCircleIcon,
   useTranslation,
   useConfirmationModal,
+  useAlertModal,
 } from '@openmsupply-client/common';
-import { useCreateOutboundFromResponse } from '../api';
+import { useCreateOutboundFromResponse, useResponseFields } from '../api';
 
-export const AppBarButtonsComponent: FC = () => {
+export const AppBarButtonsComponent = () => {
   const { OpenButton } = useDetailPanel();
+  const { linesRemainingToSupply } = useResponseFields(
+    'linesRemainingToSupply'
+  );
   const t = useTranslation('distribution');
   const { mutate: createOutbound } = useCreateOutboundFromResponse();
   const getConfirmation = useConfirmationModal({
@@ -19,6 +23,18 @@ export const AppBarButtonsComponent: FC = () => {
     message: t('messages.create-outbound-from-requisition'),
     title: t('heading.create-outbound-shipment'),
   });
+  const alert = useAlertModal({
+    title: t('heading.cannot-do-that'),
+    message: t('message.all-lines-have-been-fulfilled'),
+  });
+
+  const onCreateShipment = () => {
+    if (linesRemainingToSupply.totalCount > 0) {
+      alert();
+    } else {
+      getConfirmation();
+    }
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -26,7 +42,7 @@ export const AppBarButtonsComponent: FC = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.create-shipment')}
-          onClick={() => getConfirmation()}
+          onClick={onCreateShipment}
         />
         {OpenButton}
       </Grid>
