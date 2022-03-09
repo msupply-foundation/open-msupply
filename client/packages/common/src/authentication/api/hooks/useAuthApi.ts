@@ -1,9 +1,9 @@
-import { useOmSupplyApi } from '../../../api';
+import { useGraphQLClient } from '../../../api';
 import { getAuthQueries } from '../api';
 import { getSdk } from '../operations.generated';
 
 export const useAuthApi = () => {
-  const { client } = useOmSupplyApi();
+  const { client } = useGraphQLClient();
   const queries = getAuthQueries(getSdk(client));
 
   const keys = {

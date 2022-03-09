@@ -2,36 +2,36 @@ import React, { FC, useMemo, useEffect, useState, useCallback } from 'react';
 import { createContext } from 'react';
 import { GraphQLClient } from 'graphql-request';
 
-export const createOmSupplyApi = (url: string): { client: GraphQLClient } => {
+export const createGraphQLClient = (url: string): { client: GraphQLClient } => {
   const client = new GraphQLClient(url, { credentials: 'include' });
   return { client };
 };
 
-interface OmSupplyApiControl {
+interface GraphQLClientControl {
   client: GraphQLClient;
   setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
 }
 
-const OmSupplyApiContext = createContext<OmSupplyApiControl>({
-  ...createOmSupplyApi(''),
+const GraphQLClientContext = createContext<GraphQLClientControl>({
+  ...createGraphQLClient(''),
   setHeader: () => {},
   setUrl: () => {},
 });
 
-const { Provider, Consumer } = OmSupplyApiContext;
+const { Provider } = GraphQLClientContext;
 
 interface ApiProviderProps {
   url: string;
 }
 
-export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
+export const GraphQLClientProvider: FC<ApiProviderProps> = ({
   url,
   children,
 }) => {
   const [{ client }, setApi] = useState<{
     client: GraphQLClient;
-  }>(() => createOmSupplyApi(url));
+  }>(() => createGraphQLClient(url));
 
   const setUrl = useCallback(
     (newUrl: string) => {
@@ -48,7 +48,7 @@ export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
   );
 
   useEffect(() => {
-    setApi(createOmSupplyApi(url));
+    setApi(createGraphQLClient(url));
   }, [url]);
 
   const val = useMemo(
@@ -63,9 +63,7 @@ export const OmSupplyApiProvider: FC<ApiProviderProps> = ({
   return <Provider value={val}>{children}</Provider>;
 };
 
-export const OmSupplyApiConsumer = Consumer;
-
-export const useOmSupplyApi = (): OmSupplyApiControl => {
-  const omSupplyApiControl = React.useContext(OmSupplyApiContext);
-  return omSupplyApiControl;
+export const useGraphQLClient = (): GraphQLClientControl => {
+  const graphQLClientControl = React.useContext(GraphQLClientContext);
+  return graphQLClientControl;
 };

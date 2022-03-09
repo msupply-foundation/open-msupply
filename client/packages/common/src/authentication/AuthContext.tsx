@@ -2,7 +2,7 @@ import React, { createContext, FC, useMemo, useState } from 'react';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns';
-import { useOmSupplyApi } from '../api';
+import { useGraphQLClient } from '../api';
 import { useGetRefreshToken } from './api/hooks';
 import { useGetAuthToken } from './api/hooks/useGetAuthToken';
 import { AuthenticationResponse } from './api';
@@ -62,7 +62,7 @@ export const getAuthCookie = (): AuthCookie => {
 };
 
 const useRefreshingAuth = (token?: string) => {
-  const { setHeader } = useOmSupplyApi();
+  const { setHeader } = useGraphQLClient();
   setHeader('Authorization', `Bearer ${token}`);
   useGetRefreshToken(token ?? '');
 };
