@@ -97,7 +97,7 @@ query itemsWithStockLines(
   }
 }
 
-query itemsListView(
+query items(
   $first: Int
   $offset: Int
   $key: ItemSortFieldInput!

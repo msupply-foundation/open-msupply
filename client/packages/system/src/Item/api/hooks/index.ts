@@ -1,6 +1,5 @@
-export * from './useItemsList';
+export * from './useItems';
 export * from './useItem';
 export * from './useStockLines';
 export * from './useItemApi';
-export * from './useItemListView';
 export * from './useItemsWithStats';

@@ -24,7 +24,7 @@ export type ItemsWithStockLinesQueryVariables = Types.Exact<{
 
 export type ItemsWithStockLinesQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, type: Types.ItemNodeType, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } }> } };
 
-export type ItemsListViewQueryVariables = Types.Exact<{
+export type ItemsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
   key: Types.ItemSortFieldInput;
@@ -34,7 +34,7 @@ export type ItemsListViewQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsListViewQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }> } };
+export type ItemsQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }> } };
 
 export type ItemsWithStatsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -148,8 +148,8 @@ export const ItemsWithStockLinesDocument = gql`
   }
 }
     ${ItemFragmentDoc}`;
-export const ItemsListViewDocument = gql`
-    query itemsListView($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
+export const ItemsDocument = gql`
+    query items($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
   items(
     storeId: $storeId
     page: {first: $first, offset: $offset}
@@ -230,8 +230,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsWithStockLinesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines');
     },
-    itemsListView(variables: ItemsListViewQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsListViewQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsListViewQuery>(ItemsListViewDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsListView');
+    items(variables: ItemsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemsQuery>(ItemsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'items');
     },
     itemsWithStats(variables: ItemsWithStatsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsWithStatsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStatsQuery>(ItemsWithStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStats');
@@ -264,16 +264,16 @@ export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLR
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockItemsListViewQuery((req, res, ctx) => {
+ * mockItemsQuery((req, res, ctx) => {
  *   const { first, offset, key, desc, filter, storeId } = req.variables;
  *   return res(
  *     ctx.data({ items })
  *   )
  * })
  */
-export const mockItemsListViewQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsListViewQueryVariables>, GraphQLContext<ItemsListViewQuery>, any>) =>
-  graphql.query<ItemsListViewQuery, ItemsListViewQueryVariables>(
-    'itemsListView',
+export const mockItemsQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsQueryVariables>, GraphQLContext<ItemsQuery>, any>) =>
+  graphql.query<ItemsQuery, ItemsQueryVariables>(
+    'items',
     resolver
   )
 
