@@ -305,8 +305,8 @@ mod repository_test {
             mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
         schema::{
-            ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, KeyValueType,
-            NumberRowType, RequisitionRowStatus,
+            ChangelogAction, ChangelogRow, ChangelogTableName, KeyValueType, NumberRowType,
+            PricingRow, RequisitionRowStatus,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRepository, ItemRepository, ItemStatsFilter,
@@ -717,14 +717,15 @@ mod repository_test {
             .unwrap();
         assert_eq!(
             stats_invoice_1,
-            InvoiceStatsRow {
+            PricingRow {
                 invoice_id: invoice_1_id,
                 total_before_tax: 13.0,
                 total_after_tax: 18.0,
                 stock_total_before_tax: 3.0,
                 stock_total_after_tax: 3.0,
                 service_total_before_tax: 10.0,
-                service_total_after_tax: 15.0
+                service_total_after_tax: 15.0,
+                tax_percentage: None,
             }
         );
     }
