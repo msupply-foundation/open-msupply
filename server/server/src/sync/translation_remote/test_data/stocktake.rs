@@ -40,6 +40,7 @@ fn stocktake_pull_record() -> TestSyncRecord {
         translated_record: Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Stocktake(StocktakeRow {
                 id: STOCKTAKE_1.0.to_string(),
+                user_id: None,
                 store_id: "store_a".to_string(),
                 stocktake_number: 3,
                 comment: None,
@@ -72,6 +73,7 @@ fn stocktake_push_record() -> TestSyncPushRecord {
         },
         push_data: json!(LegacyStocktakeRow {
             ID: STOCKTAKE_1.0.to_string(),
+            user_id: None,
             store_ID: "store_a".to_string(),
             status: LegacyStocktakeStatus::Fn,
             Description: Some("Test".to_string()),
