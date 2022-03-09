@@ -11,7 +11,7 @@ export const getDashboardQueries = (
 ) => ({
   get: {
     stockCounts: async () => {
-      const result = await queries.stockCounts();
+      const result = await queries.stockCounts({ storeId });
       return {
         expired: result.stockCounts.expired ?? 0,
         expiringSoon: result.stockCounts.expiringSoon ?? 0,
