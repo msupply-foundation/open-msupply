@@ -87,8 +87,7 @@ pub fn stocktakes(
         page.map(PaginationOption::from),
         filter.map(StocktakeFilter::from),
         // Currently only one sort option is supported, use the first from the list.
-        sort.map(|mut sort_list| sort_list.pop())
-            .flatten()
+        sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
     ) {
         Ok(stocktakes) => Ok(StocktakesResponse::Response(StocktakeConnector {

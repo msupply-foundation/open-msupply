@@ -160,14 +160,12 @@ fn create_filtered_query(store_id: &str, filter: Option<NameFilter>) -> BoxedNam
 
     let show_invisible_in_current_store = filter
         .as_ref()
-        .map(|filter| filter.show_invisible_in_current_store)
-        .flatten()
+        .and_then(|filter| filter.show_invisible_in_current_store)
         .unwrap_or(false);
 
     let show_system_names = filter
         .as_ref()
-        .map(|filter| filter.show_system_names)
-        .flatten()
+        .and_then(|filter| filter.show_system_names)
         .unwrap_or(false);
 
     query = match (show_invisible_in_current_store, show_system_names) {

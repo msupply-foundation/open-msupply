@@ -119,7 +119,10 @@ impl CentralDataSynchroniser {
 
         let mut records: Vec<CentralSyncBufferRow> = Vec::new();
         for table_name in TRANSLATION_RECORDS {
-            info!("Querying central sync buffer for {} records", table_name);
+            info!(
+                "Querying central sync buffer for \"{}\" records",
+                table_name
+            );
 
             let mut buffer_rows = central_sync_buffer_repository
                 .get_sync_entries(table_name)
@@ -127,7 +130,7 @@ impl CentralDataSynchroniser {
                 .map_err(|source| CentralSyncError::GetCentralSyncBufferRecordsError { source })?;
 
             info!(
-                "Found {} {} records in central sync buffer",
+                "Found {} \"{}\" records in central sync buffer",
                 buffer_rows.len(),
                 table_name
             );
