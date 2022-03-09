@@ -9,7 +9,7 @@ export const CustomerSearchModal: FC<NameSearchProps> = ({
   onChange,
 }) => {
   const { data, isLoading } = useCustomers();
-  const t = useTranslation(['app', 'common']);
+  const t = useTranslation('app');
 
   return (
     <ListSearch
