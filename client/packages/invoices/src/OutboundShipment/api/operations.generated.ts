@@ -173,7 +173,7 @@ export const OutboundFragmentDoc = gql`
     }
     totalCount
   }
-  otherParty {
+  otherParty(storeId: $storeId) {
     __typename
     id
     name

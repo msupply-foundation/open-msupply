@@ -114,7 +114,7 @@ export const ResponseFragmentDoc = gql`
       }
     }
   }
-  otherParty {
+  otherParty(storeId: $storeId) {
     id
     code
     isCustomer
@@ -163,7 +163,7 @@ export const ResponseByNumberDocument = gql`
     __typename
     ... on RequisitionNode {
       ...Response
-      otherParty {
+      otherParty(storeId: $storeId) {
         __typename
         ... on NameNode {
           id
