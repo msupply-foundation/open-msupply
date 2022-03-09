@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::sync::SyncTranslationError;
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, empty_str_as_option,
+    date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_STOCKTAKE,
@@ -45,6 +45,7 @@ pub struct LegacyStocktakeRow {
     // #[serde(deserialize_with = "empty_str_as_option")]
     // invad_reductions_ID: Option<String>,
     pub serial_number: i64,
+    #[serde(serialize_with = "date_to_isostring")]
     pub stock_take_created_date: NaiveDate,
     #[serde(rename = "stock_take_date")]
     #[serde(deserialize_with = "zero_date_as_option")]
