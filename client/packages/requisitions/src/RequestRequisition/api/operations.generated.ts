@@ -142,7 +142,7 @@ export const RequestFragmentDoc = gql`
       ...RequestLine
     }
   }
-  otherParty {
+  otherParty(storeId: $storeId) {
     id
     code
     isCustomer
@@ -263,7 +263,7 @@ export const RequestByNumberDocument = gql`
     __typename
     ... on RequisitionNode {
       ...Request
-      otherParty {
+      otherParty(storeId: $storeId) {
         __typename
         ... on NameNode {
           id
