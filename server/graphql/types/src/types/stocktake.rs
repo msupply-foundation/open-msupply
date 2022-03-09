@@ -1,5 +1,5 @@
 use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
-use chrono::{NaiveDateTime, NaiveDate};
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::schema::{StocktakeRow, StocktakeStatus};
 use serde::Serialize;
 

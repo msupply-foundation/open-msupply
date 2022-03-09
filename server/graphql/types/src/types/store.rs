@@ -1,4 +1,4 @@
-use async_graphql::{dataloader::DataLoader, Context, Object, Result, ErrorExtensions};
+use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
 use graphql_core::{
     loader::NameByIdLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
