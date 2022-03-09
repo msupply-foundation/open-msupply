@@ -2,6 +2,7 @@ import {
   TestingProvider,
   InvoiceLineNode,
   InvoiceLineNodeType,
+  ItemNodeType,
 } from '@openmsupply-client/common';
 import { renderHook } from '@testing-library/react-hooks';
 import { graphql } from 'msw';
@@ -38,8 +39,11 @@ const getLines = (): InvoiceLineNode[] => [
     itemName: '',
     numberOfPacks: 0,
     packSize: 1,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
     item: {
       id: 'a',
+      type: ItemNodeType.Stock,
       __typename: 'ItemNode',
       availableBatches: {
         __typename: 'StockLineConnector',
@@ -69,8 +73,11 @@ const getLines = (): InvoiceLineNode[] => [
     itemName: '',
     numberOfPacks: 0,
     packSize: 1,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
     item: {
       id: 'b',
+      type: ItemNodeType.Stock,
       __typename: 'ItemNode',
       availableBatches: {
         __typename: 'StockLineConnector',
@@ -100,8 +107,11 @@ const getLines = (): InvoiceLineNode[] => [
     itemName: '',
     numberOfPacks: 0,
     packSize: 1,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
     item: {
       id: 'c',
+      type: ItemNodeType.Stock,
       __typename: 'ItemNode',
       availableBatches: {
         __typename: 'StockLineConnector',
