@@ -7,7 +7,7 @@ import {
   useQuerySelector,
   useQueryClient,
   useParams,
-  useOmSupplyApi,
+  useGraphQLClient,
   useMutation,
   UseQueryResult,
   useQuery,
@@ -39,7 +39,7 @@ export const useStocktakeApi = () => {
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
 
-  const { client } = useOmSupplyApi();
+  const { client } = useGraphQLClient();
   const { storeId } = useAuthContext();
   const queries = getStocktakeQueries(getSdk(client), storeId);
   return { ...queries, storeId, keys };

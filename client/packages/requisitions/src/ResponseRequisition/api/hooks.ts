@@ -6,7 +6,7 @@ import {
   useQueryClient,
   useAuthContext,
   useParams,
-  useOmSupplyApi,
+  useGraphQLClient,
   UseQueryResult,
   useQuery,
   FieldSelectorControl,
@@ -36,7 +36,7 @@ export const useResponseApi = () => {
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
 
-  const { client } = useOmSupplyApi();
+  const { client } = useGraphQLClient();
   const sdk = getSdk(client);
   const { storeId } = useAuthContext();
   const queries = getResponseQueries(sdk, storeId);

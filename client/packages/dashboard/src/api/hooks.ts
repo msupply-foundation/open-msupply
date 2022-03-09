@@ -1,13 +1,13 @@
 import {
   useAuthContext,
-  useOmSupplyApi,
+  useGraphQLClient,
   useQuery,
 } from '@openmsupply-client/common';
 import { DashboardApi, getDashboardQueries } from './api';
 import { getSdk } from './operations.generated';
 
 export const useDashboardApi = (): DashboardApi => {
-  const { client } = useOmSupplyApi();
+  const { client } = useGraphQLClient();
   const { storeId } = useAuthContext();
   const queries = getDashboardQueries(getSdk(client), storeId);
   return { ...queries, storeId: storeId };

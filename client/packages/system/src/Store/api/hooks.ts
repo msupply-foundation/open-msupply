@@ -1,5 +1,5 @@
 import {
-  useOmSupplyApi,
+  useGraphQLClient,
   useQueryParams,
   useQuery,
 } from '@openmsupply-client/common';
@@ -14,7 +14,7 @@ const useStoreApi = () => {
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
 
-  const { client } = useOmSupplyApi();
+  const { client } = useGraphQLClient();
   const sdk = getSdk(client);
   const queries = getStoreQueries(sdk);
   return { ...queries, keys };

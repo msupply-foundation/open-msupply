@@ -1,6 +1,6 @@
 import { useQueryClient, useMutation } from 'react-query';
 import {
-  useOmSupplyApi,
+  useGraphQLClient,
   useAuthContext,
   useQueryParams,
   useQuery,
@@ -16,7 +16,7 @@ export const useLocationApi = () => {
     list: () => [...keys.base(), 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };
-  const { client } = useOmSupplyApi();
+  const { client } = useGraphQLClient();
   const sdk = getSdk(client);
   const queries = getLocationQueries(sdk, storeId);
   return { ...queries, storeId, keys };
