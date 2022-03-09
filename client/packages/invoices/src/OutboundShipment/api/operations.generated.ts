@@ -173,7 +173,7 @@ export const OutboundFragmentDoc = gql`
     }
     totalCount
   }
-  otherParty {
+  otherParty(storeId: $storeId) {
     __typename
     id
     name
@@ -306,7 +306,7 @@ export const InsertOutboundShipmentDocument = gql`
         ... on OtherPartyNotACustomerError {
           __typename
           description
-          otherParty {
+          otherParty(storeId: $storeId) {
             code
             id
             isCustomer

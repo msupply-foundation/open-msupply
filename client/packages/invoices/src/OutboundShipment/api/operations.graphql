@@ -84,7 +84,7 @@ fragment Outbound on InvoiceNode {
     totalCount
   }
 
-  otherParty {
+  otherParty(storeId: $storeId) {
     __typename
     id
     name
@@ -224,7 +224,7 @@ mutation insertOutboundShipment(
         ... on OtherPartyNotACustomerError {
           __typename
           description
-          otherParty {
+          otherParty(storeId: $storeId) {
             code
             id
             isCustomer
