@@ -306,7 +306,7 @@ export const InsertOutboundShipmentDocument = gql`
         ... on OtherPartyNotACustomerError {
           __typename
           description
-          otherParty(storeId: $storeId) {
+          otherParty {
             code
             id
             isCustomer
