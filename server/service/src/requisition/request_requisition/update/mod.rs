@@ -4,7 +4,7 @@ use crate::{
     sync_processor::{process_records, Record},
 };
 use repository::{
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository, Name,
+    Name, RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
 mod generate;
