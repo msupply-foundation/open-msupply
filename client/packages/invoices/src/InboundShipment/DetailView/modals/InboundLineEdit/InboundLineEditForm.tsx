@@ -6,7 +6,10 @@ import {
   useTranslation,
   BasicTextInput,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, ItemSearchInput } from '@openmsupply-client/system';
+import {
+  ItemRowFragment,
+  StockItemSearchInput,
+} from '@openmsupply-client/system';
 import { useInboundItems } from '../../../api';
 
 interface InboundLineEditProps {
@@ -21,26 +24,23 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   onChangeItem,
 }) => {
   const t = useTranslation('common');
-  const { data } = useInboundItems();
+  const { data: items } = useInboundItems();
 
   return (
     <>
       <ModalRow>
         <ModalLabel label={t('label.item')} justifyContent="flex-end" />
         <Grid item flex={1}>
-          <ItemSearchInput
+          <StockItemSearchInput
             autoFocus={!item}
             disabled={disabled}
             currentItemId={item?.id}
-            onChange={(newItem: ItemRowFragment | null) =>
-              newItem && onChangeItem(newItem)
+            onChange={newItem => newItem && onChangeItem(newItem)}
+            extraFilter={
+              disabled
+                ? undefined
+                : item => !items?.some(({ id }) => id === item.id)
             }
-            extraFilter={item => {
-              const itemAlreadyInShipment = data?.some(
-                ({ id }) => id === item.id
-              );
-              return !itemAlreadyInShipment;
-            }}
           />
         </Grid>
       </ModalRow>

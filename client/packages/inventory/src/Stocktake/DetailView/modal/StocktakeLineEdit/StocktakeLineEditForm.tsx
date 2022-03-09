@@ -7,7 +7,10 @@ import {
   BasicTextInput,
   ModalMode,
 } from '@openmsupply-client/common';
-import { ItemSearchInput, ItemRowFragment } from '@openmsupply-client/system';
+import {
+  StockItemSearchInput,
+  ItemRowFragment,
+} from '@openmsupply-client/system';
 import { useStocktakeRows } from 'packages/inventory/src/Stocktake/api';
 
 interface StocktakeLineEditProps {
@@ -23,23 +26,23 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
 }) => {
   const t = useTranslation(['common', 'inventory']);
   const { items } = useStocktakeRows();
+  const disabled = mode === ModalMode.Update;
 
   return (
     <>
       <ModalRow>
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
-          <ItemSearchInput
+          <StockItemSearchInput
             autoFocus={!item}
-            disabled={mode === ModalMode.Update}
+            disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
-            extraFilter={itemToCheck => {
-              const itemAlreadyInStocktake = items?.some(
-                ({ item }) => itemToCheck.id === item?.id
-              );
-              return !itemAlreadyInStocktake;
-            }}
+            extraFilter={
+              disabled
+                ? undefined
+                : item => !items?.some(({ id }) => id === item.id)
+            }
           />
         </Grid>
       </ModalRow>
