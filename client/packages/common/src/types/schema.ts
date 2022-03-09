@@ -503,12 +503,6 @@ export type EqualFilterBigNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
-export type EqualFilterBooleanInput = {
-  equalAny?: InputMaybe<Array<Scalars['Boolean']>>;
-  equalTo?: InputMaybe<Scalars['Boolean']>;
-  notEqualTo?: InputMaybe<Scalars['Boolean']>;
-};
-
 export type EqualFilterInvoiceStatusInput = {
   equalAny?: InputMaybe<Array<InvoiceNodeStatus>>;
   equalTo?: InputMaybe<InvoiceNodeStatus>;
@@ -519,6 +513,12 @@ export type EqualFilterInvoiceTypeInput = {
   equalAny?: InputMaybe<Array<InvoiceNodeType>>;
   equalTo?: InputMaybe<InvoiceNodeType>;
   notEqualTo?: InputMaybe<InvoiceNodeType>;
+};
+
+export type EqualFilterItemTypeInput = {
+  equalAny?: InputMaybe<Array<ItemNodeType>>;
+  equalTo?: InputMaybe<ItemNodeType>;
+  notEqualTo?: InputMaybe<ItemNodeType>;
 };
 
 export type EqualFilterRequisitionStatusInput = {
@@ -543,6 +543,11 @@ export type EqualFilterStringInput = {
   equalAny?: InputMaybe<Array<Scalars['String']>>;
   equalTo?: InputMaybe<Scalars['String']>;
   notEqualTo?: InputMaybe<Scalars['String']>;
+};
+
+export type FailedToFetchReportData = PrintReportErrorInterface & {
+  __typename: 'FailedToFetchReportData';
+  description: Scalars['String'];
 };
 
 export enum ForeignKey {
@@ -923,6 +928,8 @@ export type FullQuery = {
   me: UserResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
+  /** Query omSupply "locations" entries */
+  printReport: PrintReportResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -1004,6 +1011,13 @@ export type FullQueryNamesArgs = {
 };
 
 
+export type FullQueryPrintReportArgs = {
+  dataId: Scalars['String'];
+  reportId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
 export type FullQueryRequisitionArgs = {
   id: Scalars['String'];
   storeId: Scalars['String'];
@@ -1055,6 +1069,7 @@ export type FullQueryStocktakesArgs = {
 export type FullQueryStoresArgs = {
   filter?: InputMaybe<StoreFilterInput>;
   page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StoreSortInput>>;
 };
 
 export type InboundInvoiceCounts = {
@@ -1104,7 +1119,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
-  tax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxUpdate>;
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
@@ -1140,7 +1155,7 @@ export type InsertInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxUpdate>;
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
@@ -1202,7 +1217,7 @@ export type InsertOutboundShipmentLineInput = {
   itemId: Scalars['String'];
   numberOfPacks: Scalars['Int'];
   stockLineId: Scalars['String'];
-  tax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxUpdate>;
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
@@ -1238,7 +1253,7 @@ export type InsertOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxUpdate>;
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
@@ -1378,6 +1393,11 @@ export type InvalidCredentials = AuthTokenErrorInterface & {
   description: Scalars['String'];
 };
 
+export type InvalidReport = PrintReportErrorInterface & {
+  __typename: 'InvalidReport';
+  description: Scalars['String'];
+};
+
 export type InvalidToken = RefreshTokenErrorInterface & {
   __typename: 'InvalidToken';
   description: Scalars['String'];
@@ -1409,7 +1429,8 @@ export type InvoiceFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
-  nameId?: InputMaybe<EqualFilterStringInput>;
+  otherPartyId?: InputMaybe<EqualFilterStringInput>;
+  otherPartyName?: InputMaybe<SimpleStringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -1450,6 +1471,9 @@ export type InvoiceLineNode = {
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   stockLine?: Maybe<StockLineNode>;
+  textPercentage?: Maybe<Scalars['Float']>;
+  totalAfterTax: Scalars['Float'];
+  totalBeforeTax: Scalars['Float'];
   type: InvoiceLineNodeType;
 };
 
@@ -1489,6 +1513,11 @@ export type InvoiceNode = {
   theirReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
   verifiedDatetime?: Maybe<Scalars['DateTime']>;
+};
+
+
+export type InvoiceNodeOtherPartyArgs = {
+  storeId: Scalars['String'];
 };
 
 export enum InvoiceNodeStatus {
@@ -1590,8 +1619,9 @@ export type ItemConnector = {
 export type ItemFilterInput = {
   code?: InputMaybe<SimpleStringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  isVisible?: InputMaybe<EqualFilterBooleanInput>;
+  isVisible?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<SimpleStringFilterInput>;
+  type?: InputMaybe<EqualFilterItemTypeInput>;
 };
 
 export type ItemNode = {
@@ -1602,6 +1632,7 @@ export type ItemNode = {
   isVisible: Scalars['Boolean'];
   name: Scalars['String'];
   stats: ItemStatsNode;
+  type: ItemNodeType;
   unitName?: Maybe<Scalars['String']>;
 };
 
@@ -1615,6 +1646,12 @@ export type ItemNodeStatsArgs = {
   lookBackDatetime?: InputMaybe<Scalars['NaiveDateTime']>;
   storeId: Scalars['String'];
 };
+
+export enum ItemNodeType {
+  NonStock = 'NON_STOCK',
+  Service = 'SERVICE',
+  Stock = 'STOCK'
+}
 
 export enum ItemSortFieldInput {
   Code = 'code',
@@ -1785,10 +1822,16 @@ export type NameFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
+  /** Is this name a store */
+  isStore?: InputMaybe<Scalars['Boolean']>;
   /** Filter by supplier property */
   isSupplier?: InputMaybe<Scalars['Boolean']>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
+  showInvisibleInCurrentStore?: InputMaybe<Scalars['Boolean']>;
+  showSystemNames?: InputMaybe<Scalars['Boolean']>;
+  /** Code of the store if store is linked to name */
+  storeCode?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type NameNode = {
@@ -1891,6 +1934,26 @@ export type PaginationInput = {
   offset?: InputMaybe<Scalars['Int']>;
 };
 
+export type PrintReportError = {
+  __typename: 'PrintReportError';
+  error: PrintReportErrorInterface;
+};
+
+export type PrintReportErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type PrintReportNode = {
+  __typename: 'PrintReportNode';
+  /**
+   * Return the file id of the printed report.
+   * The file can be fetched using the /files?id={id} endpoint
+   */
+  fileId: Scalars['String'];
+};
+
+export type PrintReportResponse = PrintReportError | PrintReportNode;
+
 export type RecordAlreadyExist = InsertLocationErrorInterface & UserRegisterErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String'];
@@ -1901,7 +1964,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & PrintReportErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -1970,6 +2033,12 @@ export type RequisitionLineNode = {
   linkedRequisitionLine?: Maybe<RequisitionLineNode>;
   /** OutboundShipment lines linked to requisitions line */
   outboundShipmentLines: InvoiceLineConnector;
+  /**
+   * Quantity remaining to supply
+   * supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
+   * Only available in response requisition, request requistion returns 0
+   */
+  remainingQuantityToSupply: Scalars['Int'];
   /** Quantity requested */
   requestedQuantity: Scalars['Int'];
   /**
@@ -1994,6 +2063,12 @@ export type RequisitionNode = {
   finalisedDatetime?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   lines: RequisitionLineConnector;
+  /**
+   * All lines that have not been supplied
+   * based on same logic as RequisitionLineNode.remainingQuantityToSupply
+   * only applicable to Response requisition, Request requisition will empty connector
+   */
+  linesRemainingToSupply: RequisitionLineConnector;
   /** Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line */
   maxMonthsOfStock: Scalars['Float'];
   /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
@@ -2020,6 +2095,11 @@ export type RequisitionNode = {
   type: RequisitionNodeType;
 };
 
+
+export type RequisitionNodeOtherPartyArgs = {
+  storeId: Scalars['String'];
+};
+
 export enum RequisitionNodeStatus {
   /** New requisition when manually created */
   Draft = 'DRAFT',
@@ -2044,6 +2124,7 @@ export enum RequisitionNodeType {
 export type RequisitionResponse = RecordNotFound | RequisitionNode;
 
 export enum RequisitionSortFieldInput {
+  Comment = 'comment',
   CreatedDatetime = 'createdDatetime',
   FinalisedDatetime = 'finalisedDatetime',
   OtherPartyName = 'otherPartyName',
@@ -2108,6 +2189,7 @@ export type StockLineNode = {
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
+  item: ItemNode;
   itemId: Scalars['String'];
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']>;
@@ -2215,7 +2297,10 @@ export type StoreConnector = {
 };
 
 export type StoreFilterInput = {
-  id?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<SimpleStringFilterInput>;
+  nameCode?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type StoreNode = {
@@ -2223,6 +2308,27 @@ export type StoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: NameNode;
+};
+
+
+export type StoreNodeNameArgs = {
+  storeId: Scalars['String'];
+};
+
+export enum StoreSortFieldInput {
+  Code = 'code',
+  Name = 'name',
+  NameCode = 'nameCode'
+}
+
+export type StoreSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: StoreSortFieldInput;
 };
 
 export type StoresResponse = StoreConnector;

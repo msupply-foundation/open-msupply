@@ -88,7 +88,7 @@ const outboundParsers = {
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
-      tax: 0,
+      tax: { percentage: 0 },
       totalAfterTax:
         line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
       totalBeforeTax:

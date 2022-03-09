@@ -2,6 +2,7 @@ import {
   TestingProvider,
   InvoiceLineNode,
   InvoiceLineNodeType,
+  ItemNodeType,
 } from '@openmsupply-client/common';
 import { renderHook } from '@testing-library/react-hooks';
 import { graphql } from 'msw';
@@ -33,6 +34,8 @@ const getLines = (): InvoiceLineNode[] => [
     type: InvoiceLineNodeType.StockOut,
     __typename: 'InvoiceLineNode',
     costPricePerPack: 0,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
     invoiceId: '',
     itemCode: '',
     itemName: '',
@@ -47,6 +50,7 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
+      type: ItemNodeType.Stock,
       isVisible: true,
       name: '',
       stats: {
@@ -64,6 +68,8 @@ const getLines = (): InvoiceLineNode[] => [
     type: InvoiceLineNodeType.StockOut,
     __typename: 'InvoiceLineNode',
     costPricePerPack: 0,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
     invoiceId: '',
     itemCode: '',
     itemName: '',
@@ -72,6 +78,7 @@ const getLines = (): InvoiceLineNode[] => [
     item: {
       id: 'b',
       __typename: 'ItemNode',
+      type: ItemNodeType.Stock,
       availableBatches: {
         __typename: 'StockLineConnector',
         nodes: [],
@@ -95,6 +102,8 @@ const getLines = (): InvoiceLineNode[] => [
     type: InvoiceLineNodeType.StockOut,
     __typename: 'InvoiceLineNode',
     costPricePerPack: 0,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
     invoiceId: '',
     itemCode: '',
     itemName: '',
@@ -103,6 +112,7 @@ const getLines = (): InvoiceLineNode[] => [
     item: {
       id: 'c',
       __typename: 'ItemNode',
+      type: ItemNodeType.Stock,
       availableBatches: {
         __typename: 'StockLineConnector',
         nodes: [],

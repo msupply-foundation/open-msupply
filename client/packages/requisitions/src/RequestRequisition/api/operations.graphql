@@ -140,7 +140,7 @@ fragment Request on RequisitionNode {
       ...RequestLine
     }
   }
-  otherParty {
+  otherParty(storeId: $storeId) {
     id
     code
     isCustomer
@@ -161,7 +161,7 @@ query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
     __typename
     ... on RequisitionNode {
       ...Request
-      otherParty {
+      otherParty(storeId: $storeId) {
         __typename
         ... on NameNode {
           id

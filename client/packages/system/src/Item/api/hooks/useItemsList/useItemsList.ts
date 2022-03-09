@@ -1,5 +1,4 @@
 import {
-  ItemNode,
   FilterBy,
   useQueryParams,
   SortRule,
@@ -18,7 +17,7 @@ export const useItemsList = (initialListParameters: {
   onFilterByName: (name: string) => void;
   prefetchListByName: (name: string) => void;
 } & UseQueryResult<{
-  nodes: ItemNode[];
+  nodes: ItemFragment[];
   totalCount: number;
 }> => {
   const queryClient = useQueryClient();
