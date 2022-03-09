@@ -1,12 +1,7 @@
 import React, { FC } from 'react';
 import { ListSearch, useTranslation } from '@openmsupply-client/common';
 import { useCustomers, NameRowFragment } from '../../api';
-
-interface NameSearchProps {
-  open: boolean;
-  onClose: () => void;
-  onChange: (name: NameRowFragment) => void;
-}
+import { NameSearchProps } from '../../utils';
 
 export const CustomerSearchModal: FC<NameSearchProps> = ({
   open,

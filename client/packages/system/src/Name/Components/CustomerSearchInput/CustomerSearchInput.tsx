@@ -1,38 +1,13 @@
 import React, { FC } from 'react';
+import { Autocomplete, useBufferState } from '@openmsupply-client/common';
+import { useCustomers } from '../../api';
 import {
-  Autocomplete,
-  DefaultAutocompleteItemOption,
-  AutocompleteOptionRenderer,
-  useBufferState,
-  Typography,
-} from '@openmsupply-client/common';
-import { useCustomers, NameRowFragment } from '../../api';
+  NameSearchInputProps,
+  basicFilterOptions,
+  simpleNameOptionRenderer,
+} from '../../utils';
 
-const filterOptions = {
-  stringify: (name: NameRowFragment) => `${name.code} ${name.name}`,
-  limit: 100,
-};
-
-interface CustomerSearchInputProps {
-  onChange: (name: NameRowFragment) => void;
-  width?: number;
-  value: NameRowFragment | null;
-  disabled?: boolean;
-}
-
-const optionRenderer: AutocompleteOptionRenderer<NameRowFragment> = (
-  props,
-  item
-) => (
-  <DefaultAutocompleteItemOption {...props}>
-    <Typography sx={{ marginInlineEnd: '10px', fontWeight: 'bold', width: 75 }}>
-      {item.code}
-    </Typography>
-    <Typography>{item.name}</Typography>
-  </DefaultAutocompleteItemOption>
-);
-
-export const CustomerSearchInput: FC<CustomerSearchInputProps> = ({
+export const CustomerSearchInput: FC<NameSearchInputProps> = ({
   onChange,
   width = 250,
   value,
@@ -46,14 +21,14 @@ export const CustomerSearchInput: FC<CustomerSearchInputProps> = ({
       disabled={disabled}
       clearable={false}
       value={buffer && { ...buffer, label: buffer.name }}
-      filterOptionConfig={filterOptions}
+      filterOptionConfig={basicFilterOptions}
       loading={isLoading}
       onChange={(_, name) => {
         setBuffer(name);
         name && onChange(name);
       }}
       options={data?.nodes ?? []}
-      renderOption={optionRenderer}
+      renderOption={simpleNameOptionRenderer}
       width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       autoWidthPopper
