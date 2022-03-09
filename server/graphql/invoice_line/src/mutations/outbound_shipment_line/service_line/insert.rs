@@ -90,7 +90,7 @@ impl InsertInput {
             name,
             total_before_tax,
             total_after_tax,
-            tax: tax.map(|tax| tax.percentage).flatten(),
+            tax: tax.and_then(|tax| tax.percentage),
             note,
         }
     }
