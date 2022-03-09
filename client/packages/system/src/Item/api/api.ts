@@ -54,12 +54,15 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result;
     },
-
-    itemsWithStats: async ({ sortBy }: ListParams<ItemRowFragment>) => {
+    stockItemsWithStats: async ({
+      sortBy,
+      filterBy,
+    }: ListParams<ItemRowFragment>) => {
       const result = await sdk.itemsWithStats({
         key: itemParsers.toSortField(sortBy),
         isDesc: sortBy.isDesc,
         storeId,
+        filter: { ...filterBy, type: { equalTo: ItemNodeType.Stock } },
       });
 
       const { items } = result;
