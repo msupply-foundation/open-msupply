@@ -156,12 +156,20 @@ fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
         .into_boxed();
 
     if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, item_dsl::id);
-        apply_simple_string_filter!(query, f.code, item_dsl::code);
-        apply_simple_string_filter!(query, f.name, item_dsl::name);
-        apply_equal_filter!(query, f.r#type, item_dsl::type_);
+        let ItemFilter {
+            id,
+            name,
+            code,
+            r#type,
+            is_visible,
+        } = f;
 
-        if let Some(is_visible) = f.is_visible {
+        apply_equal_filter!(query, id, item_dsl::id);
+        apply_simple_string_filter!(query, code, item_dsl::code);
+        apply_simple_string_filter!(query, name, item_dsl::name);
+        apply_equal_filter!(query, r#type, item_dsl::type_);
+
+        if let Some(is_visible) = is_visible {
             query = query.filter(item_is_visible::is_visible.eq(is_visible));
         }
     }

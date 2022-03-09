@@ -32,6 +32,7 @@ pub enum RequisitionSortField {
     RequisitionNumber,
     Type,
     Status,
+    Comment,
     OtherPartyName,
     SentDatetime,
     CreatedDatetime,
