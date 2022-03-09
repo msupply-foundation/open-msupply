@@ -68,7 +68,7 @@ fragment Response on RequisitionNode {
       }
     }
   }
-  otherParty {
+  otherParty(storeId: $storeId) {
     id
     code
     isCustomer
@@ -89,7 +89,7 @@ query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
     __typename
     ... on RequisitionNode {
       ...Response
-      otherParty {
+      otherParty(storeId: $storeId) {
         __typename
         ... on NameNode {
           id
