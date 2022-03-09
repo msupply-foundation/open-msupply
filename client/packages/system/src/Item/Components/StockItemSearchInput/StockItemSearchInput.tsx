@@ -7,7 +7,7 @@ import {
   Autocomplete,
   defaultOptionMapper,
 } from '@openmsupply-client/common';
-import { useItemsWithStats } from '../../api';
+import { useStockItemsWithStats } from '../../api';
 import { ItemRowWithStatsFragment } from '../../api/operations.generated';
 
 const ItemOption = styled('li')(({ theme }) => ({
@@ -57,7 +57,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   width = 850,
   autoFocus = false,
 }) => {
-  const { data, isLoading } = useItemsWithStats();
+  const { data, isLoading } = useStockItemsWithStats();
   const t = useTranslation('common');
   const formatNumber = useFormatNumber();
 
