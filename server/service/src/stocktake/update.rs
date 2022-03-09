@@ -1,14 +1,14 @@
 use chrono::{NaiveDate, Utc};
+use repository::EqualFilter;
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus,
     },
-    InvoiceLineRowRepository, InvoiceRepository, ItemRepository, NameFilter, NameQueryRepository,
-    RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
-    StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
+    InvoiceLineRowRepository, InvoiceRepository, ItemRepository, NameRepository, RepositoryError,
+    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    StocktakeRowRepository, StorageConnection,
 };
-use repository::{EqualFilter, SimpleStringFilter};
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
@@ -317,11 +317,8 @@ fn generate(
     }
 
     // find inventory adjustment name:
-    let name_result = NameQueryRepository::new(connection).query_by_filter(
-        NameFilter::new().code(SimpleStringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
-    )?;
-    let invad_name = name_result
-        .first()
+    let name_row = NameRepository::new(connection)
+        .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
         .ok_or(UpdateStocktakeError::InternalError(
             "Missing inventory adjustment name".to_string(),
         ))?;
@@ -330,7 +327,7 @@ fn generate(
     let now = Utc::now().naive_utc();
     let shipment = InvoiceRow {
         id: shipment_id,
-        name_id: invad_name.name_row.id.to_owned(),
+        name_id: name_row.id,
         store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
         name_store_id: None,

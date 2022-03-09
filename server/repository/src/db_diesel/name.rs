@@ -51,6 +51,15 @@ impl<'a> NameRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_code(&self, name_code: &str) -> Result<Option<NameRow>, RepositoryError> {
+        use crate::schema::diesel_schema::name::dsl::*;
+        let result = name
+            .filter(code.eq(name_code))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
         use crate::schema::diesel_schema::name::dsl::*;
         let result = name

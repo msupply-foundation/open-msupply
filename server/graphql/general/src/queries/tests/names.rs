@@ -1,136 +1,198 @@
 mod graphql {
 
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{
         mock::{
-            mock_name_linked_to_store, mock_name_not_linked_to_store, mock_store_linked_to_name,
-            MockDataInserts,
+            mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
+            mock_store_linked_to_name, MockDataInserts,
         },
-        {
-            mock::{mock_name_store_joins, mock_names, mock_stores},
-            schema::{NameRow, NameStoreJoinRow, StoreRow},
-            NameRepository, NameStoreJoinRepository, StoreRowRepository,
-        },
+        EqualFilter, Name, NameFilter, NameSort, NameSortField, PaginationOption,
+        SimpleStringFilter, StorageConnectionManager,
     };
     use serde_json::json;
+    use service::{
+        service_provider::{GeneralServiceTrait, ServiceContext, ServiceProvider},
+        ListError, ListResult,
+    };
 
     use crate::GeneralQueries;
 
+    type GetName = dyn Fn(
+            &str,
+            Option<PaginationOption>,
+            Option<NameFilter>,
+            Option<NameSort>,
+        ) -> Result<ListResult<Name>, ListError>
+        + Sync
+        + Send;
+
+    pub struct TestService(pub Box<GetName>);
+
+    impl GeneralServiceTrait for TestService {
+        fn get_names(
+            &self,
+            _: &ServiceContext,
+            store_id: &str,
+            pagination: Option<PaginationOption>,
+            filter: Option<NameFilter>,
+            sort: Option<NameSort>,
+        ) -> Result<ListResult<Name>, ListError> {
+            self.0(store_id, pagination, filter, sort)
+        }
+    }
+
+    fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        service_provider.general_service = Box::new(test_service);
+        service_provider
+    }
+
     #[actix_rt::test]
-    async fn test_graphql_names_query() {
-        let (_, connection, _, settings) = setup_graphl_test(
+    async fn test_graphql_get_names() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
             GeneralQueries,
             EmptyMutation,
-            "omsupply-database-gql-names-query",
-            MockDataInserts::none(),
+            "test_graphql_get_names",
+            MockDataInserts::all(),
         )
         .await;
 
-        // setup
-        let name_repository = NameRepository::new(&connection);
-        let store_repository = StoreRowRepository::new(&connection);
-        let name_store_repository = NameStoreJoinRepository::new(&connection);
-        let mut mock_names: Vec<NameRow> = mock_names();
-        mock_names.sort_by(|a, b| a.id.cmp(&b.id));
-
-        let mock_stores: Vec<StoreRow> = mock_stores();
-        let mock_name_store_joins: Vec<NameStoreJoinRow> = mock_name_store_joins();
-        for name in &mock_names {
-            name_repository.insert_one(&name).await.unwrap();
-        }
-        for store in &mock_stores {
-            store_repository.insert_one(&store).await.unwrap();
-        }
-        for name_store_join in &mock_name_store_joins {
-            name_store_repository.upsert_one(name_store_join).unwrap();
-        }
-
-        let query = r#"{
-            names(storeId: \"store_a\") {
-                ... on NameConnector {
-                  nodes{
-                      id
-                  }
-               }
-            }
-        }"#;
-        let expected = json!({
-          "names": {
-              "nodes": mock_names.iter().map(|name| json!({
-                "id": name.id,
-              })).collect::<serde_json::Value>(),
-            }
-          }
-        );
-        assert_graphql_query!(&settings, query, &None, &expected, None);
-
-        // test sorting
-        let query = r#"query Names($sort: [NameSortInput]) {
-          names(sort: $sort, storeId: \"store_a\"){
+        let query = r#"
+        query($storeId: String!, $page: PaginationInput, $filter: NameFilterInput, $sort: [NameSortInput!]) {
+            names(filter: $filter, page: $page, sort: $sort, storeId: $storeId) {
               ... on NameConnector {
                 nodes {
-                    name
+                  id
                 }
+                totalCount
               }
-          }
-        }"#;
-        let variables = Some(json!({
+            }
+        }
+        "#;
+
+        // Test list error
+        let test_service = TestService(Box::new(|_, _, _, _| Err(ListError::LimitBelowMin(20))));
+
+        let variables = json!({
+          "storeId": "store_a"
+        });
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &Some(variables),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // All variables and result
+        let variables = json!({
+          "storeId": "store_a",
+          "page": {
+            "first": 10,
+            "offset": 20,
+          },
           "sort": [{
-            "key": "name",
-            "desc": true,
-          }]
-        }));
-        let mut sorted_mock_names = mock_names.clone();
-        sorted_mock_names.sort_by(|a, b| b.name.to_lowercase().cmp(&a.name.to_lowercase()));
-        let expected = json!({
-          "names": {
-              "nodes": sorted_mock_names.iter().map(|name| json!({
-                "name": name.name,
-              })).collect::<serde_json::Value>(),
-            }
+            "key": "code",
+            "desc": true
+          }],
+          "filter": {
+            "id": {
+                "notEqualTo": "id_not_equal_to"
+            },
+            "name": {
+                "like": "name like"
+            },
+            "code": {
+                "equalTo": "code equal to"
+            },
+            "isCustomer": true,
+            "isSupplier": false,
+            "isStore": true,
+            "storeCode": {
+              "like": "store code like"
+            },
+            "showInvisibleInCurrentStore": false,
+            "showSystemNames": true
           }
-        );
-        assert_graphql_query!(&settings, query, &variables, &expected, None);
+        });
 
-        // test filtering
-        let query = r#"query Names($filter: [NameFilterInput]) {
-          names(filter: $filter, storeId: \"store_a\"){
-              ... on NameConnector {
-                nodes {
-                    id
-                }
+        let expected = json!({
+              "names": {
+                  "nodes": [{
+                      "id": mock_name_a().id,
+                  }],
+                  "totalCount": 1
               }
           }
-        }"#;
-        let variables = Some(json!({
-          "filter": {
-            "isCustomer": true,
-          }
-        }));
-        let expected_names_ids: Vec<&String> = mock_name_store_joins
-            .iter()
-            .filter(|a| a.name_is_customer)
-            .map(|a| &a.name_id)
-            .collect();
-        let names: Vec<&NameRow> = mock_names
-            .iter()
-            .filter(|a| {
-                expected_names_ids
-                    .iter()
-                    .find(|search_id| search_id == &&&a.id)
-                    .is_some()
-            })
-            .collect();
-        let expected = json!({
-          "names": {
-              "nodes": names.iter().map(|name| json!({
-                "id": name.id,
-              })).collect::<serde_json::Value>(),
-            }
-          }
         );
-        assert_graphql_query!(&settings, query, &variables, &expected, None);
+
+        let test_service = TestService(Box::new(|store_id, page, filter, sort| {
+            assert_eq!(store_id, "store_a");
+            assert_eq!(
+                sort,
+                Some(NameSort {
+                    key: NameSortField::Code,
+                    desc: Some(true)
+                })
+            );
+            assert_eq!(
+                page,
+                Some(PaginationOption {
+                    offset: Some(20),
+                    limit: Some(10)
+                })
+            );
+            let NameFilter {
+                id,
+                name,
+                code,
+                is_customer,
+                is_supplier,
+                is_store,
+                store_code,
+                show_invisible_in_current_store,
+                show_system_names,
+            } = filter.unwrap();
+
+            assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
+            assert_eq!(name, Some(SimpleStringFilter::like("name like")));
+            assert_eq!(code, Some(SimpleStringFilter::equal_to("code equal to")));
+            assert_eq!(is_customer, Some(true));
+            assert_eq!(is_supplier, Some(false));
+            assert_eq!(is_store, Some(true));
+            assert_eq!(
+                store_code,
+                Some(SimpleStringFilter::like("store code like"))
+            );
+            assert_eq!(show_invisible_in_current_store, Some(false));
+            assert_eq!(show_system_names, Some(true));
+
+            Ok(ListResult {
+                rows: vec![Name {
+                    name_row: mock_name_a(),
+                    name_store_join_row: None,
+                    store_row: None,
+                }],
+                count: 1,
+            })
+        }));
+
+        assert_graphql_query!(
+            &settings,
+            query,
+            &Some(variables),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 
     #[actix_rt::test]
