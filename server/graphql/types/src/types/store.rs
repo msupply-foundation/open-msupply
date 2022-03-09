@@ -1,6 +1,8 @@
-use async_graphql::{dataloader::DataLoader, Context, Object, Result, ErrorExtensions};
+use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
 use graphql_core::{
-    loader::NameByIdLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
+    loader::{IdAndStoreId, NameByIdLoader},
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
 use repository::schema::StoreRow;
 
@@ -21,10 +23,15 @@ impl StoreNode {
         &self.store.code
     }
 
-    pub async fn name(&self, ctx: &Context<'_>) -> Result<NameNode> {
+    pub async fn name(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        let response_option = loader.load_one(self.store.name_id.clone()).await?;
+        let response_option = loader
+            .load_one(IdAndStoreId {
+                id: self.store.name_id.clone(),
+                store_id,
+            })
+            .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(

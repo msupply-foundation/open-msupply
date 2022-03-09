@@ -8,7 +8,7 @@ use crate::schema::{
 
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_name_a, mock_name_store_a, MockData,
+    mock_item_a, mock_item_b, mock_name_a, mock_name_b, mock_store_a, MockData,
 };
 
 pub fn mock_test_requisition_queries() -> MockData {
@@ -59,7 +59,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             id: requisition_id.clone(),
             requisition_number: 3,
             name_id: mock_name_a().id,
-            store_id: "store_a".to_owned(),
+            store_id: mock_store_a().id,
             r#type: RequisitionRowType::Request,
             status: RequisitionRowStatus::Draft,
             created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
@@ -102,8 +102,9 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
             requisition_number: 3,
-            name_id: mock_name_store_a().id,
-            store_id: "store_a".to_owned(),
+            // not visible in store_c
+            name_id: mock_name_b().id,
+            store_id: mock_store_a().id,
             r#type: RequisitionRowType::Response,
             status: RequisitionRowStatus::Draft,
             created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
@@ -137,7 +138,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
             name_id: mock_name_a().id,
-            store_id: "store_a".to_owned(),
+            store_id: mock_store_a().id,
             invoice_number: 20,
             name_store_id: None,
             r#type: InvoiceRowType::InboundShipment,
@@ -242,7 +243,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
             name_id: mock_name_a().id,
-            store_id: "store_a".to_owned(),
+            store_id: mock_store_a().id,
             invoice_number: 20,
             name_store_id: None,
             r#type: InvoiceRowType::InboundShipment,
@@ -308,7 +309,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
             name_id: mock_name_a().id,
-            store_id: "store_a".to_owned(),
+            store_id: mock_store_a().id,
             invoice_number: 20,
             name_store_id: None,
             r#type: InvoiceRowType::OutboundShipment,

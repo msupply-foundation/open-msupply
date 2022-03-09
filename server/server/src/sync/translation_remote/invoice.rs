@@ -1,10 +1,11 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use log::info;
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         RemoteSyncBufferRow,
     },
-    EqualFilter, InvoiceRepository, NameFilter, NameQueryRepository, StorageConnection,
+    InvoiceRepository, StorageConnection, StoreRowRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -12,10 +13,11 @@ use serde::{Deserialize, Serialize};
 use crate::sync::SyncTranslationError;
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, empty_str_as_option,
+    date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
+    empty_str_as_option, naive_time,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
-    time_sec_from_date_time, zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
+    zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -32,8 +34,18 @@ pub enum LegacyTransactType {
     // supplier credit
     #[serde(rename = "sc")]
     Sc,
-    #[serde(other)]
-    Other,
+    /// repack (A stock line is broken down into smaller pack sizes)
+    #[serde(rename = "sr")]
+    Sr,
+    /// build- an internal transaction where you manufacture (build) items from raw materials in stock.
+    #[serde(rename = "bu")]
+    Bu,
+    /// receipt (cash receipt) from a customer (a customer pays for invoices issued)
+    #[serde(rename = "rc")]
+    Rc,
+    /// payment (cash payment) to a supplier
+    #[serde(rename = "ps")]
+    Ps,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -50,6 +62,21 @@ pub enum LegacyTransactStatus {
     /// finalised
     #[serde(rename = "fn")]
     Fn,
+    /// The order has been received over the internet (a “web” order), and it is currently being
+    /// processed
+    #[serde(rename = "wp")]
+    Wp,
+    /// The order has been received over the internet (a “web” order), and it is finalised
+    #[serde(rename = "wf")]
+    Wf,
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Eq)]
+pub enum TransactMode {
+    #[serde(rename = "store")]
+    Store,
+    #[serde(rename = "dispensary")]
+    Dispensary,
 }
 
 #[allow(non_snake_case)]
@@ -77,19 +104,27 @@ pub struct LegacyTransactRow {
     pub linked_transaction_id: Option<String>,
 
     /// creation time
+    #[serde(serialize_with = "date_to_isostring")]
     pub entry_date: NaiveDate, // e.g. "2021-07-30",
     /// time in seconds
-    pub entry_time: i64, // e.g. 47046,
+    #[serde(deserialize_with = "naive_time")]
+    pub entry_time: NaiveTime, // e.g. 47046,
     /// shipped_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub ship_date: Option<NaiveDate>, // "0000-00-00",
     /// delivered_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub arrival_date_actual: Option<NaiveDate>,
     /// verified_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub confirm_date: Option<NaiveDate>,
-    pub confirm_time: i64,
+    #[serde(deserialize_with = "naive_time")]
+    pub confirm_time: NaiveTime,
+
+    pub mode: TransactMode,
 }
 
 pub struct InvoiceTranslation {}
@@ -113,15 +148,14 @@ impl RemotePullTranslation for InvoiceTranslation {
                 }
             })?;
 
-        let name = NameQueryRepository::new(connection)
-            .query_one(NameFilter::new().id(EqualFilter::equal_to(&data.name_ID)))
+        let name_store_id = StoreRowRepository::new(connection)
+            .find_one_by_name_id(&data.name_ID)
             .map_err(|err| SyncTranslationError {
                 table_name,
                 source: err.into(),
                 record: sync_record.data.clone(),
-            })?;
-        let name_store_id =
-            name.and_then(|name| name.store_id().map(|store_id| store_id.to_string()));
+            })?
+            .map(|store_row| store_row.id);
 
         let invoice_type = invoice_type(&data._type).ok_or(SyncTranslationError {
             table_name,
@@ -147,7 +181,7 @@ impl RemotePullTranslation for InvoiceTranslation {
                 on_hold: data.hold,
                 comment: data.comment,
                 their_reference: data.their_ref,
-                created_datetime: date_and_time_to_datatime(data.entry_date, data.entry_time),
+                created_datetime: NaiveDateTime::new(data.entry_date, data.entry_time),
                 allocated_datetime: None,
                 picked_datetime: confirm_mapping.picked_datetime,
                 shipped_datetime: data
@@ -180,10 +214,9 @@ fn map_legacy_confirm_time(
     invoice_type: &InvoiceRowType,
     data: &LegacyTransactRow,
 ) -> ConfirmTimeMapping {
-    let confirm_time = data.confirm_time;
     let confirm_datetime = data
         .confirm_date
-        .map(|confirm_date| date_and_time_to_datatime(confirm_date, confirm_time));
+        .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
     match invoice_type {
         InvoiceRowType::OutboundShipment => ConfirmTimeMapping {
@@ -201,17 +234,19 @@ fn to_legacy_confirm_time(
     invoice_type: &InvoiceRowType,
     picked_datetime: Option<NaiveDateTime>,
     delivered_datetime: Option<NaiveDateTime>,
-) -> (Option<NaiveDate>, i64) {
-    let time = match invoice_type {
+) -> (Option<NaiveDate>, NaiveTime) {
+    let datetime = match invoice_type {
         InvoiceRowType::OutboundShipment => picked_datetime,
         InvoiceRowType::InboundShipment => delivered_datetime,
         // TODO:
         InvoiceRowType::InventoryAdjustment => None,
     };
 
-    let date = time.map(|time| date_from_date_time(&time));
-    let seconds = time.map(|time| time_sec_from_date_time(&time)).unwrap_or(0);
-    (date, seconds)
+    let date = datetime.map(|datetime| datetime.date());
+    let time = datetime
+        .map(|datetime| datetime.time())
+        .unwrap_or(NaiveTime::from_hms(0, 0, 0));
+    (date, time)
 }
 
 fn invoice_status(
@@ -237,6 +272,8 @@ fn invoice_status(
                         InvoiceRowStatus::Verified
                     }
                 }
+                LegacyTransactStatus::Wp => return None,
+                LegacyTransactStatus::Wf => return None,
             }
         }
         // inbound
@@ -255,6 +292,8 @@ fn invoice_status(
                 LegacyTransactStatus::Sg => InvoiceRowStatus::New,
                 LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
                 LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
+                LegacyTransactStatus::Wp => return None,
+                LegacyTransactStatus::Wf => return None,
             }
         }
 
@@ -325,8 +364,8 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             Colour: colour.map(|colour| parse_html_colour(&colour)).unwrap_or(0),
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
-            entry_date: date_from_date_time(&created_datetime),
-            entry_time: time_sec_from_date_time(&created_datetime),
+            entry_date: created_datetime.date(),
+            entry_time: created_datetime.time(),
             // TODO losing the time here:
             ship_date: shipped_datetime
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
@@ -335,6 +374,8 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
                 .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
+
+            mode: TransactMode::Store,
         };
 
         Ok(Some(vec![PushUpsertRecord {

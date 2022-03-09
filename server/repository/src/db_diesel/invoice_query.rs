@@ -165,7 +165,7 @@ fn to_domain((invoice_row, name_row, store_row): InvoiceQueryJoin) -> Invoice {
 type BoxedInvoiceQuery =
     IntoBoxed<'static, InnerJoin<InnerJoin<invoice::table, name::table>, store::table>, DBType>;
 
-pub fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
+fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     let mut query = invoice_dsl::invoice
         .inner_join(name_dsl::name)
         .inner_join(store_dsl::store)
