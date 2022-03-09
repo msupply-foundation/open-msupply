@@ -1,5 +1,7 @@
 use super::{ItemFulFillment, OutError};
-use crate::{invoice::check_other_party_id, number::next_number};
+use crate::{
+    invoice::check_other_party_id, number::next_number, user_account::get_default_user_id,
+};
 use chrono::Utc;
 use repository::{
     schema::{
@@ -21,6 +23,7 @@ pub fn generate(
 
     let new_invoice = InvoiceRow {
         id: uuid(),
+        user_id: Some(get_default_user_id()),
         name_id: requisition_row.name_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_owned(),

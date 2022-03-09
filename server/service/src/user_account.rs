@@ -1,6 +1,6 @@
 use repository::{
-    schema::UserAccountRow, RepositoryError, StorageConnection, TransactionError,
-    UserAccountRepository,
+    mock::mock_user_account_a, schema::UserAccountRow, RepositoryError, StorageConnection,
+    TransactionError, UserAccountRepository,
 };
 use util::uuid::uuid;
 
@@ -115,6 +115,10 @@ impl<'a> UserAccountService<'a> {
 
         Ok(user)
     }
+}
+
+pub fn get_default_user_id() -> String {
+    mock_user_account_a().id
 }
 
 #[cfg(test)]
