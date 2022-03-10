@@ -72,7 +72,7 @@ pub use storage_connection::*;
 pub use store::*;
 pub use store_row::StoreRowRepository;
 pub use unit_row::UnitRowRepository;
-pub use user_account::UserAccountRepository;
+pub use user_account::*;
 
 use diesel::{
     prelude::*,

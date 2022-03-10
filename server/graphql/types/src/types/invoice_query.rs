@@ -1,9 +1,9 @@
-use super::{InvoiceLineConnector, NameNode, RequisitionNode, StoreNode};
+use super::{InvoiceLineConnector, NameNode, RequisitionNode, StoreNode, UserNode};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
-use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader};
+use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, UserAccountLoader};
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreLoader},
     standard_graphql_error::StandardGraphqlError,
@@ -11,7 +11,7 @@ use graphql_core::{
 };
 use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, InvoiceStatsRow};
 
-use repository::Invoice;
+use repository::{Invoice, unknown_user};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -94,6 +94,17 @@ impl InvoiceNode {
             .load_one(other_party_store_id.clone())
             .await?
             .map(StoreNode::from))
+    }
+
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+        let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
+
+        let user_option = match &self.row().user_id {
+            Some(user_id) => loader.load_one(user_id.clone()).await?,
+            None => None,
+        };
+
+        Ok(UserNode::from_domain(user_option.unwrap_or(unknown_user())))
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
