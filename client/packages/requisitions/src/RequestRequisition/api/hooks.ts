@@ -15,9 +15,7 @@ import {
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  SortController,
-  useSortBy,
-  getDataSorter,
+  getColumnSorter,
   useNotification,
   useTableStore,
   RequisitionNodeStatus,
@@ -27,9 +25,9 @@ import { getRequestQueries, ListParams } from './api';
 import {
   getSdk,
   RequestFragment,
-  RequestLineFragment,
   RequestRowFragment,
 } from './operations.generated';
+import { useRequestColumns } from '../DetailView/columns';
 
 export const useHideOverStocked = zustand<{
   on: boolean;
@@ -123,27 +121,21 @@ export const useRequestFields = <
   );
 };
 
-interface UseRequestRequisitionLinesController
-  extends SortController<RequestLineFragment> {
-  lines: RequestLineFragment[];
-}
-
-export const useRequestLines = (): UseRequestRequisitionLinesController => {
+export const useRequestLines = () => {
   const { on } = useHideOverStocked();
-  const { sortBy, onChangeSortBy } = useSortBy<RequestLineFragment>({
-    key: 'itemName',
-    isDesc: false,
-  });
-
+  const { columns, onChangeSortBy, sortBy } = useRequestColumns();
   const { lines, minMonthsOfStock } = useRequestFields([
     'lines',
     'minMonthsOfStock',
   ]);
 
   const sorted = useMemo(() => {
-    const sorted = lines?.nodes.sort(
-      getDataSorter(sortBy.key as keyof RequestLineFragment, !!sortBy.isDesc)
-    );
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    const { getSortValue } = currentColumn ?? {};
+    const sorted = getSortValue
+      ? lines?.nodes.sort(getColumnSorter(getSortValue, !!sortBy.isDesc))
+      : lines?.nodes;
+
     if (on) {
       return sorted.filter(
         item =>
@@ -153,9 +145,9 @@ export const useRequestLines = (): UseRequestRequisitionLinesController => {
     } else {
       return sorted;
     }
-  }, [sortBy, lines, on, minMonthsOfStock]);
+  }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock]);
 
-  return { lines: sorted, sortBy, onChangeSortBy };
+  return { lines: sorted, sortBy, onChangeSortBy, columns };
 };
 
 export const useIsRequestDisabled = (): boolean => {
