@@ -334,9 +334,7 @@ mod test {
                 }
             },
             "testQueryUserNotAssociated": {
-                "user": {
-                    "userId": null
-                }
+                "user": null
             },
         }
         );
