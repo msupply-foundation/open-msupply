@@ -130,14 +130,16 @@ query items(
 }
 
 query itemsWithStats(
-  $first: Int
-  $offset: Int
   $storeId: String!
   $key: ItemSortFieldInput
   $isDesc: Boolean
   $filter: ItemFilterInput
 ) {
-  items(storeId: $storeId, sort: { key: $key, desc: $isDesc }) {
+  items(
+    storeId: $storeId
+    sort: { key: $key, desc: $isDesc }
+    filter: $filter
+  ) {
     ... on ItemConnector {
       __typename
       nodes {
