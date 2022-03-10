@@ -29,7 +29,7 @@ pub use requisition_line::*;
 pub use stock_line::*;
 pub use stocktake_lines::*;
 pub use store::StoreLoader;
-pub use user_account::UserAccountLoader;
+pub use user_account::*;
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct RequisitionAndItemId {

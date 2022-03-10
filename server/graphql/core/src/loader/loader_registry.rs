@@ -1,5 +1,5 @@
 use super::*;
-use crate::loader::{ItemLoader, StoreLoader, UserAccountLoader};
+use crate::loader::{ItemLoader, StoreLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
