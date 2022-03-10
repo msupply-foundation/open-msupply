@@ -44,7 +44,7 @@ export const useServiceLineColumns = (
     },
     {
       key: 'totalBeforeTax',
-      label: 'label.unit-price',
+      label: 'label.amount',
       width: 200,
       setter,
       Cell: CurrencyInputCell,
