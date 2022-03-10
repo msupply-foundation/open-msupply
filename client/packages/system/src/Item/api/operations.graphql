@@ -1,3 +1,10 @@
+fragment ServiceItemRow on ItemNode {
+  __typename
+  id
+  code
+  name
+}
+
 fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
@@ -97,7 +104,7 @@ query itemsWithStockLines(
   }
 }
 
-query itemsListView(
+query items(
   $first: Int
   $offset: Int
   $key: ItemSortFieldInput!
@@ -121,8 +128,15 @@ query itemsListView(
   }
 }
 
-query itemsWithStats($storeId: String!) {
-  items(storeId: $storeId) {
+query itemsWithStats(
+  $first: Int
+  $offset: Int
+  $storeId: String!
+  $key: ItemSortFieldInput
+  $isDesc: Boolean
+  $filter: ItemFilterInput
+) {
+  items(storeId: $storeId, sort: { key: $key, desc: $isDesc }) {
     ... on ItemConnector {
       __typename
       nodes {

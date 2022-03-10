@@ -3,7 +3,11 @@ import { useItemApi } from './../useItemApi';
 
 export const useItem = (itemId: string | undefined) => {
   const api = useItemApi();
-  return useQuery(['item', itemId], () => api.get.byId(itemId ?? ''), {
-    enabled: !!itemId,
-  });
+  return useQuery(
+    api.keys.detail(itemId ?? ''),
+    () => api.get.byId(itemId ?? ''),
+    {
+      enabled: !!itemId,
+    }
+  );
 };
