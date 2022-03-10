@@ -7,10 +7,12 @@ import {
   createTableStore,
   getNameAndColorColumn,
   useTableStore,
+  RequisitionNodeStatus,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { isResponseDisabled } from '../../utils';
+import { getRequisitionTranslator, isResponseDisabled } from '../../utils';
 import { useUpdateResponse, useResponses, ResponseRowFragment } from '../api';
 
 const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
@@ -24,6 +26,7 @@ const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
 export const ResponseRequisitionListView: FC = () => {
   const { mutate: onUpdate } = useUpdateResponse();
   const navigate = useNavigate();
+  const t = useTranslation('distribution');
   const { data, onChangeSortBy, sortBy, onChangePage, pagination, filter } =
     useResponses();
   useDisableResponseRows(data?.nodes);
@@ -35,7 +38,14 @@ export const ResponseRequisitionListView: FC = () => {
         key: 'requisitionNumber',
         label: 'label.number',
       },
-      'status',
+      'createdDatetime',
+      [
+        'status',
+        {
+          formatter: status =>
+            getRequisitionTranslator(t)(status as RequisitionNodeStatus),
+        },
+      ],
       'comment',
     ],
     { onChangeSortBy, sortBy },
