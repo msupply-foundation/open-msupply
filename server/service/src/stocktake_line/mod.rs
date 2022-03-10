@@ -3,18 +3,18 @@ use repository::{RepositoryError, StocktakeLine, StocktakeLineFilter, StocktakeL
 
 use crate::{service_provider::ServiceContext, ListResult};
 
-use self::{
-    delete::{delete_stocktake_line, DeleteStocktakeLineError},
-    insert::{insert_stocktake_line, InsertStocktakeLineError, InsertStocktakeLineInput},
-    query::{get_stocktake_line, get_stocktake_lines, GetStocktakeLinesError},
-    update::{update_stocktake_line, UpdateStocktakeLineError, UpdateStocktakeLineInput},
-};
-
-pub mod delete;
-pub mod insert;
 pub mod query;
-pub mod update;
 pub mod validate;
+
+mod delete;
+pub use self::delete::*;
+
+mod insert;
+pub use self::insert::*;
+
+mod update;
+use self::query::{get_stocktake_line, get_stocktake_lines, GetStocktakeLinesError};
+pub use self::update::*;
 
 pub trait StocktakeLineServiceTrait: Sync + Send {
     fn get_stocktake_lines(
@@ -41,7 +41,7 @@ pub trait StocktakeLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: InsertStocktakeLineInput,
+        input: InsertStocktakeLine,
     ) -> Result<StocktakeLine, InsertStocktakeLineError> {
         insert_stocktake_line(ctx, store_id, input)
     }
@@ -50,7 +50,7 @@ pub trait StocktakeLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: UpdateStocktakeLineInput,
+        input: UpdateStocktakeLine,
     ) -> Result<StocktakeLine, UpdateStocktakeLineError> {
         update_stocktake_line(ctx, store_id, input)
     }
@@ -59,7 +59,7 @@ pub trait StocktakeLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        stocktake_line_id: &str,
+        stocktake_line_id: String,
     ) -> Result<String, DeleteStocktakeLineError> {
         delete_stocktake_line(ctx, store_id, stocktake_line_id)
     }

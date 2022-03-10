@@ -1,19 +1,19 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
+use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::StocktakeNode;
+use repository::Stocktake;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
-    service_provider::{ServiceContext, ServiceProvider},
-    stocktake::insert::{
-        InsertStocktakeError as ServiceError, InsertStocktakeInput as InsertStocktake,
-    },
+    stocktake::{InsertStocktake as ServiceInput, InsertStocktakeError as ServiceError},
 };
 
 #[derive(InputObject)]
-pub struct InsertStocktakeInput {
+#[graphql(name = "InsertStocktakeInput")]
+pub struct InsertInput {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
@@ -22,15 +22,25 @@ pub struct InsertStocktakeInput {
 }
 
 #[derive(Union)]
-pub enum InsertStocktakeResponse {
+#[graphql(name = "InsertStocktakeResponse")]
+pub enum InsertResponse {
     Response(StocktakeNode),
 }
 
-pub fn insert_stocktake(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: InsertStocktakeInput,
-) -> Result<InsertStocktakeResponse> {
+#[derive(Interface)]
+#[graphql(name = "InsertStocktakeErrorInterface")]
+#[graphql(field(name = "description", type = "String"))]
+pub enum InsertErrorInterface {
+    CannotEditStocktake(CannotEditStocktake),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "InsertStocktakeError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
+pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -40,52 +50,52 @@ pub fn insert_stocktake(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-    do_insert_stocktake(&service_ctx, service_provider, store_id, input)
+    let service_context = service_provider.context()?;
+    map_response(service_provider.stocktake_service.insert_stocktake(
+        &service_context,
+        store_id,
+        input.to_domain(),
+    ))
 }
 
-pub fn do_insert_stocktake(
-    service_ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    store_id: &str,
-    input: InsertStocktakeInput,
-) -> Result<InsertStocktakeResponse> {
-    let service = &service_provider.stocktake_service;
-    let id = input.id.clone();
-    match service.insert_stocktake(&service_ctx, store_id, to_domain(input)) {
-        Ok(stocktake) => Ok(InsertStocktakeResponse::Response(StocktakeNode {
+pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertResponse> {
+    match from {
+        Ok(stocktake) => Ok(InsertResponse::Response(StocktakeNode::from_domain(
             stocktake,
-        })),
-        Err(err) => {
-            let formatted_error = format!("Insert stocktake {}: {:#?}", id, err);
-            let graphql_error = match err {
-                ServiceError::DatabaseError(err) => err.into(),
-                ServiceError::InternalError(err) => StandardGraphqlError::InternalError(err),
-                ServiceError::InvalidStore => StandardGraphqlError::BadUserInput(formatted_error),
-                ServiceError::StocktakeAlreadyExists => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
+        ))),
+        Err(error) => {
+            use StandardGraphqlError::*;
+            let formatted_error = format!("{:#?}", error);
+
+            let graphql_error = match error {
+                ServiceError::InvalidStore => BadUserInput(formatted_error),
+                ServiceError::StocktakeAlreadyExists => BadUserInput(formatted_error),
+                ServiceError::InternalError(err) => InternalError(err),
+                ServiceError::DatabaseError(_) => InternalError(formatted_error),
             };
+
             Err(graphql_error.extend())
         }
     }
 }
 
-fn to_domain(
-    InsertStocktakeInput {
-        id,
-        comment,
-        description,
-        stocktake_date,
-        is_locked,
-    }: InsertStocktakeInput,
-) -> InsertStocktake {
-    InsertStocktake {
-        id,
-        comment,
-        description,
-        stocktake_date,
-        is_locked,
+impl InsertInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let InsertInput {
+            id,
+            comment,
+            description,
+            stocktake_date,
+            is_locked,
+        } = self;
+
+        ServiceInput {
+            id,
+            comment,
+            description,
+            stocktake_date,
+            is_locked,
+        }
     }
 }
 
@@ -101,15 +111,14 @@ mod test {
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
         stocktake::{
-            insert::{InsertStocktakeError, InsertStocktakeInput},
-            StocktakeServiceTrait,
+            StocktakeServiceTrait, {InsertStocktake, InsertStocktakeError},
         },
     };
     use util::inline_init;
 
     use crate::StocktakeMutations;
 
-    type ServiceMethod = dyn Fn(&ServiceContext, &str, InsertStocktakeInput) -> Result<Stocktake, InsertStocktakeError>
+    type ServiceMethod = dyn Fn(&ServiceContext, &str, InsertStocktake) -> Result<Stocktake, InsertStocktakeError>
         + Sync
         + Send;
 
@@ -120,7 +129,7 @@ mod test {
             &self,
             ctx: &ServiceContext,
             store_id: &str,
-            input: InsertStocktakeInput,
+            input: InsertStocktake,
         ) -> Result<Stocktake, InsertStocktakeError> {
             (self.0)(ctx, store_id, input)
         }
@@ -157,7 +166,7 @@ mod test {
         let test_service = TestService(Box::new(|_, _, input| {
             assert_eq!(
                 input,
-                InsertStocktakeInput {
+                InsertStocktake {
                     id: "id1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),

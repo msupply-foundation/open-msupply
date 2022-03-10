@@ -113,6 +113,12 @@ impl StocktakeNode {
     }
 }
 
+impl StocktakeNode {
+    pub fn from_domain(stocktake: StocktakeRow) -> StocktakeNode {
+        StocktakeNode { stocktake }
+    }
+}
+
 impl StocktakeNodeStatus {
     pub fn to_domain(self) -> StocktakeStatus {
         match self {

@@ -1,26 +1,27 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
+use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::StocktakeLineNode;
+use repository::StocktakeLine;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
-    service_provider::{ServiceContext, ServiceProvider},
-    stocktake_line::insert::{
-        InsertStocktakeLineError, InsertStocktakeLineInput as InsertStocktakeLine,
+    stocktake_line::{
+        InsertStocktakeLine as ServiceInput, InsertStocktakeLineError as ServiceError,
     },
 };
 
 #[derive(InputObject)]
-pub struct InsertStocktakeLineInput {
+#[graphql(name = "InsertStocktakeLineInput")]
+pub struct InsertInput {
     pub id: String,
     pub stocktake_id: String,
     pub stock_line_id: Option<String>,
     pub location_id: Option<String>,
     pub comment: Option<String>,
     pub counted_number_of_packs: Option<u32>,
-
     pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
@@ -31,15 +32,26 @@ pub struct InsertStocktakeLineInput {
 }
 
 #[derive(Union)]
-pub enum InsertStocktakeLineResponse {
+#[graphql(name = "InsertStocktakeLineResponse")]
+pub enum InsertResponse {
+    Error(InsertError),
     Response(StocktakeLineNode),
 }
 
-pub fn insert_stocktake_line(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: InsertStocktakeLineInput,
-) -> Result<InsertStocktakeLineResponse> {
+#[derive(Interface)]
+#[graphql(name = "InsertStocktakeLineErrorInterface")]
+#[graphql(field(name = "description", type = "String"))]
+pub enum InsertErrorInterface {
+    CannotEditStocktake(CannotEditStocktake),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "InsertStocktakeLineError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
+pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -49,101 +61,90 @@ pub fn insert_stocktake_line(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-
-    do_insert_stocktake_line(&service_ctx, service_provider, store_id, input)
+    let service_context = service_provider.context()?;
+    map_response(
+        service_provider
+            .stocktake_line_service
+            .insert_stocktake_line(&service_context, store_id, input.to_domain()),
+    )
 }
 
-pub fn do_insert_stocktake_line(
-    service_ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    store_id: &str,
-    input: InsertStocktakeLineInput,
-) -> Result<InsertStocktakeLineResponse> {
-    let service = &service_provider.stocktake_line_service;
-    let id = input.id.clone();
-    match service.insert_stocktake_line(&service_ctx, store_id, to_domain(input)) {
-        Ok(line) => Ok(InsertStocktakeLineResponse::Response(StocktakeLineNode {
-            line,
-        })),
-        Err(err) => {
-            let formatted_error = format!("Insert stocktake line {}: {:#?}", id, err);
-            let graphql_error = match err {
-                InsertStocktakeLineError::DatabaseError(err) => err.into(),
-                InsertStocktakeLineError::InternalError(err) => {
-                    StandardGraphqlError::InternalError(err)
-                }
-                InsertStocktakeLineError::InvalidStore => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                InsertStocktakeLineError::StocktakeDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                InsertStocktakeLineError::StocktakeLineAlreadyExists => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                InsertStocktakeLineError::StockLineDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                InsertStocktakeLineError::StockLineAlreadyExistsInStocktake => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                InsertStocktakeLineError::LocationDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                InsertStocktakeLineError::CannotEditFinalised => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                // TODO should be standard error
-                InsertStocktakeLineError::StocktakeIsLocked => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                InsertStocktakeLineError::StockLineXOrItem => {
-                    StandardGraphqlError::BadUserInput(format!(
-                        "Either a stock line id or item id must be set (not both), {:#?}",
-                        err
-                    ))
-                }
-                InsertStocktakeLineError::ItemDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-            };
-            Err(graphql_error.extend())
+pub fn map_response(from: Result<StocktakeLine, ServiceError>) -> Result<InsertResponse> {
+    let result = match from {
+        Ok(line) => InsertResponse::Response(StocktakeLineNode::from_domain(line)),
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
+}
+
+fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::CannotEditFinalised => {
+            return Ok(InsertErrorInterface::CannotEditStocktake(
+                CannotEditStocktake {},
+            ))
         }
-    }
+        // Standard Graphql Errors
+        // TODO some are structured errors (where can be changed concurrently)
+        ServiceError::InvalidStore => BadUserInput(formatted_error),
+        ServiceError::StocktakeDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::StocktakeLineAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::StockLineAlreadyExistsInStocktake => BadUserInput(formatted_error),
+        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::StockLineXOrItem => BadUserInput(format!(
+            "Either a stock line id or item id must be set (not both), {}",
+            formatted_error
+        )),
+        ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::InternalError(err) => InternalError(err),
+    };
+
+    Err(graphql_error.extend())
 }
 
-fn to_domain(
-    InsertStocktakeLineInput {
-        id,
-        stocktake_id,
-        stock_line_id,
-        location_id,
-        comment,
-        counted_number_of_packs,
-        item_id,
-        batch,
-        expiry_date,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        note,
-    }: InsertStocktakeLineInput,
-) -> InsertStocktakeLine {
-    InsertStocktakeLine {
-        id,
-        stocktake_id,
-        stock_line_id,
-        location_id,
-        comment,
-        counted_number_of_packs,
-        item_id,
-        batch,
-        expiry_date,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        note,
+impl InsertInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let InsertInput {
+            id,
+            stocktake_id,
+            stock_line_id,
+            location_id,
+            comment,
+            counted_number_of_packs,
+            item_id,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            note,
+        } = self;
+
+        ServiceInput {
+            id,
+            stocktake_id,
+            stock_line_id,
+            location_id,
+            comment,
+            counted_number_of_packs,
+            item_id,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            note,
+        }
     }
 }
 
@@ -162,10 +163,7 @@ mod test {
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
-        stocktake_line::{
-            insert::{InsertStocktakeLineError, InsertStocktakeLineInput},
-            StocktakeLineServiceTrait,
-        },
+        stocktake_line::*,
     };
 
     use crate::StocktakeLineMutations;
@@ -173,7 +171,7 @@ mod test {
     type ServiceMethod = dyn Fn(
             &ServiceContext,
             &str,
-            InsertStocktakeLineInput,
+            InsertStocktakeLine,
         ) -> Result<StocktakeLine, InsertStocktakeLineError>
         + Sync
         + Send;
@@ -185,7 +183,7 @@ mod test {
             &self,
             ctx: &ServiceContext,
             store_id: &str,
-            input: InsertStocktakeLineInput,
+            input: InsertStocktakeLine,
         ) -> Result<StocktakeLine, InsertStocktakeLineError> {
             (self.0)(ctx, store_id, input)
         }

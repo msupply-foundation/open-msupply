@@ -1,6 +1,5 @@
 pub mod mutations;
 mod stocktake_queries;
-use self::mutations::{delete::*, insert::*, update::*};
 use self::stocktake_queries::*;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
@@ -49,26 +48,26 @@ impl StocktakeMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: InsertStocktakeInput,
-    ) -> Result<InsertStocktakeResponse> {
-        insert_stocktake(ctx, &store_id, input)
+        input: mutations::InsertInput,
+    ) -> Result<mutations::InsertResponse> {
+        mutations::insert(ctx, &store_id, input)
     }
 
     async fn update_stocktake(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: UpdateStocktakeInput,
-    ) -> Result<UpdateStocktakeResponse> {
-        update_stocktake(ctx, &store_id, input)
+        input: mutations::UpdateInput,
+    ) -> Result<mutations::UpdateResponse> {
+        mutations::update(ctx, &store_id, input)
     }
 
     async fn delete_stocktake(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: DeleteStocktakeInput,
-    ) -> Result<DeleteStocktakeResponse> {
-        delete_stocktake(ctx, &store_id, input)
+        input: mutations::DeleteInput,
+    ) -> Result<mutations::DeleteResponse> {
+        mutations::delete(ctx, &store_id, input)
     }
 }

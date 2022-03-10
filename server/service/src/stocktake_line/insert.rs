@@ -17,8 +17,8 @@ use crate::{
     validate::check_store_id_matches,
 };
 
-#[derive(Default)]
-pub struct InsertStocktakeLineInput {
+#[derive(Default, Debug, Clone)]
+pub struct InsertStocktakeLine {
     pub id: String,
     pub stocktake_id: String,
     pub stock_line_id: Option<String>,
@@ -88,7 +88,7 @@ fn check_stock_line_is_unique(
 /// If valid it returns the item_id it either from the stock_line or from input.item_id
 fn check_stock_line_xor_item(
     stock_line: &Option<StockLine>,
-    input: &InsertStocktakeLineInput,
+    input: &InsertStocktakeLine,
 ) -> Option<String> {
     if (stock_line.is_none() && input.item_id.is_none())
         || (stock_line.is_some() && input.item_id.is_some())
@@ -115,7 +115,7 @@ fn check_stock_line_exists(
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &InsertStocktakeLineInput,
+    input: &InsertStocktakeLine,
 ) -> Result<(Option<StockLine>, String), InsertStocktakeLineError> {
     let stocktake = match check_stocktake_exist(connection, &input.stocktake_id)? {
         Some(stocktake) => stocktake,
@@ -170,7 +170,7 @@ fn validate(
 fn generate(
     stock_line: Option<StockLine>,
     item_id: String,
-    InsertStocktakeLineInput {
+    InsertStocktakeLine {
         id,
         stocktake_id,
         stock_line_id,
@@ -184,7 +184,7 @@ fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         note,
-    }: InsertStocktakeLineInput,
+    }: InsertStocktakeLine,
 ) -> StocktakeLineRow {
     let snapshot_number_of_packs = if let Some(stock_line) = stock_line {
         stock_line.stock_line_row.total_number_of_packs
@@ -212,7 +212,7 @@ fn generate(
 pub fn insert_stocktake_line(
     ctx: &ServiceContext,
     store_id: &str,
-    input: InsertStocktakeLineInput,
+    input: InsertStocktakeLine,
 ) -> Result<StocktakeLine, InsertStocktakeLineError> {
     let result = ctx
         .connection
@@ -250,7 +250,7 @@ mod stocktake_line_test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake_line::insert::{InsertStocktakeLineError, InsertStocktakeLineInput},
+        stocktake_line::insert::{InsertStocktakeLine, InsertStocktakeLineError},
     };
 
     #[actix_rt::test]
@@ -269,7 +269,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = "invalid".to_string();
                     r.stock_line_id = Some(stock_line_a.id);
@@ -286,7 +286,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 "invalid_store",
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line_a.id);
@@ -304,7 +304,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line_a.id);
@@ -325,7 +325,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
@@ -345,7 +345,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
@@ -363,7 +363,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = "n/a".to_string();
                     r.stocktake_id = stocktake_a.id;
                 }),
@@ -379,7 +379,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_finalised.id;
                     r.stock_line_id = Some(stock_line.id);
@@ -397,7 +397,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
@@ -414,7 +414,7 @@ mod stocktake_line_test {
             .insert_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut InsertStocktakeLineInput| {
+                inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.counted_number_of_packs = Some(17);

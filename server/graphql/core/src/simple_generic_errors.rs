@@ -228,6 +228,14 @@ impl CannotEditRequisition {
     }
 }
 
+pub struct CannotEditStocktake;
+#[Object]
+impl CannotEditStocktake {
+    pub async fn description(&self) -> &'static str {
+        "Cannot edit stocktake"
+    }
+}
+
 // Common Mutation Errors
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
