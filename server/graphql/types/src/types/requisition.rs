@@ -4,19 +4,19 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, RequisitionLinesByRequisitionIdLoader,
-        RequisitionsByIdLoader,
+        RequisitionsByIdLoader, UserAccountLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
     schema::{NameRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    Requisition,
+    unknown_user, Requisition,
 };
 use service::ListResult;
 use StandardGraphqlError::*;
 
-use super::{InvoiceConnector, NameNode, RequisitionLineConnector};
+use super::{InvoiceConnector, NameNode, RequisitionLineConnector, UserNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum RequisitionNodeType {
@@ -66,6 +66,17 @@ impl RequisitionNode {
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_utc(self.row().created_datetime.clone(), Utc)
+    }
+
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+        let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
+
+        let user_option = match &self.row().user_id {
+            Some(user_id) => loader.load_one(user_id.clone()).await?,
+            None => None,
+        };
+
+        Ok(UserNode::from_domain(user_option.unwrap_or(unknown_user())))
     }
 
     /// Applicable to request requisition only
@@ -241,5 +252,107 @@ impl RequisitionNodeStatus {
             Sent => RequisitionNodeStatus::Sent,
             Finalised => RequisitionNodeStatus::Finalised,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use async_graphql::{EmptyMutation, Object};
+
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use repository::{
+        mock::{mock_user_account_a, MockDataInserts},
+        schema::{NameRow, RequisitionRow},
+        unknown_user, Requisition,
+    };
+    use serde_json::json;
+    use util::inline_init;
+
+    use crate::types::RequisitionNode;
+
+    #[actix_rt::test]
+    async fn graphql_requisition_user_loader() {
+        #[derive(Clone)]
+        struct TestQuery;
+
+        let (_, _, _, settings) = setup_graphl_test(
+            TestQuery,
+            EmptyMutation,
+            "graphql_requisition_user_loader",
+            MockDataInserts::none().user_accounts(),
+        )
+        .await;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query_user_exists(&self) -> RequisitionNode {
+                RequisitionNode {
+                    requisition: Requisition {
+                        requisition_row: inline_init(|r: &mut RequisitionRow| {
+                            r.user_id = Some(mock_user_account_a().id);
+                        }),
+                        name_row: NameRow::default(),
+                    },
+                }
+            }
+            pub async fn test_query_user_does_not_exist(&self) -> RequisitionNode {
+                RequisitionNode {
+                    requisition: Requisition {
+                        requisition_row: inline_init(|r: &mut RequisitionRow| {
+                            r.user_id = Some("invalid".to_string());
+                        }),
+                        name_row: NameRow::default(),
+                    },
+                }
+            }
+            pub async fn test_query_user_not_associated(&self) -> RequisitionNode {
+                RequisitionNode {
+                    requisition: Requisition {
+                        requisition_row: inline_init(|r: &mut RequisitionRow| r.user_id = None),
+                        name_row: NameRow::default(),
+                    },
+                }
+            }
+        }
+
+        let expected = json!({
+            "testQueryUserExists": {
+                "user": {
+                    "userId": mock_user_account_a().id
+                }
+            },
+            "testQueryUserDoesNotExist": {
+                "user": {
+                    "userId": unknown_user().id
+                }
+            },
+            "testQueryUserNotAssociated": {
+                "user": {
+                    "userId": unknown_user().id
+                }
+            },
+        }
+        );
+
+        let query = r#"
+        query {
+            testQueryUserExists {
+                ...user
+            }
+            testQueryUserDoesNotExist {
+                ...user
+            }
+            testQueryUserNotAssociated {
+                ...user
+            }           
+        }
+        fragment user on RequisitionNode {
+            user {
+                userId
+            }
+        }
+        "#;
+
+        assert_graphql_query!(&settings, &query, &None, expected, None);
     }
 }

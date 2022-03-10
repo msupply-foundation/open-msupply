@@ -1,15 +1,18 @@
 use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::{NaiveDate, NaiveDateTime};
-use repository::schema::{StocktakeRow, StocktakeStatus};
+use repository::{
+    schema::{StocktakeRow, StocktakeStatus},
+    unknown_user,
+};
 use serde::Serialize;
 
 use graphql_core::{
-    loader::{InvoiceByIdLoader, StocktakeLineByStocktakeIdLoader},
+    loader::{InvoiceByIdLoader, StocktakeLineByStocktakeIdLoader, UserAccountLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use super::{InvoiceNode, StocktakeLineConnector};
+use super::{InvoiceNode, StocktakeLineConnector, UserNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -30,6 +33,17 @@ impl StocktakeNode {
 
     pub async fn store_id(&self) -> &str {
         &self.stocktake.store_id
+    }
+
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+        let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
+
+        let user_option = match &self.stocktake.user_id {
+            Some(user_id) => loader.load_one(user_id.clone()).await?,
+            None => None,
+        };
+
+        Ok(UserNode::from_domain(user_option.unwrap_or(unknown_user())))
     }
 
     pub async fn stocktake_number(&self) -> i64 {
