@@ -1,521 +1,558 @@
 use async_graphql::*;
-use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
-};
-use graphql_stocktake::mutations::{
-    delete::{do_delete_stocktake, DeleteStocktakeInput, DeleteStocktakeResponse},
-    insert::{do_insert_stocktake, InsertStocktakeInput, InsertStocktakeResponse},
-    update::{do_update_stocktake, UpdateStocktakeInput, UpdateStocktakeResponse},
-};
-use graphql_stocktake_line::mutations::{
-    delete::{do_delete_stocktake_line, DeleteStocktakeLineInput, DeleteStocktakeLineResponse},
-    insert::{do_insert_stocktake_line, InsertStocktakeLineInput, InsertStocktakeLineResponse},
-    update::{do_update_stocktake_line, UpdateStocktakeLineInput, UpdateStocktakeLineResponse},
-};
-use repository::{RepositoryError, TransactionError};
-use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
-    service_provider::{ServiceContext, ServiceProvider},
-};
+use graphql_core::ContextExt;
+use graphql_stocktake::mutations as stocktake;
+use graphql_stocktake_line::mutations as stocktake_line;
+use service::stocktake::*;
+
+use crate::VecOrNone;
+
+type ServiceResult = BatchStocktakeResult;
+type ServiceInput = BatchStocktake;
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "InsertStocktakeResponseWithId",
-    params(InsertStocktakeResponse)
+    params(stocktake::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateStocktakeResponseWithId",
-    params(UpdateStocktakeResponse)
+    params(stocktake::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteStocktakeResponseWithId",
-    params(DeleteStocktakeResponse)
+    params(stocktake::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertStocktakeLineResponseWithId",
-    params(InsertStocktakeLineResponse)
+    params(stocktake_line::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateStocktakeLineResponseWithId",
-    params(UpdateStocktakeLineResponse)
+    params(stocktake_line::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteStocktakeLineResponseWithId",
-    params(DeleteStocktakeLineResponse)
+    params(stocktake_line::DeleteResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
 }
 
+type InsertStocktakesResponse = Option<Vec<MutationWithId<stocktake::InsertResponse>>>;
+type InsertStocktakeLinesResponse = Option<Vec<MutationWithId<stocktake_line::InsertResponse>>>;
+type UpdateStocktakeLinesResponse = Option<Vec<MutationWithId<stocktake_line::UpdateResponse>>>;
+type DeleteStocktakeLinesResponse = Option<Vec<MutationWithId<stocktake_line::DeleteResponse>>>;
+type UpdateStocktakesResponse = Option<Vec<MutationWithId<stocktake::UpdateResponse>>>;
+type DeleteStocktakesResponse = Option<Vec<MutationWithId<stocktake::DeleteResponse>>>;
+
+#[derive(SimpleObject)]
+#[graphql(name = "BatchStocktakeResponse")]
+pub struct BatchResponse {
+    insert_stocktakes: InsertStocktakesResponse,
+    insert_stocktake_lines: InsertStocktakeLinesResponse,
+    update_stocktake_lines: UpdateStocktakeLinesResponse,
+    delete_stocktake_lines: DeleteStocktakeLinesResponse,
+    update_stocktakes: UpdateStocktakesResponse,
+    delete_stocktakes: DeleteStocktakesResponse,
+}
+
 #[derive(InputObject)]
-pub struct BatchStocktakeInput {
-    pub insert_stocktakes: Option<Vec<InsertStocktakeInput>>,
-    pub insert_stocktake_lines: Option<Vec<InsertStocktakeLineInput>>,
-    pub update_stocktake_lines: Option<Vec<UpdateStocktakeLineInput>>,
-    pub delete_stocktake_lines: Option<Vec<DeleteStocktakeLineInput>>,
-    pub update_stocktakes: Option<Vec<UpdateStocktakeInput>>,
-    pub delete_stocktakes: Option<Vec<DeleteStocktakeInput>>,
+#[graphql(name = "BatchStocktakeInput")]
+pub struct BatchInput {
+    pub insert_stocktakes: Option<Vec<stocktake::InsertInput>>,
+    pub insert_stocktake_lines: Option<Vec<stocktake_line::InsertInput>>,
+    pub update_stocktake_lines: Option<Vec<stocktake_line::UpdateInput>>,
+    pub delete_stocktake_lines: Option<Vec<stocktake_line::DeleteInput>>,
+    pub update_stocktakes: Option<Vec<stocktake::UpdateInput>>,
+    pub delete_stocktakes: Option<Vec<stocktake::DeleteInput>>,
+    pub continue_on_error: Option<bool>,
 }
 
-#[derive(SimpleObject)]
-pub struct BatchStocktakeResponses {
-    insert_stocktakes: Option<Vec<MutationWithId<InsertStocktakeResponse>>>,
-    insert_stocktake_lines: Option<Vec<MutationWithId<InsertStocktakeLineResponse>>>,
-    update_stocktake_lines: Option<Vec<MutationWithId<UpdateStocktakeLineResponse>>>,
-    delete_stocktake_lines: Option<Vec<MutationWithId<DeleteStocktakeLineResponse>>>,
-    update_stocktakes: Option<Vec<MutationWithId<UpdateStocktakeResponse>>>,
-    delete_stocktakes: Option<Vec<MutationWithId<DeleteStocktakeResponse>>>,
-}
+pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<BatchResponse> {
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
 
-// Same as BatchStocktakeResponses but GQL needs an extra type for it
-#[derive(SimpleObject)]
-pub struct BatchStocktakeResponsesWithErrors {
-    insert_stocktakes: Option<Vec<MutationWithId<InsertStocktakeResponse>>>,
-    insert_stocktake_lines: Option<Vec<MutationWithId<InsertStocktakeLineResponse>>>,
-    update_stocktake_lines: Option<Vec<MutationWithId<UpdateStocktakeLineResponse>>>,
-    delete_stocktake_lines: Option<Vec<MutationWithId<DeleteStocktakeLineResponse>>>,
-    update_stocktakes: Option<Vec<MutationWithId<UpdateStocktakeResponse>>>,
-    delete_stocktakes: Option<Vec<MutationWithId<DeleteStocktakeResponse>>>,
-}
-
-#[derive(Union)]
-pub enum BatchStocktakeResponse {
-    Response(BatchStocktakeResponses),
-    /// At least one operation failed. No changes have been applied.
-    Error(BatchStocktakeResponsesWithErrors),
-}
-
-pub fn batch_stocktake(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: BatchStocktakeInput,
-) -> Result<BatchStocktakeResponse> {
-    validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::MutateStocktake,
-            store_id: Some(store_id.to_string()),
-        },
+    let response = service_provider.stocktake_service.batch_stocktake(
+        &service_context,
+        store_id,
+        input.to_domain(),
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-
-    let result = service_ctx.connection.transaction_sync(|_| {
-        let response = apply_batch(&service_ctx, service_provider, store_id, input)
-            .map_err(|err| BatchError::Standard(err))?;
-
-        if has_no_errors(&response) {
-            return Ok(response);
-        }
-        // else abort the transaction but return the response in a structured error
-        return Err(BatchError::Structured(response));
-    });
-    let response = match result {
-        Ok(response) => BatchStocktakeResponse::Response(response),
-        Err(error) => match error {
-            TransactionError::Transaction { msg, level } => {
-                return Err(
-                    StandardGraphqlError::from(RepositoryError::TransactionError { msg, level })
-                        .extend(),
-                );
-            }
-            TransactionError::Inner(err) => match err {
-                BatchError::Standard(err) => return Err(err),
-                BatchError::Structured(response) => {
-                    BatchStocktakeResponse::Error(BatchStocktakeResponsesWithErrors {
-                        insert_stocktakes: response.insert_stocktakes,
-                        insert_stocktake_lines: response.insert_stocktake_lines,
-                        update_stocktake_lines: response.update_stocktake_lines,
-                        delete_stocktake_lines: response.delete_stocktake_lines,
-                        update_stocktakes: response.update_stocktakes,
-                        delete_stocktakes: response.delete_stocktakes,
-                    })
-                }
-            },
-        },
-    };
-
-    Ok(response)
+    Ok(BatchResponse::from_domain(response)?)
 }
 
-enum BatchError {
-    Standard(Error),
-    // Response with errors:
-    Structured(BatchStocktakeResponses),
+impl BatchInput {
+    fn to_domain(self) -> ServiceInput {
+        let BatchInput {
+            insert_stocktakes,
+            insert_stocktake_lines,
+            update_stocktake_lines,
+            delete_stocktake_lines,
+            update_stocktakes,
+            delete_stocktakes,
+            continue_on_error,
+        } = self;
+
+        ServiceInput {
+            insert_stocktake: insert_stocktakes
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            insert_line: insert_stocktake_lines
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            update_line: update_stocktake_lines
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            delete_line: delete_stocktake_lines
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            update_stocktake: update_stocktakes
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            delete_stocktake: delete_stocktakes
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            continue_on_error,
+        }
+    }
 }
 
-fn apply_batch(
-    service_ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    store_id: &str,
-    input: BatchStocktakeInput,
-) -> Result<BatchStocktakeResponses> {
-    let insert_stocktakes = match input.insert_stocktakes {
-        Some(input) => {
-            let mut list = Vec::<MutationWithId<InsertStocktakeResponse>>::new();
-            for input in input {
-                list.push(MutationWithId {
-                    id: input.id.clone(),
-                    response: do_insert_stocktake(service_ctx, service_provider, store_id, input)?,
-                });
-            }
-            Some(list)
-        }
-        None => None,
-    };
+impl BatchResponse {
+    fn from_domain(
+        ServiceResult {
+            insert_stocktake,
+            insert_line,
+            update_line,
+            delete_line,
+            update_stocktake,
+            delete_stocktake,
+        }: ServiceResult,
+    ) -> Result<BatchResponse> {
+        let result = BatchResponse {
+            insert_stocktakes: map_insert_stocktakes(insert_stocktake)?,
+            insert_stocktake_lines: map_insert_lines(insert_line)?,
+            update_stocktake_lines: map_update_lines(update_line)?,
+            delete_stocktake_lines: map_delete_lines(delete_line)?,
+            update_stocktakes: map_update_stocktakes(update_stocktake)?,
+            delete_stocktakes: map_delete_stocktakes(delete_stocktake)?,
+        };
 
-    let insert_stocktake_lines = match input.insert_stocktake_lines {
-        Some(input) => {
-            let mut list = Vec::<MutationWithId<InsertStocktakeLineResponse>>::new();
-            for input in input {
-                list.push(MutationWithId {
-                    id: input.id.clone(),
-                    response: do_insert_stocktake_line(
-                        service_ctx,
-                        service_provider,
-                        store_id,
-                        input,
-                    )?,
-                });
-            }
-            Some(list)
-        }
-        None => None,
-    };
-    let update_stocktake_lines = match input.update_stocktake_lines {
-        Some(input) => {
-            let mut list = Vec::<MutationWithId<UpdateStocktakeLineResponse>>::new();
-            for input in input {
-                list.push(MutationWithId {
-                    id: input.id.clone(),
-                    response: do_update_stocktake_line(
-                        service_ctx,
-                        service_provider,
-                        store_id,
-                        input,
-                    )?,
-                });
-            }
-            Some(list)
-        }
-        None => None,
-    };
-    let delete_stocktake_lines = match input.delete_stocktake_lines {
-        Some(input) => {
-            let mut list = Vec::<MutationWithId<DeleteStocktakeLineResponse>>::new();
-            for input in input {
-                list.push(MutationWithId {
-                    id: input.id.clone(),
-                    response: do_delete_stocktake_line(
-                        service_ctx,
-                        service_provider,
-                        store_id,
-                        input,
-                    )?,
-                });
-            }
-            Some(list)
-        }
-        None => None,
-    };
-
-    let update_stocktakes = match input.update_stocktakes {
-        Some(input) => {
-            let mut list = Vec::<MutationWithId<UpdateStocktakeResponse>>::new();
-            for input in input {
-                list.push(MutationWithId {
-                    id: input.id.clone(),
-                    response: do_update_stocktake(service_ctx, service_provider, store_id, input)?,
-                });
-            }
-            Some(list)
-        }
-        None => None,
-    };
-
-    let delete_stocktakes = match input.delete_stocktakes {
-        Some(input) => {
-            let mut list = Vec::<MutationWithId<DeleteStocktakeResponse>>::new();
-            for input in input {
-                list.push(MutationWithId {
-                    id: input.id.clone(),
-                    response: do_delete_stocktake(service_ctx, service_provider, store_id, input)?,
-                });
-            }
-            Some(list)
-        }
-        None => None,
-    };
-
-    let response = BatchStocktakeResponses {
-        insert_stocktakes,
-        insert_stocktake_lines,
-        update_stocktake_lines,
-        delete_stocktake_lines,
-        update_stocktakes,
-        delete_stocktakes,
-    };
-    Ok(response)
+        Ok(result)
+    }
 }
 
-fn has_no_errors(response: &BatchStocktakeResponses) -> bool {
-    if let Some(responses) = &response.insert_stocktakes {
-        if !responses.iter().all(|mutation_with_id| {
-            matches!(
-                mutation_with_id.response,
-                InsertStocktakeResponse::Response(_)
-            )
-        }) {
-            return false;
-        }
-    }
-    if let Some(responses) = &response.update_stocktakes {
-        if !responses.iter().all(|mutation_with_id| {
-            matches!(
-                mutation_with_id.response,
-                UpdateStocktakeResponse::Response(_)
-            )
-        }) {
-            return false;
-        }
-    }
-    if let Some(responses) = &response.delete_stocktakes {
-        if !responses.iter().all(|mutation_with_id| {
-            matches!(
-                mutation_with_id.response,
-                DeleteStocktakeResponse::Response(_)
-            )
-        }) {
-            return false;
-        }
+fn to_standard_error<I>(input: I, error: Error) -> Error
+where
+    I: std::fmt::Debug,
+{
+    let input_string = format!("{:#?}", input);
+    error.extend_with(|_, e| e.set("input", input_string))
+}
+
+fn map_insert_stocktakes(responses: InsertStocktakesResult) -> Result<InsertStocktakesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match stocktake::insert::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
     }
 
-    if let Some(responses) = &response.insert_stocktake_lines {
-        if !responses.iter().all(|mutation_with_id| {
-            matches!(
-                mutation_with_id.response,
-                InsertStocktakeLineResponse::Response(_)
-            )
-        }) {
-            return false;
-        }
-    }
-    if let Some(responses) = &response.update_stocktake_lines {
-        if !responses.iter().all(|mutation_with_id| {
-            matches!(
-                mutation_with_id.response,
-                UpdateStocktakeLineResponse::Response(_)
-            )
-        }) {
-            return false;
-        }
-    }
-    if let Some(responses) = &response.delete_stocktake_lines {
-        if !responses.iter().all(|mutation_with_id| {
-            matches!(
-                mutation_with_id.response,
-                DeleteStocktakeLineResponse::Response(_)
-            )
-        }) {
-            return false;
-        }
+    Ok(result.vec_or_none())
+}
+
+fn map_update_stocktakes(responses: UpdateStocktakesResult) -> Result<UpdateStocktakesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match stocktake::update::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
     }
 
-    true
+    Ok(result.vec_or_none())
+}
+
+fn map_delete_stocktakes(responses: DeleteStocktakesResult) -> Result<DeleteStocktakesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match stocktake::delete::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+
+        result.push(MutationWithId {
+            id: response.input,
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
+}
+
+fn map_insert_lines(responses: InsertStocktakeLinesResult) -> Result<InsertStocktakeLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match stocktake_line::insert::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
+}
+
+fn map_update_lines(responses: UpdateStocktakeLinesResult) -> Result<UpdateStocktakeLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match stocktake_line::update::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
+}
+
+fn map_delete_lines(responses: DeleteStocktakeLinesResult) -> Result<DeleteStocktakeLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match stocktake_line::delete::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+
+        result.push(MutationWithId {
+            id: response.input,
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
 }
 
 #[cfg(test)]
-mod graphql {
-
+mod test {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{
-        mock::{mock_stock_line_a, mock_stock_line_b, mock_store_a, MockDataInserts},
-        StocktakeLineRowRepository,
+        mock::MockDataInserts, RepositoryError, StocktakeLine, StorageConnectionManager,
     };
     use serde_json::json;
+    use service::{
+        service_provider::{ServiceContext, ServiceProvider},
+        stocktake::{
+            BatchStocktake, BatchStocktakeResult, DeleteStocktakeError, StocktakeServiceTrait,
+            UpdateStocktake, UpdateStocktakeError,
+        },
+        stocktake_line::{
+            DeleteStocktakeLineError, InsertStocktakeLine, InsertStocktakeLineError,
+            UpdateStocktakeLine, UpdateStocktakeLineError,
+        },
+        InputWithResult,
+    };
+    use util::inline_init;
 
     use crate::BatchMutations;
 
+    type ServiceInput = BatchStocktake;
+    type ServiceResult = BatchStocktakeResult;
+
+    type Method =
+        dyn Fn(&str, ServiceInput) -> Result<ServiceResult, RepositoryError> + Sync + Send;
+
+    pub struct TestService(pub Box<Method>);
+
+    impl StocktakeServiceTrait for TestService {
+        fn batch_stocktake(
+            &self,
+            _: &ServiceContext,
+            store_id: &str,
+            input: ServiceInput,
+        ) -> Result<ServiceResult, RepositoryError> {
+            self.0(store_id, input)
+        }
+    }
+
+    fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        service_provider.stocktake_service = Box::new(test_service);
+        service_provider
+    }
+
     #[actix_rt::test]
-    async fn test_graphql_stocktake_batch() {
-        let (_, connection, _, settings) = setup_graphl_test(
+    async fn test_graphql_batch_stocktake() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             BatchMutations,
-            "omsupply-database-gql-stocktake_batch",
+            "test_graphql_batch_stocktake",
             MockDataInserts::all(),
         )
         .await;
 
-        let query = r#"mutation BatchStocktake($storeId: String, $input: BatchStocktakeInput!) {
-          batchStocktake(storeId: $storeId, input: $input) {
-            __typename
-            ... on BatchStocktakeResponses {                    
+        let mutation = r#"
+        mutation mut($input: BatchStocktakeInput!, $storeId: String!) {
+            batchStocktake(input: $input, storeId: $storeId) {
               insertStocktakes {
                 id
                 response {
-                  ... on StocktakeNode {
-                    id
-                  }
+                  __typename
                 }
               }
               insertStocktakeLines {
                 id
                 response {
-                  ... on StocktakeLineNode {
-                    id
+                  ... on InsertStocktakeLineError {
+                    error {
+                      __typename
+                    }
                   }
                 }
               }
               updateStocktakeLines {
                 id
                 response {
+                  ... on UpdateStocktakeLineError {
+                    error {
+                      __typename
+                    }
+                  }
                   ... on StocktakeLineNode {
-                    id
+                      id
                   }
                 }
+              }
+              deleteStocktakeLines {
+                response {
+                  ... on DeleteStocktakeLineError {
+                    error {
+                      __typename
+                    }
+                  }
+                }
+                id
               }
               updateStocktakes {
                 id
                 response {
-                  ... on StocktakeNode {
-                    id
-                  }
-                }
-              }
-            }
-            ... on BatchStocktakeResponsesWithErrors {               
-              updateStocktakeLines {
-                id
-                response {
-                  ... on StocktakeLineNode {
-                    id
-                  }
-                }
-              }
-              updateStocktakes {
-                id
-                response {
-                  __typename
-                  ... on StocktakeNode {
-                    id
-                  }
                   ... on UpdateStocktakeError {
-                    __typename
+                    error {
+                      __typename
+                    }
                   }
-                }        
+                }
+              }
+              deleteStocktakes {
+                id
+                response {
+                  ... on DeleteStocktakeError {
+                    error {
+                      __typename
+                    }
+                  }
+                }
               }
             }
           }
-        }"#;
+          
+        "#;
 
-        // success
-        let store = mock_store_a();
-        let stock_line_a = mock_stock_line_a();
-        let stock_line_b = mock_stock_line_b();
-
-        let variables = Some(json!({
-            "storeId": store.id,
-            "input": {
-              "insertStocktakes": [
-                {
-                  "id": "batch_stocktake_1",
-                },
-              ],
-              "insertStocktakeLines": [
-                {
-                  "id": "batch_stocktake_line_1",
-                  "stocktakeId": "batch_stocktake_1",
-                  "stockLineId": stock_line_a.id,
-                },
-                {
-                  "id": "batch_stocktake_line_2",
-                  "stocktakeId": "batch_stocktake_1",
-                  "stockLineId": stock_line_b.id,
-                }
-              ],
-            }
-        }));
         let expected = json!({
           "batchStocktake": {
-              "__typename": "BatchStocktakeResponses",
-              "insertStocktakes": [
-                {
-                  "id": "batch_stocktake_1",
-                }
-              ],
-              "insertStocktakeLines": [
-                {
-                  "id": "batch_stocktake_line_1",
-                  "response": {
-                    "id": "batch_stocktake_line_1",
-                  }
-                },
-                {
-                  "id": "batch_stocktake_line_2",
-                  "response": {
-                    "id": "batch_stocktake_line_2",
+            "deleteStocktakeLines": [
+              {
+                "id": "id4",
+                "response": {
+                  "error": {
+                    "__typename": "CannotEditStocktake"
                   }
                 }
+              }
+            ],
+            "deleteStocktakes": [
+              {
+                "id": "id6",
+                "response": {
+                  "error": {
+                    "__typename": "CannotEditStocktake"
+                  }
+                }
+              }
+            ],
+            "insertStocktakeLines": [
+              {
+                "id": "id2",
+                "response": {
+                  "error": {
+                    "__typename": "CannotEditStocktake"
+                  }
+                }
+              }
+            ],
+            "insertStocktakes": null,
+            "updateStocktakeLines": [
+              {
+                "id": "id3",
+                "response": {
+                  "error": {
+                    "__typename": "CannotEditStocktake"
+                  }
+                }
+              }
+            ],
+            "updateStocktakes": [
+              {
+                "id": "id5",
+                "response": {
+                  "error": {
+                    "__typename": "CannotEditStocktake"
+                  }
+                }
+              }
+            ]
+          }
+        });
+
+        let variables = Some(json!({
+            "storeId": "n/a",
+            "input": {}
+        }
+        ));
+
+        // Structured Errors
+        let test_service = TestService(Box::new(|_, _| {
+            Ok(ServiceResult {
+                insert_stocktake: vec![],
+                insert_line: vec![InputWithResult {
+                    input: inline_init(|input: &mut InsertStocktakeLine| {
+                        input.id = "id2".to_string()
+                    }),
+                    result: Err(InsertStocktakeLineError::CannotEditFinalised {}),
+                }],
+                update_line: vec![InputWithResult {
+                    input: inline_init(|input: &mut UpdateStocktakeLine| {
+                        input.id = "id3".to_string()
+                    }),
+                    result: Err(UpdateStocktakeLineError::CannotEditFinalised {}),
+                }],
+                delete_line: vec![InputWithResult {
+                    input: "id4".to_string(),
+                    result: Err(DeleteStocktakeLineError::CannotEditFinalised {}),
+                }],
+                update_stocktake: vec![InputWithResult {
+                    input: inline_init(|input: &mut UpdateStocktake| input.id = "id5".to_string()),
+                    result: Err(UpdateStocktakeError::CannotEditFinalised {}),
+                }],
+                delete_stocktake: vec![InputWithResult {
+                    input: "id6".to_string(),
+                    result: Err(DeleteStocktakeError::CannotEditFinalised {}),
+                }],
+            })
+        }));
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // Standard Error
+        let test_service = TestService(Box::new(|_, _| {
+            Ok(ServiceResult {
+                insert_stocktake: vec![],
+                insert_line: vec![InputWithResult {
+                    input: inline_init(|input: &mut InsertStocktakeLine| {
+                        input.id = "id2".to_string()
+                    }),
+                    result: Err(InsertStocktakeLineError::CannotEditFinalised {}),
+                }],
+                update_line: vec![],
+                delete_line: vec![],
+                update_stocktake: vec![],
+                delete_stocktake: vec![InputWithResult {
+                    input: "id6".to_string(),
+                    result: Err(DeleteStocktakeError::StocktakeDoesNotExist {}),
+                }],
+            })
+        }));
+        let expected_message = "Bad user input";
+        let expected_extensions = json!({ "input": format!("{:#?}", "id6") });
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &variables,
+            &expected_message,
+            Some(expected_extensions),
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // Success
+
+        let expected = json!({
+            "batchStocktake": {
+              "deleteStocktakeLines": null,
+              "deleteStocktakes": null,
+              "insertStocktakeLines": null,
+              "insertStocktakes": null,
+              "updateStocktakeLines": [
+                {
+                  "id": "id3",
+                  "response": {
+                    "id": "id3"
+                  }
+                }
               ],
+              "updateStocktakes": null
             }
           }
         );
-        assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        // structured error / abort transaction
-        // update snapshotNumberOfPacks for a stocktake line and then try to finalise the stocktake
-        let variables = Some(json!({
-            "storeId": store.id,
-            "input": {
-              "updateStocktakeLines": [
-                {
-                  "id": "batch_stocktake_line_1",
-                  "snapshotNumberOfPacks": stock_line_a.total_number_of_packs + 1,
-                },
-              ],
-              "updateStocktakes": [
-                {
-                  "id": "batch_stocktake_1",
-                  "status": "FINALISED"
-                }
-              ]
-            }
+        let test_service = TestService(Box::new(|_, _| {
+            Ok(ServiceResult {
+                insert_stocktake: vec![],
+                insert_line: vec![],
+                update_line: vec![InputWithResult {
+                    input: inline_init(|input: &mut UpdateStocktakeLine| {
+                        input.id = "id3".to_string()
+                    }),
+                    result: Ok(inline_init(|input: &mut StocktakeLine| {
+                        input.line.id = "id3".to_string()
+                    })),
+                }],
+                delete_line: vec![],
+                update_stocktake: vec![],
+                delete_stocktake: vec![],
+            })
         }));
-        let expected = json!({
-          "batchStocktake": {
-              "__typename": "BatchStocktakeResponsesWithErrors",
-              "updateStocktakeLines": [
-                {
-                  "id": "batch_stocktake_line_1",
-                  "response": {
-                    "id": "batch_stocktake_line_1",
-                  }
-                },
-              ],
-              "updateStocktakes": [
-                {
-                  "id": "batch_stocktake_1",
-                  "response": {
-                    "__typename": "UpdateStocktakeError",
-                  },
-                }
-              ]
-            }
-          }
-        );
-        assert_graphql_query!(&settings, query, &variables, &expected, None);
-        // check that tx has been aborted and stocktake line hasn't been updated
-        let stocktake_line = StocktakeLineRowRepository::new(&connection)
-            .find_one_by_id("batch_stocktake_line_1")
-            .unwrap()
-            .unwrap();
-        assert_eq!(
-            stocktake_line.snapshot_number_of_packs,
-            stock_line_a.total_number_of_packs
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
         );
     }
 }
