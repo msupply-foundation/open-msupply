@@ -16,6 +16,7 @@ pub struct LineAndStockLine {
 
 pub fn generate(
     connection: &StorageConnection,
+    user_id: &str,
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
     patch: UpdateInboundShipment,
@@ -25,6 +26,7 @@ pub fn generate(
 
     set_new_status_datetime(&mut update_invoice, &patch);
 
+    update_invoice.user_id = Some(user_id.to_string());
     update_invoice.comment = patch.comment.or(update_invoice.comment);
     update_invoice.their_reference = patch.their_reference.or(update_invoice.their_reference);
     update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);

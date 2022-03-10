@@ -63,9 +63,10 @@ pub trait RequisitionServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: InsertRequestRequisition,
     ) -> Result<Requisition, InsertRequestRequisitionError> {
-        insert_request_requisition(ctx, store_id, input)
+        insert_request_requisition(ctx, store_id, user_id, input)
     }
 
     fn update_request_requisition(
@@ -108,18 +109,20 @@ pub trait RequisitionServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: UpdateResponseRequisition,
     ) -> Result<Requisition, UpdateResponseRequisitionError> {
-        update_response_requisition(ctx, store_id, input)
+        update_response_requisition(ctx, store_id, user_id, input)
     }
 
     fn supply_requested_quantity(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: SupplyRequestedQuantity,
     ) -> Result<Vec<RequisitionLine>, SupplyRequestedQuantityError> {
-        supply_requested_quantity(ctx, store_id, input)
+        supply_requested_quantity(ctx, store_id, user_id, input)
     }
 
     fn create_requisition_shipment(
@@ -135,9 +138,10 @@ pub trait RequisitionServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: BatchRequestRequisition,
     ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
-        batch_request_requisition(ctx, store_id, input)
+        batch_request_requisition(ctx, store_id, user_id, input)
     }
 }
 

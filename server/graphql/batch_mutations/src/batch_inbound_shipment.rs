@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::inbound_shipment;
 use graphql_invoice_line::mutations::inbound_shipment_line;
@@ -15,6 +16,8 @@ use service::invoice_line::inbound_shipment_service_line::InsertInboundShipmentS
 use service::invoice_line::inbound_shipment_service_line::InsertInboundShipmentServiceLineError;
 use service::invoice_line::inbound_shipment_service_line::UpdateInboundShipmentServiceLine;
 use service::invoice_line::inbound_shipment_service_line::UpdateInboundShipmentServiceLineError;
+use service::permission_validation::Resource;
+use service::permission_validation::ResourceAccessRequest;
 use service::InputWithResult;
 use service::{
     invoice::inbound_shipment::{
@@ -111,12 +114,21 @@ pub fn batch_inbound_shipment(
     store_id: &str,
     input: BatchInboundShipmentInput,
 ) -> Result<BatchInboundShipmentResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateInboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     let response = service_provider.invoice_service.batch_inbound_shipment(
         &service_context,
         store_id,
+        &user.user_id,
         input.to_domain(),
     )?;
 
@@ -474,6 +486,7 @@ mod test {
             &self,
             _: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: ServiceInput,
         ) -> Result<ServiceResponse, RepositoryError> {
             self.0(store_id, input)
