@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ServiceItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string };
+export type ServiceItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
 export type StockLineFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null };
 
@@ -39,8 +39,6 @@ export type ItemsQueryVariables = Types.Exact<{
 export type ItemsQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }> } };
 
 export type ItemsWithStatsQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
   storeId: Types.Scalars['String'];
   key?: Types.InputMaybe<Types.ItemSortFieldInput>;
   isDesc?: Types.InputMaybe<Types.Scalars['Boolean']>;
@@ -64,6 +62,7 @@ export const ServiceItemRowFragmentDoc = gql`
   id
   code
   name
+  unitName
 }
     `;
 export const StockLineFragmentDoc = gql`
@@ -182,8 +181,8 @@ export const ItemsDocument = gql`
 }
     ${ItemRowFragmentDoc}`;
 export const ItemsWithStatsDocument = gql`
-    query itemsWithStats($first: Int, $offset: Int, $storeId: String!, $key: ItemSortFieldInput, $isDesc: Boolean, $filter: ItemFilterInput) {
-  items(storeId: $storeId, sort: {key: $key, desc: $isDesc}) {
+    query itemsWithStats($storeId: String!, $key: ItemSortFieldInput, $isDesc: Boolean, $filter: ItemFilterInput) {
+  items(storeId: $storeId, sort: {key: $key, desc: $isDesc}, filter: $filter) {
     ... on ItemConnector {
       __typename
       nodes {
@@ -297,7 +296,7 @@ export const mockItemsQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsQu
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockItemsWithStatsQuery((req, res, ctx) => {
- *   const { first, offset, storeId, key, isDesc, filter } = req.variables;
+ *   const { storeId, key, isDesc, filter } = req.variables;
  *   return res(
  *     ctx.data({ items })
  *   )

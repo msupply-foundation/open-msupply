@@ -12,6 +12,7 @@ export interface DraftInboundLine extends DraftInboundLineFragment {
 export interface DraftOutboundLine extends OutboundLineFragment {
   isCreated: boolean;
   isUpdated: boolean;
+  isDeleted?: boolean;
 }
 
 export type InboundItem = {

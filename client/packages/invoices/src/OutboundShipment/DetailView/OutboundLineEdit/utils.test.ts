@@ -35,6 +35,8 @@ const createTestLine = ({
     invoiceId: '',
     invoiceLine: {
       id,
+      totalAfterTax: 0,
+      totalBeforeTax: 0,
       sellPricePerPack: 0,
       item: {
         id: itemId,

@@ -27,6 +27,9 @@ fragment OutboundLine on InvoiceLineNode {
   invoiceId
   sellPricePerPack
   note
+  totalBeforeTax
+  totalAfterTax
+  note
 
   item {
     __typename
