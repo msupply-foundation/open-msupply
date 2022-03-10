@@ -1,7 +1,6 @@
+use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::PaginationOption;
 use repository::{RepositoryError, Stocktake, StocktakeFilter, StocktakeSort};
-
-use crate::{service_provider::ServiceContext, ListError, ListResult};
 
 pub mod query;
 pub mod validate;
@@ -13,7 +12,7 @@ mod insert;
 pub use self::insert::*;
 
 mod update;
-use self::query::{get_stocktakes, get_stocktake};
+use self::query::{get_stocktake, get_stocktakes};
 pub use self::update::*;
 
 mod batch;
@@ -43,9 +42,10 @@ pub trait StocktakeServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: InsertStocktake,
     ) -> Result<Stocktake, InsertStocktakeError> {
-        insert_stocktake(ctx, store_id, input)
+        insert_stocktake(ctx, store_id, user_id, input)
     }
 
     /// # Arguments
@@ -75,9 +75,10 @@ pub trait StocktakeServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: BatchStocktake,
     ) -> Result<BatchStocktakeResult, RepositoryError> {
-        batch_stocktake(ctx, store_id, input)
+        batch_stocktake(ctx, store_id, user_id, input)
     }
 }
 

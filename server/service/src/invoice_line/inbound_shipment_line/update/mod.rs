@@ -1,6 +1,6 @@
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 use chrono::NaiveDate;
-use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
+use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository, InvoiceRepository};
 
 mod generate;
 mod validate;
@@ -27,6 +27,7 @@ type OutError = UpdateInboundShipmentLineError;
 pub fn update_inbound_shipment_line(
     ctx: &ServiceContext,
     _store_id: &str,
+    user_id: &str,
     input: UpdateInboundShipmentLine,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
@@ -34,8 +35,8 @@ pub fn update_inbound_shipment_line(
         .transaction_sync(|connection| {
             let (line, item, invoice) = validate(&input, &connection)?;
 
-            let (updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(input, line, item, invoice);
+            let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
+                generate(user_id, input, line, item, invoice);
 
             let stock_line_respository = StockLineRowRepository::new(&connection);
 
@@ -47,6 +48,10 @@ pub fn update_inbound_shipment_line(
 
             if let Some(id) = delete_batch_id_option {
                 stock_line_respository.delete(&id)?;
+            }
+
+            if let Some(invoice_row) = invoice_row_option {
+                InvoiceRepository::new(&connection).upsert_one(&invoice_row)?;
             }
 
             get_invoice_line(ctx, &updated_line.id)

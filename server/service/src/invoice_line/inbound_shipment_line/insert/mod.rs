@@ -1,6 +1,9 @@
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 use chrono::NaiveDate;
-use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
+use repository::{
+    InvoiceLine, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
+    StockLineRowRepository,
+};
 
 mod generate;
 mod validate;
@@ -30,18 +33,24 @@ type OutError = InsertInboundShipmentLineError;
 pub fn insert_inbound_shipment_line(
     ctx: &ServiceContext,
     _store_id: &str,
+    user_id: &str,
     input: InsertInboundShipmentLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
             let (item, invoice) = validate(&input, &connection)?;
-            let (new_line, new_batch_option) = generate(input, item, invoice);
+            let (invoice_row_option, new_line, new_batch_option) =
+                generate(user_id, input, item, invoice);
 
             if let Some(new_batch) = new_batch_option {
                 StockLineRowRepository::new(&connection).upsert_one(&new_batch)?;
             }
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+
+            if let Some(invoice_row) = invoice_row_option {
+                InvoiceRepository::new(&connection).upsert_one(&invoice_row)?;
+            }
 
             get_invoice_line(ctx, &new_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?

@@ -1,4 +1,4 @@
-use crate::{invoice_line::generate_batch, u32_to_i32};
+use crate::{invoice_line::generate_batch, u32_to_i32, invoice::common::generate_invoice_user_id_update};
 use repository::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
@@ -6,23 +6,26 @@ use repository::schema::{
 use super::InsertInboundShipmentLine;
 
 pub fn generate(
+    user_id: &str,
     input: InsertInboundShipmentLine,
     item_row: ItemRow,
-    InvoiceRow {
-        status, store_id, ..
-    }: InvoiceRow,
-) -> (InvoiceLineRow, Option<StockLineRow>) {
+    existing_invoice_row: InvoiceRow,
+) -> (Option<InvoiceRow>, InvoiceLineRow, Option<StockLineRow>) {
     let mut new_line = generate_line(input, item_row);
 
-    let new_batch_option = if status != InvoiceRowStatus::New {
-        let new_batch = generate_batch(&store_id, new_line.clone(), false);
+    let new_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
+        let new_batch = generate_batch(&existing_invoice_row.store_id, new_line.clone(), false);
         new_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
     } else {
         None
     };
 
-    (new_line, new_batch_option)
+    (
+        generate_invoice_user_id_update(user_id, existing_invoice_row),
+        new_line,
+        new_batch_option,
+    )
 }
 
 fn generate_line(

@@ -40,13 +40,14 @@ type OutError = UpdateResponseRequisitionError;
 pub fn update_response_requisition(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: UpdateResponseRequisition,
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, store_id, &input)?;
-            let updated_requisition = generate(requisition_row, input);
+            let updated_requisition = generate(user_id, requisition_row, input);
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
             get_requisition(ctx, None, &updated_requisition.id)
@@ -90,6 +91,7 @@ pub fn validate(
 }
 
 pub fn generate(
+    user_id: &str,
     existing: RequisitionRow,
     UpdateResponseRequisition {
         id: _,
@@ -100,6 +102,7 @@ pub fn generate(
     }: UpdateResponseRequisition,
 ) -> RequisitionRow {
     inline_edit(&existing, |mut r| {
+        r.user_id = Some(user_id.to_string());
         r.status = if update_status.is_some() {
             RequisitionRowStatus::Finalised
         } else {
@@ -130,7 +133,8 @@ mod test_update {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition, mock_sent_request_requisition, MockDataInserts,
+            mock_new_response_requisition, mock_sent_request_requisition, mock_user_account_b,
+            MockDataInserts,
         },
         schema::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
@@ -159,6 +163,7 @@ mod test_update {
             service.update_response_requisition(
                 &context,
                 "store_a",
+                "n/a",
                 UpdateResponseRequisition {
                     id: "invalid".to_owned(),
                     colour: None,
@@ -175,6 +180,7 @@ mod test_update {
             service.update_response_requisition(
                 &context,
                 "store_b",
+                "n/a",
                 UpdateResponseRequisition {
                     id: mock_draft_response_requisition_for_update_test().id,
                     colour: None,
@@ -191,6 +197,7 @@ mod test_update {
             service.update_response_requisition(
                 &context,
                 "store_a",
+                "n/a",
                 UpdateResponseRequisition {
                     id: mock_finalised_response_requisition().id,
                     colour: None,
@@ -207,6 +214,7 @@ mod test_update {
             service.update_response_requisition(
                 &context,
                 "store_a",
+                "n/a",
                 UpdateResponseRequisition {
                     id: mock_sent_request_requisition().id,
                     colour: None,
@@ -237,6 +245,7 @@ mod test_update {
             .update_response_requisition(
                 &context,
                 "store_a",
+                &mock_user_account_b().id,
                 UpdateResponseRequisition {
                     id: mock_new_response_requisition().id,
                     colour: Some("new colour".to_owned()),
@@ -256,12 +265,14 @@ mod test_update {
             colour,
             comment,
             their_reference,
+            user_id,
             ..
         } = RequisitionRowRepository::new(&connection)
             .find_one_by_id(&result.requisition_row.id)
             .unwrap()
             .unwrap();
 
+        assert_eq!(user_id, Some(mock_user_account_b().id));
         assert_eq!(id, mock_new_response_requisition().id);
         assert_eq!(colour, Some("new colour".to_owned()));
         assert_eq!(their_reference, Some("new their_reference".to_owned()));

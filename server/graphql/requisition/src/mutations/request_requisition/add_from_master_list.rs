@@ -49,7 +49,7 @@ pub fn add_from_master_list(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::EditRequisition,
+            resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
         },
     )?;

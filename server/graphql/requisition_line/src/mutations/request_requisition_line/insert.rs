@@ -49,7 +49,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::EditRequisition,
+            resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
         },
     )?;

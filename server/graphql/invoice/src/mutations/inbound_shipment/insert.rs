@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::OtherPartyNotASupplier;
 use graphql_types::types::{InvoiceNode, NameNode};
@@ -8,6 +8,7 @@ use repository::Invoice;
 use service::invoice::inbound_shipment::{
     InsertInboundShipment as ServiceInput, InsertInboundShipmentError as ServiceError,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentInput")]
@@ -34,12 +35,21 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateInboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     map_response(service_provider.invoice_service.insert_inbound_shipment(
         &service_context,
         store_id,
+        &user.user_id,
         input.to_domain(),
     ))
 }

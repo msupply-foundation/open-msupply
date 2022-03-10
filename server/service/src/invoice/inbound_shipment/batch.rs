@@ -17,7 +17,7 @@ use crate::{
         },
     },
     service_provider::ServiceContext,
-    InputWithResult, WithDBError,
+    BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
 use super::{
@@ -40,7 +40,7 @@ pub struct BatchInboundShipment {
     pub continue_on_error: Option<bool>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BatchInboundShipmentResult {
     pub insert_shipment:
         Vec<InputWithResult<InsertInboundShipment, Result<Invoice, InsertInboundShipmentError>>>,
@@ -83,174 +83,102 @@ pub struct BatchInboundShipmentResult {
         Vec<InputWithResult<DeleteInboundShipment, Result<String, DeleteInboundShipmentError>>>,
 }
 
-pub struct DoMutationResult<T> {
-    pub has_errors: bool,
-    pub results: Vec<T>,
-}
-
-pub fn do_mutations<I, R, E, M>(
-    ctx: &ServiceContext,
-    store_id: &str,
-    inputs: Vec<I>,
-    mutation: M,
-) -> (bool, Vec<InputWithResult<I, Result<R, E>>>)
-where
-    I: Clone,
-    M: Fn(&ServiceContext, &str, I) -> Result<R, E>,
-{
-    let mut has_errors = false;
-    let mut results = vec![];
-
-    for input in inputs {
-        let mutation_result = mutation(ctx, store_id, input.clone());
-        has_errors = has_errors || mutation_result.is_err();
-        results.push(InputWithResult {
-            input,
-            result: mutation_result,
-        });
-    }
-
-    (has_errors, results)
-}
-
 pub fn batch_inbound_shipment(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: BatchInboundShipment,
 ) -> Result<BatchInboundShipmentResult, RepositoryError> {
     let result = ctx
         .connection
         .transaction_sync(|_| {
             let continue_on_error = input.continue_on_error.unwrap_or(false);
-            let mut result = BatchInboundShipmentResult {
-                insert_shipment: vec![],
-                insert_line: vec![],
-                update_line: vec![],
-                delete_line: vec![],
-                insert_service_line: vec![],
-                update_service_line: vec![],
-                delete_service_line: vec![],
-                update_shipment: vec![],
-                delete_shipment: vec![],
-            };
+            let mut results = BatchInboundShipmentResult::default();
+
+            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id, user_id);
 
             // Insert Shipment
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.insert_shipment.unwrap_or(vec![]),
-                insert_inbound_shipment,
-            );
-            result.insert_shipment = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations_with_user_id(input.insert_shipment, insert_inbound_shipment);
+            results.insert_shipment = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
             // Normal Line
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.insert_line.unwrap_or(vec![]),
-                insert_inbound_shipment_line,
-            );
-            result.insert_line = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations_with_user_id(input.insert_line, insert_inbound_shipment_line);
+            results.insert_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.update_line.unwrap_or(vec![]),
-                update_inbound_shipment_line,
-            );
-            result.update_line = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations_with_user_id(input.update_line, update_inbound_shipment_line);
+            results.update_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.delete_line.unwrap_or(vec![]),
-                delete_inbound_shipment_line,
-            );
-            result.delete_line = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations_with_user_id(input.delete_line, delete_inbound_shipment_line);
+            results.delete_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
             // Service Line
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.insert_service_line.unwrap_or(vec![]),
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.insert_service_line,
                 insert_inbound_shipment_service_line,
             );
-            result.insert_service_line = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            results.insert_service_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.update_service_line.unwrap_or(vec![]),
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.update_service_line,
                 update_inbound_shipment_service_line,
             );
-            result.update_service_line = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            results.update_service_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.delete_service_line.unwrap_or(vec![]),
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.delete_service_line,
                 delete_inbound_shipment_service_line,
             );
-            result.delete_service_line = results;
+            results.delete_service_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
 
             // Update and delete shipment
 
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.update_shipment.unwrap_or(vec![]),
-                update_inbound_shipment,
-            );
-            result.update_shipment = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations_with_user_id(input.update_shipment, update_inbound_shipment);
+            results.update_shipment = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.delete_shipment.unwrap_or(vec![]),
-                delete_inbound_shipment,
-            );
-            result.delete_shipment = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations_with_user_id(input.delete_shipment, delete_inbound_shipment);
+            results.delete_shipment = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            Ok(result)
+            Ok(results)
                 as Result<BatchInboundShipmentResult, WithDBError<BatchInboundShipmentResult>>
         })
         .map_err(|error| error.to_inner_error())
@@ -320,7 +248,7 @@ mod test {
 
         // Test rollback
         let result = service
-            .batch_inbound_shipment(&context, "store_a", input.clone())
+            .batch_inbound_shipment(&context, "store_a", "n/a", input.clone())
             .unwrap();
 
         assert_eq!(
@@ -349,7 +277,7 @@ mod test {
         input.continue_on_error = Some(true);
 
         service
-            .batch_inbound_shipment(&context, "store_a", input)
+            .batch_inbound_shipment(&context, "store_a", "n/a", input)
             .unwrap();
 
         assert_ne!(

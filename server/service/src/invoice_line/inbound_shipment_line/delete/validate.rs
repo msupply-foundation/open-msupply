@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRowType},
+    schema::{InvoiceLineRow, InvoiceRowType, InvoiceRow},
     StorageConnection,
 };
 
@@ -21,7 +21,7 @@ use super::{DeleteInboundShipmentLine, DeleteInboundShipmentLineError};
 pub fn validate(
     input: &DeleteInboundShipmentLine,
     connection: &StorageConnection,
-) -> Result<InvoiceLineRow, DeleteInboundShipmentLineError> {
+) -> Result<(InvoiceRow, InvoiceLineRow), DeleteInboundShipmentLineError> {
     let line = check_line_exists(&input.id, connection)?;
 
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
@@ -31,7 +31,7 @@ pub fn validate(
     check_invoice_is_editable(&invoice)?;
     check_batch(&line, connection)?;
 
-    Ok(line)
+    Ok((invoice, line))
 }
 
 impl From<LineDoesNotExist> for DeleteInboundShipmentLineError {

@@ -3,7 +3,7 @@ use async_graphql::*;
 
 use graphql_core::simple_generic_errors::CannotEditInvoice;
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, RecordNotFound};
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::OtherPartyNotASupplier;
 use graphql_types::types::{InvoiceNode, NameNode};
@@ -12,6 +12,7 @@ use service::invoice::inbound_shipment::{
     UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
     UpdateInboundShipmentStatus,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentInput")]
@@ -45,12 +46,21 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateInboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     map_response(service_provider.invoice_service.update_inbound_shipment(
         &service_context,
         store_id,
+        &user.user_id,
         input.to_domain(),
     ))
 }

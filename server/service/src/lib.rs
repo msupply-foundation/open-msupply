@@ -97,11 +97,20 @@ pub struct DoMutationResult<T> {
 pub struct BatchMutationsProcessor<'a> {
     ctx: &'a ServiceContext,
     store_id: &'a str,
+    user_id: &'a str,
 }
 
 impl<'a> BatchMutationsProcessor<'a> {
-    pub fn new(ctx: &'a ServiceContext, store_id: &'a str) -> BatchMutationsProcessor<'a> {
-        BatchMutationsProcessor { ctx, store_id }
+    pub fn new(
+        ctx: &'a ServiceContext,
+        store_id: &'a str,
+        user_id: &'a str,
+    ) -> BatchMutationsProcessor<'a> {
+        BatchMutationsProcessor {
+            ctx,
+            store_id,
+            user_id,
+        }
     }
 
     pub fn do_mutations<I, R, E, M>(
@@ -118,6 +127,30 @@ impl<'a> BatchMutationsProcessor<'a> {
 
         for input in inputs.unwrap_or(vec![]) {
             let mutation_result = mutation(self.ctx, self.store_id, input.clone());
+            has_errors = has_errors || mutation_result.is_err();
+            result.push(InputWithResult {
+                input,
+                result: mutation_result,
+            });
+        }
+
+        (has_errors, result)
+    }
+
+    pub fn do_mutations_with_user_id<I, R, E, M>(
+        &self,
+        inputs: Option<Vec<I>>,
+        mutation: M,
+    ) -> (bool, Vec<InputWithResult<I, Result<R, E>>>)
+    where
+        I: Clone,
+        M: Fn(&ServiceContext, &str, &str, I) -> Result<R, E>,
+    {
+        let mut has_errors = false;
+        let mut result = vec![];
+
+        for input in inputs.unwrap_or(vec![]) {
+            let mutation_result = mutation(self.ctx, self.store_id, self.user_id, input.clone());
             has_errors = has_errors || mutation_result.is_err();
             result.push(InputWithResult {
                 input,

@@ -5,13 +5,14 @@ use repository::{
     Name, RepositoryError, StorageConnection,
 };
 
-use crate::{number::next_number, user_account::get_default_user_id};
+use crate::number::next_number;
 
 use super::InsertInboundShipment;
 
 pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
+    user_id: &str,
     InsertInboundShipment {
         id,
         other_party_id,
@@ -26,7 +27,7 @@ pub fn generate(
 
     let result = InvoiceRow {
         id,
-        user_id: Some(get_default_user_id()),
+        user_id: Some(user_id.to_string()),
         name_id: other_party_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         r#type: InvoiceRowType::InboundShipment,

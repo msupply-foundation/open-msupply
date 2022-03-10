@@ -3,6 +3,7 @@ use repository::{
     schema::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
+use util::inline_edit;
 
 pub fn check_requisition_exists(
     connection: &StorageConnection,
@@ -18,4 +19,18 @@ pub fn get_lines_for_requisition(
     RequisitionLineRepository::new(connection).query_by_filter(
         RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_id)),
     )
+}
+
+pub fn generate_requisition_user_id_update(
+    user_id: &str,
+    existing_requisition_row: RequisitionRow,
+) -> Option<RequisitionRow> {
+    let user_id_option = Some(user_id.to_string());
+    let user_id_has_changed = existing_requisition_row.user_id != user_id_option;
+    user_id_has_changed.then(|| {
+        inline_edit(&existing_requisition_row, |mut u| {
+            u.user_id = user_id_option;
+            u
+        })
+    })
 }

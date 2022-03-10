@@ -63,6 +63,7 @@ pub struct BatchRequestRequisitionResult {
 pub fn batch_request_requisition(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: BatchRequestRequisition,
 ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
     let result = ctx
@@ -71,10 +72,10 @@ pub fn batch_request_requisition(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchRequestRequisitionResult::default();
 
-            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id);
+            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id, user_id);
 
             let (has_errors, result) = mutations_processor
-                .do_mutations(input.insert_requisition, insert_request_requisition);
+                .do_mutations_with_user_id(input.insert_requisition, insert_request_requisition);
             results.insert_requisition = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -183,7 +184,7 @@ mod test {
 
         // Test rollback
         let result = service
-            .batch_request_requisition(&context, "store_a", input.clone())
+            .batch_request_requisition(&context, "store_a", "n/a", input.clone())
             .unwrap();
 
         assert_eq!(
@@ -212,7 +213,7 @@ mod test {
         input.continue_on_error = Some(true);
 
         service
-            .batch_request_requisition(&context, "store_a", input)
+            .batch_request_requisition(&context, "store_a", "n/a", input)
             .unwrap();
 
         assert_ne!(

@@ -101,27 +101,30 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: InsertInboundShipmentLine,
     ) -> Result<InvoiceLine, InsertInboundShipmentLineError> {
-        insert_inbound_shipment_line(ctx, store_id, input)
+        insert_inbound_shipment_line(ctx, store_id, user_id, input)
     }
 
     fn update_inbound_shipment_line(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: UpdateInboundShipmentLine,
     ) -> Result<InvoiceLine, UpdateInboundShipmentLineError> {
-        update_inbound_shipment_line(ctx, store_id, input)
+        update_inbound_shipment_line(ctx, store_id, user_id, input)
     }
 
     fn delete_inbound_shipment_line(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: DeleteInboundShipmentLine,
     ) -> Result<String, DeleteInboundShipmentLineError> {
-        delete_inbound_shipment_line(ctx, store_id, input)
+        delete_inbound_shipment_line(ctx, store_id, user_id, input)
     }
 
     fn insert_outbound_shipment_service_line(

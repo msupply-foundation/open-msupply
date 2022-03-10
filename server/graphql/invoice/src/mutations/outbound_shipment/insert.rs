@@ -1,13 +1,14 @@
 use super::OtherPartyNotACustomerError;
 use async_graphql::*;
-use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
+use graphql_core::{simple_generic_errors::NodeError, standard_graphql_error::validate_auth};
 use graphql_types::types::{InvoiceNode, NameNode};
 use repository::Invoice;
 use service::invoice::outbound_shipment::{
     InsertOutboundShipment as ServiceInput, InsertOutboundShipmentError as ServiceError,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertOutboundShipmentInput")]
@@ -37,12 +38,21 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     map_response(service_provider.invoice_service.insert_outbound_shipment(
         &service_context,
         store_id,
+        &user.user_id,
         input.to_domain(),
     ))
 }
@@ -110,7 +120,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
 #[cfg(test)]
 mod graphql {
-
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use repository::mock::MockDataInserts;

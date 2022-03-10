@@ -1,6 +1,7 @@
 use async_graphql::*;
 use graphql_core::simple_generic_errors::CannotEditInvoice;
 use graphql_core::simple_generic_errors::RecordNotFound;
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
@@ -8,6 +9,8 @@ use graphql_types::types::{DeleteResponse as GenericDeleteResponse, InvoiceLineC
 use service::invoice::inbound_shipment::{
     DeleteInboundShipment as ServiceInput, DeleteInboundShipmentError as ServiceError,
 };
+use service::permission_validation::Resource;
+use service::permission_validation::ResourceAccessRequest;
 
 #[derive(InputObject)]
 #[graphql(name = "DeleteInboundShipmentInput")]
@@ -29,12 +32,21 @@ pub enum DeleteResponse {
 }
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateInboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     map_response(service_provider.invoice_service.delete_inbound_shipment(
         &service_context,
         store_id,
+        &user.user_id,
         input.to_domain(),
     ))
 }

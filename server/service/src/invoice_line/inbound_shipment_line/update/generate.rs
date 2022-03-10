@@ -1,30 +1,45 @@
-use crate::{invoice_line::inbound_shipment_line::generate_batch, u32_to_i32};
+use crate::{
+    invoice::common::generate_invoice_user_id_update,
+    invoice_line::inbound_shipment_line::generate_batch, u32_to_i32,
+};
 use repository::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
 use super::UpdateInboundShipmentLine;
 
 pub fn generate(
+    user_id: &str,
     input: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
-    InvoiceRow {
-        status, store_id, ..
-    }: InvoiceRow,
-) -> (InvoiceLineRow, Option<StockLineRow>, Option<String>) {
+    existing_invoice_row: InvoiceRow,
+) -> (
+    Option<InvoiceRow>,
+    InvoiceLineRow,
+    Option<StockLineRow>,
+    Option<String>,
+) {
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
 
     let mut update_line = generate_line(input, current_line, new_item_option);
 
-    let upsert_batch_option = if status != InvoiceRowStatus::New {
-        let new_batch =
-            generate_batch(&store_id, update_line.clone(), batch_to_delete_id.is_none());
+    let upsert_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
+        let new_batch = generate_batch(
+            &existing_invoice_row.store_id,
+            update_line.clone(),
+            batch_to_delete_id.is_none(),
+        );
         update_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
     } else {
         None
     };
 
-    (update_line, upsert_batch_option, batch_to_delete_id)
+    (
+        generate_invoice_user_id_update(user_id, existing_invoice_row),
+        update_line,
+        upsert_batch_option,
+        batch_to_delete_id,
+    )
 }
 
 fn get_batch_to_delete_id(

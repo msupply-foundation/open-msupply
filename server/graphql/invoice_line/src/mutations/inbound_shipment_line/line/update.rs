@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, ForeignKey, ForeignKeyError, NotAnInboundShipment, RecordNotFound,
 };
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
 
@@ -11,6 +11,7 @@ use repository::InvoiceLine;
 use service::invoice_line::inbound_shipment_line::{
     UpdateInboundShipmentLine as ServiceInput, UpdateInboundShipmentLineError as ServiceError,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 use super::BatchIsReserved;
 
@@ -43,12 +44,20 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateInboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     let response = match service_provider
         .invoice_line_service
-        .update_inbound_shipment_line(&service_context, store_id, input.to_domain())
+        .update_inbound_shipment_line(&service_context, store_id, &user.user_id, input.to_domain())
     {
         Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {

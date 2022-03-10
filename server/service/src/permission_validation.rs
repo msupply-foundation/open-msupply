@@ -24,11 +24,15 @@ pub enum Resource {
     MutateStocktake,
     // requisition
     QueryRequisition,
-    EditRequisition,
+    MutateRequisition,
     // stock take line
     InsertStockTakeLine,
     UpdateStockTakeLine,
     DeleteStockTakeLine,
+    // outbound shipment
+    MutateOutboundShipment,
+    // inbound shipment
+    MutateInboundShipment,
 }
 
 fn default() -> PermissionDSL {
@@ -47,11 +51,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::MutateStocktake, default());
     // requisition
     map.insert(Resource::QueryRequisition, default());
-    map.insert(Resource::EditRequisition, default());
+    map.insert(Resource::MutateRequisition, default());
     // stock take line
     map.insert(Resource::InsertStockTakeLine, default());
     map.insert(Resource::UpdateStockTakeLine, default());
     map.insert(Resource::DeleteStockTakeLine, default());
+    // outbound shipment
+    map.insert(Resource::MutateOutboundShipment, default());
+    // inbound shipment
+    map.insert(Resource::MutateInboundShipment, default());
     map
 }
 

@@ -25,6 +25,7 @@ type OutError = DeleteInboundShipmentError;
 pub fn delete_inbound_shipment(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: DeleteInboundShipment,
 ) -> Result<String, OutError> {
     let invoice_id = ctx
@@ -40,6 +41,7 @@ pub fn delete_inbound_shipment(
                 delete_inbound_shipment_line(
                     ctx,
                     store_id,
+                    user_id,
                     DeleteInboundShipmentLine {
                         id: line.invoice_line_row.id.clone(),
                         invoice_id: input.id.clone(),
