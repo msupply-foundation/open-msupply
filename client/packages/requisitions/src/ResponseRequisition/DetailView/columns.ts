@@ -1,45 +1,83 @@
+import { useEffect } from 'react';
 import {
   useColumns,
   GenericColumnKey,
   SortBy,
-  Column,
   ColumnAlign,
+  zustand,
+  useSortBy,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment } from './../api';
 
-interface UseResponseColumnOptions {
+type Store = {
   sortBy: SortBy<ResponseLineFragment>;
-  onChangeSortBy: (
-    column: Column<ResponseLineFragment>
-  ) => SortBy<ResponseLineFragment>;
-}
+  setSortBy: (sortBy: SortBy<ResponseLineFragment>) => void;
+};
 
-export const useResponseColumns = ({
-  onChangeSortBy,
-  sortBy,
-}: UseResponseColumnOptions): Column<ResponseLineFragment>[] =>
-  useColumns<ResponseLineFragment>(
+const useStore = zustand<Store>(set => ({
+  sortBy: { key: 'itemName', isDesc: false, direction: 'asc' },
+  setSortBy: (sortBy: SortBy<ResponseLineFragment>) =>
+    set(state => ({ ...state, sortBy })),
+}));
+
+const useSharedSortBy = () => {
+  const sharedSortBy = useStore();
+  const { sortBy, onChangeSortBy } = useSortBy<ResponseLineFragment>(
+    sharedSortBy.sortBy
+  );
+
+  useEffect(() => {
+    sharedSortBy.setSortBy(sortBy);
+  }, [sortBy]);
+  return { sortBy, onChangeSortBy };
+};
+
+export const useResponseColumns = () => {
+  const { sortBy, onChangeSortBy } = useSharedSortBy();
+  const columns = useColumns<ResponseLineFragment>(
     [
-      ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
-      ['itemName', { accessor: ({ rowData }) => rowData.item.name }],
-      ['itemUnit', { accessor: ({ rowData }) => rowData.item.unitName }],
+      [
+        'itemCode',
+        {
+          accessor: ({ rowData }) => rowData.item.code,
+          getSortValue: rowData => rowData.item.code,
+        },
+      ],
+      [
+        'itemName',
+        {
+          accessor: ({ rowData }) => rowData.item.name,
+          getSortValue: rowData => rowData.item.name,
+        },
+      ],
+      [
+        'itemUnit',
+        {
+          accessor: ({ rowData }) => rowData.item.unitName,
+          getSortValue: rowData => rowData.item.unitName ?? '',
+        },
+      ],
       [
         'stockOnHand',
         {
           accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
+          getSortValue: rowData => rowData.itemStats.availableStockOnHand,
           label: 'label.our-soh',
           description: 'description.our-soh',
         },
       ],
-      [
-        'stockOnHand',
-        {
-          accessor: ({ rowData }) =>
-            rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand,
-          label: 'label.customer-soh',
-          description: 'description.customer-soh',
-        },
-      ],
+      {
+        key: 'customerStockOnHand',
+        accessor: ({ rowData }) =>
+          rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand,
+        getSortValue: rowData =>
+          rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
+
+        label: 'label.customer-soh',
+        description: 'description.customer-soh',
+        width: 100,
+        align: ColumnAlign.Right,
+      },
       'requestedQuantity',
       {
         label: 'label.already-issued',
@@ -49,6 +87,8 @@ export const useResponseColumns = ({
         align: ColumnAlign.Right,
         accessor: ({ rowData }) =>
           rowData.supplyQuantity - rowData.remainingQuantityToSupply,
+        getSortValue: rowData =>
+          rowData.supplyQuantity - rowData.remainingQuantityToSupply,
       },
       {
         label: 'label.remaining-to-supply',
@@ -57,11 +97,18 @@ export const useResponseColumns = ({
         width: 100,
         align: ColumnAlign.Right,
         accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
+        getSortValue: rowData => rowData.remainingQuantityToSupply,
       },
-      'supplyQuantity',
-      'comment',
+      ['supplyQuantity', { getSortValue: rowData => rowData.supplyQuantity }],
+      ['comment', { getSortValue: rowData => rowData.comment ?? '' }],
       GenericColumnKey.Selection,
     ],
-    { onChangeSortBy, sortBy },
-    [sortBy]
+    {
+      onChangeSortBy,
+      sortBy,
+    },
+    [onChangeSortBy, sortBy]
   );
+
+  return { columns, sortBy, onChangeSortBy };
+};
