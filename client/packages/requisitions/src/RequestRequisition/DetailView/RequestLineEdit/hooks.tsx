@@ -85,14 +85,14 @@ export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
 };
 
 export const useNextRequestLine = (
-  currentItem: ItemWithStatsFragment | null,
-  lines: RequestLineFragment[]
+  currentItem: ItemWithStatsFragment | null
 ) => {
+  const { lines } = useRequestLines();
+
   const nextState: {
     hasNext: boolean;
     next: null | ItemWithStatsFragment;
   } = { hasNext: true, next: null };
-
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
   const next = lines[idx + 1];
   if (!next) {
