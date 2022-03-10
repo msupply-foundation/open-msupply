@@ -4,8 +4,6 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ServiceLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, note?: string | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null } };
-
 export type PartialStockLineFragment = { __typename: 'StockLineNode', id: string, itemId: string, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null };
 
 export type OutboundLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null } | null };
@@ -91,23 +89,6 @@ export type InvoiceCountsQueryVariables = Types.Exact<{
 
 export type InvoiceCountsQuery = { __typename: 'FullQuery', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
-export const ServiceLineFragmentDoc = gql`
-    fragment ServiceLine on InvoiceLineNode {
-  id
-  type
-  invoiceId
-  totalBeforeTax
-  totalAfterTax
-  note
-  item {
-    __typename
-    id
-    name
-    code
-    unitName
-  }
-}
-    `;
 export const PartialStockLineFragmentDoc = gql`
     fragment PartialStockLine on StockLineNode {
   id
