@@ -1,37 +1,61 @@
+import { useEffect } from 'react';
 import { RequestLineFragment } from '../api/operations.generated';
 import {
   useTranslation,
   ColumnAlign,
   useColumns,
-  Column,
-  SortBy,
   GenericColumnKey,
   suggestedQuantity,
+  useSortBy,
+  SortBy,
+  zustand,
 } from '@openmsupply-client/common';
 import { useRequestFields } from '../api';
 
-interface UseRequestColumnOptions {
+type Store = {
   sortBy: SortBy<RequestLineFragment>;
-  onChangeSortBy: (
-    column: Column<RequestLineFragment>
-  ) => SortBy<RequestLineFragment>;
-}
+  setSortBy: (sortBy: SortBy<RequestLineFragment>) => void;
+};
 
-export const useRequestColumns = ({
-  sortBy,
-  onChangeSortBy,
-}: UseRequestColumnOptions): Column<RequestLineFragment>[] => {
+const useStore = zustand<Store>(set => ({
+  sortBy: { key: 'itemName', isDesc: false, direction: 'asc' },
+  setSortBy: (sortBy: SortBy<RequestLineFragment>) =>
+    set(state => ({ ...state, sortBy })),
+}));
+
+const useSharedSortBy = () => {
+  const sharedSortBy = useStore();
+  const { sortBy, onChangeSortBy } = useSortBy<RequestLineFragment>(
+    sharedSortBy.sortBy
+  );
+
+  useEffect(() => {
+    sharedSortBy.setSortBy(sortBy);
+  }, [sortBy]);
+  return { sortBy, onChangeSortBy };
+};
+
+export const useRequestColumns = () => {
   const t = useTranslation('common');
   const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
-  return useColumns<RequestLineFragment>(
+  const { sortBy, onChangeSortBy } = useSharedSortBy();
+  const columns = useColumns<RequestLineFragment>(
     [
       [
         'itemCode',
-        { width: 100, accessor: ({ rowData }) => rowData.item.code },
+        {
+          width: 100,
+          accessor: ({ rowData }) => rowData.item.code,
+          getSortValue: rowData => rowData.item.code,
+        },
       ],
       [
         'itemName',
-        { width: 350, accessor: ({ rowData }) => rowData.item.name },
+        {
+          width: 350,
+          accessor: ({ rowData }) => rowData.item.name,
+          getSortValue: rowData => rowData.item.name,
+        },
       ],
 
       [
@@ -40,6 +64,7 @@ export const useRequestColumns = ({
           width: 150,
           accessor: ({ rowData }) =>
             rowData.itemStats.averageMonthlyConsumption,
+          getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
         },
       ],
 
@@ -62,6 +87,7 @@ export const useRequestColumns = ({
             : '';
           return `${availableStockOnHand} ${monthsString}`;
         },
+        getSortValue: rowData => rowData.itemStats.availableStockOnHand,
       },
 
       {
@@ -76,6 +102,12 @@ export const useRequestColumns = ({
             rowData.itemStats.availableStockOnHand,
             maxMonthsOfStock
           ),
+        getSortValue: rowData =>
+          suggestedQuantity(
+            rowData.itemStats.averageMonthlyConsumption,
+            rowData.itemStats.availableStockOnHand,
+            maxMonthsOfStock
+          ),
       },
       {
         key: 'targetStock',
@@ -84,17 +116,28 @@ export const useRequestColumns = ({
         width: 150,
         accessor: ({ rowData }) =>
           rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
+        getSortValue: rowData =>
+          rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       },
       {
         key: 'requestedQuantity',
         label: 'label.requested-quantity',
         align: ColumnAlign.Right,
         width: 150,
+        getSortValue: rowData => rowData.requestedQuantity,
       },
-      ['comment', { width: 300 }],
+      [
+        'comment',
+        { width: 300, getSortValue: rowData => rowData.comment ?? '' },
+      ],
       GenericColumnKey.Selection,
     ],
-    { onChangeSortBy, sortBy },
-    [sortBy]
+    {
+      onChangeSortBy,
+      sortBy,
+    },
+    [onChangeSortBy, sortBy]
   );
+
+  return { columns, sortBy, onChangeSortBy };
 };

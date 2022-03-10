@@ -93,7 +93,6 @@ export const useNextRequestLine = (
     hasNext: boolean;
     next: null | ItemWithStatsFragment;
   } = { hasNext: true, next: null };
-
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
   const next = lines[idx + 1];
   if (!next) {

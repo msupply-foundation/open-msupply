@@ -108,7 +108,7 @@ export const useStocktakeColumns = ({
       [
         'packSize',
         {
-          width: 50,
+          width: 125,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;

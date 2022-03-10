@@ -7,6 +7,7 @@ import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ItemStatsFragment = { __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } };
 
 export type StockCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']>;
   timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
 }>;
@@ -31,8 +32,12 @@ export const ItemStatsFragmentDoc = gql`
 }
     `;
 export const StockCountsDocument = gql`
-    query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
-  stockCounts(daysTillExpired: $daysTillExpired, timezoneOffset: $timezoneOffset) {
+    query stockCounts($storeId: String!, $daysTillExpired: Int, $timezoneOffset: Int) {
+  stockCounts(
+    storeId: $storeId
+    daysTillExpired: $daysTillExpired
+    timezoneOffset: $timezoneOffset
+  ) {
     expired
     expiringSoon
   }
@@ -40,7 +45,7 @@ export const StockCountsDocument = gql`
     `;
 export const ItemStatsDocument = gql`
     query itemStats($storeId: String!) {
-  items(storeId: $storeId, filter: {isVisible: {equalTo: true}}) {
+  items(storeId: $storeId, filter: {isVisible: true}) {
     ... on ItemConnector {
       nodes {
         ...ItemStats
@@ -58,7 +63,7 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    stockCounts(variables?: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
+    stockCounts(variables: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts');
     },
     itemStats(variables: ItemStatsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemStatsQuery> {
@@ -73,7 +78,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockStockCountsQuery((req, res, ctx) => {
- *   const { daysTillExpired, timezoneOffset } = req.variables;
+ *   const { storeId, daysTillExpired, timezoneOffset } = req.variables;
  *   return res(
  *     ctx.data({ stockCounts })
  *   )

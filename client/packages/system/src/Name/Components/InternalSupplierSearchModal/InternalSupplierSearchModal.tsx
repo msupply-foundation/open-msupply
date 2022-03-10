@@ -9,7 +9,7 @@ export const InternalSupplierSearchModal: FC<NameSearchProps> = ({
   onChange,
 }) => {
   const { data, isLoading } = useInternalSuppliers();
-  const t = useTranslation(['app', 'common']);
+  const t = useTranslation('app');
 
   return (
     <ListSearch

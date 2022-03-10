@@ -16,7 +16,7 @@ export const AppDrawerIcon: React.FC = () => {
     return <MSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />;
 
   const style = drawer.isOpen
-    ? { paddingTop: 20, width: 64 }
+    ? { paddingTop: 20, width: 64, fill: theme.mixins.drawer?.iconColor }
     : { width: 30, fill: theme.mixins.drawer?.iconColor };
 
   return extractSvg(customLogo, style);

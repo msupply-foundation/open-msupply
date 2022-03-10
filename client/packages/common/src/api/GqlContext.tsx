@@ -2,36 +2,33 @@ import React, { FC, useMemo, useEffect, useState, useCallback } from 'react';
 import { createContext } from 'react';
 import { GraphQLClient } from 'graphql-request';
 
-export const createGraphQLClient = (url: string): { client: GraphQLClient } => {
+export const createGql = (url: string): { client: GraphQLClient } => {
   const client = new GraphQLClient(url, { credentials: 'include' });
   return { client };
 };
 
-interface GraphQLClientControl {
+interface GqlControl {
   client: GraphQLClient;
   setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
 }
 
-const GraphQLClientContext = createContext<GraphQLClientControl>({
-  ...createGraphQLClient(''),
+const GqlContext = createContext<GqlControl>({
+  ...createGql(''),
   setHeader: () => {},
   setUrl: () => {},
 });
 
-const { Provider } = GraphQLClientContext;
+const { Provider } = GqlContext;
 
 interface ApiProviderProps {
   url: string;
 }
 
-export const GraphQLClientProvider: FC<ApiProviderProps> = ({
-  url,
-  children,
-}) => {
+export const GqlProvider: FC<ApiProviderProps> = ({ url, children }) => {
   const [{ client }, setApi] = useState<{
     client: GraphQLClient;
-  }>(() => createGraphQLClient(url));
+  }>(() => createGql(url));
 
   const setUrl = useCallback(
     (newUrl: string) => {
@@ -48,7 +45,7 @@ export const GraphQLClientProvider: FC<ApiProviderProps> = ({
   );
 
   useEffect(() => {
-    setApi(createGraphQLClient(url));
+    setApi(createGql(url));
   }, [url]);
 
   const val = useMemo(
@@ -63,7 +60,7 @@ export const GraphQLClientProvider: FC<ApiProviderProps> = ({
   return <Provider value={val}>{children}</Provider>;
 };
 
-export const useGraphQLClient = (): GraphQLClientControl => {
-  const graphQLClientControl = React.useContext(GraphQLClientContext);
+export const useGql = (): GqlControl => {
+  const graphQLClientControl = React.useContext(GqlContext);
   return graphQLClientControl;
 };
