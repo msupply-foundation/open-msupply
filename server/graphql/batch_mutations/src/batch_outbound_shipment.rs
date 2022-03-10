@@ -31,6 +31,8 @@ use service::{
     },
 };
 
+use crate::VecOrNone;
+
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "InsertOutboundShipmentResponseWithId",
@@ -194,20 +196,6 @@ impl BatchOutboundShipmentInput {
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             delete_shipment: delete_outbound_shipments,
             continue_on_error,
-        }
-    }
-}
-
-pub trait VecOrNone<T> {
-    fn vec_or_none(self) -> Option<Vec<T>>;
-}
-
-impl<T> VecOrNone<T> for Vec<T> {
-    fn vec_or_none(self) -> Option<Vec<T>> {
-        if self.is_empty() {
-            None
-        } else {
-            Some(self)
         }
     }
 }
