@@ -1,22 +1,11 @@
 use repository::{RepositoryError, Requisition, RequisitionLine};
 
 use crate::{
-    requisition_line::request_requisition_line::{
-        delete_request_requisition_line, insert_request_requisition_line,
-        update_request_requisition_line, DeleteRequestRequisitionLine,
-        DeleteRequestRequisitionLineError, InsertRequestRequisitionLine,
-        InsertRequestRequisitionLineError, UpdateRequestRequisitionLine,
-        UpdateRequestRequisitionLineError,
-    },
-    service_provider::ServiceContext,
-    InputWithResult, WithDBError,
+    requisition_line::request_requisition_line::*, service_provider::ServiceContext,
+    BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
-use super::{
-    delete_request_requisition, insert_request_requisition, update_request_requisition,
-    DeleteRequestRequisition, DeleteRequestRequisitionError, InsertRequestRequisition,
-    InsertRequestRequisitionError, UpdateRequestRequisition, UpdateRequestRequisitionError,
-};
+use super::*;
 
 #[derive(Clone)]
 pub struct BatchRequestRequisition {
@@ -29,71 +18,46 @@ pub struct BatchRequestRequisition {
     pub continue_on_error: Option<bool>,
 }
 
-#[derive(Debug)]
+pub type InsertRequisitionsResult = Vec<
+    InputWithResult<InsertRequestRequisition, Result<Requisition, InsertRequestRequisitionError>>,
+>;
+
+pub type InsertRequisitionLinesResult = Vec<
+    InputWithResult<
+        InsertRequestRequisitionLine,
+        Result<RequisitionLine, InsertRequestRequisitionLineError>,
+    >,
+>;
+
+pub type UpdateRequisitionLinesResult = Vec<
+    InputWithResult<
+        UpdateRequestRequisitionLine,
+        Result<RequisitionLine, UpdateRequestRequisitionLineError>,
+    >,
+>;
+
+pub type DeleteRequisitionLinesResult = Vec<
+    InputWithResult<
+        DeleteRequestRequisitionLine,
+        Result<String, DeleteRequestRequisitionLineError>,
+    >,
+>;
+
+pub type UpdateRequisitionsResult = Vec<
+    InputWithResult<UpdateRequestRequisition, Result<Requisition, UpdateRequestRequisitionError>>,
+>;
+
+pub type DeleteRequisitionsResult =
+    Vec<InputWithResult<DeleteRequestRequisition, Result<String, DeleteRequestRequisitionError>>>;
+
+#[derive(Debug, Default)]
 pub struct BatchRequestRequisitionResult {
-    pub insert_requisition: Vec<
-        InputWithResult<
-            InsertRequestRequisition,
-            Result<Requisition, InsertRequestRequisitionError>,
-        >,
-    >,
-    pub insert_line: Vec<
-        InputWithResult<
-            InsertRequestRequisitionLine,
-            Result<RequisitionLine, InsertRequestRequisitionLineError>,
-        >,
-    >,
-    pub update_line: Vec<
-        InputWithResult<
-            UpdateRequestRequisitionLine,
-            Result<RequisitionLine, UpdateRequestRequisitionLineError>,
-        >,
-    >,
-    pub delete_line: Vec<
-        InputWithResult<
-            DeleteRequestRequisitionLine,
-            Result<String, DeleteRequestRequisitionLineError>,
-        >,
-    >,
-    pub update_requisition: Vec<
-        InputWithResult<
-            UpdateRequestRequisition,
-            Result<Requisition, UpdateRequestRequisitionError>,
-        >,
-    >,
-    pub delete_requisition: Vec<
-        InputWithResult<DeleteRequestRequisition, Result<String, DeleteRequestRequisitionError>>,
-    >,
-}
-
-pub struct DoMutationResult<T> {
-    pub has_errors: bool,
-    pub results: Vec<T>,
-}
-
-pub fn do_mutations<I, R, E, M>(
-    ctx: &ServiceContext,
-    store_id: &str,
-    inputs: Vec<I>,
-    mutation: M,
-) -> (bool, Vec<InputWithResult<I, Result<R, E>>>)
-where
-    I: Clone,
-    M: Fn(&ServiceContext, &str, I) -> Result<R, E>,
-{
-    let mut has_errors = false;
-    let mut results = vec![];
-
-    for input in inputs {
-        let mutation_result = mutation(ctx, store_id, input.clone());
-        has_errors = mutation_result.is_err();
-        results.push(InputWithResult {
-            input,
-            result: mutation_result,
-        });
-    }
-
-    (has_errors, results)
+    pub insert_requisition: InsertRequisitionsResult,
+    pub insert_line: InsertRequisitionLinesResult,
+    pub update_line: UpdateRequisitionLinesResult,
+    pub delete_line: DeleteRequisitionLinesResult,
+    pub update_requisition: UpdateRequisitionsResult,
+    pub delete_requisition: DeleteRequisitionsResult,
 }
 
 pub fn batch_request_requisition(
@@ -105,87 +69,53 @@ pub fn batch_request_requisition(
         .connection
         .transaction_sync(|_| {
             let continue_on_error = input.continue_on_error.unwrap_or(false);
-            let mut result = BatchRequestRequisitionResult {
-                insert_requisition: vec![],
-                insert_line: vec![],
-                update_line: vec![],
-                delete_line: vec![],
-                update_requisition: vec![],
-                delete_requisition: vec![],
-            };
+            let mut results = BatchRequestRequisitionResult::default();
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.insert_requisition.unwrap_or(vec![]),
-                insert_request_requisition,
-            );
-            result.insert_requisition = results;
+            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id);
 
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations(input.insert_requisition, insert_request_requisition);
+            results.insert_requisition = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.insert_line.unwrap_or(vec![]),
-                insert_request_requisition_line,
-            );
-            result.insert_line = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations(input.insert_line, insert_request_requisition_line);
+            results.insert_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.update_line.unwrap_or(vec![]),
-                update_request_requisition_line,
-            );
-            result.update_line = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations(input.update_line, update_request_requisition_line);
+            results.update_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.delete_line.unwrap_or(vec![]),
-                delete_request_requisition_line,
-            );
-            result.delete_line = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
-            }
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.update_requisition.unwrap_or(vec![]),
-                update_request_requisition,
-            );
-            result.update_requisition = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations(input.delete_line, delete_request_requisition_line);
+            results.delete_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            let (has_error, results) = do_mutations(
-                ctx,
-                store_id,
-                input.delete_requisition.unwrap_or(vec![]),
-                delete_request_requisition,
-            );
-            result.delete_requisition = results;
-
-            if has_error && !continue_on_error {
-                return Err(WithDBError::err(result));
+            let (has_errors, result) = mutations_processor
+                .do_mutations(input.update_requisition, update_request_requisition);
+            results.update_requisition = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
             }
 
-            Ok(result)
+            let (has_errors, result) = mutations_processor
+                .do_mutations(input.delete_requisition, delete_request_requisition);
+            results.delete_requisition = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            Ok(results)
                 as Result<BatchRequestRequisitionResult, WithDBError<BatchRequestRequisitionResult>>
         })
         .map_err(|error| error.to_inner_error())
