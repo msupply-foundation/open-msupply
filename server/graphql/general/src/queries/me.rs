@@ -4,28 +4,13 @@ use graphql_core::{
     ContextExt,
 };
 
+use graphql_types::types::UserNode;
 use service::permission_validation::{Resource, ResourceAccessRequest};
-use service::user_account::{UserAccount, UserAccountService};
-pub struct User {
-    pub user: UserAccount,
-}
-
-#[Object]
-impl User {
-    /// Internal user id
-    pub async fn user_id(&self) -> &str {
-        &self.user.id
-    }
-
-    /// The user's email address
-    pub async fn email(&self) -> &Option<String> {
-        &self.user.email
-    }
-}
+use service::user_account::UserAccountService;
 
 #[derive(Union)]
 pub enum UserResponse {
-    Response(User),
+    Response(UserNode),
 }
 
 pub fn me(ctx: &Context<'_>) -> Result<UserResponse> {
@@ -51,5 +36,5 @@ pub fn me(ctx: &Context<'_>) -> Result<UserResponse> {
         Err(err) => return Err(err.into()),
     };
 
-    Ok(UserResponse::Response(User { user }))
+    Ok(UserResponse::Response(UserNode::from_domain(user)))
 }
