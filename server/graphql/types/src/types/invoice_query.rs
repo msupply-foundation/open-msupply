@@ -11,7 +11,7 @@ use graphql_core::{
 };
 use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, InvoiceStatsRow};
 
-use repository::{Invoice, unknown_user};
+use repository::{unknown_user, Invoice};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -96,15 +96,23 @@ impl InvoiceNode {
             .map(StoreNode::from))
     }
 
-    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+    /// User that last edited invoice, if user is not found in system default unknow user is returned
+    /// Null is returned for transfers, where inbound has not been edited yet
+    /// Null is also returned for system created invoices like inventory adjustments
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
 
-        let user_option = match &self.row().user_id {
-            Some(user_id) => loader.load_one(user_id.clone()).await?,
-            None => None,
+        let user_id = match &self.row().user_id {
+            Some(user_id) => user_id,
+            None => return Ok(None),
         };
 
-        Ok(UserNode::from_domain(user_option.unwrap_or(unknown_user())))
+        let result = loader
+            .load_one(user_id.clone())
+            .await?
+            .unwrap_or(unknown_user());
+
+        Ok(Some(UserNode::from_domain(result)))
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {

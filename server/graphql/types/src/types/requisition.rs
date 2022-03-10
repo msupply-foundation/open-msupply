@@ -68,15 +68,22 @@ impl RequisitionNode {
         DateTime::<Utc>::from_utc(self.row().created_datetime.clone(), Utc)
     }
 
-    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+    /// User that last edited requisition, if user is not found in system default unknow user is returned
+    /// Null is returned for transfers, where response requisition has not been edited yet
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
 
-        let user_option = match &self.row().user_id {
-            Some(user_id) => loader.load_one(user_id.clone()).await?,
-            None => None,
+        let user_id = match &self.row().user_id {
+            Some(user_id) => user_id,
+            None => return Ok(None),
         };
 
-        Ok(UserNode::from_domain(user_option.unwrap_or(unknown_user())))
+        let result = loader
+            .load_one(user_id.clone())
+            .await?
+            .unwrap_or(unknown_user());
+
+        Ok(Some(UserNode::from_domain(result)))
     }
 
     /// Applicable to request requisition only
@@ -299,7 +306,7 @@ mod test {
                 RequisitionNode {
                     requisition: Requisition {
                         requisition_row: inline_init(|r: &mut RequisitionRow| {
-                            r.user_id = Some("invalid".to_string());
+                            r.user_id = Some("does not exist".to_string());
                         }),
                         name_row: NameRow::default(),
                     },
@@ -328,7 +335,7 @@ mod test {
             },
             "testQueryUserNotAssociated": {
                 "user": {
-                    "userId": unknown_user().id
+                    "userId": null
                 }
             },
         }
