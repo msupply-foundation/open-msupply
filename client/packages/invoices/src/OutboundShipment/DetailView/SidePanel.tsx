@@ -120,10 +120,12 @@ export const PricingSection = () => {
   return (
     <DetailPanelSection title={t('heading.charges')}>
       <Grid container gap={0.5}>
-        <OutboundServiceLineEdit
-          isOpen={serviceLineModal.isOn}
-          onClose={serviceLineModal.toggleOff}
-        />
+        {serviceLineModal.isOn && (
+          <OutboundServiceLineEdit
+            isOpen={serviceLineModal.isOn}
+            onClose={serviceLineModal.toggleOff}
+          />
+        )}
 
         <PanelRow>
           <PanelLabel fontWeight="bold">

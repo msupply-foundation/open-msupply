@@ -29,6 +29,8 @@ export const createPlaceholderRow = (
   isCreated: true,
   isUpdated: false,
   invoiceId,
+  totalAfterTax: 0,
+  totalBeforeTax: 0,
   type: InvoiceLineNodeType.UnallocatedStock,
   item: { id: itemId, code: '', name: '', __typename: 'ItemNode' },
 });
@@ -55,7 +57,8 @@ export const createDraftOutboundLineFromStockLine = ({
   packSize: stockLine?.packSize ?? 0,
   id: generateUUID(),
   invoiceId,
-
+  totalAfterTax: 0,
+  totalBeforeTax: 0,
   __typename: 'InvoiceLineNode',
 
   // TODO: StockLineNode.Item needed from API to fill this correctly.

@@ -16,6 +16,7 @@ interface ItemSearchInputProps {
   extraFilter?: (item: ServiceItemRowFragment) => boolean;
   width?: number;
   autoFocus?: boolean;
+  refetchOnMount?: boolean;
 }
 
 const filterOptions = {
@@ -43,8 +44,9 @@ export const ServiceItemSearchInput: FC<ItemSearchInputProps> = ({
   disabled = false,
   width = 850,
   autoFocus = false,
+  refetchOnMount = true,
 }) => {
-  const { data, isLoading } = useServiceItems();
+  const { data, isLoading } = useServiceItems({ refetchOnMount });
   const t = useTranslation('common');
   const selectControl = useToggle();
 
@@ -53,6 +55,7 @@ export const ServiceItemSearchInput: FC<ItemSearchInputProps> = ({
 
   return (
     <Autocomplete
+      clearable={false}
       autoFocus={autoFocus}
       disabled={disabled}
       onOpen={selectControl.toggleOn}

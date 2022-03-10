@@ -132,6 +132,26 @@ const outboundParsers = {
   toDeletePlaceholder: (line: DraftOutboundLine) => ({
     id: line.id,
   }),
+  toInsertServiceCharge: (line: DraftOutboundLine) => ({
+    id: line.id,
+    invoiceId: line.invoiceId,
+    itemId: line.item.id,
+    totalBeforeTax: line.totalBeforeTax,
+    totalAfterTax: line.totalBeforeTax,
+    note: line.note,
+  }),
+  toUpdateServiceCharge: (line: DraftOutboundLine) => ({
+    id: line.id,
+    invoiceId: line.invoiceId,
+    itemId: line.item.id,
+    totalBeforeTax: line.totalBeforeTax,
+    totalAfterTax: line.totalBeforeTax,
+    note: line.note,
+  }),
+  toDeleteServiceCharge: (line: DraftOutboundLine) => ({
+    id: line.id,
+    invoiceId: line.invoiceId,
+  }),
 };
 
 export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
@@ -233,9 +253,9 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update invoice');
   },
-  updateLines: async (draftStocktakeLines: DraftOutboundLine[]) => {
+  updateLines: async (draftOutboundLines: DraftOutboundLine[]) => {
     const input = {
-      insertOutboundShipmentLines: draftStocktakeLines
+      insertOutboundShipmentLines: draftOutboundLines
         .filter(
           ({ type, isCreated, numberOfPacks }) =>
             isCreated &&
@@ -243,7 +263,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks > 0
         )
         .map(outboundParsers.toInsertLine),
-      updateOutboundShipmentLines: draftStocktakeLines
+      updateOutboundShipmentLines: draftOutboundLines
         .filter(
           ({ type, isCreated, isUpdated, numberOfPacks }) =>
             !isCreated &&
@@ -252,7 +272,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks > 0
         )
         .map(outboundParsers.toUpdateLine),
-      deleteOutboundShipmentLines: draftStocktakeLines
+      deleteOutboundShipmentLines: draftOutboundLines
         .filter(
           ({ type, isCreated, isUpdated, numberOfPacks }) =>
             !isCreated &&
@@ -261,7 +281,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks === 0
         )
         .map(outboundParsers.toDeleteLine),
-      insertOutboundShipmentUnallocatedLines: draftStocktakeLines
+      insertOutboundShipmentUnallocatedLines: draftOutboundLines
         .filter(
           ({ type, isCreated, numberOfPacks }) =>
             type === InvoiceLineNodeType.UnallocatedStock &&
@@ -269,7 +289,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks > 0
         )
         .map(outboundParsers.toInsertPlaceholder),
-      updateOutboundShipmentUnallocatedLines: draftStocktakeLines
+      updateOutboundShipmentUnallocatedLines: draftOutboundLines
         .filter(
           ({ type, isCreated, isUpdated, numberOfPacks }) =>
             type === InvoiceLineNodeType.UnallocatedStock &&
@@ -278,7 +298,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks > 0
         )
         .map(outboundParsers.toUpdatePlaceholder),
-      deleteOutboundShipmentUnallocatedLines: draftStocktakeLines
+      deleteOutboundShipmentUnallocatedLines: draftOutboundLines
         .filter(
           ({ type, numberOfPacks, isUpdated, isCreated }) =>
             type === InvoiceLineNodeType.UnallocatedStock &&
@@ -287,6 +307,27 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
             !isCreated
         )
         .map(outboundParsers.toDeletePlaceholder),
+      insertOutboundShipmentServiceLines: draftOutboundLines
+        .filter(
+          ({ type, isCreated, isDeleted }) =>
+            type === InvoiceLineNodeType.Service && !isDeleted && isCreated
+        )
+        .map(outboundParsers.toInsertServiceCharge),
+      updateOutboundShipmentServiceLines: draftOutboundLines
+        .filter(
+          ({ type, isUpdated, isCreated, isDeleted }) =>
+            type === InvoiceLineNodeType.Service &&
+            !isDeleted &&
+            !isCreated &&
+            isUpdated
+        )
+        .map(outboundParsers.toUpdateServiceCharge),
+      deleteOutboundShipmentServiceLines: draftOutboundLines
+        .filter(
+          ({ type, isCreated, isDeleted }) =>
+            type === InvoiceLineNodeType.Service && isDeleted && !isCreated
+        )
+        .map(outboundParsers.toDeleteServiceCharge),
     };
 
     const result = await sdk.upsertOutboundShipment({ storeId, input });

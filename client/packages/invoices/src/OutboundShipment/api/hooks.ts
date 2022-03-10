@@ -31,7 +31,7 @@ import {
   OutboundFragment,
   OutboundLineFragment,
 } from './operations.generated';
-import { canDeleteInvoice } from '../../utils';
+import { canDeleteInvoice, isA } from '../../utils';
 
 export const useOutboundApi = () => {
   const keys = {
@@ -191,7 +191,7 @@ export const useOutboundLines = (
     (invoice: OutboundFragment) => {
       return itemId
         ? invoice.lines.nodes.filter(({ item }) => itemId === item.id)
-        : invoice.lines.nodes;
+        : invoice.lines.nodes.filter(isA.stockOutLine);
     },
     [itemId]
   );
@@ -203,11 +203,21 @@ export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
   const selectLines = useCallback((invoice: OutboundFragment) => {
     const { lines } = invoice;
 
-    return Object.entries(groupBy(lines.nodes, line => line.item.id)).map(
+    const stockLines = lines.nodes.filter(isA.stockInLine);
+
+    return Object.entries(groupBy(stockLines, line => line.item.id)).map(
       ([itemId, lines]) => {
         return { id: itemId, itemId, lines };
       }
     );
+  }, []);
+
+  return useOutboundSelector(selectLines);
+};
+
+export const useOutboundServiceLines = () => {
+  const selectLines = useCallback((invoice: OutboundFragment) => {
+    return invoice.lines.nodes.filter(isA.serviceLine);
   }, []);
 
   return useOutboundSelector(selectLines);

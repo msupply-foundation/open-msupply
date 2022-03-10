@@ -1,6 +1,6 @@
 import { getItemQueries, ListParams } from './../../api';
 import { useAuthContext, useGraphQLClient } from '@openmsupply-client/common';
-import { getSdk } from '../../operations.generated';
+import { getSdk, ItemRowFragment } from '../../operations.generated';
 
 export const useItemApi = () => {
   const { client } = useGraphQLClient();
@@ -10,7 +10,8 @@ export const useItemApi = () => {
     base: () => ['item'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
-    paramList: <T>(params: ListParams<T>) => [...keys.list(), params] as const,
+    paramList: (params: ListParams<ItemRowFragment>) =>
+      [...keys.list(), params] as const,
   };
 
   const queries = getItemQueries(getSdk(client), storeId);

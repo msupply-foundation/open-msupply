@@ -98,6 +98,8 @@
   "label.invoice-number": "Invnum",
   "label.issue": "Issue",
   "label.item": "Item",
+  "label.delete": "Delete",
+  "messages.delete-this-line": "Delete this line",
   "label.line": "Line {{line, number}}",
   "label.line-total": "Line total",
   "label.location": "Location",
