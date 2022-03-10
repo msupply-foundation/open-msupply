@@ -43,6 +43,7 @@ export const useResponseColumns = ({
       'requestedQuantity',
       {
         label: 'label.already-issued',
+        description: 'description.already-issued',
         key: 'alreadyIssued',
         width: 100,
         align: ColumnAlign.Right,
@@ -51,6 +52,7 @@ export const useResponseColumns = ({
       },
       {
         label: 'label.remaining-to-supply',
+        description: 'description.remaining-to-supply',
         key: 'remainingToSupply',
         width: 100,
         align: ColumnAlign.Right,
