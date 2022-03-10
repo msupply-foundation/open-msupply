@@ -2,24 +2,12 @@ use async_graphql::*;
 use graphql_core::ContextExt;
 use graphql_requisition::mutations::request_requisition;
 use graphql_requisition_line::mutations::request_requisition_line;
-use repository::Requisition;
-use repository::RequisitionLine;
-use service::requisition::request_requisition::DeleteRequestRequisition;
-use service::requisition::request_requisition::DeleteRequestRequisitionError;
-use service::requisition_line::request_requisition_line::InsertRequestRequisitionLine;
-use service::requisition_line::request_requisition_line::InsertRequestRequisitionLineError;
-use service::requisition_line::request_requisition_line::UpdateRequestRequisitionLine;
-use service::requisition_line::request_requisition_line::UpdateRequestRequisitionLineError;
-use service::InputWithResult;
-use service::{
-    requisition::request_requisition::{
-        BatchRequestRequisition, BatchRequestRequisitionResult, InsertRequestRequisition,
-        InsertRequestRequisitionError, UpdateRequestRequisition, UpdateRequestRequisitionError,
-    },
-    requisition_line::request_requisition_line::{
-        DeleteRequestRequisitionLine, DeleteRequestRequisitionLineError,
-    },
-};
+use service::requisition::request_requisition::*;
+
+use crate::VecOrNone;
+
+type ServiceResult = BatchRequestRequisitionResult;
+type ServiceInput = BatchRequestRequisition;
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
@@ -51,21 +39,30 @@ pub struct MutationWithId<T: OutputType> {
     pub response: T,
 }
 
+type InsertRequisitionsResponse = Option<Vec<MutationWithId<request_requisition::InsertResponse>>>;
+type InsertRequisitionLinesResponse =
+    Option<Vec<MutationWithId<request_requisition_line::InsertResponse>>>;
+type UpdateRequisitionLinesResponse =
+    Option<Vec<MutationWithId<request_requisition_line::UpdateResponse>>>;
+type DeleteRequisitionLinesResponse =
+    Option<Vec<MutationWithId<request_requisition_line::DeleteResponse>>>;
+type UpdateRequisitionsResponse = Option<Vec<MutationWithId<request_requisition::UpdateResponse>>>;
+type DeleteRequisitionsResponse = Option<Vec<MutationWithId<request_requisition::DeleteResponse>>>;
+
 #[derive(SimpleObject)]
-pub struct BatchRequestRequisitionResponse {
-    insert_request_requisitions: Option<Vec<MutationWithId<request_requisition::InsertResponse>>>,
-    insert_request_requisition_lines:
-        Option<Vec<MutationWithId<request_requisition_line::InsertResponse>>>,
-    update_request_requisition_lines:
-        Option<Vec<MutationWithId<request_requisition_line::UpdateResponse>>>,
-    delete_request_requisition_lines:
-        Option<Vec<MutationWithId<request_requisition_line::DeleteResponse>>>,
-    update_request_requisitions: Option<Vec<MutationWithId<request_requisition::UpdateResponse>>>,
-    delete_request_requisitions: Option<Vec<MutationWithId<request_requisition::DeleteResponse>>>,
+#[graphql(name = "BatchRequestRequisitionResponse")]
+pub struct BatchResponse {
+    insert_request_requisitions: InsertRequisitionsResponse,
+    insert_request_requisition_lines: InsertRequisitionLinesResponse,
+    update_request_requisition_lines: UpdateRequisitionLinesResponse,
+    delete_request_requisition_lines: DeleteRequisitionLinesResponse,
+    update_request_requisitions: UpdateRequisitionsResponse,
+    delete_request_requisitions: DeleteRequisitionsResponse,
 }
 
 #[derive(InputObject)]
-pub struct BatchRequestRequisitionInput {
+#[graphql(name = "BatchRequestRequisitionInput")]
+pub struct BatchInput {
     pub insert_request_requisitions: Option<Vec<request_requisition::InsertInput>>,
     pub insert_request_requisition_lines: Option<Vec<request_requisition_line::InsertInput>>,
     pub update_request_requisition_lines: Option<Vec<request_requisition_line::UpdateInput>>,
@@ -75,11 +72,7 @@ pub struct BatchRequestRequisitionInput {
     pub continue_on_error: Option<bool>,
 }
 
-pub fn batch_request_requisition(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: BatchRequestRequisitionInput,
-) -> Result<BatchRequestRequisitionResponse> {
+pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<BatchResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
@@ -87,12 +80,12 @@ pub fn batch_request_requisition(
         .requisition_service
         .batch_request_requisition(&service_context, store_id, input.to_domain())?;
 
-    Ok(BatchRequestRequisitionResponse::from_domain(response)?)
+    Ok(BatchResponse::from_domain(response)?)
 }
 
-impl BatchRequestRequisitionInput {
-    fn to_domain(self) -> BatchRequestRequisition {
-        let BatchRequestRequisitionInput {
+impl BatchInput {
+    fn to_domain(self) -> ServiceInput {
+        let BatchInput {
             insert_request_requisitions,
             insert_request_requisition_lines,
             update_request_requisition_lines,
@@ -102,7 +95,7 @@ impl BatchRequestRequisitionInput {
             continue_on_error,
         } = self;
 
-        BatchRequestRequisition {
+        ServiceInput {
             insert_requisition: insert_request_requisitions
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             insert_line: insert_request_requisition_lines
@@ -120,195 +113,153 @@ impl BatchRequestRequisitionInput {
     }
 }
 
-pub trait VecOrNone<T> {
-    fn vec_or_none(self) -> Option<Vec<T>>;
-}
-
-impl<T> VecOrNone<T> for Vec<T> {
-    fn vec_or_none(self) -> Option<Vec<T>> {
-        if self.is_empty() {
-            None
-        } else {
-            Some(self)
-        }
-    }
-}
-
-impl BatchRequestRequisitionResponse {
+impl BatchResponse {
     fn from_domain(
-        BatchRequestRequisitionResult {
+        ServiceResult {
             insert_requisition,
             insert_line,
             update_line,
             delete_line,
             update_requisition,
             delete_requisition,
-        }: BatchRequestRequisitionResult,
-    ) -> Result<BatchRequestRequisitionResponse> {
-        let insert_request_requisitions_result: Result<
-            Vec<MutationWithId<request_requisition::InsertResponse>>,
-        > = insert_requisition
-            .into_iter()
-            .map(map_insert_requisition)
-            .collect();
-
-        let insert_request_requisition_lines_result: Result<
-            Vec<MutationWithId<request_requisition_line::InsertResponse>>,
-        > = insert_line.into_iter().map(map_insert_line).collect();
-
-        let update_request_requisition_lines_result: Result<
-            Vec<MutationWithId<request_requisition_line::UpdateResponse>>,
-        > = update_line.into_iter().map(map_update_line).collect();
-
-        let delete_request_requisition_lines_result: Result<
-            Vec<MutationWithId<request_requisition_line::DeleteResponse>>,
-        > = delete_line.into_iter().map(map_delete_line).collect();
-
-        let update_request_requisitions_result: Result<
-            Vec<MutationWithId<request_requisition::UpdateResponse>>,
-        > = update_requisition
-            .into_iter()
-            .map(map_update_requisition)
-            .collect();
-
-        let delete_request_requisitions_result: Result<
-            Vec<MutationWithId<request_requisition::DeleteResponse>>,
-        > = delete_requisition
-            .into_iter()
-            .map(map_delete_requisition)
-            .collect();
-
-        let result = BatchRequestRequisitionResponse {
-            insert_request_requisitions: insert_request_requisitions_result?.vec_or_none(),
-            insert_request_requisition_lines: insert_request_requisition_lines_result?
-                .vec_or_none(),
-            update_request_requisition_lines: update_request_requisition_lines_result?
-                .vec_or_none(),
-            delete_request_requisition_lines: delete_request_requisition_lines_result?
-                .vec_or_none(),
-            update_request_requisitions: update_request_requisitions_result?.vec_or_none(),
-            delete_request_requisitions: delete_request_requisitions_result?.vec_or_none(),
+        }: ServiceResult,
+    ) -> Result<BatchResponse> {
+        let result = BatchResponse {
+            insert_request_requisitions: map_insert_requisitions(insert_requisition)?,
+            insert_request_requisition_lines: map_insert_lines(insert_line)?,
+            update_request_requisition_lines: map_update_lines(update_line)?,
+            delete_request_requisition_lines: map_delete_lines(delete_line)?,
+            update_request_requisitions: map_update_requisitions(update_requisition)?,
+            delete_request_requisitions: map_delete_requisitions(delete_requisition)?,
         };
 
         Ok(result)
     }
 }
 
-fn map_insert_requisition(
-    from: InputWithResult<
-        InsertRequestRequisition,
-        Result<Requisition, InsertRequestRequisitionError>,
-    >,
-) -> Result<MutationWithId<request_requisition::InsertResponse>> {
-    let response = match request_requisition::insert::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
-
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+fn to_standard_error<I>(input: I, error: Error) -> Error
+where
+    I: std::fmt::Debug,
+{
+    let input_string = format!("{:#?}", input);
+    error.extend_with(|_, e| e.set("input", input_string))
 }
 
-fn map_update_requisition(
-    from: InputWithResult<
-        UpdateRequestRequisition,
-        Result<Requisition, UpdateRequestRequisitionError>,
-    >,
-) -> Result<MutationWithId<request_requisition::UpdateResponse>> {
-    let response = match request_requisition::update::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_insert_requisitions(
+    responses: InsertRequisitionsResult,
+) -> Result<InsertRequisitionsResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match request_requisition::insert::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
 }
 
-fn map_delete_requisition(
-    from: InputWithResult<DeleteRequestRequisition, Result<String, DeleteRequestRequisitionError>>,
-) -> Result<MutationWithId<request_requisition::DeleteResponse>> {
-    let response = match request_requisition::delete::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_update_requisitions(
+    responses: UpdateRequisitionsResult,
+) -> Result<UpdateRequisitionsResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match request_requisition::update::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
 }
 
-fn map_insert_line(
-    from: InputWithResult<
-        InsertRequestRequisitionLine,
-        Result<RequisitionLine, InsertRequestRequisitionLineError>,
-    >,
-) -> Result<MutationWithId<request_requisition_line::InsertResponse>> {
-    let response = match request_requisition_line::insert::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_delete_requisitions(
+    responses: DeleteRequisitionsResult,
+) -> Result<DeleteRequisitionsResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match request_requisition::delete::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
 }
 
-fn map_update_line(
-    from: InputWithResult<
-        UpdateRequestRequisitionLine,
-        Result<RequisitionLine, UpdateRequestRequisitionLineError>,
-    >,
-) -> Result<MutationWithId<request_requisition_line::UpdateResponse>> {
-    let response = match request_requisition_line::update::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_insert_lines(
+    responses: InsertRequisitionLinesResult,
+) -> Result<InsertRequisitionLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match request_requisition_line::insert::map_response(response.result)
+        {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
 }
 
-fn map_delete_line(
-    from: InputWithResult<
-        DeleteRequestRequisitionLine,
-        Result<String, DeleteRequestRequisitionLineError>,
-    >,
-) -> Result<MutationWithId<request_requisition_line::DeleteResponse>> {
-    let response = match request_requisition_line::delete::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_update_lines(
+    responses: UpdateRequisitionLinesResult,
+) -> Result<UpdateRequisitionLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match request_requisition_line::update::map_response(response.result)
+        {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
+}
+
+fn map_delete_lines(
+    responses: DeleteRequisitionLinesResult,
+) -> Result<DeleteRequisitionLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match request_requisition_line::delete::map_response(response.result)
+        {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
 }
 
 #[cfg(test)]
@@ -344,10 +295,10 @@ mod test {
     use crate::BatchMutations;
 
     type ServiceInput = BatchRequestRequisition;
-    type ServiceResponse = BatchRequestRequisitionResult;
+    type ServiceResult = BatchRequestRequisitionResult;
 
     type Method =
-        dyn Fn(&str, ServiceInput) -> Result<ServiceResponse, RepositoryError> + Sync + Send;
+        dyn Fn(&str, ServiceInput) -> Result<ServiceResult, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<Method>);
 
@@ -357,7 +308,7 @@ mod test {
             _: &ServiceContext,
             store_id: &str,
             input: ServiceInput,
-        ) -> Result<ServiceResponse, RepositoryError> {
+        ) -> Result<ServiceResult, RepositoryError> {
             self.0(store_id, input)
         }
     }
@@ -527,7 +478,7 @@ mod test {
 
         // Structured Errors
         let test_service = TestService(Box::new(|_, _| {
-            Ok(BatchRequestRequisitionResult {
+            Ok(ServiceResult {
                 insert_requisition: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertRequestRequisition| {
                         input.id = "id1".to_string()
@@ -579,7 +530,7 @@ mod test {
 
         // Standard Error
         let test_service = TestService(Box::new(|_, _| {
-            Ok(BatchRequestRequisitionResult {
+            Ok(ServiceResult {
                 insert_requisition: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertRequestRequisition| {
                         input.id = "id1".to_string()
@@ -646,7 +597,7 @@ mod test {
         );
 
         let test_service = TestService(Box::new(|_, _| {
-            Ok(BatchRequestRequisitionResult {
+            Ok(ServiceResult {
                 insert_requisition: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
