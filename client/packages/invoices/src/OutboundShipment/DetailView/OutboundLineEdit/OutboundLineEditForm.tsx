@@ -12,7 +12,10 @@ import {
   Box,
   Typography,
 } from '@openmsupply-client/common';
-import { ItemSearchInput, ItemRowFragment } from '@openmsupply-client/system';
+import {
+  StockItemSearchInput,
+  ItemRowFragment,
+} from '@openmsupply-client/system';
 import { PackSizeController } from './hooks';
 import { useOutboundRows } from '../../api';
 
@@ -48,12 +51,16 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       <ModalRow>
         <ModalLabel label={t('label.item')} />
         <Grid item flex={1}>
-          <ItemSearchInput
+          <StockItemSearchInput
             autoFocus={!item}
             disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
-            extraFilter={item => !items?.some(({ id }) => id === item.id)}
+            extraFilter={
+              disabled
+                ? undefined
+                : item => !items?.some(({ id }) => id === item.id)
+            }
           />
         </Grid>
       </ModalRow>

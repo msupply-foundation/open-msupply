@@ -1,11 +1,5 @@
-import { ItemSortFieldInput } from '@openmsupply-client/common';
 import { ItemLike } from './types';
 import { ItemRowFragment } from './api';
-
-export const getItemSortField = (sortField: string): ItemSortFieldInput => {
-  if (sortField === 'name') return ItemSortFieldInput.Name;
-  return ItemSortFieldInput.Code;
-};
 
 export const toItemRow = (line: ItemLike): ItemRowFragment => ({
   __typename: 'ItemNode',
