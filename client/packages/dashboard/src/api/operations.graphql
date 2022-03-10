@@ -6,8 +6,13 @@ fragment ItemStats on ItemNode {
   }
 }
 
-query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
+query stockCounts(
+  $storeId: String!
+  $daysTillExpired: Int
+  $timezoneOffset: Int
+) {
   stockCounts(
+    storeId: $storeId
     daysTillExpired: $daysTillExpired
     timezoneOffset: $timezoneOffset
   ) {
@@ -17,7 +22,7 @@ query stockCounts($daysTillExpired: Int, $timezoneOffset: Int) {
 }
 
 query itemStats($storeId: String!) {
-  items(storeId: $storeId, filter: { isVisible: { equalTo: true } }) {
+  items(storeId: $storeId, filter: { isVisible: true }) {
     ... on ItemConnector {
       nodes {
         ...ItemStats

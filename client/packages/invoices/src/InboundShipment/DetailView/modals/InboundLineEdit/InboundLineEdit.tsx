@@ -135,7 +135,9 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const t = useTranslation('replenishment');
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
-  const nextItem = useNextItem(currentItem?.id ?? '');
+  const { next: nextItem, disabled: nextDisabled } = useNextItem(
+    currentItem?.id ?? ''
+  );
   const isMediumScreen = useIsMediumScreen();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const { Modal } = useDialog({ isOpen, onClose });
@@ -170,6 +172,9 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
     return () => window.removeEventListener('keydown', keybindings);
   }, [currentItem]);
 
+  const okNextDisabled =
+    (mode === ModalMode.Update && nextDisabled) || !currentItem;
+
   return (
     <TableProvider createStore={createTableStore}>
       <Modal
@@ -182,6 +187,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         nextButton={
           <DialogButton
             variant="next"
+            disabled={okNextDisabled}
             onClick={async () => {
               await saveLines();
               if (mode === ModalMode.Update && nextItem) {
@@ -196,6 +202,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         okButton={
           <DialogButton
             variant="ok"
+            disabled={!currentItem}
             onClick={async () => {
               try {
                 await saveLines();
