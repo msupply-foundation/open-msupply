@@ -73,7 +73,7 @@ fn generate(
         stocktake_date,
         status: StocktakeStatus::New,
         created_datetime: Utc::now().naive_utc(),
-        user_id: Some(get_default_user_id()),
+        user_id: get_default_user_id(),
         store_id: store_id.to_string(),
         is_locked: is_locked.unwrap_or(false),
         // Default
@@ -187,7 +187,7 @@ mod test {
         assert_eq!(
             new_row,
             inline_edit(&new_row, |mut i: StocktakeRow| {
-                i.user_id = Some(get_default_user_id());
+                i.user_id = get_default_user_id();
                 i.id = "new_stocktake".to_string();
                 i.comment = Some("comment".to_string());
                 i.description = Some("description".to_string());
