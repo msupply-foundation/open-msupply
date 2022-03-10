@@ -85,10 +85,9 @@ export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
 };
 
 export const useNextRequestLine = (
-  currentItem: ItemWithStatsFragment | null
+  currentItem: ItemWithStatsFragment | null,
+  lines: RequestLineFragment[]
 ) => {
-  const { lines } = useRequestLines();
-
   const nextState: {
     hasNext: boolean;
     next: null | ItemWithStatsFragment;
