@@ -39,6 +39,8 @@ const testLine = ({
       id,
       expiryDate,
       sellPricePerPack: 0,
+      totalBeforeTax: 0,
+      totalAfterTax: 0,
       item: {
         id: itemId,
         code: '',

@@ -5,3 +5,4 @@ export * from './useItemApi';
 export * from './useStockItemsWithStats';
 export * from './useServiceItems';
 export * from './useStockItems';
+export * from './useDefaultServiceItem';

@@ -1,5 +1,6 @@
 import { InboundRowFragment } from './InboundShipment/api/operations.generated';
 import {
+  InvoiceLineNodeType,
   LocaleKey,
   InvoiceNodeStatus,
   useTranslation,
@@ -133,3 +134,14 @@ export const inboundLinesToSummaryItems = (
 export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;
+
+export const isA = {
+  stockOutLine: (line: { type: InvoiceLineNodeType }) =>
+    line.type === InvoiceLineNodeType.StockOut,
+  stockInLine: (line: { type: InvoiceLineNodeType }) =>
+    line.type === InvoiceLineNodeType.StockIn,
+  serviceLine: (line: { type: InvoiceLineNodeType }) =>
+    line.type === InvoiceLineNodeType.Service,
+  placeholderLine: (line: { type: InvoiceLineNodeType }) =>
+    line.type === InvoiceLineNodeType.UnallocatedStock,
+};

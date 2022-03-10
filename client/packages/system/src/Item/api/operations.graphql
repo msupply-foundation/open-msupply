@@ -3,6 +3,7 @@ fragment ServiceItemRow on ItemNode {
   id
   code
   name
+  unitName
 }
 
 fragment StockLine on StockLineNode {

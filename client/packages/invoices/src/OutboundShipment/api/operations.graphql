@@ -1,3 +1,19 @@
+fragment ServiceLine on InvoiceLineNode {
+  id
+  type
+  invoiceId
+  totalBeforeTax
+  totalAfterTax
+  note
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+  }
+}
+
 fragment PartialStockLine on StockLineNode {
   id
   itemId
@@ -26,6 +42,9 @@ fragment OutboundLine on InvoiceLineNode {
   packSize
   invoiceId
   sellPricePerPack
+  note
+  totalBeforeTax
+  totalAfterTax
   note
 
   item {
