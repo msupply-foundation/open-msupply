@@ -1,21 +1,19 @@
 use async_graphql::*;
 
 use chrono::NaiveDate;
-use graphql_core::simple_generic_errors::StocktakeIsLocked;
+use graphql_core::simple_generic_errors::{CannotEditStocktake, StocktakeIsLocked};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{StocktakeLineConnector, StocktakeNode, StocktakeNodeStatus};
-use repository::StocktakeLine;
+use repository::{Stocktake, StocktakeLine};
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
-    service_provider::{ServiceContext, ServiceProvider},
-    stocktake::update::{
-        UpdateStocktakeError as ServiceError, UpdateStocktakeInput as UpdateStocktake,
-    },
+    stocktake::{UpdateStocktake as ServiceInput, UpdateStocktakeError as ServiceError},
 };
 
 #[derive(InputObject)]
-pub struct UpdateStocktakeInput {
+#[graphql(name = "UpdateStocktakeInput")]
+pub struct UpdateInput {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
@@ -37,28 +35,28 @@ impl SnapshotCountCurrentCountMismatch {
 }
 
 #[derive(Interface)]
+#[graphql(name = "UpdateStocktakeErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
-pub enum UpdateStocktakeErrorInterface {
+pub enum UpdateErrorInterface {
     SnapshotCountCurrentCountMismatch(SnapshotCountCurrentCountMismatch),
     StocktakeIsLocked(StocktakeIsLocked),
+    CannotEditStocktake(CannotEditStocktake),
 }
 
 #[derive(SimpleObject)]
-pub struct UpdateStocktakeError {
-    pub error: UpdateStocktakeErrorInterface,
+#[graphql(name = "UpdateStocktakeError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
 }
 
 #[derive(Union)]
-pub enum UpdateStocktakeResponse {
+#[graphql(name = "UpdateStocktakeResponse")]
+pub enum UpdateResponse {
+    Error(UpdateError),
     Response(StocktakeNode),
-    Error(UpdateStocktakeError),
 }
 
-pub fn update_stocktake(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: UpdateStocktakeInput,
-) -> Result<UpdateStocktakeResponse> {
+pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -68,72 +66,76 @@ pub fn update_stocktake(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-    do_update_stocktake(&service_ctx, service_provider, store_id, input)
+    let service_context = service_provider.context()?;
+    map_response(service_provider.stocktake_service.update_stocktake(
+        &service_context,
+        store_id,
+        input.to_domain(),
+    ))
 }
 
-pub fn do_update_stocktake(
-    service_ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    store_id: &str,
-    input: UpdateStocktakeInput,
-) -> Result<UpdateStocktakeResponse> {
-    let service = &service_provider.stocktake_service;
-    let id = input.id.clone();
-    match service.update_stocktake(&service_ctx, store_id, to_domain(input)) {
-        Ok(stocktake) => Ok(UpdateStocktakeResponse::Response(StocktakeNode {
-            stocktake,
-        })),
-        Err(err) => Ok(UpdateStocktakeResponse::Error(UpdateStocktakeError {
-            error: map_error(err, &id)?,
-        })),
-    }
+pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<UpdateResponse> {
+    let result = match from {
+        Ok(stocktake) => UpdateResponse::Response(StocktakeNode::from_domain(stocktake)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
-fn map_error(err: ServiceError, id: &str) -> Result<UpdateStocktakeErrorInterface> {
-    let formatted_error = format!("Update stocktake {}: {:#?}", id, err);
+fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", err);
     let graphql_error = match err {
+        // Structured Errors
         ServiceError::SnapshotCountCurrentCountMismatch(lines) => {
-            return Ok(
-                UpdateStocktakeErrorInterface::SnapshotCountCurrentCountMismatch(
-                    SnapshotCountCurrentCountMismatch(lines),
-                ),
-            )
+            return Ok(UpdateErrorInterface::SnapshotCountCurrentCountMismatch(
+                SnapshotCountCurrentCountMismatch(lines),
+            ))
         }
         ServiceError::StocktakeIsLocked => {
-            return Ok(UpdateStocktakeErrorInterface::StocktakeIsLocked(
+            return Ok(UpdateErrorInterface::StocktakeIsLocked(
                 StocktakeIsLocked {},
             ))
         }
-        // standard gql errors:
-        ServiceError::DatabaseError(err) => err.into(),
-        ServiceError::InternalError(err) => StandardGraphqlError::InternalError(err),
-        ServiceError::InvalidStore => StandardGraphqlError::BadUserInput(formatted_error),
-        ServiceError::StocktakeDoesNotExist => StandardGraphqlError::BadUserInput(formatted_error),
-        ServiceError::CannotEditFinalised => StandardGraphqlError::BadUserInput(formatted_error),
-        ServiceError::NoLines => StandardGraphqlError::BadUserInput(formatted_error),
+        ServiceError::CannotEditFinalised => {
+            return Ok(UpdateErrorInterface::CannotEditStocktake(
+                CannotEditStocktake {},
+            ))
+        }
+        // Standard Graphql Errors
+        // TODO some are structured errors (where can be changed concurrently)
+        ServiceError::InvalidStore => BadUserInput(formatted_error),
+        ServiceError::StocktakeDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::NoLines => BadUserInput(formatted_error),
+        ServiceError::InternalError(err) => InternalError(err),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
 }
 
-fn to_domain(
-    UpdateStocktakeInput {
-        id,
-        comment,
-        description,
-        status,
-        is_locked,
-        stocktake_date,
-    }: UpdateStocktakeInput,
-) -> UpdateStocktake {
-    UpdateStocktake {
-        id,
-        comment,
-        description,
-        status: status.map(|s| s.to_domain()),
-        stocktake_date,
-        is_locked,
+impl UpdateInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let UpdateInput {
+            id,
+            comment,
+            description,
+            status,
+            is_locked,
+            stocktake_date,
+        } = self;
+
+        ServiceInput {
+            id,
+            comment,
+            description,
+            status: status.map(|status| status.to_domain()),
+            is_locked,
+            stocktake_date,
+        }
     }
 }
 
@@ -150,19 +152,12 @@ mod graphql {
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
-        stocktake::{
-            update::{UpdateStocktakeError, UpdateStocktakeInput},
-            StocktakeServiceTrait,
-        },
+        stocktake::*,
     };
 
     use crate::StocktakeMutations;
 
-    type UpdateMethod = dyn Fn(
-            &ServiceContext,
-            &str,
-            UpdateStocktakeInput,
-        ) -> Result<StocktakeRow, UpdateStocktakeError>
+    type UpdateMethod = dyn Fn(&ServiceContext, &str, UpdateStocktake) -> Result<StocktakeRow, UpdateStocktakeError>
         + Sync
         + Send;
 
@@ -173,7 +168,7 @@ mod graphql {
             &self,
             ctx: &ServiceContext,
             store_id: &str,
-            input: UpdateStocktakeInput,
+            input: UpdateStocktake,
         ) -> Result<StocktakeRow, UpdateStocktakeError> {
             (self.0)(ctx, store_id, input)
         }

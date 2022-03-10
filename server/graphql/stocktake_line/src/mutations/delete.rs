@@ -1,34 +1,42 @@
 use async_graphql::*;
 
+use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
-    service_provider::{ServiceContext, ServiceProvider},
-    stocktake_line::delete::DeleteStocktakeLineError,
+    stocktake_line::DeleteStocktakeLineError as ServiceError,
 };
 
 #[derive(InputObject)]
-pub struct DeleteStocktakeLineInput {
-    pub id: String,
-}
-
-#[derive(SimpleObject)]
-pub struct DeleteStocktakeLineNode {
+#[graphql(name = "DeleteStocktakeLineInput")]
+pub struct DeleteInput {
     pub id: String,
 }
 
 #[derive(Union)]
-pub enum DeleteStocktakeLineResponse {
-    Response(DeleteStocktakeLineNode),
+#[graphql(name = "DeleteStocktakeLineResponse")]
+pub enum DeleteResponse {
+    Error(DeleteError),
+    Response(GenericDeleteResponse),
 }
 
-pub fn delete_stocktake_line(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: DeleteStocktakeLineInput,
-) -> Result<DeleteStocktakeLineResponse> {
+#[derive(Interface)]
+#[graphql(name = "DeleteStocktakeLineErrorInterface")]
+#[graphql(field(name = "description", type = "String"))]
+pub enum DeleteErrorInterface {
+    CannotEditStocktake(CannotEditStocktake),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "DeleteStocktakeLineError")]
+pub struct DeleteError {
+    pub error: DeleteErrorInterface,
+}
+
+pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -38,44 +46,51 @@ pub fn delete_stocktake_line(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-    do_delete_stocktake_line(&service_ctx, service_provider, store_id, input)
+    let service_context = service_provider.context()?;
+    map_response(
+        service_provider
+            .stocktake_line_service
+            .delete_stocktake_line(&service_context, store_id, input.to_domain()),
+    )
 }
 
-pub fn do_delete_stocktake_line(
-    service_ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    store_id: &str,
-    input: DeleteStocktakeLineInput,
-) -> Result<DeleteStocktakeLineResponse> {
-    let service = &service_provider.stocktake_line_service;
-    match service.delete_stocktake_line(&service_ctx, store_id, &input.id) {
-        Ok(id) => Ok(DeleteStocktakeLineResponse::Response(
-            DeleteStocktakeLineNode { id },
-        )),
-        Err(err) => {
-            let formatted_error = format!("Delete stocktake line {}: {:#?}", input.id, err);
-            let graphql_error = match err {
-                DeleteStocktakeLineError::DatabaseError(err) => err.into(),
-                DeleteStocktakeLineError::InternalError(err) => {
-                    StandardGraphqlError::InternalError(err)
-                }
-                DeleteStocktakeLineError::StocktakeLineDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                DeleteStocktakeLineError::InvalidStore => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                DeleteStocktakeLineError::CannotEditFinalised => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                // TODO should be standard error (can lock concurrently)
-                DeleteStocktakeLineError::StocktakeIsLocked => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-            };
-            Err(graphql_error.extend())
+pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
+    let result = match from {
+        Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),
+        Err(error) => DeleteResponse::Error(DeleteError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
+}
+
+fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::CannotEditFinalised => {
+            return Ok(DeleteErrorInterface::CannotEditStocktake(
+                CannotEditStocktake {},
+            ))
         }
+        // Standard Graphql Errors
+        // TODO some are structured errors (where can be changed concurrently)
+        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::StocktakeLineDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::InvalidStore => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::InternalError(err) => InternalError(err),
+    };
+
+    Err(graphql_error.extend())
+}
+
+impl DeleteInput {
+    pub fn to_domain(self) -> String {
+        self.id
     }
 }
 
@@ -90,7 +105,7 @@ mod graphql {
 
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
-        stocktake_line::{delete::DeleteStocktakeLineError, StocktakeLineServiceTrait},
+        stocktake_line::{DeleteStocktakeLineError, StocktakeLineServiceTrait},
     };
 
     use crate::StocktakeLineMutations;
@@ -106,9 +121,9 @@ mod graphql {
             &self,
             ctx: &ServiceContext,
             store_id: &str,
-            stocktake_line_id: &str,
+            stocktake_line_id: String,
         ) -> Result<String, DeleteStocktakeLineError> {
-            (self.0)(ctx, store_id, stocktake_line_id)
+            (self.0)(ctx, store_id, &stocktake_line_id)
         }
     }
 
@@ -133,7 +148,7 @@ mod graphql {
 
         let query = r#"mutation DeleteStocktakeLine($storeId: String, $input: DeleteStocktakeLineInput!) {
             deleteStocktakeLine(storeId: $storeId, input: $input) {
-                ... on DeleteStocktakeLineNode {                    
+                ... on DeleteResponse {                    
                         id
                 }
             }

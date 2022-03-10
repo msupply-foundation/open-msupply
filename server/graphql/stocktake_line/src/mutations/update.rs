@@ -1,25 +1,26 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
+use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::StocktakeLineNode;
+use repository::StocktakeLine;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
-    service_provider::{ServiceContext, ServiceProvider},
-    stocktake_line::update::{
-        UpdateStocktakeLineError, UpdateStocktakeLineInput as UpdateStocktakeLine,
+    stocktake_line::{
+        UpdateStocktakeLine as ServiceInput, UpdateStocktakeLineError as ServiceError,
     },
 };
 
 #[derive(InputObject)]
-pub struct UpdateStocktakeLineInput {
+#[graphql(name = "UpdateStocktakeLineInput")]
+pub struct UpdateInput {
     pub id: String,
     pub location_id: Option<String>,
     pub comment: Option<String>,
     pub snapshot_number_of_packs: Option<u32>,
     pub counted_number_of_packs: Option<u32>,
-
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: Option<u32>,
@@ -29,15 +30,26 @@ pub struct UpdateStocktakeLineInput {
 }
 
 #[derive(Union)]
-pub enum UpdateStocktakeLineResponse {
+#[graphql(name = "UpdateStocktakeLineResponse")]
+pub enum UpdateResponse {
+    Error(UpdateError),
     Response(StocktakeLineNode),
 }
 
-pub fn update_stocktake_line(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: UpdateStocktakeLineInput,
-) -> Result<UpdateStocktakeLineResponse> {
+#[derive(Interface)]
+#[graphql(name = "UpdateStocktakeLineErrorInterface")]
+#[graphql(field(name = "description", type = "String"))]
+pub enum UpdateErrorInterface {
+    CannotEditStocktake(CannotEditStocktake),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateStocktakeLineError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
+pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -47,79 +59,79 @@ pub fn update_stocktake_line(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
-    do_update_stocktake_line(&service_ctx, service_provider, store_id, input)
+    let service_context = service_provider.context()?;
+    map_response(
+        service_provider
+            .stocktake_line_service
+            .update_stocktake_line(&service_context, store_id, input.to_domain()),
+    )
 }
 
-pub fn do_update_stocktake_line(
-    service_ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    store_id: &str,
-    input: UpdateStocktakeLineInput,
-) -> Result<UpdateStocktakeLineResponse> {
-    let service = &service_provider.stocktake_line_service;
-    let id = input.id.clone();
-    match service.update_stocktake_line(&service_ctx, store_id, to_domain(input)) {
-        Ok(line) => Ok(UpdateStocktakeLineResponse::Response(StocktakeLineNode {
-            line,
-        })),
-        Err(err) => {
-            let formatted_error = format!("Update stocktake line {}: {:#?}", id, err);
-            let graphql_error = match err {
-                UpdateStocktakeLineError::DatabaseError(err) => err.into(),
-                UpdateStocktakeLineError::InternalError(err) => {
-                    StandardGraphqlError::InternalError(err)
-                }
-                UpdateStocktakeLineError::InvalidStore => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpdateStocktakeLineError::StocktakeLineDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpdateStocktakeLineError::LocationDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                // TODO should be standard error
-                UpdateStocktakeLineError::StocktakeIsLocked => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpdateStocktakeLineError::CannotEditFinalised => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-            };
-            Err(graphql_error.extend())
+pub fn map_response(from: Result<StocktakeLine, ServiceError>) -> Result<UpdateResponse> {
+    let result = match from {
+        Ok(line) => UpdateResponse::Response(StocktakeLineNode::from_domain(line)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
+}
+
+impl UpdateInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let UpdateInput {
+            id,
+            location_id,
+            comment,
+            snapshot_number_of_packs,
+            counted_number_of_packs,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            note,
+        } = self;
+
+        ServiceInput {
+            id,
+            location_id,
+            comment,
+            snapshot_number_of_packs,
+            counted_number_of_packs,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            note,
         }
     }
 }
 
-fn to_domain(
-    UpdateStocktakeLineInput {
-        id,
-        location_id,
-        comment,
-        snapshot_number_of_packs,
-        counted_number_of_packs,
-        batch,
-        expiry_date,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        note,
-    }: UpdateStocktakeLineInput,
-) -> UpdateStocktakeLine {
-    UpdateStocktakeLine {
-        id,
-        location_id,
-        comment,
-        snapshot_number_of_packs,
-        counted_number_of_packs,
-        batch,
-        expiry_date,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        note,
-    }
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::CannotEditFinalised => {
+            return Ok(UpdateErrorInterface::CannotEditStocktake(
+                CannotEditStocktake {},
+            ))
+        }
+        // Standard Graphql Errors
+        // TODO some are structured errors (where can be changed concurrently)
+        ServiceError::InvalidStore => BadUserInput(formatted_error),
+        ServiceError::StocktakeLineDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::InternalError(err) => InternalError(err),
+    };
+
+    Err(graphql_error.extend())
 }
 
 #[cfg(test)]
@@ -137,10 +149,7 @@ mod test {
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
-        stocktake_line::{
-            update::{UpdateStocktakeLineError, UpdateStocktakeLineInput},
-            StocktakeLineServiceTrait,
-        },
+        stocktake_line::*,
     };
 
     use crate::StocktakeLineMutations;
@@ -148,7 +157,7 @@ mod test {
     type ServiceMethod = dyn Fn(
             &ServiceContext,
             &str,
-            UpdateStocktakeLineInput,
+            UpdateStocktakeLine,
         ) -> Result<StocktakeLine, UpdateStocktakeLineError>
         + Sync
         + Send;
@@ -160,7 +169,7 @@ mod test {
             &self,
             ctx: &ServiceContext,
             store_id: &str,
-            input: UpdateStocktakeLineInput,
+            input: UpdateStocktakeLine,
         ) -> Result<StocktakeLine, UpdateStocktakeLineError> {
             (self.0)(ctx, store_id, input)
         }

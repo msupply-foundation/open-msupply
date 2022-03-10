@@ -12,8 +12,8 @@ use crate::{number::next_number, service_provider::ServiceContext, validate::che
 
 use super::query::get_stocktake;
 
-#[derive(Default, Debug, PartialEq)]
-pub struct InsertStocktakeInput {
+#[derive(Default, Debug, PartialEq, Clone)]
+pub struct InsertStocktake {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
@@ -41,7 +41,7 @@ fn check_stocktake_does_not_exist(
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    stocktake: &InsertStocktakeInput,
+    stocktake: &InsertStocktake,
 ) -> Result<(), InsertStocktakeError> {
     if !check_stocktake_does_not_exist(connection, &stocktake.id)? {
         return Err(InsertStocktakeError::StocktakeAlreadyExists);
@@ -55,13 +55,13 @@ fn validate(
 fn generate(
     connection: &StorageConnection,
     store_id: &str,
-    InsertStocktakeInput {
+    InsertStocktake {
         id,
         comment,
         description,
         stocktake_date,
         is_locked,
-    }: InsertStocktakeInput,
+    }: InsertStocktake,
 ) -> Result<StocktakeRow, RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
 
@@ -85,7 +85,7 @@ fn generate(
 pub fn insert_stocktake(
     ctx: &ServiceContext,
     store_id: &str,
-    input: InsertStocktakeInput,
+    input: InsertStocktake,
 ) -> Result<Stocktake, InsertStocktakeError> {
     let result = ctx
         .connection
@@ -122,7 +122,7 @@ mod test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake::insert::{InsertStocktakeError, InsertStocktakeInput},
+        stocktake::insert::{InsertStocktake, InsertStocktakeError},
         user_account::get_default_user_id,
     };
 
@@ -142,7 +142,7 @@ mod test {
             .insert_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut InsertStocktakeInput| {
+                inline_init(|i: &mut InsertStocktake| {
                     i.id = existing_stocktake.id;
                 }),
             )
@@ -154,7 +154,7 @@ mod test {
             .insert_stocktake(
                 &context,
                 "invalid",
-                inline_init(|i: &mut InsertStocktakeInput| i.id = "new_stocktake".to_string()),
+                inline_init(|i: &mut InsertStocktake| i.id = "new_stocktake".to_string()),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeError::InvalidStore);
@@ -167,7 +167,7 @@ mod test {
             .insert_stocktake(
                 &context,
                 &store_a.id,
-                InsertStocktakeInput {
+                InsertStocktake {
                     id: "new_stocktake".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
