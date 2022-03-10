@@ -30,9 +30,8 @@ pub enum LegacyStocktakeStatus {
 #[derive(Deserialize, Serialize)]
 pub struct LegacyStocktakeRow {
     pub ID: String,
-    #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "created_by_ID")]
-    pub user_id: Option<String>,
+    pub user_id: String,
     pub status: LegacyStocktakeStatus,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub Description: Option<String>,
