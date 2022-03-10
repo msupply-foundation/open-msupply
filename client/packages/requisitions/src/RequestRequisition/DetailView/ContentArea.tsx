@@ -1,19 +1,14 @@
-import React, { FC } from 'react';
-import { Column, DataTable, useTranslation } from '@openmsupply-client/common';
-import { RequestLineFragment } from '../api';
+import React from 'react';
+import { DataTable, useTranslation } from '@openmsupply-client/common';
+import { RequestLineFragment, useRequestLines } from '../api';
 
 interface ContentAreaProps {
-  columns: Column<RequestLineFragment>[];
-  lines: RequestLineFragment[];
   onRowClick: null | ((line: RequestLineFragment) => void);
 }
 
-export const ContentArea: FC<ContentAreaProps> = ({
-  columns,
-  lines,
-  onRowClick,
-}) => {
+export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
   const t = useTranslation('common');
+  const { lines, columns } = useRequestLines();
   return (
     <DataTable
       onRowClick={onRowClick}

@@ -10,12 +10,7 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
-import {
-  RequestLineFragment,
-  useRequest,
-  useIsRequestDisabled,
-  useRequestLines,
-} from '../api';
+import { RequestLineFragment, useRequest, useIsRequestDisabled } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -31,7 +26,6 @@ export const DetailView: FC = () => {
   const isDisabled = useIsRequestDisabled();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
-  const { columns, lines } = useRequestLines();
 
   const onRowClick = React.useCallback(
     (line: RequestLineFragment) => {
@@ -49,11 +43,7 @@ export const DetailView: FC = () => {
         onAddItem={() => onOpen(null)}
       />
       <Toolbar />
-      <ContentArea
-        onRowClick={!isDisabled ? onRowClick : null}
-        lines={lines}
-        columns={columns}
-      />
+      <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
       <Footer />
       <SidePanel />
       {isOpen && (
@@ -62,7 +52,6 @@ export const DetailView: FC = () => {
           onClose={onClose}
           mode={mode}
           item={entity}
-          lines={lines}
         />
       )}
     </TableProvider>
