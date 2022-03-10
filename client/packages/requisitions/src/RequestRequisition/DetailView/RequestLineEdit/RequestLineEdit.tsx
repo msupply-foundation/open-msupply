@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
-import { useIsRequestDisabled } from '../../api';
+import { RequestLineFragment, useIsRequestDisabled } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 
@@ -17,6 +17,7 @@ interface RequestLineEditProps {
   onClose: () => void;
   mode: ModalMode | null;
   item: ItemRowWithStatsFragment | null;
+  lines: RequestLineFragment[];
 }
 
 export const RequestLineEdit = ({
@@ -24,13 +25,14 @@ export const RequestLineEdit = ({
   onClose,
   mode,
   item,
+  lines,
 }: RequestLineEditProps) => {
   const disabled = useIsRequestDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentItem);
-  const { next, hasNext } = useNextRequestLine(currentItem);
+  const { next, hasNext } = useNextRequestLine(currentItem, lines);
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
   return (
