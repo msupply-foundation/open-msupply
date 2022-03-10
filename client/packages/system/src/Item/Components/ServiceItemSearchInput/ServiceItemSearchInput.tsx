@@ -8,7 +8,6 @@ import {
 } from '@openmsupply-client/common';
 import { useServiceItems } from '../../api';
 import { ServiceItemRowFragment } from '../../api/operations.generated';
-import { filterOptions } from '../../utils';
 
 interface ItemSearchInputProps {
   onChange: (item: ServiceItemRowFragment | null) => void;
@@ -18,6 +17,11 @@ interface ItemSearchInputProps {
   width?: number;
   autoFocus?: boolean;
 }
+
+const filterOptions = {
+  stringify: (item: ServiceItemRowFragment) => `${item.code} ${item.name}`,
+  limit: 100,
+};
 
 const ItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.gray.main,
