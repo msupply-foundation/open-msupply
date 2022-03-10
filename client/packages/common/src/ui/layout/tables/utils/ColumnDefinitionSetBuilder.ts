@@ -39,7 +39,10 @@ export type ColumnKey =
   | 'stocktakeNumber'
   | 'description'
   | 'stocktakeDate'
-  | 'monthlyConsumption';
+  | 'monthlyConsumption'
+  | 'requestedQuantity'
+  | 'supplyQuantity'
+  | 'stockOnHand';
 
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
@@ -212,6 +215,24 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     width: 100,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
+  },
+  requestedQuantity: {
+    label: 'label.requested-quantity',
+    key: 'requestedQuantity',
+    width: 100,
+    align: ColumnAlign.Right,
+  },
+  supplyQuantity: {
+    label: 'label.supply-quantity',
+    key: 'supplyQuantity',
+    width: 100,
+    align: ColumnAlign.Right,
+  },
+  stockOnHand: {
+    label: 'label.stock-on-hand',
+    key: 'availableStockOnHand',
+    width: 100,
+    align: ColumnAlign.Right,
   },
 });
 
