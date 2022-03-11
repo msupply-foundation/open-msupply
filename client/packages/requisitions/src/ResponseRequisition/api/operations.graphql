@@ -27,6 +27,7 @@ fragment ResponseLine on RequisitionLineNode {
   itemId
   requestedQuantity
   supplyQuantity
+  remainingQuantityToSupply
   comment
 
   itemStats {
@@ -40,6 +41,11 @@ fragment ResponseLine on RequisitionLineNode {
     name
     code
     unitName
+  }
+  linkedRequisitionLine {
+    itemStats {
+      availableStockOnHand
+    }
   }
 }
 

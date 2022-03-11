@@ -89,7 +89,6 @@ export const useRequestColumns = () => {
         },
         getSortValue: rowData => rowData.itemStats.availableStockOnHand,
       },
-
       {
         key: 'suggestedQuantity',
         label: 'label.forecast-quantity',
