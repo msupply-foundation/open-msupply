@@ -1,8 +1,11 @@
 use async_graphql::*;
-use graphql_core::ContextExt;
+use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_stocktake::mutations as stocktake;
 use graphql_stocktake_line::mutations as stocktake_line;
-use service::stocktake::*;
+use service::{
+    permission_validation::{Resource, ResourceAccessRequest},
+    stocktake::*,
+};
 
 use crate::VecOrNone;
 
@@ -70,12 +73,21 @@ pub struct BatchInput {
 }
 
 pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<BatchResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateStocktake,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     let response = service_provider.stocktake_service.batch_stocktake(
         &service_context,
         store_id,
+        &user.user_id,
         input.to_domain(),
     )?;
 
@@ -285,6 +297,7 @@ mod test {
             &self,
             _: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: ServiceInput,
         ) -> Result<ServiceResult, RepositoryError> {
             self.0(store_id, input)

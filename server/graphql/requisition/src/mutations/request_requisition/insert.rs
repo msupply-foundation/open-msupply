@@ -47,10 +47,10 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::EditRequisition,
+            resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -61,7 +61,12 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .requisition_service
-            .insert_request_requisition(&service_context, store_id, input.to_domain()),
+            .insert_request_requisition(
+                &service_context,
+                store_id,
+                &user.user_id,
+                input.to_domain(),
+            ),
     )
 }
 
@@ -158,6 +163,7 @@ mod test {
             &self,
             _: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: ServiceInput,
         ) -> Result<Requisition, ServiceError> {
             self.0(store_id, input)

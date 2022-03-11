@@ -65,9 +65,10 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: UpdateResponseRequisitionLine,
     ) -> Result<RequisitionLine, UpdateResponseRequisitionLineError> {
-        update_response_requisition_line(ctx, store_id, input)
+        update_response_requisition_line(ctx, store_id, user_id, input)
     }
 }
 

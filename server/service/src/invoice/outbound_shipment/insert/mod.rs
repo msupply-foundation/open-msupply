@@ -36,13 +36,14 @@ type OutError = InsertOutboundShipmentError;
 pub fn insert_outbound_shipment(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: InsertOutboundShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
             let other_party = validate(connection, store_id, &input)?;
-            let new_invoice = generate(connection, store_id, input, other_party)?;
+            let new_invoice = generate(connection, store_id, user_id, input, other_party)?;
 
             InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
 

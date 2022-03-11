@@ -2,7 +2,6 @@ use crate::{
     number::next_number,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
-    user_account::get_default_user_id,
 };
 use chrono::Utc;
 use repository::Name;
@@ -42,13 +41,14 @@ type OutError = InsertRequestRequisitionError;
 pub fn insert_request_requisition(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: InsertRequestRequisition,
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
             validate(connection, store_id, &input)?;
-            let new_requisition = generate(connection, store_id, input)?;
+            let new_requisition = generate(connection, store_id, user_id, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
             get_requisition(ctx, None, &new_requisition.id)
@@ -84,6 +84,7 @@ fn validate(
 fn generate(
     connection: &StorageConnection,
     store_id: &str,
+    user_id: &str,
     InsertRequestRequisition {
         id,
         other_party_id,
@@ -96,7 +97,7 @@ fn generate(
 ) -> Result<RequisitionRow, RepositoryError> {
     let result = RequisitionRow {
         id,
-        user_id: Some(get_default_user_id()),
+        user_id: Some(user_id.to_string()),
         requisition_number: next_number(connection, &NumberRowType::RequestRequisition, &store_id)?,
         name_id: other_party_id,
         store_id: store_id.to_owned(),
@@ -124,8 +125,14 @@ impl From<RepositoryError> for InsertRequestRequisitionError {
 
 #[cfg(test)]
 mod test_insert {
+    use crate::{
+        requisition::request_requisition::{
+            InsertRequestRequisition, InsertRequestRequisitionError as ServiceError,
+        },
+        service_provider::ServiceProvider,
+    };
     use chrono::Utc;
-    use repository::mock::{mock_name_store_join_b, mock_store_b};
+    use repository::mock::{mock_name_store_join_b, mock_store_b, mock_user_account_a};
     use repository::Name;
     use repository::{
         mock::{
@@ -135,14 +142,6 @@ mod test_insert {
         schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
         test_db::setup_all,
         RequisitionRowRepository,
-    };
-
-    use crate::user_account::get_default_user_id;
-    use crate::{
-        requisition::request_requisition::{
-            InsertRequestRequisition, InsertRequestRequisitionError as ServiceError,
-        },
-        service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
@@ -159,6 +158,7 @@ mod test_insert {
             service.insert_request_requisition(
                 &context,
                 "store_a",
+                "n/a",
                 InsertRequestRequisition {
                     id: mock_request_draft_requisition().id,
                     other_party_id: "n/a".to_owned(),
@@ -178,6 +178,7 @@ mod test_insert {
             service.insert_request_requisition(
                 &context,
                 "store_a",
+                "n/a",
                 InsertRequestRequisition {
                     id: "new_request_requisition".to_owned(),
                     other_party_id: name_store_b.id.clone(),
@@ -200,6 +201,7 @@ mod test_insert {
             service.insert_request_requisition(
                 &context,
                 "store_a",
+                "n/a",
                 InsertRequestRequisition {
                     id: "new_request_requisition".to_owned(),
                     other_party_id: "invalid".to_owned(),
@@ -218,6 +220,7 @@ mod test_insert {
             service.insert_request_requisition(
                 &context,
                 "store_c",
+                "n/a",
                 InsertRequestRequisition {
                     id: "new_request_requisition".to_owned(),
                     other_party_id: mock_name_a().id,
@@ -266,6 +269,7 @@ mod test_insert {
             .insert_request_requisition(
                 &context,
                 "store_a",
+                &mock_user_account_a().id,
                 InsertRequestRequisition {
                     id: "new_request_requisition".to_owned(),
                     other_party_id: mock_name_store_c().id,
@@ -303,8 +307,7 @@ mod test_insert {
             .unwrap();
 
         assert_eq!(id, "new_request_requisition".to_owned());
-
-        assert_eq!(user_id, Some(get_default_user_id()));
+        assert_eq!(user_id, Some(mock_user_account_a().id));
         assert_eq!(name_id, mock_name_store_c().id);
         assert_eq!(colour, Some("new colour".to_owned()));
         assert_eq!(their_reference, Some("new their_reference".to_owned()));

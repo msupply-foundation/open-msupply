@@ -1,5 +1,9 @@
-use crate::{service_provider::ServiceContext, WithDBError};
-use repository::{InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
+use crate::{
+    invoice::common::generate_invoice_user_id_update, service_provider::ServiceContext, WithDBError,
+};
+use repository::{
+    InvoiceLineRowRepository, InvoiceRepository, RepositoryError, StockLineRowRepository,
+};
 
 mod validate;
 
@@ -16,12 +20,13 @@ type OutError = DeleteInboundShipmentLineError;
 pub fn delete_inbound_shipment_line(
     ctx: &ServiceContext,
     _store_id: &str,
+    user_id: &str,
     input: DeleteInboundShipmentLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let line = validate(&input, &connection)?;
+            let (invoice_row, line) = validate(&input, &connection)?;
 
             let delete_batch_id_option = line.stock_line_id.clone();
 
@@ -29,6 +34,10 @@ pub fn delete_inbound_shipment_line(
 
             if let Some(id) = delete_batch_id_option {
                 StockLineRowRepository::new(&connection).delete(&id)?;
+            }
+
+            if let Some(invoice_row) = generate_invoice_user_id_update(user_id, invoice_row) {
+                InvoiceRepository::new(&connection).upsert_one(&invoice_row)?;
             }
 
             Ok(line.id) as Result<String, OutError>

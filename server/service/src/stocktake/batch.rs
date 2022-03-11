@@ -49,6 +49,7 @@ pub struct BatchStocktakeResult {
 pub fn batch_stocktake(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: BatchStocktake,
 ) -> Result<BatchStocktakeResult, RepositoryError> {
     let result = ctx
@@ -57,10 +58,10 @@ pub fn batch_stocktake(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchStocktakeResult::default();
 
-            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id);
+            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id, user_id);
 
-            let (has_errors, result) =
-                mutations_processor.do_mutations(input.insert_stocktake, insert_stocktake);
+            let (has_errors, result) = mutations_processor
+                .do_mutations_with_user_id(input.insert_stocktake, insert_stocktake);
             results.insert_stocktake = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -155,7 +156,7 @@ mod test {
 
         // Test rollback
         let result = service
-            .batch_stocktake(&context, "store_a", input.clone())
+            .batch_stocktake(&context, "store_a", "n/a", input.clone())
             .unwrap();
 
         assert_eq!(
@@ -183,7 +184,9 @@ mod test {
         // Test no rollback
         input.continue_on_error = Some(true);
 
-        service.batch_stocktake(&context, "store_a", input).unwrap();
+        service
+            .batch_stocktake(&context, "store_a", "n/a", input)
+            .unwrap();
 
         assert_ne!(
             StocktakeRowRepository::new(&connection)

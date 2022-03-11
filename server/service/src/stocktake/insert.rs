@@ -7,7 +7,6 @@ use repository::{
     StorageConnection,
 };
 
-use crate::user_account::get_default_user_id;
 use crate::{number::next_number, service_provider::ServiceContext, validate::check_store_exists};
 
 use super::query::get_stocktake;
@@ -55,6 +54,7 @@ fn validate(
 fn generate(
     connection: &StorageConnection,
     store_id: &str,
+    user_id: &str,
     InsertStocktake {
         id,
         comment,
@@ -73,7 +73,7 @@ fn generate(
         stocktake_date,
         status: StocktakeStatus::New,
         created_datetime: Utc::now().naive_utc(),
-        user_id: get_default_user_id(),
+        user_id: user_id.to_string(),
         store_id: store_id.to_string(),
         is_locked: is_locked.unwrap_or(false),
         // Default
@@ -85,13 +85,14 @@ fn generate(
 pub fn insert_stocktake(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: InsertStocktake,
 ) -> Result<Stocktake, InsertStocktakeError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
             validate(connection, store_id, &input)?;
-            let new_stocktake = generate(connection, store_id, input)?;
+            let new_stocktake = generate(connection, store_id, user_id, input)?;
             StocktakeRowRepository::new(&connection).upsert_one(&new_stocktake)?;
 
             let stocktake = get_stocktake(ctx, new_stocktake.id)?;
@@ -113,7 +114,7 @@ impl From<RepositoryError> for InsertStocktakeError {
 mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
-        mock::{mock_stocktake_a, mock_store_a, MockDataInserts},
+        mock::{mock_stocktake_a, mock_store_a, mock_user_account_a, MockDataInserts},
         schema::{StocktakeRow, StocktakeStatus},
         test_db::setup_all,
         StocktakeRowRepository,
@@ -123,7 +124,6 @@ mod test {
     use crate::{
         service_provider::ServiceProvider,
         stocktake::insert::{InsertStocktake, InsertStocktakeError},
-        user_account::get_default_user_id,
     };
 
     #[actix_rt::test]
@@ -142,6 +142,7 @@ mod test {
             .insert_stocktake(
                 &context,
                 &store_a.id,
+                "n/a",
                 inline_init(|i: &mut InsertStocktake| {
                     i.id = existing_stocktake.id;
                 }),
@@ -154,6 +155,7 @@ mod test {
             .insert_stocktake(
                 &context,
                 "invalid",
+                "n/a",
                 inline_init(|i: &mut InsertStocktake| i.id = "new_stocktake".to_string()),
             )
             .unwrap_err();
@@ -167,6 +169,7 @@ mod test {
             .insert_stocktake(
                 &context,
                 &store_a.id,
+                &mock_user_account_a().id,
                 InsertStocktake {
                     id: "new_stocktake".to_string(),
                     comment: Some("comment".to_string()),
@@ -187,7 +190,7 @@ mod test {
         assert_eq!(
             new_row,
             inline_edit(&new_row, |mut i: StocktakeRow| {
-                i.user_id = get_default_user_id();
+                i.user_id = mock_user_account_a().id;
                 i.id = "new_stocktake".to_string();
                 i.comment = Some("comment".to_string());
                 i.description = Some("description".to_string());

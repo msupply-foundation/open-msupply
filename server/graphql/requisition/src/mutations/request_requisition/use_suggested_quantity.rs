@@ -47,7 +47,7 @@ pub fn use_suggested_quantity(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::EditRequisition,
+            resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
         },
     )?;

@@ -1,8 +1,11 @@
 use async_graphql::*;
-use graphql_core::ContextExt;
+use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_requisition::mutations::request_requisition;
 use graphql_requisition_line::mutations::request_requisition_line;
-use service::requisition::request_requisition::*;
+use service::{
+    permission_validation::{Resource, ResourceAccessRequest},
+    requisition::request_requisition::*,
+};
 
 use crate::VecOrNone;
 
@@ -73,12 +76,20 @@ pub struct BatchInput {
 }
 
 pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<BatchResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateRequisition,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     let response = service_provider
         .requisition_service
-        .batch_request_requisition(&service_context, store_id, input.to_domain())?;
+        .batch_request_requisition(&service_context, store_id, &user.user_id, input.to_domain())?;
 
     Ok(BatchResponse::from_domain(response)?)
 }
@@ -307,6 +318,7 @@ mod test {
             &self,
             _: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: ServiceInput,
         ) -> Result<ServiceResult, RepositoryError> {
             self.0(store_id, input)

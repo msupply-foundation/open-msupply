@@ -7,13 +7,13 @@ use repository::{
 };
 
 use crate::number::next_number;
-use crate::user_account::get_default_user_id;
 
 use super::InsertOutboundShipment;
 
 pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
+    user_id: &str,
     input: InsertOutboundShipment,
     other_party: Name,
 ) -> Result<InvoiceRow, RepositoryError> {
@@ -21,7 +21,7 @@ pub fn generate(
 
     let result = InvoiceRow {
         id: input.id,
-        user_id: Some(get_default_user_id()),
+        user_id: Some(user_id.to_string()),
         name_id: input.other_party_id,
         r#type: InvoiceRowType::OutboundShipment,
         comment: input.comment,

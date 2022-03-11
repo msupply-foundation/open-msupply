@@ -1,12 +1,13 @@
 use crate::{
-    requisition::common::check_requisition_exists,
+    requisition::common::{check_requisition_exists, generate_requisition_user_id_update},
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
 };
 
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionLine, RequisitionLineRowRepository, StorageConnection,
+    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    RepositoryError, RequisitionLine, RequisitionLineRowRepository, RequisitionRowRepository,
+    StorageConnection,
 };
 use util::inline_edit;
 
@@ -34,16 +35,22 @@ type OutError = UpdateResponseRequisitionLineError;
 pub fn update_response_requisition_line(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: UpdateResponseRequisitionLine,
 ) -> Result<RequisitionLine, OutError> {
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
-            let updated_requisition_line_row = generate(requisition_row, input);
+            let (requisition_row, requisition_line_row) = validate(connection, store_id, &input)?;
+            let (requisition_row_option, updated_requisition_line_row) =
+                generate(user_id, requisition_row, requisition_line_row, input);
 
             RequisitionLineRowRepository::new(&connection)
                 .upsert_one(&updated_requisition_line_row)?;
+
+            if let Some(requisition_row) = requisition_row_option {
+                RequisitionRowRepository::new(&connection).upsert_one(&requisition_row)?;
+            }
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)
                 .map_err(|error| OutError::DatabaseError(error))?
@@ -57,7 +64,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateResponseRequisitionLine,
-) -> Result<RequisitionLineRow, OutError> {
+) -> Result<(RequisitionRow, RequisitionLineRow), OutError> {
     let requisition_line_row = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?;
 
@@ -77,22 +84,29 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    Ok(requisition_line_row)
+    Ok((requisition_row, requisition_line_row))
 }
 
 fn generate(
+    user_id: &str,
+    existing_requisition_row: RequisitionRow,
     existing: RequisitionLineRow,
     UpdateResponseRequisitionLine {
         id: _,
         supply_quantity: updated_supply_quantity,
         comment: updated_comment,
     }: UpdateResponseRequisitionLine,
-) -> RequisitionLineRow {
-    inline_edit(&existing, |mut u| {
+) -> (Option<RequisitionRow>, RequisitionLineRow) {
+    let requisition_line_row = inline_edit(&existing, |mut u| {
         u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity as u32) as i32;
         u.comment = updated_comment.or(u.comment);
         u
-    })
+    });
+
+    (
+        generate_requisition_user_id_update(user_id, existing_requisition_row),
+        requisition_line_row,
+    )
 }
 
 impl From<RepositoryError> for UpdateResponseRequisitionLineError {
@@ -106,10 +120,10 @@ mod test {
     use repository::{
         mock::{
             mock_finalised_request_requisition_line, mock_new_response_requisition_test,
-            mock_sent_request_requisition_line, MockDataInserts,
+            mock_sent_request_requisition_line, mock_user_account_b, MockDataInserts,
         },
         test_db::setup_all,
-        RequisitionLineRowRepository,
+        RequisitionLineRowRepository, RequisitionRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -137,6 +151,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 "store_a",
+                "n/a",
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
                     r.id = "invalid".to_owned();
                 }),
@@ -149,6 +164,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 "store_b",
+                "n/a",
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
                     r.id = mock_new_response_requisition_test().lines[0].id.clone();
                 }),
@@ -161,6 +177,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 "store_a",
+                "n/a",
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
                     r.id = mock_finalised_request_requisition_line().id;
                 }),
@@ -173,6 +190,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 "store_a",
+                "n/a",
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
                     r.id = mock_sent_request_requisition_line().id;
                 }),
@@ -199,6 +217,7 @@ mod test {
             .update_response_requisition_line(
                 &context,
                 "store_a",
+                &mock_user_account_b().id,
                 UpdateResponseRequisitionLine {
                     id: test_line.id.clone(),
                     supply_quantity: Some(99),
@@ -217,6 +236,19 @@ mod test {
             inline_edit(&test_line, |mut u| {
                 u.supply_quantity = 99;
                 u.comment = Some("comment".to_string());
+                u
+            })
+        );
+
+        let requisition = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&mock_new_response_requisition_test().requisition.id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            requisition,
+            inline_edit(&requisition, |mut u| {
+                u.user_id = Some(mock_user_account_b().id);
                 u
             })
         );

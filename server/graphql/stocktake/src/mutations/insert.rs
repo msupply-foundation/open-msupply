@@ -41,7 +41,7 @@ pub struct InsertError {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateStocktake,
@@ -54,6 +54,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(service_provider.stocktake_service.insert_stocktake(
         &service_context,
         store_id,
+        &user.user_id,
         input.to_domain(),
     ))
 }
@@ -129,6 +130,7 @@ mod test {
             &self,
             ctx: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: InsertStocktake,
         ) -> Result<Stocktake, InsertStocktakeError> {
             (self.0)(ctx, store_id, input)

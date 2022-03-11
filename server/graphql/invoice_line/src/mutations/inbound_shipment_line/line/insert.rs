@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 
 use graphql_core::generic_inputs::TaxUpdate;
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
 
@@ -11,6 +11,7 @@ use repository::InvoiceLine;
 use service::invoice_line::inbound_shipment_line::{
     InsertInboundShipmentLine as ServiceInput, InsertInboundShipmentLineError as ServiceError,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentLineInput")]
@@ -44,13 +45,26 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateInboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .insert_inbound_shipment_line(&service_context, store_id, input.to_domain()),
+            .insert_inbound_shipment_line(
+                &service_context,
+                store_id,
+                &user.user_id,
+                input.to_domain(),
+            ),
     )
 }
 

@@ -44,10 +44,10 @@ pub fn supply_requested_quantity(
     store_id: &str,
     input: SupplyRequestedQuantityInput,
 ) -> Result<SupplyRequestedQuantityResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::EditRequisition,
+            resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -57,7 +57,7 @@ pub fn supply_requested_quantity(
 
     let response = match service_provider
         .requisition_service
-        .supply_requested_quantity(&service_context, store_id, input.to_domain())
+        .supply_requested_quantity(&service_context, store_id, &user.user_id, input.to_domain())
     {
         Ok(requisition_lines) => SupplyRequestedQuantityResponse::Response(
             RequisitionLineConnector::from_vec(requisition_lines),
@@ -139,6 +139,7 @@ mod test {
             &self,
             _: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: ServiceInput,
         ) -> Result<Vec<RequisitionLine>, ServiceError> {
             self.0(store_id, input)

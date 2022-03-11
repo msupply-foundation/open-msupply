@@ -52,10 +52,10 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::EditRequisition,
+            resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -65,7 +65,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
     let response = match service_provider
         .requisition_service
-        .update_response_requisition(&service_context, store_id, input.to_domain())
+        .update_response_requisition(&service_context, store_id, &user.user_id, input.to_domain())
     {
         Ok(requisition) => UpdateResponse::Response(RequisitionNode::from_domain(requisition)),
         Err(error) => UpdateResponse::Error(UpdateError {
@@ -163,6 +163,7 @@ mod test {
             &self,
             _: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: ServiceInput,
         ) -> Result<Requisition, ServiceError> {
             self.0(store_id, input)

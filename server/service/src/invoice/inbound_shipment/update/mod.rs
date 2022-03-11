@@ -40,6 +40,7 @@ type OutError = UpdateInboundShipmentError;
 pub fn update_inbound_shipment(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     patch: UpdateInboundShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
@@ -47,7 +48,7 @@ pub fn update_inbound_shipment(
         .transaction_sync(|connection| {
             let (invoice, other_party) = validate(connection, store_id, &patch)?;
             let (lines_and_invoice_lines_option, update_invoice) =
-                generate(connection, invoice, other_party, patch)?;
+                generate(connection, user_id, invoice, other_party, patch)?;
 
             InvoiceRepository::new(connection).upsert_one(&update_invoice)?;
 

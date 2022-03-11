@@ -1,8 +1,10 @@
 use crate::{
-    requisition::common::{check_requisition_exists, get_lines_for_requisition},
+    requisition::common::{
+        check_requisition_exists, generate_requisition_user_id_update, get_lines_for_requisition,
+    },
     service_provider::ServiceContext,
 };
-use repository::EqualFilter;
+use repository::{schema::RequisitionRow, EqualFilter, RequisitionRowRepository};
 use repository::{
     schema::{RequisitionLineRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
@@ -29,19 +31,28 @@ type OutError = SupplyRequestedQuantityError;
 pub fn supply_requested_quantity(
     ctx: &ServiceContext,
     store_id: &str,
+    user_id: &str,
     input: SupplyRequestedQuantity,
 ) -> Result<Vec<RequisitionLine>, OutError> {
     let requisition_lines = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
-            let update_requisition_line_rows =
-                generate(connection, &input.response_requisition_id)?;
+            let requisition_row = validate(connection, store_id, &input)?;
+            let (requisition_row_option, update_requisition_line_rows) = generate(
+                connection,
+                user_id,
+                requisition_row,
+                &input.response_requisition_id,
+            )?;
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
 
             for requisition_line_row in update_requisition_line_rows {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
+            }
+
+            if let Some(requisition_row) = requisition_row_option {
+                RequisitionRowRepository::new(&connection).upsert_one(&requisition_row)?;
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
@@ -60,7 +71,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &SupplyRequestedQuantity,
-) -> Result<(), OutError> {
+) -> Result<RequisitionRow, OutError> {
     let requisition_row = check_requisition_exists(connection, &input.response_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
@@ -76,13 +87,15 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    Ok(())
+    Ok(requisition_row)
 }
 
 fn generate(
     connection: &StorageConnection,
+    user_id: &str,
+    existing_requisition_row: RequisitionRow,
     requisition_id: &str,
-) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
+) -> Result<(Option<RequisitionRow>, Vec<RequisitionLineRow>), RepositoryError> {
     let lines = get_lines_for_requisition(connection, requisition_id)?;
 
     let result = lines
@@ -99,7 +112,10 @@ fn generate(
         )
         .collect();
 
-    Ok(result)
+    Ok((
+        generate_requisition_user_id_update(user_id, existing_requisition_row),
+        result,
+    ))
 }
 
 impl From<RepositoryError> for SupplyRequestedQuantityError {
@@ -113,10 +129,13 @@ mod test {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition_test, mock_sent_request_requisition, MockDataInserts,
+            mock_new_response_requisition_test, mock_sent_request_requisition, mock_user_account_b,
+            MockDataInserts,
         },
         test_db::setup_all,
+        RequisitionRowRepository,
     };
+    use util::inline_edit;
 
     use crate::{
         requisition::{
@@ -142,6 +161,7 @@ mod test {
             service.supply_requested_quantity(
                 &context,
                 "store_a",
+                "n/a",
                 SupplyRequestedQuantity {
                     response_requisition_id: "invalid".to_owned(),
                 }
@@ -154,6 +174,7 @@ mod test {
             service.supply_requested_quantity(
                 &context,
                 "store_b",
+                "n/a",
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_draft_response_requisition_for_update_test().id,
                 },
@@ -166,6 +187,7 @@ mod test {
             service.supply_requested_quantity(
                 &context,
                 "store_a",
+                "/na",
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_finalised_response_requisition().id,
                 },
@@ -178,6 +200,7 @@ mod test {
             service.supply_requested_quantity(
                 &context,
                 "store_a",
+                "n/a",
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_sent_request_requisition().id,
                 },
@@ -199,6 +222,7 @@ mod test {
             .supply_requested_quantity(
                 &context,
                 "store_a",
+                &mock_user_account_b().id,
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },
@@ -219,5 +243,18 @@ mod test {
                 requisition_line.requisition_line_row.requested_quantity
             )
         }
+
+        let requisition = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&mock_new_response_requisition_test().requisition.id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            requisition,
+            inline_edit(&requisition, |mut u| {
+                u.user_id = Some(mock_user_account_b().id);
+                u
+            })
+        );
     }
 }
