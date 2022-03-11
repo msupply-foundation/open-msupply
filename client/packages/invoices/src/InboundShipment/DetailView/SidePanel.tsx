@@ -108,7 +108,7 @@ const RelatedDocumentsSection: FC = () => {
 };
 
 export const PricingSection = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
   const { pricing } = useInboundFields(['pricing']);
