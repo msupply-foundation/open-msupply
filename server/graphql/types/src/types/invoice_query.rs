@@ -355,3 +355,126 @@ impl InvoiceNodeStatus {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use async_graphql::{EmptyMutation, Object};
+
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use repository::{
+        mock::{
+            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
+            MockDataInserts,
+        },
+        schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow},
+        Invoice,
+    };
+    use serde_json::json;
+    use util::inline_init;
+
+    use crate::types::InvoiceNode;
+
+    #[actix_rt::test]
+    async fn graphq_test_invoice_pricing() {
+        #[derive(Clone)]
+        struct TestQuery;
+
+        fn invoice() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "test_invoice_pricing".to_string();
+                r.name_id = mock_name_a().id;
+                r.store_id = mock_store_a().id;
+            })
+        }
+        fn line1() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.invoice_id = invoice().id;
+                r.id = "line1_id".to_string();
+                r.item_id = mock_item_a().id;
+                r.total_after_tax = 20.0;
+                r.total_before_tax = 10.0;
+                r.tax = Some(20.0);
+                r.r#type = InvoiceLineRowType::Service;
+            })
+        }
+        fn line2() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.invoice_id = invoice().id;
+                r.id = "line2_id".to_string();
+                r.item_id = mock_item_b().id;
+                r.total_after_tax = 10.0;
+                r.total_before_tax = 8.0;
+                r.tax = Some(20.0);
+                r.r#type = InvoiceLineRowType::StockIn;
+            })
+        }
+        fn line3() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.invoice_id = invoice().id;
+                r.id = "line3_id".to_string();
+                r.item_id = mock_item_c().id;
+                r.total_after_tax = 200.0;
+                r.total_before_tax = 160.0;
+                r.tax = Some(10.0);
+                r.r#type = InvoiceLineRowType::StockOut;
+            })
+        }
+
+        let (_, _, _, settings) = setup_graphl_test_with_data(
+            TestQuery,
+            EmptyMutation,
+            "graphq_test_invoice_pricing",
+            MockDataInserts::all(),
+            Some(inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.invoice_lines = vec![line1(), line2(), line3()];
+            })),
+        )
+        .await;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query(&self) -> InvoiceNode {
+                InvoiceNode {
+                    invoice: inline_init(|r: &mut Invoice| r.invoice_row = invoice()),
+                }
+            }
+        }
+
+        // let tax_percentage = ;
+
+        let expected = json!({
+            "testQuery": {
+                "pricing": {
+                    "totalBeforeTax": 160.0 + 8.0 + 10.0,
+                    "totalAfterTax": 200.0 + 10.0+ 20.0,
+                    "stockTotalBeforeTax": 160.0 + 8.0,
+                    "stockTotalAfterTax": 200.0 + 10.0,
+                    "serviceTotalBeforeTax": 10.0,
+                    "serviceTotalAfterTax": 20.0,
+                    "taxPercentage": (20.0 + 20.0 + 10.0) / 3.0
+                },
+            }
+        }
+        );
+
+        let query = r#"
+        query {
+            testQuery {
+                pricing {
+                    totalBeforeTax
+                    totalAfterTax
+                    stockTotalBeforeTax
+                    stockTotalAfterTax
+                    serviceTotalBeforeTax
+                    serviceTotalAfterTax
+                    taxPercentage  
+                }
+            }
+        }
+        "#;
+
+        assert_graphql_query!(&settings, &query, &None, expected, None);
+    }
+}
