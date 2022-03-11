@@ -1,11 +1,20 @@
+import { useMemo } from 'react';
 import {
   useQuery,
   useGql,
   useAuthContext,
   useQueryParams,
+  UseQueryResult,
+  useParams,
+  getColumnSorter,
 } from '@openmsupply-client/common';
-import { getSdk, MasterListRowFragment } from './operations.generated';
+import {
+  getSdk,
+  MasterListFragment,
+  MasterListRowFragment,
+} from './operations.generated';
 import { getMasterListQueries, ListParams } from './api';
+import { useMasterListColumns } from '../DetailView/columns';
 
 export const useMasterListApi = () => {
   const { storeId } = useAuthContext();
@@ -44,4 +53,37 @@ export const useMasterLists = ({ enabled } = { enabled: true }) => {
     ),
     ...queryParams,
   };
+};
+
+const useMasterListId = () => {
+  const { id = '' } = useParams();
+  return id;
+};
+
+export const useMasterList = (): UseQueryResult<MasterListFragment> => {
+  const masterListId = useMasterListId();
+  const api = useMasterListApi();
+  return useQuery(api.keys.detail(masterListId), () =>
+    api.get.byId(masterListId)
+  );
+};
+
+export const useMasterListFields = () => {
+  const { data } = useMasterList();
+  return { ...data };
+};
+
+export const useMasterListLines = () => {
+  const { columns, onChangeSortBy, sortBy } = useMasterListColumns();
+  const { lines } = useMasterListFields();
+
+  const sorted = useMemo(() => {
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    const { getSortValue } = currentColumn ?? {};
+    return getSortValue
+      ? lines?.nodes.sort(getColumnSorter(getSortValue, !!sortBy.isDesc))
+      : lines?.nodes;
+  }, [sortBy.key, sortBy.isDesc, lines]);
+
+  return { lines: sorted, sortBy, onChangeSortBy, columns };
 };
