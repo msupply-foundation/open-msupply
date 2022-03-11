@@ -51,19 +51,19 @@ type OutError = UpdateOutboundShipmentError;
 
 pub fn update_outbound_shipment(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     patch: UpdateOutboundShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party_option) = validate(&patch, &connection)?;
+            let (invoice, other_party_option) = validate(connection, store_id, &patch)?;
             let (stock_lines_option, update_invoice) =
-                generate(invoice, other_party_option, patch, &connection)?;
+                generate(invoice, other_party_option, patch, connection)?;
 
-            InvoiceRepository::new(&connection).upsert_one(&update_invoice)?;
+            InvoiceRepository::new(connection).upsert_one(&update_invoice)?;
             if let Some(stock_lines) = stock_lines_option {
-                let repository = StockLineRowRepository::new(&connection);
+                let repository = StockLineRowRepository::new(connection);
                 for stock_line in stock_lines {
                     repository.upsert_one(&stock_line)?;
                 }

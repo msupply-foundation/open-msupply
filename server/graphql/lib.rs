@@ -15,6 +15,7 @@ use graphql_general::{GeneralMutations, GeneralQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
@@ -31,6 +32,7 @@ pub struct FullQuery(
     pub StocktakeQueries,
     pub GeneralQueries,
     pub RequisitionQueries,
+    pub ReportQueries,
 );
 
 #[derive(MergedObject, Default)]
@@ -57,6 +59,7 @@ pub fn build_schema() -> Builder {
             StocktakeQueries,
             GeneralQueries,
             RequisitionQueries,
+            ReportQueries,
         ),
         FullMutation(
             InvoiceMutations,

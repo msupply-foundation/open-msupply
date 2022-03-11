@@ -1,11 +1,12 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterBoolInput, EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::ItemConnector;
+use graphql_types::types::{ItemConnector, ItemNodeType};
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::item::get_items;
@@ -28,23 +29,19 @@ pub struct ItemSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterItemTypeInput {
+    pub equal_to: Option<ItemNodeType>,
+    pub equal_any: Option<Vec<ItemNodeType>>,
+    pub not_equal_to: Option<ItemNodeType>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct ItemFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<SimpleStringFilterInput>,
+    pub r#type: Option<EqualFilterItemTypeInput>,
     pub code: Option<SimpleStringFilterInput>,
-    pub is_visible: Option<EqualFilterBoolInput>,
-}
-
-impl From<ItemFilterInput> for ItemFilter {
-    fn from(f: ItemFilterInput) -> Self {
-        ItemFilter {
-            id: f.id.map(EqualFilter::from),
-            name: f.name.map(SimpleStringFilter::from),
-            code: f.code.map(SimpleStringFilter::from),
-            is_visible: f.is_visible.and_then(|filter| filter.equal_to),
-            r#type: None,
-        }
-    }
+    pub is_visible: Option<bool>,
 }
 
 #[derive(Union)]
@@ -62,15 +59,34 @@ pub fn items(
     let items = get_items(
         connection_manager,
         page.map(PaginationOption::from),
-        filter.map(ItemFilter::from),
+        filter.map(|filter| filter.to_domain()),
         // Currently only one sort option is supported, use the first from the list.
-        sort.map(|mut sort_list| sort_list.pop())
-            .flatten()
+        sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
     )
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(ItemsResponse::Response(ItemConnector::from_domain(items)))
+}
+
+impl ItemFilterInput {
+    pub fn to_domain(self) -> ItemFilter {
+        let ItemFilterInput {
+            id,
+            name,
+            r#type,
+            code,
+            is_visible,
+        } = self;
+
+        ItemFilter {
+            id: id.map(EqualFilter::from),
+            name: name.map(SimpleStringFilter::from),
+            code: code.map(SimpleStringFilter::from),
+            r#type: r#type.map(|t| map_filter!(t, ItemNodeType::to_domain)),
+            is_visible,
+        }
+    }
 }
 
 impl ItemSortInput {

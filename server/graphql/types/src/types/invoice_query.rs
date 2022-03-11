@@ -3,9 +3,9 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
-use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader};
+use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput};
 use graphql_core::{
-    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreLoader},
+    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -89,11 +89,11 @@ impl InvoiceNode {
             None => return Ok(None),
         };
 
-        let loader = ctx.get_loader::<DataLoader<StoreLoader>>();
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
         Ok(loader
             .load_one(other_party_store_id.clone())
             .await?
-            .map(StoreNode::from))
+            .map(StoreNode::from_domain))
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
@@ -218,17 +218,17 @@ impl InvoiceNode {
         })
     }
 
-    pub async fn other_party(&self, ctx: &Context<'_>) -> Result<NameNode> {
+    pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(self.invoice.other_party_id().to_string())
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to invoice ({})",
-                &self.invoice.other_party_id(),
+                &self.row().name_id,
                 &self.row().id
             ))
             .extend(),
