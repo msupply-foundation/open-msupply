@@ -48,23 +48,3 @@ pub enum PrintReportResponse {
     Error(PrintReportError),
     Response(PrintReportNode),
 }
-
-#[derive(Default, Clone)]
-pub struct PrintingQueries;
-
-#[Object]
-impl PrintingQueries {
-    /// Query omSupply "locations" entries
-    pub async fn print_report(
-        &self,
-        _ctx: &Context<'_>,
-        _store_id: String,
-        #[graphql(desc = "The id of the report to be printed")] _report_id: String,
-        #[graphql(
-            desc = "The data id that should be used for the report, e.g. the invoice id when printing an invoice"
-        )]
-        _data_id: String,
-    ) -> Result<PrintReportResponse> {
-        Ok(PrintReportResponse::Response(PrintReportNode {}))
-    }
-}
