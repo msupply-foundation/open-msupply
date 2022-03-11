@@ -30,7 +30,7 @@ export type ListParams = {
 };
 
 const outboundParsers = {
-  toSortKey: (sortBy: SortBy<OutboundRowFragment>): InvoiceSortFieldInput => {
+  toSortField: (sortBy: SortBy<OutboundRowFragment>): InvoiceSortFieldInput => {
     switch (sortBy.key) {
       case 'createdDatetime': {
         return InvoiceSortFieldInput.CreatedDatetime;
@@ -172,7 +172,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.invoices({
         first,
         offset,
-        key: outboundParsers.toSortKey(sortBy),
+        key: outboundParsers.toSortField(sortBy),
         desc: !!sortBy.isDesc,
         filter,
         storeId,

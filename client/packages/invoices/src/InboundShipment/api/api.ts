@@ -1,4 +1,5 @@
 import {
+  InvoiceLineNodeType,
   RecordPatch,
   InvoiceNodeType,
   InvoiceSortFieldInput,
@@ -77,7 +78,7 @@ const inboundParsers = {
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
     return {
       id: line.id,
-      itemId: line.itemId,
+      itemId: line.item.id,
       batch: line.batch,
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
@@ -94,7 +95,7 @@ const inboundParsers = {
   },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
     id: line.id,
-    itemId: line.itemId,
+    itemId: line.item.id,
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
     expiryDate: line.expiryDate
@@ -112,6 +113,26 @@ const inboundParsers = {
   }): DeleteInboundShipmentLineInput => {
     return { id: line.id, invoiceId: line.invoiceId };
   },
+  toInsertServiceCharge: (line: DraftInboundLine) => ({
+    id: line.id,
+    invoiceId: line.invoiceId,
+    itemId: line.item.id,
+    totalBeforeTax: line.totalBeforeTax,
+    totalAfterTax: line.totalBeforeTax,
+    note: line.note,
+  }),
+  toUpdateServiceCharge: (line: DraftInboundLine) => ({
+    id: line.id,
+    invoiceId: line.invoiceId,
+    itemId: line.item.id,
+    totalBeforeTax: line.totalBeforeTax,
+    totalAfterTax: line.totalBeforeTax,
+    note: line.note,
+  }),
+  toDeleteServiceCharge: (line: DraftInboundLine) => ({
+    id: line.id,
+    invoiceId: line.invoiceId,
+  }),
 };
 
 export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
@@ -204,31 +225,60 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       },
     });
   },
-  upsertLines: async (lines: DraftInboundLine[]) => {
-    const insertInboundShipmentLines = lines
-      .filter(({ isCreated, numberOfPacks }) => isCreated && numberOfPacks > 0)
-      .map(inboundParsers.toInsertLine);
-    const updateInboundShipmentLines = lines
-      .filter(
-        ({ isCreated, isUpdated, numberOfPacks }) =>
-          !isCreated && isUpdated && numberOfPacks > 0
-      )
-      .map(inboundParsers.toUpdateLine);
-    const deleteInboundShipmentLines = lines
-      .filter(
-        ({ isCreated, isUpdated, numberOfPacks }) =>
-          !isCreated && isUpdated && numberOfPacks === 0
-      )
-      .map(inboundParsers.toDeleteLine);
+  updateLines: async (draftInboundLine: DraftInboundLine[]) => {
+    const input = {
+      insertInboundShipmentLines: draftInboundLine
+        .filter(
+          ({ type, isCreated, numberOfPacks }) =>
+            isCreated &&
+            type === InvoiceLineNodeType.StockIn &&
+            numberOfPacks > 0
+        )
+        .map(inboundParsers.toInsertLine),
+      updateInboundShipmentLines: draftInboundLine
+        .filter(
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+            !isCreated &&
+            isUpdated &&
+            type === InvoiceLineNodeType.StockIn &&
+            numberOfPacks > 0
+        )
+        .map(inboundParsers.toUpdateLine),
+      deleteInboundShipmentLines: draftInboundLine
+        .filter(
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+            !isCreated &&
+            isUpdated &&
+            type === InvoiceLineNodeType.StockIn &&
+            numberOfPacks === 0
+        )
+        .map(inboundParsers.toDeleteLine),
+      insertInboundShipmentServiceLines: draftInboundLine
+        .filter(
+          ({ type, isCreated, isDeleted }) =>
+            type === InvoiceLineNodeType.Service && !isDeleted && isCreated
+        )
+        .map(inboundParsers.toUpdateServiceCharge),
+      updateInboundShipmentServiceLines: draftInboundLine
+        .filter(
+          ({ type, isUpdated, isCreated, isDeleted }) =>
+            type === InvoiceLineNodeType.Service &&
+            !isDeleted &&
+            !isCreated &&
+            isUpdated
+        )
+        .map(inboundParsers.toUpdateServiceCharge),
+      deleteInboundShipmentServiceLines: draftInboundLine
+        .filter(
+          ({ type, isCreated, isDeleted }) =>
+            type === InvoiceLineNodeType.Service && isDeleted && !isCreated
+        )
+        .map(inboundParsers.toDeleteServiceCharge),
+    };
 
-    return sdk.upsertInboundShipment({
-      storeId,
-      input: {
-        insertInboundShipmentLines,
-        updateInboundShipmentLines,
-        deleteInboundShipmentLines,
-      },
-    });
+    const result = await sdk.upsertInboundShipment({ storeId, input });
+
+    return result;
   },
   dashboard: {
     shipmentCount: async (): Promise<{

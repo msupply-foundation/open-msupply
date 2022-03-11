@@ -13,7 +13,6 @@ import {
   BasicSpinner,
   DialogButton,
   useDialog,
-  generateUUID,
   useNotification,
   ModalMode,
   useDirtyCheck,
@@ -30,9 +29,9 @@ import {
   useInboundFields,
   useSaveInboundLines,
   useNextItem,
-  InboundLineFragment,
 } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
+import { CreateDraft } from '../utils';
 
 interface InboundLineEditProps {
   item: ItemRowFragment | null;
@@ -48,30 +47,8 @@ enum Tabs {
   Location = 'Location',
 }
 
-const createDraftInvoiceLine = (
-  itemId: string,
-  invoiceId: string,
-  seed?: InboundLineFragment
-): DraftInboundLine => {
-  const draftLine: DraftInboundLine = {
-    __typename: 'InvoiceLineNode',
-    id: generateUUID(),
-    itemId,
-    invoiceId,
-    sellPricePerPack: 0,
-    costPricePerPack: 0,
-    numberOfPacks: 0,
-    packSize: 0,
-    isCreated: seed ? false : true,
-    location: undefined,
-    expiryDate: null,
-    ...seed,
-  };
-
-  return draftLine;
-};
-const useDraftInboundLines = (itemId: string) => {
-  const { data: lines } = useInboundLines(itemId);
+const useDraftInboundLines = (item: ItemRowFragment | null) => {
+  const { data: lines } = useInboundLines(item?.id ?? '');
   const { id } = useInboundFields('id');
   const { mutateAsync, isLoading } = useSaveInboundLines();
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
@@ -79,21 +56,28 @@ const useDraftInboundLines = (itemId: string) => {
   useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
-    if (lines && itemId) {
+    if (lines && item) {
       const drafts = lines.map(line =>
-        createDraftInvoiceLine(line.item.id, line.invoiceId, line)
+        CreateDraft.stockInLine({
+          item: line.item,
+          invoiceId: line.invoiceId,
+          seed: line,
+        })
       );
-      if (drafts.length === 0) drafts.push(createDraftInvoiceLine(itemId, id));
+      if (drafts.length === 0)
+        drafts.push(CreateDraft.stockInLine({ item, invoiceId: id }));
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
     }
-  }, [lines, itemId]);
+  }, [lines, item]);
 
   const addDraftLine = () => {
-    const newLine = createDraftInvoiceLine(itemId, id);
-    setIsDirty(true);
-    setDraftLines([...draftLines, newLine]);
+    if (item) {
+      const newLine = CreateDraft.stockInLine({ item, invoiceId: id });
+      setIsDirty(true);
+      setDraftLines([...draftLines, newLine]);
+    }
   };
 
   const updateDraftLine = useCallback(
@@ -147,7 +131,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   }, [item]);
 
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
-    useDraftInboundLines(currentItem?.id ?? '');
+    useDraftInboundLines(currentItem);
 
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
