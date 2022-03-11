@@ -6,6 +6,7 @@ import { OutboundLineFragment } from './OutboundShipment/api';
 
 export interface DraftInboundLine extends DraftInboundLineFragment {
   isCreated?: boolean;
+  isDeleted?: boolean;
   isUpdated?: boolean;
 }
 
