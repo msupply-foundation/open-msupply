@@ -98,10 +98,13 @@ fn do_translation(
         Box::new(RequisitionLineTranslation {}),
     ];
     for translation in translations {
-        if let Some(mut result) = translation.try_translate_pull(connection, sync_record)? {
-            records.upserts.append(&mut result.upserts);
-            return Ok(());
-        }
+        match translation.try_translate_pull(connection, sync_record) {
+            Ok(Some(mut result)) => {
+                records.upserts.append(&mut result.upserts);
+            }
+            Err(error) => warn!("Failed to translate ({}): {:?}", error, sync_record),
+            _ => {}
+        };
     }
     warn!("Unhandled remote pull record: {:?}", sync_record);
     Ok(())
