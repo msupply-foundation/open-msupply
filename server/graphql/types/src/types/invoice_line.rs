@@ -1,4 +1,4 @@
-use super::{ItemNode, LocationNode, StockLineNode};
+use super::{ItemNode, LocationNode, PricingNode, StockLineNode};
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
@@ -106,6 +106,11 @@ impl InvoiceLineNode {
         Ok(result.map(StockLineNode::from_domain))
     }
     // Price
+    pub async fn pricing(&self) -> PricingNode {
+        PricingNode {
+            invoice_pricing: self.invoice_line.pricing(),
+        }
+    }
     pub async fn total_before_tax(&self) -> f64 {
         self.row().total_before_tax
     }
@@ -119,7 +124,7 @@ impl InvoiceLineNode {
         self.row().sell_price_per_pack
     }
 
-    pub async fn text_percentage(&self) -> &Option<f64> {
+    pub async fn tax_percentage(&self) -> &Option<f64> {
         &self.row().tax
     }
     // Location
@@ -197,4 +202,230 @@ impl InvoiceLineNode {
     pub fn row(&self) -> &InvoiceLineRow {
         &self.invoice_line.invoice_line_row
     }
+}
+
+#[cfg(test)]
+mod test {
+
+    use async_graphql::{EmptyMutation, Object};
+    use chrono::NaiveDate;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use repository::{
+        mock::MockDataInserts,
+        schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow},
+    };
+    use serde_json::json;
+    use util::inline_init;
+
+    use crate::types::InvoiceLineNode;
+
+    #[actix_rt::test]
+    async fn graphql_test_invoice_line_basic() {
+        #[derive(Clone)]
+        struct TestQuery;
+
+        let (_, _, _, settings) = setup_graphl_test(
+            TestQuery,
+            EmptyMutation,
+            "graphql_test_invoice_line_basic",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query(&self) -> InvoiceLineNode {
+                InvoiceLineNode {
+                    invoice_line: repository::InvoiceLine {
+                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                            r.id = "line_id".to_string();
+                            r.invoice_id = "line_invoice_id".to_string();
+                            r.r#type = InvoiceLineRowType::Service;
+                            r.item_id = "line_item_id".to_string();
+                            r.item_name = "line_item_name".to_string();
+                            r.item_code = "line_item_code".to_string();
+                            r.pack_size = 1;
+                            r.number_of_packs = 2;
+                            r.batch = Some("line_batch".to_string());
+                            r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01));
+                            r.location_id = Some("line_location_id".to_string());
+                            r.note = None;
+                        }),
+                        invoice_row: InvoiceRow::default(),
+                        location_row_option: Some(inline_init(|r: &mut LocationRow| {
+                            r.name = "line_location_name".to_string();
+                        })),
+                    },
+                }
+            }
+        }
+
+        let expected = json!({
+            "testQuery": {
+                "__typename": "InvoiceLineNode",
+                "id": "line_id",
+                "invoiceId": "line_invoice_id",
+                "type": "SERVICE",
+                "itemId": "line_item_id",
+                "itemName": "line_item_name",
+                "itemCode": "line_item_code",
+                "packSize": 1,
+                "numberOfPacks": 2,
+                "batch": "line_batch",
+                "expiryDate": "2021-01-01",
+                "locationName": "line_location_name",
+                "locationId": "line_location_id",
+                "note": null
+            }
+        }
+        );
+
+        let query = r#"
+        query {
+            testQuery {
+                __typename
+                id
+                invoiceId
+                type
+                itemId
+                itemName
+                itemCode
+                packSize
+                numberOfPacks
+                batch
+                expiryDate
+                locationName
+                locationId
+                note
+            }
+        }
+        "#;
+
+        assert_graphql_query!(&settings, &query, &None, expected, None);
+    }
+
+    #[actix_rt::test]
+    async fn graphql_test_invoice_line_pricing() {
+        #[derive(Clone)]
+        struct TestQuery;
+
+        let (_, _, _, settings) = setup_graphl_test(
+            TestQuery,
+            EmptyMutation,
+            "graphql_test_invoice_line_pricing",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query_stock_in(&self) -> InvoiceLineNode {
+                InvoiceLineNode {
+                    invoice_line: repository::InvoiceLine {
+                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                            r.total_before_tax = 1.0;
+                            r.total_after_tax = 2.0;
+                            r.tax = Some(10.0);
+                            r.r#type = InvoiceLineRowType::StockIn
+                        }),
+                        invoice_row: InvoiceRow::default(),
+                        location_row_option: None,
+                    },
+                }
+            }
+            pub async fn test_query_stock_out(&self) -> InvoiceLineNode {
+                InvoiceLineNode {
+                    invoice_line: repository::InvoiceLine {
+                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                            r.total_before_tax = 1.0;
+                            r.total_after_tax = 2.0;
+                            r.tax = Some(5.0);
+                            r.r#type = InvoiceLineRowType::StockOut
+                        }),
+                        invoice_row: InvoiceRow::default(),
+                        location_row_option: None,
+                    },
+                }
+            }
+            pub async fn test_query_service(&self) -> InvoiceLineNode {
+                InvoiceLineNode {
+                    invoice_line: repository::InvoiceLine {
+                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                            r.total_before_tax = 1.0;
+                            r.total_after_tax = 2.0;
+                            r.tax = None;
+                            r.r#type = InvoiceLineRowType::Service
+                        }),
+                        invoice_row: InvoiceRow::default(),
+                        location_row_option: None,
+                    },
+                }
+            }
+        }
+
+        let expected = json!({
+            "testQueryStockIn": {
+                "pricing": {
+                    "totalBeforeTax": 1.0,
+                    "totalAfterTax": 2.0,
+                    "stockTotalBeforeTax": 1.0,
+                    "stockTotalAfterTax": 2.0,
+                    "serviceTotalBeforeTax": 0.0,
+                    "serviceTotalAfterTax": 0.0,
+                    "taxPercentage": 10.0
+                }
+            },
+            "testQueryStockOut": {
+                "pricing": {
+                    "totalBeforeTax": 1.0,
+                    "totalAfterTax": 2.0,
+                    "stockTotalBeforeTax": 1.0,
+                    "stockTotalAfterTax": 2.0,
+                    "serviceTotalBeforeTax": 0.0,
+                    "serviceTotalAfterTax": 0.0,
+                    "taxPercentage": 5.0
+                }
+            },
+            "testQueryService": {
+                "pricing": {
+                    "totalBeforeTax": 1.0,
+                    "totalAfterTax": 2.0,
+                    "stockTotalBeforeTax": 0.0,
+                    "stockTotalAfterTax": 0.0,
+                    "serviceTotalBeforeTax": 1.0,
+                    "serviceTotalAfterTax":2.0,
+                    "taxPercentage": null
+                }
+            }
+        }
+        );
+
+        let query = r#"
+        query {
+            testQueryStockIn {
+              ...pricing
+            }
+            testQueryStockOut {
+                ...pricing
+            }
+              testQueryService {
+                ...pricing
+            }           
+        }
+        fragment pricing on InvoiceLineNode {
+            pricing {
+                totalBeforeTax
+                totalAfterTax
+                stockTotalBeforeTax
+                stockTotalAfterTax
+                serviceTotalBeforeTax
+                serviceTotalAfterTax
+                taxPercentage
+            }
+        }
+        "#;
+
+        assert_graphql_query!(&settings, &query, &None, expected, None);
+    }
+    // TODO good place to test loaders
 }

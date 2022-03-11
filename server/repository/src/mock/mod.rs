@@ -256,7 +256,7 @@ impl Index<&str> for MockDataCollection {
     }
 }
 
-fn all_mock_data() -> MockDataCollection {
+fn all_mock_data(extra_mock_data: Option<MockData>) -> MockDataCollection {
     let mut data: MockDataCollection = Default::default();
     data.insert(
         "base",
@@ -322,14 +322,18 @@ fn all_mock_data() -> MockDataCollection {
     data.insert("mock_test_remote_pull", mock_test_remote_pull());
     data.insert("mock_test_service_item", mock_test_service_item());
     data.insert("mock_test_name_query", mock_test_name_query());
+    if let Some(mock_data) = extra_mock_data {
+        data.insert("extra_mock_data", mock_data);
+    };
     data
 }
 
 pub async fn insert_mock_data(
     connection: &StorageConnection,
     inserts: MockDataInserts,
+    extra_mock_data: Option<MockData>,
 ) -> MockDataCollection {
-    let all_mock_data = all_mock_data();
+    let all_mock_data = all_mock_data(extra_mock_data);
     for (_, mock_data) in &all_mock_data.data {
         if inserts.user_accounts {
             let repo = UserAccountRepository::new(connection);

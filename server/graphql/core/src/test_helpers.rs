@@ -6,8 +6,8 @@ use async_graphql_actix_web::{Request, Response};
 use repository::{
     database_settings::DatabaseSettings,
     get_storage_connection_manager,
-    mock::{MockDataCollection, MockDataInserts},
-    test_db::setup_all,
+    mock::{MockData, MockDataCollection, MockDataInserts},
+    test_db::setup_all_with_data,
     StorageConnection, StorageConnectionManager,
 };
 use serde_json::Value;
@@ -223,11 +223,15 @@ macro_rules! assert_standard_graphql_error {
     }};
 }
 
-pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone>(
+pub async fn setup_graphl_test_with_data<
+    Q: 'static + ObjectType + Clone,
+    M: 'static + ObjectType + Clone,
+>(
     queries: Q,
     mutations: M,
     db_name: &str,
     inserts: MockDataInserts,
+    extra_mock_data: Option<MockData>,
 ) -> (
     MockDataCollection,
     StorageConnection,
@@ -235,7 +239,7 @@ pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + Obj
     TestGraphlSettings<Q, M>,
 ) {
     let (mock_data, connection, connection_manager, database_settings) =
-        setup_all(db_name, inserts).await;
+        setup_all_with_data(db_name, inserts, extra_mock_data).await;
 
     (
         mock_data,
@@ -247,4 +251,18 @@ pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + Obj
             database_settings,
         },
     )
+}
+
+pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone>(
+    queries: Q,
+    mutations: M,
+    db_name: &str,
+    inserts: MockDataInserts,
+) -> (
+    MockDataCollection,
+    StorageConnection,
+    StorageConnectionManager,
+    TestGraphlSettings<Q, M>,
+) {
+    setup_graphl_test_with_data(queries, mutations, db_name, inserts, None).await
 }
