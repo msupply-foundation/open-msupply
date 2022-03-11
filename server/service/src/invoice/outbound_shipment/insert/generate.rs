@@ -7,6 +7,7 @@ use repository::{
 };
 
 use crate::number::next_number;
+use crate::user_account::get_default_user_id;
 
 use super::InsertOutboundShipment;
 
@@ -20,6 +21,7 @@ pub fn generate(
 
     let result = InvoiceRow {
         id: input.id,
+        user_id: Some(get_default_user_id()),
         name_id: input.other_party_id,
         r#type: InvoiceRowType::OutboundShipment,
         comment: input.comment,

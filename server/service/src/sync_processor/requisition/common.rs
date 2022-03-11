@@ -85,14 +85,16 @@ pub fn generate_linked_requisition(
         r#type: RequisitionRowType::Response,
         status: RequisitionRowStatus::New,
         created_datetime: Utc::now().naive_utc(),
-        sent_datetime: None,
-        finalised_datetime: None,
-        colour: None,
-        comment: None,
         their_reference: source_requisition.their_reference.clone(),
         max_months_of_stock: source_requisition.max_months_of_stock.clone(),
         min_months_of_stock: source_requisition.min_months_of_stock.clone(),
         linked_requisition_id: Some(source_requisition.id.clone()),
+        // Default
+        user_id: None,
+        sent_datetime: None,
+        finalised_datetime: None,
+        colour: None,
+        comment: None,
     };
 
     Ok(result)

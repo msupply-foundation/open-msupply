@@ -1,5 +1,4 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use log::info;
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -90,7 +89,9 @@ pub struct LegacyTransactRow {
     #[serde(rename = "type")]
     pub _type: LegacyTransactType,
     pub status: LegacyTransactStatus,
-
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "user_ID")]
+    pub user_id: Option<String>,
     pub hold: bool,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
@@ -172,6 +173,7 @@ impl RemotePullTranslation for InvoiceTranslation {
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Invoice(InvoiceRow {
                 id: data.ID,
+                user_id: data.user_id,
                 store_id: data.store_ID,
                 name_id: data.name_ID,
                 name_store_id,
@@ -315,6 +317,7 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
 
         let InvoiceRow {
             id,
+            user_id,
             name_id,
             // TODO
             name_store_id: _,
@@ -353,6 +356,7 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
         let confirm_datetime = to_legacy_confirm_time(&r#type, picked_datetime, delivered_datetime);
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
+            user_id,
             name_ID: name_id,
             store_ID: store_id.clone(),
             invoice_num: invoice_number,

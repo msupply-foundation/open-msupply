@@ -65,12 +65,12 @@ pub use test_stocktake::*;
 pub use test_stocktake_line::*;
 pub use test_sync_processor::*;
 pub use test_unallocated_line::*;
-pub use user_account::mock_user_accounts;
+pub use user_account::*;
 
 use crate::{
     InvoiceLineRowRepository, LocationRowRepository, NumberRowRepository,
     RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRepository,
 };
 
 use self::unit::mock_units;
@@ -85,6 +85,7 @@ use super::{
 
 #[derive(Default)]
 pub struct MockData {
+    pub user_accounts: Vec<UserAccountRow>,
     pub names: Vec<NameRow>,
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
@@ -104,7 +105,9 @@ pub struct MockData {
     pub stocktake_lines: Vec<StocktakeLineRow>,
 }
 
+#[derive(Default)]
 pub struct MockDataInserts {
+    pub user_accounts: bool,
     pub names: bool,
     pub stores: bool,
     pub units: bool,
@@ -127,6 +130,7 @@ pub struct MockDataInserts {
 impl MockDataInserts {
     pub fn all() -> Self {
         MockDataInserts {
+            user_accounts: true,
             names: true,
             stores: true,
             units: true,
@@ -148,25 +152,12 @@ impl MockDataInserts {
     }
 
     pub fn none() -> Self {
-        MockDataInserts {
-            names: false,
-            stores: false,
-            units: false,
-            items: false,
-            locations: false,
-            name_store_joins: false,
-            full_requisitions: false,
-            invoices: false,
-            stock_lines: false,
-            invoice_lines: false,
-            full_invoices: false,
-            full_master_lists: false,
-            numbers: false,
-            requisitions: false,
-            requisition_lines: false,
-            stocktakes: false,
-            stocktake_lines: false,
-        }
+        MockDataInserts::default()
+    }
+
+    pub fn user_accounts(mut self) -> Self {
+        self.user_accounts = true;
+        self
     }
 
     pub fn names(mut self) -> Self {
@@ -270,6 +261,7 @@ fn all_mock_data() -> MockDataCollection {
     data.insert(
         "base",
         MockData {
+            user_accounts: mock_user_accounts(),
             names: mock_names(),
             stores: mock_stores(),
             units: mock_units(),
@@ -339,6 +331,13 @@ pub async fn insert_mock_data(
 ) -> MockDataCollection {
     let all_mock_data = all_mock_data();
     for (_, mock_data) in &all_mock_data.data {
+        if inserts.user_accounts {
+            let repo = UserAccountRepository::new(connection);
+            for row in &mock_data.user_accounts {
+                repo.insert_one(&row).unwrap();
+            }
+        }
+
         if inserts.names {
             let repo = NameRepository::new(connection);
             for row in &mock_data.names {

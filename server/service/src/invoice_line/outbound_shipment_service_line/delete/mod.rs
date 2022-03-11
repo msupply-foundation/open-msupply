@@ -59,10 +59,10 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_draft_inbound_service_line, mock_draft_outbound_service_line,
-            mock_draft_outbound_shipped_service_line,
+            mock_draft_inbound_service_line, mock_draft_inbound_shipment_with_service_lines,
+            mock_draft_outbound_service_line, mock_draft_outbound_shipped_service_line,
             mock_draft_outbound_shipped_with_service_lines, mock_draft_outbound_with_service_lines,
-            mock_full_draft_outbound_shipment_a, MockDataInserts, mock_draft_inbound_shipment_with_service_lines,
+            mock_full_draft_outbound_shipment_a, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,

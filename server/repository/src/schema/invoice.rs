@@ -30,6 +30,7 @@ pub struct InvoiceRow {
     pub name_id: String,
     pub name_store_id: Option<String>,
     pub store_id: String,
+    pub user_id: Option<String>,
     pub invoice_number: i64,
     #[column_name = "type_"]
     pub r#type: InvoiceRowType,
@@ -56,6 +57,7 @@ impl Default for InvoiceRow {
             status: InvoiceRowStatus::New,
             // Defaults
             id: Default::default(),
+            user_id: Default::default(),
             name_id: Default::default(),
             name_store_id: Default::default(),
             store_id: Default::default(),
