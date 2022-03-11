@@ -20,7 +20,11 @@ import {
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { inboundLinesToSummaryItems, isInboundDisabled } from './../../utils';
+import {
+  inboundLinesToSummaryItems,
+  isInboundDisabled,
+  isA,
+} from './../../utils';
 import { InboundItem } from './../../types';
 import { getInboundQueries, ListParams } from './api';
 import { useInboundShipmentColumns } from '../DetailView/ContentArea';
@@ -96,7 +100,7 @@ export const useInboundLines = (itemId?: string) => {
     (invoice: InboundFragment) => {
       return itemId
         ? invoice.lines.nodes.filter(({ item }) => itemId === item.id)
-        : invoice.lines.nodes;
+        : invoice.lines.nodes.filter(line => isA.stockInLine(line));
     },
     [itemId]
   );
@@ -110,9 +114,9 @@ export const useInboundItems = () => {
   });
 
   const selectItems = useCallback((invoice: InboundFragment) => {
-    return inboundLinesToSummaryItems(invoice.lines.nodes).sort(
-      getDataSorter(sortBy.key as keyof InboundItem, !!sortBy.isDesc)
-    );
+    return inboundLinesToSummaryItems(
+      invoice.lines.nodes.filter(line => isA.stockInLine(line))
+    ).sort(getDataSorter(sortBy.key as keyof InboundItem, !!sortBy.isDesc));
   }, []);
 
   const { data } = useInboundSelector(selectItems);
@@ -145,7 +149,7 @@ export const useSaveInboundLines = () => {
   const queryClient = useQueryClient();
   const invoiceNumber = useInboundNumber();
   const api = useInboundApi();
-  return useMutation(api.upsertLines, {
+  return useMutation(api.updateLines, {
     onSettled: () =>
       queryClient.invalidateQueries(api.keys.detail(invoiceNumber)),
   });
@@ -302,6 +306,14 @@ export const useDeleteSelectedInbounds = () => {
   };
 
   return deleteAction;
+};
+
+export const useInboundServiceLines = () => {
+  const selectLines = useCallback((invoice: InboundFragment) => {
+    return invoice.lines.nodes.filter(isA.serviceLine);
+  }, []);
+
+  return useInboundSelector(selectLines);
 };
 
 export const useInboundRows = () => {
