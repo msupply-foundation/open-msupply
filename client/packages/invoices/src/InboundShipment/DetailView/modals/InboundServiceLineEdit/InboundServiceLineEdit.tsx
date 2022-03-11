@@ -29,7 +29,7 @@ export const InboundServiceLineEdit = ({
   const { Modal } = useDialog({ isOpen, onClose });
   const { lines, update, add, save, isLoading } = useDraftServiceLines();
   const columns = useServiceLineColumns(update);
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
 
   return (
     <Modal
