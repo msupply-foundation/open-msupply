@@ -3,49 +3,14 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
-import { ItemRowFragmentDoc } from '../../Item/api/operations.generated';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';
-export type MasterListLineFragment = {
-  __typename: 'MasterListLineNode';
-  id: string;
-  item: {
-    __typename: 'ItemNode';
-    id: string;
-    code: string;
-    name: string;
-    unitName?: string | null;
-  };
-};
+import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+export type MasterListItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
-export type MasterListFragment = {
-  __typename: 'MasterListNode';
-  name: string;
-  code: string;
-  description: string;
-  id: string;
-  lines: {
-    __typename: 'MasterListLineConnector';
-    nodes: Array<{
-      __typename: 'MasterListLineNode';
-      id: string;
-      item: {
-        __typename: 'ItemNode';
-        id: string;
-        code: string;
-        name: string;
-        unitName?: string | null;
-      };
-    }>;
-  };
-};
+export type MasterListLineFragment = { __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } };
 
-export type MasterListRowFragment = {
-  __typename: 'MasterListNode';
-  name: string;
-  code: string;
-  description: string;
-  id: string;
-};
+export type MasterListFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', nodes: Array<{ __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } };
+
+export type MasterListRowFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string };
 
 export type MasterListsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -56,167 +21,103 @@ export type MasterListsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
 }>;
 
-export type MasterListsQuery = {
-  __typename: 'FullQuery';
-  masterLists: {
-    __typename: 'MasterListConnector';
-    totalCount: number;
-    nodes: Array<{
-      __typename: 'MasterListNode';
-      name: string;
-      code: string;
-      description: string;
-      id: string;
-    }>;
-  };
-};
+
+export type MasterListsQuery = { __typename: 'FullQuery', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string }> } };
 
 export type MasterListQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.MasterListFilterInput>;
   storeId: Types.Scalars['String'];
 }>;
 
-export type MasterListQuery = {
-  __typename: 'FullQuery';
-  masterLists: {
-    __typename: 'MasterListConnector';
-    totalCount: number;
-    nodes: Array<{
-      __typename: 'MasterListNode';
-      name: string;
-      code: string;
-      description: string;
-      id: string;
-      lines: {
-        __typename: 'MasterListLineConnector';
-        nodes: Array<{
-          __typename: 'MasterListLineNode';
-          id: string;
-          item: {
-            __typename: 'ItemNode';
-            id: string;
-            code: string;
-            name: string;
-            unitName?: string | null;
-          };
-        }>;
-      };
-    }>;
-  };
-};
 
+export type MasterListQuery = { __typename: 'FullQuery', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', nodes: Array<{ __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } }> } };
+
+export const MasterListItemFragmentDoc = gql`
+    fragment MasterListItem on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+}
+    `;
 export const MasterListLineFragmentDoc = gql`
-  fragment MasterListLine on MasterListLineNode {
-    id
-    item {
-      ...ItemRow
-    }
+    fragment MasterListLine on MasterListLineNode {
+  __typename
+  id
+  item {
+    ...MasterListItem
   }
-  ${ItemRowFragmentDoc}
-`;
+}
+    ${MasterListItemFragmentDoc}`;
 export const MasterListFragmentDoc = gql`
-  fragment MasterList on MasterListNode {
-    __typename
-    name
-    code
-    description
-    id
-    lines {
-      nodes {
-        ...MasterListLine
-      }
+    fragment MasterList on MasterListNode {
+  __typename
+  name
+  code
+  description
+  id
+  lines {
+    nodes {
+      ...MasterListLine
     }
   }
-  ${MasterListLineFragmentDoc}
-`;
+}
+    ${MasterListLineFragmentDoc}`;
 export const MasterListRowFragmentDoc = gql`
-  fragment MasterListRow on MasterListNode {
-    __typename
-    name
-    code
-    description
-    id
-  }
-`;
+    fragment MasterListRow on MasterListNode {
+  __typename
+  name
+  code
+  description
+  id
+}
+    `;
 export const MasterListsDocument = gql`
-  query masterLists(
-    $first: Int
-    $offset: Int
-    $key: MasterListSortFieldInput!
-    $desc: Boolean
-    $filter: MasterListFilterInput
-    $storeId: String!
+    query masterLists($first: Int, $offset: Int, $key: MasterListSortFieldInput!, $desc: Boolean, $filter: MasterListFilterInput, $storeId: String!) {
+  masterLists(
+    filter: $filter
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    storeId: $storeId
   ) {
-    masterLists(
-      filter: $filter
-      page: { first: $first, offset: $offset }
-      sort: { key: $key, desc: $desc }
-      storeId: $storeId
-    ) {
-      ... on MasterListConnector {
-        __typename
-        totalCount
-        nodes {
-          ...MasterListRow
-        }
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListRow
       }
     }
   }
-  ${MasterListRowFragmentDoc}
-`;
+}
+    ${MasterListRowFragmentDoc}`;
 export const MasterListDocument = gql`
-  query masterList($filter: MasterListFilterInput, $storeId: String!) {
-    masterLists(filter: $filter, storeId: $storeId) {
-      ... on MasterListConnector {
-        __typename
-        totalCount
-        nodes {
-          ...MasterList
-        }
+    query masterList($filter: MasterListFilterInput, $storeId: String!) {
+  masterLists(filter: $filter, storeId: $storeId) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterList
       }
     }
   }
-  ${MasterListFragmentDoc}
-`;
+}
+    ${MasterListFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(
-  action: (requestHeaders?: Record<string, string>) => Promise<T>,
-  operationName: string
-) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
+
 
 const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
 
-export function getSdk(
-  client: GraphQLClient,
-  withWrapper: SdkFunctionWrapper = defaultWrapper
-) {
+export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    masterLists(
-      variables: MasterListsQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
-    ): Promise<MasterListsQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<MasterListsQuery>(MasterListsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'masterLists'
-      );
+    masterLists(variables: MasterListsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<MasterListsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsQuery>(MasterListsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterLists');
     },
-    masterList(
-      variables: MasterListQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
-    ): Promise<MasterListQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<MasterListQuery>(MasterListDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'masterList'
-      );
-    },
+    masterList(variables: MasterListQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<MasterListQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListQuery>(MasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterList');
+    }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
@@ -232,17 +133,11 @@ export type Sdk = ReturnType<typeof getSdk>;
  *   )
  * })
  */
-export const mockMasterListsQuery = (
-  resolver: ResponseResolver<
-    GraphQLRequest<MasterListsQueryVariables>,
-    GraphQLContext<MasterListsQuery>,
-    any
-  >
-) =>
+export const mockMasterListsQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsQueryVariables>, GraphQLContext<MasterListsQuery>, any>) =>
   graphql.query<MasterListsQuery, MasterListsQueryVariables>(
     'masterLists',
     resolver
-  );
+  )
 
 /**
  * @param resolver a function that accepts a captured request and may return a mocked response.
@@ -255,14 +150,8 @@ export const mockMasterListsQuery = (
  *   )
  * })
  */
-export const mockMasterListQuery = (
-  resolver: ResponseResolver<
-    GraphQLRequest<MasterListQueryVariables>,
-    GraphQLContext<MasterListQuery>,
-    any
-  >
-) =>
+export const mockMasterListQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListQueryVariables>, GraphQLContext<MasterListQuery>, any>) =>
   graphql.query<MasterListQuery, MasterListQueryVariables>(
     'masterList',
     resolver
-  );
+  )

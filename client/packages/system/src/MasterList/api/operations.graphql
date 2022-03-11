@@ -1,7 +1,16 @@
+fragment MasterListItem on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+}
+
 fragment MasterListLine on MasterListLineNode {
+  __typename
   id
   item {
-    ...ItemRow
+    ...MasterListItem
   }
 }
 
