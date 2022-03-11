@@ -1,0 +1,5 @@
+{
+  "error.master-list-not-found": "Master list not found",
+  "label.master-list-name": "Name",
+  "messages.click-to-return-to-master-lists": "Unable to find a master list with that ID. Click OK to return to the list of master lists"
+}
