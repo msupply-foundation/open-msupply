@@ -155,7 +155,7 @@ export const Login: React.FC = ({}) => {
                 value={currentStore}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
               />
-              {error && !isLoggingIn && (
+              {error && (
                 <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
                   <Box>
                     <AlertIcon />
