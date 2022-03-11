@@ -1,47 +1,13 @@
 import React, { useEffect } from 'react';
-import {
-  RecordPatch,
-  InvoiceLineNodeType,
-  generateUUID,
-} from '@openmsupply-client/common';
-import {
-  useDefaultServiceItem,
-  ItemRowFragment,
-} from '@openmsupply-client/system';
+import { RecordPatch } from '@openmsupply-client/common';
+import { useDefaultServiceItem } from '@openmsupply-client/system';
 import {
   useInboundFields,
   useSaveInboundLines,
-  InboundLineFragment,
   useInboundServiceLines,
 } from '../../../api';
 import { DraftInboundLine } from './../../../../types';
-
-const createDraftLine = ({
-  item,
-  invoiceId,
-  seed,
-}: {
-  item: ItemRowFragment;
-  invoiceId: string;
-  seed?: InboundLineFragment;
-}): DraftInboundLine => ({
-  __typename: 'InvoiceLineNode',
-  id: generateUUID(),
-  item,
-  invoiceId,
-  totalAfterTax: 0,
-  totalBeforeTax: 0,
-  numberOfPacks: 0,
-  packSize: 0,
-  sellPricePerPack: 0,
-  note: '',
-  type: InvoiceLineNodeType.Service,
-  isCreated: !seed,
-  isUpdated: false,
-  isDeleted: false,
-  costPricePerPack: 0,
-  ...seed,
-});
+import { CreateDraft } from '../utils';
 
 export const useDraftServiceLines = () => {
   const { id } = useInboundFields('id');
@@ -58,13 +24,17 @@ export const useDraftServiceLines = () => {
     // After data has been fetched create draft lines for each service line.
     if (!hasDraftLines && hasFetchedData) {
       const newDraftLines = lines.map(seed =>
-        createDraftLine({ invoiceId: id, item: defaultServiceItem, seed })
+        CreateDraft.serviceLine({
+          invoiceId: id,
+          item: defaultServiceItem,
+          seed,
+        })
       );
 
       // If there were no service lines. Create one.
       if (!newDraftLines.length) {
         newDraftLines.push(
-          createDraftLine({
+          CreateDraft.serviceLine({
             invoiceId: id,
             item: defaultServiceItem,
           })
@@ -87,7 +57,7 @@ export const useDraftServiceLines = () => {
   const add = () => {
     setDraftLines(currLines => {
       if (defaultServiceItem) {
-        const newRow = createDraftLine({
+        const newRow = CreateDraft.serviceLine({
           invoiceId: id,
           item: defaultServiceItem,
         });
