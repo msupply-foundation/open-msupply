@@ -1,30 +1,39 @@
-use repository::{schema::StoreRow, RepositoryError, StorageConnectionManager, StoreRowRepository};
-
+use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
+use repository::{EqualFilter, Store, StoreFilter};
+use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
-pub struct StoreLoader {
-    pub connection_manager: StorageConnectionManager,
+use crate::standard_graphql_error::StandardGraphqlError;
+
+pub struct StoreByIdLoader {
+    pub service_provider: Data<ServiceProvider>,
 }
 
 #[async_trait::async_trait]
-impl Loader<String> for StoreLoader {
-    type Value = StoreRow;
-    type Error = RepositoryError;
+impl Loader<String> for StoreByIdLoader {
+    type Value = Store;
+    type Error = async_graphql::Error;
 
-    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = StoreRowRepository::new(&connection);
-        Ok(repo
-            .find_many_by_id(keys)
-            .unwrap()
-            .iter()
-            .map(|store: &StoreRow| {
-                let store_id = store.id.clone();
-                let store = store.clone();
-                (store_id, store)
-            })
+    async fn load(
+        &self,
+        store_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let service_context = self.service_provider.context()?;
+
+        let filter = StoreFilter::new().id(EqualFilter::equal_any(store_ids.to_owned()));
+
+        let stores = self
+            .service_provider
+            .general_service
+            .get_stores(&service_context, None, Some(filter), None)
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(stores
+            .rows
+            .into_iter()
+            .map(|store| (store.store_row.id.clone(), store))
             .collect())
     }
 }

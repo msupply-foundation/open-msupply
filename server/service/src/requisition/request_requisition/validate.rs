@@ -16,7 +16,10 @@ pub fn check_other_party(
     other_party_id: &str,
 ) -> Result<(), OtherPartyErrors> {
     let other_party = NameQueryRepository::new(connection)
-        .query_by_filter(NameFilter::new().id(EqualFilter::equal_to(other_party_id)))?
+        .query_by_filter(
+            store_id,
+            NameFilter::new().id(EqualFilter::equal_to(other_party_id)),
+        )?
         .pop()
         .ok_or(OtherPartyErrors::OtherPartyDoesNotExist)?;
 

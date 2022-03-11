@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, RequisitionLinesByRequisitionIdLoader,
-        RequisitionsByIdLoader,
+        RequisitionsByIdLoader, NameByIdLoaderInput,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -14,7 +14,6 @@ use repository::{
     Requisition,
 };
 use service::ListResult;
-use StandardGraphqlError::*;
 
 use super::{InvoiceConnector, NameNode, RequisitionLineConnector};
 
@@ -99,13 +98,15 @@ impl RequisitionNode {
 
     /// Request Requisition: Supplying store (store that is supplying stock)
     /// Response Requisition: Customer store (store that is ordering stock)
-    pub async fn other_party(&self, ctx: &Context<'_>) -> Result<NameNode> {
+    pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        let response_option = loader.load_one(self.row().name_id.clone()).await?;
+        let response_option = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
+            .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
-            InternalError(format!(
+            StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to requisition ({})",
                 &self.row().name_id,
                 &self.row().id
@@ -170,6 +171,21 @@ impl RequisitionNode {
         let result = result_option.unwrap_or(vec![]);
 
         Ok(InvoiceConnector::from_vec(result))
+    }
+
+    /// All lines that have not been supplied
+    /// based on same logic as RequisitionLineNode.remainingQuantityToSupply
+    /// only applicable to Response requisition, Request requisition will empty connector
+    pub async fn lines_remaining_to_supply(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<RequisitionLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<RequisitionLinesByRequisitionIdLoader>>();
+        let result_option = loader.load_one(self.row().id.clone()).await?;
+
+        let result = result_option.unwrap_or(vec![]);
+
+        Ok(RequisitionLineConnector::from_vec(result))
     }
 
     // % allocated ?

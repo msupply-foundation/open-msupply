@@ -8,7 +8,7 @@ use service::service_provider::ServiceProvider;
 
 use crate::standard_graphql_error::StandardGraphqlError;
 
-use super::{extract_unique_requisition_and_item_ids, RequisitionAndItemId};
+use super::{IdPair, RequisitionAndItemId};
 
 pub struct RequisitionLinesByRequisitionIdLoader {
     pub service_provider: Data<ServiceProvider>,
@@ -61,8 +61,7 @@ impl Loader<RequisitionAndItemId> for LinkedRequisitionLineLoader {
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
         let service_context = self.service_provider.context()?;
 
-        let (requisition_ids, item_ids) =
-            extract_unique_requisition_and_item_ids(requisition_and_item_id);
+        let (requisition_ids, item_ids) = IdPair::extract_unique_ids(requisition_and_item_id);
 
         let filter = RequisitionLineFilter::new()
             .requisition_id(EqualFilter::equal_any(requisition_ids))
@@ -79,10 +78,10 @@ impl Loader<RequisitionAndItemId> for LinkedRequisitionLineLoader {
             .into_iter()
             .map(|line| {
                 (
-                    RequisitionAndItemId {
-                        item_id: line.requisition_line_row.item_id.clone(),
-                        requisition_id: line.requisition_line_row.requisition_id.clone(),
-                    },
+                    RequisitionAndItemId::new(
+                        &line.requisition_line_row.requisition_id,
+                        &line.requisition_line_row.item_id,
+                    ),
                     line,
                 )
             })

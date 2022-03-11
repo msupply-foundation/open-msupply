@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use repository::{RepositoryError, StorageConnection, StorageConnectionManager};
+use repository::{
+    Name, NameFilter, NameSort, PaginationOption, RepositoryError, StorageConnection,
+    StorageConnectionManager, Store, StoreFilter, StoreSort,
+};
 
 use crate::{
     dashboard::{
@@ -12,13 +15,15 @@ use crate::{
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    name::get_names,
     permission_validation::{ValidationService, ValidationServiceTrait},
     permissions::{PermissionService, PermissionServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
-    store::{StoreService, StoreServiceTrait},
+    store::get_stores,
+    ListError, ListResult,
 };
 
 pub struct ServiceProvider {
@@ -31,10 +36,10 @@ pub struct ServiceProvider {
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stocktake_service: Box<dyn StocktakeServiceTrait>,
     pub stocktake_line_service: Box<dyn StocktakeLineServiceTrait>,
-    pub store_service: Box<dyn StoreServiceTrait>,
     pub invoice_line_service: Box<dyn InvoiceLineServiceTrait>,
     pub requisition_service: Box<dyn RequisitionServiceTrait>,
     pub requisition_line_service: Box<dyn RequisitionLineServiceTrait>,
+    pub general_service: Box<dyn GeneralServiceTrait>,
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
@@ -55,7 +60,6 @@ impl ServiceProvider {
             validation_service: Box::new(ValidationService::new(permission_service)),
             location_service: Box::new(LocationService {}),
             master_list_service: Box::new(MasterListService {}),
-            store_service: Box::new(StoreService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),
             invoice_service: Box::new(InvoiceService {}),
@@ -65,6 +69,7 @@ impl ServiceProvider {
             requisition_service: Box::new(RequisitionService {}),
             requisition_line_service: Box::new(RequisitionLineService {}),
             item_stats_service: Box::new(ItemStatsService {}),
+            general_service: Box::new(GeneralService {}),
         }
     }
 
@@ -80,3 +85,30 @@ impl ServiceProvider {
         self.connection_manager.connection()
     }
 }
+
+pub trait GeneralServiceTrait: Sync + Send {
+    fn get_names(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        pagination: Option<PaginationOption>,
+        filter: Option<NameFilter>,
+        sort: Option<NameSort>,
+    ) -> Result<ListResult<Name>, ListError> {
+        get_names(ctx, store_id, pagination, filter, sort)
+    }
+
+    fn get_stores(
+        &self,
+        ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
+        filter: Option<StoreFilter>,
+        sort: Option<StoreSort>,
+    ) -> Result<ListResult<Store>, ListError> {
+        get_stores(ctx, pagination, filter, sort)
+    }
+}
+
+pub struct GeneralService;
+
+impl GeneralServiceTrait for GeneralService {}
