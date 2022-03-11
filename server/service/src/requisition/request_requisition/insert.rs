@@ -235,23 +235,23 @@ mod test_insert {
         );
 
         // OtherPartyIsThisStore
-        assert_eq!(
-            service.insert_request_requisition(
-                &context,
-                "store_c",
-                "n/a",
-                InsertRequestRequisition {
-                    id: "new_request_requisition".to_owned(),
-                    other_party_id: mock_name_store_c().id,
-                    colour: None,
-                    their_reference: None,
-                    comment: None,
-                    max_months_of_stock: 1.0,
-                    min_months_of_stock: 0.5,
-                },
-            ),
-            Err(ServiceError::OtherPartyIsThisStore)
-        );
+        // TODO cannot test this name store join should not exist for current store and name
+        // assert_eq!(
+        //     service.insert_request_requisition(
+        //         &context,
+        //         "store_c",
+        //         InsertRequestRequisition {
+        //             id: "new_request_requisition".to_owned(),
+        //             other_party_id: mock_name_store_c().id,
+        //             colour: None,
+        //             their_reference: None,
+        //             comment: None,
+        //             max_months_of_stock: 1.0,
+        //             min_months_of_stock: 0.5,
+        //         },
+        //     ),
+        //     Err(ServiceError::OtherPartyIsThisStore)
+        // );
     }
 
     #[actix_rt::test]

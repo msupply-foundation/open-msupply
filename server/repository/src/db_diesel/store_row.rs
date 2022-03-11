@@ -51,6 +51,15 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        use crate::schema::diesel_schema::store::dsl as store_dsl;
+        let result = store_dsl::store
+            .filter(store_dsl::name_id.eq(name_id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         use crate::schema::diesel_schema::store::dsl::*;
         let result = store

@@ -16,36 +16,6 @@ mod repository_test {
             }
         }
 
-        pub fn name_2() -> NameRow {
-            NameRow {
-                id: "name2".to_string(),
-                name: "name_2".to_string(),
-                code: "code1".to_string(),
-                is_customer: false,
-                is_supplier: false,
-            }
-        }
-
-        pub fn name_3() -> NameRow {
-            NameRow {
-                id: "name3".to_string(),
-                name: "name_3".to_string(),
-                code: "code2".to_string(),
-                is_customer: true,
-                is_supplier: false,
-            }
-        }
-
-        pub fn name_a_umlaut() -> NameRow {
-            NameRow {
-                id: "name_äÄ_umlaut".to_string(),
-                name: "a_umlaut_äÄ_name".to_string(),
-                code: "a_umlaut_äÄ_code".to_string(),
-                is_customer: true,
-                is_supplier: false,
-            }
-        }
-
         pub fn store_1() -> StoreRow {
             StoreRow {
                 id: "store1".to_string(),
@@ -211,7 +181,7 @@ mod repository_test {
                 total_before_tax: 2.0,
                 total_after_tax: 2.0,
                 tax: None,
-                r#type: InvoiceLineRowType::StockIn,
+                r#type: InvoiceLineRowType::StockOut,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,
@@ -257,7 +227,7 @@ mod repository_test {
                 total_before_tax: 10.0,
                 total_after_tax: 15.0,
                 tax: None,
-                r#type: InvoiceLineRowType::StockIn,
+                r#type: InvoiceLineRowType::Service,
                 number_of_packs: 1,
                 note: None,
                 location_id: None,
@@ -316,21 +286,20 @@ mod repository_test {
             mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
         schema::{
-            ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, KeyValueType,
-            NumberRowType, RequisitionRowStatus,
+            ChangelogAction, ChangelogRow, ChangelogTableName, KeyValueType, NumberRowType,
+            PricingRow, RequisitionRowStatus,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRepository, ItemRepository, ItemStatsFilter,
         ItemStatsRepository, KeyValueStoreRepository, MasterListFilter, MasterListLineFilter,
         MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListRepository, MasterListRowRepository, NameFilter, NameQueryRepository,
-        NameRepository, NameSort, NameSortField, NumberRowRepository, OutboundShipmentRepository,
-        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
-        StockLineFilter, StockLineRepository, StockLineRowRepository, StocktakeRowRepository,
-        StoreRowRepository, UserAccountRepository,
+        MasterListRepository, MasterListRowRepository, NameRepository, NumberRowRepository,
+        OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        StocktakeRowRepository, StoreRowRepository, UserAccountRepository,
     };
-    use crate::{DateFilter, EqualFilter, Pagination, SimpleStringFilter};
+    use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::{Duration, Utc};
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
     use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
@@ -347,168 +316,6 @@ mod repository_test {
         repo.insert_one(&name_1).await.unwrap();
         let loaded_item = repo.find_one_by_id(name_1.id.as_str()).unwrap().unwrap();
         assert_eq!(name_1, loaded_item);
-    }
-
-    #[actix_rt::test]
-    async fn test_name_query_repository_all_filter_sort() {
-        let settings = test_db::get_test_db_settings(
-            "omsupply-database-name-query-repository-all-filter-sort",
-        );
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
-        let connection = connection_manager.connection().unwrap();
-
-        // setup
-        let name_repo = NameRepository::new(&connection);
-        name_repo.insert_one(&data::name_1()).await.unwrap();
-        name_repo.insert_one(&data::name_2()).await.unwrap();
-        name_repo.insert_one(&data::name_3()).await.unwrap();
-        name_repo.insert_one(&data::name_a_umlaut()).await.unwrap();
-
-        let repo = NameQueryRepository::new(&connection);
-        // test filter:
-        let result = repo
-            .query(
-                Pagination::new(),
-                Some(NameFilter {
-                    id: None,
-                    name: Some(SimpleStringFilter {
-                        equal_to: Some("name_1".to_string()),
-                        like: None,
-                    }),
-                    code: None,
-                    is_customer: None,
-                    is_supplier: None,
-                    store_id: None,
-                }),
-                None,
-            )
-            .unwrap();
-        assert_eq!(result.len(), 1);
-        assert_eq!(result.get(0).unwrap().name_row.name, "name_1");
-
-        let result = repo
-            .query(
-                Pagination::new(),
-                Some(NameFilter {
-                    id: None,
-                    name: Some(SimpleStringFilter {
-                        equal_to: None,
-                        like: Some("me_".to_string()),
-                    }),
-                    code: None,
-                    is_customer: None,
-                    is_supplier: None,
-                    store_id: None,
-                }),
-                None,
-            )
-            .unwrap();
-        assert_eq!(result.len(), 3);
-
-        // case insensitive search
-        let result = repo
-            .query(
-                Pagination::new(),
-                Some(NameFilter {
-                    id: None,
-                    name: Some(SimpleStringFilter {
-                        equal_to: None,
-                        like: Some("mE_".to_string()),
-                    }),
-                    code: None,
-                    is_customer: None,
-                    is_supplier: None,
-                    store_id: None,
-                }),
-                None,
-            )
-            .unwrap();
-        assert_eq!(result.len(), 3);
-
-        // case insensitive search with umlaute
-        /* Works for postgres but not for sqlite:
-        let result = repo
-            .query(
-                Pagination::new(),
-                Some(NameFilter {
-                    id: None,
-                    name: Some(SimpleStringFilter {
-                        equal_to: None,
-                        // filter for "umlaut_äÄ_name"
-                        like: Some("T_Ää_N".to_string()),
-                    }),
-                    code: None,
-                    is_customer: None,
-                    is_supplier: None,
-                }),
-                None,
-            )
-            .unwrap();
-        assert_eq!(result.len(), 1);
-        */
-
-        let result = repo
-            .query(
-                Pagination::new(),
-                Some(NameFilter {
-                    id: None,
-                    name: None,
-                    code: Some(SimpleStringFilter {
-                        equal_to: Some("code1".to_string()),
-                        like: None,
-                    }),
-                    is_customer: None,
-                    is_supplier: None,
-                    store_id: None,
-                }),
-                None,
-            )
-            .unwrap();
-        assert_eq!(result.len(), 2);
-
-        /* TODO currently no way to add name_store_join rows for the following tests:
-        let result = repo
-            .query(
-                Pagination::new(),
-                Some(NameQueryFilter {
-                    name: None,
-                    code: None,
-                    is_customer: Some(true),
-                    is_supplier: None,
-                }),
-            )
-            .unwrap();
-        assert_eq!(result.len(), 1);
-        assert_eq!(result.get(0).unwrap().name, "name_3");
-
-        let result = repo
-            .query(
-                Pagination::new(),
-                Some(NameQueryFilter {
-                    name: None,
-                    code: None,
-                    is_customer: None,
-                    is_supplier: Some(true),
-                }),
-            )
-            .unwrap();
-        assert!(result.len() == 1);
-        result.iter().find(|it| it.name == "name_1").unwrap();
-        result.iter().find(|it| it.name == "name_2").unwrap();
-        */
-
-        let result = repo
-            .query(
-                Pagination::new(),
-                None,
-                Some(NameSort {
-                    key: NameSortField::Code,
-                    desc: Some(true),
-                }),
-            )
-            .unwrap();
-        assert_eq!(result.get(0).unwrap().name_row.code, "code2");
     }
 
     #[actix_rt::test]
@@ -891,14 +698,15 @@ mod repository_test {
             .unwrap();
         assert_eq!(
             stats_invoice_1,
-            InvoiceStatsRow {
+            PricingRow {
                 invoice_id: invoice_1_id,
                 total_before_tax: 13.0,
                 total_after_tax: 18.0,
                 stock_total_before_tax: 3.0,
                 stock_total_after_tax: 3.0,
                 service_total_before_tax: 10.0,
-                service_total_after_tax: 15.0
+                service_total_after_tax: 15.0,
+                tax_percentage: None,
             }
         );
     }

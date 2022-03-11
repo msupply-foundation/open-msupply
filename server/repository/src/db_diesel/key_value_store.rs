@@ -58,7 +58,7 @@ impl<'a> KeyValueStoreRepository<'a> {
 
     pub fn get_string(&self, key: KeyValueType) -> Result<Option<String>, RepositoryError> {
         let row = self.get_row(key)?;
-        Ok(row.map(|row| row.value_string).flatten())
+        Ok(row.and_then(|row| row.value_string))
     }
 
     pub fn set_i32(&self, key: KeyValueType, value: Option<i32>) -> Result<(), RepositoryError> {
@@ -74,7 +74,7 @@ impl<'a> KeyValueStoreRepository<'a> {
 
     pub fn get_i32(&self, key: KeyValueType) -> Result<Option<i32>, RepositoryError> {
         let row = self.get_row(key)?;
-        Ok(row.map(|row| row.value_int).flatten())
+        Ok(row.and_then(|row| row.value_int))
     }
 
     pub fn set_i64(&self, key: KeyValueType, value: Option<i64>) -> Result<(), RepositoryError> {
@@ -90,7 +90,7 @@ impl<'a> KeyValueStoreRepository<'a> {
 
     pub fn get_i64(&self, key: KeyValueType) -> Result<Option<i64>, RepositoryError> {
         let row = self.get_row(key)?;
-        Ok(row.map(|row| row.value_bigint).flatten())
+        Ok(row.and_then(|row| row.value_bigint))
     }
 
     pub fn set_f64(&self, key: KeyValueType, value: Option<f64>) -> Result<(), RepositoryError> {
@@ -106,7 +106,7 @@ impl<'a> KeyValueStoreRepository<'a> {
 
     pub fn get_f64(&self, key: KeyValueType) -> Result<Option<f64>, RepositoryError> {
         let row = self.get_row(key)?;
-        Ok(row.map(|row| row.value_float).flatten())
+        Ok(row.and_then(|row| row.value_float))
     }
 
     pub fn set_bool(&self, key: KeyValueType, value: Option<bool>) -> Result<(), RepositoryError> {
@@ -122,6 +122,6 @@ impl<'a> KeyValueStoreRepository<'a> {
 
     pub fn get_bool(&self, key: KeyValueType) -> Result<Option<bool>, RepositoryError> {
         let row = self.get_row(key)?;
-        Ok(row.map(|row| row.value_bool).flatten())
+        Ok(row.and_then(|row| row.value_bool))
     }
 }

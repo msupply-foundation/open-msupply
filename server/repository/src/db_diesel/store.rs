@@ -1,48 +1,57 @@
-use crate::{Pagination, SimpleStringFilter, Sort};
+use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
+use crate::schema::NameRow;
+use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use crate::{
     diesel_macros::apply_simple_string_filter,
     schema::{
-        diesel_schema::{store, store::dsl as store_dsl},
+        diesel_schema::{name, name::dsl as name_dsl, store, store::dsl as store_dsl},
         StoreRow,
     },
     DBType, RepositoryError, StorageConnection,
 };
 
+use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-pub struct StoreRepository<'a> {
-    connection: &'a StorageConnection,
+#[derive(Debug, PartialEq, Clone)]
+pub struct Store {
+    pub store_row: StoreRow,
+    pub name_row: NameRow,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct StoreFilter {
-    pub id: Option<SimpleStringFilter>,
+    pub id: Option<EqualFilter<String>>,
+    pub code: Option<SimpleStringFilter>,
+    pub name: Option<SimpleStringFilter>,
+    pub name_code: Option<SimpleStringFilter>,
 }
+
+#[derive(PartialEq, Debug)]
+pub enum StoreSortField {
+    Code,
+    Name,
+    NameCode,
+}
+
+pub type StoreSort = Sort<StoreSortField>;
+
+pub type StoreJoin = (StoreRow, NameRow);
 
 impl StoreFilter {
     pub fn new() -> StoreFilter {
-        StoreFilter { id: None }
+        StoreFilter::default()
     }
 
-    pub fn id(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
         self
     }
 }
 
-pub type StoreSort = Sort<()>;
-
-type BoxedStoreQuery = IntoBoxed<'static, store::table, DBType>;
-
-fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
-    let mut query = store_dsl::store.into_boxed();
-
-    if let Some(f) = filter {
-        apply_simple_string_filter!(query, f.id, store_dsl::id);
-    }
-
-    query
+pub struct StoreRepository<'a> {
+    connection: &'a StorageConnection,
 }
 
 impl<'a> StoreRepository<'a> {
@@ -55,7 +64,7 @@ impl<'a> StoreRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_by_filter(&self, filter: StoreFilter) -> Result<Vec<StoreRow>, RepositoryError> {
+    pub fn query_by_filter(&self, filter: StoreFilter) -> Result<Vec<Store>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
@@ -63,16 +72,59 @@ impl<'a> StoreRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<StoreFilter>,
-        _: Option<StoreSort>,
-    ) -> Result<Vec<StoreRow>, RepositoryError> {
+        sort: Option<StoreSort>,
+    ) -> Result<Vec<Store>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let query = create_filtered_query(filter);
-
+        let mut query = create_filtered_query(filter);
+        if let Some(sort) = sort {
+            match sort.key {
+                StoreSortField::Code => {
+                    apply_sort_no_case!(query, sort, store_dsl::code);
+                }
+                StoreSortField::Name => {
+                    apply_sort_no_case!(query, sort, name_dsl::name_);
+                }
+                StoreSortField::NameCode => {
+                    apply_sort_no_case!(query, sort, name_dsl::code);
+                }
+            }
+        } else {
+            query = query.order(store_dsl::id.asc())
+        }
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<StoreRow>(&self.connection.connection)?;
+            .load::<StoreJoin>(&self.connection.connection)?;
 
-        Ok(result)
+        Ok(result.into_iter().map(to_domain).collect())
+    }
+}
+
+type BoxedStoreQuery = IntoBoxed<'static, InnerJoin<store::table, name::table>, DBType>;
+
+fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
+    let mut query = store_dsl::store.inner_join(name_dsl::name).into_boxed();
+
+    if let Some(f) = filter {
+        let StoreFilter {
+            id,
+            code,
+            name,
+            name_code,
+        } = f;
+
+        apply_equal_filter!(query, id, store_dsl::id);
+        apply_simple_string_filter!(query, code, store_dsl::code);
+        apply_simple_string_filter!(query, name, name_dsl::name_);
+        apply_simple_string_filter!(query, name_code, name_dsl::code);
+    }
+
+    query
+}
+
+fn to_domain((store_row, name_row): StoreJoin) -> Store {
+    Store {
+        store_row,
+        name_row,
     }
 }

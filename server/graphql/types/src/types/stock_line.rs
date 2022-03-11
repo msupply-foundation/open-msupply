@@ -1,8 +1,13 @@
-use super::LocationNode;
+use super::{ItemNode, LocationNode};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::{loader::LocationByIdLoader, simple_generic_errors::NodeError, ContextExt};
+use graphql_core::{
+    loader::{ItemLoader, LocationByIdLoader},
+    simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
 use repository::{schema::StockLineRow, StockLine, StorageConnectionManager};
 use service::{stock_line::get_stock_line, usize_to_u32, ListResult};
 
@@ -60,7 +65,7 @@ impl StockLineNode {
     pub async fn location_name(&self) -> Option<&str> {
         self.stock_line.location_name()
     }
-    async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
         let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
         let location_id = match &self.row().location_id {
@@ -71,6 +76,19 @@ impl StockLineNode {
         let result = loader.load_one(location_id.clone()).await?;
 
         Ok(result.map(LocationNode::from_domain))
+    }
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
+        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+        let item_option = loader.load_one(self.row().item_id.clone()).await?;
+
+        item_option.map(ItemNode::from_domain).ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find item ({}) linked to stock_line ({})",
+                &self.row().item_id,
+                &self.row().id
+            ))
+            .extend(),
+        )
     }
 }
 
