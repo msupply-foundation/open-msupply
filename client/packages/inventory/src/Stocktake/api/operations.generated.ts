@@ -44,7 +44,7 @@ export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertStocktakeLinesMutation = { __typename: 'FullMutation', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
+export type UpsertStocktakeLinesMutation = { __typename: 'FullMutation', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null } };
 
 export type DeleteStocktakesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -52,7 +52,7 @@ export type DeleteStocktakesMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteStocktakesMutation = { __typename: 'FullMutation', batchStocktake: { __typename: 'BatchStocktakeResponses', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null } | { __typename: 'BatchStocktakeResponsesWithErrors' } };
+export type DeleteStocktakesMutation = { __typename: 'FullMutation', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null } };
 
 export type UpdateStocktakeMutationVariables = Types.Exact<{
   input: Types.UpdateStocktakeInput;
@@ -179,7 +179,7 @@ export const UpsertStocktakeLinesDocument = gql`
     input: {deleteStocktakeLines: $deleteStocktakeLines, updateStocktakeLines: $updateStocktakeLines, insertStocktakeLines: $insertStocktakeLines}
   ) {
     __typename
-    ... on BatchStocktakeResponses {
+    ... on BatchStocktakeResponse {
       __typename
       deleteStocktakeLines {
         id
@@ -198,7 +198,7 @@ export const DeleteStocktakesDocument = gql`
     mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
   batchStocktake(storeId: $storeId, input: {deleteStocktakes: $ids}) {
     __typename
-    ... on BatchStocktakeResponses {
+    ... on BatchStocktakeResponse {
       deleteStocktakes {
         __typename
         id

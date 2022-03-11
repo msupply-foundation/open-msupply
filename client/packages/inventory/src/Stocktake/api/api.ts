@@ -151,7 +151,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
       storeId,
     });
     const { batchStocktake } = result;
-    if (batchStocktake.__typename === 'BatchStocktakeResponses') {
+    if (batchStocktake.__typename === 'BatchStocktakeResponse') {
       return batchStocktake;
     }
 
