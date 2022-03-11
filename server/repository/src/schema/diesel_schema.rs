@@ -187,6 +187,7 @@ table! {
         stock_total_after_tax -> Double,
         service_total_before_tax -> Double,
         service_total_after_tax -> Double,
+        tax_percentage -> Nullable<Double>,
     }
 }
 

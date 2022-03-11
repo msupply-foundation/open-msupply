@@ -33,8 +33,7 @@ impl LocationQueries {
                 page.map(PaginationOption::from),
                 filter.map(LocationFilter::from),
                 // Currently only one sort option is supported, use the first from the list.
-                sort.map(|mut sort_list| sort_list.pop())
-                    .flatten()
+                sort.and_then(|mut sort_list| sort_list.pop())
                     .map(|sort| sort.to_domain()),
             )
             .map_err(StandardGraphqlError::from_list_error)?;

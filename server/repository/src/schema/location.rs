@@ -1,6 +1,6 @@
 use super::diesel_schema::location;
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "location"]
 pub struct LocationRow {
     pub id: String,

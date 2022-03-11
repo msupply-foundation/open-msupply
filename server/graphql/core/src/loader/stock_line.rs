@@ -7,7 +7,7 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use std::collections::HashMap;
 
-use super::IdAndStoreId;
+use super::IdPair;
 
 pub struct StockLineByLocationIdLoader {
     pub connection_manager: StorageConnectionManager,
@@ -46,42 +46,52 @@ pub struct StockLineByItemAndStoreIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[derive(Clone)]
+pub struct EmptyPayload;
+pub type StockLineByItemAndStoreIdLoaderInput = IdPair<EmptyPayload>;
+impl StockLineByItemAndStoreIdLoaderInput {
+    pub fn new(store_id: &str, item_id: &str) -> Self {
+        StockLineByItemAndStoreIdLoaderInput {
+            primary_id: store_id.to_string(),
+            secondary_id: item_id.to_string(),
+            payload: EmptyPayload {},
+        }
+    }
+}
+
 #[async_trait::async_trait]
-impl Loader<IdAndStoreId> for StockLineByItemAndStoreIdLoader {
+impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdLoader {
     type Value = Vec<StockLine>;
     type Error = RepositoryError;
 
     async fn load(
         &self,
-        item_and_store_ids: &[IdAndStoreId],
-    ) -> Result<HashMap<IdAndStoreId, Self::Value>, Self::Error> {
+        item_and_store_ids: &[StockLineByItemAndStoreIdLoaderInput],
+    ) -> Result<HashMap<StockLineByItemAndStoreIdLoaderInput, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
         let repo = StockLineRepository::new(&connection);
 
         let store_id = if let Some(item_and_store_ids) = item_and_store_ids.first() {
-            &item_and_store_ids.store_id
+            &item_and_store_ids.primary_id
         } else {
             return Ok(HashMap::new());
         };
 
         let result = repo.query_by_filter(
             StockLineFilter::new()
-                .item_id(EqualFilter::equal_any(
-                    item_and_store_ids
-                        .iter()
-                        .map(|item_and_store_id| item_and_store_id.id.clone())
-                        .collect(),
-                ))
+                .item_id(EqualFilter::equal_any(IdPair::get_all_secondary_ids(
+                    &item_and_store_ids,
+                )))
                 .store_id(EqualFilter::equal_to(store_id)),
         )?;
 
         let mut result_map = HashMap::new();
         for stock_line in result {
             result_map
-                .entry(IdAndStoreId {
-                    id: stock_line.stock_line_row.item_id.clone(),
-                    store_id: store_id.clone(),
-                })
+                .entry(StockLineByItemAndStoreIdLoaderInput::new(
+                    &store_id,
+                    &stock_line.stock_line_row.item_id,
+                ))
                 .or_insert(Vec::new())
                 .push(stock_line);
         }
