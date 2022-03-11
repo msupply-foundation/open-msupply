@@ -8,6 +8,17 @@ fragment DraftInboundLine on InvoiceLineNode {
   packSize
   itemId
   invoiceId
+  note
+  totalAfterTax
+  totalBeforeTax
+  type
+
+  item {
+    id
+    code
+    name
+    unitName
+  }
 
   location {
     __typename
@@ -29,7 +40,10 @@ fragment InboundLine on InvoiceLineNode {
   numberOfPacks
   packSize
   note
+  type
   invoiceId
+  totalBeforeTax
+  totalAfterTax
 
   item {
     __typename
