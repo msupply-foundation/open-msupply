@@ -39,7 +39,6 @@ const createDraftLine = ({
   isCreated: !seed,
   isUpdated: false,
   isDeleted: false,
-  itemId: '',
   costPricePerPack: 0,
   ...seed,
 });

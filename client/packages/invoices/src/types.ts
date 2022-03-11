@@ -1,10 +1,7 @@
-import {
-  InboundLineFragment,
-  DraftInboundLineFragment,
-} from './InboundShipment/api';
+import { InboundLineFragment } from './InboundShipment/api';
 import { OutboundLineFragment } from './OutboundShipment/api';
 
-export interface DraftInboundLine extends DraftInboundLineFragment {
+export interface DraftInboundLine extends InboundLineFragment {
   isCreated?: boolean;
   isDeleted?: boolean;
   isUpdated?: boolean;

@@ -60,7 +60,6 @@ const createDraftInvoiceLine = (
     totalAfterTax: 0,
     totalBeforeTax: 0,
     id: generateUUID(),
-    itemId: item.id,
     invoiceId,
     sellPricePerPack: 0,
     costPricePerPack: 0,

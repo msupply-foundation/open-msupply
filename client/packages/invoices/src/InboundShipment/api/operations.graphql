@@ -50,7 +50,6 @@ fragment InboundLine on InvoiceLineNode {
     id
     name
     code
-    isVisible
     unitName
   }
 
