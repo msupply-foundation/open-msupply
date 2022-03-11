@@ -1,20 +1,20 @@
-use std::collections::HashMap;
-
-use repository::EqualFilter;
 use repository::{
     schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StorageConnection,
+    StorageConnection,
 };
 
-use crate::requisition::common::{check_requisition_exists, get_lines_for_requisition};
+use crate::requisition::requisition_supply_status::RequisitionLineSupplyStatus;
+use crate::requisition::{
+    common::check_requisition_exists, requisition_supply_status::get_requisitions_supply_statuses,
+};
 
-use super::{CreateRequisitionShipment, ItemFulFillment, OutError};
+use super::{CreateRequisitionShipment, OutError};
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &CreateRequisitionShipment,
-) -> Result<(RequisitionRow, Vec<ItemFulFillment>), OutError> {
+) -> Result<(RequisitionRow, Vec<RequisitionLineSupplyStatus>), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.response_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
@@ -30,46 +30,14 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    let fulfilment = get_remaining_fulfilments(connection, &requisition_row.id)?;
-    if fulfilment.len() == 0 {
+    let supply_statuses =
+        get_requisitions_supply_statuses(connection, vec![requisition_row.id.clone()])?;
+
+    let remaing_to_supply = RequisitionLineSupplyStatus::lines_remaining_to_supply(supply_statuses);
+
+    if remaing_to_supply.len() == 0 {
         return Err(OutError::NothingRemainingToSupply);
     }
 
-    Ok((requisition_row, fulfilment))
-}
-
-pub fn get_remaining_fulfilments(
-    connection: &StorageConnection,
-    requisition_id: &str,
-) -> Result<Vec<ItemFulFillment>, RepositoryError> {
-    let existing_invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_id)),
-    )?;
-
-    let requisition_lines = get_lines_for_requisition(connection, requisition_id)?;
-
-    let mut fulfilments_map: HashMap<String, i32> = requisition_lines
-        .into_iter()
-        .map(|line| {
-            (
-                line.requisition_line_row.item_id,
-                line.requisition_line_row.supply_quantity,
-            )
-        })
-        .collect();
-
-    for line in existing_invoice_lines {
-        let map_value = fulfilments_map
-            .entry(line.invoice_line_row.item_id.clone())
-            .or_insert(0);
-        *map_value -= line.invoice_line_row.pack_size * line.invoice_line_row.number_of_packs;
-    }
-
-    let result = fulfilments_map
-        .into_iter()
-        .filter(|(_, quantity)| *quantity > 0)
-        .map(|(item_id, quantity)| ItemFulFillment { item_id, quantity })
-        .collect();
-
-    Ok(result)
+    Ok((requisition_row, remaing_to_supply))
 }

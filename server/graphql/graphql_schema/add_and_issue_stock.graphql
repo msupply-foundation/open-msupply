@@ -117,7 +117,7 @@ mutation addStock(
         }
       }
       pricing {
-        ... on InvoicePricingNode {
+        ... on PricingNode {
           __typename
           totalAfterTax
         }
@@ -194,7 +194,7 @@ mutation issueStock(
         }
       }
       pricing {
-        ... on InvoicePricingNode {
+        ... on PricingNode {
           __typename
           totalAfterTax
         }

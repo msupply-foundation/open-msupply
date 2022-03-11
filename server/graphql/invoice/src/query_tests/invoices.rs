@@ -30,7 +30,7 @@ mod test {
                     nodes{
                         id
                         pricing {
-                            ... on InvoicePricingNode {
+                            ... on PricingNode {
                               totalAfterTax
                             }
                         }

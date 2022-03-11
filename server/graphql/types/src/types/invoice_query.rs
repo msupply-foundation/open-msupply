@@ -3,13 +3,15 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
-use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, UserAccountLoader};
+use graphql_core::loader::{
+    InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, UserAccountLoader,
+};
 use graphql_core::{
-    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreLoader},
+    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, InvoiceStatsRow};
+use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
 
 use repository::{unknown_user, Invoice};
 use serde::Serialize;
@@ -89,11 +91,11 @@ impl InvoiceNode {
             None => return Ok(None),
         };
 
-        let loader = ctx.get_loader::<DataLoader<StoreLoader>>();
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
         Ok(loader
             .load_one(other_party_store_id.clone())
             .await?
-            .map(StoreNode::from))
+            .map(StoreNode::from_domain))
     }
 
     /// User that last edited invoice, if user is not found in system default unknow user is returned
@@ -218,9 +220,9 @@ impl InvoiceNode {
         ))
     }
 
-    pub async fn pricing(&self, ctx: &Context<'_>) -> Result<InvoicePricingNode> {
+    pub async fn pricing(&self, ctx: &Context<'_>) -> Result<PricingNode> {
         let loader = ctx.get_loader::<DataLoader<InvoiceStatsLoader>>();
-        let default = InvoiceStatsRow {
+        let default = PricingRow {
             invoice_id: self.row().id.clone(),
             total_before_tax: 0.0,
             total_after_tax: 0.0,
@@ -228,26 +230,27 @@ impl InvoiceNode {
             stock_total_after_tax: 0.0,
             service_total_before_tax: 0.0,
             service_total_after_tax: 0.0,
+            tax_percentage: None,
         };
 
         let result_option = loader.load_one(self.row().id.to_string()).await?;
 
-        Ok(InvoicePricingNode {
+        Ok(PricingNode {
             invoice_pricing: result_option.unwrap_or(default),
         })
     }
 
-    pub async fn other_party(&self, ctx: &Context<'_>) -> Result<NameNode> {
+    pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(self.invoice.other_party_id().to_string())
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to invoice ({})",
-                &self.invoice.other_party_id(),
+                &self.row().name_id,
                 &self.row().id
             ))
             .extend(),
@@ -265,12 +268,12 @@ impl InvoiceNode {
 }
 
 // INVOICE LINE PRICING
-pub struct InvoicePricingNode {
-    invoice_pricing: InvoiceStatsRow,
+pub struct PricingNode {
+    pub invoice_pricing: PricingRow,
 }
 
 #[Object]
-impl InvoicePricingNode {
+impl PricingNode {
     // total
 
     pub async fn total_before_tax(&self) -> f64 {
@@ -299,6 +302,12 @@ impl InvoicePricingNode {
 
     pub async fn service_total_after_tax(&self) -> f64 {
         self.invoice_pricing.service_total_after_tax
+    }
+
+    // tax
+
+    pub async fn tax_percentage(&self) -> &Option<f64> {
+        &self.invoice_pricing.tax_percentage
     }
 }
 
@@ -365,5 +374,128 @@ impl InvoiceNodeStatus {
             Delivered => InvoiceNodeStatus::Delivered,
             Verified => InvoiceNodeStatus::Verified,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use async_graphql::{EmptyMutation, Object};
+
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use repository::{
+        mock::{
+            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
+            MockDataInserts,
+        },
+        schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow},
+        Invoice,
+    };
+    use serde_json::json;
+    use util::inline_init;
+
+    use crate::types::InvoiceNode;
+
+    #[actix_rt::test]
+    async fn graphq_test_invoice_pricing() {
+        #[derive(Clone)]
+        struct TestQuery;
+
+        fn invoice() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "test_invoice_pricing".to_string();
+                r.name_id = mock_name_a().id;
+                r.store_id = mock_store_a().id;
+            })
+        }
+        fn line1() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.invoice_id = invoice().id;
+                r.id = "line1_id".to_string();
+                r.item_id = mock_item_a().id;
+                r.total_after_tax = 20.0;
+                r.total_before_tax = 10.0;
+                r.tax = Some(20.0);
+                r.r#type = InvoiceLineRowType::Service;
+            })
+        }
+        fn line2() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.invoice_id = invoice().id;
+                r.id = "line2_id".to_string();
+                r.item_id = mock_item_b().id;
+                r.total_after_tax = 10.0;
+                r.total_before_tax = 8.0;
+                r.tax = Some(20.0);
+                r.r#type = InvoiceLineRowType::StockIn;
+            })
+        }
+        fn line3() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.invoice_id = invoice().id;
+                r.id = "line3_id".to_string();
+                r.item_id = mock_item_c().id;
+                r.total_after_tax = 200.0;
+                r.total_before_tax = 160.0;
+                r.tax = Some(10.0);
+                r.r#type = InvoiceLineRowType::StockOut;
+            })
+        }
+
+        let (_, _, _, settings) = setup_graphl_test_with_data(
+            TestQuery,
+            EmptyMutation,
+            "graphq_test_invoice_pricing",
+            MockDataInserts::all(),
+            Some(inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.invoice_lines = vec![line1(), line2(), line3()];
+            })),
+        )
+        .await;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query(&self) -> InvoiceNode {
+                InvoiceNode {
+                    invoice: inline_init(|r: &mut Invoice| r.invoice_row = invoice()),
+                }
+            }
+        }
+
+        // let tax_percentage = ;
+
+        let expected = json!({
+            "testQuery": {
+                "pricing": {
+                    "totalBeforeTax": 160.0 + 8.0 + 10.0,
+                    "totalAfterTax": 200.0 + 10.0+ 20.0,
+                    "stockTotalBeforeTax": 160.0 + 8.0,
+                    "stockTotalAfterTax": 200.0 + 10.0,
+                    "serviceTotalBeforeTax": 10.0,
+                    "serviceTotalAfterTax": 20.0,
+                    "taxPercentage": (20.0 + 20.0 + 10.0) / 3.0
+                },
+            }
+        }
+        );
+
+        let query = r#"
+        query {
+            testQuery {
+                pricing {
+                    totalBeforeTax
+                    totalAfterTax
+                    stockTotalBeforeTax
+                    stockTotalAfterTax
+                    serviceTotalBeforeTax
+                    serviceTotalAfterTax
+                    taxPercentage  
+                }
+            }
+        }
+        "#;
+
+        assert_graphql_query!(&settings, &query, &None, expected, None);
     }
 }

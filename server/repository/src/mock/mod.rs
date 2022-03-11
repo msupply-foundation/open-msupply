@@ -18,6 +18,7 @@ mod test_invoice_count_service;
 mod test_invoice_loaders;
 mod test_item_stats_repository;
 mod test_master_list_repository;
+mod test_name_query;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
 mod test_remote_pull;
@@ -51,6 +52,7 @@ pub use test_invoice_count_service::*;
 pub use test_invoice_loaders::*;
 pub use test_item_stats_repository::*;
 pub use test_master_list_repository::*;
+pub use test_name_query::*;
 pub use test_name_store_id::*;
 pub use test_outbound_shipment_update::*;
 pub use test_remote_pull::*;
@@ -254,7 +256,7 @@ impl Index<&str> for MockDataCollection {
     }
 }
 
-fn all_mock_data() -> MockDataCollection {
+fn all_mock_data(extra_mock_data: Option<MockData>) -> MockDataCollection {
     let mut data: MockDataCollection = Default::default();
     data.insert(
         "base",
@@ -319,14 +321,19 @@ fn all_mock_data() -> MockDataCollection {
     data.insert("mock_test_invoice_loaders", mock_test_invoice_loaders());
     data.insert("mock_test_remote_pull", mock_test_remote_pull());
     data.insert("mock_test_service_item", mock_test_service_item());
+    data.insert("mock_test_name_query", mock_test_name_query());
+    if let Some(mock_data) = extra_mock_data {
+        data.insert("extra_mock_data", mock_data);
+    };
     data
 }
 
 pub async fn insert_mock_data(
     connection: &StorageConnection,
     inserts: MockDataInserts,
+    extra_mock_data: Option<MockData>,
 ) -> MockDataCollection {
-    let all_mock_data = all_mock_data();
+    let all_mock_data = all_mock_data(extra_mock_data);
     for (_, mock_data) in &all_mock_data.data {
         if inserts.user_accounts {
             let repo = UserAccountRepository::new(connection);

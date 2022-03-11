@@ -1,5 +1,5 @@
 use super::*;
-use crate::loader::{ItemLoader, StoreLoader};
+use crate::loader::{ItemLoader, StoreByIdLoader, UserAccountLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
@@ -32,8 +32,8 @@ pub async fn get_loaders(
         connection_manager: connection_manager.clone(),
     });
 
-    let store_loader = DataLoader::new(StoreLoader {
-        connection_manager: connection_manager.clone(),
+    let store_by_id_loader = DataLoader::new(StoreByIdLoader {
+        service_provider: service_provider.clone(),
     });
 
     let invoice_by_id_loader = DataLoader::new(InvoiceByIdLoader {
@@ -74,7 +74,7 @@ pub async fn get_loaders(
     });
 
     let name_by_id_loader = DataLoader::new(NameByIdLoader {
-        connection_manager: connection_manager.clone(),
+        service_provider: service_provider.clone(),
     });
 
     let location_by_id_loader = DataLoader::new(LocationByIdLoader {
@@ -107,9 +107,19 @@ pub async fn get_loaders(
         service_provider: service_provider.clone(),
     });
 
+    let requisition_line_supply_status_loader =
+        DataLoader::new(RequisitionLineSupplyStatusLoader {
+            service_provider: service_provider.clone(),
+        });
+
+    let requisition_lines_remaining_to_supply_loader =
+        DataLoader::new(RequisitionLinesRemainingToSupplyLoader {
+            service_provider: service_provider.clone(),
+        });
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
-    loaders.insert(store_loader);
+    loaders.insert(store_by_id_loader);
     loaders.insert(invoice_by_id_loader);
     loaders.insert(invoice_by_requisition_id_loader);
     loaders.insert(invoice_line_by_invoice_id_loader);
@@ -126,6 +136,8 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
+    loaders.insert(requisition_line_supply_status_loader);
+    loaders.insert(requisition_lines_remaining_to_supply_loader);
 
     loaders
 }

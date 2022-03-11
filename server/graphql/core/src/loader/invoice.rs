@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use repository::schema::InvoiceStatsRow;
+use repository::schema::PricingRow;
 use repository::EqualFilter;
 use repository::{Invoice, InvoiceFilter, InvoiceLineRepository};
 use repository::{RepositoryError, StorageConnectionManager};
@@ -49,7 +49,7 @@ pub struct InvoiceStatsLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for InvoiceStatsLoader {
-    type Value = InvoiceStatsRow;
+    type Value = PricingRow;
     type Error = RepositoryError;
 
     async fn load(

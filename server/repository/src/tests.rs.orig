@@ -329,7 +329,7 @@ mod repository_test {
             mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
             mock_request_draft_requisition2, MockDataInserts,
         },
-        schema::{InvoiceStatsRow, NumberRowType, RequisitionRowStatus},
+        schema::{PricingRow, NumberRowType, RequisitionRowStatus},
         test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
         InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
@@ -342,7 +342,7 @@ mod repository_test {
             mock_stock_take_a, mock_stock_take_b, MockDataInserts,
         },
         schema::{
-            ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceStatsRow, NumberRowType,
+            ChangelogAction, ChangelogRow, ChangelogTableName, PricingRow, NumberRowType,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRepository, ItemRepository, MasterListLineRowRepository,
@@ -832,7 +832,7 @@ mod repository_test {
             .unwrap();
         assert_eq!(
             stats_invoice_1,
-            InvoiceStatsRow {
+            PricingRow {
                 invoice_id: invoice_1_id,
                 total_before_tax: 13.0,
                 total_after_tax: 18.0,
