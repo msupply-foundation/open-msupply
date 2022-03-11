@@ -1,6 +1,8 @@
 CREATE TABLE stocktake (
     id TEXT NOT NULL PRIMARY KEY,
     store_id TEXT NOT NULL REFERENCES store(id),
+    -- Change to reference user_accoun once users are syncing
+    user_id TEXT NOT NULL,
     stocktake_number INTEGER NOT NULL,
     comment	TEXT,
     description TEXT,

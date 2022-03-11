@@ -95,6 +95,7 @@ fn transact_1_pull_record() -> TestSyncRecord {
         translated_record: Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Invoice(InvoiceRow {
                 id: TRANSACT_1.0.to_string(),
+                user_id: None,
                 store_id: "store_a".to_string(),
                 name_id: "name_store_a".to_string(),
                 name_store_id: Some("store_a".to_string()),
@@ -138,6 +139,7 @@ fn transact_1_push_record() -> TestSyncPushRecord {
         },
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_1.0.to_string(),
+            user_id: None,
             name_ID: "name_store_a".to_string(),
             store_ID: "store_a".to_string(),
             invoice_num: 1,
@@ -241,6 +243,7 @@ fn transact_2_pull_record() -> TestSyncRecord {
         translated_record: Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Invoice(InvoiceRow {
                 id: TRANSACT_2.0.to_string(),
+                user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
                 store_id: "store_b".to_string(),
                 name_id: "name_store_b".to_string(),
                 name_store_id: Some("store_b".to_string()),
@@ -282,6 +285,7 @@ fn transact_2_push_record() -> TestSyncPushRecord {
         },
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_2.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             name_ID: "name_store_b".to_string(),
             store_ID: "store_b".to_string(),
             invoice_num: 4,

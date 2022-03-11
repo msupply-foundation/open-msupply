@@ -1677,7 +1677,7 @@ dependencies = [
  "graphql_invoice",
  "graphql_invoice_line",
  "graphql_location",
- "graphql_printing",
+ "graphql_reports",
  "graphql_requisition",
  "graphql_requisition_line",
  "graphql_stocktake",
@@ -1833,7 +1833,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql_printing"
+name = "graphql_reports"
 version = "0.1.0"
 dependencies = [
  "actix-rt",

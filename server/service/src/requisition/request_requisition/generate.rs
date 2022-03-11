@@ -3,7 +3,7 @@ use repository::{
     schema::{RequisitionLineRow, RequisitionRow},
     ItemStatsFilter, ItemStatsRepository, RepositoryError, StorageConnection,
 };
-use util::inline_init;
+
 use util::uuid::uuid;
 
 pub struct GenerateSuggestedQuantity {
@@ -56,14 +56,18 @@ pub fn generate_requisition_lines(
                 max_months_of_stock: requisition_row.max_months_of_stock.clone(),
             });
 
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = uuid();
-                r.requisition_id = requisition_row.id.clone();
-                r.item_id = item_stats.item_id;
-                r.suggested_quantity = suggested_quantity;
-                r.available_stock_on_hand = available_stock_on_hand;
-                r.average_monthly_consumption = average_monthly_consumption
-            })
+            RequisitionLineRow {
+                id: uuid(),
+                requisition_id: requisition_row.id.clone(),
+                item_id: item_stats.item_id,
+                suggested_quantity,
+                available_stock_on_hand,
+                average_monthly_consumption,
+                // Default
+                comment: None,
+                supply_quantity: 0,
+                requested_quantity: 0,
+            }
         })
         .collect();
 

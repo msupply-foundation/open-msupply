@@ -81,6 +81,7 @@ table! {
         requisition_number -> Bigint,
         name_id -> Text,
         store_id -> Text,
+        user_id -> Nullable<Text>,
         #[sql_name = "type"] type_ -> crate::schema::requisition::RequisitionRowTypeMapping,
         #[sql_name = "status"] status -> crate::schema::requisition::RequisitionRowStatusMapping,
         created_datetime -> Timestamp,
@@ -135,6 +136,7 @@ table! {
         name_id -> Text,
         name_store_id -> Nullable<Text>,
         store_id -> Text,
+        user_id -> Nullable<Text>,
         invoice_number -> BigInt,
         #[sql_name = "type"] type_ -> crate::schema::invoice::InvoiceRowTypeMapping,
         status -> crate::schema::invoice::InvoiceRowStatusMapping,
@@ -253,6 +255,7 @@ table! {
     stocktake (id) {
         id -> Text,
         store_id -> Text,
+        user_id -> Text,
         stocktake_number -> BigInt,
         comment	-> Nullable<Text>,
         description -> Nullable<Text>,
@@ -361,6 +364,9 @@ joinable!(location -> store (store_id));
 joinable!(stocktake_line -> location (location_id));
 joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
+joinable!(requisition -> user_account (user_id));
+joinable!(invoice -> user_account (user_id));
+joinable!(stocktake -> user_account (user_id));
 
 allow_tables_to_appear_in_same_query!(
     unit,
