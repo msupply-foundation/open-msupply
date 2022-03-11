@@ -78,7 +78,7 @@ const inboundParsers = {
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
     return {
       id: line.id,
-      itemId: line.itemId,
+      itemId: line.item.id,
       batch: line.batch,
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
@@ -95,7 +95,7 @@ const inboundParsers = {
   },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
     id: line.id,
-    itemId: line.itemId,
+    itemId: line.item.id,
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
     expiryDate: line.expiryDate
