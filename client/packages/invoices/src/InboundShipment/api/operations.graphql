@@ -1,34 +1,3 @@
-fragment DraftInboundLine on InvoiceLineNode {
-  id
-  batch
-  costPricePerPack
-  sellPricePerPack
-  expiryDate
-  numberOfPacks
-  packSize
-  itemId
-  invoiceId
-  note
-  totalAfterTax
-  totalBeforeTax
-  type
-
-  item {
-    id
-    code
-    name
-    unitName
-  }
-
-  location {
-    __typename
-    name
-    id
-    code
-    onHold
-  }
-}
-
 fragment InboundLine on InvoiceLineNode {
   __typename
   id
