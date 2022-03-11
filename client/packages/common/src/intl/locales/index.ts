@@ -6,6 +6,7 @@ import * as dashboard from './en/dashboard.json';
 import * as distribution from './en/distribution.json';
 import * as inventory from './en/inventory.json';
 import * as replenishment from './en/replenishment.json';
+import * as catalogue from './en/catalogue.json';
 
 // Normalize single namespace
 type WithOrWithoutPlural<K> = TypeOptions['jsonFormat'] extends 'v4'
@@ -28,4 +29,5 @@ export type LocaleKey =
   | WithOrWithoutPlural<keyof typeof common>
   | WithOrWithoutPlural<keyof typeof distribution>
   | WithOrWithoutPlural<keyof typeof replenishment>
-  | WithOrWithoutPlural<keyof typeof inventory>;
+  | WithOrWithoutPlural<keyof typeof inventory>
+  | WithOrWithoutPlural<keyof typeof catalogue>;

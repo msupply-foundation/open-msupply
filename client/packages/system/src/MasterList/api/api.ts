@@ -35,5 +35,21 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.masterLists;
     },
+    byId: async (id: string) => {
+      const filter = { id: { equalTo: id } };
+      const result = await sdk.masterList({
+        filter,
+        storeId,
+      });
+
+      if (
+        result.masterLists.totalCount === 1 &&
+        result.masterLists.nodes[0]?.__typename === 'MasterListNode'
+      ) {
+        return result.masterLists.nodes[0];
+      }
+
+      throw new Error('Record not found');
+    },
   },
 });
