@@ -42,6 +42,9 @@ pub use self::stocktake::*;
 pub mod stocktake_line;
 pub use self::stocktake_line::*;
 
+pub mod user;
+pub use self::user::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

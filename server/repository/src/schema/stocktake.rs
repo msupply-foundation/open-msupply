@@ -15,6 +15,7 @@ pub enum StocktakeStatus {
 pub struct StocktakeRow {
     pub id: String,
     pub store_id: String,
+    pub user_id: String,
     pub stocktake_number: i64,
     pub comment: Option<String>,
     pub description: Option<String>,
@@ -41,6 +42,7 @@ impl Default for StocktakeRow {
             // Defaults
             id: Default::default(),
             store_id: Default::default(),
+            user_id: Default::default(),
             stocktake_number: Default::default(),
             stocktake_date: Default::default(),
             comment: Default::default(),

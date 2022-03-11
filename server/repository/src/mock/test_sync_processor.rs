@@ -39,23 +39,19 @@ pub fn mock_sent_requistion_sync_processor() -> FullMockRequisition {
     let line2_id = format!("{}2", requisition_id);
 
     FullMockRequisition {
-        requisition: RequisitionRow {
-            id: requisition_id.clone(),
-            requisition_number: 3,
-            name_id: mock_name_store_b().id,
-            store_id: mock_store_a().id,
-            r#type: RequisitionRowType::Request,
-            status: RequisitionRowStatus::Sent,
-            created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
-            sent_datetime: Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0)),
-            finalised_datetime: None,
-            colour: None,
-            comment: None,
-            their_reference: Some("some reference".to_string()),
-            max_months_of_stock: 10.0,
-            min_months_of_stock: 5.0,
-            linked_requisition_id: None,
-        },
+        requisition: inline_init(|r: &mut RequisitionRow| {
+            r.id = requisition_id.clone();
+            r.requisition_number = 3;
+            r.name_id = mock_name_store_b().id;
+            r.store_id = mock_store_a().id;
+            r.r#type = RequisitionRowType::Request;
+            r.status = RequisitionRowStatus::Sent;
+            r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+            r.sent_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
+            r.their_reference = Some("some reference".to_string());
+            r.max_months_of_stock = 10.0;
+            r.min_months_of_stock = 5.0;
+        }),
         lines: vec![
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
@@ -79,43 +75,36 @@ pub fn mock_sent_requistion_sync_processor() -> FullMockRequisition {
 }
 
 pub fn mock_request_requisition_for_invoice_sync_processor() -> RequisitionRow {
-    RequisitionRow {
-        id: "mock_request_requisition_for_invoice_sync_processor".to_string(),
-        requisition_number: 3,
-        name_id: mock_name_store_b().id,
-        store_id: mock_store_a().id,
-        r#type: RequisitionRowType::Request,
-        status: RequisitionRowStatus::Sent,
-        created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
-        sent_datetime: Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0)),
-        finalised_datetime: None,
-        colour: None,
-        comment: None,
-        their_reference: Some("some reference".to_string()),
-        max_months_of_stock: 10.0,
-        min_months_of_stock: 5.0,
-        linked_requisition_id: None,
-    }
+    inline_init(|r: &mut RequisitionRow| {
+        r.id = "mock_request_requisition_for_invoice_sync_processor".to_string();
+        r.requisition_number = 3;
+        r.name_id = mock_name_store_b().id;
+        r.store_id = mock_store_a().id;
+        r.r#type = RequisitionRowType::Request;
+        r.status = RequisitionRowStatus::Sent;
+        r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+        r.sent_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
+        r.their_reference = Some("some reference".to_string());
+        r.max_months_of_stock = 10.0;
+        r.min_months_of_stock = 5.0;
+    })
 }
 
 pub fn mock_response_requisition_for_invoice_sync_processor() -> RequisitionRow {
-    RequisitionRow {
-        id: "mock_request_requisition_for_invoice_sync_processor".to_string(),
-        requisition_number: 3,
-        name_id: mock_name_store_b().id,
-        store_id: mock_store_a().id,
-        r#type: RequisitionRowType::Request,
-        status: RequisitionRowStatus::Sent,
-        created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
-        sent_datetime: Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0)),
-        finalised_datetime: None,
-        colour: None,
-        comment: None,
-        their_reference: Some("some reference".to_string()),
-        max_months_of_stock: 10.0,
-        min_months_of_stock: 5.0,
-        linked_requisition_id: Some(mock_request_requisition_for_invoice_sync_processor().id),
-    }
+    inline_init(|r: &mut RequisitionRow| {
+        r.id = "mock_request_requisition_for_invoice_sync_processor".to_string();
+        r.requisition_number = 3;
+        r.name_id = mock_name_store_b().id;
+        r.store_id = mock_store_a().id;
+        r.r#type = RequisitionRowType::Request;
+        r.status = RequisitionRowStatus::Sent;
+        r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+        r.sent_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
+        r.their_reference = Some("some reference".to_string());
+        r.max_months_of_stock = 10.0;
+        r.min_months_of_stock = 5.0;
+        r.linked_requisition_id = Some(mock_request_requisition_for_invoice_sync_processor().id);
+    })
 }
 
 pub fn mock_picked_invoice_sync_processor() -> FullMockInvoice {
@@ -124,27 +113,17 @@ pub fn mock_picked_invoice_sync_processor() -> FullMockInvoice {
     let line2_id = format!("{}2", invoice_id);
 
     FullMockInvoice {
-        invoice: InvoiceRow {
-            id: invoice_id.clone(),
-            name_id: mock_name_store_b().id,
-            store_id: mock_store_a().id,
-            invoice_number: 20,
-            requisition_id: Some(mock_response_requisition_for_invoice_sync_processor().id),
-            r#type: InvoiceRowType::OutboundShipment,
-            status: InvoiceRowStatus::Picked,
-            on_hold: false,
-            name_store_id: None,
-            comment: None,
-            their_reference: Some("some reference".to_string()),
-            created_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
-            allocated_datetime: None,
-            shipped_datetime: None,
-            colour: None,
-            linked_invoice_id: None,
-            picked_datetime: None,
-            delivered_datetime: None,
-            verified_datetime: None,
-        },
+        invoice: inline_init(|r: &mut InvoiceRow| {
+            r.id = invoice_id.clone();
+            r.name_id = mock_name_store_b().id;
+            r.store_id = mock_store_a().id;
+            r.invoice_number = 20;
+            r.requisition_id = Some(mock_response_requisition_for_invoice_sync_processor().id);
+            r.r#type = InvoiceRowType::OutboundShipment;
+            r.status = InvoiceRowStatus::Picked;
+            r.their_reference = Some("some reference".to_string());
+            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+        }),
         lines: vec![
             FullMockInvoiceLine {
                 line: InvoiceLineRow {

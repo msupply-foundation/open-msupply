@@ -55,23 +55,22 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
     let line1_id = format!("{}1", requisition_id);
     let line2_id = format!("{}2", requisition_id);
     FullMockRequisition {
-        requisition: RequisitionRow {
-            id: requisition_id.clone(),
-            requisition_number: 3,
-            name_id: mock_name_a().id,
-            store_id: mock_store_a().id,
-            r#type: RequisitionRowType::Request,
-            status: RequisitionRowStatus::Draft,
-            created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
-            sent_datetime: Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0)),
-            finalised_datetime: Some(NaiveDate::from_ymd(2021, 01, 03).and_hms(0, 0, 0)),
-            colour: Some("colour".to_owned()),
-            comment: Some("comment".to_owned()),
-            their_reference: Some("their_reference".to_owned()),
-            max_months_of_stock: 1.0,
-            min_months_of_stock: 0.9,
-            linked_requisition_id: None,
-        },
+        requisition: inline_init(|r: &mut RequisitionRow| {
+            r.id = requisition_id.clone();
+            r.requisition_number = 3;
+            r.name_id = mock_name_a().id;
+            r.store_id = mock_store_a().id;
+            r.r#type = RequisitionRowType::Request;
+            r.status = RequisitionRowStatus::Draft;
+            r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+            r.sent_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
+            r.finalised_datetime = Some(NaiveDate::from_ymd(2021, 01, 03).and_hms(0, 0, 0));
+            r.colour = Some("colour".to_owned());
+            r.comment = Some("comment".to_owned());
+            r.their_reference = Some("their_reference".to_owned());
+            r.max_months_of_stock = 1.0;
+            r.min_months_of_stock = 0.9;
+        }),
         lines: vec![
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
@@ -99,24 +98,23 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
     let requisition_id = "mock_response_draft_requisition_all_fields".to_owned();
     let line1_id = format!("{}1", requisition_id);
     FullMockRequisition {
-        requisition: RequisitionRow {
-            id: requisition_id.clone(),
-            requisition_number: 3,
-            // not visible in store_c
-            name_id: mock_name_b().id,
-            store_id: mock_store_a().id,
-            r#type: RequisitionRowType::Response,
-            status: RequisitionRowStatus::Draft,
-            created_datetime: NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0),
-            sent_datetime: Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0)),
-            finalised_datetime: Some(NaiveDate::from_ymd(2021, 01, 03).and_hms(0, 0, 0)),
-            colour: Some("colour".to_owned()),
-            comment: Some("comment".to_owned()),
-            their_reference: Some("their_reference".to_owned()),
-            max_months_of_stock: 1.0,
-            min_months_of_stock: 0.9,
-            linked_requisition_id: Some("mock_request_draft_requisition_all_fields".to_owned()),
-        },
+        requisition: inline_init(|r: &mut RequisitionRow| {
+            r.id = requisition_id.clone();
+            r.requisition_number = 3;
+            r.name_id = mock_name_b().id;
+            r.store_id = mock_store_a().id;
+            r.r#type = RequisitionRowType::Response;
+            r.status = RequisitionRowStatus::Draft;
+            r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+            r.sent_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
+            r.finalised_datetime = Some(NaiveDate::from_ymd(2021, 01, 03).and_hms(0, 0, 0));
+            r.colour = Some("colour".to_owned());
+            r.comment = Some("comment".to_owned());
+            r.their_reference = Some("their_reference".to_owned());
+            r.max_months_of_stock = 1.0;
+            r.min_months_of_stock = 0.9;
+            r.linked_requisition_id = Some("mock_request_draft_requisition_all_fields".to_owned());
+        }),
         lines: vec![inline_init(|r: &mut RequisitionLineRow| {
             r.id = line1_id;
             r.requisition_id = requisition_id.clone();
@@ -135,27 +133,16 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
     let line2_id = format!("{}2", invoice_id);
 
     FullMockInvoice {
-        invoice: InvoiceRow {
-            id: invoice_id.clone(),
-            name_id: mock_name_a().id,
-            store_id: mock_store_a().id,
-            invoice_number: 20,
-            name_store_id: None,
-            r#type: InvoiceRowType::InboundShipment,
-            status: InvoiceRowStatus::New,
-            on_hold: false,
-            comment: None,
-            their_reference: None,
-            created_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
-            allocated_datetime: None,
-            shipped_datetime: None,
-            colour: None,
-            requisition_id: Some(mock_request_draft_requisition_all_fields().requisition.id),
-            linked_invoice_id: None,
-            picked_datetime: None,
-            delivered_datetime: None,
-            verified_datetime: None,
-        },
+        invoice: inline_init(|r: &mut InvoiceRow| {
+            r.id = invoice_id.clone();
+            r.name_id = mock_name_a().id;
+            r.store_id = "store_a".to_owned();
+            r.invoice_number = 20;
+            r.r#type = InvoiceRowType::InboundShipment;
+            r.status = InvoiceRowStatus::New;
+            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
+        }),
         lines: vec![
             FullMockInvoiceLine {
                 line: InvoiceLineRow {
@@ -240,27 +227,16 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
     let line1_id = format!("{}1", invoice_id);
 
     FullMockInvoice {
-        invoice: InvoiceRow {
-            id: invoice_id.clone(),
-            name_id: mock_name_a().id,
-            store_id: mock_store_a().id,
-            invoice_number: 20,
-            name_store_id: None,
-            r#type: InvoiceRowType::InboundShipment,
-            status: InvoiceRowStatus::New,
-            on_hold: false,
-            comment: None,
-            their_reference: None,
-            created_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
-            allocated_datetime: None,
-            shipped_datetime: None,
-            colour: None,
-            requisition_id: Some(mock_request_draft_requisition_all_fields().requisition.id),
-            linked_invoice_id: None,
-            picked_datetime: None,
-            delivered_datetime: None,
-            verified_datetime: None,
-        },
+        invoice: inline_init(|r: &mut InvoiceRow| {
+            r.id = invoice_id.clone();
+            r.name_id = mock_name_a().id;
+            r.store_id = "store_a".to_owned();
+            r.invoice_number = 20;
+            r.r#type = InvoiceRowType::InboundShipment;
+            r.status = InvoiceRowStatus::New;
+            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
+        }),
         lines: vec![FullMockInvoiceLine {
             line: InvoiceLineRow {
                 id: line1_id.clone(),
@@ -306,27 +282,16 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
     let line1_id = format!("{}1", invoice_id);
 
     FullMockInvoice {
-        invoice: InvoiceRow {
-            id: invoice_id.clone(),
-            name_id: mock_name_a().id,
-            store_id: mock_store_a().id,
-            invoice_number: 20,
-            name_store_id: None,
-            r#type: InvoiceRowType::OutboundShipment,
-            status: InvoiceRowStatus::New,
-            on_hold: false,
-            comment: None,
-            their_reference: None,
-            created_datetime: NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0),
-            allocated_datetime: None,
-            shipped_datetime: None,
-            colour: None,
-            requisition_id: Some(mock_response_draft_requisition_all_fields().requisition.id),
-            linked_invoice_id: None,
-            picked_datetime: None,
-            delivered_datetime: None,
-            verified_datetime: None,
-        },
+        invoice: inline_init(|r: &mut InvoiceRow| {
+            r.id = invoice_id.clone();
+            r.name_id = mock_name_a().id;
+            r.store_id = "store_a".to_owned();
+            r.invoice_number = 20;
+            r.r#type = InvoiceRowType::OutboundShipment;
+            r.status = InvoiceRowStatus::New;
+            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.requisition_id = Some(mock_response_draft_requisition_all_fields().requisition.id);
+        }),
         lines: vec![FullMockInvoiceLine {
             line: InvoiceLineRow {
                 id: line1_id.clone(),

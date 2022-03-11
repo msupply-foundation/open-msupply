@@ -1,9 +1,11 @@
-use super::{InvoiceLineConnector, NameNode, RequisitionNode, StoreNode};
+use super::{InvoiceLineConnector, NameNode, RequisitionNode, StoreNode, UserNode};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
-use graphql_core::loader::{InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput};
+use graphql_core::loader::{
+    InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, UserAccountLoader,
+};
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreByIdLoader},
     standard_graphql_error::StandardGraphqlError,
@@ -11,7 +13,7 @@ use graphql_core::{
 };
 use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
 
-use repository::Invoice;
+use repository::{unknown_user, Invoice};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -94,6 +96,25 @@ impl InvoiceNode {
             .load_one(other_party_store_id.clone())
             .await?
             .map(StoreNode::from_domain))
+    }
+
+    /// User that last edited invoice, if user is not found in system default unknow user is returned
+    /// Null is returned for transfers, where inbound has not been edited yet
+    /// Null is also returned for system created invoices like inventory adjustments
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
+
+        let user_id = match &self.row().user_id {
+            Some(user_id) => user_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(user_id.clone())
+            .await?
+            .unwrap_or(unknown_user());
+
+        Ok(Some(UserNode::from_domain(result)))
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {

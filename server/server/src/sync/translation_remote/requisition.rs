@@ -73,6 +73,9 @@ pub struct LegacyRequisitionRow {
     pub store_ID: String,
     pub r#type: LegacyRequisitionType,
     pub status: LegacyRequisitionStatus,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "user_ID")]
+    pub user_id: Option<String>,
     // created_datetime
     #[serde(serialize_with = "date_to_isostring")]
     pub date_entered: NaiveDate,
@@ -135,6 +138,7 @@ impl RemotePullTranslation for RequisitionTranslation {
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Requisition(RequisitionRow {
                 id: data.ID.to_string(),
+                user_id: data.user_id,
                 requisition_number: data.serial_number,
                 name_id: data.name_ID,
                 store_id: data.store_ID,
@@ -169,6 +173,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
 
         let RequisitionRow {
             id,
+            user_id,
             requisition_number,
             name_id,
             store_id,
@@ -196,6 +201,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
 
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),
+            user_id,
             serial_number: requisition_number,
             name_ID: name_id,
             store_ID: store_id.clone(),

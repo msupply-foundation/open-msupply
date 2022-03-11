@@ -30,7 +30,7 @@ pub use requisition_supply_status::*;
 pub use stock_line::*;
 pub use stocktake_lines::*;
 pub use store::*;
-pub use user_account::UserAccountLoader;
+pub use user_account::*;
 
 #[derive(Debug, Clone)]
 /// Sometimes loaders need to take an extra parameter, like store_id or requisition_id

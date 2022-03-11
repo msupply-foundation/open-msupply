@@ -50,6 +50,7 @@ fn requisition_request_pull_record() -> TestSyncRecord {
         translated_record: Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Requisition(RequisitionRow {
                 id: REQUISITION_REQUEST.0.to_string(),
+                user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
                 requisition_number: 8,
                 name_id: "name_store_a".to_string(),
                 store_id: "store_a".to_string(),
@@ -86,6 +87,7 @@ fn requisition_request_push_record() -> TestSyncPushRecord {
         },
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_REQUEST.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             serial_number: 8,
             name_ID: "name_store_a".to_string(),
             store_ID: "store_a".to_string(),
@@ -141,6 +143,7 @@ fn requisition_response_pull_record() -> TestSyncRecord {
         translated_record: Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Requisition(RequisitionRow {
                 id: REQUISITION_RESPONSE.0.to_string(),
+                user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
                 requisition_number: 1,
                 name_id: "name_store_b".to_string(),
                 store_id: "store_b".to_string(),
@@ -177,6 +180,7 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
         },
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_RESPONSE.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             serial_number: 1,
             name_ID: "name_store_b".to_string(),
             store_ID: "store_b".to_string(),

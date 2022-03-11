@@ -13,7 +13,7 @@ use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
     number::next_number, service_provider::ServiceContext, stocktake::query::get_stocktake,
-    validate::check_store_id_matches,
+    user_account::get_default_user_id, validate::check_store_id_matches,
 };
 
 use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
@@ -317,7 +317,7 @@ fn generate(
     }
 
     // find inventory adjustment name:
-    let name_row = NameRepository::new(connection)
+    let invad_name = NameRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
         .ok_or(UpdateStocktakeError::InternalError(
             "Missing inventory adjustment name".to_string(),
@@ -327,7 +327,8 @@ fn generate(
     let now = Utc::now().naive_utc();
     let shipment = InvoiceRow {
         id: shipment_id,
-        name_id: name_row.id,
+        user_id: Some(get_default_user_id()),
+        name_id: invad_name.id,
         store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
         name_store_id: None,

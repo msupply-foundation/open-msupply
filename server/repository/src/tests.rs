@@ -2,6 +2,7 @@
 mod repository_test {
     mod data {
         use chrono::{NaiveDate, NaiveDateTime};
+        use util::inline_init;
 
         use crate::schema::*;
 
@@ -114,52 +115,32 @@ mod repository_test {
         }
 
         pub fn invoice_1() -> InvoiceRow {
-            InvoiceRow {
-                id: "invoice1".to_string(),
-                name_id: name_1().id.to_string(),
-                store_id: store_1().id.to_string(),
-                invoice_number: 12,
-                name_store_id: None,
-                r#type: InvoiceRowType::InboundShipment,
-                status: InvoiceRowStatus::New,
-                on_hold: false,
-                comment: Some("".to_string()),
-                their_reference: Some("".to_string()),
-                // Note: keep nsecs small enough for Postgres which has limited precision.
-                created_datetime: NaiveDateTime::from_timestamp(1000, 0),
-                colour: None,
-                requisition_id: None,
-                linked_invoice_id: None,
-                allocated_datetime: None,
-                picked_datetime: None,
-                shipped_datetime: None,
-                delivered_datetime: None,
-                verified_datetime: None,
-            }
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice1".to_string();
+                r.name_id = name_1().id.to_string();
+                r.store_id = store_1().id.to_string();
+                r.invoice_number = 12;
+                r.r#type = InvoiceRowType::InboundShipment;
+                r.status = InvoiceRowStatus::New;
+                r.comment = Some("".to_string());
+                r.their_reference = Some("".to_string());
+                // Note: keep nsecs small enough for Postgres which has limited precision;
+                r.created_datetime = NaiveDateTime::from_timestamp(1000, 0);
+            })
         }
 
         pub fn invoice_2() -> InvoiceRow {
-            InvoiceRow {
-                id: "invoice2".to_string(),
-                name_id: name_1().id.to_string(),
-                store_id: store_1().id.to_string(),
-                invoice_number: 12,
-                name_store_id: None,
-                r#type: InvoiceRowType::OutboundShipment,
-                status: InvoiceRowStatus::New,
-                on_hold: false,
-                comment: Some("".to_string()),
-                their_reference: Some("".to_string()),
-                created_datetime: NaiveDateTime::from_timestamp(2000, 0),
-                colour: None,
-                requisition_id: None,
-                linked_invoice_id: None,
-                allocated_datetime: None,
-                picked_datetime: None,
-                shipped_datetime: None,
-                delivered_datetime: None,
-                verified_datetime: None,
-            }
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice2".to_string();
+                r.name_id = name_1().id.to_string();
+                r.store_id = store_1().id.to_string();
+                r.invoice_number = 12;
+                r.r#type = InvoiceRowType::OutboundShipment;
+                r.status = InvoiceRowStatus::New;
+                r.comment = Some("".to_string());
+                r.their_reference = Some("".to_string());
+                r.created_datetime = NaiveDateTime::from_timestamp(2000, 0);
+            })
         }
 
         pub fn invoice_line_1() -> InvoiceLineRow {

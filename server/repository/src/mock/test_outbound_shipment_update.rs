@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use util::inline_init;
 
 use crate::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, ItemRow,
@@ -42,27 +43,17 @@ fn mock_item_with_no_stock_line() -> ItemRow {
 
 // invoice containing invoice lines without stock line
 fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
-    InvoiceRow {
-        id: String::from("outbound_shipment_invalid_stock_line"),
-        name_id: String::from("name_store_a"),
-        store_id: String::from("store_c"),
-        invoice_number: 3,
-        name_store_id: None,
-        r#type: InvoiceRowType::OutboundShipment,
-        status: InvoiceRowStatus::New,
-        on_hold: false,
-        comment: Some("Sort comment test cA".to_owned()),
-        their_reference: Some(String::from("")),
-        created_datetime: NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0),
-        colour: None,
-        requisition_id: None,
-        linked_invoice_id: None,
-        allocated_datetime: None,
-        picked_datetime: None,
-        shipped_datetime: None,
-        delivered_datetime: None,
-        verified_datetime: None,
-    }
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("outbound_shipment_invalid_stock_line");
+        r.name_id = String::from("name_store_a");
+        r.store_id = String::from("store_c");
+        r.invoice_number = 3;
+        r.r#type = InvoiceRowType::OutboundShipment;
+        r.status = InvoiceRowStatus::New;
+        r.comment = Some("Sort comment test cA".to_owned());
+        r.their_reference = Some(String::from(""));
+        r.created_datetime = NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0);
+    })
 }
 
 pub fn test_outbound_shipment_update_data() -> MockData {
