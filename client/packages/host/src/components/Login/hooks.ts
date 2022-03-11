@@ -60,6 +60,7 @@ export const useLoginForm = (
   } = state;
 
   const onLogin = async () => {
+    setError();
     const { error, token } = await login(username, password, store);
     setError(error);
     setPassword('');
