@@ -18,8 +18,8 @@ use crate::{
 
 use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
 
-#[derive(Default)]
-pub struct UpdateStocktakeInput {
+#[derive(Default, Debug, Clone)]
+pub struct UpdateStocktake {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
@@ -73,7 +73,7 @@ fn load_stocktake_lines(
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &UpdateStocktakeInput,
+    input: &UpdateStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLine>), UpdateStocktakeError> {
     let existing = match check_stocktake_exist(connection, &input.id)? {
         Some(existing) => existing,
@@ -107,10 +107,7 @@ fn validate(
     Ok((existing, stocktake_lines))
 }
 
-pub fn check_stocktake_is_not_locked(
-    input: &UpdateStocktakeInput,
-    existing: &StocktakeRow,
-) -> bool {
+pub fn check_stocktake_is_not_locked(input: &UpdateStocktake, existing: &StocktakeRow) -> bool {
     match &input.is_locked {
         Some(false) => true,
         _ => !existing.is_locked,
@@ -268,14 +265,14 @@ fn generate_new_stock_line(
 
 fn generate(
     connection: &StorageConnection,
-    UpdateStocktakeInput {
+    UpdateStocktake {
         id: _,
         comment: input_comment,
         description: input_description,
         status: input_status,
         is_locked: input_is_locked,
         stocktake_date: input_stocktake_date,
-    }: UpdateStocktakeInput,
+    }: UpdateStocktake,
     existing: StocktakeRow,
     stocktake_lines: Vec<StocktakeLine>,
     store_id: &str,
@@ -368,7 +365,7 @@ fn generate(
 pub fn update_stocktake(
     ctx: &ServiceContext,
     store_id: &str,
-    input: UpdateStocktakeInput,
+    input: UpdateStocktake,
 ) -> Result<Stocktake, UpdateStocktakeError> {
     let result = ctx
         .connection
@@ -431,7 +428,7 @@ mod test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake::update::{UpdateStocktakeError, UpdateStocktakeInput},
+        stocktake::update::{UpdateStocktake, UpdateStocktakeError},
     };
 
     #[actix_rt::test]
@@ -449,7 +446,7 @@ mod test {
             .update_stocktake(
                 &context,
                 "invalid",
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = existing_stocktake.id.clone();
                 }),
             )
@@ -462,7 +459,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = "invalid".to_string();
                 }),
             )
@@ -476,7 +473,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
                 }),
@@ -491,7 +488,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
                 }),
@@ -511,7 +508,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
                     i.status = Some(StocktakeStatus::Finalised);
@@ -534,7 +531,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
                     i.status = Some(StocktakeStatus::Finalised);
@@ -550,7 +547,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.status = Some(StocktakeStatus::Finalised);
                 }),
@@ -570,7 +567,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.status = Some(StocktakeStatus::Finalised);
                 }),
@@ -590,7 +587,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.status = Some(StocktakeStatus::Finalised);
                 }),
@@ -609,7 +606,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.status = Some(StocktakeStatus::New);
                 }),
@@ -624,7 +621,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id.clone();
                     i.is_locked = Some(true);
                     i.comment = Some("New comment".to_string());
@@ -651,7 +648,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id.clone();
                     i.is_locked = Some(false);
                     i.comment = Some("Comment".to_string());
@@ -677,7 +674,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                UpdateStocktakeInput {
+                UpdateStocktake {
                     id: stocktake.id.clone(),
                     comment: Some("comment_1".to_string()),
                     description: Some("description_1".to_string()),
@@ -706,7 +703,7 @@ mod test {
             .update_stocktake(
                 &context,
                 &store_a.id,
-                inline_init(|i: &mut UpdateStocktakeInput| {
+                inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id.clone();
                     i.status = Some(StocktakeStatus::Finalised);
                 }),

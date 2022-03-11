@@ -15,8 +15,8 @@ use crate::{
     validate::check_store_id_matches,
 };
 
-#[derive(Default)]
-pub struct UpdateStocktakeLineInput {
+#[derive(Default, Debug, Clone)]
+pub struct UpdateStocktakeLine {
     pub id: String,
     pub location_id: Option<String>,
     pub comment: Option<String>,
@@ -45,7 +45,7 @@ pub enum UpdateStocktakeLineError {
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &UpdateStocktakeLineInput,
+    input: &UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     let stocktake_line = match check_stocktake_line_exist(connection, &input.id)? {
         Some(stocktake_line) => stocktake_line,
@@ -82,7 +82,7 @@ fn validate(
 
 fn generate(
     existing: StocktakeLineRow,
-    UpdateStocktakeLineInput {
+    UpdateStocktakeLine {
         id: _,
         location_id,
         comment,
@@ -94,7 +94,7 @@ fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         note,
-    }: UpdateStocktakeLineInput,
+    }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     Ok(StocktakeLineRow {
         id: existing.id,
@@ -123,7 +123,7 @@ fn generate(
 pub fn update_stocktake_line(
     ctx: &ServiceContext,
     store_id: &str,
-    input: UpdateStocktakeLineInput,
+    input: UpdateStocktakeLine,
 ) -> Result<StocktakeLine, UpdateStocktakeLineError> {
     let result = ctx
         .connection
@@ -161,7 +161,7 @@ mod stocktake_line_test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake_line::update::{UpdateStocktakeLineError, UpdateStocktakeLineInput},
+        stocktake_line::update::{UpdateStocktakeLine, UpdateStocktakeLineError},
     };
 
     #[actix_rt::test]
@@ -179,7 +179,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = "invalid".to_string();
                 }),
             )
@@ -192,7 +192,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 "invalid",
-                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                 }),
             )
@@ -206,7 +206,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.location_id = Some("invalid".to_string());
                 }),
@@ -221,7 +221,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.comment = Some(
                         "Trying to edit a stocktake line of a finalised stocktake".to_string(),
@@ -238,7 +238,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                 }),
             )
@@ -252,7 +252,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.comment = Some(
                         "Trying to edit a stocktake line of a finalised stocktake".to_string(),
@@ -269,7 +269,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id.clone();
                 }),
             )
@@ -284,7 +284,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 &store_a.id,
-                inline_init(|r: &mut UpdateStocktakeLineInput| {
+                inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id.clone();
                     r.location_id = Some(location.id.clone());
                     r.batch = Some("test_batch".to_string());

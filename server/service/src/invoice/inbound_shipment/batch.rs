@@ -103,7 +103,7 @@ where
 
     for input in inputs {
         let mutation_result = mutation(ctx, store_id, input.clone());
-        has_errors = mutation_result.is_err();
+        has_errors = has_errors || mutation_result.is_err();
         results.push(InputWithResult {
             input,
             result: mutation_result,

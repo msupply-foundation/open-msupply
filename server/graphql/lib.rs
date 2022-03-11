@@ -25,7 +25,7 @@ use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 
-#[derive(MergedObject, Default)]
+#[derive(MergedObject, Default, Clone)]
 pub struct FullQuery(
     pub InvoiceQueries,
     pub LocationQueries,
@@ -35,7 +35,7 @@ pub struct FullQuery(
     pub ReportQueries,
 );
 
-#[derive(MergedObject, Default)]
+#[derive(MergedObject, Default, Clone)]
 pub struct FullMutation(
     pub InvoiceMutations,
     pub InvoiceLineMutations,
@@ -51,29 +51,33 @@ pub struct FullMutation(
 pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
 type Builder = SchemaBuilder<FullQuery, FullMutation, EmptySubscription>;
 
-pub fn build_schema() -> Builder {
-    Schema::build(
-        FullQuery(
-            InvoiceQueries,
-            LocationQueries,
-            StocktakeQueries,
-            GeneralQueries,
-            RequisitionQueries,
-            ReportQueries,
-        ),
-        FullMutation(
-            InvoiceMutations,
-            InvoiceLineMutations,
-            LocationMutations,
-            StocktakeMutations,
-            StocktakeLineMutations,
-            BatchMutations,
-            GeneralMutations,
-            RequisitionMutations,
-            RequisitionLineMutations,
-        ),
-        EmptySubscription,
+pub fn full_query() -> FullQuery {
+    FullQuery(
+        InvoiceQueries,
+        LocationQueries,
+        StocktakeQueries,
+        GeneralQueries,
+        RequisitionQueries,
+        ReportQueries,
     )
+}
+
+pub fn full_mutation() -> FullMutation {
+    FullMutation(
+        InvoiceMutations,
+        InvoiceLineMutations,
+        LocationMutations,
+        StocktakeMutations,
+        StocktakeLineMutations,
+        BatchMutations,
+        GeneralMutations,
+        RequisitionMutations,
+        RequisitionLineMutations,
+    )
+}
+
+pub fn build_schema() -> Builder {
+    Schema::build(full_query(), full_mutation(), EmptySubscription)
 }
 
 pub fn config(
@@ -121,4 +125,36 @@ async fn playground() -> Result<HttpResponse> {
                 // allow to set cookies
                 .with_setting("request.credentials", "same-origin"),
         )))
+}
+
+#[cfg(test)]
+mod test {
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use repository::mock::MockDataInserts;
+    use serde_json::json;
+
+    use crate::{full_mutation, full_query};
+
+    #[actix_rt::test]
+    async fn test_graphql_version() {
+        // This test should also checks that there are no duplicate types (which will be a panic when schema is built)
+        let (_, _, _, settings) = setup_graphl_test(
+            full_query(),
+            full_mutation(),
+            "graphql_requisition_user_loader",
+            MockDataInserts::none(),
+        )
+        .await;
+        let expected = json!({
+            "apiVersion": "1.0"
+        });
+
+        let query = r#"
+        query {
+            apiVersion
+        }
+        "#;
+
+        assert_graphql_query!(&settings, &query, &None, expected, None);
+    }
 }

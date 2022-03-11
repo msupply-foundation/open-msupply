@@ -1,5 +1,6 @@
 use repository::RepositoryError;
 use repository::{Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
+use service_provider::ServiceContext;
 use std::convert::TryInto;
 
 pub mod auth_data;
@@ -86,6 +87,49 @@ impl From<RepositoryError> for SingleRecordError {
         SingleRecordError::DatabaseError(error)
     }
 }
+
+// Batch mutation helpers
+pub struct DoMutationResult<T> {
+    pub has_errors: bool,
+    pub results: Vec<T>,
+}
+
+pub struct BatchMutationsProcessor<'a> {
+    ctx: &'a ServiceContext,
+    store_id: &'a str,
+}
+
+impl<'a> BatchMutationsProcessor<'a> {
+    pub fn new(ctx: &'a ServiceContext, store_id: &'a str) -> BatchMutationsProcessor<'a> {
+        BatchMutationsProcessor { ctx, store_id }
+    }
+
+    pub fn do_mutations<I, R, E, M>(
+        &self,
+        inputs: Option<Vec<I>>,
+        mutation: M,
+    ) -> (bool, Vec<InputWithResult<I, Result<R, E>>>)
+    where
+        I: Clone,
+        M: Fn(&ServiceContext, &str, I) -> Result<R, E>,
+    {
+        let mut has_errors = false;
+        let mut result = vec![];
+
+        for input in inputs.unwrap_or(vec![]) {
+            let mutation_result = mutation(self.ctx, self.store_id, input.clone());
+            has_errors = has_errors || mutation_result.is_err();
+            result.push(InputWithResult {
+                input,
+                result: mutation_result,
+            });
+        }
+
+        (has_errors, result)
+    }
+}
+
+// Pagination helpers
 
 pub fn get_default_pagination(
     pagination_option: Option<PaginationOption>,

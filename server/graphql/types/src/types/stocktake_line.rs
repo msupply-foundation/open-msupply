@@ -127,3 +127,9 @@ impl StocktakeLineConnector {
         }
     }
 }
+
+impl StocktakeLineNode {
+    pub fn from_domain(line: StocktakeLine) -> StocktakeLineNode {
+        StocktakeLineNode { line }
+    }
+}
