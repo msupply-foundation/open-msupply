@@ -8,7 +8,7 @@ use crate::schema::{
 
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_name_a, mock_name_store_a, MockData,
+    mock_item_a, mock_item_b, mock_name_a, mock_name_b, mock_store_a, MockData,
 };
 
 pub fn mock_test_requisition_queries() -> MockData {
@@ -59,7 +59,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             r.id = requisition_id.clone();
             r.requisition_number = 3;
             r.name_id = mock_name_a().id;
-            r.store_id = "store_a".to_owned();
+            r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
@@ -101,8 +101,8 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
             r.id = requisition_id.clone();
             r.requisition_number = 3;
-            r.name_id = mock_name_store_a().id;
-            r.store_id = "store_a".to_owned();
+            r.name_id = mock_name_b().id;
+            r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);

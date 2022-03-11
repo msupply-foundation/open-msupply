@@ -101,6 +101,7 @@ impl RemotePullTranslation for InvoiceLineTranslation {
             source: anyhow::Error::msg(format!("Unsupported trans_line type: {:?}", data._type)),
             record: sync_record.data.clone(),
         })?;
+        let total = total(&data);
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
                 id: data.ID,
@@ -115,15 +116,24 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 pack_size: data.pack_size,
                 cost_price_per_pack: data.cost_price,
                 sell_price_per_pack: data.sell_price,
-                // TODO check that this is the correct way to calculate the total values
-                total_before_tax: data.cost_price * data.quantity as f64,
-                total_after_tax: data.cost_price * data.quantity as f64,
+                total_before_tax: total,
+                total_after_tax: total,
                 tax: None,
                 r#type: line_type,
                 number_of_packs: data.quantity / data.pack_size,
                 note: data.note,
             }),
         )))
+    }
+}
+
+fn total(data: &LegacyTransLineRow) -> f64 {
+    match data._type {
+        LegacyTransLineType::StockIn => data.cost_price * data.quantity as f64,
+        LegacyTransLineType::StockOut => data.sell_price * data.quantity as f64,
+        LegacyTransLineType::Placeholder => 0.0,
+        LegacyTransLineType::Service => 0.0,
+        LegacyTransLineType::NonStock => 0.0,
     }
 }
 

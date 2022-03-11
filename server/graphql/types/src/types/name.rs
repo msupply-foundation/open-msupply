@@ -2,7 +2,7 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use repository::{schema::NameRow, Name};
 
-use graphql_core::{loader::StoreLoader, simple_generic_errors::NodeError, ContextExt};
+use graphql_core::{loader::StoreByIdLoader, simple_generic_errors::NodeError, ContextExt};
 
 use super::StoreNode;
 
@@ -34,11 +34,11 @@ impl NameNode {
             None => return Ok(None),
         };
 
-        let loader = ctx.get_loader::<DataLoader<StoreLoader>>();
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
         Ok(loader
             .load_one(store_id.to_string())
             .await?
-            .map(StoreNode::from))
+            .map(StoreNode::from_domain))
     }
 }
 

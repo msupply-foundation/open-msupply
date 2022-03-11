@@ -22,7 +22,6 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
 
 #[derive(InputObject, Clone)]
 #[graphql(concrete(name = "EqualFilterStringInput", params(String)))]
-#[graphql(concrete(name = "EqualFilterBooleanInput", params(bool)))]
 #[graphql(concrete(name = "EqualFilterNumberInput", params(i32)))]
 #[graphql(concrete(name = "EqualFilterBigNumberInput", params(i64)))]
 pub struct EqualFilterInput<T: InputType> {
@@ -31,7 +30,6 @@ pub struct EqualFilterInput<T: InputType> {
     pub not_equal_to: Option<T>,
 }
 
-pub type EqualFilterBoolInput = EqualFilterInput<bool>;
 pub type EqualFilterStringInput = EqualFilterInput<String>;
 pub type EqualFilterNumberInput = EqualFilterInput<i32>;
 pub type EqualFilterBigNumberInput = EqualFilterInput<i64>;

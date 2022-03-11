@@ -30,9 +30,9 @@ pub fn insert_inbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let other_party = validate(&input, &connection)?;
+            let other_party = validate(connection, store_id, &input)?;
             let new_invoice = generate(connection, store_id, input, other_party)?;
-            InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
+            InvoiceRepository::new(connection).upsert_one(&new_invoice)?;
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)

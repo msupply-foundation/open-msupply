@@ -9,7 +9,7 @@ use service::{usize_to_u32, ListResult};
 use graphql_core::{
     loader::{
         InvoiceLineForRequisitionLine, ItemLoader, LinkedRequisitionLineLoader,
-        RequisitionAndItemId,
+        RequisitionAndItemId, RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -87,10 +87,10 @@ impl RequisitionLineNode {
 
         let loader = ctx.get_loader::<DataLoader<InvoiceLineForRequisitionLine>>();
         let result_option = loader
-            .load_one(RequisitionAndItemId {
-                requisition_id: requisition_id.clone(),
-                item_id: self.row().item_id.clone(),
-            })
+            .load_one(RequisitionAndItemId::new(
+                &requisition_id,
+                &self.row().item_id,
+            ))
             .await?;
 
         let result = result_option.unwrap_or(vec![]);
@@ -113,10 +113,10 @@ impl RequisitionLineNode {
 
         let loader = ctx.get_loader::<DataLoader<InvoiceLineForRequisitionLine>>();
         let result_option = loader
-            .load_one(RequisitionAndItemId {
-                requisition_id: requisition_id.clone(),
-                item_id: self.row().item_id.clone(),
-            })
+            .load_one(RequisitionAndItemId::new(
+                &requisition_id,
+                &self.row().item_id,
+            ))
             .await?;
 
         let result = result_option.unwrap_or(vec![]);
@@ -132,6 +132,28 @@ impl RequisitionLineNode {
         }
     }
 
+    /// Quantity remaining to supply
+    /// supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
+    /// Only available in response requisition, request requistion returns 0
+    pub async fn remaining_quantity_to_supply(&self, ctx: &Context<'_>) -> Result<i32> {
+        if self.requisition_row().r#type == RequisitionRowType::Request {
+            return Ok(0);
+        }
+
+        let loader = ctx.get_loader::<DataLoader<RequisitionLineSupplyStatusLoader>>();
+
+        let response_option = loader
+            .load_one(RequisitionAndItemId::new(
+                &self.row().requisition_id,
+                &self.row().item_id,
+            ))
+            .await?;
+
+        Ok(response_option
+            .map(|requisition_line_status| requisition_line_status.remaining_quantity())
+            .unwrap_or(0))
+    }
+
     pub async fn linked_requisition_line(
         &self,
         ctx: &Context<'_>,
@@ -145,10 +167,10 @@ impl RequisitionLineNode {
 
         let loader = ctx.get_loader::<DataLoader<LinkedRequisitionLineLoader>>();
         let result_option = loader
-            .load_one(RequisitionAndItemId {
-                requisition_id: linked_requisition_id.clone(),
-                item_id: self.row().item_id.clone(),
-            })
+            .load_one(RequisitionAndItemId::new(
+                &linked_requisition_id,
+                &self.row().item_id,
+            ))
             .await?;
 
         Ok(result_option.map(RequisitionLineNode::from_domain))
