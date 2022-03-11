@@ -4,8 +4,6 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type DraftInboundLineFragment = { __typename: 'InvoiceLineNode', id: string, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, itemId: string, invoiceId: string, note?: string | null, totalAfterTax: number, totalBeforeTax: number, type: Types.InvoiceLineNodeType, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null };
-
 export type InboundLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null };
 
 export type InboundFragment = { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, type: Types.InvoiceNodeType, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean }, pricing: { __typename: 'InvoicePricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number } };
@@ -89,36 +87,6 @@ export type UpsertInboundShipmentMutationVariables = Types.Exact<{
 
 export type UpsertInboundShipmentMutation = { __typename: 'FullMutation', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', updateInboundShipments?: Array<{ __typename: 'UpdateInboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipments?: Array<{ __typename: 'InsertInboundShipmentResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentError', error: { __typename: 'OtherPartyNotASupplier', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } }> | null, deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, updateInboundShipmentServiceLines?: Array<{ __typename: 'UpdateInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, updateInboundShipmentLines?: Array<{ __typename: 'UpdateInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipmentServiceLines?: Array<{ __typename: 'InsertInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, insertInboundShipmentLines?: Array<{ __typename: 'InsertInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteInboundShipmentServiceLines?: Array<{ __typename: 'DeleteInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export const DraftInboundLineFragmentDoc = gql`
-    fragment DraftInboundLine on InvoiceLineNode {
-  id
-  batch
-  costPricePerPack
-  sellPricePerPack
-  expiryDate
-  numberOfPacks
-  packSize
-  itemId
-  invoiceId
-  note
-  totalAfterTax
-  totalBeforeTax
-  type
-  item {
-    id
-    code
-    name
-    unitName
-  }
-  location {
-    __typename
-    name
-    id
-    code
-    onHold
-  }
-}
-    `;
 export const InboundLineFragmentDoc = gql`
     fragment InboundLine on InvoiceLineNode {
   __typename
