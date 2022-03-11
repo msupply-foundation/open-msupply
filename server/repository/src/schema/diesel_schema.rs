@@ -254,7 +254,7 @@ table! {
     stocktake (id) {
         id -> Text,
         store_id -> Text,
-        user_id -> Nullable<Text>,
+        user_id -> Text,
         stocktake_number -> BigInt,
         comment	-> Nullable<Text>,
         description -> Nullable<Text>,

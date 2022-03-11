@@ -267,7 +267,7 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(StocktakeRow {
                 id: "id1".to_string(),
-                user_id: None,
+                user_id: "".to_string(),
                 stocktake_number: 123,
                 store_id: "store id".to_string(),
                 comment: Some("comment".to_string()),
