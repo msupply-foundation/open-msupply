@@ -127,6 +127,7 @@ export const Login: React.FC = ({}) => {
                 fullWidth
                 label={t('heading.username')}
                 value={username}
+                disabled={isLoggingIn}
                 onChange={e => setUsername(e.target.value)}
                 inputProps={{
                   autoComplete: 'username',
@@ -138,6 +139,7 @@ export const Login: React.FC = ({}) => {
                 label={t('heading.password')}
                 type="password"
                 value={password}
+                disabled={isLoggingIn}
                 onChange={e => setPassword(e.target.value)}
                 inputProps={{
                   autoComplete: 'current-password',
@@ -148,11 +150,12 @@ export const Login: React.FC = ({}) => {
                 renderInput={StoreAutocompleteInput}
                 loading={isLoading}
                 options={stores}
+                disabled={isLoggingIn}
                 onChange={(_, value) => setStore(value || undefined)}
                 value={currentStore}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
               />
-              {error && (
+              {error && !isLoggingIn && (
                 <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
                   <Box>
                     <AlertIcon />
