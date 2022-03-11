@@ -20,7 +20,7 @@ use diesel::{
     prelude::*,
 };
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct Invoice {
     pub invoice_row: InvoiceRow,
     pub name_row: NameRow,
