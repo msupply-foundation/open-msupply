@@ -328,7 +328,7 @@ fn generate(
     let shipment = InvoiceRow {
         id: shipment_id,
         user_id: Some(get_default_user_id()),
-        name_id: invad_name.name_row.id.to_owned(),
+        name_id: invad_name.id,
         store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
         name_store_id: None,
