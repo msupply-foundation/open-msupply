@@ -189,16 +189,17 @@ export const useOutboundLines = (
 ): UseQueryResult<OutboundLineFragment[], unknown> => {
   const selectLines = useCallback(
     (invoice: OutboundFragment) => {
+      const forListView = (line: OutboundLineFragment) =>
+        isA.stockOutLine(line) || isA.placeholderLine(line);
       return itemId
         ? invoice.lines.nodes.filter(({ item }) => itemId === item.id)
-        : invoice.lines.nodes.filter(isA.stockOutLine);
+        : invoice.lines.nodes.filter(forListView);
     },
     [itemId]
   );
 
   return useOutboundSelector(selectLines);
 };
-
 export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
   const selectLines = useCallback((invoice: OutboundFragment) => {
     const { lines } = invoice;
