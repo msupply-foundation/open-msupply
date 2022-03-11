@@ -1,3 +1,32 @@
+fragment MasterListItem on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+}
+
+fragment MasterListLine on MasterListLineNode {
+  __typename
+  id
+  item {
+    ...MasterListItem
+  }
+}
+
+fragment MasterList on MasterListNode {
+  __typename
+  name
+  code
+  description
+  id
+  lines {
+    nodes {
+      ...MasterListLine
+    }
+  }
+}
+
 fragment MasterListRow on MasterListNode {
   __typename
   name
@@ -25,6 +54,18 @@ query masterLists(
       totalCount
       nodes {
         ...MasterListRow
+      }
+    }
+  }
+}
+
+query masterList($filter: MasterListFilterInput, $storeId: String!) {
+  masterLists(filter: $filter, storeId: $storeId) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterList
       }
     }
   }
