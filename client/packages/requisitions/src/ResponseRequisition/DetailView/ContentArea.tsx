@@ -1,6 +1,5 @@
 import React from 'react';
 import { DataTable, useTranslation } from '@openmsupply-client/common';
-import { useResponseColumns } from './columns';
 import { useResponseLines, ResponseLineFragment } from '../api';
 
 interface ContentAreaProps {
@@ -8,8 +7,7 @@ interface ContentAreaProps {
 }
 
 export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
-  const { lines, onChangeSortBy, sortBy } = useResponseLines();
-  const columns = useResponseColumns({ sortBy, onChangeSortBy });
+  const { columns, lines } = useResponseLines();
   const t = useTranslation('common');
 
   return (

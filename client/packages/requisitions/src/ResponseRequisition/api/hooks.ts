@@ -12,12 +12,12 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
   SortController,
-  useSortBy,
-  getDataSorter,
+  getColumnSorter,
   useQueryParams,
   useMutation,
   useNotification,
   useTranslation,
+  Column,
 } from '@openmsupply-client/common';
 import { getResponseQueries, ListParams } from './api';
 import { isResponseDisabled } from './../../utils';
@@ -27,6 +27,7 @@ import {
   ResponseLineFragment,
   ResponseRowFragment,
 } from './operations.generated';
+import { useResponseColumns } from '../DetailView/columns';
 
 export const useResponseApi = () => {
   const keys = {
@@ -105,22 +106,22 @@ export const useResponseFields = <
 interface UseResponseLinesController
   extends SortController<ResponseLineFragment> {
   lines: ResponseLineFragment[];
+  columns: Column<ResponseLineFragment>[];
 }
 
 export const useResponseLines = (): UseResponseLinesController => {
-  const { sortBy, onChangeSortBy } = useSortBy<ResponseLineFragment>({
-    key: 'itemName',
-    isDesc: false,
-  });
   const { lines } = useResponseFields('lines');
+  const { columns, onChangeSortBy, sortBy } = useResponseColumns();
 
   const sorted = useMemo(() => {
-    return (lines?.nodes ?? []).sort(
-      getDataSorter(sortBy.key as keyof ResponseLineFragment, !!sortBy.isDesc)
-    );
-  }, [sortBy, lines]);
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    const { getSortValue } = currentColumn ?? {};
+    return getSortValue
+      ? lines?.nodes.sort(getColumnSorter(getSortValue, !!sortBy.isDesc))
+      : lines?.nodes;
+  }, [sortBy.key, sortBy.isDesc, lines]);
 
-  return { lines: sorted, sortBy, onChangeSortBy };
+  return { lines: sorted, sortBy, onChangeSortBy, columns };
 };
 
 export const useIsResponseDisabled = (): boolean => {
