@@ -29,7 +29,7 @@ const useSharedSortBy = () => {
   useEffect(() => {
     sharedSortBy.setSortBy(sortBy);
   }, [sortBy]);
-  return { sortBy, onChangeSortBy };
+  return { sortBy: sharedSortBy.sortBy, onChangeSortBy };
 };
 
 export const useResponseColumns = () => {
@@ -78,7 +78,10 @@ export const useResponseColumns = () => {
         width: 100,
         align: ColumnAlign.Right,
       },
-      'requestedQuantity',
+      [
+        'requestedQuantity',
+        { getSortValue: rowData => rowData.requestedQuantity },
+      ],
       {
         label: 'label.already-issued',
         description: 'description.already-issued',
