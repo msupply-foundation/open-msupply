@@ -6,13 +6,14 @@ use crate::invoice::check_other_party_id;
 use super::{InsertOutboundShipment, InsertOutboundShipmentError};
 
 pub fn validate(
-    input: &InsertOutboundShipment,
     connection: &StorageConnection,
+    store_id: &str,
+    input: &InsertOutboundShipment,
 ) -> Result<Name, InsertOutboundShipmentError> {
     use InsertOutboundShipmentError::*;
     check_invoice_does_not_exists(&input.id, connection)?;
 
-    let other_party = check_other_party_id(connection, &input.other_party_id)?
+    let other_party = check_other_party_id(connection, store_id, &input.other_party_id)?
         .ok_or(OtherPartyIdNotFound(input.id.clone()))?;
 
     if !other_party.is_customer() {

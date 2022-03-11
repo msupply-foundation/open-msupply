@@ -22,6 +22,7 @@ use service::permission_validation::{Resource, ResourceAccessRequest};
 pub enum RequisitionSortFieldInput {
     RequisitionNumber,
     Type,
+    Comment,
     Status,
     OtherPartyName,
     SentDatetime,
@@ -133,8 +134,7 @@ pub fn get_requisitions(
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             // Currently only one sort option is supported, use the first from the list.
-            sort.map(|mut sort_list| sort_list.pop())
-                .flatten()
+            sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
@@ -188,6 +188,7 @@ impl RequisitionSortInput {
             from::RequisitionNumber => to::RequisitionNumber,
             from::Type => to::Type,
             from::Status => to::Status,
+            from::Comment => to::Comment,
             from::OtherPartyName => to::OtherPartyName,
             from::SentDatetime => to::SentDatetime,
             from::CreatedDatetime => to::CreatedDatetime,

@@ -4,14 +4,17 @@ use async_graphql::*;
 use chrono::NaiveDateTime;
 use graphql_core::{
     loader::{
-        IdAndStoreId, ItemStatsLoaderInput, ItemsStatsForItemLoader,
-        StockLineByItemAndStoreIdLoader,
+        ItemStatsLoaderInput, ItemsStatsForItemLoader, StockLineByItemAndStoreIdLoader,
+        StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{schema::ItemRow, Item};
+use repository::{
+    schema::{ItemRow, ItemRowType},
+    Item,
+};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
@@ -47,6 +50,10 @@ impl ItemNode {
         self.item.unit_name()
     }
 
+    pub async fn r#type(&self) -> ItemNodeType {
+        ItemNodeType::from_domain(&self.row().r#type)
+    }
+
     pub async fn stats(
         &self,
         ctx: &Context<'_>,
@@ -55,11 +62,11 @@ impl ItemNode {
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
-            .load_one(ItemStatsLoaderInput {
-                store_id: store_id.clone(),
+            .load_one(ItemStatsLoaderInput::new(
+                &store_id,
+                &self.row().id,
                 look_back_datetime,
-                item_id: self.row().id.to_string(),
-            })
+            ))
             .await?
             .ok_or(
                 StandardGraphqlError::InternalError(format!(
@@ -80,10 +87,10 @@ impl ItemNode {
     ) -> Result<StockLineConnector> {
         let loader = ctx.get_loader::<DataLoader<StockLineByItemAndStoreIdLoader>>();
         let result_option = loader
-            .load_one(IdAndStoreId {
-                id: self.row().id.to_string(),
-                store_id,
-            })
+            .load_one(StockLineByItemAndStoreIdLoaderInput::new(
+                &store_id,
+                &self.row().id,
+            ))
             .await?;
 
         Ok(StockLineConnector::from_vec(
@@ -100,6 +107,31 @@ pub enum ItemResponseError {
 #[derive(SimpleObject)]
 pub struct ItemError {
     pub error: ItemResponseError,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum ItemNodeType {
+    Service,
+    Stock,
+    NonStock,
+}
+
+impl ItemNodeType {
+    pub fn from_domain(from: &ItemRowType) -> ItemNodeType {
+        match from {
+            ItemRowType::Stock => ItemNodeType::Stock,
+            ItemRowType::Service => ItemNodeType::Service,
+            ItemRowType::NonStock => ItemNodeType::NonStock,
+        }
+    }
+
+    pub fn to_domain(self) -> ItemRowType {
+        match self {
+            ItemNodeType::Stock => ItemRowType::Stock,
+            ItemNodeType::Service => ItemRowType::Service,
+            ItemNodeType::NonStock => ItemRowType::NonStock,
+        }
+    }
 }
 
 #[derive(Union)]
