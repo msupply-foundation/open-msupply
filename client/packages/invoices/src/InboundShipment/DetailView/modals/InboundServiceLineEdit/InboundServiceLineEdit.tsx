@@ -15,6 +15,7 @@ import {
 import { useIsInboundDisabled } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
+
 interface InboundServiceLineEditProps {
   isOpen: boolean;
   onClose: () => void;

@@ -13,14 +13,12 @@ import {
   BasicSpinner,
   DialogButton,
   useDialog,
-  generateUUID,
   useNotification,
   ModalMode,
   useDirtyCheck,
   useConfirmOnLeaving,
   TableProvider,
   createTableStore,
-  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -31,9 +29,9 @@ import {
   useInboundFields,
   useSaveInboundLines,
   useNextItem,
-  InboundLineFragment,
 } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
+import { CreateDraft } from '../utils';
 
 interface InboundLineEditProps {
   item: ItemRowFragment | null;
@@ -49,31 +47,6 @@ enum Tabs {
   Location = 'Location',
 }
 
-const createDraftInvoiceLine = (
-  item: ItemRowFragment,
-  invoiceId: string,
-  seed?: InboundLineFragment
-): DraftInboundLine => {
-  const draftLine: DraftInboundLine = {
-    __typename: 'InvoiceLineNode',
-    type: InvoiceLineNodeType.StockIn,
-    totalAfterTax: 0,
-    totalBeforeTax: 0,
-    id: generateUUID(),
-    invoiceId,
-    sellPricePerPack: 0,
-    costPricePerPack: 0,
-    numberOfPacks: 0,
-    packSize: 0,
-    isCreated: seed ? false : true,
-    location: undefined,
-    expiryDate: null,
-    item,
-    ...seed,
-  };
-
-  return draftLine;
-};
 const useDraftInboundLines = (item: ItemRowFragment | null) => {
   const { data: lines } = useInboundLines(item?.id ?? '');
   const { id } = useInboundFields('id');
@@ -85,9 +58,14 @@ const useDraftInboundLines = (item: ItemRowFragment | null) => {
   useEffect(() => {
     if (lines && item) {
       const drafts = lines.map(line =>
-        createDraftInvoiceLine(line.item, line.invoiceId, line)
+        CreateDraft.stockInLine({
+          item: line.item,
+          invoiceId: line.invoiceId,
+          seed: line,
+        })
       );
-      if (drafts.length === 0) drafts.push(createDraftInvoiceLine(item, id));
+      if (drafts.length === 0)
+        drafts.push(CreateDraft.stockInLine({ item, invoiceId: id }));
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
@@ -96,7 +74,7 @@ const useDraftInboundLines = (item: ItemRowFragment | null) => {
 
   const addDraftLine = () => {
     if (item) {
-      const newLine = createDraftInvoiceLine(item, id);
+      const newLine = CreateDraft.stockInLine({ item, invoiceId: id });
       setIsDirty(true);
       setDraftLines([...draftLines, newLine]);
     }
