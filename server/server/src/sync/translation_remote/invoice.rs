@@ -1,11 +1,10 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use log::info;
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         RemoteSyncBufferRow,
     },
-    EqualFilter, InvoiceRepository, NameFilter, NameQueryRepository, StorageConnection,
+    InvoiceRepository, StorageConnection, StoreRowRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -150,23 +149,14 @@ impl RemotePullTranslation for InvoiceTranslation {
                 }
             })?;
 
-        if data.mode == TransactMode::Dispensary {
-            info!(
-                "Ignore transact records in dispensary mode (transact id: {})",
-                data.ID
-            );
-            return Ok(None);
-        }
-
-        let name = NameQueryRepository::new(connection)
-            .query_one(NameFilter::new().id(EqualFilter::equal_to(&data.name_ID)))
+        let name_store_id = StoreRowRepository::new(connection)
+            .find_one_by_name_id(&data.name_ID)
             .map_err(|err| SyncTranslationError {
                 table_name,
                 source: err.into(),
                 record: sync_record.data.clone(),
-            })?;
-        let name_store_id =
-            name.and_then(|name| name.store_id().map(|store_id| store_id.to_string()));
+            })?
+            .map(|store_row| store_row.id);
 
         let invoice_type = invoice_type(&data._type).ok_or(SyncTranslationError {
             table_name,

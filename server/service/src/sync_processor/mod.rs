@@ -1,9 +1,8 @@
 use repository::EqualFilter;
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
-    InvoiceFilter, InvoiceQueryRepository, NameFilter, NameQueryRepository, NameRepository,
-    RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
-    StoreRowRepository,
+    InvoiceFilter, InvoiceQueryRepository, NameRepository, RepositoryError, RequisitionFilter,
+    RequisitionRepository, StorageConnection, StoreRowRepository,
 };
 
 use self::{
@@ -137,17 +136,7 @@ fn get_other_party_store(
         Record::InvoiceRow(invoice_row) => &invoice_row.name_id,
     };
 
-    let name = NameQueryRepository::new(connection)
-        .query_one(NameFilter::new().id(EqualFilter::equal_to(&name_id)))?
-        .ok_or(ProcessRecordError::CannotFindNameForSourceRecord(
-            record.clone(),
-        ))?;
-
-    let result = match name.store_id() {
-        Some(store_id) => StoreRowRepository::new(connection).find_one_by_id(store_id)?,
-        None => None,
-    };
-    Ok(result)
+    Ok(StoreRowRepository::new(connection).find_one_by_name_id(name_id)?)
 }
 
 fn get_source_name(

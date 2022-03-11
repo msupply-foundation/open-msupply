@@ -1,6 +1,6 @@
-use super::{ItemFulFillment, OutError};
+use super::OutError;
 use crate::{
-    invoice::check_other_party_id, number::next_number, user_account::get_default_user_id,
+    invoice::check_other_party_id, number::next_number, user_account::get_default_user_id, requisition::requisition_supply_status::RequisitionLineSupplyStatus,
 };
 use chrono::Utc;
 use repository::{
@@ -16,9 +16,9 @@ pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
     requisition_row: RequisitionRow,
-    fullfilments: Vec<ItemFulFillment>,
+    fullfilments: Vec<RequisitionLineSupplyStatus>,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), OutError> {
-    let other_party = check_other_party_id(connection, &requisition_row.name_id)?
+    let other_party = check_other_party_id(connection, store_id, &requisition_row.name_id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
 
     let new_invoice = InvoiceRow {
@@ -53,21 +53,21 @@ pub fn generate(
 pub fn generate_invoice_lines(
     connection: &StorageConnection,
     invoice_id: &str,
-    fullfilments: Vec<ItemFulFillment>,
+    requisition_line_supply_statuses: Vec<RequisitionLineSupplyStatus>,
 ) -> Result<Vec<InvoiceLineRow>, OutError> {
     let mut invoice_line_rows = vec![];
 
-    for ItemFulFillment { item_id, quantity } in fullfilments.into_iter() {
+    for requisition_line_supply_status in requisition_line_supply_statuses.into_iter() {
         let item_row = ItemRepository::new(connection)
-            .find_one_by_id(&item_id)?
+            .find_one_by_id(requisition_line_supply_status.item_id())?
             .ok_or(OutError::ProblemFindingItem)?;
 
         invoice_line_rows.push(InvoiceLineRow {
             id: uuid(),
             invoice_id: invoice_id.to_owned(),
             pack_size: 1,
-            number_of_packs: quantity,
-            item_id,
+            number_of_packs: requisition_line_supply_status.remaining_quantity(),
+            item_id: item_row.id,
             item_code: item_row.code,
             item_name: item_row.name,
             r#type: InvoiceLineRowType::UnallocatedStock,

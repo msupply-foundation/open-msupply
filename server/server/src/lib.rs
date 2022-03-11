@@ -1,3 +1,5 @@
+use crate::static_files::config_static_files;
+
 use self::{
     middleware::{compress as compress_middleware, logger as logger_middleware},
     settings::Settings,
@@ -20,6 +22,7 @@ pub mod configuration;
 pub mod environment;
 pub mod middleware;
 pub mod settings;
+pub mod static_files;
 pub mod sync;
 pub mod test_utils;
 
@@ -70,6 +73,7 @@ pub async fn start_server(
                 service_provider_data.clone(),
                 auth_data.clone(),
             ))
+            .configure(config_static_files)
     });
     match load_certs() {
         Ok(ssl_builder) => {
