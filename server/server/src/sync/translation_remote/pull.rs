@@ -103,7 +103,7 @@ fn do_translation(
                 records.upserts.append(&mut result.upserts);
             }
             Err(error) => warn!("Failed to translate ({}): {:?}", error, sync_record),
-            Ok => {}
+            _ => {}
         };
     }
     warn!("Unhandled remote pull record: {:?}", sync_record);
