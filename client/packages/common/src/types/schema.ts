@@ -159,6 +159,7 @@ export type BatchRequestRequisitionResponse = {
 };
 
 export type BatchStocktakeInput = {
+  continueOnError?: InputMaybe<Scalars['Boolean']>;
   deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput>>;
   deleteStocktakes?: InputMaybe<Array<DeleteStocktakeInput>>;
   insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput>>;
@@ -167,20 +168,8 @@ export type BatchStocktakeInput = {
   updateStocktakes?: InputMaybe<Array<UpdateStocktakeInput>>;
 };
 
-export type BatchStocktakeResponse = BatchStocktakeResponses | BatchStocktakeResponsesWithErrors;
-
-export type BatchStocktakeResponses = {
-  __typename: 'BatchStocktakeResponses';
-  deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineResponseWithId>>;
-  deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
-  insertStocktakeLines?: Maybe<Array<InsertStocktakeLineResponseWithId>>;
-  insertStocktakes?: Maybe<Array<InsertStocktakeResponseWithId>>;
-  updateStocktakeLines?: Maybe<Array<UpdateStocktakeLineResponseWithId>>;
-  updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
-};
-
-export type BatchStocktakeResponsesWithErrors = {
-  __typename: 'BatchStocktakeResponsesWithErrors';
+export type BatchStocktakeResponse = {
+  __typename: 'BatchStocktakeResponse';
   deleteStocktakeLines?: Maybe<Array<DeleteStocktakeLineResponseWithId>>;
   deleteStocktakes?: Maybe<Array<DeleteStocktakeResponseWithId>>;
   insertStocktakeLines?: Maybe<Array<InsertStocktakeLineResponseWithId>>;
@@ -218,6 +207,11 @@ export type CannotEditInvoice = DeleteErrorInterface & DeleteInboundShipmentErro
 
 export type CannotEditRequisition = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'CannotEditRequisition';
+  description: Scalars['String'];
+};
+
+export type CannotEditStocktake = DeleteStocktakeErrorInterface & DeleteStocktakeLineErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeErrorInterface & UpdateStocktakeLineErrorInterface & {
+  __typename: 'CannotEditStocktake';
   description: Scalars['String'];
 };
 
@@ -462,20 +456,33 @@ export type DeleteResponse = {
   id: Scalars['String'];
 };
 
+export type DeleteStocktakeError = {
+  __typename: 'DeleteStocktakeError';
+  error: DeleteStocktakeErrorInterface;
+};
+
+export type DeleteStocktakeErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type DeleteStocktakeInput = {
   id: Scalars['String'];
+};
+
+export type DeleteStocktakeLineError = {
+  __typename: 'DeleteStocktakeLineError';
+  error: DeleteStocktakeLineErrorInterface;
+};
+
+export type DeleteStocktakeLineErrorInterface = {
+  description: Scalars['String'];
 };
 
 export type DeleteStocktakeLineInput = {
   id: Scalars['String'];
 };
 
-export type DeleteStocktakeLineNode = {
-  __typename: 'DeleteStocktakeLineNode';
-  id: Scalars['String'];
-};
-
-export type DeleteStocktakeLineResponse = DeleteStocktakeLineNode;
+export type DeleteStocktakeLineResponse = DeleteResponse | DeleteStocktakeLineError;
 
 export type DeleteStocktakeLineResponseWithId = {
   __typename: 'DeleteStocktakeLineResponseWithId';
@@ -483,13 +490,7 @@ export type DeleteStocktakeLineResponseWithId = {
   response: DeleteStocktakeLineResponse;
 };
 
-export type DeleteStocktakeNode = {
-  __typename: 'DeleteStocktakeNode';
-  /** The id of the deleted stocktake */
-  id: Scalars['String'];
-};
-
-export type DeleteStocktakeResponse = DeleteStocktakeNode;
+export type DeleteStocktakeResponse = DeleteResponse | DeleteStocktakeError;
 
 export type DeleteStocktakeResponseWithId = {
   __typename: 'DeleteStocktakeResponseWithId';
@@ -519,6 +520,12 @@ export type EqualFilterItemTypeInput = {
   equalAny?: InputMaybe<Array<ItemNodeType>>;
   equalTo?: InputMaybe<ItemNodeType>;
   notEqualTo?: InputMaybe<ItemNodeType>;
+};
+
+export type EqualFilterReportCategoryInput = {
+  equalAny?: InputMaybe<Array<ReportCategory>>;
+  equalTo?: InputMaybe<ReportCategory>;
+  notEqualTo?: InputMaybe<ReportCategory>;
 };
 
 export type EqualFilterRequisitionStatusInput = {
@@ -928,13 +935,21 @@ export type FullQuery = {
   me: UserResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
-  /** Query omSupply "locations" entries */
+  /**
+   * Creates a printed report.
+   *
+   * All details about the report, e.g. the output format, are specified in the report definition
+   * which is referred to by the report_id.
+   * The printed report can be retrieved from the `/files` endpoint using the returned file id.
+   */
   printReport: PrintReportResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
    */
   refreshToken: RefreshTokenResponse;
+  /** Queries a list of available reports */
+  reports: ReportsResponse;
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
   requisitions: RequisitionsResponse;
@@ -1014,6 +1029,14 @@ export type FullQueryNamesArgs = {
 export type FullQueryPrintReportArgs = {
   dataId: Scalars['String'];
   reportId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryReportsArgs = {
+  filter?: InputMaybe<ReportFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReportSortInput>>;
   storeId: Scalars['String'];
 };
 
@@ -1350,6 +1373,15 @@ export type InsertStocktakeInput = {
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']>;
 };
 
+export type InsertStocktakeLineError = {
+  __typename: 'InsertStocktakeLineError';
+  error: InsertStocktakeLineErrorInterface;
+};
+
+export type InsertStocktakeLineErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type InsertStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
@@ -1366,7 +1398,7 @@ export type InsertStocktakeLineInput = {
   stocktakeId: Scalars['String'];
 };
 
-export type InsertStocktakeLineResponse = StocktakeLineNode;
+export type InsertStocktakeLineResponse = InsertStocktakeLineError | StocktakeLineNode;
 
 export type InsertStocktakeLineResponseWithId = {
   __typename: 'InsertStocktakeLineResponseWithId';
@@ -1469,9 +1501,10 @@ export type InvoiceLineNode = {
   note?: Maybe<Scalars['String']>;
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
+  pricing: PricingNode;
   sellPricePerPack: Scalars['Float'];
   stockLine?: Maybe<StockLineNode>;
-  textPercentage?: Maybe<Scalars['Float']>;
+  taxPercentage?: Maybe<Scalars['Float']>;
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
   type: InvoiceLineNodeType;
@@ -1502,7 +1535,7 @@ export type InvoiceNode = {
   otherPartyName: Scalars['String'];
   otherPartyStore?: Maybe<StoreNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']>;
-  pricing: InvoicePricingNode;
+  pricing: PricingNode;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -1512,6 +1545,12 @@ export type InvoiceNode = {
   status: InvoiceNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
+  /**
+   * User that last edited invoice, if user is not found in system default unknow user is returned
+   * Null is returned for transfers, where inbound has not been edited yet
+   * Null is also returned for system created invoices like inventory adjustments
+   */
+  user?: Maybe<UserNode>;
   verifiedDatetime?: Maybe<Scalars['DateTime']>;
 };
 
@@ -1571,16 +1610,6 @@ export enum InvoiceNodeType {
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT'
 }
-
-export type InvoicePricingNode = {
-  __typename: 'InvoicePricingNode';
-  serviceTotalAfterTax: Scalars['Float'];
-  serviceTotalBeforeTax: Scalars['Float'];
-  stockTotalAfterTax: Scalars['Float'];
-  stockTotalBeforeTax: Scalars['Float'];
-  totalAfterTax: Scalars['Float'];
-  totalBeforeTax: Scalars['Float'];
-};
 
 export type InvoiceResponse = InvoiceNode | NodeError;
 
@@ -1934,6 +1963,17 @@ export type PaginationInput = {
   offset?: InputMaybe<Scalars['Int']>;
 };
 
+export type PricingNode = {
+  __typename: 'PricingNode';
+  serviceTotalAfterTax: Scalars['Float'];
+  serviceTotalBeforeTax: Scalars['Float'];
+  stockTotalAfterTax: Scalars['Float'];
+  stockTotalBeforeTax: Scalars['Float'];
+  taxPercentage?: Maybe<Scalars['Float']>;
+  totalAfterTax: Scalars['Float'];
+  totalBeforeTax: Scalars['Float'];
+};
+
 export type PrintReportError = {
   __typename: 'PrintReportError';
   error: PrintReportErrorInterface;
@@ -1992,6 +2032,50 @@ export type RegisteredUser = {
   id: Scalars['String'];
   username: Scalars['String'];
 };
+
+export enum ReportCategory {
+  InboundShipment = 'INBOUND_SHIPMENT',
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Requisition = 'REQUISITION',
+  Stocktake = 'STOCKTAKE'
+}
+
+export type ReportConnector = {
+  __typename: 'ReportConnector';
+  nodes: Array<ReportNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ReportFilterInput = {
+  category?: InputMaybe<EqualFilterReportCategoryInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<SimpleStringFilterInput>;
+};
+
+export type ReportNode = {
+  __typename: 'ReportNode';
+  category: ReportCategory;
+  id: Scalars['String'];
+  /** Human readable name of the report */
+  name: Scalars['String'];
+};
+
+export enum ReportSortFieldInput {
+  Category = 'category',
+  Name = 'name'
+}
+
+export type ReportSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ReportSortFieldInput;
+};
+
+export type ReportsResponse = ReportConnector;
 
 export type RequisitionConnector = {
   __typename: 'RequisitionConnector';
@@ -2093,6 +2177,11 @@ export type RequisitionNode = {
   status: RequisitionNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
   type: RequisitionNodeType;
+  /**
+   * User that last edited requisition, if user is not found in system default unknow user is returned
+   * Null is returned for transfers, where response requisition has not been edited yet
+   */
+  user?: Maybe<UserNode>;
 };
 
 
@@ -2263,6 +2352,8 @@ export type StocktakeNode = {
   stocktakeDate?: Maybe<Scalars['NaiveDate']>;
   stocktakeNumber: Scalars['Int'];
   storeId: Scalars['String'];
+  /** User that created stocktake, if user is not found in system default unknow user is returned */
+  user: UserNode;
 };
 
 export enum StocktakeNodeStatus {
@@ -2720,6 +2811,15 @@ export type UpdateStocktakeInput = {
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']>;
 };
 
+export type UpdateStocktakeLineError = {
+  __typename: 'UpdateStocktakeLineError';
+  error: UpdateStocktakeLineErrorInterface;
+};
+
+export type UpdateStocktakeLineErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type UpdateStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
@@ -2734,7 +2834,7 @@ export type UpdateStocktakeLineInput = {
   snapshotNumberOfPacks?: InputMaybe<Scalars['Int']>;
 };
 
-export type UpdateStocktakeLineResponse = StocktakeLineNode;
+export type UpdateStocktakeLineResponse = StocktakeLineNode | UpdateStocktakeLineError;
 
 export type UpdateStocktakeLineResponseWithId = {
   __typename: 'UpdateStocktakeLineResponseWithId';
@@ -2765,17 +2865,18 @@ export type UseSuggestedQuantityInput = {
 
 export type UseSuggestedQuantityResponse = RequisitionLineConnector | UseSuggestedQuantityError;
 
-export type User = {
-  __typename: 'User';
+export type UserNameDoesNotExist = AuthTokenErrorInterface & {
+  __typename: 'UserNameDoesNotExist';
+  description: Scalars['String'];
+};
+
+export type UserNode = {
+  __typename: 'UserNode';
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
   /** Internal user id */
   userId: Scalars['String'];
-};
-
-export type UserNameDoesNotExist = AuthTokenErrorInterface & {
-  __typename: 'UserNameDoesNotExist';
-  description: Scalars['String'];
+  username: Scalars['String'];
 };
 
 export type UserRegisterError = {
@@ -2795,4 +2896,4 @@ export type UserRegisterInput = {
 
 export type UserRegisterResponse = RegisteredUser | UserRegisterError;
 
-export type UserResponse = User;
+export type UserResponse = UserNode;

@@ -116,7 +116,7 @@ mutation upsertStocktakeLines(
     }
   ) {
     __typename
-    ... on BatchStocktakeResponses {
+    ... on BatchStocktakeResponse {
       __typename
       deleteStocktakeLines {
         id
@@ -134,7 +134,7 @@ mutation upsertStocktakeLines(
 mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
   batchStocktake(storeId: $storeId, input: { deleteStocktakes: $ids }) {
     __typename
-    ... on BatchStocktakeResponses {
+    ... on BatchStocktakeResponse {
       deleteStocktakes {
         __typename
         id
