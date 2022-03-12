@@ -107,6 +107,11 @@ export const useCurrency = () => {
   };
 };
 
+export const useFormatCurrency = () => {
+  const { c } = useCurrency();
+  return (value: currency.Any) => c(value).format();
+};
+
 export const useCurrencyFormat = (value: currency.Any) => {
   const { c } = useCurrency();
   return c(value).format();

@@ -20,6 +20,7 @@ import {
   OutboundFragment,
   InsertOutboundShipmentMutationVariables,
   Sdk,
+  OutboundLineFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -235,9 +236,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   update: async (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
-  ): Promise<
-    RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
-  > => {
+  ) => {
     const result = await sdk.upsertOutboundShipment({
       storeId,
       input: {
@@ -339,6 +338,35 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       storeId,
       deleteOutboundShipmentLines: lines.map(outboundParsers.toDeleteLine),
     });
+  },
+  updateTax: async ({
+    lines,
+    tax,
+  }: {
+    lines: OutboundLineFragment[];
+    tax: number;
+  }) => {
+    const input = {
+      updateOutboundShipmentLines: lines.map(line => ({
+        id: line.id,
+        invoiceId: line.invoiceId,
+        totalAfterTax: line.totalBeforeTax * (1 + tax / 100),
+        tax: { percentage: tax },
+      })),
+    };
+
+    const result = await sdk.upsertOutboundShipment({
+      storeId,
+      input,
+    });
+
+    const { batchOutboundShipment } = result;
+
+    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+      return batchOutboundShipment;
+    }
+
+    throw new Error('Unable to update invoice');
   },
   dashboard: {
     shipmentCount: async (): Promise<{
