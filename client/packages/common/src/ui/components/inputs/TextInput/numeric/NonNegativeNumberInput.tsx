@@ -1,7 +1,6 @@
 import React from 'react';
-import { NumericTextInput } from '@common/components';
 import { NumUtils } from '@common/utils';
-import { NumericTextInputProps } from './NumericTextInput';
+import { NumericTextInputProps, NumericTextInput } from './NumericTextInput';
 
 interface NonNegativeNumberProps
   extends Omit<NumericTextInputProps, 'onChange'> {
