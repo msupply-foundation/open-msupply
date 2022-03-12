@@ -1,6 +1,13 @@
 import format from 'date-fns/format';
 import isValid from 'date-fns/isValid';
 
+// tax as a number like 0.12 for 12%
+// TODO: Do something better than naively rounding to 2 decimal places
+export const formatTax = (tax: number, withParens = true) =>
+  `${withParens ? '(' : ''}${((tax ?? 0) * 100).toFixed(2)}%${
+    withParens ? ')' : ''
+  }`;
+
 export const formatDate = (date: Date): string =>
   `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 

@@ -349,3 +349,21 @@ export const useDeleteSelectedLines = (): {
 
   return { onDelete };
 };
+
+export const useUpdateOutboundTax = () => {
+  const queryClient = useQueryClient();
+  const api = useOutboundApi();
+  const { data } = useOutboundLines();
+  const { mutate, ...mutateState } = useMutation(api.updateTax, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(api.keys.base());
+    },
+  });
+
+  const updateTax = useCallback(
+    (tax: number) => data && mutate({ tax, lines: data }),
+    [data, mutate]
+  );
+
+  return { ...mutateState, mutate: updateTax };
+};

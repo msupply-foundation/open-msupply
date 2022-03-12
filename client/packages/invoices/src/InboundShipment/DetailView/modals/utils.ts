@@ -27,6 +27,7 @@ const createDraftInboundLine = ({
     numberOfPacks: 0,
     packSize: 0,
     isCreated: seed ? false : true,
+    expiryDate: undefined,
     type,
     item,
     ...seed,
