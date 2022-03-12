@@ -4,9 +4,11 @@ import { styled } from '@mui/material/styles';
 import { Story } from '@storybook/react';
 import { BasicTextInput } from './BasicTextInput';
 import { InputWithLabelRow } from './InputWithLabelRow';
-import { NumericTextInput } from './NumericTextInput';
-import { NonNegativeNumberInput } from './NonNegativeNumberInput';
-import { PositiveNumberInput } from './PositiveNumberInput';
+import {
+  PositiveNumberInput,
+  NumericTextInput,
+  NonNegativeNumberInput,
+} from './numeric';
 
 export default {
   title: 'Inputs/TextInputs',
