@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { StandardTextFieldProps } from '@mui/material';
 import { BasicTextInput } from '.';
 
-interface NumericTextInputProps extends StandardTextFieldProps {
+export interface NumericTextInputProps extends StandardTextFieldProps {
   width?: number;
 }
 
