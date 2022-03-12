@@ -21,13 +21,15 @@ export const TaxEdit = ({ tax }: { tax: number }) => {
         onClick={modalController.toggleOn}
       />
 
-      <NonNegativeNumberInputModal
-        isOpen={modalController.isOn}
-        onClose={modalController.toggleOff}
-        onChange={newValue => mutate(newValue)}
-        initialValue={tax}
-        title={t('heading.edit-tax-rate')}
-      />
+      {modalController.isOn && (
+        <NonNegativeNumberInputModal
+          isOpen={modalController.isOn}
+          onClose={modalController.toggleOff}
+          onChange={newValue => mutate(newValue)}
+          initialValue={tax}
+          title={t('heading.edit-tax-rate')}
+        />
+      )}
     </>
   );
 };
