@@ -5,6 +5,8 @@ import {
   DefaultAutocompleteItemOption,
   AutocompleteOptionRenderer,
   Typography,
+  HomeIcon,
+  Box,
 } from '@openmsupply-client/common';
 import { useSuppliers, NameRowFragment } from '../../api';
 import { NameSearchProps } from '../../utils';
@@ -18,11 +20,15 @@ const optionRenderer: AutocompleteOptionRenderer<NameRowFragment> = (
       sx={{
         marginInlineEnd: '10px',
         fontWeight: 'bold',
-        width: 75,
-        color: item.store ? 'red' : 'inherit',
+        width: 110,
       }}
     >
-      {item.code}
+      <Box display="flex" alignItems="flex-end" gap={1}>
+        <Box flex={0} style={{ height: 24, width: 20 }}>
+          {!!item.store && <HomeIcon fontSize="small" />}
+        </Box>
+        <Box flex={1}>{item.code}</Box>
+      </Box>
     </Typography>
     <Typography>{item.name}</Typography>
   </DefaultAutocompleteItemOption>
