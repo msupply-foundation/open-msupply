@@ -31,6 +31,7 @@ export const createPlaceholderRow = (
   invoiceId,
   totalAfterTax: 0,
   totalBeforeTax: 0,
+  expiryDate: undefined,
   type: InvoiceLineNodeType.UnallocatedStock,
   item: { id: itemId, code: '', name: '', __typename: 'ItemNode' },
 });
