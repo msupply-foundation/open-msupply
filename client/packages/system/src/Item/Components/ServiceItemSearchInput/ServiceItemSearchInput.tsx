@@ -34,7 +34,7 @@ export const optionRenderer = (
   item: ServiceItemRowFragment
 ) => (
   <ItemOption {...props} key={item.code}>
-    <span style={{ whiteSpace: 'nowrap' }}>{item.name}</span>
+    <span style={{ whiteSpace: 'nowrap', width: 500 }}>{item.name}</span>
   </ItemOption>
 );
 
@@ -69,7 +69,6 @@ export const ServiceItemSearchInput: FC<ItemSearchInputProps> = ({
       getOptionLabel={option => `${option.name}`}
       renderOption={optionRenderer}
       width={`${width}px`}
-      // width="200px"
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
     />
   );
