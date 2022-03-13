@@ -1,5 +1,5 @@
 import React from 'react';
-import { styled } from '@mui/material';
+import { styled, Typography } from '@mui/material';
 import { AutocompleteOptionRenderer } from './types';
 
 export const DefaultAutocompleteItemOption = styled('li')(({ theme }) => ({
@@ -26,6 +26,6 @@ export const getDefaultOptionRenderer: <T>(
 ) => AutocompleteOptionRenderer<T> = key => (props, item) =>
   (
     <DefaultAutocompleteItemOption {...props}>
-      <span>{String(item?.[key])}</span>
+      <Typography>{String(item?.[key])}</Typography>
     </DefaultAutocompleteItemOption>
   );

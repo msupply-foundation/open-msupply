@@ -11,9 +11,8 @@ import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 import { BasicTextInput } from '../TextInput';
 import { defaultOptionMapper, getDefaultOptionRenderer } from './utils';
 
-export type BaseAutocompleteListProps<T> = {
+export type AutocompleteListProps<T> = {
   options: T[];
-
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
   loading?: boolean;
   loadingText?: React.ReactNode;
@@ -21,19 +20,10 @@ export type BaseAutocompleteListProps<T> = {
   onChange?: AutocompleteOnChange<T>;
   width?: number;
   height?: number;
-
+  renderOption?: AutocompleteOptionRenderer<T>;
+  optionKey?: keyof T;
   renderInput?: (params: AutocompleteRenderInputParams) => React.ReactNode;
 };
-
-export type AutocompleteListPropsWithOptionsRenderer<T> =
-  | {
-      renderOption: AutocompleteOptionRenderer<T>;
-      optionKey?: never;
-    }
-  | { renderOption?: never; optionKey: keyof T };
-
-export type AutocompleteListProps<T> = BaseAutocompleteListProps<T> &
-  AutocompleteListPropsWithOptionsRenderer<T>;
 
 export const AutocompleteList = <T,>({
   options,
