@@ -19,7 +19,7 @@ const optionRenderer: AutocompleteOptionRenderer<NameRowFragment> = (
         marginInlineEnd: '10px',
         fontWeight: 'bold',
         width: 75,
-        color: item.store ? 'red' : undefined,
+        color: item.store ? 'red' : 'inherit',
       }}
     >
       {item.code}
