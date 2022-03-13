@@ -8,8 +8,8 @@ export interface DraftInboundLine extends InboundLineFragment {
 }
 
 export interface DraftOutboundLine extends OutboundLineFragment {
-  isCreated: boolean;
-  isUpdated: boolean;
+  isCreated?: boolean;
+  isUpdated?: boolean;
   isDeleted?: boolean;
 }
 

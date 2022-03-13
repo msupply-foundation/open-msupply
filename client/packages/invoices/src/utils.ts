@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
-import { InboundItem } from './types';
+import { DraftOutboundLine, InboundItem } from './types';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -144,4 +144,30 @@ export const isA = {
     line.type === InvoiceLineNodeType.Service,
   placeholderLine: (line: { type: InvoiceLineNodeType }) =>
     line.type === InvoiceLineNodeType.UnallocatedStock,
+};
+
+export const get = {
+  stockLineSubtotal: (line: DraftOutboundLine) =>
+    line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
+  stockLineTotal: ({
+    numberOfPacks,
+    taxPercentage,
+    sellPricePerPack,
+  }: DraftOutboundLine) => {
+    const subtotal = numberOfPacks * sellPricePerPack;
+
+    if (taxPercentage == null) return subtotal;
+    if (taxPercentage === 0) return subtotal;
+
+    return subtotal * (1 + taxPercentage / 100);
+  },
+  serviceChargeTotal: ({
+    totalBeforeTax,
+    taxPercentage,
+  }: DraftOutboundLine) => {
+    if (taxPercentage == null) return totalBeforeTax;
+    if (taxPercentage === 0) return totalBeforeTax;
+
+    return totalBeforeTax * (1 + taxPercentage / 100);
+  },
 };

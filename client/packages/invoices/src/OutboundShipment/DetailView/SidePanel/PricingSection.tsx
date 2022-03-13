@@ -16,12 +16,19 @@ import {
   InfoIcon,
   MenuDotsIcon,
 } from '@openmsupply-client/common';
-import { useOutboundFields } from '../../api';
+import {
+  useOutboundFields,
+  useUpdateOutboundTax,
+  useOutboundServiceLines,
+  useOutboundLines,
+  useIsOutboundDisabled,
+} from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
 import { TaxEdit } from '../modals';
 
 type PricingGroupProps = {
   pricing: PricingNode;
+  isDisabled?: boolean;
 };
 
 const InfoTooltip = ({ title }: { title: string }) => (
@@ -32,11 +39,11 @@ const InfoTooltip = ({ title }: { title: string }) => (
   </Tooltip>
 );
 
-const ServiceCharges = ({ pricing }: PricingGroupProps) => {
+const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   const serviceLineModal = useToggle(false);
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
-
+  const { data: serviceLines } = useOutboundServiceLines();
   const { serviceTotalBeforeTax, serviceTotalAfterTax } = pricing;
 
   const tax = NumUtils.effectiveTax(
@@ -47,6 +54,8 @@ const ServiceCharges = ({ pricing }: PricingGroupProps) => {
     serviceTotalBeforeTax,
     serviceTotalAfterTax
   );
+
+  const { updateServiceLineTax } = useUpdateOutboundTax();
 
   return (
     <>
@@ -63,6 +72,7 @@ const ServiceCharges = ({ pricing }: PricingGroupProps) => {
         </PanelLabel>
         <PanelField>
           <IconButton
+            disabled={isDisabled}
             icon={<MenuDotsIcon style={{ fontSize: 16 }} />}
             label={t('messages.edit-service-charges')}
             onClick={serviceLineModal.toggleOn}
@@ -77,7 +87,11 @@ const ServiceCharges = ({ pricing }: PricingGroupProps) => {
       <PanelRow>
         <PanelLabel>{`${t('heading.tax')} ${formatTax(tax)}`}</PanelLabel>
         <PanelField>
-          <TaxEdit tax={tax} />
+          <TaxEdit
+            disabled={!serviceLines?.length || isDisabled}
+            tax={tax}
+            update={updateServiceLineTax}
+          />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>
@@ -89,14 +103,18 @@ const ServiceCharges = ({ pricing }: PricingGroupProps) => {
   );
 };
 
-const ItemPrices = ({ pricing }: PricingGroupProps) => {
+const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
+
+  const { data: outboundLines } = useOutboundLines();
 
   const { stockTotalBeforeTax, stockTotalAfterTax } = pricing;
 
   const tax = NumUtils.effectiveTax(stockTotalBeforeTax, stockTotalAfterTax);
   const totalTax = NumUtils.taxAmount(stockTotalBeforeTax, stockTotalAfterTax);
+
+  const { updateStockLineTax } = useUpdateOutboundTax();
 
   return (
     <>
@@ -111,7 +129,11 @@ const ItemPrices = ({ pricing }: PricingGroupProps) => {
       <PanelRow>
         <PanelLabel>{`${t('heading.tax')} ${formatTax(tax)}`}</PanelLabel>
         <PanelField>
-          <TaxEdit tax={tax} />
+          <TaxEdit
+            disabled={!outboundLines?.length || isDisabled}
+            tax={tax}
+            update={updateStockLineTax}
+          />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>
@@ -148,14 +170,15 @@ export const Totals = ({ pricing }: PricingGroupProps) => {
 
 export const PricingSectionComponent = () => {
   const t = useTranslation('distribution');
+  const isDisabled = useIsOutboundDisabled();
 
   const { pricing } = useOutboundFields('pricing');
 
   return (
     <DetailPanelSection title={t('heading.charges')}>
       <Grid container gap={0.5}>
-        <ServiceCharges pricing={pricing} />
-        <ItemPrices pricing={pricing} />
+        <ServiceCharges pricing={pricing} isDisabled={isDisabled} />
+        <ItemPrices pricing={pricing} isDisabled={isDisabled} />
         <Totals pricing={pricing} />
       </Grid>
     </DetailPanelSection>

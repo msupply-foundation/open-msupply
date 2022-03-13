@@ -84,6 +84,7 @@
   "label.counted-num-of-packs": "Counted # of Packs",
   "label.customer": "Customer",
   "label.customer-soh": "Their SOH",
+  "label.tax": "Tax",
   "label.date": "Date",
   "label.delivered": "Delivered",
   "label.details": "Details",
