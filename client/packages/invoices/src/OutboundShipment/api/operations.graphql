@@ -29,6 +29,7 @@ fragment OutboundLine on InvoiceLineNode {
   note
   totalBeforeTax
   totalAfterTax
+  taxPercentage
   note
 
   item {

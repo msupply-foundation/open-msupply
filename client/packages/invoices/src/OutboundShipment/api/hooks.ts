@@ -1,6 +1,7 @@
 import { isOutboundDisabled } from './../../utils';
 import { useMemo, useCallback } from 'react';
 import {
+  InvoiceLineNodeType,
   RouteBuilder,
   useQueryParams,
   useNavigate,
@@ -353,17 +354,32 @@ export const useDeleteSelectedLines = (): {
 export const useUpdateOutboundTax = () => {
   const queryClient = useQueryClient();
   const api = useOutboundApi();
-  const { data } = useOutboundLines();
-  const { mutate, ...mutateState } = useMutation(api.updateTax, {
+  const { lines } = useOutboundFields('lines');
+  const { mutateAsync, ...mutateState } = useMutation(api.updateTax, {
     onSuccess: () => {
       queryClient.invalidateQueries(api.keys.base());
     },
   });
 
-  const updateTax = useCallback(
-    (tax: number) => data && mutate({ tax, lines: data }),
-    [data, mutate]
+  const updateServiceLineTax = useCallback(
+    (tax: number) =>
+      mutateAsync({
+        tax,
+        lines: lines.nodes ?? [],
+        type: InvoiceLineNodeType.Service,
+      }),
+    [lines.nodes, mutateAsync]
   );
 
-  return { ...mutateState, mutate: updateTax };
+  const updateStockLineTax = useCallback(
+    (tax: number) =>
+      mutateAsync({
+        tax,
+        lines: lines.nodes ?? [],
+        type: InvoiceLineNodeType.StockOut,
+      }),
+    [lines.nodes, mutateAsync]
+  );
+
+  return { ...mutateState, updateStockLineTax, updateServiceLineTax };
 };
