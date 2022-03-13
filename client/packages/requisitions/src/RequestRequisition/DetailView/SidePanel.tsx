@@ -13,8 +13,13 @@ import {
   PanelField,
   ColorSelectButton,
   useBufferState,
+  Tooltip,
+  Link,
+  useFormatDate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useIsRequestDisabled, useRequest, useRequestFields } from '../api';
+import { AppRoute } from '@openmsupply-client/config';
 
 const AdditionalInfoSection: FC = () => {
   const isDisabled = useIsRequestDisabled();
@@ -49,11 +54,64 @@ const AdditionalInfoSection: FC = () => {
   );
 };
 
+const RelatedDocumentsRow: FC<{
+  label: string;
+  to: string;
+  value?: number | null;
+}> = ({ label, to, value }) => (
+  <PanelRow>
+    <PanelLabel>{label}</PanelLabel>
+    <PanelField>
+      <Link to={to}>{`#${value}`}</Link>
+    </PanelField>
+  </PanelRow>
+);
+
 const RelatedDocumentsSection: FC = () => {
   const t = useTranslation('replenishment');
+  const d = useFormatDate();
+  const { shipments } = useRequestFields('shipments');
+
+  const getTooltip = (createdDatetime: string, username?: string) => {
+    let tooltip = t('messages.inbound-shipment-created-on', {
+      date: d(new Date(createdDatetime)),
+    });
+
+    if (username && username !== 'unknown') {
+      tooltip += t('messages.by-user', { username });
+    }
+
+    return tooltip;
+  };
+
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid container gap={0.5} key="additional-info" />
+      <Grid item direction="column" container gap={0.5}>
+        {!shipments?.totalCount && (
+          <PanelLabel>{t('messages.no-shipments-yet')}</PanelLabel>
+        )}
+        {shipments?.nodes.map(shipment => (
+          <Tooltip
+            key={shipment.id}
+            title={getTooltip(
+              shipment.createdDatetime,
+              shipment.user?.username
+            )}
+          >
+            <Grid item>
+              <RelatedDocumentsRow
+                key={shipment.id}
+                label={t('label.shipment')}
+                value={shipment?.invoiceNumber}
+                to={RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InboundShipment)
+                  .addPart(String(shipment?.invoiceNumber))
+                  .build()}
+              />
+            </Grid>
+          </Tooltip>
+        ))}
+      </Grid>
     </DetailPanelSection>
   );
 };

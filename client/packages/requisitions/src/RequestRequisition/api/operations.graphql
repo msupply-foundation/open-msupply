@@ -132,14 +132,31 @@ fragment Request on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+
   lines {
     __typename
-
     totalCount
     nodes {
       ...RequestLine
     }
   }
+
+  shipments {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      id
+      invoiceNumber
+      createdDatetime
+
+      user {
+        __typename
+        username
+      }
+    }
+  }
+
   otherParty(storeId: $storeId) {
     id
     code
