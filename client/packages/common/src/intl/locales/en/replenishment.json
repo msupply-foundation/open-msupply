@@ -8,6 +8,8 @@
   "heading.related-documents": "Related documents",
   "heading.stock-distribution": "Stock Distribution",
   "heading.target-quantity": "Target Quantity",
+  "heading.charges": "Charges",
+  "heading.stock-charges": "Stock charges",
   "label.add-batch": "Add batch",
   "label.draft": "Draft",
   "label.finalised": "Finalised",

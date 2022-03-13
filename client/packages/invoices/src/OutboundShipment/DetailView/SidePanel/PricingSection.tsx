@@ -33,7 +33,7 @@ type PricingGroupProps = {
 
 const InfoTooltip = ({ title }: { title: string }) => (
   <Tooltip title={title}>
-    <div style={{ transform: 'scale(0.7)' }}>
+    <div style={{ transform: 'scale(0.7)', cursor: 'help' }}>
       <InfoIcon fontSize="small" />
     </div>
   </Tooltip>
@@ -120,7 +120,9 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
     <>
       <PanelRow>
         <InfoTooltip title={t('messages.stock-charges-description')} />
-        <PanelLabel fontWeight="bold">{t('heading.stock-charges')}</PanelLabel>
+        <PanelLabel fontWeight="bold">
+          {t('heading.item-sell-price')}
+        </PanelLabel>
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.sub-total')}</PanelLabel>
@@ -149,19 +151,12 @@ export const Totals = ({ pricing }: PricingGroupProps) => {
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
 
-  const { totalBeforeTax, totalAfterTax } = pricing;
+  const { totalAfterTax } = pricing;
 
   return (
     <>
       <PanelRow style={{ marginTop: 12 }}>
-        <PanelLabel fontWeight="bold">{t('heading.totals')}</PanelLabel>
-      </PanelRow>
-      <PanelRow>
-        <PanelLabel>{t('heading.sub-total')}</PanelLabel>
-        <PanelField>{c(totalBeforeTax)}</PanelField>
-      </PanelRow>
-      <PanelRow>
-        <PanelLabel>{t('heading.total')}</PanelLabel>
+        <PanelLabel fontWeight="bold">{t('heading.grand-total')}</PanelLabel>
         <PanelField>{c(totalAfterTax)}</PanelField>
       </PanelRow>
     </>
@@ -175,7 +170,7 @@ export const PricingSectionComponent = () => {
   const { pricing } = useOutboundFields('pricing');
 
   return (
-    <DetailPanelSection title={t('heading.charges')}>
+    <DetailPanelSection title={t('heading.invoice-details')}>
       <Grid container gap={0.5}>
         <ServiceCharges pricing={pricing} isDisabled={isDisabled} />
         <ItemPrices pricing={pricing} isDisabled={isDisabled} />
