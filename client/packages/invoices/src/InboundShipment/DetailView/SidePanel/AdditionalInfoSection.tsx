@@ -9,11 +9,16 @@ import {
   useTranslation,
   ColorSelectButton,
   useBufferState,
+  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import { useInboundFields, useIsInboundDisabled } from '../../api';
 
 export const AdditionalInfoSectionComponent = () => {
-  const { comment, colour, update } = useInboundFields(['comment', 'colour']);
+  const { user, comment, colour, update } = useInboundFields([
+    'comment',
+    'colour',
+    'user',
+  ]);
   const isDisabled = useIsInboundDisabled();
   const t = useTranslation(['common', 'replenishment']);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
@@ -23,6 +28,8 @@ export const AdditionalInfoSectionComponent = () => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
+          <PanelField>{user?.username}</PanelField>
+          {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
 
         <PanelRow>
