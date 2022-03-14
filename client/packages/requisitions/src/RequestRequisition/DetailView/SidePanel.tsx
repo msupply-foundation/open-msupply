@@ -78,7 +78,7 @@ const RelatedDocumentsSection: FC = () => {
     });
 
     if (username && username !== 'unknown') {
-      tooltip += t('messages.by-user', { username });
+      tooltip += ` ${t('messages.by-user', { username })}`;
     }
 
     return tooltip;
