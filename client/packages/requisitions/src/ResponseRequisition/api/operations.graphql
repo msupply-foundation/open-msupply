@@ -1,15 +1,3 @@
-fragment ItemWithStats on ItemNode {
-  id
-  name
-  code
-  unitName
-  stats(storeId: $storeId) {
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-  }
-}
-
 mutation updateResponse(
   $storeId: String!
   $input: UpdateResponseRequisitionInput!
@@ -65,9 +53,28 @@ fragment Response on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+
+  shipments {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      id
+      invoiceNumber
+      createdDatetime
+
+      user {
+        __typename
+        username
+      }
+    }
+  }
+
   linesRemainingToSupply {
+    __typename
     totalCount
   }
+
   lines {
     __typename
     ... on RequisitionLineConnector {
@@ -77,7 +84,9 @@ fragment Response on RequisitionNode {
       }
     }
   }
+
   otherParty(storeId: $storeId) {
+    __typename
     id
     code
     isCustomer
