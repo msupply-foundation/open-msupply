@@ -26,6 +26,7 @@ export const TaxEdit = ({ disabled = false, tax, update }: TaxEditProps) => {
         onClick={modalController.toggleOn}
       />
 
+      {/* Unmount when closing to reset state */}
       {modalController.isOn && (
         <NonNegativeNumberInputModal
           max={100}
