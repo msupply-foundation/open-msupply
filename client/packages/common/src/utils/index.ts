@@ -6,7 +6,7 @@ export * from './quantities';
 export * from './formatters';
 export * from './testing';
 export * from './debounce';
-export * from './dates/dateFunctions';
+export * from './dates';
 export * from './arrays';
 export * from './regex';
 

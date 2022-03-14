@@ -9,7 +9,7 @@ import {
 } from '../../columns/types';
 import { useFormatDate, useFormatNumber } from '@common/intl';
 import { BasicCell, BasicHeader } from '../../components';
-import { getDateOrNull } from '../../../../../utils';
+import { DateUtils } from '@common/utils';
 import { SortBy } from '@common/hooks';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
 
@@ -82,7 +82,7 @@ const getDefaultFormatter = <T extends RecordWithId>(
     case ColumnFormat.Date: {
       return (date: unknown) => {
         const formatDate = useFormatDate();
-        const maybeDate = getDateOrNull(date as string);
+        const maybeDate = DateUtils.getDateOrNull(date as string);
         return maybeDate ? formatDate(maybeDate) : '';
       };
     }

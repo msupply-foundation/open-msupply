@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   useTranslation,
   InvoiceLineNodeType,
-  isExpired,
+  DateUtils,
   ArrayUtils,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../../types';
@@ -36,7 +36,9 @@ const createPackSizeOption = (line: DraftOutboundLine) => ({
     ? true
     : (line?.stockLine?.availableNumberOfPacks ?? 0) > 0,
   isPlaceholder: isPlaceholder(line),
-  isExpired: line.expiryDate ? isExpired(new Date(line.expiryDate)) : false,
+  isExpired: line.expiryDate
+    ? DateUtils.isExpired(new Date(line.expiryDate))
+    : false,
   isOnHold: line.stockLine?.onHold,
   value: line.packSize,
   label: String(line.packSize),
