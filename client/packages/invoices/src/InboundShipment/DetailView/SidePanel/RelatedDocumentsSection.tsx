@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { memo } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -14,62 +14,45 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { useInboundFields } from '../../api';
 
-const RelatedDocumentsRow: FC<{
-  label: string;
-  to: string;
-  value?: number | null;
-}> = ({ label, to, value }) => (
-  <PanelRow>
-    <PanelLabel>{label}</PanelLabel>
-    <PanelField>
-      <Link to={to}>{`#${value}`}</Link>
-    </PanelField>
-  </PanelRow>
-);
-
-export const RelatedDocumentsSection: FC = () => {
+export const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation('replenishment');
   const d = useFormatDate();
   const { requisition } = useInboundFields('requisition');
 
-  const getTooltip = (createdDatetime: string, username?: string) => {
-    let tooltip = t('messages.internal-order-created-on', {
-      date: d(new Date(createdDatetime)),
-    });
+  if (!requisition) {
+    return <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>;
+  }
 
-    if (username && username !== 'unknown') {
-      tooltip += ` ${t('messages.by-user', { username })}`;
-    }
+  const { createdDatetime, user, requisitionNumber } = requisition;
 
-    return tooltip;
-  };
+  let tooltip = t('messages.internal-order-created-on', {
+    date: d(new Date(createdDatetime)),
+  });
+  if (user?.username && user?.username !== 'unknown') {
+    tooltip += ` ${t('messages.by-user', { username: user.username })}`;
+  }
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
       <Grid item direction="column" gap={0.5}>
-        {requisition ? (
-          <Tooltip
-            key={requisition?.id}
-            title={getTooltip(
-              requisition.createdDatetime,
-              requisition.user?.username
-            )}
-          >
-            <Grid item>
-              <RelatedDocumentsRow
-                label={t('label.requisition')}
-                value={requisition.requisitionNumber}
-                to={RouteBuilder.create(AppRoute.Replenishment)
-                  .addPart(AppRoute.InternalOrder)
-                  .addPart(String(requisition.requisitionNumber))
-                  .build()}
-              />
-            </Grid>
-          </Tooltip>
-        ) : (
-          <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
-        )}
+        <Tooltip title={tooltip}>
+          <Grid item>
+            <PanelRow>
+              <PanelLabel>{t('label.requisition')}</PanelLabel>
+              <PanelField>
+                <Link
+                  to={RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InternalOrder)
+                    .addPart(String(requisitionNumber))
+                    .build()}
+                >{`#${requisitionNumber}`}</Link>
+              </PanelField>
+            </PanelRow>
+          </Grid>
+        </Tooltip>
       </Grid>
     </DetailPanelSection>
   );
 };
+
+export const RelatedDocumentsSection = memo(RelatedDocumentsSectionComponent);

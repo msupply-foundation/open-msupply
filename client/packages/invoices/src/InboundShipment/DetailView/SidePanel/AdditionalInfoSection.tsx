@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { memo } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { useInboundFields, useIsInboundDisabled } from '../../api';
 
-export const AdditionalInfoSection: FC = () => {
+export const AdditionalInfoSectionComponent = () => {
   const { comment, colour, update } = useInboundFields(['comment', 'colour']);
   const isDisabled = useIsInboundDisabled();
   const t = useTranslation(['common', 'replenishment']);
@@ -49,3 +49,5 @@ export const AdditionalInfoSection: FC = () => {
     </DetailPanelSection>
   );
 };
+
+export const AdditionalInfoSection = memo(AdditionalInfoSectionComponent);

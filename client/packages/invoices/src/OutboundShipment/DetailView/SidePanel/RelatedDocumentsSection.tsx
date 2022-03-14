@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   PanelRow,
   PanelLabel,
@@ -14,61 +14,42 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { useOutboundFields } from '../../api';
 
-const RelatedDocumentsRow: FC<{
-  label: string;
-  to: string;
-  value?: number | null;
-}> = ({ label, to, value }) => (
-  <PanelRow>
-    <PanelLabel>{label}</PanelLabel>
-    <PanelField>
-      <Link to={to}>{`#${value}`}</Link>
-    </PanelField>
-  </PanelRow>
-);
-
-const RelatedDocumentsSectionComponent: FC = () => {
+const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation('distribution');
   const d = useFormatDate();
   const { requisition } = useOutboundFields('requisition');
 
-  const getTooltip = (createdDatetime: string, username?: string) => {
-    let tooltip = t('messages.customer-requisition-created-on', {
-      date: d(new Date(createdDatetime)),
-    });
+  if (!requisition) {
+    return <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>;
+  }
 
-    if (username && username !== 'unknown') {
-      tooltip += ` ${t('messages.by-user', { username })}`;
-    }
+  const { createdDatetime, user, requisitionNumber } = requisition;
 
-    return tooltip;
-  };
+  let tooltip = t('messages.customer-requisition-created-on', {
+    date: d(new Date(createdDatetime)),
+  });
+  if (user && user?.username !== 'unknown') {
+    tooltip += ` ${t('messages.by-user', { user: user?.username })}`;
+  }
+
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
       <Grid item direction="column" container gap={0.5}>
-        {requisition ? (
-          <Tooltip
-            key={requisition?.id}
-            title={getTooltip(
-              requisition.createdDatetime,
-              requisition.user?.username
-            )}
-          >
-            <Grid item>
-              <RelatedDocumentsRow
-                key={requisition.id}
-                label={t('label.requisition')}
-                value={requisition.requisitionNumber}
-                to={RouteBuilder.create(AppRoute.Distribution)
-                  .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(requisition.requisitionNumber))
-                  .build()}
-              />
-            </Grid>
-          </Tooltip>
-        ) : (
-          <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
-        )}
+        <Tooltip title={tooltip}>
+          <Grid item>
+            <PanelRow>
+              <PanelLabel>{t('label.requisition')}</PanelLabel>
+              <PanelField>
+                <Link
+                  to={RouteBuilder.create(AppRoute.Distribution)
+                    .addPart(AppRoute.CustomerRequisition)
+                    .addPart(String(requisition.requisitionNumber))
+                    .build()}
+                >{`#${requisitionNumber}`}</Link>
+              </PanelField>
+            </PanelRow>
+          </Grid>
+        </Tooltip>
       </Grid>
     </DetailPanelSection>
   );
