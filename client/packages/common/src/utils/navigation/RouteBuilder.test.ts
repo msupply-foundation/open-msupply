@@ -1,5 +1,5 @@
 import { AppRoute } from '@openmsupply-client/config';
-import { RouteBuilder } from './formatters';
+import { RouteBuilder } from './RouteBuilder';
 
 describe('Formatters', () => {
   it('builds a route with an appended wildcard', () => {

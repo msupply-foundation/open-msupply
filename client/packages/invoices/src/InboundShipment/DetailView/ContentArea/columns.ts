@@ -1,5 +1,5 @@
 import {
-  formatExpiryDateString,
+  Formatter,
   getRowExpandColumn,
   GenericColumnKey,
   getNotePopoverColumn,
@@ -129,9 +129,9 @@ export const useInboundShipmentColumns = () => {
                 null
               );
 
-              return formatExpiryDateString(expiryDate);
+              return Formatter.expiryDateString(expiryDate);
             } else {
-              return formatExpiryDateString(rowData.expiryDate);
+              return Formatter.expiryDateString(rowData.expiryDate);
             }
           },
           getSortValue: rowData => {
@@ -143,9 +143,9 @@ export const useInboundShipmentColumns = () => {
                 null
               );
 
-              return formatExpiryDateString(expiryDate);
+              return Formatter.expiryDateString(expiryDate);
             } else {
-              return formatExpiryDateString(rowData.expiryDate);
+              return Formatter.expiryDateString(rowData.expiryDate);
             }
           },
         },
