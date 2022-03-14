@@ -63,8 +63,15 @@ const useMasterListId = () => {
 export const useMasterList = (): UseQueryResult<MasterListFragment> => {
   const masterListId = useMasterListId();
   const api = useMasterListApi();
-  return useQuery(api.keys.detail(masterListId), () =>
-    api.get.byId(masterListId)
+  return useQuery(
+    api.keys.detail(masterListId),
+    () => api.get.byId(masterListId),
+    // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
+    // is inactive. For example, when navigating away from the page and back again, refetch.
+    {
+      refetchOnMount: false,
+      cacheTime: 0,
+    }
   );
 };
 
