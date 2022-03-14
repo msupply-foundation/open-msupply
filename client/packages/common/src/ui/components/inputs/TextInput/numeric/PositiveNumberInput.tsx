@@ -3,13 +3,12 @@ import { NumericTextInput } from '@common/components';
 import { NumUtils } from '@common/utils';
 import { NumericTextInputProps } from './NumericTextInput';
 
-interface NonNegativeNumberProps
-  extends Omit<NumericTextInputProps, 'onChange'> {
+interface PositiveNumberProps extends Omit<NumericTextInputProps, 'onChange'> {
   max?: number;
   onChange: (newValue: number) => void;
 }
 
-// where NonNegative is n >=0
+// where Positive is n >=1
 export const PositiveNumberInput = React.forwardRef(
   (
     {
@@ -19,7 +18,7 @@ export const PositiveNumberInput = React.forwardRef(
       max = 999999999,
       onChange,
       ...rest
-    }: NonNegativeNumberProps,
+    }: PositiveNumberProps,
     ref: ForwardedRef<HTMLDivElement>
   ) => {
     return (
