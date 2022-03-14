@@ -10,6 +10,7 @@ export * from './dates';
 export * from './arrays';
 export * from './regex';
 export * from './pricing';
+export * from './functions';
 
 export type UUID = string;
 
