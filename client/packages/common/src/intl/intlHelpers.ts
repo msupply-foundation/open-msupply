@@ -20,6 +20,10 @@ export interface TypedTFunction<Keys> {
   ): string;
 }
 
+export const isSupportedLang = (lang: string): boolean => {
+  return lang === 'en' || lang === 'fr' || lang === 'ar';
+};
+
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   const { t } = useTranslationNext(ns);
   return (key, options) => (key ? t(key, options) : '');
