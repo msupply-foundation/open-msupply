@@ -21,6 +21,7 @@ export const BasicCell = <T extends RecordWithId>({
       style={{
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+        ...column.styler(rowData),
       }}
     >
       {column.formatter(column.accessor({ rowData, rows }), { t, d })}

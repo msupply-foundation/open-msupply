@@ -84,6 +84,7 @@ export interface Column<T extends RecordWithId> {
   Header: JSXElementConstructor<HeaderProps<T>>;
 
   formatter: ColumnDataFormatter;
+  styler: (rowData: T) => React.CSSProperties;
 
   order?: number;
 

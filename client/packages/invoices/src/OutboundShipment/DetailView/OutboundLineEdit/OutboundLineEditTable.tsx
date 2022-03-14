@@ -1,27 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  NumericTextInput,
   Divider,
   isAlmostExpired,
-  Table,
-  TableBody,
-  TableCell,
-  TableCellProps,
-  TableContainer,
-  TableHead,
-  TableRow,
-  useFormatDate,
-  useTranslation,
-  ReadOnlyInput,
-  InvoiceNodeStatus,
   Box,
   InvoiceLineNodeType,
+  InvoiceNodeStatus,
   useCurrencyFormat,
+  DataTable,
+  useColumns,
+  NonNegativeNumberInput,
+  NonNegativeNumberInputCell,
+  ColumnAlign,
+  useTableStore,
+  useTranslation,
+  Typography,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController } from './hooks';
 import { sortByExpiry } from './utils';
-import { useOutboundFields } from '../../api';
+import { useIsOutboundDisabled, useOutboundFields } from '../../api';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
@@ -29,111 +26,30 @@ export interface OutboundLineEditTableProps {
   rows: DraftOutboundLine[];
 }
 
-type BatchesRowProps = {
-  batch: DraftOutboundLine;
-  disabled?: boolean;
-  onChange?: (key: string, value: number, packSize: number) => void;
-};
-const BatchesRow: React.FC<BatchesRowProps> = ({
-  batch,
-  disabled,
-  onChange,
-}) => {
-  const d = useFormatDate();
-
-  const expiryDate = batch.expiryDate ? d(new Date(batch.expiryDate)) : '';
-  const isDisabled = !!disabled;
-  const sellPricePerPack = useCurrencyFormat(batch.sellPricePerPack);
-  return (
-    <TableRow sx={{ color: isDisabled ? 'gray.main' : 'black' }}>
-      <BasicCell sx={{ width: '88px' }}>
-        <NumericTextInput
-          onChange={event => {
-            const value = Math.max(Number(event.target.value), 0);
-            const newValue = Math.min(
-              value,
-              batch.stockLine?.availableNumberOfPacks ?? 0
-            );
-            onChange?.(batch.id, newValue, batch.packSize);
-          }}
-          value={batch.numberOfPacks}
-          disabled={isDisabled}
-        />
-      </BasicCell>
-      <BasicCell align="right">{batch.packSize}</BasicCell>
-      <BasicCell sx={{ width: '88px' }}>
-        <ReadOnlyInput
-          number
-          value={String(batch.numberOfPacks * batch.packSize)}
-        />
-      </BasicCell>
-      <BasicCell align="right">
-        {batch.stockLine?.availableNumberOfPacks ?? 0}
-      </BasicCell>
-      <BasicCell align="right">
-        {batch.stockLine?.totalNumberOfPacks ?? 0}
-      </BasicCell>
-      <BasicCell>{batch.batch}</BasicCell>
-      <BasicCell
-        sx={{
-          color:
-            batch.expiryDate && isAlmostExpired(new Date(batch.expiryDate))
-              ? 'error.main'
-              : 'inherit',
-        }}
-      >
-        {expiryDate}
-      </BasicCell>
-      <BasicCell>{batch.location?.name}</BasicCell>
-      <BasicCell align="right">{sellPricePerPack}</BasicCell>
-      <BasicCell align="center">{batch.stockLine?.onHold ? '✓' : ''}</BasicCell>
-    </TableRow>
-  );
-};
-
-const HeaderCell: React.FC<TableCellProps> = ({ children }) => (
-  <BasicCell
-    sx={{
-      color: theme => theme.typography.body1.color,
-      fontWeight: 'bold',
-      padding: '8px',
-      position: 'sticky',
-      top: 0,
-      zIndex: 10,
-      backgroundColor: 'white',
-    }}
-  >
-    {children}
-  </BasicCell>
-);
-
-const BasicCell: React.FC<TableCellProps> = ({ sx, ...props }) => (
-  <TableCell
-    {...props}
-    sx={{
-      borderBottomWidth: 0,
-      color: 'inherit',
-      fontSize: '12px',
-      fontWeight: 'normal',
-      padding: '0 8px',
-      whiteSpace: 'nowrap',
-      ...sx,
-    }}
-  />
-);
-
 export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   onChange,
   packSizeController,
   rows,
 }) => {
-  const t = useTranslation(['distribution', 'common']);
+  const { setDisabledRows } = useTableStore();
+
+  const t = useTranslation('distribution');
   const { status } = useOutboundFields('status');
+  const isDisabled = useIsOutboundDisabled();
 
   const placeholderRow = rows.find(
     ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
   );
 
+  const updateDraftLine = (
+    patch: Partial<DraftOutboundLine> & { id: string }
+  ) => {
+    const newValue = Math.min(
+      patch.numberOfPacks ?? 0,
+      patch.stockLine?.availableNumberOfPacks ?? 0
+    );
+    onChange?.(patch.id, newValue, patch.packSize ?? 1);
+  };
   const rowsWithoutPlaceholder = rows
     .filter(({ type }) => type !== InvoiceLineNodeType.UnallocatedStock)
     .sort(sortByExpiry);
@@ -142,88 +58,150 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     packSizeController.selected?.value === -1 ||
     packSize === packSizeController.selected?.value;
 
-  const allocatableRows: DraftOutboundLine[] = [];
-  const onHoldRows: DraftOutboundLine[] = [];
-  const noStockRows: DraftOutboundLine[] = [];
-  const wrongPackSizeRows: DraftOutboundLine[] = [];
+  const columns = useColumns<DraftOutboundLine>(
+    [
+      [
+        'numberOfPacks',
+        {
+          Cell: NonNegativeNumberInputCell,
+          width: 100,
+          label: 'label.num-packs',
+          setter: updateDraftLine,
+        },
+      ],
+      ['packSize'],
+      [
+        'unitQuantity',
+        { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
+      ],
+      {
+        label: 'label.available',
+        key: 'availableNumberOfPacks',
+        align: ColumnAlign.Right,
+        width: 85,
+        accessor: ({ rowData }) =>
+          rowData.stockLine?.availableNumberOfPacks ?? 0,
+      },
+      {
+        label: 'label.in-store',
+        key: 'totalNumberOfPacks',
+        align: ColumnAlign.Right,
+        width: 80,
+        accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks ?? 0,
+      },
+      'batch',
+      [
+        'expiryDate',
+        {
+          styler: rowData => ({
+            color:
+              rowData.expiryDate &&
+              isAlmostExpired(new Date(rowData.expiryDate))
+                ? '#e63535'
+                : 'inherit',
+          }),
+          width: 75,
+        },
+      ],
+      [
+        'locationName',
+        {
+          accessor: ({ rowData }) => rowData.location?.name,
+          width: 70,
+        },
+      ],
+      [
+        'sellPricePerPack',
+        {
+          formatter: sellPrice => useCurrencyFormat(Number(sellPrice)),
+          width: 75,
+        },
+      ],
+      {
+        label: 'label.on-hold',
+        key: 'onHold',
+        accessor: ({ rowData }) => rowData.stockLine?.onHold ?? false,
+        formatter: onHold => (!!onHold ? '✓' : ''),
+        width: 80,
+      },
+    ],
+    {},
+    [updateDraftLine]
+  );
 
-  rowsWithoutPlaceholder.forEach(row => {
-    if (!!row.stockLine?.onHold) {
-      onHoldRows.push(row);
-      return;
-    }
+  const [batchRows, setBatchRows] = useState<DraftOutboundLine[]>([]);
 
-    if (row.stockLine?.availableNumberOfPacks === 0) {
-      noStockRows.push(row);
-      return;
-    }
+  useEffect(() => {
+    const allocatableRows: DraftOutboundLine[] = [];
+    const onHoldRows: DraftOutboundLine[] = [];
+    const noStockRows: DraftOutboundLine[] = [];
+    const wrongPackSizeRows: DraftOutboundLine[] = [];
 
-    if (!isRequestedPackSize(row.packSize)) {
-      wrongPackSizeRows.push(row);
-      return;
-    }
+    rowsWithoutPlaceholder.forEach(row => {
+      if (!!row.stockLine?.onHold) {
+        onHoldRows.push(row);
+        return;
+      }
 
-    allocatableRows.push(row);
-  });
+      if (row.stockLine?.availableNumberOfPacks === 0) {
+        noStockRows.push(row);
+        return;
+      }
+
+      if (!isRequestedPackSize(row.packSize)) {
+        wrongPackSizeRows.push(row);
+        return;
+      }
+
+      allocatableRows.push(row);
+    });
+
+    const disabledRows = wrongPackSizeRows
+      .concat(onHoldRows)
+      .concat(noStockRows);
+
+    setDisabledRows(disabledRows.map(({ id }) => id));
+    setBatchRows(allocatableRows.concat(disabledRows));
+  }, [rows, packSizeController.selected?.value]);
+
+  // <TableContainer sx={{ height: 375, overflowX: 'hidden' }}>
+  // <Table style={{ borderCollapse: 'separate', borderSpacing: '0 4px' }}>
 
   return (
     <Box height={400}>
       <Divider margin={10} />
-      <TableContainer sx={{ height: 375, overflowX: 'hidden' }}>
-        <Table style={{ borderCollapse: 'separate', borderSpacing: '0 4px' }}>
-          <TableHead>
-            <TableRow>
-              <HeaderCell>{t('label.num-packs')}</HeaderCell>
-              <HeaderCell>{t('label.pack')}</HeaderCell>
-              <HeaderCell>{t('label.unit-quantity')}</HeaderCell>
-              <HeaderCell>{t('label.available')}</HeaderCell>
-              <HeaderCell>{t('label.in-store')}</HeaderCell>
-              <HeaderCell>{t('label.batch')}</HeaderCell>
-              <HeaderCell>{t('label.expiry')}</HeaderCell>
-              <HeaderCell>{t('label.location')}</HeaderCell>
-              <HeaderCell>{t('label.sell')}</HeaderCell>
-              <HeaderCell>{t('label.on-hold')}</HeaderCell>
-            </TableRow>
-          </TableHead>
-          <TableBody sx={{ overflowY: 'scroll' }}>
-            {allocatableRows.map(batch => (
-              <BatchesRow batch={batch} key={batch.id} onChange={onChange} />
-            ))}
-            <TableRow
-              sx={{ height: 1, border: '2px solid', borderColor: 'divider' }}
+      <DataTable
+        isDisabled={isDisabled}
+        columns={columns}
+        data={batchRows}
+        noDataMessage="Add a new line"
+        dense
+      />
+      {placeholderRow ? (
+        <Box display="flex">
+          <Typography
+            style={{
+              alignItems: 'center',
+              display: 'flex',
+              flex: '0 1 100px',
+              fontSize: 12,
+              justifyContent: 'flex-end',
+              paddingRight: 8,
+            }}
+          >
+            {t('label.placeholder')}
+          </Typography>
+          <Box sx={{ paddingTop: '3px' }}>
+            <NonNegativeNumberInput
+              onChange={value => {
+                onChange(placeholderRow.id, value, 1);
+              }}
+              value={placeholderRow.numberOfPacks}
+              disabled={status !== InvoiceNodeStatus.New}
             />
-            {wrongPackSizeRows.map(batch => (
-              <BatchesRow batch={batch} key={batch.id} disabled />
-            ))}
-            {onHoldRows.map(batch => (
-              <BatchesRow batch={batch} key={batch.id} disabled />
-            ))}
-            {noStockRows.map(batch => (
-              <BatchesRow batch={batch} key={batch.id} disabled />
-            ))}
-            {placeholderRow ? (
-              <TableRow>
-                <BasicCell align="right" sx={{ paddingTop: '3px' }}>
-                  {t('label.placeholder')}
-                </BasicCell>
-                <BasicCell sx={{ paddingTop: '3px' }}>
-                  <NumericTextInput
-                    onChange={event => {
-                      onChange(
-                        placeholderRow.id,
-                        Number(event.target.value),
-                        1
-                      );
-                    }}
-                    value={placeholderRow.numberOfPacks}
-                    disabled={status !== InvoiceNodeStatus.New}
-                  />
-                </BasicCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </Box>
+        </Box>
+      ) : null}
     </Box>
   );
 };
