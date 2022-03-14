@@ -1,4 +1,6 @@
-use crate::{invoice_line::generate_batch, u32_to_i32, invoice::common::generate_invoice_user_id_update};
+use crate::{
+    invoice::common::generate_invoice_user_id_update, invoice_line::generate_batch, u32_to_i32,
+};
 use repository::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };

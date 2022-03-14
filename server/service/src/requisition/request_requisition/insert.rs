@@ -2,15 +2,13 @@ use crate::{
     number::next_number,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use chrono::Utc;
-use repository::Name;
 use repository::{
     schema::{NumberRowType, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
-
-use super::{check_other_party, OtherPartyErrors};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisition {
@@ -27,9 +25,10 @@ pub struct InsertRequestRequisition {
 
 pub enum InsertRequestRequisitionError {
     RequisitionAlreadyExists,
-    OtherPartyNotASupplier(Name),
+    // Name validation
+    OtherPartyNotASupplier,
     OtherPartyDoesNotExist,
-    OtherPartyIsThisStore,
+    OtherPartyNotVisible,
     OtherPartyIsNotAStore,
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
@@ -68,15 +67,24 @@ fn validate(
         return Err(OutError::RequisitionAlreadyExists);
     }
 
-    check_other_party(connection, store_id, &input.other_party_id).map_err(|e| match e {
+    let other_party = check_other_party(
+        connection,
+        store_id,
+        &input.other_party_id,
+        CheckOtherPartyType::Supplier,
+    )
+    .map_err(|e| match e {
         OtherPartyErrors::OtherPartyDoesNotExist => OutError::OtherPartyDoesNotExist {},
-        OtherPartyErrors::OtherPartyNotASupplier(name) => OutError::OtherPartyNotASupplier(name),
-        OtherPartyErrors::OtherPartyIsNotAStore => OutError::OtherPartyIsNotAStore,
-        OtherPartyErrors::OtherPartyIsThisStore => OutError::OtherPartyIsThisStore,
+        OtherPartyErrors::OtherPartyNotVisible => OutError::OtherPartyNotVisible,
+        OtherPartyErrors::TypeMismatched => OutError::OtherPartyNotASupplier,
         OtherPartyErrors::DatabaseError(repository_error) => {
             OutError::DatabaseError(repository_error)
         }
     })?;
+
+    other_party
+        .store_id()
+        .ok_or(OutError::OtherPartyIsNotAStore)?;
 
     Ok(())
 }
@@ -132,22 +140,33 @@ mod test_insert {
         service_provider::ServiceProvider,
     };
     use chrono::Utc;
-    use repository::mock::{mock_name_store_join_b, mock_store_b, mock_user_account_a};
-    use repository::Name;
     use repository::{
         mock::{
             mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
-            MockDataInserts,
+            mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
-        schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-        test_db::setup_all,
+        schema::{NameRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+        test_db::{setup_all, setup_all_with_data},
         RequisitionRowRepository,
     };
+    use util::inline_init;
 
     #[actix_rt::test]
     async fn insert_request_requisition_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_request_requisition_errors", MockDataInserts::all()).await;
+        fn not_visible() -> NameRow {
+            inline_init(|r: &mut NameRow| {
+                r.id = "not_visible".to_string();
+            })
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_request_requisition_errors",
+            MockDataInserts::all(),
+            Some(inline_init(|r: &mut MockData| {
+                r.names = vec![not_visible()];
+            })),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
@@ -189,11 +208,21 @@ mod test_insert {
                     min_months_of_stock: 0.5,
                 },
             ),
-            Err(ServiceError::OtherPartyNotASupplier(Name {
-                name_row: name_store_b,
-                name_store_join_row: Some(mock_name_store_join_b()),
-                store_row: Some(mock_store_b()),
-            }))
+            Err(ServiceError::OtherPartyNotASupplier)
+        );
+
+        // OtherPartyNotVisible
+        assert_eq!(
+            service.insert_request_requisition(
+                &context,
+                &mock_store_a().id,
+                "n/a",
+                inline_init(|r: &mut InsertRequestRequisition| {
+                    r.id = "new_id".to_string();
+                    r.other_party_id = not_visible().id;
+                })
+            ),
+            Err(ServiceError::OtherPartyNotVisible)
         );
 
         // OtherPartyDoesNotExist
@@ -233,25 +262,8 @@ mod test_insert {
             ),
             Err(ServiceError::OtherPartyIsNotAStore)
         );
-
+        // Cannot be an error, names are filtered so that name linked to current store is not shown
         // OtherPartyIsThisStore
-        // TODO cannot test this name store join should not exist for current store and name
-        // assert_eq!(
-        //     service.insert_request_requisition(
-        //         &context,
-        //         "store_c",
-        //         InsertRequestRequisition {
-        //             id: "new_request_requisition".to_owned(),
-        //             other_party_id: mock_name_store_c().id,
-        //             colour: None,
-        //             their_reference: None,
-        //             comment: None,
-        //             max_months_of_stock: 1.0,
-        //             min_months_of_stock: 0.5,
-        //         },
-        //     ),
-        //     Err(ServiceError::OtherPartyIsThisStore)
-        // );
     }
 
     #[actix_rt::test]

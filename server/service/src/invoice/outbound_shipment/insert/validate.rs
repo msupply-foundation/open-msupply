@@ -1,7 +1,7 @@
 use repository::Name;
 use repository::{InvoiceRepository, RepositoryError, StorageConnection};
 
-use crate::invoice::check_other_party_id;
+use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 
 use super::{InsertOutboundShipment, InsertOutboundShipmentError};
 
@@ -13,14 +13,18 @@ pub fn validate(
     use InsertOutboundShipmentError::*;
     check_invoice_does_not_exists(&input.id, connection)?;
 
-    let other_party = check_other_party_id(connection, store_id, &input.other_party_id)?
-        .ok_or(OtherPartyIdNotFound(input.id.clone()))?;
-
-    if !other_party.is_customer() {
-        return Err(OtherPartyNotACustomer(other_party));
-    }
-
-    // TODO check OtherPartyCannotBeThisStore
+    let other_party = check_other_party(
+        connection,
+        store_id,
+        &input.other_party_id,
+        CheckOtherPartyType::Customer,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
+        OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
+        OtherPartyErrors::TypeMismatched => OtherPartyNotACustomer,
+        OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+    })?;
 
     // TODO add check that customer belongs to "this" store (from name_store_join?)
     // OtherPartyNotACustomerOfThisStore

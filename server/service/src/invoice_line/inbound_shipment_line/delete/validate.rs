@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRowType, InvoiceRow},
+    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowType},
     StorageConnection,
 };
 
