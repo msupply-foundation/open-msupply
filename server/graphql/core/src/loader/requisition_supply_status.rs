@@ -52,7 +52,7 @@ pub struct RequisitionLinesRemainingToSupplyLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for RequisitionLinesRemainingToSupplyLoader {
-    type Value = RequisitionLine;
+    type Value = Vec<RequisitionLine>;
     type Error = async_graphql::Error;
 
     async fn load(
@@ -69,15 +69,14 @@ impl Loader<String> for RequisitionLinesRemainingToSupplyLoader {
         let remaining_to_supply =
             RequisitionLineSupplyStatus::lines_remaining_to_supply(requisition_supply_statuses);
 
-        Ok(remaining_to_supply
-            .into_iter()
-            .map(|status| {
-                let requisition_line_row = &status.requisition_line.requisition_line_row;
-                (
-                    requisition_line_row.requisition_id.clone(),
-                    status.requisition_line,
-                )
-            })
-            .collect())
+        let mut result: HashMap<String, Vec<RequisitionLine>> = HashMap::new();
+        for supply_status in remaining_to_supply {
+            let requistion_line = supply_status.requisition_line;
+            let list = result
+                .entry(requistion_line.requisition_line_row.requisition_id.clone())
+                .or_insert_with(|| Vec::<RequisitionLine>::new());
+            list.push(requistion_line);
+        }
+        Ok(result)
     }
 }
