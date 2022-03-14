@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   useToggle,
   useCurrency,
@@ -14,7 +14,7 @@ import {
 import { useInboundFields } from '../../api';
 import { InboundServiceLineEdit } from '../modals';
 
-export const PricingSection = () => {
+export const PricingSectionComponent = () => {
   const t = useTranslation('replenishment');
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
@@ -78,3 +78,5 @@ export const PricingSection = () => {
     </DetailPanelSection>
   );
 };
+
+export const PricingSection = memo(PricingSectionComponent);
