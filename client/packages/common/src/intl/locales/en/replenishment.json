@@ -35,6 +35,7 @@
   "label.add-charges": "Add charges",
   "label.shipment": "Shipment",
   "messages.no-shipments-yet": "No shipments created yet.",
+  "messages.no-related-documents": "No related documents",
   "messages.by-user": "by {{username}}",
   "messages.inbound-shipment-created-on": "Inbound shipment created on {{date}}",
   "messages.internal-order-created-on": "Internal order created on {{date}}",
