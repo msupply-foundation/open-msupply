@@ -42,7 +42,7 @@ export const ServiceItemSearchInput: FC<ItemSearchInputProps> = ({
   onChange,
   currentItemId,
   disabled = false,
-  width = 850,
+  width = 200,
   autoFocus = false,
   refetchOnMount = true,
 }) => {

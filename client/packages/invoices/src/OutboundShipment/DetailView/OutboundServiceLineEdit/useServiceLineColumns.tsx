@@ -5,12 +5,14 @@ import {
   useColumns,
   IconButton,
   XCircleIcon,
-  TextInputCell,
   CurrencyInputCell,
   ColumnAlign,
+  NonNegativeNumberInputCell,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { ServiceItemSearchInput } from '@openmsupply-client/system';
 import { DraftOutboundLine } from './../../../types';
+import { get } from './../../../utils';
 
 export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftOutboundLine>) => void
@@ -20,14 +22,14 @@ export const useServiceLineColumns = (
     {
       key: 'serviceItemName',
       label: 'label.name',
-      width: 350,
+      width: 200,
       accessor: ({ rowData }) => rowData?.item?.id,
       Cell: ({ rowData, column, rows }) => {
         const id = column.accessor({ rowData, rows }) as string;
         return (
           <ServiceItemSearchInput
             refetchOnMount={false}
-            width={300}
+            width={200}
             onChange={item => item && setter({ ...rowData, item })}
             currentItemId={id}
           />
@@ -37,7 +39,7 @@ export const useServiceLineColumns = (
     {
       key: 'note',
       label: 'label.comment',
-      width: 200,
+      width: 150,
       accessor: ({ rowData }) => rowData?.note,
       setter,
       Cell: TextInputCell,
@@ -45,15 +47,29 @@ export const useServiceLineColumns = (
     {
       key: 'totalBeforeTax',
       label: 'label.amount',
-      width: 200,
+      width: 75,
       setter,
       Cell: CurrencyInputCell,
+    },
+    {
+      key: 'taxPercentage',
+      label: 'label.tax',
+      width: 75,
+      setter,
+      Cell: NonNegativeNumberInputCell,
+    },
+    {
+      key: 'totalAfterTax',
+      label: 'label.total',
+      align: ColumnAlign.Right,
+      width: 75,
+      accessor: ({ rowData }) => get.serviceChargeTotal(rowData),
     },
     {
       key: 'isDeleted',
       label: 'label.delete',
       align: ColumnAlign.Center,
-      width: 100,
+      width: 50,
       Cell: ({ rowData }) => (
         <IconButton
           icon={<XCircleIcon />}

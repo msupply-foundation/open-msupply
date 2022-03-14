@@ -1,6 +1,7 @@
 import { isOutboundDisabled } from './../../utils';
 import { useMemo, useCallback } from 'react';
 import {
+  InvoiceLineNodeType,
   RouteBuilder,
   useQueryParams,
   useNavigate,
@@ -202,9 +203,10 @@ export const useOutboundLines = (
 };
 export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
   const selectLines = useCallback((invoice: OutboundFragment) => {
+    const forListView = (line: OutboundLineFragment) =>
+      isA.stockOutLine(line) || isA.placeholderLine(line);
     const { lines } = invoice;
-
-    const stockLines = lines.nodes.filter(isA.stockInLine);
+    const stockLines = lines.nodes.filter(forListView);
 
     return Object.entries(groupBy(stockLines, line => line.item.id)).map(
       ([itemId, lines]) => {
@@ -348,4 +350,37 @@ export const useDeleteSelectedLines = (): {
   };
 
   return { onDelete };
+};
+
+export const useUpdateOutboundTax = () => {
+  const queryClient = useQueryClient();
+  const api = useOutboundApi();
+  const { lines } = useOutboundFields('lines');
+  const { mutateAsync, ...mutateState } = useMutation(api.updateTax, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(api.keys.base());
+    },
+  });
+
+  const updateServiceLineTax = useCallback(
+    (tax: number) =>
+      mutateAsync({
+        tax,
+        lines: lines.nodes ?? [],
+        type: InvoiceLineNodeType.Service,
+      }),
+    [lines.nodes, mutateAsync]
+  );
+
+  const updateStockLineTax = useCallback(
+    (tax: number) =>
+      mutateAsync({
+        tax,
+        lines: lines.nodes ?? [],
+        type: InvoiceLineNodeType.StockOut,
+      }),
+    [lines.nodes, mutateAsync]
+  );
+
+  return { ...mutateState, updateStockLineTax, updateServiceLineTax };
 };

@@ -15,11 +15,13 @@ import {
   InvoiceSortFieldInput,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../types';
+import { get, isA } from '../../utils';
 import {
   OutboundRowFragment,
   OutboundFragment,
   InsertOutboundShipmentMutationVariables,
   Sdk,
+  OutboundLineFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -89,10 +91,8 @@ const outboundParsers = {
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
       tax: { percentage: 0 },
-      totalAfterTax:
-        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
-      totalBeforeTax:
-        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
+      totalBeforeTax: get.stockLineSubtotal(line),
+      totalAfterTax: get.stockLineTotal(line),
     };
   },
   toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
@@ -101,11 +101,9 @@ const outboundParsers = {
       invoiceId: line.invoiceId,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
-      tax: { percentage: 0 },
-      totalAfterTax:
-        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
-      totalBeforeTax:
-        line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
+      tax: { percentage: line.taxPercentage },
+      totalBeforeTax: get.stockLineSubtotal(line),
+      totalAfterTax: get.stockLineTotal(line),
     };
   },
   toDeleteLine: (line: {
@@ -136,16 +134,18 @@ const outboundParsers = {
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
+    tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: line.totalBeforeTax,
+    totalAfterTax: get.serviceChargeTotal(line),
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftOutboundLine) => ({
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
+    tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: line.totalBeforeTax,
+    totalAfterTax: get.serviceChargeTotal(line),
     note: line.note,
   }),
   toDeleteServiceCharge: (line: DraftOutboundLine) => ({
@@ -235,9 +235,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   update: async (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
-  ): Promise<
-    RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
-  > => {
+  ) => {
     const result = await sdk.upsertOutboundShipment({
       storeId,
       input: {
@@ -339,6 +337,42 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       storeId,
       deleteOutboundShipmentLines: lines.map(outboundParsers.toDeleteLine),
     });
+  },
+  updateTax: async ({
+    lines,
+    tax,
+    type,
+  }: {
+    lines: OutboundLineFragment[];
+    tax: number;
+    type: InvoiceLineNodeType.StockOut | InvoiceLineNodeType.Service;
+  }) => {
+    const toUpdateStockLine = (line: OutboundLineFragment) =>
+      outboundParsers.toUpdateLine({ ...line, taxPercentage: tax });
+    const toUpdateServiceLine = (line: OutboundLineFragment) =>
+      outboundParsers.toUpdateServiceCharge({ ...line, taxPercentage: tax });
+
+    const result = await sdk.upsertOutboundShipment({
+      storeId,
+      input: {
+        updateOutboundShipmentLines:
+          type === InvoiceLineNodeType.StockOut
+            ? lines.filter(isA.stockOutLine).map(toUpdateStockLine)
+            : [],
+        updateOutboundShipmentServiceLines:
+          type === InvoiceLineNodeType.Service
+            ? lines.filter(isA.serviceLine).map(toUpdateServiceLine)
+            : [],
+      },
+    });
+
+    const { batchOutboundShipment } = result;
+
+    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+      return batchOutboundShipment;
+    }
+
+    throw new Error('Unable to update invoice');
   },
   dashboard: {
     shipmentCount: async (): Promise<{
