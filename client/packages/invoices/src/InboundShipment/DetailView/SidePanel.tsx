@@ -17,7 +17,12 @@ import {
   useBufferState,
   IconButton,
   EditIcon,
+  Tooltip,
+  Link,
+  useFormatDate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { useInboundFields, useInbound, useIsInboundDisabled } from '../api';
 import { InboundServiceLineEdit } from './modals';
 
@@ -59,49 +64,61 @@ const AdditionalInfoSection: FC = () => {
   );
 };
 
-// const RelatedDocumentsRow: FC<{
-//   label: string;
-//   to: string;
-//   value?: number | null;
-// }> = ({ label, to, value }) => {
-//   const { success } = useNotification();
-//   return (
-//     <PanelRow>
-//       <PanelLabel>{label}</PanelLabel>
-//       <PanelField>
-//         <Link to={to} onClick={success('Not implemented yet!')}>
-//           {value}
-//         </Link>
-//       </PanelField>
-//     </PanelRow>
-//   );
-// };
+const RelatedDocumentsRow: FC<{
+  label: string;
+  to: string;
+  value?: number | null;
+}> = ({ label, to, value }) => (
+  <PanelRow>
+    <PanelLabel>{label}</PanelLabel>
+    <PanelField>
+      <Link to={to}>{`#${value}`}</Link>
+    </PanelField>
+  </PanelRow>
+);
 
 const RelatedDocumentsSection: FC = () => {
   const t = useTranslation('replenishment');
+  const d = useFormatDate();
+  const { requisition } = useInboundFields('requisition');
+
+  const getTooltip = (createdDatetime: string, username?: string) => {
+    let tooltip = t('messages.internal-order-created-on', {
+      date: d(new Date(createdDatetime)),
+    });
+
+    if (username && username !== 'unknown') {
+      tooltip += ` ${t('messages.by-user', { username })}`;
+    }
+
+    return tooltip;
+  };
+
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid container gap={0.5} key="additional-info">
-        {/* <RelatedDocumentsRow
-          label={t('label.requisition')}
-          to=""
-          value={draft.requisitionNumber}
-        />
-        <RelatedDocumentsRow
-          label={t('label.inbound-shipment')}
-          to=""
-          value={draft.inboundShipmentNumber}
-        />
-        <RelatedDocumentsRow
-          label={t('label.goods-receipt')}
-          to=""
-          value={draft.goodsReceiptNumber}
-        />
-        <RelatedDocumentsRow
-          label={t('label.purchase-order')}
-          to=""
-          value={draft.purchaseOrderNumber}
-        /> */}
+      <Grid item direction="column" gap={0.5}>
+        {requisition ? (
+          <Tooltip
+            key={requisition?.id}
+            title={getTooltip(
+              requisition.createdDatetime,
+              requisition.user?.username
+            )}
+          >
+            <Grid item>
+              <RelatedDocumentsRow
+                label={t('label.requisition')}
+                value={requisition.requisitionNumber}
+                to={RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InternalOrder)
+                  .addPart(String(requisition.requisitionNumber))
+                  .build()}
+              />
+            </Grid>
+          </Tooltip>
+        ) : (
+          <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
+        )}
       </Grid>
     </DetailPanelSection>
   );
