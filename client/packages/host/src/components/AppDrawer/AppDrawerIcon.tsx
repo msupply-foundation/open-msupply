@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  extractSvg,
+  RegexUtils,
   MSupplyGuy,
   useDrawer,
   useLocalStorage,
@@ -19,5 +19,5 @@ export const AppDrawerIcon: React.FC = () => {
     ? { paddingTop: 20, width: 64, fill: theme.mixins.drawer?.iconColor }
     : { width: 30, fill: theme.mixins.drawer?.iconColor };
 
-  return extractSvg(customLogo, style);
+  return RegexUtils.extractSvg(customLogo, style);
 };
