@@ -9,7 +9,7 @@ interface NonNegativeNumberProps
   onChange: (newValue: number) => void;
 }
 
-// where NonNegative is n >=0
+// where Positive is n >=1
 export const PositiveNumberInput = React.forwardRef(
   ({
     sx,
