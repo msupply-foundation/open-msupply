@@ -410,10 +410,7 @@ mod test {
         query { 
             testQuery {
                 linesRemainingToSupply {
-                    nodes {
-                        id
-                        remainingQuantityToSupply
-                    }
+                    totalCount
                 }
             }
         }
