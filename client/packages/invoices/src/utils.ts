@@ -4,7 +4,7 @@ import {
   LocaleKey,
   InvoiceNodeStatus,
   useTranslation,
-  groupBy,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
@@ -126,7 +126,7 @@ export const createSummaryItem = (
 export const inboundLinesToSummaryItems = (
   lines: InboundLineFragment[]
 ): InboundItem[] => {
-  const grouped = groupBy(lines, line => line.item.id);
+  const grouped = ArrayUtils.groupBy(lines, line => line.item.id);
   return Object.entries(grouped).map(([itemId, lines]) =>
     createSummaryItem(itemId, lines)
   );

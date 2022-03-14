@@ -1,3 +1,6 @@
+import groupBy from 'lodash/groupBy';
+import uniqBy from 'lodash/uniqBy';
+
 export const ArrayUtils = {
   ifTheSameElseDefault: <T, K extends keyof T, J>(
     someEntities: T[],
@@ -31,4 +34,6 @@ export const ArrayUtils = {
   ): number => {
     return arr.reduce((sum, someEntity) => sum + someEntity[key], 0);
   },
+  groupBy,
+  uniqBy,
 };

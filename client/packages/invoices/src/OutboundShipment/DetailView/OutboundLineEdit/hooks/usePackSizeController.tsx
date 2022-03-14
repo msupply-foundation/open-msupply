@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import {
   useTranslation,
   InvoiceLineNodeType,
-  ArrayUtils,
   isExpired,
-  uniqBy,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../../types';
 
@@ -87,7 +86,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   // - is not on hold.
   // - is not expired.
   // - has some available stock.
-  const validPackSizes = uniqBy(
+  const validPackSizes = ArrayUtils.uniqBy(
     packSizes.filter(
       packSize =>
         // - is a placeholder and has allocated stock.
