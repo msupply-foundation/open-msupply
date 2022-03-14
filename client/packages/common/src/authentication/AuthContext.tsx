@@ -15,6 +15,7 @@ type User = {
 };
 
 interface Store {
+  __typename: 'StoreNode';
   id: string;
   code: string;
 }
@@ -106,7 +107,7 @@ export const AuthProvider: FC = ({ children }) => {
       user: { id: '', name: username },
     };
 
-    setMRUCredentials({ username, store: store });
+    setMRUCredentials({ username, store });
     if (!!token) setLocalStore(store);
     setLocalToken(token);
     setAuthCookie(authCookie);
@@ -118,7 +119,7 @@ export const AuthProvider: FC = ({ children }) => {
     if (!localToken) return;
 
     setLocalStore(store);
-    setMRUCredentials({ username: user?.name ?? '', store: store });
+    setMRUCredentials({ username: user?.name ?? '', store });
     const authCookie = getAuthCookie();
     setAuthCookie({ ...authCookie, store });
   };

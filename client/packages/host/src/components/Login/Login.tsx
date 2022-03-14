@@ -4,16 +4,14 @@ import {
   Box,
   Stack,
   Typography,
-  Autocomplete,
   useTranslation,
   AutocompleteRenderInputParams,
-  defaultOptionMapper,
   LoadingButton,
   AlertIcon,
 } from '@openmsupply-client/common';
 import { LoginIcon } from './LoginIcon';
 import { LoginTextInput } from './LoginTextInput';
-import { useStores, StoreRowFragment } from '@openmsupply-client/system';
+import { StoreSearchInput } from '@openmsupply-client/system';
 import { useLoginForm } from './hooks';
 
 const StoreAutocompleteInput: React.FC<
@@ -28,12 +26,6 @@ const StoreAutocompleteInput: React.FC<
       label={t('heading.store')}
     />
   );
-};
-
-const storeSorter = (a: StoreRowFragment, b: StoreRowFragment) => {
-  if (a.code < b.code) return -1;
-  if (a.code > b.code) return 1;
-  return 0;
 };
 
 export const Login: React.FC = ({}) => {
@@ -52,18 +44,6 @@ export const Login: React.FC = ({}) => {
     error,
   } = useLoginForm(passwordRef);
 
-  const { data, isLoading } = useStores();
-  const undefinedStore = {
-    label: '',
-    id: '',
-    code: '',
-  };
-  const stores = [
-    undefinedStore,
-    ...defaultOptionMapper((data?.nodes ?? []).sort(storeSorter), 'code'),
-  ];
-
-  const currentStore = stores.find(s => s.id === store?.id) || undefinedStore;
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter' && isValid) {
       onLogin();
@@ -146,14 +126,11 @@ export const Login: React.FC = ({}) => {
                 }}
                 inputRef={passwordRef}
               />
-              <Autocomplete
+              <StoreSearchInput
+                onChange={setStore}
                 renderInput={StoreAutocompleteInput}
-                loading={isLoading}
-                options={stores}
-                disabled={isLoggingIn}
-                onChange={(_, value) => setStore(value || undefined)}
-                value={currentStore}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
+                isDisabled={isLoggingIn}
+                value={store}
               />
               {error && (
                 <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
