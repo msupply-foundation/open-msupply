@@ -1,11 +1,42 @@
 import React, { FC } from 'react';
-import { Autocomplete, useBufferState } from '@openmsupply-client/common';
-import { useSuppliers } from '../../api';
 import {
-  basicFilterOptions,
-  NameSearchInputProps,
-  simpleNameOptionRenderer,
-} from '../../utils';
+  DefaultAutocompleteItemOption,
+  AutocompleteOptionRenderer,
+  Typography,
+  Autocomplete,
+  useBufferState,
+  HomeIcon,
+  Box,
+} from '@openmsupply-client/common';
+import { useSuppliers } from '../../api';
+import { basicFilterOptions, NameSearchInputProps } from '../../utils';
+import { NameRowFragment } from '../../api';
+
+const optionRenderer: AutocompleteOptionRenderer<NameRowFragment> = (
+  props,
+  item
+) => (
+  <DefaultAutocompleteItemOption {...props}>
+    <Box display="flex" alignItems="flex-end" gap={1} height={25}>
+      <Box display="flex" flexDirection="row" gap={1} width={110}>
+        <Box flex={0} style={{ height: 24, minWidth: 20 }}>
+          {!!item.store && <HomeIcon fontSize="small" />}
+        </Box>
+        <Typography
+          overflow="hidden"
+          fontWeight="bold"
+          textOverflow="ellipsis"
+          sx={{
+            whiteSpace: 'no-wrap',
+          }}
+        >
+          {item.code}
+        </Typography>
+      </Box>
+      <Typography>{item.name}</Typography>
+    </Box>
+  </DefaultAutocompleteItemOption>
+);
 
 export const SupplierSearchInput: FC<NameSearchInputProps> = ({
   onChange,
@@ -28,7 +59,7 @@ export const SupplierSearchInput: FC<NameSearchInputProps> = ({
         name && onChange(name);
       }}
       options={data?.nodes ?? []}
-      renderOption={simpleNameOptionRenderer}
+      renderOption={optionRenderer}
       width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       autoWidthPopper
