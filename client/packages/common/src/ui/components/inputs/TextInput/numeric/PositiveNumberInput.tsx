@@ -3,7 +3,7 @@ import { NumericTextInput } from '@common/components';
 import { NumUtils } from '@common/utils';
 import { NumericTextInputProps } from './NumericTextInput';
 
-interface NonNegativeNumberProps
+interface PositiveNumberProps
   extends Omit<NumericTextInputProps, 'onChange'> {
   max?: number;
   onChange: (newValue: number) => void;
