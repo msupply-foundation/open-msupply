@@ -80,11 +80,11 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         </PanelField>
       </PanelRow>
 
-      <PanelRow>
+      <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{t('heading.sub-total')}</PanelLabel>
         <PanelField>{c(serviceTotalBeforeTax)}</PanelField>
       </PanelRow>
-      <PanelRow>
+      <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{`${t('heading.tax')} ${formatTax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
@@ -95,7 +95,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>
-      <PanelRow>
+      <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{t('heading.total')}</PanelLabel>
         <PanelField>{c(serviceTotalAfterTax)}</PanelField>
       </PanelRow>
@@ -124,11 +124,11 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
           {t('heading.item-sell-price')}
         </PanelLabel>
       </PanelRow>
-      <PanelRow>
+      <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{t('heading.sub-total')}</PanelLabel>
         <PanelField>{c(stockTotalBeforeTax)}</PanelField>
       </PanelRow>
-      <PanelRow>
+      <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{`${t('heading.tax')} ${formatTax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
@@ -139,7 +139,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>
-      <PanelRow>
+      <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{t('heading.total')}</PanelLabel>
         <PanelField>{c(stockTotalAfterTax)}</PanelField>
       </PanelRow>
