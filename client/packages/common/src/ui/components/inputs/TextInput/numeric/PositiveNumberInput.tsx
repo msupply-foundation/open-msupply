@@ -18,7 +18,7 @@ export const PositiveNumberInput = React.forwardRef(
     max = 999999999,
     onChange,
     ...rest
-  }: NonNegativeNumberProps) => {
+  }: PositiveNumberProps) => {
     return (
       <NumericTextInput
         type="number"
