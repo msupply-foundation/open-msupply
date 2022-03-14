@@ -1,4 +1,4 @@
-import { extractSvg } from './parseHtml';
+import { RegexUtils } from './RegexUtils';
 
 describe('ParseHTML', () => {
   const snippetWithViewBox = `<svg viewBox="0 0 207 209.9">
@@ -14,29 +14,29 @@ describe('ParseHTML', () => {
     </div>`;
 
   it('extracts an svg component', () => {
-    const svgComponent = extractSvg(snippetWithViewBox);
+    const svgComponent = RegexUtils.extractSvg(snippetWithViewBox);
     expect(svgComponent).toBeDefined();
     expect(svgComponent?.type).toBe('svg');
   });
 
   it('extracts an svg component from a block of html', () => {
-    const svgComponent = extractSvg(bigSnippet);
+    const svgComponent = RegexUtils.extractSvg(bigSnippet);
     expect(svgComponent?.type).toBe('svg');
   });
 
   it('extracts an svg component and retains viewBox', () => {
-    const svgComponent = extractSvg(snippetWithViewBox);
+    const svgComponent = RegexUtils.extractSvg(snippetWithViewBox);
     expect(svgComponent?.props?.viewBox).toBe('0 0 207 209.9');
   });
 
   it('extracts an svg component without viewBox', () => {
-    const svgComponent = extractSvg(snippetWithoutViewBox);
+    const svgComponent = RegexUtils.extractSvg(snippetWithoutViewBox);
     expect(svgComponent?.type).toBe('svg');
   });
 
   it('applies the supplied style', () => {
     const style = { width: 100 };
-    const svgComponent = extractSvg(snippetWithoutViewBox, style);
+    const svgComponent = RegexUtils.extractSvg(snippetWithoutViewBox, style);
     expect(svgComponent?.props?.style).toBe(style);
   });
 });

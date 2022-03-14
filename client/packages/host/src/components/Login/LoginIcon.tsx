@@ -3,7 +3,7 @@ import {
   MSupplyGuyGradient,
   useLocalStorage,
   useTheme,
-  extractSvg,
+  RegexUtils,
 } from '@openmsupply-client/common';
 
 export const LoginIcon: React.FC = () => {
@@ -17,5 +17,5 @@ export const LoginIcon: React.FC = () => {
     ...logoStyle,
     fill: theme.palette.background.drawer,
   };
-  return extractSvg(customLogo, style);
+  return RegexUtils.extractSvg(customLogo, style);
 };
