@@ -16,21 +16,24 @@ const optionRenderer: AutocompleteOptionRenderer<NameRowFragment> = (
   item
 ) => (
   <DefaultAutocompleteItemOption {...props}>
-    <Typography
-      sx={{
-        marginInlineEnd: '10px',
-        fontWeight: 'bold',
-        width: 110,
-      }}
-    >
-      <Box display="flex" alignItems="flex-end" gap={1}>
-        <Box flex={0} style={{ height: 24, width: 20 }}>
+    <Box display="flex" alignItems="flex-end" gap={1} height={25}>
+      <Box display="flex" flexDirection="row" gap={1} width={110}>
+        <Box flex={0} style={{ height: 24, minWidth: 20 }}>
           {!!item.store && <HomeIcon fontSize="small" />}
         </Box>
-        <Box flex={1}>{item.code}</Box>
+        <Typography
+          overflow="hidden"
+          fontWeight="bold"
+          textOverflow="ellipsis"
+          sx={{
+            whiteSpace: 'no-wrap',
+          }}
+        >
+          {item.code}
+        </Typography>
       </Box>
-    </Typography>
-    <Typography>{item.name}</Typography>
+      <Typography>{item.name}</Typography>
+    </Box>
   </DefaultAutocompleteItemOption>
 );
 
