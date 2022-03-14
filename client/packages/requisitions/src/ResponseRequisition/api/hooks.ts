@@ -142,6 +142,8 @@ export const useSaveResponseLines = () => {
 };
 
 export const useCreateOutboundFromResponse = () => {
+  const responseNumber = useResponseNumber();
+  const queryClient = useQueryClient();
   const { error, warning } = useNotification();
   const t = useTranslation('distribution');
   const openInNewTab = useOpenInNewTab();
@@ -163,6 +165,9 @@ export const useCreateOutboundFromResponse = () => {
       } else {
         error(t('error.failed-to-create-outbound'))();
       }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(api.keys.detail(responseNumber));
     },
   });
 };
