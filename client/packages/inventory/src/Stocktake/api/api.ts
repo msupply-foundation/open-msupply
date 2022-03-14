@@ -1,6 +1,6 @@
 import {
   generateUUID,
-  formatNaiveDate,
+  Formatter,
   InsertStocktakeLineInput,
   UpdateStocktakeLineInput,
   UpdateStocktakeInput,
@@ -33,7 +33,7 @@ const stocktakeParser = {
     id: patch.id,
     isLocked: patch.isLocked,
     stocktakeDate: patch.stocktakeDate
-      ? formatNaiveDate(new Date(patch.stocktakeDate))
+      ? Formatter.naiveDate(new Date(patch.stocktakeDate))
       : undefined,
   }),
   line: {
@@ -49,7 +49,7 @@ const stocktakeParser = {
       sellPricePerPack: line.sellPricePerPack,
       id: line.id,
       expiryDate: line.expiryDate
-        ? formatNaiveDate(new Date(line.expiryDate))
+        ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
@@ -63,7 +63,7 @@ const stocktakeParser = {
       sellPricePerPack: line.sellPricePerPack,
       stocktakeId: line.stocktakeId,
       expiryDate: line.expiryDate
-        ? formatNaiveDate(new Date(line.expiryDate))
+        ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
     }),
   },

@@ -4,13 +4,13 @@ import { isEqual } from 'lodash';
 export * from './numbers';
 export * from './quantities';
 export * from './formatters';
-export * from './testing/testing';
-export * from './debounce';
+export * from './testing';
 export * from './dates';
 export * from './arrays';
 export * from './regex';
 export * from './pricing';
 export * from './functions';
+export * from './navigation';
 
 export type UUID = string;
 

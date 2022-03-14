@@ -1,5 +1,5 @@
 import {
-  formatExpiryDateString,
+  Formatter,
   useColumns,
   getRowExpandColumn,
   getNotePopoverColumn,
@@ -139,9 +139,9 @@ export const useOutboundColumns = ({
               const expiryDate =
                 ArrayUtils.ifTheSameElseDefault(lines, 'expiryDate', null) ??
                 '';
-              return formatExpiryDateString(expiryDate);
+              return Formatter.expiryDateString(expiryDate);
             } else {
-              return formatExpiryDateString(row.expiryDate);
+              return Formatter.expiryDateString(row.expiryDate);
             }
           },
           accessor: ({ rowData }) => {
@@ -152,9 +152,9 @@ export const useOutboundColumns = ({
                 'expiryDate',
                 null
               );
-              return formatExpiryDateString(expiryDate);
+              return Formatter.expiryDateString(expiryDate);
             } else {
-              return formatExpiryDateString(rowData.expiryDate);
+              return Formatter.expiryDateString(rowData.expiryDate);
             }
           },
         },

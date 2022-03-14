@@ -4,7 +4,7 @@ import {
   useColumns,
   ColumnAlign,
   ArrayUtils,
-  formatExpiryDate,
+  Formatter,
   Column,
   SortBy,
 } from '@openmsupply-client/common';
@@ -90,11 +90,11 @@ export const useStocktakeColumns = ({
                 ArrayUtils.ifTheSameElseDefault(lines, 'expiryDate', null) ??
                 '';
               return (
-                (expiryDate && formatExpiryDate(new Date(expiryDate))) || ''
+                (expiryDate && Formatter.expiryDate(new Date(expiryDate))) || ''
               );
             } else {
               return row.expiryDate
-                ? formatExpiryDate(new Date(row.expiryDate)) ?? ''
+                ? Formatter.expiryDate(new Date(row.expiryDate)) ?? ''
                 : '';
             }
           },
