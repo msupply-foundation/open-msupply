@@ -37,6 +37,7 @@
   "messages.no-shipments-yet": "No shipments created yet.",
   "messages.by-user": "by {{username}}",
   "messages.inbound-shipment-created-on": "Inbound shipment created on {{date}}",
+  "messages.internal-order-created-on": "Internal order created on {{date}}",
   "messages.off-hold-confirmation": "This will re-enable status changes",
   "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
   "messages.cant-delete-invoices": "Can only delete invoices with a status of 'New'",
