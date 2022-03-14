@@ -66,6 +66,12 @@ fragment Inbound on InvoiceNode {
   theirReference
   type
 
+  user {
+    __typename
+    username
+    email
+  }
+
   requisition {
     __typename
     id
