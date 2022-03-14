@@ -77,3 +77,9 @@ export const useUserName = (): string => {
   const { user } = useAuthContext();
   return user?.name ?? '';
 };
+
+// TODO: When the server supports a query to find the deployments
+// default language, use a query to fetch it.
+export const useDefaultLanguage = (): SupportedLocales => {
+  return 'en';
+};
