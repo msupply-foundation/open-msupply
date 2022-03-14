@@ -203,9 +203,10 @@ export const useOutboundLines = (
 };
 export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
   const selectLines = useCallback((invoice: OutboundFragment) => {
+    const forListView = (line: OutboundLineFragment) =>
+      isA.stockOutLine(line) || isA.placeholderLine(line);
     const { lines } = invoice;
-
-    const stockLines = lines.nodes.filter(isA.stockInLine);
+    const stockLines = lines.nodes.filter(forListView);
 
     return Object.entries(groupBy(stockLines, line => line.item.id)).map(
       ([itemId, lines]) => {

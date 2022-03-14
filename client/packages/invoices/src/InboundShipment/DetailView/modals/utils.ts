@@ -25,7 +25,7 @@ const createDraftInboundLine = ({
     sellPricePerPack: 0,
     costPricePerPack: 0,
     numberOfPacks: 0,
-    packSize: 0,
+    packSize: 1,
     isCreated: seed ? false : true,
     expiryDate: undefined,
     type,
