@@ -2,7 +2,7 @@ import React from 'react';
 import {
   NumericTextInput,
   Divider,
-  isAlmostExpired,
+  DateUtils,
   Table,
   TableBody,
   TableCell,
@@ -77,7 +77,8 @@ const BatchesRow: React.FC<BatchesRowProps> = ({
       <BasicCell
         sx={{
           color:
-            batch.expiryDate && isAlmostExpired(new Date(batch.expiryDate))
+            batch.expiryDate &&
+            DateUtils.isAlmostExpired(new Date(batch.expiryDate))
               ? 'error.main'
               : 'inherit',
         }}
