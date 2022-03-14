@@ -214,3 +214,112 @@ impl RequisitionLineNode {
         &self.requisition_line.requisition_row
     }
 }
+
+#[cfg(test)]
+mod test {
+    use async_graphql::{EmptyMutation, Object};
+
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use repository::{mock::MockDataInserts, RequisitionLine};
+    use serde_json::json;
+    use util::inline_init;
+
+    use crate::types::RequisitionLineNode;
+
+    #[actix_rt::test]
+    async fn graphql_requisition_line_quantity_remaing_to_supply() {
+        use repository::mock::test_remaining_to_supply as TestData;
+        #[derive(Clone)]
+        struct TestQuery;
+        let (_, _, _, settings) = setup_graphl_test_with_data(
+            TestQuery,
+            EmptyMutation,
+            "graphql_requisition_line_quantity_remaing_to_supply",
+            MockDataInserts::all(),
+            Some(TestData::test_remaining_to_supply()),
+        )
+        .await;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query1(&self) -> RequisitionLineNode {
+                RequisitionLineNode {
+                    requisition_line: inline_init(|r: &mut RequisitionLine| {
+                        r.requisition_line_row = TestData::line_to_supply_q5();
+                        r.requisition_row = TestData::requisition();
+                    }),
+                }
+            }
+
+            pub async fn test_query2(&self) -> RequisitionLineNode {
+                RequisitionLineNode {
+                    requisition_line: inline_init(|r: &mut RequisitionLine| {
+                        r.requisition_line_row = TestData::line_to_supply_q2();
+                        r.requisition_row = TestData::requisition();
+                    }),
+                }
+            }
+
+            pub async fn test_query3(&self) -> RequisitionLineNode {
+                RequisitionLineNode {
+                    requisition_line: inline_init(|r: &mut RequisitionLine| {
+                        r.requisition_line_row = TestData::line_to_supply_q1();
+                        r.requisition_row = TestData::requisition();
+                    }),
+                }
+            }
+
+            pub async fn test_query4(&self) -> RequisitionLineNode {
+                RequisitionLineNode {
+                    requisition_line: inline_init(|r: &mut RequisitionLine| {
+                        r.requisition_line_row = TestData::line_to_supply_q0();
+                        r.requisition_row = TestData::requisition();
+                    }),
+                }
+            }
+        }
+
+        let query = r#"
+        query { 
+            testQuery1 {
+                ...testFragment
+            }
+            testQuery2 {
+                ...testFragment
+            }
+            testQuery3 {
+                ...testFragment
+            }
+            testQuery4 {
+                ...testFragment
+            }
+        }
+        fragment testFragment on RequisitionLineNode {
+            id
+            remainingQuantityToSupply
+        }
+        "#;
+
+        let expected = json!({
+            "testQuery1": {
+                "id":  TestData::line_to_supply_q5().id,
+                "remainingQuantityToSupply": 5
+            },
+            "testQuery2": {
+                "id":  TestData::line_to_supply_q2().id,
+                "remainingQuantityToSupply": 2
+            },
+            "testQuery3": {
+                "id":  TestData::line_to_supply_q1().id,
+                "remainingQuantityToSupply": 1
+            },
+            "testQuery4": {
+                "id":  TestData::line_to_supply_q0().id,
+                "remainingQuantityToSupply": 0
+            }
+        }
+        );
+
+        assert_graphql_query!(&settings, query, &None, &expected, None);
+    }
+}
