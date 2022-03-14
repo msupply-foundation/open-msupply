@@ -1,7 +1,7 @@
 use crate::invoice::{
-    check_invoice_is_editable, check_invoice_status, check_other_party_id, InvoiceIsNotEditable,
-    InvoiceRowStatusError,
+    check_invoice_is_editable, check_invoice_status, InvoiceIsNotEditable, InvoiceRowStatusError,
 };
+use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::EqualFilter;
 use repository::{
     schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
@@ -18,29 +18,31 @@ pub fn validate(
 ) -> Result<(InvoiceRow, Option<Name>), UpdateOutboundShipmentError> {
     use UpdateOutboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
-
-    // TODO check that during allocated status change, all unallocated lines are fullfilled
     // TODO check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice)?;
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
-
-    let other_party_option = match &patch.other_party_id {
-        Some(other_party_id) => {
-            let other_party = check_other_party_id(connection, store_id, &other_party_id)?
-                .ok_or(OtherPartyDoesNotExists {})?;
-
-            if !other_party.is_customer() {
-                return Err(OtherPartyNotACustomer(other_party));
-            };
-            Some(other_party)
-        }
-        None => None,
-    };
-
     check_can_change_status_to_allocated(connection, &invoice, patch.full_status())?;
 
-    Ok((invoice, other_party_option))
+    let other_party_id = match &patch.other_party_id {
+        None => return Ok((invoice, None)),
+        Some(other_party_id) => other_party_id,
+    };
+
+    let other_party = check_other_party(
+        connection,
+        store_id,
+        &other_party_id,
+        CheckOtherPartyType::Customer,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
+        OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
+        OtherPartyErrors::TypeMismatched => OtherPartyNotACustomer,
+        OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+    })?;
+
+    Ok((invoice, Some(other_party)))
 }
 
 fn check_invoice_exists(
