@@ -46,6 +46,18 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     Math.abs(Number(packSizeController.selected?.value || 1));
   const { items } = useOutboundRows();
 
+  const onChangePackSize = (newPackSize: number) => {
+    const previousPackSize = packSizeController.selected?.value || 1;
+    const newQuantity =
+      previousPackSize > newPackSize ? quantity * previousPackSize : quantity;
+
+    packSizeController.setPackSize(newPackSize);
+    onChangeQuantity(
+      Math.round(newQuantity / newPackSize),
+      newPackSize === -1 ? null : newPackSize
+    );
+  };
+
   return (
     <Grid container gap="4px">
       <ModalRow>
@@ -133,12 +145,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                   value={packSizeController.selected?.value ?? ''}
                   onChange={e => {
                     const { value } = e.target;
-                    const packSize = Number(value);
-                    packSizeController.setPackSize(packSize);
-                    onChangeQuantity(
-                      quantity,
-                      packSize === -1 ? null : packSize
-                    );
+                    onChangePackSize(Number(value));
                   }}
                 />
                 {packSizeController.selected?.value !== -1 && (
