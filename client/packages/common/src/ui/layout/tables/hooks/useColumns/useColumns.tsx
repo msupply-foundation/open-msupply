@@ -163,6 +163,7 @@ export const createColumnWithDefaults = <T extends RecordWithId>(
     align: getDefaultColumnAlign(column),
     formatter: getDefaultFormatter<T>(column),
     setter: getDefaultColumnSetter<T>(column),
+    styler: () => ({}),
 
     ...getColumnWidths(column),
   };
