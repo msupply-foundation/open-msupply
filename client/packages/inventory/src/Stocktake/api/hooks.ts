@@ -13,7 +13,7 @@ import {
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  groupBy,
+  ArrayUtils,
   SortUtils,
   useSortBy,
   useAuthContext,
@@ -156,7 +156,7 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
   const selectLines = useCallback((stocktake: StocktakeFragment) => {
     const { lines } = stocktake;
 
-    return Object.entries(groupBy(lines.nodes, 'itemId')).map(
+    return Object.entries(ArrayUtils.groupBy(lines.nodes, 'itemId')).map(
       ([itemId, lines]) => {
         return {
           id: itemId,

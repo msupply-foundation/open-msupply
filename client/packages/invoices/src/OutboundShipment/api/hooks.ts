@@ -15,7 +15,7 @@ import {
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  groupBy,
+  ArrayUtils,
   SortUtils,
   useSortBy,
   useMutation,
@@ -208,11 +208,11 @@ export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
     const { lines } = invoice;
     const stockLines = lines.nodes.filter(forListView);
 
-    return Object.entries(groupBy(stockLines, line => line.item.id)).map(
-      ([itemId, lines]) => {
-        return { id: itemId, itemId, lines };
-      }
-    );
+    return Object.entries(
+      ArrayUtils.groupBy(stockLines, line => line.item.id)
+    ).map(([itemId, lines]) => {
+      return { id: itemId, itemId, lines };
+    });
   }, []);
 
   return useOutboundSelector(selectLines);
