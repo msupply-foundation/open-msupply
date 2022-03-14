@@ -1,11 +1,11 @@
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::validate_auth, standard_graphql_error::StandardGraphqlError, ContextExt,
+    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible},
+    standard_graphql_error::validate_auth,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
-use graphql_types::{
-    generic_errors::OtherPartyNotASupplier,
-    types::{NameNode, RequisitionNode},
-};
+use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
@@ -30,6 +30,7 @@ pub struct InsertInput {
 #[graphql(name = "InsertRequestRequisitionErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
+    OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
 }
 
@@ -111,15 +112,20 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::OtherPartyNotASupplier(name) => {
+        ServiceError::OtherPartyNotASupplier => {
             return Ok(InsertErrorInterface::OtherPartyNotASupplier(
-                OtherPartyNotASupplier(NameNode { name }),
+                OtherPartyNotASupplier,
+            ))
+        }
+        ServiceError::OtherPartyNotVisible => {
+            return Ok(InsertErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
             ))
         }
         // Standard Graphql Errors
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::OtherPartyIsThisStore => BadUserInput(formatted_error),
+
         ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
@@ -134,7 +140,6 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
-    use repository::Name;
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
@@ -214,13 +219,7 @@ mod test {
         "#;
 
         // OtherPartyNotASupplier
-        let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::OtherPartyNotASupplier(Name {
-                name_row: mock_name_a(),
-                name_store_join_row: None,
-                store_row: None,
-            }))
-        }));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
             "insertRequestRequisition": {
@@ -264,17 +263,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
+        // Cannot be an error, names are filtered so that name linked to current store is not shown
         // OtherPartyIsThisStore
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsThisStore)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
 
         // OtherPartyIsNotAStore
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsNotAStore)));

@@ -1,5 +1,4 @@
 use async_graphql::Object;
-use graphql_types::types::NameNode;
 pub struct CannotChangeStatusOfInvoiceOnHold;
 
 #[Object]
@@ -47,20 +46,6 @@ impl OtherPartyCannotBeThisStoreError {
         "Other party must be another store."
     }
 }
-
-pub struct OtherPartyNotACustomerError(pub NameNode);
-
-#[Object]
-impl OtherPartyNotACustomerError {
-    pub async fn description(&self) -> &'static str {
-        "Other party name is not a customer"
-    }
-
-    pub async fn other_party(&self) -> &NameNode {
-        &self.0
-    }
-}
-
 pub struct NotAnOutboundShipmentError;
 
 #[Object]

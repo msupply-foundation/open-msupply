@@ -1,17 +1,5 @@
-use crate::types::{InvoiceLineConnector, NameNode};
+use crate::types::InvoiceLineConnector;
 use async_graphql::*;
-
-pub struct OtherPartyNotASupplier(pub NameNode);
-#[Object]
-impl OtherPartyNotASupplier {
-    pub async fn description(&self) -> &'static str {
-        "Other party name is not a supplier"
-    }
-
-    pub async fn other_party(&self) -> &NameNode {
-        &self.0
-    }
-}
 
 pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
