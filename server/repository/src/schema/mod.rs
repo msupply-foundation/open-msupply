@@ -15,6 +15,7 @@ mod name_store_join;
 mod number;
 mod pricing;
 mod remote_sync_buffer;
+pub mod report;
 mod requisition;
 mod requisition_line;
 mod stock_line;
