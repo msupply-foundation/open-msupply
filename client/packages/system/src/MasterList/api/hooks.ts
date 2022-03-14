@@ -6,7 +6,7 @@ import {
   useQueryParams,
   UseQueryResult,
   useParams,
-  getColumnSorter,
+  SortUtils,
 } from '@openmsupply-client/common';
 import {
   getSdk,
@@ -81,7 +81,9 @@ export const useMasterListLines = () => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     const { getSortValue } = currentColumn ?? {};
     return getSortValue
-      ? lines?.nodes.sort(getColumnSorter(getSortValue, !!sortBy.isDesc))
+      ? lines?.nodes.sort(
+          SortUtils.getColumnSorter(getSortValue, !!sortBy.isDesc)
+        )
       : lines?.nodes;
   }, [sortBy.key, sortBy.isDesc, lines]);
 

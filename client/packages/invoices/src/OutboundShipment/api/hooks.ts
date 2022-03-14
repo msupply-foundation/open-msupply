@@ -16,7 +16,7 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
   groupBy,
-  getColumnSorter,
+  SortUtils,
   useSortBy,
   useMutation,
   useTableStore,
@@ -239,7 +239,7 @@ export const useOutboundRows = (isGrouped = true) => {
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
@@ -249,7 +249,7 @@ export const useOutboundRows = (isGrouped = true) => {
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );

@@ -2,12 +2,10 @@ import {
   formatExpiryDateString,
   getRowExpandColumn,
   GenericColumnKey,
-  getSumOfKeyReducer,
   getNotePopoverColumn,
-  ifTheSameElseDefault,
   useColumns,
   Column,
-  getUnitQuantity,
+  ArrayUtils,
   useCurrency,
   useSortBy,
 } from '@openmsupply-client/common';
@@ -52,7 +50,7 @@ export const useInboundShipmentColumns = () => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               const items = lines.map(({ item }) => item);
-              return ifTheSameElseDefault(items, 'code', '');
+              return ArrayUtils.ifTheSameElseDefault(items, 'code', '');
             } else {
               return rowData.item.code;
             }
@@ -61,7 +59,7 @@ export const useInboundShipmentColumns = () => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               const items = lines.map(({ item }) => item);
-              return ifTheSameElseDefault(items, 'code', '');
+              return ArrayUtils.ifTheSameElseDefault(items, 'code', '');
             } else {
               return rowData.item.code;
             }
@@ -75,7 +73,7 @@ export const useInboundShipmentColumns = () => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               const items = lines.map(({ item }) => item);
-              return ifTheSameElseDefault(items, 'name', '');
+              return ArrayUtils.ifTheSameElseDefault(items, 'name', '');
             } else {
               return rowData.item.name;
             }
@@ -84,7 +82,7 @@ export const useInboundShipmentColumns = () => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               const items = lines.map(({ item }) => item);
-              return ifTheSameElseDefault(items, 'name', '');
+              return ArrayUtils.ifTheSameElseDefault(items, 'name', '');
             } else {
               return rowData.item.name;
             }
@@ -97,7 +95,11 @@ export const useInboundShipmentColumns = () => {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'batch', '[multiple]');
+              return ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'batch',
+                '[multiple]'
+              );
             } else {
               return rowData.batch;
             }
@@ -105,7 +107,10 @@ export const useInboundShipmentColumns = () => {
           getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'batch', '[multiple]') ?? '';
+              return (
+                ArrayUtils.ifTheSameElseDefault(lines, 'batch', '[multiple]') ??
+                ''
+              );
             } else {
               return rowData.batch ?? '';
             }
@@ -118,7 +123,7 @@ export const useInboundShipmentColumns = () => {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              const expiryDate = ifTheSameElseDefault(
+              const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
                 null
@@ -132,7 +137,7 @@ export const useInboundShipmentColumns = () => {
           getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              const expiryDate = ifTheSameElseDefault(
+              const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
                 null
@@ -154,7 +159,7 @@ export const useInboundShipmentColumns = () => {
               const locations = lines
                 .map(({ location }) => location)
                 .filter(Boolean) as LocationRowFragment[];
-              return ifTheSameElseDefault(locations, 'name', '');
+              return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
             } else {
               return rowData.location?.name ?? '';
             }
@@ -165,7 +170,7 @@ export const useInboundShipmentColumns = () => {
               const locations = lines
                 .map(({ location }) => location)
                 .filter(Boolean) as LocationRowFragment[];
-              return ifTheSameElseDefault(locations, 'name', '');
+              return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
             } else {
               return rowData.location?.name ?? '';
             }
@@ -179,7 +184,7 @@ export const useInboundShipmentColumns = () => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               return c(
-                ifTheSameElseDefault(lines, 'sellPricePerPack', '')
+                ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
               ).format();
             } else {
               return c(rowData.sellPricePerPack).format();
@@ -189,7 +194,7 @@ export const useInboundShipmentColumns = () => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               return c(
-                ifTheSameElseDefault(lines, 'sellPricePerPack', '')
+                ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
               ).format();
             } else {
               return c(rowData.sellPricePerPack).format();
@@ -203,7 +208,7 @@ export const useInboundShipmentColumns = () => {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'packSize', '');
+              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
             } else {
               return rowData.packSize;
             }
@@ -211,7 +216,7 @@ export const useInboundShipmentColumns = () => {
           getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'packSize', '');
+              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
             } else {
               return rowData.packSize;
             }
@@ -224,7 +229,7 @@ export const useInboundShipmentColumns = () => {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return lines.reduce(getUnitQuantity, 0);
+              return ArrayUtils.getUnitQuantity(lines);
             } else {
               return rowData.packSize * rowData.numberOfPacks;
             }
@@ -232,7 +237,7 @@ export const useInboundShipmentColumns = () => {
           getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return lines.reduce(getUnitQuantity, 0);
+              return ArrayUtils.getUnitQuantity(lines);
             } else {
               return rowData.packSize * rowData.numberOfPacks;
             }
@@ -245,7 +250,7 @@ export const useInboundShipmentColumns = () => {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return lines.reduce(getSumOfKeyReducer('numberOfPacks'), 0);
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
             } else {
               return rowData.numberOfPacks;
             }
@@ -253,7 +258,7 @@ export const useInboundShipmentColumns = () => {
           getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return lines.reduce(getSumOfKeyReducer('numberOfPacks'), 0);
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
             } else {
               return rowData.numberOfPacks;
             }

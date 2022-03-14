@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   useTranslation,
   InvoiceLineNodeType,
-  ifTheSameElseDefault,
+  ArrayUtils,
   isExpired,
   uniqBy,
 } from '@openmsupply-client/common';
@@ -113,7 +113,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   }
 
   const items = lines.map(({ item }) => item);
-  const itemId = ifTheSameElseDefault(items, 'id', '');
+  const itemId = ArrayUtils.ifTheSameElseDefault(items, 'id', '');
   useEffect(() => setSelected(undefined), [itemId]);
 
   // Effect to auto-select an option. Runs when the item changes (selected is null'd) or
@@ -129,7 +129,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
       // If there are multiple, check if all the allocated lines have the same pack size.
       // If so, select that pack size. Otherwise, select `any`.
       if (validPackSizes.length > 1) {
-        const sameAllocated = ifTheSameElseDefault(
+        const sameAllocated = ArrayUtils.ifTheSameElseDefault(
           validPackSizes.filter(({ hasAllocated }) => hasAllocated),
           'packSize',
           -1
