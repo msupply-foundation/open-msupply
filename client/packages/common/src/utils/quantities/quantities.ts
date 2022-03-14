@@ -1,4 +1,5 @@
-import { NumUtils } from './NumUtils';
+import { NumUtils } from '../numbers';
+
 export const suggestedQuantity = (amc: number, soh: number, mos: number) => {
   // If there is no consumption, don't suggest any
   if (!NumUtils.isPositive(amc)) return 0;

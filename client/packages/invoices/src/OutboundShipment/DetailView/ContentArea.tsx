@@ -10,7 +10,7 @@ import {
   InvoiceLineNodeType,
   useRowStyle,
   AppSxProp,
-  getUnitQuantity,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { useOutboundRows } from '../api';
@@ -37,7 +37,7 @@ const Expand: FC<{
         accessor: () => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            return lines.reduce(getUnitQuantity, 0);
+            return ArrayUtils.getUnitQuantity(lines);
           } else {
             return rowData.packSize * rowData.numberOfPacks;
           }

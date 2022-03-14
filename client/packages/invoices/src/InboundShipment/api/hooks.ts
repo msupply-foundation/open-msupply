@@ -1,13 +1,12 @@
 import { useMemo, useCallback } from 'react';
 import {
   useIsGrouped,
-  getColumnSorter,
   useQueryParams,
   useTableStore,
   useTranslation,
   useNotification,
   useNavigate,
-  getDataSorter,
+  SortUtils,
   useSortBy,
   FieldSelectorControl,
   useQueryClient,
@@ -116,7 +115,9 @@ export const useInboundItems = () => {
   const selectItems = useCallback((invoice: InboundFragment) => {
     return inboundLinesToSummaryItems(
       invoice.lines.nodes.filter(line => isA.stockInLine(line))
-    ).sort(getDataSorter(sortBy.key as keyof InboundItem, !!sortBy.isDesc));
+    ).sort(
+      SortUtils.getDataSorter(sortBy.key as keyof InboundItem, !!sortBy.isDesc)
+    );
   }, []);
 
   const { data } = useInboundSelector(selectItems);
@@ -325,7 +326,7 @@ export const useInboundRows = () => {
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
@@ -335,7 +336,7 @@ export const useInboundRows = () => {
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );

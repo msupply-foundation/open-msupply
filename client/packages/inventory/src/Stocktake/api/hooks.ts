@@ -14,7 +14,7 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
   groupBy,
-  getColumnSorter,
+  SortUtils,
   useSortBy,
   useAuthContext,
   useQueryParams,
@@ -250,7 +250,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
@@ -260,7 +260,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );

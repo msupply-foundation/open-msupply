@@ -1,12 +1,12 @@
 import { v4 } from 'uuid';
 import { isEqual } from 'lodash';
 
-export * from './NumUtils';
+export * from './numbers';
 export * from './quantities';
 export * from './formatters';
 export * from './testing';
 export * from './debounce';
-export * from './dateFunctions';
+export * from './dates/dateFunctions';
 export * from './arrays';
 export * from './regex';
 
