@@ -120,8 +120,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 >
                   <InputLabel sx={{ fontSize: '12px' }}>
                     {packSizeController.selected?.value === -1
-                      ? t('label.packs-of', { count: quantity })
-                      : t('label.units-in-pack-size-of', { count: quantity })}
+                      ? t('label.units-in-pack-size-of', { count: quantity })
+                      : t('label.packs-of', { count: quantity })}
                   </InputLabel>
                 </Grid>
 
@@ -141,7 +141,20 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                     );
                   }}
                 />
-
+                {packSizeController.selected?.value !== -1 && (
+                  <Grid
+                    item
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="flex-start"
+                  >
+                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
+                      {t('label.units', {
+                        count: packSizeController.selected?.value,
+                      })}
+                    </InputLabel>
+                  </Grid>
+                )}
                 <Box marginLeft="auto" />
               </>
             ) : null}
