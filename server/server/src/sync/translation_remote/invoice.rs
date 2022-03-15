@@ -97,6 +97,10 @@ pub struct LegacyTransactRow {
     pub comment: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub their_ref: Option<String>,
+    #[serde(rename = "om_transport_reference")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub transport_reference: Option<String>,
 
     pub Colour: i32,
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -194,6 +198,7 @@ impl RemotePullTranslation for InvoiceTranslation {
                 colour: Some(format!("#{:06X}", data.Colour)),
                 requisition_id: data.requisition_ID,
                 linked_invoice_id: data.linked_transaction_id,
+                transport_reference: data.transport_reference,
             }),
         )))
     }
@@ -339,6 +344,7 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             colour,
             requisition_id,
             linked_invoice_id,
+            transport_reference,
         } = InvoiceRepository::new(connection)
             .find_one_by_id(&changelog.row_id)
             .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?;
@@ -364,6 +370,7 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             status,
             hold: on_hold,
             comment,
+            transport_reference,
             their_ref: their_reference,
             Colour: colour.map(|colour| parse_html_colour(&colour)).unwrap_or(0),
             requisition_ID: requisition_id,
@@ -431,4 +438,29 @@ fn legacy_invoice_status(
         InvoiceRowType::InventoryAdjustment => return None,
     };
     Some(status)
+}
+
+#[cfg(test)]
+mod tests {
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    use crate::sync::translation_remote::{
+        invoice::InvoiceTranslation, pull::RemotePullTranslation,
+        test_data::transact::get_test_transact_records,
+    };
+
+    #[actix_rt::test]
+    async fn test_invoice_translation() {
+        let (_, connection, _, _) =
+            setup_all("test_invoice_translation", MockDataInserts::all()).await;
+
+        let translator = InvoiceTranslation {};
+        for record in get_test_transact_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.remote_sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
 }
