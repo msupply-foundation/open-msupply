@@ -46,9 +46,7 @@ export const useFilterBy = (initialFilterBy?: FilterBy | null): FilterState => {
     value: string
   ) => {
     if (value === '') {
-      const newFilter = { ...filterBy };
-      delete newFilter[key];
-      setFilterBy(newFilter);
+      onClearFilterRule(key);
     } else {
       const newFilter = { [key]: { [condition]: value } };
       setFilterBy({ ...filterBy, ...newFilter });
@@ -65,7 +63,9 @@ export const useFilterBy = (initialFilterBy?: FilterBy | null): FilterState => {
   };
 
   const onClearFilterRule = (key: string) => {
-    setFilterBy({ ...filterBy, [key]: null });
+    const newFilter = { ...filterBy };
+    delete newFilter[key];
+    setFilterBy(newFilter);
   };
 
   const filterState = {
