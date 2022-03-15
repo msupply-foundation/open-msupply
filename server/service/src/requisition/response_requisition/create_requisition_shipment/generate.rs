@@ -1,6 +1,8 @@
 use super::OutError;
 use crate::{
-    invoice::check_other_party_id, number::next_number, user_account::get_default_user_id, requisition::requisition_supply_status::RequisitionLineSupplyStatus,
+    invoice::check_other_party_id, number::next_number,
+    requisition::requisition_supply_status::RequisitionLineSupplyStatus,
+    user_account::get_default_user_id,
 };
 use chrono::Utc;
 use repository::{
@@ -37,6 +39,7 @@ pub fn generate(
         on_hold: false,
         comment: None,
         their_reference: None,
+        transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,

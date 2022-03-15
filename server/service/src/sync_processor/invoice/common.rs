@@ -100,6 +100,7 @@ pub fn generate_linked_invoice(
         created_datetime: Utc::now().naive_utc(),
         picked_datetime: source_invoice.picked_datetime,
         shipped_datetime: source_invoice.shipped_datetime,
+        transport_reference: source_invoice.transport_reference.clone(),
         // Default
         colour: None,
         user_id: None,
