@@ -74,10 +74,20 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   );
 
   return (
-    <Box>
+    <Box style={{ width: '100%' }}>
       <Divider margin={10} />
-      <Box style={{ height: 390, overflowX: 'hidden', overflowY: 'scroll' }}>
-        <DataTable columns={columns} data={orderedRows} dense />
+      <Box
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: 390,
+          overflowX: 'hidden',
+          overflowY: 'auto',
+        }}
+      >
+        {!!orderedRows.length && (
+          <DataTable columns={columns} data={orderedRows} dense />
+        )}
         {placeholderRow ? (
           <PlaceholderRow line={placeholderRow} onChange={onChange} />
         ) : null}

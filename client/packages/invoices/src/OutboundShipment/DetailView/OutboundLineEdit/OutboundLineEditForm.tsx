@@ -47,13 +47,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   const { items } = useOutboundRows();
 
   const onChangePackSize = (newPackSize: number) => {
-    const previousPackSize = packSizeController.selected?.value || 1;
-    const newQuantity =
-      previousPackSize > newPackSize ? quantity * previousPackSize : quantity;
-
+    const newAllocatedQuantity =
+      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / newPackSize);
     packSizeController.setPackSize(newPackSize);
     onChangeQuantity(
-      Math.round(newQuantity / newPackSize),
+      newAllocatedQuantity,
       newPackSize === -1 ? null : newPackSize
     );
   };
