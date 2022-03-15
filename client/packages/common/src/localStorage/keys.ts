@@ -6,7 +6,7 @@ export type GroupByItem = {
   inboundShipment?: boolean;
 };
 type AuthenticationCredentials = {
-  store?: { id: string; code: string } | undefined;
+  store?: { id: string; code: string; __typename: 'StoreNode' } | undefined;
   username: string;
 };
 
