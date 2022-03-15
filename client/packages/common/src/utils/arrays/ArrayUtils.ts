@@ -1,3 +1,4 @@
+import { RecordPatch, RecordWithId } from '@common/types';
 import groupBy from 'lodash/groupBy';
 import uniqBy from 'lodash/uniqBy';
 
@@ -33,6 +34,20 @@ export const ArrayUtils = {
     key: K
   ): number => {
     return arr.reduce((sum, someEntity) => sum + someEntity[key], 0);
+  },
+  immutableUpdateById: <T extends RecordWithId>(
+    arr: T[],
+    patch: RecordPatch<T>
+  ) => {
+    return arr.map(entity => {
+      if (entity.id === patch.id) {
+        return {
+          ...entity,
+          ...patch,
+        };
+      }
+      return entity;
+    });
   },
   groupBy,
   uniqBy,

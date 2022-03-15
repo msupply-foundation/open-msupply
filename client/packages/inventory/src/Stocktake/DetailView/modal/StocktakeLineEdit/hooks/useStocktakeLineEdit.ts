@@ -1,4 +1,4 @@
-import { RecordPatch } from '@openmsupply-client/common';
+import { RecordPatch, ArrayUtils } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import {
   StocktakeLineFragment,
@@ -27,18 +27,7 @@ export const useStocktakeLineEdit = (
   const { mutate: save, isLoading } = useSaveStocktakeLines();
 
   const update = (patch: RecordPatch<StocktakeLineFragment>) => {
-    setDraftLines(lines => {
-      return lines.map(line => {
-        if (line.id === patch.id) {
-          return {
-            ...line,
-            ...patch,
-            isUpdated: !line.isCreated,
-          };
-        }
-        return line;
-      });
-    });
+    setDraftLines(lines => ArrayUtils.immutableUpdateById(lines, patch));
   };
 
   const addLine = () => {
