@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import {
   Formatter,
-  Tooltip,
   Grid,
   DetailPanelSection,
   PanelField,
@@ -13,8 +12,8 @@ import {
   useFormatCurrency,
   PricingNode,
   PricingUtils,
-  InfoIcon,
   MenuDotsIcon,
+  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import {
   useOutboundFields,
@@ -30,14 +29,6 @@ type PricingGroupProps = {
   pricing: PricingNode;
   isDisabled?: boolean;
 };
-
-const InfoTooltip = ({ title }: { title: string }) => (
-  <Tooltip title={title}>
-    <div style={{ transform: 'scale(0.7)', cursor: 'help' }}>
-      <InfoIcon fontSize="small" />
-    </div>
-  </Tooltip>
-);
 
 const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   const serviceLineModal = useToggle(false);
@@ -66,7 +57,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         />
       )}
       <PanelRow>
-        <InfoTooltip title={t('messages.service-charges-description')} />
+        <InfoTooltipIcon title={t('messages.service-charges-description')} />
         <PanelLabel fontWeight="bold">
           {t('heading.service-charges')}
         </PanelLabel>
@@ -125,7 +116,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
   return (
     <>
       <PanelRow>
-        <InfoTooltip title={t('messages.stock-charges-description')} />
+        <InfoTooltipIcon title={t('messages.stock-charges-description')} />
         <PanelLabel fontWeight="bold">
           {t('heading.item-sell-price')}
         </PanelLabel>

@@ -133,6 +133,12 @@ fragment Request on RequisitionNode {
   maxMonthsOfStock
   minMonthsOfStock
 
+  user {
+    __typename
+    username
+    email
+  }
+
   lines {
     __typename
     totalCount
