@@ -1,40 +1,40 @@
 import React, { memo } from 'react';
 import {
-  PanelRow,
-  PanelLabel,
-  PanelField,
-  Link,
   Grid,
   DetailPanelSection,
+  PanelField,
+  PanelLabel,
+  PanelRow,
   useTranslation,
+  Tooltip,
+  Link,
   useFormatDate,
   RouteBuilder,
-  Tooltip,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { useOutboundFields } from '../../api';
+import { useInboundFields } from '../../api';
 
-const RelatedDocumentsSectionComponent = () => {
-  const t = useTranslation('distribution');
+export const RelatedDocumentsSectionComponent = () => {
+  const t = useTranslation('replenishment');
   const d = useFormatDate();
-  const { requisition } = useOutboundFields('requisition');
+  const { requisition } = useInboundFields('requisition');
 
   let tooltip = '';
   if (requisition) {
     const { user, createdDatetime } = requisition;
-    tooltip = t('messages.customer-requisition-created-on', {
+    tooltip = t('messages.internal-order-created-on', {
       date: d(new Date(createdDatetime)),
     });
-    if (user && user?.username !== 'unknown') {
+    if (user?.username && user.username !== 'unknown') {
       tooltip += ` ${t('messages.by-user', {
-        user: user?.username,
+        username: user?.username,
       })}`;
     }
   }
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item direction="column" container gap={0.5}>
+      <Grid item direction="column" gap={0.5}>
         {!requisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
@@ -44,8 +44,8 @@ const RelatedDocumentsSectionComponent = () => {
                 <PanelLabel>{t('label.requisition')}</PanelLabel>
                 <PanelField>
                   <Link
-                    to={RouteBuilder.create(AppRoute.Distribution)
-                      .addPart(AppRoute.CustomerRequisition)
+                    to={RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.InternalOrder)
                       .addPart(String(requisition?.requisitionNumber))
                       .build()}
                   >{`#${requisition?.requisitionNumber}`}</Link>

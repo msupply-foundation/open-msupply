@@ -86,7 +86,7 @@ const RelatedDocumentsSection: FC = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item direction="column" container gap={0.5}>
+      <Grid item direction="column" gap={0.5}>
         {!shipments?.totalCount && (
           <PanelLabel>{t('messages.no-shipments-yet')}</PanelLabel>
         )}
@@ -102,10 +102,10 @@ const RelatedDocumentsSection: FC = () => {
               <RelatedDocumentsRow
                 key={shipment.id}
                 label={t('label.shipment')}
-                value={shipment?.invoiceNumber}
+                value={shipment.invoiceNumber}
                 to={RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
-                  .addPart(String(shipment?.invoiceNumber))
+                  .addPart(String(shipment.invoiceNumber))
                   .build()}
               />
             </Grid>
