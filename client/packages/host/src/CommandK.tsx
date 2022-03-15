@@ -81,13 +81,13 @@ export const CommandK: FC = ({ children }) => {
   const drawer = useDrawer();
   const t = useTranslation('app');
   const actions = [
-    {
-      id: 'test:just-testing',
-      name: 'Just testimg',
-      shortcut: ['9'],
-      // keywords: 'drawer, close',
-      perform: () => console.log('TESTING'),
-    },
+    // {
+    //   id: 'test:just-testing',
+    //   name: 'Testing shortcuts?',
+    //   shortcut: ['arrowdown'],
+    //   // keywords: 'drawer, close',
+    //   perform: () => console.log('TESTING'),
+    // },
     {
       id: 'navigation-drawer:toggle',
       name: `${t('cmdk.drawer-toggle')} (m)`,
