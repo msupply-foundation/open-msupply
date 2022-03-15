@@ -25,6 +25,22 @@ const parseValue = <T, K extends keyof T>(object: T, key: K) => {
   return value;
 };
 
+const getSortByExpiry =
+  (desc = false) =>
+  (a: { expiryDate?: string | null }, b: { expiryDate?: string | null }) => {
+    const expiryA = new Date(a.expiryDate ?? '');
+    const expiryB = new Date(b.expiryDate ?? '');
+
+    if (expiryA < expiryB) {
+      return desc ? 1 : -1;
+    }
+    if (expiryA > expiryB) {
+      return desc ? -1 : 1;
+    }
+
+    return 0;
+  };
+
 export const SortUtils = {
   getDataSorter:
     <T, K extends keyof T>(sortKey: K, desc: boolean) =>
@@ -42,4 +58,6 @@ export const SortUtils = {
 
       return sortValues(valueA, valueB, desc);
     },
+  byExpiryAsc: getSortByExpiry(false),
+  byExpiryDesc: getSortByExpiry(true),
 };
