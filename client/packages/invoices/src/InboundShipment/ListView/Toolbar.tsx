@@ -13,11 +13,11 @@ import { useDeleteSelectedInbounds, InboundRowFragment } from '../api';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation();
+  const t = useTranslation('distribution');
   const onDelete = useDeleteSelectedInbounds();
 
-  const key = 'comment' as keyof InboundRowFragment;
-  const filterString = filter.filterBy?.[key]?.like as string;
+  const key = 'otherPartyName' as keyof InboundRowFragment;
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -29,10 +29,10 @@ export const Toolbar: FC<{
       }}
     >
       <SearchBar
-        placeholder="Search by comment..."
+        placeholder={t('placeholder.search-by-name')}
         value={filterString}
         onChange={newValue =>
-          filter.onChangeStringFilterRule('comment', 'like', newValue)
+          filter.onChangeStringFilterRule('otherPartyName', 'like', newValue)
         }
       />
 
