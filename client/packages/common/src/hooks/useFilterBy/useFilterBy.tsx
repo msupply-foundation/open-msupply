@@ -45,8 +45,14 @@ export const useFilterBy = (initialFilterBy?: FilterBy | null): FilterState => {
     condition: FilterByConditionByType['string'],
     value: string
   ) => {
-    const newFilter = { [key]: { [condition]: value } };
-    setFilterBy({ ...filterBy, ...newFilter });
+    if (value === '') {
+      const newFilter = { ...filterBy };
+      delete newFilter[key];
+      setFilterBy(newFilter);
+    } else {
+      const newFilter = { [key]: { [condition]: value } };
+      setFilterBy({ ...filterBy, ...newFilter });
+    }
   };
 
   const onChangeDateFilterRule = (
