@@ -126,13 +126,57 @@ mutation upsertStocktakeLines(
     ... on BatchStocktakeResponse {
       __typename
       deleteStocktakeLines {
+        __typename
         id
+        response {
+          ... on DeleteStocktakeLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditStocktake {
+                __typename
+                description
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
       }
       insertStocktakeLines {
+        __typename
         id
+        response {
+          __typename
+          ... on InsertStocktakeLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditStocktake {
+                __typename
+                description
+              }
+            }
+          }
+        }
       }
       updateStocktakeLines {
+        __typename
         id
+        response {
+          ... on UpdateStocktakeLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditStocktake {
+                __typename
+                description
+              }
+            }
+          }
+        }
       }
     }
   }
