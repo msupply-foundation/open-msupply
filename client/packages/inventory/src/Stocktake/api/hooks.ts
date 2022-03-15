@@ -13,8 +13,8 @@ import {
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  groupBy,
-  getColumnSorter,
+  ArrayUtils,
+  SortUtils,
   useSortBy,
   useAuthContext,
   useQueryParams,
@@ -53,8 +53,15 @@ const useStocktakeNumber = () => {
 export const useStocktake = (): UseQueryResult<StocktakeFragment> => {
   const stocktakeNumber = useStocktakeNumber();
   const api = useStocktakeApi();
-  return useQuery(api.keys.detail(stocktakeNumber), () =>
-    api.get.byNumber(stocktakeNumber)
+  return useQuery(
+    api.keys.detail(stocktakeNumber),
+    () => api.get.byNumber(stocktakeNumber),
+    // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
+    // is inactive. For example, when navigating away from the page and back again, refetch.
+    {
+      refetchOnMount: false,
+      cacheTime: 0,
+    }
   );
 };
 
@@ -156,7 +163,7 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
   const selectLines = useCallback((stocktake: StocktakeFragment) => {
     const { lines } = stocktake;
 
-    return Object.entries(groupBy(lines.nodes, 'itemId')).map(
+    return Object.entries(ArrayUtils.groupBy(lines.nodes, 'itemId')).map(
       ([itemId, lines]) => {
         return {
           id: itemId,
@@ -250,7 +257,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
@@ -260,7 +267,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );

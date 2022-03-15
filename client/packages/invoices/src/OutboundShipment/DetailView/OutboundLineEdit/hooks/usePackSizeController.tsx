@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import {
   useTranslation,
   InvoiceLineNodeType,
-  ifTheSameElseDefault,
-  isExpired,
-  uniqBy,
+  DateUtils,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../../types';
 
@@ -37,7 +36,9 @@ const createPackSizeOption = (line: DraftOutboundLine) => ({
     ? true
     : (line?.stockLine?.availableNumberOfPacks ?? 0) > 0,
   isPlaceholder: isPlaceholder(line),
-  isExpired: line.expiryDate ? isExpired(new Date(line.expiryDate)) : false,
+  isExpired: line.expiryDate
+    ? DateUtils.isExpired(new Date(line.expiryDate))
+    : false,
   isOnHold: line.stockLine?.onHold,
   value: line.packSize,
   label: String(line.packSize),
@@ -87,7 +88,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   // - is not on hold.
   // - is not expired.
   // - has some available stock.
-  const validPackSizes = uniqBy(
+  const validPackSizes = ArrayUtils.uniqBy(
     packSizes.filter(
       packSize =>
         // - is a placeholder and has allocated stock.
@@ -113,7 +114,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   }
 
   const items = lines.map(({ item }) => item);
-  const itemId = ifTheSameElseDefault(items, 'id', '');
+  const itemId = ArrayUtils.ifTheSameElseDefault(items, 'id', '');
   useEffect(() => setSelected(undefined), [itemId]);
 
   // Effect to auto-select an option. Runs when the item changes (selected is null'd) or
@@ -129,7 +130,7 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
       // If there are multiple, check if all the allocated lines have the same pack size.
       // If so, select that pack size. Otherwise, select `any`.
       if (validPackSizes.length > 1) {
-        const sameAllocated = ifTheSameElseDefault(
+        const sameAllocated = ArrayUtils.ifTheSameElseDefault(
           validPackSizes.filter(({ hasAllocated }) => hasAllocated),
           'packSize',
           -1

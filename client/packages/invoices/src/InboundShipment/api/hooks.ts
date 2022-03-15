@@ -1,13 +1,12 @@
 import { useMemo, useCallback } from 'react';
 import {
   useIsGrouped,
-  getColumnSorter,
   useQueryParams,
   useTableStore,
   useTranslation,
   useNotification,
   useNavigate,
-  getDataSorter,
+  SortUtils,
   useSortBy,
   FieldSelectorControl,
   useQueryClient,
@@ -56,8 +55,15 @@ const useInboundNumber = () => {
 export const useInbound = () => {
   const invoiceNumber = useInboundNumber();
   const api = useInboundApi();
-  return useQuery(api.keys.detail(invoiceNumber), () =>
-    api.get.byNumber(invoiceNumber)
+  return useQuery(
+    api.keys.detail(invoiceNumber),
+    () => api.get.byNumber(invoiceNumber),
+    // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
+    // is inactive. For example, when navigating away from the page and back again, refetch.
+    {
+      refetchOnMount: false,
+      cacheTime: 0,
+    }
   );
 };
 
@@ -116,7 +122,9 @@ export const useInboundItems = () => {
   const selectItems = useCallback((invoice: InboundFragment) => {
     return inboundLinesToSummaryItems(
       invoice.lines.nodes.filter(line => isA.stockInLine(line))
-    ).sort(getDataSorter(sortBy.key as keyof InboundItem, !!sortBy.isDesc));
+    ).sort(
+      SortUtils.getDataSorter(sortBy.key as keyof InboundItem, !!sortBy.isDesc)
+    );
   }, []);
 
   const { data } = useInboundSelector(selectItems);
@@ -325,7 +333,7 @@ export const useInboundRows = () => {
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
@@ -335,7 +343,7 @@ export const useInboundRows = () => {
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );

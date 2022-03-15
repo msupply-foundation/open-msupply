@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-
 import {
   Grid,
   CopyIcon,
@@ -11,6 +10,9 @@ import {
   useBufferState,
   useNotification,
   useTranslation,
+  PanelRow,
+  PanelField,
+  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import {
   useIsStocktakeDisabled,
@@ -21,13 +23,19 @@ import {
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
 
-  const { comment, update } = useStocktakeFields('comment');
+  const { comment, user, update } = useStocktakeFields(['comment', 'user']);
   const [bufferedComment, setBufferedComment] = useBufferState(comment);
   const isDisabled = useIsStocktakeDisabled();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
+        <PanelRow>
+          <PanelLabel>{t('label.entered-by')}</PanelLabel>
+          <PanelField>{user?.username}</PanelField>
+          {user?.email ? <InfoTooltipIcon title={user.email} /> : null}
+        </PanelRow>
+
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <BufferedTextArea
           disabled={isDisabled}

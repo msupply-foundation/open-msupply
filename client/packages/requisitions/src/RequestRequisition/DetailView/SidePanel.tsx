@@ -17,19 +17,29 @@ import {
   Link,
   useFormatDate,
   RouteBuilder,
+  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import { useIsRequestDisabled, useRequest, useRequestFields } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
 const AdditionalInfoSection: FC = () => {
   const isDisabled = useIsRequestDisabled();
-  const { colour, comment, update } = useRequestFields(['colour', 'comment']);
+  const { user, colour, comment, update } = useRequestFields([
+    'colour',
+    'comment',
+    'user',
+  ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const t = useTranslation('common');
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
+        <PanelRow>
+          <PanelLabel>{t('label.entered-by')}</PanelLabel>
+          <PanelField>{user?.username}</PanelField>
+          {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
+        </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
@@ -86,7 +96,7 @@ const RelatedDocumentsSection: FC = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item direction="column" container gap={0.5}>
+      <Grid item direction="column" gap={0.5}>
         {!shipments?.totalCount && (
           <PanelLabel>{t('messages.no-shipments-yet')}</PanelLabel>
         )}
@@ -102,10 +112,10 @@ const RelatedDocumentsSection: FC = () => {
               <RelatedDocumentsRow
                 key={shipment.id}
                 label={t('label.shipment')}
-                value={shipment?.invoiceNumber}
+                value={shipment.invoiceNumber}
                 to={RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
-                  .addPart(String(shipment?.invoiceNumber))
+                  .addPart(String(shipment.invoiceNumber))
                   .build()}
               />
             </Grid>

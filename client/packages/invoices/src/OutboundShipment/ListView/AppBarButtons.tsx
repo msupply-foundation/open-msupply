@@ -9,7 +9,7 @@ import {
   Grid,
   useTranslation,
   useToggle,
-  generateUUID,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useCreateOutbound } from '../api';
@@ -34,7 +34,10 @@ export const AppBarButtonsComponent: FC = () => {
           onChange={async name => {
             modalController.toggleOff();
             try {
-              await onCreate({ id: generateUUID(), otherPartyId: name?.id });
+              await onCreate({
+                id: FnUtils.generateUUID(),
+                otherPartyId: name?.id,
+              });
             } catch (e) {
               const errorSnack = error(
                 'Failed to create invoice! ' + (e as Error).message

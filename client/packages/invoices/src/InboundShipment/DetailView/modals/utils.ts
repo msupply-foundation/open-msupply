@@ -1,4 +1,4 @@
-import { InvoiceLineNodeType, generateUUID } from '@openmsupply-client/common';
+import { InvoiceLineNodeType, FnUtils } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { DraftInboundLine } from './../../../types';
 import { InboundLineFragment } from './../../api/operations.generated';
@@ -20,7 +20,7 @@ const createDraftInboundLine = ({
     __typename: 'InvoiceLineNode',
     totalAfterTax: 0,
     totalBeforeTax: 0,
-    id: generateUUID(),
+    id: FnUtils.generateUUID(),
     invoiceId,
     sellPricePerPack: 0,
     costPricePerPack: 0,
@@ -28,6 +28,7 @@ const createDraftInboundLine = ({
     packSize: 1,
     isCreated: seed ? false : true,
     expiryDate: undefined,
+    location: undefined,
     type,
     item,
     ...seed,

@@ -6,7 +6,7 @@ import {
   Grid,
   DialogButton,
   useTranslation,
-  generateUUID,
+  FnUtils,
   ToggleButton,
   InlineSpinner,
 } from '@openmsupply-client/common';
@@ -28,7 +28,7 @@ const createNewLocation = (
   seed?: LocationRowFragment | null
 ): LocationRowFragment => ({
   __typename: 'LocationNode',
-  id: generateUUID(),
+  id: FnUtils.generateUUID(),
   name: '',
   code: '',
   onHold: false,

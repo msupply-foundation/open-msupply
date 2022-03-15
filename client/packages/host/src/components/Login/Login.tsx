@@ -1,20 +1,17 @@
 import React from 'react';
 import {
   ArrowRightIcon,
-  Box,
-  Stack,
-  Typography,
-  Autocomplete,
   useTranslation,
   AutocompleteRenderInputParams,
-  defaultOptionMapper,
   LoadingButton,
+  Box,
+  Typography,
   AlertIcon,
 } from '@openmsupply-client/common';
-import { LoginIcon } from './LoginIcon';
 import { LoginTextInput } from './LoginTextInput';
-import { useStores, StoreRowFragment } from '@openmsupply-client/system';
+import { StoreSearchInput } from '@openmsupply-client/system';
 import { useLoginForm } from './hooks';
+import { LoginLayout } from './LoginLayout';
 
 const StoreAutocompleteInput: React.FC<
   AutocompleteRenderInputParams
@@ -28,12 +25,6 @@ const StoreAutocompleteInput: React.FC<
       label={t('heading.store')}
     />
   );
-};
-
-const storeSorter = (a: StoreRowFragment, b: StoreRowFragment) => {
-  if (a.code < b.code) return -1;
-  if (a.code > b.code) return 1;
-  return 0;
 };
 
 export const Login: React.FC = ({}) => {
@@ -52,136 +43,71 @@ export const Login: React.FC = ({}) => {
     error,
   } = useLoginForm(passwordRef);
 
-  const { data, isLoading } = useStores();
-  const undefinedStore = {
-    label: '',
-    id: '',
-    code: '',
-  };
-  const stores = [
-    undefinedStore,
-    ...defaultOptionMapper((data?.nodes ?? []).sort(storeSorter), 'code'),
-  ];
-
-  const currentStore = stores.find(s => s.id === store?.id) || undefinedStore;
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter' && isValid) {
-      onLogin();
-    }
-  };
-
   return (
-    <Box display="flex">
-      <Box
-        flex="1 0 50%"
-        sx={{
-          backgroundImage: theme => theme.mixins.gradient.primary,
-          padding: '0 80px 7% 80px',
-        }}
-        display="flex"
-        alignItems="flex-start"
-        justifyContent="flex-end"
-        flexDirection="column"
-      >
-        <Box>
-          <Typography
-            sx={{
-              color: theme => theme.typography.login.color,
-              fontSize: '64px',
-              fontWeight: 'bold',
-              lineHeight: 'normal',
-              maxWidth: '525px',
-            }}
-          >
-            {t('login.heading')}
-          </Typography>
-        </Box>
-        <Box style={{ marginTop: 45 }}>
-          <Typography
-            sx={{
-              fontSize: theme => theme.typography.login.fontSize,
-              color: theme => theme.typography.login.color,
-              fontWeight: theme => theme.typography.login.fontWeight,
-            }}
-          >
-            {t('login.body')}
-          </Typography>
-        </Box>
-      </Box>
-      <Box
-        flex="1 0 50%"
-        sx={{
-          backgroundColor: 'background.login',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        display="flex"
-      >
-        <Box style={{ width: 285 }}>
-          <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
-            <Stack spacing={5}>
-              <Box display="flex" justifyContent="center">
-                <LoginIcon />
-              </Box>
-              <LoginTextInput
-                fullWidth
-                label={t('heading.username')}
-                value={username}
-                disabled={isLoggingIn}
-                onChange={e => setUsername(e.target.value)}
-                inputProps={{
-                  autoComplete: 'username',
-                }}
-                autoFocus
-              />
-              <LoginTextInput
-                fullWidth
-                label={t('heading.password')}
-                type="password"
-                value={password}
-                disabled={isLoggingIn}
-                onChange={e => setPassword(e.target.value)}
-                inputProps={{
-                  autoComplete: 'current-password',
-                }}
-                inputRef={passwordRef}
-              />
-              <Autocomplete
-                renderInput={StoreAutocompleteInput}
-                loading={isLoading}
-                options={stores}
-                disabled={isLoggingIn}
-                onChange={(_, value) => setStore(value || undefined)}
-                value={currentStore}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-              />
-              {error && (
-                <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
-                  <Box>
-                    <AlertIcon />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ color: 'inherit' }}>
-                      {error.message || t('error.login')}
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
-              <Box display="flex" justifyContent="flex-end">
-                <LoadingButton
-                  isLoading={isLoggingIn}
-                  onClick={onLogin}
-                  variant="outlined"
-                  endIcon={<ArrowRightIcon />}
-                  disabled={!isValid}
-                >
-                  {t('button.login')}
-                </LoadingButton>
-              </Box>
-            </Stack>
-          </form>
-        </Box>
-      </Box>
-    </Box>
+    <LoginLayout
+      UsernameInput={
+        <LoginTextInput
+          fullWidth
+          label={t('heading.username')}
+          value={username}
+          disabled={isLoggingIn}
+          onChange={e => setUsername(e.target.value)}
+          inputProps={{
+            autoComplete: 'username',
+          }}
+          autoFocus
+        />
+      }
+      PasswordInput={
+        <LoginTextInput
+          fullWidth
+          label={t('heading.password')}
+          type="password"
+          value={password}
+          disabled={isLoggingIn}
+          onChange={e => setPassword(e.target.value)}
+          inputProps={{
+            autoComplete: 'current-password',
+          }}
+          inputRef={passwordRef}
+        />
+      }
+      StoreInput={
+        <StoreSearchInput
+          onChange={setStore}
+          renderInput={StoreAutocompleteInput}
+          isDisabled={isLoggingIn}
+          value={store}
+        />
+      }
+      LoginButton={
+        <LoadingButton
+          isLoading={isLoggingIn}
+          onClick={onLogin}
+          variant="outlined"
+          endIcon={<ArrowRightIcon />}
+          disabled={!isValid}
+        >
+          {t('button.login')}
+        </LoadingButton>
+      }
+      ErrorMessage={
+        error && (
+          <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
+            <Box>
+              <AlertIcon />
+            </Box>
+            <Box>
+              <Typography sx={{ color: 'inherit' }}>
+                {error.message || t('error.login')}
+              </Typography>
+            </Box>
+          </Box>
+        )
+      }
+      onLogin={async () => {
+        if (isValid) await onLogin();
+      }}
+    />
   );
 };

@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 
 import {
-  generateUUID,
+  FnUtils,
   DownloadIcon,
   PlusCircleIcon,
   PrinterIcon,
@@ -46,7 +46,7 @@ export const AppBarButtons: FC = () => {
         onChange={async name => {
           modalController.toggleOff();
           onCreate({
-            id: generateUUID(),
+            id: FnUtils.generateUUID(),
             otherPartyId: name?.id,
           });
         }}

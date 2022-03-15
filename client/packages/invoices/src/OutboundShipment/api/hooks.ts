@@ -15,8 +15,8 @@ import {
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  groupBy,
-  getColumnSorter,
+  ArrayUtils,
+  SortUtils,
   useSortBy,
   useMutation,
   useTableStore,
@@ -77,8 +77,15 @@ export const useOutbound = (): UseQueryResult<OutboundFragment> => {
   const outboundNumber = useOutboundNumber();
   const api = useOutboundApi();
 
-  return useQuery(api.keys.detail(outboundNumber), () =>
-    api.get.byNumber(outboundNumber)
+  return useQuery(
+    api.keys.detail(outboundNumber),
+    () => api.get.byNumber(outboundNumber),
+    // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
+    // is inactive. For example, when navigating away from the page and back again, refetch.
+    {
+      refetchOnMount: false,
+      cacheTime: 0,
+    }
   );
 };
 
@@ -208,11 +215,11 @@ export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
     const { lines } = invoice;
     const stockLines = lines.nodes.filter(forListView);
 
-    return Object.entries(groupBy(stockLines, line => line.item.id)).map(
-      ([itemId, lines]) => {
-        return { id: itemId, itemId, lines };
-      }
-    );
+    return Object.entries(
+      ArrayUtils.groupBy(stockLines, line => line.item.id)
+    ).map(([itemId, lines]) => {
+      return { id: itemId, itemId, lines };
+    });
   }, []);
 
   return useOutboundSelector(selectLines);
@@ -239,7 +246,7 @@ export const useOutboundRows = (isGrouped = true) => {
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
@@ -249,7 +256,7 @@ export const useOutboundRows = (isGrouped = true) => {
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );

@@ -23,7 +23,11 @@ export const StoreRowFragmentDoc = gql`
     `;
 export const StoresDocument = gql`
     query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(page: {first: $first, offset: $offset}, filter: $filter) {
+  stores(
+    page: {first: $first, offset: $offset}
+    filter: $filter
+    sort: {key: name}
+  ) {
     ... on StoreConnector {
       __typename
       totalCount

@@ -1,5 +1,5 @@
 import React, { useEffect, Dispatch, SetStateAction } from 'react';
-import { RecordPatch, generateUUID } from '@openmsupply-client/common';
+import { RecordPatch, FnUtils } from '@openmsupply-client/common';
 import {
   useStockLines,
   ItemRowFragment,
@@ -46,7 +46,7 @@ const createDraftLine = (
     countThisLine: true,
     isCreated: true,
     isUpdated: false,
-    id: generateUUID(),
+    id: FnUtils.generateUUID(),
     expiryDate: null,
     itemId: item.id,
     sellPricePerPack: 0,
@@ -63,12 +63,12 @@ const stockLineToDraftLine = (
   return {
     stocktakeId,
     countThisLine: false,
-    isCreated: false,
+    isCreated: true,
     isUpdated: false,
     ...line,
     snapshotNumberOfPacks: line.totalNumberOfPacks,
     expiryDate: line.expiryDate ? line.expiryDate : null,
-    id: generateUUID(),
+    id: FnUtils.generateUUID(),
   };
 };
 

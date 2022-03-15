@@ -10,7 +10,7 @@ import {
   InsertInboundShipmentLineInput,
   DeleteInboundShipmentLineInput,
   UpdateInboundShipmentInput,
-  formatNaiveDate,
+  Formatter,
   UpdateInboundShipmentStatusInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
@@ -83,7 +83,7 @@ const inboundParsers = {
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
       expiryDate: line.expiryDate
-        ? formatNaiveDate(new Date(line.expiryDate))
+        ? Formatter.naiveDate(new Date(line.expiryDate))
         : null,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
@@ -99,7 +99,7 @@ const inboundParsers = {
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
     expiryDate: line.expiryDate
-      ? formatNaiveDate(new Date(line.expiryDate))
+      ? Formatter.naiveDate(new Date(line.expiryDate))
       : null,
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,

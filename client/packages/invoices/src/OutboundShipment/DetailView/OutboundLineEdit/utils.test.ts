@@ -1,8 +1,8 @@
 import {
   InvoiceNodeStatus,
-  generateUUID,
+  FnUtils,
   InvoiceLineNodeType,
-} from '@openmsupply-client/common/';
+} from '@openmsupply-client/common';
 import { DraftOutboundLine } from './../../../types';
 import {
   createDraftOutboundLine,
@@ -22,12 +22,12 @@ type TestLineParams = {
 };
 
 const createTestLine = ({
-  itemId = generateUUID(),
+  itemId = FnUtils.generateUUID(),
   packSize = 1,
   totalNumberOfPacks = 1,
   availableNumberOfPacks = 1,
   numberOfPacks = 0,
-  id = generateUUID(),
+  id = FnUtils.generateUUID(),
   onHold = false,
   expiryDate,
 }: TestLineParams): DraftOutboundLine =>
@@ -234,6 +234,7 @@ describe('Allocate quantities - differing pack size behaviour', () => {
     allocate = allocateQuantities(InvoiceNodeStatus.New, expected);
     const lineOneAfterChange = { ...one };
     const lineTwoAfterChange = { ...two };
+    lineOneAfterChange.numberOfPacks = 0;
     lineTwoAfterChange.numberOfPacks = 1;
     const placeholderAfterChange = { ...placeholder };
     placeholderAfterChange.numberOfPacks = 4;
@@ -385,7 +386,11 @@ describe('Allocated quantities - behaviour for expired lines', () => {
 
 describe('Allocated quantities - behaviour generally not possible through the UI', () => {
   it('issues all quantities to the place holder when issuing to a pack size that has no available quantity', () => {
-    const one = createTestLine({ id: '1', packSize: 2 });
+    const one = createTestLine({
+      id: '1',
+      packSize: 2,
+      availableNumberOfPacks: 0,
+    });
     const placeholder = getPlaceholder();
 
     const draftOutboundLines = [one, placeholder];
@@ -401,5 +406,142 @@ describe('Allocated quantities - behaviour generally not possible through the UI
     const expected = [lineOne, placeholderLine];
 
     expect(allocate(10, 1)).toEqual(expected);
+  });
+});
+
+describe('Allocated quantities - coping with over-allocation', () => {
+  const now = Date.now();
+  const expiringDate1 = new Date(now + 1000).toISOString();
+  const expiringDate2 = new Date(now + 2000).toISOString();
+  const expiringDate3 = new Date(now + 3000).toISOString();
+  const expiringDate4 = new Date(now + 4000).toISOString();
+
+  const Line1 = createTestLine({
+    id: '1',
+    expiryDate: expiringDate1,
+    availableNumberOfPacks: 5,
+    totalNumberOfPacks: 10,
+    packSize: 1,
+  });
+
+  const Line2 = createTestLine({
+    id: '2',
+    expiryDate: expiringDate2,
+    availableNumberOfPacks: 5,
+    totalNumberOfPacks: 10,
+    packSize: 1,
+  });
+  const Line3 = createTestLine({
+    id: '3',
+    expiryDate: expiringDate3,
+    availableNumberOfPacks: 10,
+    totalNumberOfPacks: 10,
+    packSize: 10,
+  });
+  const Line4 = createTestLine({
+    id: '4',
+    expiryDate: expiringDate4,
+    availableNumberOfPacks: 10,
+    totalNumberOfPacks: 10,
+    packSize: 1,
+  });
+
+  const placeholder = getPlaceholder();
+  it('issues to lines by expiry date without over allocating', () => {
+    const draftOutboundLines = [
+      { ...Line1 },
+      { ...Line2 },
+      { ...Line3 },
+      { ...Line4 },
+      { ...placeholder },
+    ];
+
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftOutboundLines
+    );
+
+    const line1 = { ...Line1, numberOfPacks: 2 };
+    const line2 = { ...Line2, numberOfPacks: 0 };
+    const line3 = { ...Line3, numberOfPacks: 1 };
+    const line4 = { ...Line4, numberOfPacks: 0 };
+
+    expect(allocate(12, null)).toEqual([
+      line1,
+      line2,
+      line3,
+      line4,
+      placeholder,
+    ]);
+  });
+
+  it('reduces previously allocated lines as needed', () => {
+    const draftOutboundLines = [
+      { ...Line1 },
+      { ...Line2 },
+      { ...Line3 },
+      { ...Line4, packSize: 10 },
+      { ...placeholder },
+    ];
+
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftOutboundLines
+    );
+
+    const line1 = { ...Line1, numberOfPacks: 2 };
+    const line2 = { ...Line2, numberOfPacks: 0 };
+    const line3 = { ...Line3, numberOfPacks: 1 };
+    const line4 = { ...Line4, numberOfPacks: 0, packSize: 10 };
+
+    expect(allocate(12, null)).toEqual([
+      line1,
+      line2,
+      line3,
+      line4,
+      placeholder,
+    ]);
+  });
+
+  it('reduces large pack size lines too', () => {
+    const draftOutboundLines = [{ ...Line3 }, { ...Line4 }, { ...placeholder }];
+
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftOutboundLines
+    );
+
+    const line1 = { ...Line3, numberOfPacks: 1 };
+    const line2 = { ...Line4, numberOfPacks: 2 };
+
+    expect(allocate(12, null)).toEqual([line1, line2, placeholder]);
+  });
+
+  it('reduces large pack size lines, allocating to other lines', () => {
+    const line1 = { ...Line1, packSize: 12, availableNumberOfPacks: 40 };
+    const line2 = { ...Line2, availableNumberOfPacks: 100 };
+    const line3 = { ...Line3, packSize: 1, availableNumberOfPacks: 100 };
+    const line4 = { ...Line4 };
+
+    const draftOutboundLines = [
+      { ...line1 },
+      { ...line2 },
+      { ...line3 },
+      { ...line4 },
+      { ...placeholder },
+    ];
+
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftOutboundLines
+    );
+
+    expect(allocate(61, null)).toEqual([
+      { ...line1, numberOfPacks: 5 },
+      { ...line2, numberOfPacks: 1 },
+      line3,
+      line4,
+      placeholder,
+    ]);
   });
 });

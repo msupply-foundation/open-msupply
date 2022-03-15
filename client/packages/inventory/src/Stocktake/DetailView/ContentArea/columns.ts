@@ -3,8 +3,8 @@ import {
   GenericColumnKey,
   useColumns,
   ColumnAlign,
-  ifTheSameElseDefault,
-  formatExpiryDate,
+  ArrayUtils,
+  Formatter,
   Column,
   SortBy,
 } from '@openmsupply-client/common';
@@ -58,7 +58,10 @@ export const useStocktakeColumns = ({
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
-              return ifTheSameElseDefault(lines, 'batch', '[multiple]') ?? '';
+              return (
+                ArrayUtils.ifTheSameElseDefault(lines, 'batch', '[multiple]') ??
+                ''
+              );
             } else {
               return row.batch ?? '';
             }
@@ -66,7 +69,11 @@ export const useStocktakeColumns = ({
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'batch', '[multiple]');
+              return ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'batch',
+                '[multiple]'
+              );
             } else {
               return rowData.batch;
             }
@@ -80,20 +87,21 @@ export const useStocktakeColumns = ({
             if ('lines' in row) {
               const { lines } = row;
               const expiryDate =
-                ifTheSameElseDefault(lines, 'expiryDate', null) ?? '';
+                ArrayUtils.ifTheSameElseDefault(lines, 'expiryDate', null) ??
+                '';
               return (
-                (expiryDate && formatExpiryDate(new Date(expiryDate))) || ''
+                (expiryDate && Formatter.expiryDate(new Date(expiryDate))) || ''
               );
             } else {
               return row.expiryDate
-                ? formatExpiryDate(new Date(row.expiryDate)) ?? ''
+                ? Formatter.expiryDate(new Date(row.expiryDate)) ?? ''
                 : '';
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              const expiryDate = ifTheSameElseDefault(
+              const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
                 null
@@ -112,7 +120,9 @@ export const useStocktakeColumns = ({
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
-              return ifTheSameElseDefault(lines, 'packSize', '') ?? '';
+              return (
+                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
+              );
             } else {
               return row.packSize ?? '';
             }
@@ -120,7 +130,7 @@ export const useStocktakeColumns = ({
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ifTheSameElseDefault(lines, 'packSize', '');
+              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
             } else {
               return rowData.packSize;
             }
@@ -136,7 +146,11 @@ export const useStocktakeColumns = ({
           if ('lines' in row) {
             const { lines } = row;
             return (
-              ifTheSameElseDefault(lines, 'snapshotNumberOfPacks', '') ?? ''
+              ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'snapshotNumberOfPacks',
+                ''
+              ) ?? ''
             );
           } else {
             return row.snapshotNumberOfPacks ?? '';
@@ -145,7 +159,11 @@ export const useStocktakeColumns = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            return ifTheSameElseDefault(lines, 'snapshotNumberOfPacks', '');
+            return ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'snapshotNumberOfPacks',
+              ''
+            );
           } else {
             return rowData.snapshotNumberOfPacks;
           }
@@ -160,7 +178,11 @@ export const useStocktakeColumns = ({
           if ('lines' in row) {
             const { lines } = row;
             return (
-              ifTheSameElseDefault(lines, 'countedNumberOfPacks', '') ?? ''
+              ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'countedNumberOfPacks',
+                ''
+              ) ?? ''
             );
           } else {
             return row.countedNumberOfPacks ?? '';
@@ -169,7 +191,11 @@ export const useStocktakeColumns = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            return ifTheSameElseDefault(lines, 'countedNumberOfPacks', '');
+            return ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'countedNumberOfPacks',
+              ''
+            );
           } else {
             return rowData.countedNumberOfPacks;
           }

@@ -5,5 +5,5 @@ export const useQuerySelector = <T, ReturnType>(
   queryFn: () => Promise<T>,
   select: (data: T) => ReturnType
 ): UseQueryResult<ReturnType, unknown> => {
-  return useQuery(queryKey, queryFn, { select });
+  return useQuery(queryKey, queryFn, { select, refetchOnMount: false });
 };

@@ -12,7 +12,7 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
   SortController,
-  getColumnSorter,
+  SortUtils,
   useQueryParams,
   useMutation,
   useNotification,
@@ -80,8 +80,15 @@ export const useResponses = () => {
 export const useResponse = (): UseQueryResult<ResponseFragment> => {
   const responseNumber = useResponseNumber();
   const api = useResponseApi();
-  return useQuery(api.keys.detail(responseNumber), () =>
-    api.get.byNumber(responseNumber)
+  return useQuery(
+    api.keys.detail(responseNumber),
+    () => api.get.byNumber(responseNumber),
+    // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
+    // is inactive. For example, when navigating away from the page and back again, refetch.
+    {
+      refetchOnMount: false,
+      cacheTime: 0,
+    }
   );
 };
 
@@ -117,7 +124,9 @@ export const useResponseLines = (): UseResponseLinesController => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     const { getSortValue } = currentColumn ?? {};
     return getSortValue
-      ? lines?.nodes.sort(getColumnSorter(getSortValue, !!sortBy.isDesc))
+      ? lines?.nodes.sort(
+          SortUtils.getColumnSorter(getSortValue, !!sortBy.isDesc)
+        )
       : lines?.nodes;
   }, [sortBy.key, sortBy.isDesc, lines]);
 

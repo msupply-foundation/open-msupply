@@ -1,6 +1,6 @@
 import React from 'react';
 import create from 'zustand';
-
+import { StoreRowFragment } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
@@ -9,18 +9,14 @@ import {
   useNavigate,
 } from '@openmsupply-client/common';
 
-interface Store {
-  id: string;
-  code: string;
-}
 interface LoginForm {
   error?: AuthenticationError;
   password: string;
-  store?: Store;
+  store?: StoreRowFragment;
   username: string;
   setError: (error?: AuthenticationError) => void;
   setPassword: (password: string) => void;
-  setStore: (store?: Store) => void;
+  setStore: (store?: StoreRowFragment) => void;
   setUsername: (username: string) => void;
 }
 
@@ -37,7 +33,7 @@ export const useLoginFormState = create<LoginForm>(set => ({
   setError: (error?: AuthenticationError) =>
     set(state => ({ ...state, error })),
   setPassword: (password: string) => set(state => ({ ...state, password })),
-  setStore: (store?: Store) => set(state => ({ ...state, store })),
+  setStore: (store?: StoreRowFragment) => set(state => ({ ...state, store })),
   setUsername: (username: string) => set(state => ({ ...state, username })),
 }));
 

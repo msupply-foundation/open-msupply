@@ -1,10 +1,13 @@
-import { isProduction } from './../utils/index';
+import { EnvUtils } from '@common/utils';
 import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
 import { i18n, TOptions } from 'i18next';
 import { LocaleKey } from './locales';
 import { useAuthContext } from '../authentication';
 
-export type SupportedLocales = 'en' | 'fr' | 'ar';
+const locales = ['en' as const, 'ar' as const, 'fr' as const] as const;
+
+export type SupportedLocales = typeof locales[number];
+
 export type LocaleProps = Record<string, unknown>;
 export interface TypedTFunction<Keys> {
   // basic usage
@@ -20,6 +23,9 @@ export interface TypedTFunction<Keys> {
   ): string;
 }
 
+export const isSupportedLang = (lang: string): lang is SupportedLocales =>
+  locales.some(locale => lang === locale);
+
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   const { t } = useTranslationNext(ns);
   return (key, options) => (key ? t(key, options) : '');
@@ -33,7 +39,7 @@ export const useCurrentLanguage = (): SupportedLocales => {
     return language;
   }
 
-  if (!isProduction()) {
+  if (!EnvUtils.isProduction()) {
     throw new Error(`Language '${language}' not supported`);
   }
 
@@ -72,4 +78,10 @@ export const useI18N = (): i18n => {
 export const useUserName = (): string => {
   const { user } = useAuthContext();
   return user?.name ?? '';
+};
+
+// TODO: When the server supports a query to find the deployments
+// default language, use a query to fetch it.
+export const useDefaultLanguage = (): SupportedLocales => {
+  return 'en';
 };
