@@ -42,3 +42,24 @@ export const sortValues = <T>(
 
   return 0;
 };
+
+const getSortByExpiry =
+  (desc = false) =>
+  (a: { expiryDate?: string | null }, b: { expiryDate?: string | null }) => {
+    const expiryA = new Date(a.expiryDate ?? '');
+    const expiryB = new Date(b.expiryDate ?? '');
+
+    if (expiryA < expiryB) {
+      return desc ? 1 : -1;
+    }
+    if (expiryA > expiryB) {
+      return desc ? -1 : 1;
+    }
+
+    return 0;
+  };
+
+export const SortUtils = {
+  byExpiryAsc: getSortByExpiry(false),
+  byExpiryDesc: getSortByExpiry(true),
+};

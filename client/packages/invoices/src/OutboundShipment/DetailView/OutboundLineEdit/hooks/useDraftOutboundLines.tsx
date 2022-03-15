@@ -5,10 +5,11 @@ import {
   InvoiceNodeStatus,
   useConfirmOnLeaving,
   useDirtyCheck,
+  SortUtils,
 } from '@openmsupply-client/common';
 import { useStockLines, ItemRowFragment } from '@openmsupply-client/system';
 import { DraftOutboundLine } from '../../../../types';
-import { sortByExpiry, issueStock } from '../utils';
+import { issueStock } from '../utils';
 import { useOutboundLines, useOutboundFields } from '../../../api';
 import {
   OutboundLineFragment,
@@ -144,7 +145,7 @@ export const useDraftOutboundLines = (
             });
           }
         })
-        .sort(sortByExpiry);
+        .sort(SortUtils.byExpiryAsc);
 
       if (status === InvoiceNodeStatus.New) {
         const placeholder = lines?.find(

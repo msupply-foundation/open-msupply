@@ -1,9 +1,11 @@
 import {
-  isAlmostExpired,
   useCurrencyFormat,
   useColumns,
   NonNegativeNumberInputCell,
   ColumnAlign,
+  ExpiryDateCell,
+  CheckCell,
+  CurrencyCell,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 
@@ -12,15 +14,6 @@ export const useOutboundLineEditColumns = ({
 }: {
   onChange: (key: string, value: number, packSize: number) => void;
 }) => {
-  const updateDraftLine = (
-    patch: Partial<DraftOutboundLine> & { id: string }
-  ) => {
-    const newValue = Math.min(
-      patch.numberOfPacks ?? 0,
-      patch.stockLine?.availableNumberOfPacks ?? 0
-    );
-    onChange?.(patch.id, newValue, patch.packSize ?? 1);
-  };
   const columns = useColumns<DraftOutboundLine>(
     [
       [
@@ -29,7 +22,8 @@ export const useOutboundLineEditColumns = ({
           Cell: NonNegativeNumberInputCell,
           width: 100,
           label: 'label.num-packs',
-          setter: updateDraftLine,
+          setter: ({ packSize, id, numberOfPacks }) =>
+            onChange(id, numberOfPacks ?? 0, packSize ?? 1),
         },
       ],
       ['packSize', { width: 90 }],
@@ -45,28 +39,21 @@ export const useOutboundLineEditColumns = ({
         key: 'availableNumberOfPacks',
         align: ColumnAlign.Right,
         width: 85,
-        accessor: ({ rowData }) =>
-          rowData.stockLine?.availableNumberOfPacks ?? 0,
+        accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
       },
       {
         label: 'label.in-store',
         key: 'totalNumberOfPacks',
         align: ColumnAlign.Right,
         width: 80,
-        accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks ?? 0,
+        accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
       },
       'batch',
       [
         'expiryDate',
         {
-          styler: rowData => ({
-            color:
-              rowData.expiryDate &&
-              isAlmostExpired(new Date(rowData.expiryDate))
-                ? '#e63535'
-                : 'inherit',
-          }),
-          width: 75,
+          Cell: ExpiryDateCell,
+          width: 80,
         },
       ],
       [
@@ -79,6 +66,7 @@ export const useOutboundLineEditColumns = ({
       [
         'sellPricePerPack',
         {
+          Cell: CurrencyCell,
           formatter: sellPrice => useCurrencyFormat(Number(sellPrice)),
           width: 75,
         },
@@ -86,14 +74,14 @@ export const useOutboundLineEditColumns = ({
       {
         label: 'label.on-hold',
         key: 'onHold',
-        accessor: ({ rowData }) => rowData.stockLine?.onHold ?? false,
-        formatter: onHold => (!!onHold ? '✓' : ''),
+        Cell: CheckCell,
+        accessor: ({ rowData }) => rowData.stockLine?.onHold,
         align: ColumnAlign.Center,
         width: 80,
       },
     ],
     {},
-    [updateDraftLine]
+    [onChange]
   );
 
   return columns;
