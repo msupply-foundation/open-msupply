@@ -18,15 +18,11 @@ export const sumAvailableQuantity = (
   return sum;
 };
 
-export const getAllocatedQuantity = (
-  draftOutboundLines: DraftOutboundLine[]
-) => {
-  const allocated = draftOutboundLines.reduce(
+export const getAllocatedQuantity = (draftOutboundLines: DraftOutboundLine[]) =>
+  draftOutboundLines.reduce(
     (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
     0
   );
-  return allocated;
-};
 
 export const issueStock = (
   draftOutboundLines: DraftOutboundLine[],
