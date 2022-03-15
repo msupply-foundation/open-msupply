@@ -46,6 +46,16 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     Math.abs(Number(packSizeController.selected?.value || 1));
   const { items } = useOutboundRows();
 
+  const onChangePackSize = (newPackSize: number) => {
+    const newAllocatedQuantity =
+      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / newPackSize);
+    packSizeController.setPackSize(newPackSize);
+    onChangeQuantity(
+      newAllocatedQuantity,
+      newPackSize === -1 ? null : newPackSize
+    );
+  };
+
   return (
     <Grid container gap="4px">
       <ModalRow>
@@ -120,8 +130,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 >
                   <InputLabel sx={{ fontSize: '12px' }}>
                     {packSizeController.selected?.value === -1
-                      ? t('label.packs-of', { count: quantity })
-                      : t('label.units-in-pack-size-of', { count: quantity })}
+                      ? t('label.units-in-pack-size-of', { count: quantity })
+                      : t('label.packs-of', { count: quantity })}
                   </InputLabel>
                 </Grid>
 
@@ -133,15 +143,23 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                   value={packSizeController.selected?.value ?? ''}
                   onChange={e => {
                     const { value } = e.target;
-                    const packSize = Number(value);
-                    packSizeController.setPackSize(packSize);
-                    onChangeQuantity(
-                      quantity,
-                      packSize === -1 ? null : packSize
-                    );
+                    onChangePackSize(Number(value));
                   }}
                 />
-
+                {packSizeController.selected?.value !== -1 && (
+                  <Grid
+                    item
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="flex-start"
+                  >
+                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
+                      {t('label.units', {
+                        count: packSizeController.selected?.value,
+                      })}
+                    </InputLabel>
+                  </Grid>
+                )}
                 <Box marginLeft="auto" />
               </>
             ) : null}
