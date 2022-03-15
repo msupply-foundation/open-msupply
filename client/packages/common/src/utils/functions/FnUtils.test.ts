@@ -1,4 +1,4 @@
-import { debounce } from './debounce';
+import { FnUtils } from './FnUtils';
 
 describe('debounce', () => {
   let i = 0;
@@ -7,7 +7,7 @@ describe('debounce', () => {
     return j;
   };
 
-  const debounced = debounce(callback);
+  const debounced = FnUtils.debounce(callback);
 
   it('debounces consecutive calls', async () => {
     i = 0;

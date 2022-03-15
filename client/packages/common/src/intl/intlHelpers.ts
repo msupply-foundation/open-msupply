@@ -1,4 +1,4 @@
-import { isProduction } from './../utils/index';
+import { EnvUtils } from '@common/utils';
 import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
 import { i18n, TOptions } from 'i18next';
 import { LocaleKey } from './locales';
@@ -33,7 +33,7 @@ export const useCurrentLanguage = (): SupportedLocales => {
     return language;
   }
 
-  if (!isProduction()) {
+  if (!EnvUtils.isProduction()) {
     throw new Error(`Language '${language}' not supported`);
   }
 

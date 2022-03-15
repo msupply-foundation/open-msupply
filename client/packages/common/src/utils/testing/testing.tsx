@@ -5,10 +5,10 @@ import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { TableProvider, createTableStore } from '../ui/layout/tables';
-import { IntlTestProvider, GqlProvider } from '..';
+import { TableProvider, createTableStore } from '../../ui/layout/tables';
+import { IntlTestProvider, GqlProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';
-import { ConfirmationModalProvider } from '../ui/components/modals';
+import { ConfirmationModalProvider } from '../../ui/components/modals';
 import {
   renderHook,
   RenderHookOptions,

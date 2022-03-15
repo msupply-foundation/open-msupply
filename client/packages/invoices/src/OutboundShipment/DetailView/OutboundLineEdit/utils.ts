@@ -1,7 +1,7 @@
 import {
   InvoiceLineNodeType,
   InvoiceNodeStatus,
-  isExpired,
+  DateUtils,
   SortUtils,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from './../../../types';
@@ -80,7 +80,7 @@ export const allocateQuantities =
           (issuePackSize ? packSize === issuePackSize : true) &&
           (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
           !stockLine?.onHold &&
-          !(!!expiryDate && isExpired(new Date(expiryDate)))
+          !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
       )
       .sort(SortUtils.byExpiryAsc);
 

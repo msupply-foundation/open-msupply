@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { formatExpiryDate, isAlmostExpired } from '@common/utils';
+import { Formatter, DateUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
 
@@ -11,7 +11,9 @@ export const ExpiryDateCell = <T extends RecordWithId>({
 }: CellProps<T>) => {
   const expiryDate = column.accessor({ rowData, rows }) as string;
 
-  const isExpired = expiryDate ? isAlmostExpired(new Date(expiryDate)) : false;
+  const isExpired = expiryDate
+    ? DateUtils.isAlmostExpired(new Date(expiryDate))
+    : false;
 
   return (
     <Box
@@ -29,7 +31,7 @@ export const ExpiryDateCell = <T extends RecordWithId>({
           fontSize: 'inherit',
         }}
       >
-        {expiryDate ? formatExpiryDate(new Date(expiryDate)) || '' : ''}
+        {expiryDate ? Formatter.expiryDate(new Date(expiryDate)) || '' : ''}
       </Typography>
     </Box>
   );

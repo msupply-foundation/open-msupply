@@ -10,7 +10,7 @@ import {
   useBufferState,
   InputWithLabelRow,
   DatePickerInput,
-  formatNaiveDate,
+  Formatter,
 } from '@openmsupply-client/common';
 import {
   useStocktakeFields,
@@ -60,7 +60,7 @@ export const Toolbar: FC = () => {
                 disabled={isDisabled}
                 value={bufferedDate ? new Date(bufferedDate) : null}
                 onChange={d => {
-                  const naiveDate = formatNaiveDate(d);
+                  const naiveDate = Formatter.naiveDate(d);
                   setBufferedDate(naiveDate);
                   update({ stocktakeDate: naiveDate });
                 }}

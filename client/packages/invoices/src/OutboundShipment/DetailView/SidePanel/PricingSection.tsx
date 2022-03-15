@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import {
-  formatTax,
+  Formatter,
   Tooltip,
   Grid,
   DetailPanelSection,
@@ -12,7 +12,7 @@ import {
   IconButton,
   useFormatCurrency,
   PricingNode,
-  NumUtils,
+  PricingUtils,
   InfoIcon,
   MenuDotsIcon,
 } from '@openmsupply-client/common';
@@ -46,11 +46,11 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   const { data: serviceLines } = useOutboundServiceLines();
   const { serviceTotalBeforeTax, serviceTotalAfterTax } = pricing;
 
-  const tax = NumUtils.effectiveTax(
+  const tax = PricingUtils.effectiveTax(
     serviceTotalBeforeTax,
     serviceTotalAfterTax
   );
-  const totalTax = NumUtils.taxAmount(
+  const totalTax = PricingUtils.taxAmount(
     serviceTotalBeforeTax,
     serviceTotalAfterTax
   );
@@ -85,7 +85,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         <PanelField>{c(serviceTotalBeforeTax)}</PanelField>
       </PanelRow>
       <PanelRow sx={{ marginLeft: '10px' }}>
-        <PanelLabel>{`${t('heading.tax')} ${formatTax(tax)}`}</PanelLabel>
+        <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
             disabled={!serviceLines?.length || isDisabled}
@@ -111,8 +111,14 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
 
   const { stockTotalBeforeTax, stockTotalAfterTax } = pricing;
 
-  const tax = NumUtils.effectiveTax(stockTotalBeforeTax, stockTotalAfterTax);
-  const totalTax = NumUtils.taxAmount(stockTotalBeforeTax, stockTotalAfterTax);
+  const tax = PricingUtils.effectiveTax(
+    stockTotalBeforeTax,
+    stockTotalAfterTax
+  );
+  const totalTax = PricingUtils.taxAmount(
+    stockTotalBeforeTax,
+    stockTotalAfterTax
+  );
 
   const { updateStockLineTax } = useUpdateOutboundTax();
 
@@ -129,7 +135,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
         <PanelField>{c(stockTotalBeforeTax)}</PanelField>
       </PanelRow>
       <PanelRow sx={{ marginLeft: '10px' }}>
-        <PanelLabel>{`${t('heading.tax')} ${formatTax(tax)}`}</PanelLabel>
+        <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
             disabled={!outboundLines?.length || isDisabled}

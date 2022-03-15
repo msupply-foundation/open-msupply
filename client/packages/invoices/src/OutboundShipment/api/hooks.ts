@@ -15,8 +15,8 @@ import {
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  groupBy,
-  getColumnSorter,
+  ArrayUtils,
+  SortUtils,
   useSortBy,
   useMutation,
   useTableStore,
@@ -208,11 +208,11 @@ export const useOutboundItems = (): UseQueryResult<OutboundItem[]> => {
     const { lines } = invoice;
     const stockLines = lines.nodes.filter(forListView);
 
-    return Object.entries(groupBy(stockLines, line => line.item.id)).map(
-      ([itemId, lines]) => {
-        return { id: itemId, itemId, lines };
-      }
-    );
+    return Object.entries(
+      ArrayUtils.groupBy(stockLines, line => line.item.id)
+    ).map(([itemId, lines]) => {
+      return { id: itemId, itemId, lines };
+    });
   }, []);
 
   return useOutboundSelector(selectLines);
@@ -239,7 +239,7 @@ export const useOutboundRows = (isGrouped = true) => {
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
@@ -249,7 +249,7 @@ export const useOutboundRows = (isGrouped = true) => {
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );

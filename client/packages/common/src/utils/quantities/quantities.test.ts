@@ -1,6 +1,6 @@
 import { QuantityUtils } from './quantities';
 
-describe('suggestedQuantity', () => {
+describe('QuantityUtils - suggested quantity', () => {
   it('is defined', () => {
     expect(QuantityUtils.suggestedQuantity).toBeDefined();
   });

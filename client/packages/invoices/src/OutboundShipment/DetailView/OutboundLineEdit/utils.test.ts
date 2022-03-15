@@ -1,8 +1,8 @@
 import {
   InvoiceNodeStatus,
-  generateUUID,
+  FnUtils,
   InvoiceLineNodeType,
-} from '@openmsupply-client/common/';
+} from '@openmsupply-client/common';
 import { DraftOutboundLine } from './../../../types';
 import {
   createDraftOutboundLine,
@@ -22,12 +22,12 @@ type TestLineParams = {
 };
 
 const createTestLine = ({
-  itemId = generateUUID(),
+  itemId = FnUtils.generateUUID(),
   packSize = 1,
   totalNumberOfPacks = 1,
   availableNumberOfPacks = 1,
   numberOfPacks = 0,
-  id = generateUUID(),
+  id = FnUtils.generateUUID(),
   onHold = false,
   expiryDate,
 }: TestLineParams): DraftOutboundLine =>

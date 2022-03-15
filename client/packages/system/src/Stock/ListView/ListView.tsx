@@ -7,7 +7,7 @@ import {
   usePagination,
   useTranslation,
   Column,
-  getDataSorter,
+  SortUtils,
   SortBy,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
@@ -54,7 +54,7 @@ export const StockListView: FC = () => {
   const filteredSortedData =
     data?.nodes
       .filter(filterData)
-      .sort(getDataSorter(sortBy.key, !!sortBy.isDesc)) ?? [];
+      .sort(SortUtils.getDataSorter(sortBy.key, !!sortBy.isDesc)) ?? [];
 
   return (
     <TableProvider createStore={createTableStore}>

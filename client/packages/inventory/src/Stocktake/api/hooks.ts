@@ -13,8 +13,8 @@ import {
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  groupBy,
-  getColumnSorter,
+  ArrayUtils,
+  SortUtils,
   useSortBy,
   useAuthContext,
   useQueryParams,
@@ -156,7 +156,7 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
   const selectLines = useCallback((stocktake: StocktakeFragment) => {
     const { lines } = stocktake;
 
-    return Object.entries(groupBy(lines.nodes, 'itemId')).map(
+    return Object.entries(ArrayUtils.groupBy(lines.nodes, 'itemId')).map(
       ([itemId, lines]) => {
         return {
           id: itemId,
@@ -250,7 +250,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
@@ -260,7 +260,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return lines;
-    const sorter = getColumnSorter(
+    const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );

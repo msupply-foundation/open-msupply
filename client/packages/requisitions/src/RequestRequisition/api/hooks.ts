@@ -15,7 +15,7 @@ import {
   useQuery,
   FieldSelectorControl,
   useFieldsSelector,
-  getColumnSorter,
+  SortUtils,
   useNotification,
   useTableStore,
   RequisitionNodeStatus,
@@ -133,7 +133,9 @@ export const useRequestLines = () => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     const { getSortValue } = currentColumn ?? {};
     const sorted = getSortValue
-      ? lines?.nodes.sort(getColumnSorter(getSortValue, !!sortBy.isDesc))
+      ? lines?.nodes.sort(
+          SortUtils.getColumnSorter(getSortValue, !!sortBy.isDesc)
+        )
       : lines?.nodes;
 
     if (on) {

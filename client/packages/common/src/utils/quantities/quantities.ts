@@ -1,4 +1,4 @@
-import { NumUtils } from './NumUtils';
+import { NumUtils } from '../numbers';
 
 export const QuantityUtils = {
   suggestedQuantity: (amc: number, soh: number, mos: number) => {
@@ -15,6 +15,4 @@ export const QuantityUtils = {
 
     return Math.max(suggested, 0);
   },
-  unitQuantity: (line: { numberOfPacks: number; packSize: number }) =>
-    line.numberOfPacks * line.packSize,
 };
