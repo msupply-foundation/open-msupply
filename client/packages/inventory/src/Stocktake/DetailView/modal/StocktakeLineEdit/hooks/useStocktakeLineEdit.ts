@@ -26,8 +26,13 @@ export const useStocktakeLineEdit = (
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
   const { mutate: save, isLoading } = useSaveStocktakeLines();
 
-  const update = (patch: RecordPatch<StocktakeLineFragment>) => {
-    setDraftLines(lines => ArrayUtils.immutableUpdateById(lines, patch));
+  const update = (patch: RecordPatch<DraftStocktakeLine>) => {
+    setDraftLines(lines =>
+      ArrayUtils.immutableUpdateById(lines, {
+        ...patch,
+        isUpdated: !patch.isCreated,
+      })
+    );
   };
 
   const addLine = () => {
