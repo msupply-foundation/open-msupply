@@ -159,5 +159,6 @@
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",
-  "messages.this-batch-has-expired": "This batch has expired."
+  "messages.this-batch-has-expired": "This batch has expired.",
+  "placeholder.search-by-name": "Search by name"
 }

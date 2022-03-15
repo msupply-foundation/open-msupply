@@ -13,7 +13,7 @@ import { useDeleteSelectedOutbounds, OutboundRowFragment } from '../api';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation('common');
 
   const onDelete = useDeleteSelectedOutbounds();
 

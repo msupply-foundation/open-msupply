@@ -83,6 +83,5 @@
   "messages.must-allocate-all-lines": "Cannot change the status until all lines have been allocated.",
   "messages.select-rows-to-delete": "Select rows to delete",
   "messages.shipment-saved": "Shipment saved 🥳",
-  "warning.nothing-to-supply": "Nothing left to supply!",
-  "placeholder.search-by-name": "Search by name"
+  "warning.nothing-to-supply": "Nothing left to supply!"
 }
