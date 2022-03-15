@@ -4,7 +4,7 @@ import { ColumnAlign, ColumnDefinition } from '../types';
 import { MessageSquareIcon } from '@common/icons';
 import { PaperHoverPopover, PaperPopoverSection } from '@common/components';
 import { useTranslation } from '@common/intl';
-import { isProduction } from '@common/utils';
+import { EnvUtils } from '@common/utils';
 
 interface NoteObject {
   header: string;
@@ -40,7 +40,7 @@ export const getNotePopoverColumn = <T extends RecordWithId>(
     if (hasRequiredFields(rowData)) {
       return rowData;
     } else {
-      if (!isProduction()) {
+      if (!EnvUtils.isProduction()) {
         // TODO: Bugsnag during prod
         throw new Error(`
         The default accessor for the note popover column has been called with row data
