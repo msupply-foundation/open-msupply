@@ -9,7 +9,7 @@ import {
   useTranslation,
   StatsPanel,
   Widget,
-  generateUUID,
+  FnUtils,
   useToggle,
 } from '@openmsupply-client/common';
 import { useOutboundApi, useCreateOutbound } from '../api';
@@ -36,7 +36,10 @@ export const OutboundShipmentWidget: React.FC = () => {
         onChange={async name => {
           modalControl.toggleOff();
           try {
-            await onCreate({ id: generateUUID(), otherPartyId: name?.id });
+            await onCreate({
+              id: FnUtils.generateUUID(),
+              otherPartyId: name?.id,
+            });
           } catch (e) {
             const errorSnack = error(
               'Failed to create invoice! ' + (e as Error).message

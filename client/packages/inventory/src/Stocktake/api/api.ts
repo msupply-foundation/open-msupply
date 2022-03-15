@@ -1,5 +1,5 @@
 import {
-  generateUUID,
+  FnUtils,
   Formatter,
   InsertStocktakeLineInput,
   UpdateStocktakeLineInput,
@@ -165,7 +165,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
   insertStocktake: async () => {
     const result = await sdk.insertStocktake({
       input: {
-        id: generateUUID(),
+        id: FnUtils.generateUUID(),
       },
       storeId,
     });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ExpiryDateInput } from '@common/components';
 import { RecordWithId } from '@common/types';
-import { isTypeOf, EnvUtils } from '@common/utils';
+import { TypeUtils, EnvUtils } from '@common/utils';
 import { ColumnDefinition } from '../../columns';
 
 export const getExpiryDateInputColumn = <
@@ -10,7 +10,9 @@ export const getExpiryDateInputColumn = <
   key: 'expiryDateInput',
   label: 'label.expiry',
   accessor: ({ rowData }) => {
-    if (isTypeOf<{ expiryDate: Date | null }>(rowData, 'expiryDate')) {
+    if (
+      TypeUtils.isTypeOf<{ expiryDate: Date | null }>(rowData, 'expiryDate')
+    ) {
       return rowData.expiryDate;
     } else {
       if (!EnvUtils.isProduction()) {

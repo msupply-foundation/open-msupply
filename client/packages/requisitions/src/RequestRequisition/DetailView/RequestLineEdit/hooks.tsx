@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { generateUUID, QuantityUtils } from '@openmsupply-client/common';
+import { FnUtils, QuantityUtils } from '@openmsupply-client/common';
 import {
   useSaveRequestLines,
   useRequest,
@@ -30,7 +30,7 @@ const createDraftFromItem = (
   );
 
   return {
-    id: generateUUID(),
+    id: FnUtils.generateUUID(),
     requisitionId: request.id,
     itemId: item.id,
     requestedQuantity: suggested,
