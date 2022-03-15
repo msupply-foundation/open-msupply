@@ -133,6 +133,10 @@ impl InvoiceNode {
         &self.row().their_reference
     }
 
+    pub async fn transport_reference(&self) -> &Option<String> {
+        &self.row().transport_reference
+    }
+
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }
