@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { generateUUID, suggestedQuantity } from '@openmsupply-client/common';
+import { generateUUID, QuantityUtils } from '@openmsupply-client/common';
 import {
   useSaveRequestLines,
   useRequest,
@@ -23,7 +23,7 @@ const createDraftFromItem = (
 ): DraftRequestLine => {
   const { stats } = item;
   const { averageMonthlyConsumption, availableStockOnHand } = stats;
-  const suggested = suggestedQuantity(
+  const suggested = QuantityUtils.suggestedQuantity(
     averageMonthlyConsumption,
     availableStockOnHand,
     request.maxMonthsOfStock

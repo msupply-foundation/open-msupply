@@ -158,5 +158,6 @@
   "label.verified": "Verified",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
-  "link.history": "History"
+  "link.history": "History",
+  "messages.this-batch-has-expired": "This batch has expired."
 }
