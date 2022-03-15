@@ -33,6 +33,7 @@ export const useStocktakeColumns = ({
       [
         'itemCode',
         {
+          sortable: false,
           getSortValue: row => {
             return row.item?.code ?? '';
           },
