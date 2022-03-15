@@ -82,6 +82,13 @@ export const CommandK: FC = ({ children }) => {
   const t = useTranslation('app');
   const actions = [
     {
+      id: 'test:just-testing',
+      name: 'Just testimg',
+      shortcut: ['9'],
+      // keywords: 'drawer, close',
+      perform: () => console.log('TESTING'),
+    },
+    {
       id: 'navigation-drawer:toggle',
       name: `${t('cmdk.drawer-toggle')} (m)`,
       shortcut: ['m'],
@@ -136,6 +143,7 @@ export const CommandK: FC = ({ children }) => {
       name: `${t('cmdk.goto-items')} (g+i)`,
       shortcut: ['g', 'i'],
       keywords: 'items',
+      // section: 'What is a section?',
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Catalogue)
