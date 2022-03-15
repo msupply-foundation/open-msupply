@@ -4,7 +4,10 @@ import { i18n, TOptions } from 'i18next';
 import { LocaleKey } from './locales';
 import { useAuthContext } from '../authentication';
 
-export type SupportedLocales = 'en' | 'fr' | 'ar';
+const locales = ['en' as const, 'ar' as const, 'fr' as const] as const;
+
+export type SupportedLocales = typeof locales[number];
+
 export type LocaleProps = Record<string, unknown>;
 export interface TypedTFunction<Keys> {
   // basic usage
@@ -19,6 +22,9 @@ export interface TypedTFunction<Keys> {
     options?: TOptions<Record<string, unknown>> | string
   ): string;
 }
+
+export const isSupportedLang = (lang: string): lang is SupportedLocales =>
+  locales.some(locale => lang === locale);
 
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   const { t } = useTranslationNext(ns);
@@ -72,4 +78,10 @@ export const useI18N = (): i18n => {
 export const useUserName = (): string => {
   const { user } = useAuthContext();
   return user?.name ?? '';
+};
+
+// TODO: When the server supports a query to find the deployments
+// default language, use a query to fetch it.
+export const useDefaultLanguage = (): SupportedLocales => {
+  return 'en';
 };
