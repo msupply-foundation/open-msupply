@@ -5,7 +5,7 @@ import {
   ColumnAlign,
   useColumns,
   GenericColumnKey,
-  suggestedQuantity,
+  QuantityUtils,
   useSortBy,
   SortBy,
   zustand,
@@ -96,13 +96,13 @@ export const useRequestColumns = () => {
         align: ColumnAlign.Right,
         width: 200,
         accessor: ({ rowData }) =>
-          suggestedQuantity(
+          QuantityUtils.suggestedQuantity(
             rowData.itemStats.averageMonthlyConsumption,
             rowData.itemStats.availableStockOnHand,
             maxMonthsOfStock
           ),
         getSortValue: rowData =>
-          suggestedQuantity(
+          QuantityUtils.suggestedQuantity(
             rowData.itemStats.averageMonthlyConsumption,
             rowData.itemStats.availableStockOnHand,
             maxMonthsOfStock

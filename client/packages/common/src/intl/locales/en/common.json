@@ -70,6 +70,7 @@
   "heading.shipments-to-be-picked": "Shipments to be picked",
   "label.already-issued": "Issued",
   "label.allocated": "Allocated",
+  "label.available": "Available",
   "label.amc": "AMC",
   "label.batch": "Batch",
   "label.click-to-sort": "Click to sort by this column",
@@ -104,6 +105,7 @@
   "label.hold": "Hold",
   "label.id": "ID",
   "label.inbound-shipment": "Inbound shipment",
+  "label.in-store": "In store",
   "label.invoice-number": "Invnum",
   "label.issue": "Issue",
   "label.item": "Item",
@@ -156,5 +158,6 @@
   "label.verified": "Verified",
   "link.backorders": "Backorders",
   "link.copy-to-clipboard": "Copy to Clipboard",
-  "link.history": "History"
+  "link.history": "History",
+  "messages.this-batch-has-expired": "This batch has expired."
 }

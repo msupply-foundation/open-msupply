@@ -1,6 +1,6 @@
 import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
 import { ColumnAlign, ColumnFormat } from '../columns/types';
-import { formatExpiryDate } from '@common/utils';
+import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
 
@@ -68,7 +68,9 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.expiry',
     width: 100,
     formatter: dateString =>
-      dateString ? formatExpiryDate(new Date(dateString as string)) || '' : '',
+      dateString
+        ? Formatter.expiryDate(new Date(dateString as string)) || ''
+        : '',
   },
 
   itemCode: {
@@ -185,6 +187,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'sellPricePerPack',
     width: 100,
     align: ColumnAlign.Right,
+    format: ColumnFormat.Currency,
   },
   sellPricePerUnit: {
     label: 'label.unit-price',

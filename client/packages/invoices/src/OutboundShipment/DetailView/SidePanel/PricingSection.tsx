@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import {
-  formatTax,
-  Tooltip,
+  Formatter,
   Grid,
   DetailPanelSection,
   PanelField,
@@ -12,9 +11,9 @@ import {
   IconButton,
   useFormatCurrency,
   PricingNode,
-  NumUtils,
-  InfoIcon,
+  PricingUtils,
   MenuDotsIcon,
+  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import {
   useOutboundFields,
@@ -31,14 +30,6 @@ type PricingGroupProps = {
   isDisabled?: boolean;
 };
 
-const InfoTooltip = ({ title }: { title: string }) => (
-  <Tooltip title={title}>
-    <div style={{ transform: 'scale(0.7)', cursor: 'help' }}>
-      <InfoIcon fontSize="small" />
-    </div>
-  </Tooltip>
-);
-
 const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   const serviceLineModal = useToggle(false);
   const t = useTranslation('distribution');
@@ -46,11 +37,11 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   const { data: serviceLines } = useOutboundServiceLines();
   const { serviceTotalBeforeTax, serviceTotalAfterTax } = pricing;
 
-  const tax = NumUtils.effectiveTax(
+  const tax = PricingUtils.effectiveTax(
     serviceTotalBeforeTax,
     serviceTotalAfterTax
   );
-  const totalTax = NumUtils.taxAmount(
+  const totalTax = PricingUtils.taxAmount(
     serviceTotalBeforeTax,
     serviceTotalAfterTax
   );
@@ -66,7 +57,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         />
       )}
       <PanelRow>
-        <InfoTooltip title={t('messages.service-charges-description')} />
+        <InfoTooltipIcon title={t('messages.service-charges-description')} />
         <PanelLabel fontWeight="bold">
           {t('heading.service-charges')}
         </PanelLabel>
@@ -85,7 +76,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         <PanelField>{c(serviceTotalBeforeTax)}</PanelField>
       </PanelRow>
       <PanelRow sx={{ marginLeft: '10px' }}>
-        <PanelLabel>{`${t('heading.tax')} ${formatTax(tax)}`}</PanelLabel>
+        <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
             disabled={!serviceLines?.length || isDisabled}
@@ -111,15 +102,21 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
 
   const { stockTotalBeforeTax, stockTotalAfterTax } = pricing;
 
-  const tax = NumUtils.effectiveTax(stockTotalBeforeTax, stockTotalAfterTax);
-  const totalTax = NumUtils.taxAmount(stockTotalBeforeTax, stockTotalAfterTax);
+  const tax = PricingUtils.effectiveTax(
+    stockTotalBeforeTax,
+    stockTotalAfterTax
+  );
+  const totalTax = PricingUtils.taxAmount(
+    stockTotalBeforeTax,
+    stockTotalAfterTax
+  );
 
   const { updateStockLineTax } = useUpdateOutboundTax();
 
   return (
     <>
       <PanelRow>
-        <InfoTooltip title={t('messages.stock-charges-description')} />
+        <InfoTooltipIcon title={t('messages.stock-charges-description')} />
         <PanelLabel fontWeight="bold">
           {t('heading.item-sell-price')}
         </PanelLabel>
@@ -129,7 +126,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
         <PanelField>{c(stockTotalBeforeTax)}</PanelField>
       </PanelRow>
       <PanelRow sx={{ marginLeft: '10px' }}>
-        <PanelLabel>{`${t('heading.tax')} ${formatTax(tax)}`}</PanelLabel>
+        <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
             disabled={!outboundLines?.length || isDisabled}

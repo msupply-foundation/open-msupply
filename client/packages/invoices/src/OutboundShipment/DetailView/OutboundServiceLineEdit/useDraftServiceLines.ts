@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import {
   RecordPatch,
   InvoiceLineNodeType,
-  generateUUID,
+  FnUtils,
 } from '@openmsupply-client/common';
 import {
   useDefaultServiceItem,
@@ -26,7 +26,7 @@ const createDraftLine = ({
   seed?: OutboundLineFragment;
 }): DraftOutboundLine => ({
   __typename: 'InvoiceLineNode',
-  id: generateUUID(),
+  id: FnUtils.generateUUID(),
   item,
   invoiceId,
   totalAfterTax: 0,

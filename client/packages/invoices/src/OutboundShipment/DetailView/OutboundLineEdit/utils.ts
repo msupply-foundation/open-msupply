@@ -1,40 +1,10 @@
 import {
   InvoiceLineNodeType,
   InvoiceNodeStatus,
-  isExpired,
+  DateUtils,
+  SortUtils,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from './../../../types';
-
-export const sortByExpiry = (a: DraftOutboundLine, b: DraftOutboundLine) => {
-  const expiryA = new Date(a.expiryDate ?? '');
-  const expiryB = new Date(b.expiryDate ?? '');
-
-  if (expiryA < expiryB) {
-    return -1;
-  }
-  if (expiryA > expiryB) {
-    return 1;
-  }
-
-  return 0;
-};
-
-export const sortByExpiryDesc = (
-  a: DraftOutboundLine,
-  b: DraftOutboundLine
-) => {
-  const expiryA = new Date(a.expiryDate ?? '');
-  const expiryB = new Date(b.expiryDate ?? '');
-
-  if (expiryA < expiryB) {
-    return 1;
-  }
-  if (expiryA > expiryB) {
-    return -1;
-  }
-
-  return 0;
-};
 
 export const sumAvailableQuantity = (
   draftOutboundLines: DraftOutboundLine[]
@@ -48,14 +18,11 @@ export const sumAvailableQuantity = (
   return sum;
 };
 
-export const getAllocatedQuantity = (
-  draftOutboundLines: DraftOutboundLine[]
-) => {
-  return draftOutboundLines.reduce(
+export const getAllocatedQuantity = (draftOutboundLines: DraftOutboundLine[]) =>
+  draftOutboundLines.reduce(
     (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
     0
   );
-};
 
 export const issueStock = (
   draftOutboundLines: DraftOutboundLine[],
@@ -113,60 +80,47 @@ export const allocateQuantities =
           (issuePackSize ? packSize === issuePackSize : true) &&
           (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
           !stockLine?.onHold &&
-          !(!!expiryDate && isExpired(new Date(expiryDate)))
+          !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
       )
-      .sort(sortByExpiry);
+      .sort(SortUtils.byExpiryAsc);
 
-    validBatches.forEach(batch => {
-      const draftOutboundLineIdx = newDraftOutboundLines.findIndex(
-        ({ id }) => batch.id === id
-      );
-      const draftOutboundLine = newDraftOutboundLines[draftOutboundLineIdx];
-      if (!draftOutboundLine) return null;
-      if (toAllocate < 0) return null;
-
-      const availableUnits =
-        (draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0) *
-        draftOutboundLine.packSize;
-      const unitsToAllocate = Math.min(toAllocate, availableUnits);
-      const allocatedNumberOfPacks = Math.ceil(
-        unitsToAllocate / draftOutboundLine.packSize
-      );
-
-      toAllocate -= allocatedNumberOfPacks * draftOutboundLine.packSize;
-
-      newDraftOutboundLines[draftOutboundLineIdx] = {
-        ...draftOutboundLine,
-        numberOfPacks: allocatedNumberOfPacks,
-      };
+    toAllocate = allocateToBatches({
+      validBatches,
+      newDraftOutboundLines,
+      toAllocate,
     });
 
-    // if over-allocated due to pack sizes available, reduce allocation as needed
+    // when the last batch to be allocated results in over allocation due to pack size
+    // reduce the quantity allocated to previous batches as required
+    // if toAllocate is negative then we have over allocated
     if (toAllocate < 0) {
-      toAllocate *= -1;
-      validBatches.sort(sortByExpiryDesc).forEach(batch => {
-        const draftOutboundLineIdx = newDraftOutboundLines.findIndex(
-          ({ id }) => batch.id === id
-        );
-        const draftOutboundLine = newDraftOutboundLines[draftOutboundLineIdx];
-        if (!draftOutboundLine) return null;
-        if (draftOutboundLine.packSize > toAllocate) return null;
-        if (draftOutboundLine.numberOfPacks === 0) return null;
-
-        const allocatedUnits =
-          draftOutboundLine.numberOfPacks * draftOutboundLine.packSize;
-        const unitsToReduce = Math.min(toAllocate, allocatedUnits);
-        const numberOfPacks = Math.floor(
-          (allocatedUnits - unitsToReduce) / draftOutboundLine.packSize
-        );
-
-        toAllocate -= unitsToReduce;
-
-        newDraftOutboundLines[draftOutboundLineIdx] = {
-          ...draftOutboundLine,
-          numberOfPacks: numberOfPacks,
-        };
+      toAllocate = reduceBatchAllocation({
+        toAllocate: toAllocate * -1,
+        validBatches,
+        newDraftOutboundLines,
       });
+
+      // If there is still a quantity to allocate, then still over allocated. this time reduce
+      // lines with a pack size greater than the amount to allocate
+      if (toAllocate > 0) {
+        toAllocate = reduceBatchAllocation({
+          toAllocate,
+          validBatches,
+          newDraftOutboundLines,
+          includeOversizePacks: true,
+        });
+      }
+
+      // if there is still some to allocate, then review existing allocated lines
+      // and see if they can be increased. This is to cater for the scenario where
+      // the second reduction above has reduce a line which has a larger pack size
+      if (toAllocate > 0) {
+        toAllocate = allocatedAdditionalStock({
+          validBatches,
+          newDraftOutboundLines,
+          toAllocate,
+        });
+      }
     }
 
     if (status === InvoiceNodeStatus.New) {
@@ -185,3 +139,117 @@ export const allocateQuantities =
 
     return newDraftOutboundLines;
   };
+
+const allocateToBatches = ({
+  validBatches,
+  newDraftOutboundLines,
+  toAllocate,
+}: {
+  validBatches: DraftOutboundLine[];
+  newDraftOutboundLines: DraftOutboundLine[];
+  toAllocate: number;
+}) => {
+  validBatches.forEach(batch => {
+    const draftOutboundLineIdx = newDraftOutboundLines.findIndex(
+      ({ id }) => batch.id === id
+    );
+    const draftOutboundLine = newDraftOutboundLines[draftOutboundLineIdx];
+    if (!draftOutboundLine) return null;
+    if (toAllocate < 0) return null;
+
+    const availableUnits =
+      (draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0) *
+      draftOutboundLine.packSize;
+    const unitsToAllocate = Math.min(toAllocate, availableUnits);
+    const numberOfPacks = unitsToAllocate / draftOutboundLine.packSize;
+    const allocatedNumberOfPacks = Math.ceil(numberOfPacks);
+
+    toAllocate -= allocatedNumberOfPacks * draftOutboundLine.packSize;
+
+    newDraftOutboundLines[draftOutboundLineIdx] = {
+      ...draftOutboundLine,
+      numberOfPacks: allocatedNumberOfPacks,
+    };
+  });
+  return toAllocate;
+};
+
+const allocatedAdditionalStock = ({
+  validBatches,
+  newDraftOutboundLines,
+  toAllocate,
+}: {
+  validBatches: DraftOutboundLine[];
+  newDraftOutboundLines: DraftOutboundLine[];
+  toAllocate: number;
+}) => {
+  validBatches.forEach(batch => {
+    const draftOutboundLineIdx = newDraftOutboundLines.findIndex(
+      ({ id }) => batch.id === id
+    );
+    const draftOutboundLine = newDraftOutboundLines[draftOutboundLineIdx];
+    if (!draftOutboundLine) return null;
+    if (toAllocate < 0) return null;
+    if (draftOutboundLine.packSize > toAllocate) return null;
+
+    const availableUnits =
+      ((draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0) -
+        draftOutboundLine.numberOfPacks) *
+      draftOutboundLine.packSize;
+
+    if (availableUnits <= 0) return null;
+
+    const unitsToAllocate = Math.min(toAllocate, availableUnits);
+    const numberOfPacks = unitsToAllocate / draftOutboundLine.packSize;
+    const allocatedNumberOfPacks = Math.floor(numberOfPacks);
+
+    toAllocate -= allocatedNumberOfPacks * draftOutboundLine.packSize;
+    draftOutboundLine.numberOfPacks = allocatedNumberOfPacks;
+  });
+  return toAllocate;
+};
+
+const reduceBatchAllocation = ({
+  toAllocate,
+  validBatches,
+  newDraftOutboundLines,
+  includeOversizePacks = false,
+}: {
+  toAllocate: number;
+  validBatches: DraftOutboundLine[];
+  newDraftOutboundLines: DraftOutboundLine[];
+  includeOversizePacks?: boolean;
+}) => {
+  validBatches
+    .slice()
+    .sort(SortUtils.byExpiryDesc)
+    .forEach(batch => {
+      const draftOutboundLineIdx = newDraftOutboundLines.findIndex(
+        ({ id }) => batch.id === id
+      );
+      const draftOutboundLine = newDraftOutboundLines[draftOutboundLineIdx];
+      if (!draftOutboundLine) return null;
+      if (includeOversizePacks && draftOutboundLine.packSize < toAllocate)
+        return null;
+      if (!includeOversizePacks && draftOutboundLine.packSize > toAllocate)
+        return null;
+      if (draftOutboundLine.numberOfPacks === 0) return null;
+
+      const allocatedUnits =
+        draftOutboundLine.numberOfPacks * draftOutboundLine.packSize;
+      const unitsToReduce = Math.min(toAllocate, allocatedUnits);
+      const numberOfPacks = Math.floor(
+        (allocatedUnits - unitsToReduce) / draftOutboundLine.packSize
+      );
+      toAllocate -= includeOversizePacks
+        ? (draftOutboundLine.numberOfPacks - numberOfPacks) *
+          draftOutboundLine.packSize
+        : unitsToReduce;
+
+      newDraftOutboundLines[draftOutboundLineIdx] = {
+        ...draftOutboundLine,
+        numberOfPacks: numberOfPacks,
+      };
+    });
+  return Math.abs(toAllocate);
+};

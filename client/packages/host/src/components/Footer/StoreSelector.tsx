@@ -7,11 +7,14 @@ import {
   useAuthContext,
   usePaperClickPopover,
   useTranslation,
+  useNavigate,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { StoreRowFragment, useStores } from '@openmsupply-client/system';
 
 export const StoreSelector: FC = ({ children }) => {
   const { store, setStore } = useAuthContext();
+  const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const { data, isLoading } = useStores();
   const t = useTranslation('app');
@@ -34,6 +37,7 @@ export const StoreSelector: FC = ({ children }) => {
       onClick={() => {
         setStore(s);
         hide();
+        navigate(AppRoute.Dashboard);
       }}
       key={s.id}
     />
