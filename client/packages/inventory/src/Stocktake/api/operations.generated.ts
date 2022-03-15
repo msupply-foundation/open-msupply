@@ -44,7 +44,7 @@ export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertStocktakeLinesMutation = { __typename: 'FullMutation', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string }> | null } };
+export type UpsertStocktakeLinesMutation = { __typename: 'FullMutation', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string, response: { __typename: 'InsertStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } | { __typename: 'StocktakeLineNode' } }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string, response: { __typename: 'StocktakeLineNode' } | { __typename: 'UpdateStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } }> | null } };
 
 export type DeleteStocktakesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -187,13 +187,57 @@ export const UpsertStocktakeLinesDocument = gql`
     ... on BatchStocktakeResponse {
       __typename
       deleteStocktakeLines {
+        __typename
         id
+        response {
+          ... on DeleteStocktakeLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditStocktake {
+                __typename
+                description
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
       }
       insertStocktakeLines {
+        __typename
         id
+        response {
+          __typename
+          ... on InsertStocktakeLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditStocktake {
+                __typename
+                description
+              }
+            }
+          }
+        }
       }
       updateStocktakeLines {
+        __typename
         id
+        response {
+          ... on UpdateStocktakeLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditStocktake {
+                __typename
+                description
+              }
+            }
+          }
+        }
       }
     }
   }
