@@ -54,6 +54,12 @@ fragment Response on RequisitionNode {
   maxMonthsOfStock
   minMonthsOfStock
 
+  user {
+    __typename
+    username
+    email
+  }
+
   shipments {
     __typename
     totalCount

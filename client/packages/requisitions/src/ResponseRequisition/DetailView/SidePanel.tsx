@@ -17,19 +17,29 @@ import {
   Link,
   Tooltip,
   useFormatDate,
+  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import { useIsResponseDisabled, useResponseFields, useResponse } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
 const AdditionalInfoSection: FC = () => {
   const isDisabled = useIsResponseDisabled();
-  const { colour, comment, update } = useResponseFields(['colour', 'comment']);
+  const { user, colour, comment, update } = useResponseFields([
+    'colour',
+    'comment',
+    'user',
+  ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
-  const t = useTranslation('common');
+  const t = useTranslation('distribution');
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
+        <PanelRow>
+          <PanelLabel>{t('label.edited-by')}</PanelLabel>
+          <PanelField>{user?.username}</PanelField>
+          {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
+        </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>

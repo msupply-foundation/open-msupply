@@ -56,6 +56,13 @@ fragment Stocktake on StocktakeNode {
   status
   description
   isLocked
+
+  user {
+    __typename
+    username
+    email
+  }
+
   lines {
     __typename
     totalCount
