@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  generateUUID,
+  FnUtils,
   InvoiceLineNodeType,
   InvoiceNodeStatus,
   useConfirmOnLeaving,
@@ -18,7 +18,7 @@ import {
 export const createPlaceholderRow = (
   invoiceId: string,
   itemId: string,
-  id = generateUUID()
+  id = FnUtils.generateUUID()
 ): DraftOutboundLine => ({
   __typename: 'InvoiceLineNode',
   batch: '',
@@ -56,7 +56,7 @@ export const createDraftOutboundLineFromStockLine = ({
   expiryDate: stockLine?.expiryDate,
   sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
   packSize: stockLine?.packSize ?? 0,
-  id: generateUUID(),
+  id: FnUtils.generateUUID(),
   invoiceId,
   totalAfterTax: 0,
   totalBeforeTax: 0,

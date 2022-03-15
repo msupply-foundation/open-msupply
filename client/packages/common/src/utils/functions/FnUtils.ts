@@ -1,4 +1,8 @@
+import { UUID } from '@common/types';
+import { v4 } from 'uuid';
+
 export const FnUtils = {
+  generateUUID: (): UUID => v4(),
   debounce: <T extends (...args: any[]) => any>(
     callback: T,
     wait = 500

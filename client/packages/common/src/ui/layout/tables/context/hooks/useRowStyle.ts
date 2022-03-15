@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import isEqual from 'lodash/isEqual';
+import { ObjUtils } from '@openmsupply-client/common';
 import { useTableStore, TableStore } from '../TableContext';
 import { AppSxProp } from '../../../../../styles';
 
@@ -28,7 +28,7 @@ export const useRowStyle = (rowId?: string): UseRowStyleControl => {
   const equalityFn = (
     oldState: ReturnType<typeof selector>,
     newState: ReturnType<typeof selector>
-  ) => isEqual(oldState.rowStyle, newState.rowStyle);
+  ) => ObjUtils.isEqual(oldState.rowStyle, newState.rowStyle);
 
   return useTableStore(selector, equalityFn);
 };
