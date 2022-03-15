@@ -35,10 +35,7 @@ export const ArrayUtils = {
   ): number => {
     return arr.reduce((sum, someEntity) => sum + someEntity[key], 0);
   },
-  immutableUpdateById: <T extends RecordWithId>(
-    arr: T[],
-    patch: RecordPatch<T>
-  ) => {
+  immutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) => {
     return arr.map(entity => {
       if (entity.id === patch.id) {
         return {

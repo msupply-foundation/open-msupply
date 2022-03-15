@@ -28,7 +28,7 @@ export const useStocktakeLineEdit = (
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) => {
     setDraftLines(lines =>
-      ArrayUtils.immutableUpdateById(lines, {
+      ArrayUtils.immutablePatch(lines, {
         ...patch,
         isUpdated: !patch.isCreated,
       })
