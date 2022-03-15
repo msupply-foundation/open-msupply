@@ -2,7 +2,7 @@ import React from 'react';
 import {
   RecordWithId,
   ColumnDefinition,
-  isProduction,
+  EnvUtils,
 } from '@openmsupply-client/common';
 import { LocationSearchInput } from './LocationSearchInput';
 import { LocationRowFragment } from '../api';
@@ -26,7 +26,7 @@ export const getLocationInputColumn = <
     if (hasRequiredFields(rowData)) {
       return rowData.location;
     } else {
-      if (!isProduction()) {
+      if (!EnvUtils.isProduction()) {
         // TODO: Bugsnag during prod
         throw new Error(`
         The default accessor for the location input column has been called with row data
