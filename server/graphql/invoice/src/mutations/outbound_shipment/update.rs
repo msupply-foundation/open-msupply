@@ -30,6 +30,7 @@ pub struct UpdateInput {
     comment: Option<String>,
     /// External invoice reference, e.g. purchase or shipment number
     their_reference: Option<String>,
+    transport_reference: Option<String>,
     colour: Option<String>,
 }
 
@@ -98,6 +99,7 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
+            transport_reference,
         } = self;
 
         ServiceInput {
@@ -108,6 +110,7 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
+            transport_reference,
         }
     }
 }
@@ -193,11 +196,11 @@ mod graphql {
 
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
-    use repository::mock::{MockDataInserts, mock_name_store_c};
     use repository::mock::{
         mock_name_linked_to_store, mock_name_not_linked_to_store,
         mock_new_invoice_with_unallocated_line, mock_store_linked_to_name,
     };
+    use repository::mock::{mock_name_store_c, MockDataInserts};
     use repository::schema::{InvoiceLineRow, StockLineRow};
     use repository::{InvoiceLineRowRepository, InvoiceRepository, StockLineRowRepository};
     use serde_json::json;
