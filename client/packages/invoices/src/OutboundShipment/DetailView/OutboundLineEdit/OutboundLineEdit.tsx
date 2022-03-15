@@ -10,6 +10,8 @@ import {
   ModalMode,
   useBufferState,
   useDirtyCheck,
+  TableProvider,
+  createTableStore,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
@@ -126,11 +128,13 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         {!!currentItem ? (
           !isLoading ? (
             canAutoAllocate ? (
-              <OutboundLineEditTable
-                packSizeController={packSizeController}
-                onChange={updateQuantity}
-                rows={draftOutboundLines}
-              />
+              <TableProvider createStore={createTableStore}>
+                <OutboundLineEditTable
+                  packSizeController={packSizeController}
+                  onChange={updateQuantity}
+                  rows={draftOutboundLines}
+                />
+              </TableProvider>
             ) : (
               <NoStock />
             )
