@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController, useOutboundLineEditRows } from './hooks';
-import { useIsOutboundDisabled, useOutboundFields } from '../../api';
+import { useOutboundFields } from '../../api';
 import { useOutboundLineEditColumns } from './columns';
 
 export interface OutboundLineEditTableProps {
@@ -67,9 +67,6 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   packSizeController,
   rows,
 }) => {
-  // const { setDisabledRows } = useTableStore();
-
-  const isDisabled = useIsOutboundDisabled();
   const columns = useOutboundLineEditColumns({ onChange });
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
     rows,
@@ -80,12 +77,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     <Box>
       <Divider margin={10} />
       <Box style={{ height: 390, overflowX: 'hidden', overflowY: 'scroll' }}>
-        <DataTable
-          isDisabled={isDisabled}
-          columns={columns}
-          data={orderedRows}
-          dense
-        />
+        <DataTable columns={columns} data={orderedRows} dense />
         {placeholderRow ? (
           <PlaceholderRow line={placeholderRow} onChange={onChange} />
         ) : null}
