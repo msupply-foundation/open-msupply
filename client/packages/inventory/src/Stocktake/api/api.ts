@@ -16,7 +16,7 @@ import {
   StocktakeRowFragment,
   StocktakeLineFragment,
 } from './operations.generated';
-import { DraftStocktakeLine } from './../DetailView/modal/StocktakeLineEdit/hooks';
+import { DraftStocktakeLine } from './../DetailView/modal/StocktakeLineEdit';
 
 export type ListParams = {
   first: number;
@@ -59,8 +59,9 @@ const stocktakeParser = {
       costPricePerPack: line.costPricePerPack,
       countedNumberOfPacks: line.countedNumberOfPacks,
       id: line.id,
-      itemId: line.itemId,
+      itemId: !line.stockLine?.id ? line.itemId : undefined,
       sellPricePerPack: line.sellPricePerPack,
+      stockLineId: line.stockLine?.id,
       stocktakeId: line.stocktakeId,
       expiryDate: line.expiryDate
         ? Formatter.naiveDate(new Date(line.expiryDate))
@@ -108,7 +109,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     },
   },
   updateLines: async (draftStocktakeLines: DraftStocktakeLine[]) => {
-    const input = {
+    const result = await sdk.upsertStocktakeLines({
       storeId,
       deleteStocktakeLines: draftStocktakeLines
         .filter(
@@ -125,9 +126,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
             !isCreated && isUpdated && countThisLine
         )
         .map(stocktakeParser.line.toUpdate),
-    };
-
-    const result = await sdk.upsertStocktakeLines(input);
+    });
 
     return result;
   },

@@ -16,7 +16,7 @@ import {
   useTheme,
 } from '@openmsupply-client/common';
 import { getLocationInputColumn } from '@openmsupply-client/system';
-import { DraftStocktakeLine } from './hooks';
+import { DraftStocktakeLine } from './utils';
 
 interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
