@@ -62,8 +62,8 @@ const stockLineToDraftLine = (
 ): DraftStocktakeLine => {
   return {
     stocktakeId,
-    countThisLine: false,
-    isCreated: false,
+    countThisLine: true,
+    isCreated: true,
     isUpdated: false,
     ...line,
     snapshotNumberOfPacks: line.totalNumberOfPacks,
