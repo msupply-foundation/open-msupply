@@ -4,7 +4,10 @@ import { i18n, TOptions } from 'i18next';
 import { LocaleKey } from './locales';
 import { useAuthContext } from '../authentication';
 
-export type SupportedLocales = 'en' | 'fr' | 'ar';
+const locales = ['en' as const, 'ar' as const, 'fr' as const] as const;
+
+export type SupportedLocales = typeof locales[number];
+
 export type LocaleProps = Record<string, unknown>;
 export interface TypedTFunction<Keys> {
   // basic usage
@@ -20,9 +23,8 @@ export interface TypedTFunction<Keys> {
   ): string;
 }
 
-export const isSupportedLang = (lang: string): boolean => {
-  return lang === 'en' || lang === 'fr' || lang === 'ar';
-};
+export const isSupportedLang = (lang: string): lang is SupportedLocales =>
+  locales.some(locale => lang === locale);
 
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   const { t } = useTranslationNext(ns);
