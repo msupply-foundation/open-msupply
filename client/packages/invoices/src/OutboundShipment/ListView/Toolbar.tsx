@@ -18,7 +18,7 @@ export const Toolbar: FC<{
   const onDelete = useDeleteSelectedOutbounds();
 
   const key = 'comment' as keyof OutboundRowFragment;
-  const filterString = filter.filterBy?.[key]?.like as string;
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
   return (
     <AppBarContentPortal
