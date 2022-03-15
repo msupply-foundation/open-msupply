@@ -30,13 +30,13 @@ const AdditionalInfoSection: FC = () => {
     'user',
   ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
-  const t = useTranslation('common');
+  const t = useTranslation('distribution');
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
-          <PanelLabel>{t('label.entered-by')}</PanelLabel>
+          <PanelLabel>{t('label.edited-by')}</PanelLabel>
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
