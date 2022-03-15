@@ -62,7 +62,7 @@ const stockLineToDraftLine = (
 ): DraftStocktakeLine => {
   return {
     stocktakeId,
-    countThisLine: true,
+    countThisLine: false,
     isCreated: true,
     isUpdated: false,
     ...line,
