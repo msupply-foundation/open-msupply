@@ -3,7 +3,12 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
 import { RecordWithId } from '@common/types';
-import { useExpanded, useIsDisabled, useRowStyle } from '../../context';
+import {
+  useExpanded,
+  useIsDisabled,
+  useIsFocused,
+  useRowStyle,
+} from '../../context';
 import { Collapse, Fade } from '@mui/material';
 
 interface DataRowProps<T extends RecordWithId> {
@@ -30,6 +35,7 @@ export const DataRow = <T extends RecordWithId>({
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
   const { isDisabled } = useIsDisabled(rowData.id);
+  const { isFocused } = useIsFocused(rowData.id);
   const { rowStyle } = useRowStyle(rowData.id);
 
   const onRowClick = () => onClick && onClick(rowData);
@@ -56,6 +62,7 @@ export const DataRow = <T extends RecordWithId>({
           }}
           onClick={onRowClick}
           hover={hasOnClick}
+          selected={isFocused}
         >
           {columns.map((column, columnIndex) => {
             return (

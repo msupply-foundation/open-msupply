@@ -6,6 +6,8 @@ export interface RowState {
   isSelected: boolean;
   isExpanded: boolean;
   isDisabled: boolean;
+  isFocused: boolean;
+  index: number;
   style?: AppSxProp;
 }
 
@@ -22,6 +24,8 @@ export interface TableStore {
   setActiveRows: (id: string[]) => void;
   setDisabledRows: (id: string[]) => void;
   setIsGrouped: (grouped: boolean) => void;
+  setFocusUp: () => void;
+  setFocusDown: () => void;
   setRowStyle: (id: string, style: AppSxProp) => void;
   setRowStyles: (ids: string[], style: AppSxProp) => void;
 }
@@ -37,6 +41,8 @@ const getRowState = (
   isSelected: state.rowState[id]?.isSelected ?? false,
   isExpanded: state.rowState[id]?.isExpanded ?? false,
   isDisabled: state.rowState[id]?.isDisabled ?? false,
+  isFocused: state.rowState[id]?.isFocused ?? false,
+  index: state.rowState[id]?.index ?? 0,
   style: state.rowState[id]?.style ?? {},
   ...updates,
 });
@@ -66,6 +72,8 @@ export const createTableStore = (): UseStore<TableStore> =>
                 isSelected,
                 isExpanded: state.rowState[id]?.isExpanded ?? false,
                 isDisabled: state.rowState[id]?.isDisabled ?? false,
+                isFocused: state.rowState[id]?.isFocused ?? false,
+                index: state.rowState[id]?.index ?? 0,
               },
             }),
             state.rowState
@@ -120,12 +128,16 @@ export const createTableStore = (): UseStore<TableStore> =>
 
     setActiveRows: (ids: string[]) => {
       set(state => {
-        // Create a new row state, which is setting any newly active rows to unselected.
+        // Create a new row state, which is setting any newly active rows to unselected and unfocused.
         const newRowState: Record<string, RowState> = ids.reduce(
-          (newRowState, id) => {
+          (newRowState, id, index) => {
             return {
               ...newRowState,
-              [id]: getRowState(state, id, { isExpanded: false }),
+              [id]: getRowState(state, id, {
+                isExpanded: false,
+                isFocused: false,
+                index,
+              }),
             };
           },
           {}
@@ -150,6 +162,60 @@ export const createTableStore = (): UseStore<TableStore> =>
           ...state,
           isGrouped: grouped,
         };
+      });
+    },
+    setFocusDown: () => {
+      set(state => {
+        const { rowState } = state;
+        const rows = Object.entries(rowState);
+
+        // Get currently focused row, if any
+        const [currentFocusId, currentFocusObj] =
+          rows.find(([_, { isFocused }]) => isFocused === true) || [];
+
+        // Deduce what the next row is, wrapping back to top if end of list
+        const nextIndex = ((currentFocusObj?.index ?? -1) + 1) % rows.length;
+        const [nextId, _] =
+          rows.find(([_, { index }]) => index === nextIndex) || [];
+
+        // Set / Unset focus state
+        if (currentFocusId)
+          rowState[currentFocusId] = getRowState(state, currentFocusId, {
+            isFocused: false,
+          });
+        rowState[nextId as string] = getRowState(state, nextId as string, {
+          isFocused: true,
+        });
+
+        return { ...state, rowState: { ...rowState } };
+      });
+    },
+    setFocusUp: () => {
+      set(state => {
+        const { rowState } = state;
+        const rows = Object.entries(rowState);
+
+        // Get currently focused row, if any
+        const [currentFocusId, currentFocusObj] =
+          rows.find(([_, { isFocused }]) => isFocused === true) || [];
+
+        // Deduce what the next row is, wrapping back to bottom if top of list
+        const nextIndex =
+          ((currentFocusObj?.index ?? rows.length) - 1 + rows.length) %
+          rows.length;
+        const [nextId, _] =
+          rows.find(([_, { index }]) => index === nextIndex) || [];
+
+        // Set / Unset focus state
+        if (currentFocusId)
+          rowState[currentFocusId] = getRowState(state, currentFocusId, {
+            isFocused: false,
+          });
+        rowState[nextId as string] = getRowState(state, nextId as string, {
+          isFocused: true,
+        });
+
+        return { ...state, rowState: { ...rowState } };
       });
     },
 

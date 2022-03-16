@@ -10,6 +10,7 @@ import {
   Table as MuiTable,
   Typography,
 } from '@mui/material';
+import { useRegisterActions } from '@openmsupply-client/common';
 
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
@@ -32,7 +33,30 @@ export const DataTableComponent = <T extends RecordWithId>({
   isDisabled = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
-  const { setActiveRows, setDisabledRows } = useTableStore();
+  const { setActiveRows, setDisabledRows, setFocusUp, setFocusDown } =
+    useTableStore();
+  useRegisterActions([
+    {
+      id: 'table:focus-down',
+      name: '', // No name => won't show in Modal menu
+      shortcut: ['arrowdown'],
+      keywords: 'focus, down',
+      perform: () => {
+        console.log('Arrow down');
+        setFocusDown();
+      },
+    },
+    {
+      id: 'table:focus-up',
+      name: '',
+      shortcut: ['arrowup'],
+      keywords: 'focus, up',
+      perform: () => {
+        console.log('Arrow up');
+        setFocusUp();
+      },
+    },
+  ]);
 
   useEffect(() => {
     if (data.length) setActiveRows(data.map(({ id }) => id));
