@@ -46,21 +46,21 @@ export const useCurrentLanguage = (): SupportedLocales => {
   return 'en';
 };
 
-export const useFormatDate = (): ((
-  value: number | Date,
-  options?: Intl.DateTimeFormatOptions & { format?: string }
-) => string) => {
-  const { t } = useTranslationNext('app');
-  return (val, formatParams) => t('intl.datetime', { val, formatParams });
-};
+// export const useFormatDate = (): ((
+//   value: number | Date,
+//   options?: Intl.DateTimeFormatOptions & { format?: string }
+// ) => string) => {
+//   const { t } = useTranslationNext('app');
+//   return (val, formatParams) => t('intl.datetime', { val, formatParams });
+// };
 
-export const useFormatNumber = (): ((
-  value: number | bigint,
-  options?: Intl.NumberFormatOptions
-) => string) => {
-  const { t } = useTranslationNext('app');
-  return (val, formatParams) => t('intl.number', { val, formatParams });
-};
+// export const useFormatNumber = (): ((
+//   value: number | bigint,
+//   options?: Intl.NumberFormatOptions
+// ) => string) => {
+//   const { t } = useTranslationNext('app');
+//   return (val, formatParams) => t('intl.number', { val, formatParams });
+// };
 
 export const useRtl = (): boolean => {
   const { i18n } = useTranslationNext();
