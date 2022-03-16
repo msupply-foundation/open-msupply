@@ -4,25 +4,32 @@ import {
   CircularProgress,
   FlatButton,
   PaperPopoverSection,
+  ReportCategory,
   usePaperClickPopover,
   useTranslation,
 } from '@openmsupply-client/common';
 import { ReportRowFragment, useReports } from '../api';
 
-export const ReportSelector: FC = ({ children }) => {
+interface ReportSelectorProps {
+  category?: ReportCategory;
+  onClick: (report: ReportRowFragment) => void;
+}
+
+export const ReportSelector: FC<ReportSelectorProps> = ({
+  category,
+  children,
+  onClick,
+}) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReports();
+  const { data, isLoading } = useReports(category);
   const t = useTranslation('app');
-  const printReport = (report: ReportRowFragment) => {
-    alert(`Printing ${report.name}`);
-  };
 
   const reportButtons = data?.nodes.map(report => (
     <FlatButton
       label={report.name}
       onClick={() => {
         hide();
-        printReport(report);
+        onClick(report);
       }}
       key={report.id}
       sx={{ textAlign: 'left', justifyContent: 'left' }}
