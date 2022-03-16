@@ -1,7 +1,7 @@
 use crate::{
     database_settings::DatabaseSettings,
     db_diesel::{DBBackendConnection, StorageConnection, StorageConnectionManager},
-    mock::{insert_mock_data, MockData, MockDataCollection, MockDataInserts},
+    mock::{insert_all_mock_data, insert_mock_data, MockData, MockDataCollection, MockDataInserts},
 };
 
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -136,13 +136,13 @@ pub async fn setup_all(
     StorageConnectionManager,
     DatabaseSettings,
 ) {
-    setup_all_with_data(db_name, inserts, None).await
+    setup_all_with_data(db_name, inserts, MockData::default()).await
 }
 
 pub async fn setup_all_with_data(
     db_name: &str,
     inserts: MockDataInserts,
-    extra_mock_data: Option<MockData>,
+    extra_mock_data: MockData,
 ) -> (
     MockDataCollection,
     StorageConnection,
@@ -161,10 +161,15 @@ pub async fn setup_all_with_data(
 
     let connection = storage_connection_manager.connection().unwrap();
 
-    (
-        insert_mock_data(&connection, inserts, extra_mock_data).await,
-        connection,
-        storage_connection_manager,
-        settings,
+    let core_data = insert_all_mock_data(&connection, inserts).await;
+
+    insert_mock_data(
+        &connection,
+        MockDataInserts::all(),
+        MockDataCollection {
+            data: vec![("extra_data".to_string(), extra_mock_data)],
+        },
     )
+    .await;
+    (core_data, connection, storage_connection_manager, settings)
 }
