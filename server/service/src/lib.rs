@@ -19,6 +19,7 @@ pub mod report;
 pub mod requisition;
 pub mod requisition_line;
 pub mod service_provider;
+pub mod static_files;
 pub mod stock_line;
 pub mod stocktake;
 pub mod stocktake_line;
