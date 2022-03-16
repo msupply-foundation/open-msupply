@@ -103,8 +103,12 @@ export const AuthProvider: FC = ({ children }) => {
   const [localStore, setLocalStore] = useState<Store | undefined>(cookieStore);
   const [localToken, setLocalToken] = useState<string | undefined>(cookieToken);
   const storeId = localStore?.id ?? '';
-
-  useRefreshingAuth(setLocalToken, localToken);
+  const saveToken = (token?: string) => {
+    setLocalToken(token);
+    const authCookie = getAuthCookie();
+    setAuthCookie({ ...authCookie, token: token ?? '' });
+  };
+  useRefreshingAuth(saveToken, localToken);
 
   const login = async (username: string, password: string, store?: Store) => {
     const { token, error } = await mutateAsync({ username, password });
