@@ -4,7 +4,6 @@ import {
   useQuery,
   useAuthContext,
   ReportCategory,
-  useOpenInNewTab,
   useMutation,
 } from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
@@ -52,7 +51,6 @@ type PrintReportParams = {
 
 export const usePrintReport = () => {
   const api = useReportApi();
-  const openInNewTab = useOpenInNewTab();
   const { mutate, isLoading } = useMutation<
     string,
     unknown,
@@ -61,7 +59,12 @@ export const usePrintReport = () => {
   >(params => api.get.print(params), {
     onSuccess: fileId => {
       if (!fileId) throw new Error('Error printing report');
-      openInNewTab(`${Environment.FILE_URL}${fileId}`);
+      const url = `${Environment.FILE_URL}${fileId}`;
+      const win = window.open(url, '_blank');
+      if (win) {
+        win.focus();
+        // win.print(); // crashes chrome if the file is a PDF :shrug:
+      }
     },
   });
 

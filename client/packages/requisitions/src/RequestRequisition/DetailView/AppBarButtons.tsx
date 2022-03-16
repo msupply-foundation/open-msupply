@@ -69,7 +69,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         >
           <LoadingButton
             variant="outlined"
-            disabled={isDisabled}
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
           >
