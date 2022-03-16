@@ -23,13 +23,15 @@ export const LoggedOutAlert = () => {
     return () => toggleOff();
   }, [user]);
 
+  // no need to alert if you are on the login screen!
   if (
     matchPath(
       RouteBuilder.create(AppRoute.Login).addWildCard().build(),
       location.pathname
     )
-  )
+  ) {
     return null;
+  }
 
   return (
     <AlertModal
