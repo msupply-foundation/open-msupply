@@ -4,9 +4,12 @@ import {
   useQuery,
   useAuthContext,
   ReportCategory,
+  useOpenInNewTab,
+  useMutation,
 } from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
 import { getReportQueries, ReportListParams } from './api';
+import { Environment } from 'packages/config/src';
 
 const useReportApi = () => {
   const keys = {
@@ -42,14 +45,25 @@ export const useReports = (category?: ReportCategory) => {
   );
 };
 
-export const usePrintReports = () => {
-  const api = useReportApi();
-  const initialListParameters = { initialSortBy: { key: 'name' } };
-  const { filterBy, queryParams, sortBy, offset } = useQueryParams(
-    initialListParameters
-  );
+type PrintReportParams = {
+  reportId: string;
+  dataId: string;
+};
 
-  return useQuery(api.keys.paramList(queryParams), async () =>
-    api.get.list({ filterBy, sortBy, offset })
-  );
+export const usePrintReport = () => {
+  const api = useReportApi();
+  const openInNewTab = useOpenInNewTab();
+  const { mutate, isLoading } = useMutation<
+    string,
+    unknown,
+    PrintReportParams,
+    unknown
+  >(params => api.get.print(params), {
+    onSuccess: fileId => {
+      if (!fileId) throw new Error('Error printing report');
+      openInNewTab(`${Environment.FILE_URL}${fileId}`);
+    },
+  });
+
+  return { print: mutate, isPrinting: isLoading };
 };
