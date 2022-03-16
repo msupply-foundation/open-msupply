@@ -180,6 +180,15 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     ) -> Result<String, DeleteOutboundShipmentUnallocatedLineError> {
         delete_outbound_shipment_unallocated_line(ctx, store_id, input)
     }
+
+    fn allocate_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        line_id: String,
+    ) -> AllocateOutboundShipmentUnallocatedLineResult {
+        allocate_outbound_shipment_unallocated_line(ctx, store_id, line_id)
+    }
 }
 
 pub struct InvoiceLineService {}
