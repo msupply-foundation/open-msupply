@@ -2,4 +2,4 @@
 . "$(dirname "$0")/_/husky.sh"
 
 
-# yarn pre-commit-lint
+yarn pre-commit-lint

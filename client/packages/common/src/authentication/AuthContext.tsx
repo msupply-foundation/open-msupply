@@ -1,4 +1,4 @@
-import React, { createContext, FC, useMemo, useState } from 'react';
+import React, { createContext, FC, useMemo, useState, useEffect } from 'react';
 import { useDefaultLanguage, useI18N, isSupportedLang } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
@@ -70,10 +70,14 @@ const setAuthCookie = (cookie: AuthCookie) => {
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
 };
 
-const useRefreshingAuth = (token?: string) => {
+const useRefreshingAuth = (
+  callback: (token?: string) => void,
+  token?: string
+) => {
   const { setHeader } = useGql();
   setHeader('Authorization', `Bearer ${token}`);
-  useGetRefreshToken(token ?? '');
+  const { data } = useGetRefreshToken(token ?? '');
+  useEffect(() => callback(data?.token), [data, callback]);
 };
 
 const AuthContext = createContext<AuthControl>({
@@ -100,7 +104,7 @@ export const AuthProvider: FC = ({ children }) => {
   const [localToken, setLocalToken] = useState<string | undefined>(cookieToken);
   const storeId = localStore?.id ?? '';
 
-  useRefreshingAuth(localToken);
+  useRefreshingAuth(setLocalToken, localToken);
 
   const login = async (username: string, password: string, store?: Store) => {
     const { token, error } = await mutateAsync({ username, password });
