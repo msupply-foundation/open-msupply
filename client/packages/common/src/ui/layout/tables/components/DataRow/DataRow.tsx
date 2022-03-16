@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { Column } from '../../columns/types';
@@ -20,6 +20,7 @@ interface DataRowProps<T extends RecordWithId> {
   ExpandContent?: FC<{ rowData: T }>;
   dense?: boolean;
   rowIndex: number;
+  keyboardActivated?: boolean;
 }
 
 export const DataRow = <T extends RecordWithId>({
@@ -31,6 +32,7 @@ export const DataRow = <T extends RecordWithId>({
   ExpandContent,
   dense = false,
   rows,
+  keyboardActivated,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
@@ -42,6 +44,10 @@ export const DataRow = <T extends RecordWithId>({
   const minWidth = columns.reduce((sum, { minWidth }) => sum + minWidth, 0);
   const paddingX = dense ? '12px' : '16px';
   const paddingY = dense ? '4px' : undefined;
+
+  useEffect(() => {
+    if (isFocused) onRowClick();
+  }, [keyboardActivated]);
 
   return (
     <>

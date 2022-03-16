@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-key */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   Box,
@@ -35,6 +35,7 @@ export const DataTableComponent = <T extends RecordWithId>({
   const t = useTranslation('common');
   const { setActiveRows, setDisabledRows, setFocusUp, setFocusDown } =
     useTableStore();
+  const [clickFocusedRow, setClickFocusedRow] = useState(false);
   useRegisterActions([
     {
       id: 'table:focus-down',
@@ -54,6 +55,16 @@ export const DataTableComponent = <T extends RecordWithId>({
       perform: () => {
         console.log('Arrow up');
         setFocusUp();
+      },
+    },
+    {
+      id: 'table:press-enter',
+      name: '',
+      shortcut: ['enter'],
+      keywords: 'table, enter',
+      perform: () => {
+        console.log('Press enter');
+        setClickFocusedRow(true);
       },
     },
   ]);
@@ -141,6 +152,7 @@ export const DataTableComponent = <T extends RecordWithId>({
               rowData={row}
               rowKey={String(idx)}
               dense={dense}
+              keyboardActivated={clickFocusedRow}
             />
           ))}
         </TableBody>
