@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { styled } from '@mui/material/styles';
 import { Breadcrumbs as MuiBreadcrumbs } from '@mui/material';
 import { useLocation, Link } from 'react-router-dom';
-import { useRegisterActions } from 'kbar';
-import { useNavigate } from '@openmsupply-client/common';
+import { useRegisterActions } from '@openmsupply-client/common';
+import { useNavigateBreadcrumbs } from './useNavigateBreadcrumbs';
 
 import { LocaleKey, useTranslation } from '@common/intl';
 
-interface UrlPart {
+export interface UrlPart {
   path: string;
   key: LocaleKey;
   value: string;
@@ -23,26 +23,16 @@ export const Breadcrumbs: React.FC = () => {
   const t = useTranslation(['app', 'common']);
   const location = useLocation();
   const [urlParts, setUrlParts] = useState<UrlPart[]>([]);
-  const navigate = useNavigate();
+  const { setNavAction } = useNavigateBreadcrumbs(urlParts);
   useRegisterActions([
     {
-      id: 'test:just-testing',
-      name: 'Testing shortcuts?',
+      id: 'navigation:up-one-level',
+      name: '', // No name => won't show in Modal menu
       shortcut: ['escape'],
-      // keywords: 'drawer, close',
-      perform: () => navigateUpOne(),
+      keywords: 'navigate, back',
+      perform: () => setNavAction('upOne'),
     },
   ]);
-
-  function navigateUpOne() {
-    console.log('Pressed escape');
-    const partsLength = urlParts.length;
-    console.log(partsLength);
-    if (partsLength < 2) return;
-    navigate(urlParts[partsLength - 1]?.path as string);
-  }
-
-  console.log('urlParts', urlParts);
 
   useEffect(() => {
     const parts = location.pathname.split('/');
@@ -87,7 +77,6 @@ export const Breadcrumbs: React.FC = () => {
         fontWeight: 500,
       }}
     >
-      <p onClick={navigateUpOne}>Click me</p>
       {crumbs}
     </MuiBreadcrumbs>
   );
