@@ -33,7 +33,7 @@ export const DataTableComponent = <T extends RecordWithId>({
   isDisabled = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
-  const { setActiveRows, setDisabledRows, setFocusUp, setFocusDown } =
+  const { setRows, setDisabledRows, setFocusUp, setFocusDown } =
     useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
   useRegisterActions([
@@ -70,7 +70,7 @@ export const DataTableComponent = <T extends RecordWithId>({
   ]);
 
   useEffect(() => {
-    if (data.length) setActiveRows(data.map(({ id }) => id));
+    if (data.length) setRows(data.map(({ id }) => id));
   }, [data]);
 
   useEffect(() => {

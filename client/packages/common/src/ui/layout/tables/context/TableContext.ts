@@ -21,7 +21,7 @@ export interface TableStore {
   toggleAllExpanded: () => void;
   toggleSelected: (id: string) => void;
   toggleAll: () => void;
-  setActiveRows: (id: string[]) => void;
+  setRows: (id: string[]) => void;
   setDisabledRows: (id: string[]) => void;
   setIsGrouped: (grouped: boolean) => void;
   setFocusUp: () => void;
@@ -126,7 +126,7 @@ export const createTableStore = (): UseStore<TableStore> =>
       });
     },
 
-    setActiveRows: (ids: string[]) => {
+    setRows: (ids: string[]) => {
       set(state => {
         // Create a new row state, which is setting any newly active rows to unselected and unfocused.
         const newRowState: Record<string, RowState> = ids.reduce(
