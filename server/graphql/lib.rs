@@ -1,9 +1,14 @@
 #[cfg(test)]
 mod tests;
 
+use std::sync::Arc;
+
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use actix_web::{guard::fn_guard, HttpResponse, Result};
+use async_graphql::extensions::{
+    Extension, ExtensionContext, ExtensionFactory, Logger, NextExecute,
+};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::MergedObject;
 use async_graphql::{EmptySubscription, SchemaBuilder};
@@ -21,6 +26,7 @@ use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::StocktakeLineMutations;
 
+use log::info;
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
@@ -80,6 +86,30 @@ pub fn build_schema() -> Builder {
     Schema::build(full_query(), full_mutation(), EmptySubscription)
 }
 
+pub struct ResponseLogger;
+impl ExtensionFactory for ResponseLogger {
+    fn create(&self) -> Arc<dyn Extension> {
+        Arc::new(ResponseLoggerExtension)
+    }
+}
+struct ResponseLoggerExtension;
+#[async_trait::async_trait]
+impl Extension for ResponseLoggerExtension {
+    async fn execute(
+        &self,
+        ctx: &ExtensionContext<'_>,
+        operation_name: Option<&str>,
+        next: NextExecute<'_>,
+    ) -> async_graphql::Response {
+        let resp = next.run(ctx, operation_name).await;
+        info!(
+            target: "async-graphql",
+            "[Execute Response] {:?}\n{:?}", operation_name, resp
+        );
+        resp
+    }
+}
+
 pub fn config(
     connection_manager: Data<StorageConnectionManager>,
     loader_registry: Data<LoaderRegistry>,
@@ -92,6 +122,8 @@ pub fn config(
             .data(loader_registry)
             .data(service_provider)
             .data(auth_data)
+            .extension(Logger)
+            .extension(ResponseLogger)
             .finish();
         cfg.service(
             actix_web::web::scope("/graphql")
