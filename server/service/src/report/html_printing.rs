@@ -1,8 +1,8 @@
-use std::{fs, path::PathBuf, str::FromStr};
+use std::fs;
 
 use headless_chrome::{protocol::page::PrintToPdfOptions, Browser, LaunchOptionsBuilder};
 
-pub fn html_to_pdf(document: &String) -> Result<Vec<u8>, failure::Error> {
+pub fn html_to_pdf(document: &String, document_id: &str) -> Result<Vec<u8>, failure::Error> {
     let pdf_options=  Some(PrintToPdfOptions {
     display_header_footer: Some(true),
     prefer_css_page_size: Some(false),
@@ -22,6 +22,11 @@ pub fn html_to_pdf(document: &String) -> Result<Vec<u8>, failure::Error> {
     footer_template: Some(r#"<div style="font-size: 15px; padding-top: 8px; text-align: center; width: 100%;"><span>Footer here.</span> Page number: <span class="pageNumber"></span></div>"#.to_string()),
 });
 
+    let document_name = format!("{}.html", document_id);
+    let temp_html_doc_path = std::env::current_dir()?.join(document_name);
+    //let file_path = PathBuf::from_str(&document_name)?.canonicalize()?;
+    fs::write(&temp_html_doc_path, document)?;
+
     // create a new browser and a tab in that browser using headless-chrome
     let launch_options = LaunchOptionsBuilder::default()
         .headless(true)
@@ -29,12 +34,12 @@ pub fn html_to_pdf(document: &String) -> Result<Vec<u8>, failure::Error> {
         .map_err(|err| failure::err_msg(err))?;
     let browser = Browser::new(launch_options)?;
     let tab = browser.wait_for_initial_tab()?;
-
-    let file_path = PathBuf::from_str("./document.html")?;
-    fs::write(&file_path, document)?;
     let local_pdf = tab
-        .navigate_to(&file_path.to_string_lossy())?
+        .navigate_to(&format!("file:{}", temp_html_doc_path.to_string_lossy()))?
         .wait_until_navigated()?
         .print_to_pdf(pdf_options)?;
+
+    // clean up
+    fs::remove_file(temp_html_doc_path)?;
     Ok(local_pdf)
 }
