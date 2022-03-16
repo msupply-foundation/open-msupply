@@ -7,6 +7,7 @@ import { useGql } from '../api';
 import { useGetRefreshToken } from './api/hooks';
 import { useGetAuthToken } from './api/hooks/useGetAuthToken';
 import { AuthenticationResponse } from './api';
+import { useDebounceCallback } from '..';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
 
@@ -76,8 +77,10 @@ const useRefreshingAuth = (
 ) => {
   const { setHeader } = useGql();
   setHeader('Authorization', `Bearer ${token}`);
-  const { data } = useGetRefreshToken(token ?? '');
-  useEffect(() => callback(data?.token), [data, callback]);
+  const { data, isSuccess } = useGetRefreshToken(token ?? '');
+  useEffect(() => {
+    if (isSuccess) callback(data?.token);
+  }, [data, isSuccess, callback]);
 };
 
 const AuthContext = createContext<AuthControl>({
@@ -144,7 +147,6 @@ export const AuthProvider: FC = ({ children }) => {
     Cookies.remove('auth');
     setLocalStore(undefined);
   };
-
   const val = useMemo(
     () => ({
       isLoggingIn,
