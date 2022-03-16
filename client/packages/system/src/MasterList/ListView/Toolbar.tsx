@@ -10,7 +10,7 @@ import { MasterListRow } from '../types';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation('common');
   const key = 'name' as keyof MasterListRow;
   const filterString = filter.filterBy?.[key]?.like as string;
 
