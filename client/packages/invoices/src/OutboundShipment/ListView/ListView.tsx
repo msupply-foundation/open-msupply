@@ -16,7 +16,6 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbounds, useUpdateOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
-import { useRegisterActions } from 'kbar';
 
 const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -30,15 +29,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useUpdateOutbound();
   const t = useTranslation('common');
   const navigate = useNavigate();
-  useRegisterActions([
-    {
-      id: 'test:dynamic-test',
-      name: '',
-      shortcut: ['escape'],
-      // keywords: 'drawer, close',
-      perform: () => console.log('Should only be active in Shipments'),
-    },
-  ]);
 
   const {
     data,
