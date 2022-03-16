@@ -8,11 +8,21 @@ pub enum ReportType {
     OmReport,
 }
 
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum ReportCategory {
+    Invoice,
+    Requisition,
+    Stocktake,
+}
+
 table! {
   report (id) {
       id -> Text,
       name -> Text,
       #[sql_name = "type"] type_ -> crate::schema::report::ReportTypeMapping,
+      data -> Text,
+      context ->  crate::schema::report::ReportCategoryMapping,
   }
 }
 
@@ -23,4 +33,7 @@ pub struct ReportRow {
     pub name: String,
     #[column_name = "type_"]
     pub r#type: ReportType,
+    pub data: String,
+    /// Used to store the report category
+    pub context: ReportCategory,
 }
