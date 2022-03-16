@@ -136,7 +136,6 @@ export const CommandK: FC = ({ children }) => {
       name: `${t('cmdk.goto-items')} (g+i)`,
       shortcut: ['g', 'i'],
       keywords: 'items',
-      // section: 'What is a section?',
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Catalogue)
