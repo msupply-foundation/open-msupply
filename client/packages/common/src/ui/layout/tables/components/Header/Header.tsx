@@ -50,12 +50,30 @@ export const HeaderCell = <T extends RecordWithId>({
     150
   );
 
-  const tooltip = (
+  const showTooltip = !!description || sortable;
+  const tooltip = showTooltip ? (
     <>
       {!!description && <div>{t(description)}</div>}
       {sortable && <div>{t('label.click-to-sort')}</div>}
     </>
+  ) : (
+    ''
   );
+  const HeaderLabel = sortable ? (
+    <TableSortLabel
+      hideSortIcon={false}
+      active={isSorted}
+      direction={direction}
+      IconComponent={SortDescIcon}
+    >
+      <Header column={column} />
+    </TableSortLabel>
+  ) : (
+    <div>
+      <Header column={column} />
+    </div>
+  );
+
   return (
     <TableCell
       role="columnheader"
@@ -82,18 +100,7 @@ export const HeaderCell = <T extends RecordWithId>({
         placement="bottom"
         style={{ whiteSpace: 'pre-line' }}
       >
-        {sortable ? (
-          <TableSortLabel
-            hideSortIcon={false}
-            active={isSorted}
-            direction={direction}
-            IconComponent={SortDescIcon}
-          >
-            <Header column={column} />
-          </TableSortLabel>
-        ) : (
-          <Header column={column} />
-        )}
+        {HeaderLabel}
       </Tooltip>
     </TableCell>
   );

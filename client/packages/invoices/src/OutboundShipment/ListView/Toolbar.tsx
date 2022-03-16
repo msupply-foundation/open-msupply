@@ -13,11 +13,11 @@ import { useDeleteSelectedOutbounds, OutboundRowFragment } from '../api';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation('common');
 
   const onDelete = useDeleteSelectedOutbounds();
 
-  const key = 'comment' as keyof OutboundRowFragment;
+  const key = 'otherPartyName' as keyof OutboundRowFragment;
   const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
   return (
@@ -30,10 +30,10 @@ export const Toolbar: FC<{
       }}
     >
       <SearchBar
-        placeholder="Search by comment..."
+        placeholder={t('placeholder.search-by-name')}
         value={filterString}
         onChange={newValue => {
-          filter.onChangeStringFilterRule('comment', 'like', newValue);
+          filter.onChangeStringFilterRule('otherPartyName', 'like', newValue);
         }}
       />
 
