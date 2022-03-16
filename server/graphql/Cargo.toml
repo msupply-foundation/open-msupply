@@ -32,7 +32,7 @@ graphql_batch_mutations = { path = "batch_mutations" }
 
 actix-web = "3.3.2" # Versions >=v4 depend on Tokio v1.
 anymap = "0.12"
-async-graphql = { version = "=2.11.3", features = ["dataloader", "chrono"] }
+async-graphql = { version = "=2.11.3", features = ["dataloader", "chrono", "log"] }
 async-graphql-actix-web = "=2.11.3"
 async-trait = "0.1.16"
 chrono = { version = "0.4", features = ["serde"] }
@@ -40,6 +40,7 @@ reqwest = { version = "0.10", features = ["json"] } # Versions >=0.11 depend on 
 serde = "1.0.126"
 serde_json = "1.0.66"
 thiserror = "1.0.30"
+log = "0.4.14"
 
 
 [dev-dependencies]
