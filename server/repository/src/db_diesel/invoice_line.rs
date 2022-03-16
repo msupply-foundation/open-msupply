@@ -190,3 +190,14 @@ impl InvoiceLine {
         }
     }
 }
+
+impl InvoiceLineRowType {
+    pub fn equal_to(&self) -> EqualFilter<InvoiceLineRowType> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+}

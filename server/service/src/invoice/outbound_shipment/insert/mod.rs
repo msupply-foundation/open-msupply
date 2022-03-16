@@ -10,7 +10,7 @@ use validate::validate;
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertOutboundShipment {
     pub id: String,
     pub other_party_id: String,
@@ -20,7 +20,7 @@ pub struct InsertOutboundShipment {
     pub colour: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum InsertOutboundShipmentError {
     OtherPartyCannotBeThisStore,
     OtherPartyIdNotFound(String),
