@@ -231,7 +231,7 @@ pub async fn setup_graphl_test_with_data<
     mutations: M,
     db_name: &str,
     inserts: MockDataInserts,
-    extra_mock_data: Option<MockData>,
+    extra_mock_data: MockData,
 ) -> (
     MockDataCollection,
     StorageConnection,
@@ -264,5 +264,5 @@ pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + Obj
     StorageConnectionManager,
     TestGraphlSettings<Q, M>,
 ) {
-    setup_graphl_test_with_data(queries, mutations, db_name, inserts, None).await
+    setup_graphl_test_with_data(queries, mutations, db_name, inserts, MockData::default()).await
 }
