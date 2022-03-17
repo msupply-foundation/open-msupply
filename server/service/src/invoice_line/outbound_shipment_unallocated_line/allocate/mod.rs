@@ -65,9 +65,9 @@ type OutError = AllocateOutboundShipmentUnallocatedLineError;
 
 #[derive(Default, Debug, PartialEq)]
 pub struct Return {
-    inserts: Vec<InvoiceLine>,
-    deletes: Vec<String>,
-    updates: Vec<InvoiceLine>,
+    pub inserts: Vec<InvoiceLine>,
+    pub deletes: Vec<String>,
+    pub updates: Vec<InvoiceLine>,
 }
 
 pub type AllocateOutboundShipmentUnallocatedLineResult = Result<Return, OutError>;
