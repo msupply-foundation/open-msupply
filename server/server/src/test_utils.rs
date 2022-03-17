@@ -9,6 +9,7 @@ pub fn get_test_settings(db_name: &str) -> Settings {
         server: ServerSettings {
             host: "localhost".to_string(),
             port: 5432,
+            ignore_user_in_auth: true,
         },
         database: get_test_db_settings(db_name),
         sync: SyncSettings {
