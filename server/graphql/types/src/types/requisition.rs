@@ -67,7 +67,7 @@ impl RequisitionNode {
         DateTime::<Utc>::from_utc(self.row().created_datetime.clone(), Utc)
     }
 
-    /// User that last edited requisition, if user is not found in system default unknow user is returned
+    /// User that last edited requisition, if user is not found in system default unknown user is returned
     /// Null is returned for transfers, where response requisition has not been edited yet
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();

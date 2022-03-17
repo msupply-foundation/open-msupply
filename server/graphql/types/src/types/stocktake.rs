@@ -35,7 +35,7 @@ impl StocktakeNode {
         &self.stocktake.store_id
     }
 
-    /// User that created stocktake, if user is not found in system default unknow user is returned
+    /// User that created stocktake, if user is not found in system default unknown user is returned
     pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
         let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
 
