@@ -16,7 +16,7 @@ export const LoggedOutAlert = () => {
   const { isOn, toggleOff, toggleOn } = useToggle();
   const t = useTranslation('app');
   const location = useLocation();
-  const { token, user } = useAuthContext();
+  const { user } = useAuthContext();
 
   useEffect(() => {
     if (!user) toggleOn();

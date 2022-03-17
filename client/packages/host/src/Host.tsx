@@ -19,7 +19,6 @@ import {
   AuthProvider,
   AlertModalProvider,
   EnvUtils,
-  useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Login, Viewport } from './components';
