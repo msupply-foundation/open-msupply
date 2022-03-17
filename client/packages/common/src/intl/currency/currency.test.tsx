@@ -1,5 +1,5 @@
-import { useCurrency } from './currency';
 import { renderHookWithProvider } from '@common/utils';
+import { useCurrency } from './currency';
 
 describe('currency formatting - en', () => {
   it('formats a string with up to the precision number of decimal places, dropping decimal places where needed', () => {
