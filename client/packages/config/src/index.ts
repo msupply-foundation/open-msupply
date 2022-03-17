@@ -1,8 +1,9 @@
 export * from './routes';
 
 interface EnvironmentConfig {
-  API_URL: string;
+  API_HOST: string;
   FILE_URL: string;
+  GRAPHQL_URL: string;
 }
 
 declare global {
@@ -11,9 +12,10 @@ declare global {
   }
 }
 
-const { API_URL = 'http://localhost:4000' } = window.env;
+const { API_HOST = 'http://localhost:4000' } = window.env;
 
 export const Environment: EnvironmentConfig = {
-  API_URL,
-  FILE_URL: `${API_URL.replace('graphql', 'files')}?id=`,
+  API_HOST,
+  FILE_URL: `${API_HOST}/files?id=`,
+  GRAPHQL_URL: `${API_HOST}/graphql`,
 };

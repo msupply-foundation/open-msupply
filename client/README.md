@@ -145,7 +145,7 @@ yarn android:build-remote_server
 
 ### Run the Android app
 
-In `packages/host/public/config.js` change `API_URL` to `API_URL: 'http://localhost:8082/graphql'` to use the remote server running on Android.
+In `packages/host/public/config.js` change `API_HOST` to `API_HOST: 'http://localhost:8082'` to use the remote server running on Android.
 
 After building the web app the output needs to be copied to the android project:
 
