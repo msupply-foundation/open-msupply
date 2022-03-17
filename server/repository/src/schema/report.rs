@@ -14,6 +14,9 @@ pub enum ReportCategory {
     Invoice,
     Requisition,
     Stocktake,
+    /// Not an actual report but a resource entry used by other reports, e.g. to provide footers or
+    /// logos
+    Resource,
 }
 
 table! {

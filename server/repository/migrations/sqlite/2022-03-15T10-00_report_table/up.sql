@@ -3,5 +3,5 @@ CREATE TABLE report (
     name TEXT NOT NULL,
     type TEXT CHECK (type IN ('PPRO', 'GREP', 'OM_REPORT')) NOT NULL,
     data TEXT NOT NULL,
-    context TEXT CHECK (context IN ('INVOICE', 'REQUISITION', 'STOCKTAKE')) NOT NULL
+    context TEXT CHECK (context IN ('INVOICE', 'REQUISITION', 'STOCKTAKE', "RESOURCE")) NOT NULL
 )
