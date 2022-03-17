@@ -1,4 +1,5 @@
 import { useTranslation as useTranslationNext } from 'react-i18next';
+
 export const useFormatNumber = (): ((
   value: number | bigint,
   options?: Intl.NumberFormatOptions
