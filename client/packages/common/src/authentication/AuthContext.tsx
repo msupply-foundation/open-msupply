@@ -1,5 +1,5 @@
-import React, { createContext, FC, useMemo, useState } from 'react';
-import { useDefaultLanguage, useI18N, isSupportedLang } from '@common/intl';
+import React, { createContext, FC, useMemo, useState, useEffect } from 'react';
+import { IntlUtils } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns';
@@ -70,10 +70,16 @@ const setAuthCookie = (cookie: AuthCookie) => {
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
 };
 
-const useRefreshingAuth = (token?: string) => {
+const useRefreshingAuth = (
+  callback: (token?: string) => void,
+  token?: string
+) => {
   const { setHeader } = useGql();
   setHeader('Authorization', `Bearer ${token}`);
-  useGetRefreshToken(token ?? '');
+  const { data, isSuccess } = useGetRefreshToken(token ?? '');
+  useEffect(() => {
+    if (isSuccess) callback(data?.token);
+  }, [data, isSuccess, callback]);
 };
 
 const AuthContext = createContext<AuthControl>({
@@ -92,15 +98,19 @@ const { Provider } = AuthContext;
 export const AuthProvider: FC = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
-  const i18n = useI18N();
-  const defaultLanguage = useDefaultLanguage();
+  const i18n = IntlUtils.useI18N();
+  const defaultLanguage = IntlUtils.useDefaultLanguage();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const { token: cookieToken, store: cookieStore, user } = getAuthCookie();
   const [localStore, setLocalStore] = useState<Store | undefined>(cookieStore);
   const [localToken, setLocalToken] = useState<string | undefined>(cookieToken);
   const storeId = localStore?.id ?? '';
-
-  useRefreshingAuth(localToken);
+  const saveToken = (token?: string) => {
+    setLocalToken(token);
+    const authCookie = getAuthCookie();
+    setAuthCookie({ ...authCookie, token: token ?? '' });
+  };
+  useRefreshingAuth(saveToken, localToken);
 
   const login = async (username: string, password: string, store?: Store) => {
     const { token, error } = await mutateAsync({ username, password });
@@ -113,7 +123,9 @@ export const AuthProvider: FC = ({ children }) => {
     // When the a user first logs in, check that their browser language is an internally supported
     // language. If not, set their language to the default.
     const { language } = i18n;
-    if (!isSupportedLang(language)) i18n.changeLanguage(defaultLanguage);
+    if (!IntlUtils.isSupportedLang(language)) {
+      i18n.changeLanguage(defaultLanguage);
+    }
 
     setMRUCredentials({ username, store });
     if (!!token) setLocalStore(store);
@@ -136,7 +148,6 @@ export const AuthProvider: FC = ({ children }) => {
     Cookies.remove('auth');
     setLocalStore(undefined);
   };
-
   const val = useMemo(
     () => ({
       isLoggingIn,

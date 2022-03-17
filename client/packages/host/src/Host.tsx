@@ -23,6 +23,7 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Login, Viewport } from './components';
 import { Site } from './Site';
+import { LoggedOutAlert } from './components/LoggedOutAlert';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,12 +48,13 @@ const Host: FC = () => (
       <React.Suspense fallback={<RandomLoader />}>
         <ErrorBoundary Fallback={GenericErrorFallback}>
           <QueryClientProvider client={queryClient}>
-            <GqlProvider url={Environment.API_URL}>
+            <GqlProvider url={Environment.GRAPHQL_URL}>
               <AuthProvider>
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
                     <AlertModalProvider>
                       <BrowserRouter>
+                        <LoggedOutAlert />
                         <Viewport>
                           <Box display="flex" style={{ minHeight: '100%' }}>
                             <Routes>

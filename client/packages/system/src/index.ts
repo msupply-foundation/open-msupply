@@ -4,3 +4,4 @@ export * from './Name';
 export * from './Location';
 export * from './Store';
 export * from './MasterList';
+export * from './Report';

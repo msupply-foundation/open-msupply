@@ -99,7 +99,7 @@ export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
 }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
-      <GqlProvider url={Environment.API_URL}>
+      <GqlProvider url={Environment.GRAPHQL_URL}>
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale={locale}>
             <TableProvider createStore={createTableStore}>
@@ -115,7 +115,7 @@ export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
 export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
-      <GqlProvider url={Environment.API_URL}>
+      <GqlProvider url={Environment.GRAPHQL_URL}>
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale="en">
             <TableProvider createStore={createTableStore}>
