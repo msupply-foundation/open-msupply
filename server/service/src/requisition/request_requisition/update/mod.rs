@@ -46,6 +46,8 @@ pub enum UpdateRequestRequisitionError {
     // Internal
     UpdatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
+    // Cannot be an error, names are filtered so that name linked to current store is not shown
+    // OtherPartyIsThisStore
 }
 
 type OutError = UpdateRequestRequisitionError;
