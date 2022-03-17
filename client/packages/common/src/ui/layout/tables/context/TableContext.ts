@@ -11,6 +11,7 @@ export interface RowState {
   style?: AppSxProp;
 }
 
+type FocusDirection = 'up' | 'down';
 export interface TableStore {
   rowState: Record<string, RowState>;
   numberSelected: number;
@@ -24,8 +25,7 @@ export interface TableStore {
   setRows: (id: string[]) => void;
   setDisabledRows: (id: string[]) => void;
   setIsGrouped: (grouped: boolean) => void;
-  setFocusUp: () => void;
-  setFocusDown: () => void;
+  setFocus: (dir: FocusDirection) => void;
   setRowStyle: (id: string, style: AppSxProp) => void;
   setRowStyles: (ids: string[], style: AppSxProp) => void;
 }
@@ -164,7 +164,8 @@ export const createTableStore = (): UseStore<TableStore> =>
         };
       });
     },
-    setFocusDown: () => {
+
+    setFocus: direction => {
       set(state => {
         const { rowState } = state;
         const rows = Object.entries(rowState);
@@ -173,36 +174,12 @@ export const createTableStore = (): UseStore<TableStore> =>
         const [currentFocusId, currentFocusObj] =
           rows.find(([_, { isFocused }]) => isFocused === true) || [];
 
-        // Deduce what the next row is, wrapping back to top if end of list
-        const nextIndex = ((currentFocusObj?.index ?? -1) + 1) % rows.length;
-        const [nextId] =
-          rows.find(([, { index }]) => index === nextIndex) || [];
-
-        // Set / Unset focus state
-        if (currentFocusId)
-          rowState[currentFocusId] = getRowState(state, currentFocusId, {
-            isFocused: false,
-          });
-        rowState[nextId as string] = getRowState(state, nextId as string, {
-          isFocused: true,
-        });
-
-        return { ...state, rowState: { ...rowState } };
-      });
-    },
-    setFocusUp: () => {
-      set(state => {
-        const { rowState } = state;
-        const rows = Object.entries(rowState);
-
-        // Get currently focused row, if any
-        const [currentFocusId, currentFocusObj] =
-          rows.find(([_, { isFocused }]) => isFocused === true) || [];
-
-        // Deduce what the next row is, wrapping back to bottom if top of list
+        // Deduce what the next row is, wrapping around if reaching top/bottom
         const nextIndex =
-          ((currentFocusObj?.index ?? rows.length) - 1 + rows.length) %
-          rows.length;
+          direction === 'down'
+            ? ((currentFocusObj?.index ?? -1) + 1) % rows.length
+            : ((currentFocusObj?.index ?? rows.length) - 1 + rows.length) %
+              rows.length;
         const [nextId] =
           rows.find(([, { index }]) => index === nextIndex) || [];
 
