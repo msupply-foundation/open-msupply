@@ -4,6 +4,7 @@ import {
   isPast,
   isThisWeek,
   isToday,
+  isThisMonth,
 } from 'date-fns';
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
@@ -20,4 +21,4 @@ export const DateUtils = {
   ): boolean => differenceInMonths(expiryDate, Date.now()) <= threshold,
 };
 
-export { isThisWeek, isToday };
+export { isThisWeek, isToday, isThisMonth };
