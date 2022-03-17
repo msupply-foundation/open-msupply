@@ -99,18 +99,14 @@ pub fn config(
                     graphql(schema, http_req, req)
                 },
             ))
-            .service(
-                web::resource("/playground")
-                    .guard(guard::Get())
-                    .to(playground),
-            );
+            .service(web::resource("/graphql").guard(guard::Get()).to(playground));
     }
 }
 
 async fn playground() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(playground_source(GraphQLPlaygroundConfig::new("/")))
+        .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
 }
 
 async fn graphql(
