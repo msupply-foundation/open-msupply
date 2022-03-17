@@ -175,8 +175,8 @@ export const createTableStore = (): UseStore<TableStore> =>
 
         // Deduce what the next row is, wrapping back to top if end of list
         const nextIndex = ((currentFocusObj?.index ?? -1) + 1) % rows.length;
-        const [nextId, _] =
-          rows.find(([_, { index }]) => index === nextIndex) || [];
+        const [nextId] =
+          rows.find(([, { index }]) => index === nextIndex) || [];
 
         // Set / Unset focus state
         if (currentFocusId)
@@ -203,8 +203,8 @@ export const createTableStore = (): UseStore<TableStore> =>
         const nextIndex =
           ((currentFocusObj?.index ?? rows.length) - 1 + rows.length) %
           rows.length;
-        const [nextId, _] =
-          rows.find(([_, { index }]) => index === nextIndex) || [];
+        const [nextId] =
+          rows.find(([, { index }]) => index === nextIndex) || [];
 
         // Set / Unset focus state
         if (currentFocusId)
