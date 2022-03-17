@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-key */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   Box,
@@ -10,6 +10,7 @@ import {
   Table as MuiTable,
   Typography,
 } from '@mui/material';
+import { useRegisterActions } from '@openmsupply-client/common';
 
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
@@ -32,10 +33,37 @@ export const DataTableComponent = <T extends RecordWithId>({
   isDisabled = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
-  const { setActiveRows, setDisabledRows } = useTableStore();
+  const { setRows, setDisabledRows, setFocus } = useTableStore();
+  const [clickFocusedRow, setClickFocusedRow] = useState(false);
+  useRegisterActions([
+    {
+      id: 'table:focus-down',
+      name: '', // No name => won't show in Modal menu
+      shortcut: ['arrowdown'],
+      keywords: 'focus, down',
+      perform: () => setFocus('down'),
+    },
+    {
+      id: 'table:focus-up',
+      name: '',
+      shortcut: ['arrowup'],
+      keywords: 'focus, up',
+      perform: () => setFocus('up'),
+    },
+    {
+      id: 'table:press-enter',
+      name: '',
+      shortcut: ['enter'],
+      keywords: 'table, enter',
+      perform: () => {
+        console.log('Press enter');
+        setClickFocusedRow(true);
+      },
+    },
+  ]);
 
   useEffect(() => {
-    if (data.length) setActiveRows(data.map(({ id }) => id));
+    if (data.length) setRows(data.map(({ id }) => id));
   }, [data]);
 
   useEffect(() => {
@@ -117,6 +145,7 @@ export const DataTableComponent = <T extends RecordWithId>({
               rowData={row}
               rowKey={String(idx)}
               dense={dense}
+              keyboardActivated={clickFocusedRow}
             />
           ))}
         </TableBody>
