@@ -35,6 +35,7 @@ pub enum ReportCategory {
     Invoice,
     Requisition,
     Stocktake,
+    Resource,
 }
 
 #[derive(InputObject, Clone)]
@@ -82,6 +83,7 @@ impl ReportNode {
             ReportCategoryDomain::Invoice => ReportCategory::Invoice,
             ReportCategoryDomain::Requisition => ReportCategory::Requisition,
             ReportCategoryDomain::Stocktake => ReportCategory::Stocktake,
+            ReportCategoryDomain::Resource => ReportCategory::Resource,
         }
     }
 }
@@ -152,6 +154,7 @@ impl ReportCategory {
             ReportCategory::Invoice => ReportCategoryDomain::Invoice,
             ReportCategory::Requisition => ReportCategoryDomain::Requisition,
             ReportCategory::Stocktake => ReportCategoryDomain::Stocktake,
+            ReportCategory::Resource => ReportCategoryDomain::Resource,
         }
     }
 }

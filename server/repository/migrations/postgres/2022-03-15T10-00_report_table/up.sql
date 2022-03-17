@@ -3,7 +3,7 @@ CREATE TYPE report_type AS ENUM (
 );
 
 CREATE TYPE category_type AS ENUM (
-    'INVOICE', 'REQUISITION', 'STOCKTAKE'
+    'INVOICE', 'REQUISITION', 'STOCKTAKE', "RESOURCE"
 );
 
 
