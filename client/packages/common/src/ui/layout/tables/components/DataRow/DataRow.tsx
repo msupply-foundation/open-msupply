@@ -54,7 +54,11 @@ export const DataRow = <T extends RecordWithId>({
       <Fade in={true} timeout={500}>
         <TableRow
           sx={{
+            '&.MuiTableRow-root': {
+              '&:hover': { backgroundColor: 'background.menu' },
+            },
             color: isDisabled ? 'gray.main' : 'black',
+            backgroundColor: isFocused ? 'background.menu' : null,
             minWidth,
             alignItems: 'center',
             height: '40px',
@@ -68,7 +72,6 @@ export const DataRow = <T extends RecordWithId>({
           }}
           onClick={onRowClick}
           hover={hasOnClick}
-          selected={isFocused}
         >
           {columns.map((column, columnIndex) => {
             return (
