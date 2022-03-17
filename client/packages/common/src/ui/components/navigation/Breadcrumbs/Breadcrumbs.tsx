@@ -1,15 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { styled } from '@mui/material/styles';
 import { Breadcrumbs as MuiBreadcrumbs } from '@mui/material';
-import { useLocation, Link } from 'react-router-dom';
-
-import { LocaleKey, useTranslation } from '@common/intl';
-
-interface UrlPart {
-  path: string;
-  key: LocaleKey;
-  value: string;
-}
+import { Link } from 'react-router-dom';
+import { useRegisterActions, useBreadcrumbs } from '@openmsupply-client/common';
+import { useTranslation } from '@common/intl';
 
 const Breadcrumb = styled(Link)({
   color: 'inherit',
@@ -19,27 +13,23 @@ const Breadcrumb = styled(Link)({
 
 export const Breadcrumbs: React.FC = () => {
   const t = useTranslation(['app', 'common']);
-  const location = useLocation();
-  const [urlParts, setUrlParts] = useState<UrlPart[]>([]);
+  const { urlParts, navigateUpOne } = useBreadcrumbs();
 
-  useEffect(() => {
-    const parts = location.pathname.split('/');
-    const urlParts: UrlPart[] = [];
-
-    parts.reduce((fullPath, part, index) => {
-      if (part === '') return '';
-      const path = `${fullPath}/${part}`;
-
-      if (index > 1)
-        urlParts.push({
-          path,
-          key: `${part}` as unknown as LocaleKey,
-          value: part,
-        });
-      return path;
-    }, '');
-    setUrlParts(urlParts);
-  }, [location]);
+  useRegisterActions(
+    [
+      {
+        id: 'navigation:up-one-level',
+        name: '', // No name => won't show in Modal menu
+        shortcut: ['escape'],
+        keywords: 'navigate, back',
+        perform: () => {
+          console.log('parts', urlParts);
+          navigateUpOne();
+        },
+      },
+    ],
+    [urlParts]
+  );
 
   const crumbs = urlParts.map((part, index) => {
     if (index === urlParts.length - 1) {

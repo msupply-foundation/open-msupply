@@ -7,7 +7,7 @@ import {
   useTranslation,
   AppFooterPortal,
   InvoiceNodeStatus,
-  useNavigate,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
@@ -49,8 +49,8 @@ const createStatusLog = (invoice: OutboundFragment) => {
 };
 
 export const FooterComponent: FC = () => {
-  const navigate = useNavigate();
   const t = useTranslation('distribution');
+  const { navigateUpOne } = useBreadcrumbs();
   const { data } = useOutbound();
 
   return (
@@ -79,7 +79,7 @@ export const FooterComponent: FC = () => {
                 label={t('button.cancel')}
                 color="secondary"
                 sx={{ fontSize: '12px' }}
-                onClick={() => navigate(-1)}
+                onClick={() => navigateUpOne()}
               />
 
               <StatusChangeButton />
