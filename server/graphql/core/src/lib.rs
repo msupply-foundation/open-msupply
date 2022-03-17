@@ -72,7 +72,17 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
         header_value
             .to_str()
             .ok()
-            .and_then(|header| Cookie::parse(header).ok())
+            .and_then(|header| {
+                let cookies = header.split(" ").collect::<Vec<&str>>();
+                cookies
+                    .into_iter()
+                    .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
+                    .find(|cookie_option| match &cookie_option {
+                        Some(cookie) => cookie.name() == "refresh_token",
+                        None => false,
+                    })
+                    .flatten()
+            })
             .map(|cookie| cookie.value().to_owned())
     });
 
