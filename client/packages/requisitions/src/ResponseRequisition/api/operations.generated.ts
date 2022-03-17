@@ -52,6 +52,14 @@ export type CreateOutboundFromResponseMutationVariables = Types.Exact<{
 
 export type CreateOutboundFromResponseMutation = { __typename: 'FullMutation', createRequisitionShipment: { __typename: 'CreateRequisitionShipmentError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'NothingRemainingToSupply', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
+export type SupplyRequestedQuantityMutationVariables = Types.Exact<{
+  responseId: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type SupplyRequestedQuantityMutation = { __typename: 'FullMutation', supplyRequestedQuantity: { __typename: 'RequisitionLineConnector', nodes: Array<{ __typename: 'RequisitionLineNode', id: string }> } | { __typename: 'SupplyRequestedQuantityError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } };
+
 export const ResponseLineFragmentDoc = gql`
     fragment ResponseLine on RequisitionLineNode {
   id
@@ -256,6 +264,34 @@ export const CreateOutboundFromResponseDocument = gql`
   }
 }
     `;
+export const SupplyRequestedQuantityDocument = gql`
+    mutation supplyRequestedQuantity($responseId: String!, $storeId: String!) {
+  supplyRequestedQuantity(
+    input: {responseRequisitionId: $responseId}
+    storeId: $storeId
+  ) {
+    ... on SupplyRequestedQuantityError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+      }
+    }
+    ... on RequisitionLineConnector {
+      nodes {
+        id
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -278,6 +314,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     createOutboundFromResponse(variables: CreateOutboundFromResponseMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateOutboundFromResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateOutboundFromResponseMutation>(CreateOutboundFromResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createOutboundFromResponse');
+    },
+    supplyRequestedQuantity(variables: SupplyRequestedQuantityMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SupplyRequestedQuantityMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplyRequestedQuantityMutation>(SupplyRequestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplyRequestedQuantity');
     }
   };
 }
@@ -365,5 +404,22 @@ export const mockUpdateResponseLineMutation = (resolver: ResponseResolver<GraphQ
 export const mockCreateOutboundFromResponseMutation = (resolver: ResponseResolver<GraphQLRequest<CreateOutboundFromResponseMutationVariables>, GraphQLContext<CreateOutboundFromResponseMutation>, any>) =>
   graphql.mutation<CreateOutboundFromResponseMutation, CreateOutboundFromResponseMutationVariables>(
     'createOutboundFromResponse',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockSupplyRequestedQuantityMutation((req, res, ctx) => {
+ *   const { responseId, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ supplyRequestedQuantity })
+ *   )
+ * })
+ */
+export const mockSupplyRequestedQuantityMutation = (resolver: ResponseResolver<GraphQLRequest<SupplyRequestedQuantityMutationVariables>, GraphQLContext<SupplyRequestedQuantityMutation>, any>) =>
+  graphql.mutation<SupplyRequestedQuantityMutation, SupplyRequestedQuantityMutationVariables>(
+    'supplyRequestedQuantity',
     resolver
   )
