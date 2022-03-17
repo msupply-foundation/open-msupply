@@ -71,6 +71,11 @@ pub enum ReportDefinitionEntry {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ReportDefinition {
+    /// The map has a couple of special keys used in the template:
+    /// - `template`: the main template to generate the document
+    /// - `template_header`: optional template for a header
+    /// - `template_footer`: optional template for a footer
+    /// - `query`: the query to fetch the report data
     pub entries: HashMap<String, ReportDefinitionEntry>,
 }
 
@@ -109,7 +114,7 @@ mod report_dsl_test {
               },
               "query": {
                   "type": "DefaultQuery",
-                  "data": "OutboundShipment"
+                  "data": "Invoice"
               },
               "icon": {
                   "type": "Resource",

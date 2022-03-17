@@ -47,6 +47,12 @@ pub struct ResolvedReportDefinition {
     pub resources: HashMap<String, serde_json::Value>,
 }
 
+pub struct GeneratedReport {
+    pub document: String,
+    pub header: Option<String>,
+    pub footer: Option<String>,
+}
+
 pub trait ReportServiceTrait: Sync + Send {
     fn query_reports(
         &self,
@@ -71,7 +77,7 @@ pub trait ReportServiceTrait: Sync + Send {
         &self,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
-    ) -> Result<String, ReportError> {
+    ) -> Result<GeneratedReport, ReportError> {
         generate_report(report, report_data)
     }
 
@@ -119,6 +125,20 @@ fn query_reports(
                         output: ReportOutputType::Html,
                         template: "Dummy Invoice template, Invoice id: {{data.invoice.id}}"
                             .to_string(),
+                    }),
+                ),
+                (
+                    "template_header".to_string(),
+                    ReportDefinitionEntry::TeraTemplate(TeraTemplate {
+                        output: ReportOutputType::Html,
+                        template: r#"<div style="font-size: 10px; padding-top: 8px; text-align: center; width: 100%;"><span>Some header here.</div>"#.to_string(),
+                    }),
+                ),
+                (
+                    "template_footer".to_string(),
+                    ReportDefinitionEntry::TeraTemplate(TeraTemplate {
+                        output: ReportOutputType::Html,
+                        template: r#"<div style="font-size: 10px; padding-top: 8px; text-align: center; width: 100%;"><span>Some footer here.</div>"#.to_string(),
                     }),
                 ),
                 (
@@ -175,7 +195,7 @@ fn resolve_report(
 fn generate_report(
     report: &ResolvedReportDefinition,
     report_data: serde_json::Value,
-) -> Result<String, ReportError> {
+) -> Result<GeneratedReport, ReportError> {
     let mut context = tera::Context::new();
     context.insert("data", &report_data);
     context.insert("res", &report.resources);
@@ -192,11 +212,31 @@ fn generate_report(
     let document = tera
         .render(TEMPLATE_KEY, &context)
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+    let header = if templates.contains_key(TEMPLATE_HEADER_KEY) {
+        Some(tera.render(TEMPLATE_HEADER_KEY, &context).map_err(|err| {
+            ReportError::DocGenerationError(format!("Header generation: {}", err))
+        })?)
+    } else {
+        None
+    };
+    let footer = if templates.contains_key(TEMPLATE_FOOTER_KEY) {
+        Some(tera.render(TEMPLATE_FOOTER_KEY, &context).map_err(|err| {
+            ReportError::DocGenerationError(format!("Footer generation: {}", err))
+        })?)
+    } else {
+        None
+    };
 
-    Ok(document)
+    Ok(GeneratedReport {
+        document,
+        header,
+        footer,
+    })
 }
 
 const TEMPLATE_KEY: &'static str = "template";
+const TEMPLATE_HEADER_KEY: &'static str = "template_header";
+const TEMPLATE_FOOTER_KEY: &'static str = "template_footer";
 const QUERY_KEY: &'static str = "query";
 
 fn template_from_resolved_template(
@@ -383,7 +423,7 @@ mod report_service_test {
             name: "Report base 1".to_string(),
             r#type: ReportType::OmReport,
             data: serde_json::to_string(&report_base_1).unwrap(),
-            context: ReportCategory::Invoice,
+            context: ReportCategory::Resource,
         })
         .unwrap();
 
@@ -402,6 +442,6 @@ mod report_service_test {
                 }),
             )
             .unwrap();
-        assert_eq!(doc, "Template: Hello Footer");
+        assert_eq!(doc.document, "Template: Hello Footer");
     }
 }
