@@ -11,13 +11,14 @@ import {
   LoadingButton,
   ReportCategory,
 } from '@openmsupply-client/common';
-import { MasterListSearchModal } from '@openmsupply-client/system';
-import { useAddFromMasterList, useRequest } from '../api';
 import {
+  MasterListSearchModal,
   ReportRowFragment,
   ReportSelector,
   usePrintReport,
 } from '@openmsupply-client/system';
+import { useAddFromMasterList, useRequest } from '../../api';
+import { UseSuggestedQuantityButton } from './UseSuggestedQuantityButton';
 
 interface AppBarButtonProps {
   isDisabled: boolean;
@@ -43,6 +44,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <UseSuggestedQuantityButton />
         <ButtonWithIcon
           disabled={isDisabled}
           Icon={<PlusCircleIcon />}

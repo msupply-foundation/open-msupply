@@ -361,3 +361,31 @@ mutation deleteRequestLines(
     }
   }
 }
+
+mutation useSuggestedQuantity($requestId: String!, $storeId: String!) {
+  useSuggestedQuantity(
+    input: { requestRequisitionId: $requestId }
+    storeId: $storeId
+  ) {
+    ... on UseSuggestedQuantityError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+      }
+    }
+    ... on RequisitionLineConnector {
+      nodes {
+        id
+      }
+      totalCount
+    }
+  }
+}
