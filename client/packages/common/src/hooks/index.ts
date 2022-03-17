@@ -1,5 +1,6 @@
 export * from './useAppBarRect';
 export * from './useBoundingClientRect';
+export * from './useBreadcrumbs';
 export * from './useBufferState';
 export * from './useConfirmOnLeaving';
 export * from './useDebounce';
