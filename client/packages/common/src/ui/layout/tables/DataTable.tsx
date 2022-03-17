@@ -33,8 +33,7 @@ export const DataTableComponent = <T extends RecordWithId>({
   isDisabled = false,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
-  const { setRows, setDisabledRows, setFocusUp, setFocusDown } =
-    useTableStore();
+  const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
   useRegisterActions([
     {
@@ -42,20 +41,14 @@ export const DataTableComponent = <T extends RecordWithId>({
       name: '', // No name => won't show in Modal menu
       shortcut: ['arrowdown'],
       keywords: 'focus, down',
-      perform: () => {
-        console.log('Arrow down');
-        setFocusDown();
-      },
+      perform: () => setFocus('down'),
     },
     {
       id: 'table:focus-up',
       name: '',
       shortcut: ['arrowup'],
       keywords: 'focus, up',
-      perform: () => {
-        console.log('Arrow up');
-        setFocusUp();
-      },
+      perform: () => setFocus('up'),
     },
     {
       id: 'table:press-enter',
