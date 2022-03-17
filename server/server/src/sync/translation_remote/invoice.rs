@@ -1,13 +1,14 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     schema::{
-        ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow,
         RemoteSyncBufferRow,
     },
-    InvoiceRepository, StorageConnection, StoreRowRepository,
+    InvoiceRepository, NameRepository, StorageConnection, StoreRowRepository,
 };
 
 use serde::{Deserialize, Serialize};
+use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use crate::sync::SyncTranslationError;
 
@@ -149,6 +150,16 @@ impl RemotePullTranslation for InvoiceTranslation {
                 }
             })?;
 
+        let name = NameRepository::new(connection)
+            .find_one_by_id(&data.name_ID)
+            .ok()
+            .flatten()
+            .ok_or(SyncTranslationError {
+                table_name,
+                source: anyhow::Error::msg(format!("Missing name: {}", data.name_ID)),
+                record: sync_record.data.clone(),
+            })?;
+
         let name_store_id = StoreRowRepository::new(connection)
             .find_one_by_name_id(&data.name_ID)
             .map_err(|err| SyncTranslationError {
@@ -158,7 +169,7 @@ impl RemotePullTranslation for InvoiceTranslation {
             })?
             .map(|store_row| store_row.id);
 
-        let invoice_type = invoice_type(&data._type).ok_or(SyncTranslationError {
+        let invoice_type = invoice_type(&data._type, &name).ok_or(SyncTranslationError {
             table_name,
             source: anyhow::Error::msg(format!("Unsupported invoice type: {:?}", data._type)),
             record: sync_record.data.clone(),
@@ -199,7 +210,10 @@ impl RemotePullTranslation for InvoiceTranslation {
     }
 }
 
-fn invoice_type(_type: &LegacyTransactType) -> Option<InvoiceRowType> {
+fn invoice_type(_type: &LegacyTransactType, name: &NameRow) -> Option<InvoiceRowType> {
+    if name.code == INVENTORY_ADJUSTMENT_NAME_CODE {
+        return Some(InvoiceRowType::InventoryAdjustment);
+    }
     match _type {
         LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
@@ -229,7 +243,10 @@ fn map_legacy_confirm_time(
             picked_datetime: None,
             delivered_datetime: confirm_datetime,
         },
-        InvoiceRowType::InventoryAdjustment => todo!(),
+        InvoiceRowType::InventoryAdjustment => ConfirmTimeMapping {
+            picked_datetime: None,
+            delivered_datetime: confirm_datetime,
+        },
     }
 }
 fn to_legacy_confirm_time(
@@ -240,8 +257,7 @@ fn to_legacy_confirm_time(
     let datetime = match invoice_type {
         InvoiceRowType::OutboundShipment => picked_datetime,
         InvoiceRowType::InboundShipment => delivered_datetime,
-        // TODO:
-        InvoiceRowType::InventoryAdjustment => None,
+        InvoiceRowType::InventoryAdjustment => delivered_datetime,
     };
 
     let date = datetime.map(|datetime| datetime.date());
@@ -299,7 +315,14 @@ fn invoice_status(
             }
         }
 
-        InvoiceRowType::InventoryAdjustment => return None,
+        InvoiceRowType::InventoryAdjustment => match data.status {
+            LegacyTransactStatus::Nw => InvoiceRowStatus::New,
+            LegacyTransactStatus::Sg => InvoiceRowStatus::New,
+            LegacyTransactStatus::Cn => InvoiceRowStatus::New,
+            LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
+            LegacyTransactStatus::Wp => return None,
+            LegacyTransactStatus::Wf => return None,
+        },
     };
     Some(status)
 }
@@ -401,8 +424,9 @@ fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
     let t = match _type {
         InvoiceRowType::OutboundShipment => LegacyTransactType::Ci,
         InvoiceRowType::InboundShipment => LegacyTransactType::Si,
-        // TODO:
-        InvoiceRowType::InventoryAdjustment => return None,
+        // Always use supplier invoice. omSupply can contain incoming and outgoing lines so there is
+        // no clear mapping to Ci or Si here.
+        InvoiceRowType::InventoryAdjustment => LegacyTransactType::Si,
     };
     return Some(t);
 }
@@ -428,7 +452,14 @@ fn legacy_invoice_status(
             InvoiceRowStatus::Delivered => LegacyTransactStatus::Cn,
             InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
         },
-        InvoiceRowType::InventoryAdjustment => return None,
+        InvoiceRowType::InventoryAdjustment => match status {
+            InvoiceRowStatus::New => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Allocated => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Picked => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Shipped => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Delivered => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
+        },
     };
     Some(status)
 }
