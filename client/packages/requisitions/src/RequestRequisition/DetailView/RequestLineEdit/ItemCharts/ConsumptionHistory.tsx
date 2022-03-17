@@ -34,9 +34,26 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
     d(new Date(date), {
       val: { month: 'short', day: '2-digit' },
     });
+  const tooltipFormatter = (
+    value: number,
+    name: string,
+    props: { payload: { date: string } }
+  ) => {
+    switch (name) {
+      case 'consumption':
+        if (props.payload.date === '2021-03-01')
+          return [value, t('label.requested-quantity')];
+        else return [value, t('label.consumption')];
+      case 'amc':
+        return [value, t('label.moving-average')];
+      default:
+        return [value, name];
+    }
+  };
+  const tooltipLabelFormatter = (date: string) => d(new Date(date));
 
   return (
-    <Box sx={{ paddingLeft: 4, paddingRight: 4 }}>
+    <Box>
       <Box>
         <Typography
           variant="body1"
@@ -56,7 +73,11 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
             tick={{ fontSize: 12 }}
           />
           <YAxis axisLine={false} tick={{ fontSize: 12 }} />
-          <ChartTooltip />
+          <ChartTooltip
+            formatter={tooltipFormatter}
+            labelFormatter={tooltipLabelFormatter}
+            labelStyle={{ fontWeight: 700 }}
+          />
           <Legend
             payload={[
               {

@@ -13,6 +13,7 @@ import { useIsRequestDisabled } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
+import { StockEvolution } from './ItemCharts/StockEvolution';
 
 interface RequestLineEditProps {
   isOpen: boolean;
@@ -83,10 +84,13 @@ export const RequestLineEdit = ({
             }
             suggestedQuantity={draft?.suggestedQuantity}
           />
-          <Box>
-            <Box>
-              <ConsumptionHistory draftLine={draft} />
-            </Box>
+          <Box
+            display="flex"
+            sx={{ paddingLeft: 4, paddingRight: 4 }}
+            justifyContent="space-between"
+          >
+            <ConsumptionHistory draftLine={draft} />
+            <StockEvolution draftLine={draft} />
           </Box>
         </>
       ) : (
