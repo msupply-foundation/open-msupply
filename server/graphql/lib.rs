@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod tests;
 
-use actix_web::web::Data;
-use actix_web::HttpRequest;
-use actix_web::{guard::fn_guard, HttpResponse, Result};
+use actix_web::web::{self, Data};
+use actix_web::HttpResponse;
+use actix_web::{guard, HttpRequest};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::MergedObject;
 use async_graphql::{EmptySubscription, SchemaBuilder};
-use async_graphql_actix_web::{Request, Response};
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_core::auth_data_from_request;
 use graphql_core::loader::LoaderRegistry;
@@ -93,38 +93,34 @@ pub fn config(
             .data(service_provider)
             .data(auth_data)
             .finish();
-        cfg.service(
-            actix_web::web::scope("/graphql")
-                .data(schema)
-                .route("", actix_web::web::post().to(graphql))
-                // It’s nicest to have the playground on the same URL, but if it’s a GET request and
-                // there’s a `query` parameter, we want it to be treated as a GraphQL query. The
-                // simplest way of doing this is to just require no query string for playground access.
-                .route(
-                    "",
-                    actix_web::web::get()
-                        .guard(fn_guard(|head| head.uri.query().is_none()))
-                        .to(playground),
-                )
-                .route("", actix_web::web::get().to(graphql)),
-        );
+        cfg.app_data(Data::new(schema))
+            .service(web::resource("/graphql").guard(guard::Post()).to(
+                |schema: Data<Schema>, http_req, req: GraphQLRequest| {
+                    graphql(schema, http_req, req)
+                },
+            ))
+            .service(
+                web::resource("/playground")
+                    .guard(guard::Get())
+                    .to(playground),
+            );
     }
 }
 
-async fn graphql(schema: Data<Schema>, http_req: HttpRequest, req: Request) -> Response {
+async fn playground() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(playground_source(GraphQLPlaygroundConfig::new("/")))
+}
+
+async fn graphql(
+    schema: Data<Schema>,
+    http_req: HttpRequest,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
     let user_data = auth_data_from_request(&http_req);
     let query = req.into_inner().data(user_data);
     schema.execute(query).await.into()
-}
-
-async fn playground() -> Result<HttpResponse> {
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(playground_source(
-            GraphQLPlaygroundConfig::new("/graphql")
-                // allow to set cookies
-                .with_setting("request.credentials", "same-origin"),
-        )))
 }
 
 #[cfg(test)]
