@@ -220,6 +220,19 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShi
   description: Scalars['String'];
 };
 
+export type ConsumptionHistoryConnector = {
+  __typename: 'ConsumptionHistoryConnector';
+  nodes: Array<ConsumptionHistoryNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ConsumptionHistoryNode = {
+  __typename: 'ConsumptionHistoryNode';
+  amc: Scalars['Float'];
+  consumption: Scalars['Int'];
+  date: Scalars['NaiveDate'];
+};
+
 export type CreateRequisitionShipmentError = {
   __typename: 'CreateRequisitionShipmentError';
   error: CreateRequisitionShipmentErrorInterface;
@@ -1639,6 +1652,13 @@ export type InvoiceSortInput = {
 
 export type InvoicesResponse = InvoiceConnector;
 
+export type ItemChartDataNode = {
+  __typename: 'ItemChartDataNode';
+  consumptionHistory: ConsumptionHistoryConnector;
+  stockEvolution: StockEvolutionConnector;
+  suggestedQuantityCalculation: SuggestedQuantityCalculationNode;
+};
+
 export type ItemConnector = {
   __typename: 'ItemConnector';
   nodes: Array<ItemNode>;
@@ -2106,6 +2126,7 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  chartData: ItemChartDataNode;
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   /** InboundShipment lines linked to requisitions line */
@@ -2252,6 +2273,19 @@ export type StockCounts = {
   __typename: 'StockCounts';
   expired: Scalars['Int'];
   expiringSoon: Scalars['Int'];
+};
+
+export type StockEvolutionConnector = {
+  __typename: 'StockEvolutionConnector';
+  nodes: Array<StockEvolutionNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StockEvolutionNode = {
+  __typename: 'StockEvolutionNode';
+  date: Scalars['NaiveDate'];
+  historicStockOnHand?: Maybe<Scalars['Int']>;
+  projectedStockOnHand?: Maybe<Scalars['Int']>;
 };
 
 export type StockLineAlreadyExistsInInvoice = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
@@ -2423,6 +2457,17 @@ export type StoreSortInput = {
 };
 
 export type StoresResponse = StoreConnector;
+
+export type SuggestedQuantityCalculationNode = {
+  __typename: 'SuggestedQuantityCalculationNode';
+  averageMonthlyConsumption: Scalars['Float'];
+  /** Target */
+  maximumStockOnHand: Scalars['Int'];
+  /** If stock on hand > minimum stock on hand, suggested will be 0 */
+  minimumStockOnHand: Scalars['Int'];
+  stockOnHand: Scalars['Int'];
+  suggested: Scalars['Int'];
+};
 
 export type SupplyRequestedQuantityError = {
   __typename: 'SupplyRequestedQuantityError';
