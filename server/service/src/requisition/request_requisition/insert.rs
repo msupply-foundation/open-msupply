@@ -33,6 +33,8 @@ pub enum InsertRequestRequisitionError {
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
+    // Cannot be an error, names are filtered so that name linked to current store is not shown
+    // OtherPartyIsThisStore
 }
 
 type OutError = InsertRequestRequisitionError;
@@ -262,8 +264,6 @@ mod test_insert {
             ),
             Err(ServiceError::OtherPartyIsNotAStore)
         );
-        // Cannot be an error, names are filtered so that name linked to current store is not shown
-        // OtherPartyIsThisStore
     }
 
     #[actix_rt::test]

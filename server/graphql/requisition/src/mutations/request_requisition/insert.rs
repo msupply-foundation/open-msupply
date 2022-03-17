@@ -263,9 +263,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // Cannot be an error, names are filtered so that name linked to current store is not shown
-        // OtherPartyIsThisStore
-
         // OtherPartyIsNotAStore
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsNotAStore)));
         let expected_message = "Bad user input";
