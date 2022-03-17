@@ -343,10 +343,15 @@ mod test {
             .unwrap();
 
         assert_eq!(result.inserts.len(), 1);
-        assert_eq!(result.deletes.len(), 0);
-        assert_eq!(result.updates.len(), 1);
+        assert_eq!(result.deletes.len(), 1);
+        assert_eq!(result.updates.len(), 0);
 
         let repo = InvoiceLineRowRepository::new(&connection);
+
+        assert_eq!(
+            repo.find_one_by_id(&result.deletes[0]),
+            Err(RepositoryError::NotFound)
+        );
 
         let new_line = repo
             .find_one_by_id(&result.inserts[0].invoice_line_row.id)
