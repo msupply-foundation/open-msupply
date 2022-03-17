@@ -60,5 +60,6 @@
   "heading.store": "Store",
   "button.login": "Log in",
   "error.login": "Invalid username or password",
-  "select-store": "Select store"
+  "select-store": "Select store",
+  "select-report": "Select Report"
 }

@@ -49,7 +49,7 @@ const Host: FC = () => (
       <React.Suspense fallback={<RandomLoader />}>
         <ErrorBoundary Fallback={GenericErrorFallback}>
           <QueryClientProvider client={queryClient}>
-            <GqlProvider url={Environment.API_URL}>
+            <GqlProvider url={Environment.GRAPHQL_URL}>
               <AuthProvider>
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
