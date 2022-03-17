@@ -11,8 +11,6 @@ const Breadcrumb = styled(Link)({
   textDecoration: 'none',
 });
 
-// This one changed
-
 export const Breadcrumbs: React.FC = () => {
   const t = useTranslation(['app', 'common']);
   const { urlParts, navigateUpOne } = useBreadcrumbs();
