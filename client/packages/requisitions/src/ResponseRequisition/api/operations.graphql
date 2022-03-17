@@ -210,3 +210,30 @@ mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
     }
   }
 }
+
+mutation supplyRequestedQuantity($responseId: String!, $storeId: String!) {
+  supplyRequestedQuantity(
+    input: { responseRequisitionId: $responseId }
+    storeId: $storeId
+  ) {
+    ... on SupplyRequestedQuantityError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+      }
+    }
+    ... on RequisitionLineConnector {
+      nodes {
+        id
+      }
+    }
+  }
+}
