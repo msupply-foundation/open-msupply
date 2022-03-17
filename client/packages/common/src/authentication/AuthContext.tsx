@@ -1,4 +1,4 @@
-import React, { createContext, FC, useMemo, useState } from 'react';
+import React, { createContext, FC, useMemo, useState, useEffect } from 'react';
 import { IntlUtils } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
@@ -70,10 +70,16 @@ const setAuthCookie = (cookie: AuthCookie) => {
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
 };
 
-const useRefreshingAuth = (token?: string) => {
+const useRefreshingAuth = (
+  callback: (token?: string) => void,
+  token?: string
+) => {
   const { setHeader } = useGql();
   setHeader('Authorization', `Bearer ${token}`);
-  useGetRefreshToken(token ?? '');
+  const { data, isSuccess } = useGetRefreshToken(token ?? '');
+  useEffect(() => {
+    if (isSuccess) callback(data?.token);
+  }, [data, isSuccess, callback]);
 };
 
 const AuthContext = createContext<AuthControl>({
@@ -99,8 +105,12 @@ export const AuthProvider: FC = ({ children }) => {
   const [localStore, setLocalStore] = useState<Store | undefined>(cookieStore);
   const [localToken, setLocalToken] = useState<string | undefined>(cookieToken);
   const storeId = localStore?.id ?? '';
-
-  useRefreshingAuth(localToken);
+  const saveToken = (token?: string) => {
+    setLocalToken(token);
+    const authCookie = getAuthCookie();
+    setAuthCookie({ ...authCookie, token: token ?? '' });
+  };
+  useRefreshingAuth(saveToken, localToken);
 
   const login = async (username: string, password: string, store?: Store) => {
     const { token, error } = await mutateAsync({ username, password });
@@ -138,7 +148,6 @@ export const AuthProvider: FC = ({ children }) => {
     Cookies.remove('auth');
     setLocalStore(undefined);
   };
-
   const val = useMemo(
     () => ({
       isLoggingIn,

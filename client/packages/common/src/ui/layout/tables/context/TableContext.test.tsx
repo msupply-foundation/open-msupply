@@ -11,10 +11,10 @@ describe('TableContext - expanding rows', () => {
   it('sets a single row as expanded once called', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows, toggleExpanded } = result.current;
+    const { setRows, toggleExpanded } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleExpanded('a');
     });
 
@@ -26,10 +26,10 @@ describe('TableContext - expanding rows', () => {
   it('sets a single row as not expanded when called twice', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows, toggleExpanded } = result.current;
+    const { setRows, toggleExpanded } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleExpanded('a');
       toggleExpanded('a');
     });
@@ -42,10 +42,10 @@ describe('TableContext - expanding rows', () => {
   it('sets all active rows as expanded when expand all is called', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows, toggleAllExpanded } = result.current;
+    const { setRows, toggleAllExpanded } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleAllExpanded();
     });
 
@@ -57,10 +57,10 @@ describe('TableContext - expanding rows', () => {
   it('sets all active rows as not expanded when expand all is called twice', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows, toggleAllExpanded } = result.current;
+    const { setRows, toggleAllExpanded } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleAllExpanded();
       toggleAllExpanded();
     });
@@ -73,10 +73,10 @@ describe('TableContext - expanding rows', () => {
   it('sets all active rows as expanded when expand all is called in an indeterminate state', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows, toggleExpanded, toggleAllExpanded } = result.current;
+    const { setRows, toggleExpanded, toggleAllExpanded } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleAllExpanded();
       toggleExpanded('b');
       toggleAllExpanded();
@@ -90,10 +90,10 @@ describe('TableContext - expanding rows', () => {
   it('only sets the expanded state when toggling, not the selected state', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows, toggleExpanded } = result.current;
+    const { setRows, toggleExpanded } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleExpanded('a');
     });
 
@@ -104,10 +104,10 @@ describe('TableContext - expanding rows', () => {
   it('after setting active rows, there are no expanded rows', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows } = result.current;
+    const { setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
     });
 
     expect(result.current.numberExpanded).toBe(0);
@@ -118,10 +118,10 @@ describe('TableContext - setting selected rows', () => {
   it('sets all rows in the row state, with a selected state of false when a set of rows is set to active', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows } = result.current;
+    const { setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
     });
 
     expect(result.current.rowState['a']?.isSelected).toBe(false);
@@ -133,12 +133,12 @@ describe('TableContext - setting selected rows', () => {
   it('sets all rows in the row state, with a previously set selected state, if set', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { toggleSelected, setActiveRows } = result.current;
+    const { toggleSelected, setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleSelected('a');
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
     });
 
     expect(result.current.rowState['a']?.isSelected).toBe(true);
@@ -150,11 +150,11 @@ describe('TableContext - setting selected rows', () => {
   it('the row state has no stale rows from previous active rows', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows } = result.current;
+    const { setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c', 'd']);
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c', 'd']);
+      setRows(['a', 'b', 'c']);
     });
 
     expect(result.current.rowState['a']?.isSelected).toBe(false);
@@ -167,10 +167,10 @@ describe('TableContext - setting selected rows', () => {
   it('sets a row to selected when selected and the state of the number of selected rows is updated', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { toggleSelected, setActiveRows } = result.current;
+    const { toggleSelected, setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleSelected('a');
       toggleSelected('b');
     });
@@ -184,10 +184,10 @@ describe('TableContext - setting selected rows', () => {
   it('sets all rows to selected when no rows are selected and toggleAll is called', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { toggleAll, setActiveRows } = result.current;
+    const { toggleAll, setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleAll();
     });
 
@@ -200,10 +200,10 @@ describe('TableContext - setting selected rows', () => {
   it('sets all rows to selected if there is a single unselected row and toggleAll is called', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { toggleSelected, toggleAll, setActiveRows } = result.current;
+    const { toggleSelected, toggleAll, setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleAll();
       toggleSelected('a');
       toggleAll();
@@ -218,10 +218,10 @@ describe('TableContext - setting selected rows', () => {
   it('sets all rows to selected if there is a single selected row and toggleAll is called', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { toggleSelected, toggleAll, setActiveRows } = result.current;
+    const { toggleSelected, toggleAll, setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleSelected('a');
       toggleAll();
     });
@@ -235,10 +235,10 @@ describe('TableContext - setting selected rows', () => {
   it('sets all rows to unselected when all rows are selected and toggleAll is called', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { toggleAll, setActiveRows } = result.current;
+    const { toggleAll, setRows } = result.current;
 
     act(() => {
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
       toggleAll();
       toggleAll();
     });
@@ -254,7 +254,7 @@ describe('TableContext - grouping rows', () => {
   it('after setting active rows, the grouped state is unchanged', () => {
     const { result } = renderHook<unknown, TableStore>(useStore);
 
-    const { setActiveRows, setIsGrouped } = result.current;
+    const { setRows, setIsGrouped } = result.current;
 
     const firstResult = result?.all?.[0];
     if (!(firstResult instanceof Error)) {
@@ -263,7 +263,7 @@ describe('TableContext - grouping rows', () => {
 
     act(() => {
       setIsGrouped(true);
-      setActiveRows(['a', 'b', 'c']);
+      setRows(['a', 'b', 'c']);
     });
 
     const secondResult = result?.all?.[1];
