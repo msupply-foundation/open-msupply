@@ -1,5 +1,6 @@
 import { i18n } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
+import { EnvUtils } from '@common/utils';
 
 export { useTranslationNext };
 
@@ -27,3 +28,15 @@ export const useDefaultLanguage = (): SupportedLocales => {
 
 export const isSupportedLang = (lang: string): lang is SupportedLocales =>
   locales.some(locale => lang === locale);
+
+export const useCurrentLanguage = (): SupportedLocales => {
+  const { i18n } = useTranslationNext();
+  const { language } = i18n;
+  if (language === 'en' || language === 'fr' || language === 'ar') {
+    return language;
+  }
+  if (!EnvUtils.isProduction()) {
+    throw new Error(`Language '${language}' not supported`);
+  }
+  return 'en';
+};
