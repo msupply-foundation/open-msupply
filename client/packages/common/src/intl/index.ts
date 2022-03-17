@@ -1,7 +1,7 @@
 export { LocaleKey } from './locales';
 
 export * from './currency';
-export * from './util';
+export * from './utils';
 export * from './strings';
 export * from './number';
 export * from './date';
