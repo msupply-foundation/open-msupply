@@ -13,7 +13,7 @@ import { useDeleteSelectedInbounds, InboundRowFragment } from '../api';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation('common');
+  const t = useTranslation('replenishment');
   const onDelete = useDeleteSelectedInbounds();
 
   const key = 'otherPartyName' as keyof InboundRowFragment;
