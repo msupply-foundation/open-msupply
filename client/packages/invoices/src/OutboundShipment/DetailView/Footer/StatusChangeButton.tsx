@@ -11,11 +11,7 @@ import {
   InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
-import {
-  useOutboundLines,
-  useIsOutboundDisabled,
-  useOutboundFields,
-} from '../../api';
+import { useOutbound } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -99,7 +95,10 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, onHold, update } = useOutboundFields(['status', 'onHold']);
+  const { status, onHold, update } = useOutbound.document.fields([
+    'status',
+    'onHold',
+  ]);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
 
@@ -150,7 +149,7 @@ const useStatusChangeButton = () => {
 
 const useStatusChangePlaceholderCheck = () => {
   const t = useTranslation('distribution');
-  const { data: lines } = useOutboundLines();
+  const { data: lines } = useOutbound.line.stockLines();
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),
     message: t('messages.must-allocate-all-lines'),
@@ -176,7 +175,7 @@ export const StatusChangeButton = () => {
     onHold,
   } = useStatusChangeButton();
   const { hasPlaceholder, alert } = useStatusChangePlaceholderCheck();
-  const isDisabled = useIsOutboundDisabled();
+  const isDisabled = useOutbound.utils.isDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
