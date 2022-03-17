@@ -13,17 +13,23 @@ const Breadcrumb = styled(Link)({
 
 export const Breadcrumbs: React.FC = () => {
   const t = useTranslation(['app', 'common']);
-  const { urlParts, setNavAction } = useBreadcrumbs();
+  const { urlParts, navigateUpOne } = useBreadcrumbs();
 
-  useRegisterActions([
-    {
-      id: 'navigation:up-one-level',
-      name: '', // No name => won't show in Modal menu
-      shortcut: ['escape'],
-      keywords: 'navigate, back',
-      perform: () => setNavAction('up-one'),
-    },
-  ]);
+  useRegisterActions(
+    [
+      {
+        id: 'navigation:up-one-level',
+        name: '', // No name => won't show in Modal menu
+        shortcut: ['escape'],
+        keywords: 'navigate, back',
+        perform: () => {
+          console.log('parts', urlParts);
+          navigateUpOne();
+        },
+      },
+    ],
+    [urlParts]
+  );
 
   const crumbs = urlParts.map((part, index) => {
     if (index === urlParts.length - 1) {

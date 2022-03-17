@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LocaleKey } from '@common/intl';
-
-type BreadcrumbNavigationAction = 'up-one' | null;
-
 export interface UrlPart {
   path: string;
   key: LocaleKey;
@@ -14,7 +11,6 @@ export const useBreadcrumbs = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [urlParts, setUrlParts] = useState<UrlPart[]>([]);
-  const [navAction, setNavAction] = useState<BreadcrumbNavigationAction>(null);
 
   useEffect(() => {
     const parts = location.pathname.split('/');
@@ -35,18 +31,10 @@ export const useBreadcrumbs = () => {
     setUrlParts(urlParts);
   }, [location]);
 
-  useEffect(() => {
-    if (!navAction) return;
-    if (navAction === 'up-one') navigateUpOne();
-    setNavAction(null);
-  }, [navAction]);
-
   const navigateUpOne = () => {
-    console.log('Up one breadcrumb');
-    console.log('parts', urlParts);
     if (urlParts.length < 2) return;
     navigate(urlParts[urlParts.length - 2]?.path as string);
   };
 
-  return { urlParts, setNavAction };
+  return { urlParts, navigateUpOne };
 };

@@ -50,7 +50,7 @@ const createStatusLog = (invoice: OutboundFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation('distribution');
-  const { setNavAction } = useBreadcrumbs();
+  const { navigateUpOne } = useBreadcrumbs();
   const { data } = useOutbound();
 
   return (
@@ -79,7 +79,7 @@ export const FooterComponent: FC = () => {
                 label={t('button.cancel')}
                 color="secondary"
                 sx={{ fontSize: '12px' }}
-                onClick={() => setNavAction('up-one')}
+                onClick={() => navigateUpOne()}
               />
 
               <StatusChangeButton />
