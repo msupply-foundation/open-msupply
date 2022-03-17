@@ -5,10 +5,11 @@ import {
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { useSupplyRequestedQuantity } from '../../api';
+import { useSupplyRequestedQuantity, useIsResponseDisabled } from '../../api';
 
 export const SupplyRequestedQuantityButtonComponent = () => {
   const t = useTranslation('distribution');
+  const isDisabled = useIsResponseDisabled();
   const { mutate: supplyRequestedQuantity } = useSupplyRequestedQuantity();
   const getConfirmation = useConfirmationModal({
     onConfirm: supplyRequestedQuantity,
@@ -18,6 +19,7 @@ export const SupplyRequestedQuantityButtonComponent = () => {
 
   return (
     <ButtonWithIcon
+      disabled={isDisabled}
       Icon={<PlusCircleIcon />}
       label={t('button.supply-to-requested')}
       onClick={() => getConfirmation()}
