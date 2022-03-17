@@ -11,6 +11,11 @@ import {
   PrinterIcon,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
+import {
+  usePrintReport,
+  ReportRowFragment,
+  ReportSelector,
+} from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
   onAddItem: () => void;
@@ -20,6 +25,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
   const isDisabled = useOutbound.utils.isDisabled();
+  const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
   const { print, isPrinting } = usePrintReport();
