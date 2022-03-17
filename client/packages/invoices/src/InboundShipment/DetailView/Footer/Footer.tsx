@@ -5,8 +5,8 @@ import {
   useTranslation,
   AppFooterPortal,
   InvoiceNodeStatus,
-  useNavigate,
   XCircleIcon,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 
 import React, { FC } from 'react';
@@ -50,7 +50,7 @@ const createStatusLog = (invoice: InboundFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation('replenishment');
-  const navigate = useNavigate();
+  const { navigateUpOne } = useBreadcrumbs();
   const { data } = useInbound();
 
   return (
@@ -79,7 +79,7 @@ export const FooterComponent: FC = () => {
                 label={t('button.cancel')}
                 color="secondary"
                 sx={{ fontSize: '12px' }}
-                onClick={() => navigate(-1)}
+                onClick={() => navigateUpOne()}
               />
 
               <StatusChangeButton />
