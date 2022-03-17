@@ -1,0 +1,53 @@
+fragment ReportRow on ReportNode {
+  category
+  id
+  name
+}
+
+query reports(
+  $storeId: String!
+  $key: String!
+  $desc: Boolean
+  $filter: ReportFilterInput
+) {
+  reports(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ReportConnector {
+      nodes {
+        __typename
+        ...ReportRow
+      }
+      totalCount
+    }
+  }
+}
+
+query printReport($storeId: String!, $dataId: String!, $reportId: String!) {
+  printReport(dataId: $dataId, reportId: $reportId, storeId: $storeId) {
+    ... on PrintReportNode {
+      __typename
+      fileId
+    }
+    ... on PrintReportError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on FailedToFetchReportData {
+          __typename
+          description
+        }
+        ... on InvalidReport {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}

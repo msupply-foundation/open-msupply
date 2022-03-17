@@ -7,9 +7,18 @@ import {
   useDetailPanel,
   useTranslation,
   useToggle,
+  PrinterIcon,
+  LoadingButton,
+  ReportCategory,
 } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
-import { useAddFromMasterList } from '../api';
+import { useAddFromMasterList, useRequest } from '../api';
+import {
+  ReportRowFragment,
+  ReportSelector,
+  usePrintReport,
+} from '@openmsupply-client/system';
+
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: (newState: boolean) => void;
@@ -23,6 +32,13 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('distribution');
   const modalController = useToggle();
+  const { data } = useRequest();
+  const { print, isPrinting } = usePrintReport();
+
+  const printReport = (report: ReportRowFragment) => {
+    if (!data) return;
+    print({ reportId: report.id, dataId: data?.id || '' });
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -47,6 +63,18 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}
         />
+        <ReportSelector
+          category={ReportCategory.Requisition}
+          onClick={printReport}
+        >
+          <LoadingButton
+            variant="outlined"
+            startIcon={<PrinterIcon />}
+            isLoading={isPrinting}
+          >
+            {t('button.print')}
+          </LoadingButton>
+        </ReportSelector>
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
