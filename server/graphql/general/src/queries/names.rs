@@ -41,10 +41,11 @@ pub struct NameFilterInput {
     pub is_store: Option<bool>,
     /// Code of the store if store is linked to name
     pub store_code: Option<SimpleStringFilterInput>,
-    // Visibility in current store (based on store_id parameter and existance of name_store_join record)
+    /// Visibility in current store (based on store_id parameter and existance of name_store_join record)
     pub is_visible: Option<bool>,
-    // Show system names (defaults to false)
-    // System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
+    /// Show system names (defaults to false)
+    /// System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
+    /// if is_visible is set to true and is_system_name is also true no system names will be returned
     pub is_system_name: Option<bool>,
 }
 
