@@ -1,5 +1,7 @@
 {
   "admin": "Admin",
+  "auth.logged-out-message": "You have been logged out of your session due to inactivity. Click OK to return to the login screen.",
+  "auth.logged-out-title": "Session Timed Out",
   "button.close-the-menu": "Close the menu",
   "button.go-back": "Go back",
   "button.open-the-menu": "Open the menu",
@@ -58,5 +60,6 @@
   "heading.store": "Store",
   "button.login": "Log in",
   "error.login": "Invalid username or password",
-  "select-store": "Select store"
+  "select-store": "Select store",
+  "select-report": "Select Report"
 }
