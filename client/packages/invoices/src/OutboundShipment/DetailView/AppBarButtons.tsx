@@ -7,7 +7,7 @@ import {
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useIsOutboundDisabled } from '../api';
+import { useOutbound } from '../api';
 
 interface AppBarButtonProps {
   onAddItem: () => void;
@@ -16,7 +16,7 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const isDisabled = useIsOutboundDisabled();
+  const isDisabled = useOutbound.utils.isDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
 

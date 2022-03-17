@@ -51,7 +51,7 @@ const createStatusLog = (invoice: OutboundFragment) => {
 export const FooterComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('distribution');
-  const { data } = useOutbound();
+  const { data } = useOutbound.document.get();
 
   return (
     <AppFooterPortal

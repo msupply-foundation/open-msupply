@@ -15,13 +15,7 @@ import {
   MenuDotsIcon,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import {
-  useOutboundFields,
-  useUpdateOutboundTax,
-  useOutboundServiceLines,
-  useOutboundLines,
-  useIsOutboundDisabled,
-} from '../../api';
+import { useOutbound } from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
 import { TaxEdit } from '../modals';
 
@@ -34,7 +28,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   const serviceLineModal = useToggle(false);
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
-  const { data: serviceLines } = useOutboundServiceLines();
+  const { data: serviceLines } = useOutbound.line.serviceLines();
   const { serviceTotalBeforeTax, serviceTotalAfterTax } = pricing;
 
   const tax = PricingUtils.effectiveTax(
@@ -46,7 +40,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
     serviceTotalAfterTax
   );
 
-  const { updateServiceLineTax } = useUpdateOutboundTax();
+  const { updateServiceLineTax } = useOutbound.document.updateTax();
 
   return (
     <>
@@ -98,7 +92,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
 
-  const { data: outboundLines } = useOutboundLines();
+  const { data: outboundLines } = useOutbound.line.stockLines();
 
   const { stockTotalBeforeTax, stockTotalAfterTax } = pricing;
 
@@ -111,7 +105,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
     stockTotalAfterTax
   );
 
-  const { updateStockLineTax } = useUpdateOutboundTax();
+  const { updateStockLineTax } = useOutbound.document.updateTax();
 
   return (
     <>
@@ -162,9 +156,9 @@ export const Totals = ({ pricing }: PricingGroupProps) => {
 
 export const PricingSectionComponent = () => {
   const t = useTranslation('distribution');
-  const isDisabled = useIsOutboundDisabled();
+  const isDisabled = useOutbound.utils.isDisabled();
 
-  const { pricing } = useOutboundFields('pricing');
+  const { pricing } = useOutbound.document.fields('pricing');
 
   return (
     <DetailPanelSection title={t('heading.invoice-details')}>
