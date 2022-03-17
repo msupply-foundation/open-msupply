@@ -12,7 +12,7 @@ name = "remote_server_android"
 repository = { path = "../repository" }
 server = { path = "../server" }
 
-actix-web = { version= "3.3.2", features = ["openssl"] } 
+actix-web = { version= "4.0.1", features = ["openssl"] } 
 android_logger = "0.10.1"
 jni = { version = "0.19.0"}
 log = "0.4.14"
