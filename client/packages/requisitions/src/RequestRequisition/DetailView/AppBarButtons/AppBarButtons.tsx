@@ -41,15 +41,16 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <UseSuggestedQuantityButton />
-        <AddFromMasterListButton />
-
         <ButtonWithIcon
           disabled={isDisabled}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}
         />
+
+        <AddFromMasterListButton />
+        <UseSuggestedQuantityButton />
+
         <ReportSelector
           category={ReportCategory.Requisition}
           onClick={printReport}
