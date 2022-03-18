@@ -15,7 +15,7 @@ use graphql_core::{
     ContextExt,
 };
 
-use super::{InvoiceLineConnector, ItemNode, ItemStatsNode, ItemChartDataNode};
+use super::{InvoiceLineConnector, ItemChartDataNode, ItemNode, ItemStatsNode};
 
 #[derive(PartialEq, Debug)]
 pub struct RequisitionLineNode {
@@ -239,7 +239,7 @@ mod test {
             EmptyMutation,
             "graphql_requisition_line_quantity_remaing_to_supply",
             MockDataInserts::all(),
-            Some(TestData::test_remaining_to_supply()),
+            TestData::test_remaining_to_supply(),
         )
         .await;
 

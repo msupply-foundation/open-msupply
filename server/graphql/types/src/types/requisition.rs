@@ -391,7 +391,7 @@ mod test {
             EmptyMutation,
             "graphql_requisition_lines_remaining_to_supply_loader",
             MockDataInserts::all(),
-            Some(TestData::test_remaining_to_supply()),
+            TestData::test_remaining_to_supply(),
         )
         .await;
 

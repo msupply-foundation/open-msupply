@@ -164,9 +164,9 @@ mod test_insert {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_request_requisition_errors",
             MockDataInserts::all(),
-            Some(inline_init(|r: &mut MockData| {
+            inline_init(|r: &mut MockData| {
                 r.names = vec![not_visible()];
-            })),
+            }),
         )
         .await;
 
