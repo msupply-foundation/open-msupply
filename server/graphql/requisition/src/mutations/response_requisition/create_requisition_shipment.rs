@@ -45,7 +45,7 @@ pub fn create_requisition_shipment(
     store_id: &str,
     input: CreateRequisitionShipmentInput,
 ) -> Result<CreateRequisitionShipmentResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
@@ -58,7 +58,7 @@ pub fn create_requisition_shipment(
 
     let response = match service_provider
         .requisition_service
-        .create_requisition_shipment(&service_context, store_id, input.to_domain())
+        .create_requisition_shipment(&service_context, store_id, &user.user_id, input.to_domain())
     {
         Ok(invoice) => {
             CreateRequisitionShipmentResponse::Response(InvoiceNode::from_domain(invoice))
@@ -155,6 +155,7 @@ mod test {
             &self,
             _: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: ServiceInput,
         ) -> Result<Invoice, ServiceError> {
             self.0(store_id, input)
