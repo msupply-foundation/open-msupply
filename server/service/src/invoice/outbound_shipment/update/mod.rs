@@ -28,6 +28,7 @@ pub struct UpdateOutboundShipment {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
+    pub transport_reference: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -117,6 +118,15 @@ impl UpdateOutboundShipmentStatus {
             UpdateOutboundShipmentStatus::Shipped => InvoiceRowStatus::Shipped,
         }
     }
+
+    pub fn full_status_option(
+        status: &Option<UpdateOutboundShipmentStatus>,
+    ) -> Option<InvoiceRowStatus> {
+        match status {
+            Some(status) => Some(status.full_status()),
+            None => None,
+        }
+    }
 }
 
 impl UpdateOutboundShipment {
@@ -131,8 +141,8 @@ impl UpdateOutboundShipment {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_outbound_shipment_a, mock_store_a, MockData, MockDataInserts},
-        schema::{NameRow, NameStoreJoinRow},
+        mock::{mock_name_a, mock_outbound_shipment_a, mock_store_a, MockData, MockDataInserts},
+        schema::{InvoiceRow, InvoiceRowType, NameRow, NameStoreJoinRow},
         test_db::setup_all_with_data,
         InvoiceRepository,
     };
@@ -225,6 +235,15 @@ mod test {
 
     #[actix_rt::test]
     async fn update_outbound_shipment_success() {
+        fn invoice() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "test_invoice_pricing".to_string();
+                r.name_id = mock_name_a().id;
+                r.store_id = mock_store_a().id;
+                r.r#type = InvoiceRowType::OutboundShipment;
+            })
+        }
+
         fn customer() -> NameRow {
             inline_init(|r: &mut NameRow| {
                 r.id = "customer".to_string();
@@ -244,6 +263,7 @@ mod test {
             "update_outbound_shipment_success",
             MockDataInserts::all(),
             Some(inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
                 r.names = vec![customer()];
                 r.name_store_joins = vec![customer_join()];
             })),
@@ -254,30 +274,49 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_service;
 
-        // Success
-        service
-            .update_outbound_shipment(
-                &context,
-                &mock_store_a().id,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = mock_outbound_shipment_a().id;
-                    r.other_party_id = Some(customer().id);
-                }),
-            )
-            .unwrap();
+        // Test all fields apart from status
+        fn get_update() -> UpdateOutboundShipment {
+            UpdateOutboundShipment {
+                id: invoice().id,
+                other_party_id: Some(customer().id),
+                status: None,
+                on_hold: Some(true),
+                comment: Some("comment".to_string()),
+                their_reference: Some("their_reference".to_string()),
+                colour: Some("colour".to_string()),
+                transport_reference: Some("transport_reference".to_string()),
+            }
+        }
 
-        let invoice = InvoiceRepository::new(&connection)
-            .find_one_by_id(&mock_outbound_shipment_a().id)
+        let result = service.update_outbound_shipment(&context, "store_a", get_update());
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let updated_record = InvoiceRepository::new(&connection)
+            .find_one_by_id(&invoice().id)
             .unwrap();
 
         assert_eq!(
-            invoice,
-            inline_edit(&invoice, |mut u| {
+            updated_record,
+            inline_edit(&invoice(), |mut u| {
+                let UpdateOutboundShipment {
+                    id: _,
+                    other_party_id: _,
+                    status: _,
+                    on_hold,
+                    comment,
+                    their_reference,
+                    colour,
+                    transport_reference,
+                } = get_update();
                 u.name_id = customer().id;
+                u.on_hold = on_hold.unwrap();
+                u.comment = comment;
+                u.their_reference = their_reference;
+                u.colour = colour;
+                u.transport_reference = transport_reference;
                 u
             })
-        )
-
-        // TODO validate other field
+        );
     }
 }

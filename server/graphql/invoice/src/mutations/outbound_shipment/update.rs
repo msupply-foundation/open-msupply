@@ -30,6 +30,7 @@ pub struct UpdateInput {
     comment: Option<String>,
     /// External invoice reference, e.g. purchase or shipment number
     their_reference: Option<String>,
+    transport_reference: Option<String>,
     colour: Option<String>,
 }
 
@@ -99,6 +100,7 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
+            transport_reference,
         } = self;
 
         ServiceInput {
@@ -109,6 +111,7 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
+            transport_reference,
         }
     }
 }

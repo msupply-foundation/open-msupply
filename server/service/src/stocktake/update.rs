@@ -332,6 +332,8 @@ fn generate(
         name_store_id: None,
         r#type: InvoiceRowType::InventoryAdjustment,
         status: InvoiceRowStatus::Verified,
+        // Default
+        transport_reference: None,
         on_hold: false,
         comment: None,
         their_reference: None,

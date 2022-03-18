@@ -1,7 +1,6 @@
 use super::OutError;
 use crate::{
-    number::next_number, requisition::requisition_supply_status::RequisitionLineSupplyStatus,
-    validate::get_other_party,
+    number::next_number, requisition::requisition_supply_status::RequisitionLineSupplyStatus, validate::get_other_party,
 };
 use chrono::Utc;
 use repository::{
@@ -39,6 +38,7 @@ pub fn generate(
         on_hold: false,
         comment: None,
         their_reference: None,
+        transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,
