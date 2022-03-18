@@ -12,21 +12,21 @@ import {
   FnUtils,
   useToggle,
 } from '@openmsupply-client/common';
-import { useOutboundApi, useCreateOutbound } from '../api';
+import { useOutbound } from '../api';
 
 export const OutboundShipmentWidget: React.FC = () => {
   const modalControl = useToggle(false);
   const { error } = useNotification();
   const t = useTranslation(['app', 'dashboard']);
 
-  const api = useOutboundApi();
+  const api = useOutbound.utils.api();
   const { data, isLoading } = useQuery(
     ['outbound-shipment', 'count'],
     api.dashboard.shipmentCount,
     { retry: false }
   );
 
-  const { mutate: onCreate } = useCreateOutbound();
+  const { mutate: onCreate } = useOutbound.document.insert();
 
   return (
     <>

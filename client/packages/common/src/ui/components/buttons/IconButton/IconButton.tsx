@@ -18,7 +18,7 @@ export const IconButton: React.FC<ButtonProps> = ({
   width,
   height,
 }) => (
-  <Tooltip title={label}>
+  <Tooltip title={disabled ? '' : label}>
     <MuiIconButton
       sx={{ width, height }}
       disabled={disabled}

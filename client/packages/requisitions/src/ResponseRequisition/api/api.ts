@@ -12,6 +12,7 @@ import {
   ResponseFragment,
   ResponseRowFragment,
   Sdk,
+  SupplyRequestedQuantityMutation,
 } from './operations.generated';
 import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
 
@@ -152,5 +153,11 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not create outbound');
+  },
+  supplyRequestedQuantity: async (
+    responseId: string
+  ): Promise<SupplyRequestedQuantityMutation> => {
+    const result = await sdk.supplyRequestedQuantity({ storeId, responseId });
+    return result;
   },
 });

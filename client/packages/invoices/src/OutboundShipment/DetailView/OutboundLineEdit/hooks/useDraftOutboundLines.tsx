@@ -10,7 +10,7 @@ import {
 import { useStockLines, ItemRowFragment } from '@openmsupply-client/system';
 import { DraftOutboundLine } from '../../../../types';
 import { issueStock } from '../utils';
-import { useOutboundLines, useOutboundFields } from '../../../api';
+import { useOutbound } from '../../../api';
 import {
   OutboundLineFragment,
   PartialStockLineFragment,
@@ -107,10 +107,12 @@ interface UseDraftOutboundLinesControl {
 export const useDraftOutboundLines = (
   item: ItemRowFragment | null
 ): UseDraftOutboundLinesControl => {
-  const { id: invoiceId, status } = useOutboundFields(['id', 'status']);
-  const { data: lines, isLoading: outboundLinesLoading } = useOutboundLines(
-    item?.id ?? ''
-  );
+  const { id: invoiceId, status } = useOutbound.document.fields([
+    'id',
+    'status',
+  ]);
+  const { data: lines, isLoading: outboundLinesLoading } =
+    useOutbound.line.stockLines(item?.id ?? '');
   const { data, isLoading } = useStockLines(item?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftOutboundLines, setDraftOutboundLines] = useState<

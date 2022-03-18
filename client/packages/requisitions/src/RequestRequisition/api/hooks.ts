@@ -307,3 +307,15 @@ export const useDeleteRequestLines = () => {
 
   return { onDelete };
 };
+
+export const useSuggestedQuantity = () => {
+  const queryClient = useQueryClient();
+  const api = useRequestApi();
+  const requestNumber = useRequestNumber();
+  const { id } = useRequestFields('id');
+
+  return useMutation(() => api.useSuggestedQuantity(id), {
+    onSettled: () =>
+      queryClient.invalidateQueries(api.keys.detail(requestNumber)),
+  });
+};
