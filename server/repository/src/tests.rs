@@ -287,7 +287,7 @@ mod repository_test {
         },
         schema::{
             ChangelogAction, ChangelogRow, ChangelogTableName, KeyValueType, NumberRowType,
-            PricingRow, RequisitionRowStatus,
+            RequisitionRowStatus,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRepository, ItemRepository, ItemStatsFilter,
@@ -302,7 +302,7 @@ mod repository_test {
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::{Duration, Utc};
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
+    use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, inline_edit};
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -698,16 +698,16 @@ mod repository_test {
             .unwrap();
         assert_eq!(
             stats_invoice_1,
-            PricingRow {
-                invoice_id: invoice_1_id,
-                total_before_tax: 13.0,
-                total_after_tax: 18.0,
-                stock_total_before_tax: 3.0,
-                stock_total_after_tax: 3.0,
-                service_total_before_tax: 10.0,
-                service_total_after_tax: 15.0,
-                tax_percentage: None,
-            }
+            inline_edit(&stats_invoice_1, |mut u| {
+                u.invoice_id = invoice_1_id;
+                u.total_before_tax = 13.0;
+                u.total_after_tax = 18.0;
+                u.stock_total_before_tax = 3.0;
+                u.stock_total_after_tax = 3.0;
+                u.service_total_before_tax = 10.0;
+                u.service_total_after_tax = 15.0;
+                u
+            })
         );
     }
 

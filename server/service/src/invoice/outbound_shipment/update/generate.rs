@@ -6,26 +6,37 @@ use repository::{
     InvoiceLineRowRepository, StockLineRowRepository, StorageConnection,
 };
 
-use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
+use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
 
 pub fn generate(
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
-    patch: UpdateOutboundShipment,
+    UpdateOutboundShipment {
+        id: _,
+        other_party_id: input_other_party_id,
+        status: input_status,
+        on_hold: input_on_hold,
+        comment: input_comment,
+        their_reference: input_their_reference,
+        colour: input_colour,
+        transport_reference: input_transport_reference,
+    }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<(Option<Vec<StockLineRow>>, InvoiceRow), UpdateOutboundShipmentError> {
-    let should_create_batches = should_update_batches(&existing_invoice, &patch);
+    let should_create_batches = should_update_batches(&existing_invoice, &input_status);
     let mut update_invoice = existing_invoice;
 
-    set_new_status_datetime(&mut update_invoice, &patch);
+    set_new_status_datetime(&mut update_invoice, &input_status);
 
-    update_invoice.name_id = patch.other_party_id.unwrap_or(update_invoice.name_id);
-    update_invoice.comment = patch.comment.or(update_invoice.comment);
-    update_invoice.their_reference = patch.their_reference.or(update_invoice.their_reference);
-    update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
-    update_invoice.colour = patch.colour.or(update_invoice.colour);
+    update_invoice.name_id = input_other_party_id.unwrap_or(update_invoice.name_id);
+    update_invoice.comment = input_comment.or(update_invoice.comment);
+    update_invoice.their_reference = input_their_reference.or(update_invoice.their_reference);
+    update_invoice.on_hold = input_on_hold.unwrap_or(update_invoice.on_hold);
+    update_invoice.colour = input_colour.or(update_invoice.colour);
+    update_invoice.transport_reference =
+        input_transport_reference.or(update_invoice.transport_reference);
 
-    if let Some(status) = patch.status {
+    if let Some(status) = input_status {
         update_invoice.status = status.full_status().into()
     }
 
@@ -44,8 +55,11 @@ pub fn generate(
     }
 }
 
-pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateOutboundShipment) -> bool {
-    if let Some(new_invoice_status) = patch.full_status() {
+pub fn should_update_batches(
+    invoice: &InvoiceRow,
+    status: &Option<UpdateOutboundShipmentStatus>,
+) -> bool {
+    if let Some(new_invoice_status) = UpdateOutboundShipmentStatus::full_status_option(status) {
         let invoice_status_index = invoice.status.index();
         let new_invoice_status_index = new_invoice_status.index();
 
@@ -56,8 +70,11 @@ pub fn should_update_batches(invoice: &InvoiceRow, patch: &UpdateOutboundShipmen
     }
 }
 
-fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateOutboundShipment) {
-    if let Some(new_invoice_status) = patch.full_status() {
+fn set_new_status_datetime(
+    invoice: &mut InvoiceRow,
+    status: &Option<UpdateOutboundShipmentStatus>,
+) {
+    if let Some(new_invoice_status) = UpdateOutboundShipmentStatus::full_status_option(status) {
         let current_datetime = Utc::now().naive_utc();
         let invoice_status_index = invoice.status.index();
         let new_invoice_status_index = new_invoice_status.index();

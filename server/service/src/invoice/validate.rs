@@ -2,10 +2,9 @@ use crate::WithDBError;
 use repository::EqualFilter;
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, NameQueryRepository,
-    RepositoryError, StorageConnection,
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
+    StorageConnection,
 };
-use repository::{Name, NameFilter};
 
 pub struct WrongInvoiceRowType;
 
@@ -121,19 +120,4 @@ pub fn check_invoice_is_empty(
     } else {
         Ok(())
     }
-}
-
-pub fn check_other_party_id(
-    connection: &StorageConnection,
-    store_id: &str,
-    other_party_id: &str,
-) -> Result<Option<Name>, RepositoryError> {
-    let repository = NameQueryRepository::new(&connection);
-
-    let mut result = repository.query_by_filter(
-        store_id,
-        NameFilter::new().id(EqualFilter::equal_to(other_party_id)),
-    )?;
-
-    Ok(result.pop())
 }
