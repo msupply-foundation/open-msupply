@@ -40,7 +40,7 @@ pub fn insert_outbound_shipment_line(
     Ok(new_line)
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum InsertOutboundShipmentLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),

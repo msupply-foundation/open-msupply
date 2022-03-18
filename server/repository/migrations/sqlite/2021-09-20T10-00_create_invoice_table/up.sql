@@ -15,6 +15,7 @@ CREATE TABLE invoice (
     on_hold BOOLEAN NOT NULL,
     comment TEXT,
     their_reference TEXT,
+    transport_reference TEXT,
     created_datetime TEXT NOT NULL,
     allocated_datetime TEXT,
     picked_datetime TEXT,

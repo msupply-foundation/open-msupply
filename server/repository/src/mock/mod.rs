@@ -21,6 +21,7 @@ mod test_master_list_repository;
 mod test_name_query;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
+pub mod test_remaining_to_supply;
 mod test_remote_pull;
 mod test_requisition_line_repository;
 mod test_requisition_queries;
@@ -229,7 +230,7 @@ impl MockDataInserts {
 #[derive(Default)]
 pub struct MockDataCollection {
     // Note: can't use a HashMap since mock data should be inserted in order
-    data: Vec<(String, MockData)>,
+    pub data: Vec<(String, MockData)>,
 }
 
 impl MockDataCollection {
@@ -256,7 +257,7 @@ impl Index<&str> for MockDataCollection {
     }
 }
 
-fn all_mock_data(extra_mock_data: Option<MockData>) -> MockDataCollection {
+fn all_mock_data() -> MockDataCollection {
     let mut data: MockDataCollection = Default::default();
     data.insert(
         "base",
@@ -322,19 +323,22 @@ fn all_mock_data(extra_mock_data: Option<MockData>) -> MockDataCollection {
     data.insert("mock_test_remote_pull", mock_test_remote_pull());
     data.insert("mock_test_service_item", mock_test_service_item());
     data.insert("mock_test_name_query", mock_test_name_query());
-    if let Some(mock_data) = extra_mock_data {
-        data.insert("extra_mock_data", mock_data);
-    };
     data
+}
+
+pub async fn insert_all_mock_data(
+    connection: &StorageConnection,
+    inserts: MockDataInserts,
+) -> MockDataCollection {
+    insert_mock_data(connection, inserts, all_mock_data()).await
 }
 
 pub async fn insert_mock_data(
     connection: &StorageConnection,
     inserts: MockDataInserts,
-    extra_mock_data: Option<MockData>,
+    mock_data: MockDataCollection,
 ) -> MockDataCollection {
-    let all_mock_data = all_mock_data(extra_mock_data);
-    for (_, mock_data) in &all_mock_data.data {
+    for (_, mock_data) in &mock_data.data {
         if inserts.user_accounts {
             let repo = UserAccountRepository::new(connection);
             for row in &mock_data.user_accounts {
@@ -459,5 +463,5 @@ pub async fn insert_mock_data(
         }
     }
 
-    all_mock_data
+    mock_data
 }

@@ -10,8 +10,7 @@ pub struct DeleteOutboundShipmentUnallocatedLine {
     pub id: String,
 }
 
-#[derive(Debug, PartialEq)]
-
+#[derive(Debug, PartialEq, Clone)]
 pub enum DeleteOutboundShipmentUnallocatedLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),

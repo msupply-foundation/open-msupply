@@ -4,7 +4,8 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, NameByIdLoaderInput,
-        RequisitionLinesByRequisitionIdLoader, RequisitionsByIdLoader, UserAccountLoader,
+        RequisitionLinesByRequisitionIdLoader, RequisitionLinesRemainingToSupplyLoader,
+        RequisitionsByIdLoader, UserAccountLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -67,7 +68,7 @@ impl RequisitionNode {
         DateTime::<Utc>::from_utc(self.row().created_datetime.clone(), Utc)
     }
 
-    /// User that last edited requisition, if user is not found in system default unknow user is returned
+    /// User that last edited requisition, if user is not found in system default unknown user is returned
     /// Null is returned for transfers, where response requisition has not been edited yet
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
@@ -198,7 +199,7 @@ impl RequisitionNode {
         &self,
         ctx: &Context<'_>,
     ) -> Result<RequisitionLineConnector> {
-        let loader = ctx.get_loader::<DataLoader<RequisitionLinesByRequisitionIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<RequisitionLinesRemainingToSupplyLoader>>();
         let result_option = loader.load_one(self.row().id.clone()).await?;
 
         let result = result_option.unwrap_or(vec![]);
@@ -282,7 +283,10 @@ impl RequisitionNodeStatus {
 mod test {
     use async_graphql::{EmptyMutation, Object};
 
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{
+        assert_graphql_query,
+        test_helpers::{setup_graphl_test, setup_graphl_test_with_data},
+    };
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
         schema::{NameRow, RequisitionRow},
@@ -375,5 +379,53 @@ mod test {
         "#;
 
         assert_graphql_query!(&settings, &query, &None, expected, None);
+    }
+
+    #[actix_rt::test]
+    async fn graphql_requisition_lines_remaining_to_supply_loader() {
+        use repository::mock::test_remaining_to_supply as TestData;
+        #[derive(Clone)]
+        struct TestQuery;
+        let (_, _, _, settings) = setup_graphl_test_with_data(
+            TestQuery,
+            EmptyMutation,
+            "graphql_requisition_lines_remaining_to_supply_loader",
+            MockDataInserts::all(),
+            TestData::test_remaining_to_supply(),
+        )
+        .await;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query(&self) -> RequisitionNode {
+                RequisitionNode {
+                    requisition: inline_init(|r: &mut Requisition| {
+                        r.requisition_row = TestData::requisition()
+                    }),
+                }
+            }
+        }
+
+        let query = r#"
+        query { 
+            testQuery {
+                linesRemainingToSupply {
+                    totalCount
+                }
+            }
+        }
+        "#;
+
+        let expected = json!({
+            "testQuery": {
+                "linesRemainingToSupply": {
+                    // TestData::line_to_supply_q0() should not be filtered out
+                    "totalCount": 3
+                  }
+            }
+        }
+        );
+
+        assert_graphql_query!(&settings, query, &None, &expected, None);
     }
 }

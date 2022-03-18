@@ -88,8 +88,8 @@ pub fn batch_stocktake(
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) =
-                mutations_processor.do_mutations(input.update_stocktake, update_stocktake);
+            let (has_errors, result) = mutations_processor
+                .do_mutations_with_user_id(input.update_stocktake, update_stocktake);
             results.update_stocktake = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
