@@ -7,7 +7,7 @@ use service::{
     stocktake::*,
 };
 
-use crate::VecOrNone;
+use crate::{VecOrNone, to_standard_error};
 
 type ServiceResult = BatchStocktakeResult;
 type ServiceInput = BatchStocktake;
@@ -146,14 +146,6 @@ impl BatchResponse {
 
         Ok(result)
     }
-}
-
-fn to_standard_error<I>(input: I, error: Error) -> Error
-where
-    I: std::fmt::Debug,
-{
-    let input_string = format!("{:#?}", input);
-    error.extend_with(|_, e| e.set("input", input_string))
 }
 
 fn map_insert_stocktakes(responses: InsertStocktakesResult) -> Result<InsertStocktakesResponse> {
