@@ -98,7 +98,7 @@ impl InvoiceNode {
             .map(StoreNode::from_domain))
     }
 
-    /// User that last edited invoice, if user is not found in system default unknow user is returned
+    /// User that last edited invoice, if user is not found in system default unknown user is returned
     /// Null is returned for transfers, where inbound has not been edited yet
     /// Null is also returned for system created invoices like inventory adjustments
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
