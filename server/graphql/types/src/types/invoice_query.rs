@@ -98,7 +98,7 @@ impl InvoiceNode {
             .map(StoreNode::from_domain))
     }
 
-    /// User that last edited invoice, if user is not found in system default unknow user is returned
+    /// User that last edited invoice, if user is not found in system default unknown user is returned
     /// Null is returned for transfers, where inbound has not been edited yet
     /// Null is also returned for system created invoices like inventory adjustments
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
@@ -131,6 +131,10 @@ impl InvoiceNode {
 
     pub async fn their_reference(&self) -> &Option<String> {
         &self.row().their_reference
+    }
+
+    pub async fn transport_reference(&self) -> &Option<String> {
+        &self.row().transport_reference
     }
 
     pub async fn comment(&self) -> &Option<String> {
@@ -413,9 +417,9 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.id = "line1_id".to_string();
                 r.item_id = mock_item_a().id;
-                r.total_after_tax = 20.0;
-                r.total_before_tax = 10.0;
-                r.tax = Some(20.0);
+                r.total_after_tax = 110.0;
+                r.total_before_tax = 100.0;
+                r.tax = Some(10.0);
                 r.r#type = InvoiceLineRowType::Service;
             })
         }
@@ -424,9 +428,9 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.id = "line2_id".to_string();
                 r.item_id = mock_item_b().id;
-                r.total_after_tax = 10.0;
-                r.total_before_tax = 8.0;
-                r.tax = Some(20.0);
+                r.total_after_tax = 50.0;
+                r.total_before_tax = 50.0;
+                r.tax = None;
                 r.r#type = InvoiceLineRowType::StockIn;
             })
         }
@@ -435,9 +439,9 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.id = "line3_id".to_string();
                 r.item_id = mock_item_c().id;
-                r.total_after_tax = 200.0;
-                r.total_before_tax = 160.0;
-                r.tax = Some(10.0);
+                r.total_after_tax = 105.0;
+                r.total_before_tax = 100.0;
+                r.tax = Some(5.0);
                 r.r#type = InvoiceLineRowType::StockOut;
             })
         }
@@ -462,19 +466,26 @@ mod test {
                 }
             }
         }
+        let total_before_tax = 50.0 + 100.0 + 100.0;
+        let total_after_tax = 50.0 + 105.0 + 110.0;
+        let tax_percentage_dec = (total_after_tax / total_before_tax) - 1.0;
 
-        // let tax_percentage = ;
+        assert_eq!(
+            total_before_tax * (1.0 + tax_percentage_dec),
+            total_after_tax
+        );
+        let tax_percentage = tax_percentage_dec * 100.0;
 
         let expected = json!({
             "testQuery": {
                 "pricing": {
-                    "totalBeforeTax": 160.0 + 8.0 + 10.0,
-                    "totalAfterTax": 200.0 + 10.0+ 20.0,
-                    "stockTotalBeforeTax": 160.0 + 8.0,
-                    "stockTotalAfterTax": 200.0 + 10.0,
-                    "serviceTotalBeforeTax": 10.0,
-                    "serviceTotalAfterTax": 20.0,
-                    "taxPercentage": (20.0 + 20.0 + 10.0) / 3.0
+                    "totalBeforeTax": total_before_tax,
+                    "totalAfterTax": total_after_tax,
+                    "stockTotalBeforeTax": 50.0 + 100.0,
+                    "stockTotalAfterTax": 50.0 + 105.0,
+                    "serviceTotalBeforeTax": 100.0,
+                    "serviceTotalAfterTax": 110.0,
+                    "taxPercentage": tax_percentage
                 },
             }
         }

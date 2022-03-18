@@ -39,6 +39,8 @@ pub fn generate(
         status: InvoiceRowStatus::New,
         on_hold: on_hold.unwrap_or(false),
         colour,
+        // Default
+        transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,

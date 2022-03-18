@@ -105,6 +105,7 @@ fn transact_1_pull_record() -> TestSyncRecord {
                 on_hold: false,
                 comment: None,
                 their_reference: None,
+                transport_reference: None,
                 created_datetime: NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0)
                     + Duration::seconds(47046),
                 allocated_datetime: None,
@@ -148,6 +149,7 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             hold: false,
             comment: None,
             their_ref: None,
+            transport_reference: None,
             Colour: 0,
             requisition_ID: None,
             linked_transaction_id: None,
@@ -235,7 +237,8 @@ const TRANSACT_2: (&'static str, &'static str) = (
         "user4": "",
         "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
         "wardID": "",
-        "waybill_number": ""
+        "waybill_number": "",
+        "om_transport_reference": "transport reference"
     }"#,
 );
 fn transact_2_pull_record() -> TestSyncRecord {
@@ -253,6 +256,7 @@ fn transact_2_pull_record() -> TestSyncRecord {
                 on_hold: false,
                 comment: None,
                 their_reference: None,
+                transport_reference: Some("transport reference".to_string()),
                 created_datetime: NaiveDate::from_ymd(2021, 8, 3).and_hms(0, 0, 0)
                     + Duration::seconds(44806),
                 allocated_datetime: None,
@@ -294,6 +298,7 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             hold: false,
             comment: None,
             their_ref: None,
+            transport_reference: Some("transport reference".to_string()),
             Colour: 1710361,
             requisition_ID: None,
             linked_transaction_id: None,

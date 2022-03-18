@@ -7,7 +7,6 @@ use crate::{
     MasterListNameJoinRepository, MasterListRowRepository, RequisitionLineRowRepository,
     RequisitionRowRepository, StockLineRowRepository, StorageConnection,
 };
-
 pub struct FullMockRequisition {
     pub requisition: RequisitionRow,
     pub lines: Vec<RequisitionLineRow>,
