@@ -10,7 +10,7 @@ pub type SyncConnectionError = anyhow::Error;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum RemoteSyncActionV5 {
-    #[serde(alias = "create")]
+    #[serde(alias = "insert")]
     Create,
     #[serde(alias = "update")]
     Update,
@@ -28,7 +28,8 @@ pub struct RemoteSyncRecordV5 {
     #[serde(rename = "recordID")]
     pub record_id: String,
     pub action: RemoteSyncActionV5,
-    pub data: serde_json::Value,
+    /// Not set when record is deleted
+    pub data: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -278,18 +279,18 @@ mod tests {
                 table: "table".to_owned(),
                 record_id: "record id".to_owned(),
                 action: RemoteSyncActionV5::Update,
-                data: json!({
+                data: Some(json!({
                     "id": "record_a"
-                }),
+                })),
             },
             RemoteSyncRecordV5 {
                 sync_id: "sync_record_b".to_owned(),
                 table: "table".to_owned(),
                 record_id: "record id".to_owned(),
                 action: RemoteSyncActionV5::Create,
-                data: json!({
+                data: Some(json!({
                     "id": "record_b"
-                }),
+                })),
             },
         ];
 

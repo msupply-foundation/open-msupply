@@ -101,6 +101,7 @@ fn do_translation(
         match translation.try_translate_pull(connection, sync_record) {
             Ok(Some(mut result)) => {
                 records.upserts.append(&mut result.upserts);
+                return Ok(());
             }
             Err(error) => warn!("Failed to translate ({}): {:?}", error, sync_record),
             _ => {}

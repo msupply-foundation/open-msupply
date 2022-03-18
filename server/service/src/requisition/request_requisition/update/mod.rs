@@ -4,7 +4,7 @@ use crate::{
     sync_processor::{process_records, Record},
 };
 use repository::{
-    Name, RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
 mod generate;
@@ -36,15 +36,18 @@ pub struct UpdateRequestRequisition {
 pub enum UpdateRequestRequisitionError {
     RequisitionDoesNotExist,
     NotThisStoreRequisition,
-    OtherPartyNotASupplier(Name),
-    OtherPartyDoesNotExist,
-    OtherPartyIsThisStore,
-    OtherPartyIsNotAStore,
     CannotEditRequisition,
     NotARequestRequisition,
+    // Name validation
+    OtherPartyNotASupplier,
+    OtherPartyNotVisible,
+    OtherPartyDoesNotExist,
+    OtherPartyIsNotAStore,
     // Internal
     UpdatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
+    // Cannot be an error, names are filtered so that name linked to current store is not shown
+    // OtherPartyIsThisStore
 }
 
 type OutError = UpdateRequestRequisitionError;

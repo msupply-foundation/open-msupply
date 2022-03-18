@@ -43,12 +43,9 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
             return Ok(HashMap::new());
         };
 
-        let filter = NameFilter::new()
-            // It's posible that historic name becomes invisible
-            .show_invisible_in_current_store(true)
-            .id(EqualFilter::equal_any(IdPair::get_all_secondary_ids(
-                &ids_with_store_id,
-            )));
+        let filter = NameFilter::new().id(EqualFilter::equal_any(IdPair::get_all_secondary_ids(
+            &ids_with_store_id,
+        )));
 
         let names = self
             .service_provider

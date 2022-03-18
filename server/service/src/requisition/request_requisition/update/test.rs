@@ -6,10 +6,10 @@ mod test_update {
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_name_store_c,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            MockDataInserts,
+            mock_store_a, MockData, MockDataInserts,
         },
-        schema::RequisitionRowStatus,
-        test_db::setup_all,
+        schema::{NameRow, NameStoreJoinRow, RequisitionRowStatus},
+        test_db::{setup_all, setup_all_with_data},
         RequisitionLineRowRepository, RequisitionRowRepository,
     };
     use util::{inline_edit, inline_init};
@@ -24,8 +24,36 @@ mod test_update {
 
     #[actix_rt::test]
     async fn update_request_requisition_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("update_request_requisition_errors", MockDataInserts::all()).await;
+        fn not_visible() -> NameRow {
+            inline_init(|r: &mut NameRow| {
+                r.id = "not_visible".to_string();
+            })
+        }
+
+        fn not_a_supplier() -> NameRow {
+            inline_init(|r: &mut NameRow| {
+                r.id = "not_a_supplier".to_string();
+            })
+        }
+
+        fn not_a_supplier_join() -> NameStoreJoinRow {
+            inline_init(|r: &mut NameStoreJoinRow| {
+                r.id = "not_a_supplier_join".to_string();
+                r.name_id = not_a_supplier().id;
+                r.store_id = mock_store_a().id;
+                r.name_is_supplier = false;
+            })
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_request_requisition_errors",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.names = vec![not_visible(), not_a_supplier()];
+                r.name_store_joins = vec![not_a_supplier_join()];
+            }),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
@@ -77,6 +105,43 @@ mod test_update {
                 }),
             ),
             Err(ServiceError::NotARequestRequisition)
+        );
+
+        // OtherPartyDoesNotExist
+        assert_eq!(
+            service.update_request_requisition(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut UpdateRequestRequisition| {
+                    r.id = mock_draft_request_requisition_for_update_test().id;
+                    r.other_party_id = Some("invalid".to_string());
+                })
+            ),
+            Err(ServiceError::OtherPartyDoesNotExist)
+        );
+        // OtherPartyNotVisible
+        assert_eq!(
+            service.update_request_requisition(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut UpdateRequestRequisition| {
+                    r.id = mock_draft_request_requisition_for_update_test().id;
+                    r.other_party_id = Some(not_visible().id);
+                })
+            ),
+            Err(ServiceError::OtherPartyNotVisible)
+        );
+        // OtherPartyNotASupplier
+        assert_eq!(
+            service.update_request_requisition(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut UpdateRequestRequisition| {
+                    r.id = mock_draft_request_requisition_for_update_test().id;
+                    r.other_party_id = Some(not_a_supplier().id);
+                })
+            ),
+            Err(ServiceError::OtherPartyNotASupplier)
         );
     }
 

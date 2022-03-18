@@ -120,8 +120,8 @@ mod graphql {
             "storeCode": {
               "like": "store code like"
             },
-            "showInvisibleInCurrentStore": false,
-            "showSystemNames": true
+            "isVisible": false,
+            "isSystemName": true
           }
         });
 
@@ -159,8 +159,8 @@ mod graphql {
                 is_supplier,
                 is_store,
                 store_code,
-                show_invisible_in_current_store,
-                show_system_names,
+                is_visible,
+                is_system_name,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
@@ -173,8 +173,8 @@ mod graphql {
                 store_code,
                 Some(SimpleStringFilter::like("store code like"))
             );
-            assert_eq!(show_invisible_in_current_store, Some(false));
-            assert_eq!(show_system_names, Some(true));
+            assert_eq!(is_visible, Some(false));
+            assert_eq!(is_system_name, Some(true));
 
             Ok(ListResult {
                 rows: vec![Name {
@@ -238,7 +238,6 @@ mod graphql {
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        // Test store loader, name not linked to store
         let variables = Some(json!({
           "filter": {
             "id": { "equalTo": mock_name_not_linked_to_store().id }

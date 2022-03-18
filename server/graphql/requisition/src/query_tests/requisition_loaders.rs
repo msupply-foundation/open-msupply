@@ -39,11 +39,6 @@ mod test {
                     }
                     totalCount
                 }
-                linesRemainingToSupply {
-                    nodes {
-                        id
-                    }
-                }
               }
             }
           }
@@ -127,38 +122,6 @@ mod test {
                         }],
                         "totalCount": 1
                     },
-                }]
-            }
-        }
-        );
-
-        assert_graphql_query!(&settings, query, &Some(variables.clone()), &expected, None);
-
-        // Test lines remaining to supply
-        let variables = json!({
-            "storeId": "store_a",
-          "filter": {
-            "id": {
-                "equalAny": [mock_new_response_requisition_test().requisition.id]
-            },
-          }
-        }
-        );
-
-        let expected = json!({
-            "requisitions": {
-                "nodes": [{
-                    "id": mock_new_response_requisition_test().requisition.id,
-                    "linesRemainingToSupply": {
-                         "nodes": [
-                            {
-                              "id": "mock_new_response_requisition_test1",
-                            },
-                            {
-                              "id": "mock_new_response_requisition_test2",
-                            }
-                          ]
-                    }
                 }]
             }
         }
