@@ -118,7 +118,7 @@ mod graphql {
             }
         }"#;
 
-        // OtherPartyNotACustomerError
+        // OtherPartyNotACustomer
         let variables = Some(json!({
           "id": "does not exist"
         }));
