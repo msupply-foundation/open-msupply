@@ -3,7 +3,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
-import { useRtl } from '@common/intl';
+import { IntlUtils } from '@common/intl';
 
 export interface ButtonProps {
   icon?: React.ReactElement;
@@ -71,7 +71,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
-  const isRtl = useRtl();
+  const isRtl = IntlUtils.useRtl();
 
   useEffect(() => {
     if (isOpen != null) setOpen(isOpen);

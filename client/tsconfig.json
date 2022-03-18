@@ -6,6 +6,7 @@
       "@common/hooks": ["packages/common/src/hooks"],
       "@common/icons": ["packages/common/src/ui/icons"],
       "@common/intl": ["packages/common/src/intl"],
+      "@common/intl/*": ["packages/common/src/intl/*"],
       "@common/styles": ["packages/common/src/styles"],
       "@common/types": ["packages/common/src/types"],
       "@common/utils": ["packages/common/src/utils"]

@@ -1,5 +1,5 @@
 import React, { createContext, FC, useMemo, useState, useEffect } from 'react';
-import { useDefaultLanguage, useI18N, isSupportedLang } from '@common/intl';
+import { IntlUtils } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns';
@@ -98,8 +98,8 @@ const { Provider } = AuthContext;
 export const AuthProvider: FC = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
-  const i18n = useI18N();
-  const defaultLanguage = useDefaultLanguage();
+  const i18n = IntlUtils.useI18N();
+  const defaultLanguage = IntlUtils.useDefaultLanguage();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const { token: cookieToken, store: cookieStore, user } = getAuthCookie();
   const [localStore, setLocalStore] = useState<Store | undefined>(cookieStore);
@@ -123,7 +123,9 @@ export const AuthProvider: FC = ({ children }) => {
     // When the a user first logs in, check that their browser language is an internally supported
     // language. If not, set their language to the default.
     const { language } = i18n;
-    if (!isSupportedLang(language)) i18n.changeLanguage(defaultLanguage);
+    if (!IntlUtils.isSupportedLang(language)) {
+      i18n.changeLanguage(defaultLanguage);
+    }
 
     setMRUCredentials({ username, store });
     if (!!token) setLocalStore(store);
