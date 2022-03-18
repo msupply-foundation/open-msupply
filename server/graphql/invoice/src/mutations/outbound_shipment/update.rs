@@ -1,13 +1,13 @@
-use super::{
-    CannotChangeStatusOfInvoiceOnHold, InvoiceIsNotEditable, NotAnOutboundShipmentError,
-    OtherPartyNotACustomerError,
-};
+use super::{CannotChangeStatusOfInvoiceOnHold, InvoiceIsNotEditable, NotAnOutboundShipmentError};
 
 use async_graphql::*;
-use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
+use graphql_core::simple_generic_errors::{
+    CannotReverseInvoiceStatus, NodeError, OtherPartyNotACustomer, OtherPartyNotVisible,
+    RecordNotFound,
+};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
-use graphql_types::types::{InvoiceLineConnector, InvoiceNode, NameNode};
+use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
 
 use repository::Invoice;
 use service::invoice::outbound_shipment::{
@@ -84,7 +84,8 @@ pub enum UpdateErrorInterface {
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
     InvoiceIsNotEditable(InvoiceIsNotEditable),
-    OtherPartyNotACustomer(OtherPartyNotACustomerError),
+    OtherPartyNotACustomer(OtherPartyNotACustomer),
+    OtherPartyNotVisible(OtherPartyNotVisible),
     NotAnOutboundShipment(NotAnOutboundShipmentError),
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(CanOnlyChangeToAllocatedWhenNoUnallocatedLines),
 }
@@ -128,18 +129,18 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         ServiceError::CannotReverseInvoiceStatus => {
             return Ok(UpdateErrorInterface::CannotReverseInvoiceStatus(
-                CannotReverseInvoiceStatus {},
+                CannotReverseInvoiceStatus,
             ))
         }
         ServiceError::InvoiceIsNotEditable => {
             return Ok(UpdateErrorInterface::InvoiceIsNotEditable(
-                InvoiceIsNotEditable {},
+                InvoiceIsNotEditable,
             ))
         }
 
         ServiceError::CannotChangeStatusOfInvoiceOnHold => {
             return Ok(UpdateErrorInterface::CannotChangeStatusOfInvoiceOnHold(
-                CannotChangeStatusOfInvoiceOnHold {},
+                CannotChangeStatusOfInvoiceOnHold,
             ))
         }
         ServiceError::CanOnlyChangeToAllocatedWhenNoUnallocatedLines(lines) => {
@@ -151,15 +152,19 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 ),
             )
         }
-        ServiceError::OtherPartyNotACustomer(name) => {
+        ServiceError::OtherPartyNotACustomer => {
             return Ok(UpdateErrorInterface::OtherPartyNotACustomer(
-                OtherPartyNotACustomerError(NameNode { name }),
+                OtherPartyNotACustomer,
+            ))
+        }
+        ServiceError::OtherPartyNotVisible => {
+            return Ok(UpdateErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
             ))
         }
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
-        ServiceError::OtherPartyCannotBeThisStore => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExists => BadUserInput(formatted_error),
+        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoicenDoesNotExist => InternalError(formatted_error),
@@ -299,7 +304,7 @@ mod graphql {
             None,
             None
         );
-        // OtherPartyNotACustomerError
+        // OtherPartyNotACustomer
         let other_party_supplier = mock_name_store_c();
         let variables = Some(json!({
           "input": {
@@ -310,7 +315,7 @@ mod graphql {
         let expected = json!({
             "updateOutboundShipment": {
               "error": {
-                "__typename": "OtherPartyNotACustomerError"
+                "__typename": "OtherPartyNotACustomer"
               }
             }
           }

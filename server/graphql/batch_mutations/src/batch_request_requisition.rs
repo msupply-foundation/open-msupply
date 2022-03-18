@@ -280,7 +280,7 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::MockDataInserts, Name, RepositoryError, RequisitionLine, StorageConnectionManager,
+        mock::MockDataInserts, RepositoryError, RequisitionLine, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -495,9 +495,7 @@ mod test {
                     input: inline_init(|input: &mut InsertRequestRequisition| {
                         input.id = "id1".to_string()
                     }),
-                    result: Err(InsertRequestRequisitionError::OtherPartyNotASupplier(
-                        Name::default(),
-                    )),
+                    result: Err(InsertRequestRequisitionError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertRequestRequisitionLine| {
@@ -547,9 +545,7 @@ mod test {
                     input: inline_init(|input: &mut InsertRequestRequisition| {
                         input.id = "id1".to_string()
                     }),
-                    result: Err(InsertRequestRequisitionError::OtherPartyNotASupplier(
-                        Name::default(),
-                    )),
+                    result: Err(InsertRequestRequisitionError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertRequestRequisitionLine| {

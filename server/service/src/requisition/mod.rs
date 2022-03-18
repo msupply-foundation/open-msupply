@@ -139,9 +139,10 @@ pub trait RequisitionServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: CreateRequisitionShipment,
     ) -> Result<Invoice, CreateRequisitionShipmentError> {
-        create_requisition_shipment(ctx, store_id, input)
+        create_requisition_shipment(ctx, store_id, user_id, input)
     }
 
     fn batch_request_requisition(
