@@ -18,7 +18,8 @@ pub struct Settings {
 pub struct ServerSettings {
     pub host: String,
     pub port: u16,
-    pub ignore_user_in_auth: bool,
+    #[serde(default)]
+    pub debug_no_access_control: bool,
 }
 
 #[derive(serde::Deserialize)]
