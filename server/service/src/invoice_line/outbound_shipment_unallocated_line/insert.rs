@@ -22,8 +22,7 @@ pub struct InsertOutboundShipmentUnallocatedLine {
     pub quantity: u32,
 }
 
-#[derive(Debug, PartialEq)]
-
+#[derive(Clone, Debug, PartialEq)]
 pub enum InsertOutboundShipmentUnallocatedLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),

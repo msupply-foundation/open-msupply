@@ -4,6 +4,8 @@ diesel_postfix_operator!(AscNoCase, " COLLATE NOCASE ASC NULLS FIRST", ());
 diesel_postfix_operator!(DescNoCase, " COLLATE NOCASE DESC NULLS LAST", ());
 diesel_postfix_operator!(AscNullsFirst, " ASC NULLS FIRST", ());
 diesel_postfix_operator!(DescNullsLast, " DESC NULLS LAST", ());
+diesel_postfix_operator!(AscNullsLast, " ASC NULLS LAST", ());
+diesel_postfix_operator!(DescNullsFirst, " DESC NULLS FIRST", ());
 
 // Expression extensions for order by
 pub trait OrderByExtensions: Sized {
@@ -69,6 +71,32 @@ pub trait OrderByExtensions: Sized {
     fn desc_nulls_last(self) -> DescNullsLast<Self> {
         DescNullsLast::new(self)
     }
+
+    /// Creates a SQL ASC NULLS LAST expression
+    ///
+    /// Required since postgres and sqlite treats nulls differently in sort
+    /// Should work in sqlite 3.3 and above
+    ///
+    /// # Examples
+    ///
+    /// See tests, can be added as doc tests here if this is lib crate
+    ///
+    fn asc_nulls_last(self) -> AscNullsLast<Self> {
+        AscNullsLast::new(self)
+    }
+
+    /// Creates a SQL DESC NULLS FIRST expression
+    ///
+    /// Required since postgres and sqlite treats nulls differently in sort
+    /// Should work in sqlite 3.3 and above
+    ///
+    /// # Examples
+    ///
+    /// See tests, can be added as doc tests here if this is lib crate
+    ///
+    fn desc_nulls_first(self) -> DescNullsFirst<Self> {
+        DescNullsFirst::new(self)
+    }
 }
 
 impl<T> OrderByExtensions for T where T: Expression {}
@@ -83,6 +111,7 @@ mod tests {
         item (id) {
             id -> Text,
             name -> Text,
+            expiry_date -> Nullable<Date>,
         }
     }
 
@@ -92,7 +121,7 @@ mod tests {
         let sql = debug_query::<Sqlite, _>(&query).to_string();
         assert_eq!(
             sql,
-            r#"SELECT `item`.`id`, `item`.`name` FROM `item` ORDER BY `item`.`name` ASC NULLS FIRST -- binds: []"#
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` ORDER BY `item`.`name` ASC NULLS FIRST -- binds: []"#
         );
     }
 
@@ -102,7 +131,27 @@ mod tests {
         let sql = debug_query::<Sqlite, _>(&query).to_string();
         assert_eq!(
             sql,
-            r#"SELECT `item`.`id`, `item`.`name` FROM `item` ORDER BY `item`.`name` DESC NULLS LAST -- binds: []"#
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` ORDER BY `item`.`name` DESC NULLS LAST -- binds: []"#
+        );
+    }
+
+    #[test]
+    fn asc_nulls_last_test() {
+        let query = item::dsl::item.order(item::dsl::expiry_date.asc_nulls_last());
+        let sql = debug_query::<Sqlite, _>(&query).to_string();
+        assert_eq!(
+            sql,
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` ORDER BY `item`.`expiry_date` ASC NULLS LAST -- binds: []"#
+        );
+    }
+
+    #[test]
+    fn desc_nulls_first_test() {
+        let query = item::dsl::item.order(item::dsl::expiry_date.desc_nulls_first());
+        let sql = debug_query::<Sqlite, _>(&query).to_string();
+        assert_eq!(
+            sql,
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` ORDER BY `item`.`expiry_date` DESC NULLS FIRST -- binds: []"#
         );
     }
 
@@ -112,7 +161,7 @@ mod tests {
         let sql = debug_query::<Sqlite, _>(&query).to_string();
         assert_eq!(
             sql,
-            r#"SELECT `item`.`id`, `item`.`name` FROM `item` ORDER BY `item`.`name` COLLATE NOCASE DESC NULLS LAST -- binds: []"#
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` ORDER BY `item`.`name` COLLATE NOCASE DESC NULLS LAST -- binds: []"#
         );
     }
 
@@ -122,7 +171,7 @@ mod tests {
         let sql = debug_query::<Sqlite, _>(&query).to_string();
         assert_eq!(
             sql,
-            r#"SELECT `item`.`id`, `item`.`name` FROM `item` ORDER BY `item`.`name` COLLATE NOCASE ASC NULLS FIRST -- binds: []"#
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` ORDER BY `item`.`name` COLLATE NOCASE ASC NULLS FIRST -- binds: []"#
         );
     }
 }

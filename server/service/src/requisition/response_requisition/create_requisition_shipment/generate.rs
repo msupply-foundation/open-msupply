@@ -1,6 +1,6 @@
 use super::OutError;
 use crate::{
-    invoice::check_other_party_id, number::next_number, user_account::get_default_user_id, requisition::requisition_supply_status::RequisitionLineSupplyStatus,
+    number::next_number, requisition::requisition_supply_status::RequisitionLineSupplyStatus, validate::get_other_party,
 };
 use chrono::Utc;
 use repository::{
@@ -15,15 +15,16 @@ use util::uuid::uuid;
 pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
+    user_id: &str,
     requisition_row: RequisitionRow,
     fullfilments: Vec<RequisitionLineSupplyStatus>,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), OutError> {
-    let other_party = check_other_party_id(connection, store_id, &requisition_row.name_id)?
+    let other_party = get_other_party(connection, store_id, &requisition_row.name_id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
 
     let new_invoice = InvoiceRow {
         id: uuid(),
-        user_id: Some(get_default_user_id()),
+        user_id: Some(user_id.to_string()),
         name_id: requisition_row.name_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_owned(),
@@ -37,6 +38,7 @@ pub fn generate(
         on_hold: false,
         comment: None,
         their_reference: None,
+        transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,

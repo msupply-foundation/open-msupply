@@ -1,8 +1,12 @@
 use std::sync::RwLock;
 
-use actix_web::{web::Data, HttpRequest};
+use actix_web::{
+    guard,
+    web::{self, Data},
+    HttpRequest,
+};
 use async_graphql::{EmptySubscription, ObjectType, Schema};
-use async_graphql_actix_web::{Request, Response};
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use repository::{
     database_settings::DatabaseSettings,
     get_storage_connection_manager,
@@ -10,7 +14,7 @@ use repository::{
     test_db::setup_all_with_data,
     StorageConnection, StorageConnectionManager,
 };
-use serde_json::Value;
+
 use service::{auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket};
 
 use crate::{
@@ -42,7 +46,7 @@ pub async fn run_test_gql_query<
     });
 
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
-    let loader_registry = actix_web::web::Data::new(LoaderRegistry { loaders });
+    let loader_registry_data = actix_web::web::Data::new(LoaderRegistry { loaders });
 
     let auth_data = Data::new(AuthData {
         auth_token_secret: "n/a".to_string(),
@@ -54,15 +58,22 @@ pub async fn run_test_gql_query<
 
     let mut app = actix_web::test::init_service(
         actix_web::App::new()
-            .data(connection_manager_data.clone())
-            .data(loader_registry.clone())
-            .configure(graphql_config(
-                settings.queries.clone(),
-                settings.mutations.clone(),
-                connection_manager_data,
-                loader_registry,
-                service_provider_data,
-                auth_data,
+            .app_data(Data::new(
+                Schema::build(
+                    settings.queries.clone(),
+                    settings.mutations.clone(),
+                    EmptySubscription,
+                )
+                .data(connection_manager_data.clone())
+                .data(loader_registry_data.clone())
+                .data(service_provider_data.clone())
+                .data(auth_data.clone())
+                .finish(),
+            ))
+            .service(web::resource("/graphql").guard(guard::Post()).to(
+                |schema: Data<Schema<Q, M, EmptySubscription>>, http_req, req: GraphQLRequest| {
+                    graphql(schema, http_req, req)
+                },
             )),
     )
     .await;
@@ -80,51 +91,23 @@ pub async fn run_test_gql_query<
     payload = payload.replace("\n", "");
 
     let req = actix_web::test::TestRequest::post()
-        .header("content-type", "application/json")
         .set_payload(payload)
         .uri("/graphql")
         .to_request();
 
-    let res = actix_web::test::read_response(&mut app, req).await;
-    let body = String::from_utf8(res.to_vec()).expect("Failed to parse response");
-    serde_json::from_str::<Value>(&body).expect(body.as_str())
+    actix_web::test::call_and_read_body_json(&mut app, req).await
 }
 
 async fn graphql<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone>(
     schema: Data<Schema<Q, M, EmptySubscription>>,
     http_req: HttpRequest,
-    req: Request,
-) -> Response {
+    req: GraphQLRequest,
+) -> GraphQLResponse {
     let user_data = auth_data_from_request(&http_req);
     let query = req.into_inner().data(user_data);
     schema.execute(query).await.into()
 }
 
-fn graphql_config<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone>(
-    queries: Q,
-    mutations: M,
-    connection_manager: Data<StorageConnectionManager>,
-    loader_registry: Data<LoaderRegistry>,
-    service_provider: Data<ServiceProvider>,
-    auth_data: Data<AuthData>,
-) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
-    |cfg| {
-        let schema = Schema::build(queries, mutations, EmptySubscription)
-            .data(connection_manager)
-            .data(loader_registry)
-            .data(service_provider)
-            .data(auth_data)
-            .finish();
-        cfg.service(actix_web::web::scope("/graphql").data(schema).route(
-            "",
-            actix_web::web::post().to(
-                |schema: Data<Schema<Q, M, EmptySubscription>>,
-                 http_req: HttpRequest,
-                 req: Request| graphql(schema, http_req, req),
-            ),
-        ));
-    }
-}
 // TODO should really re-export dev deps (actix_rt, assert_json_dif, to avoid need to import in consumer)
 #[macro_export]
 macro_rules! assert_graphql_query {
@@ -231,7 +214,7 @@ pub async fn setup_graphl_test_with_data<
     mutations: M,
     db_name: &str,
     inserts: MockDataInserts,
-    extra_mock_data: Option<MockData>,
+    extra_mock_data: MockData,
 ) -> (
     MockDataCollection,
     StorageConnection,
@@ -264,5 +247,5 @@ pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + Obj
     StorageConnectionManager,
     TestGraphlSettings<Q, M>,
 ) {
-    setup_graphl_test_with_data(queries, mutations, db_name, inserts, None).await
+    setup_graphl_test_with_data(queries, mutations, db_name, inserts, MockData::default()).await
 }
