@@ -1,5 +1,6 @@
 {
   "button.delete-lines": "Delete lines",
+  "button.add-from-master-list": "Add from master list",
   "button.new-shipment": "New Shipment",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "button.requested-to-suggested": "Requested to Suggested",
@@ -8,7 +9,7 @@
   "heading.are-you-sure": "Are you sure?",
   "heading.related-documents": "Related documents",
   "heading.stock-distribution": "Stock Distribution",
-  "heading.requested-to-suggested": "Requested to Suggested",
+  "heading.requested-to-suggested": "Request Suggested",
   "heading.target-quantity": "Target Quantity",
   "heading.charges": "Charges",
   "heading.stock-charges": "Stock charges",
