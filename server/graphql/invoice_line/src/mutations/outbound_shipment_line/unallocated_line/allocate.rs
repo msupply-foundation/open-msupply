@@ -6,7 +6,8 @@ use graphql_core::{
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector};
 use service::{
     invoice_line::outbound_shipment_unallocated_line::{
-        AllocateOutboundShipmentUnallocatedLineError as ServiceError, Return as ServiceReturn,
+        AllocateOutboundShipmentUnallocatedLineError as ServiceError,
+        InvoiceLineInsertsUpdatesDeletes,
     },
     permission_validation::{Resource, ResourceAccessRequest},
 };
@@ -57,7 +58,9 @@ pub fn allocate(ctx: &Context<'_>, store_id: &str, line_id: String) -> Result<Al
     )
 }
 
-pub fn map_response(from: Result<ServiceReturn, ServiceError>) -> Result<AllocateResponse> {
+pub fn map_response(
+    from: Result<InvoiceLineInsertsUpdatesDeletes, ServiceError>,
+) -> Result<AllocateResponse> {
     let result = match from {
         Ok(line) => AllocateResponse::Response(ResponseNode::from_domain(line)),
         Err(error) => AllocateResponse::Error(AllocateError {
@@ -90,8 +93,8 @@ fn map_error(error: ServiceError) -> Result<AllocateErrorInterface> {
 }
 
 impl ResponseNode {
-    pub fn from_domain(from: ServiceReturn) -> ResponseNode {
-        let ServiceReturn {
+    pub fn from_domain(from: InvoiceLineInsertsUpdatesDeletes) -> ResponseNode {
+        let InvoiceLineInsertsUpdatesDeletes {
             updates,
             deletes,
             inserts,
@@ -119,7 +122,7 @@ mod graphql {
         invoice_line::{
             outbound_shipment_unallocated_line::{
                 AllocateOutboundShipmentUnallocatedLineError as ServiceError,
-                Return as ServiceReturn,
+                InvoiceLineInsertsUpdatesDeletes,
             },
             InvoiceLineServiceTrait,
         },
@@ -129,7 +132,8 @@ mod graphql {
 
     use crate::InvoiceLineMutations;
 
-    type AllocateLineMethod = dyn Fn(String) -> Result<ServiceReturn, ServiceError> + Sync + Send;
+    type AllocateLineMethod =
+        dyn Fn(String) -> Result<InvoiceLineInsertsUpdatesDeletes, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<AllocateLineMethod>);
 
@@ -139,7 +143,7 @@ mod graphql {
             _: &ServiceContext,
             _: &str,
             input: String,
-        ) -> Result<ServiceReturn, ServiceError> {
+        ) -> Result<InvoiceLineInsertsUpdatesDeletes, ServiceError> {
             self.0(input)
         }
     }
@@ -270,7 +274,7 @@ mod graphql {
         // Success
         let test_service = TestService(Box::new(|line_id| {
             assert_eq!(line_id, "unallocated_line");
-            Ok(ServiceReturn {
+            Ok(InvoiceLineInsertsUpdatesDeletes {
                 inserts: vec![inline_init(|r: &mut InvoiceLine| {
                     r.invoice_line_row =
                         inline_init(|r: &mut InvoiceLineRow| r.id = "insert1".to_string())
