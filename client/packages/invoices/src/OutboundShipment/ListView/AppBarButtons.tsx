@@ -12,11 +12,11 @@ import {
   FnUtils,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
-import { useCreateOutbound } from '../api';
+import { useOutbound } from '../api';
 
 export const AppBarButtonsComponent: FC = () => {
   const { info, success, error } = useNotification();
-  const { mutate: onCreate } = useCreateOutbound();
+  const { mutate: onCreate } = useOutbound.document.insert();
   const t = useTranslation(['distribution', 'common']);
   const modalController = useToggle();
 

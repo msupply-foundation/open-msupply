@@ -13,7 +13,7 @@ import {
   ArrayUtils,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
-import { useOutboundRows } from '../api';
+import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { OutboundLineFragment } from '../api/operations.generated';
 
@@ -100,7 +100,7 @@ export const useHighlightPlaceholderRows = (
 export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
   const t = useTranslation('distribution');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
-  const { rows, onChangeSortBy, sortBy } = useOutboundRows(isGrouped);
+  const { rows, onChangeSortBy, sortBy } = useOutbound.line.rows(isGrouped);
   const columns = useOutboundColumns({ onChangeSortBy, sortBy });
   useHighlightPlaceholderRows(rows);
 

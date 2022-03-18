@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController, useOutboundLineEditRows } from './hooks';
-import { useOutboundFields } from '../../api';
+import { useOutbound } from '../../api';
 import { useOutboundLineEditColumns } from './columns';
 
 export interface OutboundLineEditTableProps {
@@ -28,7 +28,7 @@ const PlaceholderRow = ({
   onChange: (key: string, value: number, packSize: number) => void;
 }) => {
   const t = useTranslation('distribution');
-  const { status } = useOutboundFields('status');
+  const { status } = useOutbound.document.fields('status');
   const debouncedOnChange = useDebounceCallback(onChange, []);
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
