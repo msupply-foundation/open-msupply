@@ -68,23 +68,23 @@ type ServiceInput = BatchOutboundShipment;
 type ServiceResult = BatchOutboundShipmentResult;
 
 type InsertShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::InsertResponse>>>;
-type InsertShipmentLinesResponse =
+type InsertLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::line::InsertResponse>>>;
-type UpdateShipmentLinesResponse =
+type UpdateLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::line::UpdateResponse>>>;
-type DeleteShipmentLinesResponse =
+type DeleteLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::line::DeleteResponse>>>;
-type InsertShipmentServiceLinesResponse =
+type InsertServiceLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::service_line::InsertResponse>>>;
-type UpdateShipmentServiceLinesResponse =
+type UpdateServiceLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::service_line::UpdateResponse>>>;
-type DeleteShipmentServiceLinesResponse =
+type DeleteServiceLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::service_line::DeleteResponse>>>;
-type InsertShipmentUnallocatedLinesResponse =
+type InsertUnallocatedLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::InsertResponse>>>;
-type UpdateShipmentUnallocatedLinesResponse =
+type UpdateUnallocatedLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::UpdateResponse>>>;
-type DeleteShipmentUnallocatedLinesResponse =
+type DeleteUnallocatedLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::DeleteResponse>>>;
 type UpdateShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::UpdateResponse>>>;
 type DeleteShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::DeleteResponse>>>;
@@ -93,15 +93,15 @@ type DeleteShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::Dele
 #[graphql(name = "BatchOutboundShipmentResponse")]
 pub struct BatchResponse {
     insert_outbound_shipments: InsertShipmentsResponse,
-    insert_outbound_shipment_lines: InsertShipmentLinesResponse,
-    update_outbound_shipment_lines: UpdateShipmentLinesResponse,
-    delete_outbound_shipment_lines: DeleteShipmentLinesResponse,
-    insert_outbound_shipment_service_lines: InsertShipmentServiceLinesResponse,
-    update_outbound_shipment_service_lines: UpdateShipmentServiceLinesResponse,
-    delete_outbound_shipment_service_lines: DeleteShipmentServiceLinesResponse,
-    insert_outbound_shipment_unallocated_lines: InsertShipmentUnallocatedLinesResponse,
-    update_outbound_shipment_unallocated_lines: UpdateShipmentUnallocatedLinesResponse,
-    delete_outbound_shipment_unallocated_lines: DeleteShipmentUnallocatedLinesResponse,
+    insert_outbound_shipment_lines: InsertLinesResponse,
+    update_outbound_shipment_lines: UpdateLinesResponse,
+    delete_outbound_shipment_lines: DeleteLinesResponse,
+    insert_outbound_shipment_service_lines: InsertServiceLinesResponse,
+    update_outbound_shipment_service_lines: UpdateServiceLinesResponse,
+    delete_outbound_shipment_service_lines: DeleteServiceLinesResponse,
+    insert_outbound_shipment_unallocated_lines: InsertUnallocatedLinesResponse,
+    update_outbound_shipment_unallocated_lines: UpdateUnallocatedLinesResponse,
+    delete_outbound_shipment_unallocated_lines: DeleteUnallocatedLinesResponse,
     update_outbound_shipments: UpdateShipmentsResponse,
     delete_outbound_shipments: DeleteShipmentsResponse,
 }
@@ -290,7 +290,7 @@ fn map_delete_shipments(responses: DeleteShipmentsResult) -> Result<DeleteShipme
     Ok(result.vec_or_none())
 }
 
-fn map_insert_lines(responses: InsertShipmentLinesResult) -> Result<InsertShipmentLinesResponse> {
+fn map_insert_lines(responses: InsertLinesResult) -> Result<InsertLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -309,7 +309,7 @@ fn map_insert_lines(responses: InsertShipmentLinesResult) -> Result<InsertShipme
     Ok(result.vec_or_none())
 }
 
-fn map_update_lines(responses: UpdateShipmentLinesResult) -> Result<UpdateShipmentLinesResponse> {
+fn map_update_lines(responses: UpdateLinesResult) -> Result<UpdateLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -328,7 +328,7 @@ fn map_update_lines(responses: UpdateShipmentLinesResult) -> Result<UpdateShipme
     Ok(result.vec_or_none())
 }
 
-fn map_delete_lines(responses: DeleteShipmentLinesResult) -> Result<DeleteShipmentLinesResponse> {
+fn map_delete_lines(responses: DeleteLinesResult) -> Result<DeleteLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -348,8 +348,8 @@ fn map_delete_lines(responses: DeleteShipmentLinesResult) -> Result<DeleteShipme
 }
 
 fn map_insert_service_lines(
-    responses: InsertShipmentServiceLinesResult,
-) -> Result<InsertShipmentServiceLinesResponse> {
+    responses: InsertServiceLinesResult,
+) -> Result<InsertServiceLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -369,8 +369,8 @@ fn map_insert_service_lines(
 }
 
 fn map_update_service_lines(
-    responses: UpdateShipmentServiceLinesResult,
-) -> Result<UpdateShipmentServiceLinesResponse> {
+    responses: UpdateServiceLinesResult,
+) -> Result<UpdateServiceLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -390,8 +390,8 @@ fn map_update_service_lines(
 }
 
 fn map_delete_service_lines(
-    responses: DeleteShipmentServiceLinesResult,
-) -> Result<DeleteShipmentServiceLinesResponse> {
+    responses: DeleteServiceLinesResult,
+) -> Result<DeleteServiceLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -411,8 +411,8 @@ fn map_delete_service_lines(
 }
 
 fn map_insert_unallocated_lines(
-    responses: InsertShipmentUnallocatedLinesResult,
-) -> Result<InsertShipmentUnallocatedLinesResponse> {
+    responses: InsertUnallocatedLinesResult,
+) -> Result<InsertUnallocatedLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -432,8 +432,8 @@ fn map_insert_unallocated_lines(
 }
 
 fn map_update_unallocated_lines(
-    responses: UpdateShipmentUnallocatedLinesResult,
-) -> Result<UpdateShipmentUnallocatedLinesResponse> {
+    responses: UpdateUnallocatedLinesResult,
+) -> Result<UpdateUnallocatedLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -453,8 +453,8 @@ fn map_update_unallocated_lines(
 }
 
 fn map_delete_unallocated_lines(
-    responses: DeleteShipmentUnallocatedLinesResult,
-) -> Result<DeleteShipmentUnallocatedLinesResponse> {
+    responses: DeleteUnallocatedLinesResult,
+) -> Result<DeleteUnallocatedLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
