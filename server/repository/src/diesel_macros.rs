@@ -171,8 +171,33 @@ macro_rules! apply_sort {
     }};
 }
 
+/// Example expand, when called with:
+///
+/// ```
+/// apply_sort_asc_nulls_last!(query, sort, location_dsl, name)
+/// ```
+///
+/// ```
+/// if sort.desc.unwrap_or(false) {
+///     query = query.order(location_dsl::name.desc_nulls_first());
+/// } else {
+///     query = query.order(location_dsl::name.asc_nulls_last());
+/// }
+/// ```
+macro_rules! apply_sort_asc_nulls_last {
+    ($query:ident, $sort:ident, $dsl_field:expr) => {{
+        use crate::diesel_extensions::OrderByExtensions;
+        if $sort.desc.unwrap_or(false) {
+            $query = $query.order($dsl_field.desc_nulls_first());
+        } else {
+            $query = $query.order($dsl_field.asc_nulls_last());
+        }
+    }};
+}
+
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
 pub(crate) use apply_simple_string_filter;
 pub(crate) use apply_sort;
+pub(crate) use apply_sort_asc_nulls_last;
 pub(crate) use apply_sort_no_case;

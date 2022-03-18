@@ -451,10 +451,10 @@ mod test {
             EmptyMutation,
             "graphq_test_invoice_pricing",
             MockDataInserts::all(),
-            Some(inline_init(|r: &mut MockData| {
+            inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
                 r.invoice_lines = vec![line1(), line2(), line3()];
-            })),
+            }),
         )
         .await;
 

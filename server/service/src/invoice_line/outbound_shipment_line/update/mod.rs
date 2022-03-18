@@ -88,7 +88,7 @@ impl BatchPair {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
