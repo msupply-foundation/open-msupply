@@ -81,7 +81,7 @@ pub mod android {
         let db_path: String = env.get_string(db_path).unwrap().into();
         // run server in background thread
         let thread = thread::spawn(move || {
-            actix_web::rt::System::new("remote server runtime").block_on(async move {
+            actix_web::rt::System::new().block_on(async move {
                 let settings = Settings {
                     server: ServerSettings {
                         host: "127.0.0.1".to_string(),

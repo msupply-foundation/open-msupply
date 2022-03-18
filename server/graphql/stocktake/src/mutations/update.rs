@@ -57,7 +57,7 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateStocktake,
@@ -70,6 +70,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(service_provider.stocktake_service.update_stocktake(
         &service_context,
         store_id,
+        &user.user_id,
         input.to_domain(),
     ))
 }
@@ -168,6 +169,7 @@ mod graphql {
             &self,
             ctx: &ServiceContext,
             store_id: &str,
+            _: &str,
             input: UpdateStocktake,
         ) -> Result<StocktakeRow, UpdateStocktakeError> {
             (self.0)(ctx, store_id, input)

@@ -33,6 +33,7 @@ mod test_update {
             service.create_requisition_shipment(
                 &context,
                 "store_a",
+                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: "invalid".to_owned(),
                 },
@@ -45,6 +46,7 @@ mod test_update {
             service.create_requisition_shipment(
                 &context,
                 "store_b",
+                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_draft_response_requisition_for_update_test().id,
                 },
@@ -57,6 +59,7 @@ mod test_update {
             service.create_requisition_shipment(
                 &context,
                 "store_a",
+                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_finalised_response_requisition().id,
                 },
@@ -69,6 +72,7 @@ mod test_update {
             service.create_requisition_shipment(
                 &context,
                 "store_a",
+                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_sent_request_requisition().id,
                 },
@@ -94,6 +98,7 @@ mod test_update {
             .create_requisition_shipment(
                 &context,
                 "store_a",
+                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },
@@ -127,6 +132,7 @@ mod test_update {
             service.create_requisition_shipment(
                 &context,
                 "store_a",
+                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },
@@ -152,6 +158,7 @@ mod test_update {
             .create_requisition_shipment(
                 &context,
                 "store_a",
+                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },

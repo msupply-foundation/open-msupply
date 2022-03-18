@@ -1,14 +1,13 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
+    simple_generic_errors::{
+        CannotEditRequisition, OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
+    },
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::{
-    generic_errors::OtherPartyNotASupplier,
-    types::{NameNode, RequisitionNode},
-};
+use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
@@ -40,8 +39,9 @@ pub enum UpdateRequestRequisitionStatusInput {
 #[graphql(name = "UpdateRequestRequisitionErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
-    RecordNotFound(RecordNotFound),
+    OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
+    RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
 }
 
@@ -121,23 +121,27 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound))
         }
         ServiceError::CannotEditRequisition => {
             return Ok(UpdateErrorInterface::CannotEditRequisition(
-                CannotEditRequisition {},
+                CannotEditRequisition,
             ))
         }
-        ServiceError::OtherPartyNotASupplier(name) => {
+        ServiceError::OtherPartyNotASupplier => {
             return Ok(UpdateErrorInterface::OtherPartyNotASupplier(
-                OtherPartyNotASupplier(NameNode { name }),
+                OtherPartyNotASupplier,
+            ))
+        }
+        ServiceError::OtherPartyNotVisible => {
+            return Ok(UpdateErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
             ))
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::OtherPartyIsThisStore => BadUserInput(formatted_error),
         ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
         ServiceError::UpdatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
@@ -163,7 +167,7 @@ mod test {
     };
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
-        Name, Requisition, StorageConnectionManager,
+        Requisition, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -314,13 +318,7 @@ mod test {
         );
 
         // OtherPartyNotASupplier
-        let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::OtherPartyNotASupplier(Name {
-                name_row: mock_name_a(),
-                name_store_join_row: None,
-                store_row: None,
-            }))
-        }));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
             "updateRequestRequisition": {
@@ -341,18 +339,6 @@ mod test {
 
         // OtherPartyDoesNotExist
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyDoesNotExist)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // OtherPartyIsThisStore
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsThisStore)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
