@@ -1,9 +1,9 @@
-use super::OtherPartyNotACustomerError;
 use async_graphql::*;
+use graphql_core::simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{simple_generic_errors::NodeError, standard_graphql_error::validate_auth};
-use graphql_types::types::{InvoiceNode, NameNode};
+use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::invoice::outbound_shipment::{
     InsertOutboundShipment as ServiceInput, InsertOutboundShipmentError as ServiceError,
@@ -93,7 +93,8 @@ impl InsertInput {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
-    OtherPartyNotACustomer(OtherPartyNotACustomerError),
+    OtherPartyNotACustomer(OtherPartyNotACustomer),
+    OtherPartyNotVisible(OtherPartyNotVisible),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
@@ -102,15 +103,19 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::OtherPartyNotACustomer(name) => {
+        ServiceError::OtherPartyNotACustomer => {
             return Ok(InsertErrorInterface::OtherPartyNotACustomer(
-                OtherPartyNotACustomerError(NameNode { name }),
+                OtherPartyNotACustomer,
+            ))
+        }
+        ServiceError::OtherPartyNotVisible => {
+            return Ok(InsertErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
             ))
         }
         // Standard Graphql Errors
         ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::OtherPartyCannotBeThisStore => BadUserInput(formatted_error),
-        ServiceError::OtherPartyIdNotFound(_) => BadUserInput(formatted_error),
+        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -123,10 +128,10 @@ mod graphql {
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use repository::mock::{
-        mock_name_linked_to_store, mock_name_not_linked_to_store,
+        mock_name_linked_to_store, mock_name_not_linked_to_store, mock_name_store_b,
         mock_outbound_shipment_number_store_a, mock_store_linked_to_name,
     };
-    use repository::mock::{mock_name_store_a, mock_name_store_c, MockDataInserts};
+    use repository::mock::{mock_name_store_c, MockDataInserts};
     use repository::InvoiceRepository;
     use serde_json::json;
     use util::uuid::uuid;
@@ -144,7 +149,7 @@ mod graphql {
         .await;
 
         let other_party_supplier = &mock_name_store_c();
-        let other_party_customer = &mock_name_store_a();
+        let other_party_customer = &mock_name_store_b();
 
         let starting_invoice_number = mock_outbound_shipment_number_store_a().value;
 
@@ -176,7 +181,7 @@ mod graphql {
             }
         }"#;
 
-        // OtherPartyNotACustomerError
+        // OtherPartyNotACustomer
         let variables = Some(json!({
           "input": {
             "id": "ci_insert_1",
@@ -186,7 +191,7 @@ mod graphql {
         let expected = json!({
             "insertOutboundShipment": {
               "error": {
-                "__typename": "OtherPartyNotACustomerError"
+                "__typename": "OtherPartyNotACustomer"
               }
             }
           }

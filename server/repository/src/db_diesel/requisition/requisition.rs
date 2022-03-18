@@ -23,7 +23,7 @@ use super::{RequisitionFilter, RequisitionSort, RequisitionSortField};
 
 pub type RequisitionJoin = (RequisitionRow, NameRow);
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct Requisition {
     pub requisition_row: RequisitionRow,
     pub name_row: NameRow,
