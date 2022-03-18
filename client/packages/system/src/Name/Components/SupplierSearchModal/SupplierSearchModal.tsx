@@ -53,8 +53,8 @@ export const SupplierSearchModal: FC<NameSearchProps> = ({
       onClose={onClose}
       title={t('suppliers')}
       renderOption={optionRenderer}
-      onChange={(_, name: NameRowFragment | null) => {
-        if (name) onChange(name);
+      onChange={(_, name: NameRowFragment | NameRowFragment[] | null) => {
+        if (name && !(name instanceof Array)) onChange(name);
       }}
     />
   );
