@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from '@common/components';
+// import { DateUtils } from '@common/utils';
 import {
   Box,
   useFormatDate,
@@ -104,7 +105,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
             {data.map((entry, index) => (
               <Cell
                 key={entry.date}
-                // fill={isThisMonth(new Date(entry.date)) ? theme.palette.primary.light : theme.palette.gray.main}
+                // fill={DateUtils.isThisMonth(new Date(entry.date)) ? theme.palette.primary.light : theme.palette.gray.main}
                 // hack to cope with mock data.. which is giving 2021 dates only
                 fill={
                   index === data.length - 1
