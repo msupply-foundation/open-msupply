@@ -41,10 +41,12 @@ pub struct NameFilterInput {
     pub is_store: Option<bool>,
     /// Code of the store if store is linked to name
     pub store_code: Option<SimpleStringFilterInput>,
-    // Show invisible names in current store (based on store_id parameter)
-    pub show_invisible_in_current_store: Option<bool>,
-    // Show system names
-    pub show_system_names: Option<bool>,
+    /// Visibility in current store (based on store_id parameter and existance of name_store_join record)
+    pub is_visible: Option<bool>,
+    /// Show system names (defaults to false)
+    /// System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
+    /// if is_visible is set to true and is_system_name is also true no system names will be returned
+    pub is_system_name: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -95,8 +97,8 @@ impl NameFilterInput {
             is_supplier,
             is_store,
             store_code,
-            show_invisible_in_current_store,
-            show_system_names,
+            is_visible,
+            is_system_name,
         } = self;
 
         NameFilter {
@@ -107,8 +109,8 @@ impl NameFilterInput {
             is_customer,
             is_supplier,
             is_store,
-            show_invisible_in_current_store,
-            show_system_names,
+            is_visible,
+            is_system_name: is_system_name.or(Some(false)),
         }
     }
 }

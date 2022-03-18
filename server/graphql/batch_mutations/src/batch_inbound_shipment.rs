@@ -449,7 +449,7 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, Name, RepositoryError, StorageConnectionManager,
+        mock::MockDataInserts, InvoiceLine, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -663,9 +663,7 @@ mod test {
                     input: inline_init(|input: &mut InsertInboundShipment| {
                         input.id = "id1".to_string()
                     }),
-                    result: Err(InsertInboundShipmentError::OtherPartyNotASupplier(
-                        Name::default(),
-                    )),
+                    result: Err(InsertInboundShipmentError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertInboundShipmentLine| {
@@ -718,9 +716,7 @@ mod test {
                     input: inline_init(|input: &mut InsertInboundShipment| {
                         input.id = "id1".to_string()
                     }),
-                    result: Err(InsertInboundShipmentError::OtherPartyNotASupplier(
-                        Name::default(),
-                    )),
+                    result: Err(InsertInboundShipmentError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertInboundShipmentLine| {

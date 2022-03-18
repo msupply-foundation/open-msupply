@@ -1,8 +1,8 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_other_party_id, InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceRowStatusError,
-    WrongInvoiceRowType,
+    InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceRowStatusError, WrongInvoiceRowType,
 };
+use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::Name;
 use repository::{
     schema::{InvoiceRow, InvoiceRowType},
@@ -24,20 +24,25 @@ pub fn validate(
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
 
-    let other_party_option = match &patch.other_party_id {
-        Some(other_party_id) => {
-            let other_party = check_other_party_id(connection, store_id, &other_party_id)?
-                .ok_or(OtherPartyDoesNotExist {})?;
-
-            if !other_party.is_supplier() {
-                return Err(OtherPartyNotASupplier(other_party));
-            };
-            Some(other_party)
-        }
-        None => None,
+    let other_party_id = match &patch.other_party_id {
+        None => return Ok((invoice, None)),
+        Some(other_party_id) => other_party_id,
     };
 
-    Ok((invoice, other_party_option))
+    let other_party = check_other_party(
+        connection,
+        store_id,
+        &other_party_id,
+        CheckOtherPartyType::Supplier,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
+        OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
+        OtherPartyErrors::TypeMismatched => OtherPartyNotASupplier,
+        OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+    })?;
+
+    Ok((invoice, Some(other_party)))
 }
 
 impl From<WrongInvoiceRowType> for UpdateInboundShipmentError {
