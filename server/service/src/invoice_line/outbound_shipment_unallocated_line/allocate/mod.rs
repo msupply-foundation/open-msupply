@@ -65,9 +65,9 @@ type OutError = AllocateOutboundShipmentUnallocatedLineError;
 
 #[derive(Default, Debug, PartialEq)]
 pub struct InvoiceLineInsertsUpdatesDeletes {
-    inserts: Vec<InvoiceLine>,
-    deletes: Vec<String>,
-    updates: Vec<InvoiceLine>,
+    pub inserts: Vec<InvoiceLine>,
+    pub deletes: Vec<String>,
+    pub updates: Vec<InvoiceLine>,
 }
 
 pub fn allocate_outbound_shipment_unallocated_line(
