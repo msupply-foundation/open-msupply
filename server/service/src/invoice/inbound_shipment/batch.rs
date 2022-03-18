@@ -42,27 +42,27 @@ pub struct BatchInboundShipment {
 
 pub type InsertShipmentsResult =
     Vec<InputWithResult<InsertInboundShipment, Result<Invoice, InsertInboundShipmentError>>>;
-pub type InsertShipmentLinesResult = Vec<
+pub type InsertLinesResult = Vec<
     InputWithResult<InsertInboundShipmentLine, Result<InvoiceLine, InsertInboundShipmentLineError>>,
 >;
-pub type UpdateShipmentLinesResult = Vec<
+pub type UpdateLinesResult = Vec<
     InputWithResult<UpdateInboundShipmentLine, Result<InvoiceLine, UpdateInboundShipmentLineError>>,
 >;
-pub type DeleteShipmentLinesResult =
+pub type DeleteLinesResult =
     Vec<InputWithResult<DeleteInboundShipmentLine, Result<String, DeleteInboundShipmentLineError>>>;
-pub type InsertShipmentServiceLinesResult = Vec<
+pub type InsertServiceLinesResult = Vec<
     InputWithResult<
         InsertInboundShipmentServiceLine,
         Result<InvoiceLine, InsertInboundShipmentServiceLineError>,
     >,
 >;
-pub type UpdateShipmentServiceLinesResult = Vec<
+pub type UpdateServiceLinesResult = Vec<
     InputWithResult<
         UpdateInboundShipmentServiceLine,
         Result<InvoiceLine, UpdateInboundShipmentServiceLineError>,
     >,
 >;
-pub type DeleteShipmentServiceLinesResult = Vec<
+pub type DeleteServiceLinesResult = Vec<
     InputWithResult<
         DeleteInboundShipmentLine,
         Result<String, DeleteInboundShipmentServiceLineError>,
@@ -76,12 +76,12 @@ pub type DeleteShipmentsResult =
 #[derive(Debug, Default)]
 pub struct BatchInboundShipmentResult {
     pub insert_shipment: InsertShipmentsResult,
-    pub insert_line: InsertShipmentLinesResult,
-    pub update_line: UpdateShipmentLinesResult,
-    pub delete_line: DeleteShipmentLinesResult,
-    pub insert_service_line: InsertShipmentServiceLinesResult,
-    pub update_service_line: UpdateShipmentServiceLinesResult,
-    pub delete_service_line: DeleteShipmentServiceLinesResult,
+    pub insert_line: InsertLinesResult,
+    pub update_line: UpdateLinesResult,
+    pub delete_line: DeleteLinesResult,
+    pub insert_service_line: InsertServiceLinesResult,
+    pub update_service_line: UpdateServiceLinesResult,
+    pub delete_service_line: DeleteServiceLinesResult,
     pub update_shipment: UpdateShipmentsResult,
     pub delete_shipment: DeleteShipmentsResult,
 }

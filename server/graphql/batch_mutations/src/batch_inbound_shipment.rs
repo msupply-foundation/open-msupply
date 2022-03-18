@@ -243,7 +243,7 @@ fn map_delete_shipments(responses: DeleteShipmentsResult) -> Result<DeleteShipme
     Ok(result.vec_or_none())
 }
 
-fn map_insert_lines(responses: InsertShipmentLinesResult) -> Result<InsertShipmentLinesResponse> {
+fn map_insert_lines(responses: InsertLinesResult) -> Result<InsertShipmentLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -262,7 +262,7 @@ fn map_insert_lines(responses: InsertShipmentLinesResult) -> Result<InsertShipme
     Ok(result.vec_or_none())
 }
 
-fn map_update_lines(responses: UpdateShipmentLinesResult) -> Result<UpdateShipmentLinesResponse> {
+fn map_update_lines(responses: UpdateLinesResult) -> Result<UpdateShipmentLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -281,7 +281,7 @@ fn map_update_lines(responses: UpdateShipmentLinesResult) -> Result<UpdateShipme
     Ok(result.vec_or_none())
 }
 
-fn map_delete_lines(responses: DeleteShipmentLinesResult) -> Result<DeleteShipmentLinesResponse> {
+fn map_delete_lines(responses: DeleteLinesResult) -> Result<DeleteShipmentLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
         let mapped_response =
@@ -301,7 +301,7 @@ fn map_delete_lines(responses: DeleteShipmentLinesResult) -> Result<DeleteShipme
 }
 
 fn map_insert_service_lines(
-    responses: InsertShipmentServiceLinesResult,
+    responses: InsertServiceLinesResult,
 ) -> Result<InsertShipmentServiceLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
@@ -322,7 +322,7 @@ fn map_insert_service_lines(
 }
 
 fn map_update_service_lines(
-    responses: UpdateShipmentServiceLinesResult,
+    responses: UpdateServiceLinesResult,
 ) -> Result<UpdateShipmentServiceLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
@@ -343,7 +343,7 @@ fn map_update_service_lines(
 }
 
 fn map_delete_service_lines(
-    responses: DeleteShipmentServiceLinesResult,
+    responses: DeleteServiceLinesResult,
 ) -> Result<DeleteShipmentServiceLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
