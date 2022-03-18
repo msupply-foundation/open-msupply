@@ -63,7 +63,6 @@ pub async fn start_server(
 
     let mut http_server = HttpServer::new(move || {
         App::new()
-            .app_data(connection_manager_data_app.clone())
             .wrap(logger_middleware())
             .wrap(Cors::permissive())
             .wrap(compress_middleware())
@@ -104,7 +103,7 @@ pub async fn start_server(
     // and so we want an orderly exit. This achieves it nicely.
     let result = tokio::select! {
         result = (&mut running_sever) => result,
-        _ = (&mut off_switch) => Ok(running_sever.stop(true).await),
+        _ = (&mut off_switch) => Ok(running_sever.handle().stop(true).await),
         () = async {
             synchroniser.run().await;
         } => unreachable!("Synchroniser unexpectedly died!?"),
