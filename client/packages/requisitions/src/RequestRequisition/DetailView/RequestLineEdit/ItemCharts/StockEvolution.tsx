@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from '@common/components';
-import { isAfter, isEqual } from '@common/utils';
+import { DateUtils } from '@common/utils';
 import {
   Box,
   useFormatDate,
@@ -29,8 +29,8 @@ type valueWithDate = {
   date: Date;
 };
 const dateSorter = (a: valueWithDate, b: valueWithDate) => {
-  if (isEqual(a.date, b.date)) return 0;
-  if (isAfter(a.date, b.date)) return 1;
+  if (DateUtils.isEqual(a.date, b.date)) return 0;
+  if (DateUtils.isAfter(a.date, b.date)) return 1;
   return -1;
 };
 

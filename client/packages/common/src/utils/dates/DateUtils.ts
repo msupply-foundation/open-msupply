@@ -22,6 +22,10 @@ export const DateUtils = {
     expiryDate: Date,
     threshold = MINIMUM_EXPIRY_MONTHS
   ): boolean => differenceInMonths(expiryDate, Date.now()) <= threshold,
+  isThisWeek,
+  isToday,
+  isThisMonth,
+  isAfter,
+  isBefore,
+  isEqual,
 };
-
-export { isThisWeek, isToday, isThisMonth, isAfter, isBefore, isEqual };
