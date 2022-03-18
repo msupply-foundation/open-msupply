@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -11,6 +11,7 @@ import {
   useTranslation,
   useNotification,
   useTableStore,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -20,7 +21,16 @@ import {
   ResponseLineFragment,
 } from '../api';
 
-export const Toolbar: FC = () => {
+interface ToolbarProps {
+  filter: {
+    itemFilter: string;
+    setItemFilter: Dispatch<SetStateAction<string>>;
+  };
+}
+
+export const Toolbar = ({
+  filter: { itemFilter, setItemFilter },
+}: ToolbarProps) => {
   const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
   const isDisabled = useIsResponseDisabled();
@@ -88,6 +98,14 @@ export const Toolbar: FC = () => {
             </Box>
           </Box>
         </Grid>
+        <SearchBar
+          placeholder={t('placeholder.filter-items')}
+          value={itemFilter}
+          onChange={newValue => {
+            setItemFilter(newValue);
+          }}
+          debounceTime={0}
+        />
         <DropdownMenu disabled={isDisabled} label={t('label.select')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
             {t('button.delete-lines', { ns: 'distribution' })}
