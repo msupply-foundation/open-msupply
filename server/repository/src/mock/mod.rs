@@ -21,6 +21,7 @@ mod test_master_list_repository;
 mod test_name_query;
 mod test_name_store_id;
 mod test_outbound_shipment_update;
+pub mod test_remaining_to_supply;
 mod test_remote_pull;
 mod test_requisition_line_repository;
 mod test_requisition_queries;

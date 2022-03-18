@@ -44,12 +44,14 @@ async fn files(
     let max_lifetime_sec = 60 * 60; // 1 hours
     delete_old_files(file_dir, max_lifetime_sec)?;
 
-    fs::NamedFile::open(file_path)?
+    let response = fs::NamedFile::open(file_path)?
         .set_content_disposition(ContentDisposition {
             disposition: DispositionType::Attachment,
             parameters: vec![DispositionParam::Filename(original_file_name)],
         })
-        .into_response(&req)
+        .into_response(&req);
+
+    Ok(response)
 }
 
 /// Returns the file name part of the path like:

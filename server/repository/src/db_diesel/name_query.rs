@@ -35,8 +35,8 @@ pub struct NameFilter {
     pub is_supplier: Option<bool>,
     pub is_store: Option<bool>,
     pub store_code: Option<SimpleStringFilter>,
-    pub show_invisible_in_current_store: Option<bool>,
-    pub show_system_names: Option<bool>,
+    pub is_visible: Option<bool>,
+    pub is_system_name: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -64,7 +64,7 @@ impl<'a> NameQueryRepository<'a> {
         filter: Option<NameFilter>,
     ) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let query = create_filtered_query(store_id, filter);
+        let query = create_filtered_query(store_id.to_string(), filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -93,7 +93,7 @@ impl<'a> NameQueryRepository<'a> {
         sort: Option<NameSort>,
     ) -> Result<Vec<Name>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = create_filtered_query(store_id, filter);
+        let mut query = create_filtered_query(store_id.to_string(), filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -135,55 +135,26 @@ fn to_domain((name_row, name_store_join_row, store_row): NameAndNameStoreJoin) -
 // name_store_join_dsl::name_id.eq(name_dsl::id)
 type NameIdEqualToId = Eq<name_store_join_dsl::name_id, name_dsl::id>;
 // name_store_join_dsl::store_id.eq(store_id)
-type StoreIdEqualToStr<'a> = Eq<name_store_join_dsl::store_id, &'a str>;
+type StoreIdEqualToStr = Eq<name_store_join_dsl::store_id, String>;
 // name_store_join_dsl::name_id.eq(name_dsl::id).and(name_store_join_dsl::store_id.eq(store_id))
-type OnNameStoreJoinToNameJoin<'a> =
-    OnClauseWrapper<name_store_join::table, And<NameIdEqualToId, StoreIdEqualToStr<'a>>>;
+type OnNameStoreJoinToNameJoin =
+    OnClauseWrapper<name_store_join::table, And<NameIdEqualToId, StoreIdEqualToStr>>;
 
-type BoxedNameQuery<'a> = IntoBoxed<
+type BoxedNameQuery = IntoBoxed<
     'static,
-    LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin<'a>>, store::table>,
+    LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin>, store::table>,
     DBType,
 >;
 
-fn create_filtered_query(store_id: &str, filter: Option<NameFilter>) -> BoxedNameQuery {
+fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
     let mut query = name_dsl::name
         .left_join(
             name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_id
                 .eq(name_dsl::id)
-                .and(name_store_join_dsl::store_id.eq(store_id))),
+                .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
         )
         .left_join(store_dsl::store)
         .into_boxed();
-
-    // Special filters
-
-    let show_invisible_in_current_store = filter
-        .as_ref()
-        .and_then(|filter| filter.show_invisible_in_current_store)
-        .unwrap_or(false);
-
-    let show_system_names = filter
-        .as_ref()
-        .and_then(|filter| filter.show_system_names)
-        .unwrap_or(false);
-
-    query = match (show_invisible_in_current_store, show_system_names) {
-        (true, true) => query,
-        (false, true) => query.filter(
-            name_store_join_dsl::id
-                .is_not_null()
-                // System names don't have name_store_join
-                .or(name_dsl::code.eq_any(SYSTEM_NAME_CODES)),
-        ),
-        (true, false) => query.filter(name_dsl::code.ne_all(SYSTEM_NAME_CODES)),
-        (false, false) => {
-            query = query.filter(name_dsl::code.ne_all(SYSTEM_NAME_CODES));
-            query.filter(name_store_join_dsl::id.is_not_null())
-        }
-    };
-
-    // Normal filters
 
     if let Some(f) = filter {
         let NameFilter {
@@ -194,8 +165,8 @@ fn create_filtered_query(store_id: &str, filter: Option<NameFilter>) -> BoxedNam
             is_supplier,
             is_store,
             store_code,
-            show_invisible_in_current_store: _,
-            show_system_names: _,
+            is_visible,
+            is_system_name,
         } = f;
 
         apply_equal_filter!(query, id, name_dsl::id);
@@ -210,11 +181,26 @@ fn create_filtered_query(store_id: &str, filter: Option<NameFilter>) -> BoxedNam
             query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
         }
 
+        query = match is_visible {
+            Some(true) => query.filter(name_store_join_dsl::id.is_not_null()),
+            Some(false) => query.filter(name_store_join_dsl::id.is_null()),
+            None => query,
+        };
+
+        query = match is_system_name {
+            Some(true) => query.filter(name_dsl::code.eq_any(SYSTEM_NAME_CODES)),
+            Some(false) => query.filter(name_dsl::code.ne_all(SYSTEM_NAME_CODES)),
+            None => query,
+        };
+
         query = match is_store {
             Some(true) => query.filter(store_dsl::id.is_not_null()),
             Some(false) => query.filter(store_dsl::id.is_null()),
             None => query,
         };
+
+        // Filter out name for current store
+        query = query.filter(store_dsl::id.ne(store_id).or(store_dsl::id.is_null()));
     };
 
     query
@@ -245,13 +231,13 @@ impl NameFilter {
         self
     }
 
-    pub fn show_invisible_in_current_store(mut self, value: bool) -> Self {
-        self.show_invisible_in_current_store = Some(value);
+    pub fn is_visible(mut self, value: bool) -> Self {
+        self.is_visible = Some(value);
         self
     }
 
-    pub fn show_system_names(mut self, value: bool) -> Self {
-        self.show_system_names = Some(value);
+    pub fn is_system_name(mut self, value: bool) -> Self {
+        self.is_system_name = Some(value);
         self
     }
 
@@ -276,6 +262,17 @@ impl Name {
             .unwrap_or(false)
     }
 
+    pub fn is_visible(&self) -> bool {
+        self.name_store_join_row.is_some()
+    }
+
+    pub fn is_system_name(&self) -> bool {
+        SYSTEM_NAME_CODES
+            .iter()
+            .find(|system_name_code| self.name_row.code == **system_name_code)
+            .is_some()
+    }
+
     pub fn store_id(&self) -> Option<&str> {
         self.store_row
             .as_ref()
@@ -288,9 +285,7 @@ mod tests {
     use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
     use crate::{
-        mock::{
-            mock_name_1, mock_name_2, mock_test_name_query_store_1, mock_test_name_query_store_2,
-        },
+        mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
         test_db, NameFilter, Pagination, SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
         {
             db_diesel::{NameQueryRepository, NameRepository},
@@ -331,10 +326,6 @@ mod tests {
         (rows, queries)
     }
 
-    fn get_filter() -> Option<NameFilter> {
-        Some(NameFilter::new().show_invisible_in_current_store(true))
-    }
-
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
@@ -356,14 +347,14 @@ mod tests {
 
         // .count()
         assert_eq!(
-            usize::try_from(repository.count(store_id, get_filter()).unwrap()).unwrap(),
+            usize::try_from(repository.count(store_id, None).unwrap()).unwrap(),
             queries.len()
         );
 
         // .query, no pagenation (default)
         assert_eq!(
             repository
-                .query(store_id, Pagination::new(), get_filter(), None)
+                .query(store_id, Pagination::new(), None, None)
                 .unwrap()
                 .len(),
             default_page_size
@@ -377,7 +368,7 @@ mod tests {
                     offset: 10,
                     limit: DEFAULT_PAGINATION_LIMIT,
                 },
-                get_filter(),
+                None,
                 None,
             )
             .unwrap();
@@ -396,7 +387,7 @@ mod tests {
                     offset: 0,
                     limit: 10,
                 },
-                get_filter(),
+                None,
                 None,
             )
             .unwrap();
@@ -411,7 +402,7 @@ mod tests {
                     offset: 150,
                     limit: 90,
                 },
-                get_filter(),
+                None,
                 None,
             )
             .unwrap();
@@ -430,15 +421,13 @@ mod tests {
         let repo = NameQueryRepository::new(&connection);
 
         let store_id = "store_a";
-        let mut names = repo
-            .query(store_id, Pagination::new(), get_filter(), None)
-            .unwrap();
+        let mut names = repo.query(store_id, Pagination::new(), None, None).unwrap();
 
         let sorted = repo
             .query(
                 store_id,
                 Pagination::new(),
-                get_filter(),
+                None,
                 Some(NameSort {
                     key: NameSortField::Name,
                     desc: None,
@@ -464,7 +453,7 @@ mod tests {
             .query(
                 store_id,
                 Pagination::new(),
-                get_filter(),
+                None,
                 Some(NameSort {
                     key: NameSortField::Code,
                     desc: Some(true),
@@ -499,7 +488,7 @@ mod tests {
         let store_id = &mock_test_name_query_store_1().id;
         // test filter:
 
-        // Name should be invisibile in it's own store (no name_store_join should exist)
+        // Name should be filtered out from it's own store
 
         let result = repo
             .query_by_filter(
@@ -509,7 +498,7 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), 0);
 
-        // Name should be invisibile in it's own store (no name_store_join should exist)
+        // Name should be filtered out from it's own store
 
         let result = repo
             .query_by_filter(
@@ -525,7 +514,9 @@ mod tests {
         let result = repo
             .query_by_filter(
                 store_id,
-                NameFilter::new().name(SimpleStringFilter::like("me_")),
+                NameFilter::new()
+                    .is_visible(true)
+                    .name(SimpleStringFilter::like("me_")),
             )
             .unwrap();
         assert_eq!(result.len(), 2);
@@ -536,7 +527,9 @@ mod tests {
         let result = repo
             .query_by_filter(
                 store_id,
-                NameFilter::new().name(SimpleStringFilter::like("mE_")),
+                NameFilter::new()
+                    .is_visible(true)
+                    .name(SimpleStringFilter::like("mE_")),
             )
             .unwrap();
         assert_eq!(result.len(), 2);
@@ -560,7 +553,7 @@ mod tests {
             .query_by_filter(
                 store_id,
                 NameFilter::new()
-                    .show_system_names(true)
+                    .is_system_name(true)
                     .code(SimpleStringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
             )
             .unwrap();
@@ -574,7 +567,8 @@ mod tests {
             .query_by_filter(
                 store_id,
                 NameFilter::new()
-                    .show_invisible_in_current_store(true)
+                    .is_visible(true)
+                    .is_system_name(true)
                     .code(SimpleStringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
             )
             .unwrap();
@@ -583,7 +577,7 @@ mod tests {
         // Test is store
 
         let result = repo
-            .query_by_filter(store_id, NameFilter::new().is_store(true))
+            .query_by_filter(store_id, NameFilter::new().is_visible(true).is_store(true))
             .unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(
@@ -592,18 +586,15 @@ mod tests {
         );
 
         // Test is visible
-        // Visibility is determined by having name_store_join, by default invisible are not shown
+        // Visibility is determined by having name_store_join
 
         let result = repo
             .query_by_filter(
                 &mock_test_name_query_store_2().id,
-                NameFilter::new()
-                    .show_invisible_in_current_store(true)
-                    .name(SimpleStringFilter::equal_to(&mock_name_2().name)),
+                NameFilter::new().is_visible(true),
             )
             .unwrap();
-        assert_eq!(result.len(), 1);
-        assert_eq!(result.get(0).unwrap().name_row.id, mock_name_2().id);
+        assert_eq!(result.len(), 2);
 
         // Test is supplier
 
@@ -627,7 +618,7 @@ mod tests {
             .query(
                 store_id,
                 Pagination::new(),
-                None,
+                Some(NameFilter::new().is_visible(true)),
                 Some(NameSort {
                     key: NameSortField::Code,
                     desc: Some(true),

@@ -23,7 +23,7 @@ thiserror = "1"
 log = "0.4.14"
 
 [dev-dependencies]
-actix-rt = "1.1.1" # for Tokio 0.2
+actix-rt = "2.6.0"
 
 [features]
 default = ["sqlite"]
