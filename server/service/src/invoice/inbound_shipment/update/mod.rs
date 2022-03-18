@@ -179,10 +179,10 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_errors",
             MockDataInserts::all(),
-            Some(inline_init(|r: &mut MockData| {
+            inline_init(|r: &mut MockData| {
                 r.names = vec![not_visible(), not_a_supplier()];
                 r.name_store_joins = vec![not_a_supplier_join()];
-            })),
+            }),
         )
         .await;
 
@@ -253,10 +253,10 @@ mod test {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success",
             MockDataInserts::all(),
-            Some(inline_init(|r: &mut MockData| {
+            inline_init(|r: &mut MockData| {
                 r.names = vec![supplier()];
                 r.name_store_joins = vec![supplier_join()];
-            })),
+            }),
         )
         .await;
 
