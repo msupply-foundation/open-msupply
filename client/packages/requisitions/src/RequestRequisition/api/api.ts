@@ -255,4 +255,8 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not add from master list');
   },
+  useSuggestedQuantity: async (requestId: string) => {
+    const result = await sdk.useSuggestedQuantity({ requestId, storeId });
+    return result;
+  },
 });

@@ -8,12 +8,13 @@ import {
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
-import { CreateShipmentButton } from './CreateShipmentButton';
 import {
   ReportRowFragment,
   ReportSelector,
   usePrintReport,
 } from '@openmsupply-client/system';
+import { CreateShipmentButton } from './CreateShipmentButton';
+import { SupplyRequestedQuantityButton } from './SupplyRequestedQuantityButton';
 import { useResponse } from '../../api';
 
 export const AppBarButtonsComponent = () => {
@@ -31,6 +32,7 @@ export const AppBarButtonsComponent = () => {
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <CreateShipmentButton />
+        <SupplyRequestedQuantityButton />
         <ReportSelector
           category={ReportCategory.Requisition}
           onClick={printReport}

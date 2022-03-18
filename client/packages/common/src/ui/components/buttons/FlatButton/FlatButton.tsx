@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button as MuiButton, styled, SxProps, Theme } from '@mui/material';
 import { Property } from 'csstype';
-import { useRtl } from '@common/intl';
+import { IntlUtils } from '@common/intl';
 interface ButtonProps {
   color?: 'inherit' | 'primary' | 'secondary';
   endIcon?: React.ReactNode;
@@ -36,7 +36,7 @@ export const FlatButton: React.FC<ButtonProps> = ({
   sx,
   disabled = false,
 }) => {
-  const isRtl = useRtl();
+  const isRtl = IntlUtils.useRtl();
   return (
     <StyledButton
       disabled={disabled}

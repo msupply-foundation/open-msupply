@@ -11,12 +11,12 @@ import {
   useBufferState,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import { useOutboundFields, useIsOutboundDisabled } from '../../api';
+import { useOutbound } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation('distribution');
-  const isDisabled = useIsOutboundDisabled();
-  const { colour, comment, user, update } = useOutboundFields([
+  const isDisabled = useOutbound.utils.isDisabled();
+  const { colour, comment, user, update } = useOutbound.document.fields([
     'colour',
     'comment',
     'user',
