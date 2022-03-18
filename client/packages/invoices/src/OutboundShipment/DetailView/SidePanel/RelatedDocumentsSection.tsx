@@ -12,12 +12,12 @@ import {
   Tooltip,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { useOutboundFields } from '../../api';
+import { useOutbound } from '../../api';
 
 const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation('distribution');
   const d = useFormatDate();
-  const { requisition } = useOutboundFields('requisition');
+  const { requisition } = useOutbound.document.fields('requisition');
 
   let tooltip = '';
   if (requisition) {
