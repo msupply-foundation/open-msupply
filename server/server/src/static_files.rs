@@ -3,15 +3,14 @@ use std::io::ErrorKind;
 use actix_files as fs;
 use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
-use actix_web::web::{get, scope};
-use actix_web::{web, Error, HttpRequest, HttpResponse};
+use actix_web::{guard, web, Error, HttpRequest, HttpResponse};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use service::static_files::StaticFileService;
 
 // this function could be located in different module
 pub fn config_static_files(cfg: &mut web::ServiceConfig) {
-    cfg.service(scope("/").route("/files", get().to(files)));
+    cfg.service(web::resource("/files").guard(guard::Get()).to(files));
 }
 
 #[derive(Debug, Deserialize)]
@@ -32,10 +31,12 @@ async fn files(
             "Static file not found",
         ))?;
 
-    fs::NamedFile::open(file.path)?
+    let response = fs::NamedFile::open(file.path)?
         .set_content_disposition(ContentDisposition {
             disposition: DispositionType::Attachment,
             parameters: vec![DispositionParam::Filename(file.name)],
         })
-        .into_response(&req)
+        .into_response(&req);
+
+    Ok(response)
 }
