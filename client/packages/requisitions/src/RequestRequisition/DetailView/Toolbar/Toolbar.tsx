@@ -1,19 +1,28 @@
-import React, { FC } from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
   useTranslation,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequestFields, useIsRequestDisabled } from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
 import { ToolbarActions } from './ToolbarActions';
 
-export const Toolbar: FC = () => {
-  const t = useTranslation('replenishment');
+interface ToolbarProps {
+  filter: {
+    itemFilter: string;
+    setItemFilter: Dispatch<SetStateAction<string>>;
+  };
+}
 
+export const Toolbar = ({
+  filter: { itemFilter, setItemFilter },
+}: ToolbarProps) => {
+  const t = useTranslation('replenishment');
   const isDisabled = useIsRequestDisabled();
   const { theirReference, update, otherParty } = useRequestFields([
     'theirReference',
@@ -21,7 +30,14 @@ export const Toolbar: FC = () => {
   ]);
 
   return (
-    <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
+    <AppBarContentPortal
+      sx={{
+        display: 'flex',
+        flex: 1,
+        marginBottom: 1,
+        flexDirection: 'column',
+      }}
+    >
       <Grid container>
         <Grid item display="flex" flex={1} direction="column" gap={1}>
           {otherParty && (
@@ -57,8 +73,24 @@ export const Toolbar: FC = () => {
           gap={2}
         >
           <ToolbarActions />
-          <ToolbarDropDown />
         </Grid>
+      </Grid>
+      <Grid
+        item
+        display="flex"
+        gap={1}
+        justifyContent="flex-end"
+        sx={{ marginTop: 2 }}
+      >
+        <SearchBar
+          placeholder={t('placeholder.filter-items')}
+          value={itemFilter}
+          onChange={newValue => {
+            setItemFilter(newValue);
+          }}
+          debounceTime={0}
+        />
+        <ToolbarDropDown />
       </Grid>
     </AppBarContentPortal>
   );
