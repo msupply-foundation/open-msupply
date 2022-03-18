@@ -66,9 +66,10 @@ pub trait StocktakeServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
+        user_id: &str,
         input: UpdateStocktake,
     ) -> Result<Stocktake, UpdateStocktakeError> {
-        update_stocktake(ctx, store_id, input)
+        update_stocktake(ctx, store_id, user_id, input)
     }
 
     fn batch_stocktake(
