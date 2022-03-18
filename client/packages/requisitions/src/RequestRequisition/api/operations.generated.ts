@@ -87,6 +87,14 @@ export type DeleteRequestLinesMutationVariables = Types.Exact<{
 
 export type DeleteRequestLinesMutation = { __typename: 'FullMutation', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitionLines?: Array<{ __typename: 'DeleteRequestRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
+export type UseSuggestedQuantityMutationVariables = Types.Exact<{
+  requestId: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type UseSuggestedQuantityMutation = { __typename: 'FullMutation', useSuggestedQuantity: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string }> } | { __typename: 'UseSuggestedQuantityError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } };
+
 export const ItemWithStatsFragmentDoc = gql`
     fragment ItemWithStats on ItemNode {
   id
@@ -432,6 +440,35 @@ export const DeleteRequestLinesDocument = gql`
   }
 }
     `;
+export const UseSuggestedQuantityDocument = gql`
+    mutation useSuggestedQuantity($requestId: String!, $storeId: String!) {
+  useSuggestedQuantity(
+    input: {requestRequisitionId: $requestId}
+    storeId: $storeId
+  ) {
+    ... on UseSuggestedQuantityError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+      }
+    }
+    ... on RequisitionLineConnector {
+      nodes {
+        id
+      }
+      totalCount
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -466,6 +503,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteRequestLines(variables: DeleteRequestLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteRequestLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestLinesMutation>(DeleteRequestLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequestLines');
+    },
+    useSuggestedQuantity(variables: UseSuggestedQuantityMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UseSuggestedQuantityMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UseSuggestedQuantityMutation>(UseSuggestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'useSuggestedQuantity');
     }
   };
 }
@@ -621,5 +661,22 @@ export const mockAddFromMasterListMutation = (resolver: ResponseResolver<GraphQL
 export const mockDeleteRequestLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteRequestLinesMutationVariables>, GraphQLContext<DeleteRequestLinesMutation>, any>) =>
   graphql.mutation<DeleteRequestLinesMutation, DeleteRequestLinesMutationVariables>(
     'deleteRequestLines',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUseSuggestedQuantityMutation((req, res, ctx) => {
+ *   const { requestId, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ useSuggestedQuantity })
+ *   )
+ * })
+ */
+export const mockUseSuggestedQuantityMutation = (resolver: ResponseResolver<GraphQLRequest<UseSuggestedQuantityMutationVariables>, GraphQLContext<UseSuggestedQuantityMutation>, any>) =>
+  graphql.mutation<UseSuggestedQuantityMutation, UseSuggestedQuantityMutationVariables>(
+    'useSuggestedQuantity',
     resolver
   )
