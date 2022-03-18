@@ -186,7 +186,8 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         line_id: String,
-    ) -> AllocateOutboundShipmentUnallocatedLineResult {
+    ) -> Result<InvoiceLineInsertsUpdatesDeletes, AllocateOutboundShipmentUnallocatedLineError>
+    {
         allocate_outbound_shipment_unallocated_line(ctx, store_id, line_id)
     }
 }

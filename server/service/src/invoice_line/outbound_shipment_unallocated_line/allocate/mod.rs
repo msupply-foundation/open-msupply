@@ -64,19 +64,17 @@ pub enum AllocateOutboundShipmentUnallocatedLineError {
 type OutError = AllocateOutboundShipmentUnallocatedLineError;
 
 #[derive(Default, Debug, PartialEq)]
-pub struct Return {
+pub struct InvoiceLineInsertsUpdatesDeletes {
     inserts: Vec<InvoiceLine>,
     deletes: Vec<String>,
     updates: Vec<InvoiceLine>,
 }
 
-pub type AllocateOutboundShipmentUnallocatedLineResult = Result<Return, OutError>;
-
 pub fn allocate_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
     store_id: &str,
     line_id: String,
-) -> AllocateOutboundShipmentUnallocatedLineResult {
+) -> Result<InvoiceLineInsertsUpdatesDeletes, OutError> {
     let line = ctx
         .connection
         .transaction_sync(|connection| {
@@ -88,7 +86,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 delete_unallocated_line,
             } = generate(&connection, &store_id, unallocated_line)?;
 
-            let mut result = Return::default();
+            let mut result = InvoiceLineInsertsUpdatesDeletes::default();
 
             for input in update_lines.into_iter() {
                 result.updates.push(
@@ -134,7 +132,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 );
             }
 
-            Ok(result) as AllocateOutboundShipmentUnallocatedLineResult
+            Ok(result) as Result<InvoiceLineInsertsUpdatesDeletes, OutError>
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(line)
