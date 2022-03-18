@@ -12,22 +12,18 @@ import {
   DeleteIcon,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
-import {
-  useOutboundFields,
-  useIsOutboundDisabled,
-  useDeleteSelectedLines,
-} from '../api';
+import { useOutbound } from '../api';
 
 export const Toolbar: FC = () => {
-  const { onDelete } = useDeleteSelectedLines();
-  const { otherParty, theirReference, update } = useOutboundFields([
+  const { onDelete } = useOutbound.line.deleteSelected();
+  const { otherParty, theirReference, update } = useOutbound.document.fields([
     'otherParty',
     'theirReference',
   ]);
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
 
-  const isDisabled = useIsOutboundDisabled();
+  const isDisabled = useOutbound.utils.isDisabled();
   const t = useTranslation('distribution');
 
   return (

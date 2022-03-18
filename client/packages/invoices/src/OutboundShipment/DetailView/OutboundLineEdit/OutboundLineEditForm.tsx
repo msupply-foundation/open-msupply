@@ -17,7 +17,7 @@ import {
   ItemRowFragment,
 } from '@openmsupply-client/system';
 import { PackSizeController } from './hooks';
-import { useOutboundRows } from '../../api';
+import { useOutbound } from '../../api';
 
 interface OutboundLineEditFormProps {
   allocatedQuantity: number;
@@ -44,7 +44,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   const quantity =
     allocatedQuantity /
     Math.abs(Number(packSizeController.selected?.value || 1));
-  const { items } = useOutboundRows();
+  const { items } = useOutbound.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
     const newAllocatedQuantity =

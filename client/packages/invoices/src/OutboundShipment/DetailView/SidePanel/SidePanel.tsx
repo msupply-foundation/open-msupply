@@ -14,7 +14,7 @@ import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 export const SidePanelComponent = () => {
   const { success } = useNotification();
   const t = useTranslation('distribution');
-  const { data } = useOutbound();
+  const { data } = useOutbound.document.get();
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');
