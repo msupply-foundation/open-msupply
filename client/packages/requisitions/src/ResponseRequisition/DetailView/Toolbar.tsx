@@ -65,6 +65,7 @@ export const Toolbar = ({
         display="flex"
         flex={1}
         alignItems="flex-end"
+        gap={1}
       >
         <Grid item display="flex" flex={1}>
           <Box display="flex" flexDirection="row" gap={4}>
