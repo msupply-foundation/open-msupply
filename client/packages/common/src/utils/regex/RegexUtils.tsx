@@ -23,4 +23,9 @@ export const RegexUtils = {
       />
     );
   },
+  // Case-insensitive match of partial string -- same as SQL "LIKE"
+  matchSubstring: (substring: string, testString: string) => {
+    const matcher = new RegExp(substring, 'i');
+    return matcher.test(testString);
+  },
 };
