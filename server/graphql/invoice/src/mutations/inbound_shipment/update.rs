@@ -1,12 +1,13 @@
 use crate::mutations::outbound_shipment::CannotChangeStatusOfInvoiceOnHold;
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::CannotEditInvoice;
+use graphql_core::simple_generic_errors::{
+    CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
+};
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::generic_errors::OtherPartyNotASupplier;
-use graphql_types::types::{InvoiceNode, NameNode};
+use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::invoice::inbound_shipment::{
     UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
@@ -71,6 +72,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
+    OtherPartyNotVisible(OtherPartyNotVisible),
     CannotEditInvoice(CannotEditInvoice),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
@@ -118,27 +120,30 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound))
         }
         ServiceError::CannotReverseInvoiceStatus => {
             return Ok(UpdateErrorInterface::CannotReverseInvoiceStatus(
-                CannotReverseInvoiceStatus {},
+                CannotReverseInvoiceStatus,
             ))
         }
         ServiceError::CannotEditFinalised => {
-            return Ok(UpdateErrorInterface::CannotEditInvoice(
-                CannotEditInvoice {},
-            ))
+            return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice))
         }
 
         ServiceError::CannotChangeStatusOfInvoiceOnHold => {
             return Ok(UpdateErrorInterface::CannotChangeStatusOfInvoiceOnHold(
-                CannotChangeStatusOfInvoiceOnHold {},
+                CannotChangeStatusOfInvoiceOnHold,
             ))
         }
-        ServiceError::OtherPartyNotASupplier(name) => {
+        ServiceError::OtherPartyNotASupplier => {
             return Ok(UpdateErrorInterface::OtherPartyNotASupplier(
-                OtherPartyNotASupplier(NameNode { name }),
+                OtherPartyNotASupplier,
+            ))
+        }
+        ServiceError::OtherPartyNotVisible => {
+            return Ok(UpdateErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
             ))
         }
         // Standard Graphql Errors
