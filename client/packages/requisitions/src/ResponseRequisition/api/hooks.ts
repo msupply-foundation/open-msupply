@@ -180,3 +180,16 @@ export const useCreateOutboundFromResponse = () => {
     },
   });
 };
+
+export const useSupplyRequestedQuantity = () => {
+  const responseNumber = useResponseNumber();
+  const queryClient = useQueryClient();
+  const { id } = useResponseFields('id');
+  const api = useResponseApi();
+
+  return useMutation(() => api.supplyRequestedQuantity(id), {
+    onSettled: () => {
+      queryClient.invalidateQueries(api.keys.detail(responseNumber));
+    },
+  });
+};
