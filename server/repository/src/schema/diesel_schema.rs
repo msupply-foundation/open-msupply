@@ -143,6 +143,7 @@ table! {
         on_hold -> Bool,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
+        transport_reference -> Nullable<Text>,
         created_datetime -> Timestamp,
         allocated_datetime -> Nullable<Timestamp>,
         picked_datetime -> Nullable<Timestamp>,

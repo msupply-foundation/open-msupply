@@ -28,94 +28,152 @@ pub async fn get_loaders(
 ) -> LoaderMap {
     let mut loaders: LoaderMap = LoaderMap::new();
 
-    let item_loader = DataLoader::new(ItemLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let store_by_id_loader = DataLoader::new(StoreByIdLoader {
-        service_provider: service_provider.clone(),
-    });
-
-    let invoice_by_id_loader = DataLoader::new(InvoiceByIdLoader {
-        service_provider: service_provider.clone(),
-    });
-
-    let invoice_by_requisition_id_loader = DataLoader::new(InvoiceByRequisitionIdLoader {
-        service_provider: service_provider.clone(),
-    });
-
-    let invoice_line_by_invoice_id_loader = DataLoader::new(InvoiceLineByInvoiceIdLoader {
-        service_provider: service_provider.clone(),
-    });
-
-    let invoice_line_for_requisition_line = DataLoader::new(InvoiceLineForRequisitionLine {
-        service_provider: service_provider.clone(),
-    });
-
-    let invoice_line_stats_loader = DataLoader::new(InvoiceStatsLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let stock_line_by_item_id_and_store_id_loader =
-        DataLoader::new(StockLineByItemAndStoreIdLoader {
+    let item_loader = DataLoader::new(
+        ItemLoader {
             connection_manager: connection_manager.clone(),
-        });
+        },
+        async_std::task::spawn,
+    );
 
-    let stock_line_by_location_id_loader = DataLoader::new(StockLineByLocationIdLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let stock_line_by_id_loader = DataLoader::new(StockLineByIdLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let user_account_loader = DataLoader::new(UserAccountLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let name_by_id_loader = DataLoader::new(NameByIdLoader {
-        service_provider: service_provider.clone(),
-    });
-
-    let location_by_id_loader = DataLoader::new(LocationByIdLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let master_list_line_by_master_list_id = DataLoader::new(MasterListLineByMasterListId {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let stocktake_line_loader = DataLoader::new(StocktakeLineByStocktakeIdLoader {
-        connection_manager: connection_manager.clone(),
-    });
-
-    let requisitions_by_id_loader = DataLoader::new(RequisitionsByIdLoader {
-        service_provider: service_provider.clone(),
-    });
-
-    let requisition_line_by_requisition_id_loader =
-        DataLoader::new(RequisitionLinesByRequisitionIdLoader {
+    let store_by_id_loader = DataLoader::new(
+        StoreByIdLoader {
             service_provider: service_provider.clone(),
-        });
+        },
+        async_std::task::spawn,
+    );
 
-    let requisition_line_by_linked_requisition_line_id_loader =
-        DataLoader::new(LinkedRequisitionLineLoader {
+    let invoice_by_id_loader = DataLoader::new(
+        InvoiceByIdLoader {
             service_provider: service_provider.clone(),
-        });
+        },
+        async_std::task::spawn,
+    );
 
-    let item_stats_for_item_loader = DataLoader::new(ItemsStatsForItemLoader {
-        service_provider: service_provider.clone(),
-    });
-
-    let requisition_line_supply_status_loader =
-        DataLoader::new(RequisitionLineSupplyStatusLoader {
+    let invoice_by_requisition_id_loader = DataLoader::new(
+        InvoiceByRequisitionIdLoader {
             service_provider: service_provider.clone(),
-        });
+        },
+        async_std::task::spawn,
+    );
 
-    let requisition_lines_remaining_to_supply_loader =
-        DataLoader::new(RequisitionLinesRemainingToSupplyLoader {
+    let invoice_line_by_invoice_id_loader = DataLoader::new(
+        InvoiceLineByInvoiceIdLoader {
             service_provider: service_provider.clone(),
-        });
+        },
+        async_std::task::spawn,
+    );
+
+    let invoice_line_for_requisition_line = DataLoader::new(
+        InvoiceLineForRequisitionLine {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let invoice_line_stats_loader = DataLoader::new(
+        InvoiceStatsLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let stock_line_by_item_id_and_store_id_loader = DataLoader::new(
+        StockLineByItemAndStoreIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let stock_line_by_location_id_loader = DataLoader::new(
+        StockLineByLocationIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let stock_line_by_id_loader = DataLoader::new(
+        StockLineByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let user_account_loader = DataLoader::new(
+        UserAccountLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let name_by_id_loader = DataLoader::new(
+        NameByIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let location_by_id_loader = DataLoader::new(
+        LocationByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let master_list_line_by_master_list_id = DataLoader::new(
+        MasterListLineByMasterListId {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let stocktake_line_loader = DataLoader::new(
+        StocktakeLineByStocktakeIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let requisitions_by_id_loader = DataLoader::new(
+        RequisitionsByIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let requisition_line_by_requisition_id_loader = DataLoader::new(
+        RequisitionLinesByRequisitionIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let requisition_line_by_linked_requisition_line_id_loader = DataLoader::new(
+        LinkedRequisitionLineLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let item_stats_for_item_loader = DataLoader::new(
+        ItemsStatsForItemLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let requisition_line_supply_status_loader = DataLoader::new(
+        RequisitionLineSupplyStatusLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let requisition_lines_remaining_to_supply_loader = DataLoader::new(
+        RequisitionLinesRemainingToSupplyLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
 
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);

@@ -1074,7 +1074,7 @@ type NotEnoughStockForReduction implements InsertOutboundShipmentLineErrorInterf
 type NothingRemainingToSupply implements CreateRequisitionShipmentErrorInterface {
 	description: String!
 }
-type OtherPartyNotACustomerError implements UpdateErrorInterface & InsertErrorInterface {
+type OtherPartyNotACustomer implements UpdateErrorInterface & InsertErrorInterface {
 	description: String!
 	otherParty: NameNode!
 }

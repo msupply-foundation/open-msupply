@@ -20,7 +20,7 @@ serde = "1.0.126"
 serde_json = "1.0.66"
 
 [dev-dependencies]
-actix-rt = "1.1.1" # for Tokio 0.2
+actix-rt = "2.6.0"
 
 [features]
 default = ["sqlite"]

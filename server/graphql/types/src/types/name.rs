@@ -28,6 +28,14 @@ impl NameNode {
         self.name.is_supplier()
     }
 
+    pub async fn is_visible(&self) -> bool {
+        self.name.is_visible()
+    }
+
+    pub async fn is_system_name(&self) -> bool {
+        self.name.is_system_name()
+    }
+
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
         let store_id = match self.name.store_id() {
             Some(store_id) => store_id,

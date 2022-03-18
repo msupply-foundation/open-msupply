@@ -285,3 +285,29 @@ impl UniqueValueViolation {
         self.0
     }
 }
+
+pub struct OtherPartyNotASupplier;
+#[Object]
+impl OtherPartyNotASupplier {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not a supplier"
+    }
+}
+
+pub struct OtherPartyNotACustomer;
+
+#[Object]
+impl OtherPartyNotACustomer {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not a customer"
+    }
+}
+
+pub struct OtherPartyNotVisible;
+
+#[Object]
+impl OtherPartyNotVisible {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not visible in current store"
+    }
+}
