@@ -11,6 +11,7 @@ module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest-setup.ts'],
   moduleNameMapper: {
+    kbar: '<rootDir>/__mocks__/kbar.ts',
     // ref: https://react-hooks-testing-library.com/installation#being-specific
     // This mapping will ensure the correct renderHook is used in the test environment
     // as the import within `utils/testing` is for the specific dom version.
