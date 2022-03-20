@@ -6,6 +6,14 @@ pub fn get_default_gql_query(query: DefaultQuery) -> GraphQlQuery {
             query: INVOICE_QUERY.to_string(),
             variables: None,
         },
+        DefaultQuery::Stocktake => GraphQlQuery {
+            query: STOCKTAKE_QUERY.to_string(),
+            variables: None,
+        },
+        DefaultQuery::Requisition => GraphQlQuery {
+            query: REQUISITION_QUERY.to_string(),
+            variables: None,
+        },
     }
 }
 
@@ -102,3 +110,127 @@ query InvoiceQuery($storeId: String, $dataId: String) {
   }
 }
 "#;
+
+const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String) {
+  stocktake(storeId: $storeId, id: $dataId) {
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on StocktakeNode {
+      id
+      storeId
+      stocktakeNumber
+      stocktakeDate
+      status
+      comment
+      createdDatetime
+      description
+      finalisedDatetime
+      inventoryAdjustmentId
+      isLocked
+      inventoryAdjustment {
+        allocatedDatetime
+        colour
+        comment
+        createdDatetime
+        deliveredDatetime
+        id
+        invoiceNumber
+        onHold
+        otherPartyId
+        otherPartyName
+        pickedDatetime
+        shippedDatetime
+        status
+        theirReference
+        type
+        verifiedDatetime
+      }
+      lines {
+        totalCount
+        nodes {
+          batch
+          comment
+          costPricePerPack
+          countedNumberOfPacks
+          expiryDate
+          id
+          itemId
+          note
+          packSize
+          sellPricePerPack
+          snapshotNumberOfPacks
+          stocktakeId
+        }
+      }
+    }
+  }
+}"#;
+
+const REQUISITION_QUERY: &str = r#"query RequisitionQuery($storeId: String, $dataId: String) {
+  requisition(storeId: $storeId, id: $dataId) {
+    ... on RequisitionNode {
+      id
+      colour
+      comment
+      createdDatetime
+      finalisedDatetime
+      maxMonthsOfStock
+      minMonthsOfStock
+      otherPartyId
+      otherPartyName
+      requisitionNumber
+      sentDatetime
+      status
+      theirReference
+      type
+      shipments {
+        totalCount
+        nodes {
+          allocatedDatetime
+          colour
+          comment
+          createdDatetime
+          deliveredDatetime
+          id
+          invoiceNumber
+          onHold
+          otherPartyId
+          otherPartyName
+          pickedDatetime
+          shippedDatetime
+          status
+          theirReference
+          type
+          verifiedDatetime
+        }
+      }
+      requestRequisition {
+        colour
+        comment
+        createdDatetime
+        finalisedDatetime
+        id
+        maxMonthsOfStock
+        minMonthsOfStock
+        otherPartyId
+        otherPartyName
+        requisitionNumber
+        sentDatetime
+        status
+        theirReference
+        type
+        lines {
+          totalCount
+        }
+      }
+    }
+    ... on RecordNotFound {
+      __typename
+      description
+    }
+  }
+}"#;
