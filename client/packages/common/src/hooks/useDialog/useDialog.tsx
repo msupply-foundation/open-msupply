@@ -20,6 +20,7 @@ export interface ModalProps {
   nextButton?: React.ReactElement<{
     onClick: () => Promise<boolean>;
   }>;
+  slideAnimation?: boolean;
 
   okButton?: JSX.Element;
   width?: number;
@@ -91,15 +92,14 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     width,
     title,
     contentProps,
+    slideAnimation = true,
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
     const { slideConfig, onTriggerSlide } = useSlideAnimation(isRtl);
 
-    // TODO: If you want to disable the slide, add a prop `slidesOnNext` or something,
-    // with a default of true and check before doing all this.
     let WrappedNextButton: ModalProps['nextButton'] = undefined;
-    if (nextButton) {
+    if (slideAnimation && nextButton) {
       const { onClick, ...restOfNextButtonProps } = nextButton.props;
 
       // TODO: If you want to change the slide direction or other animation details, add a prop
@@ -127,9 +127,13 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           {...restOfContentProps}
           sx={{ overflowX: 'hidden', ...contentSX }}
         >
-          <Slide in={slideConfig.in} direction={slideConfig.direction}>
-            <div>{slideConfig.in && children}</div>
-          </Slide>
+          {slideAnimation ? (
+            <Slide in={slideConfig.in} direction={slideConfig.direction}>
+              <div>{slideConfig.in && children}</div>
+            </Slide>
+          ) : (
+            <div>{children}</div>
+          )}
         </DialogContent>
         <DialogActions
           sx={{

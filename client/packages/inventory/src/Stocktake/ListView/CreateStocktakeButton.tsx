@@ -13,11 +13,13 @@ export const CreateStocktakeButton: React.FC = () => {
 
   return (
     <>
-      <StockItemSelectModal
-        isOpen={modalController.isOn}
-        onChange={mutate}
-        onClose={modalController.toggleOff}
-      />
+      {modalController.isOn && (
+        <StockItemSelectModal
+          isOpen={modalController.isOn}
+          onChange={mutate}
+          onClose={modalController.toggleOff}
+        />
+      )}
       <ButtonWithIcon
         Icon={<PlusCircleIcon />}
         label={t('label.new-stocktake')}

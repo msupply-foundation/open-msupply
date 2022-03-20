@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { FC, useState } from 'react';
 import {
   BasicSpinner,
   Box,
@@ -7,6 +7,9 @@ import {
   AutocompleteList,
   Checkbox,
   TextField,
+  Typography,
+  AutocompleteRenderInputParams,
+  AutocompleteOptionRenderer,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useStockItemsWithStats } from '../../api';
@@ -19,6 +22,55 @@ interface StockItemSelectModalProps {
   onChange: (() => Promise<void>) | (() => void);
 }
 
+const renderOption: AutocompleteOptionRenderer<ItemRowWithStatsFragment> = (
+  props,
+  option,
+  { selected }
+): JSX.Element => (
+  <li {...props}>
+    <Checkbox checked={selected} />
+    <span
+      style={{
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
+        width: 100,
+      }}
+    >
+      {option.code}
+    </span>
+    <span
+      style={{
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+    >
+      {option.name}
+    </span>
+  </li>
+);
+
+const ItemInput: FC<AutocompleteRenderInputParams> = props => {
+  const { InputProps, ...rest } = props;
+  const { startAdornment, ...restInputProps } = InputProps ?? {};
+  const t = useTranslation('common');
+  const length =
+    startAdornment && startAdornment instanceof Array
+      ? startAdornment.length
+      : 0;
+  return (
+    <>
+      <Typography>{length} items selected</Typography>
+      <TextField
+        autoFocus
+        InputProps={restInputProps}
+        {...rest}
+        placeholder={t('placeholder.search-by-name-or-code')}
+      />
+    </>
+  );
+};
+
 export const StockItemSelectModal = ({
   extraFilter,
   isOpen,
@@ -29,9 +81,6 @@ export const StockItemSelectModal = ({
   const t = useTranslation('common');
   const { data, isLoading: loading } = useStockItemsWithStats();
   const [saving, setSaving] = useState(false);
-  // const options = data?.nodes
-  //   ? defaultOptionMapper<ItemRowFragment>(data?.nodes, 'name')
-  //   : [];
 
   const options = extraFilter
     ? data?.nodes?.filter(extraFilter) ?? []
@@ -39,6 +88,7 @@ export const StockItemSelectModal = ({
 
   return (
     <Modal
+      slideAnimation={false}
       title={t('heading.select-items')}
       width={650}
       height={600}
@@ -63,41 +113,14 @@ export const StockItemSelectModal = ({
           <AutocompleteList
             options={options}
             loading={loading}
-            height={400}
+            height={375}
             width={600}
             disableCloseOnSelect
             multiple
             getOptionLabel={option => option.name}
-            renderInput={params => (
-              <TextField
-                {...params}
-                placeholder={t('placeholder.search-by-name-or-code')}
-              />
-            )}
-            limitTags={3}
-            renderOption={(props, option, { selected }) => (
-              <li {...props}>
-                <Checkbox checked={selected} />
-                <span
-                  style={{
-                    fontWeight: 700,
-                    whiteSpace: 'nowrap',
-                    width: 100,
-                  }}
-                >
-                  {option.code}
-                </span>
-                <span
-                  style={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {option.name}
-                </span>
-              </li>
-            )}
+            renderInput={ItemInput}
+            limitTags={0}
+            renderOption={renderOption}
           />
         ) : (
           <Box sx={{ height: '100%' }}>
