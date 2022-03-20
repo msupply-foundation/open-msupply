@@ -4,6 +4,7 @@ use std::time::{Duration, SystemTime};
 
 use util::uuid::uuid;
 
+#[derive(Debug, PartialEq)]
 pub struct StaticFile {
     pub id: String,
     pub name: String,
@@ -17,11 +18,22 @@ const STATIC_FILE_DIR: &'static str = "static_files";
 /// by id within a certain time frame.
 ///
 /// Old files are deleted automatically.
-pub struct StaticFileService {}
+pub struct StaticFileService {
+    pub dir: String,
+    /// Time [s] for how long static files are kept before they are discarded
+    pub max_lifetime_millis: u64,
+}
 impl StaticFileService {
+    pub fn new() -> Self {
+        StaticFileService {
+            dir: STATIC_FILE_DIR.to_string(),
+            max_lifetime_millis: 60 * 60 * 1000, // 1 hours
+        }
+    }
+
     pub fn store_file(&self, file_name: &str, bytes: &[u8]) -> anyhow::Result<StaticFile> {
         let id = uuid();
-        let static_files = std::env::current_dir()?.join(STATIC_FILE_DIR);
+        let static_files = std::env::current_dir()?.join(&self.dir);
         std::fs::create_dir_all(&static_files)?;
         let file_path = static_files.join(format!("{}_{}", id, file_name));
         std::fs::write(&file_path, bytes).unwrap();
@@ -33,11 +45,10 @@ impl StaticFileService {
     }
 
     pub fn find_file(&self, id: &str) -> anyhow::Result<Option<StaticFile>> {
-        let file_dir = std::env::current_dir()?.join(STATIC_FILE_DIR);
+        let file_dir = std::env::current_dir()?.join(&self.dir);
         std::fs::create_dir_all(&file_dir).unwrap();
         // clean up the static file directory
-        let max_lifetime_sec = 60 * 60; // 1 hours
-        delete_old_files(&file_dir, max_lifetime_sec)?;
+        delete_old_files(&file_dir, self.max_lifetime_millis)?;
 
         let file_path = match find_file(id, &file_dir)? {
             Some(path) => path,
@@ -88,7 +99,7 @@ fn find_file(id: &str, file_dir: &PathBuf) -> Result<Option<PathBuf>, Error> {
     Ok(None)
 }
 
-fn delete_old_files(file_dir: &PathBuf, max_life_time_sec: u64) -> Result<(), Error> {
+fn delete_old_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Result<(), Error> {
     let paths = std::fs::read_dir(file_dir)?;
     for path in paths {
         let entry = path?;
@@ -102,7 +113,7 @@ fn delete_old_files(file_dir: &PathBuf, max_life_time_sec: u64) -> Result<(), Er
         if SystemTime::now()
             .duration_since(file_time)
             .unwrap_or(Duration::from_secs(0))
-            > Duration::from_secs(max_life_time_sec)
+            > Duration::from_millis(max_life_time_millis)
         {
             log::info!("Delete old static file: {:?}", entry_path);
             std::fs::remove_file(entry_path).unwrap_or_else(|err| {
@@ -113,4 +124,33 @@ fn delete_old_files(file_dir: &PathBuf, max_life_time_sec: u64) -> Result<(), Er
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use std::{fs, time::Duration};
+
+    use super::StaticFileService;
+
+    const TEST_DIR: &'static str = "test_static_files";
+
+    #[test]
+    fn test_static_file_storage() {
+        let mut service = StaticFileService::new();
+        service.dir = TEST_DIR.to_string();
+        service.max_lifetime_millis = 100;
+        let test_dir = std::env::current_dir().unwrap().join(TEST_DIR);
+        if fs::metadata(&test_dir).is_ok() {
+            fs::remove_dir_all(&test_dir).unwrap();
+        }
+
+        let file_in = service.store_file("test_file", "data".as_bytes()).unwrap();
+        let file_out = service.find_file(&file_in.id).unwrap().unwrap();
+        assert_eq!(file_in, file_out);
+
+        std::thread::sleep(Duration::from_millis(101));
+
+        assert!(service.find_file(&file_in.id).unwrap().is_none());
+        fs::remove_dir_all(&test_dir).unwrap();
+    }
 }
