@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { FC } from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -19,21 +19,14 @@ import {
   useResponseFields,
   useIsResponseDisabled,
   ResponseLineFragment,
+  useResponseLines,
 } from '../api';
 
-interface ToolbarProps {
-  filter: {
-    itemFilter: string;
-    setItemFilter: Dispatch<SetStateAction<string>>;
-  };
-}
-
-export const Toolbar = ({
-  filter: { itemFilter, setItemFilter },
-}: ToolbarProps) => {
+export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
   const isDisabled = useIsResponseDisabled();
+  const { itemFilter, setItemFilter } = useResponseLines();
   const { lines, otherParty, theirReference, update } = useResponseFields([
     'lines',
     'otherParty',
