@@ -89,7 +89,12 @@ export const useInsertStocktake = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const api = useStocktakeApi();
-  return useMutation(api.insertStocktake, {
+  return useMutation<
+    { __typename: 'StocktakeNode'; id: string; stocktakeNumber: number },
+    unknown,
+    string[] | undefined,
+    unknown
+  >((itemIds?: string[]) => api.insertStocktake(itemIds), {
     onSuccess: ({ stocktakeNumber }) => {
       navigate(String(stocktakeNumber));
       return queryClient.invalidateQueries(api.keys.base());

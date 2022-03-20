@@ -10,6 +10,7 @@ import {
   Typography,
   AutocompleteRenderInputParams,
   AutocompleteOptionRenderer,
+  AutocompleteOnChange,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useStockItemsWithStats } from '../../api';
@@ -19,7 +20,7 @@ interface StockItemSelectModalProps {
   extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
   isOpen: boolean;
   onClose: () => void;
-  onChange: (() => Promise<void>) | (() => void);
+  onChange: (itemIds?: string[]) => void;
 }
 
 const renderOption: AutocompleteOptionRenderer<ItemRowWithStatsFragment> = (
@@ -81,10 +82,19 @@ export const StockItemSelectModal = ({
   const t = useTranslation('common');
   const { data, isLoading: loading } = useStockItemsWithStats();
   const [saving, setSaving] = useState(false);
+  const [itemIds, setItemIds] = useState<string[]>([]);
 
   const options = extraFilter
     ? data?.nodes?.filter(extraFilter) ?? []
     : data?.nodes ?? [];
+
+  const onChangeItems: AutocompleteOnChange<
+    ItemRowWithStatsFragment | ItemRowWithStatsFragment[]
+  > = (_event, items) => {
+    if (items && items instanceof Array) {
+      setItemIds(items.map(item => item.id));
+    }
+  };
 
   return (
     <Modal
@@ -101,7 +111,7 @@ export const StockItemSelectModal = ({
           variant="ok"
           onClick={async () => {
             setSaving(true);
-            await onChange();
+            await onChange(itemIds);
             setSaving(false);
             onClose();
           }}
@@ -121,6 +131,7 @@ export const StockItemSelectModal = ({
             renderInput={ItemInput}
             limitTags={0}
             renderOption={renderOption}
+            onChange={onChangeItems}
           />
         ) : (
           <Box sx={{ height: '100%' }}>
