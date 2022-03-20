@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use repository::{
-    schema::report::{ReportCategory, ReportRow, ReportType},
+    schema::report::{ReportRow, ReportType},
     PaginationOption, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
     RepositoryError,
 };
@@ -15,9 +15,10 @@ use crate::{
 use super::{
     default_queries::get_default_gql_query,
     definition::{
-        DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportOutputType,
-        ReportRef, TeraTemplate,
+        DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
+        TeraTemplate,
     },
+    dummy_reports::insert_dummy_reports,
     html_printing::html_to_pdf,
 };
 
@@ -114,47 +115,9 @@ fn query_reports(
 ) -> Result<Vec<ReportRow>, ListError> {
     let repo = ReportRepository::new(&ctx.connection);
 
-    // TODO remove if reports are loaded:
+    // TODO remove when reports are loaded through other means:
     if repo.count(None)? == 0 {
-        // add some dummy report
-        let report_1 = ReportDefinition {
-            entries: HashMap::from([
-                (
-                    "template".to_string(),
-                    ReportDefinitionEntry::TeraTemplate(TeraTemplate {
-                        output: ReportOutputType::Html,
-                        template: "Dummy Invoice template, Invoice id: {{data.invoice.id}}"
-                            .to_string(),
-                    }),
-                ),
-                (
-                    "template_header".to_string(),
-                    ReportDefinitionEntry::TeraTemplate(TeraTemplate {
-                        output: ReportOutputType::Html,
-                        template: r#"<div style="font-size: 10px; padding-top: 8px; text-align: center; width: 100%;"><span>Some header here.</div>"#.to_string(),
-                    }),
-                ),
-                (
-                    "template_footer".to_string(),
-                    ReportDefinitionEntry::TeraTemplate(TeraTemplate {
-                        output: ReportOutputType::Html,
-                        template: r#"<div style="font-size: 10px; padding-top: 8px; text-align: center; width: 100%;"><span>Some footer here.</div>"#.to_string(),
-                    }),
-                ),
-                (
-                    "query".to_string(),
-                    ReportDefinitionEntry::DefaultQuery(DefaultQuery::Invoice),
-                ),
-            ]),
-        };
-        let row = ReportRow {
-            id: "dummy_report".to_string(),
-            name: "Dummy report".to_string(),
-            r#type: ReportType::OmReport,
-            data: serde_json::to_string(&report_1).unwrap(),
-            context: ReportCategory::Invoice,
-        };
-        ReportRowRepository::new(&ctx.connection).upsert_one(&row)?;
+        insert_dummy_reports(&ctx.connection)?;
     }
 
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;

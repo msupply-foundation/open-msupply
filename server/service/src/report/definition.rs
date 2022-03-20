@@ -33,6 +33,8 @@ impl GraphQlQuery {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum DefaultQuery {
     Invoice,
+    Stocktake,
+    Requisition,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
