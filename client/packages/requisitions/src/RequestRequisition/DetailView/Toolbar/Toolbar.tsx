@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { FC } from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
@@ -8,22 +8,18 @@ import {
   SearchBar,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
-import { useRequestFields, useIsRequestDisabled } from '../../api';
+import {
+  useRequestFields,
+  useIsRequestDisabled,
+  useRequestLines,
+} from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
 import { ToolbarActions } from './ToolbarActions';
 
-interface ToolbarProps {
-  filter: {
-    itemFilter: string;
-    setItemFilter: Dispatch<SetStateAction<string>>;
-  };
-}
-
-export const Toolbar = ({
-  filter: { itemFilter, setItemFilter },
-}: ToolbarProps) => {
+export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const isDisabled = useIsRequestDisabled();
+  const { itemFilter, setItemFilter } = useRequestLines();
   const { theirReference, update, otherParty } = useRequestFields([
     'theirReference',
     'otherParty',

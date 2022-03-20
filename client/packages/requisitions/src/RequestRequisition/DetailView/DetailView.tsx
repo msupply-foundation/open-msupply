@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -21,7 +21,6 @@ import { RequestLineEdit } from './RequestLineEdit';
 
 export const DetailView: FC = () => {
   const { data, isLoading } = useRequest();
-  const [itemFilter, setItemFilter] = useState<string>('');
   const { onOpen, onClose, mode, entity, isOpen } =
     useEditModal<ItemRowWithStatsFragment>();
   const isDisabled = useIsRequestDisabled();
@@ -43,11 +42,8 @@ export const DetailView: FC = () => {
         isDisabled={!data || isDisabled}
         onAddItem={() => onOpen(null)}
       />
-      <Toolbar filter={{ itemFilter, setItemFilter }} />
-      <ContentArea
-        onRowClick={!isDisabled ? onRowClick : null}
-        itemFilter={itemFilter}
-      />
+      <Toolbar />
+      <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
       <Footer />
       <SidePanel />
       {isOpen && (

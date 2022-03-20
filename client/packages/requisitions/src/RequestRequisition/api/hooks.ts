@@ -1,5 +1,5 @@
 import { isRequestDisabled } from './../../utils';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   zustand,
   useConfirmationModal,
@@ -19,6 +19,7 @@ import {
   useNotification,
   useTableStore,
   RequisitionNodeStatus,
+  RegexUtils,
 } from '@openmsupply-client/common';
 import { MasterListRowFragment } from '@openmsupply-client/system';
 import { getRequestQueries, ListParams } from './api';
@@ -128,13 +129,27 @@ export const useRequestFields = <
   );
 };
 
+export const useItemFilter = zustand<{
+  itemFilter: string;
+  setItemFilter: (itemFilter: string) => void;
+}>(set => ({
+  setItemFilter: (itemFilter: string) =>
+    set(state => ({ ...state, itemFilter })),
+  itemFilter: '',
+}));
+
 export const useRequestLines = () => {
   const { on } = useHideOverStocked();
+  const { itemFilter, setItemFilter } = useItemFilter();
   const { columns, onChangeSortBy, sortBy } = useRequestColumns();
   const { lines, minMonthsOfStock } = useRequestFields([
     'lines',
     'minMonthsOfStock',
   ]);
+
+  useEffect(() => {
+    setItemFilter('');
+  }, []);
 
   const sorted = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -149,14 +164,24 @@ export const useRequestLines = () => {
       return sorted.filter(
         item =>
           item.itemStats.availableStockOnHand <
-          item.itemStats.averageMonthlyConsumption * minMonthsOfStock
+            item.itemStats.averageMonthlyConsumption * minMonthsOfStock &&
+          RegexUtils.matchSubstring(itemFilter, item.item.name)
       );
     } else {
-      return sorted;
+      return sorted.filter(({ item: { name } }) =>
+        RegexUtils.matchSubstring(itemFilter, name)
+      );
     }
-  }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock]);
+  }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock, itemFilter]);
 
-  return { lines: sorted, sortBy, onChangeSortBy, columns };
+  return {
+    lines: sorted,
+    sortBy,
+    onChangeSortBy,
+    columns,
+    itemFilter,
+    setItemFilter,
+  };
 };
 
 export const useIsRequestDisabled = (): boolean => {

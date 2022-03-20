@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -27,7 +27,6 @@ export const DetailView: FC = () => {
   const { onOpen, onClose, entity, isOpen } =
     useEditModal<ResponseLineFragment>();
   const { data, isLoading } = useResponse();
-  const [itemFilter, setItemFilter] = useState<string>('');
   const navigate = useNavigate();
   const t = useTranslation('distribution');
 
@@ -43,11 +42,8 @@ export const DetailView: FC = () => {
   return !!data ? (
     <TableProvider createStore={createTableStore}>
       <AppBarButtons />
-      <Toolbar filter={{ itemFilter, setItemFilter }} />
-      <ContentArea
-        onRowClick={!isDisabled ? onRowClick : null}
-        itemFilter={itemFilter}
-      />
+      <Toolbar />
+      <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
       <Footer />
       <SidePanel />
       {entity && (
