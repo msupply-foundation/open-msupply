@@ -161,7 +161,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.upsertStocktakeLines(input);
     return result;
   },
-  insertStocktake: async () => {
+  insertStocktake: async (itemIds?: string[]) => {
     const result = await sdk.insertStocktake({
       input: {
         id: FnUtils.generateUUID(),
@@ -170,6 +170,17 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     });
     const { insertStocktake } = result;
     if (insertStocktake.__typename === 'StocktakeNode') {
+      if (itemIds) {
+        const insertStocktakeLines = itemIds.map(itemId => ({
+          id: FnUtils.generateUUID(),
+          stocktakeId: insertStocktake.id,
+          itemId,
+        }));
+        await sdk.upsertStocktakeLines({
+          storeId,
+          insertStocktakeLines,
+        });
+      }
       return insertStocktake;
     }
 
