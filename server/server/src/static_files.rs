@@ -22,7 +22,7 @@ async fn files(
     req: HttpRequest,
     query: web::Query<FileRequestQuery>,
 ) -> Result<HttpResponse, Error> {
-    let service = StaticFileService {};
+    let service = StaticFileService::new();
     let file = service
         .find_file(&query.id)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?

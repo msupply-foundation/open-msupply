@@ -39,8 +39,7 @@ pub async fn start_server(
         auth_token_secret: settings.auth.token_secret.to_owned(),
         token_bucket: RwLock::new(TokenBucket::new()),
         debug_no_ssl: matches!(cert_type, ServerCertType::None),
-        // TODO: disable once frontend supports auth!
-        debug_no_access_control: true,
+        debug_no_access_control: settings.server.debug_no_access_control,
     });
 
     let connection_manager = get_storage_connection_manager(&settings.database);
