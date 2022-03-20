@@ -98,7 +98,7 @@ describe('useFilterBy', () => {
     });
   });
 
-  it('updates string filters', () => {
+  it('clears string filters', () => {
     const { result } = renderHook(() =>
       useFilterBy({
         comment: { equalTo: 'a' },
@@ -111,7 +111,6 @@ describe('useFilterBy', () => {
     });
 
     expect(result.current.filterBy).toEqual({
-      comment: null,
       allocatedDatetime: { equalTo: '1/1/2020' },
     });
   });
