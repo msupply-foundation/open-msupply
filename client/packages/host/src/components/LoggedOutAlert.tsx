@@ -16,12 +16,12 @@ export const LoggedOutAlert = () => {
   const { isOn, toggleOff, toggleOn } = useToggle();
   const t = useTranslation('app');
   const location = useLocation();
-  const { user } = useAuthContext();
+  const { token } = useAuthContext();
 
   useEffect(() => {
-    if (!user) toggleOn();
+    if (!token) toggleOn();
     return () => toggleOff();
-  }, [user]);
+  }, [token]);
 
   // no need to alert if you are on the login screen!
   if (
