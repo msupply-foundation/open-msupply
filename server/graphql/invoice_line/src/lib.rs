@@ -89,6 +89,15 @@ impl InvoiceLineMutations {
         outbound_shipment_line::unallocated_line::delete(ctx, &store_id, input)
     }
 
+    async fn allocate_outbound_shipment_unallocated_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        line_id: String,
+    ) -> Result<outbound_shipment_line::unallocated_line::AllocateResponse> {
+        outbound_shipment_line::unallocated_line::allocate(ctx, &store_id, line_id)
+    }
+
     // Inbound
 
     async fn insert_inbound_shipment_line(
