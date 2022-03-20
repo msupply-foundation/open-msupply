@@ -17,3 +17,4 @@
 # directories used by the server at runtime
 plugins
 certs
+static_files
