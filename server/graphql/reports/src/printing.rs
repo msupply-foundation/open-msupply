@@ -120,7 +120,6 @@ enum FetchResult {
     Error(String),
 }
 
-/// Returns either the data or an query error string
 async fn fetch_data(
     ctx: &Context<'_>,
     query: GraphQlQuery,
