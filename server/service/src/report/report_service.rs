@@ -93,7 +93,7 @@ pub trait ReportServiceTrait: Sync + Send {
         let pdf = html_to_pdf(&document, &id)
             .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
 
-        let file_service = StaticFileService {};
+        let file_service = StaticFileService::new();
         let file = file_service
             .store_file(&format!("{}.pdf", report.name), &pdf)
             .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
