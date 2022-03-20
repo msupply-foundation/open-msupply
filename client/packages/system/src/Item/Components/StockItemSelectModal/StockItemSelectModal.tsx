@@ -61,7 +61,7 @@ const ItemInput: FC<AutocompleteRenderInputParams> = props => {
       : 0;
   return (
     <>
-      <Typography>{length} items selected</Typography>
+      <Typography>{t('label.items-selected', { count: length })}</Typography>
       <TextField
         autoFocus
         InputProps={restInputProps}
