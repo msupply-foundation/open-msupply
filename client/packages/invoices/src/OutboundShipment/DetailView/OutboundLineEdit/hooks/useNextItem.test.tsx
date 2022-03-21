@@ -205,11 +205,9 @@ describe('useNextItem', () => {
       wrapper: TestingProvider,
     });
 
-    return result.waitForNextUpdate().then(() => {
-      expect(result.result.current.next).toEqual(null);
-      expect(result.result.current).toEqual(
-        expect.objectContaining({ disabled: true })
-      );
-    });
+    expect(result.result.current.next).toEqual(null);
+    expect(result.result.current).toEqual(
+      expect.objectContaining({ disabled: true })
+    );
   });
 });
