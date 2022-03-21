@@ -68,23 +68,34 @@ impl RemotePullTranslation for StocktakeLineTranslation {
         } else {
             None
         };
+        let mut row = StocktakeLineRow {
+            id: data.ID,
+            stocktake_id: data.stock_take_ID,
+            stock_line_id: data.item_line_ID,
+            location_id: data.location_id,
+            comment: data.comment,
+            snapshot_number_of_packs: data.snapshot_qty,
+            counted_number_of_packs,
+            item_id: data.item_ID,
+            batch: data.Batch,
+            expiry_date: data.expiry,
+            pack_size: Some(data.snapshot_packsize),
+            cost_price_per_pack: Some(data.cost_price),
+            sell_price_per_pack: Some(data.sell_price),
+            note: None,
+        };
+        // the following lines are from stock_line, manually unset when stock_line is None
+        // (because they are otherwise set to Some(0.0)
+        if row.stock_line_id.is_none() {
+            row.batch = None;
+            row.expiry_date = None;
+            row.pack_size = None;
+            row.cost_price_per_pack = None;
+            row.sell_price_per_pack = None;
+            row.note = None;
+        }
         Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::StocktakeLine(StocktakeLineRow {
-                id: data.ID,
-                stocktake_id: data.stock_take_ID,
-                stock_line_id: data.item_line_ID,
-                location_id: data.location_id,
-                comment: data.comment,
-                snapshot_number_of_packs: data.snapshot_qty,
-                counted_number_of_packs,
-                item_id: data.item_ID,
-                batch: data.Batch,
-                expiry_date: data.expiry,
-                pack_size: Some(data.snapshot_packsize),
-                cost_price_per_pack: Some(data.cost_price),
-                sell_price_per_pack: Some(data.sell_price),
-                note: None,
-            }),
+            IntegrationUpsertRecord::StocktakeLine(row),
         )))
     }
 }
