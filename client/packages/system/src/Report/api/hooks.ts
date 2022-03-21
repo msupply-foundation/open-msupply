@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
 import { getReportQueries, ReportListParams } from './api';
-import { Environment } from 'packages/config/src';
+import { Environment } from '@openmsupply-client/config';
 
 const useReportApi = () => {
   const keys = {
