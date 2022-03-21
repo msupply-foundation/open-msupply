@@ -16,8 +16,8 @@ use super::{
 pub struct Synchroniser {
     settings: SyncSettings,
     connection_manager: StorageConnectionManager,
-    central_data: CentralDataSynchroniser,
-    remote_data: RemoteDataSynchroniser,
+    pub(crate) central_data: CentralDataSynchroniser,
+    pub(crate) remote_data: RemoteDataSynchroniser,
 }
 
 /// There are three types of data that is synced between the central server and the remote server:

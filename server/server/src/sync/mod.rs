@@ -8,6 +8,9 @@ mod synchroniser;
 mod translation_central;
 mod translation_remote;
 
+#[cfg(test)]
+mod remote_sync_integration_test;
+
 pub use actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor};
 use repository::RepositoryError;
 pub use sync_api_credentials::SyncCredentials;
