@@ -1,11 +1,13 @@
 #[cfg(test)]
 mod remote_sync_integration_tests {
+    use chrono::NaiveDate;
     use rand::{thread_rng, Rng};
     use repository::{
         mock::MockDataInserts,
-        schema::{NumberRow, NumberRowType},
+        schema::{NumberRow, NumberRowType, StockLineRow},
         test_db::setup_all,
-        NumberRowRepository, StorageConnection,
+        EqualFilter, ItemFilter, ItemQueryRepository, NumberRowRepository, StockLineRowRepository,
+        StorageConnection,
     };
     use util::{inline_edit, uuid::uuid};
 
@@ -31,9 +33,9 @@ mod remote_sync_integration_tests {
         /// inserts new row(s)
         fn insert(&self, connection: &StorageConnection, store_id: &str) -> T;
         /// mutates existing row(s) locally
-        fn mutate(&self, connection: &StorageConnection, row: &T) -> T;
+        fn mutate(&self, connection: &StorageConnection, rows: &T) -> T;
         /// validates that the expected row(s) are in the local DB
-        fn validate(&self, connection: &StorageConnection, row: &T);
+        fn validate(&self, connection: &StorageConnection, rows: &T);
     }
 
     fn gen_i64() -> i64 {
@@ -149,6 +151,82 @@ mod remote_sync_integration_tests {
         }
     }
 
+    struct StockLineRecordTester {}
+    impl SyncRecordTester<Vec<StockLineRow>> for StockLineRecordTester {
+        fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<StockLineRow> {
+            let item = ItemQueryRepository::new(connection)
+                .query_one(ItemFilter::new())
+                .unwrap()
+                .unwrap();
+            let rows = vec![StockLineRow {
+                id: uuid(),
+                item_id: item.item_row.id,
+                store_id: store_id.to_string(),
+                // TODO test location?
+                location_id: None,
+                batch: Some("some remote sync test batch".to_string()),
+                pack_size: 5,
+                cost_price_per_pack: 10.0,
+                sell_price_per_pack: 15.0,
+                available_number_of_packs: 100,
+                total_number_of_packs: 150,
+                expiry_date: Some(NaiveDate::from_ymd(2021, 03, 21)),
+                on_hold: true,
+                note: Some("some remote sync test note".to_string()),
+            }];
+            let repo = StockLineRowRepository::new(connection);
+            for row in &rows {
+                repo.upsert_one(row).unwrap();
+            }
+            rows
+        }
+
+        fn mutate(
+            &self,
+            connection: &StorageConnection,
+            rows: &Vec<StockLineRow>,
+        ) -> Vec<StockLineRow> {
+            let repo = StockLineRowRepository::new(&connection);
+            let rows = rows
+                .iter()
+                .map(|row| {
+                    let new_item = ItemQueryRepository::new(connection)
+                        .query_one(ItemFilter::new().id(EqualFilter::not_equal_to(&row.item_id)))
+                        .unwrap()
+                        .unwrap();
+
+                    let row = inline_edit(row, |mut d| {
+                        d.item_id = new_item.item_row.id;
+                        // TODO test location?
+                        d.batch = Some("some remote sync test batch 2".to_string());
+                        d.pack_size = 10;
+                        d.cost_price_per_pack = 15.0;
+                        d.sell_price_per_pack = 20.0;
+                        d.available_number_of_packs = 110;
+                        d.total_number_of_packs = 160;
+                        d.expiry_date = Some(NaiveDate::from_ymd(2021, 03, 22));
+                        d.on_hold = false;
+                        d.note = Some("some remote sync test note 2".to_string());
+                        d
+                    });
+                    repo.upsert_one(&row).unwrap();
+                    row
+                })
+                .collect();
+            rows
+        }
+
+        fn validate(&self, connection: &StorageConnection, rows: &Vec<StockLineRow>) {
+            for row_expected in rows {
+                let repo = StockLineRowRepository::new(&connection);
+                let row = repo
+                    .find_one_by_id(&row_expected.id)
+                    .expect(&format!("Stock line row not found: {:?} ", row_expected));
+                assert_eq!(row_expected, &row);
+            }
+        }
+    }
+
     async fn test_sync_record<T>(
         store_id: &str,
         sync_settings: &SyncSettings,
@@ -214,5 +292,9 @@ mod remote_sync_integration_tests {
         // numbers
         let number_tester = NumberSyncRecordTester {};
         test_sync_record(store_id, &sync_settings, &number_tester).await;
+
+        // stock line
+        let stock_line_tester = StockLineRecordTester {};
+        test_sync_record(store_id, &sync_settings, &stock_line_tester).await;
     }
 }
