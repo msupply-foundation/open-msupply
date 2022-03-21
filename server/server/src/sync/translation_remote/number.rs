@@ -113,6 +113,9 @@ fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
         "customer_invoice_number" => NumberRowType::OutboundShipment,
         // NumberRowType::RequestRequisition ?,
         // "purchase_order_number" => ,
+        // new for omSupply
+        "request_requisition" => NumberRowType::RequestRequisition,
+        "response_requisition" => NumberRowType::ResponseRequisition,
         _ => return None,
     };
     let store = split.next()?.to_string();
@@ -125,8 +128,9 @@ fn to_number_name(number_type: &NumberRowType, store_id: &str) -> Option<String>
         NumberRowType::OutboundShipment => "customer_invoice_number",
         NumberRowType::InventoryAdjustment => "inventory_adjustment_serial_number",
         NumberRowType::Stocktake => "stock_take_number",
-        NumberRowType::RequestRequisition => return None,
-        NumberRowType::ResponseRequisition => return None,
+        // new for omSupply
+        NumberRowType::RequestRequisition => "request_requisition",
+        NumberRowType::ResponseRequisition => "response_requisition",
     };
     Some(format!("{}_for_store_{}", number_str, store_id))
 }
