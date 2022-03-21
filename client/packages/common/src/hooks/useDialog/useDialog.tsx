@@ -99,17 +99,19 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     const { slideConfig, onTriggerSlide } = useSlideAnimation(isRtl);
 
     let WrappedNextButton: ModalProps['nextButton'] = undefined;
-    if (slideAnimation && nextButton) {
+    if (nextButton) {
       const { onClick, ...restOfNextButtonProps } = nextButton.props;
 
       // TODO: If you want to change the slide direction or other animation details, add a prop
       // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
       WrappedNextButton = React.cloneElement(nextButton, {
-        onClick: async () => {
-          const result = await onClick();
-          if (!!result) onTriggerSlide();
-          return result;
-        },
+        onClick: slideAnimation
+          ? async () => {
+              const result = await onClick();
+              if (!!result) onTriggerSlide();
+              return result;
+            }
+          : onClick,
         ...restOfNextButtonProps,
       });
     }
