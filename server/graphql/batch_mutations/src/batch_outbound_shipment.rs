@@ -59,6 +59,10 @@ use crate::{to_standard_error, VecOrNone};
     name = "DeleteOutboundShipmentUnallocatedLineResponseWithId",
     params(outbound_shipment_line::unallocated_line::DeleteResponse)
 ))]
+#[graphql(concrete(
+    name = "AllocateOutboundShipmentUnallocatedLineResponseWithId",
+    params(outbound_shipment_line::unallocated_line::AllocateResponse)
+))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
@@ -86,6 +90,8 @@ type UpdateUnallocatedLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::UpdateResponse>>>;
 type DeleteUnallocatedLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::DeleteResponse>>>;
+type AllocateLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::AllocateResponse>>>;
 type UpdateShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::UpdateResponse>>>;
 type DeleteShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::DeleteResponse>>>;
 
@@ -102,6 +108,7 @@ pub struct BatchResponse {
     insert_outbound_shipment_unallocated_lines: InsertUnallocatedLinesResponse,
     update_outbound_shipment_unallocated_lines: UpdateUnallocatedLinesResponse,
     delete_outbound_shipment_unallocated_lines: DeleteUnallocatedLinesResponse,
+    allocate_outbound_shipment_unallocated_lines: AllocateLinesResponse,
     update_outbound_shipments: UpdateShipmentsResponse,
     delete_outbound_shipments: DeleteShipmentsResponse,
 }
@@ -125,6 +132,7 @@ pub struct BatchInput {
         Option<Vec<outbound_shipment_line::unallocated_line::UpdateInput>>,
     pub delete_outbound_shipment_unallocated_lines:
         Option<Vec<outbound_shipment_line::unallocated_line::DeleteInput>>,
+    pub allocated_outbound_shipment_unallocated_lines: Option<Vec<String>>,
     pub update_outbound_shipments: Option<Vec<outbound_shipment::UpdateInput>>,
     pub delete_outbound_shipments: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
@@ -168,6 +176,7 @@ impl BatchInput {
             insert_outbound_shipment_unallocated_lines,
             update_outbound_shipment_unallocated_lines,
             delete_outbound_shipment_unallocated_lines,
+            allocated_outbound_shipment_unallocated_lines,
         } = self;
 
         ServiceInput {
@@ -191,7 +200,7 @@ impl BatchInput {
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             delete_unallocated_line: delete_outbound_shipment_unallocated_lines
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
-
+            allocate_line: allocated_outbound_shipment_unallocated_lines,
             update_shipment: update_outbound_shipments
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             delete_shipment: delete_outbound_shipments,
@@ -215,6 +224,7 @@ impl BatchResponse {
             insert_unallocated_line,
             update_unallocated_line,
             delete_unallocated_line,
+            allocate_line,
         }: ServiceResult,
     ) -> Result<BatchResponse> {
         let result = BatchResponse {
@@ -234,6 +244,7 @@ impl BatchResponse {
             delete_outbound_shipment_unallocated_lines: map_delete_unallocated_lines(
                 delete_unallocated_line,
             )?,
+            allocate_outbound_shipment_unallocated_lines: map_allocate_lines(allocate_line)?,
             update_outbound_shipments: map_update_shipments(update_shipment)?,
             delete_outbound_shipments: map_delete_shipments(delete_shipment)?,
         };
@@ -473,6 +484,26 @@ fn map_delete_unallocated_lines(
     Ok(result.vec_or_none())
 }
 
+fn map_allocate_lines(responses: AllocateLinesResult) -> Result<AllocateLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::unallocated_line::allocate::map_response(response.result)
+            {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
+}
+
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
@@ -504,6 +535,7 @@ mod test {
                 UpdateOutboundShipmentServiceLineError,
             },
             outbound_shipment_unallocated_line::{
+                AllocateOutboundShipmentUnallocatedLineError,
                 DeleteOutboundShipmentUnallocatedLine, DeleteOutboundShipmentUnallocatedLineError,
                 InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
                 UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
@@ -670,7 +702,16 @@ mod test {
                 }
                 id
               }
-
+              allocateOutboundShipmentUnallocatedLines {
+                response {
+                  ... on AllocateOutboundShipmentUnallocatedLineError {
+                    error {
+                      __typename
+                    }
+                  }
+                }
+                id
+              }
               updateOutboundShipments {
                 id
                 response {
@@ -801,7 +842,7 @@ mod test {
                   }
                 }
               ],
-              "updateOutboundShipments": [
+              "allocateOutboundShipmentUnallocatedLines": [
                 {
                   "id": "id11",
                   "response": {
@@ -811,9 +852,19 @@ mod test {
                   }
                 }
               ],
-              "deleteOutboundShipments": [
+              "updateOutboundShipments": [
                 {
                   "id": "id12",
+                  "response": {
+                    "error": {
+                      "__typename": "RecordNotFound"
+                    }
+                  }
+                }
+              ],
+              "deleteOutboundShipments": [
+                {
+                  "id": "id13",
                   "response": {
                     "error": {
                       "__typename": "RecordNotFound"
@@ -896,15 +947,19 @@ mod test {
                     }),
                     result: Err(DeleteOutboundShipmentUnallocatedLineError::LineDoesNotExist {}),
                 }],
+                allocate_line: vec![InputWithResult {
+                    input: "id11".to_string(),
+                    result: Err(AllocateOutboundShipmentUnallocatedLineError::LineDoesNotExist {}),
+                }],
 
                 update_shipment: vec![InputWithResult {
                     input: inline_init(|input: &mut UpdateOutboundShipment| {
-                        input.id = "id11".to_string()
+                        input.id = "id12".to_string()
                     }),
                     result: Err(UpdateOutboundShipmentError::InvoiceDoesNotExists {}),
                 }],
                 delete_shipment: vec![InputWithResult {
-                    input: "id12".to_string(),
+                    input: "id13".to_string(),
                     result: Err(DeleteOutboundShipmentError::InvoiceDoesNotExist {}),
                 }],
             })
@@ -946,6 +1001,7 @@ mod test {
                 insert_unallocated_line: vec![],
                 update_unallocated_line: vec![],
                 delete_unallocated_line: vec![],
+                allocate_line: vec![],
             })
         }));
         let expected_message = "Bad user input";
@@ -972,6 +1028,7 @@ mod test {
               "insertOutboundShipmentUnallocatedLines": null,
               "updateOutboundShipmentUnallocatedLines":  null,
               "deleteOutboundShipmentUnallocatedLines": null,
+              "allocateOutboundShipmentUnallocatedLines": null,
               "insertOutboundShipments": null,
               "updateOutboundShipmentLines": [
                 {
@@ -1007,6 +1064,7 @@ mod test {
                 insert_unallocated_line: vec![],
                 update_unallocated_line: vec![],
                 delete_unallocated_line: vec![],
+                allocate_line: vec![],
             })
         }));
 
