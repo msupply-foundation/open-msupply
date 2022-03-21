@@ -25,8 +25,11 @@ export const MasterListSearchModal: FC<MasterListSearchProps> = ({
       onClose={onClose}
       title={t('master-lists')}
       optionKey="name"
-      onChange={(_, masterList: MasterListRowFragment | null) => {
-        if (masterList) onChange(masterList);
+      onChange={(
+        _,
+        masterList: MasterListRowFragment | MasterListRowFragment[] | null
+      ) => {
+        if (masterList && !(masterList instanceof Array)) onChange(masterList);
       }}
     />
   );

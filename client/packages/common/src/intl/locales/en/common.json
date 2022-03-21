@@ -66,6 +66,7 @@
   "heading.edit-item": "Edit Item",
   "heading.expiring-stock": "Expiring Stock",
   "heading.order": "Order",
+  "heading.select-items": "Select Items",
   "heading.settings": "Settings",
   "heading.shipments-to-be-picked": "Shipments to be picked",
   "label.already-issued": "Issued",
@@ -109,6 +110,8 @@
   "label.invoice-number": "Invnum",
   "label.issue": "Issue",
   "label.item": "Item",
+  "label.items-selected_one": "{{count}} item selected",
+  "label.items-selected_other": "{{count}} items selected",
   "label.delete": "Delete",
   "messages.delete-this-line": "Delete this line",
   "label.line": "Line {{line, number}}",
@@ -160,6 +163,7 @@
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",
   "messages.this-batch-has-expired": "This batch has expired.",
+  "placeholder.filter-items": "Filter items",
   "placeholder.search-by-name": "Search by name",
-  "placeholder.filter-items": "Filter items"
+  "placeholder.search-by-name-or-code": "Search by name or code"
 }
