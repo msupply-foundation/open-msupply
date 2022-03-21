@@ -209,7 +209,7 @@ mod test {
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "allocate_unallocated_line_partial_allocate",
+            "allocate_unallocated_line_partial_allocate_and_fefo",
             MockDataInserts::none().stores().items().names().units(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
