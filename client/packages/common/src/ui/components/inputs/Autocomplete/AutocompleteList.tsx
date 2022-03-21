@@ -27,6 +27,8 @@ export type AutocompleteListProps<T> = {
   multiple?: boolean;
   getOptionLabel?: (option: T) => string;
   limitTags?: number;
+  inputValue?: string;
+  clearText?: string;
 };
 
 export const AutocompleteList = <T,>({
@@ -45,6 +47,8 @@ export const AutocompleteList = <T,>({
   multiple,
   getOptionLabel,
   limitTags,
+  inputValue,
+  clearText,
 }: AutocompleteListProps<T>): JSX.Element => {
   const filterOptions = createFilterOptions(filterOptionConfig);
 
@@ -104,6 +108,8 @@ export const AutocompleteList = <T,>({
       multiple={multiple}
       getOptionLabel={getOptionLabel}
       limitTags={limitTags}
+      inputValue={inputValue}
+      clearText={clearText}
     />
   );
 };

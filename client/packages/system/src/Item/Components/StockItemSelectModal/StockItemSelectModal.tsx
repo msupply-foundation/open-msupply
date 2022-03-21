@@ -51,27 +51,6 @@ const renderOption: AutocompleteOptionRenderer<ItemRowWithStatsFragment> = (
   </li>
 );
 
-const ItemInput: FC<AutocompleteRenderInputParams> = props => {
-  const { InputProps, ...rest } = props;
-  const { startAdornment, ...restInputProps } = InputProps ?? {};
-  const t = useTranslation('common');
-  const length =
-    startAdornment && startAdornment instanceof Array
-      ? startAdornment.length
-      : 0;
-  return (
-    <>
-      <Typography>{t('label.items-selected', { count: length })}</Typography>
-      <TextField
-        autoFocus
-        InputProps={restInputProps}
-        {...rest}
-        placeholder={t('placeholder.search-by-name-or-code')}
-      />
-    </>
-  );
-};
-
 export const StockItemSelectModal = ({
   extraFilter,
   isOpen,
@@ -79,10 +58,11 @@ export const StockItemSelectModal = ({
   onClose,
 }: StockItemSelectModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation('common');
+  const t = useTranslation('inventory');
   const { data, isLoading: loading } = useStockItemsWithStats();
   const [saving, setSaving] = useState(false);
   const [itemIds, setItemIds] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState('');
 
   const options = extraFilter
     ? data?.nodes?.filter(extraFilter) ?? []
@@ -94,6 +74,29 @@ export const StockItemSelectModal = ({
     if (items && items instanceof Array) {
       setItemIds(items.map(item => item.id));
     }
+  };
+
+  const ItemInput: FC<AutocompleteRenderInputParams> = props => {
+    const { InputProps, ...rest } = props;
+    const { startAdornment, ...restInputProps } = InputProps ?? {};
+    const t = useTranslation('common');
+    const length =
+      startAdornment && startAdornment instanceof Array
+        ? startAdornment.length
+        : 0;
+
+    return (
+      <>
+        <Typography>{t('label.items-selected', { count: length })}</Typography>
+        <TextField
+          autoFocus
+          InputProps={restInputProps}
+          {...rest}
+          placeholder={t('placeholder.search-by-name-or-code')}
+          onChange={e => setInputValue(e.target.value)}
+        />
+      </>
+    );
   };
 
   return (
@@ -132,6 +135,8 @@ export const StockItemSelectModal = ({
             limitTags={0}
             renderOption={renderOption}
             onChange={onChangeItems}
+            inputValue={inputValue}
+            clearText={t('label.clear-selection')}
           />
         ) : (
           <Box sx={{ height: '100%' }}>
