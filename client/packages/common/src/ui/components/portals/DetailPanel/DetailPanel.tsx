@@ -112,7 +112,7 @@ export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
             />
           </Box>
         </Grid>
-        <Grid item flex={1}>
+        <Grid item flex={1} style={{ overflowY: 'scroll' }}>
           <Divider />
           {children}
         </Grid>
