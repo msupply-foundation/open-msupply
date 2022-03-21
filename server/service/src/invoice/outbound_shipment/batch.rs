@@ -18,10 +18,11 @@ use crate::{
         outbound_shipment_unallocated_line::{
             allocate_outbound_shipment_unallocated_line, delete_outbound_shipment_unallocated_line,
             insert_outbound_shipment_unallocated_line, update_outbound_shipment_unallocated_line,
-            AllocateOutboundShipmentUnallocatedLineError, DeleteOutboundShipmentUnallocatedLine,
+            AllocateOutboundShipmentUnallocatedLineError,
+            AllocateOutboundShipmentUnallocatedLineResult, DeleteOutboundShipmentUnallocatedLine,
             DeleteOutboundShipmentUnallocatedLineError, InsertOutboundShipmentUnallocatedLine,
-            InsertOutboundShipmentUnallocatedLineError, InvoiceLineInsertsUpdatesDeletes,
-            UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
+            InsertOutboundShipmentUnallocatedLineError, UpdateOutboundShipmentUnallocatedLine,
+            UpdateOutboundShipmentUnallocatedLineError,
         },
     },
     service_provider::ServiceContext,
@@ -108,7 +109,10 @@ pub type DeleteUnallocatedLinesResult = Vec<
 pub type AllocateLinesResult = Vec<
     InputWithResult<
         String,
-        Result<InvoiceLineInsertsUpdatesDeletes, AllocateOutboundShipmentUnallocatedLineError>,
+        Result<
+            AllocateOutboundShipmentUnallocatedLineResult,
+            AllocateOutboundShipmentUnallocatedLineError,
+        >,
     >,
 >;
 pub type UpdateShipmentsResult =
