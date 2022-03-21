@@ -11,6 +11,7 @@ import {
   useTranslation,
   useNotification,
   useTableStore,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -18,12 +19,14 @@ import {
   useResponseFields,
   useIsResponseDisabled,
   ResponseLineFragment,
+  useResponseLines,
 } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const { success, info } = useNotification();
   const isDisabled = useIsResponseDisabled();
+  const { itemFilter, setItemFilter } = useResponseLines();
   const { lines, otherParty, theirReference, update } = useResponseFields([
     'lines',
     'otherParty',
@@ -55,6 +58,7 @@ export const Toolbar: FC = () => {
         display="flex"
         flex={1}
         alignItems="flex-end"
+        gap={1}
       >
         <Grid item display="flex" flex={1}>
           <Box display="flex" flexDirection="row" gap={4}>
@@ -88,6 +92,14 @@ export const Toolbar: FC = () => {
             </Box>
           </Box>
         </Grid>
+        <SearchBar
+          placeholder={t('placeholder.filter-items')}
+          value={itemFilter}
+          onChange={newValue => {
+            setItemFilter(newValue);
+          }}
+          debounceTime={0}
+        />
         <DropdownMenu disabled={isDisabled} label={t('label.select')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
             {t('button.delete-lines', { ns: 'distribution' })}
