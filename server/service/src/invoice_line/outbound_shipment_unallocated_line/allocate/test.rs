@@ -182,7 +182,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 3;
                 r.available_number_of_packs = 10;
-                r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01))
+                r.expiry_date = Some(NaiveDate::from_ymd(3021, 01, 01))
             })
         }
 
@@ -193,7 +193,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 3;
                 r.available_number_of_packs = 2;
-                r.expiry_date = Some(NaiveDate::from_ymd(2021, 02, 01))
+                r.expiry_date = Some(NaiveDate::from_ymd(3021, 02, 01))
             })
         }
 
