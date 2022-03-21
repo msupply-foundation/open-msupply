@@ -163,6 +163,7 @@
   "link.copy-to-clipboard": "Copy to Clipboard",
   "link.history": "History",
   "messages.this-batch-has-expired": "This batch has expired.",
+  "placeholder.filter-items": "Filter items",
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code"
 }
