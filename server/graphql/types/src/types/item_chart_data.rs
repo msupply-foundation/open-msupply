@@ -5,6 +5,7 @@ use chrono::NaiveDate;
 pub struct ConsumptionHistoryNode {
     pub consumption: u32,
     pub amc: f64,
+    pub is_historic: bool,
     pub date: NaiveDate,
 }
 
@@ -16,8 +17,10 @@ pub struct ConsumptionHistoryConnector {
 
 #[derive(SimpleObject, Clone)]
 pub struct StockEvolutionNode {
-    pub projected_stock_on_hand: Option<u32>,
-    pub historic_stock_on_hand: Option<u32>,
+    pub stock_on_hand: u32,
+    pub is_historic: bool,
+    pub max: u32,
+    pub min: u32,
     pub date: NaiveDate,
 }
 
@@ -50,61 +53,73 @@ impl Default for ItemChartDataNode {
         let mut consumption_history = vec![
             ConsumptionHistoryNode {
                 consumption: 100,
+                is_historic: false,
                 amc: 100.0,
                 date: NaiveDate::from_ymd(2022, 02, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 90,
+                is_historic: true,
                 amc: 95.0,
                 date: NaiveDate::from_ymd(2022, 01, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 85,
+                is_historic: true,
                 amc: 92.0,
                 date: NaiveDate::from_ymd(2021, 12, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 110,
+                is_historic: true,
                 amc: 95.0,
                 date: NaiveDate::from_ymd(2021, 11, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 130,
+                is_historic: true,
                 amc: 110.0,
                 date: NaiveDate::from_ymd(2021, 10, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 70,
+                is_historic: true,
                 amc: 80.0,
                 date: NaiveDate::from_ymd(2021, 09, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 80,
+                is_historic: true,
                 amc: 85.0,
                 date: NaiveDate::from_ymd(2021, 08, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 85,
+                is_historic: true,
                 amc: 85.0,
                 date: NaiveDate::from_ymd(2021, 07, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 100,
+                is_historic: true,
                 amc: 90.0,
                 date: NaiveDate::from_ymd(2021, 06, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 75,
+                is_historic: true,
                 amc: 80.0,
                 date: NaiveDate::from_ymd(2021, 05, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 60,
+                is_historic: true,
                 amc: 65.0,
                 date: NaiveDate::from_ymd(2021, 04, 01),
             },
             ConsumptionHistoryNode {
                 consumption: 80,
+                is_historic: true,
                 amc: 75.0,
                 date: NaiveDate::from_ymd(2021, 03, 01),
             },
@@ -113,206 +128,286 @@ impl Default for ItemChartDataNode {
         let mut stock_evolution = vec![
             // After receiving
             StockEvolutionNode {
-                projected_stock_on_hand: Some(180),
-                historic_stock_on_hand: None,
+                stock_on_hand: 180,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 11),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(177),
-                historic_stock_on_hand: None,
+                stock_on_hand: 177,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 12),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(174),
-                historic_stock_on_hand: None,
+                stock_on_hand: 174,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 13),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(171),
-                historic_stock_on_hand: None,
+                stock_on_hand: 171,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 14),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(168),
-                historic_stock_on_hand: None,
+                stock_on_hand: 168,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 15),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(165),
-                historic_stock_on_hand: None,
+                stock_on_hand: 165,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 16),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(162),
-                historic_stock_on_hand: None,
+                stock_on_hand: 162,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 17),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(159),
-                historic_stock_on_hand: None,
+                stock_on_hand: 159,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 18),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(156),
-                historic_stock_on_hand: None,
+                stock_on_hand: 156,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 19),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(153),
-                historic_stock_on_hand: None,
+                stock_on_hand: 153,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 20),
             },
             // Before receiving
             StockEvolutionNode {
-                projected_stock_on_hand: Some(20),
-                historic_stock_on_hand: None,
+                stock_on_hand: 20,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 02),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(17),
-                historic_stock_on_hand: None,
+                stock_on_hand: 17,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 03),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(14),
-                historic_stock_on_hand: None,
+                stock_on_hand: 14,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 04),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(11),
-                historic_stock_on_hand: None,
+                stock_on_hand: 11,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 05),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(8),
-                historic_stock_on_hand: None,
+                stock_on_hand: 8,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 06),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(5),
-                historic_stock_on_hand: None,
+                stock_on_hand: 5,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 07),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(2),
-                historic_stock_on_hand: None,
+                stock_on_hand: 2,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 08),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(0),
-                historic_stock_on_hand: None,
+                stock_on_hand: 0,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 09),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: Some(0),
-                historic_stock_on_hand: None,
+                stock_on_hand: 0,
+                is_historic: true,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 02, 10),
             },
             // Historic after receiving
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(24),
+                stock_on_hand: 24,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 31),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(29),
+                stock_on_hand: 29,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 30),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(30),
+                stock_on_hand: 30,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 29),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(32),
+                stock_on_hand: 32,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 28),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(37),
+                stock_on_hand: 37,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 27),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(39),
+                stock_on_hand: 39,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 26),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(39),
+                stock_on_hand: 39,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 25),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(40),
+                stock_on_hand: 40,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 24),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(45),
+                stock_on_hand: 45,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 23),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(46),
+                stock_on_hand: 46,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 22),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(48),
+                stock_on_hand: 48,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 21),
             },
             // Historic Before Receiving
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(16),
+                stock_on_hand: 16,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 11),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(12),
+                stock_on_hand: 12,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 12),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(11),
+                stock_on_hand: 11,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 13),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(8),
+                stock_on_hand: 8,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 14),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(5),
+                stock_on_hand: 5,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 15),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(3),
+                stock_on_hand: 3,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 16),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(0),
+                stock_on_hand: 0,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 17),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(0),
+                stock_on_hand: 0,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 18),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(0),
+                stock_on_hand: 0,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 19),
             },
             StockEvolutionNode {
-                projected_stock_on_hand: None,
-                historic_stock_on_hand: Some(0),
+                stock_on_hand: 0,
+                is_historic: false,
+                max: 100,
+                min: 30,
                 date: NaiveDate::from_ymd(2021, 01, 20),
             },
         ];
@@ -368,284 +463,376 @@ mod test {
         }
 
         let expected = json!({
-            "testQuery": {
-              "consumptionHistory": {
-                "nodes": [
-                  {
-                    "amc": 75.0,
-                    "consumption": 80,
-                    "date": "2021-03-01"
-                  },
-                  {
-                    "amc": 65.0,
-                    "consumption": 60,
-                    "date": "2021-04-01"
-                  },
-                  {
-                    "amc": 80.0,
-                    "consumption": 75,
-                    "date": "2021-05-01"
-                  },
-                  {
-                    "amc": 90.0,
-                    "consumption": 100,
-                    "date": "2021-06-01"
-                  },
-                  {
-                    "amc": 85.0,
-                    "consumption": 85,
-                    "date": "2021-07-01"
-                  },
-                  {
-                    "amc": 85.0,
-                    "consumption": 80,
-                    "date": "2021-08-01"
-                  },
-                  {
-                    "amc": 80.0,
-                    "consumption": 70,
-                    "date": "2021-09-01"
-                  },
-                  {
-                    "amc": 110.0,
-                    "consumption": 130,
-                    "date": "2021-10-01"
-                  },
-                  {
-                    "amc": 95.0,
-                    "consumption": 110,
-                    "date": "2021-11-01"
-                  },
-                  {
-                    "amc": 92.0,
-                    "consumption": 85,
-                    "date": "2021-12-01"
-                  },
-                  {
-                    "amc": 95.0,
-                    "consumption": 90,
-                    "date": "2022-01-01"
-                  },
-                  {
-                    "amc": 100.0,
-                    "consumption": 100,
-                    "date": "2022-02-01"
-                  }
-                ]
-              },
-              "stockEvolution": {
-                "nodes": [
-                  {
-                    "date": "2021-01-11",
-                    "historicStockOnHand": 16,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-12",
-                    "historicStockOnHand": 12,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-13",
-                    "historicStockOnHand": 11,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-14",
-                    "historicStockOnHand": 8,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-15",
-                    "historicStockOnHand": 5,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-16",
-                    "historicStockOnHand": 3,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-17",
-                    "historicStockOnHand": 0,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-18",
-                    "historicStockOnHand": 0,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-19",
-                    "historicStockOnHand": 0,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-20",
-                    "historicStockOnHand": 0,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-21",
-                    "historicStockOnHand": 48,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-22",
-                    "historicStockOnHand": 46,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-23",
-                    "historicStockOnHand": 45,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-24",
-                    "historicStockOnHand": 40,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-25",
-                    "historicStockOnHand": 39,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-26",
-                    "historicStockOnHand": 39,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-27",
-                    "historicStockOnHand": 37,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-28",
-                    "historicStockOnHand": 32,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-29",
-                    "historicStockOnHand": 30,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-30",
-                    "historicStockOnHand": 29,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-01-31",
-                    "historicStockOnHand": 24,
-                    "projectedStockOnHand": null
-                  },
-                  {
-                    "date": "2021-02-02",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 20
-                  },
-                  {
-                    "date": "2021-02-03",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 17
-                  },
-                  {
-                    "date": "2021-02-04",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 14
-                  },
-                  {
-                    "date": "2021-02-05",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 11
-                  },
-                  {
-                    "date": "2021-02-06",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 8
-                  },
-                  {
-                    "date": "2021-02-07",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 5
-                  },
-                  {
-                    "date": "2021-02-08",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 2
-                  },
-                  {
-                    "date": "2021-02-09",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 0
-                  },
-                  {
-                    "date": "2021-02-10",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 0
-                  },
-                  {
-                    "date": "2021-02-11",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 180
-                  },
-                  {
-                    "date": "2021-02-12",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 177
-                  },
-                  {
-                    "date": "2021-02-13",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 174
-                  },
-                  {
-                    "date": "2021-02-14",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 171
-                  },
-                  {
-                    "date": "2021-02-15",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 168
-                  },
-                  {
-                    "date": "2021-02-16",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 165
-                  },
-                  {
-                    "date": "2021-02-17",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 162
-                  },
-                  {
-                    "date": "2021-02-18",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 159
-                  },
-                  {
-                    "date": "2021-02-19",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 156
-                  },
-                  {
-                    "date": "2021-02-20",
-                    "historicStockOnHand": null,
-                    "projectedStockOnHand": 153
-                  }
-                ]
-              },
-              "suggestedQuantityCalculation": {
-                "averageMonthlyConsumption": 100.0,
-                "maximumStockOnHand": 200,
-                "minimumStockOnHand": 30,
-                "stockOnHand": 20,
-                "suggested": 180
-              }
+          "testQuery": {
+            "consumptionHistory": {
+              "nodes": [
+                {
+                  "amc": 75.0,
+                  "consumption": 80,
+                  "date": "2021-03-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 65.0,
+                  "consumption": 60,
+                  "date": "2021-04-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 80.0,
+                  "consumption": 75,
+                  "date": "2021-05-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 90.0,
+                  "consumption": 100,
+                  "date": "2021-06-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 85.0,
+                  "consumption": 85,
+                  "date": "2021-07-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 85.0,
+                  "consumption": 80,
+                  "date": "2021-08-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 80.0,
+                  "consumption": 70,
+                  "date": "2021-09-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 110.0,
+                  "consumption": 130,
+                  "date": "2021-10-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 95.0,
+                  "consumption": 110,
+                  "date": "2021-11-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 92.0,
+                  "consumption": 85,
+                  "date": "2021-12-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 95.0,
+                  "consumption": 90,
+                  "date": "2022-01-01",
+                  "isHistoric": true
+                },
+                {
+                  "amc": 100.0,
+                  "consumption": 100,
+                  "date": "2022-02-01",
+                  "isHistoric": false
+                }
+              ]
+            },
+            "stockEvolution": {
+              "nodes": [
+                {
+                  "date": "2021-01-11",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 16
+                },
+                {
+                  "date": "2021-01-12",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 12
+                },
+                {
+                  "date": "2021-01-13",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 11
+                },
+                {
+                  "date": "2021-01-14",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 8
+                },
+                {
+                  "date": "2021-01-15",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 5
+                },
+                {
+                  "date": "2021-01-16",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 3
+                },
+                {
+                  "date": "2021-01-17",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 0
+                },
+                {
+                  "date": "2021-01-18",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 0
+                },
+                {
+                  "date": "2021-01-19",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 0
+                },
+                {
+                  "date": "2021-01-20",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 0
+                },
+                {
+                  "date": "2021-01-21",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 48
+                },
+                {
+                  "date": "2021-01-22",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 46
+                },
+                {
+                  "date": "2021-01-23",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 45
+                },
+                {
+                  "date": "2021-01-24",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 40
+                },
+                {
+                  "date": "2021-01-25",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 39
+                },
+                {
+                  "date": "2021-01-26",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 39
+                },
+                {
+                  "date": "2021-01-27",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 37
+                },
+                {
+                  "date": "2021-01-28",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 32
+                },
+                {
+                  "date": "2021-01-29",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 30
+                },
+                {
+                  "date": "2021-01-30",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 29
+                },
+                {
+                  "date": "2021-01-31",
+                  "isHistoric": false,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 24
+                },
+                {
+                  "date": "2021-02-02",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 20
+                },
+                {
+                  "date": "2021-02-03",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 17
+                },
+                {
+                  "date": "2021-02-04",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 14
+                },
+                {
+                  "date": "2021-02-05",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 11
+                },
+                {
+                  "date": "2021-02-06",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 8
+                },
+                {
+                  "date": "2021-02-07",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 5
+                },
+                {
+                  "date": "2021-02-08",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 2
+                },
+                {
+                  "date": "2021-02-09",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 0
+                },
+                {
+                  "date": "2021-02-10",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 0
+                },
+                {
+                  "date": "2021-02-11",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 180
+                },
+                {
+                  "date": "2021-02-12",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 177
+                },
+                {
+                  "date": "2021-02-13",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 174
+                },
+                {
+                  "date": "2021-02-14",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 171
+                },
+                {
+                  "date": "2021-02-15",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 168
+                },
+                {
+                  "date": "2021-02-16",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 165
+                },
+                {
+                  "date": "2021-02-17",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 162
+                },
+                {
+                  "date": "2021-02-18",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 159
+                },
+                {
+                  "date": "2021-02-19",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 156
+                },
+                {
+                  "date": "2021-02-20",
+                  "isHistoric": true,
+                  "max": 100,
+                  "min": 30,
+                  "stockOnHand": 153
+                }
+              ]
+            },
+            "suggestedQuantityCalculation": {
+              "averageMonthlyConsumption": 100.0,
+              "maximumStockOnHand": 200,
+              "minimumStockOnHand": 30,
+              "stockOnHand": 20,
+              "suggested": 180
             }
           }
+        }
         );
 
         let query = r#"
@@ -653,6 +840,7 @@ mod test {
             testQuery {
                 consumptionHistory {
                     nodes {
+                        isHistoric
                         consumption
                         amc
                         date
@@ -660,8 +848,10 @@ mod test {
                 }
                 stockEvolution {
                     nodes {
-                        projectedStockOnHand
-                        historicStockOnHand
+                        stockOnHand
+                        isHistoric
+                        max
+                        min
                         date
                     }
                 }
