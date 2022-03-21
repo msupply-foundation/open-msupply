@@ -127,7 +127,7 @@ export const StockItemSelectModal = ({
             width={600}
             disableCloseOnSelect
             multiple
-            getOptionLabel={option => option.name}
+            getOptionLabel={option => `${option.code} ${option.name}`}
             renderInput={ItemInput}
             limitTags={0}
             renderOption={renderOption}
