@@ -9,7 +9,7 @@ mod translation_central;
 mod translation_remote;
 
 #[cfg(test)]
-mod remote_sync_integration_test;
+mod integration_tests;
 
 pub use actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor};
 use repository::RepositoryError;
