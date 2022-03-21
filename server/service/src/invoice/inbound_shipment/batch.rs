@@ -40,47 +40,50 @@ pub struct BatchInboundShipment {
     pub continue_on_error: Option<bool>,
 }
 
+pub type InsertShipmentsResult =
+    Vec<InputWithResult<InsertInboundShipment, Result<Invoice, InsertInboundShipmentError>>>;
+pub type InsertLinesResult = Vec<
+    InputWithResult<InsertInboundShipmentLine, Result<InvoiceLine, InsertInboundShipmentLineError>>,
+>;
+pub type UpdateLinesResult = Vec<
+    InputWithResult<UpdateInboundShipmentLine, Result<InvoiceLine, UpdateInboundShipmentLineError>>,
+>;
+pub type DeleteLinesResult =
+    Vec<InputWithResult<DeleteInboundShipmentLine, Result<String, DeleteInboundShipmentLineError>>>;
+pub type InsertServiceLinesResult = Vec<
+    InputWithResult<
+        InsertInboundShipmentServiceLine,
+        Result<InvoiceLine, InsertInboundShipmentServiceLineError>,
+    >,
+>;
+pub type UpdateServiceLinesResult = Vec<
+    InputWithResult<
+        UpdateInboundShipmentServiceLine,
+        Result<InvoiceLine, UpdateInboundShipmentServiceLineError>,
+    >,
+>;
+pub type DeleteServiceLinesResult = Vec<
+    InputWithResult<
+        DeleteInboundShipmentLine,
+        Result<String, DeleteInboundShipmentServiceLineError>,
+    >,
+>;
+pub type UpdateShipmentsResult =
+    Vec<InputWithResult<UpdateInboundShipment, Result<Invoice, UpdateInboundShipmentError>>>;
+pub type DeleteShipmentsResult =
+    Vec<InputWithResult<DeleteInboundShipment, Result<String, DeleteInboundShipmentError>>>;
+
 #[derive(Debug, Default)]
 pub struct BatchInboundShipmentResult {
-    pub insert_shipment:
-        Vec<InputWithResult<InsertInboundShipment, Result<Invoice, InsertInboundShipmentError>>>,
-    pub insert_line: Vec<
-        InputWithResult<
-            InsertInboundShipmentLine,
-            Result<InvoiceLine, InsertInboundShipmentLineError>,
-        >,
-    >,
-    pub update_line: Vec<
-        InputWithResult<
-            UpdateInboundShipmentLine,
-            Result<InvoiceLine, UpdateInboundShipmentLineError>,
-        >,
-    >,
-    pub delete_line: Vec<
-        InputWithResult<DeleteInboundShipmentLine, Result<String, DeleteInboundShipmentLineError>>,
-    >,
-    pub insert_service_line: Vec<
-        InputWithResult<
-            InsertInboundShipmentServiceLine,
-            Result<InvoiceLine, InsertInboundShipmentServiceLineError>,
-        >,
-    >,
-    pub update_service_line: Vec<
-        InputWithResult<
-            UpdateInboundShipmentServiceLine,
-            Result<InvoiceLine, UpdateInboundShipmentServiceLineError>,
-        >,
-    >,
-    pub delete_service_line: Vec<
-        InputWithResult<
-            DeleteInboundShipmentLine,
-            Result<String, DeleteInboundShipmentServiceLineError>,
-        >,
-    >,
-    pub update_shipment:
-        Vec<InputWithResult<UpdateInboundShipment, Result<Invoice, UpdateInboundShipmentError>>>,
-    pub delete_shipment:
-        Vec<InputWithResult<DeleteInboundShipment, Result<String, DeleteInboundShipmentError>>>,
+    pub insert_shipment: InsertShipmentsResult,
+    pub insert_line: InsertLinesResult,
+    pub update_line: UpdateLinesResult,
+    pub delete_line: DeleteLinesResult,
+    pub insert_service_line: InsertServiceLinesResult,
+    pub update_service_line: UpdateServiceLinesResult,
+    pub delete_service_line: DeleteServiceLinesResult,
+    pub update_shipment: UpdateShipmentsResult,
+    pub delete_shipment: DeleteShipmentsResult,
 }
 
 pub fn batch_inbound_shipment(

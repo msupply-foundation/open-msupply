@@ -3,38 +3,12 @@ use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::outbound_shipment;
 use graphql_invoice_line::mutations::outbound_shipment_line;
-use repository::Invoice;
-use repository::InvoiceLine;
-use service::invoice::outbound_shipment::DeleteOutboundShipmentError;
-use service::invoice_line::outbound_shipment_line::InsertOutboundShipmentLine;
-use service::invoice_line::outbound_shipment_line::InsertOutboundShipmentLineError;
-use service::invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine;
-use service::invoice_line::outbound_shipment_line::UpdateOutboundShipmentLineError;
-use service::invoice_line::outbound_shipment_service_line::DeleteOutboundShipmentServiceLineError;
-use service::invoice_line::outbound_shipment_service_line::InsertOutboundShipmentServiceLine;
-use service::invoice_line::outbound_shipment_service_line::InsertOutboundShipmentServiceLineError;
-use service::invoice_line::outbound_shipment_service_line::UpdateOutboundShipmentServiceLine;
-use service::invoice_line::outbound_shipment_service_line::UpdateOutboundShipmentServiceLineError;
-use service::invoice_line::outbound_shipment_unallocated_line::DeleteOutboundShipmentUnallocatedLine;
-use service::invoice_line::outbound_shipment_unallocated_line::DeleteOutboundShipmentUnallocatedLineError;
-use service::invoice_line::outbound_shipment_unallocated_line::InsertOutboundShipmentUnallocatedLine;
-use service::invoice_line::outbound_shipment_unallocated_line::InsertOutboundShipmentUnallocatedLineError;
-use service::invoice_line::outbound_shipment_unallocated_line::UpdateOutboundShipmentUnallocatedLine;
-use service::invoice_line::outbound_shipment_unallocated_line::UpdateOutboundShipmentUnallocatedLineError;
+use service::invoice::outbound_shipment::*;
+use service::invoice::outbound_shipment::{BatchOutboundShipment, BatchOutboundShipmentResult};
 use service::permission_validation::Resource;
 use service::permission_validation::ResourceAccessRequest;
-use service::InputWithResult;
-use service::{
-    invoice::outbound_shipment::{
-        BatchOutboundShipment, BatchOutboundShipmentResult, InsertOutboundShipment,
-        InsertOutboundShipmentError, UpdateOutboundShipment, UpdateOutboundShipmentError,
-    },
-    invoice_line::outbound_shipment_line::{
-        DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
-    },
-};
 
-use crate::VecOrNone;
+use crate::{to_standard_error, VecOrNone};
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
@@ -90,33 +64,51 @@ pub struct MutationWithId<T: OutputType> {
     pub response: T,
 }
 
+type ServiceInput = BatchOutboundShipment;
+type ServiceResult = BatchOutboundShipmentResult;
+
+type InsertShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::InsertResponse>>>;
+type InsertLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::line::InsertResponse>>>;
+type UpdateLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::line::UpdateResponse>>>;
+type DeleteLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::line::DeleteResponse>>>;
+type InsertServiceLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::service_line::InsertResponse>>>;
+type UpdateServiceLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::service_line::UpdateResponse>>>;
+type DeleteServiceLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::service_line::DeleteResponse>>>;
+type InsertUnallocatedLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::InsertResponse>>>;
+type UpdateUnallocatedLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::UpdateResponse>>>;
+type DeleteUnallocatedLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::DeleteResponse>>>;
+type UpdateShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::UpdateResponse>>>;
+type DeleteShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::DeleteResponse>>>;
+
 #[derive(SimpleObject)]
-pub struct BatchOutboundShipmentResponse {
-    insert_outbound_shipments: Option<Vec<MutationWithId<outbound_shipment::InsertResponse>>>,
-    insert_outbound_shipment_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::line::InsertResponse>>>,
-    update_outbound_shipment_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::line::UpdateResponse>>>,
-    delete_outbound_shipment_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::line::DeleteResponse>>>,
-    insert_outbound_shipment_service_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::service_line::InsertResponse>>>,
-    update_outbound_shipment_service_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::service_line::UpdateResponse>>>,
-    delete_outbound_shipment_service_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::service_line::DeleteResponse>>>,
-    insert_outbound_shipment_unallocated_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::InsertResponse>>>,
-    update_outbound_shipment_unallocated_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::UpdateResponse>>>,
-    delete_outbound_shipment_unallocated_lines:
-        Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::DeleteResponse>>>,
-    update_outbound_shipments: Option<Vec<MutationWithId<outbound_shipment::UpdateResponse>>>,
-    delete_outbound_shipments: Option<Vec<MutationWithId<outbound_shipment::DeleteResponse>>>,
+#[graphql(name = "BatchOutboundShipmentResponse")]
+pub struct BatchResponse {
+    insert_outbound_shipments: InsertShipmentsResponse,
+    insert_outbound_shipment_lines: InsertLinesResponse,
+    update_outbound_shipment_lines: UpdateLinesResponse,
+    delete_outbound_shipment_lines: DeleteLinesResponse,
+    insert_outbound_shipment_service_lines: InsertServiceLinesResponse,
+    update_outbound_shipment_service_lines: UpdateServiceLinesResponse,
+    delete_outbound_shipment_service_lines: DeleteServiceLinesResponse,
+    insert_outbound_shipment_unallocated_lines: InsertUnallocatedLinesResponse,
+    update_outbound_shipment_unallocated_lines: UpdateUnallocatedLinesResponse,
+    delete_outbound_shipment_unallocated_lines: DeleteUnallocatedLinesResponse,
+    update_outbound_shipments: UpdateShipmentsResponse,
+    delete_outbound_shipments: DeleteShipmentsResponse,
 }
 
 #[derive(InputObject)]
-pub struct BatchOutboundShipmentInput {
+#[graphql(name = "BatchOutboundShipmentInput")]
+pub struct BatchInput {
     pub insert_outbound_shipments: Option<Vec<outbound_shipment::InsertInput>>,
     pub insert_outbound_shipment_lines: Option<Vec<outbound_shipment_line::line::InsertInput>>,
     pub update_outbound_shipment_lines: Option<Vec<outbound_shipment_line::line::UpdateInput>>,
@@ -138,11 +130,7 @@ pub struct BatchOutboundShipmentInput {
     pub continue_on_error: Option<bool>,
 }
 
-pub fn batch_outbound_shipment(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: BatchOutboundShipmentInput,
-) -> Result<BatchOutboundShipmentResponse> {
+pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<BatchResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -161,12 +149,12 @@ pub fn batch_outbound_shipment(
         input.to_domain(),
     )?;
 
-    Ok(BatchOutboundShipmentResponse::from_domain(response)?)
+    Ok(BatchResponse::from_domain(response)?)
 }
 
-impl BatchOutboundShipmentInput {
-    fn to_domain(self) -> BatchOutboundShipment {
-        let BatchOutboundShipmentInput {
+impl BatchInput {
+    fn to_domain(self) -> ServiceInput {
+        let BatchInput {
             insert_outbound_shipments,
             insert_outbound_shipment_lines,
             update_outbound_shipment_lines,
@@ -182,7 +170,7 @@ impl BatchOutboundShipmentInput {
             delete_outbound_shipment_unallocated_lines,
         } = self;
 
-        BatchOutboundShipment {
+        ServiceInput {
             insert_shipment: insert_outbound_shipments
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             insert_line: insert_outbound_shipment_lines
@@ -212,9 +200,9 @@ impl BatchOutboundShipmentInput {
     }
 }
 
-impl BatchOutboundShipmentResponse {
+impl BatchResponse {
     fn from_domain(
-        BatchOutboundShipmentResult {
+        ServiceResult {
             insert_shipment,
             insert_line,
             update_line,
@@ -227,353 +215,262 @@ impl BatchOutboundShipmentResponse {
             insert_unallocated_line,
             update_unallocated_line,
             delete_unallocated_line,
-        }: BatchOutboundShipmentResult,
-    ) -> Result<BatchOutboundShipmentResponse> {
-        // Insert Shipment
-
-        let insert_outbound_shipments_result: Result<
-            Vec<MutationWithId<outbound_shipment::InsertResponse>>,
-        > = insert_shipment
-            .into_iter()
-            .map(map_insert_shipment)
-            .collect();
-
-        // Normal Line
-
-        let insert_outbound_shipment_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::line::InsertResponse>>,
-        > = insert_line.into_iter().map(map_insert_line).collect();
-
-        let update_outbound_shipment_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::line::UpdateResponse>>,
-        > = update_line.into_iter().map(map_update_line).collect();
-
-        let delete_outbound_shipment_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::line::DeleteResponse>>,
-        > = delete_line.into_iter().map(map_delete_line).collect();
-
-        // Service Line
-
-        let insert_outbound_shipment_service_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::service_line::InsertResponse>>,
-        > = insert_service_line
-            .into_iter()
-            .map(map_insert_service_line)
-            .collect();
-
-        let update_outbound_shipment_service_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::service_line::UpdateResponse>>,
-        > = update_service_line
-            .into_iter()
-            .map(map_update_service_line)
-            .collect();
-
-        let delete_outbound_shipment_service_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::service_line::DeleteResponse>>,
-        > = delete_service_line
-            .into_iter()
-            .map(map_delete_service_line)
-            .collect();
-
-        // Unallocated Line
-
-        let insert_outbound_shipment_unallocated_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::unallocated_line::InsertResponse>>,
-        > = insert_unallocated_line
-            .into_iter()
-            .map(map_insert_unallocated_line)
-            .collect();
-
-        let update_outbound_shipment_unallocated_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::unallocated_line::UpdateResponse>>,
-        > = update_unallocated_line
-            .into_iter()
-            .map(map_update_unallocated_line)
-            .collect();
-
-        let delete_outbound_shipment_unallocated_lines_result: Result<
-            Vec<MutationWithId<outbound_shipment_line::unallocated_line::DeleteResponse>>,
-        > = delete_unallocated_line
-            .into_iter()
-            .map(map_delete_unallocated_line)
-            .collect();
-
-        // Update delete shipment
-
-        let update_outbound_shipments_result: Result<
-            Vec<MutationWithId<outbound_shipment::UpdateResponse>>,
-        > = update_shipment
-            .into_iter()
-            .map(map_update_shipment)
-            .collect();
-
-        let delete_outbound_shipments_result: Result<
-            Vec<MutationWithId<outbound_shipment::DeleteResponse>>,
-        > = delete_shipment
-            .into_iter()
-            .map(map_delete_shipment)
-            .collect();
-
-        let result = BatchOutboundShipmentResponse {
-            insert_outbound_shipments: insert_outbound_shipments_result?.vec_or_none(),
-            insert_outbound_shipment_lines: insert_outbound_shipment_lines_result?.vec_or_none(),
-            update_outbound_shipment_lines: update_outbound_shipment_lines_result?.vec_or_none(),
-            delete_outbound_shipment_lines: delete_outbound_shipment_lines_result?.vec_or_none(),
-
-            insert_outbound_shipment_service_lines: insert_outbound_shipment_service_lines_result?
-                .vec_or_none(),
-            update_outbound_shipment_service_lines: update_outbound_shipment_service_lines_result?
-                .vec_or_none(),
-            delete_outbound_shipment_service_lines: delete_outbound_shipment_service_lines_result?
-                .vec_or_none(),
-
-            insert_outbound_shipment_unallocated_lines:
-                insert_outbound_shipment_unallocated_lines_result?.vec_or_none(),
-            update_outbound_shipment_unallocated_lines:
-                update_outbound_shipment_unallocated_lines_result?.vec_or_none(),
-            delete_outbound_shipment_unallocated_lines:
-                delete_outbound_shipment_unallocated_lines_result?.vec_or_none(),
-
-            update_outbound_shipments: update_outbound_shipments_result?.vec_or_none(),
-            delete_outbound_shipments: delete_outbound_shipments_result?.vec_or_none(),
+        }: ServiceResult,
+    ) -> Result<BatchResponse> {
+        let result = BatchResponse {
+            insert_outbound_shipments: map_insert_shipments(insert_shipment)?,
+            insert_outbound_shipment_lines: map_insert_lines(insert_line)?,
+            update_outbound_shipment_lines: map_update_lines(update_line)?,
+            delete_outbound_shipment_lines: map_delete_lines(delete_line)?,
+            insert_outbound_shipment_service_lines: map_insert_service_lines(insert_service_line)?,
+            update_outbound_shipment_service_lines: map_update_service_lines(update_service_line)?,
+            delete_outbound_shipment_service_lines: map_delete_service_lines(delete_service_line)?,
+            insert_outbound_shipment_unallocated_lines: map_insert_unallocated_lines(
+                insert_unallocated_line,
+            )?,
+            update_outbound_shipment_unallocated_lines: map_update_unallocated_lines(
+                update_unallocated_line,
+            )?,
+            delete_outbound_shipment_unallocated_lines: map_delete_unallocated_lines(
+                delete_unallocated_line,
+            )?,
+            update_outbound_shipments: map_update_shipments(update_shipment)?,
+            delete_outbound_shipments: map_delete_shipments(delete_shipment)?,
         };
 
         Ok(result)
     }
 }
 
-fn map_insert_shipment(
-    from: InputWithResult<InsertOutboundShipment, Result<Invoice, InsertOutboundShipmentError>>,
-) -> Result<MutationWithId<outbound_shipment::InsertResponse>> {
-    let response = match outbound_shipment::insert::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_insert_shipments(responses: InsertShipmentsResult) -> Result<InsertShipmentsResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match outbound_shipment::insert::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_update_shipment(
-    from: InputWithResult<UpdateOutboundShipment, Result<Invoice, UpdateOutboundShipmentError>>,
-) -> Result<MutationWithId<outbound_shipment::UpdateResponse>> {
-    let response = match outbound_shipment::update::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_update_shipments(responses: UpdateShipmentsResult) -> Result<UpdateShipmentsResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match outbound_shipment::update::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_delete_shipment(
-    from: InputWithResult<String, Result<String, DeleteOutboundShipmentError>>,
-) -> Result<MutationWithId<outbound_shipment::DeleteResponse>> {
-    let response = match outbound_shipment::delete::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_delete_shipments(responses: DeleteShipmentsResult) -> Result<DeleteShipmentsResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match outbound_shipment::delete::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+        result.push(MutationWithId {
+            id: response.input.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input,
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_insert_line(
-    from: InputWithResult<
-        InsertOutboundShipmentLine,
-        Result<InvoiceLine, InsertOutboundShipmentLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::line::InsertResponse>> {
-    let response = match outbound_shipment_line::line::insert::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_insert_lines(responses: InsertLinesResult) -> Result<InsertLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::line::insert::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_update_line(
-    from: InputWithResult<
-        UpdateOutboundShipmentLine,
-        Result<InvoiceLine, UpdateOutboundShipmentLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::line::UpdateResponse>> {
-    let response = match outbound_shipment_line::line::update::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_update_lines(responses: UpdateLinesResult) -> Result<UpdateLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::line::update::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_delete_line(
-    from: InputWithResult<
-        DeleteOutboundShipmentLine,
-        Result<String, DeleteOutboundShipmentLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::line::DeleteResponse>> {
-    let response = match outbound_shipment_line::line::delete::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_delete_lines(responses: DeleteLinesResult) -> Result<DeleteLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::line::delete::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_insert_service_line(
-    from: InputWithResult<
-        InsertOutboundShipmentServiceLine,
-        Result<InvoiceLine, InsertOutboundShipmentServiceLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::service_line::InsertResponse>> {
-    let response = match outbound_shipment_line::service_line::insert::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_insert_service_lines(
+    responses: InsertServiceLinesResult,
+) -> Result<InsertServiceLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::service_line::insert::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_update_service_line(
-    from: InputWithResult<
-        UpdateOutboundShipmentServiceLine,
-        Result<InvoiceLine, UpdateOutboundShipmentServiceLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::service_line::UpdateResponse>> {
-    let response = match outbound_shipment_line::service_line::update::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_update_service_lines(
+    responses: UpdateServiceLinesResult,
+) -> Result<UpdateServiceLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::service_line::update::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_delete_service_line(
-    from: InputWithResult<
-        DeleteOutboundShipmentLine,
-        Result<String, DeleteOutboundShipmentServiceLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::service_line::DeleteResponse>> {
-    let response = match outbound_shipment_line::service_line::delete::map_response(from.result) {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_delete_service_lines(
+    responses: DeleteServiceLinesResult,
+) -> Result<DeleteServiceLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::service_line::delete::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_insert_unallocated_line(
-    from: InputWithResult<
-        InsertOutboundShipmentUnallocatedLine,
-        Result<InvoiceLine, InsertOutboundShipmentUnallocatedLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::unallocated_line::InsertResponse>> {
-    let response = match outbound_shipment_line::unallocated_line::insert::map_response(from.result)
-    {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_insert_unallocated_lines(
+    responses: InsertUnallocatedLinesResult,
+) -> Result<InsertUnallocatedLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::unallocated_line::insert::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_update_unallocated_line(
-    from: InputWithResult<
-        UpdateOutboundShipmentUnallocatedLine,
-        Result<InvoiceLine, UpdateOutboundShipmentUnallocatedLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::unallocated_line::UpdateResponse>> {
-    let response = match outbound_shipment_line::unallocated_line::update::map_response(from.result)
-    {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_update_unallocated_lines(
+    responses: UpdateUnallocatedLinesResult,
+) -> Result<UpdateUnallocatedLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::unallocated_line::update::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
-fn map_delete_unallocated_line(
-    from: InputWithResult<
-        DeleteOutboundShipmentUnallocatedLine,
-        Result<String, DeleteOutboundShipmentUnallocatedLineError>,
-    >,
-) -> Result<MutationWithId<outbound_shipment_line::unallocated_line::DeleteResponse>> {
-    let response = match outbound_shipment_line::unallocated_line::delete::map_response(from.result)
-    {
-        Ok(response) => response,
-        Err(standard_error) => {
-            let input_string = format!("{:#?}", from.input);
-            return Err(standard_error.extend_with(|_, e| e.set("input", input_string)));
-        }
-    };
+fn map_delete_unallocated_lines(
+    responses: DeleteUnallocatedLinesResult,
+) -> Result<DeleteUnallocatedLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match outbound_shipment_line::unallocated_line::delete::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
 
-    Ok(MutationWithId {
-        id: from.input.id.clone(),
-        response,
-    })
+    Ok(result.vec_or_none())
 }
 
 #[cfg(test)]

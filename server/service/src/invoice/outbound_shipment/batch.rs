@@ -50,67 +50,78 @@ pub struct BatchOutboundShipment {
     pub continue_on_error: Option<bool>,
 }
 
+pub type InsertShipmentsResult =
+    Vec<InputWithResult<InsertOutboundShipment, Result<Invoice, InsertOutboundShipmentError>>>;
+pub type InsertLinesResult = Vec<
+    InputWithResult<
+        InsertOutboundShipmentLine,
+        Result<InvoiceLine, InsertOutboundShipmentLineError>,
+    >,
+>;
+pub type UpdateLinesResult = Vec<
+    InputWithResult<
+        UpdateOutboundShipmentLine,
+        Result<InvoiceLine, UpdateOutboundShipmentLineError>,
+    >,
+>;
+pub type DeleteLinesResult = Vec<
+    InputWithResult<DeleteOutboundShipmentLine, Result<String, DeleteOutboundShipmentLineError>>,
+>;
+pub type InsertServiceLinesResult = Vec<
+    InputWithResult<
+        InsertOutboundShipmentServiceLine,
+        Result<InvoiceLine, InsertOutboundShipmentServiceLineError>,
+    >,
+>;
+pub type UpdateServiceLinesResult = Vec<
+    InputWithResult<
+        UpdateOutboundShipmentServiceLine,
+        Result<InvoiceLine, UpdateOutboundShipmentServiceLineError>,
+    >,
+>;
+pub type DeleteServiceLinesResult = Vec<
+    InputWithResult<
+        DeleteOutboundShipmentLine,
+        Result<String, DeleteOutboundShipmentServiceLineError>,
+    >,
+>;
+pub type InsertUnallocatedLinesResult = Vec<
+    InputWithResult<
+        InsertOutboundShipmentUnallocatedLine,
+        Result<InvoiceLine, InsertOutboundShipmentUnallocatedLineError>,
+    >,
+>;
+pub type UpdateUnallocatedLinesResult = Vec<
+    InputWithResult<
+        UpdateOutboundShipmentUnallocatedLine,
+        Result<InvoiceLine, UpdateOutboundShipmentUnallocatedLineError>,
+    >,
+>;
+pub type DeleteUnallocatedLinesResult = Vec<
+    InputWithResult<
+        DeleteOutboundShipmentUnallocatedLine,
+        Result<String, DeleteOutboundShipmentUnallocatedLineError>,
+    >,
+>;
+pub type UpdateShipmentsResult =
+    Vec<InputWithResult<UpdateOutboundShipment, Result<Invoice, UpdateOutboundShipmentError>>>;
+pub type DeleteShipmentsResult =
+    Vec<InputWithResult<String, Result<String, DeleteOutboundShipmentError>>>;
+
 #[derive(Debug, Default)]
 pub struct BatchOutboundShipmentResult {
-    pub insert_shipment:
-        Vec<InputWithResult<InsertOutboundShipment, Result<Invoice, InsertOutboundShipmentError>>>,
-    pub insert_line: Vec<
-        InputWithResult<
-            InsertOutboundShipmentLine,
-            Result<InvoiceLine, InsertOutboundShipmentLineError>,
-        >,
-    >,
-    pub update_line: Vec<
-        InputWithResult<
-            UpdateOutboundShipmentLine,
-            Result<InvoiceLine, UpdateOutboundShipmentLineError>,
-        >,
-    >,
-    pub delete_line: Vec<
-        InputWithResult<
-            DeleteOutboundShipmentLine,
-            Result<String, DeleteOutboundShipmentLineError>,
-        >,
-    >,
-    pub insert_service_line: Vec<
-        InputWithResult<
-            InsertOutboundShipmentServiceLine,
-            Result<InvoiceLine, InsertOutboundShipmentServiceLineError>,
-        >,
-    >,
-    pub update_service_line: Vec<
-        InputWithResult<
-            UpdateOutboundShipmentServiceLine,
-            Result<InvoiceLine, UpdateOutboundShipmentServiceLineError>,
-        >,
-    >,
-    pub delete_service_line: Vec<
-        InputWithResult<
-            DeleteOutboundShipmentLine,
-            Result<String, DeleteOutboundShipmentServiceLineError>,
-        >,
-    >,
-    pub insert_unallocated_line: Vec<
-        InputWithResult<
-            InsertOutboundShipmentUnallocatedLine,
-            Result<InvoiceLine, InsertOutboundShipmentUnallocatedLineError>,
-        >,
-    >,
-    pub update_unallocated_line: Vec<
-        InputWithResult<
-            UpdateOutboundShipmentUnallocatedLine,
-            Result<InvoiceLine, UpdateOutboundShipmentUnallocatedLineError>,
-        >,
-    >,
-    pub delete_unallocated_line: Vec<
-        InputWithResult<
-            DeleteOutboundShipmentUnallocatedLine,
-            Result<String, DeleteOutboundShipmentUnallocatedLineError>,
-        >,
-    >,
-    pub update_shipment:
-        Vec<InputWithResult<UpdateOutboundShipment, Result<Invoice, UpdateOutboundShipmentError>>>,
-    pub delete_shipment: Vec<InputWithResult<String, Result<String, DeleteOutboundShipmentError>>>,
+    pub insert_shipment: InsertShipmentsResult,
+    pub insert_line: InsertLinesResult,
+    pub update_line: UpdateLinesResult,
+    pub delete_line: DeleteLinesResult,
+    pub insert_service_line: InsertServiceLinesResult,
+    pub update_service_line: UpdateServiceLinesResult,
+    pub delete_service_line: DeleteServiceLinesResult,
+    pub insert_unallocated_line: InsertUnallocatedLinesResult,
+    pub update_unallocated_line: UpdateUnallocatedLinesResult,
+    pub delete_unallocated_line: DeleteUnallocatedLinesResult,
+    pub update_shipment: UpdateShipmentsResult,
+    pub delete_shipment: DeleteShipmentsResult,
 }
 
 pub fn batch_outbound_shipment(
