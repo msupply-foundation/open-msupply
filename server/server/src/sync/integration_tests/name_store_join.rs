@@ -64,7 +64,6 @@ impl SyncRecordTester<Vec<NameStoreJoinRow>> for NameStoreJoinRecordTester {
                     row_expected
                 ))
                 .unwrap();
-            // TODO: fix un-synced fields:
             assert_eq!(row_expected, &row);
         }
     }
