@@ -28,51 +28,120 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             .unwrap()
             .unwrap();
         let invoice_id = uuid();
-        let rows = vec![FullInvoice {
-            row: InvoiceRow {
-                id: invoice_id.clone(),
-                name_id: name.name_row.id,
-                name_store_id: None,
-                store_id: store_id.to_string(),
-                user_id: Some("user 1".to_string()),
-                invoice_number: 8,
-                r#type: InvoiceRowType::InventoryAdjustment,
-                status: InvoiceRowStatus::New,
-                on_hold: false,
-                comment: None,
-                their_reference: None,
-                transport_reference: None,
-                created_datetime: NaiveDate::from_ymd(2022, 03, 24).and_hms(11, 35, 15),
-                allocated_datetime: None,
-                picked_datetime: None,
-                shipped_datetime: None,
-                delivered_datetime: None,
-                verified_datetime: None,
-                colour: None,
-                requisition_id: None,
-                linked_invoice_id: None,
+        let invoice_row = InvoiceRow {
+            id: invoice_id.clone(),
+            name_id: name.name_row.id,
+            name_store_id: None,
+            store_id: store_id.to_string(),
+            user_id: Some("user 1".to_string()),
+            invoice_number: 8,
+            r#type: InvoiceRowType::InboundShipment,
+            status: InvoiceRowStatus::New,
+            on_hold: false,
+            comment: None,
+            their_reference: None,
+            transport_reference: None,
+            created_datetime: NaiveDate::from_ymd(2022, 03, 24).and_hms(11, 35, 15),
+            allocated_datetime: None,
+            picked_datetime: None,
+            shipped_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
+            colour: None,
+            requisition_id: None,
+            linked_invoice_id: None,
+        };
+        let invoice_line_row = InvoiceLineRow {
+            id: uuid(),
+            invoice_id,
+            r#type: InvoiceLineRowType::StockIn,
+            item_id: item.item_row.id,
+            item_name: item.item_row.name,
+            item_code: item.item_row.code,
+            stock_line_id: None,
+            location_id: None,
+            batch: None,
+            expiry_date: None,
+            pack_size: 1,
+            cost_price_per_pack: 5.0,
+            sell_price_per_pack: 10.0,
+            total_before_tax: 8.0,
+            total_after_tax: 12.0,
+            tax: None,
+            number_of_packs: 10,
+            note: None,
+        };
+        let invoice_row_id_1 = uuid();
+        let rows = vec![
+            // try all row/line statuses and types
+            FullInvoice {
+                row: inline_edit(&invoice_row, |mut d| {
+                    d.id = invoice_row_id_1.clone();
+                    d.r#type = InvoiceRowType::OutboundShipment;
+                    d.status = InvoiceRowStatus::Allocated;
+                    d
+                }),
+                lines: vec![
+                    inline_edit(&invoice_line_row, |mut d| {
+                        d.id = uuid();
+                        d.invoice_id = invoice_row_id_1.clone();
+                        d.r#type = InvoiceLineRowType::UnallocatedStock;
+                        d
+                    }),
+                    inline_edit(&invoice_line_row, |mut d| {
+                        d.id = uuid();
+                        d.invoice_id = invoice_row_id_1.clone();
+                        d.r#type = InvoiceLineRowType::Service;
+                        d
+                    }),
+                    inline_edit(&invoice_line_row, |mut d| {
+                        d.id = uuid();
+                        d.invoice_id = invoice_row_id_1.clone();
+                        d.r#type = InvoiceLineRowType::StockIn;
+                        d
+                    }),
+                    inline_edit(&invoice_line_row, |mut d| {
+                        d.id = uuid();
+                        d.invoice_id = invoice_row_id_1.clone();
+                        d.r#type = InvoiceLineRowType::StockOut;
+                        d
+                    }),
+                ],
             },
-            lines: vec![InvoiceLineRow {
-                id: uuid(),
-                invoice_id,
-                r#type: InvoiceLineRowType::StockIn,
-                item_id: item.item_row.id,
-                item_name: item.item_row.name,
-                item_code: item.item_row.code,
-                stock_line_id: None,
-                location_id: None,
-                batch: None,
-                expiry_date: None,
-                pack_size: 1,
-                cost_price_per_pack: 5.0,
-                sell_price_per_pack: 10.0,
-                total_before_tax: 8.0,
-                total_after_tax: 12.0,
-                tax: None,
-                number_of_packs: 10,
-                note: None,
-            }],
-        }];
+            FullInvoice {
+                row: inline_edit(&invoice_row, |mut d| {
+                    d.id = uuid();
+                    d.r#type = InvoiceRowType::InventoryAdjustment;
+                    d.status = InvoiceRowStatus::Picked;
+                    d
+                }),
+                lines: vec![],
+            },
+            FullInvoice {
+                row: inline_edit(&invoice_row, |mut d| {
+                    d.id = uuid();
+                    d.r#type = InvoiceRowType::OutboundShipment;
+                    d.status = InvoiceRowStatus::Shipped;
+                    d
+                }),
+                lines: vec![],
+            },
+            FullInvoice {
+                row: inline_edit(&invoice_row, |mut d| {
+                    d.id = uuid();
+                    d.r#type = InvoiceRowType::OutboundShipment;
+                    d.status = InvoiceRowStatus::Delivered;
+                    d
+                }),
+                lines: vec![],
+            },
+            // main test data
+            FullInvoice {
+                row: invoice_row,
+                lines: vec![invoice_line_row],
+            },
+        ];
+
         let repo = InvoiceRepository::new(connection);
         let line_repo = InvoiceLineRowRepository::new(connection);
         for row in &rows {
@@ -191,7 +260,6 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
                     ))
                 })
                 .collect::<Vec<InvoiceLineRow>>();
-            // TODO: fix un-synced fields:
             for (i, expected_line) in row_expected.lines.iter().enumerate() {
                 let line = &line_rows[i];
                 assert_eq!(expected_line, line);
