@@ -11,7 +11,7 @@ use super::remote_sync_integration_test::SyncRecordTester;
 
 #[derive(Debug)]
 pub struct FullStocktake {
-    stocktake: StocktakeRow,
+    row: StocktakeRow,
     lines: Vec<StocktakeLineRow>,
 }
 pub struct StocktakeRecordTester {}
@@ -22,10 +22,10 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
             .unwrap()
             .unwrap();
 
-        let stocktake_id_1 = uuid();
+        let row_id = uuid();
         let rows = vec![FullStocktake {
-            stocktake: StocktakeRow {
-                id: stocktake_id_1.clone(),
+            row: StocktakeRow {
+                id: row_id.clone(),
                 store_id: store_id.to_string(),
                 user_id: "test user".to_string(),
                 stocktake_number: 55,
@@ -40,7 +40,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
             },
             lines: vec![StocktakeLineRow {
                 id: uuid(),
-                stocktake_id: stocktake_id_1,
+                stocktake_id: row_id,
                 stock_line_id: None,
                 location_id: None,
                 comment: None,
@@ -55,12 +55,12 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                 note: None,
             }],
         }];
-        let stocktake_repo = StocktakeRowRepository::new(connection);
-        let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
+        let repo = StocktakeRowRepository::new(connection);
+        let line_repo = StocktakeLineRowRepository::new(connection);
         for row in &rows {
-            stocktake_repo.upsert_one(&row.stocktake).unwrap();
+            repo.upsert_one(&row.row).unwrap();
             for line in &row.lines {
-                stocktake_line_repo.upsert_one(line).unwrap();
+                line_repo.upsert_one(line).unwrap();
             }
         }
         rows
@@ -75,12 +75,12 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
             .query_one(InvoiceFilter::new())
             .unwrap()
             .unwrap();
-        let stocktake_repo = StocktakeRowRepository::new(connection);
-        let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
+        let repo = StocktakeRowRepository::new(connection);
+        let line_repo = StocktakeLineRowRepository::new(connection);
         let rows = rows
             .iter()
             .map(|row| {
-                let stocktake = inline_edit(&row.stocktake, |mut d| {
+                let stocktake = inline_edit(&row.row, |mut d| {
                     d.user_id = "test user 2".to_string();
                     d.comment = Some("comment sync test".to_string());
                     d.description = Some("description sync test".to_string());
@@ -123,29 +123,32 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                     })
                     .collect();
 
-                stocktake_repo.upsert_one(&stocktake).unwrap();
+                repo.upsert_one(&stocktake).unwrap();
                 for line in &lines {
-                    stocktake_line_repo.upsert_one(line).unwrap();
+                    line_repo.upsert_one(line).unwrap();
                 }
-                FullStocktake { stocktake, lines }
+                FullStocktake {
+                    row: stocktake,
+                    lines,
+                }
             })
             .collect();
         rows
     }
 
     fn validate(&self, connection: &StorageConnection, rows: &Vec<FullStocktake>) {
-        let stocktake_repo = StocktakeRowRepository::new(connection);
-        let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
+        let repo = StocktakeRowRepository::new(connection);
+        let line_repo = StocktakeLineRowRepository::new(connection);
         for row_expected in rows {
-            let stock_take_row = stocktake_repo
-                .find_one_by_id(&row_expected.stocktake.id)
+            let stock_take_row = repo
+                .find_one_by_id(&row_expected.row.id)
                 .expect(&format!("Stocktake row not found: {:?} ", row_expected))
                 .unwrap();
             let line_rows = row_expected
                 .lines
                 .iter()
                 .map(|line| {
-                    stocktake_line_repo
+                    line_repo
                         .find_one_by_id(&line.id)
                         .expect(&format!(
                             "Stocktake line row not found: {:?} ",
@@ -158,7 +161,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                 let line = &line_rows[i];
                 assert_eq!(expected_line, line);
             }
-            assert_eq!(row_expected.stocktake, stock_take_row);
+            assert_eq!(row_expected.row, stock_take_row);
         }
     }
 }
