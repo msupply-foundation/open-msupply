@@ -36,12 +36,10 @@ mod remote_sync_integration_tests {
 
     use super::SyncRecordTester;
 
-    /// return storage connection and a store_id
     async fn init_db(sync_settings: &SyncSettings) -> (StorageConnection, Synchroniser) {
         let (_, connection, connection_manager, _) =
             setup_all("remote_sync_integration_tests", MockDataInserts::none()).await;
 
-        // add new data -> push -> clear locally -> pull -> modify -> push -> clear locally -> pull
         let synchroniser = Synchroniser::new(sync_settings.clone(), connection_manager).unwrap();
         synchroniser
             .central_data
@@ -52,6 +50,11 @@ mod remote_sync_integration_tests {
         (connection, synchroniser)
     }
 
+    /// Does a simple test cycle:
+    /// 1) Insert new data records and push them to the central server
+    /// 2) Reset local data and pull. Then validate that the pulled data is correct
+    /// 3) Mutate the previously inserted data and push the changes
+    /// 4) Reset, pull and validate as in step 2)
     async fn test_sync_record<T>(
         store_id: &str,
         sync_settings: &SyncSettings,
