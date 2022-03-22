@@ -154,7 +154,6 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                         .unwrap()
                 })
                 .collect::<Vec<StocktakeLineRow>>();
-            // TODO: fix un-synced fields:
             for (i, expected_line) in row_expected.lines.iter().enumerate() {
                 let line = &line_rows[i];
                 assert_eq!(expected_line, line);
