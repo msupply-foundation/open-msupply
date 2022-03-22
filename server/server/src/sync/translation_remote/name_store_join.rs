@@ -20,6 +20,10 @@ pub struct LegacyNameStoreJoinRow {
     pub ID: String,
     pub store_ID: String,
     pub name_ID: String,
+    #[serde(rename = "om_name_is_customer")]
+    pub name_is_customer: Option<bool>,
+    #[serde(rename = "om_name_is_supplier")]
+    pub name_is_supplier: Option<bool>,
 }
 
 pub struct NameStoreJoinTranslation {}
@@ -66,8 +70,8 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
                 id: data.ID,
                 name_id: data.name_ID,
                 store_id: data.store_ID,
-                name_is_customer: name.is_customer,
-                name_is_supplier: name.is_supplier,
+                name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
+                name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
             }),
         )))
     }
@@ -88,8 +92,8 @@ impl RemotePushUpsertTranslation for NameStoreJoinTranslation {
             id,
             name_id,
             store_id,
-            name_is_customer: _,
-            name_is_supplier: _,
+            name_is_customer,
+            name_is_supplier,
         } = NameStoreJoinRepository::new(connection)
             .find_one_by_id(&changelog.row_id)
             .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
@@ -103,6 +107,8 @@ impl RemotePushUpsertTranslation for NameStoreJoinTranslation {
             ID: id.clone(),
             store_ID: store_id.clone(),
             name_ID: name_id,
+            name_is_customer: Some(name_is_customer),
+            name_is_supplier: Some(name_is_supplier),
         };
 
         Ok(Some(vec![PushUpsertRecord {
