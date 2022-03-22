@@ -27,8 +27,8 @@ mod remote_sync_integration_tests {
         sync::{
             integration_tests::{
                 invoice::InvoiceRecordTester, name_store_join::NameStoreJoinRecordTester,
-                number::NumberSyncRecordTester, stock_line::StockLineRecordTester,
-                stocktake::StocktakeRecordTester,
+                number::NumberSyncRecordTester, requisition::RequisitionRecordTester,
+                stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
             },
             Synchroniser,
         },
@@ -101,7 +101,9 @@ mod remote_sync_integration_tests {
 
     /// This test assumes a running central server.
     /// To run the this test, enable the test macro and update the sync_settings and used store_id.
-    // #[actix_rt::test]
+    /// For every test run a new unique records are generated and it shouldn't be necessary to bring
+    /// the central server into a clean state after each test.
+    //#[actix_rt::test]
     async fn test_syncing_new_data() {
         let sync_settings = SyncSettings {
             url: "http://192.168.178.77:8080".to_string(),
@@ -130,5 +132,8 @@ mod remote_sync_integration_tests {
 
         let invoice_tester = InvoiceRecordTester {};
         test_sync_record(store_id, &sync_settings, &invoice_tester).await;
+
+        let requisition_tester = RequisitionRecordTester {};
+        test_sync_record(store_id, &sync_settings, &requisition_tester).await;
     }
 }
