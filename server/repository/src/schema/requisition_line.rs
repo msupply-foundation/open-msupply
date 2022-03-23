@@ -1,3 +1,5 @@
+use chrono::NaiveDateTime;
+
 use super::diesel_schema::requisition_line;
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
@@ -11,5 +13,6 @@ pub struct RequisitionLineRow {
     pub supply_quantity: i32,
     pub available_stock_on_hand: i32,
     pub average_monthly_consumption: i32,
+    pub snapshot_datetime: Option<NaiveDateTime>,
     pub comment: Option<String>,
 }
