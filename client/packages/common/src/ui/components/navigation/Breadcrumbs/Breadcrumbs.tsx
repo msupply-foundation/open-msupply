@@ -22,10 +22,7 @@ export const Breadcrumbs: React.FC = () => {
         name: '', // No name => won't show in Modal menu
         shortcut: ['escape'],
         keywords: 'navigate, back',
-        perform: () => {
-          console.log('parts', urlParts);
-          navigateUpOne();
-        },
+        perform: () => navigateUpOne(),
       },
     ],
     [urlParts]

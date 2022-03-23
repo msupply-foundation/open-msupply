@@ -1,5 +1,5 @@
 import React, { createContext, FC, useMemo, useState, useEffect } from 'react';
-import { useDefaultLanguage, useI18N, isSupportedLang } from '@common/intl';
+import { IntlUtils } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns';
@@ -76,12 +76,11 @@ const useRefreshingAuth = (
 ) => {
   const { setHeader } = useGql();
   setHeader('Authorization', `Bearer ${token}`);
-  const { data, isSuccess } = useGetRefreshToken(token ?? '');
+  const { data, enabled, isSuccess } = useGetRefreshToken(token ?? '');
   useEffect(() => {
-    if (isSuccess) callback(data?.token);
-  }, [data, isSuccess, callback]);
+    if (isSuccess && enabled) callback(data?.token ?? '');
+  }, [enabled, isSuccess, data]);
 };
-
 const AuthContext = createContext<AuthControl>({
   isLoggingIn: false,
   login: () =>
@@ -98,75 +97,74 @@ const { Provider } = AuthContext;
 export const AuthProvider: FC = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
-  const i18n = useI18N();
-  const defaultLanguage = useDefaultLanguage();
+  const i18n = IntlUtils.useI18N();
+  const defaultLanguage = IntlUtils.useDefaultLanguage();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
-  const { token: cookieToken, store: cookieStore, user } = getAuthCookie();
-  const [localStore, setLocalStore] = useState<Store | undefined>(cookieStore);
-  const [localToken, setLocalToken] = useState<string | undefined>(cookieToken);
-  const storeId = localStore?.id ?? '';
+  const authCookie = getAuthCookie();
+  const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
+  const storeId = cookie?.store?.id ?? '';
+
   const saveToken = (token?: string) => {
-    setLocalToken(token);
     const authCookie = getAuthCookie();
-    setAuthCookie({ ...authCookie, token: token ?? '' });
+    const newCookie = { ...authCookie, token: token ?? '' };
+    setAuthCookie(newCookie);
+    setCookie(newCookie);
   };
-  useRefreshingAuth(saveToken, localToken);
+  useRefreshingAuth(saveToken, cookie?.token);
 
   const login = async (username: string, password: string, store?: Store) => {
     const { token, error } = await mutateAsync({ username, password });
     const authCookie = {
       store,
-      token: token,
+      token,
       user: { id: '', name: username },
     };
 
     // When the a user first logs in, check that their browser language is an internally supported
     // language. If not, set their language to the default.
     const { language } = i18n;
-    if (!isSupportedLang(language)) i18n.changeLanguage(defaultLanguage);
+    if (!IntlUtils.isSupportedLang(language)) {
+      i18n.changeLanguage(defaultLanguage);
+    }
 
     setMRUCredentials({ username, store });
-    if (!!token) setLocalStore(store);
-    setLocalToken(token);
     setAuthCookie(authCookie);
+    setCookie(authCookie);
 
     return { token, error };
   };
 
   const setStore = (store: Store) => {
-    if (!localToken) return;
+    if (!cookie?.token) return;
 
-    setLocalStore(store);
-    setMRUCredentials({ username: user?.name ?? '', store });
+    setMRUCredentials({
+      username: mostRecentlyUsedCredentials?.username ?? '',
+      store,
+    });
     const authCookie = getAuthCookie();
-    setAuthCookie({ ...authCookie, store });
+    const newCookie = { ...authCookie, store };
+    setAuthCookie(newCookie);
+    setCookie(newCookie);
   };
 
   const logout = () => {
     Cookies.remove('auth');
-    setLocalStore(undefined);
+    setCookie(undefined);
   };
+
   const val = useMemo(
     () => ({
       isLoggingIn,
       login,
       logout,
       storeId,
-      token: localToken,
-      user,
-      store: localStore,
+      token: cookie?.token,
+      user: cookie?.user,
+      store: cookie?.store,
       mostRecentlyUsedCredentials,
       setStore,
     }),
-    [
-      login,
-      localStore,
-      localToken,
-      user,
-      mostRecentlyUsedCredentials,
-      isLoggingIn,
-      setStore,
-    ]
+    [login, cookie, mostRecentlyUsedCredentials, isLoggingIn, setStore]
   );
 
   return <Provider value={val}>{children}</Provider>;

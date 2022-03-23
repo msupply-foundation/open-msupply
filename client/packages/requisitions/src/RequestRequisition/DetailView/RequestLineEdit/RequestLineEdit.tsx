@@ -5,12 +5,15 @@ import {
   DialogButton,
   BasicSpinner,
   useBufferState,
+  Box,
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
 import { useIsRequestDisabled } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
 import { StockDistribution } from './ItemCharts/StockDistribution';
+import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
+import { StockEvolution } from './ItemCharts/StockEvolution';
 
 interface RequestLineEditProps {
   isOpen: boolean;
@@ -81,6 +84,14 @@ export const RequestLineEdit = ({
             }
             suggestedQuantity={draft?.suggestedQuantity}
           />
+          <Box
+            display="flex"
+            sx={{ paddingLeft: 4, paddingRight: 4 }}
+            justifyContent="space-between"
+          >
+            <ConsumptionHistory draftLine={draft} />
+            <StockEvolution draftLine={draft} />
+          </Box>
         </>
       ) : (
         <BasicSpinner />

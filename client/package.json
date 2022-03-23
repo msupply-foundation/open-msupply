@@ -46,6 +46,7 @@
     "@types/lodash": "^4.14.178",
     "@types/node": "^16.11.12",
     "@types/react": "^17.0.37",
+    "@types/recharts": "^1.8.23",
     "@typescript-eslint/eslint-plugin": "^5.7.0",
     "@typescript-eslint/parser": "^5.7.0",
     "eslint": "^8.4.1",

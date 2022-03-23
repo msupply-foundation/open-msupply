@@ -1,5 +1,5 @@
 import { AppRoute } from '@openmsupply-client/config';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import {
   RouteBuilder,
   useOpenInNewTab,
@@ -18,8 +18,10 @@ import {
   useNotification,
   useTranslation,
   Column,
+  RegexUtils,
 } from '@openmsupply-client/common';
 import { getResponseQueries, ListParams } from './api';
+import { useItemFilter } from '../../RequestRequisition/api';
 import { isResponseDisabled } from './../../utils';
 import {
   getSdk,
@@ -114,23 +116,40 @@ interface UseResponseLinesController
   extends SortController<ResponseLineFragment> {
   lines: ResponseLineFragment[];
   columns: Column<ResponseLineFragment>[];
+  itemFilter: string;
+  setItemFilter: (itemFilter: string) => void;
 }
 
 export const useResponseLines = (): UseResponseLinesController => {
   const { lines } = useResponseFields('lines');
   const { columns, onChangeSortBy, sortBy } = useResponseColumns();
+  const { itemFilter, setItemFilter } = useItemFilter();
+
+  useEffect(() => {
+    setItemFilter('');
+  }, []);
 
   const sorted = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     const { getSortValue } = currentColumn ?? {};
-    return getSortValue
+    const sortedLines = getSortValue
       ? lines?.nodes.sort(
           SortUtils.getColumnSorter(getSortValue, !!sortBy.isDesc)
         )
       : lines?.nodes;
-  }, [sortBy.key, sortBy.isDesc, lines]);
+    return sortedLines.filter(({ item: { name } }) =>
+      RegexUtils.matchSubstring(itemFilter, name)
+    );
+  }, [sortBy.key, sortBy.isDesc, lines, itemFilter]);
 
-  return { lines: sorted, sortBy, onChangeSortBy, columns };
+  return {
+    lines: sorted,
+    sortBy,
+    onChangeSortBy,
+    columns,
+    itemFilter,
+    setItemFilter,
+  };
 };
 
 export const useIsResponseDisabled = (): boolean => {
@@ -175,6 +194,19 @@ export const useCreateOutboundFromResponse = () => {
         error(t('error.failed-to-create-outbound'))();
       }
     },
+    onSettled: () => {
+      queryClient.invalidateQueries(api.keys.detail(responseNumber));
+    },
+  });
+};
+
+export const useSupplyRequestedQuantity = () => {
+  const responseNumber = useResponseNumber();
+  const queryClient = useQueryClient();
+  const { id } = useResponseFields('id');
+  const api = useResponseApi();
+
+  return useMutation(() => api.supplyRequestedQuantity(id), {
     onSettled: () => {
       queryClient.invalidateQueries(api.keys.detail(responseNumber));
     },

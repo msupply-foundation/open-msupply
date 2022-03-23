@@ -1,5 +1,5 @@
 import currency from 'currency.js';
-import { useCurrentLanguage } from './intlHelpers';
+import { IntlUtils } from '../utils';
 
 const trimCents = (centsString: string) => {
   const trimmed = Number(`.${centsString}`);
@@ -98,7 +98,7 @@ const currencyOptions = {
 };
 
 export const useCurrency = () => {
-  const language = useCurrentLanguage();
+  const language = IntlUtils.useCurrentLanguage();
   const options = currencyOptions[language];
   return {
     c: (value: currency.Any) => currency(value, options),

@@ -26,11 +26,7 @@ import {
   sumAvailableQuantity,
   getAllocatedQuantity,
 } from './utils';
-import {
-  useIsOutboundDisabled,
-  useOutboundFields,
-  useSaveOutboundLines,
-} from '../../api';
+import { useOutbound } from '../../api';
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,9 +44,9 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
   const [currentItem, setCurrentItem] = useBufferState(item);
 
-  const { mutate } = useSaveOutboundLines();
-  const { status } = useOutboundFields('status');
-  const isDisabled = useIsOutboundDisabled();
+  const { mutate } = useOutbound.line.save();
+  const { status } = useOutbound.document.fields('status');
+  const isDisabled = useOutbound.utils.isDisabled();
   const {
     draftOutboundLines,
     updateQuantity,

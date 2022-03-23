@@ -17,12 +17,18 @@ export type AutocompleteListProps<T> = {
   loading?: boolean;
   loadingText?: React.ReactNode;
   noOptionsText?: React.ReactNode;
-  onChange?: AutocompleteOnChange<T>;
+  onChange?: AutocompleteOnChange<T | T[]>;
   width?: number;
   height?: number;
   renderOption?: AutocompleteOptionRenderer<T>;
   optionKey?: keyof T;
   renderInput?: (params: AutocompleteRenderInputParams) => React.ReactNode;
+  disableCloseOnSelect?: boolean;
+  multiple?: boolean;
+  getOptionLabel?: (option: T) => string;
+  limitTags?: number;
+  inputValue?: string;
+  clearText?: string;
 };
 
 export const AutocompleteList = <T,>({
@@ -37,6 +43,12 @@ export const AutocompleteList = <T,>({
   renderInput,
   optionKey,
   renderOption,
+  disableCloseOnSelect,
+  multiple,
+  getOptionLabel,
+  limitTags,
+  inputValue,
+  clearText,
 }: AutocompleteListProps<T>): JSX.Element => {
   const filterOptions = createFilterOptions(filterOptionConfig);
 
@@ -92,6 +104,12 @@ export const AutocompleteList = <T,>({
           {props.children}
         </Paper>
       )}
+      disableCloseOnSelect={disableCloseOnSelect}
+      multiple={multiple}
+      getOptionLabel={getOptionLabel}
+      limitTags={limitTags}
+      inputValue={inputValue}
+      clearText={clearText}
     />
   );
 };

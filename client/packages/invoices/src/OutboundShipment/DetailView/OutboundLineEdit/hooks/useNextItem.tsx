@@ -1,5 +1,5 @@
 import { ItemRowFragment, toItemRow } from '@openmsupply-client/system';
-import { useOutboundRows } from '../../../api';
+import { useOutbound } from '../../../api';
 
 export const useNextItem = (
   currentItemId?: string
@@ -7,7 +7,7 @@ export const useNextItem = (
   const next: ItemRowFragment | null = null;
   const disabled = true;
 
-  const { items } = useOutboundRows();
+  const { items } = useOutbound.line.rows();
 
   if (!items || !currentItemId) return { next, disabled };
 

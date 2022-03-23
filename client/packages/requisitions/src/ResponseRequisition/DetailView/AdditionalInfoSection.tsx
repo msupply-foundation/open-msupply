@@ -1,0 +1,56 @@
+import React, { FC } from 'react';
+import {
+  Grid,
+  DetailPanelSection,
+  PanelLabel,
+  useTranslation,
+  PanelRow,
+  PanelField,
+  ColorSelectButton,
+  useBufferState,
+  BufferedTextArea,
+  InfoTooltipIcon,
+} from '@openmsupply-client/common';
+import { useIsResponseDisabled, useResponseFields } from '../api';
+
+export const AdditionalInfoSection: FC = () => {
+  const isDisabled = useIsResponseDisabled();
+  const { user, colour, comment, update } = useResponseFields([
+    'colour',
+    'comment',
+    'user',
+  ]);
+  const [bufferedColor, setBufferedColor] = useBufferState(colour);
+  const t = useTranslation('distribution');
+
+  return (
+    <DetailPanelSection title={t('heading.additional-info')}>
+      <Grid container gap={0.5} key="additional-info">
+        <PanelRow>
+          <PanelLabel>{t('label.edited-by')}</PanelLabel>
+          <PanelField>{user?.username}</PanelField>
+          {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.color')}</PanelLabel>
+          <PanelField>
+            <ColorSelectButton
+              disabled={isDisabled}
+              onChange={color => {
+                setBufferedColor(color.hex);
+                update({ colour: color.hex });
+              }}
+              color={bufferedColor ?? ''}
+            />
+          </PanelField>
+        </PanelRow>
+        <PanelLabel>{t('heading.comment')}</PanelLabel>
+        <BufferedTextArea
+          disabled={isDisabled}
+          onChange={e => update({ comment: e.target.value })}
+          value={comment ?? ''}
+        />
+      </Grid>
+    </DetailPanelSection>
+  );
+};

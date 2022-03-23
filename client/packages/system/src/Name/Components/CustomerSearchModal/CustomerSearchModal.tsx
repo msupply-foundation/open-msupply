@@ -19,8 +19,8 @@ export const CustomerSearchModal: FC<NameSearchProps> = ({
       onClose={onClose}
       title={t('customers')}
       optionKey="name"
-      onChange={(_, name: NameRowFragment | null) => {
-        if (name) onChange(name);
+      onChange={(_, name: NameRowFragment | NameRowFragment[] | null) => {
+        if (name && !(name instanceof Array)) onChange(name);
       }}
     />
   );

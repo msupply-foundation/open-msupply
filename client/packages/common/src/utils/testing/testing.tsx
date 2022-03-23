@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import { AppThemeProvider } from '@common/styles';
 import { SupportedLocales } from '@common/intl';
 import mediaQuery from 'css-mediaquery';
@@ -6,7 +6,7 @@ import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TableProvider, createTableStore } from '../../ui/layout/tables';
-import { IntlTestProvider, GqlProvider } from '../..';
+import { GqlProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../../ui/components/modals';
 import {
@@ -14,6 +14,14 @@ import {
   RenderHookOptions,
   RenderHookResult,
 } from '@testing-library/react-hooks/dom';
+import i18next from 'i18next';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import app from '@common/intl/locales/en/app.json';
+import common from '@common/intl/locales/en/common.json';
+import appFr from '@common/intl/locales/fr/app.json';
+import commonFr from '@common/intl/locales/fr/common.json';
+import appAr from '@common/intl/locales/ar/app.json';
+import commonAr from '@common/intl/locales/ar/common.json';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +31,44 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+interface IntlTestProviderProps {
+  locale: SupportedLocales;
+}
+
+const resources = {
+  ar: {
+    app: { ...app, ...appAr },
+    common: { ...common, ...commonAr },
+  },
+  en: { app, common },
+  fr: {
+    app: { ...app, ...appFr },
+    common: { ...common, ...commonFr },
+  },
+};
+
+export const IntlTestProvider: FC<IntlTestProviderProps> = ({
+  children,
+  locale,
+}) => {
+  useEffect(() => {
+    i18next.use(initReactI18next).init({
+      resources,
+      debug: false,
+      lng: locale,
+      fallbackLng: 'en',
+      ns: ['app', 'common'],
+      defaultNS: 'common',
+      fallbackNS: 'common',
+      interpolation: {
+        escapeValue: false,
+      },
+    });
+  }, [resources]);
+
+  return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
+};
 
 interface StoryProviderProps {
   locale?: SupportedLocales;

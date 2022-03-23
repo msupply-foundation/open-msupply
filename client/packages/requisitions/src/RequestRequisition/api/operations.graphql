@@ -98,6 +98,31 @@ mutation deleteRequest(
   }
 }
 
+fragment RequestLineChartData on ItemChartDataNode {
+  __typename
+  consumptionHistory {
+    nodes {
+      amc
+      consumption
+      date
+    }
+  }
+  suggestedQuantityCalculation {
+    stockOnHand
+    suggested
+    minimumStockOnHand
+    maximumStockOnHand
+    averageMonthlyConsumption
+  }
+  stockEvolution {
+    nodes {
+      date
+      historicStockOnHand
+      projectedStockOnHand
+    }
+  }
+}
+
 fragment RequestLine on RequisitionLineNode {
   id
   itemId
@@ -113,6 +138,9 @@ fragment RequestLine on RequisitionLineNode {
   }
   item {
     ...ItemWithStats
+  }
+  chartData {
+    ...RequestLineChartData
   }
 }
 
@@ -358,6 +386,34 @@ mutation deleteRequestLines(
           id
         }
       }
+    }
+  }
+}
+
+mutation useSuggestedQuantity($requestId: String!, $storeId: String!) {
+  useSuggestedQuantity(
+    input: { requestRequisitionId: $requestId }
+    storeId: $storeId
+  ) {
+    ... on UseSuggestedQuantityError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+      }
+    }
+    ... on RequisitionLineConnector {
+      nodes {
+        id
+      }
+      totalCount
     }
   }
 }
