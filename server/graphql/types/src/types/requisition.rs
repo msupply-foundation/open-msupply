@@ -1,6 +1,6 @@
 use self::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, NameByIdLoaderInput,
@@ -66,6 +66,10 @@ impl RequisitionNode {
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_utc(self.row().created_datetime.clone(), Utc)
+    }
+
+    pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
+        &self.row().expected_delivery_date
     }
 
     /// User that last edited requisition, if user is not found in system default unknown user is returned

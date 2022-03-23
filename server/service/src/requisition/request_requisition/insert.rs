@@ -4,7 +4,7 @@ use crate::{
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use repository::{
     schema::{NumberRowType, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
@@ -19,6 +19,7 @@ pub struct InsertRequestRequisition {
     pub comment: Option<String>,
     pub max_months_of_stock: f64,
     pub min_months_of_stock: f64,
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -103,6 +104,7 @@ fn generate(
         their_reference,
         max_months_of_stock,
         min_months_of_stock,
+        expected_delivery_date,
     }: InsertRequestRequisition,
 ) -> Result<RequisitionRow, RepositoryError> {
     let result = RequisitionRow {
@@ -114,13 +116,15 @@ fn generate(
         r#type: RequisitionRowType::Request,
         status: RequisitionRowStatus::Draft,
         created_datetime: Utc::now().naive_utc(),
-        sent_datetime: None,
-        finalised_datetime: None,
         colour,
         comment,
+        expected_delivery_date,
         their_reference,
         max_months_of_stock,
         min_months_of_stock,
+        // Default
+        sent_datetime: None,
+        finalised_datetime: None,
         linked_requisition_id: None,
     };
 
@@ -141,17 +145,17 @@ mod test_insert {
         },
         service_provider::ServiceProvider,
     };
-    use chrono::Utc;
+    use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{
             mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
             mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
-        schema::{NameRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+        schema::NameRow,
         test_db::{setup_all, setup_all_with_data},
         RequisitionRowRepository,
     };
-    use util::inline_init;
+    use util::{inline_edit, inline_init};
 
     #[actix_rt::test]
     async fn insert_request_requisition_errors() {
@@ -180,15 +184,9 @@ mod test_insert {
                 &context,
                 "store_a",
                 "n/a",
-                InsertRequestRequisition {
-                    id: mock_request_draft_requisition().id,
-                    other_party_id: "n/a".to_owned(),
-                    colour: None,
-                    their_reference: None,
-                    comment: None,
-                    max_months_of_stock: 1.0,
-                    min_months_of_stock: 0.5,
-                },
+                inline_init(|r: &mut InsertRequestRequisition| {
+                    r.id = mock_request_draft_requisition().id;
+                }),
             ),
             Err(ServiceError::RequisitionAlreadyExists)
         );
@@ -200,15 +198,10 @@ mod test_insert {
                 &context,
                 "store_a",
                 "n/a",
-                InsertRequestRequisition {
-                    id: "new_request_requisition".to_owned(),
-                    other_party_id: name_store_b.id.clone(),
-                    colour: None,
-                    their_reference: None,
-                    comment: None,
-                    max_months_of_stock: 1.0,
-                    min_months_of_stock: 0.5,
-                },
+                inline_init(|r: &mut InsertRequestRequisition| {
+                    r.id = "new_request_requisition".to_owned();
+                    r.other_party_id = name_store_b.id.clone();
+                }),
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -233,15 +226,10 @@ mod test_insert {
                 &context,
                 "store_a",
                 "n/a",
-                InsertRequestRequisition {
-                    id: "new_request_requisition".to_owned(),
-                    other_party_id: "invalid".to_owned(),
-                    colour: None,
-                    their_reference: None,
-                    comment: None,
-                    max_months_of_stock: 1.0,
-                    min_months_of_stock: 0.5,
-                },
+                inline_init(|r: &mut InsertRequestRequisition| {
+                    r.id = "new_request_requisition".to_owned();
+                    r.other_party_id = "invalid".to_owned();
+                }),
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -252,15 +240,10 @@ mod test_insert {
                 &context,
                 "store_c",
                 "n/a",
-                InsertRequestRequisition {
-                    id: "new_request_requisition".to_owned(),
-                    other_party_id: mock_name_a().id,
-                    colour: None,
-                    their_reference: None,
-                    comment: None,
-                    max_months_of_stock: 1.0,
-                    min_months_of_stock: 0.5,
-                },
+                inline_init(|r: &mut InsertRequestRequisition| {
+                    r.id = "new_request_requisition".to_owned();
+                    r.other_party_id = mock_name_a().id;
+                }),
             ),
             Err(ServiceError::OtherPartyIsNotAStore)
         );
@@ -290,48 +273,36 @@ mod test_insert {
                     comment: Some("new comment".to_owned()),
                     max_months_of_stock: 1.0,
                     min_months_of_stock: 0.5,
+                    expected_delivery_date: Some(NaiveDate::from_ymd(2022, 01, 03)),
                 },
             )
             .unwrap();
 
         let after_insert = Utc::now().naive_utc();
 
-        let RequisitionRow {
-            id,
-            user_id,
-            requisition_number: _,
-            name_id,
-            store_id,
-            r#type,
-            status,
-            created_datetime,
-            sent_datetime,
-            finalised_datetime,
-            colour,
-            comment,
-            their_reference,
-            max_months_of_stock,
-            min_months_of_stock,
-            linked_requisition_id,
-        } = RequisitionRowRepository::new(&connection)
+        let new_row = RequisitionRowRepository::new(&connection)
             .find_one_by_id(&result.requisition_row.id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(id, "new_request_requisition".to_owned());
-        assert_eq!(user_id, Some(mock_user_account_a().id));
-        assert_eq!(name_id, mock_name_store_c().id);
-        assert_eq!(colour, Some("new colour".to_owned()));
-        assert_eq!(their_reference, Some("new their_reference".to_owned()));
-        assert_eq!(comment, Some("new comment".to_owned()));
-        assert_eq!(max_months_of_stock, 1.0);
-        assert_eq!(min_months_of_stock, 0.5);
-        assert_eq!(store_id, "store_a".to_owned());
-        assert_eq!(r#type, RequisitionRowType::Request);
-        assert_eq!(status, RequisitionRowStatus::Draft);
-        assert!(created_datetime > before_insert && created_datetime < after_insert);
-        assert_eq!(sent_datetime, None);
-        assert_eq!(finalised_datetime, None);
-        assert_eq!(linked_requisition_id, None);
+        assert_eq!(
+            new_row,
+            inline_edit(&new_row, |mut u| {
+                u.id = "new_request_requisition".to_owned();
+                u.user_id = Some(mock_user_account_a().id);
+                u.name_id = mock_name_store_c().id;
+                u.colour = Some("new colour".to_owned());
+                u.their_reference = Some("new their_reference".to_owned());
+                u.comment = Some("new comment".to_owned());
+                u.max_months_of_stock = 1.0;
+                u.min_months_of_stock = 0.5;
+                u.expected_delivery_date = Some(NaiveDate::from_ymd(2022, 01, 03));
+                u
+            })
+        );
+
+        assert!(
+            new_row.created_datetime > before_insert && new_row.created_datetime < after_insert
+        );
     }
 }
