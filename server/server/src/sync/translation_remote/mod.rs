@@ -68,6 +68,14 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
         .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
 }
 
+pub fn empty_date_time_as_option<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<NaiveDateTime>, D::Error> {
+    let s: Option<String> = Option::deserialize(d)?;
+    Ok(s.filter(|s| s != "")
+        .and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok()))
+}
+
 pub fn date_and_time_to_datatime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
     NaiveDateTime::new(
         date,
