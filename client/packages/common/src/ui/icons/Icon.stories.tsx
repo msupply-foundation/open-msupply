@@ -104,7 +104,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     {
-      icon: <MSupplyGuyGradient {...args} style={{ height: 39, width: 26 }} />,
+      icon: <MSupplyGuyGradient {...args} size="medium" />,
       name: 'MSupplyGuyGradient',
     },
     { icon: <MedicineIcon {...args} />, name: 'MedicineIcon' },
