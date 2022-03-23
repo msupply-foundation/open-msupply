@@ -1,64 +1,56 @@
-import React, { FC, memo } from 'react';
+import React, { FC } from 'react';
 import {
   Grid,
   DetailPanelSection,
-  PanelField,
   PanelLabel,
-  PanelRow,
-  BufferedTextArea,
   useTranslation,
+  PanelRow,
+  PanelField,
   ColorSelectButton,
   useBufferState,
+  BufferedTextArea,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../../api';
+import { useIsResponseDisabled, useResponseFields } from '../api';
 
-export const AdditionalInfoSectionComponent: FC = () => {
-  const t = useTranslation('distribution');
-  const isDisabled = useOutbound.utils.isDisabled();
-  const { colour, comment, user, update } = useOutbound.document.fields([
+export const AdditionalInfoSection: FC = () => {
+  const isDisabled = useIsResponseDisabled();
+  const { user, colour, comment, update } = useResponseFields([
     'colour',
     'comment',
     'user',
   ]);
-  const [colorBuffer, setColorBuffer] = useBufferState(colour);
-  const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
+  const [bufferedColor, setBufferedColor] = useBufferState(colour);
+  const t = useTranslation('distribution');
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
-          <PanelLabel>{t('label.entered-by')}</PanelLabel>
+          <PanelLabel>{t('label.edited-by')}</PanelLabel>
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
-
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
             <ColorSelectButton
               disabled={isDisabled}
               onChange={color => {
-                setColorBuffer(color.hex);
+                setBufferedColor(color.hex);
                 update({ colour: color.hex });
               }}
-              color={colorBuffer}
+              color={bufferedColor ?? ''}
             />
           </PanelField>
         </PanelRow>
-
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <BufferedTextArea
           disabled={isDisabled}
-          onChange={e => {
-            setCommentBuffer(e.target.value);
-            update({ comment: e.target.value });
-          }}
-          value={commentBuffer}
+          onChange={e => update({ comment: e.target.value })}
+          value={comment ?? ''}
         />
       </Grid>
     </DetailPanelSection>
   );
 };
-
-export const AdditionalInfoSection = memo(AdditionalInfoSectionComponent);

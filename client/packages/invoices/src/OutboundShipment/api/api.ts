@@ -82,6 +82,7 @@ const outboundParsers = {
     onHold: 'onHold' in patch ? patch.onHold : undefined,
     otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
     theirReference: patch.theirReference,
+    transportReference: patch.transportReference,
   }),
   toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
     return {
