@@ -96,9 +96,17 @@ impl RemotePullTranslation for InvoiceLineTranslation {
             source: anyhow::Error::msg(format!("Unsupported trans_line type: {:?}", data._type)),
             record: sync_record.data.clone(),
         })?;
-        let total = total(&data);
-        let item_code = match data.item_code {
-            Some(item_code) => item_code,
+
+        let (item_code, tax, total_before_tax, total_after_tax) = match data.item_code {
+            Some(item_code) => {
+                // use new om_* fields
+                (
+                    item_code,
+                    data.tax,
+                    data.total_before_tax.unwrap_or(0.0),
+                    data.total_after_tax.unwrap_or(0.0),
+                )
+            }
             None => {
                 let item = match ItemRepository::new(connection)
                     .find_one_by_id(&data.item_ID)
@@ -119,9 +127,11 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                         })
                     }
                 };
-                item.code
+                let total = total(&data);
+                (item.code, None, total, total)
             }
         };
+
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
                 id: data.ID,
@@ -136,9 +146,9 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 pack_size: data.pack_size,
                 cost_price_per_pack: data.cost_price,
                 sell_price_per_pack: data.sell_price,
-                total_before_tax: data.total_before_tax.unwrap_or(total),
-                total_after_tax: data.total_after_tax.unwrap_or(total),
-                tax: data.tax,
+                total_before_tax,
+                total_after_tax,
+                tax,
                 r#type: line_type,
                 number_of_packs: data.quantity / data.pack_size,
                 note: data.note,
