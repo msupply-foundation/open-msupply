@@ -19,7 +19,7 @@ const sizes = {
 };
 
 type MSupplyGuyProps = SvgIconProps & {
-  size: 'large' | 'medium';
+  size?: 'large' | 'medium';
 };
 
 const SvgGuy: FC<SvgIconProps & { fill: string }> = props => {
@@ -27,7 +27,7 @@ const SvgGuy: FC<SvgIconProps & { fill: string }> = props => {
   return (
     <SvgIcon {...svgProps} viewBox="3 1 206 310">
       <g>
-        <linearGradient id="6000022348f0" x1="0.5" y1="0" x2="0.5" y2="1">
+        <linearGradient id="linear-grad" x1="0.5" y1="0" x2="0.5" y2="1">
           <stop offset="0" stopColor="#fa7a0a" />
           <stop offset="1" stopColor="#e83b30" />
         </linearGradient>
@@ -66,21 +66,23 @@ const UnstyledGuy: FC<MSupplyGuyProps> = (svgProps): JSX.Element => (
   <SvgGuy fill="#e95c30" {...svgProps} />
 );
 
-export const MSupplyGuyGradient: FC<SvgIconProps> = (svgProps): JSX.Element => (
-  <SvgGuy fill="url(#6000022348f0)" {...svgProps} />
-);
+export const MSupplyGuyGradient: FC<MSupplyGuyProps> = (
+  svgProps
+): JSX.Element => <MSupplyGuy fill="url(#linear-grad)" {...svgProps} />;
 
-export const MSupplyGuy = styled(UnstyledGuy)(({ theme, size }) => ({
-  ...sizes[size],
-
-  transition: theme.transitions.create('width', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  '&:hover': {
-    animation:
-      size === 'large'
-        ? `${spin} 1s infinite ease`
-        : `${otherSpin} 1s infinite ease`,
-  },
-}));
+export const MSupplyGuy = styled(UnstyledGuy)(({ theme, size }) => {
+  const animationStyle = {
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    '&:hover': {
+      animation:
+        size === 'large'
+          ? `${spin} 1s infinite ease`
+          : `${otherSpin} 1s infinite ease`,
+    },
+  };
+  const sizeStyle = size ? sizes[size] : {};
+  return { ...animationStyle, ...sizeStyle };
+});
