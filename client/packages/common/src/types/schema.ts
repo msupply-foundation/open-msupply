@@ -58,6 +58,24 @@ export type AddFromMasterListInput = {
 
 export type AddFromMasterListResponse = AddFromMasterListError | RequisitionLineConnector;
 
+export type AllocateOutboundShipmentUnallocatedLineError = {
+  __typename: 'AllocateOutboundShipmentUnallocatedLineError';
+  error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
+};
+
+export type AllocateOutboundShipmentUnallocatedLineErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type AllocateOutboundShipmentUnallocatedLineNode = {
+  __typename: 'AllocateOutboundShipmentUnallocatedLineNode';
+  deletes: Array<DeleteResponse>;
+  inserts: InvoiceLineConnector;
+  updates: InvoiceLineConnector;
+};
+
+export type AllocateOutboundShipmentUnallocatedLineResponse = AllocateOutboundShipmentUnallocatedLineError | AllocateOutboundShipmentUnallocatedLineNode;
+
 export type AuthToken = {
   __typename: 'AuthToken';
   /** Bearer token */
@@ -589,6 +607,7 @@ export type FullMutation = {
   __typename: 'FullMutation';
   /** Add requisition lines from master item master list */
   addFromMasterList: AddFromMasterListResponse;
+  allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
@@ -648,6 +667,12 @@ export type FullMutation = {
 
 export type FullMutationAddFromMasterListArgs = {
   input: AddFromMasterListInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationAllocateOutboundShipmentUnallocatedLineArgs = {
+  lineId: Scalars['String'];
   storeId: Scalars['String'];
 };
 
@@ -1557,9 +1582,10 @@ export type InvoiceNode = {
   shippedDatetime?: Maybe<Scalars['DateTime']>;
   status: InvoiceNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
+  transportReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
   /**
-   * User that last edited invoice, if user is not found in system default unknow user is returned
+   * User that last edited invoice, if user is not found in system default unknown user is returned
    * Null is returned for transfers, where inbound has not been edited yet
    * Null is also returned for system created invoices like inventory adjustments
    */
@@ -1875,10 +1901,16 @@ export type NameFilterInput = {
   isStore?: InputMaybe<Scalars['Boolean']>;
   /** Filter by supplier property */
   isSupplier?: InputMaybe<Scalars['Boolean']>;
+  /**
+   * Show system names (defaults to false)
+   * System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
+   * if is_visible is set to true and is_system_name is also true no system names will be returned
+   */
+  isSystemName?: InputMaybe<Scalars['Boolean']>;
+  /** Visibility in current store (based on store_id parameter and existance of name_store_join record) */
+  isVisible?: InputMaybe<Scalars['Boolean']>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
-  showInvisibleInCurrentStore?: InputMaybe<Scalars['Boolean']>;
-  showSystemNames?: InputMaybe<Scalars['Boolean']>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<SimpleStringFilterInput>;
 };
@@ -1889,6 +1921,8 @@ export type NameNode = {
   id: Scalars['String'];
   isCustomer: Scalars['Boolean'];
   isSupplier: Scalars['Boolean'];
+  isSystemName: Scalars['Boolean'];
+  isVisible: Scalars['Boolean'];
   name: Scalars['String'];
   store?: Maybe<StoreNode>;
 };
@@ -1952,16 +1986,19 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String'];
 };
 
-export type OtherPartyNotACustomerError = InsertErrorInterface & UpdateErrorInterface & {
-  __typename: 'OtherPartyNotACustomerError';
+export type OtherPartyNotACustomer = InsertErrorInterface & UpdateErrorInterface & {
+  __typename: 'OtherPartyNotACustomer';
   description: Scalars['String'];
-  otherParty: NameNode;
 };
 
 export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String'];
-  otherParty: NameNode;
+};
+
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
+  __typename: 'OtherPartyNotVisible';
+  description: Scalars['String'];
 };
 
 export type OutboundInvoiceCounts = {
@@ -2024,7 +2061,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & PrintReportErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & PrintReportErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -2199,7 +2236,7 @@ export type RequisitionNode = {
   theirReference?: Maybe<Scalars['String']>;
   type: RequisitionNodeType;
   /**
-   * User that last edited requisition, if user is not found in system default unknow user is returned
+   * User that last edited requisition, if user is not found in system default unknown user is returned
    * Null is returned for transfers, where response requisition has not been edited yet
    */
   user?: Maybe<UserNode>;
@@ -2386,7 +2423,7 @@ export type StocktakeNode = {
   stocktakeDate?: Maybe<Scalars['NaiveDate']>;
   stocktakeNumber: Scalars['Int'];
   storeId: Scalars['String'];
-  /** User that created stocktake, if user is not found in system default unknow user is returned */
+  /** User that created stocktake, if user is not found in system default unknown user is returned */
   user: UserNode;
 };
 
@@ -2649,6 +2686,7 @@ export type UpdateOutboundShipmentInput = {
   status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
   /** External invoice reference, e.g. purchase or shipment number */
   theirReference?: InputMaybe<Scalars['String']>;
+  transportReference?: InputMaybe<Scalars['String']>;
 };
 
 export type UpdateOutboundShipmentLineError = {
