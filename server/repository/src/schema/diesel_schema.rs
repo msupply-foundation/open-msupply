@@ -87,6 +87,7 @@ table! {
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
+        expected_delivery_date -> Nullable<Date>,
         colour -> Nullable<Text>,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
@@ -106,6 +107,7 @@ table! {
         supply_quantity -> Integer,
         available_stock_on_hand -> Integer ,
         average_monthly_consumption -> Integer,
+        snapshot_datetime -> Nullable<Timestamp>,
         comment -> Nullable<Text>,
     }
 }
