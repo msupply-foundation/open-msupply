@@ -57,6 +57,17 @@ pub struct LegacyTransLineRow {
     pub quantity: i32,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub note: Option<String>,
+
+    #[serde(rename = "om_item_code")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(default)]
+    pub item_code: Option<String>,
+    #[serde(rename = "om_tax")]
+    pub tax: Option<f64>,
+    #[serde(rename = "om_total_before_tax")]
+    pub total_before_tax: Option<f64>,
+    #[serde(rename = "om_total_after_tax")]
+    pub total_after_tax: Option<f64>,
 }
 
 pub struct InvoiceLineTranslation {}
@@ -80,35 +91,44 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 }
             })?;
 
-        let item = match ItemRepository::new(connection)
-            .find_one_by_id(&data.item_ID)
-            .map_err(|source| SyncTranslationError {
-                table_name,
-                source: source.into(),
-                record: sync_record.data.clone(),
-            })? {
-            Some(item) => item,
-            None => {
-                return Err(SyncTranslationError {
-                    table_name,
-                    source: anyhow::Error::msg(format!("Failed to get item: {}", data.item_ID)),
-                    record: sync_record.data.clone(),
-                })
-            }
-        };
         let line_type = to_invoice_line_type(&data._type).ok_or(SyncTranslationError {
             table_name,
             source: anyhow::Error::msg(format!("Unsupported trans_line type: {:?}", data._type)),
             record: sync_record.data.clone(),
         })?;
         let total = total(&data);
+        let item_code = match data.item_code {
+            Some(item_code) => item_code,
+            None => {
+                let item = match ItemRepository::new(connection)
+                    .find_one_by_id(&data.item_ID)
+                    .map_err(|source| SyncTranslationError {
+                        table_name,
+                        source: source.into(),
+                        record: sync_record.data.clone(),
+                    })? {
+                    Some(item) => item,
+                    None => {
+                        return Err(SyncTranslationError {
+                            table_name,
+                            source: anyhow::Error::msg(format!(
+                                "Failed to get item: {}",
+                                data.item_ID
+                            )),
+                            record: sync_record.data.clone(),
+                        })
+                    }
+                };
+                item.code
+            }
+        };
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
                 id: data.ID,
                 invoice_id: data.transaction_ID,
                 item_id: data.item_ID,
                 item_name: data.item_name,
-                item_code: item.code,
+                item_code,
                 stock_line_id: data.item_line_ID,
                 location_id: data.location_ID,
                 batch: data.batch,
@@ -116,9 +136,9 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 pack_size: data.pack_size,
                 cost_price_per_pack: data.cost_price,
                 sell_price_per_pack: data.sell_price,
-                total_before_tax: total,
-                total_after_tax: total,
-                tax: None,
+                total_before_tax: data.total_before_tax.unwrap_or(total),
+                total_after_tax: data.total_after_tax.unwrap_or(total),
+                tax: data.tax,
                 r#type: line_type,
                 number_of_packs: data.quantity / data.pack_size,
                 note: data.note,
@@ -164,8 +184,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             invoice_id,
             item_id,
             item_name,
-            // TODO
-            item_code: _,
+            item_code,
             stock_line_id,
             location_id,
             batch,
@@ -173,10 +192,9 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
-            total_before_tax: _,
-            total_after_tax: _,
-            // TODO
-            tax: _,
+            total_before_tax,
+            total_after_tax,
+            tax,
             r#type,
             number_of_packs,
             note,
@@ -199,6 +217,10 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             _type: to_legacy_invoice_line_type(&r#type),
             quantity: pack_size * number_of_packs,
             note,
+            item_code: Some(item_code),
+            tax,
+            total_before_tax: Some(total_before_tax),
+            total_after_tax: Some(total_after_tax),
         };
 
         Ok(Some(vec![PushUpsertRecord {
