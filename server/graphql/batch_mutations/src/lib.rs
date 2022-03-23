@@ -3,12 +3,6 @@ mod batch_outbound_shipment;
 mod batch_request_requisition;
 mod batch_stocktake;
 use async_graphql::*;
-use batch_inbound_shipment::{
-    batch_inbound_shipment, BatchInboundShipmentInput, BatchInboundShipmentResponse,
-};
-use batch_outbound_shipment::{
-    batch_outbound_shipment, BatchOutboundShipmentInput, BatchOutboundShipmentResponse,
-};
 
 #[derive(Default, Clone)]
 pub struct BatchMutations;
@@ -19,18 +13,18 @@ impl BatchMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: BatchInboundShipmentInput,
-    ) -> Result<BatchInboundShipmentResponse> {
-        batch_inbound_shipment(ctx, &store_id, input)
+        input: batch_inbound_shipment::BatchInput,
+    ) -> Result<batch_inbound_shipment::BatchResponse> {
+        batch_inbound_shipment::batch(ctx, &store_id, input)
     }
 
     async fn batch_outbound_shipment(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: BatchOutboundShipmentInput,
-    ) -> Result<BatchOutboundShipmentResponse> {
-        batch_outbound_shipment(ctx, &store_id, input)
+        input: batch_outbound_shipment::BatchInput,
+    ) -> Result<batch_outbound_shipment::BatchResponse> {
+        batch_outbound_shipment::batch(ctx, &store_id, input)
     }
 
     async fn batch_request_requisition(
@@ -64,4 +58,12 @@ impl<T> VecOrNone<T> for Vec<T> {
             Some(self)
         }
     }
+}
+
+fn to_standard_error<I>(input: I, error: Error) -> Error
+where
+    I: std::fmt::Debug,
+{
+    let input_string = format!("{:#?}", input);
+    error.extend_with(|_, e| e.set("input", input_string))
 }
