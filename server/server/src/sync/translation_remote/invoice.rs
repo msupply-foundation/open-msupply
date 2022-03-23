@@ -14,7 +14,7 @@ use crate::sync::SyncTranslationError;
 
 use super::{
     date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
-    empty_str_as_option, naive_time,
+    empty_date_time_as_option, empty_str_as_option, naive_time,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
@@ -79,6 +79,65 @@ pub enum TransactMode {
     Dispensary,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InvoiceStatus {
+    New,
+    Allocated,
+    Picked,
+    Shipped,
+    Delivered,
+    Verified,
+}
+impl InvoiceStatus {
+    fn to_domain(&self) -> InvoiceRowStatus {
+        match self {
+            InvoiceStatus::New => InvoiceRowStatus::New,
+            InvoiceStatus::Allocated => InvoiceRowStatus::Allocated,
+            InvoiceStatus::Picked => InvoiceRowStatus::Picked,
+            InvoiceStatus::Shipped => InvoiceRowStatus::Shipped,
+            InvoiceStatus::Delivered => InvoiceRowStatus::Delivered,
+            InvoiceStatus::Verified => InvoiceRowStatus::Verified,
+        }
+    }
+
+    fn from_domain(status: InvoiceRowStatus) -> Self {
+        match status {
+            InvoiceRowStatus::New => InvoiceStatus::New,
+            InvoiceRowStatus::Allocated => InvoiceStatus::Allocated,
+            InvoiceRowStatus::Picked => InvoiceStatus::Picked,
+            InvoiceRowStatus::Shipped => InvoiceStatus::Shipped,
+            InvoiceRowStatus::Delivered => InvoiceStatus::Delivered,
+            InvoiceRowStatus::Verified => InvoiceStatus::Verified,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InvoiceType {
+    OutboundShipment,
+    InboundShipment,
+    InventoryAdjustment,
+}
+impl InvoiceType {
+    fn to_domain(&self) -> InvoiceRowType {
+        match self {
+            InvoiceType::OutboundShipment => InvoiceRowType::OutboundShipment,
+            InvoiceType::InboundShipment => InvoiceRowType::InboundShipment,
+            InvoiceType::InventoryAdjustment => InvoiceRowType::InventoryAdjustment,
+        }
+    }
+
+    fn from_domain(status: InvoiceRowType) -> Self {
+        match status {
+            InvoiceRowType::OutboundShipment => InvoiceType::OutboundShipment,
+            InvoiceRowType::InboundShipment => InvoiceType::InboundShipment,
+            InvoiceRowType::InventoryAdjustment => InvoiceType::InventoryAdjustment,
+        }
+    }
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyTransactRow {
@@ -98,10 +157,11 @@ pub struct LegacyTransactRow {
     pub comment: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub their_ref: Option<String>,
-    //#[serde(rename = "om_transport_reference")]
-    //#[serde(default)]
-    //#[serde(deserialize_with = "empty_str_as_option")]
-    //pub transport_reference: Option<String>,
+
+    #[serde(rename = "om_transport_reference")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub transport_reference: Option<String>,
     pub Colour: i32,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub requisition_ID: Option<String>,
@@ -130,6 +190,43 @@ pub struct LegacyTransactRow {
     pub confirm_time: NaiveTime,
 
     pub mode: TransactMode,
+
+    #[serde(rename = "om_created_datetime")]
+    pub created_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_allocated_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub allocated_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_picked_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub picked_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_shipped_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub shipped_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_delivered_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub delivered_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_verified_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub verified_datetime: Option<NaiveDateTime>,
+
+    #[serde(default)]
+    pub om_status: Option<InvoiceStatus>,
+    #[serde(default)]
+    pub om_type: Option<InvoiceType>,
+
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(default)]
+    pub om_colour: Option<String>,
 }
 
 pub struct InvoiceTranslation {}
@@ -182,7 +279,7 @@ impl RemotePullTranslation for InvoiceTranslation {
             source: anyhow::Error::msg(format!("Unsupported invoice type: {:?}", data._type)),
             record: sync_record.data.clone(),
         })?;
-        let confirm_mapping = map_legacy_confirm_time(&invoice_type, &data);
+        let mapping = map_legacy(&invoice_type, &data);
 
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Invoice(InvoiceRow {
@@ -192,23 +289,27 @@ impl RemotePullTranslation for InvoiceTranslation {
                 name_id: data.name_ID,
                 name_store_id,
                 invoice_number: data.invoice_num,
-                r#type: invoice_type,
-                status: invoice_status,
+                r#type: data.om_type.map(|t| t.to_domain()).unwrap_or(invoice_type),
+                status: data
+                    .om_status
+                    .map(|s| s.to_domain())
+                    .unwrap_or(invoice_status),
                 on_hold: data.hold,
                 comment: data.comment,
                 their_reference: data.their_ref,
-                created_datetime: NaiveDateTime::new(data.entry_date, data.entry_time),
-                allocated_datetime: None,
-                picked_datetime: confirm_mapping.picked_datetime,
-                shipped_datetime: data
-                    .ship_date
-                    .map(|ship_date| date_and_time_to_datatime(ship_date, 0)),
-                delivered_datetime: confirm_mapping.delivered_datetime,
-                verified_datetime: None,
-                colour: Some(format!("#{:06X}", data.Colour)),
+
+                // new om field mappings
+                created_datetime: mapping.created_datetime,
+                allocated_datetime: mapping.allocated_datetime,
+                picked_datetime: mapping.picked_datetime,
+                shipped_datetime: mapping.shipped_datetime,
+                delivered_datetime: mapping.delivered_datetime,
+                verified_datetime: mapping.verified_datetime,
+                colour: mapping.colour,
+
                 requisition_id: data.requisition_ID,
                 linked_invoice_id: data.linked_transaction_id,
-                transport_reference: None,
+                transport_reference: data.transport_reference,
             }),
         )))
     }
@@ -225,34 +326,60 @@ fn invoice_type(_type: &LegacyTransactType, name: &NameRow) -> Option<InvoiceRow
     }
 }
 
-/// Helper struct for mapping legacy confirm time to new fields
-struct ConfirmTimeMapping {
+/// Helper struct for new om_* fields mappings
+struct LegacyMapping {
+    created_datetime: NaiveDateTime,
     picked_datetime: Option<NaiveDateTime>,
     delivered_datetime: Option<NaiveDateTime>,
+    allocated_datetime: Option<NaiveDateTime>,
+    shipped_datetime: Option<NaiveDateTime>,
+    verified_datetime: Option<NaiveDateTime>,
+    colour: Option<String>,
 }
-fn map_legacy_confirm_time(
-    invoice_type: &InvoiceRowType,
-    data: &LegacyTransactRow,
-) -> ConfirmTimeMapping {
+/// Either make use of om_* fields, if present, or do a best afford mapping
+fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> LegacyMapping {
+    if let Some(created_datetime) = data.created_datetime {
+        return LegacyMapping {
+            created_datetime,
+            picked_datetime: data.picked_datetime,
+            delivered_datetime: data.delivered_datetime,
+            allocated_datetime: data.allocated_datetime,
+            shipped_datetime: data.shipped_datetime,
+            verified_datetime: data.verified_datetime,
+            colour: data.om_colour.clone(),
+        };
+    }
+
+    let mut mapping = LegacyMapping {
+        created_datetime: NaiveDateTime::new(data.entry_date, data.entry_time),
+        picked_datetime: None,
+        delivered_datetime: None,
+        allocated_datetime: None,
+        shipped_datetime: data
+            .ship_date
+            .map(|ship_date| date_and_time_to_datatime(ship_date, 0)),
+        verified_datetime: None,
+        colour: Some(format!("#{:06X}", data.Colour)),
+    };
+
     let confirm_datetime = data
         .confirm_date
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
     match invoice_type {
-        InvoiceRowType::OutboundShipment => ConfirmTimeMapping {
-            picked_datetime: confirm_datetime,
-            delivered_datetime: None,
-        },
-        InvoiceRowType::InboundShipment => ConfirmTimeMapping {
-            picked_datetime: None,
-            delivered_datetime: confirm_datetime,
-        },
-        InvoiceRowType::InventoryAdjustment => ConfirmTimeMapping {
-            picked_datetime: None,
-            delivered_datetime: confirm_datetime,
-        },
-    }
+        InvoiceRowType::OutboundShipment => {
+            mapping.picked_datetime = confirm_datetime;
+        }
+        InvoiceRowType::InboundShipment => {
+            mapping.delivered_datetime = confirm_datetime;
+        }
+        InvoiceRowType::InventoryAdjustment => {
+            mapping.delivered_datetime = confirm_datetime;
+        }
+    };
+    mapping
 }
+
 fn to_legacy_confirm_time(
     invoice_type: &InvoiceRowType,
     picked_datetime: Option<NaiveDateTime>,
@@ -282,7 +409,6 @@ fn invoice_status(
             let delivered = data.arrival_date_actual.is_some();
             match data.status {
                 LegacyTransactStatus::Nw => InvoiceRowStatus::New,
-                // TODO could also mean Allocated
                 LegacyTransactStatus::Sg => InvoiceRowStatus::New,
                 LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
                 LegacyTransactStatus::Fn => {
@@ -346,7 +472,6 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             id,
             user_id,
             name_id,
-            // TODO
             name_store_id: _,
             store_id,
             invoice_number,
@@ -356,17 +481,15 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             comment,
             their_reference,
             created_datetime,
-            // TODO:
-            allocated_datetime: _,
-            // TODO:
+            allocated_datetime,
             picked_datetime,
             shipped_datetime,
             delivered_datetime,
-            verified_datetime: _,
+            verified_datetime,
             colour,
             requisition_id,
             linked_invoice_id,
-            transport_reference: _,
+            transport_reference,
         } = InvoiceRepository::new(connection)
             .find_one_by_id(&changelog.row_id)
             .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?;
@@ -376,11 +499,12 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             anyhow::Error::msg(format!("Invalid invoice type: {:?}", r#type)),
             changelog,
         ))?;
-        let status = legacy_invoice_status(&r#type, &status).ok_or(to_push_translation_error(
-            table_name,
-            anyhow::Error::msg(format!("Invalid invoice status: {:?}", r#status)),
-            changelog,
-        ))?;
+        let legacy_status =
+            legacy_invoice_status(&r#type, &status).ok_or(to_push_translation_error(
+                table_name,
+                anyhow::Error::msg(format!("Invalid invoice status: {:?}", r#status)),
+                changelog,
+            ))?;
         let confirm_datetime = to_legacy_confirm_time(&r#type, picked_datetime, delivered_datetime);
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
@@ -389,25 +513,36 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             store_ID: store_id.clone(),
             invoice_num: invoice_number,
             _type,
-            status,
+            status: legacy_status,
             hold: on_hold,
             comment,
             their_ref: their_reference,
-            Colour: colour.map(|colour| parse_html_colour(&colour)).unwrap_or(0),
+            Colour: colour
+                .as_ref()
+                .map(|colour| parse_html_colour(colour))
+                .unwrap_or(0),
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
             entry_date: created_datetime.date(),
             entry_time: created_datetime.time(),
-            // TODO losing the time here:
             ship_date: shipped_datetime
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
-            // TODO losing the time here:
             arrival_date_actual: delivered_datetime
                 .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
 
             mode: TransactMode::Store,
+            transport_reference,
+            created_datetime: Some(created_datetime),
+            allocated_datetime,
+            picked_datetime,
+            shipped_datetime,
+            delivered_datetime,
+            verified_datetime,
+            om_status: Some(InvoiceStatus::from_domain(status)),
+            om_type: Some(InvoiceType::from_domain(r#type)),
+            om_colour: colour,
         };
 
         Ok(Some(vec![PushUpsertRecord {
