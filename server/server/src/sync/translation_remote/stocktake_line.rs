@@ -39,6 +39,11 @@ pub struct LegacyStocktakeLineRow {
     pub expiry: Option<NaiveDate>,
     pub cost_price: f64,
     pub sell_price: f64,
+
+    #[serde(rename = "om_note")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(default)]
+    pub note: Option<String>,
 }
 
 pub struct StocktakeLineTranslation {}
@@ -82,7 +87,7 @@ impl RemotePullTranslation for StocktakeLineTranslation {
             pack_size: Some(data.snapshot_packsize),
             cost_price_per_pack: Some(data.cost_price),
             sell_price_per_pack: Some(data.sell_price),
-            note: None,
+            note: data.note,
         };
         // the following lines are from stock_line, manually unset when stock_line is None
         // (because they are otherwise set to Some(0.0)
@@ -125,7 +130,7 @@ impl RemotePushUpsertTranslation for StocktakeLineTranslation {
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
-            note: _,
+            note,
         } = StocktakeLineRowRepository::new(connection)
             .find_one_by_id(&changelog.row_id)
             .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
@@ -175,6 +180,7 @@ impl RemotePushUpsertTranslation for StocktakeLineTranslation {
                 .map(|it| it.sell_price_per_pack)
                 .or(sell_price_per_pack)
                 .unwrap_or(0.0),
+            note,
         };
 
         Ok(Some(vec![PushUpsertRecord {
