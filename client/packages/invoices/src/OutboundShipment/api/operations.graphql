@@ -78,6 +78,7 @@ fragment Outbound on InvoiceNode {
   otherPartyName
   status
   theirReference
+  transportReference
   type
 
   user {
@@ -140,6 +141,7 @@ fragment OutboundRow on InvoiceNode {
   otherPartyId
   otherPartyName
   theirReference
+  transportReference
   type
   status
   colour
@@ -254,6 +256,11 @@ mutation insertOutboundShipment(
     ... on InsertOutboundShipmentError {
       __typename
       error {
+        description
+        ... on OtherPartyNotACustomer {
+          __typename
+          description
+        }
         ... on OtherPartyNotVisible {
           __typename
           description

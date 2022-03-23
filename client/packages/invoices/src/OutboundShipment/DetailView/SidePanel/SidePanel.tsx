@@ -10,6 +10,7 @@ import { useOutbound } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
+import { TransportSection } from './TransportSection';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
@@ -34,6 +35,7 @@ export const SidePanelComponent = () => {
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
       <PricingSection />
+      <TransportSection />
     </DetailPanelPortal>
   );
 };
