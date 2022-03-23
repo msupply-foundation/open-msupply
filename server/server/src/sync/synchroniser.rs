@@ -95,8 +95,7 @@ impl Synchroniser {
 
         // First push before pulling. This avoids problems with the existing central server
         // implementation...
-        // TODO enable once push is working/tested:
-        //self.remote_data.push_changes(&connection).await?;
+        self.remote_data.push_changes(&connection).await?;
         self.remote_data.pull(&connection).await?;
 
         // Check if there is new data on the central server. Do this after pulling the remote data
