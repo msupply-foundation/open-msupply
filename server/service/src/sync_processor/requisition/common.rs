@@ -89,6 +89,7 @@ pub fn generate_linked_requisition(
         max_months_of_stock: source_requisition.max_months_of_stock.clone(),
         min_months_of_stock: source_requisition.min_months_of_stock.clone(),
         linked_requisition_id: Some(source_requisition.id.clone()),
+        expected_delivery_date: source_requisition.expected_delivery_date,
         // Default
         user_id: None,
         sent_datetime: None,
