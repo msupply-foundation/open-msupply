@@ -23,7 +23,6 @@ CREATE TABLE invoice (
     delivered_datetime TEXT,
     verified_datetime TEXT,
     colour TEXT,
-    requisition_id TEXT REFERENCES requisition(id),
-    linked_invoice_id TEXT,
-    FOREIGN KEY (linked_invoice_id) REFERENCES invoice(id)    
+    requisition_id TEXT,
+    linked_invoice_id TEXT
 )
