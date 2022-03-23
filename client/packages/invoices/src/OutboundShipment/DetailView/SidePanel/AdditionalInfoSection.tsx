@@ -11,12 +11,12 @@ import {
   useBufferState,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import { useOutboundFields, useIsOutboundDisabled } from '../../api';
+import { useOutbound } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation('distribution');
-  const isDisabled = useIsOutboundDisabled();
-  const { colour, comment, user, update } = useOutboundFields([
+  const isDisabled = useOutbound.utils.isDisabled();
+  const { colour, comment, user, update } = useOutbound.document.fields([
     'colour',
     'comment',
     'user',
@@ -28,7 +28,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
-          <PanelLabel>{t('label.edited-by')}</PanelLabel>
+          <PanelLabel>{t('label.entered-by')}</PanelLabel>
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>

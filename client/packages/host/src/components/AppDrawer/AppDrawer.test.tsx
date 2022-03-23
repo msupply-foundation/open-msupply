@@ -66,7 +66,7 @@ describe('AppDrawer', () => {
       expect(getByText(/distribution/i)).toBeVisible();
       expect(getByText(/dashboard/i)).toBeVisible();
       expect(getByText(/inventory/i)).toBeVisible();
-      expect(getByText(/reports/i)).toBeVisible();
+      // expect(getByText(/reports/i)).toBeVisible();
     });
   });
   it('Text is invisible when the menu is collapsed', async () => {
@@ -93,7 +93,7 @@ describe('AppDrawer', () => {
       expect(getByText(/suppliers/i)).not.toBeVisible();
       expect(getByText(/stock/i)).not.toBeVisible();
       expect(getByText(/tools/i)).not.toBeVisible();
-      expect(getByText(/reports/i)).not.toBeVisible();
+      // expect(getByText(/reports/i)).not.toBeVisible();
       expect(getByText(/messages/i)).not.toBeVisible();
     });
   });

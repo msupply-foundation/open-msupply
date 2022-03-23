@@ -132,7 +132,14 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
 
   return useMemo(
     () => (
-      <Box padding={4}>
+      <Box
+        sx={{
+          paddingLeft: 4,
+          paddingRight: 4,
+          paddingTop: 4,
+          paddingBottom: 2,
+        }}
+      >
         <Typography
           variant="body1"
           fontWeight={700}

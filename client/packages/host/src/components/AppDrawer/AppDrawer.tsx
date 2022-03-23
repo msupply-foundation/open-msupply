@@ -168,6 +168,7 @@ export const AppDrawer: React.FC = () => {
           )}
           onClick={drawer.toggle}
           icon={<AppDrawerIcon />}
+          sx={{ '&:hover': { backgroundColor: 'inherit' } }}
         />
       </ToolbarIconContainer>
       <UpperListContainer onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>

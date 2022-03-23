@@ -4,12 +4,12 @@ import {
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { useOutboundFields, useIsOutboundDisabled } from '../../api';
+import { useOutbound } from '../../api';
 
 export const OnHoldButtonComponent = memo(() => {
   const t = useTranslation('distribution');
-  const { onHold, update } = useOutboundFields('onHold');
-  const isDisabled = useIsOutboundDisabled();
+  const { onHold, update } = useOutbound.document.fields('onHold');
+  const isDisabled = useOutbound.utils.isDisabled();
   const getConfirmation = useConfirmationModal({
     message: t(
       onHold

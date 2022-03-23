@@ -16,6 +16,9 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
   '&.Mui-expanded': { margin: 0 },
   '&:before': { backgroundColor: 'transparent' },
   '& p.MuiTypography-root': { fontSize: 12 },
+  '& .MuiAccordionSummary-root.Mui-expanded': {
+    minHeight: 48,
+  },
 }));
 
 export interface DetailPanelSectionProps {

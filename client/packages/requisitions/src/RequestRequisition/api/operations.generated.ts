@@ -12,7 +12,7 @@ export type InsertRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertRequestMutation = { __typename: 'FullMutation', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError', error: { __typename: 'OtherPartyNotASupplier', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+export type InsertRequestMutation = { __typename: 'FullMutation', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
 export type UpdateRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -20,7 +20,7 @@ export type UpdateRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateRequestMutation = { __typename: 'FullMutation', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'RecordNotFound', description: string } } };
+export type UpdateRequestMutation = { __typename: 'FullMutation', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -30,9 +30,11 @@ export type DeleteRequestMutationVariables = Types.Exact<{
 
 export type DeleteRequestMutation = { __typename: 'FullMutation', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitions?: Array<{ __typename: 'DeleteRequestRequisitionResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionError', error: { __typename: 'CannotDeleteRequisitionWithLines', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } };
+export type RequestLineChartDataFragment = { __typename: 'ItemChartDataNode', consumptionHistory: { __typename: 'ConsumptionHistoryConnector', nodes: Array<{ __typename: 'ConsumptionHistoryNode', amc: number, consumption: number, date: string }> }, suggestedQuantityCalculation: { __typename: 'SuggestedQuantityCalculationNode', stockOnHand: number, suggested: number, minimumStockOnHand: number, maximumStockOnHand: number, averageMonthlyConsumption: number }, stockEvolution: { __typename: 'StockEvolutionConnector', nodes: Array<{ __typename: 'StockEvolutionNode', date: string, historicStockOnHand?: number | null, projectedStockOnHand?: number | null }> } };
 
-export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
+export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } }, chartData: { __typename: 'ItemChartDataNode', consumptionHistory: { __typename: 'ConsumptionHistoryConnector', nodes: Array<{ __typename: 'ConsumptionHistoryNode', amc: number, consumption: number, date: string }> }, suggestedQuantityCalculation: { __typename: 'SuggestedQuantityCalculationNode', stockOnHand: number, suggested: number, minimumStockOnHand: number, maximumStockOnHand: number, averageMonthlyConsumption: number }, stockEvolution: { __typename: 'StockEvolutionConnector', nodes: Array<{ __typename: 'StockEvolutionNode', date: string, historicStockOnHand?: number | null, projectedStockOnHand?: number | null }> } } };
+
+export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } }, chartData: { __typename: 'ItemChartDataNode', consumptionHistory: { __typename: 'ConsumptionHistoryConnector', nodes: Array<{ __typename: 'ConsumptionHistoryNode', amc: number, consumption: number, date: string }> }, suggestedQuantityCalculation: { __typename: 'SuggestedQuantityCalculationNode', stockOnHand: number, suggested: number, minimumStockOnHand: number, maximumStockOnHand: number, averageMonthlyConsumption: number }, stockEvolution: { __typename: 'StockEvolutionConnector', nodes: Array<{ __typename: 'StockEvolutionNode', date: string, historicStockOnHand?: number | null, projectedStockOnHand?: number | null }> } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
 
 export type RequestByNumberQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -40,7 +42,7 @@ export type RequestByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type RequestByNumberQuery = { __typename: 'FullQuery', requisitionByNumber: { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> } } };
+export type RequestByNumberQuery = { __typename: 'FullQuery', requisitionByNumber: { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand: number, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } }, chartData: { __typename: 'ItemChartDataNode', consumptionHistory: { __typename: 'ConsumptionHistoryConnector', nodes: Array<{ __typename: 'ConsumptionHistoryNode', amc: number, consumption: number, date: string }> }, suggestedQuantityCalculation: { __typename: 'SuggestedQuantityCalculationNode', stockOnHand: number, suggested: number, minimumStockOnHand: number, maximumStockOnHand: number, averageMonthlyConsumption: number }, stockEvolution: { __typename: 'StockEvolutionConnector', nodes: Array<{ __typename: 'StockEvolutionNode', date: string, historicStockOnHand?: number | null, projectedStockOnHand?: number | null }> } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> } } };
 
 export type RequestRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string };
 
@@ -87,6 +89,14 @@ export type DeleteRequestLinesMutationVariables = Types.Exact<{
 
 export type DeleteRequestLinesMutation = { __typename: 'FullMutation', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitionLines?: Array<{ __typename: 'DeleteRequestRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
+export type UseSuggestedQuantityMutationVariables = Types.Exact<{
+  requestId: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type UseSuggestedQuantityMutation = { __typename: 'FullMutation', useSuggestedQuantity: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string }> } | { __typename: 'UseSuggestedQuantityError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } };
+
 export const ItemWithStatsFragmentDoc = gql`
     fragment ItemWithStats on ItemNode {
   id
@@ -97,6 +107,32 @@ export const ItemWithStatsFragmentDoc = gql`
     averageMonthlyConsumption
     availableStockOnHand
     availableMonthsOfStockOnHand
+  }
+}
+    `;
+export const RequestLineChartDataFragmentDoc = gql`
+    fragment RequestLineChartData on ItemChartDataNode {
+  __typename
+  consumptionHistory {
+    nodes {
+      amc
+      consumption
+      date
+    }
+  }
+  suggestedQuantityCalculation {
+    stockOnHand
+    suggested
+    minimumStockOnHand
+    maximumStockOnHand
+    averageMonthlyConsumption
+  }
+  stockEvolution {
+    nodes {
+      date
+      historicStockOnHand
+      projectedStockOnHand
+    }
   }
 }
     `;
@@ -116,8 +152,12 @@ export const RequestLineFragmentDoc = gql`
   item {
     ...ItemWithStats
   }
+  chartData {
+    ...RequestLineChartData
+  }
 }
-    ${ItemWithStatsFragmentDoc}`;
+    ${ItemWithStatsFragmentDoc}
+${RequestLineChartDataFragmentDoc}`;
 export const RequestFragmentDoc = gql`
     fragment Request on RequisitionNode {
   __typename
@@ -432,6 +472,35 @@ export const DeleteRequestLinesDocument = gql`
   }
 }
     `;
+export const UseSuggestedQuantityDocument = gql`
+    mutation useSuggestedQuantity($requestId: String!, $storeId: String!) {
+  useSuggestedQuantity(
+    input: {requestRequisitionId: $requestId}
+    storeId: $storeId
+  ) {
+    ... on UseSuggestedQuantityError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+      }
+    }
+    ... on RequisitionLineConnector {
+      nodes {
+        id
+      }
+      totalCount
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -466,6 +535,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteRequestLines(variables: DeleteRequestLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteRequestLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestLinesMutation>(DeleteRequestLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequestLines');
+    },
+    useSuggestedQuantity(variables: UseSuggestedQuantityMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UseSuggestedQuantityMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UseSuggestedQuantityMutation>(UseSuggestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'useSuggestedQuantity');
     }
   };
 }
@@ -621,5 +693,22 @@ export const mockAddFromMasterListMutation = (resolver: ResponseResolver<GraphQL
 export const mockDeleteRequestLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteRequestLinesMutationVariables>, GraphQLContext<DeleteRequestLinesMutation>, any>) =>
   graphql.mutation<DeleteRequestLinesMutation, DeleteRequestLinesMutationVariables>(
     'deleteRequestLines',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUseSuggestedQuantityMutation((req, res, ctx) => {
+ *   const { requestId, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ useSuggestedQuantity })
+ *   )
+ * })
+ */
+export const mockUseSuggestedQuantityMutation = (resolver: ResponseResolver<GraphQLRequest<UseSuggestedQuantityMutationVariables>, GraphQLContext<UseSuggestedQuantityMutation>, any>) =>
+  graphql.mutation<UseSuggestedQuantityMutation, UseSuggestedQuantityMutationVariables>(
+    'useSuggestedQuantity',
     resolver
   )
