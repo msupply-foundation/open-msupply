@@ -31,7 +31,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
         let invoice_row = InvoiceRow {
             id: invoice_id.clone(),
             name_id: name.name_row.id,
-            name_store_id: None,
+            name_store_id: name.store_row.map(|s| s.id),
             store_id: store_id.to_string(),
             user_id: Some("user 1".to_string()),
             invoice_number: 8,
@@ -180,8 +180,6 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
                 repo.upsert_one(&linked_invoice).unwrap();
 
                 let row = inline_edit(&row_existing.row, |mut d| {
-                    d.name_id = name.name_row.id;
-                    d.name_store_id = name.store_row.map(|r| r.id);
                     d.user_id = Some("test user 2".to_string());
                     d.r#type = InvoiceRowType::InboundShipment;
                     d.status = InvoiceRowStatus::Verified;
