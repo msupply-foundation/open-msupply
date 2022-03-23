@@ -65,64 +65,68 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
         </Typography>
       </Box>
       <Box>
-        <ComposedChart width={450} height={255} data={data}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="date"
-            axisLine={false}
-            tickFormatter={dateFormatter}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis axisLine={false} tick={{ fontSize: 12 }} />
-          <ChartTooltip
-            formatter={tooltipFormatter}
-            labelFormatter={tooltipLabelFormatter}
-            labelStyle={{ fontWeight: 700 }}
-          />
-          <Legend
-            payload={[
-              {
-                value: t('label.consumption'),
-                type: 'rect',
-                id: '1',
-                color: theme.palette.gray.main,
-              },
-              {
-                value: t('label.requested-quantity'),
-                type: 'rect',
-                id: '2',
-                color: theme.palette.primary.light,
-              },
-              {
-                value: t('label.moving-average'),
-                type: 'rect',
-                id: '3',
-                color: theme.palette.secondary.light,
-              },
-            ]}
-          />
-          <Bar dataKey="consumption">
-            {data.map((entry, index) => (
-              <Cell
-                key={entry.date}
-                // fill={DateUtils.isThisMonth(new Date(entry.date)) ? theme.palette.primary.light : theme.palette.gray.main}
-                // hack to cope with mock data.. which is giving 2021 dates only
-                fill={
-                  index === data.length - 1
-                    ? theme.palette.primary.light
-                    : theme.palette.gray.main
-                }
-              />
-            ))}
-          </Bar>
-          <Line
-            dataKey="amc"
-            stroke={theme.palette.secondary.light}
-            type="monotone"
-            dot={false}
-            strokeWidth={2}
-          />
-        </ComposedChart>
+        {data.length === 0 ? (
+          <Typography width={450}>{t('error.no-data')}</Typography>
+        ) : (
+          <ComposedChart width={450} height={255} data={data}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="date"
+              axisLine={false}
+              tickFormatter={dateFormatter}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis axisLine={false} tick={{ fontSize: 12 }} />
+            <ChartTooltip
+              formatter={tooltipFormatter}
+              labelFormatter={tooltipLabelFormatter}
+              labelStyle={{ fontWeight: 700 }}
+            />
+            <Legend
+              payload={[
+                {
+                  value: t('label.consumption'),
+                  type: 'rect',
+                  id: '1',
+                  color: theme.palette.gray.main,
+                },
+                {
+                  value: t('label.requested-quantity'),
+                  type: 'rect',
+                  id: '2',
+                  color: theme.palette.primary.light,
+                },
+                {
+                  value: t('label.moving-average'),
+                  type: 'rect',
+                  id: '3',
+                  color: theme.palette.secondary.light,
+                },
+              ]}
+            />
+            <Bar dataKey="consumption">
+              {data.map((entry, index) => (
+                <Cell
+                  key={entry.date}
+                  // fill={DateUtils.isThisMonth(new Date(entry.date)) ? theme.palette.primary.light : theme.palette.gray.main}
+                  // hack to cope with mock data.. which is giving 2021 dates only
+                  fill={
+                    index === data.length - 1
+                      ? theme.palette.primary.light
+                      : theme.palette.gray.main
+                  }
+                />
+              ))}
+            </Bar>
+            <Line
+              dataKey="amc"
+              stroke={theme.palette.secondary.light}
+              type="monotone"
+              dot={false}
+              strokeWidth={2}
+            />
+          </ComposedChart>
+        )}
       </Box>
     </Box>
   );
