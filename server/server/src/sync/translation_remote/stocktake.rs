@@ -86,6 +86,16 @@ impl RemotePullTranslation for StocktakeTranslation {
                     record: sync_record.data.clone(),
                 }
             })?;
+        let (created_datetime, finalised_datetime) = match data.created_datetime {
+            Some(created_datetime) => {
+                // use new om_* fields
+                (created_datetime, data.finalised_datetime)
+            }
+            None => (
+                date_and_time_to_datatime(data.stock_take_created_date, 0),
+                None,
+            ),
+        };
 
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Stocktake(StocktakeRow {
@@ -96,10 +106,8 @@ impl RemotePullTranslation for StocktakeTranslation {
                 comment: data.comment,
                 description: data.Description,
                 status: stocktake_status(&data.status),
-                created_datetime: data
-                    .created_datetime
-                    .unwrap_or(date_and_time_to_datatime(data.stock_take_created_date, 0)),
-                finalised_datetime: data.finalised_datetime,
+                created_datetime,
+                finalised_datetime,
                 inventory_adjustment_id: data.invad_additions_ID,
                 stocktake_date: data.stocktake_date,
                 is_locked: data.is_locked,

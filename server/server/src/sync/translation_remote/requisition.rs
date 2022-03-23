@@ -172,21 +172,54 @@ impl RemotePullTranslation for RequisitionTranslation {
                 }
             })?;
 
+        let (
+            created_datetime,
+            sent_datetime,
+            finalised_datetime,
+            max_months_of_stock,
+            status,
+            colour,
+        ) = match data.created_datetime {
+            // use new om_* fields
+            Some(created_datetime) => (
+                created_datetime,
+                data.sent_datetime,
+                data.finalised_datetime,
+                data.max_months_of_stock.unwrap_or(0.0),
+                data.om_status
+                    .map(|s| s.to_domain())
+                    .ok_or(SyncTranslationError {
+                        table_name,
+                        source: anyhow::Error::msg(
+                            "Invalid data: om_created_datetime set but om_status missing",
+                        ),
+                        record: sync_record.data.clone(),
+                    })?,
+                data.om_colour,
+            ),
+            None => (
+                date_and_time_to_datatime(data.date_entered, 0),
+                None,
+                None,
+                data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
+                from_legacy_status(&data.status).ok_or(SyncTranslationError {
+                    table_name,
+                    source: anyhow::Error::msg(format!(
+                        "Unsupported requisition status: {:?}",
+                        data.status
+                    )),
+                    record: sync_record.data.clone(),
+                })?,
+                data.colour.and_then(|colour| req_colour_to_hex(colour)),
+            ),
+        };
+
         let t = from_legacy_type(&data.r#type).ok_or(SyncTranslationError {
             table_name,
             source: anyhow::Error::msg(format!("Unsupported requisition type: {:?}", data.r#type)),
             record: sync_record.data.clone(),
         })?;
-        let status = data.om_status.map(|s| s.to_domain()).unwrap_or(
-            from_legacy_status(&data.status).ok_or(SyncTranslationError {
-                table_name,
-                source: anyhow::Error::msg(format!(
-                    "Unsupported requisition status: {:?}",
-                    data.status
-                )),
-                record: sync_record.data.clone(),
-            })?,
-        );
+
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Requisition(RequisitionRow {
                 id: data.ID.to_string(),
@@ -196,19 +229,13 @@ impl RemotePullTranslation for RequisitionTranslation {
                 store_id: data.store_ID,
                 r#type: t,
                 status,
-                created_datetime: data
-                    .created_datetime
-                    .unwrap_or(date_and_time_to_datatime(data.date_entered, 0)),
-                sent_datetime: data.sent_datetime,
-                finalised_datetime: data.finalised_datetime,
-                colour: data
-                    .om_colour
-                    .or(data.colour.and_then(|colour| req_colour_to_hex(colour))),
+                created_datetime,
+                sent_datetime,
+                finalised_datetime,
+                colour,
                 comment: data.comment,
                 their_reference: data.requester_reference,
-                max_months_of_stock: data
-                    .max_months_of_stock
-                    .unwrap_or(data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH),
+                max_months_of_stock,
                 min_months_of_stock: data.thresholdMOS,
                 linked_requisition_id: data.linked_requisition_id,
             }),
