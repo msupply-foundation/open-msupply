@@ -34,7 +34,7 @@ export const RelatedDocumentsSectionComponent = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item direction="column" gap={0.5}>
+      <Grid item flexDirection="column" gap={0.5}>
         {!requisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (

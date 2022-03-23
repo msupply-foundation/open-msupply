@@ -16,7 +16,7 @@ export const Toolbar: FC = () => {
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid container>
-        <Grid item display="flex" flex={1} direction="column" gap={1}>
+        <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('label.master-list-name')}
             Input={
