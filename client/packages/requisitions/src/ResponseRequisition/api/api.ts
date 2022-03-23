@@ -23,8 +23,6 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
-// Tiny change here
-
 const responseParser = {
   toStatus: (
     patch: Partial<ResponseFragment> & { id: string }
