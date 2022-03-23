@@ -103,11 +103,14 @@ mod remote_sync_integration_tests {
     }
 
     /// This test assumes a running central server.
-    /// To run the this test, enable the test macro and update the sync_settings and used store_id.
-    /// For every test run a new unique records are generated and it shouldn't be necessary to bring
+    /// To run this test, enable the test macro and update the sync_settings and used store_id.
+    /// For every test run new unique records are generated and it shouldn't be necessary to bring
     /// the central server into a clean state after each test.
+    ///
+    /// Note: these test can't be parallelized since every sync test need exclusive access to the
+    /// central server
     //#[actix_rt::test]
-    async fn test_syncing_new_data() {
+    async fn test_remote_syncing() {
         let sync_settings = SyncSettings {
             url: "http://192.168.178.77:8080".to_string(),
             username: "mobiletest".to_string(),
@@ -119,7 +122,7 @@ mod remote_sync_integration_tests {
         };
         let store_id = "80004C94067A4CE5A34FC343EB1B4306";
 
-        // numbers
+        // number
         let number_tester = NumberSyncRecordTester {};
         test_sync_record(store_id, &sync_settings, &number_tester).await;
 
@@ -127,15 +130,19 @@ mod remote_sync_integration_tests {
         let stock_line_tester = StockLineRecordTester {};
         test_sync_record(store_id, &sync_settings, &stock_line_tester).await;
 
+        // name store join
         let name_store_join_tester = NameStoreJoinRecordTester {};
         test_sync_record(store_id, &sync_settings, &name_store_join_tester).await;
 
+        // stocktake
         let stocktake_tester = StocktakeRecordTester {};
         test_sync_record(store_id, &sync_settings, &stocktake_tester).await;
 
+        // invoice
         let invoice_tester = InvoiceRecordTester {};
         test_sync_record(store_id, &sync_settings, &invoice_tester).await;
 
+        // requisition
         let requisition_tester = RequisitionRecordTester {};
         test_sync_record(store_id, &sync_settings, &requisition_tester).await;
     }
