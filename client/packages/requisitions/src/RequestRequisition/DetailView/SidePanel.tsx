@@ -96,7 +96,7 @@ const RelatedDocumentsSection: FC = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item direction="column" gap={0.5}>
+      <Grid item flexDirection="column" gap={0.5}>
         {!shipments?.totalCount && (
           <PanelLabel>{t('messages.no-shipments-yet')}</PanelLabel>
         )}

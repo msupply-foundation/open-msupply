@@ -35,7 +35,7 @@ export const Toolbar: FC = () => {
       }}
     >
       <Grid container>
-        <Grid item display="flex" flex={1} direction="column" gap={1}>
+        <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
           {otherParty && (
             <InputWithLabelRow
               label={t('label.supplier-name')}
