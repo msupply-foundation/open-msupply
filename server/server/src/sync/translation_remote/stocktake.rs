@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, RemoteSyncBufferRow, StocktakeRow, StocktakeStatus,
@@ -10,7 +10,8 @@ use serde::{Deserialize, Serialize};
 use crate::sync::SyncTranslationError;
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
+    date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
+    empty_date_time_as_option, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_STOCKTAKE,
@@ -51,8 +52,17 @@ pub struct LegacyStocktakeRow {
     pub stock_take_created_date: NaiveDate,
     #[serde(rename = "stock_take_date")]
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub stocktake_date: Option<NaiveDate>,
     pub store_ID: String,
+
+    #[serde(rename = "om_created_datetime")]
+    pub created_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_finalised_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub finalised_datetime: Option<NaiveDateTime>,
 }
 
 pub struct StocktakeTranslation {}
@@ -86,10 +96,10 @@ impl RemotePullTranslation for StocktakeTranslation {
                 comment: data.comment,
                 description: data.Description,
                 status: stocktake_status(&data.status),
-                created_datetime: date_and_time_to_datatime(data.stock_take_created_date, 0),
-                // TODO finalise doesn't exist in mSupply?
-                finalised_datetime: None,
-                // TODO what is the correct mapping:
+                created_datetime: data
+                    .created_datetime
+                    .unwrap_or(date_and_time_to_datatime(data.stock_take_created_date, 0)),
+                finalised_datetime: data.finalised_datetime,
                 inventory_adjustment_id: data.invad_additions_ID,
                 stocktake_date: data.stocktake_date,
                 is_locked: data.is_locked,
@@ -125,7 +135,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             description,
             status,
             created_datetime,
-            finalised_datetime: _,
+            finalised_datetime,
             inventory_adjustment_id,
             is_locked,
             stocktake_date,
@@ -150,6 +160,8 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             invad_additions_ID: inventory_adjustment_id,
             serial_number: stocktake_number,
             stock_take_created_date: date_from_date_time(&created_datetime),
+            created_datetime: Some(created_datetime),
+            finalised_datetime,
         };
 
         Ok(Some(vec![PushUpsertRecord {
