@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use repository::{
     schema::{ChangelogRow, ChangelogTableName, RemoteSyncBufferRow, RequisitionLineRow},
     RequisitionLineRowRepository, StorageConnection,
@@ -9,7 +10,7 @@ use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 use crate::sync::SyncTranslationError;
 
 use super::{
-    empty_str_as_option,
+    empty_date_time_as_option, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     TRANSLATION_RECORD_REQUISITION_LINE,
@@ -34,6 +35,11 @@ pub struct LegacyRequisitionLineRow {
 
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
+
+    #[serde(rename = "om_calculation_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub calculation_datetime: Option<NaiveDateTime>,
 }
 
 pub struct RequisitionLineTranslation {}
@@ -116,6 +122,7 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
             stock_on_hand: available_stock_on_hand,
             daily_usage: average_monthly_consumption as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
             comment,
+            calculation_datetime: None,
         };
 
         Ok(Some(vec![PushUpsertRecord {
