@@ -225,6 +225,18 @@ query outboundByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
+query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
+  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
+    outbound {
+      created {
+        today
+        thisWeek
+      }
+      toBePicked
+    }
+  }
+}
+
 mutation insertOutboundShipment(
   $id: String!
   $otherPartyId: String!
@@ -242,18 +254,15 @@ mutation insertOutboundShipment(
     ... on InsertOutboundShipmentError {
       __typename
       error {
-        description
-        ... on OtherPartyNotACustomerError {
+        ... on OtherPartyNotVisible {
           __typename
           description
-          otherParty {
-            code
-            id
-            isCustomer
-            isSupplier
-            name
-          }
         }
+        ... on OtherPartyNotACustomer {
+          __typename
+          description
+        }
+        description
       }
     }
     ... on NodeError {
@@ -655,6 +664,33 @@ mutation upsertOutboundShipment(
         }
       }
     }
+    allocateOutboundShipmentUnallocatedLines {
+      id
+      response {
+        ... on AllocateOutboundShipmentUnallocatedLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+          }
+        }
+        ... on AllocateOutboundShipmentUnallocatedLineNode {
+          __typename
+          deletes {
+            id
+          }
+          inserts {
+            totalCount
+          }
+          updates {
+            totalCount
+          }
+        }
+      }
+    }
   }
 }
 
@@ -692,18 +728,6 @@ mutation deleteOutboundShipmentLines(
           id
         }
       }
-    }
-  }
-}
-
-query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
-  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-    outbound {
-      created {
-        today
-        thisWeek
-      }
-      toBePicked
     }
   }
 }
