@@ -36,6 +36,7 @@ mod remote_sync_integration_tests {
 
     use super::SyncRecordTester;
 
+    #[allow(dead_code)]
     async fn init_db(sync_settings: &SyncSettings) -> (StorageConnection, Synchroniser) {
         let (_, connection, connection_manager, _) =
             setup_all("remote_sync_integration_tests", MockDataInserts::none()).await;
@@ -55,6 +56,7 @@ mod remote_sync_integration_tests {
     /// 2) Reset local data and pull. Then validate that the pulled data is correct
     /// 3) Mutate the previously inserted data and push the changes
     /// 4) Reset, pull and validate as in step 2)
+    #[allow(dead_code)]
     async fn test_sync_record<T>(
         store_id: &str,
         sync_settings: &SyncSettings,
@@ -110,6 +112,7 @@ mod remote_sync_integration_tests {
     /// Note: these test can't be parallelized since every sync test need exclusive access to the
     /// central server
     //#[actix_rt::test]
+    #[allow(dead_code)]
     async fn test_remote_syncing() {
         let sync_settings = SyncSettings {
             url: "http://192.168.178.77:8080".to_string(),
@@ -122,27 +125,27 @@ mod remote_sync_integration_tests {
         };
         let store_id = "80004C94067A4CE5A34FC343EB1B4306";
 
-        // number
+        println!("number:");
         let number_tester = NumberSyncRecordTester {};
         test_sync_record(store_id, &sync_settings, &number_tester).await;
 
-        // stock line
+        println!("stock line:");
         let stock_line_tester = StockLineRecordTester {};
         test_sync_record(store_id, &sync_settings, &stock_line_tester).await;
 
-        // name store join
+        println!("name store join:");
         let name_store_join_tester = NameStoreJoinRecordTester {};
         test_sync_record(store_id, &sync_settings, &name_store_join_tester).await;
 
-        // stocktake
+        println!("stocktake:");
         let stocktake_tester = StocktakeRecordTester {};
         test_sync_record(store_id, &sync_settings, &stocktake_tester).await;
 
-        // invoice
+        println!("invoice:");
         let invoice_tester = InvoiceRecordTester {};
         test_sync_record(store_id, &sync_settings, &invoice_tester).await;
 
-        // requisition
+        println!("requisition:");
         let requisition_tester = RequisitionRecordTester {};
         test_sync_record(store_id, &sync_settings, &requisition_tester).await;
     }
