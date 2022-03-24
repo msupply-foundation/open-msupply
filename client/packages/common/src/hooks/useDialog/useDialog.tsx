@@ -29,6 +29,7 @@ export interface ModalProps {
 export interface DialogProps {
   onClose?: () => void;
   isOpen?: boolean;
+  animationTimeout?: number;
 }
 
 interface DialogState {
@@ -45,7 +46,7 @@ enum Direction {
   Down = 'down',
 }
 
-const useSlideAnimation = (isRtl: boolean) => {
+const useSlideAnimation = (isRtl: boolean, timeout: number) => {
   const [slideConfig, setSlide] = useState({
     in: true,
     direction: isRtl ? Direction.Left : Direction.Right,
@@ -61,14 +62,14 @@ const useSlideAnimation = (isRtl: boolean) => {
         in: true,
         direction: isRtl ? Direction.Left : Direction.Right,
       });
-    }, 500);
+    }, timeout);
   };
 
   return { slideConfig, onTriggerSlide };
 };
 
 export const useDialog = (dialogProps?: DialogProps): DialogState => {
-  const { onClose, isOpen } = dialogProps ?? {};
+  const { onClose, isOpen, animationTimeout = 500 } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
@@ -96,7 +97,10 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
-    const { slideConfig, onTriggerSlide } = useSlideAnimation(isRtl);
+    const { slideConfig, onTriggerSlide } = useSlideAnimation(
+      isRtl,
+      animationTimeout
+    );
 
     let WrappedNextButton: ModalProps['nextButton'] = undefined;
     if (nextButton) {
