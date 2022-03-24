@@ -27,7 +27,7 @@ export { ListIcon } from './ListIcon';
 export { MenuDotsIcon } from './MenuDots';
 export { MessagesIcon } from './Messages';
 export { MessageSquareIcon } from './MessageSquare';
-export { MSupplyGuy, MSupplyGuyGradient } from './MSupplyGuy';
+export { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 export { PlusCircleIcon } from './PlusCircle';
 export { PowerIcon } from './Power';
 export { PrinterIcon } from './Printer';
