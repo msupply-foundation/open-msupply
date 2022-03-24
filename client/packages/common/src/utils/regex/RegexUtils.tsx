@@ -28,4 +28,19 @@ export const RegexUtils = {
     const matcher = new RegExp(substring, 'i');
     return matcher.test(testString);
   },
+  // Case-insensitive version of 'startsWith'
+  matchString: (substring: string, testString: string) => {
+    const matcher = new RegExp(`^${substring}`, 'i');
+    return matcher.test(testString);
+  },
+  // matches test string against an object's name or code properties
+  matchNameOrCode: (
+    item: { name: string; code: string },
+    searchString: string
+  ) => {
+    return (
+      RegexUtils.matchString(searchString, item.name) ||
+      RegexUtils.matchString(searchString, item.code)
+    );
+  },
 };

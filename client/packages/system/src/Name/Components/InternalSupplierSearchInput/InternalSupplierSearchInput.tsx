@@ -1,6 +1,10 @@
 import React, { FC } from 'react';
-import { Autocomplete, useBufferState } from '@openmsupply-client/common';
-import { useInternalSuppliers } from '../../api';
+import {
+  Autocomplete,
+  RegexUtils,
+  useBufferState,
+} from '@openmsupply-client/common';
+import { NameRowFragment, useInternalSuppliers } from '../../api';
 import {
   basicFilterOptions,
   NameSearchInputProps,
@@ -29,6 +33,12 @@ export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
       }}
       options={data?.nodes ?? []}
       renderOption={simpleNameOptionRenderer}
+      getOptionLabel={(option: NameRowFragment) => option.name}
+      filterOptions={(options, state) =>
+        options.filter(option =>
+          RegexUtils.matchNameOrCode(option, state.inputValue)
+        )
+      }
       width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       autoWidthPopper
