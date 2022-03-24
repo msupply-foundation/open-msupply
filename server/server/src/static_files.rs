@@ -6,8 +6,7 @@ use std::time::{Duration, SystemTime};
 use actix_files as fs;
 use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
-use actix_web::web::{get, scope};
-use actix_web::{web, Error, HttpRequest, HttpResponse, guard};
+use actix_web::{guard, web, Error, HttpRequest, HttpResponse};
 use reqwest::StatusCode;
 use serde::Deserialize;
 
