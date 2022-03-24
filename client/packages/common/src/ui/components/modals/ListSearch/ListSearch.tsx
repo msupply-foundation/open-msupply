@@ -17,6 +17,8 @@ interface ListSearchProps<T> extends AutocompleteListProps<T> {
 }
 
 export const ListSearch = <T,>({
+  filterOptions,
+  getOptionLabel,
   title,
   options,
   optionKey,
@@ -35,6 +37,8 @@ export const ListSearch = <T,>({
     <BasicModal open={open} onClose={onClose} height={modalHeight}>
       <ModalTitle title={title} />
       <AutocompleteList
+        filterOptions={filterOptions}
+        getOptionLabel={getOptionLabel}
         renderOption={renderOption}
         onChange={onChange}
         loading={loading}
