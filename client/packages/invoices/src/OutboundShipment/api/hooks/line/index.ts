@@ -7,6 +7,7 @@ import {
   useOutboundDeleteLines,
   useOutboundDeleteSelectedLines,
 } from './useOutboundDeleteLines';
+import { useOutboundAllocateSelectedLines } from './useOutboundAllocateSelectedLines';
 
 export {
   useOutboundServiceLines,
@@ -16,4 +17,5 @@ export {
   useOutboundItems,
   useOutboundDeleteLines,
   useOutboundDeleteSelectedLines,
+  useOutboundAllocateSelectedLines,
 };

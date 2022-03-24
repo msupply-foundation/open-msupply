@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   RegexUtils,
-  MSupplyGuy,
+  AnimatedMSupplyGuy,
   useDrawer,
   useLocalStorage,
   useTheme,
@@ -13,7 +13,7 @@ export const AppDrawerIcon: React.FC = () => {
   const [customLogo] = useLocalStorage('/theme/logo');
 
   if (!customLogo)
-    return <MSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />;
+    return <AnimatedMSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />;
 
   const style = drawer.isOpen
     ? { paddingTop: 20, width: 64, fill: theme.mixins.drawer?.iconColor }

@@ -28,7 +28,7 @@ import { HomeIcon } from './Home';
 import { InfoIcon } from './Info';
 import { InvoiceIcon } from './Invoice';
 import { MedicineIcon } from './MedicineIcon';
-import { MSupplyGuy, MSupplyGuyGradient } from './MSupplyGuy';
+import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 import { MenuDotsIcon } from './MenuDots';
 import { MessagesIcon } from './Messages';
 import { MessageSquareIcon } from './MessageSquare';
@@ -51,6 +51,7 @@ import { TranslateIcon } from './Translate';
 import { TruckIcon } from './Truck';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
+import { ZapIcon } from './Zap';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 
 export default {
@@ -104,8 +105,8 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     {
-      icon: <MSupplyGuyGradient {...args} style={{ height: 39, width: 26 }} />,
-      name: 'MSupplyGuyGradient',
+      icon: <AnimatedMSupplyGuy {...args} size="medium" />,
+      name: 'AnimatedMSupplyGuy',
     },
     { icon: <MedicineIcon {...args} />, name: 'MedicineIcon' },
     { icon: <MenuDotsIcon {...args} />, name: 'MenuDots' },
@@ -130,6 +131,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UserIcon {...args} />, name: 'User' },
     { icon: <XCircleIcon {...args} />, name: 'XCircle' },
+    { icon: <ZapIcon {...args} />, name: 'Zap' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {

@@ -149,7 +149,7 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
   const t = useTranslation('replenishment');
 
-  if (suggestedQuantity + availableStockOnHand === 0)
+  if (suggestedQuantity === 0 && availableStockOnHand === 0)
     return <CalculationError isSohAndQtyZero />;
 
   const monthlyConsumptionWidth =

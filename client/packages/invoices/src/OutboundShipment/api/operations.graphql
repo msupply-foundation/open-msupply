@@ -265,6 +265,11 @@ mutation insertOutboundShipment(
           __typename
           description
         }
+        ... on OtherPartyNotACustomer {
+          __typename
+          description
+        }
+        description
       }
     }
     ... on NodeError {
@@ -662,6 +667,33 @@ mutation upsertOutboundShipment(
           __typename
           error {
             description
+          }
+        }
+      }
+    }
+    allocateOutboundShipmentUnallocatedLines {
+      id
+      response {
+        ... on AllocateOutboundShipmentUnallocatedLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+          }
+        }
+        ... on AllocateOutboundShipmentUnallocatedLineNode {
+          __typename
+          deletes {
+            id
+          }
+          inserts {
+            totalCount
+          }
+          updates {
+            totalCount
           }
         }
       }

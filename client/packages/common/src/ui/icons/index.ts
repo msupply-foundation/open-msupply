@@ -27,7 +27,7 @@ export { ListIcon } from './ListIcon';
 export { MenuDotsIcon } from './MenuDots';
 export { MessagesIcon } from './Messages';
 export { MessageSquareIcon } from './MessageSquare';
-export { MSupplyGuy, MSupplyGuyGradient } from './MSupplyGuy';
+export { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 export { PlusCircleIcon } from './PlusCircle';
 export { PowerIcon } from './Power';
 export { PrinterIcon } from './Printer';
@@ -49,6 +49,7 @@ export { XCircleIcon } from './XCircle';
 export { MedicineIcon } from './MedicineIcon';
 export { SidebarIcon } from './Sidebar';
 export { SearchIcon } from './Search';
+export { ZapIcon } from './Zap';
 
 type Color =
   | 'inherit'
