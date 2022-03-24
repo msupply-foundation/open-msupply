@@ -138,7 +138,7 @@ export const useResponseLines = (): UseResponseLinesController => {
         )
       : lines?.nodes;
     return sortedLines.filter(({ item: { name } }) =>
-      RegexUtils.matchSubstring(itemFilter, name)
+      RegexUtils.includes(itemFilter, name)
     );
   }, [sortBy.key, sortBy.isDesc, lines, itemFilter]);
 

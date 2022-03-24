@@ -4,8 +4,9 @@ import { useCustomers } from '../../api';
 import {
   NameSearchInputProps,
   basicFilterOptions,
-  simpleNameOptionRenderer,
+  filterByNameAndCode,
 } from '../../utils';
+import { NameOptionRenderer } from '../NameOptionRenderer';
 
 export const CustomerSearchInput: FC<NameSearchInputProps> = ({
   onChange,
@@ -22,13 +23,14 @@ export const CustomerSearchInput: FC<NameSearchInputProps> = ({
       clearable={false}
       value={buffer && { ...buffer, label: buffer.name }}
       filterOptionConfig={basicFilterOptions}
+      filterOptions={filterByNameAndCode}
       loading={isLoading}
       onChange={(_, name) => {
         setBuffer(name);
         name && onChange(name);
       }}
       options={data?.nodes ?? []}
-      renderOption={simpleNameOptionRenderer}
+      renderOption={NameOptionRenderer}
       width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       autoWidthPopper
