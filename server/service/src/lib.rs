@@ -3,6 +3,7 @@ use repository::{Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use service_provider::ServiceContext;
 use std::convert::TryInto;
 
+pub mod apis;
 pub mod auth_data;
 pub mod dashboard;
 pub mod invoice;
