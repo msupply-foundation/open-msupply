@@ -6,6 +6,7 @@ import {
   AutocompleteRenderInputParams,
   createFilterOptions,
   CreateFilterOptionsConfig,
+  FilterOptionsState,
 } from '@mui/material';
 import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 import { BasicTextInput } from '../TextInput';
@@ -13,6 +14,7 @@ import { defaultOptionMapper, getDefaultOptionRenderer } from './utils';
 
 export type AutocompleteListProps<T> = {
   options: T[];
+  filterOptions?: (options: T[], state: FilterOptionsState<T>) => T[];
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
   loading?: boolean;
   loadingText?: React.ReactNode;
@@ -29,11 +31,16 @@ export type AutocompleteListProps<T> = {
   limitTags?: number;
   inputValue?: string;
   clearText?: string;
+  // annoying. typing this to T | T[] causes ts complaints, as it types the value as (T | T[])[]
+  // as the correct typing relies on other props here
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value?: any;
 };
 
 export const AutocompleteList = <T,>({
   options,
   filterOptionConfig,
+  filterOptions,
   loading,
   loadingText,
   noOptionsText,
@@ -49,9 +56,9 @@ export const AutocompleteList = <T,>({
   limitTags,
   inputValue,
   clearText,
+  value,
 }: AutocompleteListProps<T>): JSX.Element => {
-  const filterOptions = createFilterOptions(filterOptionConfig);
-
+  const createdFilterOptions = createFilterOptions(filterOptionConfig);
   const optionRenderer = optionKey
     ? getDefaultOptionRenderer<T>(optionKey)
     : renderOption;
@@ -83,7 +90,7 @@ export const AutocompleteList = <T,>({
       renderInput={
         renderInput || (props => <BasicTextInput {...props} autoFocus />)
       }
-      filterOptions={filterOptions}
+      filterOptions={filterOptions ?? createdFilterOptions}
       open
       forcePopupIcon={false}
       options={mappedOptions}
@@ -110,6 +117,7 @@ export const AutocompleteList = <T,>({
       limitTags={limitTags}
       inputValue={inputValue}
       clearText={clearText}
+      value={value}
     />
   );
 };
