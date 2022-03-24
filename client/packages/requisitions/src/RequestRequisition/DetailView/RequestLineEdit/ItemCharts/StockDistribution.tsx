@@ -33,7 +33,6 @@ const ValueBar = ({
   label: string;
   colour: string;
 }) => {
-  console.log(`** DISTRO ** label:${label} value:${value} total:${total}`);
   if (value === 0) return null;
 
   const flexBasis = Math.min(Math.round((100 * value) / total), 100);
@@ -162,7 +161,7 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
   const t = useTranslation('replenishment');
 
-  if (suggestedQuantity + availableStockOnHand === 0)
+  if (suggestedQuantity === 0 && availableStockOnHand === 0)
     return <CalculationError isSohAndQtyZero />;
 
   const monthlyConsumptionWidth =
