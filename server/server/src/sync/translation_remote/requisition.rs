@@ -17,7 +17,7 @@ use super::{
     empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_REQUISITION,
+    zero_date_as_option, TRANSLATION_RECORD_REQUISITION,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -135,10 +135,10 @@ pub struct LegacyRequisitionRow {
     #[serde(deserialize_with = "empty_date_time_as_option")]
     pub finalised_datetime: Option<NaiveDateTime>,
 
-    #[serde(rename = "om_expected_delivery_datetime")]
+    #[serde(rename = "om_expected_delivery_date")]
     #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
-    pub expected_delivery_datetime: Option<NaiveDateTime>,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    pub expected_delivery_date: Option<NaiveDate>,
 
     #[serde(rename = "om_max_months_of_stock")]
     #[serde(default)]
@@ -294,7 +294,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             sent_datetime: sent_datetime,
             finalised_datetime: finalised_datetime,
             // TODO:
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
             requester_reference: their_reference,
             linked_requisition_id,
             thresholdMOS: min_months_of_stock,

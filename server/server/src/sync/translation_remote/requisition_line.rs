@@ -36,10 +36,10 @@ pub struct LegacyRequisitionLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
 
-    #[serde(rename = "om_calculation_datetime")]
+    #[serde(rename = "om_snapshot_datetime")]
     #[serde(default)]
     #[serde(deserialize_with = "empty_date_time_as_option")]
-    pub calculation_datetime: Option<NaiveDateTime>,
+    pub snapshot_datetime: Option<NaiveDateTime>,
 }
 
 pub struct RequisitionLineTranslation {}
@@ -122,7 +122,7 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
             stock_on_hand: available_stock_on_hand,
             daily_usage: average_monthly_consumption as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
             comment,
-            calculation_datetime: None,
+            snapshot_datetime: None,
         };
 
         Ok(Some(vec![PushUpsertRecord {

@@ -108,7 +108,7 @@ fn requisition_request_push_record() -> TestSyncPushRecord {
             max_months_of_stock: Some(5.0),
             om_status: Some(RequisitionStatus::Finalised),
             om_colour: Some("#1A1919".to_string()),
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -206,7 +206,7 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionStatus::New),
             om_colour: Some("#1A1919".to_string()),
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -244,7 +244,7 @@ const REQUISITION_OM_FIELDS: (&'static str, &'static str) = (
       "om_created_datetime": "2020-07-09T00:00:00",
       "om_sent_datetime": "2022-03-24T14:48:00",
       "om_finalised_datetime": "2022-03-25T14:48:00",
-      "om_expected_delivery_datetime": "2022-03-26T14:48:00",
+      "om_expected_delivery_date": "2022-03-26",
       "om_max_months_of_stock": 10.0,
       "om_status": "DRAFT",
       "om_colour": "Colour" 
@@ -309,8 +309,8 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             sent_datetime: Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(14, 48, 00)),
             finalised_datetime: Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(14, 48, 00)),
             //TODO:
-            //expected_delivery_datetime: Some(NaiveDate::from_ymd(2022, 03, 26).and_hms(14, 48, 00)),
-            expected_delivery_datetime: None,
+            //expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26).and_hms(14, 48, 00)),
+            expected_delivery_date: None,
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionStatus::Draft),
             om_colour: Some("Colour".to_string()),
