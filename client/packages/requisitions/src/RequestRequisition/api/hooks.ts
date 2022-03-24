@@ -308,6 +308,7 @@ export const useDeleteRequestLines = () => {
   const { lines } = useRequestLines();
   const api = useRequestApi();
   const requestNumber = useRequestNumber();
+  const isDisabled = useIsRequestDisabled();
   const queryClient = useQueryClient();
   const { mutate } = useMutation(api.deleteLines, {
     onSettled: () =>
@@ -320,6 +321,10 @@ export const useDeleteRequestLines = () => {
   );
 
   const onDelete = async () => {
+    if (isDisabled) {
+      info(t('label.cant-delete-disabled'))();
+      return;
+    }
     const number = selectedRows?.length;
     if (selectedRows && number) {
       mutate(selectedRows, {
