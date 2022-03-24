@@ -1,11 +1,7 @@
 import React, { FC } from 'react';
-import {
-  ListSearch,
-  RegexUtils,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { ListSearch, useTranslation } from '@openmsupply-client/common';
 import { useSuppliers, NameRowFragment } from '../../api';
-import { NameSearchProps } from '../../utils';
+import { filterByNameAndCode, NameSearchProps } from '../../utils';
 import { NameOptionRenderer } from '../NameOptionRenderer';
 
 export const SupplierSearchModal: FC<NameSearchProps> = ({
@@ -25,11 +21,7 @@ export const SupplierSearchModal: FC<NameSearchProps> = ({
       title={t('suppliers')}
       renderOption={NameOptionRenderer}
       getOptionLabel={(option: NameRowFragment) => option.name}
-      filterOptions={(options, state) =>
-        options.filter(option =>
-          RegexUtils.matchNameOrCode(option, state.inputValue)
-        )
-      }
+      filterOptions={filterByNameAndCode}
       onChange={(_, name: NameRowFragment | NameRowFragment[] | null) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
