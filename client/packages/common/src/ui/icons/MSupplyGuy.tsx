@@ -24,7 +24,7 @@ type MSupplyGuyProps = SvgIconProps & {
 
 const SvgGuy: FC<MSupplyGuyProps> = props => {
   const { size, ...svgProps } = props;
-  const sizeStyle = size ? sizes[size] : {};
+  const sizeStyle = size ? sizes[size] : { ...svgProps.style };
   return (
     <SvgIcon {...svgProps} viewBox="3 1 206 310" style={sizeStyle}>
       <g>
