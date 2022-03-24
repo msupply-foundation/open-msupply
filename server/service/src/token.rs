@@ -139,7 +139,7 @@ impl<'a> TokenService<'a> {
     ) -> Result<TokenPair, JWTRefreshError> {
         let mut validation = jsonwebtoken::Validation::default();
         validation.set_audience(&vec![format!("{:?}", Audience::TokenRefresh)]);
-        validation.iss = Some(ISSUER.to_string());
+        validation.set_issuer(&[ISSUER]);
         let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
             refresh_token,
             &jsonwebtoken::DecodingKey::from_secret(self.jwt_token_secret),
@@ -190,7 +190,7 @@ impl<'a> TokenService<'a> {
     pub fn verify_token(&self, token: &str) -> Result<OmSupplyClaim, JWTValidationError> {
         let mut validation = jsonwebtoken::Validation::default();
         validation.set_audience(&vec![format!("{:?}", Audience::Api)]);
-        validation.iss = Some(ISSUER.to_string());
+        validation.set_issuer(&[ISSUER]);
         let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
             token,
             &jsonwebtoken::DecodingKey::from_secret(self.jwt_token_secret),
