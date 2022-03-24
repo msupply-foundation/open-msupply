@@ -29,5 +29,6 @@ export const useOutbound = {
     save: Lines.useOutboundSaveLines,
     delete: Lines.useOutboundDeleteLines,
     deleteSelected: Lines.useOutboundDeleteSelectedLines,
+    allocateSelected: Lines.useOutboundAllocateSelectedLines,
   },
 };

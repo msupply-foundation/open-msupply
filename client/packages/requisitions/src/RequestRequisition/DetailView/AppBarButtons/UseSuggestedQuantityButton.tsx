@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   ButtonWithIcon,
-  EditIcon,
+  ZapIcon,
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
@@ -18,7 +18,7 @@ export const UseSuggestedQuantityButtonComponent = () => {
 
   return (
     <ButtonWithIcon
-      Icon={<EditIcon />}
+      Icon={<ZapIcon />}
       label={t('button.requested-to-suggested')}
       onClick={() => getConfirmation()}
     />
