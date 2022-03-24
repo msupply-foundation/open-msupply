@@ -35,7 +35,7 @@ export const useOutboundDelete = () => {
         cannotDeleteSnack();
       } else {
         mutate(selectedRows, {
-          onSuccess: () => queryClient.invalidateQueries(['invoice']),
+          onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
         });
         const deletedMessage = t('messages.deleted-invoices', {
           number: numberSelected,
