@@ -51,6 +51,7 @@ import { TranslateIcon } from './Translate';
 import { TruckIcon } from './Truck';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
+import { ZapIcon } from './Zap';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 
 export default {
@@ -130,6 +131,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UserIcon {...args} />, name: 'User' },
     { icon: <XCircleIcon {...args} />, name: 'XCircle' },
+    { icon: <ZapIcon {...args} />, name: 'Zap' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {

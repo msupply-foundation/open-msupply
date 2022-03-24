@@ -76,6 +76,12 @@ export type AllocateOutboundShipmentUnallocatedLineNode = {
 
 export type AllocateOutboundShipmentUnallocatedLineResponse = AllocateOutboundShipmentUnallocatedLineError | AllocateOutboundShipmentUnallocatedLineNode;
 
+export type AllocateOutboundShipmentUnallocatedLineResponseWithId = {
+  __typename: 'AllocateOutboundShipmentUnallocatedLineResponseWithId';
+  id: Scalars['String'];
+  response: AllocateOutboundShipmentUnallocatedLineResponse;
+};
+
 export type AuthToken = {
   __typename: 'AuthToken';
   /** Bearer token */
@@ -125,6 +131,7 @@ export type BatchIsReserved = DeleteInboundShipmentLineErrorInterface & UpdateIn
 };
 
 export type BatchOutboundShipmentInput = {
+  allocatedOutboundShipmentUnallocatedLines?: InputMaybe<Array<Scalars['String']>>;
   continueOnError?: InputMaybe<Scalars['Boolean']>;
   deleteOutboundShipmentLines?: InputMaybe<Array<DeleteOutboundShipmentLineInput>>;
   deleteOutboundShipmentServiceLines?: InputMaybe<Array<DeleteOutboundShipmentServiceLineInput>>;
@@ -142,6 +149,7 @@ export type BatchOutboundShipmentInput = {
 
 export type BatchOutboundShipmentResponse = {
   __typename: 'BatchOutboundShipmentResponse';
+  allocateOutboundShipmentUnallocatedLines?: Maybe<Array<AllocateOutboundShipmentUnallocatedLineResponseWithId>>;
   deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineResponseWithId>>;
   deleteOutboundShipmentServiceLines?: Maybe<Array<DeleteOutboundShipmentServiceLineResponseWithId>>;
   deleteOutboundShipmentUnallocatedLines?: Maybe<Array<DeleteOutboundShipmentUnallocatedLineResponseWithId>>;

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   ButtonWithIcon,
-  PlusCircleIcon,
+  ZapIcon,
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
@@ -20,7 +20,7 @@ export const SupplyRequestedQuantityButtonComponent = () => {
   return (
     <ButtonWithIcon
       disabled={isDisabled}
-      Icon={<PlusCircleIcon />}
+      Icon={<ZapIcon />}
       label={t('button.supply-to-requested')}
       onClick={() => getConfirmation()}
     />

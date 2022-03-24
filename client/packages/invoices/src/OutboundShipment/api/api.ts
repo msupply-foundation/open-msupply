@@ -333,6 +333,22 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
 
     return result;
   },
+  allocateLines: async (
+    allocatedOutboundShipmentUnallocatedLines: string[]
+  ) => {
+    const input = {
+      allocatedOutboundShipmentUnallocatedLines,
+    };
+
+    const result = await sdk.upsertOutboundShipment({ storeId, input });
+    const { batchOutboundShipment } = result;
+
+    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+      return batchOutboundShipment;
+    }
+
+    throw new Error('Unable to allocate lines');
+  },
   deleteLines: async (lines: { id: string; invoiceId: string }[]) => {
     return sdk.deleteOutboundShipmentLines({
       storeId,

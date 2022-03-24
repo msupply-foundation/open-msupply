@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import {
+  AlertIcon,
   Box,
   Tooltip,
   Typography,
@@ -112,18 +113,56 @@ const MonthlyBar = ({
   );
 };
 
+const CalculationError = ({
+  isAmcZero,
+  isSohAndQtyZero,
+}: {
+  isAmcZero?: boolean;
+  isSohAndQtyZero?: boolean;
+}) => {
+  const t = useTranslation('replenishment');
+  const detail = isAmcZero
+    ? `: ${t('error.amc-is-zero')}`
+    : isSohAndQtyZero
+    ? `: ${t('error.soh-and-suggested-quantity-are-zero')}`
+    : '';
+  const message = `${t('error.unable-to-calculate')}${detail}`;
+
+  return (
+    <Box
+      sx={{
+        paddingLeft: 4,
+        paddingRight: 4,
+        paddingTop: 4,
+        paddingBottom: 2,
+      }}
+    >
+      <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
+        {t('heading.stock-distribution')}
+      </Typography>
+      <Box display="flex" padding={1} gap={1}>
+        <AlertIcon color="primary" fontSize="small" />
+        <Typography variant="body1" fontSize={12} sx={{ color: 'error.main' }}>
+          {message}
+        </Typography>
+      </Box>
+    </Box>
+  );
+};
+
 export const StockDistribution: React.FC<StockDistributionProps> = ({
   availableStockOnHand = 0,
   averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
 }) => {
-  if (averageMonthlyConsumption === 0) return null;
+  if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
 
   const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
   const t = useTranslation('replenishment');
 
-  if (suggestedQuantity + availableStockOnHand === 0) return null;
+  if (suggestedQuantity === 0 && availableStockOnHand === 0)
+    return <CalculationError isSohAndQtyZero />;
 
   const monthlyConsumptionWidth =
     availableStockOnHand > targetQuantity
