@@ -80,27 +80,25 @@ export const DropdownMenu: FC<DropdownMenuProps> = ({
   children,
   disabled = false,
 }) => {
-  if (Array.isArray(children))
-    return (
-      <FormControl size="small">
-        <InputLabel
-          shrink={false}
-          sx={{ color: 'gray.main', '&.Mui-focused': { color: 'gray.main' } }}
-          id={`action-drop-down-label-${label}`}
-        >
-          {label}
-        </InputLabel>
-        <StyledSelect
-          disabled={disabled}
-          value=""
-          size="small"
-          labelId={`action-drop-down-label-${label}`}
-          variant="outlined"
-          IconComponent={ChevronDownIcon}
-        >
-          {children}
-        </StyledSelect>
-      </FormControl>
-    );
-  else return <div>{children}</div>;
+  return (
+    <FormControl size="small">
+      <InputLabel
+        shrink={false}
+        sx={{ color: 'gray.main', '&.Mui-focused': { color: 'gray.main' } }}
+        id={`action-drop-down-label-${label}`}
+      >
+        {label}
+      </InputLabel>
+      <StyledSelect
+        disabled={disabled}
+        value=""
+        size="small"
+        labelId={`action-drop-down-label-${label}`}
+        variant="outlined"
+        IconComponent={ChevronDownIcon}
+      >
+        {children}
+      </StyledSelect>
+    </FormControl>
+  );
 };
