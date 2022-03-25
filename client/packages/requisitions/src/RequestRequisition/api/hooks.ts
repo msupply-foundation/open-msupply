@@ -322,7 +322,7 @@ export const useDeleteRequestLines = () => {
 
   const onDelete = async () => {
     if (isDisabled) {
-      info(t('label.cant-delete-disabled'))();
+      info(t('label.cant-delete-disabled-requisition'))();
       return;
     }
     const number = selectedRows?.length;
