@@ -15,7 +15,6 @@ use repository::{
     Item,
 };
 use service::ListResult;
-use util::constants::default_amc_look_back_months;
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
@@ -58,7 +57,8 @@ impl ItemNode {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(default_with = "default_amc_look_back_months()")] amc_look_back_months: u32,
+        #[graphql(default_with = "util::constants::default_amc_look_back_months()")]
+        amc_look_back_months: u32,
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader

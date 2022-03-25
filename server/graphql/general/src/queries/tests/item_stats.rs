@@ -1,9 +1,6 @@
 mod tests {
     use async_graphql::EmptyMutation;
-    use graphql_core::{
-        assert_graphql_query,
-        test_helpers::{setup_graphl_test, setup_graphl_test_with_data},
-    };
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
     use repository::mock::{test_item_stats, MockDataInserts};
     use serde_json::json;
 
