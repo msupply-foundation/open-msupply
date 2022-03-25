@@ -24,8 +24,24 @@ export const RegexUtils = {
     );
   },
   // Case-insensitive match of partial string -- same as SQL "LIKE"
-  matchSubstring: (substring: string, testString: string) => {
+  includes: (substring: string, testString: string) => {
     const matcher = new RegExp(substring, 'i');
     return matcher.test(testString);
+  },
+  // Case-insensitive
+  startsWith: (substring: string, testString: string) => {
+    const matcher = new RegExp(`^${substring}`, 'i');
+    return matcher.test(testString);
+  },
+  // returns true if the search string is contained in any of the properties of a given object
+  // the props can be specified, of left blank to match all
+  matchObjectProperties: function <T>(
+    substring: string,
+    object: T,
+    keys?: Array<keyof T>
+  ) {
+    return (keys ?? (Object.keys(object) as Array<keyof T>)).some(key =>
+      RegexUtils.includes(substring, String(object[key]))
+    );
   },
 };

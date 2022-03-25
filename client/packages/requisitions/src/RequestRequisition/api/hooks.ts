@@ -165,11 +165,11 @@ export const useRequestLines = () => {
         item =>
           item.itemStats.availableStockOnHand <
             item.itemStats.averageMonthlyConsumption * minMonthsOfStock &&
-          RegexUtils.matchSubstring(itemFilter, item.item.name)
+          RegexUtils.includes(itemFilter, item.item.name)
       );
     } else {
       return sorted.filter(({ item: { name } }) =>
-        RegexUtils.matchSubstring(itemFilter, name)
+        RegexUtils.includes(itemFilter, name)
       );
     }
   }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock, itemFilter]);

@@ -6,6 +6,7 @@ import {
   AutocompleteRenderInputParams,
   createFilterOptions,
   CreateFilterOptionsConfig,
+  FilterOptionsState,
 } from '@mui/material';
 import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 import { BasicTextInput } from '../TextInput';
@@ -14,6 +15,7 @@ import { defaultOptionMapper, getDefaultOptionRenderer } from './utils';
 export type AutocompleteListProps<T> = {
   options: T[];
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
+  filterOptions?: (options: T[], state: FilterOptionsState<T>) => T[];
   loading?: boolean;
   loadingText?: React.ReactNode;
   noOptionsText?: React.ReactNode;
@@ -33,6 +35,7 @@ export type AutocompleteListProps<T> = {
 
 export const AutocompleteList = <T,>({
   options,
+  filterOptions,
   filterOptionConfig,
   loading,
   loadingText,
@@ -50,7 +53,7 @@ export const AutocompleteList = <T,>({
   inputValue,
   clearText,
 }: AutocompleteListProps<T>): JSX.Element => {
-  const filterOptions = createFilterOptions(filterOptionConfig);
+  const createdFilterOptions = createFilterOptions(filterOptionConfig);
 
   const optionRenderer = optionKey
     ? getDefaultOptionRenderer<T>(optionKey)
@@ -83,7 +86,7 @@ export const AutocompleteList = <T,>({
       renderInput={
         renderInput || (props => <BasicTextInput {...props} autoFocus />)
       }
-      filterOptions={filterOptions}
+      filterOptions={filterOptions ?? createdFilterOptions}
       open
       forcePopupIcon={false}
       options={mappedOptions}
