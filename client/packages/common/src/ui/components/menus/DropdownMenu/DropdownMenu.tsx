@@ -85,7 +85,7 @@ export const DropdownMenu: FC<DropdownMenuProps> = ({
       <FormControl size="small">
         <InputLabel
           shrink={false}
-          sx={{ color: '#8f90a6', '&.Mui-focused': { color: '#8f90a6' } }}
+          sx={{ color: 'gray.main', '&.Mui-focused': { color: 'gray.main' } }}
           id={`action-drop-down-label-${label}`}
         >
           {label}
