@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import { ListSearch, useTranslation } from '@openmsupply-client/common';
 import { useCustomers, NameRowFragment } from '../../api';
-import { NameSearchProps } from '../../utils';
+import { filterByNameAndCode, NameSearchProps } from '../../utils';
+import { NameOptionRenderer } from '../NameOptionRenderer';
 
 export const CustomerSearchModal: FC<NameSearchProps> = ({
   open,
@@ -18,7 +19,9 @@ export const CustomerSearchModal: FC<NameSearchProps> = ({
       options={data?.nodes ?? []}
       onClose={onClose}
       title={t('customers')}
-      optionKey="name"
+      renderOption={NameOptionRenderer}
+      getOptionLabel={(option: NameRowFragment) => option.name}
+      filterOptions={filterByNameAndCode}
       onChange={(_, name: NameRowFragment | NameRowFragment[] | null) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}

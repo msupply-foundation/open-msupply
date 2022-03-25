@@ -40,3 +40,37 @@ describe('ParseHTML', () => {
     expect(svgComponent?.props?.style).toBe(style);
   });
 });
+
+describe('String matching for object properties', () => {
+  const obj = { id: 'green', name: 'blue', colour: 'orange' };
+
+  it('matches all properties of an object', () => {
+    expect(
+      RegexUtils.matchObjectProperties('oran', obj, ['id', 'name', 'colour'])
+    ).toBeTruthy();
+    expect(
+      RegexUtils.matchObjectProperties('blue', obj, ['id', 'name', 'colour'])
+    ).toBeTruthy();
+    expect(
+      RegexUtils.matchObjectProperties('green', obj, ['id', 'name', 'colour'])
+    ).toBeTruthy();
+  });
+
+  it('matches within the string', () => {
+    expect(
+      RegexUtils.matchObjectProperties('ee', obj, ['id', 'name', 'colour'])
+    ).toBeTruthy();
+  });
+
+  it('matches only the props specified', () => {
+    expect(
+      RegexUtils.matchObjectProperties('ee', obj, ['name', 'colour'])
+    ).toBeFalsy();
+  });
+
+  it('matches all props if no keys specified', () => {
+    expect(RegexUtils.matchObjectProperties('oran', obj)).toBeTruthy();
+    expect(RegexUtils.matchObjectProperties('blue', obj)).toBeTruthy();
+    expect(RegexUtils.matchObjectProperties('green', obj)).toBeTruthy();
+  });
+});
