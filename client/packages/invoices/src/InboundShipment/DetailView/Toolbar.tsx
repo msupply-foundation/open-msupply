@@ -73,7 +73,7 @@ export const Toolbar: FC = () => {
             />
           </Box>
         </Grid>
-        <DropdownMenu label={t('label.select')}>
+        <DropdownMenu label={t('label.actions')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>

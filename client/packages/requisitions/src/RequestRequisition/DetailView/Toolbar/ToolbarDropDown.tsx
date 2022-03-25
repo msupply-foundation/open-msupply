@@ -11,7 +11,7 @@ export const ToolbarDropDown = () => {
   const t = useTranslation('replenishment');
   const { onDelete } = useDeleteRequestLines();
   return (
-    <DropdownMenu label={t('label.select')}>
+    <DropdownMenu label={t('label.actions')}>
       <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
         {t('button.delete-lines', { ns: 'distribution' })}
       </DropdownMenuItem>
