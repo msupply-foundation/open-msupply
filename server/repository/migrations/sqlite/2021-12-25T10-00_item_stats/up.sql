@@ -3,8 +3,8 @@ SELECT
     'n/a' as id,
     items_and_stores.item_id AS item_id, 
     items_and_stores.store_id AS store_id,
-	COALESCE(consumption.quantity, 0) AS consumption_quantity,
-	consumption.date AS consumption_datetime
+	COALESCE(consumption.quantity, 0) AS quantity,
+	date(consumption.date) AS date
 FROM
    (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
 LEFT OUTER JOIN 
@@ -19,11 +19,12 @@ LEFT OUTER JOIN
 	 WHERE invoice.type = 'OUTBOUND_SHIPMENT' 
 	 	AND picked_datetime IS NOT NULL
 		AND invoice_line.number_of_packs > 0
+		AND invoice_line.type = 'STOCK_OUT'
 	) AS consumption 
 	ON consumption.item_id = items_and_stores.item_id 
 		AND consumption.store_id = items_and_stores.store_id;
 
-CREATE VIEW stock_info AS
+CREATE VIEW stock_on_hand AS
 SELECT 
     'n/a' as id,
     items_and_stores.item_id AS item_id, 

@@ -315,13 +315,13 @@ table! {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        consumption_quantity -> Integer,
-        consumption_datetime -> Nullable<Timestamp>,
+        quantity -> Integer,
+        date -> Date,
     }
 }
 
 table! {
-    stock_info (id) {
+    stock_on_hand (id) {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
