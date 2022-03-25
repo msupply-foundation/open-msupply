@@ -195,7 +195,7 @@ mod test {
                             "suggestedQuantity": &response_requisition.lines[0].suggested_quantity,
                             "comment": &response_requisition.lines[0].comment,
                             "itemStats": {
-                                "averageMonthlyConsumption": &response_requisition.lines[0].average_monthly_consumption,
+                                "averageMonthlyConsumption": response_requisition.lines[0].average_monthly_consumption as f64,
                                 "availableStockOnHand": &response_requisition.lines[0].available_stock_on_hand,
                                 "availableMonthsOfStockOnHand": response_requisition.lines[0].available_stock_on_hand as f64 / response_requisition.lines[0].average_monthly_consumption as f64
                             }
