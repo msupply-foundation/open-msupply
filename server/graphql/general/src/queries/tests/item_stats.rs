@@ -1,18 +1,22 @@
 mod tests {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
-    use repository::mock::{mock_item_stats_item1, mock_item_stats_item2, MockDataInserts};
+    use graphql_core::{
+        assert_graphql_query,
+        test_helpers::{setup_graphl_test, setup_graphl_test_with_data},
+    };
+    use repository::mock::{test_item_stats, MockDataInserts};
     use serde_json::json;
 
     use crate::GeneralQueries;
 
     #[actix_rt::test]
     async fn test_graphql_item_stats_loader() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphl_test_with_data(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_item_stats_loader",
             MockDataInserts::all(),
+            test_item_stats::mock_item_stats(),
         )
         .await;
 
@@ -36,29 +40,28 @@ mod tests {
         let variables = json!({
           "filter": {
             "id": {
-                "equalAny": [&mock_item_stats_item1().id, &mock_item_stats_item2().id]
+                "equalAny": [&test_item_stats::item().id, &test_item_stats::item2().id]
             },
           }
         }
         );
 
-        // As per item stats repository test
         let expected = json!({
             "items": {
                 "nodes": [{
-                    "id": &mock_item_stats_item1().id,
+                    "id": &test_item_stats::item().id,
                     "stats": {
-                        "averageMonthlyConsumption":  15,
-                        "availableStockOnHand": 210,
-                        "availableMonthsOfStockOnHand": 210 as f64 / 15 as f64
+                        "averageMonthlyConsumption":  test_item_stats::item1_amc_3_months(),
+                        "availableStockOnHand":  test_item_stats::item_1_soh(),
+                        "availableMonthsOfStockOnHand": test_item_stats::item_1_soh() as f64 / test_item_stats::item1_amc_3_months()
                     }
                 },
                 {
-                    "id": &mock_item_stats_item2().id,
+                    "id": &test_item_stats::item2().id,
                     "stats": {
-                        "averageMonthlyConsumption": 5,
-                        "availableStockOnHand": 22,
-                        "availableMonthsOfStockOnHand": 22 as f64 / 5 as f64
+                        "averageMonthlyConsumption":  test_item_stats::item2_amc_3_months(),
+                        "availableStockOnHand":  test_item_stats::item_2_soh(),
+                        "availableMonthsOfStockOnHand": test_item_stats::item_2_soh() as f64 / test_item_stats::item2_amc_3_months()
                     },
                 }]
             }
