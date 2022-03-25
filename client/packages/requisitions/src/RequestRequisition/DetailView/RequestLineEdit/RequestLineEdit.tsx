@@ -29,7 +29,7 @@ export const RequestLineEdit = ({
   item,
 }: RequestLineEditProps) => {
   const disabled = useIsRequestDisabled();
-  const { Modal } = useDialog({ onClose, isOpen });
+  const { Modal } = useDialog({ onClose, isOpen, animationTimeout: 100 });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentItem);
