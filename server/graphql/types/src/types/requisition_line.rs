@@ -4,7 +4,7 @@ use repository::{
     schema::{RequisitionLineRow, RequisitionRow, RequisitionRowType},
     RequisitionLine,
 };
-use service::{usize_to_u32, ListResult};
+use service::{usize_to_u32, ListResult, item_stats::ItemStats};
 
 use graphql_core::{
     loader::{
@@ -130,9 +130,7 @@ impl RequisitionLineNode {
     /// Snapshot Stats (when requisition was created)
     pub async fn item_stats(&self) -> ItemStatsNode {
         ItemStatsNode {
-            average_monthly_consumption: self.row().average_monthly_consumption,
-            available_stock_on_hand: self.row().available_stock_on_hand,
-            snapshot_datetime: self.row().snapshot_datetime.clone(),
+            item_stats: ItemStats::from_requisition_line(self.row()),
         }
     }
 
