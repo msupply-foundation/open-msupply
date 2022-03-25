@@ -7,6 +7,8 @@ use crate::{
     MasterListNameJoinRepository, MasterListRowRepository, RequisitionLineRowRepository,
     RequisitionRowRepository, StockLineRowRepository, StorageConnection,
 };
+
+#[derive(Clone)]
 pub struct FullMockRequisition {
     pub requisition: RequisitionRow,
     pub lines: Vec<RequisitionLineRow>,
@@ -25,12 +27,12 @@ pub fn insert_full_mock_requisition(
             .unwrap();
     }
 }
-
+#[derive(Clone)]
 pub struct FullMockInvoiceLine {
     pub line: InvoiceLineRow,
     pub stock_line: StockLineRow,
 }
-
+#[derive(Clone)]
 pub struct FullMockInvoice {
     pub invoice: InvoiceRow,
     pub lines: Vec<FullMockInvoiceLine>,
@@ -58,7 +60,7 @@ pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &StorageC
             .unwrap();
     }
 }
-
+#[derive(Clone)]
 pub struct FullMockMasterList {
     pub master_list: MasterListRow,
     pub joins: Vec<MasterListNameJoinRow>,
