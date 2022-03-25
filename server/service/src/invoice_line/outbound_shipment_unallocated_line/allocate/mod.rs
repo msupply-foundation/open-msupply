@@ -73,11 +73,13 @@ pub struct AllocateOutboundShipmentUnallocatedLineResult {
     pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
 
+type ServiceResult = AllocateOutboundShipmentUnallocatedLineResult;
+
 pub fn allocate_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
     store_id: &str,
     line_id: String,
-) -> Result<AllocateOutboundShipmentUnallocatedLineResult, OutError> {
+) -> Result<ServiceResult, OutError> {
     let line = ctx
         .connection
         .transaction_sync(|connection| {
@@ -92,7 +94,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 issued_expiring_soon_stock_lines,
             } = generate(&connection, &store_id, unallocated_line)?;
 
-            let mut result = AllocateOutboundShipmentUnallocatedLineResult {
+            let mut result = ServiceResult {
                 inserts: vec![],
                 deletes: vec![],
                 updates: vec![],
@@ -145,7 +147,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 );
             }
 
-            Ok(result) as Result<AllocateOutboundShipmentUnallocatedLineResult, OutError>
+            Ok(result) as Result<ServiceResult, OutError>
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(line)

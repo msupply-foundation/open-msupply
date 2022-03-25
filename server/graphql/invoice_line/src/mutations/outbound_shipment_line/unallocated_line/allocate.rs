@@ -7,7 +7,7 @@ use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnec
 use service::{
     invoice_line::outbound_shipment_unallocated_line::{
         AllocateOutboundShipmentUnallocatedLineError as ServiceError,
-        AllocateOutboundShipmentUnallocatedLineResult,
+        AllocateOutboundShipmentUnallocatedLineResult as ServiceResult,
     },
     permission_validation::{Resource, ResourceAccessRequest},
 };
@@ -61,9 +61,7 @@ pub fn allocate(ctx: &Context<'_>, store_id: &str, line_id: String) -> Result<Al
     )
 }
 
-pub fn map_response(
-    from: Result<AllocateOutboundShipmentUnallocatedLineResult, ServiceError>,
-) -> Result<AllocateResponse> {
+pub fn map_response(from: Result<ServiceResult, ServiceError>) -> Result<AllocateResponse> {
     let result = match from {
         Ok(line) => AllocateResponse::Response(ResponseNode::from_domain(line)),
         Err(error) => AllocateResponse::Error(AllocateError {
@@ -96,8 +94,8 @@ fn map_error(error: ServiceError) -> Result<AllocateErrorInterface> {
 }
 
 impl ResponseNode {
-    pub fn from_domain(from: AllocateOutboundShipmentUnallocatedLineResult) -> ResponseNode {
-        let AllocateOutboundShipmentUnallocatedLineResult {
+    pub fn from_domain(from: ServiceResult) -> ResponseNode {
+        let ServiceResult {
             updates,
             deletes,
             inserts,
@@ -134,7 +132,7 @@ mod graphql {
         invoice_line::{
             outbound_shipment_unallocated_line::{
                 AllocateOutboundShipmentUnallocatedLineError as ServiceError,
-                AllocateOutboundShipmentUnallocatedLineResult,
+                AllocateOutboundShipmentUnallocatedLineResult as ServiceResult,
             },
             InvoiceLineServiceTrait,
         },
@@ -144,9 +142,7 @@ mod graphql {
 
     use crate::InvoiceLineMutations;
 
-    type AllocateLineMethod = dyn Fn(String) -> Result<AllocateOutboundShipmentUnallocatedLineResult, ServiceError>
-        + Sync
-        + Send;
+    type AllocateLineMethod = dyn Fn(String) -> Result<ServiceResult, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<AllocateLineMethod>);
 
@@ -156,7 +152,7 @@ mod graphql {
             _: &ServiceContext,
             _: &str,
             input: String,
-        ) -> Result<AllocateOutboundShipmentUnallocatedLineResult, ServiceError> {
+        ) -> Result<ServiceResult, ServiceError> {
             self.0(input)
         }
     }
@@ -302,7 +298,7 @@ mod graphql {
         // Success
         let test_service = TestService(Box::new(|line_id| {
             assert_eq!(line_id, "unallocated_line");
-            Ok(AllocateOutboundShipmentUnallocatedLineResult {
+            Ok(ServiceResult {
                 inserts: vec![inline_init(|r: &mut InvoiceLine| {
                     r.invoice_line_row =
                         inline_init(|r: &mut InvoiceLineRow| r.id = "insert1".to_string())
