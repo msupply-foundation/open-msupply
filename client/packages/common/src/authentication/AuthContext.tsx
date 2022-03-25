@@ -9,6 +9,12 @@ import { useGetAuthToken } from './api/hooks/useGetAuthToken';
 import { AuthenticationResponse } from './api';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
+const TOKEN_CHECK_INTERVAL = 60 * 1000;
+
+export enum AuthError {
+  PermissionDenied = 'PermissionDenied',
+  Unauthenticated = 'Unauthenticated',
+}
 
 type User = {
   id: string;
@@ -34,6 +40,7 @@ type MRUCredentials = {
 };
 
 interface AuthControl {
+  error?: AuthError | null;
   isLoggingIn: boolean;
   login: (
     username: string,
@@ -42,6 +49,7 @@ interface AuthControl {
   ) => Promise<AuthenticationResponse>;
   logout: () => void;
   mostRecentlyUsedCredentials?: MRUCredentials | null;
+  setError?: (error: AuthError) => void;
   setStore: (store: Store) => void;
   store?: Store;
   storeId: string;
@@ -102,6 +110,7 @@ export const AuthProvider: FC = ({ children }) => {
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
+  const [error, setError] = useLocalStorage('/auth/error');
   const storeId = cookie?.store?.id ?? '';
 
   const saveToken = (token?: string) => {
@@ -130,6 +139,7 @@ export const AuthProvider: FC = ({ children }) => {
     setMRUCredentials({ username, store });
     setAuthCookie(authCookie);
     setCookie(authCookie);
+    setError(undefined);
 
     return { token, error };
   };
@@ -149,11 +159,13 @@ export const AuthProvider: FC = ({ children }) => {
 
   const logout = () => {
     Cookies.remove('auth');
+    setError(undefined);
     setCookie(undefined);
   };
 
   const val = useMemo(
     () => ({
+      error,
       isLoggingIn,
       login,
       logout,
@@ -163,9 +175,33 @@ export const AuthProvider: FC = ({ children }) => {
       store: cookie?.store,
       mostRecentlyUsedCredentials,
       setStore,
+      setError,
     }),
-    [login, cookie, mostRecentlyUsedCredentials, isLoggingIn, setStore]
+    [
+      login,
+      cookie,
+      error,
+      mostRecentlyUsedCredentials,
+      isLoggingIn,
+      setStore,
+      setError,
+    ]
   );
+
+  useEffect(() => {
+    // check every minute for a valid token
+    // if the cookie has expired, raise an auth error
+    const timer = window.setInterval(() => {
+      const authCookie = getAuthCookie();
+      const { token } = authCookie;
+
+      if (!token) {
+        setError(AuthError.Unauthenticated);
+        window.clearInterval(timer);
+      }
+    }, TOKEN_CHECK_INTERVAL);
+    return () => window.clearInterval(timer);
+  }, []);
 
   return <Provider value={val}>{children}</Provider>;
 };
