@@ -77,7 +77,7 @@ export const StockItemSelectModal = ({
 
   const selectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const filtered = options.filter(option =>
-      RegexUtils.matchNameOrCode(option, inputValue)
+      RegexUtils.matchObjectProperties(inputValue, option, ['name', 'code'])
     );
     if (event.target.checked) {
       setSelectedItems([...selectedItems, ...filtered]);
@@ -158,7 +158,10 @@ export const StockItemSelectModal = ({
             getOptionLabel={option => `${option.code} ${option.name}`}
             filterOptions={(options, state) =>
               options.filter(option =>
-                RegexUtils.matchNameOrCode(option, state.inputValue)
+                RegexUtils.matchObjectProperties(state.inputValue, option, [
+                  'name',
+                  'code',
+                ])
               )
             }
             renderInput={ItemInput}
