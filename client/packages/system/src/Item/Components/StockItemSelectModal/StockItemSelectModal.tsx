@@ -136,11 +136,9 @@ export const StockItemSelectModal = ({
           disabled={saving}
           variant="ok"
           onClick={async () => {
-            if (selectedItems instanceof Array) {
-              setSaving(true);
-              await onChange(selectedItems.map(item => item.id));
-              setSaving(false);
-            }
+            setSaving(true);
+            await onChange(selectedItems.map(item => item.id));
+            setSaving(false);
             onClose();
           }}
         />
