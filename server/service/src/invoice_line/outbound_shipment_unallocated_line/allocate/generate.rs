@@ -137,9 +137,10 @@ fn get_stock_line_eligibility(stock_line: &StockLine) -> Option<StockLineAlert> 
         return Some(Expired);
     }
 
-    if let Ordering::Less =
-        expiry_date.cmp(&date_now_with_offset(stock_line_expiring_soon_offset()))
-    {
+    if let Ordering::Less = expiry_date.cmp(&date_now_with_offset(
+        stock_line_expiring_soon_offset(),
+        true,
+    )) {
         return Some(ExpiringSoon);
     }
 

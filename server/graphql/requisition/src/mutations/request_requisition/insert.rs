@@ -33,7 +33,7 @@ pub struct InsertInput {
 }
 
 pub fn default_expected_delivery_date() -> Option<NaiveDate> {
-    Some(date_now_with_offset(expected_delivery_date_offset()))
+    Some(date_now_with_offset(expected_delivery_date_offset(), true))
 }
 
 #[derive(Interface)]

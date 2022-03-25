@@ -333,6 +333,7 @@ mod test {
             inline_edit(&base_stock_line("stock_line_expiring_soon"), |mut u| {
                 u.expiry_date = Some(date_now_with_offset(
                     stock_line_expiring_soon_offset() - Duration::days(1),
+                    true,
                 ));
                 u
             })
@@ -350,6 +351,7 @@ mod test {
             inline_edit(&base_stock_line("stock_line_not_expired"), |mut u| {
                 u.expiry_date = Some(date_now_with_offset(
                     stock_line_expiring_soon_offset() + Duration::days(1),
+                    true,
                 ));
                 u
             })

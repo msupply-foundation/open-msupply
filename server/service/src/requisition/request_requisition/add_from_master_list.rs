@@ -40,8 +40,7 @@ pub fn add_from_master_list(
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, store_id, &input)?;
-            let new_requisition_line_rows =
-                generate(connection, store_id, requisition_row, &input)?;
+            let new_requisition_line_rows = generate(ctx, store_id, requisition_row, &input)?;
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
 
@@ -88,19 +87,20 @@ fn validate(
 }
 
 fn generate(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     store_id: &str,
     requisition_row: RequisitionRow,
     input: &AddFromMasterList,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
-    let requisition_lines = get_lines_for_requisition(connection, &input.request_requisition_id)?;
+    let requisition_lines =
+        get_lines_for_requisition(&ctx.connection, &input.request_requisition_id)?;
 
     let item_ids_in_requisition: Vec<String> = requisition_lines
         .into_iter()
         .map(|requisition_line| requisition_line.requisition_line_row.item_id)
         .collect();
 
-    let master_list_lines_not_in_requisition = MasterListLineRepository::new(connection)
+    let master_list_lines_not_in_requisition = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
                 .master_list_id(EqualFilter::equal_to(&input.master_list_id))
@@ -113,7 +113,7 @@ fn generate(
         .collect();
 
     Ok(generate_requisition_lines(
-        connection,
+        ctx,
         store_id,
         &requisition_row,
         items_ids_not_in_requisition,
@@ -143,14 +143,18 @@ impl From<RepositoryError> for AddFromMasterListError {
 mod test {
     use repository::{
         mock::{
+            common::FullMockMasterList,
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_item_a, mock_item_b, mock_item_c,
-            mock_item_d, mock_item_stats_item1, mock_item_stats_item2,
-            mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            mock_test_add_from_master_list, mock_test_not_store_a_master_list, MockDataInserts,
+            mock_item_d, mock_name_store_a, mock_request_draft_requisition_calculation_test,
+            mock_sent_request_requisition, mock_test_not_store_a_master_list,
+            test_item_stats::{self},
+            MockData, MockDataInserts,
         },
-        test_db::setup_all,
+        schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow},
+        test_db::{setup_all, setup_all_with_data},
     };
+    use util::inline_init;
 
     use crate::{
         requisition::{
@@ -237,8 +241,53 @@ mod test {
 
     #[actix_rt::test]
     async fn add_from_master_list_success() {
-        let (_, connection, connection_manager, _) =
-            setup_all("add_from_master_list_success", MockDataInserts::all()).await;
+        fn master_list() -> FullMockMasterList {
+            let id = "master_list".to_owned();
+            let join1 = format!("{}1", id);
+            let line1 = format!("{}1", id);
+            let line2 = format!("{}2", id);
+            let line3 = format!("{}3", id);
+
+            FullMockMasterList {
+                master_list: MasterListRow {
+                    id: id.clone(),
+                    name: id.clone(),
+                    code: id.clone(),
+                    description: id.clone(),
+                },
+                joins: vec![MasterListNameJoinRow {
+                    id: join1,
+                    master_list_id: id.clone(),
+                    name_id: mock_name_store_a().id,
+                }],
+                lines: vec![
+                    MasterListLineRow {
+                        id: line1.clone(),
+                        item_id: mock_item_a().id,
+                        master_list_id: id.clone(),
+                    },
+                    MasterListLineRow {
+                        id: line2.clone(),
+                        item_id: test_item_stats::item().id,
+                        master_list_id: id.clone(),
+                    },
+                    MasterListLineRow {
+                        id: line3.clone(),
+                        item_id: test_item_stats::item2().id,
+                        master_list_id: id.clone(),
+                    },
+                ],
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "add_from_master_list_success",
+            MockDataInserts::all(),
+            test_item_stats::mock_item_stats().join(inline_init(|r: &mut MockData| {
+                r.full_master_lists = vec![master_list()];
+            })),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
@@ -252,7 +301,7 @@ mod test {
                     request_requisition_id: mock_request_draft_requisition_calculation_test()
                         .requisition
                         .id,
-                    master_list_id: mock_test_add_from_master_list().master_list.id,
+                    master_list_id: master_list().master_list.id,
                 },
             )
             .unwrap();
@@ -272,37 +321,57 @@ mod test {
             .into_iter()
             .map(|requisition_line| requisition_line.requisition_line_row.item_id)
             .collect();
-
         item_ids.sort_by(|a, b| a.cmp(&b));
 
+        let mut test_item_ids = vec![
+            mock_item_a().id,
+            mock_item_b().id,
+            mock_item_c().id,
+            mock_item_d().id,
+            test_item_stats::item().id,
+            test_item_stats::item2().id,
+        ];
+        test_item_ids.sort_by(|a, b| a.cmp(&b));
+
+        assert_eq!(item_ids, test_item_ids);
+        let line = lines
+            .iter()
+            .find(|line| line.requisition_line_row.item_id == test_item_stats::item().id)
+            .unwrap();
+
         assert_eq!(
-            item_ids,
-            vec![
-                mock_item_a().id,
-                mock_item_b().id,
-                mock_item_c().id,
-                mock_item_d().id,
-                mock_item_stats_item1().id,
-                mock_item_stats_item2().id
-            ]
+            line.requisition_line_row.available_stock_on_hand,
+            test_item_stats::item_1_soh() as i32
         );
-        // Check calculated and stats, as per test_item_stats_repository test
+        assert_eq!(
+            line.requisition_line_row.average_monthly_consumption,
+            test_item_stats::item1_amc_3_months() as i32
+        );
+        assert_eq!(
+            line.requisition_line_row.suggested_quantity,
+            // 10 = requisition max_mos
+            test_item_stats::item1_amc_3_months() as i32 * 10
+                - test_item_stats::item_1_soh() as i32
+        );
+
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_id == mock_item_stats_item1().id)
+            .find(|line| line.requisition_line_row.item_id == test_item_stats::item2().id)
             .unwrap();
 
-        assert_eq!(line.requisition_line_row.available_stock_on_hand, 210);
-        assert_eq!(line.requisition_line_row.average_monthly_consumption, 15);
-        assert_eq!(line.requisition_line_row.suggested_quantity, 0);
-
-        let line = lines
-            .iter()
-            .find(|line| line.requisition_line_row.item_id == mock_item_stats_item2().id)
-            .unwrap();
-
-        assert_eq!(line.requisition_line_row.available_stock_on_hand, 22);
-        assert_eq!(line.requisition_line_row.average_monthly_consumption, 5);
-        assert_eq!(line.requisition_line_row.suggested_quantity, 10 * 5 - 22);
+        assert_eq!(
+            line.requisition_line_row.available_stock_on_hand,
+            test_item_stats::item_2_soh() as i32
+        );
+        assert_eq!(
+            line.requisition_line_row.average_monthly_consumption,
+            test_item_stats::item2_amc_3_months() as i32
+        );
+        assert_eq!(
+            line.requisition_line_row.suggested_quantity,
+            // 10 = requisition max_mos
+            test_item_stats::item2_amc_3_months() as i32 * 10
+                - test_item_stats::item_2_soh() as i32
+        );
     }
 }

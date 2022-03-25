@@ -2,10 +2,14 @@ use chrono::Utc;
 use repository::EqualFilter;
 use repository::{
     schema::{RequisitionLineRow, RequisitionRow},
-    ItemStatsFilter, ItemStatsRepository, RepositoryError, StorageConnection,
+    RepositoryError,
 };
 
+use util::constants::DEFAULT_AMC_LOOK_BACK_MONTHS;
 use util::uuid::uuid;
+
+use crate::item_stats::{get_item_stats, ItemStatsFilter};
+use crate::service_provider::ServiceContext;
 
 pub struct GenerateSuggestedQuantity {
     pub average_monthly_consumption: i32,
@@ -35,24 +39,26 @@ pub fn generate_suggested_quantity(
 }
 
 pub fn generate_requisition_lines(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     store_id: &str,
     requisition_row: &RequisitionRow,
     item_ids: Vec<String>,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
-    let repository = ItemStatsRepository::new(&connection);
-
-    let filter = ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids));
-    let item_stats_rows = repository.query(store_id, None, Some(filter))?;
+    let item_stats_rows = get_item_stats(
+        ctx,
+        store_id,
+        DEFAULT_AMC_LOOK_BACK_MONTHS,
+        Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids))),
+    )?;
 
     let result = item_stats_rows
         .into_iter()
         .map(|item_stats| {
-            let average_monthly_consumption = item_stats.average_monthly_consumption();
-            let available_stock_on_hand = item_stats.available_stock_on_hand();
+            let average_monthly_consumption = item_stats.average_monthly_consumption as i32;
+            let available_stock_on_hand = item_stats.available_stock_on_hand as i32;
             let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
-                average_monthly_consumption: average_monthly_consumption.clone(),
-                available_stock_on_hand: available_stock_on_hand.clone(),
+                average_monthly_consumption,
+                available_stock_on_hand,
                 min_months_of_stock: requisition_row.min_months_of_stock.clone(),
                 max_months_of_stock: requisition_row.max_months_of_stock.clone(),
             });
