@@ -94,6 +94,18 @@ export const StockItemSelectModal = ({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { startAdornment, ...restInputProps } = InputProps ?? {};
     const t = useTranslation('common');
+    const filtered = options.filter(option =>
+      RegexUtils.matchObjectProperties(inputValue, option, ['name', 'code'])
+    );
+
+    const selectedIds = selectedItems.map(item => item.id);
+    const filteredSelectedCount = filtered.filter(item =>
+      selectedIds.includes(item.id)
+    ).length;
+    const indeterminate =
+      filteredSelectedCount > 0 && filteredSelectedCount < filtered.length;
+    const checked =
+      filteredSelectedCount > 0 && filteredSelectedCount === filtered.length;
 
     return (
       <>
@@ -108,7 +120,11 @@ export const StockItemSelectModal = ({
           </Typography>
           <Typography textAlign="right" flex={1}>
             {t('label.select-all')}
-            <Checkbox onChange={selectAll} />
+            <Checkbox
+              onChange={selectAll}
+              indeterminate={indeterminate}
+              checked={checked}
+            />
           </Typography>
         </Box>
         <TextField
