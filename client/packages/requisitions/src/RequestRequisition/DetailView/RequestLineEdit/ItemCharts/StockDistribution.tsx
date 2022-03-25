@@ -129,28 +129,16 @@ const CalculationError = ({
   const message = `${t('error.unable-to-calculate')}${detail}`;
 
   return (
-    <Box
-      sx={{
-        paddingLeft: 4,
-        paddingRight: 4,
-        paddingTop: 4,
-        paddingBottom: 2,
-      }}
-    >
-      <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
-        {t('heading.stock-distribution')}
+    <Box display="flex" padding={1} gap={1}>
+      <AlertIcon color="primary" fontSize="small" />
+      <Typography variant="body1" fontSize={12} sx={{ color: 'error.main' }}>
+        {message}
       </Typography>
-      <Box display="flex" padding={1} gap={1}>
-        <AlertIcon color="primary" fontSize="small" />
-        <Typography variant="body1" fontSize={12} sx={{ color: 'error.main' }}>
-          {message}
-        </Typography>
-      </Box>
     </Box>
   );
 };
 
-export const StockDistribution: React.FC<StockDistributionProps> = ({
+const StockDistributionContent: React.FC<StockDistributionProps> = ({
   availableStockOnHand = 0,
   averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
@@ -171,22 +159,7 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
 
   return useMemo(
     () => (
-      <Box
-        sx={{
-          paddingLeft: 4,
-          paddingRight: 4,
-          paddingTop: 4,
-          paddingBottom: 2,
-        }}
-      >
-        <Typography
-          variant="body1"
-          fontWeight={700}
-          style={{ marginBottom: 10 }}
-        >
-          {t('heading.stock-distribution')}
-        </Typography>
-
+      <>
         <Typography variant="body1" fontWeight={700} fontSize={12}>
           {t('heading.target-quantity')}
         </Typography>
@@ -230,8 +203,35 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
             colour="primary.light"
           />
         </Box>
-      </Box>
+      </>
     ),
     [availableStockOnHand, averageMonthlyConsumption, suggestedQuantity]
+  );
+};
+
+export const StockDistribution: React.FC<StockDistributionProps> = ({
+  availableStockOnHand = 0,
+  averageMonthlyConsumption = 0,
+  suggestedQuantity = 0,
+}) => {
+  const t = useTranslation('replenishment');
+  return (
+    <Box
+      sx={{
+        paddingLeft: 4,
+        paddingRight: 4,
+        paddingTop: 4,
+        paddingBottom: 2,
+      }}
+    >
+      <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
+        {t('heading.stock-distribution')}
+      </Typography>
+      <StockDistributionContent
+        availableStockOnHand={availableStockOnHand}
+        averageMonthlyConsumption={averageMonthlyConsumption}
+        suggestedQuantity={suggestedQuantity}
+      />
+    </Box>
   );
 };

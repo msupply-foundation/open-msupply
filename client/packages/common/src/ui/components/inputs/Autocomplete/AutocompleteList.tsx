@@ -14,8 +14,8 @@ import { defaultOptionMapper, getDefaultOptionRenderer } from './utils';
 
 export type AutocompleteListProps<T> = {
   options: T[];
-  filterOptions?: (options: T[], state: FilterOptionsState<T>) => T[];
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
+  filterOptions?: (options: T[], state: FilterOptionsState<T>) => T[];
   loading?: boolean;
   loadingText?: React.ReactNode;
   noOptionsText?: React.ReactNode;
@@ -39,8 +39,8 @@ export type AutocompleteListProps<T> = {
 
 export const AutocompleteList = <T,>({
   options,
-  filterOptionConfig,
   filterOptions,
+  filterOptionConfig,
   loading,
   loadingText,
   noOptionsText,
