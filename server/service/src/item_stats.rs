@@ -1,20 +1,241 @@
-use chrono::NaiveDateTime;
-use repository::{ItemStats, ItemStatsFilter, ItemStatsRepository, RepositoryError};
+use std::collections::HashMap;
 
-use crate::service_provider::ServiceContext;
+use crate::{i64_to_u32, service_provider::ServiceContext};
+use chrono::Duration;
+use repository::{
+    schema::{ConsumptionRow, RequisitionLineRow, StockOnHandRow},
+    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, RepositoryError,
+    StockOnHandFilter, StockOnHandRepository, StorageConnection,
+};
+use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct ItemStatsFilter {
+    pub item_id: Option<EqualFilter<String>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct ItemStats {
+    pub average_monthly_consumption: f64,
+    pub available_stock_on_hand: u32,
+    pub item_id: String,
+}
 
 pub trait ItemStatsServiceTrait: Sync + Send {
     fn get_item_stats(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        look_back_datetime: Option<NaiveDateTime>,
+        amc_look_back_months: u32,
         filter: Option<ItemStatsFilter>,
     ) -> Result<Vec<ItemStats>, RepositoryError> {
-        let repository = ItemStatsRepository::new(&ctx.connection);
-
-        repository.query(store_id, look_back_datetime, filter)
+        get_item_stats(ctx, store_id, amc_look_back_months, filter)
     }
 }
+
 pub struct ItemStatsService {}
 impl ItemStatsServiceTrait for ItemStatsService {}
+
+pub fn get_item_stats(
+    ctx: &ServiceContext,
+    store_id: &str,
+    amc_look_back_months: u32,
+    filter: Option<ItemStatsFilter>,
+) -> Result<Vec<ItemStats>, RepositoryError> {
+    let ItemStatsFilter {
+        item_id: item_id_filter,
+    } = filter.unwrap_or_default();
+
+    Ok(ItemStats::new_vec(
+        get_consumption_rows(
+            &ctx.connection,
+            store_id,
+            item_id_filter.clone(),
+            amc_look_back_months,
+        )?,
+        get_stock_on_hand_rows(&ctx.connection, store_id, item_id_filter)?,
+        amc_look_back_months,
+    ))
+}
+
+pub fn get_consumption_rows(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_id_filter: Option<EqualFilter<String>>,
+    amc_look_back_months: u32,
+) -> Result<Vec<ConsumptionRow>, RepositoryError> {
+    let start_date = date_now_with_offset(
+        Duration::days((amc_look_back_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i64),
+        false,
+    );
+
+    let filter = ConsumptionFilter {
+        item_id: item_id_filter,
+        store_id: Some(EqualFilter::equal_to(store_id)),
+        date: Some(DateFilter::after_or_equal_to(start_date)),
+    };
+
+    ConsumptionRepository::new(&connection).query(Some(filter))
+}
+
+pub fn get_stock_on_hand_rows(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_id_filter: Option<EqualFilter<String>>,
+) -> Result<Vec<StockOnHandRow>, RepositoryError> {
+    let filter = StockOnHandFilter {
+        item_id: item_id_filter,
+        store_id: Some(EqualFilter::equal_to(store_id)),
+    };
+
+    StockOnHandRepository::new(&connection).query(Some(filter))
+}
+
+impl ItemStats {
+    fn new_vec(
+        consumption_rows: Vec<ConsumptionRow>,
+        stock_on_hand_rows: Vec<StockOnHandRow>,
+        amc_look_back_months: u32,
+    ) -> Vec<Self> {
+        let mut consumption_map = HashMap::new();
+        for consumption_row in consumption_rows.into_iter() {
+            let item_total_consumption = consumption_map
+                .entry(consumption_row.item_id.clone())
+                .or_insert(0);
+            *item_total_consumption += consumption_row.quantity;
+        }
+
+        stock_on_hand_rows
+            .into_iter()
+            .map(|stock_on_hand| ItemStats {
+                available_stock_on_hand: i64_to_u32(stock_on_hand.available_stock_on_hand),
+                item_id: stock_on_hand.item_id.clone(),
+                average_monthly_consumption: consumption_map
+                    .get(&stock_on_hand.item_id)
+                    .map(|consumption| *consumption as f64 / amc_look_back_months as f64)
+                    .unwrap_or_default(),
+            })
+            .collect()
+    }
+
+    pub fn from_requisition_line(requistion_line: &RequisitionLineRow) -> Self {
+        ItemStats {
+            average_monthly_consumption: requistion_line.average_monthly_consumption as f64,
+            available_stock_on_hand: requistion_line.available_stock_on_hand as u32,
+            item_id: requistion_line.item_id.clone(),
+        }
+    }
+}
+
+impl ItemStatsFilter {
+    pub fn new() -> ItemStatsFilter {
+        ItemStatsFilter { item_id: None }
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
+        self
+    }
+}
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
+        test_db, EqualFilter,
+    };
+    use util::constants::DEFAULT_AMC_LOOK_BACK_MONTHS;
+
+    use crate::{item_stats::ItemStatsFilter, service_provider::ServiceProvider};
+
+    #[actix_rt::test]
+    async fn test_item_stats_service() {
+        let (_, _, connection_manager, _) = test_db::setup_all_with_data(
+            "test_item_stats_service",
+            MockDataInserts::all(),
+            test_item_stats::mock_item_stats(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+        let service = service_provider.item_stats_service;
+
+        let item_ids = vec![test_item_stats::item().id, test_item_stats::item2().id];
+        let filter = Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids)));
+
+        let mut item_stats = service
+            .get_item_stats(
+                &context,
+                &mock_store_a().id,
+                DEFAULT_AMC_LOOK_BACK_MONTHS,
+                filter.clone(),
+            )
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+        assert_eq!(
+            item_stats[0].available_stock_on_hand,
+            test_item_stats::item_1_soh()
+        );
+        assert_eq!(
+            item_stats[1].available_stock_on_hand,
+            test_item_stats::item_2_soh()
+        );
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption,
+            test_item_stats::item1_amc_3_months()
+        );
+        assert_eq!(
+            item_stats[1].average_monthly_consumption,
+            test_item_stats::item2_amc_3_months()
+        );
+
+        // Reduce to looking back 10 days
+        let mut item_stats = service
+            .get_item_stats(&context, &mock_store_a().id, 1, filter.clone())
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+        assert_eq!(
+            item_stats[0].available_stock_on_hand,
+            test_item_stats::item_1_soh()
+        );
+        assert_eq!(
+            item_stats[1].available_stock_on_hand,
+            test_item_stats::item_2_soh()
+        );
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption,
+            test_item_stats::item1_amc_1_months()
+        );
+        // No invoice lines check
+        assert_eq!(item_stats[1].average_monthly_consumption, 0.0);
+
+        let mut item_stats = service
+            .get_item_stats(
+                &context,
+                &mock_store_b().id,
+                DEFAULT_AMC_LOOK_BACK_MONTHS,
+                filter.clone(),
+            )
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+        assert_eq!(
+            item_stats[0].available_stock_on_hand,
+            test_item_stats::item_1_store_b_soh()
+        );
+        // No stock line check
+        assert_eq!(item_stats[1].available_stock_on_hand, 0);
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption,
+            test_item_stats::item1_amc_3_months_store_b()
+        );
+    }
+}
