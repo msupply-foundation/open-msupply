@@ -9,8 +9,6 @@ import {
   DropdownMenuItem,
   DeleteIcon,
   useTranslation,
-  useNotification,
-  useTableStore,
   SearchBar,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
@@ -18,37 +16,20 @@ import { CustomerSearchInput } from '@openmsupply-client/system';
 import {
   useResponseFields,
   useIsResponseDisabled,
-  ResponseLineFragment,
   useResponseLines,
+  useDeleteResponseLines,
 } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
-  const { success, info } = useNotification();
   const isDisabled = useIsResponseDisabled();
   const { itemFilter, setItemFilter } = useResponseLines();
-  const { lines, otherParty, theirReference, update } = useResponseFields([
+  const { otherParty, theirReference, update } = useResponseFields([
     'lines',
     'otherParty',
     'theirReference',
   ]);
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => lines.nodes.find(({ id }) => selectedId === id))
-      .filter(Boolean) as ResponseLineFragment[],
-  }));
-
-  const deleteAction = () => {
-    if (selectedRows && selectedRows?.length > 0) {
-      const successSnack = success(`Deleted ${selectedRows?.length} lines`);
-      successSnack();
-    } else {
-      const infoSnack = info(t('label.select-rows-to-delete-them'));
-      infoSnack();
-    }
-  };
+  const { onDelete } = useDeleteResponseLines();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -100,8 +81,8 @@ export const Toolbar: FC = () => {
           }}
           debounceTime={0}
         />
-        <DropdownMenu disabled={isDisabled} label={t('label.select')}>
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+        <DropdownMenu label={t('label.select')}>
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines', { ns: 'distribution' })}
           </DropdownMenuItem>
         </DropdownMenu>
