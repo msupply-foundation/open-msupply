@@ -1,17 +1,18 @@
 use super::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
-use chrono::NaiveDateTime;
 use repository::EqualFilter;
-use repository::{ItemStats, ItemStatsFilter};
-use service::service_provider::ServiceProvider;
+use service::{
+    item_stats::{ItemStats, ItemStatsFilter},
+    service_provider::ServiceProvider,
+};
 use std::collections::HashMap;
 
 pub struct ItemsStatsForItemLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-pub type ItemStatsLoaderInputPayload = Option<NaiveDateTime>;
+pub type ItemStatsLoaderInputPayload = u32; // amc_lookback_months
 pub type ItemStatsLoaderInput = IdPair<ItemStatsLoaderInputPayload>;
 impl ItemStatsLoaderInput {
     pub fn new(store_id: &str, item_id: &str, payload: ItemStatsLoaderInputPayload) -> Self {
@@ -34,7 +35,7 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
     ) -> Result<HashMap<ItemStatsLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.context()?;
 
-        let (store_id, look_back_datetime) = if let Some(loader_input) = loader_inputs.first() {
+        let (store_id, amc_lookback_months) = if let Some(loader_input) = loader_inputs.first() {
             (
                 loader_input.primary_id.clone(),
                 loader_input.payload.clone(),
@@ -50,7 +51,7 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
         let item_stats = self.service_provider.item_stats_service.get_item_stats(
             &service_context,
             &store_id,
-            look_back_datetime.clone(),
+            amc_lookback_months,
             Some(filter),
         )?;
 
@@ -58,7 +59,7 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
             .into_iter()
             .map(|item_stat| {
                 (
-                    ItemStatsLoaderInput::new(&store_id, &item_stat.item_id, look_back_datetime),
+                    ItemStatsLoaderInput::new(&store_id, &item_stat.item_id, amc_lookback_months),
                     item_stat,
                 )
             })

@@ -3,15 +3,13 @@ use util::inline_init;
 
 use crate::schema::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    MasterListLineRow, MasterListNameJoinRow, MasterListRow, RequisitionLineRow, RequisitionRow,
-    RequisitionRowStatus, RequisitionRowType,
+    MasterListRow, RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType,
 };
 
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockMasterList, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_stats_item1,
-    mock_item_stats_item2, mock_name_a, mock_name_store_a, mock_stock_line_a, mock_store_a,
-    MockData,
+    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_stock_line_a,
+    mock_store_a, MockData,
 };
 
 pub fn mock_test_requisition_service() -> MockData {
@@ -43,9 +41,6 @@ pub fn mock_test_requisition_service() -> MockData {
     result
         .full_requisitions
         .push(mock_new_response_requisition_test());
-    result
-        .full_master_lists
-        .push(mock_test_add_from_master_list());
     result
         .full_master_lists
         .push(mock_test_not_store_a_master_list());
@@ -250,45 +245,6 @@ pub fn mock_test_not_store_a_master_list() -> FullMockMasterList {
         },
         joins: vec![],
         lines: vec![],
-    }
-}
-
-pub fn mock_test_add_from_master_list() -> FullMockMasterList {
-    let id = "mock_test_add_from_master_list".to_owned();
-    let join1 = format!("{}1", id);
-    let line1 = format!("{}1", id);
-    let line2 = format!("{}2", id);
-    let line3 = format!("{}3", id);
-
-    FullMockMasterList {
-        master_list: MasterListRow {
-            id: id.clone(),
-            name: id.clone(),
-            code: id.clone(),
-            description: id.clone(),
-        },
-        joins: vec![MasterListNameJoinRow {
-            id: join1,
-            master_list_id: id.clone(),
-            name_id: mock_name_store_a().id,
-        }],
-        lines: vec![
-            MasterListLineRow {
-                id: line1.clone(),
-                item_id: mock_item_a().id,
-                master_list_id: id.clone(),
-            },
-            MasterListLineRow {
-                id: line2.clone(),
-                item_id: mock_item_stats_item1().id,
-                master_list_id: id.clone(),
-            },
-            MasterListLineRow {
-                id: line3.clone(),
-                item_id: mock_item_stats_item2().id,
-                master_list_id: id.clone(),
-            },
-        ],
     }
 }
 

@@ -4,12 +4,12 @@ use repository::{
     schema::{RequisitionLineRow, RequisitionRow, RequisitionRowType},
     RequisitionLine,
 };
-use service::{usize_to_u32, ListResult};
+use service::{item_stats::ItemStats, usize_to_u32, ListResult};
 
 use graphql_core::{
     loader::{
-        InvoiceLineForRequisitionLine, ItemLoader, LinkedRequisitionLineLoader,
-        RequisitionAndItemId, RequisitionLineSupplyStatusLoader,
+        InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
+        LinkedRequisitionLineLoader, RequisitionAndItemId, RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -127,13 +127,38 @@ impl RequisitionLineNode {
         Ok(InvoiceLineConnector::from_vec(result))
     }
 
-    /// Snapshot Stats (when requisition was created)
-    pub async fn item_stats(&self) -> ItemStatsNode {
-        ItemStatsNode {
-            average_monthly_consumption: self.row().average_monthly_consumption,
-            available_stock_on_hand: self.row().available_stock_on_hand,
-            snapshot_datetime: self.row().snapshot_datetime.clone(),
+    /// For request requisition: snapshot stats (when requisition was created)
+    /// For response requisition current item stats
+    pub async fn item_stats(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(default_with = "util::constants::default_amc_look_back_months()")]
+        amc_look_back_months: u32,
+    ) -> Result<ItemStatsNode> {
+        if self.requisition_row().r#type == RequisitionRowType::Request {
+            return Ok(ItemStatsNode {
+                item_stats: ItemStats::from_requisition_line(self.row()),
+            });
         }
+
+        let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
+        let result = loader
+            .load_one(ItemStatsLoaderInput::new(
+                &self.requisition_row().store_id,
+                &self.row().item_id,
+                amc_look_back_months,
+            ))
+            .await?
+            .ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find item stats for requisition line {} and store {}",
+                    &self.row().item_id,
+                    &self.requisition_row().store_id,
+                ))
+                .extend(),
+            )?;
+
+        Ok(ItemStatsNode::from_domain(result))
     }
 
     /// Quantity remaining to supply
