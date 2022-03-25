@@ -132,8 +132,8 @@ pub fn batch_request_requisition(
 mod test {
     use repository::{
         mock::{
-            mock_draft_response_requisition_for_update_test, mock_item_stats_item2,
-            mock_name_store_c, MockDataInserts,
+            mock_draft_response_requisition_for_update_test, mock_item_a, mock_name_store_c,
+            MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -172,7 +172,7 @@ mod test {
                 |input: &mut InsertRequestRequisitionLine| {
                     input.requisition_id = "new_id".to_string();
                     input.id = "new_line_id".to_string();
-                    input.item_id = mock_item_stats_item2().id;
+                    input.item_id = mock_item_a().id;
                 },
             )]),
             update_line: None,

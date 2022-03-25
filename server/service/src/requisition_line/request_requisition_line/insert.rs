@@ -52,7 +52,7 @@ pub fn insert_request_requisition_line(
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, store_id, &input)?;
-            let new_requisition_line_row = generate(connection, store_id, requisition_row, input)?;
+            let new_requisition_line_row = generate(ctx, store_id, requisition_row, input)?;
 
             RequisitionLineRowRepository::new(&connection).upsert_one(&new_requisition_line_row)?;
 
@@ -102,7 +102,7 @@ fn validate(
 }
 
 fn generate(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     store_id: &str,
     requisition_row: RequisitionRow,
     InsertRequestRequisitionLine {
@@ -114,7 +114,7 @@ fn generate(
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
     let mut new_requisition_line =
-        generate_requisition_lines(connection, store_id, &requisition_row, vec![item_id])?
+        generate_requisition_lines(ctx, store_id, &requisition_row, vec![item_id])?
             .pop()
             .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
@@ -136,11 +136,11 @@ mod test {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_draft_response_requisition_for_update_test, mock_item_c, mock_item_stats_item2,
+            mock_draft_response_requisition_for_update_test, mock_item_c,
             mock_request_draft_requisition, mock_request_draft_requisition_calculation_test,
-            mock_sent_request_requisition, MockDataInserts,
+            mock_sent_request_requisition, test_item_stats, MockDataInserts,
         },
-        test_db::setup_all,
+        test_db::{setup_all, setup_all_with_data},
         RequisitionLineRowRepository,
     };
     use util::{inline_edit, inline_init};
@@ -262,9 +262,10 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_request_requisition_line_success() {
-        let (_, connection, connection_manager, _) = setup_all(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "insert_request_requisition_line_success",
             MockDataInserts::all(),
+            test_item_stats::mock_item_stats(),
         )
         .await;
 
@@ -281,7 +282,7 @@ mod test {
                         .requisition
                         .id,
                     id: "new requisition line id".to_owned(),
-                    item_id: mock_item_stats_item2().id,
+                    item_id: test_item_stats::item2().id,
                     requested_quantity: Some(20),
                     comment: Some("comment".to_string()),
                 },
@@ -297,10 +298,10 @@ mod test {
             line,
             inline_edit(&line, |mut u| {
                 u.requested_quantity = 20;
-                // as per test_item_stats_repository
-                u.available_stock_on_hand = 22;
-                u.average_monthly_consumption = 5;
-                u.suggested_quantity = 10 * 5 - 22;
+                u.available_stock_on_hand = test_item_stats::item_2_soh() as i32;
+                u.average_monthly_consumption = test_item_stats::item2_amc_3_months() as i32;
+                u.suggested_quantity = test_item_stats::item2_amc_3_months() as i32 * 10
+                    - test_item_stats::item_2_soh() as i32;
                 u.comment = Some("comment".to_string());
                 u
             })
@@ -319,5 +320,7 @@ mod test {
         );
 
         assert!(matches!(result, Ok(_)), "{:#?}", result);
+
+        // TODO test suggested = 0 (where MOS is above MIN_MOS)
     }
 }
