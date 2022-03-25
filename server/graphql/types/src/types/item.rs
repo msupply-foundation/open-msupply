@@ -97,6 +97,60 @@ impl ItemNode {
             result_option.unwrap_or(vec![]),
         ))
     }
+
+    // Mock
+
+    pub async fn msupply_universal_code(&self) -> &str {
+        "368154bf"
+    }
+
+    pub async fn msupply_universal_name(&self) -> &str {
+        "Amoxicilin"
+    }
+
+    pub async fn doses(&self) -> u32 {
+        0
+    }
+
+    pub async fn is_vaccine(&self) -> bool {
+        false
+    }
+
+    pub async fn default_pack_size(&self) -> u32 {
+        1
+    }
+
+    pub async fn outer_pack_size(&self) -> u32 {
+        10
+    }
+
+    pub async fn volume_per_outer_pack(&self) -> u32 {
+        5
+    }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        0.5
+    }
+
+    pub async fn margin(&self) -> f64 {
+        0.1
+    }
+
+    pub async fn weight(&self) -> f64 {
+        0.2
+    }
+
+    pub async fn strength(&self) -> &str {
+        "0.01mg"
+    }
+
+    pub async fn atc_category(&self) -> &str {
+        "J01CA04"
+    }
+
+    pub async fn ddd(&self) -> f64 {
+        1.5
+    }
 }
 
 #[derive(Union)]
