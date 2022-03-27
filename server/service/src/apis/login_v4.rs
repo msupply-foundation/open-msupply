@@ -11,96 +11,108 @@ pub enum LoginUserTypeV4 {
     Unknown,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub enum LoginStatusV4 {
     #[serde(alias = "success")]
     Success,
+    #[serde(alias = "error")]
+    Error,
     #[serde(other)]
     Unknown,
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub struct LoginInputV4 {
-    username: String,
-    password: String,
-    login_type: LoginUserTypeV4,
+    pub username: String,
+    pub password: String,
+    #[serde(rename = "loginType")]
+    pub login_type: LoginUserTypeV4,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct LoginUserV4 {
     #[serde(rename = "ID")]
-    id: String,
-    name: String,
-    startup_method: String,
+    pub id: String,
+    pub name: String,
+    pub startup_method: String,
     //Signature: "[object Picture]",
-    nblogins: String,
+    pub nblogins: i32,
     //lastlogin: "2020-03-24",
-    group_id: String,
-    mode: String,
+    pub group_id: String,
+    pub mode: String,
     // qdump_offset_b: null,
-    active: bool,
+    pub active: bool,
     // permissions_spare: null,
-    lasttime: i32,
-    initials: String,
-    first_name: String,
-    last_name: String,
+    pub lasttime: i32,
+    pub initials: String,
+    pub first_name: String,
+    pub last_name: String,
     //date_of_birth: "0000-00-00",
-    address_1: String,
-    address_2: String,
-    e_mail: String,
-    phone1: String,
-    phone2: String,
+    pub address_1: String,
+    pub address_2: String,
+    pub e_mail: String,
+    pub phone1: String,
+    pub phone2: String,
     //date_created: "2017-10-11",
     //date_left: "0000-00-00",
-    job_title: String,
-    responsible_officer: bool,
-    Language: i32,
-    use_ldap: bool,
-    ldap_login_string: String,
-    receives_sms_errors: bool,
-    is_group: bool,
+    pub job_title: String,
+    pub responsible_officer: bool,
+    #[serde(rename = "Language")]
+    pub language: i32,
+    pub use_ldap: bool,
+    pub ldap_login_string: String,
+    pub receives_sms_errors: bool,
+    pub is_group: bool,
     // dashboard_tabs: { "tabs": [] },
     // custom_data: null,
-    windows_user_name: String,
-    license_category_id: String,
+    pub windows_user_name: String,
+    pub license_category_id: String,
     // tags: { "tags": [] },
     // type: { "types": ["desktop"]},
-    isInactiveAuthoriser: bool,
-    spare_1: String,
+    #[serde(rename = "isInactiveAuthoriser")]
+    pub is_inactive_authoriser: bool,
+    pub spare_1: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct LoginUserStoresV4 {
     #[serde(rename = "ID")]
-    id: String,
+    pub id: String,
     #[serde(rename = "user_ID")]
-    user_id: String,
+    pub user_id: String,
     #[serde(rename = "store_ID")]
-    store_id: String,
-    can_login: bool,
-    store_default: bool,
-    can_action_replenishments: bool,
-    permissions: Vec<bool>,
+    pub store_id: String,
+    pub can_login: bool,
+    pub store_default: bool,
+    pub can_action_replenishments: bool,
+    pub permissions: Vec<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct LoginUserInfoV4 {
-    user: LoginUserV4,
-    user_stores: Vec<LoginUserStoresV4>,
+    pub user: LoginUserV4,
+    #[serde(rename = "userStores")]
+    pub user_stores: Vec<LoginUserStoresV4>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct LoginResponseV4 {
-    status: LoginStatusV4,
-    authenticated: bool,
-    username: String,
-    userFirstName: String,
-    userLastName: String,
-    userJobTitle: String,
-    userType: LoginUserTypeV4,
-    service: String,
-    storeName: String,
-    userInfo: Option<LoginUserInfoV4>,
+    pub status: LoginStatusV4,
+    pub authenticated: bool,
+    pub username: String,
+    #[serde(rename = "userFirstName")]
+    pub user_first_name: String,
+    #[serde(rename = "userLastName")]
+    pub user_last_name: String,
+    #[serde(rename = "userJobTitle")]
+    pub user_job_title: String,
+    #[serde(rename = "userType")]
+    pub user_type: LoginUserTypeV4,
+    pub service: String,
+    #[serde(rename = "storeName")]
+    pub store_name: String,
+    #[serde(rename = "userInfo")]
+    pub user_info: Option<LoginUserInfoV4>,
 }
 
 pub struct LoginApiV4 {
@@ -109,6 +121,10 @@ pub struct LoginApiV4 {
 }
 
 impl LoginApiV4 {
+    pub fn new(client: Client, server_url: Url) -> Self {
+        LoginApiV4 { server_url, client }
+    }
+
     pub async fn login(&self, input: LoginInputV4) -> Result<LoginResponseV4, LoginV4Error> {
         let response = self
             .client
