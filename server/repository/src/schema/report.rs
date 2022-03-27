@@ -3,8 +3,6 @@ use diesel_derive_enum::DbEnum;
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReportType {
-    PPro,
-    Grep,
     OmReport,
 }
 

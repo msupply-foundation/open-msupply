@@ -1,5 +1,5 @@
 CREATE TYPE report_type AS ENUM (
-    'PPRO', 'GREP', 'OM_REPORT'
+    'OM_REPORT'
 );
 
 CREATE TYPE category_type AS ENUM (
