@@ -1,26 +1,70 @@
+-- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockMovement.4dm
+-- TODO are all of sc, ci, si type transactions synced, and are all of the dates set correctly ?
+CREATE VIEW outbound_shipment_stock_movement AS
+SELECT 
+    'n/a' as id,
+    number_of_packs * pack_size * -1 as quantity,
+	item_id,
+	store_id,
+	picked_datetime as datetime
+FROM invoice_line 
+JOIN invoice
+	ON invoice_line.invoice_id = invoice.id
+WHERE invoice.type = 'OUTBOUND_SHIPMENT' 
+	AND picked_datetime IS NOT NULL
+	AND invoice_line.number_of_packs > 0
+	AND invoice_line.type = 'STOCK_OUT';
+		
+CREATE VIEW inbound_shipment_stock_movement AS
+SELECT 
+    'n/a' as id,
+    number_of_packs * pack_size as quantity,
+	item_id,
+	store_id,
+	delivered_datetime as datetime
+FROM invoice_line 
+JOIN invoice
+	ON invoice_line.invoice_id = invoice.id
+WHERE invoice.type = 'INBOUND_SHIPMENT' 
+	AND delivered_datetime IS NOT NULL
+	AND invoice_line.number_of_packs > 0
+	AND invoice_line.type = 'STOCK_IN';
+		
+CREATE VIEW inventory_adjustment_stock_movement AS
+SELECT 
+    'n/a' as id,
+    CASE
+	 WHEN invoice_line.type = 'STOCK_IN' THEN number_of_packs * pack_size
+	 WHEN invoice_line.type = 'STOCK_OUT' THEN number_of_packs * pack_size * -1
+	END as quantity,
+	item_id,
+	store_id,
+	verified_datetime as datetime
+FROM invoice_line 
+JOIN invoice
+	ON invoice_line.invoice_id = invoice.id
+WHERE invoice.type = 'INVENTORY_ADJUSTMENT' 
+	AND verified_datetime IS NOT NULL
+	AND invoice_line.number_of_packs > 0;
+		
+CREATE VIEW stock_movement AS
+SELECT * FROM outbound_shipment_stock_movement
+UNION SELECT * from inbound_shipment_stock_movement
+UNION SELECT * from inventory_adjustment_stock_movement;
+
+-- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockConsumption.4dm
+-- TODO sc type ?
 CREATE VIEW consumption AS
 SELECT 
     'n/a' as id,
     items_and_stores.item_id AS item_id, 
     items_and_stores.store_id AS store_id,
-	COALESCE(consumption.quantity, 0) AS quantity,
-	consumption.date::date AS date
+	-- @ = absolute value
+	@ COALESCE(consumption.quantity, 0) AS quantity,
+	consumption.datetime::date AS date
 FROM
    (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-LEFT OUTER JOIN 
-	(SELECT 
-	 	item_id, 
-	 	store_id, 
-	 	picked_datetime as date,
-	 	COALESCE(pack_size * number_of_packs, 0) as quantity
-	 FROM invoice_line 
-	 JOIN invoice
-	    ON invoice_line.invoice_id = invoice.id
-	 WHERE invoice.type = 'OUTBOUND_SHIPMENT' 
-	 	AND picked_datetime IS NOT NULL
-		AND invoice_line.number_of_packs > 0
-		AND invoice_line.type = 'STOCK_OUT'
-	) AS consumption 
+LEFT OUTER JOIN outbound_shipment_stock_movement as consumption
 	ON consumption.item_id = items_and_stores.item_id 
 		AND consumption.store_id = items_and_stores.store_id;
 
@@ -43,3 +87,7 @@ LEFT OUTER JOIN
 	) AS stock
 	ON stock.item_id = items_and_stores.item_id 
 		AND stock.store_id = items_and_stores.store_id
+
+-- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockMovement.4dm
+-- TODO are all of sc, ci, si type transactions synced, and are all of the dates set correctly ?
+

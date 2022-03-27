@@ -311,6 +311,16 @@ table! {
 }
 
 table! {
+    stock_movement (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        quantity -> Integer,
+        datetime -> Timestamp,
+    }
+}
+
+table! {
     consumption (id) {
         id -> Text,
         item_id -> Text,
