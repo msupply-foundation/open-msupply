@@ -31,10 +31,7 @@ export type AutocompleteListProps<T> = {
   limitTags?: number;
   inputValue?: string;
   clearText?: string;
-  // annoying. typing this to T | T[] causes ts complaints, as it types the value as (T | T[])[]
-  // as the correct typing relies on other props here
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value?: any;
+  value?: T extends unknown[] ? T : T[];
   disableClearable?: boolean;
 };
 
