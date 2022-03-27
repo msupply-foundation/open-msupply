@@ -1,5 +1,8 @@
 use self::{
-    chart::{get_requisition_line_chart, RequisitionLineChart, RequisitionLineChartError, ConsumptionHistoryOptions},
+    chart::{
+        get_requisition_line_chart, ConsumptionHistoryOptions, RequisitionLineChart,
+        RequisitionLineChartError, StockEvolutionOptions,
+    },
     query::get_requisition_lines,
     request_requisition_line::{
         delete_request_requisition_line, insert_request_requisition_line,
@@ -79,12 +82,14 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         store_id: &str,
         requisition_line_id: &str,
         consumption_history_options: ConsumptionHistoryOptions,
+        stock_evolution_options: StockEvolutionOptions,
     ) -> Result<RequisitionLineChart, RequisitionLineChartError> {
         get_requisition_line_chart(
             ctx,
             store_id,
             requisition_line_id,
             consumption_history_options,
+            stock_evolution_options,
         )
     }
 }

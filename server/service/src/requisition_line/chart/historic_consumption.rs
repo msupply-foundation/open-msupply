@@ -10,10 +10,19 @@ use util::{
     last_day_of_the_month,
 };
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct ConsumptionHistoryOptions {
     pub amc_look_back_months: u32,
     pub number_of_data_points: u32,
+}
+
+impl Default for ConsumptionHistoryOptions {
+    fn default() -> Self {
+        Self {
+            amc_look_back_months: 1,
+            number_of_data_points: 1,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,7 +40,7 @@ pub fn get_historic_consumption_for_item(
     options: ConsumptionHistoryOptions,
 ) -> Result<Vec<ConsumptionHistory>, RepositoryError> {
     // Initilise series
-    let points = generate_consumption_series(reference_date, options)?;
+    let points = generate_consumption_series(reference_date, options);
     // Get rows
     let filter = ConsumptionFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
@@ -73,7 +82,7 @@ fn generate_consumption_series(
         amc_look_back_months,
         number_of_data_points,
     }: ConsumptionHistoryOptions,
-) -> Result<ConsumptionHistoryPoints, RepositoryError> {
+) -> ConsumptionHistoryPoints {
     // reference_date is counted as the first month data point
     let data_point_offset = (number_of_data_points as i32 - 1).neg();
     // current month as a whole is counted in historic amc calculation
@@ -112,7 +121,7 @@ fn generate_consumption_series(
         off_set += 1;
     }
 
-    Ok(points)
+    points
 }
 
 fn calculate_consumption(
@@ -125,6 +134,7 @@ fn calculate_consumption(
     }: ConsumptionHistoryPoint,
     consumption_rows: &Vec<ConsumptionRow>,
 ) -> ConsumptionHistory {
+    // https://github.com/openmsupply/remote-server/issues/972
     let total_consumption_amc = consumption_rows.iter().fold(0, |sum, row| {
         if within_range(&start_of_amc_lookup, &end_of_amc_lookup, &row.date) {
             sum + row.quantity
@@ -173,7 +183,7 @@ mod tests {
                     number_of_data_points: 3
                 }
             ),
-            Ok(ConsumptionHistoryPoints {
+            ConsumptionHistoryPoints {
                 first_date: NaiveDate::from_ymd(2020, 7, 1),
                 last_date: NaiveDate::from_ymd(2021, 1, 31),
                 rows: vec![
@@ -199,7 +209,7 @@ mod tests {
                         end_of_amc_lookup: NaiveDate::from_ymd(2021, 01, 31),
                     }
                 ]
-            })
+            }
         );
     }
 
