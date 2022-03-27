@@ -208,6 +208,7 @@ export const useDeleteSelectedLines = (): {
   const { success, info } = useNotification();
   const { items, lines } = useInboundRows();
   const { mutate } = useDeleteInboundLines();
+  const isDisabled = useIsInboundDisabled();
   const t = useTranslation('replenishment');
 
   const selectedRows = useTableStore(state => {
@@ -222,6 +223,10 @@ export const useDeleteSelectedLines = (): {
   });
 
   const onDelete = async () => {
+    if (isDisabled) {
+      info(t('label.cant-delete-disabled'))();
+      return;
+    }
     if (selectedRows && selectedRows?.length > 0) {
       const number = selectedRows?.length;
       const onSuccess = success(t('messages.deleted-lines', { number }));

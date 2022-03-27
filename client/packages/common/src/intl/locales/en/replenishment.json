@@ -40,6 +40,7 @@
   "label.quantities": "Quantities",
   "label.requested-quantity": "Req. Qty.",
   "label.select-rows-to-delete-them": "Select rows to delete them",
+  "label.cant-delete-disabled": "Can only delete lines when status is New",
   "label.sent": "Sent",
   "label.stock-details": "Stock details",
   "label.stock-level": "Stock level",

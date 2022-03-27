@@ -19,6 +19,7 @@ import {
   useTranslation,
   Column,
   RegexUtils,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { getResponseQueries, ListParams } from './api';
 import { useItemFilter } from '../../RequestRequisition/api';
@@ -50,6 +51,12 @@ export const useResponseApi = () => {
 const useResponseNumber = () => {
   const { requisitionNumber = '' } = useParams();
   return requisitionNumber;
+};
+
+export const useIsRequestDisabled = (): boolean => {
+  const { data } = useResponse();
+  if (!data) return true;
+  return isResponseDisabled(data);
 };
 
 export const useUpdateResponse = () => {
@@ -198,6 +205,43 @@ export const useCreateOutboundFromResponse = () => {
       queryClient.invalidateQueries(api.keys.detail(responseNumber));
     },
   });
+};
+
+export const useDeleteResponseLines = () => {
+  const { success, info } = useNotification();
+  const { lines } = useResponseLines();
+  const api = useResponseApi();
+  const requestNumber = useResponseNumber();
+  const isDisabled = useIsRequestDisabled();
+  const queryClient = useQueryClient();
+  const { mutate } = useMutation(api.deleteLines, {
+    onSettled: () =>
+      queryClient.invalidateQueries(api.keys.detail(requestNumber)),
+  });
+  const t = useTranslation('distribution');
+
+  const selectedRows = useTableStore(state =>
+    lines.filter(({ id }) => state.rowState[id]?.isSelected)
+  );
+
+  const onDelete = async () => {
+    if (isDisabled) {
+      info(t('label.cant-delete-disabled-requisition'))();
+      return;
+    }
+    info('Deleting response lines not yet implemented in API')();
+    return;
+    const number = selectedRows?.length;
+    if (selectedRows && number) {
+      mutate(selectedRows, {
+        onSuccess: success(t('messages.deleted-lines', { number: number })),
+      });
+    } else {
+      info(t('label.select-rows-to-delete-them'))();
+    }
+  };
+
+  return { onDelete };
 };
 
 export const useSupplyRequestedQuantity = () => {
