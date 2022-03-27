@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import {
   AuthError,
   matchPath,
+  Location,
   RouteBuilder,
   useLocalStorage,
   useLocation,
@@ -38,14 +39,24 @@ export const AuthenticationAlert = () => {
       ? t('auth.logged-out-message')
       : t('auth.permission-denied');
 
+  const onOk = () => {
+    const state = {} as { from?: Location };
+    if (error === AuthError.Unauthenticated) {
+      state.from = location;
+    }
+
+    navigate(`/${AppRoute.Login}`, {
+      replace: true,
+      state,
+    });
+  };
+
   return (
     <AlertModal
       open={isOn}
       title={t('auth.alert-title')}
       message={message}
-      onOk={() => {
-        navigate(AppRoute.Login);
-      }}
+      onOk={onOk}
     />
   );
 };
