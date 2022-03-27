@@ -71,7 +71,7 @@ pub use user_account::*;
 use crate::{
     InvoiceLineRowRepository, LocationRowRepository, NumberRowRepository,
     RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRowRepository,
 };
 
 use self::unit::mock_units;
@@ -340,7 +340,7 @@ pub async fn insert_mock_data(
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
         if inserts.user_accounts {
-            let repo = UserAccountRepository::new(connection);
+            let repo = UserAccountRowRepository::new(connection);
             for row in &mock_data.user_accounts {
                 repo.insert_one(&row).unwrap();
             }

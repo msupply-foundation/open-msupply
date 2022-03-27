@@ -7,13 +7,13 @@ use crate::{
 
 use diesel::prelude::*;
 
-pub struct UserAccountRepository<'a> {
+pub struct UserAccountRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> UserAccountRepository<'a> {
+impl<'a> UserAccountRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        UserAccountRepository { connection }
+        UserAccountRowRepository { connection }
     }
 
     pub fn insert_one(&self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {
@@ -71,7 +71,7 @@ pub fn unknown_user() -> UserAccountRow {
     UserAccountRow {
         id: "unknown".to_string(),
         username: "unknown".to_string(),
-        password: "unknown".to_string(),
+        hashed_password: "unknown".to_string(),
         email: Some("unknown@sussol.net".to_string()),
     }
 }

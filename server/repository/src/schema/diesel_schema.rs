@@ -1,3 +1,5 @@
+use super::user_store_join::user_store_join;
+
 table! {
     central_sync_buffer (id) {
         id -> Integer,
@@ -368,6 +370,8 @@ joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(requisition -> user_account (user_id));
 joinable!(invoice -> user_account (user_id));
 joinable!(stocktake -> user_account (user_id));
+joinable!(user_store_join -> user_account (user_id));
+joinable!(user_store_join -> store (store_id));
 
 allow_tables_to_appear_in_same_query!(
     unit,
@@ -390,4 +394,5 @@ allow_tables_to_appear_in_same_query!(
     item_is_visible,
     stocktake,
     stocktake_line,
+    user_store_join,
 );

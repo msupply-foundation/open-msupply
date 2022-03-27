@@ -1,6 +1,6 @@
 use repository::{
     schema::UserAccountRow, RepositoryError, StorageConnection, TransactionError,
-    UserAccountRepository,
+    UserAccountRowRepository,
 };
 use util::uuid::uuid;
 
@@ -52,7 +52,7 @@ impl<'a> UserAccountService<'a> {
     ) -> Result<UserAccount, CreateUserAccountError> {
         self.connection
             .transaction_sync(|con| {
-                let repo = UserAccountRepository::new(con);
+                let repo = UserAccountRowRepository::new(con);
                 if let Some(_) = repo
                     .find_one_by_user_name(&user.username)
                     .map_err(|e| CreateUserAccountError::DatabaseError(e))?
@@ -69,7 +69,7 @@ impl<'a> UserAccountService<'a> {
                 let row = UserAccountRow {
                     id: uuid(),
                     username: user.username,
-                    password: hashed_password,
+                    hashed_password: hashed_password,
                     email: user.email,
                 };
                 repo.insert_one(&row)?;
@@ -86,7 +86,7 @@ impl<'a> UserAccountService<'a> {
     }
 
     pub fn find_user(&self, user_id: &str) -> Result<Option<UserAccount>, RepositoryError> {
-        let repo = UserAccountRepository::new(self.connection);
+        let repo = UserAccountRowRepository::new(self.connection);
         repo.find_one_by_id(user_id)
     }
 
@@ -96,7 +96,7 @@ impl<'a> UserAccountService<'a> {
         username: &str,
         password: &str,
     ) -> Result<UserAccount, VerifyPasswordError> {
-        let repo = UserAccountRepository::new(self.connection);
+        let repo = UserAccountRowRepository::new(self.connection);
         let user = match repo
             .find_one_by_user_name(username)
             .map_err(|e| VerifyPasswordError::DatabaseError(e))?
@@ -105,7 +105,7 @@ impl<'a> UserAccountService<'a> {
             None => return Err(VerifyPasswordError::UsernameDoesNotExist),
         };
         // verify password
-        let valid = verify(password, &user.password).map_err(|err| {
+        let valid = verify(password, &user.hashed_password).map_err(|err| {
             error!("verify_password: {}", err);
             VerifyPasswordError::InvalidCredentialsBackend(err)
         })?;

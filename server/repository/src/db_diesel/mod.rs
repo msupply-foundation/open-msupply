@@ -35,7 +35,11 @@ mod storage_connection;
 mod store;
 mod store_row;
 mod unit_row;
-mod user_account;
+mod user;
+mod user_permission;
+mod user_permission_row;
+mod user_row;
+mod user_store_join_row;
 
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use changelog_row::*;
@@ -72,7 +76,10 @@ pub use storage_connection::*;
 pub use store::*;
 pub use store_row::StoreRowRepository;
 pub use unit_row::UnitRowRepository;
-pub use user_account::*;
+pub use user_permission::*;
+pub use user_permission_row::*;
+pub use user_row::*;
+pub use user_store_join_row::*;
 
 use diesel::{
     prelude::*,
