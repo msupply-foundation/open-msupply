@@ -22,6 +22,12 @@ use super::{
     html_printing::html_to_pdf,
 };
 
+// Reserved template entry keys:
+const TEMPLATE_KEY: &'static str = "template";
+const TEMPLATE_HEADER_KEY: &'static str = "template_header";
+const TEMPLATE_FOOTER_KEY: &'static str = "template_footer";
+const QUERY_KEY: &'static str = "query";
+
 #[derive(Debug)]
 pub enum ReportError {
     RepositoryError(RepositoryError),
@@ -198,11 +204,6 @@ fn generate_report(
         footer,
     })
 }
-
-const TEMPLATE_KEY: &'static str = "template";
-const TEMPLATE_HEADER_KEY: &'static str = "template_header";
-const TEMPLATE_FOOTER_KEY: &'static str = "template_footer";
-const QUERY_KEY: &'static str = "query";
 
 fn template_from_resolved_template(
     report: &ReportDefinition,
