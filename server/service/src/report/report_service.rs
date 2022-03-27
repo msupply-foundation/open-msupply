@@ -176,16 +176,18 @@ fn generate_report(
         .render(TEMPLATE_KEY, &context)
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
     let header = if templates.contains_key(TEMPLATE_HEADER_KEY) {
-        Some(tera.render(TEMPLATE_HEADER_KEY, &context).map_err(|err| {
+        let header = tera.render(TEMPLATE_HEADER_KEY, &context).map_err(|err| {
             ReportError::DocGenerationError(format!("Header generation: {}", err))
-        })?)
+        })?;
+        Some(header)
     } else {
         None
     };
     let footer = if templates.contains_key(TEMPLATE_FOOTER_KEY) {
-        Some(tera.render(TEMPLATE_FOOTER_KEY, &context).map_err(|err| {
+        let footer = tera.render(TEMPLATE_FOOTER_KEY, &context).map_err(|err| {
             ReportError::DocGenerationError(format!("Footer generation: {}", err))
-        })?)
+        })?;
+        Some(footer)
     } else {
         None
     };
