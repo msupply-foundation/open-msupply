@@ -35,6 +35,7 @@ export type AutocompleteListProps<T> = {
   // as the correct typing relies on other props here
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
+  disableClearable?: boolean;
 };
 
 export const AutocompleteList = <T,>({
@@ -57,6 +58,7 @@ export const AutocompleteList = <T,>({
   inputValue,
   clearText,
   value,
+  disableClearable,
 }: AutocompleteListProps<T>): JSX.Element => {
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
   const optionRenderer = optionKey
@@ -73,6 +75,7 @@ export const AutocompleteList = <T,>({
 
   return (
     <MuiAutocomplete
+      disableClearable={disableClearable}
       autoSelect={false}
       loading={loading}
       loadingText={loadingText}
