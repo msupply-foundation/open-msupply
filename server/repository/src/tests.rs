@@ -297,7 +297,7 @@ mod repository_test {
         OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
         RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
-        StocktakeRowRepository, StoreRowRepository, UserAccountRepository,
+        StocktakeRowRepository, StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::{Duration, Utc};
@@ -718,7 +718,7 @@ mod repository_test {
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
 
-        let repo = UserAccountRepository::new(&connection);
+        let repo = UserAccountRowRepository::new(&connection);
         let item1 = data::user_account_1();
         repo.insert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
