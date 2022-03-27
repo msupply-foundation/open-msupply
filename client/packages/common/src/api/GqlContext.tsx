@@ -1,14 +1,83 @@
 import React, { FC, useMemo, useEffect, useState, useCallback } from 'react';
 import { createContext } from 'react';
-import { GraphQLClient } from 'graphql-request';
+import {
+  BatchRequestDocument,
+  GraphQLClient,
+  RequestDocument,
+  Variables,
+} from 'graphql-request';
+import { AuthError } from '../authentication/AuthContext';
+import { LocalStorage } from '../localStorage';
 
-export const createGql = (url: string): { client: GraphQLClient } => {
-  const client = new GraphQLClient(url, { credentials: 'include' });
+class GQLClient extends GraphQLClient {
+  private client: GraphQLClient;
+  private emptyData: object;
+
+  constructor(url: string, options?: RequestInit) {
+    super(url, options);
+    this.client = new GraphQLClient(url, options);
+    this.emptyData = {};
+  }
+
+  public rawRequest<T, V = Variables>(
+    query: string,
+    variables?: V,
+    requestHeaders?: RequestInit['headers']
+  ): Promise<{
+    data: T;
+    extensions?: any;
+    headers: Headers;
+    status: number;
+  }> {
+    return this.client.rawRequest(query, variables, requestHeaders);
+  }
+
+  public request<T, V = Variables>(
+    document: RequestDocument,
+    variables?: V,
+    requestHeaders?: RequestInit['headers']
+  ): Promise<T> {
+    const response = this.client.request(document, variables, requestHeaders);
+    // returning an empty object in order to give the caller a stable reference
+    // without it, the page will re-render continuously
+    return response.then(
+      data => data ?? this.emptyData,
+      ({ response }) => {
+        if (response && response.errors) {
+          if (
+            response.errors.some(
+              ({ message }: { message?: string }) =>
+                message === AuthError.Unauthenticated
+            )
+          ) {
+            LocalStorage.setItem('/auth/error', AuthError.Unauthenticated);
+          }
+        }
+        return this.emptyData;
+      }
+    );
+  }
+  public batchRequests<T, V = Variables>(
+    documents: BatchRequestDocument<V>[],
+    requestHeaders?: RequestInit['headers']
+  ): Promise<T> {
+    return this.client.batchRequests(documents, requestHeaders);
+  }
+  public setHeaders = (headers: RequestInit['headers']): GraphQLClient =>
+    this.client.setHeaders(headers);
+  public setHeader = (key: string, value: string): GraphQLClient =>
+    this.client.setHeader(key, value);
+  public setEndpoint = (value: string): GraphQLClient =>
+    this.client.setEndpoint(value);
+}
+
+export const createGql = (url: string): { client: GQLClient } => {
+  const client = new GQLClient(url, { credentials: 'include' });
   return { client };
 };
 
 interface GqlControl {
-  client: GraphQLClient;
+  client: GQLClient;
   setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
 }
@@ -27,7 +96,7 @@ interface ApiProviderProps {
 
 export const GqlProvider: FC<ApiProviderProps> = ({ url, children }) => {
   const [{ client }, setApi] = useState<{
-    client: GraphQLClient;
+    client: GQLClient;
   }>(() => createGql(url));
 
   const setUrl = useCallback(
