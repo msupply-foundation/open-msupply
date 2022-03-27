@@ -196,7 +196,7 @@ table! {
     user_account (id) {
         id -> Text,
         username -> Text,
-        password -> Text,
+        hashed_password -> Text,
         email -> Nullable<Text>,
     }
 }

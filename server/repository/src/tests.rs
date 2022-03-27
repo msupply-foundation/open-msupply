@@ -238,7 +238,7 @@ mod repository_test {
             UserAccountRow {
                 id: "user1".to_string(),
                 username: "user 1".to_string(),
-                password: "p1".to_string(),
+                hashed_password: "p1".to_string(),
                 email: Some("email".to_string()),
             }
         }
@@ -247,7 +247,7 @@ mod repository_test {
             UserAccountRow {
                 id: "user2".to_string(),
                 username: "user 2".to_string(),
-                password: "p2".to_string(),
+                hashed_password: "p2".to_string(),
                 email: None,
             }
         }
