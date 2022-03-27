@@ -115,7 +115,7 @@ pub fn validate_auth(
         &auth_data.token_bucket,
         auth_data.auth_token_secret.as_bytes(),
     );
-    let claims = match service.verify_token(auth_token) {
+    let claims = match service.verify_token(auth_token, None) {
         Ok(claims) => claims,
         Err(err) => {
             let e = match err {
@@ -128,7 +128,7 @@ pub fn validate_auth(
                 JWTValidationError::InvalidToken(_) => ValidationError::Denied(
                     ValidationDeniedKind::NotAuthenticated("Invalid token".to_string()),
                 ),
-                JWTValidationError::TokenInvalided => {
+                JWTValidationError::TokenInvalidated => {
                     ValidationError::Denied(ValidationDeniedKind::NotAuthenticated(
                         "Token has been invalided on the server".to_string(),
                     ))
