@@ -47,7 +47,7 @@ class GQLClient extends GraphQLClient {
           if (
             response.errors.some(
               ({ message }: { message?: string }) =>
-                message === 'Unauthenticated'
+                message === AuthError.Unauthenticated
             )
           ) {
             LocalStorage.setItem('/auth/error', AuthError.Unauthenticated);
