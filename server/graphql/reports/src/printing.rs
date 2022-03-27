@@ -5,16 +5,8 @@ use service::permission_validation::{Resource, ResourceAccessRequest};
 use service::report::definition::GraphQlQuery;
 use service::report::report_service::ReportError;
 
-pub struct InvalidReport;
-#[Object]
-impl InvalidReport {
-    pub async fn description(&self) -> &'static str {
-        "Report exist but is invalid"
-    }
-}
-
 pub struct FailedToFetchReportData {
-    message: String,
+    errors: serde_json::Value,
 }
 #[Object]
 impl FailedToFetchReportData {
@@ -22,8 +14,8 @@ impl FailedToFetchReportData {
         "Failed to query data required for the report"
     }
 
-    pub async fn message(&self) -> &String {
-        &self.message
+    pub async fn errors(&self) -> &serde_json::Value {
+        &self.errors
     }
 }
 
@@ -93,10 +85,10 @@ pub async fn print_report(
         .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)))?;
     let report_data = match result {
         FetchResult::Data(data) => data,
-        FetchResult::Error(message) => {
+        FetchResult::Error(errors) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
                 error: PrintReportErrorInterface::FailedToFetchReportData(
-                    FailedToFetchReportData { message },
+                    FailedToFetchReportData { errors },
                 ),
             }))
         }
@@ -117,7 +109,7 @@ pub async fn print_report(
 
 enum FetchResult {
     Data(serde_json::Value),
-    Error(String),
+    Error(serde_json::Value),
 }
 
 async fn fetch_data(
@@ -132,7 +124,7 @@ async fn fetch_data(
     let request = Request::new(query.query).variables(variables);
     let response = self_requester.call(request, user_data).await;
     if !response.errors.is_empty() {
-        return Ok(FetchResult::Error(serde_json::to_string(&response.errors)?));
+        return Ok(FetchResult::Error(serde_json::to_value(&response.errors)?));
     }
     Ok(FetchResult::Data(response.data.into_json()?))
 }
