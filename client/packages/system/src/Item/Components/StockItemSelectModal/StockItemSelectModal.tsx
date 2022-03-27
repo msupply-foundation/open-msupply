@@ -12,6 +12,8 @@ import {
   AutocompleteOptionRenderer,
   AutocompleteOnChange,
   RegexUtils,
+  CloseIcon,
+  IconButton,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useStockItemsWithStats } from '../../api';
@@ -107,6 +109,15 @@ export const StockItemSelectModal = ({
     const checked =
       filteredSelectedCount > 0 && filteredSelectedCount === filtered.length;
 
+    const clearInputButton = !!inputValue && (
+      <IconButton
+        sx={{ color: 'gray.main' }}
+        onClick={() => setInputValue('')}
+        icon={<CloseIcon fontSize="small" />}
+        label="Clear filter"
+      />
+    );
+
     return (
       <>
         <Box display="flex">
@@ -129,10 +140,11 @@ export const StockItemSelectModal = ({
         </Box>
         <TextField
           autoFocus
-          InputProps={restInputProps}
+          InputProps={{ ...restInputProps, endAdornment: clearInputButton }}
           {...rest}
           placeholder={t('placeholder.search-by-name-or-code')}
           onChange={e => setInputValue(e.target.value)}
+          value={inputValue}
         />
       </>
     );
@@ -185,6 +197,7 @@ export const StockItemSelectModal = ({
             inputValue={inputValue}
             clearText={t('label.clear-selection')}
             value={selectedItems}
+            disableClearable
           />
         ) : (
           <Box sx={{ height: '100%' }}>
