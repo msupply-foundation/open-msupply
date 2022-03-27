@@ -8,6 +8,7 @@ import {
 import { OutboundFragment } from './../../operations.generated';
 import { useOutboundApi } from './../utils/useOutboundApi';
 import { useOutboundNumber } from './../utils/useOutboundNumber';
+import { useOutboundIsDisabled } from './../utils/useOutboundIsDisabled';
 import { useOutboundRows } from './useOutboundRows';
 
 export const useOutboundDeleteLines = () => {
@@ -55,6 +56,7 @@ export const useOutboundDeleteSelectedLines = (): {
   const { success, info } = useNotification();
   const { items, lines } = useOutboundRows();
   const { mutate } = useOutboundDeleteLines();
+  const isDisabled = useOutboundIsDisabled();
   const t = useTranslation('distribution');
 
   const selectedRows = useTableStore(state => {
@@ -69,6 +71,10 @@ export const useOutboundDeleteSelectedLines = (): {
   });
 
   const onDelete = async () => {
+    if (isDisabled) {
+      info(t('label.cant-delete-disabled-shipment'))();
+      return;
+    }
     if (selectedRows && selectedRows?.length > 0) {
       const number = selectedRows?.length;
       const onSuccess = success(t('messages.deleted-lines', { number }));
