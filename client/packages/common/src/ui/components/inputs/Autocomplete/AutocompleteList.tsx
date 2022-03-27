@@ -31,6 +31,11 @@ export type AutocompleteListProps<T> = {
   limitTags?: number;
   inputValue?: string;
   clearText?: string;
+  // annoying. typing this to T | T[] causes ts complaints, as it types the value as (T | T[])[]
+  // as the correct typing relies on other props here
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value?: any;
+  disableClearable?: boolean;
 };
 
 export const AutocompleteList = <T,>({
@@ -52,9 +57,10 @@ export const AutocompleteList = <T,>({
   limitTags,
   inputValue,
   clearText,
+  value,
+  disableClearable,
 }: AutocompleteListProps<T>): JSX.Element => {
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
-
   const optionRenderer = optionKey
     ? getDefaultOptionRenderer<T>(optionKey)
     : renderOption;
@@ -69,6 +75,7 @@ export const AutocompleteList = <T,>({
 
   return (
     <MuiAutocomplete
+      disableClearable={disableClearable}
       autoSelect={false}
       loading={loading}
       loadingText={loadingText}
@@ -113,6 +120,7 @@ export const AutocompleteList = <T,>({
       limitTags={limitTags}
       inputValue={inputValue}
       clearText={clearText}
+      value={value}
     />
   );
 };

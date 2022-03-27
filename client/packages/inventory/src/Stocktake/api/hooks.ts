@@ -323,7 +323,6 @@ export const useDeleteSelectedStocktakes = () => {
           number: numberSelected,
         });
         const successSnack = success(deletedMessage);
-        successSnack();
         mutate(selectedRows, { onSuccess: successSnack });
       }
     } else {

@@ -11,6 +11,9 @@ import {
   AutocompleteRenderInputParams,
   AutocompleteOptionRenderer,
   AutocompleteOnChange,
+  RegexUtils,
+  CloseIcon,
+  IconButton,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useStockItemsWithStats } from '../../api';
@@ -61,7 +64,9 @@ export const StockItemSelectModal = ({
   const t = useTranslation('inventory');
   const { data, isLoading: loading } = useStockItemsWithStats();
   const [saving, setSaving] = useState(false);
-  const [itemIds, setItemIds] = useState<string[]>([]);
+  const [selectedItems, setSelectedItems] = useState<
+    ItemRowWithStatsFragment[]
+  >([]);
   const [inputValue, setInputValue] = useState('');
 
   const options = extraFilter
@@ -70,30 +75,76 @@ export const StockItemSelectModal = ({
 
   const onChangeItems: AutocompleteOnChange<
     ItemRowWithStatsFragment | ItemRowWithStatsFragment[]
-  > = (_event, items) => {
-    if (items && items instanceof Array) {
-      setItemIds(items.map(item => item.id));
+  > = (_event, items) => setSelectedItems(items instanceof Array ? items : []);
+
+  const selectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const filtered = options.filter(option =>
+      RegexUtils.matchObjectProperties(inputValue, option, ['name', 'code'])
+    );
+    if (event.target.checked) {
+      setSelectedItems([...selectedItems, ...filtered]);
+    } else {
+      const filteredIds = filtered.map(item => item.id);
+      setSelectedItems(
+        selectedItems.filter(item => !filteredIds.includes(item.id))
+      );
     }
   };
 
   const ItemInput: FC<AutocompleteRenderInputParams> = props => {
     const { InputProps, ...rest } = props;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { startAdornment, ...restInputProps } = InputProps ?? {};
     const t = useTranslation('common');
-    const length =
-      startAdornment && startAdornment instanceof Array
-        ? startAdornment.length
-        : 0;
+    const filtered = options.filter(option =>
+      RegexUtils.matchObjectProperties(inputValue, option, ['name', 'code'])
+    );
+
+    const selectedIds = selectedItems.map(item => item.id);
+    const filteredSelectedCount = filtered.filter(item =>
+      selectedIds.includes(item.id)
+    ).length;
+    const indeterminate =
+      filteredSelectedCount > 0 && filteredSelectedCount < filtered.length;
+    const checked =
+      filteredSelectedCount > 0 && filteredSelectedCount === filtered.length;
+
+    const clearInputButton = !!inputValue && (
+      <IconButton
+        sx={{ color: 'gray.main' }}
+        onClick={() => setInputValue('')}
+        icon={<CloseIcon fontSize="small" />}
+        label={t('label.clear-filter')}
+      />
+    );
 
     return (
       <>
-        <Typography>{t('label.items-selected', { count: length })}</Typography>
+        <Box display="flex">
+          <Typography
+            flex={1}
+            style={{ verticalAlign: 'bottom' }}
+            display="flex"
+            alignItems="center"
+          >
+            {t('label.items-selected', { count: selectedItems.length })}
+          </Typography>
+          <Typography textAlign="right" flex={1}>
+            {t('label.select-all')}
+            <Checkbox
+              onChange={selectAll}
+              indeterminate={indeterminate}
+              checked={checked}
+            />
+          </Typography>
+        </Box>
         <TextField
           autoFocus
-          InputProps={restInputProps}
+          InputProps={{ ...restInputProps, endAdornment: clearInputButton }}
           {...rest}
           placeholder={t('placeholder.search-by-name-or-code')}
           onChange={e => setInputValue(e.target.value)}
+          value={inputValue}
         />
       </>
     );
@@ -114,7 +165,7 @@ export const StockItemSelectModal = ({
           variant="ok"
           onClick={async () => {
             setSaving(true);
-            await onChange(itemIds);
+            await onChange(selectedItems.map(item => item.id));
             setSaving(false);
             onClose();
           }}
@@ -126,17 +177,26 @@ export const StockItemSelectModal = ({
           <AutocompleteList
             options={options}
             loading={loading}
-            height={375}
+            height={365}
             width={600}
             disableCloseOnSelect
             multiple
             getOptionLabel={option => `${option.code} ${option.name}`}
+            filterOptions={(options, state) =>
+              options.filter(option =>
+                RegexUtils.matchObjectProperties(state.inputValue, option, [
+                  'name',
+                  'code',
+                ])
+              )
+            }
             renderInput={ItemInput}
             limitTags={0}
             renderOption={renderOption}
             onChange={onChangeItems}
             inputValue={inputValue}
-            clearText={t('label.clear-selection')}
+            value={selectedItems}
+            disableClearable
           />
         ) : (
           <Box sx={{ height: '100%' }}>
