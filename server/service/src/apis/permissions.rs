@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Copy)]
+#[derive(Clone)]
 pub enum Permissions {
     CreatePurchaseOrders,
     ViewPurchaseOrders,
@@ -47,6 +47,7 @@ pub enum Permissions {
     AddEditGoodsReceived,
     ManageTenders,
     AddPatients,
+    /// not used
     EditRemoteData,
     ChooseDispensaryModeByDefaultOnLogIn,
     CreateRepacksOrSplitStock,
@@ -73,6 +74,7 @@ pub enum Permissions {
     AddEditTransactionCategories,
     AddEditContacts,
     MergePrescribers,
+    /// bandana 080115 user permission set for  Admin tab
     AddEditUsers,
     SendEmail,
     ViewLog,
@@ -138,6 +140,7 @@ pub enum Permissions {
     AuthoriseCustomerInvoices,
     AuthoriseSupplierInvoices,
     AuthoriseGoodsReceived,
+    /// via the website
     ModifyQuotesEnteredByTheSupplier,
     PrintPurchaseOrders,
     EditItemDefaultPrice,
@@ -392,14 +395,14 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
 }
 
 pub fn map_api_permissions(permissions: Vec<bool>) -> Vec<Permissions> {
-    let output = Vec::new();
+    let mut output = Vec::new();
     let mapping = permission_mapping();
     for (i, has_per) in permissions.iter().enumerate() {
         if !has_per {
             continue;
         }
         if let Some(permission) = mapping.get(&(i as i16)) {
-            output.push(*permission)
+            output.push(permission.clone())
         }
     }
     output
