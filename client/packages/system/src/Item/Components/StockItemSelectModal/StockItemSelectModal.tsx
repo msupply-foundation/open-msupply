@@ -114,7 +114,7 @@ export const StockItemSelectModal = ({
         sx={{ color: 'gray.main' }}
         onClick={() => setInputValue('')}
         icon={<CloseIcon fontSize="small" />}
-        label="Clear filter"
+        label={t('label.clear-filter')}
       />
     );
 
@@ -195,7 +195,6 @@ export const StockItemSelectModal = ({
             renderOption={renderOption}
             onChange={onChangeItems}
             inputValue={inputValue}
-            clearText={t('label.clear-selection')}
             value={selectedItems}
             disableClearable
           />
