@@ -11,7 +11,6 @@ import {
   XAxis,
   YAxis,
 } from '@common/components';
-// import { DateUtils } from '@common/utils';
 import {
   Box,
   useFormatDate,
@@ -38,13 +37,14 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   const tooltipFormatter = (
     value: number,
     name: string,
-    props: { payload: { date: string } }
+    props: { payload: { date: string; isHistoric: boolean } }
   ) => {
     switch (name) {
       case 'consumption':
-        if (props.payload.date === '2021-03-01')
-          return [value, t('label.requested-quantity')];
-        else return [value, t('label.consumption')];
+        const label = props.payload.isHistoric
+          ? t('label.consumption')
+          : t('label.requested-quantity');
+        return [value, label];
       case 'amc':
         return [value, t('label.moving-average')];
       default:
@@ -105,15 +105,13 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
               ]}
             />
             <Bar dataKey="consumption">
-              {data.map((entry, index) => (
+              {data.map(entry => (
                 <Cell
                   key={entry.date}
-                  // fill={DateUtils.isThisMonth(new Date(entry.date)) ? theme.palette.primary.light : theme.palette.gray.main}
-                  // hack to cope with mock data.. which is giving 2021 dates only
                   fill={
-                    index === data.length - 1
-                      ? theme.palette.primary.light
-                      : theme.palette.gray.main
+                    entry.isHistoric
+                      ? theme.palette.gray.main
+                      : theme.palette.primary.light
                   }
                 />
               ))}

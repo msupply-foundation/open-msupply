@@ -257,6 +257,7 @@ export type ConsumptionHistoryNode = {
   amc: Scalars['Float'];
   consumption: Scalars['Int'];
   date: Scalars['NaiveDate'];
+  isHistoric: Scalars['Boolean'];
 };
 
 export type CreateRequisitionShipmentError = {
@@ -2329,8 +2330,10 @@ export type StockEvolutionConnector = {
 export type StockEvolutionNode = {
   __typename: 'StockEvolutionNode';
   date: Scalars['NaiveDate'];
-  historicStockOnHand?: Maybe<Scalars['Int']>;
-  projectedStockOnHand?: Maybe<Scalars['Int']>;
+  isHistoric: Scalars['Boolean'];
+  max: Scalars['Int'];
+  min: Scalars['Int'];
+  stockOnHand: Scalars['Int'];
 };
 
 export type StockLineAlreadyExistsInInvoice = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
