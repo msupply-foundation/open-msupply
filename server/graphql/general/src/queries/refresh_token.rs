@@ -94,7 +94,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
     };
     let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
     let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
-    let pair = match service.refresh_token(&refresh_token, max_age_token, max_age_refresh) {
+    let pair = match service.refresh_token(&refresh_token, max_age_token, max_age_refresh, None) {
         Ok(pair) => pair,
         Err(err) => {
             return RefreshTokenResponse::Error(RefreshTokenError {
