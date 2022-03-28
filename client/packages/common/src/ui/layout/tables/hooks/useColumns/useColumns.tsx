@@ -82,7 +82,7 @@ const getDefaultFormatter = <T extends RecordWithId>(
     case ColumnFormat.Date: {
       return (date: unknown) => {
         const formatDate = useFormatDate();
-        const maybeDate = DateUtils.getDateOrNull(date as string);
+        const maybeDate = DateUtils.getDateOrNull(date as string | null);
         return maybeDate ? formatDate(maybeDate) : '';
       };
     }
