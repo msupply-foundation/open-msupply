@@ -32,7 +32,8 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   const data = draftLine?.chartData?.consumptionHistory.nodes ?? [];
   const dateFormatter = (date: string) =>
     d(new Date(date), {
-      val: { month: 'short', day: '2-digit' },
+      month: 'short',
+      day: '2-digit',
     });
   const tooltipFormatter = (
     value: number,

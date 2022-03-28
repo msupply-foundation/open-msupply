@@ -32,9 +32,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
   const data = draftLine?.chartData?.stockEvolution.nodes ?? [];
 
   const dateFormatter = (date: string) =>
-    d(new Date(date), {
-      val: { month: 'short', day: '2-digit' },
-    });
+    d(new Date(date), { month: 'short', day: '2-digit' });
   const tooltipFormatter = (value: number, name: string) => {
     switch (name) {
       case 'stockOnHand':
