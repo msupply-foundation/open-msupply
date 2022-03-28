@@ -4,7 +4,7 @@ use repository::{
     schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     EqualFilter, InvoiceLineRowRepository, InvoiceRepository, ItemFilter, ItemQueryRepository,
     NameFilter, NameQueryRepository, RequisitionRowRepository, StockLineFilter,
-    StockLineRepository, StorageConnection,
+    StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 use util::{inline_edit, uuid::uuid};
 
@@ -18,8 +18,8 @@ pub struct FullInvoice {
 pub struct InvoiceRecordTester {}
 impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
     fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<FullInvoice> {
-        let name = NameQueryRepository::new(connection)
-            .query_by_filter(store_id, NameFilter::new().is_store(true))
+        let other_store = StoreRepository::new(connection)
+            .query_by_filter(StoreFilter::new().id(EqualFilter::not_equal_to(store_id)))
             .unwrap()
             .pop()
             .unwrap();
@@ -30,8 +30,8 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
         let invoice_id = uuid();
         let invoice_row = InvoiceRow {
             id: invoice_id.clone(),
-            name_id: name.name_row.id,
-            name_store_id: name.store_row.map(|s| s.id),
+            name_id: other_store.name_row.id,
+            name_store_id: Some(other_store.store_row.id),
             store_id: store_id.to_string(),
             user_id: Some("user 1".to_string()),
             invoice_number: 8,
@@ -168,15 +168,19 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
                     .pop()
                     .unwrap();
                 // create requisition and linked invoice
-                let mut requisition = mock_request_draft_requisition();
-                requisition.name_id = name.name_row.id.clone();
-                requisition.store_id = row_existing.row.store_id.clone();
+                let requisition = inline_edit(&mock_request_draft_requisition(), |mut r| {
+                    r.name_id = name.name_row.id.clone();
+                    r.store_id = row_existing.row.store_id.clone();
+                    r
+                });
                 RequisitionRowRepository::new(connection)
                     .upsert_one(&requisition)
                     .unwrap();
-                let mut linked_invoice = mock_outbound_shipment_a();
-                linked_invoice.name_id = name.name_row.id.clone();
-                linked_invoice.store_id = row_existing.row.store_id.clone();
+                let linked_invoice = inline_edit(&mock_outbound_shipment_a(), |mut invoice| {
+                    invoice.name_id = name.name_row.id.clone();
+                    invoice.store_id = row_existing.row.store_id.clone();
+                    invoice
+                });
                 repo.upsert_one(&linked_invoice).unwrap();
 
                 let row = inline_edit(&row_existing.row, |mut d| {
