@@ -77,6 +77,7 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
     }
 }
 
+// Unused since name_store_join is central data and is not pushed
 impl RemotePushUpsertTranslation for NameStoreJoinTranslation {
     fn try_translate_push(
         &self,

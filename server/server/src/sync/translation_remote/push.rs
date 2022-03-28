@@ -7,10 +7,10 @@ use repository::{
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
-        requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
-        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
-        stocktake_line::StocktakeLineTranslation, table_name_to_central,
+        number::NumberTranslation, requisition::RequisitionTranslation,
+        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
+        stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
+        table_name_to_central,
     },
     SyncTranslationError,
 };
@@ -68,8 +68,13 @@ pub fn translate_changelog(
             let translations: Vec<Box<dyn RemotePushUpsertTranslation>> = vec![
                 Box::new(NumberTranslation {}),
                 Box::new(StockLineTranslation {}),
-                // Don't push name store joins for now
-                Box::new(NameStoreJoinTranslation {}),
+                // Don't push name_store_join since it is central data.
+                //
+                // Not like other central data name_store_join rows are pulled through the remote
+                // queue. The reason for it is that there can be quite a lot of name_store_join rows
+                // if there are many stores and many names. Using the remote queue allows the
+                // central server to only push rows relevant for a particular store.
+                //Box::new(NameStoreJoinTranslation {}),
                 Box::new(InvoiceTranslation {}),
                 Box::new(InvoiceLineTranslation {}),
                 Box::new(StocktakeTranslation {}),

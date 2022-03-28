@@ -26,9 +26,9 @@ mod remote_sync_integration_tests {
         settings::SyncSettings,
         sync::{
             integration_tests::{
-                invoice::InvoiceRecordTester, name_store_join::NameStoreJoinRecordTester,
-                number::NumberSyncRecordTester, requisition::RequisitionRecordTester,
-                stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
+                invoice::InvoiceRecordTester, number::NumberSyncRecordTester,
+                requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
+                stocktake::StocktakeRecordTester,
             },
             Synchroniser,
         },
@@ -132,10 +132,6 @@ mod remote_sync_integration_tests {
         println!("stock line:");
         let stock_line_tester = StockLineRecordTester {};
         test_sync_record(store_id, &sync_settings, &stock_line_tester).await;
-
-        println!("name store join:");
-        let name_store_join_tester = NameStoreJoinRecordTester {};
-        test_sync_record(store_id, &sync_settings, &name_store_join_tester).await;
 
         println!("stocktake:");
         let stocktake_tester = StocktakeRecordTester {};
