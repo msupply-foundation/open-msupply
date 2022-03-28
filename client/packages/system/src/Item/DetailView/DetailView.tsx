@@ -44,7 +44,7 @@ export const ItemDetailView: FC = () => {
       onOk={() =>
         navigate(
           RouteBuilder.create(AppRoute.Catalogue)
-            .addPart(AppRoute.MasterLists)
+            .addPart(AppRoute.Items)
             .build()
         )
       }

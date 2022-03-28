@@ -7,12 +7,16 @@ export const useItemId = () => {
   return id;
 };
 
-export const useItem = (itemId?: string) => {
-  const id = useItemId();
+export const useItem = () => {
+  const itemId = useItemId();
+  return useItemById(itemId);
+};
+
+export const useItemById = (itemId: string | undefined) => {
   const api = useItemApi();
   return useQuery(
-    api.keys.detail(itemId ?? id),
-    () => api.get.byId(itemId ?? id),
+    api.keys.detail(itemId || ''),
+    () => api.get.byId(itemId || ''),
     {
       enabled: !!itemId,
     }
