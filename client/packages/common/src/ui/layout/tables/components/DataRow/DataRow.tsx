@@ -58,15 +58,12 @@ export const DataRow = <T extends RecordWithId>({
             },
             color: isDisabled ? 'gray.main' : 'black',
             backgroundColor: isFocused ? 'background.menu' : null,
-            // minWidth,
             alignItems: 'center',
             height: '40px',
             maxHeight: '45px',
             boxShadow: dense
               ? 'none'
               : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
-            // display: 'flex',
-            // flex: '1 0 auto',
             ...rowStyle,
           }}
           onClick={onRowClick}
@@ -79,7 +76,6 @@ export const DataRow = <T extends RecordWithId>({
                 align={column.align}
                 sx={{
                   borderBottom: 'none',
-                  // justifyContent: 'flex-end',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',
                   paddingLeft: paddingX,
@@ -87,7 +83,6 @@ export const DataRow = <T extends RecordWithId>({
                   paddingTop: paddingY,
                   paddingBottom: paddingY,
                   ...(hasOnClick && { cursor: 'pointer' }),
-                  // flex: `${column.width} 0 auto`,
                   minWidth: column.minWidth,
                   maxWidth: column.maxWidth,
                   width: column.width,

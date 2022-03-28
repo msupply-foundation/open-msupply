@@ -13,7 +13,6 @@ export const getNameAndColorColumn = <
   T extends RecordWithIdWithRequiredFields
 >(): ColumnDefinition<T> => ({
   label: 'label.name',
-  width: 350,
   setter: () => {
     if (process.env['NODE_ENV']) {
       throw new Error(

@@ -54,7 +54,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       ],
       'invoiceNumber',
       'createdDatetime',
-      'comment',
+      ['comment', { maxWidth: 300 }],
       [
         'totalAfterTax',
         {
