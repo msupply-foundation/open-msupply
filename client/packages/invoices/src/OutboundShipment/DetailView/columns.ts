@@ -82,6 +82,7 @@ export const useOutboundColumns = ({
       [
         'itemName',
         {
+          maxWidth: 400,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -162,7 +163,6 @@ export const useOutboundColumns = ({
       [
         'locationName',
         {
-          // width: 180,
           getSortValue: row => {
             if ('lines' in row) {
               const locations = row.lines
@@ -210,7 +210,6 @@ export const useOutboundColumns = ({
       [
         'numberOfPacks',
         {
-          // width: 150,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -256,7 +255,6 @@ export const useOutboundColumns = ({
       [
         'packSize',
         {
-          // width: 150,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -301,7 +299,6 @@ export const useOutboundColumns = ({
       {
         label: 'label.unit-price',
         key: 'sellPricePerUnit',
-        // width: 200,
         align: ColumnAlign.Right,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
@@ -337,7 +334,6 @@ export const useOutboundColumns = ({
       {
         label: 'label.line-total',
         key: 'lineTotal',
-        // width: 200,
         align: ColumnAlign.Right,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {

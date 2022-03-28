@@ -10,10 +10,7 @@ export const HeaderRow: FC<{ dense?: boolean }> = ({ dense, ...props }) => (
   <TableRow
     {...props}
     sx={{
-      // display: 'flex',
-      // flex: '1 0 auto',
       height: !!dense ? '40px' : '60px',
-      alignItems: 'center',
     }}
   />
 );
