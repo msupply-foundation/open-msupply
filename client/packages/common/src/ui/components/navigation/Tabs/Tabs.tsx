@@ -23,4 +23,5 @@ export const Tab = styled(MuiTab)({
   height: 50,
   fontWeight: 'bold',
   textTransform: 'none',
+  whiteSpace: 'nowrap',
 });
