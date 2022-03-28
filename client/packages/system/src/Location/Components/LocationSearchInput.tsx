@@ -8,7 +8,7 @@ import { useLocations, LocationRowFragment } from '../api';
 
 interface LocationSearchInputProps {
   value: LocationRowFragment | null;
-  width?: number;
+  width?: number | string;
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
