@@ -3,7 +3,7 @@ CREATE TYPE report_type AS ENUM (
 );
 
 CREATE TYPE category_type AS ENUM (
-    'INVOICE', 'REQUISITION', 'STOCKTAKE', "RESOURCE"
+    'INVOICE', 'REQUISITION', 'STOCKTAKE', 'RESOURCE'
 );
 
 
@@ -12,5 +12,5 @@ CREATE TABLE report (
     name TEXT NOT NULL,
     type report_type NOT NULL,
     data TEXT NOT NULL,
-    context category_type NOT NULL,
+    context category_type NOT NULL
 )
