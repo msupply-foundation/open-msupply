@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import {
-  DetailViewSkeleton,
+  DetailFormSkeleton,
   AlertModal,
   RouteBuilder,
   useNavigate,
@@ -22,7 +22,7 @@ export const ItemDetailView: FC = () => {
   const t = useTranslation('catalogue');
   const { currentTab, onChangeTab } = useTabs('general');
 
-  if (isLoading) return <DetailViewSkeleton />;
+  if (isLoading) return <DetailFormSkeleton />;
 
   return !!data ? (
     <Box style={{ width: '100%' }}>
