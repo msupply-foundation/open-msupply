@@ -1710,14 +1710,27 @@ export type ItemFilterInput = {
 
 export type ItemNode = {
   __typename: 'ItemNode';
+  atcCategory: Scalars['String'];
   availableBatches: StockLineConnector;
   code: Scalars['String'];
+  ddd: Scalars['Float'];
+  defaultPackSize: Scalars['Int'];
+  doses: Scalars['Int'];
   id: Scalars['String'];
+  isVaccine: Scalars['Boolean'];
   isVisible: Scalars['Boolean'];
+  margin: Scalars['Float'];
+  msupplyUniversalCode: Scalars['String'];
+  msupplyUniversalName: Scalars['String'];
   name: Scalars['String'];
+  outerPackSize: Scalars['Int'];
   stats: ItemStatsNode;
+  strength: Scalars['String'];
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']>;
+  volumePerOuterPack: Scalars['Int'];
+  volumePerPack: Scalars['Float'];
+  weight: Scalars['Float'];
 };
 
 
@@ -1926,14 +1939,25 @@ export type NameFilterInput = {
 
 export type NameNode = {
   __typename: 'NameNode';
+  address: Scalars['String'];
+  chargeCode: Scalars['String'];
   code: Scalars['String'];
+  comment: Scalars['String'];
+  country: Scalars['String'];
+  createdDate?: Maybe<Scalars['NaiveDate']>;
+  email: Scalars['String'];
   id: Scalars['String'];
   isCustomer: Scalars['Boolean'];
+  isDonor: Scalars['Boolean'];
+  isManufacturer: Scalars['Boolean'];
+  isOnHold: Scalars['Boolean'];
   isSupplier: Scalars['Boolean'];
   isSystemName: Scalars['Boolean'];
   isVisible: Scalars['Boolean'];
   name: Scalars['String'];
+  phone: Scalars['String'];
   store?: Maybe<StoreNode>;
+  website: Scalars['String'];
 };
 
 export enum NameSortFieldInput {
