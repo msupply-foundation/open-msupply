@@ -10,12 +10,14 @@ export interface StatsPanelProps {
   isLoading: boolean;
   stats: Stat[];
   title: string;
+  width?: number;
 }
 
 export const StatsPanel: FC<StatsPanelProps> = ({
   isLoading,
   stats,
   title,
+  width,
 }) => {
   const Statistic: FC<Stat> = ({ label, value }) => (
     <Grid container alignItems="center" style={{ height: 30 }}>
@@ -47,6 +49,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
         boxShadow: theme => theme.shadows[1],
         padding: '14px 24px',
         minWidth: '300px',
+        width: width ? `${width}px` : undefined,
       }}
     >
       <Grid container>

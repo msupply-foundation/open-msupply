@@ -10,9 +10,11 @@
   "label.is-vaccine": "Vaccine",
   "label.margin": "Margin",
   "label.master-list-name": "Name",
+  "label.months": "Months",
   "label.name": "Name",
   "label.outer-pack-size": "Outer pack size",
   "label.strength": "Strength",
+  "label.units": "Units",
   "label.universal-code": "Universal code",
   "label.universal-name": "Universal name",
   "label.volume-per-outer-pack": "Volume per outer pack",
@@ -22,8 +24,11 @@
   "messages.click-to-return-to-master-lists": "Unable to find a master list with that ID. Click OK to return to the list of master lists",
   "tab.general": "General",
   "tab.master-lists": "Master Lists",
+  "title.amc": "AMC",
   "title.categories": "Categories",
   "title.details": "Details",
+  "title.months-of-stock": "Months of Stock",
   "title.packaging": "Packaging",
-  "title.pricing": "Pricing"
+  "title.pricing": "Pricing",
+  "title.stock-on-hand": "Stock on Hand"
 }
