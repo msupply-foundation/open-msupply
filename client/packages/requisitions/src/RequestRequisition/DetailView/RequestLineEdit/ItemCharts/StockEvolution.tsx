@@ -11,7 +11,6 @@ import {
   XAxis,
   YAxis,
 } from '@common/components';
-import { DateUtils } from '@common/utils';
 import {
   Box,
   useFormatDate,
@@ -19,20 +18,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from '../hooks';
-import { useRequestFields } from '../../../api';
 
 export interface StockEvolutionProps {
   draftLine: DraftRequestLine | null;
 }
-
-type valueWithDate = {
-  date: Date;
-};
-const dateSorter = (a: valueWithDate, b: valueWithDate) => {
-  if (DateUtils.isEqual(a.date, b.date)) return 0;
-  if (DateUtils.isAfter(a.date, b.date)) return 1;
-  return -1;
-};
 
 export const StockEvolution: React.FC<StockEvolutionProps> = ({
   draftLine,
@@ -40,28 +29,13 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
   const t = useTranslation('replenishment');
   const theme = useTheme();
   const d = useFormatDate();
-  const { maxMonthsOfStock, minMonthsOfStock } = useRequestFields([
-    'maxMonthsOfStock',
-    'minMonthsOfStock',
-  ]);
+  const data = draftLine?.chartData?.stockEvolution.nodes ?? [];
 
-  const data =
-    draftLine?.chartData?.stockEvolution.nodes
-      .map(node => ({
-        date: new Date(node.date),
-        value: node.historicStockOnHand ?? node.projectedStockOnHand ?? 0,
-        isHistoric: node.historicStockOnHand !== null,
-        max: draftLine.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
-        min: draftLine.itemStats.averageMonthlyConsumption * minMonthsOfStock,
-      }))
-      .sort(dateSorter) ?? [];
-  const dateFormatter = (date: Date) =>
-    d(date, {
-      val: { month: 'short', day: '2-digit' },
-    });
+  const dateFormatter = (date: string) =>
+    d(new Date(date), { month: 'short', day: '2-digit' });
   const tooltipFormatter = (value: number, name: string) => {
     switch (name) {
-      case 'value':
+      case 'stockOnHand':
         return [value, t('label.stock-level')];
       case 'min':
         return [value, t('label.min')];
@@ -72,7 +46,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
     }
   };
 
-  const tooltipLabelFormatter = (date: Date) => d(date);
+  const tooltipLabelFormatter = (date: string) => d(new Date(date));
 
   return (
     <Box>
@@ -131,10 +105,10 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
                 },
               ]}
             />
-            <Bar dataKey="value">
+            <Bar dataKey="stockOnHand">
               {data.map(entry => (
                 <Cell
-                  key={entry.date.toISOString()}
+                  key={entry.date}
                   fill={
                     entry.isHistoric
                       ? theme.palette.gray.main
