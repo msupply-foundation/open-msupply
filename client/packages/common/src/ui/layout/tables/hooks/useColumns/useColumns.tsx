@@ -13,26 +13,26 @@ import { DateUtils } from '@common/utils';
 import { SortBy } from '@common/hooks';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
 
-const getColumnWidths = <T extends RecordWithId>(
-  column: ColumnDefinition<T>
-) => {
-  const getDefaultWidth = () => {
-    switch (column.format) {
-      case ColumnFormat.Integer:
-        return 60;
-      default: {
-        return 100;
-      }
-    }
-  };
+// const getColumnWidths = <T extends RecordWithId>(
+//   column: ColumnDefinition<T>
+// ) => {
+//   const getDefaultWidth = () => {
+//     switch (column.format) {
+//       case ColumnFormat.Integer:
+//         return 60;
+//       default: {
+//         return 100;
+//       }
+//     }
+//   };
 
-  const defaultWidth = getDefaultWidth();
+//   const defaultWidth = getDefaultWidth();
 
-  const minWidth = column.minWidth || column.width || defaultWidth;
-  const width = column.width || defaultWidth;
+//   const minWidth = column.minWidth || column.width || defaultWidth;
+//   const width = column.width || defaultWidth;
 
-  return { minWidth, width, maxWidth: column.maxWidth };
-};
+//   return { minWidth, width, maxWidth: column.maxWidth };
+// };
 
 const getSortType = (column: { format?: ColumnFormat }) => {
   switch (column.format) {
@@ -164,7 +164,7 @@ export const createColumnWithDefaults = <T extends RecordWithId>(
     formatter: getDefaultFormatter<T>(column),
     setter: getDefaultColumnSetter<T>(column),
 
-    ...getColumnWidths(column),
+    // ...getColumnWidths(column),
   };
 
   return { ...defaults, ...column };

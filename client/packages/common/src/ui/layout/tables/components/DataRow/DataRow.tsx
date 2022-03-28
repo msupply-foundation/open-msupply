@@ -41,9 +41,8 @@ export const DataRow = <T extends RecordWithId>({
   const { rowStyle } = useRowStyle(rowData.id);
 
   const onRowClick = () => onClick && onClick(rowData);
-  const minWidth = columns.reduce((sum, { minWidth }) => sum + minWidth, 0);
   const paddingX = dense ? '12px' : '16px';
-  const paddingY = dense ? '4px' : undefined;
+  const paddingY = dense ? '4px' : 0;
 
   useEffect(() => {
     if (isFocused) onRowClick();
@@ -59,15 +58,15 @@ export const DataRow = <T extends RecordWithId>({
             },
             color: isDisabled ? 'gray.main' : 'black',
             backgroundColor: isFocused ? 'background.menu' : null,
-            minWidth,
+            // minWidth,
             alignItems: 'center',
             height: '40px',
             maxHeight: '45px',
             boxShadow: dense
               ? 'none'
               : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
-            display: 'flex',
-            flex: '1 0 auto',
+            // display: 'flex',
+            // flex: '1 0 auto',
             ...rowStyle,
           }}
           onClick={onRowClick}
@@ -80,7 +79,7 @@ export const DataRow = <T extends RecordWithId>({
                 align={column.align}
                 sx={{
                   borderBottom: 'none',
-                  justifyContent: 'flex-end',
+                  // justifyContent: 'flex-end',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',
                   paddingLeft: paddingX,
@@ -88,7 +87,7 @@ export const DataRow = <T extends RecordWithId>({
                   paddingTop: paddingY,
                   paddingBottom: paddingY,
                   ...(hasOnClick && { cursor: 'pointer' }),
-                  flex: `${column.width} 0 auto`,
+                  // flex: `${column.width} 0 auto`,
                   minWidth: column.minWidth,
                   maxWidth: column.maxWidth,
                   width: column.width,
@@ -113,8 +112,8 @@ export const DataRow = <T extends RecordWithId>({
           })}
         </TableRow>
       </Fade>
-      <tr style={{ display: 'flex' }}>
-        <td style={{ display: 'flex', flex: 1 }}>
+      <tr>
+        <td colSpan={columns.length}>
           <Collapse
             sx={{
               flex: 1,

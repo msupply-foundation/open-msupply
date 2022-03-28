@@ -74,8 +74,8 @@ export interface Column<T extends RecordWithId> {
   onChangeSortBy?: (column: Column<T>) => void;
   sortBy?: SortBy<T>;
 
-  width: number;
-  minWidth: number;
+  width?: number;
+  minWidth?: number;
   maxWidth?: number;
   maxLength?: number;
   backgroundColor?: string;
