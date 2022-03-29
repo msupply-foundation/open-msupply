@@ -1,5 +1,8 @@
-use chrono::{NaiveDate, NaiveDateTime};
-use repository::{schema::RequisitionLineRow, RepositoryError, RequisitionLine, StorageConnection};
+use chrono::NaiveDate;
+use repository::{
+    schema::{RequisitionLineRow, RequisitionRowType},
+    RepositoryError, RequisitionLine, StorageConnection,
+};
 mod historic_consumption;
 pub use historic_consumption::*;
 
@@ -14,18 +17,28 @@ use super::common::check_requisition_line_exists;
 pub enum RequisitionLineChartError {
     RequisitionLineDoesNotExist,
     RequisitionLineDoesNotBelongToCurrentStore,
-    RequisitionLineIsLegacyRecord,
+    NotARequestRequisition,
     // TODO not a reqest requisition
     // Internal
     DatabaseError(RepositoryError),
 }
 type OutError = RequisitionLineChartError;
 
-#[derive(Debug, PartialEq)]
-pub struct RequisitionLineChart {
-    pub consumption_history: Vec<ConsumptionHistory>,
-    pub stock_evolution: Vec<StockEvolution>,
-    pub reference_date: NaiveDate,
+#[derive(Debug, PartialEq, Default)]
+pub struct SuggestedQuantityCalculation {
+    pub average_monthly_consumption: f64,
+    pub stock_on_hand: u32,
+    pub minimum_stock_on_hand: f64,
+    pub maximum_stock_on_hand: f64,
+    pub suggested: u32,
+}
+
+#[derive(Debug, PartialEq, Default)]
+pub struct ItemChart {
+    pub consumption_history: Option<Vec<ConsumptionHistory>>,
+    pub stock_evolution: Option<Vec<StockEvolution>>,
+    pub reference_date: Option<NaiveDate>,
+    pub suggested_quantity_calculation: SuggestedQuantityCalculation,
 }
 
 pub fn get_requisition_line_chart(
@@ -34,13 +47,29 @@ pub fn get_requisition_line_chart(
     requisition_line_id: &str,
     consumption_history_options: ConsumptionHistoryOptions,
     stock_evolution_options: StockEvolutionOptions,
-) -> Result<RequisitionLineChart, OutError> {
+) -> Result<ItemChart, OutError> {
     // Validate
-    let ValidateResult {
-        requisition_line,
-        requisition_line_datetime,
-        expected_delivery_date,
-    } = validate(&ctx.connection, store_id, requisition_line_id)?;
+    let requisition_line = validate(&ctx.connection, store_id, requisition_line_id)?;
+
+    let suggested_quantity_calculation =
+        SuggestedQuantityCalculation::from_requisition_line(&requisition_line);
+
+    let (expected_delivery_date, requisition_line_datetime) = match (
+        &requisition_line.requisition_row.expected_delivery_date,
+        &requisition_line.requisition_line_row.snapshot_datetime,
+    ) {
+        (Some(expected_delivery_date), Some(requisition_line_datetime)) => {
+            (expected_delivery_date, requisition_line_datetime)
+        }
+        _ => {
+            return Ok(ItemChart {
+                consumption_history: None,
+                stock_evolution: None,
+                reference_date: None,
+                suggested_quantity_calculation,
+            })
+        }
+    };
 
     let RequisitionLineRow {
         item_id,
@@ -71,9 +100,9 @@ pub fn get_requisition_line_chart(
         &ctx.connection,
         store_id,
         &item_id,
-        requisition_line_datetime,
+        *requisition_line_datetime,
         available_stock_on_hand as u32,
-        expected_delivery_date,
+        *expected_delivery_date,
         suggested_quantity as u32,
         average_monthly_consumption as f64,
         stock_evolution_options,
@@ -81,24 +110,19 @@ pub fn get_requisition_line_chart(
 
     historic_stock.append(&mut projected_stock);
 
-    Ok(RequisitionLineChart {
-        consumption_history,
-        stock_evolution: historic_stock,
-        reference_date: requisition_line_datetime.date(),
+    Ok(ItemChart {
+        consumption_history: Some(consumption_history),
+        stock_evolution: Some(historic_stock),
+        reference_date: Some(requisition_line_datetime.date()),
+        suggested_quantity_calculation,
     })
-}
-
-struct ValidateResult {
-    requisition_line: RequisitionLine,
-    requisition_line_datetime: NaiveDateTime,
-    expected_delivery_date: NaiveDate,
 }
 
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
     requisition_line_id: &str,
-) -> Result<ValidateResult, OutError> {
+) -> Result<RequisitionLine, OutError> {
     let requisition_line = check_requisition_line_exists(connection, requisition_line_id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?;
 
@@ -106,28 +130,31 @@ fn validate(
         return Err(OutError::RequisitionLineDoesNotBelongToCurrentStore);
     }
 
-    let requisition_line_datetime = requisition_line
-        .requisition_line_row
-        .snapshot_datetime
-        .clone()
-        .ok_or(OutError::RequisitionLineIsLegacyRecord)?;
+    if requisition_line.requisition_row.r#type != RequisitionRowType::Request {
+        return Err(OutError::NotARequestRequisition);
+    }
 
-    let expected_delivery_date = requisition_line
-        .requisition_row
-        .expected_delivery_date
-        .clone()
-        .ok_or(OutError::RequisitionLineIsLegacyRecord)?;
-
-    Ok(ValidateResult {
-        requisition_line,
-        requisition_line_datetime,
-        expected_delivery_date,
-    })
+    Ok(requisition_line)
 }
 
 impl From<RepositoryError> for OutError {
     fn from(error: RepositoryError) -> Self {
         OutError::DatabaseError(error)
+    }
+}
+
+impl SuggestedQuantityCalculation {
+    pub fn from_requisition_line(from: &RequisitionLine) -> Self {
+        SuggestedQuantityCalculation {
+            average_monthly_consumption: from.requisition_line_row.average_monthly_consumption
+                as f64,
+            stock_on_hand: from.requisition_line_row.available_stock_on_hand as u32,
+            minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
+                * from.requisition_row.min_months_of_stock,
+            maximum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
+                * from.requisition_row.max_months_of_stock as f64,
+            suggested: from.requisition_line_row.suggested_quantity as u32,
+        }
     }
 }
 
@@ -137,8 +164,8 @@ mod test {
     use crate::service_provider::ServiceProvider;
     use repository::{
         mock::{
-            mock_item_a, mock_name_a, mock_request_draft_requisition_calculation_test, MockData,
-            MockDataInserts,
+            mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
+            mock_request_draft_requisition_calculation_test, MockData, MockDataInserts,
         },
         schema::{
             InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow,
@@ -187,7 +214,9 @@ mod test {
             Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
         );
 
-        // RequisitionLineIsLegacyRecord
+        let test_line = mock_draft_response_requisition_for_update_test_line();
+
+        // NotARequestRequisition
         assert_eq!(
             service.get_requisition_line_chart(
                 &context,
@@ -196,7 +225,7 @@ mod test {
                 ConsumptionHistoryOptions::default(),
                 StockEvolutionOptions::default(),
             ),
-            Err(ServiceError::RequisitionLineIsLegacyRecord)
+            Err(ServiceError::NotARequestRequisition)
         );
     }
 
@@ -352,7 +381,7 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            result.consumption_history,
+            result.consumption_history.unwrap(),
             vec![
                 ConsumptionHistory {
                     // 2020-11-01 to 2020-11-30
@@ -539,36 +568,36 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            result.stock_evolution,
+            result.stock_evolution.unwrap(),
             vec![
                 // Historic
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2020, 12, 31),
+                    date: NaiveDate::from_ymd(2020, 12, 31),
                     quantity: 29.0 // (40) - 15 - 7 + 11 = (29)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 1),
+                    date: NaiveDate::from_ymd(2021, 1, 1),
                     quantity: 40.0 // 30 - 10 + 20 = (40)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 2),
+                    date: NaiveDate::from_ymd(2021, 1, 2),
                     quantity: 30.0 // initial
                 },
                 // Projected
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 3),
+                    date: NaiveDate::from_ymd(2021, 1, 3),
                     quantity: 5.0 // 30 - 25 - 5
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 4),
+                    date: NaiveDate::from_ymd(2021, 1, 4),
                     quantity: 0.0 // (5) - 25 = -something, but we set to (0)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 5),
+                    date: NaiveDate::from_ymd(2021, 1, 5),
                     quantity: 75.0 // (0) - 25 + 50 = (75), adding suggested
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 6),
+                    date: NaiveDate::from_ymd(2021, 1, 6),
                     quantity: 50.0 // (75) - 25 = 50.0
                 },
             ]
