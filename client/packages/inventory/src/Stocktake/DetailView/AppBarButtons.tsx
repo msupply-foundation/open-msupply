@@ -45,7 +45,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onClick={() => onAddItem(true)}
         />
         <ReportSelector
-          category={ReportCategory.Requisition}
+          category={ReportCategory.Stocktake}
           onClick={printReport}
         >
           <LoadingButton

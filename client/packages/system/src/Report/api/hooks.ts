@@ -5,6 +5,7 @@ import {
   useAuthContext,
   ReportCategory,
   useMutation,
+  useNotification,
 } from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
 import { getReportQueries, ReportListParams } from './api';
@@ -29,7 +30,7 @@ const useReportApi = () => {
 export const useReports = (category?: ReportCategory) => {
   const api = useReportApi();
   const initialFilterBy = category
-    ? { category: { equalTo: ReportCategory.InboundShipment } }
+    ? { category: { equalTo: category } }
     : undefined;
   const initialListParameters = {
     initialSortBy: { key: 'name' },
@@ -51,9 +52,10 @@ type PrintReportParams = {
 
 export const usePrintReport = () => {
   const api = useReportApi();
+  const { error } = useNotification();
   const { mutate, isLoading } = useMutation<
     string,
-    unknown,
+    Error,
     PrintReportParams,
     unknown
   >(params => api.get.print(params), {
@@ -65,6 +67,9 @@ export const usePrintReport = () => {
         win.focus();
         // win.print(); // crashes chrome if the file is a PDF :shrug:
       }
+    },
+    onError: e => {
+      error(e.message)();
     },
   });
 
