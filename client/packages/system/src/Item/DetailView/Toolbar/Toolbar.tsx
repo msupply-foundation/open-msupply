@@ -1,14 +1,11 @@
 import React, { FC } from 'react';
 import {
   AppBarContentPortal,
-  InputWithLabelRow,
-  BufferedTextInput,
   Grid,
   useTranslation,
   Tab,
   TabList,
 } from '@openmsupply-client/common';
-import { useItemFields } from '../../api';
 import { Statistics } from './Statistics';
 
 interface ToolbarProps {
@@ -19,36 +16,10 @@ interface ToolbarProps {
 export const Toolbar: FC<ToolbarProps> = ({ currentTab, onChangeTab }) => {
   const t = useTranslation('catalogue');
 
-  const { code, name } = useItemFields();
-
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid container flexDirection="column">
         <Grid item display="flex" flex={1} gap={1}>
-          <Grid item flex={0} flexDirection="column">
-            <InputWithLabelRow
-              label={t('label.name')}
-              Input={
-                <BufferedTextInput
-                  disabled={true}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={name}
-                />
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.code')}
-              Input={
-                <BufferedTextInput
-                  disabled={true}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={code}
-                />
-              }
-            />
-          </Grid>
           <Statistics />
         </Grid>
         <Grid item display="flex" flex={1} flexDirection="column" gap={1}>

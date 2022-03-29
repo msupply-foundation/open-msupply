@@ -16,7 +16,6 @@ export const Statistics = () => {
       gap={1}
       justifyContent="center"
       display="flex"
-      flexWrap="wrap"
     >
       <StatsPanel
         isLoading={false}
