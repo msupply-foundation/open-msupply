@@ -23,7 +23,7 @@ export type PrintReportQueryVariables = Types.Exact<{
 }>;
 
 
-export type PrintReportQuery = { __typename: 'FullQuery', printReport: { __typename: 'PrintReportError', error: { __typename: 'FailedToFetchReportData', description: string } | { __typename: 'InvalidReport', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'PrintReportNode', fileId: string } };
+export type PrintReportQuery = { __typename: 'FullQuery', printReport: { __typename: 'PrintReportError', error: { __typename: 'FailedToFetchReportData', description: string, errors: any } } | { __typename: 'PrintReportNode', fileId: string } };
 
 export const ReportRowFragmentDoc = gql`
     fragment ReportRow on ReportNode {
@@ -55,19 +55,12 @@ export const PrintReportDocument = gql`
     ... on PrintReportError {
       __typename
       error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
         ... on FailedToFetchReportData {
           __typename
           description
+          errors
         }
-        ... on InvalidReport {
-          __typename
-          description
-        }
+        description
       }
     }
   }

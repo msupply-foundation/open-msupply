@@ -29,7 +29,7 @@ const useReportApi = () => {
 export const useReports = (category?: ReportCategory) => {
   const api = useReportApi();
   const initialFilterBy = category
-    ? { category: { equalTo: ReportCategory.InboundShipment } }
+    ? { category: { equalTo: category } }
     : undefined;
   const initialListParameters = {
     initialSortBy: { key: 'name' },
@@ -60,6 +60,7 @@ export const usePrintReport = () => {
     onSuccess: fileId => {
       if (!fileId) throw new Error('Error printing report');
       const url = `${Environment.FILE_URL}${fileId}`;
+      console.log('** DOWNLOADED', url);
       const win = window.open(url, '_blank');
       if (win) {
         win.focus();
