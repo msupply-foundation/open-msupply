@@ -1,5 +1,6 @@
 {
   "app.admin": "Admin",
+  "app.login": "Login",
   "app.catalogue": "Catalogue",
   "app.customer-requisition": "Requisitions",
   "app.customers": "Customers",

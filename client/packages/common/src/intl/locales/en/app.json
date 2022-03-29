@@ -1,4 +1,5 @@
 {
+  "app": "mSupply",
   "admin": "Admin",
   "auth.logged-out-message": "You have been logged out of your session due to inactivity. Click OK to return to the login screen.",
   "auth.alert-title": "Session Timed Out",
