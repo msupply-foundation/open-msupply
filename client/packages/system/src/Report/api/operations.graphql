@@ -34,19 +34,12 @@ query printReport($storeId: String!, $dataId: String!, $reportId: String!) {
     ... on PrintReportError {
       __typename
       error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
         ... on FailedToFetchReportData {
           __typename
           description
+          errors
         }
-        ... on InvalidReport {
-          __typename
-          description
-        }
+        description
       }
     }
   }

@@ -16,6 +16,8 @@ export type Scalars = {
    * The input/output is a string in RFC3339 format.
    */
   DateTime: string;
+  /** A scalar that can represent any JSON value. */
+  JSON: any;
   /**
    * ISO 8601 calendar date without timezone.
    * Format: %Y-%m-%d
@@ -595,6 +597,7 @@ export type EqualFilterStringInput = {
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String'];
+  errors: Scalars['JSON'];
 };
 
 export enum ForeignKey {
@@ -1472,11 +1475,6 @@ export type InvalidCredentials = AuthTokenErrorInterface & {
   description: Scalars['String'];
 };
 
-export type InvalidReport = PrintReportErrorInterface & {
-  __typename: 'InvalidReport';
-  description: Scalars['String'];
-};
-
 export type InvalidToken = RefreshTokenErrorInterface & {
   __typename: 'InvalidToken';
   description: Scalars['String'];
@@ -1710,14 +1708,27 @@ export type ItemFilterInput = {
 
 export type ItemNode = {
   __typename: 'ItemNode';
+  atcCategory: Scalars['String'];
   availableBatches: StockLineConnector;
   code: Scalars['String'];
+  ddd: Scalars['Float'];
+  defaultPackSize: Scalars['Int'];
+  doses: Scalars['Int'];
   id: Scalars['String'];
+  isVaccine: Scalars['Boolean'];
   isVisible: Scalars['Boolean'];
+  margin: Scalars['Float'];
+  msupplyUniversalCode: Scalars['String'];
+  msupplyUniversalName: Scalars['String'];
   name: Scalars['String'];
+  outerPackSize: Scalars['Int'];
   stats: ItemStatsNode;
+  strength: Scalars['String'];
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']>;
+  volumePerOuterPack: Scalars['Int'];
+  volumePerPack: Scalars['Float'];
+  weight: Scalars['Float'];
 };
 
 
@@ -1926,14 +1937,25 @@ export type NameFilterInput = {
 
 export type NameNode = {
   __typename: 'NameNode';
+  address: Scalars['String'];
+  chargeCode: Scalars['String'];
   code: Scalars['String'];
+  comment: Scalars['String'];
+  country: Scalars['String'];
+  createdDate?: Maybe<Scalars['NaiveDate']>;
+  email: Scalars['String'];
   id: Scalars['String'];
   isCustomer: Scalars['Boolean'];
+  isDonor: Scalars['Boolean'];
+  isManufacturer: Scalars['Boolean'];
+  isOnHold: Scalars['Boolean'];
   isSupplier: Scalars['Boolean'];
   isSystemName: Scalars['Boolean'];
   isVisible: Scalars['Boolean'];
   name: Scalars['String'];
+  phone: Scalars['String'];
   store?: Maybe<StoreNode>;
+  website: Scalars['String'];
 };
 
 export enum NameSortFieldInput {
@@ -2070,7 +2092,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & PrintReportErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -2100,9 +2122,9 @@ export type RegisteredUser = {
 };
 
 export enum ReportCategory {
-  InboundShipment = 'INBOUND_SHIPMENT',
-  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Invoice = 'INVOICE',
   Requisition = 'REQUISITION',
+  Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
 }
 
@@ -2127,7 +2149,7 @@ export type ReportNode = {
 };
 
 export enum ReportSortFieldInput {
-  Category = 'category',
+  Id = 'id',
   Name = 'name'
 }
 
