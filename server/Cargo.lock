@@ -354,6 +354,7 @@ dependencies = [
  "once_cell",
  "repository",
  "server",
+ "service",
  "tokio",
 ]
 

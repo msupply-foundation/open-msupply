@@ -17,6 +17,7 @@ use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 
 use loader::LoaderRegistry;
+use service::sync_settings::SyncSettings;
 
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
 pub trait ContextExt {
@@ -25,6 +26,7 @@ pub trait ContextExt {
     fn service_provider(&self) -> &ServiceProvider;
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
+    fn get_sync_settings(&self) -> &SyncSettings;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -47,6 +49,10 @@ impl<'a> ContextExt for Context<'a> {
     fn get_auth_token(&self) -> Option<String> {
         self.data_opt::<RequestUserData>()
             .and_then(|d| d.auth_token.to_owned())
+    }
+
+    fn get_sync_settings(&self) -> &SyncSettings {
+        self.data_unchecked::<Data<SyncSettings>>()
     }
 }
 

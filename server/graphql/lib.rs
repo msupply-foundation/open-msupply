@@ -6,7 +6,9 @@ use std::sync::Arc;
 use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
-use async_graphql::extensions::{Logger, ExtensionFactory, Extension, ExtensionContext, NextExecute};
+use async_graphql::extensions::{
+    Extension, ExtensionContext, ExtensionFactory, Logger, NextExecute,
+};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::MergedObject;
 use async_graphql::{EmptySubscription, SchemaBuilder};
@@ -28,6 +30,7 @@ use log::info;
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
+use service::sync_settings::SyncSettings;
 
 #[derive(MergedObject, Default, Clone)]
 pub struct FullQuery(
@@ -113,6 +116,7 @@ pub fn config(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
+    sync_settings_data: Data<SyncSettings>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         let schema = build_schema()
@@ -120,6 +124,7 @@ pub fn config(
             .data(loader_registry)
             .data(service_provider)
             .data(auth_data)
+            .data(sync_settings_data)
             .extension(Logger)
             .extension(ResponseLogger)
             .finish();
