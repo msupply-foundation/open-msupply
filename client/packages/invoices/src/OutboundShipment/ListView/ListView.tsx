@@ -52,9 +52,9 @@ export const OutboundShipmentListViewComponent: FC = () => {
             getStatusTranslator(t)(status as InvoiceNodeStatus),
         },
       ],
-      'invoiceNumber',
+      ['invoiceNumber', { maxWidth: 80 }],
       'createdDatetime',
-      'comment',
+      ['comment', { maxWidth: 300 }],
       [
         'totalAfterTax',
         {
