@@ -1,6 +1,9 @@
 use repository::{
-    schema::UserAccountRow, RepositoryError, StorageConnection, TransactionError,
-    UserAccountRowRepository,
+    schema::{
+        user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow, UserAccountRow,
+    },
+    RepositoryError, StorageConnection, TransactionError, UserAccountRowRepository,
+    UserPermissionRowRepository, UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -37,6 +40,11 @@ pub enum VerifyPasswordError {
     DatabaseError(RepositoryError),
 }
 
+pub struct StorePermissions {
+    pub user_store_join: UserStoreJoinRow,
+    pub permissions: Vec<UserPermissionRow>,
+}
+
 pub struct UserAccountService<'a> {
     connection: &'a StorageConnection,
 }
@@ -44,6 +52,48 @@ pub struct UserAccountService<'a> {
 impl<'a> UserAccountService<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         UserAccountService { connection }
+    }
+
+    /// Deletes existing user and replaces the user with the provided data
+    pub fn upsert_user(
+        &self,
+        user: UserAccountRow,
+        stores_permissions: Vec<StorePermissions>,
+    ) -> Result<(), RepositoryError> {
+        let result = self
+            .connection
+            .transaction_sync(|con| {
+                let user_repo = UserAccountRowRepository::new(con);
+                let user_store_repo = UserStoreJoinRowRepository::new(con);
+                let permission_repo = UserPermissionRowRepository::new(con);
+
+                // remove existing user (if exists)
+                permission_repo.delete_by_user_id(&user.id)?;
+                user_store_repo.delete_by_user_id(&user.id)?;
+                user_repo.delete_by_id(&user.id)?;
+                // insert user
+                user_repo.insert_one(&user)?;
+                for store in stores_permissions {
+                    user_store_repo.upsert_one(&store.user_store_join)?;
+                    for permission in store.permissions {
+                        permission_repo.upsert_one(&permission)?;
+                    }
+                }
+
+                Ok(())
+            })
+            .map_err(|error| RepositoryError::from(error))?;
+        Ok(result)
+    }
+
+    pub fn hash_password(password: &str) -> Result<String, CreateUserAccountError> {
+        match hash(password, DEFAULT_COST) {
+            Ok(pwd) => Ok(pwd),
+            Err(err) => {
+                error!("create_user: Failed to hash password");
+                return Err(CreateUserAccountError::PasswordHashError(err));
+            }
+        }
     }
 
     pub fn create_user(
@@ -59,13 +109,7 @@ impl<'a> UserAccountService<'a> {
                 {
                     return Err(CreateUserAccountError::UserNameExist);
                 }
-                let hashed_password = match hash(user.password, DEFAULT_COST) {
-                    Ok(pwd) => pwd,
-                    Err(err) => {
-                        error!("create_user: Failed to hash password");
-                        return Err(CreateUserAccountError::PasswordHashError(err));
-                    }
-                };
+                let hashed_password = UserAccountService::hash_password(&user.password)?;
                 let row = UserAccountRow {
                     id: uuid(),
                     username: user.username,
@@ -119,7 +163,16 @@ impl<'a> UserAccountService<'a> {
 
 #[cfg(test)]
 mod user_account_test {
-    use repository::{get_storage_connection_manager, test_db};
+    use repository::{
+        get_storage_connection_manager,
+        mock::{mock_user_account_a, mock_user_account_b, MockDataInserts},
+        schema::user_permission::{Permission, Resource},
+        test_db::{self, setup_all},
+        EqualFilter, UserFilter, UserPermissionFilter, UserPermissionRepository, UserRepository,
+    };
+    use util::inline_edit;
+
+    use crate::service_provider::ServiceProvider;
 
     use super::*;
 
@@ -157,5 +210,92 @@ mod user_account_test {
             "{:?}",
             err
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_user_upsert() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_user_upsert",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_accounts()
+                .user_store_joins()
+                .user_permissions(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+
+        let user_repo = UserRepository::new(&context.connection);
+        let user_permission_repo = UserPermissionRepository::new(&context.connection);
+
+        // some base line test that there is actually some data in the DB
+        let user = user_repo
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_account_a().id)))
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert!(user.stores.len() > 1);
+        let permissions = user_permission_repo
+            .query_by_filter(
+                UserPermissionFilter::new()
+                    .user_id(EqualFilter::equal_to(&mock_user_account_a().id)),
+            )
+            .unwrap();
+        assert!(permissions.len() > 1);
+
+        // actual test
+        let user_service = UserAccountService::new(&context.connection);
+        user_service
+            .upsert_user(
+                inline_edit(&mock_user_account_a(), |mut u| {
+                    u.hashed_password = "changedpassword".to_string();
+                    u
+                }),
+                vec![StorePermissions {
+                    user_store_join: UserStoreJoinRow {
+                        id: "new_user_store_join".to_string(),
+                        user_id: mock_user_account_a().id,
+                        store_id: "store_b".to_string(),
+                        is_default: true,
+                    },
+                    permissions: vec![UserPermissionRow {
+                        id: "new_permission".to_string(),
+                        user_id: mock_user_account_a().id,
+                        store_id: Some("store_b".to_string()),
+                        resource: Resource::InboundShipment,
+                        permission: Permission::Mutate,
+                    }],
+                }],
+            )
+            .unwrap();
+        let user = user_repo
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_account_a().id)))
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert!(user.stores.len() == 1);
+        let permissions = user_permission_repo
+            .query_by_filter(
+                UserPermissionFilter::new()
+                    .user_id(EqualFilter::equal_to(&mock_user_account_a().id)),
+            )
+            .unwrap();
+        assert!(permissions.len() == 1);
+        // test that other user is still there
+        let user = user_repo
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_account_b().id)))
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert!(user.stores.len() > 0);
+        let permissions = user_permission_repo
+            .query_by_filter(
+                UserPermissionFilter::new()
+                    .user_id(EqualFilter::equal_to(&mock_user_account_b().id)),
+            )
+            .unwrap();
+        assert!(permissions.len() > 0);
     }
 }

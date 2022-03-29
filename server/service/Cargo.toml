@@ -22,6 +22,7 @@ serde_json = "1.0.66"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
+httpmock= "0.6.6"
 
 [features]
 default = ["sqlite"]
