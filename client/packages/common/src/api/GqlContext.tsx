@@ -51,6 +51,11 @@ class GQLClient extends GraphQLClient {
             )
           ) {
             LocalStorage.setItem('/auth/error', AuthError.Unauthenticated);
+          } else {
+            const error = response.errors[0];
+            const { extensions } = error;
+            const { details } = extensions || {};
+            throw new Error(details || error.message);
           }
         }
         return this.emptyData;
