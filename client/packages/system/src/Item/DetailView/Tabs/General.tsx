@@ -27,6 +27,14 @@ export const GeneralTab = () => {
       >
         <DetailSection title={t('title.details')}>
           <DetailInputWithLabelRow
+            label={t('label.name')}
+            inputProps={{ value: data?.name, disabled: isDisabled }}
+          />
+          <DetailInputWithLabelRow
+            label={t('label.code')}
+            inputProps={{ value: data?.code, disabled: isDisabled }}
+          />
+          <DetailInputWithLabelRow
             label={t('label.unit')}
             inputProps={{ value: data?.unitName, disabled: isDisabled }}
           />

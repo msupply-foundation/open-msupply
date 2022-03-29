@@ -9,6 +9,7 @@ import {
   TabContext,
   TabPanel,
   useTabs,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { useItem } from '../api';
 import { Toolbar } from './Toolbar';
@@ -21,6 +22,11 @@ export const ItemDetailView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { currentTab, onChangeTab } = useTabs('general');
+  const { setSuffix } = useBreadcrumbs();
+
+  React.useEffect(() => {
+    setSuffix(data?.name ?? '');
+  }, [data]);
 
   if (isLoading) return <DetailFormSkeleton />;
 
