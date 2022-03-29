@@ -43,7 +43,7 @@ pub struct UserStorePermissions {
 #[derive(Clone, Default)]
 pub struct UserFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
+    pub username: Option<SimpleStringFilter>,
     pub store_id: Option<EqualFilter<String>>,
 }
 
@@ -56,13 +56,13 @@ pub type UserSort = Sort<UserSortField>;
 
 type UserStoreJoin = (UserStoreJoinRow, UserAccountRow, StoreRow);
 
-pub struct UserQueryRepository<'a> {
+pub struct UserRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> UserQueryRepository<'a> {
+impl<'a> UserRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        UserQueryRepository { connection }
+        UserRepository { connection }
     }
 
     pub fn count(&self, filter: Option<UserFilter>) -> Result<i64, RepositoryError> {
@@ -149,10 +149,14 @@ fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserStoreQuery {
         .into_boxed();
 
     if let Some(f) = filter {
-        let UserFilter { id, name, store_id } = f;
+        let UserFilter {
+            id,
+            username,
+            store_id,
+        } = f;
 
         apply_equal_filter!(query, id, user_dsl::id);
-        apply_simple_string_filter!(query, name, user_dsl::username);
+        apply_simple_string_filter!(query, username, user_dsl::username);
         apply_equal_filter!(query, store_id, user_store_join_dsl::store_id);
     }
 
@@ -170,7 +174,7 @@ impl UserFilter {
     }
 
     pub fn name(mut self, filter: SimpleStringFilter) -> Self {
-        self.name = Some(filter);
+        self.username = Some(filter);
         self
     }
 

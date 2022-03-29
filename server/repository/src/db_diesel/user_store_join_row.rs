@@ -43,9 +43,9 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(result)
     }
 
-    pub async fn remove_all(&self, user_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete_by_user_id(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
-            user_store_join_dsl::user_store_join.filter(user_store_join_dsl::user_id.eq(user_id)),
+            user_store_join_dsl::user_store_join.filter(user_store_join_dsl::user_id.eq(id)),
         )
         .execute(&self.connection.connection)?;
         Ok(())

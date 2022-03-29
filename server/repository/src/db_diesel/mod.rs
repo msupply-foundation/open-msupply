@@ -76,6 +76,7 @@ pub use storage_connection::*;
 pub use store::*;
 pub use store_row::StoreRowRepository;
 pub use unit_row::UnitRowRepository;
+pub use user::*;
 pub use user_permission::*;
 pub use user_permission_row::*;
 pub use user_row::*;
