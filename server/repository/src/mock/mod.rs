@@ -69,9 +69,11 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
+    schema::{user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow},
     InvoiceLineRowRepository, LocationRowRepository, NumberRowRepository,
     RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRowRepository,
+    UserPermissionRowRepository, UserStoreJoinRowRepository,
 };
 
 use self::unit::mock_units;
@@ -87,6 +89,8 @@ use super::{
 #[derive(Default)]
 pub struct MockData {
     pub user_accounts: Vec<UserAccountRow>,
+    pub user_store_joins: Vec<UserStoreJoinRow>,
+    pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
@@ -109,6 +113,8 @@ pub struct MockData {
 #[derive(Default)]
 pub struct MockDataInserts {
     pub user_accounts: bool,
+    pub user_store_joins: bool,
+    pub user_permissions: bool,
     pub names: bool,
     pub stores: bool,
     pub units: bool,
@@ -132,6 +138,8 @@ impl MockDataInserts {
     pub fn all() -> Self {
         MockDataInserts {
             user_accounts: true,
+            user_store_joins: true,
+            user_permissions: true,
             names: true,
             stores: true,
             units: true,
@@ -158,6 +166,16 @@ impl MockDataInserts {
 
     pub fn user_accounts(mut self) -> Self {
         self.user_accounts = true;
+        self
+    }
+
+    pub fn user_store_joins(mut self) -> Self {
+        self.user_store_joins = true;
+        self
+    }
+
+    pub fn user_permissions(mut self) -> Self {
+        self.user_permissions = true;
         self
     }
 
@@ -263,6 +281,8 @@ fn all_mock_data() -> MockDataCollection {
         "base",
         MockData {
             user_accounts: mock_user_accounts(),
+            user_store_joins: mock_user_store_joins(),
+            user_permissions: mock_user_permissions(),
             names: mock_names(),
             stores: mock_stores(),
             units: mock_units(),
@@ -339,13 +359,6 @@ pub async fn insert_mock_data(
     mock_data: MockDataCollection,
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
-        if inserts.user_accounts {
-            let repo = UserAccountRowRepository::new(connection);
-            for row in &mock_data.user_accounts {
-                repo.insert_one(&row).unwrap();
-            }
-        }
-
         if inserts.names {
             let repo = NameRepository::new(connection);
             for row in &mock_data.names {
@@ -357,6 +370,27 @@ pub async fn insert_mock_data(
             let repo = StoreRowRepository::new(connection);
             for row in &mock_data.stores {
                 repo.insert_one(&row).await.unwrap();
+            }
+        }
+
+        if inserts.user_accounts {
+            let repo = UserAccountRowRepository::new(connection);
+            for row in &mock_data.user_accounts {
+                repo.insert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.user_store_joins {
+            let repo = UserStoreJoinRowRepository::new(connection);
+            for row in &mock_data.user_store_joins {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.user_permissions {
+            let repo = UserPermissionRowRepository::new(connection);
+            for row in &mock_data.user_permissions {
+                repo.upsert_one(&row).unwrap();
             }
         }
 

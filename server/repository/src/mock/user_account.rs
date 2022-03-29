@@ -1,4 +1,10 @@
-use crate::schema::UserAccountRow;
+use crate::schema::{
+    user_permission::{Permission, Resource, UserPermissionRow},
+    user_store_join::UserStoreJoinRow,
+    UserAccountRow,
+};
+
+// users
 
 pub fn mock_user_account_a() -> UserAccountRow {
     UserAccountRow {
@@ -18,6 +24,83 @@ pub fn mock_user_account_b() -> UserAccountRow {
     }
 }
 
+pub fn mock_user_store_join_a_store_a() -> UserStoreJoinRow {
+    UserStoreJoinRow {
+        id: "user_store_join_a_store_a".to_string(),
+        user_id: "user_account_a".to_string(),
+        store_id: "store_a".to_string(),
+        is_default: true,
+    }
+}
+
+// user store joins
+
+pub fn mock_user_store_join_a_store_b() -> UserStoreJoinRow {
+    UserStoreJoinRow {
+        id: "user_store_join_a_store_b".to_string(),
+        user_id: "user_account_a".to_string(),
+        store_id: "store_b".to_string(),
+        is_default: false,
+    }
+}
+
+pub fn mock_user_store_join_b_store_a() -> UserStoreJoinRow {
+    UserStoreJoinRow {
+        id: "user_store_join_b_store_a".to_string(),
+        user_id: "user_account_b".to_string(),
+        store_id: "store_a".to_string(),
+        is_default: true,
+    }
+}
+
+// permissions
+
+pub fn mock_user_permission_a1() -> UserPermissionRow {
+    UserPermissionRow {
+        id: "user_permission_a1".to_string(),
+        user_id: "user_account_a".to_string(),
+        store_id: Some("store_a".to_string()),
+        resource: Resource::Stocktake,
+        permission: Permission::Mutate,
+    }
+}
+
+pub fn mock_user_permission_a2() -> UserPermissionRow {
+    UserPermissionRow {
+        id: "user_permission_a2".to_string(),
+        user_id: "user_account_a".to_string(),
+        store_id: Some("store_a".to_string()),
+        resource: Resource::Requisition,
+        permission: Permission::Query,
+    }
+}
+
+pub fn mock_user_permission_b1() -> UserPermissionRow {
+    UserPermissionRow {
+        id: "user_permission_b1".to_string(),
+        user_id: "user_account_b".to_string(),
+        store_id: Some("store_a".to_string()),
+        resource: Resource::OutboundShipment,
+        permission: Permission::Query,
+    }
+}
+
 pub fn mock_user_accounts() -> Vec<UserAccountRow> {
     vec![mock_user_account_a(), mock_user_account_b()]
+}
+
+pub fn mock_user_store_joins() -> Vec<UserStoreJoinRow> {
+    vec![
+        mock_user_store_join_a_store_a(),
+        mock_user_store_join_a_store_b(),
+        mock_user_store_join_b_store_a(),
+    ]
+}
+
+pub fn mock_user_permissions() -> Vec<UserPermissionRow> {
+    vec![
+        mock_user_permission_a1(),
+        mock_user_permission_a2(),
+        mock_user_permission_b1(),
+    ]
 }
