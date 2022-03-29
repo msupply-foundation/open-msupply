@@ -129,8 +129,7 @@ impl RequisitionLineNode {
     pub async fn item_stats(
         &self,
         ctx: &Context<'_>,
-        #[graphql(default_with = "util::constants::default_amc_look_back_months()")]
-        amc_look_back_months: u32,
+        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<u32>,
     ) -> Result<ItemStatsNode> {
         if self.requisition_row().r#type == RequisitionRowType::Request {
             return Ok(ItemStatsNode {
@@ -143,7 +142,7 @@ impl RequisitionLineNode {
             .load_one(ItemStatsLoaderInput::new(
                 &self.requisition_row().store_id,
                 &self.row().item_id,
-                amc_look_back_months,
+                amc_lookback_months,
             ))
             .await?
             .ok_or(

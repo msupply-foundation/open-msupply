@@ -12,7 +12,7 @@ type ServiceError = RequisitionLineChartError;
 #[derive(InputObject)]
 pub struct ConsumptionOptionsInput {
     /// Defaults to 3 months
-    amc_look_back_months: Option<u32>,
+    amc_lookback_months: Option<u32>,
     /// Defaults to 20
     number_of_data_points: Option<u32>,
 }
@@ -100,12 +100,12 @@ fn map_error(error: ServiceError) -> Result<ChartErrorInterface> {
 impl ConsumptionOptionsInput {
     fn to_domain(self) -> ConsumptionHistoryOptions {
         let ConsumptionOptionsInput {
-            amc_look_back_months,
+            amc_lookback_months,
             number_of_data_points,
         } = self;
         let default = ConsumptionHistoryOptions::default();
         ConsumptionHistoryOptions {
-            amc_look_back_months: amc_look_back_months.unwrap_or(default.amc_look_back_months),
+            amc_lookback_months: amc_lookback_months.unwrap_or(default.amc_lookback_months),
             number_of_data_points: number_of_data_points.unwrap_or(default.number_of_data_points),
         }
     }
@@ -296,7 +296,7 @@ mod graphql {
             assert_eq!(
                 consumption_history,
                 inline_init(|r: &mut ConsumptionHistoryOptions| {
-                    r.amc_look_back_months = 20;
+                    r.amc_lookback_months = 20;
                 })
             );
             Ok(ItemChart::default())
@@ -306,7 +306,7 @@ mod graphql {
             "requestRequisitionLineId": "n/a",
             "storeId": "n/a",
             "consumptionOptionsInput": {
-                "amcLookBackMonths": 20
+                "amcLookbackMonths": 20
             }
         });
 
@@ -338,7 +338,7 @@ mod graphql {
                 assert_eq!(
                     consumption_history,
                     ConsumptionHistoryOptions {
-                        amc_look_back_months: 11,
+                        amc_lookback_months: 11,
                         number_of_data_points: 12
                     }
                 );
@@ -357,7 +357,7 @@ mod graphql {
                 "numberOfProjectedDataPoints": 10
             },
             "consumptionOptionsInput": {
-                "amcLookBackMonths": 11,
+                "amcLookbackMonths": 11,
                 "numberOfDataPoints": 12
             }
         });

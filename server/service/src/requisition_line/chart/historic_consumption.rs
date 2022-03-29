@@ -6,20 +6,20 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 use util::{
-    constants::{default_amc_look_back_months, NUMBER_OF_DAYS_IN_A_MONTH},
+    constants::{default_amc_lookback_months, NUMBER_OF_DAYS_IN_A_MONTH},
     date_with_months_offset, first_day_of_the_month, last_day_of_the_month,
 };
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ConsumptionHistoryOptions {
-    pub amc_look_back_months: u32,
+    pub amc_lookback_months: u32,
     pub number_of_data_points: u32,
 }
 
 impl Default for ConsumptionHistoryOptions {
     fn default() -> Self {
         Self {
-            amc_look_back_months: default_amc_look_back_months(),
+            amc_lookback_months: default_amc_lookback_months(),
             number_of_data_points: 20,
         }
     }
@@ -79,14 +79,14 @@ struct ConsumptionHistoryPoints {
 fn generate_consumption_series(
     reference_date: NaiveDate,
     ConsumptionHistoryOptions {
-        amc_look_back_months,
+        amc_lookback_months,
         number_of_data_points,
     }: ConsumptionHistoryOptions,
 ) -> ConsumptionHistoryPoints {
     // reference_date is counted as the first month data point
     let data_point_offset = (number_of_data_points as i32 - 1).neg();
     // current month as a whole is counted in historic amc calculation
-    let amc_calculation_offset = (amc_look_back_months as i32 - 1).neg();
+    let amc_calculation_offset = (amc_lookback_months as i32 - 1).neg();
 
     let first_data_point_date =
         first_day_of_the_month(&date_with_months_offset(&reference_date, data_point_offset));
@@ -179,7 +179,7 @@ mod tests {
             generate_consumption_series(
                 NaiveDate::from_ymd(2021, 1, 4),
                 ConsumptionHistoryOptions {
-                    amc_look_back_months: 5,
+                    amc_lookback_months: 5,
                     number_of_data_points: 3
                 }
             ),

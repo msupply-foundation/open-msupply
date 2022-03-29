@@ -4,8 +4,6 @@ use repository::{
     schema::{RequisitionLineRow, RequisitionRow},
     RepositoryError,
 };
-
-use util::constants::DEFAULT_AMC_LOOK_BACK_MONTHS;
 use util::uuid::uuid;
 
 use crate::item_stats::{get_item_stats, ItemStatsFilter};
@@ -47,7 +45,7 @@ pub fn generate_requisition_lines(
     let item_stats_rows = get_item_stats(
         ctx,
         store_id,
-        DEFAULT_AMC_LOOK_BACK_MONTHS,
+        None,
         Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids))),
     )?;
 

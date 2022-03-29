@@ -373,7 +373,7 @@ mod test {
                 &store().id,
                 &requisition_line().id,
                 ConsumptionHistoryOptions {
-                    amc_look_back_months: 5,
+                    amc_lookback_months: 5,
                     number_of_data_points: 3,
                 },
                 StockEvolutionOptions::default(),
