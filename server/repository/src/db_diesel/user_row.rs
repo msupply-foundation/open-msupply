@@ -61,6 +61,13 @@ impl<'a> UserAccountRowRepository<'a> {
             .load(&self.connection.connection)?;
         Ok(result)
     }
+
+    pub fn delete_by_id(&self, id: &str) -> Result<usize, RepositoryError> {
+        let result = diesel::delete(user_account_dsl::user_account)
+            .filter(user_account_dsl::id.eq(id))
+            .execute(&self.connection.connection)?;
+        Ok(result)
+    }
 }
 
 // TODO

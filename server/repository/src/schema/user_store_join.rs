@@ -3,6 +3,7 @@ table! {
       id -> Text,
       user_id -> Text,
       store_id -> Text,
+      is_default -> Bool,
   }
 }
 
@@ -12,4 +13,5 @@ pub struct UserStoreJoinRow {
     pub id: String,
     pub user_id: String,
     pub store_id: String,
+    pub is_default: bool,
 }

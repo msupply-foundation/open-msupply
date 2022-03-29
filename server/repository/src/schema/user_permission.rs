@@ -10,7 +10,7 @@ table! {
   }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum Resource {
     Stocktake,
@@ -27,7 +27,7 @@ pub enum Permission {
     Mutate,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
 #[table_name = "user_permission"]
 pub struct UserPermissionRow {
     pub id: String,

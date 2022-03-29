@@ -43,7 +43,7 @@ impl<'a> UserPermissionRowRepository<'a> {
         Ok(result)
     }
 
-    pub async fn remove_all(&self, user_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete_by_user_id(&self, user_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             user_permission_dsl::user_permission.filter(user_permission_dsl::user_id.eq(user_id)),
         )
