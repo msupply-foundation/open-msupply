@@ -60,7 +60,6 @@ export const usePrintReport = () => {
     onSuccess: fileId => {
       if (!fileId) throw new Error('Error printing report');
       const url = `${Environment.FILE_URL}${fileId}`;
-      console.log('** DOWNLOADED', url);
       const win = window.open(url, '_blank');
       if (win) {
         win.focus();
