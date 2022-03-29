@@ -1,19 +1,31 @@
 import React, { FC } from 'react';
+import { Box, ReportCategory, Typography } from '@openmsupply-client/common';
+import { AlertIcon } from '@common/icons';
+import { useTranslation } from '@common/intl';
 import {
-  Box,
   CircularProgress,
   FlatButton,
   PaperPopoverSection,
-  ReportCategory,
   usePaperClickPopover,
-  useTranslation,
-} from '@openmsupply-client/common';
+} from '@common/components';
 import { ReportRowFragment, useReports } from '../api';
 
 interface ReportSelectorProps {
   category?: ReportCategory;
   onClick: (report: ReportRowFragment) => void;
 }
+
+const NoReports = () => {
+  const t = useTranslation('common');
+  return (
+    <Box display="flex" alignItems="center" gap={1} padding={2}>
+      <Box flex={0}>
+        <AlertIcon fontSize="small" color="primary" />
+      </Box>
+      <Typography flex={1}>{t('error.no-reports-available')}</Typography>
+    </Box>
+  );
+};
 
 export const ReportSelector: FC<ReportSelectorProps> = ({
   category,
@@ -35,6 +47,9 @@ export const ReportSelector: FC<ReportSelectorProps> = ({
       sx={{ textAlign: 'left', justifyContent: 'left' }}
     />
   ));
+
+  const noReports = !isLoading && !data?.nodes.length;
+
   return (
     <PaperClickPopover
       placement="bottom"
@@ -49,7 +64,7 @@ export const ReportSelector: FC<ReportSelectorProps> = ({
               display="flex"
               flexDirection="column"
             >
-              {reportButtons}
+              {noReports ? <NoReports /> : reportButtons}
             </Box>
           )}
         </PaperPopoverSection>

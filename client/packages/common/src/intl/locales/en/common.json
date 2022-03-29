@@ -52,6 +52,7 @@
   "error.missing-invoice": "Invoice {id} not found",
   "error.no-data": "No data available",
   "error.no-items": "No items",
+  "error.no-reports-available": "No reports available",
   "error.no-results": "No records to display",
   "error.number-required": "Enter a valid number",
   "error.something-wrong": "Oops! Something's gone wrong.",

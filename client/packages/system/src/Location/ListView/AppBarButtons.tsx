@@ -3,7 +3,6 @@ import React, { FC } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
-  PrinterIcon,
   useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -16,7 +15,7 @@ interface AppBarButtonsProps {
 }
 
 export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
-  const { info, success } = useNotification();
+  const { success } = useNotification();
   const t = useTranslation(['inventory', 'common']);
 
   return (
@@ -31,11 +30,6 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
           Icon={<DownloadIcon />}
           label={t('button.export')}
           onClick={success('Downloaded successfully')}
-        />
-        <ButtonWithIcon
-          Icon={<PrinterIcon />}
-          label={t('button.print')}
-          onClick={info('No printer detected')}
         />
       </Grid>
     </AppBarButtonsPortal>
