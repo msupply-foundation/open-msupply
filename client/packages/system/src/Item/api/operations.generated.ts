@@ -12,7 +12,7 @@ export type ItemRowFragment = { __typename: 'ItemNode', id: string, code: string
 
 export type ItemRowWithStatsFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } };
 
-export type ItemFragment = { __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, type: Types.ItemNodeType, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } };
+export type ItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: number, defaultPackSize: number, doses: number, isVaccine: boolean, isVisible: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -24,7 +24,7 @@ export type ItemsWithStockLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsWithStockLinesQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, type: Types.ItemNodeType, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } }> } };
+export type ItemsWithStockLinesQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: number, defaultPackSize: number, doses: number, isVaccine: boolean, isVisible: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } }> } };
 
 export type ItemsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -54,7 +54,7 @@ export type ItemByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemByIdQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null }> } }> } };
+export type ItemByIdQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: number, defaultPackSize: number, doses: number, isVaccine: boolean, isVisible: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null }> } }> } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -63,28 +63,6 @@ export const ServiceItemRowFragmentDoc = gql`
   code
   name
   unitName
-}
-    `;
-export const StockLineFragmentDoc = gql`
-    fragment StockLine on StockLineNode {
-  availableNumberOfPacks
-  batch
-  costPricePerPack
-  expiryDate
-  id
-  itemId
-  location {
-    code
-    id
-    name
-    onHold
-  }
-  note
-  onHold
-  packSize
-  sellPricePerPack
-  storeId
-  totalNumberOfPacks
 }
     `;
 export const ItemRowFragmentDoc = gql`
@@ -107,33 +85,56 @@ export const ItemRowWithStatsFragmentDoc = gql`
   }
 }
     ${ItemRowFragmentDoc}`;
+export const StockLineFragmentDoc = gql`
+    fragment StockLine on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemId
+  location {
+    code
+    id
+    name
+    onHold
+  }
+  note
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+}
+    `;
 export const ItemFragmentDoc = gql`
     fragment Item on ItemNode {
   __typename
-  code
   id
-  isVisible
+  code
   name
-  unitName
+  atcCategory
+  ddd
+  defaultPackSize
+  doses
+  isVaccine
+  isVisible
+  margin
+  msupplyUniversalCode
+  msupplyUniversalName
+  outerPackSize
+  strength
   type
+  unitName
+  volumePerOuterPack
+  volumePerPack
+  weight
   availableBatches(storeId: $storeId) {
     __typename
     totalCount
     nodes {
       __typename
-      availableNumberOfPacks
-      batch
-      costPricePerPack
-      expiryDate
-      id
-      itemId
-      packSize
-      sellPricePerPack
-      totalNumberOfPacks
-      onHold
-      note
-      storeId
-      locationName
+      ...StockLine
     }
   }
   stats(storeId: $storeId) {
@@ -143,7 +144,7 @@ export const ItemFragmentDoc = gql`
     availableMonthsOfStockOnHand
   }
 }
-    `;
+    ${StockLineFragmentDoc}`;
 export const ItemsWithStockLinesDocument = gql`
     query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
   items(
@@ -210,11 +211,7 @@ export const ItemByIdDocument = gql`
       __typename
       nodes {
         __typename
-        code
-        id
-        isVisible
-        name
-        unitName
+        ...Item
         stats(storeId: $storeId) {
           __typename
           averageMonthlyConsumption
@@ -232,7 +229,8 @@ export const ItemByIdDocument = gql`
     }
   }
 }
-    ${StockLineFragmentDoc}`;
+    ${ItemFragmentDoc}
+${StockLineFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
