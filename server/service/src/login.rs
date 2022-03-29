@@ -18,12 +18,19 @@ use crate::{
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
-    service_provider::ServiceContext,
+    service_provider::{ServiceContext, ServiceProvider},
     token::{JWTIssuingError, TokenPair, TokenService},
     user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
+
+#[derive(Debug)]
+pub enum FetchUserError {
+    Unauthenticated,
+    ConnectionError(String),
+    InternalError(String),
+}
 
 pub struct LoginService {}
 
@@ -36,31 +43,36 @@ pub enum LoginError {
     DatabaseError(RepositoryError),
 }
 
-pub struct LoginInput {
-    pub username: String,
-    pub password: String,
-    pub auth_data: AuthData,
-    /// url to the central server
-    pub central_server_url: Url,
-}
-
 impl LoginService {
-    /// # Arguments
-    /// * `client` client to be used to do the central server login request (mainly for testing)
+    /// Note, this service takes a ServiceProvider instead of a ServiceContext. The reason is that a
+    /// ServiceContext can't be used across async calls (because of the containing thread bound
+    /// SqliteConnection). Since we need an async api call to the remote server to fetch user data
+    /// we need to create the service context after the call where the compiler can deduce that we are
+    /// not passing it to another thread.
     pub async fn login(
-        service_ctx: &ServiceContext,
-        input: LoginInput,
+        service_provider: &ServiceProvider,
+        username: &str,
+        password: &str,
+        auth_data: &AuthData,
+        central_server_url: &str,
         client: Option<Client>,
     ) -> Result<TokenPair, LoginError> {
-        LoginService::update_user(service_ctx, &input, client)
+        match LoginService::fetch_user_from_central(username, password, central_server_url, client)
             .await
-            .map_err(|err| {
-                info!("Central server login failed: {}", err);
-                LoginError::LoginFailure
-            })?;
-
+        {
+            Ok((user, store_permissions)) => {
+                let service_ctx = service_provider.context()?;
+                LoginService::update_user(&service_ctx, user, store_permissions)?;
+            }
+            Err(err) => match err {
+                FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
+                FetchUserError::ConnectionError(_) => info!("{:?}", err),
+                FetchUserError::InternalError(_) => info!("{:?}", err),
+            },
+        };
+        let service_ctx = service_provider.context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
-        let user_account = match user_service.verify_password(&input.username, &input.password) {
+        let user_account = match user_service.verify_password(username, password) {
             Ok(user) => user,
             Err(err) => {
                 return Err(match err {
@@ -75,8 +87,8 @@ impl LoginService {
         };
 
         let mut token_service = TokenService::new(
-            &input.auth_data.token_bucket,
-            input.auth_data.auth_token_secret.as_bytes(),
+            &auth_data.token_bucket,
+            auth_data.auth_token_secret.as_bytes(),
         );
         let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
         let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
@@ -87,60 +99,68 @@ impl LoginService {
         Ok(pair)
     }
 
-    /// Tries to fetch the user details from the central server and stores the found data locally
-    async fn update_user(
-        service_ctx: &ServiceContext,
-        input: &LoginInput,
+    /// # Arguments
+    /// * `client` client to be used to do the central server login request (mainly for testing)
+    async fn fetch_user_from_central(
+        username: &str,
+        password: &str,
+        central_server_url: &str,
         client: Option<Client>,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(UserAccountRow, Vec<StorePermissions>), FetchUserError> {
+        let central_server_url = Url::parse(central_server_url).map_err(|err| {
+            FetchUserError::InternalError(format!("Failed to parse central server url: {}", err))
+        })?;
         let client = client.unwrap_or(
             ClientBuilder::new()
                 .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
-                .build()?,
+                .build()
+                .map_err(|err| FetchUserError::ConnectionError(format!("{:?}", err)))?,
         );
-        let login_api = LoginApiV4::new(client, input.central_server_url.clone());
+        let login_api = LoginApiV4::new(client, central_server_url.clone());
         let user_data = match login_api
             .login(LoginInputV4 {
-                username: input.username.to_string(),
-                password: input.password.to_string(),
+                username: username.to_string(),
+                password: password.to_string(),
                 login_type: LoginUserTypeV4::User,
             })
             .await
         {
             Ok(result) => {
                 if result.status == LoginStatusV4::Error {
-                    let msg = "Failed to fetch user from central server";
-                    info!("{}", msg);
-                    return Err(anyhow::Error::msg(msg));
+                    return Err(FetchUserError::ConnectionError(
+                        "Failed to fetch user from central server".to_string(),
+                    ));
                 }
                 result
             }
             Err(err) => {
-                info!(
+                return Err(FetchUserError::ConnectionError(format!(
                     "Failed to reach the central server to fetch data for {}: {:?}",
-                    input.username, err
-                );
-                return Ok(());
+                    username, err
+                )));
             }
         };
         if user_data.status != LoginStatusV4::Success {
-            info!("Unexpected central server status");
-            return Ok(());
+            return Err(FetchUserError::InternalError(format!(
+                "Unexpected central server status: {:?}",
+                user_data.status
+            )));
         }
         let user_info = match user_data.user_info {
             Some(user_info) => user_info,
             None => {
-                info!("Missing user info in returned central server login data");
-                return Ok(());
+                return Err(FetchUserError::InternalError(
+                    "Missing user info in returned central server login data".to_string(),
+                ));
             }
         };
 
         // convert user_info to internal format
         let user = UserAccountRow {
             id: user_info.user.id,
-            username: input.username.clone(),
-            hashed_password: UserAccountService::hash_password(&input.password)
-                .map_err(|err| anyhow::Error::msg(format!("Failed to hash password: {:?}", err)))?,
+            username: username.to_string(),
+            hashed_password: UserAccountService::hash_password(password)
+                .map_err(|err| FetchUserError::InternalError(format!("{:?}", err)))?,
             email: match user_info.user.e_mail.as_str() {
                 // TODO do this using serde
                 "" => None,
@@ -175,12 +195,23 @@ impl LoginService {
                 }
             })
             .collect();
+        Ok((user, stores_permissions))
+    }
 
-        // write user data
+    fn update_user(
+        service_ctx: &ServiceContext,
+        user: UserAccountRow,
+        store_permissions: Vec<StorePermissions>,
+    ) -> Result<(), RepositoryError> {
         let service = UserAccountService::new(&service_ctx.connection);
-        service.upsert_user(user, stores_permissions)?;
-
+        service.upsert_user(user, store_permissions)?;
         Ok(())
+    }
+}
+
+impl From<RepositoryError> for LoginError {
+    fn from(err: RepositoryError) -> Self {
+        LoginError::InternalError(format!("{:?}", err))
     }
 }
 
@@ -270,21 +301,19 @@ mod test {
         mock::MockDataInserts, test_db::setup_all, EqualFilter, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
-    use reqwest::Url;
 
     use crate::{
         apis::login_v4::LoginResponseV4, auth_data::AuthData, login_mock_data::LOGIN_V4_RESPONSE_1,
         service_provider::ServiceProvider, token_bucket::TokenBucket,
     };
 
-    use super::{LoginInput, LoginService};
+    use super::LoginService;
 
     #[actix_rt::test]
     async fn central_login_test() {
         let (_, _, connection_manager, _) =
             setup_all("login_test", MockDataInserts::none().names().stores()).await;
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.context().unwrap();
 
         let mock_server = MockServer::start();
         mock_server.mock(|when, then| {
@@ -292,23 +321,19 @@ mod test {
             then.status(200).body(LOGIN_V4_RESPONSE_1);
         });
 
-        let central_server_url = Url::parse(&mock_server.base_url()).unwrap();
-
+        let central_server_url = mock_server.base_url();
         let auth_data = AuthData {
             auth_token_secret: "secret".to_string(),
             token_bucket: RwLock::new(TokenBucket::new()),
             debug_no_ssl: true,
             debug_no_access_control: false,
         };
-
         LoginService::login(
-            &context,
-            LoginInput {
-                username: "Gryffindor".to_string(),
-                password: "password".to_string(),
-                auth_data,
-                central_server_url,
-            },
+            &service_provider,
+            "Gryffindor",
+            "password",
+            &auth_data,
+            &central_server_url,
             None,
         )
         .await
@@ -317,6 +342,7 @@ mod test {
         let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();
         let expected_user_info = expected.user_info.unwrap();
 
+        let context = service_provider.context().unwrap();
         let user = UserRepository::new(&context.connection)
             .query_one(UserFilter::new().id(EqualFilter::equal_to(&expected_user_info.user.id)))
             .unwrap()
