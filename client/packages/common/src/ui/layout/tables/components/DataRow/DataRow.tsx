@@ -54,7 +54,9 @@ export const DataRow = <T extends RecordWithId>({
         <TableRow
           sx={{
             '&.MuiTableRow-root': {
-              '&:hover': { backgroundColor: 'background.menu' },
+              '&:hover': hasOnClick
+                ? { backgroundColor: 'background.menu' }
+                : {},
             },
             color: isDisabled ? 'gray.main' : 'black',
             backgroundColor: isFocused ? 'background.menu' : null,
@@ -67,7 +69,6 @@ export const DataRow = <T extends RecordWithId>({
             ...rowStyle,
           }}
           onClick={onRowClick}
-          hover={hasOnClick}
         >
           {columns.map((column, columnIndex) => {
             return (
