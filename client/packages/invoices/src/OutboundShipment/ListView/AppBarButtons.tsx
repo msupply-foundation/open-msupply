@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
-  PrinterIcon,
   useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -15,7 +14,7 @@ import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 
 export const AppBarButtonsComponent: FC = () => {
-  const { info, success, error } = useNotification();
+  const { success, error } = useNotification();
   const { mutate: onCreate } = useOutbound.document.insert();
   const t = useTranslation(['distribution', 'common']);
   const modalController = useToggle();
@@ -50,11 +49,6 @@ export const AppBarButtonsComponent: FC = () => {
           Icon={<DownloadIcon />}
           label={t('button.export')}
           onClick={success('Downloaded successfully')}
-        />
-        <ButtonWithIcon
-          Icon={<PrinterIcon />}
-          label={t('button.print')}
-          onClick={info('No printer detected')}
         />
       </Grid>
     </AppBarButtonsPortal>

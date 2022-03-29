@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import {
   DownloadIcon,
-  PrinterIcon,
   useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -11,7 +10,7 @@ import { useTranslation } from '@common/intl';
 import { CreateStocktakeButton } from './CreateStocktakeButton';
 
 export const AppBarButtons: FC = () => {
-  const { info, success } = useNotification();
+  const { success } = useNotification();
   const t = useTranslation(['distribution', 'common']);
 
   return (
@@ -22,11 +21,6 @@ export const AppBarButtons: FC = () => {
           Icon={<DownloadIcon />}
           label={t('button.export')}
           onClick={success('Downloaded successfully')}
-        />
-        <ButtonWithIcon
-          Icon={<PrinterIcon />}
-          label={t('button.print')}
-          onClick={info('No printer detected')}
         />
       </Grid>
     </AppBarButtonsPortal>
