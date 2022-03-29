@@ -5,7 +5,7 @@ use repository::{
 };
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_with_days_offset};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StockEvolutionOptions {
     pub number_of_historic_data_points: u32,
     pub number_of_projected_data_points: u32,
@@ -14,14 +14,14 @@ pub struct StockEvolutionOptions {
 impl Default for StockEvolutionOptions {
     fn default() -> Self {
         Self {
-            number_of_historic_data_points: 1,
-            number_of_projected_data_points: 0,
+            number_of_historic_data_points: 30,
+            number_of_projected_data_points: 20,
         }
     }
 }
 #[derive(PartialEq, Debug)]
 pub struct StockEvolution {
-    pub reference_date: NaiveDate,
+    pub date: NaiveDate,
     pub quantity: f64,
 }
 
@@ -129,7 +129,7 @@ fn calculate_historic_stock_evolution(
     // Last point stock on hand should be reference_stock_on_hand
     if let Some(last_point) = historic_points.pop() {
         result.push(StockEvolution {
-            reference_date: last_point,
+            date: last_point,
             quantity: reference_stock_on_hand as f64,
         });
     }
@@ -150,7 +150,7 @@ fn calculate_historic_stock_evolution(
         // Reverse ledger thus substraction
         running_stock_on_hand -= day_movements;
         result.push(StockEvolution {
-            reference_date,
+            date: reference_date,
             quantity: running_stock_on_hand,
         })
     }
@@ -180,7 +180,7 @@ fn calculate_projected_stock_evolution(
         }
 
         result.push(StockEvolution {
-            reference_date,
+            date: reference_date,
             quantity: running_stock_on_hand,
         });
     }
@@ -267,15 +267,15 @@ mod tests {
             ),
             vec![
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2020, 12, 31),
+                    date: NaiveDate::from_ymd(2020, 12, 31),
                     quantity: 18.0 // (40) - 15 - 7 = (18)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 1),
+                    date: NaiveDate::from_ymd(2021, 1, 1),
                     quantity: 40.0 // 30 - 10 + 20 = (40)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 2),
+                    date: NaiveDate::from_ymd(2021, 1, 2),
                     quantity: 30.0 // initial
                 }
             ]
@@ -299,19 +299,19 @@ mod tests {
             ),
             vec![
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 3),
+                    date: NaiveDate::from_ymd(2021, 1, 3),
                     quantity: 4.5 // 30 - 25.5 - 4.5
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 4),
+                    date: NaiveDate::from_ymd(2021, 1, 4),
                     quantity: 0.0 // (4.5) - 25.5 = -something, but we set to (0)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 5),
+                    date: NaiveDate::from_ymd(2021, 1, 5),
                     quantity: 74.5 // (0) - 25.5 + 50 = (74.5), adding suggested
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 6),
+                    date: NaiveDate::from_ymd(2021, 1, 6),
                     quantity: 49.0 // (74.5) - 25.5 = 49.0
                 },
             ]

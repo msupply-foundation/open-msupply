@@ -6,11 +6,11 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 use util::{
-    constants::NUMBER_OF_DAYS_IN_A_MONTH, date_with_months_offset, first_day_of_the_month,
-    last_day_of_the_month,
+    constants::{default_amc_look_back_months, NUMBER_OF_DAYS_IN_A_MONTH},
+    date_with_months_offset, first_day_of_the_month, last_day_of_the_month,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ConsumptionHistoryOptions {
     pub amc_look_back_months: u32,
     pub number_of_data_points: u32,
@@ -19,8 +19,8 @@ pub struct ConsumptionHistoryOptions {
 impl Default for ConsumptionHistoryOptions {
     fn default() -> Self {
         Self {
-            amc_look_back_months: 1,
-            number_of_data_points: 1,
+            amc_look_back_months: default_amc_look_back_months(),
+            number_of_data_points: 20,
         }
     }
 }
