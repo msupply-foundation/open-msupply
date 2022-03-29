@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ArrowRightIcon,
   useTranslation,
@@ -7,6 +7,7 @@ import {
   Box,
   Typography,
   AlertIcon,
+  useHostContext,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
 import { StoreSearchInput } from '@openmsupply-client/system';
@@ -29,6 +30,11 @@ const StoreAutocompleteInput: React.FC<
 
 export const Login: React.FC = ({}) => {
   const t = useTranslation('app');
+  const { setPageTitle } = useHostContext();
+  useEffect(() => {
+    setPageTitle(`${t('app.login')} | ${t('app')} `);
+  }, []);
+
   const passwordRef = React.useRef(null);
   const {
     isValid,
