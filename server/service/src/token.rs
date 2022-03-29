@@ -71,11 +71,11 @@ pub enum JWTLogoutError {
 pub struct TokenPair {
     /// The JWT token
     pub token: String,
-    /// expiry date of the token
+    /// expiry date of the token (unix timestamp [s])
     pub expiry_date: usize,
     /// The JWT refresh token
     pub refresh: String,
-    /// Expiry date of the refresh token
+    /// Expiry date of the refresh token (unix timestamp [s])
     pub refresh_expiry_date: usize,
 }
 
