@@ -15,7 +15,7 @@ use graphql_core::{
     ContextExt,
 };
 
-use super::{InvoiceLineConnector, ItemChartDataNode, ItemNode, ItemStatsNode};
+use super::{InvoiceLineConnector, ItemNode, ItemStatsNode};
 
 #[derive(PartialEq, Debug)]
 pub struct RequisitionLineNode {
@@ -98,9 +98,6 @@ impl RequisitionLineNode {
         Ok(InvoiceLineConnector::from_vec(result))
     }
 
-    pub async fn chart_data(&self) -> ItemChartDataNode {
-        ItemChartDataNode::default()
-    }
     /// InboundShipment lines linked to requisitions line
     pub async fn inbound_shipment_lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
         // Outbound shipments links to request requisition, so for response requisition
