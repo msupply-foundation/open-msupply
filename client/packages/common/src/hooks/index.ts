@@ -11,6 +11,7 @@ export * from './useDrawer';
 export * from './useEditModal';
 export * from './useEffectAfterMounting';
 export * from './useFilterBy';
+export * from './useGetPageTitle';
 export * from './useHostContext/useHostContext';
 export * from './useIsMountedRef';
 export * from './useIsScreen';
