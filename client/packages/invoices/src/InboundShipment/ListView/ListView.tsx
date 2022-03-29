@@ -51,10 +51,10 @@ export const InboundListView: FC = () => {
             getStatusTranslator(t)(status as InvoiceNodeStatus),
         },
       ],
-      'invoiceNumber',
+      ['invoiceNumber', { maxWidth: 80 }],
       'createdDatetime',
       'allocatedDatetime',
-      'comment',
+      ['comment', { maxWidth: 300 }],
       [
         'totalAfterTax',
         {

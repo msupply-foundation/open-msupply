@@ -27,6 +27,7 @@ export const MiniTable = <T extends RecordWithId>({
           backgroundColor: theme => alpha(theme.palette.gray.light, 0.2),
           border: theme => `1px solid ${alpha(theme.palette.gray.light, 0.2)}`,
           '& .MuiTableHead-root': { borderRadius: '16px 16px 0 0' },
+          overflow: 'hidden',
         }}
       >
         <DataTable dense columns={columns} data={rows} />
