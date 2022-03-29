@@ -11,6 +11,7 @@ pub mod invoice_line;
 pub mod item;
 pub mod item_stats;
 pub mod location;
+pub mod login;
 pub mod master_list;
 pub mod name;
 pub mod number;
@@ -28,6 +29,9 @@ pub mod token;
 pub mod token_bucket;
 pub mod user_account;
 pub mod validate;
+
+#[cfg(test)]
+mod login_mock_data;
 
 #[derive(PartialEq, Debug)]
 pub struct ListResult<T> {
