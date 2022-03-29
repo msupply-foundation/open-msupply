@@ -24,8 +24,8 @@ impl GeneralQueries {
         ctx: &Context<'_>,
         #[graphql(desc = "UserName")] username: String,
         #[graphql(desc = "Password")] password: String,
-    ) -> AuthTokenResponse {
-        login(ctx, &username, &password)
+    ) -> Result<AuthTokenResponse> {
+        login(ctx, &username, &password).await
     }
 
     pub async fn logout(&self, ctx: &Context<'_>) -> LogoutResponse {
