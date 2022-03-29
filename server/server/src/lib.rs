@@ -60,6 +60,8 @@ pub async fn start_server(
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
     let loader_registry_data = Data::new(LoaderRegistry { loaders });
 
+    let sync_settings_data = Data::new(settings.sync.clone());
+
     let mut http_server = HttpServer::new(move || {
         App::new()
             .wrap(logger_middleware())
@@ -70,6 +72,7 @@ pub async fn start_server(
                 loader_registry_data.clone(),
                 service_provider_data.clone(),
                 auth_data.clone(),
+                sync_settings_data.clone(),
             ))
             .configure(config_static_files)
     });
