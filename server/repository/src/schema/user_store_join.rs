@@ -1,3 +1,5 @@
+use super::diesel_schema::{store, user_account};
+
 table! {
   user_store_join (id) {
       id -> Text,
@@ -6,6 +8,12 @@ table! {
       is_default -> Bool,
   }
 }
+
+joinable!(user_store_join -> user_account (user_id));
+joinable!(user_store_join -> store (store_id));
+
+allow_tables_to_appear_in_same_query!(user_store_join, user_account);
+allow_tables_to_appear_in_same_query!(user_store_join, store);
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[table_name = "user_store_join"]
