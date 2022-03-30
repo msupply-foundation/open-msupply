@@ -12,7 +12,7 @@ mod requisition_supply_status;
 mod stock_line;
 mod stocktake_lines;
 mod store;
-mod user_account;
+mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
@@ -30,7 +30,7 @@ pub use requisition_supply_status::*;
 pub use stock_line::*;
 pub use stocktake_lines::*;
 pub use store::*;
-pub use user_account::*;
+pub use user::*;
 
 #[derive(Debug, Clone)]
 /// Sometimes loaders need to take an extra parameter, like store_id or requisition_id

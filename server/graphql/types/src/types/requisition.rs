@@ -5,7 +5,7 @@ use graphql_core::{
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, NameByIdLoaderInput,
         RequisitionLinesByRequisitionIdLoader, RequisitionLinesRemainingToSupplyLoader,
-        RequisitionsByIdLoader, UserAccountLoader,
+        RequisitionsByIdLoader, UserLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -71,7 +71,7 @@ impl RequisitionNode {
     /// User that last edited requisition, if user is not found in system default unknown user is returned
     /// Null is returned for transfers, where response requisition has not been edited yet
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
-        let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 
         let user_id = match &self.row().user_id {
             Some(user_id) => user_id,
@@ -350,7 +350,7 @@ mod test {
             },
             "testQueryUserDoesNotExist": {
                 "user": {
-                    "userId": unknown_user().id
+                    "userId": unknown_user().user_row.id
                 }
             },
             "testQueryUserNotAssociated": {

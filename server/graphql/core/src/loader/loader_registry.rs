@@ -1,5 +1,5 @@
 use super::*;
-use crate::loader::{ItemLoader, StoreByIdLoader, UserAccountLoader};
+use crate::loader::{ItemLoader, StoreByIdLoader, UserLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
@@ -99,7 +99,7 @@ pub async fn get_loaders(
     );
 
     let user_account_loader = DataLoader::new(
-        UserAccountLoader {
+        UserLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,
