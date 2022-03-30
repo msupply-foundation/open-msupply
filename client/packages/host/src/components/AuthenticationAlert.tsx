@@ -53,6 +53,7 @@ export const AuthenticationAlert = () => {
 
   return (
     <AlertModal
+      important
       open={isOn}
       title={t('auth.alert-title')}
       message={message}
