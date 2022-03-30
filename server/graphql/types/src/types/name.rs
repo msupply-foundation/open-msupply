@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use dataloader::DataLoader;
 use repository::{schema::NameRow, Name};
 
