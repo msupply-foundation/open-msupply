@@ -5,21 +5,21 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
-        diesel_schema::store,
-        diesel_schema::store::dsl as store_dsl,
-        diesel_schema::user_account,
-        diesel_schema::user_account::dsl as user_dsl,
+        diesel_schema::{store, store::dsl as store_dsl},
+        diesel_schema::{user_account, user_account::dsl as user_dsl},
         user_permission::UserPermissionRow,
-        user_store_join::user_store_join,
-        user_store_join::{user_store_join::dsl as user_store_join_dsl, UserStoreJoinRow},
+        user_store_join::{
+            user_store_join, user_store_join::dsl as user_store_join_dsl, UserStoreJoinRow,
+        },
         StoreRow, UserAccountRow,
     },
 };
 use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{Eq, IntoBoxed, LeftJoin},
     prelude::*,
+    query_source::joins::OnClauseWrapper,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -54,7 +54,7 @@ pub enum UserSortField {
 
 pub type UserSort = Sort<UserSortField>;
 
-type UserStoreJoin = (UserStoreJoinRow, UserAccountRow, StoreRow);
+type UserAndUserStoreJoin = (UserAccountRow, Option<UserStoreJoinRow>, Option<StoreRow>);
 
 pub struct UserRepository<'a> {
     connection: &'a StorageConnection,
@@ -107,45 +107,51 @@ impl<'a> UserRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<UserStoreJoin>(&self.connection.connection)?;
+        let result = final_query.load::<UserAndUserStoreJoin>(&self.connection.connection)?;
         Ok(to_domain(result))
     }
 }
 
-fn to_domain(result: Vec<UserStoreJoin>) -> Vec<User> {
-    let mut map = HashMap::<String, Vec<UserStoreJoin>>::new();
-    for join in result {
-        let entry = map.entry(join.1.id.clone()).or_insert(vec![]);
-        entry.push(join);
+fn to_domain(results: Vec<UserAndUserStoreJoin>) -> Vec<User> {
+    // collect all joins for a user
+    let mut user_map = HashMap::<String, User>::new();
+    for join in results {
+        let entry = user_map.entry(join.0.id.clone()).or_insert(User {
+            user_row: join.0,
+            stores: vec![],
+        });
+        if let (Some(user_store_join), Some(store_row)) = (join.1, join.2) {
+            entry.stores.push(UserStore {
+                store_row,
+                user_store_join,
+            })
+        }
     }
-    let users = map
-        .into_iter()
-        .map(|it| {
-            let user_row = it.1.first().unwrap().1.clone();
-            let stores =
-                it.1.into_iter()
-                    .map(|store| UserStore {
-                        store_row: store.2,
-                        user_store_join: store.0,
-                    })
-                    .collect();
-            User { user_row, stores }
-        })
-        .collect();
-
+    let users = user_map.into_iter().map(|(_, user)| user).collect();
     users
 }
 
-type BoxedUserStoreQuery = IntoBoxed<
+// user_store_join_dsl::user_id.eq(user_dsl::id)
+type UserIdEqualToId = Eq<user_store_join_dsl::user_id, user_dsl::id>;
+// store_dsl::id.eq(store_id))
+type StoreIdEqualToId = Eq<store_dsl::id, user_store_join_dsl::store_id>;
+// user_store_join.on(user_id.eq(user_dsl::id))
+type OnUserStoreJoinToUserJoin = OnClauseWrapper<user_store_join::table, UserIdEqualToId>;
+// store.on(id.eq(store_id))
+type OnStoreJoinToUserStoreJoin = OnClauseWrapper<store::table, StoreIdEqualToId>;
+
+type BoxedUserQuery = IntoBoxed<
     'static,
-    InnerJoin<InnerJoin<user_store_join::table, user_account::table>, store::table>,
+    LeftJoin<LeftJoin<user_account::table, OnUserStoreJoinToUserJoin>, OnStoreJoinToUserStoreJoin>,
     DBType,
 >;
 
-fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserStoreQuery {
-    let mut query = user_store_join_dsl::user_store_join
-        .inner_join(user_dsl::user_account)
-        .inner_join(store_dsl::store)
+fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
+    let mut query = user_dsl::user_account
+        .left_join(
+            user_store_join_dsl::user_store_join.on(user_store_join_dsl::user_id.eq(user_dsl::id)),
+        )
+        .left_join(store_dsl::store.on(store_dsl::id.eq(user_store_join_dsl::store_id)))
         .into_boxed();
 
     if let Some(f) = filter {
