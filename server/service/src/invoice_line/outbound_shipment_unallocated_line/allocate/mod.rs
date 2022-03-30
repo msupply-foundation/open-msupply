@@ -64,7 +64,7 @@ pub enum AllocateOutboundShipmentUnallocatedLineError {
 type OutError = AllocateOutboundShipmentUnallocatedLineError;
 
 #[derive(Default, Debug, PartialEq)]
-pub struct AllocateOutboundShipmentUnallocatedLineResult {
+pub struct AllocateLineResult {
     pub inserts: Vec<InvoiceLine>,
     pub deletes: Vec<String>,
     pub updates: Vec<InvoiceLine>,
@@ -73,7 +73,7 @@ pub struct AllocateOutboundShipmentUnallocatedLineResult {
     pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
 
-type ServiceResult = AllocateOutboundShipmentUnallocatedLineResult;
+type ServiceResult = AllocateLineResult;
 
 pub fn allocate_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,

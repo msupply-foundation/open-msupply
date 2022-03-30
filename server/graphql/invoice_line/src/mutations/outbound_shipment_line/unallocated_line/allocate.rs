@@ -6,8 +6,8 @@ use graphql_core::{
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use service::{
     invoice_line::outbound_shipment_unallocated_line::{
+        AllocateLineResult as ServiceResult,
         AllocateOutboundShipmentUnallocatedLineError as ServiceError,
-        AllocateOutboundShipmentUnallocatedLineResult as ServiceResult,
     },
     permission_validation::{Resource, ResourceAccessRequest},
 };
@@ -131,8 +131,8 @@ mod graphql {
     use service::{
         invoice_line::{
             outbound_shipment_unallocated_line::{
+                AllocateLineResult as ServiceResult,
                 AllocateOutboundShipmentUnallocatedLineError as ServiceError,
-                AllocateOutboundShipmentUnallocatedLineResult as ServiceResult,
             },
             InvoiceLineServiceTrait,
         },
