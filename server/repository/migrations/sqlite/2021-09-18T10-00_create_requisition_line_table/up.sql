@@ -9,5 +9,7 @@ CREATE TABLE requisition_line (
     supply_quantity INTEGER NOT NULL,
     available_stock_on_hand INTEGER NOT NULL,
     average_monthly_consumption INTEGER NOT NULL,
+    -- Calculation of stock on hand and average monthly consumption
+    snapshot_datetime TEXT,
     comment TEXT
 )

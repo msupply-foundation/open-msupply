@@ -132,6 +132,7 @@ impl RequisitionLineNode {
         ItemStatsNode {
             average_monthly_consumption: self.row().average_monthly_consumption,
             available_stock_on_hand: self.row().available_stock_on_hand,
+            snapshot_datetime: self.row().snapshot_datetime.clone(),
         }
     }
 

@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::NaiveDate;
 use dataloader::DataLoader;
 use repository::{schema::NameRow, Name};
 
@@ -47,6 +48,52 @@ impl NameNode {
             .load_one(store_id.to_string())
             .await?
             .map(StoreNode::from_domain))
+    }
+
+    // Mock
+
+    pub async fn phone(&self) -> &str {
+        "+64 932184910"
+    }
+
+    pub async fn charge_code(&self) -> &str {
+        &self.row().code
+    }
+
+    pub async fn comment(&self) -> &str {
+        "For billing contact Sam"
+    }
+
+    pub async fn country(&self) -> &str {
+        "UK"
+    }
+
+    pub async fn address(&self) -> &str {
+        "10 Downing Street"
+    }
+
+    pub async fn email(&self) -> &str {
+        "mock@moc.ki.ng"
+    }
+
+    pub async fn website(&self) -> &str {
+        "https://moc.ki.ng"
+    }
+
+    pub async fn is_manufacturer(&self) -> bool {
+        true
+    }
+
+    pub async fn is_donor(&self) -> bool {
+        false
+    }
+
+    pub async fn created_date(&self) -> Option<NaiveDate> {
+        Some(NaiveDate::from_ymd(2010, 02, 28))
+    }
+
+    pub async fn is_on_hold(&self) -> bool {
+        false
     }
 }
 

@@ -33,6 +33,8 @@ pub enum Resource {
     MutateOutboundShipment,
     // inbound shipment
     MutateInboundShipment,
+    // reporting
+    Report,
 }
 
 fn default() -> PermissionDSL {
@@ -60,6 +62,8 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::MutateOutboundShipment, default());
     // inbound shipment
     map.insert(Resource::MutateInboundShipment, default());
+    // report
+    map.insert(Resource::Report, default());
     map
 }
 

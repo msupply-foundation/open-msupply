@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test_update {
-    use chrono::Utc;
+    use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
@@ -170,6 +170,7 @@ mod test_update {
                     max_months_of_stock: None,
                     min_months_of_stock: None,
                     other_party_id: Some(mock_name_store_c().id),
+                    expected_delivery_date: Some(NaiveDate::from_ymd(2022, 01, 03)),
                 },
             )
             .unwrap();
@@ -189,6 +190,7 @@ mod test_update {
                 u.their_reference = Some("new their_reference".to_owned());
                 u.comment = Some("new comment".to_owned());
                 u.name_id = mock_name_store_c().id;
+                u.expected_delivery_date = Some(NaiveDate::from_ymd(2022, 01, 03));
                 u
             })
         );

@@ -11,7 +11,7 @@ use crate::{
 };
 use repository::{
     schema::{InvoiceLineRow, InvoiceLineRowType},
-    InvoiceLine, RepositoryError, StorageConnection,
+    InvoiceLine, RepositoryError, StockLine, StorageConnection,
 };
 
 use super::{
@@ -64,17 +64,22 @@ pub enum AllocateOutboundShipmentUnallocatedLineError {
 type OutError = AllocateOutboundShipmentUnallocatedLineError;
 
 #[derive(Default, Debug, PartialEq)]
-pub struct InvoiceLineInsertsUpdatesDeletes {
+pub struct AllocateLineResult {
     pub inserts: Vec<InvoiceLine>,
     pub deletes: Vec<String>,
     pub updates: Vec<InvoiceLine>,
+    pub skipped_expired_stock_lines: Vec<StockLine>,
+    pub skipped_on_hold_stock_lines: Vec<StockLine>,
+    pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
+
+type ServiceResult = AllocateLineResult;
 
 pub fn allocate_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
     store_id: &str,
     line_id: String,
-) -> Result<InvoiceLineInsertsUpdatesDeletes, OutError> {
+) -> Result<ServiceResult, OutError> {
     let line = ctx
         .connection
         .transaction_sync(|connection| {
@@ -84,9 +89,19 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 insert_lines,
                 update_unallocated_line,
                 delete_unallocated_line,
+                skipped_expired_stock_lines,
+                skipped_on_hold_stock_lines,
+                issued_expiring_soon_stock_lines,
             } = generate(&connection, &store_id, unallocated_line)?;
 
-            let mut result = InvoiceLineInsertsUpdatesDeletes::default();
+            let mut result = ServiceResult {
+                inserts: vec![],
+                deletes: vec![],
+                updates: vec![],
+                skipped_expired_stock_lines,
+                skipped_on_hold_stock_lines,
+                issued_expiring_soon_stock_lines,
+            };
 
             for input in update_lines.into_iter() {
                 result.updates.push(
@@ -132,7 +147,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 );
             }
 
-            Ok(result) as Result<InvoiceLineInsertsUpdatesDeletes, OutError>
+            Ok(result) as Result<ServiceResult, OutError>
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(line)

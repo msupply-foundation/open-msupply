@@ -22,6 +22,7 @@ pub fn generate(
         their_reference: update_their_reference,
         max_months_of_stock: update_max_months_of_stock,
         min_months_of_stock: update_threashold_months_of_stock,
+        expected_delivery_date: update_expected_delivery_date,
     }: UpdateRequestRequisition,
 ) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
     // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
@@ -51,6 +52,7 @@ pub fn generate(
         u.min_months_of_stock = update_threashold_months_of_stock;
         u.max_months_of_stock = update_max_months_of_stock;
         u.name_id = update_other_party_id.unwrap_or(u.name_id);
+        u.expected_delivery_date = update_expected_delivery_date.or(u.expected_delivery_date);
 
         u
     });
