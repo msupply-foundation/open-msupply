@@ -9,7 +9,7 @@ use repository::{
 use util::uuid::uuid;
 
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
-use log::error;
+use log::{error, warn};
 
 pub struct CreateUserAccount {
     pub username: String,
@@ -41,6 +41,7 @@ pub enum VerifyPasswordError {
     DatabaseError(RepositoryError),
 }
 
+#[derive(Debug)]
 pub struct StorePermissions {
     pub user_store_join: UserStoreJoinRow,
     pub permissions: Vec<UserPermissionRow>,
@@ -75,10 +76,28 @@ impl<'a> UserAccountService<'a> {
                 // insert user
                 user_repo.insert_one(&user)?;
                 for store in stores_permissions {
-                    user_store_repo.upsert_one(&store.user_store_join)?;
-                    for permission in store.permissions {
-                        permission_repo.upsert_one(&permission)?;
-                    }
+                    // The list may contain stores we don't know about; try to insert the store
+                    // in a sub-transaction and ignore the store when there is an error
+                    let sub_result = con.transaction_sync_etc(
+                        |_| {
+                            user_store_repo.upsert_one(&store.user_store_join)?;
+                            for permission in &store.permissions {
+                                permission_repo.upsert_one(permission)?;
+                            }
+                            Ok(())
+                        },
+                        false,
+                    );
+                    match sub_result {
+                        Ok(_) => Ok(()),
+                        Err(TransactionError::Inner(
+                            err @ RepositoryError::ForeignKeyViolation(_),
+                        )) => {
+                            warn!("Failed to insert store permissions({}): {:?}", err, store);
+                            Ok(())
+                        }
+                        Err(err) => Err(RepositoryError::from(err)),
+                    }?;
                 }
 
                 Ok(())
