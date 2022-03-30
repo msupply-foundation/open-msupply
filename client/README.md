@@ -151,7 +151,13 @@ yarn android:build-remote_server
 
 In `packages/host/public/config.js` change `API_HOST` to `API_HOST: 'http://localhost:8082'` to use the remote server running on Android.
 
-After building the web app the output needs to be copied to the android project:
+Then run the command `yarn android:build` to
+
+- build the react app
+- copy the built files for capacitor
+- build the apk
+
+The steps, if you need to run them manually are:
 
 ```
 yarn build
@@ -177,6 +183,7 @@ To build an .apk, run the command `yarn android:build`
 
 Currently the remote-server doesn't create a sqlite DB file on first startup.
 For this reason this step needs to be done manually, i.e. create and migrate the db file locally and then copy the file to the app folder on the device (using adb or AndroidStudio).
+The path in AndroidStudio shows as `/data/data/app/org.openmsupply.client/files/omsupply-database.sqlite`
 
 ### Java bits
 
