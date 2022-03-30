@@ -1,16 +1,24 @@
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(rename_items = "camelCase")]
-pub enum ReportSortFieldInput {
-    Name,
-    Category,
-}
-
+use ::serde::Serialize;
 use async_graphql::*;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
+    standard_graphql_error::validate_auth,
 };
-use serde::Serialize;
+use graphql_core::{map_filter, ContextExt};
+use repository::schema::report::{ReportCategory as ReportCategoryDomain, ReportRow};
+use repository::{
+    EqualFilter, PaginationOption, ReportFilter, ReportSort, ReportSortField, SimpleStringFilter,
+};
+use service::permission_validation::{Resource, ResourceAccessRequest};
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum ReportSortFieldInput {
+    Id,
+    Name,
+}
 
 #[derive(InputObject)]
 pub struct ReportSortInput {
@@ -24,10 +32,10 @@ pub struct ReportSortInput {
 #[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ReportCategory {
-    OutboundShipment,
-    InboundShipment,
+    Invoice,
     Requisition,
     Stocktake,
+    Resource,
 }
 
 #[derive(InputObject, Clone)]
@@ -57,57 +65,96 @@ pub struct ReportConnector {
 
 #[derive(PartialEq, Debug)]
 pub struct ReportNode {
-    id: String,
-    name: String,
-    category: ReportCategory,
+    row: ReportRow,
 }
 
 #[Object]
 impl ReportNode {
     pub async fn id(&self) -> &str {
-        &self.id
+        &self.row.id
     }
 
     /// Human readable name of the report
     pub async fn name(&self) -> &str {
-        &self.name
+        &self.row.name
     }
-
-    pub async fn category(&self) -> &ReportCategory {
-        &self.category
+    pub async fn category(&self) -> ReportCategory {
+        match self.row.context {
+            ReportCategoryDomain::Invoice => ReportCategory::Invoice,
+            ReportCategoryDomain::Requisition => ReportCategory::Requisition,
+            ReportCategoryDomain::Stocktake => ReportCategory::Stocktake,
+            ReportCategoryDomain::Resource => ReportCategory::Resource,
+        }
     }
 }
 
 pub fn reports(
-    _ctx: &Context<'_>,
-    _store_id: &str,
-    _page: Option<PaginationInput>,
-    _filter: Option<ReportFilterInput>,
-    _sort: Option<Vec<ReportSortInput>>,
+    ctx: &Context<'_>,
+    store_id: String,
+    page: Option<PaginationInput>,
+    filter: Option<ReportFilterInput>,
+    sort: Option<Vec<ReportSortInput>>,
 ) -> Result<ReportsResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::Report,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+
+    let reports = service_provider
+        .report_service
+        .query_reports(
+            &service_context,
+            page.map(PaginationOption::from),
+            filter.map(|f| f.to_domain()),
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
     Ok(ReportsResponse::Response(ReportConnector {
-        total_count: 4,
-        nodes: vec![
-            ReportNode {
-                id: "OutboundShipmentReport_1".to_string(),
-                name: "Outbound shipment report".to_string(),
-                category: ReportCategory::OutboundShipment,
-            },
-            ReportNode {
-                id: "InboundShipmentReport_1".to_string(),
-                name: "Inbound shipment report".to_string(),
-                category: ReportCategory::InboundShipment,
-            },
-            ReportNode {
-                id: "RequisitionReport_1".to_string(),
-                name: "Requisition shipment report".to_string(),
-                category: ReportCategory::Requisition,
-            },
-            ReportNode {
-                id: "StocktakeReport_1".to_string(),
-                name: "Stocktake report".to_string(),
-                category: ReportCategory::Stocktake,
-            },
-        ],
+        total_count: reports.len() as u32,
+        nodes: reports.into_iter().map(|row| ReportNode { row }).collect(),
     }))
+}
+
+impl ReportFilterInput {
+    pub fn to_domain(self) -> ReportFilter {
+        ReportFilter {
+            id: self.id.map(EqualFilter::from),
+            name: self.name.map(SimpleStringFilter::from),
+            r#type: None,
+            category: self
+                .category
+                .map(|t| map_filter!(t, ReportCategory::to_domain)),
+        }
+    }
+}
+
+impl ReportSortInput {
+    pub fn to_domain(self) -> ReportSort {
+        let key = match self.key {
+            ReportSortFieldInput::Id => ReportSortField::Id,
+            ReportSortFieldInput::Name => ReportSortField::Name,
+        };
+        ReportSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
+
+impl ReportCategory {
+    pub fn to_domain(self) -> ReportCategoryDomain {
+        match self {
+            ReportCategory::Invoice => ReportCategoryDomain::Invoice,
+            ReportCategory::Requisition => ReportCategoryDomain::Requisition,
+            ReportCategory::Stocktake => ReportCategoryDomain::Stocktake,
+            ReportCategory::Resource => ReportCategoryDomain::Resource,
+        }
+    }
 }

@@ -1,10 +1,15 @@
+use std::cmp::Ordering;
+
 use repository::{
     schema::{InvoiceLineRow, InvoiceLineRowType},
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, Pagination,
     RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineSort,
     StockLineSortField, StorageConnection,
 };
-use util::{fraction_is_integer, uuid};
+use util::{
+    constants::stock_line_expiring_soon_offset, date_now, date_now_with_offset,
+    fraction_is_integer, uuid,
+};
 
 use crate::invoice_line::{
     outbound_shipment_line::{InsertOutboundShipmentLine, UpdateOutboundShipmentLine},
@@ -19,6 +24,9 @@ pub struct GenerateOutput {
     pub insert_lines: Vec<InsertOutboundShipmentLine>,
     pub update_unallocated_line: Option<UpdateOutboundShipmentUnallocatedLine>,
     pub delete_unallocated_line: Option<DeleteOutboundShipmentUnallocatedLine>,
+    pub skipped_expired_stock_lines: Vec<StockLine>,
+    pub skipped_on_hold_stock_lines: Vec<StockLine>,
+    pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
 
 pub fn generate(
@@ -42,6 +50,29 @@ pub fn generate(
         get_sorted_available_stock_lines(connection, store_id, &unallocated_line)?;
     // Use FEFO to allocate
     for stock_line in sorted_available_stock_lines {
+        let can_use = get_stock_line_eligibility(&stock_line)
+            .map(|eligibility| match eligibility {
+                StockLineAlert::OnHold => {
+                    result.skipped_on_hold_stock_lines.push(stock_line.clone());
+                    false
+                }
+                StockLineAlert::Expired => {
+                    result.skipped_expired_stock_lines.push(stock_line.clone());
+                    false
+                }
+                StockLineAlert::ExpiringSoon => {
+                    result
+                        .issued_expiring_soon_stock_lines
+                        .push(stock_line.clone());
+                    true
+                }
+            })
+            .unwrap_or(true);
+
+        if !can_use {
+            continue;
+        }
+
         let packs_to_allocate =
             packs_to_allocate_from_stock_line(remaining_to_allocated, &stock_line);
 
@@ -80,6 +111,38 @@ pub fn generate(
     };
 
     Ok(result)
+}
+
+enum StockLineAlert {
+    OnHold,
+    Expired,
+    ExpiringSoon,
+}
+
+fn get_stock_line_eligibility(stock_line: &StockLine) -> Option<StockLineAlert> {
+    use StockLineAlert::*;
+    let stock_line_row = &stock_line.stock_line_row;
+    // Expired
+    if stock_line_row.on_hold {
+        return Some(OnHold);
+    }
+
+    let expiry_date = match &stock_line_row.expiry_date {
+        Some(expiry_date) => expiry_date,
+        None => return None,
+    };
+
+    if let Ordering::Less = expiry_date.cmp(&date_now()) {
+        return Some(Expired);
+    }
+
+    if let Ordering::Less =
+        expiry_date.cmp(&date_now_with_offset(stock_line_expiring_soon_offset()))
+    {
+        return Some(ExpiringSoon);
+    }
+
+    None
 }
 
 fn generate_new_line(

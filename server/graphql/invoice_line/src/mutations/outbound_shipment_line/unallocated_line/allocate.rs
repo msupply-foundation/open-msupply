@@ -3,11 +3,11 @@ use graphql_core::{
     simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError, ContextExt,
 };
-use graphql_types::types::{DeleteResponse, InvoiceLineConnector};
+use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use service::{
     invoice_line::outbound_shipment_unallocated_line::{
+        AllocateLineResult as ServiceResult,
         AllocateOutboundShipmentUnallocatedLineError as ServiceError,
-        InvoiceLineInsertsUpdatesDeletes,
     },
     permission_validation::{Resource, ResourceAccessRequest},
 };
@@ -37,6 +37,9 @@ pub struct ResponseNode {
     updates: InvoiceLineConnector,
     inserts: InvoiceLineConnector,
     deletes: Vec<DeleteResponse>,
+    skipped_expired_stock_lines: StockLineConnector,
+    skipped_on_hold_stock_lines: StockLineConnector,
+    issued_expiring_soon_stock_lines: StockLineConnector,
 }
 
 pub fn allocate(ctx: &Context<'_>, store_id: &str, line_id: String) -> Result<AllocateResponse> {
@@ -58,9 +61,7 @@ pub fn allocate(ctx: &Context<'_>, store_id: &str, line_id: String) -> Result<Al
     )
 }
 
-pub fn map_response(
-    from: Result<InvoiceLineInsertsUpdatesDeletes, ServiceError>,
-) -> Result<AllocateResponse> {
+pub fn map_response(from: Result<ServiceResult, ServiceError>) -> Result<AllocateResponse> {
     let result = match from {
         Ok(line) => AllocateResponse::Response(ResponseNode::from_domain(line)),
         Err(error) => AllocateResponse::Error(AllocateError {
@@ -93,16 +94,24 @@ fn map_error(error: ServiceError) -> Result<AllocateErrorInterface> {
 }
 
 impl ResponseNode {
-    pub fn from_domain(from: InvoiceLineInsertsUpdatesDeletes) -> ResponseNode {
-        let InvoiceLineInsertsUpdatesDeletes {
+    pub fn from_domain(from: ServiceResult) -> ResponseNode {
+        let ServiceResult {
             updates,
             deletes,
             inserts,
+            skipped_expired_stock_lines,
+            skipped_on_hold_stock_lines,
+            issued_expiring_soon_stock_lines,
         } = from;
         ResponseNode {
             updates: InvoiceLineConnector::from_vec(updates),
             deletes: deletes.into_iter().map(|id| DeleteResponse(id)).collect(),
             inserts: InvoiceLineConnector::from_vec(inserts),
+            skipped_expired_stock_lines: StockLineConnector::from_vec(skipped_expired_stock_lines),
+            skipped_on_hold_stock_lines: StockLineConnector::from_vec(skipped_on_hold_stock_lines),
+            issued_expiring_soon_stock_lines: StockLineConnector::from_vec(
+                issued_expiring_soon_stock_lines,
+            ),
         }
     }
 }
@@ -114,15 +123,16 @@ mod graphql {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::MockDataInserts, schema::InvoiceLineRow, InvoiceLine, StorageConnectionManager,
+        mock::MockDataInserts, schema::InvoiceLineRow, InvoiceLine, StockLine,
+        StorageConnectionManager,
     };
     use serde_json::json;
 
     use service::{
         invoice_line::{
             outbound_shipment_unallocated_line::{
+                AllocateLineResult as ServiceResult,
                 AllocateOutboundShipmentUnallocatedLineError as ServiceError,
-                InvoiceLineInsertsUpdatesDeletes,
             },
             InvoiceLineServiceTrait,
         },
@@ -132,8 +142,7 @@ mod graphql {
 
     use crate::InvoiceLineMutations;
 
-    type AllocateLineMethod =
-        dyn Fn(String) -> Result<InvoiceLineInsertsUpdatesDeletes, ServiceError> + Sync + Send;
+    type AllocateLineMethod = dyn Fn(String) -> Result<ServiceResult, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<AllocateLineMethod>);
 
@@ -143,7 +152,7 @@ mod graphql {
             _: &ServiceContext,
             _: &str,
             input: String,
-        ) -> Result<InvoiceLineInsertsUpdatesDeletes, ServiceError> {
+        ) -> Result<ServiceResult, ServiceError> {
             self.0(input)
         }
     }
@@ -266,6 +275,21 @@ mod graphql {
                     deletes {
                         id
                     }
+                    skippedExpiredStockLines {
+                        nodes {
+                            id
+                        }
+                    }
+                    skippedOnHoldStockLines {
+                        nodes {
+                            id
+                        }
+                    }
+                    issuedExpiringSoonStockLines {
+                        nodes {
+                            id
+                        }
+                    }
                 }
             }
           }
@@ -274,7 +298,7 @@ mod graphql {
         // Success
         let test_service = TestService(Box::new(|line_id| {
             assert_eq!(line_id, "unallocated_line");
-            Ok(InvoiceLineInsertsUpdatesDeletes {
+            Ok(ServiceResult {
                 inserts: vec![inline_init(|r: &mut InvoiceLine| {
                     r.invoice_line_row =
                         inline_init(|r: &mut InvoiceLineRow| r.id = "insert1".to_string())
@@ -290,6 +314,15 @@ mod graphql {
                             inline_init(|r: &mut InvoiceLineRow| r.id = "update2".to_string())
                     }),
                 ],
+                skipped_expired_stock_lines: vec![inline_init(|r: &mut StockLine| {
+                    r.stock_line_row.id = "skpped_expired".to_string();
+                })],
+                skipped_on_hold_stock_lines: vec![inline_init(|r: &mut StockLine| {
+                    r.stock_line_row.id = "skipped_on_hold".to_string();
+                })],
+                issued_expiring_soon_stock_lines: vec![inline_init(|r: &mut StockLine| {
+                    r.stock_line_row.id = "expiring_soon".to_string();
+                })],
             })
         }));
 
@@ -308,6 +341,21 @@ mod graphql {
                         "id": "update1"
                     },{
                         "id": "update2"
+                    }]
+                },
+                "skippedExpiredStockLines": {
+                    "nodes": [{
+                        "id": "skpped_expired"
+                    }]
+                },
+                "skippedOnHoldStockLines": {
+                    "nodes": [{
+                        "id": "skipped_on_hold"
+                    }]
+                },
+                "issuedExpiringSoonStockLines": {
+                    "nodes": [{
+                        "id": "expiring_soon"
                     }]
                 }
             }

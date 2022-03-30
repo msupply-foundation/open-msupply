@@ -1,3 +1,4 @@
+use chrono::Utc;
 use repository::EqualFilter;
 use repository::{
     schema::{RequisitionLineRow, RequisitionRow},
@@ -63,6 +64,7 @@ pub fn generate_requisition_lines(
                 suggested_quantity,
                 available_stock_on_hand,
                 average_monthly_consumption,
+                snapshot_datetime: Some(Utc::now().naive_utc()),
                 // Default
                 comment: None,
                 supply_quantity: 0,
