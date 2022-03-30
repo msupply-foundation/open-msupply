@@ -15,7 +15,7 @@ use service::{auth_data::AuthData, service_provider::ServiceProvider, token_buck
 
 use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
-use std::{net::TcpListener, sync::RwLock};
+use std::{net::TcpListener, path::Path, sync::RwLock};
 use tokio::sync::oneshot;
 
 pub mod configuration;
@@ -33,10 +33,12 @@ pub async fn start_server(
     settings: Settings,
     mut off_switch: oneshot::Receiver<()>,
 ) -> std::io::Result<()> {
+    let cert_type = find_certs();
+
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
         token_bucket: RwLock::new(TokenBucket::new()),
-        debug_no_ssl: false,
+        debug_no_ssl: matches!(cert_type, ServerCertType::None),
         debug_no_access_control: settings.server.debug_no_access_control,
     });
 
@@ -73,17 +75,16 @@ pub async fn start_server(
             ))
             .configure(config_static_files)
     });
-    match load_certs() {
-        Ok(ssl_builder) => {
+    match cert_type {
+        ServerCertType::SelfSigned(cert_path) => {
+            let ssl_builder = load_certs(cert_path).expect("Invalid self signed certificates");
             http_server = http_server.bind_openssl(
                 format!("{}:{}", settings.server.host, settings.server.port),
                 ssl_builder,
             )?;
         }
-        Err(err) => {
-            error!("Failed to load certificates: {}", err);
-            warn!("Run in HTTP mode");
-
+        ServerCertType::None => {
+            warn!("No certificates found. Run in HTTP mode");
             let listener = TcpListener::bind(settings.server.address())
                 .expect("Failed to bind server to address");
             http_server = http_server.listen(listener)?;
@@ -112,9 +113,32 @@ pub async fn start_server(
     result
 }
 
-fn load_certs() -> Result<SslAcceptorBuilder, anyhow::Error> {
+pub struct SelfSignedCertFiles {
+    pub private_cert_file: String,
+    pub public_cert_file: String,
+}
+
+/// Details about the certs used by the running server
+pub enum ServerCertType {
+    None,
+    SelfSigned(SelfSignedCertFiles),
+}
+
+const PRIVATE_CERT_FILE: &str = "./certs/key.pem";
+const PUBLIC_CERT_FILE: &str = "./certs/cert.pem";
+fn find_certs() -> ServerCertType {
+    if !Path::new(PRIVATE_CERT_FILE).exists() || !Path::new(PUBLIC_CERT_FILE).exists() {
+        return ServerCertType::None;
+    }
+    return ServerCertType::SelfSigned(SelfSignedCertFiles {
+        private_cert_file: PRIVATE_CERT_FILE.to_string(),
+        public_cert_file: PUBLIC_CERT_FILE.to_string(),
+    });
+}
+
+fn load_certs(cert_files: SelfSignedCertFiles) -> Result<SslAcceptorBuilder, anyhow::Error> {
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    builder.set_private_key_file("certs/key.pem", SslFiletype::PEM)?;
-    builder.set_certificate_chain_file("certs/cert.pem")?;
+    builder.set_private_key_file(cert_files.private_cert_file, SslFiletype::PEM)?;
+    builder.set_certificate_chain_file(cert_files.public_cert_file)?;
     Ok(builder)
 }
