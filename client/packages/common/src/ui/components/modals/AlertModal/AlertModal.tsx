@@ -1,44 +1,38 @@
-import React from 'react';
-import { Grid, Typography } from '@mui/material';
-import { DialogButton } from '../../buttons';
-import { AlertIcon } from '@common/icons';
-import { BasicModal } from '@common/components';
-
+import React, { useContext } from 'react';
+import { AlertModalContext } from './AlertModalContext';
 export interface AlertModalProps {
+  important?: boolean;
   message: React.ReactNode;
   open: boolean;
   onOk: () => void;
   title: string;
 }
 
+// This is really just a convenience component
+// allowing you to use the modal in a declarative syntax
+// without creating multiple overlaying modals
+// Set the important prop only if this is a critical alert
+// which should only be superceded by other critical alerts
+// Apart from the important / non-important distinction,
+// the latest caller wins, and will be displayed
 export const AlertModal: React.FC<AlertModalProps> = ({
+  important,
   message,
   onOk,
   open,
   title,
 }) => {
-  return (
-    <BasicModal open={open} width={400} height={150}>
-      <Grid padding={4} container gap={1} flexDirection="column">
-        <Grid container gap={1}>
-          <Grid item>
-            <AlertIcon color="primary" />
-          </Grid>
-          <Grid item>
-            <Typography
-              id="transition-modal-title"
-              variant="h6"
-              component="span"
-            >
-              {title}
-            </Typography>
-          </Grid>
-        </Grid>
-        <Grid item>{message}</Grid>
-        <Grid item display="flex" justifyContent="flex-end" flex={1}>
-          <DialogButton variant="ok" onClick={onOk} autoFocus />
-        </Grid>
-      </Grid>
-    </BasicModal>
-  );
+  const alertContext = useContext(AlertModalContext);
+  const {
+    setState,
+    open: isCurrentlyOpen,
+    important: isCurrentlyImportant,
+  } = alertContext;
+
+  React.useEffect(() => {
+    if (isCurrentlyOpen && !!isCurrentlyImportant && !important) return;
+    setState({ important, message, onOk, open, title });
+  }, [important, message, onOk, open, title]);
+
+  return <></>;
 };
