@@ -18,6 +18,7 @@ use crate::{
     name::get_names,
     permission_validation::{ValidationService, ValidationServiceTrait},
     permissions::{PermissionService, PermissionServiceTrait},
+    report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
@@ -45,6 +46,9 @@ pub struct ServiceProvider {
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
     // Stock stats
     pub item_stats_service: Box<dyn ItemStatsServiceTrait>,
+
+    // Reports
+    pub report_service: Box<dyn ReportServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -70,6 +74,7 @@ impl ServiceProvider {
             requisition_line_service: Box::new(RequisitionLineService {}),
             item_stats_service: Box::new(ItemStatsService {}),
             general_service: Box::new(GeneralService {}),
+            report_service: Box::new(ReportService {}),
         }
     }
 
