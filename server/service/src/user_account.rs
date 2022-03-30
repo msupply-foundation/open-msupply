@@ -2,8 +2,9 @@ use repository::{
     schema::{
         user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow, UserAccountRow,
     },
-    RepositoryError, StorageConnection, TransactionError, UserAccountRowRepository,
-    UserPermissionRowRepository, UserStoreJoinRowRepository,
+    EqualFilter, RepositoryError, StorageConnection, TransactionError, User,
+    UserAccountRowRepository, UserFilter, UserPermissionRowRepository, UserRepository,
+    UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -129,9 +130,9 @@ impl<'a> UserAccountService<'a> {
             )
     }
 
-    pub fn find_user(&self, user_id: &str) -> Result<Option<UserAccount>, RepositoryError> {
-        let repo = UserAccountRowRepository::new(self.connection);
-        repo.find_one_by_id(user_id)
+    pub fn find_user(&self, user_id: &str) -> Result<Option<User>, RepositoryError> {
+        let repo = UserRepository::new(self.connection);
+        repo.query_one(UserFilter::new().id(EqualFilter::equal_to(user_id)))
     }
 
     /// Finds a user account and verifies that the password is ok

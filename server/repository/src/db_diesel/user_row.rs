@@ -3,6 +3,7 @@ use super::StorageConnection;
 use crate::{
     repository_error::RepositoryError,
     schema::{diesel_schema::user_account::dsl as user_account_dsl, UserAccountRow},
+    User,
 };
 
 use diesel::prelude::*;
@@ -74,11 +75,14 @@ impl<'a> UserAccountRowRepository<'a> {
 // Users don't sync and will only be available after first log in, thus in schema reference is not enforced
 // API consumers would like users to be returned for records that are linked to them, as if reference was enforced
 // Using uknown user until we start syncing users
-pub fn unknown_user() -> UserAccountRow {
-    UserAccountRow {
-        id: "unknown".to_string(),
-        username: "unknown".to_string(),
-        hashed_password: "unknown".to_string(),
-        email: Some("unknown@sussol.net".to_string()),
+pub fn unknown_user() -> User {
+    User {
+        user_row: UserAccountRow {
+            id: "unknown".to_string(),
+            username: "unknown".to_string(),
+            hashed_password: "unknown".to_string(),
+            email: Some("unknown@sussol.net".to_string()),
+        },
+        stores: vec![],
     }
 }
