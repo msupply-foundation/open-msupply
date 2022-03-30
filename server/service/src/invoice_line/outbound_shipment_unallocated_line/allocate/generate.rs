@@ -36,9 +36,8 @@ pub fn generate(
 ) -> Result<GenerateOutput, RepositoryError> {
     let mut result = GenerateOutput::default();
     let allocated_lines = get_allocated_lines(connection, &unallocated_line)?;
-    let already_allocated = calculate_already_allocated(&allocated_lines);
     // Assume pack_size 1 for unallocated line
-    let mut remaining_to_allocated = unallocated_line.number_of_packs - already_allocated;
+    let mut remaining_to_allocated = unallocated_line.number_of_packs;
     // If nothing remaing to alloacted just remove the line
     if remaining_to_allocated <= 0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
@@ -220,12 +219,6 @@ fn get_sorted_available_stock_lines(
     };
 
     StockLineRepository::new(connection).query(Pagination::new(), Some(filter), Some(sort))
-}
-
-fn calculate_already_allocated(lines: &Vec<InvoiceLine>) -> i32 {
-    lines.iter().fold(0, |sum, line| {
-        sum + line.invoice_line_row.number_of_packs * line.invoice_line_row.pack_size
-    })
 }
 
 fn get_allocated_lines(
