@@ -17,7 +17,23 @@ export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 export type RefreshTokenQuery = { __typename: 'FullQuery', refreshToken: { __typename: 'RefreshToken', token: string } | { __typename: 'RefreshTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidToken', description: string } | { __typename: 'NoRefreshTokenProvided', description: string } | { __typename: 'NotARefreshToken', description: string } | { __typename: 'TokenExpired', description: string } } };
 
+export type StoreRowFragment = { __typename: 'StoreNode', code: string, id: string };
 
+export type StoresQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']>;
+  filter?: Types.InputMaybe<Types.StoreFilterInput>;
+}>;
+
+
+export type StoresQuery = { __typename: 'FullQuery', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, id: string }> } };
+
+export const StoreRowFragmentDoc = gql`
+    fragment StoreRow on StoreNode {
+  code
+  id
+}
+    `;
 export const AuthTokenDocument = gql`
     query authToken($username: String!, $password: String!) {
   authToken(password: $password, username: $username) {
@@ -94,6 +110,23 @@ export const RefreshTokenDocument = gql`
   }
 }
     `;
+export const StoresDocument = gql`
+    query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
+  stores(
+    page: {first: $first, offset: $offset}
+    filter: $filter
+    sort: {key: name}
+  ) {
+    ... on StoreConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StoreRow
+      }
+    }
+  }
+}
+    ${StoreRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
 
@@ -107,6 +140,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     refreshToken(variables?: RefreshTokenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RefreshTokenQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RefreshTokenQuery>(RefreshTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'refreshToken');
+    },
+    stores(variables?: StoresQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StoresQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<StoresQuery>(StoresDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stores');
     }
   };
 }
@@ -142,5 +178,22 @@ export const mockAuthTokenQuery = (resolver: ResponseResolver<GraphQLRequest<Aut
 export const mockRefreshTokenQuery = (resolver: ResponseResolver<GraphQLRequest<RefreshTokenQueryVariables>, GraphQLContext<RefreshTokenQuery>, any>) =>
   graphql.query<RefreshTokenQuery, RefreshTokenQueryVariables>(
     'refreshToken',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockStoresQuery((req, res, ctx) => {
+ *   const { first, offset, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ stores })
+ *   )
+ * })
+ */
+export const mockStoresQuery = (resolver: ResponseResolver<GraphQLRequest<StoresQueryVariables>, GraphQLContext<StoresQuery>, any>) =>
+  graphql.query<StoresQuery, StoresQueryVariables>(
+    'stores',
     resolver
   )
