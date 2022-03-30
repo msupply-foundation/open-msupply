@@ -12,3 +12,7 @@ pub const SYSTEM_NAME_CODES: &[&'static str] = &["invad", "build", "repack"];
 pub fn stock_line_expiring_soon_offset() -> Duration {
     Duration::weeks(6)
 }
+/// Expected delivery date offset (for request requisiton insert)
+pub fn expected_delivery_date_offset() -> Duration {
+    Duration::weeks(2)
+}

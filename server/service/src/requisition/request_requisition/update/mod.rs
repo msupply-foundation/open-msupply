@@ -3,6 +3,7 @@ use crate::{
     service_provider::ServiceContext,
     sync_processor::{process_records, Record},
 };
+use chrono::NaiveDate;
 use repository::{
     RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
 };
@@ -29,6 +30,7 @@ pub struct UpdateRequestRequisition {
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: Option<f64>,
     pub status: Option<UpdateRequestRequstionStatus>,
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 #[derive(Debug, PartialEq)]
