@@ -73,6 +73,9 @@ export type AllocateOutboundShipmentUnallocatedLineNode = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineNode';
   deletes: Array<DeleteResponse>;
   inserts: InvoiceLineConnector;
+  issuedExpiringSoonStockLines: StockLineConnector;
+  skippedExpiredStockLines: StockLineConnector;
+  skippedOnHoldStockLines: StockLineConnector;
   updates: InvoiceLineConnector;
 };
 
@@ -1375,6 +1378,8 @@ export type InsertRequestRequisitionErrorInterface = {
 export type InsertRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
+  /** Defaults to + 2 weeks from now */
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   maxMonthsOfStock: Scalars['Float'];
   minMonthsOfStock: Scalars['Float'];
@@ -1768,6 +1773,8 @@ export type ItemStatsNode = {
   availableMonthsOfStockOnHand: Scalars['Float'];
   availableStockOnHand: Scalars['Int'];
   averageMonthlyConsumption: Scalars['Int'];
+  /** For historic item stats (i.e. RequisitionLine.ItemStats) */
+  snapshotDatetime?: Maybe<Scalars['DateTime']>;
 };
 
 export type ItemsResponse = ItemConnector;
@@ -2233,6 +2240,7 @@ export type RequisitionNode = {
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['DateTime'];
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   lines: RequisitionLineConnector;
@@ -2826,6 +2834,7 @@ export type UpdateRequestRequisitionErrorInterface = {
 export type UpdateRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   maxMonthsOfStock?: InputMaybe<Scalars['Float']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']>;
