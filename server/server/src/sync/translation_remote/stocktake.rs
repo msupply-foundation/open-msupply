@@ -7,13 +7,11 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
     empty_date_time_as_option, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_STOCKTAKE,
 };
 
@@ -71,21 +69,14 @@ impl RemotePullTranslation for StocktakeTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_STOCKTAKE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyStocktakeRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
+        let data = serde_json::from_str::<LegacyStocktakeRow>(&sync_record.data)?;
         let (created_datetime, finalised_datetime) = match data.created_datetime {
             Some(created_datetime) => {
                 // use new om_* fields
@@ -128,7 +119,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::Stocktake {
             return Ok(None);
         }
@@ -148,13 +139,8 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             is_locked,
             stocktake_date,
         } = StocktakeRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
-            .ok_or(to_push_translation_error(
-                table_name,
-                anyhow::Error::msg("Stocktake row not found"),
-                changelog,
-            ))?;
+            .find_one_by_id(&changelog.row_id)?
+            .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
 
         let legacy_row = LegacyStocktakeRow {
             ID: id.clone(),
@@ -177,8 +163,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             store_id: Some(store_id),
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }

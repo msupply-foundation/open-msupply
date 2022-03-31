@@ -7,12 +7,10 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     empty_date_time_as_option, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     TRANSLATION_RECORD_REQUISITION_LINE,
 };
 
@@ -48,21 +46,14 @@ impl RemotePullTranslation for RequisitionLineTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_REQUISITION_LINE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data).map_err(
-            |source| SyncTranslationError {
-                table_name,
-                source: source.into(),
-                record: sync_record.data.clone(),
-            },
-        )?;
-
+        let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data)?;
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::RequisitionLine(RequisitionLineRow {
                 id: data.ID.to_string(),
@@ -84,7 +75,7 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::RequisitionLine {
             return Ok(None);
         }
@@ -101,16 +92,11 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
             average_monthly_consumption,
             comment,
         } = RequisitionLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
-            .ok_or(to_push_translation_error(
-                table_name,
-                anyhow::Error::msg(format!(
-                    "Requisition line row not found: {}",
-                    changelog.row_id
-                )),
-                changelog,
-            ))?;
+            .find_one_by_id(&changelog.row_id)?
+            .ok_or(anyhow::Error::msg(format!(
+                "Requisition line row not found: {}",
+                changelog.row_id
+            )))?;
 
         let legacy_row = LegacyRequisitionLineRow {
             ID: id.clone(),
@@ -131,8 +117,7 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
             store_id: None,
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }

@@ -1,16 +1,13 @@
 use log::warn;
 use repository::{
-    schema::{ChangelogRow, ChangelogTableName, NameStoreJoinRow, RemoteSyncBufferRow},
-    NameRepository, NameStoreJoinRepository, StorageConnection,
+    schema::{NameStoreJoinRow, RemoteSyncBufferRow},
+    NameRepository, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
     TRANSLATION_RECORD_NAME_STORE_JOIN,
 };
 
@@ -32,28 +29,16 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<super::pull::IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<super::pull::IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_NAME_STORE_JOIN;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data).map_err(
-            |source| SyncTranslationError {
-                table_name,
-                source: source.into(),
-                record: sync_record.data.clone(),
-            },
-        )?;
+        let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data)?;
 
-        let name = match NameRepository::new(connection)
-            .find_one_by_id(&data.name_ID)
-            .map_err(|source| SyncTranslationError {
-                table_name,
-                source: source.into(),
-                record: sync_record.data.clone(),
-            })? {
+        let name = match NameRepository::new(connection).find_one_by_id(&data.name_ID)? {
             Some(name) => name,
             None => {
                 // TODO: support patients?
