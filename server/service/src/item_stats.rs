@@ -8,7 +8,7 @@ use repository::{
     StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
 use util::{
-    constants::{default_amc_lookback_months, NUMBER_OF_DAYS_IN_A_MONTH},
+    constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
     date_now_with_offset,
 };
 
@@ -49,7 +49,7 @@ pub fn get_item_stats(
         item_id: item_id_filter,
     } = filter.unwrap_or_default();
 
-    let amc_lookback_months = amc_lookback_months.unwrap_or(default_amc_lookback_months());
+    let amc_lookback_months = amc_lookback_months.unwrap_or(DEFAULT_AMC_LOOKBACK_MONTHS);
 
     Ok(ItemStats::new_vec(
         get_consumption_rows(
