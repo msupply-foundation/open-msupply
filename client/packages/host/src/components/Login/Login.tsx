@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import {
   ArrowRightIcon,
   useTranslation,
-  AutocompleteRenderInputParams,
   LoadingButton,
   Box,
   Typography,
@@ -10,23 +9,8 @@ import {
   useHostContext,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
-import { StoreSearchInput } from '@openmsupply-client/system';
 import { useLoginForm } from './hooks';
 import { LoginLayout } from './LoginLayout';
-
-const StoreAutocompleteInput: React.FC<
-  AutocompleteRenderInputParams
-> = props => {
-  const t = useTranslation('app');
-  return (
-    <LoginTextInput
-      {...props}
-      InputProps={{ ...props.InputProps }}
-      style={{ width: 282 }}
-      label={t('heading.store')}
-    />
-  );
-};
 
 export const Login: React.FC = ({}) => {
   const t = useTranslation('app');
@@ -40,8 +24,6 @@ export const Login: React.FC = ({}) => {
     isValid,
     password,
     setPassword,
-    store,
-    setStore,
     username,
     setUsername,
     isLoggingIn,
@@ -76,14 +58,6 @@ export const Login: React.FC = ({}) => {
             autoComplete: 'current-password',
           }}
           inputRef={passwordRef}
-        />
-      }
-      StoreInput={
-        <StoreSearchInput
-          onChange={setStore}
-          renderInput={StoreAutocompleteInput}
-          isDisabled={isLoggingIn}
-          value={store}
         />
       }
       LoginButton={

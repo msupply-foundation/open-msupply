@@ -10,7 +10,6 @@ import { LoginIcon } from './LoginIcon';
 type LoginLayoutProps = {
   UsernameInput: React.ReactNode;
   PasswordInput: React.ReactNode;
-  StoreInput: React.ReactNode;
   LoginButton: React.ReactNode;
   ErrorMessage: React.ReactNode;
   onLogin: () => Promise<void>;
@@ -19,7 +18,6 @@ type LoginLayoutProps = {
 export const LoginLayout = ({
   UsernameInput,
   PasswordInput,
-  StoreInput,
   LoginButton,
   ErrorMessage,
   onLogin,
@@ -87,7 +85,6 @@ export const LoginLayout = ({
               </Box>
               {UsernameInput}
               {PasswordInput}
-              {StoreInput}
               {ErrorMessage}
               <Box display="flex" justifyContent="flex-end">
                 {LoginButton}
