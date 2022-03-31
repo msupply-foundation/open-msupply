@@ -396,7 +396,7 @@ fn to_legacy_confirm_time(
     let datetime = match invoice_type {
         InvoiceRowType::OutboundShipment => picked_datetime,
         InvoiceRowType::InboundShipment => delivered_datetime,
-        InvoiceRowType::InventoryAdjustment => delivered_datetime,
+        InvoiceRowType::InventoryAdjustment => None,
     };
 
     let date = datetime.map(|datetime| datetime.date());
