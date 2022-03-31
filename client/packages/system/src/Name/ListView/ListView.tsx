@@ -1,19 +1,23 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
-  useNavigate,
   TableProvider,
   DataTable,
   useColumns,
   createTableStore,
+  useDialog,
 } from '@openmsupply-client/common';
+import { DetailModal } from '../DetailModal';
 import { useNames, NameRowFragment } from '../api';
 
 export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   type,
 }) => {
-  const navigate = useNavigate();
+  const [selectedId, setSelectedId] = useState<string>('');
   const { data, isLoading, onChangePage, pagination, sortBy, onChangeSortBy } =
     useNames(type);
+  const { Modal, showDialog } = useDialog();
+
+  console.log('selectedId', selectedId);
 
   const columns = useColumns<NameRowFragment>(
     ['name', 'code'],
@@ -33,9 +37,13 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
         data={data?.nodes}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(row.id);
+          setSelectedId(row.id);
+          showDialog();
         }}
       />
+      <Modal title="Customer details" sx={{ maxWidth: '90%' }}>
+        <DetailModal nameId={selectedId} />
+      </Modal>
     </TableProvider>
   );
 };

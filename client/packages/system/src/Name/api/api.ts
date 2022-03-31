@@ -18,6 +18,18 @@ const nameParsers = {
 
 export const getNameQueries = (sdk: Sdk, storeId: string) => ({
   get: {
+    byId: async (nameId: string) => {
+      const result = await sdk.nameById({ storeId, nameId });
+      console.log(result);
+      const { names } = result;
+      if (names.__typename === 'NameConnector') {
+        if (names.nodes.length) {
+          return names.nodes[0];
+        }
+      }
+
+      throw new Error('Name not found');
+    },
     internalSuppliers: async ({ sortBy }: ListParams) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
 
