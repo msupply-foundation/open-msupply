@@ -1,47 +1,29 @@
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, Utc};
 
-pub fn date_now_with_offset(off_set: Duration, is_addition: bool) -> NaiveDate {
-    date_with_offset(&date_now(), off_set, is_addition)
+pub fn date_now_with_offset(off_set: Duration) -> NaiveDate {
+    date_with_offset(&date_now(), off_set)
 }
 
-pub fn date_with_offset(date: &NaiveDate, off_set: Duration, is_addition: bool) -> NaiveDate {
-    if is_addition {
-        date.checked_add_signed(off_set)
-    } else {
-        date.checked_sub_signed(off_set)
-    }
-    .unwrap_or(date.clone())
+pub fn date_with_offset(date: &NaiveDate, off_set: Duration) -> NaiveDate {
+    date.checked_add_signed(off_set).unwrap_or(date.clone())
 }
 
-pub fn date_with_days_offset(date: &NaiveDate, days_offset: u32, is_addition: bool) -> NaiveDate {
+pub fn date_with_days_offset(date: &NaiveDate, days_offset: i32) -> NaiveDate {
     let off_set = Duration::days(days_offset as i64);
-    date_with_offset(date, off_set, is_addition)
+    date_with_offset(date, off_set)
 }
 
 pub fn date_now() -> NaiveDate {
     Utc::now().naive_local().date()
 }
 
-pub fn datetime_with_offset(
-    date: &NaiveDateTime,
-    off_set: Duration,
-    is_addition: bool,
-) -> NaiveDateTime {
-    if is_addition {
-        date.checked_add_signed(off_set)
-    } else {
-        date.checked_sub_signed(off_set)
-    }
-    .unwrap_or(date.clone())
+pub fn datetime_with_offset(date: &NaiveDateTime, off_set: Duration) -> NaiveDateTime {
+    date.checked_add_signed(off_set).unwrap_or(date.clone())
 }
 
-pub fn datetime_with_days_offset(
-    date: &NaiveDateTime,
-    days_offset: u32,
-    is_addition: bool,
-) -> NaiveDateTime {
+pub fn datetime_with_days_offset(date: &NaiveDateTime, days_offset: i32) -> NaiveDateTime {
     let off_set = Duration::days(days_offset as i64);
-    datetime_with_offset(date, off_set, is_addition)
+    datetime_with_offset(date, off_set)
 }
 
 /// ```

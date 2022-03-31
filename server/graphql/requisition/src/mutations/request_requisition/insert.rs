@@ -14,7 +14,7 @@ use service::{
         InsertRequestRequisition as ServiceInput, InsertRequestRequisitionError as ServiceError,
     },
 };
-use util::{date_now_with_offset, constants::expected_delivery_date_offset};
+use util::{constants::expected_delivery_date_offset, date_now_with_offset};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertRequestRequisitionInput")]
@@ -107,10 +107,8 @@ impl InsertInput {
             comment,
             max_months_of_stock,
             min_months_of_stock,
-            expected_delivery_date: expected_delivery_date.or(Some(date_now_with_offset(
-                expected_delivery_date_offset(),
-                true,
-            ))),
+            expected_delivery_date: expected_delivery_date
+                .or(Some(date_now_with_offset(expected_delivery_date_offset()))),
         }
     }
 }

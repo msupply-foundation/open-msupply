@@ -1,3 +1,5 @@
+use std::ops::Neg;
+
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     schema::StockMovementRow, DatetimeFilter, EqualFilter, RepositoryError, StockMovementFilter,
@@ -88,8 +90,10 @@ fn generate_evolution_series(
     let reference_date = reference_datetime.date();
     let last_historic_date = reference_date;
     // -1 point because current reference_datetime is consider a historic data point
-    let first_historic_date =
-        date_with_days_offset(&reference_date, number_of_historic_data_points - 1, false);
+    let first_historic_date = date_with_days_offset(
+        &reference_date,
+        (number_of_historic_data_points as i32 - 1).neg(),
+    );
 
     let mut points = StockEvolutionPoints {
         historic_points: Vec::new(),
@@ -99,11 +103,11 @@ fn generate_evolution_series(
     };
 
     let last_projected_date =
-        date_with_days_offset(&reference_date, number_of_projected_data_points, true);
+        date_with_days_offset(&reference_date, number_of_projected_data_points as i32);
 
     let mut off_set = 0;
     loop {
-        let reference_date = date_with_days_offset(&first_historic_date, off_set, true);
+        let reference_date = date_with_days_offset(&first_historic_date, off_set);
         if reference_date > last_projected_date {
             break;
         }
@@ -139,7 +143,7 @@ fn calculate_historic_stock_evolution(
     for reference_date in historic_points.into_iter().rev() {
         // On reference_datetime's date we should should have reference_stock_on_hand
         // SOH at the start of next day is current day SOH
-        let next_day = date_with_days_offset(&reference_date, 1, true);
+        let next_day = date_with_days_offset(&reference_date, 1);
         let day_movements = stock_on_hand_rows.iter().fold(0, |movement, row| {
             if within_range(next_day, row.datetime) {
                 movement + row.quantity
@@ -190,7 +194,7 @@ fn calculate_projected_stock_evolution(
 
 fn within_range(within_date: NaiveDate, datetime: NaiveDateTime) -> bool {
     within_date.and_hms(0, 0, 0) <= datetime
-        && datetime <= date_with_days_offset(&within_date, 1, true).and_hms(0, 0, 0)
+        && datetime <= date_with_days_offset(&within_date, 1).and_hms(0, 0, 0)
 }
 
 #[cfg(test)]
