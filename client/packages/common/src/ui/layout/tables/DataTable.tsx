@@ -108,6 +108,7 @@ export const DataTableComponent = <T extends RecordWithId>({
         flexDirection: 'column',
         height: '100%',
         overflowX: 'unset',
+        tableLayout: 'fixed',
       }}
     >
       <MuiTable>
