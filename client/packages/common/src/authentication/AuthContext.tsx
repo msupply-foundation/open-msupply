@@ -126,7 +126,7 @@ export const AuthProvider: FC = ({ children }) => {
   // or the first store in the list
   // TODO: return default store rather than first - currently not provided by API
   const getStore = async () => {
-    if (!!mostRecentlyUsedCredentials && !!mostRecentlyUsedCredentials.store)
+    if (mostRecentlyUsedCredentials?.store)
       return mostRecentlyUsedCredentials.store;
 
     const { nodes } = await getStores();
