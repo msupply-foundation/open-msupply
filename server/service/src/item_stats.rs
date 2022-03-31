@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Neg};
 
 use crate::{i64_to_u32, service_provider::ServiceContext};
 use chrono::Duration;
@@ -69,10 +69,9 @@ pub fn get_consumption_rows(
     item_id_filter: Option<EqualFilter<String>>,
     amc_lookback_months: u32,
 ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
-    let start_date = date_now_with_offset(
-        Duration::days((amc_lookback_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i64),
-        false,
-    );
+    let start_date = date_now_with_offset(Duration::days(
+        (amc_lookback_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64,
+    ));
 
     let filter = ConsumptionFilter {
         item_id: item_id_filter,
