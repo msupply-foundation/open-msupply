@@ -29,8 +29,6 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
     setSuffix(data?.name ?? '');
   }, [data]);
 
-  console.log('data', data);
-
   if (isLoading) return <DetailFormSkeleton />;
 
   return !!data ? (
