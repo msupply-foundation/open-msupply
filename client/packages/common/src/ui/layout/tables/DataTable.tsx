@@ -156,6 +156,7 @@ export const DataTableComponent = <T extends RecordWithId>({
           insetBlockEnd: 0,
           backgroundColor: 'white',
           justifyContent: 'flex-end',
+          zIndex: 100,
         }}
       >
         {pagination && onChangePage && (
