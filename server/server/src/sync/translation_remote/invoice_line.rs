@@ -53,8 +53,8 @@ pub struct LegacyTransLineRow {
     pub sell_price: f64,
     #[serde(rename = "type")]
     pub _type: LegacyTransLineType,
-    // number of packs
-    pub quantity: i32,
+    #[serde(rename = "quantity")]
+    pub number_of_packs: i32,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub note: Option<String>,
 
@@ -151,7 +151,7 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 total_after_tax,
                 tax,
                 r#type: line_type,
-                number_of_packs: data.quantity / data.pack_size,
+                number_of_packs: data.number_of_packs,
                 note: data.note,
             }),
         )))
@@ -160,8 +160,8 @@ impl RemotePullTranslation for InvoiceLineTranslation {
 
 fn total(data: &LegacyTransLineRow) -> f64 {
     match data._type {
-        LegacyTransLineType::StockIn => data.cost_price * data.quantity as f64,
-        LegacyTransLineType::StockOut => data.sell_price * data.quantity as f64,
+        LegacyTransLineType::StockIn => data.cost_price * data.number_of_packs as f64,
+        LegacyTransLineType::StockOut => data.sell_price * data.number_of_packs as f64,
         LegacyTransLineType::Placeholder => 0.0,
         LegacyTransLineType::Service => 0.0,
         LegacyTransLineType::NonStock => 0.0,
@@ -226,7 +226,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             cost_price: cost_price_per_pack,
             sell_price: sell_price_per_pack,
             _type: to_legacy_invoice_line_type(&r#type),
-            quantity: pack_size * number_of_packs,
+            number_of_packs,
             note,
             item_code: Some(item_code),
             // encode None as -1
