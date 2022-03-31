@@ -11,6 +11,7 @@ pub enum ChangelogAction {
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
     Number,
+    Location,
     StockLine,
     NameStoreJoin,
     Invoice,
