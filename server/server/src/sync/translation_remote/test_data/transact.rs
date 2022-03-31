@@ -266,7 +266,7 @@ fn transact_2_pull_record() -> TestSyncRecord {
                 name_store_id: Some("store_b".to_string()),
                 invoice_number: 4,
                 r#type: InvoiceRowType::OutboundShipment,
-                status: InvoiceRowStatus::Verified,
+                status: InvoiceRowStatus::Shipped,
                 on_hold: false,
                 comment: None,
                 their_reference: None,
@@ -332,7 +332,7 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            om_status: Some(InvoiceStatus::Verified),
+            om_status: Some(InvoiceStatus::Shipped),
             om_type: Some(InvoiceType::OutboundShipment),
             om_colour: Some("#1A1919".to_string())
         }),
@@ -489,8 +489,8 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             entry_time: NaiveTime::from_hms(9, 33, 0),
             ship_date: Some(NaiveDate::from_ymd(2022, 8, 27)),
             arrival_date_actual: Some(NaiveDate::from_ymd(2022, 8, 28)),
-            confirm_date: Some(NaiveDate::from_ymd(2022, 8, 28)),
-            confirm_time: NaiveTime::from_hms(13, 33, 0),
+            confirm_date: None,
+            confirm_time: NaiveTime::from_hms(0, 0, 0),
             mode: TransactMode::Store,
 
             created_datetime: Some(NaiveDate::from_ymd(2022, 8, 24).and_hms(9, 33, 0)),
