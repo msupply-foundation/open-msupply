@@ -349,15 +349,41 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
     match invoice_type {
-        InvoiceRowType::OutboundShipment => {
-            mapping.picked_datetime = confirm_datetime;
-        }
+        InvoiceRowType::OutboundShipment => match data.status {
+            LegacyTransactStatus::Cn => {
+                mapping.allocated_datetime = confirm_datetime.clone();
+                mapping.picked_datetime = confirm_datetime;
+            }
+            LegacyTransactStatus::Fn => {
+                mapping.allocated_datetime = confirm_datetime.clone();
+                mapping.picked_datetime = confirm_datetime.clone();
+                mapping.shipped_datetime = confirm_datetime;
+            }
+            _ => {}
+        },
         InvoiceRowType::InboundShipment => {
             mapping.delivered_datetime = confirm_datetime;
+
+            match data.status {
+                LegacyTransactStatus::Cn => {
+                    mapping.delivered_datetime = confirm_datetime;
+                }
+                LegacyTransactStatus::Fn => {
+                    mapping.delivered_datetime = confirm_datetime.clone();
+                    mapping.verified_datetime = confirm_datetime;
+                }
+                _ => {}
+            }
         }
-        InvoiceRowType::InventoryAdjustment => {
-            mapping.delivered_datetime = confirm_datetime;
-        }
+        InvoiceRowType::InventoryAdjustment => match data.status {
+            LegacyTransactStatus::Cn => {
+                mapping.verified_datetime = confirm_datetime;
+            }
+            LegacyTransactStatus::Fn => {
+                mapping.verified_datetime = confirm_datetime;
+            }
+            _ => {}
+        },
     };
     mapping
 }
