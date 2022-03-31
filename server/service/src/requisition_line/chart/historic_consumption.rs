@@ -6,8 +6,8 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 use util::{
-    constants::{NUMBER_OF_DAYS_IN_A_MONTH, DEFAULT_AMC_LOOKBACK_MONTHS}, date_with_months_offset, first_day_of_the_month,
-    last_day_of_the_month,
+    constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
+    date_with_months_offset, first_day_of_the_month, last_day_of_the_month,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -39,7 +39,7 @@ pub fn get_historic_consumption_for_item(
     reference_date: NaiveDate,
     options: ConsumptionHistoryOptions,
 ) -> Result<Vec<ConsumptionHistory>, RepositoryError> {
-    // Initilise series
+    // Initialise series
     let points = generate_consumption_series(reference_date, options);
     // Get rows
     let filter = ConsumptionFilter::new()

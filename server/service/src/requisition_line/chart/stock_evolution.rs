@@ -43,7 +43,7 @@ pub fn get_stock_evolution_for_item(
     average_monthly_consumption: f64,
     options: StockEvolutionOptions,
 ) -> Result<StockEvolutionResult, RepositoryError> {
-    // Initilise series
+    // Initialise series
     let points = generate_evolution_series(reference_datetime, options);
     // Get rows
     let filter = StockMovementFilter::new()
