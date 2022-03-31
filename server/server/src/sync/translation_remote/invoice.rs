@@ -339,9 +339,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
         picked_datetime: None,
         delivered_datetime: None,
         allocated_datetime: None,
-        shipped_datetime: data
-            .ship_date
-            .map(|ship_date| date_and_time_to_datatime(ship_date, 0)),
+        shipped_datetime: None,
         verified_datetime: None,
         colour: Some(format!("#{:06X}", data.Colour)),
     };
