@@ -5,6 +5,7 @@ import {
   useColumns,
   createTableStore,
   useDialog,
+  DialogButton,
 } from '@openmsupply-client/common';
 import { DetailModal } from '../DetailModal';
 import { useNames, NameRowFragment } from '../api';
@@ -15,9 +16,7 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   const [selectedId, setSelectedId] = useState<string>('');
   const { data, isLoading, onChangePage, pagination, sortBy, onChangeSortBy } =
     useNames(type);
-  const { Modal, showDialog } = useDialog();
-
-  console.log('selectedId', selectedId);
+  const { Modal, showDialog, hideDialog } = useDialog();
 
   const columns = useColumns<NameRowFragment>(
     ['name', 'code'],
@@ -41,7 +40,11 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
           showDialog();
         }}
       />
-      <Modal title="Customer details" sx={{ maxWidth: '90%' }}>
+      <Modal
+        title=""
+        sx={{ maxWidth: '90%' }}
+        okButton={<DialogButton variant="ok" onClick={hideDialog} />}
+      >
         <DetailModal nameId={selectedId} />
       </Modal>
     </TableProvider>
