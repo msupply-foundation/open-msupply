@@ -11,8 +11,8 @@ import {
   Formatter,
   Typography,
   Box,
-  Link,
 } from '@openmsupply-client/common';
+import { Link } from '@mui/material';
 import { useName } from '../api';
 
 interface DetailModalProps {
@@ -67,9 +67,11 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               label={t('label.website')}
               inputProps={{ value: data?.website, disabled: isDisabled }}
               DisabledInput={
-                <Link to={data.website} target="_blank">
-                  {data.website}
-                </Link>
+                <>
+                  <Link href={data.website} target="_blank" rel="noopener">
+                    {data.website}
+                  </Link>
+                </>
               }
             />
           </DetailSection>
