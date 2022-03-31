@@ -6,6 +6,7 @@ import { addMinutes } from 'date-fns';
 import { useGql } from '../api';
 import { useGetRefreshToken } from './api/hooks';
 import { useGetAuthToken } from './api/hooks/useGetAuthToken';
+import { useStores } from './api/hooks/useStores';
 import { AuthenticationResponse } from './api';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
@@ -44,8 +45,7 @@ interface AuthControl {
   isLoggingIn: boolean;
   login: (
     username: string,
-    password: string,
-    store?: Store
+    password: string
   ) => Promise<AuthenticationResponse>;
   logout: () => void;
   mostRecentlyUsedCredentials?: MRUCredentials | null;
@@ -108,6 +108,7 @@ export const AuthProvider: FC = ({ children }) => {
   const i18n = IntlUtils.useI18N();
   const defaultLanguage = IntlUtils.useDefaultLanguage();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
+  const { mutateAsync: getStores } = useStores();
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
   const [error, setError] = useLocalStorage('/auth/error');
@@ -121,8 +122,22 @@ export const AuthProvider: FC = ({ children }) => {
   };
   useRefreshingAuth(saveToken, cookie?.token);
 
-  const login = async (username: string, password: string, store?: Store) => {
+  // returns MRU store, if set
+  // or the first store in the list
+  // TODO: return default store rather than first - currently not provided by API
+  const getStore = async () => {
+    if (mostRecentlyUsedCredentials?.store)
+      return mostRecentlyUsedCredentials.store;
+
+    const { nodes } = await getStores();
+    return !!nodes && nodes?.length && nodes?.length > 0
+      ? nodes?.[0]
+      : undefined;
+  };
+
+  const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
+    const store = await getStore();
     const authCookie = {
       store,
       token,

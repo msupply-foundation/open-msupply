@@ -1,6 +1,5 @@
 import React from 'react';
 import create from 'zustand';
-import { StoreRowFragment } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
@@ -12,11 +11,9 @@ import {
 interface LoginForm {
   error?: AuthenticationError;
   password: string;
-  store?: StoreRowFragment;
   username: string;
   setError: (error?: AuthenticationError) => void;
   setPassword: (password: string) => void;
-  setStore: (store?: StoreRowFragment) => void;
   setUsername: (username: string) => void;
 }
 
@@ -27,13 +24,11 @@ interface State {
 export const useLoginFormState = create<LoginForm>(set => ({
   error: undefined,
   password: '',
-  store: undefined,
   username: '',
 
   setError: (error?: AuthenticationError) =>
     set(state => ({ ...state, error })),
   setPassword: (password: string) => set(state => ({ ...state, password })),
-  setStore: (store?: StoreRowFragment) => set(state => ({ ...state, store })),
   setUsername: (username: string) => set(state => ({ ...state, username })),
 }));
 
@@ -44,20 +39,12 @@ export const useLoginForm = (
   const navigate = useNavigate();
   const location = useLocation();
   const { mostRecentlyUsedCredentials, login, isLoggingIn } = useAuthContext();
-  const {
-    password,
-    setPassword,
-    setStore,
-    setUsername,
-    store,
-    username,
-    error,
-    setError,
-  } = state;
+  const { password, setPassword, setUsername, username, error, setError } =
+    state;
 
   const onLogin = async () => {
     setError();
-    const { error, token } = await login(username, password, store);
+    const { error, token } = await login(username, password);
     setError(error);
     setPassword('');
     if (!token) return;
@@ -69,12 +56,9 @@ export const useLoginForm = (
     navigate(from, { replace: true });
   };
 
-  const isValid = !!username && !!password && !!store?.id;
+  const isValid = !!username && !!password;
 
   React.useEffect(() => {
-    if (mostRecentlyUsedCredentials?.store && !store) {
-      setStore(mostRecentlyUsedCredentials.store);
-    }
     if (mostRecentlyUsedCredentials?.username && !username) {
       setUsername(mostRecentlyUsedCredentials.username);
       setTimeout(() => passwordRef.current?.focus(), 100);
