@@ -1,7 +1,9 @@
-use crate::sync::translation_central::{SyncTranslationError, TRANSLATION_RECORD_STORE};
+use crate::sync::translation_central::TRANSLATION_RECORD_STORE;
 use repository::schema::{CentralSyncBufferRow, StoreRow};
 
 use serde::Deserialize;
+
+use super::{CentralPushTranslation, IntegrationUpsertRecord};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -11,23 +13,18 @@ pub struct LegacyStoreRow {
     code: String,
 }
 
-impl LegacyStoreRow {
-    pub fn try_translate(
+pub struct StoreTranslation {}
+impl CentralPushTranslation for StoreTranslation {
+    fn try_translate(
+        &self,
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<StoreRow>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_STORE;
-
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data).map_err(|source| {
-            SyncTranslationError {
-                table_name,
-                source: source.into(),
-                record: sync_record.data.clone(),
-            }
-        })?;
+        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)?;
 
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)
@@ -40,19 +37,26 @@ impl LegacyStoreRow {
             _ => {}
         }
 
-        Ok(Some(StoreRow {
+        // ignore stores without name
+        if data.name_ID == "" {
+            return Ok(None);
+        }
+
+        Ok(Some(IntegrationUpsertRecord::Store(StoreRow {
             id: data.ID,
             name_id: data.name_ID,
             code: data.code,
-        }))
+        })))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::CentralPushTranslation;
     use crate::sync::translation_central::{
-        store::LegacyStoreRow,
+        store::StoreTranslation,
         test_data::{store::get_test_store_records, TestSyncDataRecord},
+        IntegrationUpsertRecord,
     };
 
     #[test]
@@ -61,8 +65,10 @@ mod tests {
             match record.translated_record {
                 TestSyncDataRecord::Store(translated_record) => {
                     assert_eq!(
-                        LegacyStoreRow::try_translate(&record.central_sync_buffer_row).unwrap(),
-                        translated_record,
+                        StoreTranslation {}
+                            .try_translate(&record.central_sync_buffer_row)
+                            .unwrap(),
+                        translated_record.map(|r| (IntegrationUpsertRecord::Store(r))),
                         "{}",
                         record.identifier
                     )

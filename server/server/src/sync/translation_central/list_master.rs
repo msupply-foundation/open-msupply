@@ -1,7 +1,9 @@
-use crate::sync::{translation_central::TRANSLATION_RECORD_LIST_MASTER, SyncTranslationError};
+use crate::sync::translation_central::TRANSLATION_RECORD_LIST_MASTER;
 use repository::schema::{CentralSyncBufferRow, MasterListRow};
 
 use serde::Deserialize;
+
+use super::{CentralPushTranslation, IntegrationUpsertRecord};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -12,39 +14,34 @@ pub struct LegacyListMasterRow {
     note: String,
 }
 
-impl LegacyListMasterRow {
-    pub fn try_translate(
+pub struct MasterListTranslation {}
+impl CentralPushTranslation for MasterListTranslation {
+    fn try_translate(
+        &self,
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<MasterListRow>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_LIST_MASTER;
-
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyListMasterRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
-
-        Ok(Some(MasterListRow {
+        let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
+        Ok(Some(IntegrationUpsertRecord::MasterList(MasterListRow {
             id: data.ID,
             name: data.description,
             code: data.code,
             description: data.note,
-        }))
+        })))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::CentralPushTranslation;
     use crate::sync::translation_central::{
-        list_master::LegacyListMasterRow,
+        list_master::MasterListTranslation,
         test_data::{master_list::get_test_master_list_records, TestSyncDataRecord},
+        IntegrationUpsertRecord,
     };
 
     #[test]
@@ -53,9 +50,10 @@ mod tests {
             match record.translated_record {
                 TestSyncDataRecord::MasterList(translated_record) => {
                     assert_eq!(
-                        LegacyListMasterRow::try_translate(&record.central_sync_buffer_row)
+                        MasterListTranslation {}
+                            .try_translate(&record.central_sync_buffer_row)
                             .unwrap(),
-                        translated_record,
+                        translated_record.map(|r| (IntegrationUpsertRecord::MasterList(r))),
                         "{}",
                         record.identifier
                     )
