@@ -8,6 +8,10 @@ import {
   DetailSection,
   Checkbox,
   Grid,
+  Formatter,
+  Typography,
+  Box,
+  Link,
 } from '@openmsupply-client/common';
 import { useName } from '../api';
 
@@ -31,7 +35,10 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
 
   return !!data ? (
     <DetailContainer>
-      <DetailSection title={data?.name}>
+      <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+        <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
+          {data.name}
+        </Typography>
         <Grid container flex={1} flexDirection="row" gap={4}>
           <DetailSection title="">
             <DetailInputWithLabelRow
@@ -61,19 +68,25 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
             <DetailInputWithLabelRow
               label={t('label.website')}
               inputProps={{ value: data?.website, disabled: isDisabled }}
+              DisabledInput={
+                <Link to={data.website} target="_blank">
+                  {data.website}
+                </Link>
+              }
             />
           </DetailSection>
           <DetailSection title="">
             <DetailInputWithLabelRow
               label={t('label.date-created')}
-              inputProps={{ value: data?.createdDate, disabled: isDisabled }}
+              inputProps={{
+                value: data?.createdDate
+                  ? Formatter.localisedDate(new Date(data?.createdDate))
+                  : '',
+                disabled: isDisabled,
+              }}
             />
             <DetailInputWithLabelRow
               label={t('label.manufacturer')}
-              inputProps={{
-                value: data?.isManufacturer,
-                disabled: isDisabled,
-              }}
               Input={
                 <Checkbox
                   disabled={isDisabled}
@@ -83,25 +96,17 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
             />
             <DetailInputWithLabelRow
               label={t('label.donor')}
-              inputProps={{
-                value: data?.isDonor,
-                disabled: isDisabled,
-              }}
               Input={<Checkbox disabled={isDisabled} checked={data?.isDonor} />}
             />
             <DetailInputWithLabelRow
               label={t('label.on-hold')}
-              inputProps={{
-                value: data?.isOnHold,
-                disabled: isDisabled,
-              }}
               Input={
                 <Checkbox disabled={isDisabled} checked={data?.isOnHold} />
               }
             />
           </DetailSection>
         </Grid>
-      </DetailSection>
+      </Box>
     </DetailContainer>
   ) : null;
 };
