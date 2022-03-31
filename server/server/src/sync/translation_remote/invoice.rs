@@ -10,13 +10,11 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
     empty_date_time_as_option, empty_str_as_option, naive_time,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
 };
 
@@ -235,50 +233,34 @@ impl RemotePullTranslation for InvoiceTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_TRANSACT;
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyTransactRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
+        let data = serde_json::from_str::<LegacyTransactRow>(&sync_record.data)?;
 
         let name = NameRepository::new(connection)
             .find_one_by_id(&data.name_ID)
             .ok()
             .flatten()
-            .ok_or(SyncTranslationError {
-                table_name,
-                source: anyhow::Error::msg(format!("Missing name: {}", data.name_ID)),
-                record: sync_record.data.clone(),
-            })?;
+            .ok_or(anyhow::Error::msg(format!(
+                "Missing name: {}",
+                data.name_ID
+            )))?;
 
         let name_store_id = StoreRowRepository::new(connection)
-            .find_one_by_name_id(&data.name_ID)
-            .map_err(|err| SyncTranslationError {
-                table_name,
-                source: err.into(),
-                record: sync_record.data.clone(),
-            })?
+            .find_one_by_name_id(&data.name_ID)?
             .map(|store_row| store_row.id);
 
-        let invoice_type = invoice_type(&data._type, &name).ok_or(SyncTranslationError {
-            table_name,
-            source: anyhow::Error::msg(format!("Unsupported invoice type: {:?}", data._type)),
-            record: sync_record.data.clone(),
-        })?;
-        let invoice_status = invoice_status(&invoice_type, &data).ok_or(SyncTranslationError {
-            table_name,
-            source: anyhow::Error::msg(format!("Unsupported invoice type: {:?}", data._type)),
-            record: sync_record.data.clone(),
-        })?;
+        let invoice_type = invoice_type(&data._type, &name).ok_or(anyhow::Error::msg(format!(
+            "Unsupported invoice type: {:?}",
+            data._type
+        )))?;
+        let invoice_status = invoice_status(&invoice_type, &data).ok_or(anyhow::Error::msg(
+            format!("Unsupported invoice type: {:?}", data._type),
+        ))?;
         let mapping = map_legacy(&invoice_type, &data);
 
         Ok(Some(IntegrationRecord::from_upsert(
@@ -462,7 +444,7 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::Invoice {
             return Ok(None);
         }
@@ -490,21 +472,15 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             requisition_id,
             linked_invoice_id,
             transport_reference,
-        } = InvoiceRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?;
+        } = InvoiceRepository::new(connection).find_one_by_id(&changelog.row_id)?;
 
-        let _type = legacy_invoice_type(&r#type).ok_or(to_push_translation_error(
-            table_name,
-            anyhow::Error::msg(format!("Invalid invoice type: {:?}", r#type)),
-            changelog,
+        let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
+            "Invalid invoice type: {:?}",
+            r#type
+        )))?;
+        let legacy_status = legacy_invoice_status(&r#type, &status).ok_or(anyhow::Error::msg(
+            format!("Invalid invoice status: {:?}", r#status),
         ))?;
-        let legacy_status =
-            legacy_invoice_status(&r#type, &status).ok_or(to_push_translation_error(
-                table_name,
-                anyhow::Error::msg(format!("Invalid invoice status: {:?}", r#status)),
-                changelog,
-            ))?;
         let confirm_datetime = to_legacy_confirm_time(&r#type, picked_datetime, delivered_datetime);
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
@@ -550,8 +526,7 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             store_id: Some(store_id),
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }

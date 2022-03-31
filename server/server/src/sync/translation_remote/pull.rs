@@ -51,7 +51,7 @@ pub trait RemotePullTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError>;
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error>;
 }
 
 /// Imports sync records and writes them to the DB
@@ -103,7 +103,15 @@ fn do_translation(
                 records.upserts.append(&mut result.upserts);
                 return Ok(());
             }
-            Err(error) => warn!("Failed to translate ({}): {:?}", error, sync_record),
+            Err(error) => warn!(
+                "Failed to translate ({}): {:?}",
+                SyncTranslationError {
+                    table_name: sync_record.table_name.clone(),
+                    source: error,
+                    record: format!("{:?}", sync_record),
+                },
+                sync_record
+            ),
             _ => {}
         };
     }

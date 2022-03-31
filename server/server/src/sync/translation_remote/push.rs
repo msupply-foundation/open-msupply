@@ -21,7 +21,7 @@ pub trait RemotePushUpsertTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError>;
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error>;
 }
 
 #[derive(Debug)]
@@ -44,18 +44,6 @@ pub struct PushDeleteRecord {
 pub enum PushRecord {
     Upsert(PushUpsertRecord),
     Delete(PushDeleteRecord),
-}
-
-pub fn to_push_translation_error(
-    table_name: &'static str,
-    err: anyhow::Error,
-    changelog: &ChangelogRow,
-) -> SyncTranslationError {
-    SyncTranslationError {
-        table_name,
-        source: err,
-        record: format!("{:?}", changelog),
-    }
 }
 
 pub fn translate_changelog(
@@ -83,7 +71,14 @@ pub fn translate_changelog(
                 Box::new(RequisitionLineTranslation {}),
             ];
             for translation in translations {
-                if let Some(records) = translation.try_translate_push(connection, changelog)? {
+                if let Some(records) = translation
+                    .try_translate_push(connection, changelog)
+                    .map_err(|err| SyncTranslationError {
+                        table_name: table_name_to_central(&changelog.table_name).to_string(),
+                        source: err,
+                        record: format!("{:?}", changelog),
+                    })?
+                {
                     info!("Push record upserts: {:?}", records);
                     for record in records {
                         results.push(PushRecord::Upsert(record));

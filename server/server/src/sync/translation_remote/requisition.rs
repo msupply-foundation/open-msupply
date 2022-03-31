@@ -10,13 +10,11 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_date_time_as_option,
     empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_REQUISITION,
 };
 
@@ -156,21 +154,14 @@ impl RemotePullTranslation for RequisitionTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_REQUISITION;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyRequisitionRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
+        let data = serde_json::from_str::<LegacyRequisitionRow>(&sync_record.data)?;
 
         let (
             created_datetime,
@@ -188,13 +179,9 @@ impl RemotePullTranslation for RequisitionTranslation {
                 data.max_months_of_stock.unwrap_or(0.0),
                 data.om_status
                     .map(|s| s.to_domain())
-                    .ok_or(SyncTranslationError {
-                        table_name,
-                        source: anyhow::Error::msg(
-                            "Invalid data: om_created_datetime set but om_status missing",
-                        ),
-                        record: sync_record.data.clone(),
-                    })?,
+                    .ok_or(anyhow::Error::msg(
+                        "Invalid data: om_created_datetime set but om_status missing",
+                    ))?,
                 data.om_colour,
             ),
             None => (
@@ -202,23 +189,18 @@ impl RemotePullTranslation for RequisitionTranslation {
                 None,
                 None,
                 data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
-                from_legacy_status(&data.status).ok_or(SyncTranslationError {
-                    table_name,
-                    source: anyhow::Error::msg(format!(
-                        "Unsupported requisition status: {:?}",
-                        data.status
-                    )),
-                    record: sync_record.data.clone(),
-                })?,
+                from_legacy_status(&data.status).ok_or(anyhow::Error::msg(format!(
+                    "Unsupported requisition status: {:?}",
+                    data.status
+                )))?,
                 data.colour.and_then(|colour| req_colour_to_hex(colour)),
             ),
         };
 
-        let t = from_legacy_type(&data.r#type).ok_or(SyncTranslationError {
-            table_name,
-            source: anyhow::Error::msg(format!("Unsupported requisition type: {:?}", data.r#type)),
-            record: sync_record.data.clone(),
-        })?;
+        let t = from_legacy_type(&data.r#type).ok_or(anyhow::Error::msg(format!(
+            "Unsupported requisition type: {:?}",
+            data.r#type
+        )))?;
 
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Requisition(RequisitionRow {
@@ -248,7 +230,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::Requisition {
             return Ok(None);
         }
@@ -272,13 +254,11 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             min_months_of_stock,
             linked_requisition_id,
         } = RequisitionRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
-            .ok_or(to_push_translation_error(
-                table_name,
-                anyhow::Error::msg(format!("Requisition row not found: {}", changelog.row_id)),
-                changelog,
-            ))?;
+            .find_one_by_id(&changelog.row_id)?
+            .ok_or(anyhow::Error::msg(format!(
+                "Requisition row not found: {}",
+                changelog.row_id
+            )))?;
 
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),
@@ -311,8 +291,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             store_id: Some(store_id),
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }

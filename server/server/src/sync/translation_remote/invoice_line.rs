@@ -8,12 +8,10 @@ use repository::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     date_option_to_isostring, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_TRANS_LINE,
 };
 
@@ -76,26 +74,18 @@ impl RemotePullTranslation for InvoiceLineTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_TRANS_LINE;
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyTransLineRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
+        let data = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
-        let line_type = to_invoice_line_type(&data._type).ok_or(SyncTranslationError {
-            table_name,
-            source: anyhow::Error::msg(format!("Unsupported trans_line type: {:?}", data._type)),
-            record: sync_record.data.clone(),
-        })?;
+        let line_type = to_invoice_line_type(&data._type).ok_or(anyhow::Error::msg(format!(
+            "Unsupported trans_line type: {:?}",
+            data._type
+        )))?;
 
         let (item_code, tax, total_before_tax, total_after_tax) = match data.item_code {
             Some(item_code) => {
@@ -109,23 +99,13 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 )
             }
             None => {
-                let item = match ItemRepository::new(connection)
-                    .find_one_by_id(&data.item_ID)
-                    .map_err(|source| SyncTranslationError {
-                        table_name,
-                        source: source.into(),
-                        record: sync_record.data.clone(),
-                    })? {
+                let item = match ItemRepository::new(connection).find_one_by_id(&data.item_ID)? {
                     Some(item) => item,
                     None => {
-                        return Err(SyncTranslationError {
-                            table_name,
-                            source: anyhow::Error::msg(format!(
-                                "Failed to get item: {}",
-                                data.item_ID
-                            )),
-                            record: sync_record.data.clone(),
-                        })
+                        return Err(anyhow::Error::msg(format!(
+                            "Failed to get item: {}",
+                            data.item_ID
+                        )))
                     }
                 };
                 let total = total(&data);
@@ -184,7 +164,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::InvoiceLine {
             return Ok(None);
         }
@@ -209,9 +189,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             r#type,
             number_of_packs,
             note,
-        } = InvoiceLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?;
+        } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
 
         let legacy_row = LegacyTransLineRow {
             ID: id.clone(),
@@ -241,8 +219,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             store_id: None,
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }
