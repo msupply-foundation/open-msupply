@@ -14,6 +14,7 @@ use service::{
         InsertRequestRequisition as ServiceInput, InsertRequestRequisitionError as ServiceError,
     },
 };
+use util::{date_now_with_offset, constants::expected_delivery_date_offset};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertRequestRequisitionInput")]
@@ -106,7 +107,10 @@ impl InsertInput {
             comment,
             max_months_of_stock,
             min_months_of_stock,
-            expected_delivery_date,
+            expected_delivery_date: expected_delivery_date.or(Some(date_now_with_offset(
+                expected_delivery_date_offset(),
+                true,
+            ))),
         }
     }
 }
@@ -161,6 +165,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
+    use util::date_now;
 
     use crate::RequisitionMutations;
 
@@ -363,6 +368,33 @@ mod test {
             &settings,
             mutation,
             &Some(variables),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // Default expected_delivery_date
+        let test_service = TestService(Box::new(|_, input| {
+            let now = date_now();
+            let expected = input.expected_delivery_date.unwrap();
+            assert_eq!((expected - now), chrono::Duration::weeks(2));
+
+            Ok(Requisition {
+                requisition_row: mock_request_draft_requisition(),
+                name_row: mock_name_a(),
+            })
+        }));
+
+        let expected = json!({
+            "insertRequestRequisition": {
+                "id": mock_request_draft_requisition().id
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
             &expected,
             Some(service_provider(test_service, &connection_manager))
         );

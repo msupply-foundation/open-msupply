@@ -9,7 +9,6 @@ use repository::{
     schema::{NumberRowType, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
-use util::{constants::expected_delivery_date_offset, date_now_with_offset};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisition {
@@ -45,13 +44,8 @@ pub fn insert_request_requisition(
     ctx: &ServiceContext,
     store_id: &str,
     user_id: &str,
-    mut input: InsertRequestRequisition,
+    input: InsertRequestRequisition,
 ) -> Result<Requisition, OutError> {
-    input.expected_delivery_date = input.expected_delivery_date.or(Some(date_now_with_offset(
-        expected_delivery_date_offset(),
-        true,
-    )));
-
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
