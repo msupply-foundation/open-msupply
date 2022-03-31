@@ -59,8 +59,8 @@ query names(
   }
 }
 
-query nameById($storeId: String!, $itemId: String!) {
-  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+query nameById($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
     ... on NameConnector {
       __typename
       nodes {

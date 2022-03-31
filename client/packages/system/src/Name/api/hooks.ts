@@ -21,6 +21,21 @@ const useNameApi = () => {
   return { ...queries, storeId, keys };
 };
 
+export const useName = (nameId: string) => {
+  return useNameById(nameId);
+};
+
+export const useNameById = (nameId: string | undefined) => {
+  const api = useNameApi();
+  return useQuery(
+    api.keys.detail(nameId || ''),
+    () => api.get.byId(nameId || ''),
+    {
+      enabled: !!nameId,
+    }
+  );
+};
+
 export const useNames = (type: 'customer' | 'supplier') => {
   const api = useNameApi();
   const queryParams = useQueryParams<NameRowFragment>({

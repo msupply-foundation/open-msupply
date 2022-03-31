@@ -4,6 +4,7 @@ import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
 import { IntlUtils } from '@common/intl';
+import { SxProps, Theme } from '@mui/material';
 
 export interface ButtonProps {
   icon?: React.ReactElement;
@@ -24,6 +25,7 @@ export interface ModalProps {
 
   okButton?: JSX.Element;
   width?: number;
+  sx?: SxProps<Theme>;
   title: string;
 }
 export interface DialogProps {
@@ -94,6 +96,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     title,
     contentProps,
     slideAnimation = true,
+    sx = {},
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
@@ -127,6 +130,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         onClose={handleClose}
         width={width}
         height={height}
+        sx={{ ...sx }}
       >
         {title ? <ModalTitle title={title} /> : null}
         <DialogContent
