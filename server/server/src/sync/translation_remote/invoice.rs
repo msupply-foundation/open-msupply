@@ -384,53 +384,30 @@ fn invoice_status(
     invoice_type: &InvoiceRowType,
     data: &LegacyTransactRow,
 ) -> Option<InvoiceRowStatus> {
-    let shipped = data.ship_date.is_some();
     let status = match invoice_type {
         // outbound
-        InvoiceRowType::OutboundShipment => {
-            let delivered = data.arrival_date_actual.is_some();
-            match data.status {
-                LegacyTransactStatus::Nw => InvoiceRowStatus::New,
-                LegacyTransactStatus::Sg => InvoiceRowStatus::New,
-                LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
-                LegacyTransactStatus::Fn => {
-                    if shipped {
-                        InvoiceRowStatus::Shipped
-                    } else if delivered {
-                        InvoiceRowStatus::Delivered
-                    } else {
-                        InvoiceRowStatus::Verified
-                    }
-                }
-                LegacyTransactStatus::Wp => return None,
-                LegacyTransactStatus::Wf => return None,
-            }
-        }
+        InvoiceRowType::OutboundShipment => match data.status {
+            LegacyTransactStatus::Nw => InvoiceRowStatus::New,
+            LegacyTransactStatus::Sg => InvoiceRowStatus::New,
+            LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
+            LegacyTransactStatus::Fn => InvoiceRowStatus::Shipped,
+            LegacyTransactStatus::Wp => return None,
+            LegacyTransactStatus::Wf => return None,
+        },
         // inbound
-        InvoiceRowType::InboundShipment => {
-            let manual_created = data.their_ref.is_none();
-            match data.status {
-                LegacyTransactStatus::Nw => {
-                    if manual_created {
-                        InvoiceRowStatus::New
-                    } else if !shipped {
-                        InvoiceRowStatus::Picked
-                    } else {
-                        InvoiceRowStatus::Shipped
-                    }
-                }
-                LegacyTransactStatus::Sg => InvoiceRowStatus::New,
-                LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
-                LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
-                LegacyTransactStatus::Wp => return None,
-                LegacyTransactStatus::Wf => return None,
-            }
-        }
+        InvoiceRowType::InboundShipment => match data.status {
+            LegacyTransactStatus::Sg => InvoiceRowStatus::New,
+            LegacyTransactStatus::Nw => InvoiceRowStatus::New,
+            LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
+            LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
+            LegacyTransactStatus::Wp => return None,
+            LegacyTransactStatus::Wf => return None,
+        },
 
         InvoiceRowType::InventoryAdjustment => match data.status {
             LegacyTransactStatus::Nw => InvoiceRowStatus::New,
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
-            LegacyTransactStatus::Cn => InvoiceRowStatus::New,
+            LegacyTransactStatus::Cn => InvoiceRowStatus::Verified,
             LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
             LegacyTransactStatus::Wp => return None,
             LegacyTransactStatus::Wf => return None,
