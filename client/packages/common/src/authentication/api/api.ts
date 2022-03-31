@@ -23,11 +23,11 @@ type ListParams = {
 const authTokenGuard = (
   authTokenQuery: AuthTokenQuery
 ): AuthenticationResponse => {
-  if (authTokenQuery.authToken.__typename === 'AuthToken') {
+  if (authTokenQuery?.authToken?.__typename === 'AuthToken') {
     return { token: authTokenQuery.authToken.token };
   }
 
-  if (authTokenQuery.authToken.__typename === 'AuthTokenError') {
+  if (authTokenQuery?.authToken?.__typename === 'AuthTokenError') {
     switch (authTokenQuery.authToken.error.__typename) {
       case 'DatabaseError':
       case 'InternalError':
@@ -38,7 +38,10 @@ const authTokenGuard = (
     }
   }
 
-  return { token: '', error: { message: '' } };
+  return {
+    token: '',
+    error: { message: 'Error communicating with the server' },
+  };
 };
 
 const refreshTokenGuard = (
