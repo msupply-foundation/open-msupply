@@ -115,6 +115,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     width: 75,
   },
   createdDatetime: {
+    description: 'description.entered',
     label: 'label.entered',
     key: 'createdDatetime',
     format: ColumnFormat.Date,
@@ -135,6 +136,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   },
 
   totalAfterTax: {
+    description: 'description.total',
     label: 'label.total',
     key: 'totalAfterTax',
     width: 100,
