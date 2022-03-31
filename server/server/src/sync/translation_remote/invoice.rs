@@ -320,6 +320,8 @@ struct LegacyMapping {
 }
 /// Either make use of om_* fields, if present, or do a best afford mapping
 fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> LegacyMapping {
+    // If created_datetime (om_created_datetime) exists then the record was created in omSupply and
+    // omSupply fields are used
     if let Some(created_datetime) = data.created_datetime {
         return LegacyMapping {
             created_datetime,
