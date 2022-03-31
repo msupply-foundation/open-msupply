@@ -67,6 +67,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         'totalAfterTax',
         {
           accessor: ({ rowData }) => c(rowData.pricing.totalAfterTax).format(),
+          width: '100%',
         },
       ],
       'selection',

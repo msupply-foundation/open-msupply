@@ -60,6 +60,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'numberOfPacks',
     format: ColumnFormat.Integer,
     align: ColumnAlign.Right,
+    description: 'description.pack-quantity',
     label: 'label.pack-quantity',
     width: 100,
   },
@@ -101,6 +102,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   },
   invoiceNumber: {
     key: 'invoiceNumber',
+    align: ColumnAlign.Right,
     label: 'label.invoice-number',
     width: 50,
   },
@@ -163,10 +165,11 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   packSize: {
     label: 'label.pack-size',
     key: 'packSize',
-    width: 100,
+    width: 125,
     align: ColumnAlign.Right,
   },
   quantity: {
+    description: 'description.pack-quantity',
     label: 'label.pack-quantity',
     key: 'quantity',
     width: 100,
@@ -204,6 +207,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     width: 75,
   },
   unitQuantity: {
+    description: 'description.unit-quantity',
     label: 'label.unit-quantity',
     key: 'unitQuantity',
     width: 100,
