@@ -1,6 +1,5 @@
 import React, { FC, useEffect } from 'react';
 import {
-  DetailFormSkeleton,
   useTranslation,
   useBreadcrumbs,
   DetailContainer,
@@ -11,6 +10,7 @@ import {
   Formatter,
   Typography,
   Box,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { Link } from '@mui/material';
 import { useName } from '../api';
@@ -29,7 +29,7 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
     setSuffix(data?.name ?? '');
   }, [data]);
 
-  if (isLoading) return <DetailFormSkeleton />;
+  if (isLoading) return <BasicSpinner />;
 
   return !!data ? (
     <DetailContainer>

@@ -22,10 +22,6 @@ const useNameApi = () => {
 };
 
 export const useName = (nameId: string) => {
-  return useNameById(nameId);
-};
-
-export const useNameById = (nameId: string | undefined) => {
   const api = useNameApi();
   return useQuery(
     api.keys.detail(nameId || ''),

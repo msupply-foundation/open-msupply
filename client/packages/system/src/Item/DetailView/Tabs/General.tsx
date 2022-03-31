@@ -61,7 +61,6 @@ export const GeneralTab = () => {
           />
           <DetailInputWithLabelRow
             label={t('label.is-vaccine')}
-            inputProps={{ value: data?.isVaccine, disabled: isDisabled }}
             Input={<Checkbox disabled={isDisabled} checked={data?.isVaccine} />}
           />
         </DetailSection>
