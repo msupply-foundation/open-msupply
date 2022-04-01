@@ -94,7 +94,7 @@ export const HeaderCell = <T extends RecordWithId>({
       <Tooltip
         title={tooltip}
         placement="bottom"
-        style={{ whiteSpace: 'pre-line', display: 'block' }}
+        style={{ whiteSpace: 'pre-line' }}
       >
         {HeaderLabel}
       </Tooltip>

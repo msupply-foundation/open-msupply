@@ -54,7 +54,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       ],
       [
         'invoiceNumber',
-        { description: 'description.invoice-number', maxWidth: 80 },
+        { description: 'description.invoice-number', maxWidth: 110 },
       ],
       'createdDatetime',
       {
