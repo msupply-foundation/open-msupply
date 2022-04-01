@@ -14,7 +14,6 @@ use service::{
         InsertRequestRequisition as ServiceInput, InsertRequestRequisitionError as ServiceError,
     },
 };
-
 use util::{constants::expected_delivery_date_offset, date_now_with_offset};
 
 #[derive(InputObject)]
@@ -27,13 +26,8 @@ pub struct InsertInput {
     pub comment: Option<String>,
     pub max_months_of_stock: f64,
     pub min_months_of_stock: f64,
-    /// Defaults to + 2 weeks from now
-    #[graphql(default_with = "default_expected_delivery_date()")]
+    /// Defaults to 2 weeks from now
     pub expected_delivery_date: Option<NaiveDate>,
-}
-
-pub fn default_expected_delivery_date() -> Option<NaiveDate> {
-    Some(date_now_with_offset(expected_delivery_date_offset(), true))
 }
 
 #[derive(Interface)]
@@ -113,7 +107,8 @@ impl InsertInput {
             comment,
             max_months_of_stock,
             min_months_of_stock,
-            expected_delivery_date,
+            expected_delivery_date: expected_delivery_date
+                .or(Some(date_now_with_offset(expected_delivery_date_offset()))),
         }
     }
 }

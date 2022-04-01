@@ -17,7 +17,4 @@ pub fn expected_delivery_date_offset() -> Duration {
     Duration::weeks(2)
 }
 /// Default AMC calculation lookback
-pub const DEFAULT_AMC_LOOK_BACK_MONTHS: u32 = 3;
-pub fn default_amc_look_back_months() -> u32 {
-    DEFAULT_AMC_LOOK_BACK_MONTHS
-}
+pub const DEFAULT_AMC_LOOKBACK_MONTHS: u32 = 3;

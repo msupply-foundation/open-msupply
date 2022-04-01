@@ -6,6 +6,7 @@ use self::queries::*;
 
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use queries::requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput};
 
 #[derive(Default, Clone)]
 pub struct GeneralQueries;
@@ -107,6 +108,23 @@ impl GeneralQueries {
         #[graphql(desc = "Expiring soon threshold")] days_till_expired: Option<i32>,
     ) -> Result<StockCounts> {
         stock_counts(timezone_offset, days_till_expired)
+    }
+
+    pub async fn requisition_line_chart(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        request_requisition_line_id: String,
+        consumption_options_input: Option<ConsumptionOptionsInput>,
+        stock_evolution_options_input: Option<StockEvolutionOptionsInput>,
+    ) -> Result<requisition_line_chart::ChartResponse> {
+        requisition_line_chart::chart(
+            ctx,
+            &store_id,
+            &request_requisition_line_id,
+            consumption_options_input,
+            stock_evolution_options_input,
+        )
     }
 }
 

@@ -14,12 +14,11 @@ impl ItemStatsNode {
         self.item_stats.available_stock_on_hand
     }
 
-    pub async fn available_months_of_stock_on_hand(&self) -> f64 {
-        if self.item_stats.average_monthly_consumption == 0.0 {
-            return self.item_stats.available_stock_on_hand as f64;
-        }
-        self.item_stats.available_stock_on_hand as f64
-            / self.item_stats.average_monthly_consumption as f64
+    pub async fn available_months_of_stock_on_hand(&self) -> Option<f64> {
+        (self.item_stats.average_monthly_consumption != 0.0).then(|| {
+            self.item_stats.available_stock_on_hand as f64
+                / self.item_stats.average_monthly_consumption as f64
+        })
     }
 }
 

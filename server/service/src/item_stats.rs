@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Neg};
 
 use crate::{i64_to_u32, service_provider::ServiceContext};
 use chrono::Duration;
@@ -7,7 +7,10 @@ use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, RepositoryError,
     StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
-use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
+use util::{
+    constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
+    date_now_with_offset,
+};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct ItemStatsFilter {
@@ -26,10 +29,10 @@ pub trait ItemStatsServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        amc_look_back_months: u32,
+        amc_lookback_months: Option<u32>,
         filter: Option<ItemStatsFilter>,
     ) -> Result<Vec<ItemStats>, RepositoryError> {
-        get_item_stats(ctx, store_id, amc_look_back_months, filter)
+        get_item_stats(ctx, store_id, amc_lookback_months, filter)
     }
 }
 
@@ -39,22 +42,24 @@ impl ItemStatsServiceTrait for ItemStatsService {}
 pub fn get_item_stats(
     ctx: &ServiceContext,
     store_id: &str,
-    amc_look_back_months: u32,
+    amc_lookback_months: Option<u32>,
     filter: Option<ItemStatsFilter>,
 ) -> Result<Vec<ItemStats>, RepositoryError> {
     let ItemStatsFilter {
         item_id: item_id_filter,
     } = filter.unwrap_or_default();
 
+    let amc_lookback_months = amc_lookback_months.unwrap_or(DEFAULT_AMC_LOOKBACK_MONTHS);
+
     Ok(ItemStats::new_vec(
         get_consumption_rows(
             &ctx.connection,
             store_id,
             item_id_filter.clone(),
-            amc_look_back_months,
+            amc_lookback_months,
         )?,
         get_stock_on_hand_rows(&ctx.connection, store_id, item_id_filter)?,
-        amc_look_back_months,
+        amc_lookback_months,
     ))
 }
 
@@ -62,12 +67,11 @@ pub fn get_consumption_rows(
     connection: &StorageConnection,
     store_id: &str,
     item_id_filter: Option<EqualFilter<String>>,
-    amc_look_back_months: u32,
+    amc_lookback_months: u32,
 ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
-    let start_date = date_now_with_offset(
-        Duration::days((amc_look_back_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i64),
-        false,
-    );
+    let start_date = date_now_with_offset(Duration::days(
+        (amc_lookback_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64,
+    ));
 
     let filter = ConsumptionFilter {
         item_id: item_id_filter,
@@ -95,7 +99,7 @@ impl ItemStats {
     fn new_vec(
         consumption_rows: Vec<ConsumptionRow>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
-        amc_look_back_months: u32,
+        amc_lookback_months: u32,
     ) -> Vec<Self> {
         let mut consumption_map = HashMap::new();
         for consumption_row in consumption_rows.into_iter() {
@@ -112,7 +116,7 @@ impl ItemStats {
                 item_id: stock_on_hand.item_id.clone(),
                 average_monthly_consumption: consumption_map
                     .get(&stock_on_hand.item_id)
-                    .map(|consumption| *consumption as f64 / amc_look_back_months as f64)
+                    .map(|consumption| *consumption as f64 / amc_lookback_months as f64)
                     .unwrap_or_default(),
             })
             .collect()
@@ -143,7 +147,6 @@ mod test {
         mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
         test_db, EqualFilter,
     };
-    use util::constants::DEFAULT_AMC_LOOK_BACK_MONTHS;
 
     use crate::{item_stats::ItemStatsFilter, service_provider::ServiceProvider};
 
@@ -164,12 +167,7 @@ mod test {
         let filter = Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids)));
 
         let mut item_stats = service
-            .get_item_stats(
-                &context,
-                &mock_store_a().id,
-                DEFAULT_AMC_LOOK_BACK_MONTHS,
-                filter.clone(),
-            )
+            .get_item_stats(&context, &mock_store_a().id, None, filter.clone())
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -194,7 +192,7 @@ mod test {
 
         // Reduce to looking back 10 days
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, 1, filter.clone())
+            .get_item_stats(&context, &mock_store_a().id, Some(1), filter.clone())
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -216,12 +214,7 @@ mod test {
         assert_eq!(item_stats[1].average_monthly_consumption, 0.0);
 
         let mut item_stats = service
-            .get_item_stats(
-                &context,
-                &mock_store_b().id,
-                DEFAULT_AMC_LOOK_BACK_MONTHS,
-                filter.clone(),
-            )
+            .get_item_stats(&context, &mock_store_b().id, None, filter.clone())
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 

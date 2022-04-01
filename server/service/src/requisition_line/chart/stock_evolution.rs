@@ -1,3 +1,5 @@
+use std::ops::Neg;
+
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     schema::StockMovementRow, DatetimeFilter, EqualFilter, RepositoryError, StockMovementFilter,
@@ -5,7 +7,7 @@ use repository::{
 };
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_with_days_offset};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StockEvolutionOptions {
     pub number_of_historic_data_points: u32,
     pub number_of_projected_data_points: u32,
@@ -14,14 +16,14 @@ pub struct StockEvolutionOptions {
 impl Default for StockEvolutionOptions {
     fn default() -> Self {
         Self {
-            number_of_historic_data_points: 1,
-            number_of_projected_data_points: 0,
+            number_of_historic_data_points: 30,
+            number_of_projected_data_points: 20,
         }
     }
 }
 #[derive(PartialEq, Debug)]
 pub struct StockEvolution {
-    pub reference_date: NaiveDate,
+    pub date: NaiveDate,
     pub quantity: f64,
 }
 
@@ -41,7 +43,7 @@ pub fn get_stock_evolution_for_item(
     average_monthly_consumption: f64,
     options: StockEvolutionOptions,
 ) -> Result<StockEvolutionResult, RepositoryError> {
-    // Initilise series
+    // Initialise series
     let points = generate_evolution_series(reference_datetime, options);
     // Get rows
     let filter = StockMovementFilter::new()
@@ -88,8 +90,10 @@ fn generate_evolution_series(
     let reference_date = reference_datetime.date();
     let last_historic_date = reference_date;
     // -1 point because current reference_datetime is consider a historic data point
-    let first_historic_date =
-        date_with_days_offset(&reference_date, number_of_historic_data_points - 1, false);
+    let first_historic_date = date_with_days_offset(
+        &reference_date,
+        (number_of_historic_data_points as i32 - 1).neg(),
+    );
 
     let mut points = StockEvolutionPoints {
         historic_points: Vec::new(),
@@ -99,11 +103,11 @@ fn generate_evolution_series(
     };
 
     let last_projected_date =
-        date_with_days_offset(&reference_date, number_of_projected_data_points, true);
+        date_with_days_offset(&reference_date, number_of_projected_data_points as i32);
 
     let mut off_set = 0;
     loop {
-        let reference_date = date_with_days_offset(&first_historic_date, off_set, true);
+        let reference_date = date_with_days_offset(&first_historic_date, off_set);
         if reference_date > last_projected_date {
             break;
         }
@@ -129,7 +133,7 @@ fn calculate_historic_stock_evolution(
     // Last point stock on hand should be reference_stock_on_hand
     if let Some(last_point) = historic_points.pop() {
         result.push(StockEvolution {
-            reference_date: last_point,
+            date: last_point,
             quantity: reference_stock_on_hand as f64,
         });
     }
@@ -139,7 +143,7 @@ fn calculate_historic_stock_evolution(
     for reference_date in historic_points.into_iter().rev() {
         // On reference_datetime's date we should should have reference_stock_on_hand
         // SOH at the start of next day is current day SOH
-        let next_day = date_with_days_offset(&reference_date, 1, true);
+        let next_day = date_with_days_offset(&reference_date, 1);
         let day_movements = stock_on_hand_rows.iter().fold(0, |movement, row| {
             if within_range(next_day, row.datetime) {
                 movement + row.quantity
@@ -150,7 +154,7 @@ fn calculate_historic_stock_evolution(
         // Reverse ledger thus substraction
         running_stock_on_hand -= day_movements;
         result.push(StockEvolution {
-            reference_date,
+            date: reference_date,
             quantity: running_stock_on_hand,
         })
     }
@@ -180,7 +184,7 @@ fn calculate_projected_stock_evolution(
         }
 
         result.push(StockEvolution {
-            reference_date,
+            date: reference_date,
             quantity: running_stock_on_hand,
         });
     }
@@ -190,7 +194,7 @@ fn calculate_projected_stock_evolution(
 
 fn within_range(within_date: NaiveDate, datetime: NaiveDateTime) -> bool {
     within_date.and_hms(0, 0, 0) <= datetime
-        && datetime <= date_with_days_offset(&within_date, 1, true).and_hms(0, 0, 0)
+        && datetime <= date_with_days_offset(&within_date, 1).and_hms(0, 0, 0)
 }
 
 #[cfg(test)]
@@ -267,15 +271,15 @@ mod tests {
             ),
             vec![
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2020, 12, 31),
+                    date: NaiveDate::from_ymd(2020, 12, 31),
                     quantity: 18.0 // (40) - 15 - 7 = (18)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 1),
+                    date: NaiveDate::from_ymd(2021, 1, 1),
                     quantity: 40.0 // 30 - 10 + 20 = (40)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 2),
+                    date: NaiveDate::from_ymd(2021, 1, 2),
                     quantity: 30.0 // initial
                 }
             ]
@@ -299,19 +303,19 @@ mod tests {
             ),
             vec![
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 3),
+                    date: NaiveDate::from_ymd(2021, 1, 3),
                     quantity: 4.5 // 30 - 25.5 - 4.5
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 4),
+                    date: NaiveDate::from_ymd(2021, 1, 4),
                     quantity: 0.0 // (4.5) - 25.5 = -something, but we set to (0)
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 5),
+                    date: NaiveDate::from_ymd(2021, 1, 5),
                     quantity: 74.5 // (0) - 25.5 + 50 = (74.5), adding suggested
                 },
                 StockEvolution {
-                    reference_date: NaiveDate::from_ymd(2021, 1, 6),
+                    date: NaiveDate::from_ymd(2021, 1, 6),
                     quantity: 49.0 // (74.5) - 25.5 = 49.0
                 },
             ]
