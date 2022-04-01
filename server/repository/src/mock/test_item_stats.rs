@@ -100,13 +100,12 @@ pub fn item1_amc_3_months_store_b() -> f64 {
 
 pub fn item() -> ItemRow {
     let id = "item".to_string();
-    ItemRow {
-        id: id.clone(),
-        name: id.clone(),
-        code: id.clone(),
-        unit_id: None,
-        r#type: ItemRowType::Stock,
-    }
+    inline_init(|r: &mut ItemRow| {
+        r.id = id.clone();
+        r.name = id.clone();
+        r.code = id.clone();
+        r.r#type = ItemRowType::Stock;
+    })
 }
 
 pub fn stock_line1() -> StockLineRow {
@@ -167,13 +166,12 @@ pub fn item_1_store_b_soh() -> u32 {
 
 pub fn item2() -> ItemRow {
     let id = "item2".to_string();
-    ItemRow {
-        id: id.clone(),
-        name: id.clone(),
-        code: id.clone(),
-        unit_id: None,
-        r#type: ItemRowType::Stock,
-    }
+    inline_init(|r: &mut ItemRow| {
+        r.id = id.clone();
+        r.name = id.clone();
+        r.code = id.clone();
+        r.r#type = ItemRowType::Stock;
+    })
 }
 
 pub fn stock_line1_item2() -> StockLineRow {

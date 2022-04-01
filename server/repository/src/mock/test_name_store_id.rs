@@ -1,3 +1,5 @@
+use util::inline_init;
+
 use crate::schema::{NameRow, NameStoreJoinRow, StoreRow};
 
 use super::MockData;
@@ -20,13 +22,13 @@ pub fn mock_test_name_store_id() -> MockData {
 }
 
 pub fn mock_name_linked_to_store() -> NameRow {
-    NameRow {
-        id: "name_linked_to_store_id".to_owned(),
-        name: "Name linked to store".to_owned(),
-        code: "name_linked_to_store_code".to_owned(),
-        is_customer: true,
-        is_supplier: true,
-    }
+    inline_init(|r: &mut NameRow| {
+        r.id = "name_linked_to_store_id".to_owned();
+        r.name = "Name linked to store".to_owned();
+        r.code = "name_linked_to_store_code".to_owned();
+        r.is_customer = true;
+        r.is_supplier = true;
+    })
 }
 
 pub fn mock_store_linked_to_name() -> StoreRow {
@@ -48,13 +50,13 @@ pub fn mock_name_linked_to_store_join() -> NameStoreJoinRow {
 }
 
 pub fn mock_name_not_linked_to_store() -> NameRow {
-    NameRow {
-        id: "name_not_linked_to_store_id".to_owned(),
-        name: "Name not linked to store".to_owned(),
-        code: "name_not_linked_to_store_code".to_owned(),
-        is_customer: true,
-        is_supplier: true,
-    }
+    inline_init(|r: &mut NameRow| {
+        r.id = "name_not_linked_to_store_id".to_owned();
+        r.name = "Name not linked to store".to_owned();
+        r.code = "name_not_linked_to_store_code".to_owned();
+        r.is_customer = true;
+        r.is_supplier = true;
+    })
 }
 
 pub fn mock_name_not_linked_to_store_join() -> NameStoreJoinRow {
