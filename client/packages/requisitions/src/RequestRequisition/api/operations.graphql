@@ -10,120 +10,19 @@ fragment ItemWithStats on ItemNode {
   }
 }
 
-mutation insertRequest(
-  $storeId: String!
-  $input: InsertRequestRequisitionInput!
-) {
-  insertRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-      requisitionNumber
-    }
-    ... on InsertRequestRequisitionError {
-      __typename
-      error {
-        description
-        ... on OtherPartyNotASupplier {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-mutation updateRequest(
-  $storeId: String!
-  $input: UpdateRequestRequisitionInput!
-) {
-  updateRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-      requisitionNumber
-    }
-    ... on UpdateRequestRequisitionError {
-      __typename
-      error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on CannotEditRequisition {
-          __typename
-          description
-        }
-        ... on OtherPartyNotASupplier {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-mutation deleteRequest(
-  $storeId: String!
-  $input: BatchRequestRequisitionInput!
-) {
-  batchRequestRequisition(storeId: $storeId, input: $input) {
-    deleteRequestRequisitions {
-      id
-      response {
-        ... on DeleteRequestRequisitionError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on CannotDeleteRequisitionWithLines {
-              __typename
-              description
-            }
-            ... on CannotEditRequisition {
-              __typename
-              description
-            }
-          }
-        }
-        ... on DeleteResponse {
-          id
-        }
-      }
-    }
-  }
-}
-
-fragment RequestLineChartData on ItemChartDataNode {
-  __typename
-  consumptionHistory {
-    nodes {
-      amc
-      consumption
-      isHistoric
-      date
-    }
-  }
-  suggestedQuantityCalculation {
-    stockOnHand
-    suggested
-    minimumStockOnHand
-    maximumStockOnHand
-    averageMonthlyConsumption
-  }
-  stockEvolution {
-    nodes {
-      stockOnHand
-      isHistoric
-      max
-      min
-      date
-    }
-  }
+fragment RequestRow on RequisitionNode {
+  colour
+  comment
+  createdDatetime
+  finalisedDatetime
+  id
+  otherPartyName
+  requisitionNumber
+  sentDatetime
+  status
+  theirReference
+  type
+  otherPartyId
 }
 
 fragment RequestLine on RequisitionLineNode {
@@ -141,9 +40,6 @@ fragment RequestLine on RequisitionLineNode {
   }
   item {
     ...ItemWithStats
-  }
-  chartData {
-    ...RequestLineChartData
   }
 }
 
@@ -206,6 +102,7 @@ fragment Request on RequisitionNode {
     }
   }
 }
+
 query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
@@ -233,19 +130,53 @@ query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   }
 }
 
-fragment RequestRow on RequisitionNode {
-  colour
-  comment
-  createdDatetime
-  finalisedDatetime
-  id
-  otherPartyName
-  requisitionNumber
-  sentDatetime
-  status
-  theirReference
-  type
-  otherPartyId
+query requisitionLineChart($storeId: String!, $requisitionLineId: String!) {
+  requisitionLineChart(
+    requestRequisitionLineId: $requisitionLineId
+    storeId: $storeId
+  ) {
+    ... on ItemChartNode {
+      calculationDate
+      consumptionHistory {
+        totalCount
+        nodes {
+          averageMonthlyConsumption
+          consumption
+          date
+          isCurrent
+          isHistoric
+        }
+      }
+      stockEvolution {
+        nodes {
+          date
+          isHistoric
+          isProjected
+          minimumStockOnHand
+          maximumStockOnHand
+          stockOnHand
+        }
+        totalCount
+      }
+      suggestedQuantityCalculation {
+        suggestedQuantity
+        stockOnHand
+        minimumStockOnHand
+        maximumStockOnHand
+        averageMonthlyConsumption
+      }
+    }
+    ... on RequisitionLineChartError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
 }
 
 query requests(
@@ -417,6 +348,94 @@ mutation useSuggestedQuantity($requestId: String!, $storeId: String!) {
         id
       }
       totalCount
+    }
+  }
+}
+
+mutation insertRequest(
+  $storeId: String!
+  $input: InsertRequestRequisitionInput!
+) {
+  insertRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+    ... on InsertRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation updateRequest(
+  $storeId: String!
+  $input: UpdateRequestRequisitionInput!
+) {
+  updateRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+    ... on UpdateRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation deleteRequest(
+  $storeId: String!
+  $input: BatchRequestRequisitionInput!
+) {
+  batchRequestRequisition(storeId: $storeId, input: $input) {
+    deleteRequestRequisitions {
+      id
+      response {
+        ... on DeleteRequestRequisitionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteRequisitionWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
     }
   }
 }

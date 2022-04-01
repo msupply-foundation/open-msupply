@@ -10,7 +10,7 @@ export interface UrlPart {
 }
 
 type BreadcrumbState = {
-  setSuffix: (suffix: string) => void;
+  setSuffix: (suffix?: string) => void;
   suffix?: string;
   setUrlParts: (urlParts: UrlPart[]) => void;
   urlParts: UrlPart[];
@@ -46,6 +46,7 @@ export const useBreadcrumbs = () => {
       return path;
     }, '');
     setUrlParts(urlParts);
+    setSuffix(undefined);
   }, [location]);
 
   const navigateUpOne = () => {
