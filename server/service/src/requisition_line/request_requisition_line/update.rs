@@ -59,7 +59,8 @@ fn validate(
     input: &UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
     let requisition_line_row = check_requisition_line_exists(connection, &input.id)?
-        .ok_or(OutError::RequisitionLineDoesNotExist)?;
+        .ok_or(OutError::RequisitionLineDoesNotExist)?
+        .requisition_line_row;
 
     let requisition_row =
         check_requisition_exists(connection, &requisition_line_row.requisition_id)?

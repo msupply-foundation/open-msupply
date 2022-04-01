@@ -311,17 +311,27 @@ table! {
 }
 
 table! {
-    consumption (id) {
+    stock_movement (id) {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        consumption_quantity -> Integer,
-        consumption_datetime -> Nullable<Timestamp>,
+        quantity -> Integer,
+        datetime -> Timestamp,
     }
 }
 
 table! {
-    stock_info (id) {
+    consumption (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        quantity -> Integer,
+        date -> Date,
+    }
+}
+
+table! {
+    stock_on_hand (id) {
         id -> Text,
         item_id -> Text,
         store_id -> Text,

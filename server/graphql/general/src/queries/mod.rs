@@ -18,6 +18,6 @@ pub mod stock_counts;
 pub use self::stock_counts::*;
 pub mod store;
 pub use self::store::*;
-
+pub mod requisition_line_chart;
 #[cfg(test)]
 mod tests;

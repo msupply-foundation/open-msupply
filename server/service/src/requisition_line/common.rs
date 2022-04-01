@@ -1,14 +1,15 @@
 use repository::EqualFilter;
 use repository::{
-    schema::RequisitionLineRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRowRepository, StorageConnection,
+    RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    StorageConnection,
 };
 
 pub fn check_requisition_line_exists(
     connection: &StorageConnection,
     id: &str,
-) -> Result<Option<RequisitionLineRow>, RepositoryError> {
-    RequisitionLineRowRepository::new(connection).find_one_by_id(id)
+) -> Result<Option<RequisitionLine>, RepositoryError> {
+    RequisitionLineRepository::new(connection)
+        .query_one(RequisitionLineFilter::new().id(EqualFilter::equal_to(id)))
 }
 
 pub fn check_item_exists_in_requisition(
