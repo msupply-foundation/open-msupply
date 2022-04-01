@@ -13,7 +13,7 @@ type ServiceError = RequisitionLineChartError;
 pub struct ConsumptionOptionsInput {
     /// Defaults to 3 months
     amc_lookback_months: Option<u32>,
-    /// Defaults to 20
+    /// Defaults to 12
     number_of_data_points: Option<u32>,
 }
 

@@ -20,7 +20,7 @@ impl Default for ConsumptionHistoryOptions {
     fn default() -> Self {
         Self {
             amc_lookback_months: DEFAULT_AMC_LOOKBACK_MONTHS,
-            number_of_data_points: 20,
+            number_of_data_points: 12,
         }
     }
 }
