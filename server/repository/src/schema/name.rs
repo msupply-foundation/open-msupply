@@ -9,4 +9,6 @@ pub struct NameRow {
     pub code: String,
     pub is_customer: bool,
     pub is_supplier: bool,
+    // TODO, this is temporary, remove
+    pub legacy_record: String,
 }

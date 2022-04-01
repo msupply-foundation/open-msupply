@@ -1,15 +1,16 @@
+use util::inline_init;
+
 use crate::schema::{NameRow, StoreRow};
 
 use super::MockData;
 
 pub fn mock_name_store_remote_pull() -> NameRow {
-    NameRow {
-        id: String::from("name_store_remote_pull"),
-        name: String::from("Store for remote pull"),
-        code: String::from("code"),
-        is_customer: false,
-        is_supplier: true,
-    }
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("name_store_remote_pull");
+        r.name = String::from("Store for remote pull");
+        r.code = String::from("code");
+        r.is_supplier = true;
+    })
 }
 
 // unique store is needed for number tests since number ids are not unique

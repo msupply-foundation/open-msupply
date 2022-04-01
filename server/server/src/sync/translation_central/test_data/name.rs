@@ -389,6 +389,7 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 code: "GEN".to_owned(),
                 is_supplier: true,
                 is_customer: true,
+                legacy_record: NAME_1.1.to_owned(),
             })),
             identifier: "General",
             central_sync_buffer_row: CentralSyncBufferRow {
@@ -405,6 +406,7 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 code: "SNA".to_owned(),
                 is_customer: true,
                 is_supplier: false,
+                legacy_record: NAME_2.1.to_owned(),
             })),
             identifier: "Birch Store",
             central_sync_buffer_row: CentralSyncBufferRow {
@@ -421,6 +423,7 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 code: "SNA".to_owned(),
                 is_customer: true,
                 is_supplier: false,
+                legacy_record: NAME_3.1.to_owned(),
             })),
             identifier: "Birch Store",
             central_sync_buffer_row: CentralSyncBufferRow {
@@ -441,6 +444,7 @@ pub fn get_test_name_upsert_records() -> Vec<TestSyncRecord> {
             code: "GEN".to_owned(),
             is_customer: true,
             is_supplier: true,
+            legacy_record: NAME_UPSERT_1.1.to_owned(),
         })),
         identifier: "General2",
         central_sync_buffer_row: CentralSyncBufferRow {

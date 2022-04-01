@@ -37,6 +37,7 @@ impl LegacyNameRow {
             code: data.code.to_string(),
             is_customer: data.customer,
             is_supplier: data.supplier,
+            legacy_record: sync_record.data.clone(),
         }))
     }
 }
