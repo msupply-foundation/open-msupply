@@ -65,7 +65,7 @@ impl RemotePullTranslation for StocktakeLineTranslation {
         } else {
             None
         };
-        let mut row = StocktakeLineRow {
+        let row = StocktakeLineRow {
             id: data.ID,
             stocktake_id: data.stock_take_ID,
             stock_line_id: data.item_line_ID,
