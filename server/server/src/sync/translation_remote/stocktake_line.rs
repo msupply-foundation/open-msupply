@@ -81,16 +81,6 @@ impl RemotePullTranslation for StocktakeLineTranslation {
             sell_price_per_pack: Some(data.sell_price),
             note: data.note,
         };
-        // the following lines are from stock_line, manually unset when stock_line is None
-        // (because they are otherwise set to Some(0.0)
-        if row.stock_line_id.is_none() {
-            row.batch = None;
-            row.expiry_date = None;
-            row.pack_size = None;
-            row.cost_price_per_pack = None;
-            row.sell_price_per_pack = None;
-            row.note = None;
-        }
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::StocktakeLine(row),
         )))
