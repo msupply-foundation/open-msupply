@@ -47,6 +47,7 @@
   "description.stock-on-hand": "Stock on Hand (Est. remaining)",
   "description.supply-quantity": "Amount to Supply",
   "error.404": "Click the back arrow or use the menu to find your way again.",
+  "error.general-query-error": "There was an communicating with the server 😢",
   "error.greater-than-zero-required": "Enter a number greater than zero",
   "error.invalid-value": "Invalid Value",
   "error.missing-invoice": "Invoice {id} not found",
