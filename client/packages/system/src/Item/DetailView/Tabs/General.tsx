@@ -7,7 +7,7 @@ import {
   Checkbox,
   Grid,
   NumericTextInput,
-  Typography,
+  NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { useItem } from '../../api';
 
@@ -45,7 +45,9 @@ export const GeneralTab = () => {
           />
           <DetailInputWithLabelRow
             label={t('label.ddd')}
-            inputProps={{ value: data?.ddd, disabled: isDisabled }}
+            inputProps={{ disabled: isDisabled }}
+            Input={<NumericTextInput value={data?.ddd} disabled={isDisabled} />}
+            DisabledInput={<NumericTextDisplay value={data?.ddd} />}
           />
           <DetailInputWithLabelRow
             label={t('label.type')}
@@ -57,7 +59,7 @@ export const GeneralTab = () => {
             Input={
               <NumericTextInput value={data?.doses} disabled={isDisabled} />
             }
-            DisabledInput={<Typography>{data?.doses}</Typography>}
+            DisabledInput={<NumericTextDisplay value={data?.doses} />}
           />
           <DetailInputWithLabelRow
             label={t('label.is-vaccine')}
@@ -102,7 +104,7 @@ export const GeneralTab = () => {
                 disabled={isDisabled}
               />
             }
-            DisabledInput={<Typography>{data?.defaultPackSize}</Typography>}
+            DisabledInput={<NumericTextDisplay value={data?.defaultPackSize} />}
             inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
@@ -113,7 +115,7 @@ export const GeneralTab = () => {
                 disabled={isDisabled}
               />
             }
-            DisabledInput={<Typography>{data?.outerPackSize}</Typography>}
+            DisabledInput={<NumericTextDisplay value={data?.outerPackSize} />}
             inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
@@ -124,7 +126,7 @@ export const GeneralTab = () => {
                 disabled={isDisabled}
               />
             }
-            DisabledInput={<Typography>{data?.volumePerPack}</Typography>}
+            DisabledInput={<NumericTextDisplay value={data?.volumePerPack} />}
             inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
@@ -135,7 +137,9 @@ export const GeneralTab = () => {
                 disabled={isDisabled}
               />
             }
-            DisabledInput={<Typography>{data?.volumePerOuterPack}</Typography>}
+            DisabledInput={
+              <NumericTextDisplay value={data?.volumePerOuterPack} />
+            }
             inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
@@ -143,7 +147,7 @@ export const GeneralTab = () => {
             Input={
               <NumericTextInput value={data?.weight} disabled={isDisabled} />
             }
-            DisabledInput={<Typography>{data?.weight}</Typography>}
+            DisabledInput={<NumericTextDisplay value={data?.weight} />}
             inputProps={{ disabled: isDisabled }}
           />
         </DetailSection>
@@ -153,7 +157,7 @@ export const GeneralTab = () => {
             Input={
               <NumericTextInput value={data?.margin} disabled={isDisabled} />
             }
-            DisabledInput={<Typography>{data?.margin}</Typography>}
+            DisabledInput={<NumericTextDisplay value={data?.margin} />}
             inputProps={{ disabled: isDisabled }}
           />
         </DetailSection>
