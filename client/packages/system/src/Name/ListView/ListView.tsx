@@ -6,7 +6,9 @@ import {
   createTableStore,
   useDialog,
   DialogButton,
+  Fade,
 } from '@openmsupply-client/common';
+import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
 import { useNames, NameRowFragment } from '../api';
 
@@ -27,6 +29,15 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
     [sortBy]
   );
 
+  const Transition = React.forwardRef(
+    (
+      props: TransitionProps & {
+        children: React.ReactElement;
+      },
+      ref: React.Ref<unknown>
+    ) => <Fade ref={ref} {...props} timeout={800}></Fade>
+  );
+
   return (
     <TableProvider createStore={createTableStore}>
       <DataTable
@@ -44,6 +55,8 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
         title=""
         sx={{ maxWidth: '90%' }}
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
+        slideAnimation={false}
+        Transition={Transition}
       >
         <DetailModal nameId={selectedId} />
       </Modal>
