@@ -4,6 +4,7 @@ import {
   CartesianGrid,
   Cell,
   ChartTooltip,
+  CircularProgress,
   ComposedChart,
   Legend,
   Line,
@@ -17,19 +18,19 @@ import {
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftRequestLine } from '../hooks';
+import { useRequestLineChartData } from '../../../api/hooks';
 
 export interface ConsumptionHistoryProps {
-  draftLine: DraftRequestLine | null;
+  id: string;
 }
 
 export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
-  draftLine,
+  id,
 }) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
   const d = useFormatDate();
-  const data = draftLine?.chartData?.consumptionHistory.nodes ?? [];
+  const { data, isLoading } = useRequestLineChartData(id);
   const dateFormatter = (date: string) =>
     d(new Date(date), {
       month: 'short',
@@ -52,9 +53,13 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
         return [value, name];
     }
   };
+  if (!data || !data.consumptionHistory) return null;
+
   const tooltipLabelFormatter = (date: string) => d(new Date(date));
 
-  return (
+  return isLoading ? (
+    <CircularProgress />
+  ) : (
     <Box>
       <Box>
         <Typography
@@ -66,10 +71,14 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
         </Typography>
       </Box>
       <Box>
-        {data.length === 0 ? (
+        {data.consumptionHistory.nodes?.length === 0 ? (
           <Typography width={450}>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart width={450} height={255} data={data}>
+          <ComposedChart
+            width={450}
+            height={255}
+            data={data.consumptionHistory.nodes}
+          >
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -106,7 +115,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
               ]}
             />
             <Bar dataKey="consumption">
-              {data.map(entry => (
+              {data.consumptionHistory.nodes?.map(entry => (
                 <Cell
                   key={entry.date}
                   fill={

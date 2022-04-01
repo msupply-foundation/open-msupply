@@ -4,6 +4,7 @@ import {
   CartesianGrid,
   Cell,
   ChartTooltip,
+  CircularProgress,
   ComposedChart,
   Legend,
   Line,
@@ -17,19 +18,17 @@ import {
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftRequestLine } from '../hooks';
+import { useRequestLineChartData } from '../../../api/hooks';
 
 export interface StockEvolutionProps {
-  draftLine: DraftRequestLine | null;
+  id: string;
 }
 
-export const StockEvolution: React.FC<StockEvolutionProps> = ({
-  draftLine,
-}) => {
+export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
   const d = useFormatDate();
-  const data = draftLine?.chartData?.stockEvolution.nodes ?? [];
+  const { data, isLoading } = useRequestLineChartData(id);
 
   const dateFormatter = (date: string) =>
     d(new Date(date), { month: 'short', day: '2-digit' });
@@ -46,9 +45,12 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
     }
   };
 
+  if (!data || !data.stockEvolution) return null;
   const tooltipLabelFormatter = (date: string) => d(new Date(date));
 
-  return (
+  return isLoading ? (
+    <CircularProgress />
+  ) : (
     <Box>
       <Box>
         <Typography
@@ -60,10 +62,14 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
         </Typography>
       </Box>
       <Box>
-        {data.length === 0 ? (
+        {data.stockEvolution.nodes.length === 0 ? (
           <Typography width={450}>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart width={450} height={255} data={data}>
+          <ComposedChart
+            width={450}
+            height={255}
+            data={data.stockEvolution.nodes}
+          >
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -106,7 +112,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
               ]}
             />
             <Bar dataKey="stockOnHand">
-              {data.map(entry => (
+              {data.stockEvolution.nodes?.map(entry => (
                 <Cell
                   key={entry.date}
                   fill={

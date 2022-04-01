@@ -126,6 +126,18 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Record not found');
     },
+    lineChartData: async (requisitionLineId: string) => {
+      const result = await sdk.requisitionLineChart({
+        storeId,
+        requisitionLineId,
+      });
+
+      if (result?.requisitionLineChart.__typename === 'ItemChartNode') {
+        return result.requisitionLineChart;
+      }
+
+      throw new Error('Unable to load chart data');
+    },
   },
   deleteLines: async (requestLines: RequestLineFragment[]) => {
     const ids = requestLines.map(requestParser.toDeleteLine);

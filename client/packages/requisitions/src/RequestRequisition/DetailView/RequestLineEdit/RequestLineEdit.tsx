@@ -77,20 +77,22 @@ export const RequestLineEdit = ({
             onChangeItem={setCurrentItem}
             item={currentItem}
           />
-          <StockDistribution
-            availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-            averageMonthlyConsumption={
-              draft?.itemStats?.averageMonthlyConsumption
-            }
-            suggestedQuantity={draft?.suggestedQuantity}
-          />
+          {!!draft && (
+            <StockDistribution
+              availableStockOnHand={draft?.itemStats?.availableStockOnHand}
+              averageMonthlyConsumption={
+                draft?.itemStats?.averageMonthlyConsumption
+              }
+              suggestedQuantity={draft?.suggestedQuantity}
+            />
+          )}
           <Box
             display="flex"
             sx={{ paddingLeft: 4, paddingRight: 4 }}
             justifyContent="space-between"
           >
-            <ConsumptionHistory draftLine={draft} />
-            <StockEvolution draftLine={draft} />
+            <ConsumptionHistory id={draft?.id || ''} />
+            <StockEvolution id={draft?.id || ''} />
           </Box>
         </>
       ) : (
