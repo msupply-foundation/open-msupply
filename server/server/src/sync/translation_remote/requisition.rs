@@ -189,10 +189,9 @@ impl RemotePullTranslation for RequisitionTranslation {
                 None,
                 None,
                 data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
-                from_legacy_status(&data.status).ok_or(anyhow::Error::msg(format!(
-                    "Unsupported requisition status: {:?}",
-                    data.status
-                )))?,
+                from_legacy_status(&data.r#type, &data.status).ok_or(anyhow::Error::msg(
+                    format!("Unsupported requisition status: {:?}", data.status),
+                ))?,
                 data.colour.and_then(|colour| req_colour_to_hex(colour)),
             ),
         };
@@ -267,7 +266,10 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             name_ID: name_id,
             store_ID: store_id.clone(),
             r#type: to_legacy_type(&r#type),
-            status: to_legacy_status(&status),
+            status: to_legacy_status(&r#type, &status).ok_or(anyhow::Error::msg(format!(
+                "Unexpected row requisition status {:?} (type: {:?}), row id:{}",
+                status, r#type, changelog.row_id
+            )))?,
             om_status: Some(RequisitionStatus::from_domain(status)),
             date_entered: date_from_date_time(&created_datetime),
             created_datetime: Some(created_datetime),
@@ -312,23 +314,46 @@ fn to_legacy_type(t: &RequisitionRowType) -> LegacyRequisitionType {
     }
 }
 
-fn from_legacy_status(status: &LegacyRequisitionStatus) -> Option<RequisitionRowStatus> {
-    let status = match status {
-        LegacyRequisitionStatus::Sg => RequisitionRowStatus::Draft,
-        &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
-        LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
+fn from_legacy_status(
+    r#type: &LegacyRequisitionType,
+    status: &LegacyRequisitionStatus,
+) -> Option<RequisitionRowStatus> {
+    let status = match r#type {
+        LegacyRequisitionType::Response => match status {
+            LegacyRequisitionStatus::Sg => RequisitionRowStatus::Draft,
+            &LegacyRequisitionStatus::Cn => RequisitionRowStatus::Sent,
+            LegacyRequisitionStatus::Fn => RequisitionRowStatus::Sent,
+            _ => return None,
+        },
+        LegacyRequisitionType::Request => match status {
+            LegacyRequisitionStatus::Sg => return None,
+            &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
+            LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
+            _ => return None,
+        },
         _ => return None,
     };
     Some(status)
 }
 
-fn to_legacy_status(status: &RequisitionRowStatus) -> LegacyRequisitionStatus {
-    match status {
-        RequisitionRowStatus::Draft => LegacyRequisitionStatus::Sg,
-        RequisitionRowStatus::New => LegacyRequisitionStatus::Cn,
-        RequisitionRowStatus::Sent => LegacyRequisitionStatus::Fn,
-        RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
-    }
+fn to_legacy_status(
+    r#type: &RequisitionRowType,
+    status: &RequisitionRowStatus,
+) -> Option<LegacyRequisitionStatus> {
+    let status = match r#type {
+        RequisitionRowType::Request => match status {
+            RequisitionRowStatus::Draft => LegacyRequisitionStatus::Sg,
+            RequisitionRowStatus::Sent => LegacyRequisitionStatus::Fn,
+            RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
+            _ => return None,
+        },
+        RequisitionRowType::Response => match status {
+            RequisitionRowStatus::New => LegacyRequisitionStatus::Cn,
+            RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
+            _ => return None,
+        },
+    };
+    Some(status)
 }
 
 fn hex_colour_to_req_colour(colour: &str) -> Option<i64> {
