@@ -56,7 +56,7 @@ export const RequestRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
         },
       ],
-      ['comment', { minWidth: '30%' }],
+      ['comment', { width: '100%' }],
       'selection',
     ],
     { sortBy, onChangeSortBy },
