@@ -197,7 +197,7 @@ impl RemotePullTranslation for RequisitionTranslation {
             ),
         };
 
-        let t = from_legacy_type(&data.r#type).ok_or(anyhow::Error::msg(format!(
+        let r#type = from_legacy_type(&data.r#type).ok_or(anyhow::Error::msg(format!(
             "Unsupported requisition type: {:?}",
             data.r#type
         )))?;
@@ -209,7 +209,7 @@ impl RemotePullTranslation for RequisitionTranslation {
                 requisition_number: data.serial_number,
                 name_id: data.name_ID,
                 store_id: data.store_ID,
-                r#type: t,
+                r#type,
                 status,
                 created_datetime,
                 sent_datetime,
