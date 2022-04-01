@@ -26,7 +26,6 @@ pub struct LegacyStocktakeLineRow {
     pub snapshot_packsize: i32,
     pub stock_take_qty: i32,
     pub is_edited: bool,
-    // TODO is this optional?
     #[serde(deserialize_with = "empty_str_as_option")]
     pub item_line_ID: Option<String>,
     pub item_ID: String,
