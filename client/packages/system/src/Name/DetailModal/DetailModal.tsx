@@ -11,8 +11,8 @@ import {
   Typography,
   Box,
   BasicSpinner,
+  MuiLink,
 } from '@openmsupply-client/common';
-import { Link } from '@mui/material';
 import { useName } from '../api';
 
 interface DetailModalProps {
@@ -68,9 +68,9 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               inputProps={{ value: data?.website, disabled: isDisabled }}
               DisabledInput={
                 <>
-                  <Link href={data.website} target="_blank" rel="noopener">
+                  <MuiLink href={data.website} target="_blank" rel="noopener">
                     {data.website}
-                  </Link>
+                  </MuiLink>
                 </>
               }
             />
