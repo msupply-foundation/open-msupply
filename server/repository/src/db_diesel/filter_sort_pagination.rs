@@ -120,7 +120,7 @@ impl DatetimeFilter {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DateFilter {
     pub equal_to: Option<NaiveDate>,
     pub before_or_equal_to: Option<NaiveDate>,
@@ -128,11 +128,35 @@ pub struct DateFilter {
 }
 
 impl DateFilter {
-    pub fn date_range(from: NaiveDate, to: NaiveDate) -> DateFilter {
+    pub fn date_range(from: &NaiveDate, to: &NaiveDate) -> DateFilter {
         DateFilter {
             equal_to: None,
-            after_or_equal_to: Some(from),
-            before_or_equal_to: Some(to),
+            after_or_equal_to: Some(from.clone()),
+            before_or_equal_to: Some(to.clone()),
+        }
+    }
+
+    pub fn after_or_equal_to(value: NaiveDate) -> Self {
+        DateFilter {
+            equal_to: None,
+            after_or_equal_to: Some(value.to_owned()),
+            before_or_equal_to: None,
+        }
+    }
+
+    pub fn equal_to(value: NaiveDate) -> Self {
+        DateFilter {
+            equal_to: Some(value.to_owned()),
+            after_or_equal_to: None,
+            before_or_equal_to: None,
+        }
+    }
+
+    pub fn before_or_equal_to(value: NaiveDate) -> Self {
+        DateFilter {
+            equal_to: None,
+            after_or_equal_to: None,
+            before_or_equal_to: Some(value),
         }
     }
 }

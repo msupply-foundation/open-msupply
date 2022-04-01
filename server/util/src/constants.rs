@@ -16,3 +16,5 @@ pub fn stock_line_expiring_soon_offset() -> Duration {
 pub fn expected_delivery_date_offset() -> Duration {
     Duration::weeks(2)
 }
+/// Default AMC calculation lookback
+pub const DEFAULT_AMC_LOOKBACK_MONTHS: u32 = 3;
