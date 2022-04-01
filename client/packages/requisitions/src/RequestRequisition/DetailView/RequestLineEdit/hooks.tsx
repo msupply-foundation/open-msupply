@@ -7,16 +7,14 @@ import {
   RequestLineFragment,
   ItemWithStatsFragment,
   RequestFragment,
-  RequestLineChartDataFragment,
 } from '../../api';
 
 export type DraftRequestLine = Omit<
   RequestLineFragment,
-  'chartData' | '__typename' | 'item'
+  '__typename' | 'item'
 > & {
   isCreated: boolean;
   requisitionId: string;
-  chartData?: RequestLineChartDataFragment;
 };
 
 const createDraftFromItem = (
@@ -53,7 +51,6 @@ const createDraftFromRequestLine = (
   suggestedQuantity: line.suggestedQuantity,
   isCreated: false,
   itemStats: line.itemStats,
-  chartData: line.chartData,
 });
 
 export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {

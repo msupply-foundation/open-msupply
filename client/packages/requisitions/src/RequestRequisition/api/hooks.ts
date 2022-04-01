@@ -44,6 +44,7 @@ export const useRequestApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    chartData: (lineId: string) => [...keys.base(), storeId, lineId] as const,
   };
 
   const { client } = useGql();
@@ -126,6 +127,19 @@ export const useRequestFields = <
     (patch: Partial<RequestFragment>) =>
       api.update({ ...patch, id: data?.id ?? '' }),
     keys
+  );
+};
+
+export const useRequestLineChartData = (requisitionLineId: string) => {
+  const api = useRequestApi();
+  return useQuery(
+    api.keys.chartData(requisitionLineId),
+    () => api.get.lineChartData(requisitionLineId),
+    {
+      refetchOnMount: false,
+      cacheTime: 0,
+      onError: () => {},
+    }
   );
 };
 
