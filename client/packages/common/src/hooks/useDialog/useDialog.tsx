@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
+import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
 import { IntlUtils } from '@common/intl';
@@ -22,7 +23,11 @@ export interface ModalProps {
     onClick: () => Promise<boolean>;
   }>;
   slideAnimation?: boolean;
-
+  Transition?: React.ForwardRefExoticComponent<
+    TransitionProps & {
+      children: React.ReactElement;
+    } & React.RefAttributes<unknown>
+  >;
   okButton?: JSX.Element;
   width?: number;
   sx?: SxProps<Theme>;
@@ -96,6 +101,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     title,
     contentProps,
     slideAnimation = true,
+    Transition,
     sx = {},
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -130,7 +136,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         onClose={handleClose}
         width={width}
         height={height}
-        sx={{ ...sx }}
+        sx={sx}
+        TransitionComponent={Transition}
       >
         {title ? <ModalTitle title={title} /> : null}
         <DialogContent
