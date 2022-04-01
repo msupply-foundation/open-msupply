@@ -17,7 +17,10 @@ export const QueryErrorHandler = () => {
         ...currentDefaults.queries,
         onError: e => error((e as Error).message || generalError)(),
       },
-      mutations: currentDefaults.mutations,
+      mutations: {
+        ...currentDefaults.mutations,
+        onError: e => error((e as Error).message || generalError)(),
+      },
     });
   }, []);
 
