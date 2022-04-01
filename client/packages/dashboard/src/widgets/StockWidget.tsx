@@ -24,7 +24,7 @@ export const StockWidget: React.FC = () => {
     itemStatsData?.filter(
       item =>
         item.stats.availableStockOnHand > 0 &&
-        item.stats.availableMonthsOfStockOnHand < LOW_MOS_THRESHOLD
+        (item.stats.availableMonthsOfStockOnHand ?? 0) < LOW_MOS_THRESHOLD
     ).length || 0;
 
   const noStockItemsCount =

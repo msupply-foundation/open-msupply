@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ItemStatsFragment = { __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } };
+export type ItemStatsFragment = { __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
 
 export type StockCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -20,7 +20,7 @@ export type ItemStatsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemStatsQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand: number } }> } };
+export type ItemStatsQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } }> } };
 
 export const ItemStatsFragmentDoc = gql`
     fragment ItemStats on ItemNode {
