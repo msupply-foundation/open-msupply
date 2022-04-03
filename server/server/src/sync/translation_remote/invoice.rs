@@ -203,9 +203,7 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_date_time_as_option")]
     pub verified_datetime: Option<NaiveDateTime>,
 
-    #[serde(default)]
     pub om_status: Option<InvoiceStatus>,
-    #[serde(default)]
     pub om_type: Option<InvoiceType>,
 
     /// We ignore the legacy colour field

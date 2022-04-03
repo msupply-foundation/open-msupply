@@ -141,9 +141,7 @@ pub struct LegacyRequisitionRow {
     pub expected_delivery_date: Option<NaiveDate>,
 
     #[serde(rename = "om_max_months_of_stock")]
-    #[serde(default)]
     pub max_months_of_stock: Option<f64>,
-    #[serde(default)]
     pub om_status: Option<RequisitionStatus>,
     /// We ignore the legacy colour field
     #[serde(deserialize_with = "empty_str_as_option")]
