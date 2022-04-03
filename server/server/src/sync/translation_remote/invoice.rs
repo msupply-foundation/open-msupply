@@ -26,24 +26,11 @@ pub enum LegacyTransactType {
     /// Customer invoice
     #[serde(rename = "ci")]
     Ci,
-    // customer credit
-    #[serde(rename = "cc")]
-    Cc,
-    // supplier credit
-    #[serde(rename = "sc")]
-    Sc,
-    /// repack (A stock line is broken down into smaller pack sizes)
-    #[serde(rename = "sr")]
-    Sr,
-    /// build- an internal transaction where you manufacture (build) items from raw materials in stock.
-    #[serde(rename = "bu")]
-    Bu,
-    /// receipt (cash receipt) from a customer (a customer pays for invoices issued)
-    #[serde(rename = "rc")]
-    Rc,
-    /// payment (cash payment) to a supplier
-    #[serde(rename = "ps")]
-    Ps,
+    /// Bucket to catch all other variants
+    /// E.g. "cc" (customer credit), "sc" (supplier credit), "sr" (repack), "bu" (build),
+    /// "rc" (cash receipt), "ps" (cash payment)
+    #[serde(other)]
+    Others,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -60,13 +47,10 @@ pub enum LegacyTransactStatus {
     /// finalised
     #[serde(rename = "fn")]
     Fn,
-    /// The order has been received over the internet (a “web” order), and it is currently being
-    /// processed
-    #[serde(rename = "wp")]
-    Wp,
-    /// The order has been received over the internet (a “web” order), and it is finalised
-    #[serde(rename = "wf")]
-    Wf,
+    /// Bucket to catch all other variants
+    /// E.g. "wp" (web processed), "wp" (web finalised),
+    #[serde(other)]
+    Others,
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Eq)]
@@ -75,6 +59,9 @@ pub enum TransactMode {
     Store,
     #[serde(rename = "dispensary")]
     Dispensary,
+    /// Bucket to catch all other variants
+    #[serde(other)]
+    Others,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -417,8 +404,7 @@ fn invoice_status(
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
             LegacyTransactStatus::Fn => InvoiceRowStatus::Shipped,
-            LegacyTransactStatus::Wp => return None,
-            LegacyTransactStatus::Wf => return None,
+            _ => return None,
         },
         // inbound
         InvoiceRowType::InboundShipment => match data.status {
@@ -426,8 +412,7 @@ fn invoice_status(
             LegacyTransactStatus::Nw => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
             LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
-            LegacyTransactStatus::Wp => return None,
-            LegacyTransactStatus::Wf => return None,
+            _ => return None,
         },
 
         InvoiceRowType::InventoryAdjustment => match data.status {
@@ -435,8 +420,7 @@ fn invoice_status(
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Verified,
             LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
-            LegacyTransactStatus::Wp => return None,
-            LegacyTransactStatus::Wf => return None,
+            _ => return None,
         },
     };
     Some(status)

@@ -15,7 +15,7 @@ use super::{
     zero_date_as_option, TRANSLATION_RECORD_STOCKTAKE,
 };
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
     /// From the 4d code this is used for new
     #[serde(rename = "sg")]
@@ -23,6 +23,9 @@ pub enum LegacyStocktakeStatus {
     /// finalised
     #[serde(rename = "fn")]
     Fn,
+    /// Bucket to catch all other variants
+    #[serde(other)]
+    Others,
 }
 
 #[allow(non_snake_case)]
@@ -100,7 +103,10 @@ impl RemotePullTranslation for StocktakeTranslation {
                 stocktake_number: data.serial_number,
                 comment: data.comment,
                 description: data.Description,
-                status: stocktake_status(&data.status),
+                status: stocktake_status(&data.status).ok_or(anyhow::Error::msg(format!(
+                    "Unexpected stocktake status: {:?}",
+                    data.status
+                )))?,
                 created_datetime,
                 finalised_datetime,
                 inventory_adjustment_id: data.invad_additions_ID,
@@ -111,11 +117,13 @@ impl RemotePullTranslation for StocktakeTranslation {
     }
 }
 
-fn stocktake_status(status: &LegacyStocktakeStatus) -> StocktakeStatus {
-    match status {
+fn stocktake_status(status: &LegacyStocktakeStatus) -> Option<StocktakeStatus> {
+    let status = match status {
         LegacyStocktakeStatus::Sg => StocktakeStatus::New,
         LegacyStocktakeStatus::Fn => StocktakeStatus::Finalised,
-    }
+        _ => return None,
+    };
+    Some(status)
 }
 
 impl RemotePushUpsertTranslation for StocktakeTranslation {
