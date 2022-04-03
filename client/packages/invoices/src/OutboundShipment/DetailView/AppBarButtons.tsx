@@ -10,11 +10,11 @@ import {
   ReportCategory,
   PrinterIcon,
 } from '@openmsupply-client/common';
-import { useIsOutboundDisabled, useOutbound } from '../api';
+import { useOutbound } from '../api';
 import {
+  usePrintReport,
   ReportRowFragment,
   ReportSelector,
-  usePrintReport,
 } from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
@@ -24,8 +24,8 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const isDisabled = useIsOutboundDisabled();
-  const { data } = useOutbound();
+  const isDisabled = useOutbound.utils.isDisabled();
+  const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
   const { print, isPrinting } = usePrintReport();
@@ -44,10 +44,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem()}
         />
-        <ReportSelector
-          category={ReportCategory.OutboundShipment}
-          onClick={printReport}
-        >
+        <ReportSelector category={ReportCategory.Invoice} onClick={printReport}>
           <LoadingButton
             variant="outlined"
             startIcon={<PrinterIcon />}

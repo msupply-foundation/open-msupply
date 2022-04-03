@@ -7,7 +7,7 @@ import { useCurrency } from '@common/intl';
 
 interface CurrencyInputProps extends RCInputProps {
   onChangeNumber: (value: number) => void;
-  maxWidth?: number;
+  maxWidth?: number | string;
 }
 
 // TODO: It would be nice if we were to just use the BasicTextInput or

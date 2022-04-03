@@ -9,6 +9,7 @@ import {
   useTranslation,
   useNotification,
 } from '@openmsupply-client/common';
+import { themeOptions } from '@common/styles';
 import { LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
@@ -19,10 +20,16 @@ export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
+  const customThemeEnabled =
+    !!customTheme && Object.keys(customTheme).length > 0;
 
   const customThemeValue = {
-    enabled: !!customTheme,
-    text: customTheme ? JSON.stringify(customTheme, null, 4) : '{}',
+    enabled: customThemeEnabled,
+    text: JSON.stringify(
+      customThemeEnabled ? customTheme : themeOptions,
+      null,
+      4
+    ),
   };
 
   const customLogoValue = {

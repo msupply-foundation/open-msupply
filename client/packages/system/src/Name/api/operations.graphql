@@ -10,6 +10,31 @@ fragment NameRow on NameNode {
   }
 }
 
+fragment Name on NameNode {
+  address
+  chargeCode
+  code
+  comment
+  country
+  createdDate
+  email
+  id
+  isCustomer
+  isDonor
+  isManufacturer
+  isOnHold
+  isSupplier
+  isSystemName
+  isVisible
+  name
+  phone
+  website
+  store {
+    id
+    code
+  }
+}
+
 query names(
   $storeId: String!
   $key: NameSortFieldInput!
@@ -28,6 +53,18 @@ query names(
       __typename
       nodes {
         ...NameRow
+      }
+      totalCount
+    }
+  }
+}
+
+query nameById($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...Name
       }
       totalCount
     }

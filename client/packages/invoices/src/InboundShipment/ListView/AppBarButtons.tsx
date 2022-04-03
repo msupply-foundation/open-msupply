@@ -3,7 +3,6 @@ import {
   FnUtils,
   DownloadIcon,
   PlusCircleIcon,
-  PrinterIcon,
   useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -17,7 +16,7 @@ import { useInsertInbound } from '../api';
 export const AppBarButtons: FC = () => {
   const modalController = useToggle();
   const { mutate: onCreate } = useInsertInbound();
-  const { info, success } = useNotification();
+  const { success } = useNotification();
   const t = useTranslation('replenishment');
 
   return (
@@ -32,11 +31,6 @@ export const AppBarButtons: FC = () => {
           Icon={<DownloadIcon />}
           label={t('button.export', { ns: 'common' })}
           onClick={success('Downloaded successfully')}
-        />
-        <ButtonWithIcon
-          Icon={<PrinterIcon />}
-          label={t('button.print', { ns: 'common' })}
-          onClick={info('No printer detected')}
         />
       </Grid>
       <SupplierSearchModal

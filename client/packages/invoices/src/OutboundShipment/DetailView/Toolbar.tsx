@@ -10,24 +10,22 @@ import {
   useBufferState,
   DropdownMenuItem,
   DeleteIcon,
+  ZapIcon,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
-import {
-  useOutboundFields,
-  useIsOutboundDisabled,
-  useDeleteSelectedLines,
-} from '../api';
+import { useOutbound } from '../api';
 
 export const Toolbar: FC = () => {
-  const { onDelete } = useDeleteSelectedLines();
-  const { otherParty, theirReference, update } = useOutboundFields([
+  const { onDelete } = useOutbound.line.deleteSelected();
+  const { onAllocate } = useOutbound.line.allocateSelected();
+  const { otherParty, theirReference, update } = useOutbound.document.fields([
     'otherParty',
     'theirReference',
   ]);
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
 
-  const isDisabled = useIsOutboundDisabled();
+  const isDisabled = useOutbound.utils.isDisabled();
   const t = useTranslation('distribution');
 
   return (
@@ -72,9 +70,12 @@ export const Toolbar: FC = () => {
             />
           </Box>
         </Grid>
-        <DropdownMenu disabled={isDisabled} label={t('label.select')}>
+        <DropdownMenu label={t('label.actions')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines')}
+          </DropdownMenuItem>
+          <DropdownMenuItem IconComponent={ZapIcon} onClick={onAllocate}>
+            {t('button.allocate-lines')}
           </DropdownMenuItem>
         </DropdownMenu>
       </Grid>

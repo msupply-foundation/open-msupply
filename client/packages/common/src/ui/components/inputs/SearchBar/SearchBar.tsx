@@ -9,6 +9,7 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   placeholder: string;
   isLoading?: boolean;
+  debounceTime?: number;
 }
 
 const Spin: FC<{ isLoading: boolean }> = ({ isLoading }) =>
@@ -19,6 +20,7 @@ export const SearchBar: FC<SearchBarProps> = ({
   onChange,
   placeholder,
   isLoading = false,
+  debounceTime = 500,
 }) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
@@ -38,7 +40,7 @@ export const SearchBar: FC<SearchBarProps> = ({
       setLoading(false);
     },
     [onChange],
-    500
+    debounceTime
   );
 
   return (

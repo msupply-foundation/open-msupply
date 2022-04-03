@@ -23,7 +23,7 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Login, Viewport } from './components';
 import { Site } from './Site';
-import { LoggedOutAlert } from './components/LoggedOutAlert';
+import { AuthenticationAlert } from './components/AuthenticationAlert';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,7 +54,7 @@ const Host: FC = () => (
                   <ConfirmationModalProvider>
                     <AlertModalProvider>
                       <BrowserRouter>
-                        <LoggedOutAlert />
+                        <AuthenticationAlert />
                         <Viewport>
                           <Box display="flex" style={{ minHeight: '100%' }}>
                             <Routes>

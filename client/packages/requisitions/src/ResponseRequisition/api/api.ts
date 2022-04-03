@@ -10,8 +10,10 @@ import {
 } from '@openmsupply-client/common';
 import {
   ResponseFragment,
+  ResponseLineFragment,
   ResponseRowFragment,
   Sdk,
+  SupplyRequestedQuantityMutation,
 } from './operations.generated';
 import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
 
@@ -69,6 +71,7 @@ const responseParser = {
       status: responseParser.toStatus(requisition),
     };
   },
+  toDeleteLine: (line: ResponseLineFragment) => ({ id: line.id }),
   toUpdateLine: (
     patch: DraftResponseLine
   ): UpdateResponseRequisitionLineInput => ({
@@ -122,6 +125,25 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
+  deleteLines: async (_: ResponseLineFragment[]) => {
+    // NOT YET IMPLEMENTED IN SERVER API
+
+    // const ids = responseLines.map(responseParser.toDeleteLine);
+    // const result = await sdk.deleteRequestLines({ ids, storeId });
+
+    // if (result.batchRequestRequisition.deleteRequestRequisitionLines) {
+    //   const failedLines =
+    //     result.batchRequestRequisition.deleteRequestRequisitionLines.filter(
+    //       line =>
+    //         line.response.__typename === 'DeleteRequestRequisitionLineError'
+    //     );
+    //   if (failedLines.length === 0) {
+    //     return result.batchRequestRequisition.deleteRequestRequisitionLines;
+    //   }
+    // }
+
+    throw new Error('Could not delete requisition lines!');
+  },
   updateLine: async (patch: DraftResponseLine) => {
     const result = await sdk.updateResponseLine({
       storeId,
@@ -152,5 +174,11 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not create outbound');
+  },
+  supplyRequestedQuantity: async (
+    responseId: string
+  ): Promise<SupplyRequestedQuantityMutation> => {
+    const result = await sdk.supplyRequestedQuantity({ storeId, responseId });
+    return result;
   },
 });

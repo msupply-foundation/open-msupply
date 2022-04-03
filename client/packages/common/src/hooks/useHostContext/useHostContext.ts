@@ -15,6 +15,9 @@ type HostContext = {
 
   setDetailPanelRef: (ref: React.MutableRefObject<null> | null) => void;
   detailPanelRef: React.MutableRefObject<null> | null;
+
+  setPageTitle: (title: string) => void;
+  pageTitle: string;
 };
 
 export const useHostContext = create<HostContext>(set => ({
@@ -37,4 +40,10 @@ export const useHostContext = create<HostContext>(set => ({
   setDetailPanelRef: (refOrNull: React.MutableRefObject<null> | null) =>
     set(state => ({ ...state, detailPanelRef: refOrNull })),
   detailPanelRef: null,
+
+  setPageTitle: (title: string) => {
+    set(state => ({ ...state, pageTitle: title }));
+    document.title = title;
+  },
+  pageTitle: '',
 }));

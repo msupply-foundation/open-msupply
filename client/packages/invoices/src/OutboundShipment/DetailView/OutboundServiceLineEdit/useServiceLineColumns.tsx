@@ -9,6 +9,7 @@ import {
   ColumnAlign,
   NonNegativeNumberInputCell,
   TextInputCell,
+  useFormatCurrency,
 } from '@openmsupply-client/common';
 import { ServiceItemSearchInput } from '@openmsupply-client/system';
 import { DraftOutboundLine } from './../../../types';
@@ -18,6 +19,7 @@ export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftOutboundLine>) => void
 ) => {
   const t = useTranslation('distribution');
+  const c = useFormatCurrency();
   return useColumns<DraftOutboundLine>([
     {
       key: 'serviceItemName',
@@ -63,7 +65,7 @@ export const useServiceLineColumns = (
       label: 'label.total',
       align: ColumnAlign.Right,
       width: 75,
-      accessor: ({ rowData }) => get.serviceChargeTotal(rowData),
+      accessor: ({ rowData }) => c(get.serviceChargeTotal(rowData)),
     },
     {
       key: 'isDeleted',

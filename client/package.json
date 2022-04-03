@@ -6,7 +6,7 @@
     "build": "lerna run --scope @openmsupply-client/* build",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
-    "compile": "lerna run --scope @openmsupply-client/* --parallel tsc",
+    "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD",
     "prepare": "husky install",
     "pre-commit-lint": "yarn compile && yarn lint-staged",
     "test": "jest --config ./jest.config.js --maxWorkers=50%",
@@ -14,11 +14,7 @@
     "build-storybook": "build-storybook -s ./packages/host/public ",
     "generate": "graphql-codegen --config codegen.yml",
     "android:build-remote_server": "cd ./packages/android && ./build_remote_server_libs.sh",
-    "android:build": "cd ./packages/android && ./gradlew assembleRelease",
-    "i18n-unused-display": "i18n-unused display-unused",
-    "i18n-unused-mark": "i18n-unused mark-unused",
-    "i18n-unused-remove": "i18n-unused remove-unused",
-    "i18n-unused-missing": "i18n-unused display-missed"
+    "android:build": "yarn build && npx cap copy && cd ./packages/android && ./gradlew assembleRelease"
   },
   "workspaces": {
     "packages": [
@@ -50,13 +46,14 @@
     "@types/lodash": "^4.14.178",
     "@types/node": "^16.11.12",
     "@types/react": "^17.0.37",
+    "@types/recharts": "^1.8.23",
     "@typescript-eslint/eslint-plugin": "^5.7.0",
     "@typescript-eslint/parser": "^5.7.0",
     "eslint": "^8.4.1",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jest-dom": "^3.9.2",
     "eslint-plugin-react": "^7.27.1",
-    "i18n-unused": "^0.7.2",
+    "i18n-unused": "^0.8.0",
     "jest": "^27.4.5",
     "msw": "^0.36.3",
     "msw-storybook-addon": "^1.5.0",

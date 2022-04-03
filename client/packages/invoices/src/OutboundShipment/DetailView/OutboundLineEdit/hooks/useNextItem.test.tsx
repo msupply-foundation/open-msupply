@@ -69,6 +69,20 @@ const getLines = (): InvoiceLineNode[] => [
         availableMonthsOfStockOnHand: 0,
         averageMonthlyConsumption: 0,
       },
+      atcCategory: '',
+      ddd: 0,
+      defaultPackSize: 0,
+      doses: 0,
+      isVaccine: false,
+      margin: 0,
+      msupplyUniversalCode: '',
+      msupplyUniversalName: '',
+      outerPackSize: 0,
+      strength: '',
+      unitName: '',
+      volumePerOuterPack: 0,
+      volumePerPack: 0,
+      weight: 0,
     },
   },
   {
@@ -112,6 +126,20 @@ const getLines = (): InvoiceLineNode[] => [
         availableMonthsOfStockOnHand: 0,
         averageMonthlyConsumption: 0,
       },
+      atcCategory: '',
+      ddd: 0,
+      defaultPackSize: 0,
+      doses: 0,
+      isVaccine: false,
+      margin: 0,
+      msupplyUniversalCode: '',
+      msupplyUniversalName: '',
+      outerPackSize: 0,
+      strength: '',
+      unitName: '',
+      volumePerOuterPack: 0,
+      volumePerPack: 0,
+      weight: 0,
     },
   },
   {
@@ -155,6 +183,20 @@ const getLines = (): InvoiceLineNode[] => [
         availableMonthsOfStockOnHand: 0,
         averageMonthlyConsumption: 0,
       },
+      atcCategory: '',
+      ddd: 0,
+      defaultPackSize: 0,
+      doses: 0,
+      isVaccine: false,
+      margin: 0,
+      msupplyUniversalCode: '',
+      msupplyUniversalName: '',
+      outerPackSize: 0,
+      strength: '',
+      unitName: '',
+      volumePerOuterPack: 0,
+      volumePerPack: 0,
+      weight: 0,
     },
   },
 ];
@@ -205,11 +247,9 @@ describe('useNextItem', () => {
       wrapper: TestingProvider,
     });
 
-    return result.waitForNextUpdate().then(() => {
-      expect(result.result.current.next).toEqual(null);
-      expect(result.result.current).toEqual(
-        expect.objectContaining({ disabled: true })
-      );
-    });
+    expect(result.result.current.next).toEqual(null);
+    expect(result.result.current).toEqual(
+      expect.objectContaining({ disabled: true })
+    );
   });
 });

@@ -47,30 +47,31 @@ fragment ItemRowWithStats on ItemNode {
 
 fragment Item on ItemNode {
   __typename
-  code
   id
-  isVisible
+  code
   name
-  unitName
+  atcCategory
+  ddd
+  defaultPackSize
+  doses
+  isVaccine
+  isVisible
+  margin
+  msupplyUniversalCode
+  msupplyUniversalName
+  outerPackSize
+  strength
   type
+  unitName
+  volumePerOuterPack
+  volumePerPack
+  weight
   availableBatches(storeId: $storeId) {
     __typename
     totalCount
     nodes {
       __typename
-      availableNumberOfPacks
-      batch
-      costPricePerPack
-      expiryDate
-      id
-      itemId
-      packSize
-      sellPricePerPack
-      totalNumberOfPacks
-      onHold
-      note
-      storeId
-      locationName
+      ...StockLine
     }
   }
   stats(storeId: $storeId) {
@@ -166,11 +167,7 @@ query itemById($storeId: String!, $itemId: String!) {
       __typename
       nodes {
         __typename
-        code
-        id
-        isVisible
-        name
-        unitName
+        ...Item
         stats(storeId: $storeId) {
           __typename
           averageMonthlyConsumption

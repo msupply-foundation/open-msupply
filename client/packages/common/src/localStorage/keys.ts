@@ -1,5 +1,6 @@
 import { SupportedLocales } from '@common/intl';
 import { ThemeOptions } from '@mui/material';
+import { AuthError } from '../authentication/AuthContext';
 
 export type GroupByItem = {
   outboundShipment?: boolean;
@@ -18,6 +19,7 @@ export type LocalStorageRecord = {
   '/theme/custom': ThemeOptions;
   '/theme/logo': string;
   '/mru/credentials': AuthenticationCredentials;
+  '/auth/error': AuthError | undefined;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;

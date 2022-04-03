@@ -82,6 +82,7 @@ const outboundParsers = {
     onHold: 'onHold' in patch ? patch.onHold : undefined,
     otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
     theirReference: patch.theirReference,
+    transportReference: patch.transportReference,
   }),
   toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
     return {
@@ -331,6 +332,22 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.upsertOutboundShipment({ storeId, input });
 
     return result;
+  },
+  allocateLines: async (
+    allocatedOutboundShipmentUnallocatedLines: string[]
+  ) => {
+    const input = {
+      allocatedOutboundShipmentUnallocatedLines,
+    };
+
+    const result = await sdk.upsertOutboundShipment({ storeId, input });
+    const { batchOutboundShipment } = result;
+
+    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+      return batchOutboundShipment;
+    }
+
+    throw new Error('Unable to allocate lines');
   },
   deleteLines: async (lines: { id: string; invoiceId: string }[]) => {
     return sdk.deleteOutboundShipmentLines({

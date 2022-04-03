@@ -10,92 +10,19 @@ fragment ItemWithStats on ItemNode {
   }
 }
 
-mutation insertRequest(
-  $storeId: String!
-  $input: InsertRequestRequisitionInput!
-) {
-  insertRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-      requisitionNumber
-    }
-    ... on InsertRequestRequisitionError {
-      __typename
-      error {
-        description
-        ... on OtherPartyNotASupplier {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-mutation updateRequest(
-  $storeId: String!
-  $input: UpdateRequestRequisitionInput!
-) {
-  updateRequestRequisition(input: $input, storeId: $storeId) {
-    ... on RequisitionNode {
-      __typename
-      id
-      requisitionNumber
-    }
-    ... on UpdateRequestRequisitionError {
-      __typename
-      error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on CannotEditRequisition {
-          __typename
-          description
-        }
-        ... on OtherPartyNotASupplier {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-mutation deleteRequest(
-  $storeId: String!
-  $input: BatchRequestRequisitionInput!
-) {
-  batchRequestRequisition(storeId: $storeId, input: $input) {
-    deleteRequestRequisitions {
-      id
-      response {
-        ... on DeleteRequestRequisitionError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on CannotDeleteRequisitionWithLines {
-              __typename
-              description
-            }
-            ... on CannotEditRequisition {
-              __typename
-              description
-            }
-          }
-        }
-        ... on DeleteResponse {
-          id
-        }
-      }
-    }
-  }
+fragment RequestRow on RequisitionNode {
+  colour
+  comment
+  createdDatetime
+  finalisedDatetime
+  id
+  otherPartyName
+  requisitionNumber
+  sentDatetime
+  status
+  theirReference
+  type
+  otherPartyId
 }
 
 fragment RequestLine on RequisitionLineNode {
@@ -175,6 +102,7 @@ fragment Request on RequisitionNode {
     }
   }
 }
+
 query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
@@ -202,19 +130,53 @@ query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   }
 }
 
-fragment RequestRow on RequisitionNode {
-  colour
-  comment
-  createdDatetime
-  finalisedDatetime
-  id
-  otherPartyName
-  requisitionNumber
-  sentDatetime
-  status
-  theirReference
-  type
-  otherPartyId
+query requisitionLineChart($storeId: String!, $requisitionLineId: String!) {
+  requisitionLineChart(
+    requestRequisitionLineId: $requisitionLineId
+    storeId: $storeId
+  ) {
+    ... on ItemChartNode {
+      calculationDate
+      consumptionHistory {
+        totalCount
+        nodes {
+          averageMonthlyConsumption
+          consumption
+          date
+          isCurrent
+          isHistoric
+        }
+      }
+      stockEvolution {
+        nodes {
+          date
+          isHistoric
+          isProjected
+          minimumStockOnHand
+          maximumStockOnHand
+          stockOnHand
+        }
+        totalCount
+      }
+      suggestedQuantityCalculation {
+        suggestedQuantity
+        stockOnHand
+        minimumStockOnHand
+        maximumStockOnHand
+        averageMonthlyConsumption
+      }
+    }
+    ... on RequisitionLineChartError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
 }
 
 query requests(
@@ -345,6 +307,122 @@ mutation deleteRequestLines(
           error {
             description
             ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation useSuggestedQuantity($requestId: String!, $storeId: String!) {
+  useSuggestedQuantity(
+    input: { requestRequisitionId: $requestId }
+    storeId: $storeId
+  ) {
+    ... on UseSuggestedQuantityError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+      }
+    }
+    ... on RequisitionLineConnector {
+      nodes {
+        id
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertRequest(
+  $storeId: String!
+  $input: InsertRequestRequisitionInput!
+) {
+  insertRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+    ... on InsertRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation updateRequest(
+  $storeId: String!
+  $input: UpdateRequestRequisitionInput!
+) {
+  updateRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+    ... on UpdateRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation deleteRequest(
+  $storeId: String!
+  $input: BatchRequestRequisitionInput!
+) {
+  batchRequestRequisition(storeId: $storeId, input: $input) {
+    deleteRequestRequisitions {
+      id
+      response {
+        ... on DeleteRequestRequisitionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteRequisitionWithLines {
               __typename
               description
             }

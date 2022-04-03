@@ -42,7 +42,7 @@ export const StocktakeListView: FC = () => {
 
   const columns = useColumns<StocktakeRowFragment>(
     [
-      'stocktakeNumber',
+      ['stocktakeNumber', { maxWidth: 50 }],
       [
         'status',
         {

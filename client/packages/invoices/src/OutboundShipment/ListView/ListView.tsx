@@ -14,7 +14,7 @@ import {
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { useOutbounds, useUpdateOutbound } from '../api';
+import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
 
 const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
@@ -26,7 +26,7 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 };
 
 export const OutboundShipmentListViewComponent: FC = () => {
-  const { mutate: onUpdate } = useUpdateOutbound();
+  const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation('common');
   const navigate = useNavigate();
 
@@ -38,7 +38,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     onChangePage,
     pagination,
     filter,
-  } = useOutbounds();
+  } = useOutbound.document.list();
   useDisableOutboundRows(data?.nodes);
 
   const { c } = useCurrency();
@@ -52,13 +52,22 @@ export const OutboundShipmentListViewComponent: FC = () => {
             getStatusTranslator(t)(status as InvoiceNodeStatus),
         },
       ],
-      'invoiceNumber',
+      [
+        'invoiceNumber',
+        { description: 'description.invoice-number', maxWidth: 110 },
+      ],
       'createdDatetime',
-      'comment',
+      {
+        description: 'description.customer-reference',
+        key: 'theirReference',
+        label: 'label.reference',
+      },
+      ['comment'],
       [
         'totalAfterTax',
         {
           accessor: ({ rowData }) => c(rowData.pricing.totalAfterTax).format(),
+          width: '100%',
         },
       ],
       'selection',

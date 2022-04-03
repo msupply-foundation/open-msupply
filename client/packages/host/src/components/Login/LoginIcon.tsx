@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  MSupplyGuyGradient,
+  MSupplyGuy,
   useLocalStorage,
   useTheme,
   RegexUtils,
@@ -11,7 +11,7 @@ export const LoginIcon: React.FC = () => {
   const logoStyle = { width: 122, height: 180 };
   const theme = useTheme();
 
-  if (!customLogo) return <MSupplyGuyGradient style={logoStyle} />;
+  if (!customLogo) return <MSupplyGuy style={logoStyle} />;
 
   const style = {
     ...logoStyle,

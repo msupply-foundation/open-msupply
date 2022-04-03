@@ -10,11 +10,12 @@ import { useOutbound } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
+import { TransportSection } from './TransportSection';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
   const t = useTranslation('distribution');
-  const { data } = useOutbound();
+  const { data } = useOutbound.document.get();
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');
@@ -34,6 +35,7 @@ export const SidePanelComponent = () => {
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
       <PricingSection />
+      <TransportSection />
     </DetailPanelPortal>
   );
 };
