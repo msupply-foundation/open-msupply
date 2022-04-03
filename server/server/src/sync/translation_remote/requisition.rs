@@ -106,6 +106,9 @@ pub struct LegacyRequisitionRow {
     // created_datetime
     #[serde(serialize_with = "date_to_isostring")]
     pub date_entered: NaiveDate,
+
+    #[serde(rename = "lastModifiedAt")]
+    pub last_modified_at: i64,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub requester_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -161,7 +164,10 @@ impl RemotePullTranslation for RequisitionTranslation {
         }
 
         let data = serde_json::from_str::<LegacyRequisitionRow>(&sync_record.data)?;
-
+        let r#type = from_legacy_type(&data.r#type).ok_or(anyhow::Error::msg(format!(
+            "Unsupported requisition type: {:?}",
+            data.r#type
+        )))?;
         let (
             created_datetime,
             sent_datetime,
@@ -185,8 +191,8 @@ impl RemotePullTranslation for RequisitionTranslation {
             ),
             None => (
                 date_and_time_to_datatime(data.date_entered, 0),
-                None,
-                None,
+                from_legacy_sent_datetime(data.last_modified_at, &r#type),
+                from_legacy_finalised_datetime(data.last_modified_at, &r#type),
                 data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
                 from_legacy_status(&data.r#type, &data.status).ok_or(anyhow::Error::msg(
                     format!("Unsupported requisition status: {:?}", data.status),
@@ -194,11 +200,6 @@ impl RemotePullTranslation for RequisitionTranslation {
                 None,
             ),
         };
-
-        let r#type = from_legacy_type(&data.r#type).ok_or(anyhow::Error::msg(format!(
-            "Unsupported requisition type: {:?}",
-            data.r#type
-        )))?;
 
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Requisition(RequisitionRow {
@@ -220,6 +221,38 @@ impl RemotePullTranslation for RequisitionTranslation {
                 linked_requisition_id: data.linked_requisition_id,
             }),
         )))
+    }
+}
+
+fn from_legacy_sent_datetime(
+    last_modified_at: i64,
+    r#type: &RequisitionRowType,
+) -> Option<NaiveDateTime> {
+    match r#type {
+        RequisitionRowType::Request => {
+            if last_modified_at > 0 {
+                Some(NaiveDateTime::from_timestamp(last_modified_at, 0))
+            } else {
+                None
+            }
+        }
+        RequisitionRowType::Response => None,
+    }
+}
+
+fn from_legacy_finalised_datetime(
+    last_modified_at: i64,
+    r#type: &RequisitionRowType,
+) -> Option<NaiveDateTime> {
+    match r#type {
+        RequisitionRowType::Request => None,
+        RequisitionRowType::Response => {
+            if last_modified_at > 0 {
+                Some(NaiveDateTime::from_timestamp(last_modified_at, 0))
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -272,6 +305,11 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             om_status: Some(RequisitionStatus::from_domain(status)),
             date_entered: date_from_date_time(&created_datetime),
             created_datetime: Some(created_datetime),
+            last_modified_at: to_legacy_last_modified_at(
+                &r#type,
+                sent_datetime,
+                finalised_datetime,
+            ),
             sent_datetime: sent_datetime,
             finalised_datetime: finalised_datetime,
             // TODO:
@@ -292,6 +330,19 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
         }]))
+    }
+}
+
+fn to_legacy_last_modified_at(
+    r#type: &RequisitionRowType,
+    sent_datetime: Option<NaiveDateTime>,
+    finalised_datetime: Option<NaiveDateTime>,
+) -> i64 {
+    match r#type {
+        RequisitionRowType::Request => sent_datetime.map(|time| time.timestamp()).unwrap_or(0),
+        RequisitionRowType::Response => {
+            finalised_datetime.map(|time| time.timestamp()).unwrap_or(0)
+        }
     }
 }
 
@@ -316,13 +367,13 @@ fn from_legacy_status(
     status: &LegacyRequisitionStatus,
 ) -> Option<RequisitionRowStatus> {
     let status = match r#type {
-        LegacyRequisitionType::Response => match status {
+        LegacyRequisitionType::Request => match status {
             LegacyRequisitionStatus::Sg => RequisitionRowStatus::Draft,
             &LegacyRequisitionStatus::Cn => RequisitionRowStatus::Sent,
             LegacyRequisitionStatus::Fn => RequisitionRowStatus::Sent,
             _ => return None,
         },
-        LegacyRequisitionType::Request => match status {
+        LegacyRequisitionType::Response => match status {
             LegacyRequisitionStatus::Sg => return None,
             &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
             LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
