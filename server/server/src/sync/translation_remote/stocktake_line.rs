@@ -132,28 +132,12 @@ impl RemotePushUpsertTranslation for StocktakeLineTranslation {
             is_edited: counted_number_of_packs.is_some(),
             item_line_ID: stock_line_id,
             item_ID: item_id,
-            snapshot_packsize: stock_line
-                .as_ref()
-                .map(|it| it.pack_size)
-                .or(pack_size)
-                .unwrap_or(0),
-            Batch: stock_line
-                .as_ref()
-                .and_then(|it| it.batch.clone())
-                .or(batch),
-            expiry: stock_line
-                .as_ref()
-                .and_then(|it| it.expiry_date)
-                .or(expiry_date),
-            cost_price: stock_line
-                .as_ref()
-                .map(|it| it.cost_price_per_pack)
-                .or(cost_price_per_pack)
-                .unwrap_or(0.0),
-            sell_price: stock_line
-                .map(|it| it.sell_price_per_pack)
-                .or(sell_price_per_pack)
-                .unwrap_or(0.0),
+            snapshot_packsize: pack_size
+                .unwrap_or(stock_line.as_ref().map(|it| it.pack_size).unwrap_or(0)),
+            Batch: batch,
+            expiry: expiry_date,
+            cost_price: cost_price_per_pack.unwrap_or(0.0),
+            sell_price: sell_price_per_pack.unwrap_or(0.0),
             note,
         };
 
