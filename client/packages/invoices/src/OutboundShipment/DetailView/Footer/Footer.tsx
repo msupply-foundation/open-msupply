@@ -50,8 +50,8 @@ const createStatusLog = (invoice: OutboundFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation('distribution');
+  const { data } = useOutbound.document.get();
   const { navigateUpOne } = useBreadcrumbs();
-  const { data } = useOutbound();
 
   return (
     <AppFooterPortal
@@ -76,7 +76,7 @@ export const FooterComponent: FC = () => {
               <ButtonWithIcon
                 shrinkThreshold="lg"
                 Icon={<XCircleIcon />}
-                label={t('button.cancel')}
+                label={t('button.close')}
                 color="secondary"
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigateUpOne()}

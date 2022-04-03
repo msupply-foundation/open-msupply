@@ -20,8 +20,11 @@ export const useGetRefreshToken = (token: string) => {
   // the debounce will delay the initial refresh request, giving the dev env a bit of time
   debouncedSetEnabled(!!token);
 
-  return useQuery(api.keys.refresh(token), api.get.refreshToken, {
-    refetchInterval,
+  return {
     enabled,
-  });
+    ...useQuery(api.keys.refresh(token), api.get.refreshToken, {
+      refetchInterval,
+      enabled,
+    }),
+  };
 };

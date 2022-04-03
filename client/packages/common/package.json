@@ -37,6 +37,7 @@
     "react-i18next": "^11.15.1",
     "react-query": "^3.34.12",
     "react-router-dom": "^6.1.1",
+    "recharts": "^2.1.9",
     "stylis": "^4.0.13",
     "stylis-plugin-rtl": "^2.1.1",
     "uuid": "^8.3.2",

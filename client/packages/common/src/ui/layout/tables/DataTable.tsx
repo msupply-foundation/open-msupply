@@ -114,9 +114,6 @@ export const DataTableComponent = <T extends RecordWithId>({
         <TableHead
           sx={{
             backgroundColor: 'background.white',
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
             position: 'sticky',
             top: 0,
             zIndex: 'tableHeader',
@@ -133,7 +130,7 @@ export const DataTableComponent = <T extends RecordWithId>({
             ))}
           </HeaderRow>
         </TableHead>
-        <TableBody sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <TableBody>
           {data.map((row, idx) => (
             <DataRow
               key={row.id}
@@ -159,6 +156,7 @@ export const DataTableComponent = <T extends RecordWithId>({
           insetBlockEnd: 0,
           backgroundColor: 'white',
           justifyContent: 'flex-end',
+          zIndex: 100,
         }}
       >
         {pagination && onChangePage && (

@@ -16,6 +16,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Fab from '@mui/material/Fab';
+import MuiLink from '@mui/material/Link';
 
 export * from './portals';
 export * from './inputs';
@@ -28,6 +29,7 @@ export * from './menus';
 export * from './modals';
 export * from './panels';
 export * from './popover';
+export * from './charts';
 
 export {
   Accordion,
@@ -43,6 +45,7 @@ export {
   GlobalStyles,
   Menu,
   MenuItem,
+  MuiLink,
   Typography,
   TextField,
   Tooltip,

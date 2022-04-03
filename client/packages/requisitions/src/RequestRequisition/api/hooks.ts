@@ -1,5 +1,5 @@
 import { isRequestDisabled } from './../../utils';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   zustand,
   useConfirmationModal,
@@ -19,6 +19,7 @@ import {
   useNotification,
   useTableStore,
   RequisitionNodeStatus,
+  RegexUtils,
 } from '@openmsupply-client/common';
 import { MasterListRowFragment } from '@openmsupply-client/system';
 import { getRequestQueries, ListParams } from './api';
@@ -43,6 +44,7 @@ export const useRequestApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    chartData: (lineId: string) => [...keys.base(), storeId, lineId] as const,
   };
 
   const { client } = useGql();
@@ -128,13 +130,40 @@ export const useRequestFields = <
   );
 };
 
+export const useRequestLineChartData = (requisitionLineId: string) => {
+  const api = useRequestApi();
+  return useQuery(
+    api.keys.chartData(requisitionLineId),
+    () => api.get.lineChartData(requisitionLineId),
+    {
+      refetchOnMount: false,
+      cacheTime: 0,
+      onError: () => {},
+    }
+  );
+};
+
+export const useItemFilter = zustand<{
+  itemFilter: string;
+  setItemFilter: (itemFilter: string) => void;
+}>(set => ({
+  setItemFilter: (itemFilter: string) =>
+    set(state => ({ ...state, itemFilter })),
+  itemFilter: '',
+}));
+
 export const useRequestLines = () => {
   const { on } = useHideOverStocked();
+  const { itemFilter, setItemFilter } = useItemFilter();
   const { columns, onChangeSortBy, sortBy } = useRequestColumns();
   const { lines, minMonthsOfStock } = useRequestFields([
     'lines',
     'minMonthsOfStock',
   ]);
+
+  useEffect(() => {
+    setItemFilter('');
+  }, []);
 
   const sorted = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -149,14 +178,24 @@ export const useRequestLines = () => {
       return sorted.filter(
         item =>
           item.itemStats.availableStockOnHand <
-          item.itemStats.averageMonthlyConsumption * minMonthsOfStock
+            item.itemStats.averageMonthlyConsumption * minMonthsOfStock &&
+          RegexUtils.includes(itemFilter, item.item.name)
       );
     } else {
-      return sorted;
+      return sorted.filter(({ item: { name } }) =>
+        RegexUtils.includes(itemFilter, name)
+      );
     }
-  }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock]);
+  }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock, itemFilter]);
 
-  return { lines: sorted, sortBy, onChangeSortBy, columns };
+  return {
+    lines: sorted,
+    sortBy,
+    onChangeSortBy,
+    columns,
+    itemFilter,
+    setItemFilter,
+  };
 };
 
 export const useIsRequestDisabled = (): boolean => {
@@ -283,6 +322,7 @@ export const useDeleteRequestLines = () => {
   const { lines } = useRequestLines();
   const api = useRequestApi();
   const requestNumber = useRequestNumber();
+  const isDisabled = useIsRequestDisabled();
   const queryClient = useQueryClient();
   const { mutate } = useMutation(api.deleteLines, {
     onSettled: () =>
@@ -295,6 +335,10 @@ export const useDeleteRequestLines = () => {
   );
 
   const onDelete = async () => {
+    if (isDisabled) {
+      info(t('label.cant-delete-disabled-requisition'))();
+      return;
+    }
     const number = selectedRows?.length;
     if (selectedRows && number) {
       mutate(selectedRows, {
@@ -306,4 +350,16 @@ export const useDeleteRequestLines = () => {
   };
 
   return { onDelete };
+};
+
+export const useSuggestedQuantity = () => {
+  const queryClient = useQueryClient();
+  const api = useRequestApi();
+  const requestNumber = useRequestNumber();
+  const { id } = useRequestFields('id');
+
+  return useMutation(() => api.useSuggestedQuantity(id), {
+    onSettled: () =>
+      queryClient.invalidateQueries(api.keys.detail(requestNumber)),
+  });
 };

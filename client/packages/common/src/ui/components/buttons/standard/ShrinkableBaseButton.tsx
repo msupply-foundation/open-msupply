@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { ButtonProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { StyledBaseButton } from './BaseButton';
-import { useRtl } from '@common/intl';
+import { IntlUtils } from '@common/intl';
 
 export const StyledShrinkableBaseButton = styled(StyledBaseButton, {
   shouldForwardProp: prop => prop !== 'shrink' && prop !== 'isRtl',
@@ -32,7 +32,7 @@ interface ShrinkableBaseButtonProps extends ButtonProps {
 
 export const ShrinkableBaseButton: FC<ShrinkableBaseButtonProps> =
   React.forwardRef(({ shrink = false, ...props }, ref) => {
-    const isRtl = useRtl();
+    const isRtl = IntlUtils.useRtl();
     return (
       <StyledShrinkableBaseButton
         ref={ref}

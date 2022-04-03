@@ -12,7 +12,7 @@ import {
   TableProvider,
   createTableStore,
 } from '@openmsupply-client/common';
-import { useIsOutboundDisabled } from '../../api';
+import { useOutbound } from '../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
 interface OutboundServiceLineEditProps {
@@ -25,7 +25,7 @@ export const OutboundServiceLineEdit = ({
   onClose,
 }: OutboundServiceLineEditProps) => {
   const { error } = useNotification();
-  const isDisabled = useIsOutboundDisabled();
+  const isDisabled = useOutbound.utils.isDisabled();
   const { Modal } = useDialog({ isOpen, onClose });
   const { lines, update, add, save, isLoading } = useDraftServiceLines();
   const columns = useServiceLineColumns(update);

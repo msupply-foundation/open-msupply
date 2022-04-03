@@ -5,12 +5,15 @@ import {
   DialogButton,
   BasicSpinner,
   useBufferState,
+  Box,
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
 import { useIsRequestDisabled } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
 import { StockDistribution } from './ItemCharts/StockDistribution';
+import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
+import { StockEvolution } from './ItemCharts/StockEvolution';
 
 interface RequestLineEditProps {
   isOpen: boolean;
@@ -26,7 +29,7 @@ export const RequestLineEdit = ({
   item,
 }: RequestLineEditProps) => {
   const disabled = useIsRequestDisabled();
-  const { Modal } = useDialog({ onClose, isOpen });
+  const { Modal } = useDialog({ onClose, isOpen, animationTimeout: 100 });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentItem);
@@ -74,13 +77,23 @@ export const RequestLineEdit = ({
             onChangeItem={setCurrentItem}
             item={currentItem}
           />
-          <StockDistribution
-            availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-            averageMonthlyConsumption={
-              draft?.itemStats?.averageMonthlyConsumption
-            }
-            suggestedQuantity={draft?.suggestedQuantity}
-          />
+          {!!draft && (
+            <StockDistribution
+              availableStockOnHand={draft?.itemStats?.availableStockOnHand}
+              averageMonthlyConsumption={
+                draft?.itemStats?.averageMonthlyConsumption
+              }
+              suggestedQuantity={draft?.suggestedQuantity}
+            />
+          )}
+          <Box
+            display="flex"
+            sx={{ paddingLeft: 4, paddingRight: 4 }}
+            justifyContent="space-between"
+          >
+            <ConsumptionHistory id={draft?.id || ''} />
+            <StockEvolution id={draft?.id || ''} />
+          </Box>
         </>
       ) : (
         <BasicSpinner />

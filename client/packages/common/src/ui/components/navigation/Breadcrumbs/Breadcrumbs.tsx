@@ -4,6 +4,7 @@ import { Breadcrumbs as MuiBreadcrumbs } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useRegisterActions, useBreadcrumbs } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
+import { UrlPart } from '@common/hooks';
 
 const Breadcrumb = styled(Link)({
   color: 'inherit',
@@ -12,8 +13,8 @@ const Breadcrumb = styled(Link)({
 });
 
 export const Breadcrumbs: React.FC = () => {
-  const t = useTranslation(['app', 'common']);
-  const { urlParts, navigateUpOne } = useBreadcrumbs();
+  const t = useTranslation('app');
+  const { urlParts, navigateUpOne, suffix } = useBreadcrumbs();
 
   useRegisterActions(
     [
@@ -22,22 +23,20 @@ export const Breadcrumbs: React.FC = () => {
         name: '', // No name => won't show in Modal menu
         shortcut: ['escape'],
         keywords: 'navigate, back',
-        perform: () => {
-          console.log('parts', urlParts);
-          navigateUpOne();
-        },
+        perform: () => navigateUpOne(),
       },
     ],
     [urlParts]
   );
 
+  const parseTitle = (part: UrlPart) =>
+    /^\d+$/.test(part.value)
+      ? t('breadcrumb.item', { id: part.value })
+      : t(part.key);
+
   const crumbs = urlParts.map((part, index) => {
     if (index === urlParts.length - 1) {
-      const title = /^\d+$/.test(part.value)
-        ? t('breadcrumb.item', { id: part.value })
-        : t(part.key);
-
-      return <span key={part.key}>{title}</span>;
+      return <span key={part.key}>{suffix ?? parseTitle(part)}</span>;
     }
 
     return (

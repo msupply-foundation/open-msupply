@@ -47,6 +47,7 @@ export const RequestRequisitionListView: FC = () => {
       {
         key: 'requisitionNumber',
         label: 'label.number',
+        width: 100,
       },
       [
         'status',
@@ -55,7 +56,7 @@ export const RequestRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
         },
       ],
-      'comment',
+      ['comment', { width: '100%' }],
       'selection',
     ],
     { sortBy, onChangeSortBy },

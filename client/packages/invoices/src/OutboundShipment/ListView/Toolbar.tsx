@@ -8,14 +8,14 @@ import {
   SearchBar,
   FilterController,
 } from '@openmsupply-client/common';
-import { useDeleteSelectedOutbounds, OutboundRowFragment } from '../api';
+import { useOutbound, OutboundRowFragment } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation('common');
+  const t = useTranslation('distribution');
 
-  const onDelete = useDeleteSelectedOutbounds();
+  const onDelete = useOutbound.document.delete();
 
   const key = 'otherPartyName' as keyof OutboundRowFragment;
   const filterString = (filter.filterBy?.[key]?.like as string) || '';

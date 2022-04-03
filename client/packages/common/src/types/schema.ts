@@ -16,6 +16,8 @@ export type Scalars = {
    * The input/output is a string in RFC3339 format.
    */
   DateTime: string;
+  /** A scalar that can represent any JSON value. */
+  JSON: any;
   /**
    * ISO 8601 calendar date without timezone.
    * Format: %Y-%m-%d
@@ -57,6 +59,33 @@ export type AddFromMasterListInput = {
 };
 
 export type AddFromMasterListResponse = AddFromMasterListError | RequisitionLineConnector;
+
+export type AllocateOutboundShipmentUnallocatedLineError = {
+  __typename: 'AllocateOutboundShipmentUnallocatedLineError';
+  error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
+};
+
+export type AllocateOutboundShipmentUnallocatedLineErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type AllocateOutboundShipmentUnallocatedLineNode = {
+  __typename: 'AllocateOutboundShipmentUnallocatedLineNode';
+  deletes: Array<DeleteResponse>;
+  inserts: InvoiceLineConnector;
+  issuedExpiringSoonStockLines: StockLineConnector;
+  skippedExpiredStockLines: StockLineConnector;
+  skippedOnHoldStockLines: StockLineConnector;
+  updates: InvoiceLineConnector;
+};
+
+export type AllocateOutboundShipmentUnallocatedLineResponse = AllocateOutboundShipmentUnallocatedLineError | AllocateOutboundShipmentUnallocatedLineNode;
+
+export type AllocateOutboundShipmentUnallocatedLineResponseWithId = {
+  __typename: 'AllocateOutboundShipmentUnallocatedLineResponseWithId';
+  id: Scalars['String'];
+  response: AllocateOutboundShipmentUnallocatedLineResponse;
+};
 
 export type AuthToken = {
   __typename: 'AuthToken';
@@ -107,6 +136,7 @@ export type BatchIsReserved = DeleteInboundShipmentLineErrorInterface & UpdateIn
 };
 
 export type BatchOutboundShipmentInput = {
+  allocatedOutboundShipmentUnallocatedLines?: InputMaybe<Array<Scalars['String']>>;
   continueOnError?: InputMaybe<Scalars['Boolean']>;
   deleteOutboundShipmentLines?: InputMaybe<Array<DeleteOutboundShipmentLineInput>>;
   deleteOutboundShipmentServiceLines?: InputMaybe<Array<DeleteOutboundShipmentServiceLineInput>>;
@@ -124,6 +154,7 @@ export type BatchOutboundShipmentInput = {
 
 export type BatchOutboundShipmentResponse = {
   __typename: 'BatchOutboundShipmentResponse';
+  allocateOutboundShipmentUnallocatedLines?: Maybe<Array<AllocateOutboundShipmentUnallocatedLineResponseWithId>>;
   deleteOutboundShipmentLines?: Maybe<Array<DeleteOutboundShipmentLineResponseWithId>>;
   deleteOutboundShipmentServiceLines?: Maybe<Array<DeleteOutboundShipmentServiceLineResponseWithId>>;
   deleteOutboundShipmentUnallocatedLines?: Maybe<Array<DeleteOutboundShipmentUnallocatedLineResponseWithId>>;
@@ -218,6 +249,28 @@ export type CannotEditStocktake = DeleteStocktakeErrorInterface & DeleteStocktak
 export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
   __typename: 'CannotReverseInvoiceStatus';
   description: Scalars['String'];
+};
+
+export type ConsumptionHistoryConnector = {
+  __typename: 'ConsumptionHistoryConnector';
+  nodes: Array<ConsumptionHistoryNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ConsumptionHistoryNode = {
+  __typename: 'ConsumptionHistoryNode';
+  averageMonthlyConsumption: Scalars['Int'];
+  consumption: Scalars['Int'];
+  date: Scalars['NaiveDate'];
+  isCurrent: Scalars['Boolean'];
+  isHistoric: Scalars['Boolean'];
+};
+
+export type ConsumptionOptionsInput = {
+  /** Defaults to 3 months */
+  amcLookbackMonths?: InputMaybe<Scalars['Int']>;
+  /** Defaults to 12 */
+  numberOfDataPoints?: InputMaybe<Scalars['Int']>;
 };
 
 export type CreateRequisitionShipmentError = {
@@ -555,6 +608,7 @@ export type EqualFilterStringInput = {
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String'];
+  errors: Scalars['JSON'];
 };
 
 export enum ForeignKey {
@@ -576,6 +630,7 @@ export type FullMutation = {
   __typename: 'FullMutation';
   /** Add requisition lines from master item master list */
   addFromMasterList: AddFromMasterListResponse;
+  allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
@@ -635,6 +690,12 @@ export type FullMutation = {
 
 export type FullMutationAddFromMasterListArgs = {
   input: AddFromMasterListInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationAllocateOutboundShipmentUnallocatedLineArgs = {
+  lineId: Scalars['String'];
   storeId: Scalars['String'];
 };
 
@@ -952,6 +1013,7 @@ export type FullQuery = {
   reports: ReportsResponse;
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
+  requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   stockCounts: StockCounts;
   stocktake: StocktakeResponse;
@@ -1051,6 +1113,14 @@ export type FullQueryRequisitionByNumberArgs = {
   requisitionNumber: Scalars['Int'];
   storeId: Scalars['String'];
   type: RequisitionNodeType;
+};
+
+
+export type FullQueryRequisitionLineChartArgs = {
+  consumptionOptionsInput?: InputMaybe<ConsumptionOptionsInput>;
+  requestRequisitionLineId: Scalars['String'];
+  stockEvolutionOptionsInput?: InputMaybe<StockEvolutionOptionsInput>;
+  storeId: Scalars['String'];
 };
 
 
@@ -1325,6 +1395,8 @@ export type InsertRequestRequisitionErrorInterface = {
 export type InsertRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
+  /** Defaults to 2 weeks from now */
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   maxMonthsOfStock: Scalars['Float'];
   minMonthsOfStock: Scalars['Float'];
@@ -1422,11 +1494,6 @@ export type InternalError = AuthTokenErrorInterface & InsertLocationErrorInterfa
 
 export type InvalidCredentials = AuthTokenErrorInterface & {
   __typename: 'InvalidCredentials';
-  description: Scalars['String'];
-};
-
-export type InvalidReport = PrintReportErrorInterface & {
-  __typename: 'InvalidReport';
   description: Scalars['String'];
 };
 
@@ -1544,9 +1611,10 @@ export type InvoiceNode = {
   shippedDatetime?: Maybe<Scalars['DateTime']>;
   status: InvoiceNodeStatus;
   theirReference?: Maybe<Scalars['String']>;
+  transportReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
   /**
-   * User that last edited invoice, if user is not found in system default unknow user is returned
+   * User that last edited invoice, if user is not found in system default unknown user is returned
    * Null is returned for transfers, where inbound has not been edited yet
    * Null is also returned for system created invoices like inventory adjustments
    */
@@ -1639,6 +1707,14 @@ export type InvoiceSortInput = {
 
 export type InvoicesResponse = InvoiceConnector;
 
+export type ItemChartNode = {
+  __typename: 'ItemChartNode';
+  calculationDate?: Maybe<Scalars['NaiveDate']>;
+  consumptionHistory?: Maybe<ConsumptionHistoryConnector>;
+  stockEvolution?: Maybe<StockEvolutionConnector>;
+  suggestedQuantityCalculation: SuggestedQuantityCalculationNode;
+};
+
 export type ItemConnector = {
   __typename: 'ItemConnector';
   nodes: Array<ItemNode>;
@@ -1655,14 +1731,27 @@ export type ItemFilterInput = {
 
 export type ItemNode = {
   __typename: 'ItemNode';
+  atcCategory: Scalars['String'];
   availableBatches: StockLineConnector;
   code: Scalars['String'];
+  ddd: Scalars['Float'];
+  defaultPackSize: Scalars['Int'];
+  doses: Scalars['Int'];
   id: Scalars['String'];
+  isVaccine: Scalars['Boolean'];
   isVisible: Scalars['Boolean'];
+  margin: Scalars['Float'];
+  msupplyUniversalCode: Scalars['String'];
+  msupplyUniversalName: Scalars['String'];
   name: Scalars['String'];
+  outerPackSize: Scalars['Int'];
   stats: ItemStatsNode;
+  strength: Scalars['String'];
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']>;
+  volumePerOuterPack: Scalars['Int'];
+  volumePerPack: Scalars['Float'];
+  weight: Scalars['Float'];
 };
 
 
@@ -1672,7 +1761,7 @@ export type ItemNodeAvailableBatchesArgs = {
 
 
 export type ItemNodeStatsArgs = {
-  lookBackDatetime?: InputMaybe<Scalars['NaiveDateTime']>;
+  amcLookbackMonths?: InputMaybe<Scalars['Int']>;
   storeId: Scalars['String'];
 };
 
@@ -1699,9 +1788,9 @@ export type ItemSortInput = {
 
 export type ItemStatsNode = {
   __typename: 'ItemStatsNode';
-  availableMonthsOfStockOnHand: Scalars['Float'];
+  availableMonthsOfStockOnHand?: Maybe<Scalars['Float']>;
   availableStockOnHand: Scalars['Int'];
-  averageMonthlyConsumption: Scalars['Int'];
+  averageMonthlyConsumption: Scalars['Float'];
 };
 
 export type ItemsResponse = ItemConnector;
@@ -1855,22 +1944,41 @@ export type NameFilterInput = {
   isStore?: InputMaybe<Scalars['Boolean']>;
   /** Filter by supplier property */
   isSupplier?: InputMaybe<Scalars['Boolean']>;
+  /**
+   * Show system names (defaults to false)
+   * System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
+   * if is_visible is set to true and is_system_name is also true no system names will be returned
+   */
+  isSystemName?: InputMaybe<Scalars['Boolean']>;
+  /** Visibility in current store (based on store_id parameter and existance of name_store_join record) */
+  isVisible?: InputMaybe<Scalars['Boolean']>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
-  showInvisibleInCurrentStore?: InputMaybe<Scalars['Boolean']>;
-  showSystemNames?: InputMaybe<Scalars['Boolean']>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type NameNode = {
   __typename: 'NameNode';
+  address: Scalars['String'];
+  chargeCode: Scalars['String'];
   code: Scalars['String'];
+  comment: Scalars['String'];
+  country: Scalars['String'];
+  createdDate?: Maybe<Scalars['NaiveDate']>;
+  email: Scalars['String'];
   id: Scalars['String'];
   isCustomer: Scalars['Boolean'];
+  isDonor: Scalars['Boolean'];
+  isManufacturer: Scalars['Boolean'];
+  isOnHold: Scalars['Boolean'];
   isSupplier: Scalars['Boolean'];
+  isSystemName: Scalars['Boolean'];
+  isVisible: Scalars['Boolean'];
   name: Scalars['String'];
+  phone: Scalars['String'];
   store?: Maybe<StoreNode>;
+  website: Scalars['String'];
 };
 
 export enum NameSortFieldInput {
@@ -1932,16 +2040,19 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String'];
 };
 
-export type OtherPartyNotACustomerError = InsertErrorInterface & UpdateErrorInterface & {
-  __typename: 'OtherPartyNotACustomerError';
+export type OtherPartyNotACustomer = InsertErrorInterface & UpdateErrorInterface & {
+  __typename: 'OtherPartyNotACustomer';
   description: Scalars['String'];
-  otherParty: NameNode;
 };
 
 export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String'];
-  otherParty: NameNode;
+};
+
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
+  __typename: 'OtherPartyNotVisible';
+  description: Scalars['String'];
 };
 
 export type OutboundInvoiceCounts = {
@@ -2004,7 +2115,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & PrintReportErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -2034,9 +2145,9 @@ export type RegisteredUser = {
 };
 
 export enum ReportCategory {
-  InboundShipment = 'INBOUND_SHIPMENT',
-  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Invoice = 'INVOICE',
   Requisition = 'REQUISITION',
+  Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
 }
 
@@ -2061,7 +2172,7 @@ export type ReportNode = {
 };
 
 export enum ReportSortFieldInput {
-  Category = 'category',
+  Id = 'id',
   Name = 'name'
 }
 
@@ -2098,6 +2209,17 @@ export type RequisitionFilterInput = {
   type?: InputMaybe<EqualFilterRequisitionTypeInput>;
 };
 
+export type RequisitionLineChartError = {
+  __typename: 'RequisitionLineChartError';
+  error: RequisitionLineChartErrorInterface;
+};
+
+export type RequisitionLineChartErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type RequisitionLineChartResponse = ItemChartNode | RequisitionLineChartError;
+
 export type RequisitionLineConnector = {
   __typename: 'RequisitionLineConnector';
   nodes: Array<RequisitionLineNode>;
@@ -2112,7 +2234,10 @@ export type RequisitionLineNode = {
   inboundShipmentLines: InvoiceLineConnector;
   item: ItemNode;
   itemId: Scalars['String'];
-  /** Snapshot Stats (when requisition was created) */
+  /**
+   * For request requisition: snapshot stats (when requisition was created)
+   * For response requisition current item stats
+   */
   itemStats: ItemStatsNode;
   linkedRequisitionLine?: Maybe<RequisitionLineNode>;
   /** OutboundShipment lines linked to requisitions line */
@@ -2134,6 +2259,11 @@ export type RequisitionLineNode = {
   supplyQuantity: Scalars['Int'];
 };
 
+
+export type RequisitionLineNodeItemStatsArgs = {
+  amcLookbackMonths?: InputMaybe<Scalars['Int']>;
+};
+
 export type RequisitionLineWithItemIdExists = InsertRequestRequisitionLineErrorInterface & {
   __typename: 'RequisitionLineWithItemIdExists';
   description: Scalars['String'];
@@ -2144,6 +2274,7 @@ export type RequisitionNode = {
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['DateTime'];
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   lines: RequisitionLineConnector;
@@ -2178,7 +2309,7 @@ export type RequisitionNode = {
   theirReference?: Maybe<Scalars['String']>;
   type: RequisitionNodeType;
   /**
-   * User that last edited requisition, if user is not found in system default unknow user is returned
+   * User that last edited requisition, if user is not found in system default unknown user is returned
    * Null is returned for transfers, where response requisition has not been edited yet
    */
   user?: Maybe<UserNode>;
@@ -2252,6 +2383,29 @@ export type StockCounts = {
   __typename: 'StockCounts';
   expired: Scalars['Int'];
   expiringSoon: Scalars['Int'];
+};
+
+export type StockEvolutionConnector = {
+  __typename: 'StockEvolutionConnector';
+  nodes: Array<StockEvolutionNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type StockEvolutionNode = {
+  __typename: 'StockEvolutionNode';
+  date: Scalars['NaiveDate'];
+  isHistoric: Scalars['Boolean'];
+  isProjected: Scalars['Boolean'];
+  maximumStockOnHand: Scalars['Int'];
+  minimumStockOnHand: Scalars['Int'];
+  stockOnHand: Scalars['Int'];
+};
+
+export type StockEvolutionOptionsInput = {
+  /** Defaults to 30, number of data points for historic stock on hand in stock evolution chart */
+  numberOfHistoricDataPoints?: InputMaybe<Scalars['Int']>;
+  /** Defaults to 20, number of data points for projected stock on hand in stock evolution chart */
+  numberOfProjectedDataPoints?: InputMaybe<Scalars['Int']>;
 };
 
 export type StockLineAlreadyExistsInInvoice = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
@@ -2352,7 +2506,7 @@ export type StocktakeNode = {
   stocktakeDate?: Maybe<Scalars['NaiveDate']>;
   stocktakeNumber: Scalars['Int'];
   storeId: Scalars['String'];
-  /** User that created stocktake, if user is not found in system default unknow user is returned */
+  /** User that created stocktake, if user is not found in system default unknown user is returned */
   user: UserNode;
 };
 
@@ -2423,6 +2577,15 @@ export type StoreSortInput = {
 };
 
 export type StoresResponse = StoreConnector;
+
+export type SuggestedQuantityCalculationNode = {
+  __typename: 'SuggestedQuantityCalculationNode';
+  averageMonthlyConsumption: Scalars['Int'];
+  maximumStockOnHand: Scalars['Int'];
+  minimumStockOnHand: Scalars['Int'];
+  stockOnHand: Scalars['Int'];
+  suggestedQuantity: Scalars['Int'];
+};
 
 export type SupplyRequestedQuantityError = {
   __typename: 'SupplyRequestedQuantityError';
@@ -2604,6 +2767,7 @@ export type UpdateOutboundShipmentInput = {
   status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
   /** External invoice reference, e.g. purchase or shipment number */
   theirReference?: InputMaybe<Scalars['String']>;
+  transportReference?: InputMaybe<Scalars['String']>;
 };
 
 export type UpdateOutboundShipmentLineError = {
@@ -2710,6 +2874,7 @@ export type UpdateRequestRequisitionErrorInterface = {
 export type UpdateRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   maxMonthsOfStock?: InputMaybe<Scalars['Float']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']>;

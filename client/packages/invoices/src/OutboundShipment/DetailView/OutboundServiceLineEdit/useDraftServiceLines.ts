@@ -8,12 +8,7 @@ import {
   useDefaultServiceItem,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import {
-  useOutboundFields,
-  useOutboundServiceLines,
-  useSaveOutboundLines,
-  OutboundLineFragment,
-} from '../../api';
+import { useOutbound, OutboundLineFragment } from '../../api';
 import { DraftOutboundLine } from './../../../types';
 
 const createDraftLine = ({
@@ -43,10 +38,10 @@ const createDraftLine = ({
 });
 
 export const useDraftServiceLines = () => {
-  const { id } = useOutboundFields('id');
-  const { data: lines } = useOutboundServiceLines();
+  const { id } = useOutbound.document.fields('id');
+  const { data: lines } = useOutbound.line.serviceLines();
   const { defaultServiceItem, isLoading } = useDefaultServiceItem();
-  const { mutate } = useSaveOutboundLines();
+  const { mutate } = useOutbound.line.save();
 
   const [draftLines, setDraftLines] = React.useState<DraftOutboundLine[]>([]);
 

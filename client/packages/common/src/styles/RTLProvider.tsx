@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { useRtl } from '@common/intl';
+import { IntlUtils } from '@common/intl';
 
 export const RTLProvider: FC = props => {
-  const isRtl = useRtl();
+  const isRtl = IntlUtils?.useRtl();
 
   return (
     <div

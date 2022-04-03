@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton as MuiIconButton, Tooltip } from '@mui/material';
+import { IconButton as MuiIconButton, SxProps, Tooltip } from '@mui/material';
 
 interface ButtonProps {
   disabled?: boolean;
@@ -8,6 +8,7 @@ interface ButtonProps {
   label: string;
   width?: string;
   height?: string;
+  sx?: SxProps;
 }
 
 export const IconButton: React.FC<ButtonProps> = ({
@@ -17,10 +18,11 @@ export const IconButton: React.FC<ButtonProps> = ({
   label,
   width,
   height,
+  sx,
 }) => (
-  <Tooltip title={label}>
+  <Tooltip title={disabled ? '' : label}>
     <MuiIconButton
-      sx={{ width, height }}
+      sx={{ width, height, ...sx }}
       disabled={disabled}
       onClick={onClick}
       aria-label={label}

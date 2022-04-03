@@ -25,7 +25,6 @@ export const TaxEdit = ({ disabled = false, tax, update }: TaxEditProps) => {
         label={t('heading.edit-tax-rate')}
         onClick={modalController.toggleOn}
       />
-
       {/* Unmount when closing to reset state */}
       {modalController.isOn && (
         <NonNegativeNumberInputModal

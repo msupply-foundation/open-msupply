@@ -1,14 +1,21 @@
 import React, { createContext, FC, useMemo, useState, useEffect } from 'react';
-import { useDefaultLanguage, useI18N, isSupportedLang } from '@common/intl';
+import { IntlUtils } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns';
 import { useGql } from '../api';
 import { useGetRefreshToken } from './api/hooks';
 import { useGetAuthToken } from './api/hooks/useGetAuthToken';
+import { useStores } from './api/hooks/useStores';
 import { AuthenticationResponse } from './api';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
+const TOKEN_CHECK_INTERVAL = 60 * 1000;
+
+export enum AuthError {
+  PermissionDenied = 'PermissionDenied',
+  Unauthenticated = 'Unauthenticated',
+}
 
 type User = {
   id: string;
@@ -34,14 +41,15 @@ type MRUCredentials = {
 };
 
 interface AuthControl {
+  error?: AuthError | null;
   isLoggingIn: boolean;
   login: (
     username: string,
-    password: string,
-    store?: Store
+    password: string
   ) => Promise<AuthenticationResponse>;
   logout: () => void;
   mostRecentlyUsedCredentials?: MRUCredentials | null;
+  setError?: (error: AuthError) => void;
   setStore: (store: Store) => void;
   store?: Store;
   storeId: string;
@@ -76,12 +84,11 @@ const useRefreshingAuth = (
 ) => {
   const { setHeader } = useGql();
   setHeader('Authorization', `Bearer ${token}`);
-  const { data, isSuccess } = useGetRefreshToken(token ?? '');
+  const { data, enabled, isSuccess } = useGetRefreshToken(token ?? '');
   useEffect(() => {
-    if (isSuccess) callback(data?.token);
-  }, [data, isSuccess, callback]);
+    if (isSuccess && enabled) callback(data?.token ?? '');
+  }, [enabled, isSuccess, data]);
 };
-
 const AuthContext = createContext<AuthControl>({
   isLoggingIn: false,
   login: () =>
@@ -98,76 +105,118 @@ const { Provider } = AuthContext;
 export const AuthProvider: FC = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
-  const i18n = useI18N();
-  const defaultLanguage = useDefaultLanguage();
+  const i18n = IntlUtils.useI18N();
+  const defaultLanguage = IntlUtils.useDefaultLanguage();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
-  const { token: cookieToken, store: cookieStore, user } = getAuthCookie();
-  const [localStore, setLocalStore] = useState<Store | undefined>(cookieStore);
-  const [localToken, setLocalToken] = useState<string | undefined>(cookieToken);
-  const storeId = localStore?.id ?? '';
-  const saveToken = (token?: string) => {
-    setLocalToken(token);
-    const authCookie = getAuthCookie();
-    setAuthCookie({ ...authCookie, token: token ?? '' });
-  };
-  useRefreshingAuth(saveToken, localToken);
+  const { mutateAsync: getStores } = useStores();
+  const authCookie = getAuthCookie();
+  const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
+  const [error, setError] = useLocalStorage('/auth/error');
+  const storeId = cookie?.store?.id ?? '';
 
-  const login = async (username: string, password: string, store?: Store) => {
+  const saveToken = (token?: string) => {
+    const authCookie = getAuthCookie();
+    const newCookie = { ...authCookie, token: token ?? '' };
+    setAuthCookie(newCookie);
+    setCookie(newCookie);
+  };
+  useRefreshingAuth(saveToken, cookie?.token);
+
+  // returns MRU store, if set
+  // or the first store in the list
+  // TODO: return default store rather than first - currently not provided by API
+  const getStore = async () => {
+    if (mostRecentlyUsedCredentials?.store)
+      return mostRecentlyUsedCredentials.store;
+
+    const { nodes } = await getStores();
+    return !!nodes && nodes?.length && nodes?.length > 0
+      ? nodes?.[0]
+      : undefined;
+  };
+
+  const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
+    const store = await getStore();
     const authCookie = {
       store,
-      token: token,
+      token,
       user: { id: '', name: username },
     };
 
     // When the a user first logs in, check that their browser language is an internally supported
     // language. If not, set their language to the default.
     const { language } = i18n;
-    if (!isSupportedLang(language)) i18n.changeLanguage(defaultLanguage);
+    if (!IntlUtils.isSupportedLang(language)) {
+      i18n.changeLanguage(defaultLanguage);
+    }
 
     setMRUCredentials({ username, store });
-    if (!!token) setLocalStore(store);
-    setLocalToken(token);
     setAuthCookie(authCookie);
+    setCookie(authCookie);
+    setError(undefined);
 
     return { token, error };
   };
 
   const setStore = (store: Store) => {
-    if (!localToken) return;
+    if (!cookie?.token) return;
 
-    setLocalStore(store);
-    setMRUCredentials({ username: user?.name ?? '', store });
+    setMRUCredentials({
+      username: mostRecentlyUsedCredentials?.username ?? '',
+      store,
+    });
     const authCookie = getAuthCookie();
-    setAuthCookie({ ...authCookie, store });
+    const newCookie = { ...authCookie, store };
+    setAuthCookie(newCookie);
+    setCookie(newCookie);
   };
 
   const logout = () => {
     Cookies.remove('auth');
-    setLocalStore(undefined);
+    setError(undefined);
+    setCookie(undefined);
   };
+
   const val = useMemo(
     () => ({
+      error,
       isLoggingIn,
       login,
       logout,
       storeId,
-      token: localToken,
-      user,
-      store: localStore,
+      token: cookie?.token,
+      user: cookie?.user,
+      store: cookie?.store,
       mostRecentlyUsedCredentials,
       setStore,
+      setError,
     }),
     [
       login,
-      localStore,
-      localToken,
-      user,
+      cookie,
+      error,
       mostRecentlyUsedCredentials,
       isLoggingIn,
       setStore,
+      setError,
     ]
   );
+
+  useEffect(() => {
+    // check every minute for a valid token
+    // if the cookie has expired, raise an auth error
+    const timer = window.setInterval(() => {
+      const authCookie = getAuthCookie();
+      const { token } = authCookie;
+
+      if (!token) {
+        setError(AuthError.Unauthenticated);
+        window.clearInterval(timer);
+      }
+    }, TOKEN_CHECK_INTERVAL);
+    return () => window.clearInterval(timer);
+  }, []);
 
   return <Provider value={val}>{children}</Provider>;
 };

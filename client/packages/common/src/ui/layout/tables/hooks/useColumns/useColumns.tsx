@@ -13,27 +13,6 @@ import { DateUtils } from '@common/utils';
 import { SortBy } from '@common/hooks';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
 
-const getColumnWidths = <T extends RecordWithId>(
-  column: ColumnDefinition<T>
-) => {
-  const getDefaultWidth = () => {
-    switch (column.format) {
-      case ColumnFormat.Integer:
-        return 60;
-      default: {
-        return 100;
-      }
-    }
-  };
-
-  const defaultWidth = getDefaultWidth();
-
-  const minWidth = column.minWidth || column.width || defaultWidth;
-  const width = column.width || defaultWidth;
-
-  return { minWidth, width, maxWidth: column.maxWidth };
-};
-
 const getSortType = (column: { format?: ColumnFormat }) => {
   switch (column.format) {
     case ColumnFormat.Date:
@@ -82,7 +61,7 @@ const getDefaultFormatter = <T extends RecordWithId>(
     case ColumnFormat.Date: {
       return (date: unknown) => {
         const formatDate = useFormatDate();
-        const maybeDate = DateUtils.getDateOrNull(date as string);
+        const maybeDate = DateUtils.getDateOrNull(date as string | null);
         return maybeDate ? formatDate(maybeDate) : '';
       };
     }
@@ -163,8 +142,6 @@ export const createColumnWithDefaults = <T extends RecordWithId>(
     align: getDefaultColumnAlign(column),
     formatter: getDefaultFormatter<T>(column),
     setter: getDefaultColumnSetter<T>(column),
-
-    ...getColumnWidths(column),
   };
 
   return { ...defaults, ...column };

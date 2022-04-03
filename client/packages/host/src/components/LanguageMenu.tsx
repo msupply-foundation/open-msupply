@@ -1,9 +1,9 @@
 import React from 'react';
-import { useI18N, useNavigate, Select } from '@openmsupply-client/common';
+import { IntlUtils, useNavigate, Select } from '@openmsupply-client/common';
 
 export const LanguageMenu: React.FC = () => {
   const navigate = useNavigate();
-  const i18n = useI18N();
+  const i18n = IntlUtils.useI18N();
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
     i18n.changeLanguage(value);
