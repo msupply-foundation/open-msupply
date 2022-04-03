@@ -49,9 +49,9 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                 item_id: item.item_row.id,
                 batch: None,
                 expiry_date: None,
-                pack_size: None,
-                cost_price_per_pack: None,
-                sell_price_per_pack: None,
+                pack_size: Some(0),
+                cost_price_per_pack: Some(0.0),
+                sell_price_per_pack: Some(0.0),
                 note: None,
             }],
         }];
