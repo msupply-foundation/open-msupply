@@ -115,8 +115,6 @@ pub struct LegacyRequisitionRow {
     /// relates to max_months_of_stock
     pub daysToSupply: i64,
 
-    /// Colour number mapped to an internal colour
-    pub colour: Option<i64>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
 
@@ -143,6 +141,7 @@ pub struct LegacyRequisitionRow {
     pub max_months_of_stock: Option<f64>,
     #[serde(default)]
     pub om_status: Option<RequisitionStatus>,
+    /// We ignore the legacy colour field
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
     pub om_colour: Option<String>,
@@ -192,7 +191,7 @@ impl RemotePullTranslation for RequisitionTranslation {
                 from_legacy_status(&data.r#type, &data.status).ok_or(anyhow::Error::msg(
                     format!("Unsupported requisition status: {:?}", data.status),
                 ))?,
-                data.colour.and_then(|colour| req_colour_to_hex(colour)),
+                None,
             ),
         };
 
@@ -282,9 +281,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             thresholdMOS: min_months_of_stock,
             daysToSupply: (NUMBER_OF_DAYS_IN_A_MONTH * max_months_of_stock) as i64,
             max_months_of_stock: Some(max_months_of_stock),
-            // Note, this loses the color if colour is not supported by mSupply
             om_colour: colour.clone(),
-            colour: colour.and_then(|colour| hex_colour_to_req_colour(&colour)),
             comment,
         };
 
@@ -354,44 +351,6 @@ fn to_legacy_status(
         },
     };
     Some(status)
-}
-
-fn hex_colour_to_req_colour(colour: &str) -> Option<i64> {
-    let colour = match colour {
-        "#1A1919" => 1,
-        "#F57231" => 2,
-        "#F982D8" => 3,
-        "#F40E29" => 4,
-        "#8AD6FE" => 5,
-        "#3B10FD" => 6,
-        "#219205" => 7,
-        "#8C000D" => 8,
-        _ => return None,
-    };
-    Some(colour)
-}
-
-fn req_colour_to_hex(colour: i64) -> Option<String> {
-    let colour = match colour {
-        // black
-        1 => "#1A1919",
-        // orange
-        2 => "#F57231",
-        // red
-        3 => "#F982D8",
-        // red ribbon
-        4 => "#F40E29",
-        // cyan
-        5 => "#8AD6FE",
-        // blue
-        6 => "#3B10FD",
-        // green
-        7 => "#219205",
-        // brown
-        8 => "#8C000D",
-        _ => return None,
-    };
-    Some(colour.to_string())
 }
 
 #[cfg(test)]
