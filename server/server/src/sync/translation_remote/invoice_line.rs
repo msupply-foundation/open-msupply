@@ -25,8 +25,10 @@ pub enum LegacyTransLineType {
     Placeholder,
     #[serde(rename = "service")]
     Service,
-    #[serde(rename = "non_stock")]
-    NonStock,
+    /// Bucket to catch all other variants
+    /// E.g. "non_stock"
+    #[serde(other)]
+    Others,
 }
 
 #[allow(non_snake_case)]
@@ -142,9 +144,7 @@ fn total(data: &LegacyTransLineRow) -> f64 {
     match data._type {
         LegacyTransLineType::StockIn => data.cost_price * data.number_of_packs as f64,
         LegacyTransLineType::StockOut => data.sell_price * data.number_of_packs as f64,
-        LegacyTransLineType::Placeholder => 0.0,
-        LegacyTransLineType::Service => 0.0,
-        LegacyTransLineType::NonStock => 0.0,
+        _ => 0.0,
     }
 }
 
@@ -154,7 +154,7 @@ fn to_invoice_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowTyp
         LegacyTransLineType::StockOut => InvoiceLineRowType::StockOut,
         LegacyTransLineType::Placeholder => InvoiceLineRowType::UnallocatedStock,
         LegacyTransLineType::Service => InvoiceLineRowType::Service,
-        LegacyTransLineType::NonStock => return None,
+        _ => return None,
     };
     Some(invoice_line_type)
 }

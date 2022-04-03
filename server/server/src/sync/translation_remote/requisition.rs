@@ -41,6 +41,9 @@ pub enum LegacyRequisitionType {
     /// A requisition that is for reporting purposes only.
     #[serde(rename = "report")]
     Report,
+    /// Bucket to catch all other variants
+    #[serde(other)]
+    Others,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -54,12 +57,10 @@ pub enum LegacyRequisitionStatus {
     /// finalised
     #[serde(rename = "fn")]
     Fn,
-    /// web: still in progress
-    #[serde(rename = "wp")]
-    Wp,
-    /// finalised by customer after web submission
-    #[serde(rename = "wf")]
-    Wf,
+    /// Bucket to catch all other variants
+    /// E.g. "wp" (web progress), "wf" (web finalised)
+    #[serde(other)]
+    Others,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
