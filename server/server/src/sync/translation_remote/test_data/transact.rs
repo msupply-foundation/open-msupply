@@ -118,7 +118,7 @@ fn transact_1_pull_record() -> TestSyncRecord {
                     NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0) + Duration::seconds(47046),
                 ),
                 verified_datetime: None,
-                colour: Some("#000000".to_string()),
+                colour: None,
                 requisition_id: None,
                 linked_invoice_id: None,
             }),
@@ -153,7 +153,6 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             comment: None,
             their_ref: None,
             transport_reference: None,
-            Colour: 0,
             requisition_ID: None,
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd(2021, 7, 30),
@@ -173,7 +172,7 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             verified_datetime: None,
             om_status: Some(InvoiceStatus::Delivered),
             om_type: Some(InvoiceType::InboundShipment),
-            om_colour: Some("#000000".to_string())
+            om_colour: None
         }),
     }
 }
@@ -278,7 +277,7 @@ fn transact_2_pull_record() -> TestSyncRecord {
                 shipped_datetime: None,
                 delivered_datetime: None,
                 verified_datetime: None,
-                colour: Some("#1A1919".to_string()),
+                colour: None,
                 requisition_id: None,
                 linked_invoice_id: None,
             }),
@@ -313,7 +312,6 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             comment: None,
             their_ref: None,
             transport_reference: Some("transport reference".to_string()),
-            Colour: 1710361,
             requisition_ID: None,
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd(2021, 8, 3),
@@ -334,7 +332,7 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             verified_datetime: None,
             om_status: Some(InvoiceStatus::Shipped),
             om_type: Some(InvoiceType::OutboundShipment),
-            om_colour: Some("#1A1919".to_string())
+            om_colour: None
         }),
     }
 }
@@ -482,7 +480,6 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             comment: None,
             their_ref: None,
             transport_reference: Some("transport reference".to_string()),
-            Colour: 0,
             requisition_ID: None,
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd(2022, 8, 24),
