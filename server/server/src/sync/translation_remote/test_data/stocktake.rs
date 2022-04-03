@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveTime};
 use repository::schema::{
     ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
     StocktakeRow, StocktakeStatus,
@@ -46,7 +46,8 @@ fn stocktake_pull_record() -> TestSyncRecord {
                 comment: None,
                 description: Some("Test".to_string()),
                 status: StocktakeStatus::Finalised,
-                created_datetime: NaiveDate::from_ymd(2021, 07, 30).and_hms(0, 0, 0),
+                created_datetime: NaiveDate::from_ymd(2021, 07, 30)
+                    .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap()),
                 finalised_datetime: None,
                 inventory_adjustment_id: Some("inbound_shipment_a".to_string()),
                 is_locked: false,
@@ -83,7 +84,11 @@ fn stocktake_push_record() -> TestSyncPushRecord {
             stock_take_created_date: NaiveDate::from_ymd(2021, 07, 30),
             is_locked: false,
             stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
-            created_datetime: Some(NaiveDate::from_ymd(2021, 07, 30).and_hms(0, 0, 0)),
+            stock_take_time: NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap(),
+            created_datetime: Some(
+                NaiveDate::from_ymd(2021, 07, 30)
+                    .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap())
+            ),
             finalised_datetime: None,
         }),
     }
@@ -105,7 +110,7 @@ const STOCKTAKE_OM_FIELD: (&'static str, &'static str) = (
       "status": "fn",
       "stock_take_created_date": "2021-07-30",
       "stock_take_date": "2021-07-30",
-      "stock_take_time": 47061,
+      "stock_take_time": 47062,
       "store_ID": "store_a",
       "type": "",
       "om_created_datetime": "2021-07-30T15:15:15",
@@ -158,6 +163,7 @@ fn stocktake_om_field_push_record() -> TestSyncPushRecord {
             invad_additions_ID: Some("inbound_shipment_a".to_string()),
             serial_number: 3,
             stock_take_created_date: NaiveDate::from_ymd(2021, 07, 30),
+            stock_take_time: NaiveTime::from_hms(15, 15, 15),
             is_locked: false,
             stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
             created_datetime: Some(NaiveDate::from_ymd(2021, 07, 30).and_hms(15, 15, 15)),

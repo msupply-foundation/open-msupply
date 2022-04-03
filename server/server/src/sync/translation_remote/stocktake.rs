@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, RemoteSyncBufferRow, StocktakeRow, StocktakeStatus,
@@ -8,8 +8,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
-    empty_date_time_as_option, empty_str_as_option,
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
+    empty_str_as_option, naive_time,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_STOCKTAKE,
@@ -48,6 +48,10 @@ pub struct LegacyStocktakeRow {
     pub serial_number: i64,
     #[serde(serialize_with = "date_to_isostring")]
     pub stock_take_created_date: NaiveDate,
+    /// Its actually the stock_take_created_time:
+    #[serde(deserialize_with = "naive_time")]
+    pub stock_take_time: NaiveTime,
+
     #[serde(rename = "stock_take_date")]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
@@ -83,7 +87,7 @@ impl RemotePullTranslation for StocktakeTranslation {
                 (created_datetime, data.finalised_datetime)
             }
             None => (
-                date_and_time_to_datatime(data.stock_take_created_date, 0),
+                data.stock_take_created_date.and_time(data.stock_take_time),
                 None,
             ),
         };
@@ -154,6 +158,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             invad_additions_ID: inventory_adjustment_id,
             serial_number: stocktake_number,
             stock_take_created_date: date_from_date_time(&created_datetime),
+            stock_take_time: created_datetime.time(),
             created_datetime: Some(created_datetime),
             finalised_datetime,
         };
