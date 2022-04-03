@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
-    empty_date_time_as_option, empty_str_as_option, naive_time,
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
+    empty_str_as_option, naive_time,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_TRANSACT,
@@ -160,7 +160,6 @@ pub struct LegacyTransactRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub transport_reference: Option<String>,
-    pub Colour: i32,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -222,6 +221,7 @@ pub struct LegacyTransactRow {
     #[serde(default)]
     pub om_type: Option<InvoiceType>,
 
+    /// We ignore the legacy colour field
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
     pub om_colour: Option<String>,
@@ -341,7 +341,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
         allocated_datetime: None,
         shipped_datetime: None,
         verified_datetime: None,
-        colour: Some(format!("#{:06X}", data.Colour)),
+        colour: None,
     };
 
     let confirm_datetime = data
@@ -496,10 +496,6 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             hold: on_hold,
             comment,
             their_ref: their_reference,
-            Colour: colour
-                .as_ref()
-                .map(|colour| parse_html_colour(colour))
-                .unwrap_or(0),
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
             entry_date: created_datetime.date(),
@@ -532,10 +528,6 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             data: serde_json::to_value(&legacy_row)?,
         }]))
     }
-}
-
-fn parse_html_colour(colour: &str) -> i32 {
-    i32::from_str_radix(&colour[1..], 16).unwrap_or(0)
 }
 
 fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
