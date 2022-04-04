@@ -6,10 +6,7 @@ use repository::schema::{
 use serde_json::json;
 
 use crate::sync::translation_remote::{
-    invoice::{
-        InvoiceStatus, InvoiceType, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType,
-        TransactMode,
-    },
+    invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode},
     pull::{IntegrationRecord, IntegrationUpsertRecord},
     test_data::TestSyncRecord,
     TRANSLATION_RECORD_TRANSACT,
@@ -170,8 +167,8 @@ fn transact_1_push_record() -> TestSyncPushRecord {
                 NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0) + Duration::seconds(47046),
             ),
             verified_datetime: None,
-            om_status: Some(InvoiceStatus::Delivered),
-            om_type: Some(InvoiceType::InboundShipment),
+            om_status: Some(InvoiceRowStatus::Delivered),
+            om_type: Some(InvoiceRowType::InboundShipment),
             om_colour: None
         }),
     }
@@ -330,8 +327,8 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            om_status: Some(InvoiceStatus::Shipped),
-            om_type: Some(InvoiceType::OutboundShipment),
+            om_status: Some(InvoiceRowStatus::Shipped),
+            om_type: Some(InvoiceRowType::OutboundShipment),
             om_colour: None
         }),
     }
@@ -496,8 +493,8 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             shipped_datetime: Some(NaiveDate::from_ymd(2022, 8, 27).and_hms(12, 33, 0)),
             delivered_datetime: Some(NaiveDate::from_ymd(2022, 8, 28).and_hms(13, 33, 0)),
             verified_datetime: Some(NaiveDate::from_ymd(2022, 8, 29).and_hms(14, 33, 0)),
-            om_status: Some(InvoiceStatus::Shipped),
-            om_type: Some(InvoiceType::InventoryAdjustment),
+            om_status: Some(InvoiceRowStatus::Shipped),
+            om_type: Some(InvoiceRowType::InventoryAdjustment),
             om_colour: Some("SomeColour".to_string())
         }),
     }

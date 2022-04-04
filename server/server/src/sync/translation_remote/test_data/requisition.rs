@@ -7,9 +7,7 @@ use serde_json::json;
 
 use crate::sync::translation_remote::{
     pull::{IntegrationRecord, IntegrationUpsertRecord},
-    requisition::{
-        LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType, RequisitionStatus,
-    },
+    requisition::{LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType},
     TRANSLATION_RECORD_REQUISITION,
 };
 
@@ -106,7 +104,7 @@ fn requisition_request_push_record() -> TestSyncPushRecord {
             sent_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(05, 36, 46)),
             finalised_datetime: None,
             max_months_of_stock: Some(5.0),
-            om_status: Some(RequisitionStatus::Sent),
+            om_status: Some(RequisitionRowStatus::Sent),
             om_colour: None,
             expected_delivery_date: None,
         }),
@@ -204,7 +202,7 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             sent_datetime: None,
             finalised_datetime: Some(NaiveDate::from_ymd(2020, 7, 9).and_hms(5, 6, 20)),
             max_months_of_stock: Some(10.0),
-            om_status: Some(RequisitionStatus::Finalised),
+            om_status: Some(RequisitionRowStatus::Finalised),
             om_colour: None,
             expected_delivery_date: None,
         }),
@@ -312,7 +310,7 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             //expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26).and_hms(14, 48, 00)),
             expected_delivery_date: None,
             max_months_of_stock: Some(10.0),
-            om_status: Some(RequisitionStatus::New),
+            om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),
         }),
     }

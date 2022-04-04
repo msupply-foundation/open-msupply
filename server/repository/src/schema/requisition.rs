@@ -1,6 +1,7 @@
 use super::diesel_schema::requisition;
 use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 use util::Defaults;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
@@ -9,7 +10,8 @@ pub enum RequisitionRowType {
     Request,
     Response,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionRowStatus {
     Draft,
