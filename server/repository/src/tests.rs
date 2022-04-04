@@ -277,32 +277,32 @@ mod repository_test {
         database_settings::get_storage_connection_manager,
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
-            mock_inbound_shipment_number_store_a, mock_item_stats_item1, mock_item_stats_item2,
-            mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
-            mock_request_draft_requisition, mock_request_draft_requisition2, mock_stocktake_a,
-            mock_stocktake_b, mock_stocktake_no_line_a, mock_stocktake_no_line_b,
-            mock_test_master_list_name1, mock_test_master_list_name2,
-            mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
-            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
+            mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
+            mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
+            mock_request_draft_requisition2, mock_stocktake_a, mock_stocktake_b,
+            mock_stocktake_no_line_a, mock_stocktake_no_line_b, mock_test_master_list_name1,
+            mock_test_master_list_name2, mock_test_master_list_name_filter1,
+            mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
+            mock_test_master_list_store1, MockDataInserts,
         },
         schema::{
             ChangelogAction, ChangelogRow, ChangelogTableName, KeyValueType, NumberRowType,
             RequisitionRowStatus,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, ItemStatsFilter,
-        ItemStatsRepository, KeyValueStoreRepository, MasterListFilter, MasterListLineFilter,
-        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListRepository, MasterListRowRepository, NameRepository, NumberRowRepository,
-        OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
-        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
-        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
-        StocktakeRowRepository, StoreRowRepository, UserAccountRowRepository,
+        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, KeyValueStoreRepository,
+        MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
+        MasterListRowRepository, NameRepository, NumberRowRepository, OutboundShipmentRepository,
+        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
+        StockLineFilter, StockLineRepository, StockLineRowRepository, StocktakeRowRepository,
+        StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
-    use chrono::{Duration, Utc};
+    use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, inline_edit};
+    use util::inline_edit;
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -1143,72 +1143,6 @@ mod repository_test {
                     id: requisition_line.requisition_line_row.id
                 })
                 .collect::<Vec<Id>>()
-        );
-    }
-
-    #[actix_rt::test]
-    async fn test_item_stats_repository() {
-        let (_, connection, _, _) =
-            test_db::setup_all("test_item_stats_repository", MockDataInserts::all()).await;
-
-        let repo = ItemStatsRepository::new(&connection);
-        let item_ids = vec![mock_item_stats_item1().id, mock_item_stats_item2().id];
-        let filter = Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids)));
-
-        // Store a normal default look back (3 * 30 days)
-        let mut item_stats = repo.query("store_a", None, filter.clone()).unwrap();
-        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
-
-        assert_eq!(item_stats.len(), 2);
-        assert_eq!(item_stats[0].available_stock_on_hand(), 210);
-        assert_eq!(item_stats[1].available_stock_on_hand(), 22);
-
-        assert_eq!(
-            item_stats[0].average_monthly_consumption(),
-            ((40 + 4 + 3) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
-        );
-        assert_eq!(
-            item_stats[1].average_monthly_consumption(),
-            ((15) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
-        );
-
-        // Reduce to looking back 10 days
-        let mut item_stats = repo
-            .query(
-                "store_a",
-                Some(Utc::now().naive_utc() - Duration::days(10)),
-                filter.clone(),
-            )
-            .unwrap();
-        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
-
-        assert_eq!(item_stats.len(), 2);
-        assert_eq!(item_stats[0].available_stock_on_hand(), 210);
-        assert_eq!(item_stats[1].available_stock_on_hand(), 22);
-
-        assert_eq!(
-            item_stats[0].average_monthly_consumption(),
-            ((40 + 4) as f64 / (10) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
-        );
-        // No invoice lines check
-        assert_eq!(item_stats[1].average_monthly_consumption(), 0);
-
-        // Store b normal default look back (3 * 30 days)
-        let mut item_stats = repo.query("store_b", None, filter.clone()).unwrap();
-        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
-
-        assert_eq!(item_stats.len(), 2);
-        assert_eq!(item_stats[0].available_stock_on_hand(), 10);
-        // No stock line check
-        assert_eq!(item_stats[1].available_stock_on_hand(), 0);
-
-        assert_eq!(
-            item_stats[0].average_monthly_consumption(),
-            ((20000) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
-        );
-        assert_eq!(
-            item_stats[1].average_monthly_consumption(),
-            ((300) as f64 / (3 * 30) as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i32
         );
     }
 

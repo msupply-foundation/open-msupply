@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Index};
 
-mod common;
+pub mod common;
 mod full_invoice;
 mod full_master_list;
 mod invoice;
@@ -16,7 +16,7 @@ mod stocktake_line;
 mod store;
 mod test_invoice_count_service;
 mod test_invoice_loaders;
-mod test_item_stats_repository;
+pub mod test_item_stats;
 mod test_master_list_repository;
 mod test_name_query;
 mod test_name_store_id;
@@ -51,7 +51,6 @@ pub use stocktake_line::*;
 pub use store::*;
 pub use test_invoice_count_service::*;
 pub use test_invoice_loaders::*;
-pub use test_item_stats_repository::*;
 pub use test_master_list_repository::*;
 pub use test_name_query::*;
 pub use test_name_store_id::*;
@@ -86,7 +85,7 @@ use super::{
     schema::*,
 };
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct MockData {
     pub user_accounts: Vec<UserAccountRow>,
     pub user_store_joins: Vec<UserStoreJoinRow>,
@@ -323,10 +322,6 @@ fn all_mock_data() -> MockDataCollection {
         mock_test_requisition_line_repository(),
     );
     data.insert(
-        "mock_test_item_stats_repository",
-        mock_test_item_stats_repository(),
-    );
-    data.insert(
         "mock_test_requisition_service",
         mock_test_requisition_service(),
     );
@@ -498,4 +493,52 @@ pub async fn insert_mock_data(
     }
 
     mock_data
+}
+
+impl MockData {
+    pub fn join(mut self, other: MockData) -> MockData {
+        let MockData {
+            mut user_accounts,
+            mut names,
+            mut stores,
+            mut units,
+            mut items,
+            mut locations,
+            mut name_store_joins,
+            mut full_requisitions,
+            mut invoices,
+            mut stock_lines,
+            mut invoice_lines,
+            full_invoices: _,
+            mut full_master_lists,
+            mut numbers,
+            mut requisitions,
+            mut requisition_lines,
+            mut stocktakes,
+            mut stocktake_lines,
+            user_store_joins: _,
+            user_permissions: _,
+        } = other;
+
+        self.user_accounts.append(&mut user_accounts);
+        self.names.append(&mut names);
+        self.stores.append(&mut stores);
+        self.units.append(&mut units);
+        self.items.append(&mut items);
+        self.locations.append(&mut locations);
+        self.full_requisitions.append(&mut full_requisitions);
+        self.invoices.append(&mut invoices);
+        self.invoice_lines.append(&mut invoice_lines);
+        // self.full_invoices.append(&mut full_invoices);
+        self.full_master_lists.append(&mut full_master_lists);
+        self.numbers.append(&mut numbers);
+        self.requisitions.append(&mut requisitions);
+        self.requisition_lines.append(&mut requisition_lines);
+        self.stocktakes.append(&mut stocktakes);
+        self.stocktake_lines.append(&mut stocktake_lines);
+        self.name_store_joins.append(&mut name_store_joins);
+        self.stock_lines.append(&mut stock_lines);
+
+        self
+    }
 }

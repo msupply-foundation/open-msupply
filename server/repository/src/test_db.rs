@@ -124,7 +124,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
 }
 
 /// Generic setup method to help setup test enviroment
-/// - sets up database (create one and initilises schema), drops existing database
+/// - sets up database (create one and initialises schema), drops existing database
 /// - creates connectuion
 /// - inserts mock data
 pub async fn setup_all(

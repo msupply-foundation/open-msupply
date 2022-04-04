@@ -1,7 +1,6 @@
 use super::{ItemStatsNode, StockLineConnector};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::NaiveDateTime;
 use graphql_core::{
     loader::{
         ItemStatsLoaderInput, ItemsStatsForItemLoader, StockLineByItemAndStoreIdLoader,
@@ -58,14 +57,14 @@ impl ItemNode {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        look_back_datetime: Option<NaiveDateTime>,
+        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<u32>,
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
             .load_one(ItemStatsLoaderInput::new(
                 &store_id,
                 &self.row().id,
-                look_back_datetime,
+                amc_lookback_months,
             ))
             .await?
             .ok_or(
