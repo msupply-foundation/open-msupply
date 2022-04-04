@@ -11,7 +11,6 @@ import {
   Widget,
   FnUtils,
   useToggle,
-  Formatter,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 
@@ -64,7 +63,7 @@ export const OutboundShipmentWidget: React.FC = () => {
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),
-                  value: Formatter.round(data?.toBePicked),
+                  value: data?.toBePicked || 0,
                 },
               ]}
             />

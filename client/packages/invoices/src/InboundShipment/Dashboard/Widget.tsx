@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   ButtonWithIcon,
-  Formatter,
   Grid,
   PlusCircleIcon,
   StatsPanel,
@@ -37,11 +36,11 @@ export const InboundShipmentWidget: React.FC = () => {
             stats={[
               {
                 label: t('label.today', { ns: 'dashboard' }),
-                value: Formatter.round(data?.today),
+                value: data?.today ?? 0,
               },
               {
                 label: t('label.this-week', { ns: 'dashboard' }),
-                value: Formatter.round(data?.thisWeek),
+                value: data?.thisWeek ?? 0,
               },
             ]}
           />
