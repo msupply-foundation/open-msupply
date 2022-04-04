@@ -34,6 +34,12 @@ pub struct User {
     pub stores: Vec<UserStore>,
 }
 
+impl User {
+    pub fn default_store(&self) -> Option<&UserStore> {
+        self.stores.iter().find(|s| s.user_store_join.is_default)
+    }
+}
+
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct UserStorePermissions {
     pub store_row: StoreRow,
@@ -127,7 +133,7 @@ fn to_domain(results: Vec<UserAndUserStoreJoin>) -> Vec<User> {
             })
         }
     }
-    let users = user_map.into_iter().map(|(_, user)| user).collect();
+    let users = user_map.into_values().collect();
     users
 }
 
