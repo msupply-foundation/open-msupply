@@ -61,6 +61,7 @@ fn requisition_line_request_pull_record() -> TestSyncRecord {
                 available_stock_on_hand: 10,
                 average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
                 comment: None,
+                snapshot_datetime: None,
             }),
         )),
         identifier: "Requisition line 1",

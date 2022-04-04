@@ -1,7 +1,6 @@
 use super::{ItemStatsNode, StockLineConnector};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::NaiveDateTime;
 use graphql_core::{
     loader::{
         ItemStatsLoaderInput, ItemsStatsForItemLoader, StockLineByItemAndStoreIdLoader,
@@ -58,14 +57,14 @@ impl ItemNode {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        look_back_datetime: Option<NaiveDateTime>,
+        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<u32>,
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
             .load_one(ItemStatsLoaderInput::new(
                 &store_id,
                 &self.row().id,
-                look_back_datetime,
+                amc_lookback_months,
             ))
             .await?
             .ok_or(
@@ -96,6 +95,60 @@ impl ItemNode {
         Ok(StockLineConnector::from_vec(
             result_option.unwrap_or(vec![]),
         ))
+    }
+
+    // Mock
+
+    pub async fn msupply_universal_code(&self) -> &str {
+        "368154bf"
+    }
+
+    pub async fn msupply_universal_name(&self) -> &str {
+        "Amoxicilin"
+    }
+
+    pub async fn doses(&self) -> u32 {
+        0
+    }
+
+    pub async fn is_vaccine(&self) -> bool {
+        false
+    }
+
+    pub async fn default_pack_size(&self) -> u32 {
+        1
+    }
+
+    pub async fn outer_pack_size(&self) -> u32 {
+        10
+    }
+
+    pub async fn volume_per_outer_pack(&self) -> u32 {
+        5
+    }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        0.5
+    }
+
+    pub async fn margin(&self) -> f64 {
+        0.1
+    }
+
+    pub async fn weight(&self) -> f64 {
+        0.2
+    }
+
+    pub async fn strength(&self) -> &str {
+        "0.01mg"
+    }
+
+    pub async fn atc_category(&self) -> &str {
+        "J01CA04"
+    }
+
+    pub async fn ddd(&self) -> f64 {
+        1.5
     }
 }
 

@@ -1,4 +1,8 @@
 use self::{
+    chart::{
+        get_requisition_line_chart, ConsumptionHistoryOptions, RequisitionLineChartError,
+        StockEvolutionOptions, ItemChart,
+    },
     query::get_requisition_lines,
     request_requisition_line::{
         delete_request_requisition_line, insert_request_requisition_line,
@@ -19,6 +23,7 @@ use crate::service_provider::ServiceContext;
 use repository::PaginationOption;
 use repository::{RequisitionLine, RequisitionLineFilter};
 
+pub mod chart;
 pub mod common;
 pub mod query;
 pub mod request_requisition_line;
@@ -69,6 +74,23 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         input: UpdateResponseRequisitionLine,
     ) -> Result<RequisitionLine, UpdateResponseRequisitionLineError> {
         update_response_requisition_line(ctx, store_id, user_id, input)
+    }
+
+    fn get_requisition_line_chart(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        requisition_line_id: &str,
+        consumption_history_options: ConsumptionHistoryOptions,
+        stock_evolution_options: StockEvolutionOptions,
+    ) -> Result<ItemChart, RequisitionLineChartError> {
+        get_requisition_line_chart(
+            ctx,
+            store_id,
+            requisition_line_id,
+            consumption_history_options,
+            stock_evolution_options,
+        )
     }
 }
 

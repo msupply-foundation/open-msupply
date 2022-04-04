@@ -6,14 +6,16 @@ use std::sync::Arc;
 use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
-use async_graphql::extensions::{Logger, ExtensionFactory, Extension, ExtensionContext, NextExecute};
+use async_graphql::extensions::{
+    Extension, ExtensionContext, ExtensionFactory, Logger, NextExecute,
+};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::MergedObject;
 use async_graphql::{EmptySubscription, SchemaBuilder};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
-use graphql_core::auth_data_from_request;
 use graphql_core::loader::LoaderRegistry;
+use graphql_core::{auth_data_from_request, RequestUserData, SelfRequest};
 use graphql_general::{GeneralMutations, GeneralQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
@@ -80,10 +82,6 @@ pub fn full_mutation() -> FullMutation {
     )
 }
 
-pub fn build_schema() -> Builder {
-    Schema::build(full_query(), full_mutation(), EmptySubscription)
-}
-
 pub struct ResponseLogger;
 impl ExtensionFactory for ResponseLogger {
     fn create(&self) -> Arc<dyn Extension> {
@@ -108,6 +106,48 @@ impl Extension for ResponseLoggerExtension {
     }
 }
 
+pub fn schema_builder() -> Builder {
+    Schema::build(full_query(), full_mutation(), EmptySubscription)
+}
+
+pub fn build_schema(
+    connection_manager: Data<StorageConnectionManager>,
+    loader_registry: Data<LoaderRegistry>,
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    self_request: Option<Data<Box<dyn SelfRequest>>>,
+    include_logger: bool,
+) -> Schema {
+    let mut builder = schema_builder()
+        .data(connection_manager.clone())
+        .data(loader_registry.clone())
+        .data(service_provider.clone())
+        .data(auth_data.clone());
+    match self_request {
+        Some(self_request) => builder = builder.data(self_request),
+        None => {}
+    }
+    if include_logger {
+        builder = builder.extension(Logger).extension(ResponseLogger);
+    }
+    builder.finish()
+}
+
+struct SelfRequestImpl {
+    schema: Schema,
+}
+#[async_trait::async_trait]
+impl SelfRequest for SelfRequestImpl {
+    async fn call(
+        &self,
+        request: async_graphql::Request,
+        user_data: RequestUserData,
+    ) -> async_graphql::Response {
+        let query = request.data(user_data);
+        self.schema.execute(query).await.into()
+    }
+}
+
 pub fn config(
     connection_manager: Data<StorageConnectionManager>,
     loader_registry: Data<LoaderRegistry>,
@@ -115,14 +155,26 @@ pub fn config(
     auth_data: Data<AuthData>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
-        let schema = build_schema()
-            .data(connection_manager)
-            .data(loader_registry)
-            .data(service_provider)
-            .data(auth_data)
-            .extension(Logger)
-            .extension(ResponseLogger)
-            .finish();
+        let self_requester: Data<Box<dyn SelfRequest>> = Data::new(Box::new(SelfRequestImpl {
+            schema: build_schema(
+                connection_manager.clone(),
+                loader_registry.clone(),
+                service_provider.clone(),
+                auth_data.clone(),
+                None,
+                false,
+            ),
+        }));
+
+        let schema = build_schema(
+            connection_manager,
+            loader_registry,
+            service_provider,
+            auth_data,
+            Some(self_requester),
+            true,
+        );
+
         cfg.app_data(Data::new(schema))
             .service(web::resource("/graphql").guard(guard::Post()).to(
                 |schema: Data<Schema>, http_req, req: GraphQLRequest| {

@@ -187,6 +187,8 @@ impl RemotePullTranslation for RequisitionTranslation {
                 max_months_of_stock,
                 min_months_of_stock: data.thresholdMOS,
                 linked_requisition_id: data.linked_requisition_id,
+                // TODO translate om_expected_delivery_date
+                expected_delivery_date: None,
             }),
         )))
     }
@@ -252,6 +254,8 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             max_months_of_stock,
             min_months_of_stock,
             linked_requisition_id,
+            // TODO translate om_expected_delivery_date
+            expected_delivery_date: _,
         } = RequisitionRowRepository::new(connection)
             .find_one_by_id(&changelog.row_id)?
             .ok_or(anyhow::Error::msg(format!(

@@ -50,7 +50,7 @@ edit `src/configurations/base.yaml`, btw sync.interval is in seconds.
 
 ##### Reset ?
 
-if you need to re-initilise etc..
+if you need to re-initialise etc..
 
 `postgres` -> delete and the create database, run migrations again
 `sqlite` -> just remove sqlite file in root of repo
