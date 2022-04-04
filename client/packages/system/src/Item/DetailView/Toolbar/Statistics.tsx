@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from '@common/intl';
-import { Grid, StatsPanel } from '@openmsupply-client/common';
+import { Formatter, Grid, StatsPanel } from '@openmsupply-client/common';
 import { useItemFields } from '../../api';
 
 export const Statistics = () => {
@@ -22,7 +22,7 @@ export const Statistics = () => {
         stats={[
           {
             label: t('label.units'),
-            value: stats?.availableStockOnHand ?? 0,
+            value: Formatter.round(stats?.availableStockOnHand),
           },
         ]}
         title={t('title.stock-on-hand')}
@@ -33,7 +33,7 @@ export const Statistics = () => {
         stats={[
           {
             label: t('label.units'),
-            value: stats?.averageMonthlyConsumption ?? 0,
+            value: Formatter.round(stats?.averageMonthlyConsumption, 1),
           },
         ]}
         title={t('title.amc')}
@@ -44,7 +44,7 @@ export const Statistics = () => {
         stats={[
           {
             label: t('label.months'),
-            value: stats?.availableMonthsOfStockOnHand ?? 0,
+            value: Formatter.round(stats?.availableMonthsOfStockOnHand ?? 0, 1),
           },
         ]}
         title={t('title.months-of-stock')}
