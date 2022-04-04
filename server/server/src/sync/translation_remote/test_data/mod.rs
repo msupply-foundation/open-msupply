@@ -165,7 +165,10 @@ pub fn check_records_against_database(
                         RequisitionLineRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
                             .unwrap()
-                            .unwrap(),
+                            .expect(&format!(
+                                "RequisitionLine not found: {}",
+                                &comparison_record.id
+                            )),
                         comparison_record
                     )
                 }

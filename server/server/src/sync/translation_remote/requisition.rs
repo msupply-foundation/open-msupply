@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
 use super::{
-    date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_date_time_as_option,
-    empty_str_as_option,
+    date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
+    empty_date_time_as_option, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
     push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_REQUISITION,
@@ -109,6 +109,7 @@ pub struct LegacyRequisitionRow {
     #[serde(rename = "om_expected_delivery_date")]
     #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub expected_delivery_date: Option<NaiveDate>,
 
     #[serde(rename = "om_max_months_of_stock")]
@@ -187,8 +188,7 @@ impl RemotePullTranslation for RequisitionTranslation {
                 max_months_of_stock,
                 min_months_of_stock: data.thresholdMOS,
                 linked_requisition_id: data.linked_requisition_id,
-                // TODO translate om_expected_delivery_date
-                expected_delivery_date: None,
+                expected_delivery_date: data.expected_delivery_date,
             }),
         )))
     }
@@ -254,8 +254,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             max_months_of_stock,
             min_months_of_stock,
             linked_requisition_id,
-            // TODO translate om_expected_delivery_date
-            expected_delivery_date: _,
+            expected_delivery_date,
         } = RequisitionRowRepository::new(connection)
             .find_one_by_id(&changelog.row_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -284,8 +283,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             ),
             sent_datetime: sent_datetime,
             finalised_datetime: finalised_datetime,
-            // TODO:
-            expected_delivery_date: None,
+            expected_delivery_date,
             requester_reference: their_reference,
             linked_requisition_id,
             thresholdMOS: min_months_of_stock,

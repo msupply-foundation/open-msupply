@@ -38,6 +38,7 @@ impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
             created_datetime: NaiveDate::from_ymd(2022, 03, 23).and_hms(8, 53, 0),
             sent_datetime: None,
             finalised_datetime: None,
+            expected_delivery_date: None,
             colour: None,
             comment: None,
             their_reference: None,
@@ -82,6 +83,7 @@ impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
                     available_stock_on_hand: 10,
                     average_monthly_consumption: 15,
                     comment: None,
+                    snapshot_datetime: None,
                 }],
                 row,
             },
@@ -133,6 +135,7 @@ impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
                     d.sent_datetime = Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(8, 53, 0));
                     d.finalised_datetime =
                         Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(8, 53, 0));
+                    d.expected_delivery_date = Some(NaiveDate::from_ymd(2022, 03, 28));
                     d.max_months_of_stock = 15.0;
                     d.min_months_of_stock = 10.0;
                     d.linked_requisition_id = Some(requisition.id);
@@ -149,6 +152,8 @@ impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
                             d.available_stock_on_hand = 15;
                             d.average_monthly_consumption = 20;
                             d.comment = Some("some comment".to_string());
+                            d.snapshot_datetime =
+                                Some(NaiveDate::from_ymd(2022, 03, 20).and_hms(12, 13, 14));
                             d
                         })
                     })
