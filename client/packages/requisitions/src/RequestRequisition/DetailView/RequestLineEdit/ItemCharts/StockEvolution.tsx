@@ -13,7 +13,7 @@ import {
   YAxis,
 } from '@common/components';
 import { Box, useTheme, useTranslation } from '@openmsupply-client/common';
-import { useFormatDateTime } from '@common/utils';
+import { useFormatDateTime } from '@common/intl';
 import { useRequestLineChartData } from '../../../api/hooks';
 
 export interface StockEvolutionProps {

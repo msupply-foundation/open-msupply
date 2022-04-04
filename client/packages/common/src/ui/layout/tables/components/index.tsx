@@ -1,8 +1,7 @@
 import React, { ReactElement } from 'react';
 import { CellProps, HeaderProps } from '../columns/types';
 import { RecordWithId } from '@common/types';
-import { useTranslation } from '@common/intl';
-import { useFormatDateTime } from '@common/utils';
+import { useTranslation, useFormatDateTime } from '@common/intl';
 
 export * from './DataRow';
 export * from './Cells';
