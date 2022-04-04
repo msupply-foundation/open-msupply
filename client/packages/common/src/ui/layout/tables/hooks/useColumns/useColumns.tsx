@@ -7,7 +7,8 @@ import {
   ColumnAlign,
   Column,
 } from '../../columns/types';
-import { useFormatDate, useFormatNumber } from '@common/intl';
+import { useFormatNumber } from '@common/intl';
+import { useFormatDateTime } from '@common/utils';
 import { BasicCell, BasicHeader } from '../../components';
 import { DateUtils } from '@common/utils';
 import { SortBy } from '@common/hooks';
@@ -60,9 +61,9 @@ const getDefaultFormatter = <T extends RecordWithId>(
   switch (column.format) {
     case ColumnFormat.Date: {
       return (date: unknown) => {
-        const formatDate = useFormatDate();
+        const { localisedDate } = useFormatDateTime();
         const maybeDate = DateUtils.getDateOrNull(date as string | null);
-        return maybeDate ? formatDate(maybeDate) : '';
+        return maybeDate ? localisedDate(maybeDate) : '';
       };
     }
     case ColumnFormat.Currency: {

@@ -1,7 +1,8 @@
 import React, { ReactElement } from 'react';
 import { CellProps, HeaderProps } from '../columns/types';
 import { RecordWithId } from '@common/types';
-import { useTranslation, useFormatDate } from '@common/intl';
+import { useTranslation } from '@common/intl';
+import { useFormatDateTime } from '@common/utils';
 
 export * from './DataRow';
 export * from './Cells';
@@ -14,7 +15,7 @@ export const BasicCell = <T extends RecordWithId>({
   rows,
 }: CellProps<T>): ReactElement => {
   const t = useTranslation();
-  const d = useFormatDate();
+  const { localisedDate: d } = useFormatDateTime();
 
   return (
     <div

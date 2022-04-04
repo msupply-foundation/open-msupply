@@ -12,12 +12,8 @@ import {
   XAxis,
   YAxis,
 } from '@common/components';
-import {
-  Box,
-  useFormatDate,
-  useTheme,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Box, useTheme, useTranslation } from '@openmsupply-client/common';
+import { useFormatDateTime } from '@common/utils';
 import { useRequestLineChartData } from '../../../api/hooks';
 
 export interface StockEvolutionProps {
@@ -27,11 +23,10 @@ export interface StockEvolutionProps {
 export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
-  const d = useFormatDate();
+  const { customDate } = useFormatDateTime();
   const { data, isLoading } = useRequestLineChartData(id);
 
-  const dateFormatter = (date: string) =>
-    d(new Date(date), { month: 'short', day: '2-digit' });
+  const dateFormatter = (date: string) => customDate(date, 'dd MMM');
   const tooltipFormatter = (value: number, name: string) => {
     switch (name) {
       case 'stockOnHand':
@@ -46,7 +41,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
   };
 
   if (!data || !data.stockEvolution) return null;
-  const tooltipLabelFormatter = (date: string) => d(new Date(date));
+  const tooltipLabelFormatter = (date: string) => dateFormatter(date);
 
   return isLoading ? (
     <CircularProgress />
