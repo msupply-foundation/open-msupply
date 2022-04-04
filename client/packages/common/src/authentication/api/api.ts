@@ -29,8 +29,7 @@ const authTokenGuard = (
 
   if (authTokenQuery?.authToken?.__typename === 'AuthTokenError') {
     switch (authTokenQuery.authToken.error.__typename) {
-      case 'DatabaseError':
-      case 'InternalError':
+      case 'InvalidCredentials':
         return {
           token: '',
           error: { message: authTokenQuery.authToken.error.description },
