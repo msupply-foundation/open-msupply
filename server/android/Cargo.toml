@@ -10,6 +10,7 @@ name = "remote_server_android"
 
 [dependencies]
 repository = { path = "../repository" }
+service = { path = "../service" }
 server = { path = "../server" }
 
 actix-web = { version= "4.0.1", features = ["openssl"] } 

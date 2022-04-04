@@ -1,9 +1,9 @@
 use std::time::Duration;
 
-use crate::settings::SyncSettings;
 use repository::StorageConnectionManager;
 
 use reqwest::{Client, Url};
+use service::sync_settings::SyncSettings;
 
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},

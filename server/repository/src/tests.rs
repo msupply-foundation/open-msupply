@@ -238,7 +238,7 @@ mod repository_test {
             UserAccountRow {
                 id: "user1".to_string(),
                 username: "user 1".to_string(),
-                password: "p1".to_string(),
+                hashed_password: "p1".to_string(),
                 email: Some("email".to_string()),
             }
         }
@@ -247,7 +247,7 @@ mod repository_test {
             UserAccountRow {
                 id: "user2".to_string(),
                 username: "user 2".to_string(),
-                password: "p2".to_string(),
+                hashed_password: "p2".to_string(),
                 email: None,
             }
         }
@@ -297,7 +297,7 @@ mod repository_test {
         RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
         RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
         StockLineFilter, StockLineRepository, StockLineRowRepository, StocktakeRowRepository,
-        StoreRowRepository, UserAccountRepository,
+        StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
@@ -718,7 +718,7 @@ mod repository_test {
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
 
-        let repo = UserAccountRepository::new(&connection);
+        let repo = UserAccountRowRepository::new(&connection);
         let item1 = data::user_account_1();
         repo.insert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
