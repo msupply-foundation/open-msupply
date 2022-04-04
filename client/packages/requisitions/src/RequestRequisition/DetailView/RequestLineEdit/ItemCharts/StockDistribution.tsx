@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import {
   AlertIcon,
   Box,
+  Formatter,
   Tooltip,
   Typography,
   useTranslation,
@@ -39,7 +40,7 @@ const ValueBar = ({
 
   return (
     <>
-      <Tooltip title={`${label}: ${value}`} placement="top">
+      <Tooltip title={`${label}: ${Formatter.round(value)}`} placement="top">
         <Box flexBasis={`${flexBasis}%`} flexGrow={1}>
           <Box sx={{ backgroundColor: colour, height: '20px' }} />
           <Box style={{ textAlign: 'end', paddingRight: 10, paddingTop: 10 }}>
@@ -52,7 +53,7 @@ const ValueBar = ({
               </Typography>
             ) : null}
             {flexBasis > MIN_FLEX_BASIS_TO_SHOW_VALUE ? (
-              <Typography fontSize={12}>{value}</Typography>
+              <Typography fontSize={12}>{Formatter.round(value)}</Typography>
             ) : null}
           </Box>
         </Box>
@@ -77,7 +78,9 @@ const MonthlyConsumption = ({
   const text = ` (${month} ${t('label.months', {
     count: month,
   })})`;
-  const label = `${averageMonthlyConsumption * month}${showText ? text : ''}`;
+  const label = `${Formatter.round(averageMonthlyConsumption * month)}${
+    showText ? text : ''
+  }`;
 
   return <MonthlyBar flexBasis={flexBasis} label={label} />;
 };

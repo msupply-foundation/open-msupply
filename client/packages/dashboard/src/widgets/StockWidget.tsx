@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ButtonWithIcon,
+  Formatter,
   Grid,
   PlusCircleIcon,
   RouteBuilder,
@@ -46,11 +47,11 @@ export const StockWidget: React.FC = () => {
             stats={[
               {
                 label: t('label.expired', { ns: 'dashboard' }),
-                value: expiryData?.expired || 0,
+                value: Formatter.round(expiryData?.expired),
               },
               {
                 label: t('label.expiring-soon'),
-                value: expiryData?.expiringSoon || 0,
+                value: Formatter.round(expiryData?.expiringSoon),
               },
             ]}
           />
@@ -60,15 +61,15 @@ export const StockWidget: React.FC = () => {
             stats={[
               {
                 label: t('label.total-items', { ns: 'dashboard' }),
-                value: itemStatsData?.length || 0,
+                value: Formatter.round(itemStatsData?.length),
               },
               {
                 label: t('label.items-no-stock'),
-                value: noStockItemsCount,
+                value: Formatter.round(noStockItemsCount),
               },
               {
                 label: t('label.low-stock-items'),
-                value: lowStockItemsCount,
+                value: Formatter.round(lowStockItemsCount),
               },
             ]}
           />
