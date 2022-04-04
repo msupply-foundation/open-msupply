@@ -44,4 +44,5 @@ export const getNameAndColorColumn = <
       {column.accessor({ rowData, rows })}
     </Box>
   ),
+  minWidth: 400,
 });

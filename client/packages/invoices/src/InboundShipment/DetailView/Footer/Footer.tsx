@@ -76,7 +76,7 @@ export const FooterComponent: FC = () => {
               <ButtonWithIcon
                 shrinkThreshold="lg"
                 Icon={<XCircleIcon />}
-                label={t('button.cancel')}
+                label={t('button.close')}
                 color="secondary"
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigateUpOne()}
