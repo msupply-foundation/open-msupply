@@ -241,6 +241,7 @@ export const RequisitionLineChartDocument = gql`
     storeId: $storeId
   ) {
     ... on ItemChartNode {
+      __typename
       calculationDate
       consumptionHistory {
         totalCount
