@@ -33,6 +33,9 @@ pub use self::invoice_query::*;
 pub mod invoice_line;
 pub use self::invoice_line::*;
 
+pub mod item_chart;
+pub use self::item_chart::*;
+
 pub mod store;
 pub use self::store::*;
 
@@ -44,9 +47,6 @@ pub use self::stocktake_line::*;
 
 pub mod user;
 pub use self::user::*;
-
-pub mod item_chart_data;
-pub use item_chart_data::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

@@ -4,15 +4,14 @@ use crate::{
     sync_processor::{ProcessRecordError, RecordForProcessing},
 };
 use chrono::Utc;
-use repository::EqualFilter;
+
 use repository::{
     schema::{
         NumberRowType, RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType,
     },
-    ItemStats, ItemStatsFilter, ItemStatsRepository, RequisitionLineRowRepository,
-    RequisitionRowRepository, StorageConnection,
+    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
-use util::{inline_init, uuid::uuid};
+use util::uuid::uuid;
 
 pub fn can_create_response_requisition(
     source_requisition: &RequisitionRow,
@@ -111,40 +110,22 @@ fn generate_linked_requisition_lines(
     let mut new_lines = Vec::new();
 
     for source_line in source_lines.into_iter() {
-        let item_id = source_line.requisition_line_row.item_id.clone();
-        let item_stats = get_item_stats(connection, &linked_requisition.store_id, &item_id)?;
-
-        let new_row = inline_init(|r: &mut RequisitionLineRow| {
-            r.id = uuid();
-            r.requisition_id = linked_requisition.id.clone();
-            r.item_id = source_line.requisition_line_row.item_id;
-            r.requested_quantity = source_line.requisition_line_row.requested_quantity;
-            r.suggested_quantity = source_line.requisition_line_row.suggested_quantity;
-            r.available_stock_on_hand = item_stats.available_stock_on_hand();
-            r.average_monthly_consumption = item_stats.average_monthly_consumption();
+        new_lines.push(RequisitionLineRow {
+            id: uuid(),
+            requisition_id: linked_requisition.id.clone(),
+            item_id: source_line.requisition_line_row.item_id,
+            requested_quantity: source_line.requisition_line_row.requested_quantity,
+            suggested_quantity: source_line.requisition_line_row.suggested_quantity,
+            available_stock_on_hand: source_line.requisition_line_row.available_stock_on_hand,
+            average_monthly_consumption: source_line
+                .requisition_line_row
+                .average_monthly_consumption,
+            snapshot_datetime: source_line.requisition_line_row.snapshot_datetime,
+            // Default
+            supply_quantity: 0,
+            comment: None,
         });
-
-        new_lines.push(new_row);
     }
 
     Ok(new_lines)
-}
-
-fn get_item_stats(
-    connection: &StorageConnection,
-    store_id: &str,
-    item_id: &str,
-) -> Result<ItemStats, ProcessRecordError> {
-    let repository = ItemStatsRepository::new(&connection);
-
-    let filter = ItemStatsFilter::new().item_id(EqualFilter::equal_any(vec![item_id.to_string()]));
-
-    let result = repository.query_one(store_id, None, filter)?.ok_or(
-        ProcessRecordError::CannotFindStatsForItemAndStore {
-            store_id: store_id.to_string(),
-            item_id: item_id.to_string(),
-        },
-    )?;
-
-    Ok(result)
 }
