@@ -1,9 +1,9 @@
-use crate::sync::{
-    translation_central::TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN, SyncTranslationError,
-};
+use crate::sync::translation_central::TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN;
 use repository::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
 
 use serde::Deserialize;
+
+use super::{CentralPushTranslation, IntegrationUpsertRecord};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -13,43 +13,40 @@ pub struct LegacyListMasterNameJoinRow {
     list_master_ID: String,
 }
 
-impl LegacyListMasterNameJoinRow {
-    pub fn try_translate(
+pub struct MasterListNameJoinTranslation {}
+impl CentralPushTranslation for MasterListNameJoinTranslation {
+    fn try_translate(
+        &self,
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<MasterListNameJoinRow>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN;
-
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data).map_err(
-            |source| SyncTranslationError {
-                table_name,
-                source: source.into(),
-                record: sync_record.data.clone(),
-            },
-        )?;
-
+        let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)?;
         if data.name_ID == "" {
             return Ok(None);
         }
 
-        Ok(Some(MasterListNameJoinRow {
-            id: data.ID,
-            master_list_id: data.list_master_ID,
-            name_id: data.name_ID,
-        }))
+        Ok(Some(IntegrationUpsertRecord::MasterListNameJoin(
+            MasterListNameJoinRow {
+                id: data.ID,
+                master_list_id: data.list_master_ID,
+                name_id: data.name_ID,
+            },
+        )))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::sync::translation_central::{
-        list_master_name_join::LegacyListMasterNameJoinRow,
+        list_master_name_join::MasterListNameJoinTranslation,
         test_data::{
             master_list_name_join::get_test_master_list_name_join_records, TestSyncDataRecord,
         },
+        CentralPushTranslation, IntegrationUpsertRecord,
     };
 
     #[test]
@@ -58,9 +55,10 @@ mod tests {
             match record.translated_record {
                 TestSyncDataRecord::MasterListNameJoin(translated_record) => {
                     assert_eq!(
-                        LegacyListMasterNameJoinRow::try_translate(&record.central_sync_buffer_row)
+                        MasterListNameJoinTranslation {}
+                            .try_translate(&record.central_sync_buffer_row)
                             .unwrap(),
-                        translated_record,
+                        translated_record.map(|r| (IntegrationUpsertRecord::MasterListNameJoin(r))),
                         "{}",
                         record.identifier
                     )

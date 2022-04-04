@@ -7,7 +7,10 @@ mod store;
 pub mod test_data;
 mod unit;
 
-use crate::sync::translation_central::unit::LegacyUnitRow;
+use crate::sync::translation_central::{
+    item::ItemTranslation, list_master_line::MasterListLineTranslation,
+    list_master_name_join::MasterListNameJoinTranslation,
+};
 use repository::{
     schema::{
         CentralSyncBufferRow, ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
@@ -18,17 +21,16 @@ use repository::{
     StoreRowRepository, TransactionError, UnitRowRepository,
 };
 
-use self::{
-    item::LegacyItemRow, list_master::LegacyListMasterRow,
-    list_master_line::LegacyListMasterLineRow, list_master_name_join::LegacyListMasterNameJoinRow,
-    name::LegacyNameRow, store::LegacyStoreRow,
-};
-
 use log::{info, warn};
+
+use self::{
+    list_master::MasterListTranslation, name::NameTranslation, store::StoreTranslation,
+    unit::UnitTranslation,
+};
 
 use super::{SyncImportError, SyncTranslationError};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum IntegrationUpsertRecord {
     Unit(UnitRow),
     Name(NameRow),
@@ -44,59 +46,54 @@ struct IntegrationRecord {
     pub upserts: Vec<IntegrationUpsertRecord>,
 }
 
+pub trait CentralPushTranslation {
+    fn try_translate(
+        &self,
+        sync_record: &CentralSyncBufferRow,
+    ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error>;
+}
+
 /// Translates sync records into the local DB schema.
 /// Translated records are added to integration_records.
 fn do_translation(
     sync_record: &CentralSyncBufferRow,
     records: &mut IntegrationRecord,
 ) -> Result<(), SyncTranslationError> {
-    use IntegrationUpsertRecord::*;
-    if let Some(row) = LegacyNameRow::try_translate(sync_record)? {
-        records.upserts.push(Name(row));
-        return Ok(());
+    let translations: Vec<Box<dyn CentralPushTranslation>> = vec![
+        Box::new(NameTranslation {}),
+        Box::new(UnitTranslation {}),
+        Box::new(ItemTranslation {}),
+        Box::new(StoreTranslation {}),
+        Box::new(MasterListTranslation {}),
+        Box::new(MasterListLineTranslation {}),
+        Box::new(MasterListNameJoinTranslation {}),
+    ];
+    for translation in translations {
+        match translation.try_translate(sync_record) {
+            Ok(Some(result)) => {
+                records.upserts.push(result);
+                return Ok(());
+            }
+            Err(error) => warn!(
+                "Failed to translate ({}): {:?}",
+                SyncTranslationError {
+                    table_name: sync_record.table_name.clone(),
+                    source: error,
+                    record: format!("{:?}", sync_record.data),
+                },
+                sync_record
+            ),
+            _ => {
+                log::info!(
+                    "Ignore central record: table: \"{}\", record id: {}",
+                    sync_record.table_name,
+                    sync_record.record_id
+                );
+            }
+        };
     }
 
-    if let Some(row) = LegacyUnitRow::try_translate(sync_record)? {
-        records.upserts.push(Unit(row));
-        return Ok(());
-    }
-
-    if let Some(row) = LegacyItemRow::try_translate(sync_record)? {
-        records.upserts.push(Item(row));
-        return Ok(());
-    }
-
-    if let Some(row) = LegacyStoreRow::try_translate(sync_record)? {
-        // TODO: move this check up when fetching/validating/reordering the sync records?
-        // ignore stores without name
-        if row.name_id == "" {
-            return Ok(());
-        }
-        records.upserts.push(Store(row));
-        return Ok(());
-    }
-
-    if let Some(row) = LegacyListMasterRow::try_translate(sync_record)? {
-        records.upserts.push(MasterList(row));
-        return Ok(());
-    }
-
-    if let Some(row) = LegacyListMasterLineRow::try_translate(sync_record)? {
-        records.upserts.push(MasterListLine(row));
-        return Ok(());
-    }
-
-    if let Some(row) = LegacyListMasterNameJoinRow::try_translate(sync_record)? {
-        records.upserts.push(MasterListNameJoin(row));
-        return Ok(());
-    }
-
-    log::info!(
-        "Ignore central record: table: \"{}\", record id: {}",
-        sync_record.table_name,
-        sync_record.record_id
-    );
-    Ok(()) // At this point we are either ignoring records or record_types
+    Ok(())
 }
 
 pub const TRANSLATION_RECORD_NAME: &str = "name";

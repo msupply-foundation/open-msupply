@@ -5,11 +5,9 @@ use repository::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     TRANSLATION_RECORD_NUMBER,
 };
 
@@ -27,21 +25,14 @@ impl RemotePullTranslation for NumberTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_NUMBER;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyNumberRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
+        let data = serde_json::from_str::<LegacyNumberRow>(&sync_record.data)?;
 
         let type_and_store = match parse_number_name(data.name) {
             Some(type_and_store) => type_and_store,
@@ -63,7 +54,7 @@ impl RemotePushUpsertTranslation for NumberTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::Number {
             return Ok(None);
         }
@@ -75,13 +66,8 @@ impl RemotePushUpsertTranslation for NumberTranslation {
             store_id,
             r#type,
         } = NumberRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
-            .ok_or(to_push_translation_error(
-                table_name,
-                anyhow::Error::msg("Number row not found"),
-                changelog,
-            ))?;
+            .find_one_by_id(&changelog.row_id)?
+            .ok_or(anyhow::Error::msg("Number row not found"))?;
 
         let name = match to_number_name(&r#type, &store_id) {
             Some(name) => name,
@@ -98,8 +84,7 @@ impl RemotePushUpsertTranslation for NumberTranslation {
             store_id: Some(store_id),
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }
@@ -113,6 +98,9 @@ fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
         "customer_invoice_number" => NumberRowType::OutboundShipment,
         // NumberRowType::RequestRequisition ?,
         // "purchase_order_number" => ,
+        // new for omSupply
+        "request_requisition" => NumberRowType::RequestRequisition,
+        "response_requisition" => NumberRowType::ResponseRequisition,
         _ => return None,
     };
     let store = split.next()?.to_string();
@@ -125,8 +113,9 @@ fn to_number_name(number_type: &NumberRowType, store_id: &str) -> Option<String>
         NumberRowType::OutboundShipment => "customer_invoice_number",
         NumberRowType::InventoryAdjustment => "inventory_adjustment_serial_number",
         NumberRowType::Stocktake => "stock_take_number",
-        NumberRowType::RequestRequisition => return None,
-        NumberRowType::ResponseRequisition => return None,
+        // new for omSupply
+        NumberRowType::RequestRequisition => "request_requisition",
+        NumberRowType::ResponseRequisition => "response_requisition",
     };
     Some(format!("{}_for_store_{}", number_str, store_id))
 }

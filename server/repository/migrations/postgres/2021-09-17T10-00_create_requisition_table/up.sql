@@ -21,6 +21,5 @@ CREATE TABLE requisition (
     their_reference TEXT,
     max_months_of_stock  DOUBLE PRECISION NOT NULL,
     min_months_of_stock DOUBLE PRECISION NOT NULL,
-    linked_requisition_id TEXT,
-    FOREIGN KEY (linked_requisition_id) REFERENCES requisition(id)
+    linked_requisition_id TEXT
 )

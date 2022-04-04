@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, RemoteSyncBufferRow, StocktakeRow, StocktakeStatus,
@@ -7,16 +7,15 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::SyncTranslationError;
-
 use super::{
-    date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
+    empty_str_as_option, naive_time,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_STOCKTAKE,
 };
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
     /// From the 4d code this is used for new
     #[serde(rename = "sg")]
@@ -24,6 +23,9 @@ pub enum LegacyStocktakeStatus {
     /// finalised
     #[serde(rename = "fn")]
     Fn,
+    /// Bucket to catch all other variants
+    #[serde(other)]
+    Others,
 }
 
 #[allow(non_snake_case)]
@@ -49,10 +51,23 @@ pub struct LegacyStocktakeRow {
     pub serial_number: i64,
     #[serde(serialize_with = "date_to_isostring")]
     pub stock_take_created_date: NaiveDate,
+    /// Its actually the stock_take_created_time:
+    #[serde(deserialize_with = "naive_time")]
+    pub stock_take_time: NaiveTime,
+
     #[serde(rename = "stock_take_date")]
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub stocktake_date: Option<NaiveDate>,
     pub store_ID: String,
+
+    #[serde(rename = "om_created_datetime")]
+    pub created_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_finalised_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub finalised_datetime: Option<NaiveDateTime>,
 }
 
 pub struct StocktakeTranslation {}
@@ -61,21 +76,24 @@ impl RemotePullTranslation for StocktakeTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_STOCKTAKE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyStocktakeRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
+        let data = serde_json::from_str::<LegacyStocktakeRow>(&sync_record.data)?;
+        let (created_datetime, finalised_datetime) = match data.created_datetime {
+            Some(created_datetime) => {
+                // use new om_* fields
+                (created_datetime, data.finalised_datetime)
+            }
+            None => (
+                data.stock_take_created_date.and_time(data.stock_take_time),
+                None,
+            ),
+        };
 
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Stocktake(StocktakeRow {
@@ -85,11 +103,12 @@ impl RemotePullTranslation for StocktakeTranslation {
                 stocktake_number: data.serial_number,
                 comment: data.comment,
                 description: data.Description,
-                status: stocktake_status(&data.status),
-                created_datetime: date_and_time_to_datatime(data.stock_take_created_date, 0),
-                // TODO finalise doesn't exist in mSupply?
-                finalised_datetime: None,
-                // TODO what is the correct mapping:
+                status: stocktake_status(&data.status).ok_or(anyhow::Error::msg(format!(
+                    "Unexpected stocktake status: {:?}",
+                    data.status
+                )))?,
+                created_datetime,
+                finalised_datetime,
                 inventory_adjustment_id: data.invad_additions_ID,
                 stocktake_date: data.stocktake_date,
                 is_locked: data.is_locked,
@@ -98,11 +117,13 @@ impl RemotePullTranslation for StocktakeTranslation {
     }
 }
 
-fn stocktake_status(status: &LegacyStocktakeStatus) -> StocktakeStatus {
-    match status {
+fn stocktake_status(status: &LegacyStocktakeStatus) -> Option<StocktakeStatus> {
+    let status = match status {
         LegacyStocktakeStatus::Sg => StocktakeStatus::New,
         LegacyStocktakeStatus::Fn => StocktakeStatus::Finalised,
-    }
+        _ => return None,
+    };
+    Some(status)
 }
 
 impl RemotePushUpsertTranslation for StocktakeTranslation {
@@ -110,7 +131,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::Stocktake {
             return Ok(None);
         }
@@ -125,18 +146,13 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             description,
             status,
             created_datetime,
-            finalised_datetime: _,
+            finalised_datetime,
             inventory_adjustment_id,
             is_locked,
             stocktake_date,
         } = StocktakeRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
-            .ok_or(to_push_translation_error(
-                table_name,
-                anyhow::Error::msg("Stocktake row not found"),
-                changelog,
-            ))?;
+            .find_one_by_id(&changelog.row_id)?
+            .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
 
         let legacy_row = LegacyStocktakeRow {
             ID: id.clone(),
@@ -150,6 +166,9 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             invad_additions_ID: inventory_adjustment_id,
             serial_number: stocktake_number,
             stock_take_created_date: date_from_date_time(&created_datetime),
+            stock_take_time: created_datetime.time(),
+            created_datetime: Some(created_datetime),
+            finalised_datetime,
         };
 
         Ok(Some(vec![PushUpsertRecord {
@@ -157,8 +176,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
             store_id: Some(store_id),
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }

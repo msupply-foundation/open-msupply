@@ -6,12 +6,10 @@ use repository::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     date_option_to_isostring, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_ITEM_LINE,
 };
 
@@ -43,22 +41,14 @@ impl RemotePullTranslation for StockLineTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_ITEM_LINE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyStockLineRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
-
+        let data = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::StockLine(StockLineRow {
                 id: data.ID,
@@ -84,7 +74,7 @@ impl RemotePushUpsertTranslation for StockLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::StockLine {
             return Ok(None);
         }
@@ -104,9 +94,7 @@ impl RemotePushUpsertTranslation for StockLineTranslation {
             expiry_date,
             on_hold,
             note,
-        } = StockLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?;
+        } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
 
         let legacy_row = LegacyStockLineRow {
             ID: id.clone(),
@@ -129,8 +117,7 @@ impl RemotePushUpsertTranslation for StockLineTranslation {
             store_id: Some(store_id),
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }
