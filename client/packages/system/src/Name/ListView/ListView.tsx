@@ -1,26 +1,31 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
-  useNavigate,
   TableProvider,
   DataTable,
   useColumns,
   createTableStore,
+  useDialog,
+  DialogButton,
+  Fade,
 } from '@openmsupply-client/common';
+import { TransitionProps } from '@mui/material/transitions';
+import { DetailModal } from '../DetailModal';
 import { useNames, NameRowFragment } from '../api';
 
 export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   type,
 }) => {
-  const navigate = useNavigate();
+  const [selectedId, setSelectedId] = useState<string>('');
   const {
     data,
-    isLoading,
     isError,
+    isLoading,
     onChangePage,
     pagination,
     sortBy,
     onChangeSortBy,
   } = useNames(type);
+  const { Modal, showDialog, hideDialog } = useDialog();
 
   const columns = useColumns<NameRowFragment>(
     ['name', 'code'],
@@ -29,6 +34,15 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
       onChangeSortBy,
     },
     [sortBy]
+  );
+
+  const Transition = React.forwardRef(
+    (
+      props: TransitionProps & {
+        children: React.ReactElement;
+      },
+      ref: React.Ref<unknown>
+    ) => <Fade ref={ref} {...props} timeout={800}></Fade>
   );
 
   return (
@@ -41,9 +55,19 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
         isLoading={isLoading}
         isError={isError}
         onRowClick={row => {
-          navigate(row.id);
+          setSelectedId(row.id);
+          showDialog();
         }}
       />
+      <Modal
+        title=""
+        sx={{ maxWidth: '90%' }}
+        okButton={<DialogButton variant="ok" onClick={hideDialog} />}
+        slideAnimation={false}
+        Transition={Transition}
+      >
+        <DetailModal nameId={selectedId} />
+      </Modal>
     </TableProvider>
   );
 };

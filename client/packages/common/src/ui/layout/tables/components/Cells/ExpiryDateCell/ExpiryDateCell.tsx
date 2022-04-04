@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { Formatter, DateUtils } from '@common/utils';
+import { Formatter } from '@common/utils';
+import { DateUtils } from '@common/intl';
 import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
 

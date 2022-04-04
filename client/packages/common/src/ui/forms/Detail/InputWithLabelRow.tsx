@@ -4,11 +4,13 @@ import {
   Box,
   FormLabelProps,
   StandardTextFieldProps,
+  Typography,
 } from '@mui/material';
 import { BasicTextInput } from '@common/components';
 
 interface InputWithLabelRowProps {
   Input?: ReactNode;
+  DisabledInput?: ReactNode;
   label: string;
   labelProps?: FormLabelProps;
   inputProps?: StandardTextFieldProps;
@@ -17,10 +19,12 @@ interface InputWithLabelRowProps {
 export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   label,
   inputProps,
-  Input = <BasicTextInput style={{ width: '100%' }} {...inputProps} />,
+  Input = <BasicTextInput {...inputProps} />,
+  DisabledInput = <Typography>{inputProps?.value as string}</Typography>,
   labelProps,
 }) => {
   const { sx, ...labelPropsRest } = labelProps || {};
+  const isDisabled = inputProps?.disabled;
 
   return (
     <Box
@@ -28,6 +32,7 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
       alignItems="center"
       gap={1}
       justifyContent="space-around"
+      style={{ minWidth: 300 }}
     >
       <Box flex={1} style={{ textAlign: 'end' }} flexBasis="40%">
         <FormLabel sx={{ fontWeight: 'bold', ...sx }} {...labelPropsRest}>
@@ -35,7 +40,7 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
         </FormLabel>
       </Box>
       <Box flex={1} flexBasis="60%">
-        {Input}
+        {!isDisabled ? Input : DisabledInput}
       </Box>
     </Box>
   );

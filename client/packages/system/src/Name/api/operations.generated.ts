@@ -22,11 +22,11 @@ export type NamesQuery = { __typename: 'FullQuery', names: { __typename: 'NameCo
 
 export type NameByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  itemId: Types.Scalars['String'];
+  nameId: Types.Scalars['String'];
 }>;
 
 
-export type NameByIdQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode' }> } };
+export type NameByIdQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address: string, chargeCode: string, code: string, comment: string, country: string, createdDate?: string | null, email: string, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone: string, website: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
 export const NameRowFragmentDoc = gql`
     fragment NameRow on NameNode {
@@ -86,8 +86,8 @@ export const NamesDocument = gql`
 }
     ${NameRowFragmentDoc}`;
 export const NameByIdDocument = gql`
-    query nameById($storeId: String!, $itemId: String!) {
-  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {
+    query nameById($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: {id: {equalTo: $nameId}}) {
     ... on NameConnector {
       __typename
       nodes {
@@ -138,9 +138,9 @@ export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQu
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockNameByIdQuery((req, res, ctx) => {
- *   const { storeId, itemId } = req.variables;
+ *   const { storeId, nameId } = req.variables;
  *   return res(
- *     ctx.data({ items })
+ *     ctx.data({ names })
  *   )
  * })
  */

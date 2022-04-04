@@ -55,7 +55,7 @@ export const InboundListView: FC = () => {
       ['invoiceNumber', { maxWidth: 80 }],
       'createdDatetime',
       'allocatedDatetime',
-      ['comment', { maxWidth: 300 }],
+      ['comment', { width: '100%' }],
       [
         'totalAfterTax',
         {
