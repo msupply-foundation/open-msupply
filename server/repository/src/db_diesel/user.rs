@@ -121,12 +121,12 @@ impl<'a> UserRepository<'a> {
 fn to_domain(results: Vec<UserAndUserStoreJoin>) -> Vec<User> {
     // collect all joins for a user
     let mut user_map = HashMap::<String, User>::new();
-    for join in results {
-        let entry = user_map.entry(join.0.id.clone()).or_insert(User {
-            user_row: join.0,
+    for (user_row, user_store_join, store_row) in results {
+        let entry = user_map.entry(user_row.id.clone()).or_insert(User {
+            user_row,
             stores: vec![],
         });
-        if let (Some(user_store_join), Some(store_row)) = (join.1, join.2) {
+        if let (Some(user_store_join), Some(store_row)) = (user_store_join, store_row) {
             entry.stores.push(UserStore {
                 store_row,
                 user_store_join,
