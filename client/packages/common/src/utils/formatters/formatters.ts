@@ -6,9 +6,6 @@ export const Formatter = {
   // TODO: Do something better than naively rounding to 2 decimal places
   tax: (tax: number, withParens = true) =>
     `${withParens ? '(' : ''}${(tax ?? 0).toFixed(2)}%${withParens ? ')' : ''}`,
-  date: (date: Date): string =>
-    `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`,
-  localisedDate: (date: Date): string => format(date, 'P'),
   naiveDate: (date?: Date | null): string | null => {
     if (date && isValid(date)) return format(date, 'yyyy-MM-dd');
     else return null;

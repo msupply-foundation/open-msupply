@@ -1,3 +1,4 @@
+import { IntlUtils } from '@common/intl';
 import {
   isValid,
   differenceInMonths,
@@ -8,9 +9,25 @@ import {
   isAfter,
   isBefore,
   isEqual,
+  format,
+  // isDate,
+  parseISO,
+  fromUnixTime,
 } from 'date-fns';
+import { enGB, enUS, fr, ar } from 'date-fns/locale';
+
+// Map locale string (from i18n) to locale object (from date-fns)
+const getLocaleObj = { fr, ar };
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
+
+const dateInputHandler = (date: Date | string | number): Date => {
+  // Assume a string is an ISO date-time string
+  if (typeof date === 'string') return parseISO(date);
+  // Assume a number is a UNIX timestamp
+  if (typeof date === 'number') return fromUnixTime(date);
+  return date as Date;
+};
 
 export const DateUtils = {
   getDateOrNull: (date: string | null): Date | null => {
@@ -29,4 +46,18 @@ export const DateUtils = {
   isAfter,
   isBefore,
   isEqual,
+};
+
+export const useFormatDateTime = () => {
+  const language = IntlUtils.useCurrentLanguage();
+  const locale =
+    language === 'en'
+      ? navigator.language === 'en-US'
+        ? enUS
+        : enGB
+      : getLocaleObj[language];
+  const localisedDate = (date: Date | string | number): string => {
+    return format(dateInputHandler(date), 'P', { locale });
+  };
+  return { localisedDate };
 };

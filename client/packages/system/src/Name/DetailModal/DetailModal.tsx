@@ -7,7 +7,7 @@ import {
   DetailSection,
   Checkbox,
   Grid,
-  Formatter,
+  useFormatDateTime,
   Typography,
   Box,
   BasicSpinner,
@@ -24,6 +24,7 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
   const t = useTranslation('common');
   const { setSuffix } = useBreadcrumbs();
   const isDisabled = true;
+  const { localisedDate } = useFormatDateTime();
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
@@ -80,7 +81,7 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               label={t('label.date-created')}
               inputProps={{
                 value: data?.createdDate
-                  ? Formatter.localisedDate(new Date(data?.createdDate))
+                  ? localisedDate(data?.createdDate)
                   : '',
                 disabled: isDisabled,
               }}
