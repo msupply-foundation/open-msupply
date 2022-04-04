@@ -1,9 +1,11 @@
 use super::diesel_schema::invoice;
 use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 use util::Defaults;
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceRowType {
     OutboundShipment,
@@ -11,7 +13,8 @@ pub enum InvoiceRowType {
     InventoryAdjustment,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceRowStatus {
     New,

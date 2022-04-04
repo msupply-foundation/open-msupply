@@ -63,35 +63,6 @@ pub enum LegacyRequisitionStatus {
     Others,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum RequisitionStatus {
-    Draft,
-    New,
-    Sent,
-    Finalised,
-}
-
-impl RequisitionStatus {
-    fn to_domain(&self) -> RequisitionRowStatus {
-        match self {
-            RequisitionStatus::Draft => RequisitionRowStatus::Draft,
-            RequisitionStatus::New => RequisitionRowStatus::New,
-            RequisitionStatus::Sent => RequisitionRowStatus::Sent,
-            RequisitionStatus::Finalised => RequisitionRowStatus::Finalised,
-        }
-    }
-
-    fn from_domain(status: RequisitionRowStatus) -> Self {
-        match status {
-            RequisitionRowStatus::Draft => RequisitionStatus::Draft,
-            RequisitionRowStatus::New => RequisitionStatus::New,
-            RequisitionRowStatus::Sent => RequisitionStatus::Sent,
-            RequisitionRowStatus::Finalised => RequisitionStatus::Finalised,
-        }
-    }
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyRequisitionRow {
@@ -142,7 +113,7 @@ pub struct LegacyRequisitionRow {
 
     #[serde(rename = "om_max_months_of_stock")]
     pub max_months_of_stock: Option<f64>,
-    pub om_status: Option<RequisitionStatus>,
+    pub om_status: Option<RequisitionRowStatus>,
     /// We ignore the legacy colour field
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
@@ -181,11 +152,9 @@ impl RemotePullTranslation for RequisitionTranslation {
                 data.sent_datetime,
                 data.finalised_datetime,
                 data.max_months_of_stock.unwrap_or(0.0),
-                data.om_status
-                    .map(|s| s.to_domain())
-                    .ok_or(anyhow::Error::msg(
-                        "Invalid data: om_created_datetime set but om_status missing",
-                    ))?,
+                data.om_status.ok_or(anyhow::Error::msg(
+                    "Invalid data: om_created_datetime set but om_status missing",
+                ))?,
                 data.om_colour,
             ),
             None => (
@@ -301,7 +270,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
                 "Unexpected row requisition status {:?} (type: {:?}), row id:{}",
                 status, r#type, changelog.row_id
             )))?,
-            om_status: Some(RequisitionStatus::from_domain(status)),
+            om_status: Some(status),
             date_entered: date_from_date_time(&created_datetime),
             created_datetime: Some(created_datetime),
             last_modified_at: to_legacy_last_modified_at(

@@ -63,66 +63,6 @@ pub enum TransactMode {
     #[serde(other)]
     Others,
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum InvoiceStatus {
-    New,
-    Allocated,
-    Picked,
-    Shipped,
-    Delivered,
-    Verified,
-}
-impl InvoiceStatus {
-    fn to_domain(&self) -> InvoiceRowStatus {
-        match self {
-            InvoiceStatus::New => InvoiceRowStatus::New,
-            InvoiceStatus::Allocated => InvoiceRowStatus::Allocated,
-            InvoiceStatus::Picked => InvoiceRowStatus::Picked,
-            InvoiceStatus::Shipped => InvoiceRowStatus::Shipped,
-            InvoiceStatus::Delivered => InvoiceRowStatus::Delivered,
-            InvoiceStatus::Verified => InvoiceRowStatus::Verified,
-        }
-    }
-
-    fn from_domain(status: InvoiceRowStatus) -> Self {
-        match status {
-            InvoiceRowStatus::New => InvoiceStatus::New,
-            InvoiceRowStatus::Allocated => InvoiceStatus::Allocated,
-            InvoiceRowStatus::Picked => InvoiceStatus::Picked,
-            InvoiceRowStatus::Shipped => InvoiceStatus::Shipped,
-            InvoiceRowStatus::Delivered => InvoiceStatus::Delivered,
-            InvoiceRowStatus::Verified => InvoiceStatus::Verified,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum InvoiceType {
-    OutboundShipment,
-    InboundShipment,
-    InventoryAdjustment,
-}
-impl InvoiceType {
-    fn to_domain(&self) -> InvoiceRowType {
-        match self {
-            InvoiceType::OutboundShipment => InvoiceRowType::OutboundShipment,
-            InvoiceType::InboundShipment => InvoiceRowType::InboundShipment,
-            InvoiceType::InventoryAdjustment => InvoiceRowType::InventoryAdjustment,
-        }
-    }
-
-    fn from_domain(status: InvoiceRowType) -> Self {
-        match status {
-            InvoiceRowType::OutboundShipment => InvoiceType::OutboundShipment,
-            InvoiceRowType::InboundShipment => InvoiceType::InboundShipment,
-            InvoiceRowType::InventoryAdjustment => InvoiceType::InventoryAdjustment,
-        }
-    }
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyTransactRow {
@@ -203,8 +143,8 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_date_time_as_option")]
     pub verified_datetime: Option<NaiveDateTime>,
 
-    pub om_status: Option<InvoiceStatus>,
-    pub om_type: Option<InvoiceType>,
+    pub om_status: Option<InvoiceRowStatus>,
+    pub om_type: Option<InvoiceRowType>,
 
     /// We ignore the legacy colour field
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -256,11 +196,8 @@ impl RemotePullTranslation for InvoiceTranslation {
                 name_id: data.name_ID,
                 name_store_id,
                 invoice_number: data.invoice_num,
-                r#type: data.om_type.map(|t| t.to_domain()).unwrap_or(invoice_type),
-                status: data
-                    .om_status
-                    .map(|s| s.to_domain())
-                    .unwrap_or(invoice_status),
+                r#type: data.om_type.unwrap_or(invoice_type),
+                status: data.om_status.unwrap_or(invoice_status),
                 on_hold: data.hold,
                 comment: data.comment,
                 their_reference: data.their_ref,
@@ -497,8 +434,8 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             shipped_datetime,
             delivered_datetime,
             verified_datetime,
-            om_status: Some(InvoiceStatus::from_domain(status)),
-            om_type: Some(InvoiceType::from_domain(r#type)),
+            om_status: Some(status),
+            om_type: Some(r#type),
             om_colour: colour,
         };
 
