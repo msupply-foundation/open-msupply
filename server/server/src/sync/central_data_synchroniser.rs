@@ -50,7 +50,7 @@ impl CentralDataSynchroniser {
         const BATCH_SIZE: u32 = 500;
 
         loop {
-            info!("Pulling {} central sync records...", BATCH_SIZE);
+            info!("Pulling central sync records...");
             let sync_batch: CentralSyncBatchV5 = self
                 .sync_api_v5
                 .get_central_records(cursor, BATCH_SIZE)
