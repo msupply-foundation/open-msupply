@@ -1,4 +1,6 @@
-use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
+use async_graphql::{
+    dataloader::DataLoader, Context, ErrorExtensions, Object, Result, SimpleObject,
+};
 use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
@@ -36,6 +38,12 @@ impl UserStoreNode {
     }
 }
 
+#[derive(SimpleObject)]
+pub struct UserStoreConnector {
+    total_count: u32,
+    nodes: Vec<UserStoreNode>,
+}
+
 pub struct UserNode {
     pub user: User,
 }
@@ -57,24 +65,24 @@ impl UserNode {
     }
 
     pub async fn default_store(&self) -> Option<UserStoreNode> {
-        let default_store = self
-            .user
-            .stores
-            .iter()
-            .find(|s| s.user_store_join.is_default);
-        default_store.map(|user_store| UserStoreNode {
+        self.user.default_store().map(|user_store| UserStoreNode {
             user_store: user_store.clone(),
         })
     }
 
-    pub async fn stores(&self) -> Vec<UserStoreNode> {
-        self.user
+    pub async fn stores(&self) -> UserStoreConnector {
+        let nodes: Vec<UserStoreNode> = self
+            .user
             .stores
             .iter()
             .map(|user_store| UserStoreNode {
                 user_store: user_store.clone(),
             })
-            .collect()
+            .collect();
+        UserStoreConnector {
+            total_count: nodes.len() as u32,
+            nodes,
+        }
     }
 }
 
