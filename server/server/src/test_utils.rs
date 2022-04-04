@@ -1,6 +1,7 @@
 use repository::test_db::get_test_db_settings;
+use service::sync_settings::SyncSettings;
 
-use super::settings::{AuthSettings, ServerSettings, Settings, SyncSettings};
+use super::settings::{AuthSettings, ServerSettings, Settings};
 
 // The following settings work for PG and Sqlite (username, password, host and port are
 // ignored for the later)

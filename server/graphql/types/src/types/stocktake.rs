@@ -7,7 +7,7 @@ use repository::{
 use serde::Serialize;
 
 use graphql_core::{
-    loader::{InvoiceByIdLoader, StocktakeLineByStocktakeIdLoader, UserAccountLoader},
+    loader::{InvoiceByIdLoader, StocktakeLineByStocktakeIdLoader, UserLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -37,7 +37,7 @@ impl StocktakeNode {
 
     /// User that created stocktake, if user is not found in system default unknown user is returned
     pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
-        let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 
         let user = loader
             .load_one(self.stocktake.user_id.clone())
@@ -189,7 +189,7 @@ mod test {
             },
             "testQueryUserDoesNotExist": {
                 "user": {
-                    "userId": unknown_user().id
+                    "userId": unknown_user().user_row.id
                 }
             },
         }
