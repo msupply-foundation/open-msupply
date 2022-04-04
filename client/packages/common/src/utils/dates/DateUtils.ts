@@ -56,8 +56,11 @@ export const useFormatDateTime = () => {
         ? enUS
         : enGB
       : getLocaleObj[language];
-  const localisedDate = (date: Date | string | number): string => {
-    return format(dateInputHandler(date), 'P', { locale });
-  };
-  return { localisedDate };
+  const localisedDate = (date: Date | string | number): string =>
+    format(dateInputHandler(date), 'P', { locale });
+  const customDate = (
+    date: Date | string | number,
+    formatString: string
+  ): string => format(dateInputHandler(date), formatString, { locale });
+  return { localisedDate, customDate };
 };

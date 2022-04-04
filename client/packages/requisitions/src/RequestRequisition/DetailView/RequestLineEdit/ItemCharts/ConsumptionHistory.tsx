@@ -14,7 +14,7 @@ import {
 } from '@common/components';
 import {
   Box,
-  useFormatDate,
+  useFormatDateTime,
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -29,13 +29,9 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
 }) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
-  const d = useFormatDate();
+  const { customDate } = useFormatDateTime();
   const { data, isLoading } = useRequestLineChartData(id);
-  const dateFormatter = (date: string) =>
-    d(new Date(date), {
-      month: 'short',
-      day: '2-digit',
-    });
+  const dateFormatter = (date: string) => customDate(date, 'dd MMM');
   const tooltipFormatter = (
     value: number,
     name: string,
@@ -55,7 +51,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   };
   if (!data || !data.consumptionHistory) return null;
 
-  const tooltipLabelFormatter = (date: string) => d(new Date(date));
+  const tooltipLabelFormatter = (date: string) => dateFormatter(date);
 
   return isLoading ? (
     <CircularProgress />

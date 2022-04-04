@@ -9,8 +9,8 @@ import {
   RouteBuilder,
   Link,
   Tooltip,
-  useFormatDate,
 } from '@openmsupply-client/common';
+import { useFormatDateTime } from '@common/utils';
 import { useResponseFields } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -29,12 +29,12 @@ const RelatedDocumentsRow: FC<{
 
 export const RelatedDocumentsSection: FC = () => {
   const t = useTranslation('distribution');
-  const d = useFormatDate();
+  const { localisedDate: d } = useFormatDateTime();
   const { shipments } = useResponseFields('shipments');
 
   const getTooltip = (createdDatetime: string, username?: string) => {
     let tooltip = t('messages.outbound-shipment-created-on', {
-      date: d(new Date(createdDatetime)),
+      date: d(createdDatetime),
     });
 
     if (username && username !== 'unknown') {
