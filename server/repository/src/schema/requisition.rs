@@ -1,5 +1,5 @@
 use super::diesel_schema::requisition;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use util::Defaults;
@@ -34,6 +34,7 @@ pub struct RequisitionRow {
     pub created_datetime: NaiveDateTime,
     pub sent_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
+    pub expected_delivery_date: Option<NaiveDate>,
     pub colour: Option<String>,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
@@ -56,6 +57,7 @@ impl Default for RequisitionRow {
             store_id: Default::default(),
             sent_datetime: Default::default(),
             finalised_datetime: Default::default(),
+            expected_delivery_date: Default::default(),
             colour: Default::default(),
             comment: Default::default(),
             their_reference: Default::default(),

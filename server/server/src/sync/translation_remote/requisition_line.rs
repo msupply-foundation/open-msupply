@@ -65,6 +65,8 @@ impl RemotePullTranslation for RequisitionLineTranslation {
                 available_stock_on_hand: data.stock_on_hand,
                 average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH) as i32,
                 comment: data.comment,
+                // TODO translate om_snapshot_datetime
+                snapshot_datetime: None,
             }),
         )))
     }
@@ -91,6 +93,8 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
             available_stock_on_hand,
             average_monthly_consumption,
             comment,
+            // TODO translate om_snapshot_datetime
+            snapshot_datetime: _,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.row_id)?
             .ok_or(anyhow::Error::msg(format!(

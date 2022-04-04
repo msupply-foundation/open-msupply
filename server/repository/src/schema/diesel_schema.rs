@@ -87,6 +87,7 @@ table! {
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
+        expected_delivery_date -> Nullable<Date>,
         colour -> Nullable<Text>,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
@@ -106,6 +107,7 @@ table! {
         supply_quantity -> Integer,
         available_stock_on_hand -> Integer ,
         average_monthly_consumption -> Integer,
+        snapshot_datetime -> Nullable<Timestamp>,
         comment -> Nullable<Text>,
     }
 }
@@ -309,17 +311,27 @@ table! {
 }
 
 table! {
-    consumption (id) {
+    stock_movement (id) {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        consumption_quantity -> Integer,
-        consumption_datetime -> Nullable<Timestamp>,
+        quantity -> Integer,
+        datetime -> Timestamp,
     }
 }
 
 table! {
-    stock_info (id) {
+    consumption (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        quantity -> Integer,
+        date -> Date,
+    }
+}
+
+table! {
+    stock_on_hand (id) {
         id -> Text,
         item_id -> Text,
         store_id -> Text,

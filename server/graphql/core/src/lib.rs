@@ -9,7 +9,7 @@ pub mod test_helpers;
 use actix_web::cookie::Cookie;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
-use async_graphql::Context;
+use async_graphql::{Context, Request, Response};
 
 use repository::StorageConnectionManager;
 use reqwest::header::COOKIE;
@@ -18,6 +18,12 @@ use service::service_provider::ServiceProvider;
 
 use loader::LoaderRegistry;
 
+/// Performs a query to ourself, e.g. the report endpoint can query
+#[async_trait::async_trait]
+pub trait SelfRequest: Send + Sync {
+    async fn call(&self, request: Request, user_data: RequestUserData) -> Response;
+}
+
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
 pub trait ContextExt {
     fn get_connection_manager(&self) -> &StorageConnectionManager;
@@ -25,6 +31,7 @@ pub trait ContextExt {
     fn service_provider(&self) -> &ServiceProvider;
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
+    fn self_request(&self) -> Option<&Box<dyn SelfRequest>>;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -48,8 +55,14 @@ impl<'a> ContextExt for Context<'a> {
         self.data_opt::<RequestUserData>()
             .and_then(|d| d.auth_token.to_owned())
     }
+
+    fn self_request(&self) -> Option<&Box<dyn SelfRequest>> {
+        self.data_opt::<Data<Box<dyn SelfRequest>>>()
+            .map(|data| data.get_ref())
+    }
 }
 
+#[derive(Clone)]
 pub struct RequestUserData {
     auth_token: Option<String>,
     pub refresh_token: Option<String>,

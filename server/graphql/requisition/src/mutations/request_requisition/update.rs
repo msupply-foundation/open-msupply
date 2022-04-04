@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_core::{
     simple_generic_errors::{
         CannotEditRequisition, OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
@@ -28,6 +29,7 @@ pub struct UpdateInput {
     pub min_months_of_stock: Option<f64>,
     pub status: Option<UpdateRequestRequisitionStatusInput>,
     pub other_party_id: Option<String>,
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -99,6 +101,7 @@ impl UpdateInput {
             min_months_of_stock,
             status,
             other_party_id,
+            expected_delivery_date,
         } = self;
 
         ServiceInput {
@@ -110,6 +113,7 @@ impl UpdateInput {
             min_months_of_stock,
             status: status.map(|status| status.to_domain()),
             other_party_id,
+            expected_delivery_date,
         }
     }
 }
@@ -162,6 +166,7 @@ impl UpdateRequestRequisitionStatusInput {
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
+    use chrono::NaiveDate;
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
@@ -395,7 +400,8 @@ mod test {
                     max_months_of_stock: Some(1.0),
                     min_months_of_stock: Some(2.0),
                     other_party_id: Some("other_party_id".to_string()),
-                    status: Some(UpdateRequestRequstionStatus::Sent)
+                    status: Some(UpdateRequestRequstionStatus::Sent),
+                    expected_delivery_date: Some(NaiveDate::from_ymd(2022, 01, 03))
                 }
             );
             Ok(Requisition {
@@ -413,7 +419,8 @@ mod test {
             "theirReference": "reference input",
             "comment": "comment input",
             "status": "SENT",
-            "otherPartyId": "other_party_id"
+            "otherPartyId": "other_party_id",
+            "expectedDeliveryDate": "2022-01-03"
           },
           "storeId": "store_a"
         });

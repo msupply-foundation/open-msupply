@@ -15,6 +15,7 @@ CREATE TABLE requisition (
     created_datetime TIMESTAMP NOT NULL,
     sent_datetime TIMESTAMP,
     finalised_datetime TIMESTAMP,
+    expected_delivery_date DATE,
     colour TEXT,
     comment TEXT,
     their_reference TEXT,
