@@ -37,26 +37,31 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
     ) -> Result<HashMap<NameByIdLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.context()?;
 
-        let store_id = if let Some(item_and_store_ids) = ids_with_store_id.first() {
-            &item_and_store_ids.primary_id
-        } else {
-            return Ok(HashMap::new());
-        };
-
-        let filter = NameFilter::new().id(EqualFilter::equal_any(IdPair::get_all_secondary_ids(
-            &ids_with_store_id,
-        )));
-
-        let names = self
-            .service_provider
-            .general_service
-            .get_names(&service_context, store_id, None, Some(filter), None)
-            .map_err(StandardGraphqlError::from_list_error)?;
-
-        Ok(names
-            .rows
-            .into_iter()
-            .map(|name| (NameByIdLoaderInput::new(store_id, &name.name_row.id), name))
-            .collect())
+        // store_id -> Vec of name_id
+        let mut store_name_map = HashMap::<String, Vec<String>>::new();
+        for item in ids_with_store_id {
+            let entry = store_name_map
+                .entry(item.primary_id.clone())
+                .or_insert(vec![]);
+            entry.push(item.secondary_id.clone())
+        }
+        let mut output = HashMap::<NameByIdLoaderInput, Self::Value>::new();
+        for (store_id, names) in store_name_map {
+            let names = self
+                .service_provider
+                .general_service
+                .get_names(
+                    &service_context,
+                    &store_id,
+                    None, // TODO this needs to be ALL without limit
+                    Some(NameFilter::new().id(EqualFilter::equal_any(names))),
+                    None,
+                )
+                .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
+            for name in names.rows {
+                output.insert(NameByIdLoaderInput::new(&store_id, &name.name_row.id), name);
+            }
+        }
+        Ok(output)
     }
 }
