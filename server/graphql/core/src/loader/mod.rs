@@ -6,13 +6,14 @@ mod loader_registry;
 mod location;
 mod master_list_line;
 mod name;
+mod name_row;
 mod requisition;
 mod requisition_line;
 mod requisition_supply_status;
 mod stock_line;
 mod stocktake_lines;
 mod store;
-mod user_account;
+mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
@@ -24,13 +25,14 @@ pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
 pub use location::LocationByIdLoader;
 pub use master_list_line::MasterListLineByMasterListId;
 pub use name::*;
+pub use name_row::*;
 pub use requisition::*;
 pub use requisition_line::*;
 pub use requisition_supply_status::*;
 pub use stock_line::*;
 pub use stocktake_lines::*;
 pub use store::*;
-pub use user_account::*;
+pub use user::*;
 
 #[derive(Debug, Clone)]
 /// Sometimes loaders need to take an extra parameter, like store_id or requisition_id

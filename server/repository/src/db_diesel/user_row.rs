@@ -3,17 +3,18 @@ use super::StorageConnection;
 use crate::{
     repository_error::RepositoryError,
     schema::{diesel_schema::user_account::dsl as user_account_dsl, UserAccountRow},
+    User,
 };
 
 use diesel::prelude::*;
 
-pub struct UserAccountRepository<'a> {
+pub struct UserAccountRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> UserAccountRepository<'a> {
+impl<'a> UserAccountRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        UserAccountRepository { connection }
+        UserAccountRowRepository { connection }
     }
 
     pub fn insert_one(&self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {
@@ -61,17 +62,27 @@ impl<'a> UserAccountRepository<'a> {
             .load(&self.connection.connection)?;
         Ok(result)
     }
+
+    pub fn delete_by_id(&self, id: &str) -> Result<usize, RepositoryError> {
+        let result = diesel::delete(user_account_dsl::user_account)
+            .filter(user_account_dsl::id.eq(id))
+            .execute(&self.connection.connection)?;
+        Ok(result)
+    }
 }
 
 // TODO
 // Users don't sync and will only be available after first log in, thus in schema reference is not enforced
 // API consumers would like users to be returned for records that are linked to them, as if reference was enforced
 // Using uknown user until we start syncing users
-pub fn unknown_user() -> UserAccountRow {
-    UserAccountRow {
-        id: "unknown".to_string(),
-        username: "unknown".to_string(),
-        password: "unknown".to_string(),
-        email: Some("unknown@sussol.net".to_string()),
+pub fn unknown_user() -> User {
+    User {
+        user_row: UserAccountRow {
+            id: "unknown".to_string(),
+            username: "unknown".to_string(),
+            hashed_password: "unknown".to_string(),
+            email: Some("unknown@sussol.net".to_string()),
+        },
+        stores: vec![],
     }
 }

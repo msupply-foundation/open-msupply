@@ -21,17 +21,15 @@ pub fn gen_i64() -> i64 {
 mod remote_sync_integration_tests {
 
     use repository::{mock::MockDataInserts, test_db::setup_all, StorageConnection};
+    use service::sync_settings::SyncSettings;
 
-    use crate::{
-        settings::SyncSettings,
-        sync::{
-            integration_tests::{
-                invoice::InvoiceRecordTester, number::NumberSyncRecordTester,
-                requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
-                stocktake::StocktakeRecordTester,
-            },
-            Synchroniser,
+    use crate::sync::{
+        integration_tests::{
+            invoice::InvoiceRecordTester, number::NumberSyncRecordTester,
+            requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
+            stocktake::StocktakeRecordTester,
         },
+        Synchroniser,
     };
 
     use super::SyncRecordTester;

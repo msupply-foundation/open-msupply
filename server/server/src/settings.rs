@@ -1,5 +1,6 @@
 use config::ConfigError;
 use repository::database_settings::DatabaseSettings;
+use service::sync_settings::SyncSettings;
 use std::{
     env::VarError,
     fmt::{Debug, Display, Formatter, Result as FmtResult},
@@ -20,18 +21,6 @@ pub struct ServerSettings {
     pub port: u16,
     #[serde(default)]
     pub debug_no_access_control: bool,
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct SyncSettings {
-    pub url: String,
-    pub username: String,
-    pub password: String,
-    /// sync interval in sec
-    pub interval: u64,
-    pub central_server_site_id: u32,
-    pub site_id: u32,
-    pub site_hardware_id: String,
 }
 
 impl ServerSettings {

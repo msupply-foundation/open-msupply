@@ -9,8 +9,9 @@ pub mod android {
     use jni::sys::{jchar, jshort};
     use repository::database_settings::DatabaseSettings;
 
-    use server::settings::{AuthSettings, ServerSettings, Settings, SyncSettings};
+    use server::settings::{AuthSettings, ServerSettings, Settings};
     use server::start_server;
+    use service::sync_settings::SyncSettings;
     use tokio::sync::oneshot;
 
     use self::jni::objects::{JClass, JString};

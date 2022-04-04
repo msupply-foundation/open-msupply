@@ -1,1 +1,1 @@
-DROP VIEW IF EXISTS stocktake_line CASCADE;
+DROP TABLE IF EXISTS stocktake_line CASCADE;

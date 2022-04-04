@@ -17,6 +17,7 @@ use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 
 use loader::LoaderRegistry;
+use service::sync_settings::SyncSettings;
 
 /// Performs a query to ourself, e.g. the report endpoint can query
 #[async_trait::async_trait]
@@ -32,6 +33,7 @@ pub trait ContextExt {
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
     fn self_request(&self) -> Option<&Box<dyn SelfRequest>>;
+    fn get_sync_settings(&self) -> &SyncSettings;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -54,6 +56,10 @@ impl<'a> ContextExt for Context<'a> {
     fn get_auth_token(&self) -> Option<String> {
         self.data_opt::<RequestUserData>()
             .and_then(|d| d.auth_token.to_owned())
+    }
+
+    fn get_sync_settings(&self) -> &SyncSettings {
+        self.data_unchecked::<Data<SyncSettings>>()
     }
 
     fn self_request(&self) -> Option<&Box<dyn SelfRequest>> {

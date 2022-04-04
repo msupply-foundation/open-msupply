@@ -27,6 +27,8 @@ mod unit;
 mod user_account;
 
 pub mod diesel_schema;
+pub mod user_permission;
+pub mod user_store_join;
 
 #[derive(Clone)]
 pub enum DatabaseRow {
