@@ -10,7 +10,7 @@ import {
   Link,
   Tooltip,
 } from '@openmsupply-client/common';
-import { useFormatDateTime } from '@common/utils';
+import { useFormatDateTime } from '@common/intl';
 import { useResponseFields } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
