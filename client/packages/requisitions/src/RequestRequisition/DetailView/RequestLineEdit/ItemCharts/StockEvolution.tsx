@@ -23,10 +23,10 @@ export interface StockEvolutionProps {
 export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
-  const { customDate } = useFormatDateTime();
+  const { dayMonthShort } = useFormatDateTime();
   const { data, isLoading } = useRequestLineChartData(id);
 
-  const dateFormatter = (date: string) => customDate(date, 'dd MMM');
+  const dateFormatter = (date: string) => dayMonthShort(date);
   const tooltipFormatter = (value: number, name: string) => {
     switch (name) {
       case 'stockOnHand':
