@@ -78,6 +78,8 @@ impl<'a> UserAccountService<'a> {
                 for store in stores_permissions {
                     // The list may contain stores we don't know about; try to insert the store
                     // in a sub-transaction and ignore the store when there is an error
+                    // Note: Postgres requires this to run in a sub-transaction because it aborts
+                    // the whole tx when encounter an error.
                     let sub_result = con.transaction_sync_etc(
                         |_| {
                             user_store_repo.upsert_one(&store.user_store_join)?;
