@@ -4,7 +4,7 @@ import { BarChartIcon, InlineSpinner, StockIcon } from '../../../';
 
 export type Stat = {
   label: string;
-  value: string;
+  value: number;
 };
 export interface StatsPanelProps {
   isLoading: boolean;

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Formatter,
   Grid,
   InputWithLabelRow,
   NumericTextInput,
@@ -109,7 +108,7 @@ export const RequestLineEditForm = ({
           {item && item?.stats.averageMonthlyConsumption != null ? (
             <InfoRow
               label={t('label.amc')}
-              value={Formatter.round(item?.stats.averageMonthlyConsumption, 2)}
+              value={String(item?.stats.averageMonthlyConsumption)}
             />
           ) : null}
         </>
@@ -137,7 +136,7 @@ export const RequestLineEditForm = ({
             Input={
               <NumericTextInput
                 width={150}
-                value={Math.round(draftLine?.suggestedQuantity ?? 0)}
+                value={draftLine?.suggestedQuantity}
                 disabled
               />
             }
@@ -148,7 +147,7 @@ export const RequestLineEditForm = ({
           <InputWithLabelRow
             Input={
               <NumericTextInput
-                value={Formatter.round(draftLine?.requestedQuantity)}
+                value={draftLine?.requestedQuantity}
                 width={150}
                 onChange={e =>
                   update({

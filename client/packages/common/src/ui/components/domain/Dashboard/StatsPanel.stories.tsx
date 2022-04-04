@@ -8,10 +8,10 @@ const Template: ComponentStory<typeof StatsPanel> = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const t = useTranslation('common');
   const stats: Stat[] = [
-    { label: t('label.expired'), value: '8' },
+    { label: t('label.expired'), value: 8 },
     {
       label: t('label.expiring-soon'),
-      value: '88',
+      value: 88,
     },
   ];
 
