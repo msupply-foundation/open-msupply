@@ -264,6 +264,7 @@ fn requisition_om_fields_pull_record() -> TestSyncRecord {
                 created_datetime: NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0),
                 sent_datetime: Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(14, 48, 00)),
                 finalised_datetime: Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(14, 48, 00)),
+                expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26)),
                 colour: Some("Colour".to_string()),
                 comment: Some("From request requisition 3".to_string()),
                 their_reference: Some("From request requisition 3".to_string()),
@@ -308,9 +309,7 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             created_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(0, 0, 0)),
             sent_datetime: Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(14, 48, 00)),
             finalised_datetime: Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(14, 48, 00)),
-            //TODO:
-            //expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26).and_hms(14, 48, 00)),
-            expected_delivery_date: None,
+            expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26)),
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),
