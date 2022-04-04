@@ -4,7 +4,7 @@ use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use reqwest::header::SET_COOKIE;
 use service::{
-    login::{LoginError, LoginService},
+    login::{LoginError, LoginInput, LoginService},
     token::TokenPair,
 };
 
@@ -29,14 +29,14 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     let service_provider = ctx.service_provider();
     let auth_data = ctx.get_auth_data();
     let sync_settings = ctx.get_sync_settings();
-    let central_server_url = &sync_settings.url;
     let pair = match LoginService::login(
         service_provider,
-        username,
-        password,
         auth_data,
-        central_server_url,
-        None,
+        LoginInput {
+            username: username.to_string(),
+            password: password.to_string(),
+            central_server_url: sync_settings.url.clone(),
+        },
     )
     .await
     {

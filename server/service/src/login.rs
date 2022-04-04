@@ -9,7 +9,7 @@ use repository::{
     },
     RepositoryError,
 };
-use reqwest::{Client, ClientBuilder, Url};
+use reqwest::{ClientBuilder, Url};
 use util::uuid::uuid;
 
 use crate::{
@@ -43,6 +43,13 @@ pub enum LoginError {
     DatabaseError(RepositoryError),
 }
 
+pub struct LoginInput {
+    pub username: String,
+    pub password: String,
+    /// Central server url needed to fetch user details during login
+    pub central_server_url: String,
+}
+
 impl LoginService {
     /// Note, this service takes a ServiceProvider instead of a ServiceContext. The reason is that a
     /// ServiceContext can't be used across async calls (because of the containing thread bound
@@ -51,15 +58,10 @@ impl LoginService {
     /// not passing it to another thread.
     pub async fn login(
         service_provider: &ServiceProvider,
-        username: &str,
-        password: &str,
         auth_data: &AuthData,
-        central_server_url: &str,
-        client: Option<Client>,
+        input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
-        match LoginService::fetch_user_from_central(username, password, central_server_url, client)
-            .await
-        {
+        match LoginService::fetch_user_from_central(&input).await {
             Ok((user, store_permissions)) => {
                 let service_ctx = service_provider.context()?;
                 LoginService::update_user(&service_ctx, user, store_permissions)?;
@@ -72,7 +74,7 @@ impl LoginService {
         };
         let service_ctx = service_provider.context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
-        let user_account = match user_service.verify_password(username, password) {
+        let user_account = match user_service.verify_password(&input.username, &input.password) {
             Ok(user) => user,
             Err(err) => {
                 return Err(match err {
@@ -99,28 +101,23 @@ impl LoginService {
         Ok(pair)
     }
 
-    /// # Arguments
-    /// * `client` client to be used to do the central server login request (mainly for testing)
     async fn fetch_user_from_central(
-        username: &str,
-        password: &str,
-        central_server_url: &str,
-        client: Option<Client>,
+        input: &LoginInput,
     ) -> Result<(UserAccountRow, Vec<StorePermissions>), FetchUserError> {
-        let central_server_url = Url::parse(central_server_url).map_err(|err| {
+        let central_server_url = Url::parse(&input.central_server_url).map_err(|err| {
             FetchUserError::InternalError(format!("Failed to parse central server url: {}", err))
         })?;
-        let client = client.unwrap_or(
-            ClientBuilder::new()
-                .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
-                .build()
-                .map_err(|err| FetchUserError::ConnectionError(format!("{:?}", err)))?,
-        );
+        let client = ClientBuilder::new()
+            .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
+            .build()
+            .map_err(|err| FetchUserError::ConnectionError(format!("{:?}", err)))?;
         let login_api = LoginApiV4::new(client, central_server_url.clone());
+        let username = &input.username;
+        let password = &input.password;
         let user_data = match login_api
             .login(LoginInputV4 {
-                username: username.to_string(),
-                password: password.to_string(),
+                username: username.clone(),
+                password: password.clone(),
                 login_type: LoginUserTypeV4::User,
             })
             .await
@@ -159,7 +156,7 @@ impl LoginService {
         let user = UserAccountRow {
             id: user_info.user.id,
             username: username.to_string(),
-            hashed_password: UserAccountService::hash_password(password)
+            hashed_password: UserAccountService::hash_password(&password)
                 .map_err(|err| FetchUserError::InternalError(format!("{:?}", err)))?,
             email: match user_info.user.e_mail.as_str() {
                 // TODO do this using serde
@@ -303,8 +300,9 @@ mod test {
     };
 
     use crate::{
-        apis::login_v4::LoginResponseV4, auth_data::AuthData, login_mock_data::LOGIN_V4_RESPONSE_1,
-        service_provider::ServiceProvider, token_bucket::TokenBucket,
+        apis::login_v4::LoginResponseV4, auth_data::AuthData, login::LoginInput,
+        login_mock_data::LOGIN_V4_RESPONSE_1, service_provider::ServiceProvider,
+        token_bucket::TokenBucket,
     };
 
     use super::LoginService;
@@ -330,11 +328,12 @@ mod test {
         };
         LoginService::login(
             &service_provider,
-            "Gryffindor",
-            "password",
             &auth_data,
-            &central_server_url,
-            None,
+            LoginInput {
+                username: "Gryffindor".to_string(),
+                password: "password".to_string(),
+                central_server_url,
+            },
         )
         .await
         .unwrap();
