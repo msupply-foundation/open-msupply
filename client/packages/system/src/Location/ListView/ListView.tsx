@@ -16,6 +16,7 @@ export const LocationListView: FC = () => {
     pagination,
     onChangePage,
     data,
+    isError,
     isLoading,
     onChangeSortBy,
     sortBy,
@@ -50,6 +51,7 @@ export const LocationListView: FC = () => {
         onChangePage={onChangePage}
         columns={columns}
         data={locations}
+        isError={isError}
         isLoading={isLoading}
         onRowClick={onOpen}
       />
