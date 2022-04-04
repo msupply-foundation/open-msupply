@@ -22,7 +22,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 #[error("Failed to translate {table_name} sync record: {record}")]
 pub struct SyncTranslationError {
-    pub table_name: &'static str,
+    pub table_name: String,
     pub source: anyhow::Error,
     pub record: String,
 }

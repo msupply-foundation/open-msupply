@@ -91,6 +91,7 @@ fn requisition_line_request_push_record() -> TestSyncPushRecord {
             stock_on_hand: 10,
             daily_usage: 3.0,
             comment: None,
+            snapshot_datetime: None,
         }),
     }
 }

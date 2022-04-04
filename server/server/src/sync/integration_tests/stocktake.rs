@@ -49,9 +49,9 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                 item_id: item.item_row.id,
                 batch: None,
                 expiry_date: None,
-                pack_size: None,
-                cost_price_per_pack: None,
-                sell_price_per_pack: None,
+                pack_size: Some(0),
+                cost_price_per_pack: Some(0.0),
+                sell_price_per_pack: Some(0.0),
                 note: None,
             }],
         }];
@@ -113,11 +113,11 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                             d.item_id = item.id;
                             d.stock_line_id = Some(stock_line.id);
                             d.batch = stock_line.batch;
-                            d.expiry_date = stock_line.expiry_date;
+                            d.expiry_date = Some(NaiveDate::from_ymd(2025, 03, 24));
                             d.pack_size = Some(stock_line.pack_size);
                             d.cost_price_per_pack = Some(stock_line.cost_price_per_pack);
                             d.sell_price_per_pack = Some(stock_line.sell_price_per_pack);
-                            d.note = stock_line.note;
+                            d.note = Some("stock_line.note".to_string());
                             d
                         })
                     })
