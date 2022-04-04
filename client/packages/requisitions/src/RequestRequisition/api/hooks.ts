@@ -53,20 +53,23 @@ export const useRequestApi = () => {
   return { ...queries, storeId, keys };
 };
 
-export const useRequests = () => {
+export const useRequests = (options?: { enabled: boolean }) => {
   const queryParams = useQueryParams<RequestRowFragment>({
     initialSortBy: { key: 'otherPartyName' },
   });
   const api = useRequestApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.list({
-        first: queryParams.first,
-        offset: queryParams.offset,
-        sortBy: queryParams.sortBy,
-        filterBy: queryParams.filter.filterBy,
-      })
+    ...useQuery(
+      api.keys.paramList(queryParams),
+      () =>
+        api.get.list({
+          first: queryParams.first,
+          offset: queryParams.offset,
+          sortBy: queryParams.sortBy,
+          filterBy: queryParams.filter.filterBy,
+        }),
+      options
     ),
     ...queryParams,
   };
@@ -225,19 +228,16 @@ export const useDeleteRequests = () => {
 };
 
 export const useDeleteSelectedRequisitions = () => {
-  const { data: rows } = useRequests();
+  const { data: rows } = useRequests({ enabled: false });
   const { mutate } = useDeleteRequests();
   const t = useTranslation('replenishment');
-
   const { success, info } = useNotification();
-
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean) as RequestRowFragment[],
   }));
-
   const deleteAction = () => {
     const numberSelected = selectedRows.length;
     if (selectedRows && numberSelected > 0) {
@@ -260,7 +260,6 @@ export const useDeleteSelectedRequisitions = () => {
       selectRowsSnack();
     }
   };
-
   return deleteAction;
 };
 
