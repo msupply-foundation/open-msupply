@@ -29,9 +29,9 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
 }) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
-  const { customDate } = useFormatDateTime();
+  const { dayMonthShort } = useFormatDateTime();
   const { data, isLoading } = useRequestLineChartData(id);
-  const dateFormatter = (date: string) => customDate(date, 'dd MMM');
+  const dateFormatter = (date: string) => dayMonthShort(date);
   const tooltipFormatter = (
     value: number,
     name: string,

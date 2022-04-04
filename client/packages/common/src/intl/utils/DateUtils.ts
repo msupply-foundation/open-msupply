@@ -59,11 +59,14 @@ export const useFormatDateTime = () => {
   const localisedDate = (date: Date | string | number): string =>
     format(dateInputHandler(date), 'P', { locale });
 
+  const dayMonthShort = (date: Date | string | number): string =>
+    format(dateInputHandler(date), 'dd MMM', { locale });
+
   const customDate = (
     date: Date | string | number,
     formatString: string
   ): string => format(dateInputHandler(date), formatString, { locale });
   // Add more date/time formatters as required
 
-  return { localisedDate, customDate };
+  return { localisedDate, dayMonthShort, customDate };
 };
