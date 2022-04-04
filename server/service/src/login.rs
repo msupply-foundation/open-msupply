@@ -114,35 +114,31 @@ impl LoginService {
         let login_api = LoginApiV4::new(client, central_server_url.clone());
         let username = &input.username;
         let password = &input.password;
-        let user_data = match login_api
+        let user_data = login_api
             .login(LoginInputV4 {
                 username: username.clone(),
                 password: password.clone(),
                 login_type: LoginUserTypeV4::User,
             })
             .await
-        {
-            Ok(result) => {
-                if result.status == LoginStatusV4::Error {
-                    return Err(FetchUserError::ConnectionError(
-                        "Failed to fetch user from central server".to_string(),
-                    ));
-                }
-                result
-            }
-            Err(err) => {
-                return Err(FetchUserError::ConnectionError(format!(
+            .map_err(|err| {
+                FetchUserError::ConnectionError(format!(
                     "Failed to reach the central server to fetch data for {}: {:?}",
                     username, err
-                )));
-            }
-        };
+                ))
+            })?;
+        if user_data.status == LoginStatusV4::Error {
+            return Err(FetchUserError::ConnectionError(
+                "Failed to fetch user from central server".to_string(),
+            ));
+        }
         if user_data.status != LoginStatusV4::Success {
             return Err(FetchUserError::InternalError(format!(
                 "Unexpected central server status: {:?}",
                 user_data.status
             )));
         }
+
         let user_info = match user_data.user_info {
             Some(user_info) => user_info,
             None => {
