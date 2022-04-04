@@ -4,7 +4,6 @@ export * from './currency';
 export * from './utils';
 export * from './strings';
 export * from './number';
-export * from './date';
 export * from './currency';
 export * from './context';
 

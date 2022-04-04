@@ -1,6 +1,6 @@
 import { JSXElementConstructor } from 'react';
 import { SortBy } from '@common/hooks';
-import { useTranslation, useFormatDate, LocaleKey } from '@common/intl';
+import { useTranslation, LocaleKey } from '@common/intl';
 import { RecordWithId } from '@common/types';
 
 export interface CellProps<T extends RecordWithId> {
@@ -39,7 +39,7 @@ export type ColumnDataAccessor<T extends RecordWithId> = (params: {
 
 export type Translators = {
   t: ReturnType<typeof useTranslation>;
-  d: ReturnType<typeof useFormatDate>;
+  d: (date: string | number | Date) => string;
 };
 
 export type ColumnDataFormatter = (
