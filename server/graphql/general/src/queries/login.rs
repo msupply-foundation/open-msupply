@@ -20,9 +20,29 @@ impl AuthToken {
     }
 }
 
+pub struct InvalidCredentials;
+#[Object]
+impl InvalidCredentials {
+    pub async fn description(&self) -> &'static str {
+        "Invalid credentials"
+    }
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", type = "&str"))]
+pub enum AuthTokenErrorInterface {
+    InvalidCredentials(InvalidCredentials),
+}
+
+#[derive(SimpleObject)]
+pub struct AuthTokenError {
+    pub error: AuthTokenErrorInterface,
+}
+
 #[derive(Union)]
 pub enum AuthTokenResponse {
     Response(AuthToken),
+    Error(AuthTokenError),
 }
 
 pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<AuthTokenResponse> {
@@ -45,7 +65,9 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
             let formatted_error = format!("{:#?}", error);
             let graphql_error = match error {
                 LoginError::LoginFailure => {
-                    StandardGraphqlError::Unauthenticated("Invalid credentials".to_string())
+                    return Ok(AuthTokenResponse::Error(AuthTokenError {
+                        error: AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials {}),
+                    }))
                 }
                 LoginError::FailedToGenerateToken(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
