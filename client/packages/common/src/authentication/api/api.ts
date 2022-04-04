@@ -32,7 +32,7 @@ const authTokenGuard = (
       case 'InvalidCredentials':
         return {
           token: '',
-          error: { message: authTokenQuery.authToken.error.description },
+          error: { message: '' },
         };
     }
   }
