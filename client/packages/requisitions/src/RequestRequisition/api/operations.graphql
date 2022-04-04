@@ -136,6 +136,7 @@ query requisitionLineChart($storeId: String!, $requisitionLineId: String!) {
     storeId: $storeId
   ) {
     ... on ItemChartNode {
+      __typename
       calculationDate
       consumptionHistory {
         totalCount
