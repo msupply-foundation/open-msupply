@@ -9,8 +9,15 @@ import {
 import { useItems, ItemRowFragment } from '../api';
 
 export const ItemListView: FC = () => {
-  const { data, isLoading, onChangePage, pagination, sortBy, onChangeSortBy } =
-    useItems();
+  const {
+    data,
+    isError,
+    isLoading,
+    onChangePage,
+    pagination,
+    sortBy,
+    onChangeSortBy,
+  } = useItems();
   const navigate = useNavigate();
 
   const columns = useColumns<ItemRowFragment>(
@@ -29,6 +36,7 @@ export const ItemListView: FC = () => {
         onChangePage={onChangePage}
         columns={columns}
         data={data?.nodes}
+        isError={isError}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(`/catalogue/items/${row.id}`);

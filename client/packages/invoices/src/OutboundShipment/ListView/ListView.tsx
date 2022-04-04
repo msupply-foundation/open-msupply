@@ -32,6 +32,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
   const {
     data,
+    isError,
     isLoading,
     sortBy,
     onChangeSortBy,
@@ -77,6 +78,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
         onChangePage={onChangePage}
         columns={columns}
         data={data?.nodes ?? []}
+        isError={isError}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(String(row.invoiceNumber));

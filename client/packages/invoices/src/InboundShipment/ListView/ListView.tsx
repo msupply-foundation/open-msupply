@@ -30,6 +30,7 @@ export const InboundListView: FC = () => {
   const { c } = useCurrency();
   const {
     data,
+    isError,
     isLoading,
     sortBy,
     onChangeSortBy,
@@ -81,6 +82,7 @@ export const InboundListView: FC = () => {
         onRowClick={row => {
           navigate(String(row.invoiceNumber));
         }}
+        isError={isError}
       />
     </>
   );
