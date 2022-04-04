@@ -15,15 +15,16 @@ export interface QueryResponse<T> {
 }
 
 export interface TableProps<T extends RecordWithId> {
-  isDisabled?: boolean;
+  children?: ReactNode;
   columns: Column<T>[];
   data?: T[];
+  dense?: boolean;
+  ExpandContent?: FC<{ rowData: T }>;
+  isDisabled?: boolean;
+  isError?: boolean;
   isLoading?: boolean;
+  noDataMessage?: string;
   pagination?: Pagination & { total?: number };
   onChangePage?: (page: number) => void;
   onRowClick?: null | ((row: T) => void);
-  children?: ReactNode;
-  noDataMessage?: string;
-  ExpandContent?: FC<{ rowData: T }>;
-  dense?: boolean;
 }

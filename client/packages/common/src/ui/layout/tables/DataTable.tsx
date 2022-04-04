@@ -3,14 +3,13 @@ import React, { useEffect, useState } from 'react';
 
 import {
   Box,
-  CircularProgress,
   TableBody,
   TableHead,
   TableContainer,
   Table as MuiTable,
   Typography,
 } from '@mui/material';
-import { useRegisterActions } from '@openmsupply-client/common';
+import { BasicSpinner, useRegisterActions } from '@openmsupply-client/common';
 
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
@@ -21,16 +20,17 @@ import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
 export const DataTableComponent = <T extends RecordWithId>({
+  ExpandContent,
   columns,
   data = [],
-  isLoading = false,
-  onRowClick,
-  pagination,
-  onChangePage,
-  noDataMessage,
-  ExpandContent,
   dense = false,
   isDisabled = false,
+  isError = false,
+  isLoading = false,
+  noDataMessage,
+  pagination,
+  onChangePage,
+  onRowClick,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
   const { setRows, setDisabledRows, setFocus } = useTableStore();
@@ -77,19 +77,17 @@ export const DataTableComponent = <T extends RecordWithId>({
     if (page * first > total) onChangePage(0);
   }, [pagination]);
 
-  if (isLoading)
+  if (isLoading) return <BasicSpinner />;
+
+  if (isError) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <CircularProgress />
+      <Box sx={{ padding: 2 }}>
+        <Typography sx={{ color: 'error.main' }}>
+          {t('error.unable-to-load-data')}
+        </Typography>
       </Box>
     );
+  }
 
   if (data.length === 0) {
     return (
