@@ -1,13 +1,12 @@
 import React from 'react';
 import {
-  Formatter,
   Grid,
   InputWithLabelRow,
   NumericTextInput,
   TextArea,
   Typography,
-  useTranslation,
 } from '@openmsupply-client/common';
+import { useFormatNumber, useTranslation } from '@common/intl';
 import {
   StockItemSearchInput,
   ItemRowWithStatsFragment,
@@ -80,6 +79,7 @@ export const RequestLineEditForm = ({
   draftLine,
 }: RequestLineEditFormProps) => {
   const t = useTranslation(['replenishment', 'common']);
+  const formatNumber = useFormatNumber();
   const { lines } = useRequestLines();
   return (
     <RequestLineEditFormLayout
@@ -109,7 +109,10 @@ export const RequestLineEditForm = ({
           {item && item?.stats.averageMonthlyConsumption != null ? (
             <InfoRow
               label={t('label.amc')}
-              value={Formatter.round(item?.stats.averageMonthlyConsumption, 2)}
+              value={formatNumber.round(
+                item?.stats.averageMonthlyConsumption,
+                2
+              )}
             />
           ) : null}
         </>
@@ -148,7 +151,7 @@ export const RequestLineEditForm = ({
           <InputWithLabelRow
             Input={
               <NumericTextInput
-                value={Formatter.round(draftLine?.requestedQuantity)}
+                value={formatNumber.round(draftLine?.requestedQuantity)}
                 width={150}
                 onChange={e =>
                   update({

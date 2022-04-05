@@ -6,19 +6,19 @@ import {
   PlusCircleIcon,
   useNotification,
   useQuery,
-  useTranslation,
   StatsPanel,
   Widget,
   FnUtils,
   useToggle,
-  Formatter,
 } from '@openmsupply-client/common';
+import { useFormatNumber, useTranslation } from '@common/intl';
 import { useOutbound } from '../api';
 
 export const OutboundShipmentWidget: React.FC = () => {
   const modalControl = useToggle(false);
   const { error } = useNotification();
   const t = useTranslation(['app', 'dashboard']);
+  const formatNumber = useFormatNumber();
 
   const api = useOutbound.utils.api();
   const { data, isLoading } = useQuery(
@@ -64,7 +64,7 @@ export const OutboundShipmentWidget: React.FC = () => {
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),
-                  value: Formatter.round(data?.toBePicked),
+                  value: formatNumber.round(data?.toBePicked),
                 },
               ]}
             />
