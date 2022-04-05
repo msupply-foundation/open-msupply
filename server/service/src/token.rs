@@ -79,6 +79,33 @@ pub struct TokenPair {
     pub refresh_expiry_date: usize,
 }
 
+/// This service issues new jwt tokens that can be used by a user to authenticate, e.g. by passing
+/// the token in the HTTP request header as a "Authorization: Bearer {token}" bearer token.
+///
+/// There are two types of tokens:
+/// 1) An auth token which must be passed in every service request. This token has a short living
+/// expiry time (~1h) and must be refreshed (replaced by a new token) regularly.
+/// 2) A refresh token that is required to refresh an auth token. This token has a longer expiry
+/// time, e.g. to allow a user to stay logged in on a website while the computer or the browser is
+/// shut down. The refresh token is implicitly passed to the client in a session cookie.
+/// The refresh token is itself refreshed in every refresh call, i.e. the refresh token always
+/// expires after a fix time duration after the last login or token refresh.
+///
+/// FAQ:
+/// Q: Why a session cookie?
+/// A: JS code can't access/steal session cookies which limits the time for how long a successful
+/// attack can be active.
+///
+/// Q: Why an auth token? and why not just having one long lived session cookie?
+/// A: Having short lived auth tokens makes it possible to issue these tokens to a 3rd party to act
+/// on behave of a user, e.g. a plugin or an external service could use an auth token to gain
+/// temporary access to an API but is not able to refresh the token indefinitely.
+///
+/// Q: Still why an auth token? the long lived refresh token could be invalidated on the server
+/// site to revoke access.
+/// A: This requires a reliable mechanism to do the token invalidation. This can be hard to do. With
+/// the current solution the auth token simply expires when we stop issuing tokens to the 3rd party,
+/// e.g. by deactivated a plugin.
 pub struct TokenService<'a> {
     token_bucket: &'a RwLock<TokenBucket>,
     jwt_token_secret: &'a [u8],
