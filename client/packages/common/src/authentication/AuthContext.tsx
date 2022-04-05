@@ -212,16 +212,10 @@ export const AuthProvider: FC = ({ children }) => {
     // if the cookie has expired, raise an auth error
     const timer = window.setInterval(() => {
       const authCookie = getAuthCookie();
-      const { store, token } = authCookie;
+      const { token } = authCookie;
 
       if (!token) {
         setError(AuthError.Unauthenticated);
-        window.clearInterval(timer);
-      }
-      // we have a token, but no store! this can happen if the user has authenticated
-      // but has no stores assigned in mSupply
-      if (!store) {
-        setError(AuthError.NoStoreAssigned);
         window.clearInterval(timer);
       }
     }, TOKEN_CHECK_INTERVAL);
