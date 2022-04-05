@@ -1,5 +1,6 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
 use repository::schema::{CentralSyncBufferRow, StoreRow};
+use util::inline_init;
 
 const STORE_1: (&'static str, &'static str) = (
     "4E27CEB263354EB7B1B33CEA8F7884D8",
@@ -186,11 +187,12 @@ const RECORD_TYPE: &'static str = "store";
 pub fn get_test_store_records() -> Vec<TestSyncRecord> {
     vec![
         TestSyncRecord {
-            translated_record: TestSyncDataRecord::Store(Some(StoreRow {
-                id: STORE_1.0.to_owned(),
-                name_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
-                code: "GEN".to_owned(),
-            })),
+            translated_record: TestSyncDataRecord::Store(Some(inline_init(|s: &mut StoreRow| {
+                s.id = STORE_1.0.to_owned();
+                s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
+                s.code = "GEN".to_string();
+                s.remote_site_id = 1;
+            }))),
             identifier: "General",
             central_sync_buffer_row: CentralSyncBufferRow {
                 id: 10,

@@ -8,9 +8,13 @@ use super::{CentralPushTranslation, IntegrationUpsertRecord};
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct LegacyStoreRow {
-    ID: String,
-    name_ID: String,
+    #[serde(rename = "ID")]
+    id: String,
+    #[serde(rename = "name_ID")]
+    name_id: String,
     code: String,
+    #[serde(rename = "sync_id_remote_site")]
+    remote_site_id: i32,
 }
 
 pub struct StoreTranslation {}
@@ -38,14 +42,15 @@ impl CentralPushTranslation for StoreTranslation {
         }
 
         // ignore stores without name
-        if data.name_ID == "" {
+        if data.name_id == "" {
             return Ok(None);
         }
 
         Ok(Some(IntegrationUpsertRecord::Store(StoreRow {
-            id: data.ID,
-            name_id: data.name_ID,
+            id: data.id,
+            name_id: data.name_id,
             code: data.code,
+            remote_site_id: data.remote_site_id,
         })))
     }
 }
