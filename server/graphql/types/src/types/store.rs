@@ -39,6 +39,10 @@ impl StoreNode {
             .extend(),
         )
     }
+
+    pub async fn remote_site_id(&self) -> i32 {
+        self.row().remote_site_id
+    }
 }
 
 impl StoreNode {
