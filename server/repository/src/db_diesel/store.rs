@@ -50,6 +50,21 @@ impl StoreFilter {
         self.id = Some(filter);
         self
     }
+
+    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn remote_site_id(mut self, filter: EqualFilter<i32>) -> Self {
+        self.remote_site_id = Some(filter);
+        self
+    }
 }
 
 pub struct StoreRepository<'a> {
@@ -64,6 +79,10 @@ impl<'a> StoreRepository<'a> {
     pub fn count(&self, filter: Option<StoreFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query.count().get_result(&self.connection.connection)?)
+    }
+
+    pub fn query_one(&self, filter: StoreFilter) -> Result<Option<Store>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(&self, filter: StoreFilter) -> Result<Vec<Store>, RepositoryError> {

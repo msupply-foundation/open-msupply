@@ -41,6 +41,17 @@ impl EqualFilter<i64> {
     }
 }
 
+impl EqualFilter<i32> {
+    pub fn equal_to_i32(value: i32) -> Self {
+        EqualFilter {
+            equal_to: Some(value),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+}
+
 impl EqualFilter<String> {
     pub fn equal_to(value: &str) -> Self {
         EqualFilter {
