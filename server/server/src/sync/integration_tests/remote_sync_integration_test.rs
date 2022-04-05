@@ -20,7 +20,10 @@ pub fn gen_i64() -> i64 {
 #[cfg(test)]
 mod remote_sync_integration_tests {
 
-    use repository::{mock::MockDataInserts, test_db::setup_all, StorageConnection};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, EqualFilter, StorageConnection, StoreFilter,
+        StoreRepository,
+    };
     use service::sync_settings::SyncSettings;
 
     use crate::sync::{
@@ -55,20 +58,25 @@ mod remote_sync_integration_tests {
     /// 3) Mutate the previously inserted data and push the changes
     /// 4) Reset, pull and validate as in step 2)
     #[allow(dead_code)]
-    async fn test_sync_record<T>(
-        store_id: &str,
-        sync_settings: &SyncSettings,
-        tester: &dyn SyncRecordTester<T>,
-    ) {
+    async fn test_sync_record<T>(sync_settings: &SyncSettings, tester: &dyn SyncRecordTester<T>) {
         let (connection, synchroniser) = init_db(sync_settings).await;
         synchroniser
             .remote_data
             .initial_pull(&connection)
             .await
             .unwrap();
+        let store_id = StoreRepository::new(&connection)
+            .query_one(
+                StoreFilter::new()
+                    .remote_site_id(EqualFilter::equal_to_i32(sync_settings.site_id as i32)),
+            )
+            .unwrap()
+            .unwrap()
+            .store_row
+            .id;
 
         // push some new changes
-        let data = tester.insert(&connection, store_id);
+        let data = tester.insert(&connection, &store_id);
         synchroniser
             .remote_data
             .push_changes(&connection)
@@ -103,11 +111,11 @@ mod remote_sync_integration_tests {
     }
 
     /// This test assumes a running central server.
-    /// To run this test, enable the test macro and update the sync_settings and used store_id.
+    /// To run this test, enable the test macro and update the sync_settings.
     /// For every test run new unique records are generated and it shouldn't be necessary to bring
     /// the central server into a clean state after each test.
     ///
-    /// Note: these test can't be parallelized since every sync test need exclusive access to the
+    /// Note: the sub tests can't be parallelized since every sync test need exclusive access to the
     /// central server
     //#[actix_rt::test]
     #[allow(dead_code)]
@@ -121,26 +129,25 @@ mod remote_sync_integration_tests {
             site_id: 7,
             site_hardware_id: "49149896-E713-4535-9DA8-C30AB06F9D5E".to_string(),
         };
-        let store_id = "80004C94067A4CE5A34FC343EB1B4306";
 
         println!("number:");
         let number_tester = NumberSyncRecordTester {};
-        test_sync_record(store_id, &sync_settings, &number_tester).await;
+        test_sync_record(&sync_settings, &number_tester).await;
 
         println!("stock line:");
         let stock_line_tester = StockLineRecordTester {};
-        test_sync_record(store_id, &sync_settings, &stock_line_tester).await;
+        test_sync_record(&sync_settings, &stock_line_tester).await;
 
         println!("stocktake:");
         let stocktake_tester = StocktakeRecordTester {};
-        test_sync_record(store_id, &sync_settings, &stocktake_tester).await;
+        test_sync_record(&sync_settings, &stocktake_tester).await;
 
         println!("invoice:");
         let invoice_tester = InvoiceRecordTester {};
-        test_sync_record(store_id, &sync_settings, &invoice_tester).await;
+        test_sync_record(&sync_settings, &invoice_tester).await;
 
         println!("requisition:");
         let requisition_tester = RequisitionRecordTester {};
-        test_sync_record(store_id, &sync_settings, &requisition_tester).await;
+        test_sync_record(&sync_settings, &requisition_tester).await;
     }
 }
