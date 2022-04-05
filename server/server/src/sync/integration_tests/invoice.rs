@@ -1,10 +1,13 @@
 use chrono::NaiveDate;
 use repository::{
     mock::{mock_outbound_shipment_a, mock_request_draft_requisition},
-    schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::{
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        LocationRow,
+    },
     EqualFilter, InvoiceLineRowRepository, InvoiceRepository, ItemFilter, ItemQueryRepository,
-    NameFilter, NameQueryRepository, RequisitionRowRepository, StockLineFilter,
-    StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
+    LocationRowRepository, NameFilter, NameQueryRepository, RequisitionRowRepository,
+    StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 use util::{inline_edit, uuid::uuid};
 
@@ -18,6 +21,18 @@ pub struct FullInvoice {
 pub struct InvoiceRecordTester {}
 impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
     fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<FullInvoice> {
+        // create test location
+        let location = LocationRow {
+            id: uuid(),
+            name: "TestLocation".to_string(),
+            code: "TestLocationCode".to_string(),
+            on_hold: false,
+            store_id: store_id.to_string(),
+        };
+        LocationRowRepository::new(connection)
+            .upsert_one(&location)
+            .unwrap();
+
         let other_store = StoreRepository::new(connection)
             .query_by_filter(StoreFilter::new().id(EqualFilter::not_equal_to(store_id)))
             .unwrap()
@@ -59,7 +74,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             item_name: item.item_row.name,
             item_code: item.item_row.code,
             stock_line_id: None,
-            location_id: None,
+            location_id: Some(location.id),
             batch: None,
             expiry_date: None,
             pack_size: 1,
