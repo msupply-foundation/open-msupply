@@ -16,8 +16,15 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   type,
 }) => {
   const [selectedId, setSelectedId] = useState<string>('');
-  const { data, isLoading, onChangePage, pagination, sortBy, onChangeSortBy } =
-    useNames(type);
+  const {
+    data,
+    isError,
+    isLoading,
+    onChangePage,
+    pagination,
+    sortBy,
+    onChangeSortBy,
+  } = useNames(type);
   const { Modal, showDialog, hideDialog } = useDialog();
 
   const columns = useColumns<NameRowFragment>(
@@ -46,6 +53,7 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
+        isError={isError}
         onRowClick={row => {
           setSelectedId(row.id);
           showDialog();

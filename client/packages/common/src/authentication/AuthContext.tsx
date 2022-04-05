@@ -129,7 +129,7 @@ export const AuthProvider: FC = ({ children }) => {
     if (mostRecentlyUsedCredentials?.store)
       return mostRecentlyUsedCredentials.store;
 
-    const { nodes } = await getStores();
+    const { nodes } = (await getStores()) || {};
     return !!nodes && nodes?.length && nodes?.length > 0
       ? nodes?.[0]
       : undefined;
