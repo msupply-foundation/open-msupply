@@ -288,7 +288,7 @@ export type CreateRequisitionShipmentInput = {
 
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
-export type DatabaseError = AuthTokenErrorInterface & DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UserRegisterErrorInterface & {
+export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UserRegisterErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -1486,7 +1486,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = AuthTokenErrorInterface & InsertLocationErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UserRegisterErrorInterface & {
+export type InternalError = InsertLocationErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UserRegisterErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -3030,15 +3030,12 @@ export type UseSuggestedQuantityInput = {
 
 export type UseSuggestedQuantityResponse = RequisitionLineConnector | UseSuggestedQuantityError;
 
-export type UserNameDoesNotExist = AuthTokenErrorInterface & {
-  __typename: 'UserNameDoesNotExist';
-  description: Scalars['String'];
-};
-
 export type UserNode = {
   __typename: 'UserNode';
+  defaultStore?: Maybe<UserStoreNode>;
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
+  stores: UserStoreConnector;
   /** Internal user id */
   userId: Scalars['String'];
   username: Scalars['String'];
@@ -3062,3 +3059,16 @@ export type UserRegisterInput = {
 export type UserRegisterResponse = RegisteredUser | UserRegisterError;
 
 export type UserResponse = UserNode;
+
+export type UserStoreConnector = {
+  __typename: 'UserStoreConnector';
+  nodes: Array<UserStoreNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type UserStoreNode = {
+  __typename: 'UserStoreNode';
+  code: Scalars['String'];
+  id: Scalars['String'];
+  name: Scalars['String'];
+};
