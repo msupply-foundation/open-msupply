@@ -1,9 +1,9 @@
 {
-    "button.new-outbound-shipment": "Nouvelle expédition",
-    "heading.expiring-stock": "Expiration des stocks",
-    "label.expiring-soon": "Stock expirant",
-    "heading.shipments-to-be-picked": "Expéditions à préparer",
-    "label.expired": "Expiré(s)",
-    "label.today": "Aujourd'hui",
-    "label.this-week": "Cette Semaine"
+  "button.new-outbound-shipment": "Nouvelle expédition",
+  "heading.expiring-stock": "Expiration des stocks",
+  "label.expiring-soon": "Stock expirant",
+  "heading.shipments-to-be-picked": "Expéditions à préparer",
+  "label.expired": "Expiré(s)",
+  "label.today": "Aujourd'hui",
+  "label.this-week": "Cette Semaine"
 }
