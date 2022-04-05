@@ -27,8 +27,16 @@ export const ResponseRequisitionListView: FC = () => {
   const { mutate: onUpdate } = useUpdateResponse();
   const navigate = useNavigate();
   const t = useTranslation('distribution');
-  const { data, onChangeSortBy, sortBy, onChangePage, pagination, filter } =
-    useResponses();
+  const {
+    data,
+    isError,
+    isLoading,
+    onChangeSortBy,
+    sortBy,
+    onChangePage,
+    pagination,
+    filter,
+  } = useResponses();
   useDisableResponseRows(data?.nodes);
 
   const columns = useColumns<ResponseRowFragment>(
@@ -66,6 +74,8 @@ export const ResponseRequisitionListView: FC = () => {
         onRowClick={row => {
           navigate(String(row.requisitionNumber));
         }}
+        isError={isError}
+        isLoading={isLoading}
       />
     </>
   );
