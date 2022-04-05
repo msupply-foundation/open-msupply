@@ -8,23 +8,24 @@ import {
   usePaperClickPopover,
   useTranslation,
   useNavigate,
+  useUserDetails,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { StoreRowFragment, useStores } from '@openmsupply-client/system';
+import { UserStoreNodeFragment } from 'packages/common/src/authentication/api/operations.generated';
 
 export const StoreSelector: FC = ({ children }) => {
-  const { store, setStore } = useAuthContext();
+  const { store, setStore, token } = useAuthContext();
   const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useStores();
+  const { data, isLoading } = useUserDetails(token);
   const t = useTranslation('app');
 
-  const storeSorter = (a: StoreRowFragment, b: StoreRowFragment) => {
+  const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
     if (a.code < b.code) return -1;
     if (a.code > b.code) return 1;
     return 0;
   };
-  const stores = (data?.nodes ?? []).sort(storeSorter);
+  const stores = (data?.stores?.nodes ?? []).sort(storeSorter);
 
   if (!store?.code) return null;
 

@@ -1,4 +1,3 @@
-import { FilterBy } from '@common/hooks';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
@@ -13,13 +12,6 @@ export interface AuthenticationResponse {
 export interface RefreshResponse {
   token: string;
 }
-
-type ListParams = {
-  filterBy: FilterBy | null;
-  first: number;
-  offset: number;
-};
-
 const authTokenGuard = (
   authTokenQuery: AuthTokenQuery
 ): AuthenticationResponse => {
@@ -29,11 +21,10 @@ const authTokenGuard = (
 
   if (authTokenQuery?.authToken?.__typename === 'AuthTokenError') {
     switch (authTokenQuery.authToken.error.__typename) {
-      case 'DatabaseError':
-      case 'InternalError':
+      case 'InvalidCredentials':
         return {
           token: '',
-          error: { message: authTokenQuery.authToken.error.description },
+          error: { message: '' },
         };
     }
   }
@@ -73,16 +64,9 @@ export const getAuthQueries = (sdk: Sdk) => ({
       const result = await sdk.refreshToken();
       return refreshTokenGuard(result);
     },
-    stores:
-      ({ filterBy, first, offset }: ListParams) =>
-      async () => {
-        const result = await sdk.stores({
-          filter: filterBy,
-          first,
-          offset,
-        });
-
-        return result.stores;
-      },
+    me: () => async () => {
+      const result = await sdk.me();
+      return result.me;
+    },
   },
 });
