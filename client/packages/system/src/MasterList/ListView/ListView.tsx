@@ -13,6 +13,7 @@ import { useMasterLists, MasterListRowFragment } from '../api';
 export const MasterListListView: FC = () => {
   const {
     data,
+    isError,
     isLoading,
     onChangePage,
     pagination,
@@ -40,6 +41,7 @@ export const MasterListListView: FC = () => {
         onChangePage={onChangePage}
         columns={columns}
         data={data?.nodes}
+        isError={isError}
         isLoading={isLoading}
         onRowClick={row => navigate(row.id)}
       />

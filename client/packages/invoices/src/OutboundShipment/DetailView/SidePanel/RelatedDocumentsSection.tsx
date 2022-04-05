@@ -7,7 +7,7 @@ import {
   Grid,
   DetailPanelSection,
   useTranslation,
-  useFormatDate,
+  useFormatDateTime,
   RouteBuilder,
   Tooltip,
 } from '@openmsupply-client/common';
@@ -16,7 +16,7 @@ import { useOutbound } from '../../api';
 
 const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation('distribution');
-  const d = useFormatDate();
+  const { localisedDate: d } = useFormatDateTime();
   const { requisition } = useOutbound.document.fields('requisition');
 
   let tooltip = '';

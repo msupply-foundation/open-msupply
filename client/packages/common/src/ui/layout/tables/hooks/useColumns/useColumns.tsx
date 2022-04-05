@@ -7,9 +7,8 @@ import {
   ColumnAlign,
   Column,
 } from '../../columns/types';
-import { useFormatDate, useFormatNumber } from '@common/intl';
+import { useFormatCurrency, useFormatDateTime, DateUtils } from '@common/intl';
 import { BasicCell, BasicHeader } from '../../components';
-import { DateUtils } from '@common/utils';
 import { SortBy } from '@common/hooks';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
 
@@ -60,19 +59,18 @@ const getDefaultFormatter = <T extends RecordWithId>(
   switch (column.format) {
     case ColumnFormat.Date: {
       return (date: unknown) => {
-        const formatDate = useFormatDate();
+        const { localisedDate } = useFormatDateTime();
         const maybeDate = DateUtils.getDateOrNull(date as string | null);
-        return maybeDate ? formatDate(maybeDate) : '';
+        return maybeDate ? localisedDate(maybeDate) : '';
       };
     }
     case ColumnFormat.Currency: {
       return (value: unknown) => {
         if (Number.isNaN(Number(value))) return '';
 
-        const formatNumber = useFormatNumber();
+        const formatCurrency = useFormatCurrency();
 
-        // TODO: fetch currency symbol or use style: 'currency'
-        return `$${formatNumber(Number(value))}`;
+        return `${formatCurrency(Number(value))}`;
       };
     }
     default: {
