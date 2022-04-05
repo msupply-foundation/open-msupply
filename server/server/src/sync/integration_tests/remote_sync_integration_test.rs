@@ -25,9 +25,9 @@ mod remote_sync_integration_tests {
 
     use crate::sync::{
         integration_tests::{
-            invoice::InvoiceRecordTester, number::NumberSyncRecordTester,
-            requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
-            stocktake::StocktakeRecordTester,
+            invoice::InvoiceRecordTester, location::LocationSyncRecordTester,
+            number::NumberSyncRecordTester, requisition::RequisitionRecordTester,
+            stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
         },
         Synchroniser,
     };
@@ -126,6 +126,10 @@ mod remote_sync_integration_tests {
         println!("number:");
         let number_tester = NumberSyncRecordTester {};
         test_sync_record(store_id, &sync_settings, &number_tester).await;
+
+        println!("Location:");
+        let location_tester = LocationSyncRecordTester {};
+        test_sync_record(store_id, &sync_settings, &location_tester).await;
 
         println!("stock line:");
         let stock_line_tester = StockLineRecordTester {};
