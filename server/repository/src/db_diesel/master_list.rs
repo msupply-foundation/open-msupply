@@ -5,8 +5,8 @@ use crate::{
         diesel_schema::{
             master_list, master_list::dsl as master_list_dsl,
             master_list_name_join::dsl as master_list_name_join_dsl, name::dsl as name_dsl,
-            store::dsl as store_dsl,
         },
+        store::store::dsl as store_dsl,
         MasterListRow,
     },
 };

@@ -5,10 +5,8 @@ use crate::{
         apply_sort_no_case,
     },
     schema::{
-        diesel_schema::{
-            invoice, invoice::dsl as invoice_dsl, name, name::dsl as name_dsl, store,
-            store::dsl as store_dsl,
-        },
+        diesel_schema::{invoice, invoice::dsl as invoice_dsl, name, name::dsl as name_dsl},
+        store::{store, store::dsl as store_dsl},
         InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, StoreRow,
     },
     RepositoryError,
