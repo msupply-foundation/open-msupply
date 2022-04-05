@@ -8,7 +8,7 @@ import {
   useTranslation,
   Tooltip,
   Link,
-  useFormatDate,
+  useFormatDateTime,
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -16,7 +16,7 @@ import { useInboundFields } from '../../api';
 
 export const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation('replenishment');
-  const d = useFormatDate();
+  const { localisedDate: d } = useFormatDateTime();
   const { requisition } = useInboundFields('requisition');
 
   let tooltip = '';

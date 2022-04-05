@@ -6,7 +6,6 @@ import {
   createTableStore,
   getNameAndColorColumn,
   useNavigate,
-  BasicSpinner,
   useTranslation,
   RequisitionNodeStatus,
   useTableStore,
@@ -32,6 +31,7 @@ export const RequestRequisitionListView: FC = () => {
 
   const {
     data,
+    isError,
     isLoading,
     sortBy,
     onChangeSortBy,
@@ -70,10 +70,6 @@ export const RequestRequisitionListView: FC = () => {
     [navigate]
   );
 
-  if (isLoading) {
-    return <BasicSpinner />;
-  }
-
   return (
     <>
       <Toolbar filter={filter} />
@@ -85,6 +81,8 @@ export const RequestRequisitionListView: FC = () => {
         columns={columns}
         data={data?.nodes}
         onRowClick={onRowClick}
+        isError={isError}
+        isLoading={isLoading}
       />
     </>
   );
