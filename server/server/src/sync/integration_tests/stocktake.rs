@@ -1,9 +1,9 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::{StocktakeLineRow, StocktakeRow, StocktakeStatus},
+    schema::{LocationRow, StocktakeLineRow, StocktakeRow, StocktakeStatus},
     InvoiceFilter, InvoiceQueryRepository, ItemFilter, ItemQueryRepository, ItemRepository,
-    StockLineFilter, StockLineRepository, StocktakeLineRowRepository, StocktakeRowRepository,
-    StorageConnection,
+    LocationRowRepository, StockLineFilter, StockLineRepository, StocktakeLineRowRepository,
+    StocktakeRowRepository, StorageConnection,
 };
 use util::{inline_edit, uuid::uuid};
 
@@ -17,6 +17,18 @@ pub struct FullStocktake {
 pub struct StocktakeRecordTester {}
 impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
     fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<FullStocktake> {
+        // create test location
+        let location = LocationRow {
+            id: uuid(),
+            name: "TestLocation".to_string(),
+            code: "TestLocationCode".to_string(),
+            on_hold: false,
+            store_id: store_id.to_string(),
+        };
+        LocationRowRepository::new(connection)
+            .upsert_one(&location)
+            .unwrap();
+
         let item = ItemQueryRepository::new(connection)
             .query_one(ItemFilter::new())
             .unwrap()
@@ -42,7 +54,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                 id: uuid(),
                 stocktake_id: row_id,
                 stock_line_id: None,
-                location_id: None,
+                location_id: Some(location.id),
                 comment: None,
                 snapshot_number_of_packs: 100,
                 counted_number_of_packs: None,
@@ -108,6 +120,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                             .unwrap();
                         inline_edit(l, |mut d| {
                             d.comment = Some("stocktake line comment".to_string());
+                            d.location_id = None;
                             d.snapshot_number_of_packs = 110;
                             d.counted_number_of_packs = Some(90);
                             d.item_id = item.id;
