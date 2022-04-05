@@ -5,7 +5,8 @@ use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 use crate::{
     diesel_macros::apply_simple_string_filter,
     schema::{
-        diesel_schema::{name, name::dsl as name_dsl, store, store::dsl as store_dsl},
+        diesel_schema::{name, name::dsl as name_dsl},
+        store::{store, store::dsl as store_dsl},
         StoreRow,
     },
     DBType, RepositoryError, StorageConnection,
@@ -26,6 +27,7 @@ pub struct StoreFilter {
     pub code: Option<SimpleStringFilter>,
     pub name: Option<SimpleStringFilter>,
     pub name_code: Option<SimpleStringFilter>,
+    pub remote_site_id: Option<EqualFilter<i32>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -111,12 +113,14 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             code,
             name,
             name_code,
+            remote_site_id,
         } = f;
 
         apply_equal_filter!(query, id, store_dsl::id);
         apply_simple_string_filter!(query, code, store_dsl::code);
         apply_simple_string_filter!(query, name, name_dsl::name_);
         apply_simple_string_filter!(query, name_code, name_dsl::code);
+        apply_equal_filter!(query, remote_site_id, store_dsl::remote_site_id);
     }
 
     query

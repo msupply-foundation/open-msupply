@@ -1,3 +1,5 @@
+use super::store::store;
+
 table! {
     central_sync_buffer (id) {
         id -> Integer,
@@ -109,14 +111,6 @@ table! {
         average_monthly_consumption -> Integer,
         snapshot_datetime -> Nullable<Timestamp>,
         comment -> Nullable<Text>,
-    }
-}
-
-table! {
-    store (id) {
-        id -> Text,
-        name_id -> Text,
-        code -> Text,
     }
 }
 

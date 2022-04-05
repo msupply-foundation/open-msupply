@@ -1,4 +1,4 @@
-use super::diesel_schema::{store, user_account};
+use super::{diesel_schema::user_account, store::store};
 
 table! {
   user_store_join (id) {

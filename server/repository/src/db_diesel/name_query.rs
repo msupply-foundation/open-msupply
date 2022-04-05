@@ -5,8 +5,9 @@ use crate::{
     schema::{
         diesel_schema::{
             name, name::dsl as name_dsl, name_store_join,
-            name_store_join::dsl as name_store_join_dsl, store, store::dsl as store_dsl,
+            name_store_join::dsl as name_store_join_dsl,
         },
+        store::{store, store::dsl as store_dsl},
         NameRow, NameStoreJoinRow, StoreRow,
     },
 };
