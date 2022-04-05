@@ -1,3 +1,5 @@
+use util::inline_init;
+
 use crate::schema::{MasterListNameJoinRow, MasterListRow, NameRow, StoreRow};
 
 use super::{common::FullMockMasterList, MockData};
@@ -54,11 +56,11 @@ pub fn mock_test_master_list_name3() -> NameRow {
 }
 
 pub fn mock_test_master_list_store1() -> StoreRow {
-    StoreRow {
-        id: String::from("mock_test_master_list_store1"),
-        name_id: mock_test_master_list_name3().id,
-        code: String::from("mock_test_master_list_store1"),
-    }
+    inline_init(|s: &mut StoreRow| {
+        s.id = "mock_test_master_list_store1".to_string();
+        s.name_id = mock_test_master_list_name3().id;
+        s.code = "mock_test_master_list_store1".to_string();
+    })
 }
 
 // For name 1 and 2
