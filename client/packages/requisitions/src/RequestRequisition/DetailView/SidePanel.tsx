@@ -15,7 +15,7 @@ import {
   useBufferState,
   Tooltip,
   Link,
-  useFormatDate,
+  useFormatDateTime,
   RouteBuilder,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
@@ -79,7 +79,7 @@ const RelatedDocumentsRow: FC<{
 
 const RelatedDocumentsSection: FC = () => {
   const t = useTranslation('replenishment');
-  const d = useFormatDate();
+  const { localisedDate: d } = useFormatDateTime();
   const { shipments } = useRequestFields('shipments');
 
   const getTooltip = (createdDatetime: string, username?: string) => {

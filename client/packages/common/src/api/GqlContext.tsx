@@ -58,7 +58,7 @@ class GQLClient extends GraphQLClient {
             throw new Error(details || error.message);
           }
         }
-        return this.emptyData;
+        throw new Error('Unknown error');
       }
     );
   }
