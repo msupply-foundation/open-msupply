@@ -1,9 +1,16 @@
-import { useTranslation as useTranslationNext } from 'react-i18next';
+import { IntlUtils } from '../utils';
 
-export const useFormatNumber = (): ((
-  value: number | bigint,
-  options?: Intl.NumberFormatOptions
-) => string) => {
-  const { t } = useTranslationNext('app');
-  return (val, formatParams) => t('intl.number', { val, formatParams });
+export const useFormatNumber = () => {
+  const language = IntlUtils.useCurrentLanguage();
+
+  return {
+    format: (value: number, options?: Intl.NumberFormatOptions) =>
+      new Intl.NumberFormat(language, options).format(value),
+    round: (value?: number, dp?: number): string => {
+      const intl = new Intl.NumberFormat(language, {
+        maximumFractionDigits: dp ?? 0,
+      });
+      return intl.format(value ?? 0);
+    },
+  };
 };

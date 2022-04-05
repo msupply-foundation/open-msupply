@@ -17,7 +17,6 @@
   "inbound-shipments": "Inbound Shipments",
   "intl.currency": "{{val, currency(NZD}}",
   "intl.datetime": "{{val, datetime}}",
-  "intl.number": "{{val, number}}",
   "inventory": "Inventory",
   "items": "Items",
   "loading": "Loading...",

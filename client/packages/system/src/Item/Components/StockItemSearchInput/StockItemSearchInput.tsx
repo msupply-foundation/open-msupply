@@ -81,7 +81,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       onChange={(_, item) => onChange(item)}
       options={defaultOptionMapper(options, 'name')}
       getOptionLabel={option => `${option.code}     ${option.name}`}
-      renderOption={getOptionRenderer(t('label.units'), formatNumber)}
+      renderOption={getOptionRenderer(t('label.units'), formatNumber.format)}
       width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       autoWidthPopper

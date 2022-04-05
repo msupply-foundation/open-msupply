@@ -5,6 +5,7 @@ import {
   PlusCircleIcon,
   RouteBuilder,
   StatsPanel,
+  useFormatNumber,
   useNavigate,
   useTranslation,
   Widget,
@@ -17,6 +18,7 @@ const LOW_MOS_THRESHOLD = 3;
 export const StockWidget: React.FC = () => {
   const t = useTranslation(['dashboard']);
   const navigate = useNavigate();
+  const formatNumber = useFormatNumber();
   const { data: expiryData, isLoading: isExpiryLoading } = useStockCounts();
   const { data: itemStatsData, isLoading: isItemStatsLoading } = useItemStats();
 
@@ -46,11 +48,11 @@ export const StockWidget: React.FC = () => {
             stats={[
               {
                 label: t('label.expired', { ns: 'dashboard' }),
-                value: expiryData?.expired || 0,
+                value: formatNumber.round(expiryData?.expired),
               },
               {
                 label: t('label.expiring-soon'),
-                value: expiryData?.expiringSoon || 0,
+                value: formatNumber.round(expiryData?.expiringSoon),
               },
             ]}
           />
@@ -60,15 +62,15 @@ export const StockWidget: React.FC = () => {
             stats={[
               {
                 label: t('label.total-items', { ns: 'dashboard' }),
-                value: itemStatsData?.length || 0,
+                value: formatNumber.round(itemStatsData?.length),
               },
               {
                 label: t('label.items-no-stock'),
-                value: noStockItemsCount,
+                value: formatNumber.round(noStockItemsCount),
               },
               {
                 label: t('label.low-stock-items'),
-                value: lowStockItemsCount,
+                value: formatNumber.round(lowStockItemsCount),
               },
             ]}
           />
