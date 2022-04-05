@@ -1,27 +1,29 @@
+use util::inline_init;
+
 use crate::schema::StoreRow;
 
 pub fn mock_store_a() -> StoreRow {
-    StoreRow {
-        id: String::from("store_a"),
-        name_id: String::from("name_store_a"),
-        code: String::from("code"),
-    }
+    inline_init(|s: &mut StoreRow| {
+        s.id = "store_a".to_string();
+        s.name_id = "name_store_a".to_string();
+        s.code = "code".to_string();
+    })
 }
 
 pub fn mock_store_b() -> StoreRow {
-    StoreRow {
-        id: String::from("store_b"),
-        name_id: String::from("name_store_b"),
-        code: String::from("code"),
-    }
+    inline_init(|s: &mut StoreRow| {
+        s.id = "store_b".to_string();
+        s.name_id = "name_store_b".to_string();
+        s.code = "code".to_string();
+    })
 }
 
 pub fn mock_store_c() -> StoreRow {
-    StoreRow {
-        id: String::from("store_c"),
-        name_id: String::from("name_store_c"),
-        code: String::from("code"),
-    }
+    inline_init(|s: &mut StoreRow| {
+        s.id = "store_c".to_string();
+        s.name_id = "name_store_c".to_string();
+        s.code = "code".to_string();
+    })
 }
 
 pub fn mock_stores() -> Vec<StoreRow> {

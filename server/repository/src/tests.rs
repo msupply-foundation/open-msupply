@@ -17,11 +17,11 @@ mod repository_test {
         }
 
         pub fn store_1() -> StoreRow {
-            StoreRow {
-                id: "store1".to_string(),
-                name_id: "name1".to_string(),
-                code: "code1".to_string(),
-            }
+            inline_init(|s: &mut StoreRow| {
+                s.id = "store1".to_string();
+                s.name_id = "name1".to_string();
+                s.code = "code1".to_string();
+            })
         }
 
         pub fn item_1() -> ItemRow {
