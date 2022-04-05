@@ -108,7 +108,8 @@ export const AuthProvider: FC = ({ children }) => {
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
   const [error, setError] = useLocalStorage('/auth/error');
   const storeId = cookie?.store?.id ?? '';
-  const { data, isLoading } = useUserDetails(cookie?.token);
+  const { mutateAsync: getStores } = useUserDetails();
+  const { setHeader } = useGql();
 
   const saveToken = (token?: string) => {
     const authCookie = getAuthCookie();
@@ -120,9 +121,10 @@ export const AuthProvider: FC = ({ children }) => {
 
   // returns MRU store, if set
   // or the first store in the list
-  const getStore = () => {
-    const stores = data?.stores?.nodes ?? [];
-    const defaultStore = data?.defaultStore;
+  const getStore = async (token?: string) => {
+    const userDetails = await getStores(token);
+    const defaultStore = userDetails?.defaultStore;
+    const stores = userDetails?.stores.nodes;
 
     if (
       mostRecentlyUsedCredentials?.store &&
@@ -138,7 +140,8 @@ export const AuthProvider: FC = ({ children }) => {
 
   const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
-    const store = getStore();
+    setHeader('Authorization', `Bearer ${token}`);
+    const store = await getStore(token);
     const authCookie = {
       store,
       token,
@@ -155,7 +158,7 @@ export const AuthProvider: FC = ({ children }) => {
     setMRUCredentials({ username, store });
     setAuthCookie(authCookie);
     setCookie(authCookie);
-    setError(undefined);
+    setError(store ? undefined : AuthError.NoStoreAssigned);
 
     return { token, error };
   };
@@ -183,7 +186,6 @@ export const AuthProvider: FC = ({ children }) => {
     () => ({
       error,
       isLoggingIn,
-      isLoading,
       login,
       logout,
       storeId,
@@ -196,7 +198,6 @@ export const AuthProvider: FC = ({ children }) => {
     }),
     [
       login,
-      isLoading,
       cookie,
       error,
       mostRecentlyUsedCredentials,
@@ -205,17 +206,6 @@ export const AuthProvider: FC = ({ children }) => {
       setError,
     ]
   );
-
-  useEffect(() => {
-    const authCookie = getAuthCookie();
-    const { store, token } = authCookie;
-
-    // we have a token, but no store! this can happen if the user has authenticated
-    // but has no stores assigned in mSupply
-    if (!!token && !store) {
-      setError(AuthError.NoStoreAssigned);
-    }
-  }, [authCookie.token, authCookie.store]);
 
   useEffect(() => {
     // check every minute for a valid token
