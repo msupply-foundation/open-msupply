@@ -10,7 +10,7 @@ export type AuthTokenQueryVariables = Types.Exact<{
 }>;
 
 
-export type AuthTokenQuery = { __typename: 'FullQuery', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'UserNameDoesNotExist', description: string } } };
+export type AuthTokenQuery = { __typename: 'FullQuery', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'InvalidCredentials', description: string } } };
 
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -44,23 +44,9 @@ export const AuthTokenDocument = gql`
     ... on AuthTokenError {
       __typename
       error {
-        ... on UserNameDoesNotExist {
-          __typename
-          description
-        }
         ... on InvalidCredentials {
           __typename
           description
-        }
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on InternalError {
-          __typename
-          description
-          fullError
         }
         description
       }
