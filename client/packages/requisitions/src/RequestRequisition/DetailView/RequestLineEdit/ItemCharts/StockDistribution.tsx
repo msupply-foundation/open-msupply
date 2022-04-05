@@ -2,11 +2,10 @@ import React, { useMemo } from 'react';
 import {
   AlertIcon,
   Box,
-  Formatter,
   Tooltip,
   Typography,
-  useTranslation,
 } from '@openmsupply-client/common';
+import { useFormatNumber, useTranslation } from '@common/intl';
 import { useRequestFields } from '../../../api';
 
 export interface StockDistributionProps {
@@ -34,13 +33,14 @@ const ValueBar = ({
   label: string;
   colour: string;
 }) => {
+  const formatNumber = useFormatNumber();
   if (value === 0) return null;
 
   const flexBasis = Math.min(Math.round((100 * value) / total), 100);
 
   return (
     <>
-      <Tooltip title={`${label}: ${Formatter.round(value)}`} placement="top">
+      <Tooltip title={`${label}: ${formatNumber.round(value)}`} placement="top">
         <Box flexBasis={`${flexBasis}%`} flexGrow={1}>
           <Box sx={{ backgroundColor: colour, height: '20px' }} />
           <Box style={{ textAlign: 'end', paddingRight: 10, paddingTop: 10 }}>
@@ -53,7 +53,7 @@ const ValueBar = ({
               </Typography>
             ) : null}
             {flexBasis > MIN_FLEX_BASIS_TO_SHOW_VALUE ? (
-              <Typography fontSize={12}>{Formatter.round(value)}</Typography>
+              <Typography fontSize={12}>{formatNumber.round(value)}</Typography>
             ) : null}
           </Box>
         </Box>
@@ -75,10 +75,11 @@ const MonthlyConsumption = ({
   showText: boolean;
 }) => {
   const t = useTranslation('common');
+  const formatNumber = useFormatNumber();
   const text = ` (${month} ${t('label.months', {
     count: month,
   })})`;
-  const label = `${Formatter.round(averageMonthlyConsumption * month)}${
+  const label = `${formatNumber.round(averageMonthlyConsumption * month)}${
     showText ? text : ''
   }`;
 

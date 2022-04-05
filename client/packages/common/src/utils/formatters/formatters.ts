@@ -25,10 +25,4 @@ export const Formatter = {
     const expiryDate = date ? Formatter.expiryDate(new Date(date)) : null;
     return expiryDate ?? '';
   },
-  round: (num?: number, dp?: number): string => {
-    const value = num ?? 0;
-    const factor = Math.pow(10, dp ?? 0);
-
-    return String(Math.round(value * factor) / factor);
-  },
 };

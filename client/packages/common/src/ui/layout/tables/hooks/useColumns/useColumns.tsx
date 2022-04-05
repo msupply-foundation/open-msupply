@@ -7,7 +7,7 @@ import {
   ColumnAlign,
   Column,
 } from '../../columns/types';
-import { useFormatDate, useFormatNumber } from '@common/intl';
+import { useFormatCurrency, useFormatDate } from '@common/intl';
 import { BasicCell, BasicHeader } from '../../components';
 import { DateUtils } from '@common/utils';
 import { SortBy } from '@common/hooks';
@@ -69,10 +69,9 @@ const getDefaultFormatter = <T extends RecordWithId>(
       return (value: unknown) => {
         if (Number.isNaN(Number(value))) return '';
 
-        const formatNumber = useFormatNumber();
+        const formatCurrency = useFormatCurrency();
 
-        // TODO: fetch currency symbol or use style: 'currency'
-        return `$${formatNumber(Number(value))}`;
+        return `${formatCurrency(Number(value))}`;
       };
     }
     default: {

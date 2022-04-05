@@ -1,11 +1,11 @@
 import React from 'react';
 import {
   ButtonWithIcon,
-  Formatter,
   Grid,
   PlusCircleIcon,
   RouteBuilder,
   StatsPanel,
+  useFormatNumber,
   useNavigate,
   useTranslation,
   Widget,
@@ -18,6 +18,7 @@ const LOW_MOS_THRESHOLD = 3;
 export const StockWidget: React.FC = () => {
   const t = useTranslation(['dashboard']);
   const navigate = useNavigate();
+  const formatNumber = useFormatNumber();
   const { data: expiryData, isLoading: isExpiryLoading } = useStockCounts();
   const { data: itemStatsData, isLoading: isItemStatsLoading } = useItemStats();
 
@@ -47,11 +48,11 @@ export const StockWidget: React.FC = () => {
             stats={[
               {
                 label: t('label.expired', { ns: 'dashboard' }),
-                value: Formatter.round(expiryData?.expired),
+                value: formatNumber.round(expiryData?.expired),
               },
               {
                 label: t('label.expiring-soon'),
-                value: Formatter.round(expiryData?.expiringSoon),
+                value: formatNumber.round(expiryData?.expiringSoon),
               },
             ]}
           />
@@ -61,15 +62,15 @@ export const StockWidget: React.FC = () => {
             stats={[
               {
                 label: t('label.total-items', { ns: 'dashboard' }),
-                value: Formatter.round(itemStatsData?.length),
+                value: formatNumber.round(itemStatsData?.length),
               },
               {
                 label: t('label.items-no-stock'),
-                value: Formatter.round(noStockItemsCount),
+                value: formatNumber.round(noStockItemsCount),
               },
               {
                 label: t('label.low-stock-items'),
-                value: Formatter.round(lowStockItemsCount),
+                value: formatNumber.round(lowStockItemsCount),
               },
             ]}
           />
