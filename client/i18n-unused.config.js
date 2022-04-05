@@ -15,4 +15,5 @@ module.exports = {
     'packages/system/node_modules',
     'packages/template/node_modules',
   ],
+  flatTranslations: true,
 };
