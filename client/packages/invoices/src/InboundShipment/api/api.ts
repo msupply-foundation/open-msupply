@@ -180,14 +180,15 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
-    const result = await sdk.deleteInboundShipments({
-      storeId,
-      deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
-    });
+    const result =
+      (await sdk.deleteInboundShipments({
+        storeId,
+        deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
+      })) || {};
 
     const { batchInboundShipment } = result;
 
-    if (batchInboundShipment.deleteInboundShipments) {
+    if (batchInboundShipment?.deleteInboundShipments) {
       return batchInboundShipment.deleteInboundShipments.map(({ id }) => id);
     }
 
@@ -196,15 +197,16 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   insert: async (
     patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>
   ): Promise<number> => {
-    const result = await sdk.insertInboundShipment({
-      id: patch.id,
-      otherPartyId: patch.otherPartyId,
-      storeId,
-    });
+    const result =
+      (await sdk.insertInboundShipment({
+        id: patch.id,
+        otherPartyId: patch.otherPartyId,
+        storeId,
+      })) || {};
 
     const { insertInboundShipment } = result;
 
-    if (insertInboundShipment.__typename === 'InvoiceNode') {
+    if (insertInboundShipment?.__typename === 'InvoiceNode') {
       return insertInboundShipment.invoiceNumber;
     }
 
