@@ -56,7 +56,7 @@
   "cmdk.goto-reports": "Go to: Reports",
   "cmdk.goto-master-lists": "Go to: Master Lists",
   "cmdk.placeholder": "Type a command or search",
-  "login.heading": "Simple. Powerful. Pharmaceutical Management.",
+  "login.heading": "Simple.\nPowerful.\nPharmaceutical\nManagement.",
   "login.body": "Whether you run a pharmaceutical distribution warehouse, or are a manufacturer needing dozens of connected users, or a small dispensary, mSupply is a valuable partner.",
   "login.store-changed": "Welcome to the {{store, string}} store",
   "heading.username": "Username",

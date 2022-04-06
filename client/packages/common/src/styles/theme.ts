@@ -193,7 +193,7 @@ export const themeOptions = {
     },
     body2: { color: '#555770', fontSize: 12, fontWeight: 500 },
     fontFamily: 'InterVariable',
-    login: { color: '#fafafa', fontSize: 20, fontWeight: 600 },
+    login: { color: '#fafafa' },
     th: { color: '#1c1c28', fontSize: 14, fontWeight: 700 },
     h6: {
       fontFamily: 'InterVariable',

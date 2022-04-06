@@ -4,11 +4,15 @@ import {
   useLocalStorage,
   useTheme,
   RegexUtils,
+  useIsSmallScreen,
 } from '@openmsupply-client/common';
 
 export const LoginIcon: React.FC = () => {
   const [customLogo] = useLocalStorage('/theme/logo');
-  const logoStyle = { width: 122, height: 180 };
+  const isSmallScreen = useIsSmallScreen();
+  const logoStyle = isSmallScreen
+    ? { width: 61, height: 90 }
+    : { width: 122, height: 180 };
   const theme = useTheme();
 
   if (!customLogo) return <MSupplyGuy style={logoStyle} />;
