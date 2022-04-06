@@ -4,9 +4,12 @@ import { useAuthApi } from './useAuthApi';
 
 export const useUserDetails = () => {
   const api = useAuthApi();
-  return useMutation<UserNode, unknown, string | undefined, unknown>(
-    api.get.me
-  );
+  return useMutation<
+    UserNode | undefined,
+    unknown,
+    string | undefined,
+    unknown
+  >(api.get.me);
 };
 
 export const useUserStores = (token: string) => {
