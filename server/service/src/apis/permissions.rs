@@ -401,7 +401,7 @@ pub fn map_api_permissions(permissions: Vec<bool>) -> Vec<Permissions> {
         if !has_per {
             continue;
         }
-        if let Some(permission) = mapping.get(&(i as i16)) {
+        if let Some(permission) = mapping.get(&((i + 1) as i16)) {
             output.push(permission.clone())
         }
     }
