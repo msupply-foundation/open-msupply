@@ -22,19 +22,19 @@ pub fn mock_test_name_query() -> MockData {
 }
 
 pub fn mock_test_name_query_store_1() -> StoreRow {
-    StoreRow {
-        id: "mock_test_name_query_store_1".to_string(),
-        name_id: mock_name_1().id,
-        code: "mock_test_name_query_store_1_code".to_string(),
-    }
+    inline_init(|s: &mut StoreRow| {
+        s.id = "mock_test_name_query_store_1".to_string();
+        s.name_id = mock_name_1().id;
+        s.code = "mock_test_name_query_store_1_code".to_string();
+    })
 }
 
 pub fn mock_test_name_query_store_2() -> StoreRow {
-    StoreRow {
-        id: "mock_test_name_query_store_2".to_string(),
-        name_id: mock_name_2().id,
-        code: "mock_test_name_query_store_2_code".to_string(),
-    }
+    inline_init(|s: &mut StoreRow| {
+        s.id = "mock_test_name_query_store_2".to_string();
+        s.name_id = mock_name_2().id;
+        s.code = "mock_test_name_query_store_2_code".to_string();
+    })
 }
 
 pub fn mock_name_1() -> NameRow {

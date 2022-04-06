@@ -32,11 +32,11 @@ pub fn mock_name_linked_to_store() -> NameRow {
 }
 
 pub fn mock_store_linked_to_name() -> StoreRow {
-    StoreRow {
-        id: "name_store_id".to_owned(),
-        name_id: "name_linked_to_store_id".to_owned(),
-        code: "name_store_code".to_owned(),
-    }
+    inline_init(|s: &mut StoreRow| {
+        s.id = "name_store_id".to_string();
+        s.name_id = "name_linked_to_store_id".to_string();
+        s.code = "name_store_code".to_string();
+    })
 }
 
 pub fn mock_name_linked_to_store_join() -> NameStoreJoinRow {

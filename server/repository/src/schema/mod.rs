@@ -21,7 +21,7 @@ mod requisition_line;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
-mod store;
+pub mod store;
 mod sync_out;
 mod unit;
 mod user_account;

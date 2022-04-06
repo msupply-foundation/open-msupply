@@ -5,8 +5,8 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
-        diesel_schema::{store, store::dsl as store_dsl},
         diesel_schema::{user_account, user_account::dsl as user_dsl},
+        store::{store, store::dsl as store_dsl},
         user_permission::UserPermissionRow,
         user_store_join::{
             user_store_join, user_store_join::dsl as user_store_join_dsl, UserStoreJoinRow,

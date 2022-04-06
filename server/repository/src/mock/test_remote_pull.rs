@@ -15,11 +15,11 @@ pub fn mock_name_store_remote_pull() -> NameRow {
 
 // unique store is needed for number tests since number ids are not unique
 pub fn mock_store_remote_pull() -> StoreRow {
-    StoreRow {
-        id: String::from("store_remote_pull"),
-        name_id: String::from("name_store_remote_pull"),
-        code: String::from("codepull"),
-    }
+    inline_init(|s: &mut StoreRow| {
+        s.id = "store_remote_pull".to_string();
+        s.name_id = "name_store_remote_pull".to_string();
+        s.code = "codepull".to_string();
+    })
 }
 
 pub fn mock_test_remote_pull() -> MockData {

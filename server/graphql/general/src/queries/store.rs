@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::generic_filters::EqualFilterStringInput;
+use graphql_core::generic_filters::{EqualFilterInput, EqualFilterStringInput};
 use graphql_core::{
     generic_filters::SimpleStringFilterInput, pagination::PaginationInput,
     standard_graphql_error::list_error_to_gql_err, ContextExt,
@@ -14,6 +14,7 @@ pub struct StoreFilterInput {
     pub code: Option<SimpleStringFilterInput>,
     pub name: Option<SimpleStringFilterInput>,
     pub name_code: Option<SimpleStringFilterInput>,
+    pub site_id: Option<EqualFilterInput<i32>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -86,6 +87,7 @@ impl StoreFilterInput {
             code,
             name,
             name_code,
+            site_id,
         } = self;
 
         StoreFilter {
@@ -93,6 +95,7 @@ impl StoreFilterInput {
             code: code.map(SimpleStringFilter::from),
             name: name.map(SimpleStringFilter::from),
             name_code: name_code.map(SimpleStringFilter::from),
+            site_id: site_id.map(EqualFilter::from),
         }
     }
 }

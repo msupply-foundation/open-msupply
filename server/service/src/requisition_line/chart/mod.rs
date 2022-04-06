@@ -238,11 +238,11 @@ mod test {
         }
 
         fn store() -> StoreRow {
-            StoreRow {
-                id: "store".to_string(),
-                name_id: name().id,
-                code: "n/a".to_string(),
-            }
+            inline_init(|s: &mut StoreRow| {
+                s.id = "store".to_string();
+                s.name_id = name().id;
+                s.code = "n/a".to_string();
+            })
         }
 
         fn requisition() -> RequisitionRow {
@@ -422,11 +422,11 @@ mod test {
         }
 
         fn store() -> StoreRow {
-            StoreRow {
-                id: "store".to_string(),
-                name_id: name().id,
-                code: "n/a".to_string(),
-            }
+            inline_init(|s: &mut StoreRow| {
+                s.id = "store".to_string();
+                s.name_id = name().id;
+                s.code = "n/a".to_string();
+            })
         }
 
         fn requisition() -> RequisitionRow {
