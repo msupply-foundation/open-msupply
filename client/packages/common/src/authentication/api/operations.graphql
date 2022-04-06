@@ -1,9 +1,11 @@
+fragment UserStoreNode on UserStoreNode {
+  code
+  id
+  name
+}
+
 query authToken($username: String!, $password: String!) {
   authToken(password: $password, username: $username) {
-    ... on AuthToken {
-      __typename
-      token
-    }
     ... on AuthTokenError {
       __typename
       error {
@@ -13,6 +15,31 @@ query authToken($username: String!, $password: String!) {
         }
         description
       }
+    }
+    ... on AuthToken {
+      __typename
+      token
+    }
+  }
+}
+
+query me {
+  me {
+    ... on UserNode {
+      __typename
+      email
+      defaultStore {
+        ...UserStoreNode
+      }
+      stores {
+        totalCount
+        nodes {
+          __typename
+          ...UserStoreNode
+        }
+      }
+      username
+      userId
     }
   }
 }
@@ -53,27 +80,6 @@ query refreshToken {
           description
           fullError
         }
-      }
-    }
-  }
-}
-
-fragment StoreRow on StoreNode {
-  code
-  id
-}
-
-query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-  stores(
-    page: { first: $first, offset: $offset }
-    filter: $filter
-    sort: { key: name }
-  ) {
-    ... on StoreConnector {
-      __typename
-      totalCount
-      nodes {
-        ...StoreRow
       }
     }
   }

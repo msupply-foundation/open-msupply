@@ -6,13 +6,15 @@ import { addMinutes } from 'date-fns';
 import { useGql } from '../api';
 import { useGetRefreshToken } from './api/hooks';
 import { useGetAuthToken } from './api/hooks/useGetAuthToken';
-import { useStores } from './api/hooks/useStores';
+import { useUserDetails } from './api/hooks/useUserDetails';
 import { AuthenticationResponse } from './api';
+import { UserStoreNodeFragment } from './api/operations.generated';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
 
 export enum AuthError {
+  NoStoreAssigned = 'NoStoreAssigned',
   PermissionDenied = 'PermissionDenied',
   Unauthenticated = 'Unauthenticated',
 }
@@ -22,21 +24,15 @@ type User = {
   name: string;
 };
 
-interface Store {
-  __typename: 'StoreNode';
-  id: string;
-  code: string;
-}
-
 interface AuthCookie {
   expires?: Date;
-  store?: Store;
+  store?: UserStoreNodeFragment;
   token: string;
   user?: User;
 }
 
 type MRUCredentials = {
-  store?: Store;
+  store?: UserStoreNodeFragment;
   username?: string;
 };
 
@@ -50,10 +46,10 @@ interface AuthControl {
   logout: () => void;
   mostRecentlyUsedCredentials?: MRUCredentials | null;
   setError?: (error: AuthError) => void;
-  setStore: (store: Store) => void;
-  store?: Store;
+  setStore: (store: UserStoreNodeFragment) => void;
+  store?: UserStoreNodeFragment;
   storeId: string;
-  token?: string;
+  token: string;
   user?: User;
 }
 
@@ -90,6 +86,7 @@ const useRefreshingAuth = (
   }, [enabled, isSuccess, data]);
 };
 const AuthContext = createContext<AuthControl>({
+  token: '',
   isLoggingIn: false,
   login: () =>
     new Promise(() => ({
@@ -108,11 +105,12 @@ export const AuthProvider: FC = ({ children }) => {
   const i18n = IntlUtils.useI18N();
   const defaultLanguage = IntlUtils.useDefaultLanguage();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
-  const { mutateAsync: getStores } = useStores();
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
   const [error, setError] = useLocalStorage('/auth/error');
   const storeId = cookie?.store?.id ?? '';
+  const { mutateAsync: getStores } = useUserDetails();
+  const { setHeader } = useGql();
 
   const saveToken = (token?: string) => {
     const authCookie = getAuthCookie();
@@ -124,20 +122,31 @@ export const AuthProvider: FC = ({ children }) => {
 
   // returns MRU store, if set
   // or the first store in the list
-  // TODO: return default store rather than first - currently not provided by API
-  const getStore = async () => {
-    if (mostRecentlyUsedCredentials?.store)
-      return mostRecentlyUsedCredentials.store;
+  const getStore = async (token?: string) => {
+    const userDetails = await getStores(token);
+    const defaultStore = userDetails?.defaultStore;
+    const stores = userDetails?.stores.nodes;
 
-    const { nodes } = (await getStores()) || {};
-    return !!nodes && nodes?.length && nodes?.length > 0
-      ? nodes?.[0]
-      : undefined;
+    if (
+      mostRecentlyUsedCredentials?.store &&
+      stores?.some(store => store.id === mostRecentlyUsedCredentials?.store?.id)
+    ) {
+      return (
+        stores.find(
+          store => store.id === mostRecentlyUsedCredentials.store?.id
+        ) || mostRecentlyUsedCredentials.store
+      );
+    }
+
+    if (!!defaultStore) return defaultStore;
+
+    return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
   };
 
   const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
-    const store = await getStore();
+    setHeader('Authorization', `Bearer ${token}`);
+    const store = await getStore(token);
     const authCookie = {
       store,
       token,
@@ -154,12 +163,12 @@ export const AuthProvider: FC = ({ children }) => {
     setMRUCredentials({ username, store });
     setAuthCookie(authCookie);
     setCookie(authCookie);
-    setError(undefined);
+    setError(store ? undefined : AuthError.NoStoreAssigned);
 
     return { token, error };
   };
 
-  const setStore = (store: Store) => {
+  const setStore = (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
 
     setMRUCredentials({
@@ -185,7 +194,7 @@ export const AuthProvider: FC = ({ children }) => {
       login,
       logout,
       storeId,
-      token: cookie?.token,
+      token: cookie?.token || '',
       user: cookie?.user,
       store: cookie?.store,
       mostRecentlyUsedCredentials,

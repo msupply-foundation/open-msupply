@@ -1,5 +1,6 @@
 import { SupportedLocales } from '@common/intl';
 import { ThemeOptions } from '@mui/material';
+import { UserStoreNodeFragment } from '../authentication/api/operations.generated';
 import { AuthError } from '../authentication/AuthContext';
 
 export type GroupByItem = {
@@ -7,7 +8,7 @@ export type GroupByItem = {
   inboundShipment?: boolean;
 };
 type AuthenticationCredentials = {
-  store?: { id: string; code: string; __typename: 'StoreNode' } | undefined;
+  store?: UserStoreNodeFragment | undefined;
   username: string;
 };
 

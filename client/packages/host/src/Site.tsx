@@ -14,6 +14,9 @@ import {
   useLocation,
   useHostContext,
   useGetPageTitle,
+  useAuthContext,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -35,6 +38,17 @@ const Heading: FC = ({ children }) => (
   </div>
 );
 
+const NotifyOnLogin = () => {
+  const { success } = useNotification();
+  const { store } = useAuthContext();
+  const t = useTranslation('app');
+  useEffect(() => {
+    if (!!store) success(t('login.store-changed', { store: store.name }))();
+  }, [store]);
+
+  return <></>;
+};
+
 export const Site: FC = () => {
   const location = useLocation();
   const getPageTitle = useGetPageTitle();
@@ -51,6 +65,7 @@ export const Site: FC = () => {
           <AppDrawer />
           <Box flex={1} display="flex" flexDirection="column" overflow="hidden">
             <AppBar />
+            <NotifyOnLogin />
             <Box display="flex" flex={1} overflow="auto">
               <Routes>
                 <Route
