@@ -288,9 +288,11 @@ impl ValidationServiceTrait for ValidationService {
         };
 
         // TODO temp validation of  Resource::MutateRequisition
-        if let (Some(store_id), Resource::MutateRequisition) =
-            (&resource_request.store_id, &resource_request.resource)
-        {
+        if let (Some(store_id), Resource::MutateRequisition, false) = (
+            &resource_request.store_id,
+            &resource_request.resource,
+            auth_data.debug_no_access_control,
+        ) {
             let connection = self.connection_manager.connection()?;
 
             let matched_permission = UserPermissionRepository::new(&connection).query_by_filter(
