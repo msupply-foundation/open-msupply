@@ -1,5 +1,5 @@
 use super::*;
-use crate::loader::{ItemLoader, StoreByIdLoader, UserAccountLoader};
+use crate::loader::{ItemLoader, StoreByIdLoader, UserLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
@@ -99,7 +99,7 @@ pub async fn get_loaders(
     );
 
     let user_account_loader = DataLoader::new(
-        UserAccountLoader {
+        UserLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,
@@ -175,6 +175,13 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let name_row_loader = DataLoader::new(
+        NameRowLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -196,6 +203,7 @@ pub async fn get_loaders(
     loaders.insert(stocktake_line_loader);
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
+    loaders.insert(name_row_loader);
 
     loaders
 }

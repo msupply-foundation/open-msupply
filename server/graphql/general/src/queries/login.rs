@@ -1,13 +1,11 @@
 use async_graphql::*;
-use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError},
-    ContextExt,
-};
+use chrono::Utc;
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use reqwest::header::SET_COOKIE;
 use service::{
-    token::{JWTIssuingError, TokenPair, TokenService},
-    user_account::UserAccountService,
+    login::{LoginError, LoginInput, LoginService},
+    token::TokenPair,
 };
 
 pub struct AuthToken {
@@ -22,14 +20,6 @@ impl AuthToken {
     }
 }
 
-pub struct UserNameDoesNotExist;
-#[Object]
-impl UserNameDoesNotExist {
-    pub async fn description(&self) -> &'static str {
-        "User does not exist"
-    }
-}
-
 pub struct InvalidCredentials;
 #[Object]
 impl InvalidCredentials {
@@ -41,10 +31,7 @@ impl InvalidCredentials {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum AuthTokenErrorInterface {
-    DatabaseError(DatabaseError),
-    UserNameDoesNotExist(UserNameDoesNotExist),
     InvalidCredentials(InvalidCredentials),
-    InternalError(InternalError),
 }
 
 #[derive(SimpleObject)]
@@ -54,75 +41,57 @@ pub struct AuthTokenError {
 
 #[derive(Union)]
 pub enum AuthTokenResponse {
-    Error(AuthTokenError),
     Response(AuthToken),
+    Error(AuthTokenError),
 }
 
-pub fn login(ctx: &Context<'_>, username: &str, password: &str) -> AuthTokenResponse {
-    let connection_manager = ctx.get_connection_manager();
-    let con = match connection_manager.connection() {
-        Ok(con) => con,
-        Err(err) => {
-            return AuthTokenResponse::Error(AuthTokenError {
-                error: AuthTokenErrorInterface::DatabaseError(DatabaseError(err)),
-            })
-        }
-    };
-    let user_service = UserAccountService::new(&con);
-    let user_account = match user_service.verify_password(username, password) {
-        Ok(user) => user,
-        Err(err) => {
-            return AuthTokenResponse::Error(AuthTokenError {
-                error: match err {
-                    service::user_account::VerifyPasswordError::UsernameDoesNotExist => {
-                        AuthTokenErrorInterface::UserNameDoesNotExist(UserNameDoesNotExist)
-                    }
-                    service::user_account::VerifyPasswordError::InvalidCredentials => {
-                        AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials)
-                    }
-                    service::user_account::VerifyPasswordError::InvalidCredentialsBackend(_) => {
-                        AuthTokenErrorInterface::InternalError(InternalError(
-                            "Failed to read credentials".to_string(),
-                        ))
-                    }
-                    service::user_account::VerifyPasswordError::DatabaseError(e) => {
-                        AuthTokenErrorInterface::DatabaseError(DatabaseError(e))
-                    }
-                },
-            })
-        }
-    };
-
+pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<AuthTokenResponse> {
+    let service_provider = ctx.service_provider();
     let auth_data = ctx.get_auth_data();
-    let mut token_service = TokenService::new(
-        &auth_data.token_bucket,
-        auth_data.auth_token_secret.as_bytes(),
-    );
-    let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
-    let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
-    let pair = match token_service.jwt_token(&user_account.id, max_age_token, max_age_refresh) {
+    let sync_settings = ctx.get_sync_settings();
+    let pair = match LoginService::login(
+        service_provider,
+        auth_data,
+        LoginInput {
+            username: username.to_string(),
+            password: password.to_string(),
+            central_server_url: sync_settings.url.clone(),
+        },
+    )
+    .await
+    {
         Ok(pair) => pair,
-        Err(err) => {
-            return AuthTokenResponse::Error(AuthTokenError {
-                error: match err {
-                    JWTIssuingError::CanNotCreateToken(_) => {
-                        AuthTokenErrorInterface::InternalError(InternalError(
-                            "Can not create token".to_string(),
-                        ))
-                    }
-                    JWTIssuingError::ConcurrencyLockError(_) => {
-                        AuthTokenErrorInterface::InternalError(InternalError(
-                            "Lock error".to_string(),
-                        ))
-                    }
-                },
-            })
+        Err(error) => {
+            let formatted_error = format!("{:#?}", error);
+            let graphql_error = match error {
+                LoginError::LoginFailure => {
+                    return Ok(AuthTokenResponse::Error(AuthTokenError {
+                        error: AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials {}),
+                    }))
+                }
+                LoginError::FailedToGenerateToken(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+                LoginError::InternalError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+                LoginError::DatabaseError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+            };
+            return Err(graphql_error.extend());
         }
     };
 
-    set_refresh_token_cookie(ctx, &pair.refresh, max_age_refresh, auth_data.debug_no_ssl);
+    let now = Utc::now().timestamp() as usize;
+    set_refresh_token_cookie(
+        &ctx,
+        &pair.refresh,
+        pair.refresh_expiry_date - now,
+        auth_data.debug_no_ssl,
+    );
 
-    AuthTokenResponse::Response(AuthToken { pair })
+    Ok(AuthTokenResponse::Response(AuthToken { pair }))
 }
 
 /// Store refresh token in a cookie:

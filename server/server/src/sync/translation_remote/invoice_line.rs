@@ -8,12 +8,10 @@ use repository::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     date_option_to_isostring, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_TRANS_LINE,
 };
 
@@ -27,8 +25,10 @@ pub enum LegacyTransLineType {
     Placeholder,
     #[serde(rename = "service")]
     Service,
-    #[serde(rename = "non_stock")]
-    NonStock,
+    /// Bucket to catch all other variants
+    /// E.g. "non_stock"
+    #[serde(other)]
+    Others,
 }
 
 #[allow(non_snake_case)]
@@ -53,10 +53,21 @@ pub struct LegacyTransLineRow {
     pub sell_price: f64,
     #[serde(rename = "type")]
     pub _type: LegacyTransLineType,
-    // number of packs
-    pub quantity: i32,
+    #[serde(rename = "quantity")]
+    pub number_of_packs: i32,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub note: Option<String>,
+
+    #[serde(rename = "om_item_code")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(default)]
+    pub item_code: Option<String>,
+    #[serde(rename = "om_tax")]
+    pub tax: Option<f64>,
+    #[serde(rename = "om_total_before_tax")]
+    pub total_before_tax: Option<f64>,
+    #[serde(rename = "om_total_after_tax")]
+    pub total_after_tax: Option<f64>,
 }
 
 pub struct InvoiceLineTranslation {}
@@ -65,50 +76,51 @@ impl RemotePullTranslation for InvoiceLineTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_TRANS_LINE;
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyTransLineRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
+        let data = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
-        let item = match ItemRepository::new(connection)
-            .find_one_by_id(&data.item_ID)
-            .map_err(|source| SyncTranslationError {
-                table_name,
-                source: source.into(),
-                record: sync_record.data.clone(),
-            })? {
-            Some(item) => item,
+        let line_type = to_invoice_line_type(&data._type).ok_or(anyhow::Error::msg(format!(
+            "Unsupported trans_line type: {:?}",
+            data._type
+        )))?;
+
+        let (item_code, tax, total_before_tax, total_after_tax) = match data.item_code {
+            Some(item_code) => {
+                // use new om_* fields
+                (
+                    item_code,
+                    data.tax,
+                    data.total_before_tax.unwrap_or(0.0),
+                    data.total_after_tax.unwrap_or(0.0),
+                )
+            }
             None => {
-                return Err(SyncTranslationError {
-                    table_name,
-                    source: anyhow::Error::msg(format!("Failed to get item: {}", data.item_ID)),
-                    record: sync_record.data.clone(),
-                })
+                let item = match ItemRepository::new(connection).find_one_by_id(&data.item_ID)? {
+                    Some(item) => item,
+                    None => {
+                        return Err(anyhow::Error::msg(format!(
+                            "Failed to get item: {}",
+                            data.item_ID
+                        )))
+                    }
+                };
+                let total = total(&data);
+                (item.code, None, total, total)
             }
         };
-        let line_type = to_invoice_line_type(&data._type).ok_or(SyncTranslationError {
-            table_name,
-            source: anyhow::Error::msg(format!("Unsupported trans_line type: {:?}", data._type)),
-            record: sync_record.data.clone(),
-        })?;
-        let total = total(&data);
+
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
                 id: data.ID,
                 invoice_id: data.transaction_ID,
                 item_id: data.item_ID,
                 item_name: data.item_name,
-                item_code: item.code,
+                item_code,
                 stock_line_id: data.item_line_ID,
                 location_id: data.location_ID,
                 batch: data.batch,
@@ -116,11 +128,11 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 pack_size: data.pack_size,
                 cost_price_per_pack: data.cost_price,
                 sell_price_per_pack: data.sell_price,
-                total_before_tax: total,
-                total_after_tax: total,
-                tax: None,
+                total_before_tax,
+                total_after_tax,
+                tax,
                 r#type: line_type,
-                number_of_packs: data.quantity / data.pack_size,
+                number_of_packs: data.number_of_packs,
                 note: data.note,
             }),
         )))
@@ -129,11 +141,9 @@ impl RemotePullTranslation for InvoiceLineTranslation {
 
 fn total(data: &LegacyTransLineRow) -> f64 {
     match data._type {
-        LegacyTransLineType::StockIn => data.cost_price * data.quantity as f64,
-        LegacyTransLineType::StockOut => data.sell_price * data.quantity as f64,
-        LegacyTransLineType::Placeholder => 0.0,
-        LegacyTransLineType::Service => 0.0,
-        LegacyTransLineType::NonStock => 0.0,
+        LegacyTransLineType::StockIn => data.cost_price * data.number_of_packs as f64,
+        LegacyTransLineType::StockOut => data.sell_price * data.number_of_packs as f64,
+        _ => 0.0,
     }
 }
 
@@ -143,7 +153,7 @@ fn to_invoice_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowTyp
         LegacyTransLineType::StockOut => InvoiceLineRowType::StockOut,
         LegacyTransLineType::Placeholder => InvoiceLineRowType::UnallocatedStock,
         LegacyTransLineType::Service => InvoiceLineRowType::Service,
-        LegacyTransLineType::NonStock => return None,
+        _ => return None,
     };
     Some(invoice_line_type)
 }
@@ -153,7 +163,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::InvoiceLine {
             return Ok(None);
         }
@@ -164,8 +174,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             invoice_id,
             item_id,
             item_name,
-            // TODO
-            item_code: _,
+            item_code,
             stock_line_id,
             location_id,
             batch,
@@ -173,16 +182,13 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
-            total_before_tax: _,
-            total_after_tax: _,
-            // TODO
-            tax: _,
+            total_before_tax,
+            total_after_tax,
+            tax,
             r#type,
             number_of_packs,
             note,
-        } = InvoiceLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?;
+        } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
 
         let legacy_row = LegacyTransLineRow {
             ID: id.clone(),
@@ -197,8 +203,12 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             cost_price: cost_price_per_pack,
             sell_price: sell_price_per_pack,
             _type: to_legacy_invoice_line_type(&r#type),
-            quantity: pack_size * number_of_packs,
+            number_of_packs,
             note,
+            item_code: Some(item_code),
+            tax,
+            total_before_tax: Some(total_before_tax),
+            total_after_tax: Some(total_after_tax),
         };
 
         Ok(Some(vec![PushUpsertRecord {
@@ -207,8 +217,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             store_id: None,
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
     }
 }

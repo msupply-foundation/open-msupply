@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, RemoteSyncBufferRow, RequisitionRow,
@@ -10,13 +10,11 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
-use crate::sync::SyncTranslationError;
-
 use super::{
     date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
-    empty_str_as_option,
+    empty_date_time_as_option, empty_str_as_option,
     pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{to_push_translation_error, PushUpsertRecord, RemotePushUpsertTranslation},
+    push::{PushUpsertRecord, RemotePushUpsertTranslation},
     zero_date_as_option, TRANSLATION_RECORD_REQUISITION,
 };
 
@@ -43,6 +41,9 @@ pub enum LegacyRequisitionType {
     /// A requisition that is for reporting purposes only.
     #[serde(rename = "report")]
     Report,
+    /// Bucket to catch all other variants
+    #[serde(other)]
+    Others,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -56,12 +57,10 @@ pub enum LegacyRequisitionStatus {
     /// finalised
     #[serde(rename = "fn")]
     Fn,
-    /// web: still in progress
-    #[serde(rename = "wp")]
-    Wp,
-    /// finalised by customer after web submission
-    #[serde(rename = "wf")]
-    Wf,
+    /// Bucket to catch all other variants
+    /// E.g. "wp" (web progress), "wf" (web finalised)
+    #[serde(other)]
+    Others,
 }
 
 #[allow(non_snake_case)]
@@ -79,25 +78,47 @@ pub struct LegacyRequisitionRow {
     // created_datetime
     #[serde(serialize_with = "date_to_isostring")]
     pub date_entered: NaiveDate,
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
-    pub date_stock_take: Option<NaiveDate>,
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
-    pub date_order_received: Option<NaiveDate>,
+
+    #[serde(rename = "lastModifiedAt")]
+    pub last_modified_at: i64,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub requester_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub linked_requisition_id: Option<String>,
     /// min_months_of_stock
     pub thresholdMOS: f64,
-    // TODO needs a om_max_months_of_stock value in mSupply
+    /// relates to max_months_of_stock
     pub daysToSupply: i64,
 
-    /// Colour number mapped to an internal colour
-    pub colour: Option<i64>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
+
+    #[serde(rename = "om_created_datetime")]
+    pub created_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_sent_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub sent_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_finalised_datetime")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_date_time_as_option")]
+    pub finalised_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "om_expected_delivery_date")]
+    #[serde(default)]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub expected_delivery_date: Option<NaiveDate>,
+
+    #[serde(rename = "om_max_months_of_stock")]
+    pub max_months_of_stock: Option<f64>,
+    pub om_status: Option<RequisitionRowStatus>,
+    /// We ignore the legacy colour field
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(default)]
+    pub om_colour: Option<String>,
 }
 
 pub struct RequisitionTranslation {}
@@ -106,35 +127,49 @@ impl RemotePullTranslation for RequisitionTranslation {
         &self,
         _: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_REQUISITION;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
-        let data =
-            serde_json::from_str::<LegacyRequisitionRow>(&sync_record.data).map_err(|source| {
-                SyncTranslationError {
-                    table_name,
-                    source: source.into(),
-                    record: sync_record.data.clone(),
-                }
-            })?;
+        let data = serde_json::from_str::<LegacyRequisitionRow>(&sync_record.data)?;
+        let r#type = from_legacy_type(&data.r#type).ok_or(anyhow::Error::msg(format!(
+            "Unsupported requisition type: {:?}",
+            data.r#type
+        )))?;
+        let (
+            created_datetime,
+            sent_datetime,
+            finalised_datetime,
+            max_months_of_stock,
+            status,
+            colour,
+        ) = match data.created_datetime {
+            // use new om_* fields
+            Some(created_datetime) => (
+                created_datetime,
+                data.sent_datetime,
+                data.finalised_datetime,
+                data.max_months_of_stock.unwrap_or(0.0),
+                data.om_status.ok_or(anyhow::Error::msg(
+                    "Invalid data: om_created_datetime set but om_status missing",
+                ))?,
+                data.om_colour,
+            ),
+            None => (
+                date_and_time_to_datatime(data.date_entered, 0),
+                from_legacy_sent_datetime(data.last_modified_at, &r#type),
+                from_legacy_finalised_datetime(data.last_modified_at, &r#type),
+                data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
+                from_legacy_status(&data.r#type, &data.status).ok_or(anyhow::Error::msg(
+                    format!("Unsupported requisition status: {:?}", data.status),
+                ))?,
+                None,
+            ),
+        };
 
-        let t = from_legacy_type(&data.r#type).ok_or(SyncTranslationError {
-            table_name,
-            source: anyhow::Error::msg(format!("Unsupported requisition type: {:?}", data.r#type)),
-            record: sync_record.data.clone(),
-        })?;
-        let status = from_legacy_status(&data.status).ok_or(SyncTranslationError {
-            table_name,
-            source: anyhow::Error::msg(format!(
-                "Unsupported requisition status: {:?}",
-                data.status
-            )),
-            record: sync_record.data.clone(),
-        })?;
         Ok(Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::Requisition(RequisitionRow {
                 id: data.ID.to_string(),
@@ -142,23 +177,52 @@ impl RemotePullTranslation for RequisitionTranslation {
                 requisition_number: data.serial_number,
                 name_id: data.name_ID,
                 store_id: data.store_ID,
-                r#type: t,
+                r#type,
                 status,
-                created_datetime: date_and_time_to_datatime(data.date_entered, 0),
-                // TODO needs new field in mSupply
-                sent_datetime: None,
-                // TODO needs new field in mSupply
-                finalised_datetime: None,
-                colour: data.colour.and_then(|colour| req_colour_to_hex(colour)),
+                created_datetime,
+                sent_datetime,
+                finalised_datetime,
+                colour,
                 comment: data.comment,
                 their_reference: data.requester_reference,
-                max_months_of_stock: data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
+                max_months_of_stock,
                 min_months_of_stock: data.thresholdMOS,
                 linked_requisition_id: data.linked_requisition_id,
-                // TODO translate om_expected_delivery_date
-                expected_delivery_date: None,
+                expected_delivery_date: data.expected_delivery_date,
             }),
         )))
+    }
+}
+
+fn from_legacy_sent_datetime(
+    last_modified_at: i64,
+    r#type: &RequisitionRowType,
+) -> Option<NaiveDateTime> {
+    match r#type {
+        RequisitionRowType::Request => {
+            if last_modified_at > 0 {
+                Some(NaiveDateTime::from_timestamp(last_modified_at, 0))
+            } else {
+                None
+            }
+        }
+        RequisitionRowType::Response => None,
+    }
+}
+
+fn from_legacy_finalised_datetime(
+    last_modified_at: i64,
+    r#type: &RequisitionRowType,
+) -> Option<NaiveDateTime> {
+    match r#type {
+        RequisitionRowType::Request => None,
+        RequisitionRowType::Response => {
+            if last_modified_at > 0 {
+                Some(NaiveDateTime::from_timestamp(last_modified_at, 0))
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -167,7 +231,7 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError> {
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
         if changelog.table_name != ChangelogTableName::Requisition {
             return Ok(None);
         }
@@ -182,26 +246,21 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             r#type,
             status,
             created_datetime,
-            // TODO:
-            sent_datetime: _,
-            // TODO:
-            finalised_datetime: _,
+            sent_datetime,
+            finalised_datetime,
             colour,
             comment,
             their_reference,
             max_months_of_stock,
             min_months_of_stock,
             linked_requisition_id,
-            // TODO translate om_expected_delivery_date
-            expected_delivery_date: _,
+            expected_delivery_date,
         } = RequisitionRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)
-            .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?
-            .ok_or(to_push_translation_error(
-                table_name,
-                anyhow::Error::msg(format!("Requisition row not found: {}", changelog.row_id)),
-                changelog,
-            ))?;
+            .find_one_by_id(&changelog.row_id)?
+            .ok_or(anyhow::Error::msg(format!(
+                "Requisition row not found: {}",
+                changelog.row_id
+            )))?;
 
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),
@@ -210,18 +269,27 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             name_ID: name_id,
             store_ID: store_id.clone(),
             r#type: to_legacy_type(&r#type),
-            status: to_legacy_status(&status),
+            status: to_legacy_status(&r#type, &status).ok_or(anyhow::Error::msg(format!(
+                "Unexpected row requisition status {:?} (type: {:?}), row id:{}",
+                status, r#type, changelog.row_id
+            )))?,
+            om_status: Some(status),
             date_entered: date_from_date_time(&created_datetime),
-            // TODO
-            date_stock_take: None,
-            // TODO
-            date_order_received: None,
+            created_datetime: Some(created_datetime),
+            last_modified_at: to_legacy_last_modified_at(
+                &r#type,
+                sent_datetime,
+                finalised_datetime,
+            ),
+            sent_datetime: sent_datetime,
+            finalised_datetime: finalised_datetime,
+            expected_delivery_date,
             requester_reference: their_reference,
             linked_requisition_id,
             thresholdMOS: min_months_of_stock,
             daysToSupply: (NUMBER_OF_DAYS_IN_A_MONTH * max_months_of_stock) as i64,
-            // Note, this loses the color if colour is not supported by mSupply
-            colour: colour.and_then(|colour| hex_colour_to_req_colour(&colour)),
+            max_months_of_stock: Some(max_months_of_stock),
+            om_colour: colour.clone(),
             comment,
         };
 
@@ -230,9 +298,21 @@ impl RemotePushUpsertTranslation for RequisitionTranslation {
             store_id: Some(store_id),
             table_name,
             record_id: id,
-            data: serde_json::to_value(&legacy_row)
-                .map_err(|err| to_push_translation_error(table_name, err.into(), changelog))?,
+            data: serde_json::to_value(&legacy_row)?,
         }]))
+    }
+}
+
+fn to_legacy_last_modified_at(
+    r#type: &RequisitionRowType,
+    sent_datetime: Option<NaiveDateTime>,
+    finalised_datetime: Option<NaiveDateTime>,
+) -> i64 {
+    match r#type {
+        RequisitionRowType::Request => sent_datetime.map(|time| time.timestamp()).unwrap_or(0),
+        RequisitionRowType::Response => {
+            finalised_datetime.map(|time| time.timestamp()).unwrap_or(0)
+        }
     }
 }
 
@@ -252,59 +332,70 @@ fn to_legacy_type(t: &RequisitionRowType) -> LegacyRequisitionType {
     }
 }
 
-fn from_legacy_status(status: &LegacyRequisitionStatus) -> Option<RequisitionRowStatus> {
-    let status = match status {
-        LegacyRequisitionStatus::Sg => RequisitionRowStatus::Draft,
-        &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
-        LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
+fn from_legacy_status(
+    r#type: &LegacyRequisitionType,
+    status: &LegacyRequisitionStatus,
+) -> Option<RequisitionRowStatus> {
+    let status = match r#type {
+        LegacyRequisitionType::Request => match status {
+            LegacyRequisitionStatus::Sg => RequisitionRowStatus::Draft,
+            &LegacyRequisitionStatus::Cn => RequisitionRowStatus::Sent,
+            LegacyRequisitionStatus::Fn => RequisitionRowStatus::Sent,
+            _ => return None,
+        },
+        LegacyRequisitionType::Response => match status {
+            LegacyRequisitionStatus::Sg => return None,
+            &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
+            LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
+            _ => return None,
+        },
         _ => return None,
     };
     Some(status)
 }
 
-fn to_legacy_status(status: &RequisitionRowStatus) -> LegacyRequisitionStatus {
-    match status {
-        RequisitionRowStatus::Draft => LegacyRequisitionStatus::Sg,
-        RequisitionRowStatus::New => LegacyRequisitionStatus::Cn,
-        RequisitionRowStatus::Sent => LegacyRequisitionStatus::Fn,
-        RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
+fn to_legacy_status(
+    r#type: &RequisitionRowType,
+    status: &RequisitionRowStatus,
+) -> Option<LegacyRequisitionStatus> {
+    let status = match r#type {
+        RequisitionRowType::Request => match status {
+            RequisitionRowStatus::Draft => LegacyRequisitionStatus::Sg,
+            RequisitionRowStatus::Sent => LegacyRequisitionStatus::Fn,
+            RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
+            _ => return None,
+        },
+        RequisitionRowType::Response => match status {
+            RequisitionRowStatus::New => LegacyRequisitionStatus::Cn,
+            RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
+            _ => return None,
+        },
+    };
+    Some(status)
+}
+
+#[cfg(test)]
+mod tests {
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    use crate::sync::translation_remote::{
+        pull::RemotePullTranslation, test_data::requisition::get_test_requisition_records,
+    };
+
+    use super::RequisitionTranslation;
+
+    #[actix_rt::test]
+    async fn test_requisition_translation() {
+        let (_, connection, _, _) =
+            setup_all("test_requisition_translation", MockDataInserts::all()).await;
+
+        let translator = RequisitionTranslation {};
+        for record in get_test_requisition_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.remote_sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
-}
-
-fn hex_colour_to_req_colour(colour: &str) -> Option<i64> {
-    let colour = match colour {
-        "#1A1919" => 1,
-        "#F57231" => 2,
-        "#F982D8" => 3,
-        "#F40E29" => 4,
-        "#8AD6FE" => 5,
-        "#3B10FD" => 6,
-        "#219205" => 7,
-        "#8C000D" => 8,
-        _ => return None,
-    };
-    Some(colour)
-}
-
-fn req_colour_to_hex(colour: i64) -> Option<String> {
-    let colour = match colour {
-        // black
-        1 => "#1A1919",
-        // orange
-        2 => "#F57231",
-        // red
-        3 => "#F982D8",
-        // red ribbon
-        4 => "#F40E29",
-        // cyan
-        5 => "#8AD6FE",
-        // blue
-        6 => "#3B10FD",
-        // green
-        7 => "#219205",
-        // brown
-        8 => "#8C000D",
-        _ => return None,
-    };
-    Some(colour.to_string())
 }

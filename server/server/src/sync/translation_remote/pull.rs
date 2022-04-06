@@ -1,11 +1,11 @@
 use log::{info, warn};
 use repository::{
     schema::{
-        InvoiceLineRow, InvoiceRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow,
+        InvoiceLineRow, InvoiceRow, LocationRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow,
         RequisitionLineRow, RequisitionRow, StockLineRow, StocktakeLineRow, StocktakeRow,
     },
-    InvoiceLineRowRepository, InvoiceRepository, NameStoreJoinRepository, NumberRowRepository,
-    RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
+    InvoiceLineRowRepository, InvoiceRepository, LocationRowRepository, NameStoreJoinRepository,
+    NumberRowRepository, RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
     StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
     TransactionError,
 };
@@ -13,10 +13,10 @@ use repository::{
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
-        requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
-        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
-        stocktake_line::StocktakeLineTranslation,
+        location::LocationTranslation, name_store_join::NameStoreJoinTranslation,
+        number::NumberTranslation, requisition::RequisitionTranslation,
+        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
+        stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
     },
     SyncImportError, SyncTranslationError,
 };
@@ -24,6 +24,7 @@ use crate::sync::{
 #[derive(Debug, Clone, PartialEq)]
 pub enum IntegrationUpsertRecord {
     Number(NumberRow),
+    Location(LocationRow),
     StockLine(StockLineRow),
     NameStoreJoin(NameStoreJoinRow),
     Invoice(InvoiceRow),
@@ -51,7 +52,7 @@ pub trait RemotePullTranslation {
         &self,
         connection: &StorageConnection,
         sync_record: &RemoteSyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, SyncTranslationError>;
+    ) -> Result<Option<IntegrationRecord>, anyhow::Error>;
 }
 
 /// Imports sync records and writes them to the DB
@@ -87,6 +88,7 @@ fn do_translation(
 ) -> Result<(), SyncTranslationError> {
     let translations: Vec<Box<dyn RemotePullTranslation>> = vec![
         Box::new(NumberTranslation {}),
+        Box::new(LocationTranslation {}),
         Box::new(StockLineTranslation {}),
         // Don't pull name store joins for now
         Box::new(NameStoreJoinTranslation {}),
@@ -103,7 +105,15 @@ fn do_translation(
                 records.upserts.append(&mut result.upserts);
                 return Ok(());
             }
-            Err(error) => warn!("Failed to translate ({}): {:?}", error, sync_record),
+            Err(error) => warn!(
+                "Failed to translate ({}): {:?}",
+                SyncTranslationError {
+                    table_name: sync_record.table_name.clone(),
+                    source: error,
+                    record: format!("{:?}", sync_record),
+                },
+                sync_record
+            ),
             _ => {}
         };
     }
@@ -117,6 +127,9 @@ fn integrate_record(
 ) -> Result<(), RepositoryError> {
     match &record {
         IntegrationUpsertRecord::Number(record) => NumberRowRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::Location(record) => {
+            LocationRowRepository::new(con).upsert_one(record)
+        }
         IntegrationUpsertRecord::StockLine(record) => {
             StockLineRowRepository::new(con).upsert_one(record)
         }

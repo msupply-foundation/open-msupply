@@ -1,7 +1,9 @@
-use crate::sync::{translation_central::TRANSLATION_RECORD_ITEM, SyncTranslationError};
+use crate::sync::translation_central::TRANSLATION_RECORD_ITEM;
 use repository::schema::{CentralSyncBufferRow, ItemRow, ItemRowType};
 
 use serde::Deserialize;
+
+use super::{CentralPushTranslation, IntegrationUpsertRecord};
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize)]
@@ -29,22 +31,18 @@ fn to_item_type(type_of: LegacyItemType) -> ItemRowType {
     }
 }
 
-impl LegacyItemRow {
-    pub fn try_translate(
+pub struct ItemTranslation {}
+impl CentralPushTranslation for ItemTranslation {
+    fn try_translate(
+        &self,
         sync_record: &CentralSyncBufferRow,
-    ) -> Result<Option<ItemRow>, SyncTranslationError> {
+    ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_ITEM;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
-        let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data).map_err(|source| {
-            SyncTranslationError {
-                table_name,
-                source: source.into(),
-                record: sync_record.data.clone(),
-            }
-        })?;
+        let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)?;
 
         let mut result = ItemRow {
             id: data.ID,
@@ -59,15 +57,17 @@ impl LegacyItemRow {
             result.unit_id = Some(data.unit_ID);
         }
 
-        Ok(Some(result))
+        Ok(Some(IntegrationUpsertRecord::Item(result)))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::CentralPushTranslation;
     use crate::sync::translation_central::{
-        item::LegacyItemRow,
+        item::ItemTranslation,
         test_data::{item::get_test_item_records, TestSyncDataRecord},
+        IntegrationUpsertRecord,
     };
 
     #[test]
@@ -76,8 +76,10 @@ mod tests {
             match record.translated_record {
                 TestSyncDataRecord::Item(translated_record) => {
                     assert_eq!(
-                        LegacyItemRow::try_translate(&record.central_sync_buffer_row).unwrap(),
-                        translated_record,
+                        ItemTranslation {}
+                            .try_translate(&record.central_sync_buffer_row)
+                            .unwrap(),
+                        translated_record.map(|r| (IntegrationUpsertRecord::Item(r))),
                         "{}",
                         record.identifier
                     )
