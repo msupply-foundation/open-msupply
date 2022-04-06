@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use repository::schema::{
     ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
     RequisitionLineRow,
@@ -52,7 +53,7 @@ fn requisition_line_request_pull_record() -> TestSyncRecord {
     TestSyncRecord {
         translated_record: Some(IntegrationRecord::from_upsert(
             IntegrationUpsertRecord::RequisitionLine(RequisitionLineRow {
-                id: "66FB0A41C95441ABBBC7905857466089".to_string(),
+                id: REQUISITION_LINE_1.0.to_string(),
                 requisition_id: "mock_request_draft_requisition2".to_string(),
                 item_id: "item_a".to_string(),
                 requested_quantity: 102,
@@ -92,15 +93,107 @@ fn requisition_line_request_push_record() -> TestSyncPushRecord {
             stock_on_hand: 10,
             daily_usage: 3.0,
             comment: None,
+            snapshot_datetime: None,
+        }),
+    }
+}
+
+const REQUISITION_LINE_OM_FIELD: (&'static str, &'static str) = (
+    "ABCB0A41C95441ABBBC7905857466089",
+    r#"{
+        "ID": "ABCB0A41C95441ABBBC7905857466089",
+        "requisition_ID": "mock_request_draft_requisition2",
+        "item_ID": "item_a",
+        "stock_on_hand": 10,
+        "actualQuan": 2,
+        "imprest_or_prev_quantity": 0,
+        "colour": -255,
+        "line_number": 1,
+        "Cust_prev_stock_balance": 0,
+        "Cust_stock_received": 0,
+        "Cust_stock_order": 102,
+        "comment": "Some comment",
+        "Cust_loss_adjust": 0,
+        "days_out_or_new_demand": 0,
+        "previous_stock_on_hand": 0,
+        "daily_usage": 3,
+        "suggested_quantity": 101,
+        "adjusted_consumption": 0,
+        "linked_requisition_line_ID": "",
+        "purchase_order_line_ID": "",
+        "optionID": "",
+        "Cust_stock_issued": 0,
+        "itemName": "Ibuprofen 200mg tablets",
+        "stockLosses": 0,
+        "stockAdditions": 0,
+        "stockExpiring": 0,
+        "DOSforAMCadjustment": 0,
+        "requestedPackSize": 0,
+        "approved_quantity": 0,
+        "authoriser_comment": "",
+        "om_snapshot_datetime": "2022-04-04T14:48:11"
+    }"#,
+);
+fn requisition_line_om_fields_pull_record() -> TestSyncRecord {
+    TestSyncRecord {
+        translated_record: Some(IntegrationRecord::from_upsert(
+            IntegrationUpsertRecord::RequisitionLine(RequisitionLineRow {
+                id: REQUISITION_LINE_OM_FIELD.0.to_string(),
+                requisition_id: "mock_request_draft_requisition2".to_string(),
+                item_id: "item_a".to_string(),
+                requested_quantity: 102,
+                suggested_quantity: 101,
+                supply_quantity: 2,
+                available_stock_on_hand: 10,
+                average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
+                comment: Some("Some comment".to_string()),
+                snapshot_datetime: Some(NaiveDate::from_ymd(2022, 04, 04).and_hms(14, 48, 11)),
+            }),
+        )),
+        identifier: "Requisition line om fields",
+        remote_sync_buffer_row: RemoteSyncBufferRow {
+            id: "Requisition_line_20".to_string(),
+            table_name: TRANSLATION_RECORD_REQUISITION_LINE.to_string(),
+            record_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
+            data: REQUISITION_LINE_OM_FIELD.1.to_string(),
+            action: RemoteSyncBufferAction::Update,
+        },
+    }
+}
+fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
+    TestSyncPushRecord {
+        change_log: ChangelogRow {
+            id: 3,
+            table_name: ChangelogTableName::RequisitionLine,
+            row_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
+            row_action: ChangelogAction::Upsert,
+        },
+        push_data: json!(LegacyRequisitionLineRow {
+            ID: REQUISITION_LINE_OM_FIELD.0.to_string(),
+            requisition_ID: "mock_request_draft_requisition2".to_string(),
+            item_ID: "item_a".to_string(),
+            Cust_stock_order: 102,
+            suggested_quantity: 101,
+            actualQuan: 2,
+            stock_on_hand: 10,
+            daily_usage: 3.0,
+            comment: Some("Some comment".to_string()),
+            snapshot_datetime: Some(NaiveDate::from_ymd(2022, 04, 04).and_hms(14, 48, 11)),
         }),
     }
 }
 
 pub fn get_test_requisition_line_records() -> Vec<TestSyncRecord> {
-    vec![requisition_line_request_pull_record()]
+    vec![
+        requisition_line_request_pull_record(),
+        requisition_line_om_fields_pull_record(),
+    ]
 }
 
 #[allow(dead_code)]
 pub fn get_test_push_requisition_line_records() -> Vec<TestSyncPushRecord> {
-    vec![requisition_line_request_push_record()]
+    vec![
+        requisition_line_request_push_record(),
+        requisition_line_om_fields_push_record(),
+    ]
 }

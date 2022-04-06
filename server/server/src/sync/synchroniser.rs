@@ -1,9 +1,9 @@
 use std::time::Duration;
 
-use crate::settings::SyncSettings;
 use repository::StorageConnectionManager;
 
 use reqwest::{Client, Url};
+use service::sync_settings::SyncSettings;
 
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
@@ -16,8 +16,8 @@ use super::{
 pub struct Synchroniser {
     settings: SyncSettings,
     connection_manager: StorageConnectionManager,
-    central_data: CentralDataSynchroniser,
-    remote_data: RemoteDataSynchroniser,
+    pub(crate) central_data: CentralDataSynchroniser,
+    pub(crate) remote_data: RemoteDataSynchroniser,
 }
 
 /// There are three types of data that is synced between the central server and the remote server:
@@ -95,8 +95,7 @@ impl Synchroniser {
 
         // First push before pulling. This avoids problems with the existing central server
         // implementation...
-        // TODO enable once push is working/tested:
-        //self.remote_data.push_changes(&connection).await?;
+        self.remote_data.push_changes(&connection).await?;
         self.remote_data.pull(&connection).await?;
 
         // Check if there is new data on the central server. Do this after pulling the remote data

@@ -202,7 +202,7 @@ table! {
     user_account (id) {
         id -> Text,
         username -> Text,
-        password -> Text,
+        hashed_password -> Text,
         email -> Nullable<Text>,
     }
 }
@@ -388,14 +388,12 @@ joinable!(stocktake -> user_account (user_id));
 allow_tables_to_appear_in_same_query!(
     unit,
     location,
-    central_sync_buffer,
     item,
     stock_line,
     name,
     requisition,
     requisition_line,
     store,
-    sync_out,
     invoice,
     invoice_line,
     invoice_stats,

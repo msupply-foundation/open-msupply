@@ -4,6 +4,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 mod invoice;
 mod invoice_line;
+mod location;
 mod name_store_join;
 mod number;
 mod requisition;
@@ -19,6 +20,7 @@ pub mod push;
 pub mod test_data;
 
 pub const TRANSLATION_RECORD_NUMBER: &'static str = "number";
+pub const TRANSLATION_RECORD_LOCATION: &'static str = "Location";
 /// stock line
 pub const TRANSLATION_RECORD_ITEM_LINE: &'static str = "item_line";
 pub const TRANSLATION_RECORD_NAME_STORE_JOIN: &'static str = "name_store_join";
@@ -33,6 +35,7 @@ pub const TRANSLATION_RECORD_REQUISITION_LINE: &'static str = "requisition_line"
 /// at the beginning of the list don't rely on later items to be translated first.
 pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_NUMBER,
+    TRANSLATION_RECORD_LOCATION,
     TRANSLATION_RECORD_ITEM_LINE,
     TRANSLATION_RECORD_NAME_STORE_JOIN,
     TRANSLATION_RECORD_TRANSACT,
@@ -46,6 +49,7 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
 pub fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
     match table {
         ChangelogTableName::Number => TRANSLATION_RECORD_NUMBER,
+        ChangelogTableName::Location => TRANSLATION_RECORD_LOCATION,
         ChangelogTableName::StockLine => TRANSLATION_RECORD_ITEM_LINE,
         ChangelogTableName::NameStoreJoin => TRANSLATION_RECORD_NAME_STORE_JOIN,
         ChangelogTableName::Invoice => TRANSLATION_RECORD_TRANSACT,
@@ -66,6 +70,14 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
     let s: Option<String> = Option::deserialize(d)?;
     Ok(s.filter(|s| s != "0000-00-00")
         .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
+}
+
+pub fn empty_date_time_as_option<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<NaiveDateTime>, D::Error> {
+    let s: Option<String> = Option::deserialize(d)?;
+    Ok(s.filter(|s| s != "")
+        .and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok()))
 }
 
 pub fn date_and_time_to_datatime(date: NaiveDate, seconds: i64) -> NaiveDateTime {

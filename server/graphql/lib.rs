@@ -30,6 +30,7 @@ use log::info;
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
+use service::sync_settings::SyncSettings;
 
 #[derive(MergedObject, Default, Clone)]
 pub struct FullQuery(
@@ -115,14 +116,16 @@ pub fn build_schema(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
+    sync_settings_data: Data<SyncSettings>,
     self_request: Option<Data<Box<dyn SelfRequest>>>,
     include_logger: bool,
 ) -> Schema {
     let mut builder = schema_builder()
-        .data(connection_manager.clone())
-        .data(loader_registry.clone())
-        .data(service_provider.clone())
-        .data(auth_data.clone());
+        .data(connection_manager)
+        .data(loader_registry)
+        .data(service_provider)
+        .data(auth_data)
+        .data(sync_settings_data);
     match self_request {
         Some(self_request) => builder = builder.data(self_request),
         None => {}
@@ -153,6 +156,7 @@ pub fn config(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
+    sync_settings_data: Data<SyncSettings>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         let self_requester: Data<Box<dyn SelfRequest>> = Data::new(Box::new(SelfRequestImpl {
@@ -161,6 +165,7 @@ pub fn config(
                 loader_registry.clone(),
                 service_provider.clone(),
                 auth_data.clone(),
+                sync_settings_data.clone(),
                 None,
                 false,
             ),
@@ -171,6 +176,7 @@ pub fn config(
             loader_registry,
             service_provider,
             auth_data,
+            sync_settings_data,
             Some(self_requester),
             true,
         );

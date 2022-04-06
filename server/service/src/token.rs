@@ -47,7 +47,7 @@ pub enum JWTValidationError {
     NotAnApiToken,
     InvalidToken(JWTError),
     /// Token has been invalidated on the backend
-    TokenInvalided,
+    TokenInvalidated,
     ConcurrencyLockError(anyhow::Error),
 }
 
@@ -71,11 +71,11 @@ pub enum JWTLogoutError {
 pub struct TokenPair {
     /// The JWT token
     pub token: String,
-    /// expiry date of the token
+    /// expiry date of the token (unix timestamp [s])
     pub expiry_date: usize,
     /// The JWT refresh token
     pub refresh: String,
-    /// Expiry date of the refresh token
+    /// Expiry date of the refresh token (unix timestamp [s])
     pub refresh_expiry_date: usize,
 }
 
@@ -101,14 +101,14 @@ impl<'a> TokenService<'a> {
     pub fn jwt_token(
         &mut self,
         user_id: &str,
-        valid_for: usize,
-        refresh_token_valid_for: usize,
+        valid_for_sec: usize,
+        refresh_token_valid_for_sec: usize,
     ) -> Result<TokenPair, JWTIssuingError> {
         let pair = create_jwt_pair(
             user_id,
             self.jwt_token_secret,
-            valid_for,
-            refresh_token_valid_for,
+            valid_for_sec,
+            refresh_token_valid_for_sec,
         )
         .map_err(|err| {
             error!("jwt_token: {}", err);
@@ -136,10 +136,12 @@ impl<'a> TokenService<'a> {
         refresh_token: &str,
         valid_for: usize,
         refresh_token_valid_for: usize,
+        leeway_sec: Option<u64>,
     ) -> Result<TokenPair, JWTRefreshError> {
         let mut validation = jsonwebtoken::Validation::default();
+        validation.leeway = leeway_sec.unwrap_or(validation.leeway);
         validation.set_audience(&vec![format!("{:?}", Audience::TokenRefresh)]);
-        validation.iss = Some(ISSUER.to_string());
+        validation.set_issuer(&[ISSUER]);
         let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
             refresh_token,
             &jsonwebtoken::DecodingKey::from_secret(self.jwt_token_secret),
@@ -187,10 +189,17 @@ impl<'a> TokenService<'a> {
         Ok(pair)
     }
 
-    pub fn verify_token(&self, token: &str) -> Result<OmSupplyClaim, JWTValidationError> {
+    /// # Arguments
+    /// * `leeway_sec` - leeway duration [s] for the expiry validation
+    pub fn verify_token(
+        &self,
+        token: &str,
+        leeway_sec: Option<u64>,
+    ) -> Result<OmSupplyClaim, JWTValidationError> {
         let mut validation = jsonwebtoken::Validation::default();
+        validation.leeway = leeway_sec.unwrap_or(validation.leeway);
         validation.set_audience(&vec![format!("{:?}", Audience::Api)]);
-        validation.iss = Some(ISSUER.to_string());
+        validation.set_issuer(&[ISSUER]);
         let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
             token,
             &jsonwebtoken::DecodingKey::from_secret(self.jwt_token_secret),
@@ -213,7 +222,7 @@ impl<'a> TokenService<'a> {
             JWTValidationError::ConcurrencyLockError(anyhow!("verify_token: {}", e))
         })?;
         if !token_bucket.contains(&decoded.claims.sub, token) {
-            return Err(JWTValidationError::TokenInvalided);
+            return Err(JWTValidationError::TokenInvalidated);
         }
         Ok(decoded.claims)
     }
@@ -233,12 +242,12 @@ impl<'a> TokenService<'a> {
 fn create_jwt_pair(
     user_id: &str,
     jwt_token_secret: &[u8],
-    valid_for: usize,
-    refresh_valid_for: usize,
+    valid_for_sec: usize,
+    refresh_valid_for_sec: usize,
 ) -> Result<TokenPair, JWTError> {
     let now = Utc::now().timestamp() as usize;
-    let expiry_date = now + valid_for;
-    let refresh_expiry_date = now + refresh_valid_for;
+    let expiry_date = now + valid_for_sec;
+    let refresh_expiry_date = now + refresh_valid_for_sec;
 
     // api token
     let api_claims = OmSupplyClaim {
@@ -293,31 +302,37 @@ mod user_account_test {
         let token_pair = service.jwt_token(user_id, 60, 120).unwrap();
 
         // should be able to verify token
-        let claims = service.verify_token(&token_pair.token).unwrap();
+        let claims = service.verify_token(&token_pair.token, Some(0)).unwrap();
         assert_eq!(user_id, claims.sub);
 
         // should fail to verify with refresh token
-        let err = service.verify_token(&token_pair.refresh).unwrap_err();
+        let err = service
+            .verify_token(&token_pair.refresh, Some(0))
+            .unwrap_err();
         assert!(matches!(err, JWTValidationError::NotAnApiToken));
 
         // should fail to refresh token refresh with api token
         let err = service
-            .refresh_token(&token_pair.token, 60, 120)
+            .refresh_token(&token_pair.token, 60, 120, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTRefreshError::NotARefreshToken));
 
         // should succeed to refresh token
-        let token_pair = service.refresh_token(&token_pair.refresh, 60, 120).unwrap();
-        let claims = service.verify_token(&token_pair.token).unwrap();
+        let token_pair = service
+            .refresh_token(&token_pair.refresh, 60, 120, Some(0))
+            .unwrap();
+        let claims = service.verify_token(&token_pair.token, Some(0)).unwrap();
         // important: sub must still match the user id:
         assert_eq!(user_id, claims.sub);
 
         // should fail to verify and refresh when logged out
         service.logout(&user_id).unwrap();
-        let err = service.verify_token(&token_pair.token).unwrap_err();
-        assert!(matches!(err, JWTValidationError::TokenInvalided));
         let err = service
-            .refresh_token(&token_pair.refresh, 60, 120)
+            .verify_token(&token_pair.token, Some(0))
+            .unwrap_err();
+        assert!(matches!(err, JWTValidationError::TokenInvalidated));
+        let err = service
+            .refresh_token(&token_pair.refresh, 60, 120, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTRefreshError::TokenInvalided));
     }
@@ -332,15 +347,17 @@ mod user_account_test {
         // should be able to create a new token
         let token_pair = service.jwt_token(user_id, 1, 1).unwrap();
         // should be able to verify token
-        let claims = service.verify_token(&token_pair.token).unwrap();
+        let claims = service.verify_token(&token_pair.token, Some(2)).unwrap();
         assert_eq!(user_id, claims.sub);
 
         // granularity is 1 sec so need to wait 2 sec
         std::thread::sleep(std::time::Duration::from_millis(2000));
-        let err = service.verify_token(&token_pair.token).unwrap_err();
+        let err = service
+            .verify_token(&token_pair.token, Some(0))
+            .unwrap_err();
         assert!(matches!(err, JWTValidationError::ExpiredSignature));
         let err = service
-            .refresh_token(&token_pair.refresh, 1, 1)
+            .refresh_token(&token_pair.refresh, 1, 1, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTRefreshError::ExpiredSignature));
     }

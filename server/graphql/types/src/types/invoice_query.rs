@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, UserAccountLoader,
+    InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreByIdLoader},
@@ -102,7 +102,7 @@ impl InvoiceNode {
     /// Null is returned for transfers, where inbound has not been edited yet
     /// Null is also returned for system created invoices like inventory adjustments
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
-        let loader = ctx.get_loader::<DataLoader<UserAccountLoader>>();
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 
         let user_id = match &self.row().user_id {
             Some(user_id) => user_id,

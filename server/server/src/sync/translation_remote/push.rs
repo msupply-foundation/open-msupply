@@ -7,7 +7,7 @@ use repository::{
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
+        location::LocationTranslation, number::NumberTranslation,
         requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
         stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
         stocktake_line::StocktakeLineTranslation, table_name_to_central,
@@ -21,7 +21,7 @@ pub trait RemotePushUpsertTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, SyncTranslationError>;
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error>;
 }
 
 #[derive(Debug)]
@@ -46,18 +46,6 @@ pub enum PushRecord {
     Delete(PushDeleteRecord),
 }
 
-pub fn to_push_translation_error(
-    table_name: &'static str,
-    err: anyhow::Error,
-    changelog: &ChangelogRow,
-) -> SyncTranslationError {
-    SyncTranslationError {
-        table_name,
-        source: err,
-        record: format!("{:?}", changelog),
-    }
-}
-
 pub fn translate_changelog(
     connection: &StorageConnection,
     changelog: &ChangelogRow,
@@ -67,9 +55,15 @@ pub fn translate_changelog(
         ChangelogAction::Upsert => {
             let translations: Vec<Box<dyn RemotePushUpsertTranslation>> = vec![
                 Box::new(NumberTranslation {}),
+                Box::new(LocationTranslation {}),
                 Box::new(StockLineTranslation {}),
-                // Don't push name store joins for now
-                Box::new(NameStoreJoinTranslation {}),
+                // Don't push name_store_join since it is central data.
+                //
+                // Not like other central data name_store_join rows are pulled through the remote
+                // queue. The reason for it is that there can be quite a lot of name_store_join rows
+                // if there are many stores and many names. Using the remote queue allows the
+                // central server to only push rows relevant for a particular store.
+                //Box::new(NameStoreJoinTranslation {}),
                 Box::new(InvoiceTranslation {}),
                 Box::new(InvoiceLineTranslation {}),
                 Box::new(StocktakeTranslation {}),
@@ -78,7 +72,14 @@ pub fn translate_changelog(
                 Box::new(RequisitionLineTranslation {}),
             ];
             for translation in translations {
-                if let Some(records) = translation.try_translate_push(connection, changelog)? {
+                if let Some(records) = translation
+                    .try_translate_push(connection, changelog)
+                    .map_err(|err| SyncTranslationError {
+                        table_name: table_name_to_central(&changelog.table_name).to_string(),
+                        source: err,
+                        record: format!("{:?}", changelog),
+                    })?
+                {
                     info!("Push record upserts: {:?}", records);
                     for record in records {
                         results.push(PushRecord::Upsert(record));
