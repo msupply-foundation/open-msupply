@@ -26,6 +26,8 @@ const authTokenGuard = (
           token: '',
           error: { message: '' },
         };
+      default:
+        return { token: '', error: { message: '' } };
     }
   }
 
@@ -54,11 +56,18 @@ export const getAuthQueries = (sdk: Sdk) => ({
       username: string;
       password: string;
     }): Promise<AuthenticationResponse> => {
-      const result = await sdk.authToken({
-        username,
-        password,
-      });
-      return authTokenGuard(result);
+      try {
+        const result = await sdk.authToken({
+          username,
+          password,
+        });
+        return authTokenGuard(result);
+      } catch (e) {
+        return {
+          token: '',
+          error: { message: 'Error communicating with the server' },
+        };
+      }
     },
     refreshToken: async (): Promise<RefreshResponse> => {
       const result = await sdk.refreshToken();

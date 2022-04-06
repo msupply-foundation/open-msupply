@@ -30,6 +30,7 @@ import {
   InventoryRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
+import { QueryErrorHandler } from './QueryErrorHandler';
 
 const Heading: FC = ({ children }) => (
   <div style={{ margin: 50 }}>
@@ -145,6 +146,7 @@ export const Site: FC = () => {
             <AppFooterPortal SessionDetails={<Footer />} />
           </Box>
           <DetailPanel />
+          <QueryErrorHandler />
         </SnackbarProvider>
       </CommandK>
     </RequireAuthentication>

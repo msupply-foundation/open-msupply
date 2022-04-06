@@ -29,6 +29,7 @@ export const StocktakeListView: FC = () => {
 
   const {
     data,
+    isError,
     isLoading,
     sortBy,
     onChangeSortBy,
@@ -68,6 +69,7 @@ export const StocktakeListView: FC = () => {
         onChangePage={onChangePage}
         columns={columns}
         data={data?.nodes ?? []}
+        isError={isError}
         isLoading={isLoading}
         onRowClick={row => {
           navigate(String(row.stocktakeNumber));
