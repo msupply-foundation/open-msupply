@@ -145,3 +145,25 @@ impl UserPermissionFilter {
         self
     }
 }
+
+impl Resource {
+    pub fn equal_to(&self) -> EqualFilter<Resource> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+}
+
+impl Permission {
+    pub fn equal_to(&self) -> EqualFilter<Permission> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+}

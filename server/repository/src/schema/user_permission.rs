@@ -1,7 +1,5 @@
 use diesel_derive_enum::DbEnum;
 
-use crate::EqualFilter;
-
 table! {
   user_permission (id) {
       id -> Text,
@@ -37,26 +35,4 @@ pub struct UserPermissionRow {
     pub store_id: Option<String>,
     pub resource: Resource,
     pub permission: Permission,
-}
-
-impl Resource {
-    pub fn equal_to(&self) -> EqualFilter<Resource> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-        }
-    }
-}
-
-impl Permission {
-    pub fn equal_to(&self) -> EqualFilter<Permission> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-        }
-    }
 }
