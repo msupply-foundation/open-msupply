@@ -48,10 +48,10 @@ export const LoginLayout = ({
             sx={{
               color: theme => theme.typography.login.color,
               fontSize: {
-                xs: '20px',
-                sm: '32px',
-                md: '38px',
-                lg: '48px',
+                xs: '38px',
+                sm: '38px',
+                md: '48px',
+                lg: '64px',
                 xl: '64px',
               },
               fontWeight: 'bold',
@@ -66,10 +66,10 @@ export const LoginLayout = ({
           <Typography
             sx={{
               fontSize: {
-                xs: '10px',
-                sm: '12px',
-                md: '14px',
-                lg: '16px',
+                xs: '12px',
+                sm: '14px',
+                md: '16px',
+                lg: '20px',
                 xl: '20px',
               },
               color: theme => theme.typography.login.color,
