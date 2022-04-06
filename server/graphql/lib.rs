@@ -16,7 +16,7 @@ use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::{auth_data_from_request, RequestUserData, SelfRequest};
-use graphql_general::{GeneralMutations, GeneralQueries};
+use graphql_general::GeneralQueries;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
@@ -50,7 +50,6 @@ pub struct FullMutation(
     pub StocktakeMutations,
     pub StocktakeLineMutations,
     pub BatchMutations,
-    pub GeneralMutations,
     pub RequisitionMutations,
     pub RequisitionLineMutations,
 );
@@ -77,7 +76,6 @@ pub fn full_mutation() -> FullMutation {
         StocktakeMutations,
         StocktakeLineMutations,
         BatchMutations,
-        GeneralMutations,
         RequisitionMutations,
         RequisitionLineMutations,
     )
