@@ -12,7 +12,7 @@ use crate::{
 };
 use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct Item {
     pub item_row: ItemRow,
     pub item_is_visible_row: ItemIsVisibleRow,
@@ -193,6 +193,8 @@ impl Item {
 mod tests {
     use std::convert::TryFrom;
 
+    use util::inline_init;
+
     use crate::{
         db_diesel::item_query::ItemFilter,
         schema::ItemRowType,
@@ -221,13 +223,12 @@ mod tests {
     fn data() -> Vec<ItemRow> {
         let mut rows = Vec::new();
         for index in 0..200 {
-            rows.push(ItemRow {
-                id: format!("id{:05}", index),
-                name: format!("name{}", index),
-                code: format!("code{}", index),
-                unit_id: None,
-                r#type: ItemRowType::Stock,
-            });
+            rows.push(inline_init(|r: &mut ItemRow| {
+                r.id = format!("id{:05}", index);
+                r.name = format!("name{}", index);
+                r.code = format!("code{}", index);
+                r.r#type = ItemRowType::Stock;
+            }));
         }
         rows
     }
@@ -361,41 +362,36 @@ mod tests {
         let item_query_repository = ItemQueryRepository::new(&storage_connection);
 
         let item_rows = vec![
-            ItemRow {
-                id: "item1".to_owned(),
-                name: "name1".to_owned(),
-                code: "name1".to_owned(),
-                unit_id: None,
-                r#type: ItemRowType::Stock,
-            },
-            ItemRow {
-                id: "item2".to_owned(),
-                name: "name2".to_owned(),
-                code: "name2".to_owned(),
-                unit_id: None,
-                r#type: ItemRowType::Stock,
-            },
-            ItemRow {
-                id: "item3".to_owned(),
-                name: "name3".to_owned(),
-                code: "name3".to_owned(),
-                unit_id: None,
-                r#type: ItemRowType::Stock,
-            },
-            ItemRow {
-                id: "item4".to_owned(),
-                name: "name4".to_owned(),
-                code: "name4".to_owned(),
-                unit_id: None,
-                r#type: ItemRowType::Stock,
-            },
-            ItemRow {
-                id: "item5".to_owned(),
-                name: "name5".to_owned(),
-                code: "name5".to_owned(),
-                unit_id: None,
-                r#type: ItemRowType::Stock,
-            },
+            inline_init(|r: &mut ItemRow| {
+                r.id = "item1".to_owned();
+                r.name = "name1".to_owned();
+                r.code = "name1".to_owned();
+                r.r#type = ItemRowType::Stock;
+            }),
+            inline_init(|r: &mut ItemRow| {
+                r.id = "item2".to_owned();
+                r.name = "name2".to_owned();
+                r.code = "name2".to_owned();
+                r.r#type = ItemRowType::Stock;
+            }),
+            inline_init(|r: &mut ItemRow| {
+                r.id = "item3".to_owned();
+                r.name = "name3".to_owned();
+                r.code = "name3".to_owned();
+                r.r#type = ItemRowType::Stock;
+            }),
+            inline_init(|r: &mut ItemRow| {
+                r.id = "item4".to_owned();
+                r.name = "name4".to_owned();
+                r.code = "name4".to_owned();
+                r.r#type = ItemRowType::Stock;
+            }),
+            inline_init(|r: &mut ItemRow| {
+                r.id = "item5".to_owned();
+                r.name = "name5".to_owned();
+                r.code = "name5".to_owned();
+                r.r#type = ItemRowType::Stock;
+            }),
         ];
 
         let master_list_rows = vec![
@@ -436,13 +432,13 @@ mod tests {
             },
         ];
 
-        let name_row = NameRow {
-            id: "name1".to_owned(),
-            name: "".to_owned(),
-            code: "".to_owned(),
-            is_supplier: true,
-            is_customer: true,
-        };
+        let name_row = inline_init(|r: &mut NameRow| {
+            r.id = "name1".to_owned();
+            r.name = "".to_owned();
+            r.code = "".to_owned();
+            r.is_supplier = true;
+            r.is_customer = true;
+        });
 
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_owned(),

@@ -32,13 +32,12 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
 }
 
 fn mock_item_with_no_stock_line() -> ItemRow {
-    ItemRow {
-        id: String::from("item_with_no_stock_line"),
-        name: String::from("Item with no stock line"),
-        code: String::from("code"),
-        unit_id: None,
-        r#type: ItemRowType::Stock,
-    }
+    inline_init(|r: &mut ItemRow| {
+        r.id = String::from("item_with_no_stock_line");
+        r.name = String::from("Item with no stock line");
+        r.code = String::from("code");
+        r.r#type = ItemRowType::Stock;
+    })
 }
 
 // invoice containing invoice lines without stock line

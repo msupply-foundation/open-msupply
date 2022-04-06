@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::StockLineRow, EqualFilter, ItemFilter, ItemQueryRepository, StockLineRowRepository,
+    schema::{LocationRow, StockLineRow},
+    EqualFilter, ItemFilter, ItemQueryRepository, LocationRowRepository, StockLineRowRepository,
     StorageConnection,
 };
 use util::{inline_edit, uuid::uuid};
@@ -10,6 +11,18 @@ use super::remote_sync_integration_test::SyncRecordTester;
 pub struct StockLineRecordTester {}
 impl SyncRecordTester<Vec<StockLineRow>> for StockLineRecordTester {
     fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<StockLineRow> {
+        // create test location
+        let location = LocationRow {
+            id: uuid(),
+            name: "TestLocation".to_string(),
+            code: "TestLocationCode".to_string(),
+            on_hold: false,
+            store_id: store_id.to_string(),
+        };
+        LocationRowRepository::new(connection)
+            .upsert_one(&location)
+            .unwrap();
+
         let item = ItemQueryRepository::new(connection)
             .query_one(ItemFilter::new())
             .unwrap()
@@ -18,8 +31,7 @@ impl SyncRecordTester<Vec<StockLineRow>> for StockLineRecordTester {
             id: uuid(),
             item_id: item.item_row.id,
             store_id: store_id.to_string(),
-            // TODO test location?
-            location_id: None,
+            location_id: Some(location.id),
             batch: Some("some remote sync test batch".to_string()),
             pack_size: 5,
             cost_price_per_pack: 10.0,
@@ -53,7 +65,7 @@ impl SyncRecordTester<Vec<StockLineRow>> for StockLineRecordTester {
 
                 let row = inline_edit(row, |mut d| {
                     d.item_id = new_item.item_row.id;
-                    // TODO test location?
+                    d.location_id = None;
                     d.batch = Some("some remote sync test batch 2".to_string());
                     d.pack_size = 10;
                     d.cost_price_per_pack = 15.0;

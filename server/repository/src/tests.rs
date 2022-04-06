@@ -7,13 +7,11 @@ mod repository_test {
         use crate::schema::*;
 
         pub fn name_1() -> NameRow {
-            NameRow {
-                id: "name1".to_string(),
-                name: "name_1".to_string(),
-                code: "code1".to_string(),
-                is_customer: false,
-                is_supplier: false,
-            }
+            inline_init(|r: &mut NameRow| {
+                r.id = "name1".to_string();
+                r.name = "name_1".to_string();
+                r.code = "code1".to_string();
+            })
         }
 
         pub fn store_1() -> StoreRow {
@@ -25,33 +23,30 @@ mod repository_test {
         }
 
         pub fn item_1() -> ItemRow {
-            ItemRow {
-                id: "item1".to_string(),
-                name: "name1".to_string(),
-                code: "code1".to_string(),
-                unit_id: None,
-                r#type: ItemRowType::Stock,
-            }
+            inline_init(|r: &mut ItemRow| {
+                r.id = "item1".to_string();
+                r.name = "name1".to_string();
+                r.code = "code1".to_string();
+                r.r#type = ItemRowType::Stock;
+            })
         }
 
         pub fn item_2() -> ItemRow {
-            ItemRow {
-                id: "item2".to_string(),
-                name: "item-2".to_string(),
-                code: "code2".to_string(),
-                unit_id: None,
-                r#type: ItemRowType::Stock,
-            }
+            inline_init(|r: &mut ItemRow| {
+                r.id = "item2".to_string();
+                r.name = "item-2".to_string();
+                r.code = "code2".to_string();
+                r.r#type = ItemRowType::Stock;
+            })
         }
 
         pub fn item_service_1() -> ItemRow {
-            ItemRow {
-                id: "item_service_1".to_string(),
-                name: "item_service_name_1".to_string(),
-                code: "item_service_code_1".to_string(),
-                unit_id: None,
-                r#type: ItemRowType::Service,
-            }
+            inline_init(|r: &mut ItemRow| {
+                r.id = "item_service_1".to_string();
+                r.name = "item_service_name_1".to_string();
+                r.code = "item_service_code_1".to_string();
+                r.r#type = ItemRowType::Service;
+            })
         }
 
         pub fn stock_line_1() -> StockLineRow {

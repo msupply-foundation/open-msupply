@@ -45,6 +45,8 @@ table! {
         code -> Text,
         unit_id -> Nullable<Text>,
         #[sql_name = "type"] type_ -> crate::schema::item::ItemRowTypeMapping,
+        // TODO, this is temporary, remove
+        legacy_record -> Text,
     }
 }
 
@@ -74,6 +76,8 @@ table! {
         code -> Text,
         is_customer -> Bool,
         is_supplier -> Bool,
+        // TODO, this is temporary, remove
+        legacy_record -> Text,
     }
 }
 
