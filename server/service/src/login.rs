@@ -1,4 +1,7 @@
-use std::{collections::HashMap, time::Duration};
+use std::{
+    collections::HashMap,
+    time::{Duration, SystemTime},
+};
 
 use log::info;
 use repository::{
@@ -51,12 +54,37 @@ pub struct LoginInput {
 }
 
 impl LoginService {
+    /// # Arguments:
+    /// * `min_err_response_time_sec` min response time if there was a login error. This is to
+    /// disguise any information whether the use exists or not, i.e. response time for invalid
+    /// usernames is indistinguishable from the response time for invalid passwords. This only works
+    /// if the value is high enough, i.e. higher than the server needs to calculate the password
+    /// hash.
+    ///
     /// Note, this service takes a ServiceProvider instead of a ServiceContext. The reason is that a
     /// ServiceContext can't be used across async calls (because of the containing thread bound
     /// SqliteConnection). Since we need an async api call to the remote server to fetch user data
     /// we need to create the service context after the call where the compiler can deduce that we are
     /// not passing it to another thread.
     pub async fn login(
+        service_provider: &ServiceProvider,
+        auth_data: &AuthData,
+        input: LoginInput,
+        min_err_response_time_sec: u64,
+    ) -> Result<TokenPair, LoginError> {
+        let now = SystemTime::now();
+        match LoginService::do_login(service_provider, auth_data, input).await {
+            Ok(result) => Ok(result),
+            Err(err) => {
+                let delay = Duration::from_secs(min_err_response_time_sec)
+                    - now.elapsed().unwrap_or(Duration::from_secs(0));
+                tokio::time::sleep(delay).await;
+                Err(err)
+            }
+        }
+    }
+
+    async fn do_login(
         service_provider: &ServiceProvider,
         auth_data: &AuthData,
         input: LoginInput,
@@ -330,6 +358,7 @@ mod test {
                 password: "password".to_string(),
                 central_server_url,
             },
+            0,
         )
         .await
         .unwrap();

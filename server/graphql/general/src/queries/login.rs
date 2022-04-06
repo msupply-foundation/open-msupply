@@ -8,6 +8,9 @@ use service::{
     token::TokenPair,
 };
 
+// Fixed login response time in case of an error (see service)
+const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
+
 pub struct AuthToken {
     pub pair: TokenPair,
 }
@@ -57,6 +60,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
             password: password.to_string(),
             central_server_url: sync_settings.url.clone(),
         },
+        MIN_ERR_RESPONSE_TIME_SEC,
     )
     .await
     {
