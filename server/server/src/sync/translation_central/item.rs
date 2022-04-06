@@ -50,6 +50,7 @@ impl CentralPushTranslation for ItemTranslation {
             code: data.code,
             unit_id: None,
             r#type: to_item_type(data.type_of),
+            legacy_record: sync_record.data.clone(),
         };
 
         if data.unit_ID != "" {

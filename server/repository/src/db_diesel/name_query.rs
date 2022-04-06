@@ -282,7 +282,7 @@ impl Name {
 
 #[cfg(test)]
 mod tests {
-    use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
+    use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
     use crate::{
         mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
@@ -302,23 +302,22 @@ mod tests {
         let mut rows = Vec::new();
         let mut queries = Vec::new();
         for index in 0..200 {
-            rows.push(NameRow {
-                id: format!("id{:05}", index),
-                name: format!("name{}", index),
-                code: format!("code{}", index),
-                is_customer: true,
-                is_supplier: true,
-            });
+            rows.push(inline_init(|r: &mut NameRow| {
+                r.id = format!("id{:05}", index);
+                r.name = format!("name{}", index);
+                r.code = format!("code{}", index);
+                r.is_customer = true;
+                r.is_supplier = true;
+            }));
 
             queries.push(Name {
-                name_row: NameRow {
-                    id: format!("id{:05}", index),
-                    name: format!("name{}", index),
-                    code: format!("code{}", index),
-
-                    is_customer: true,
-                    is_supplier: true,
-                },
+                name_row: inline_init(|r: &mut NameRow| {
+                    r.id = format!("id{:05}", index);
+                    r.name = format!("name{}", index);
+                    r.code = format!("code{}", index);
+                    r.is_customer = true;
+                    r.is_supplier = true;
+                }),
                 name_store_join_row: None,
                 store_row: None,
             });
