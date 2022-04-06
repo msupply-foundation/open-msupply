@@ -67,8 +67,7 @@ mod remote_sync_integration_tests {
             .unwrap();
         let store_id = StoreRepository::new(&connection)
             .query_one(
-                StoreFilter::new()
-                    .remote_site_id(EqualFilter::equal_to_i32(sync_settings.site_id as i32)),
+                StoreFilter::new().site_id(EqualFilter::equal_to_i32(sync_settings.site_id as i32)),
             )
             .unwrap()
             .unwrap()

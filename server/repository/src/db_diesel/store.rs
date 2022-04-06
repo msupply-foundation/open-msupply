@@ -27,7 +27,7 @@ pub struct StoreFilter {
     pub code: Option<SimpleStringFilter>,
     pub name: Option<SimpleStringFilter>,
     pub name_code: Option<SimpleStringFilter>,
-    pub remote_site_id: Option<EqualFilter<i32>>,
+    pub site_id: Option<EqualFilter<i32>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -61,8 +61,8 @@ impl StoreFilter {
         self
     }
 
-    pub fn remote_site_id(mut self, filter: EqualFilter<i32>) -> Self {
-        self.remote_site_id = Some(filter);
+    pub fn site_id(mut self, filter: EqualFilter<i32>) -> Self {
+        self.site_id = Some(filter);
         self
     }
 }
@@ -132,14 +132,14 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             code,
             name,
             name_code,
-            remote_site_id,
+            site_id,
         } = f;
 
         apply_equal_filter!(query, id, store_dsl::id);
         apply_simple_string_filter!(query, code, store_dsl::code);
         apply_simple_string_filter!(query, name, name_dsl::name_);
         apply_simple_string_filter!(query, name_code, name_dsl::code);
-        apply_equal_filter!(query, remote_site_id, store_dsl::remote_site_id);
+        apply_equal_filter!(query, site_id, store_dsl::site_id);
     }
 
     query

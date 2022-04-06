@@ -40,8 +40,8 @@ impl StoreNode {
         )
     }
 
-    pub async fn remote_site_id(&self) -> i32 {
-        self.row().remote_site_id
+    pub async fn site_id(&self) -> i32 {
+        self.row().site_id
     }
 }
 

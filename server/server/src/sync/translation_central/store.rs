@@ -14,7 +14,7 @@ pub struct LegacyStoreRow {
     name_id: String,
     code: String,
     #[serde(rename = "sync_id_remote_site")]
-    remote_site_id: i32,
+    site_id: i32,
 }
 
 pub struct StoreTranslation {}
@@ -50,7 +50,7 @@ impl CentralPushTranslation for StoreTranslation {
             id: data.id,
             name_id: data.name_id,
             code: data.code,
-            remote_site_id: data.remote_site_id,
+            site_id: data.site_id,
         })))
     }
 }
