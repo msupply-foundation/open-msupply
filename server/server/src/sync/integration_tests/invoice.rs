@@ -82,7 +82,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             sell_price_per_pack: 10.0,
             total_before_tax: 8.0,
             total_after_tax: 12.0,
-            tax: None,
+            tax: Some(10.0),
             number_of_packs: 10,
             note: None,
         };
@@ -242,7 +242,10 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
                             d.sell_price_per_pack = 15.0;
                             d.total_before_tax = 10.0;
                             d.total_after_tax = 15.0;
-                            d.tax = Some(15.0);
+                            // TODO test to unset the tax, this is currently not working but should
+                            // work with the new push endpoint
+                            // d.tax = None;
+                            d.tax = Some(0.0);
                             d.number_of_packs = 15;
                             d.note = Some("invoice line note".to_string());
                             d

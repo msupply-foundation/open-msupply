@@ -98,7 +98,7 @@ pub fn check_records_against_database(
                                 &comparison_record.store_id
                             )
                             .unwrap()
-                            .unwrap(),
+                            .expect(&format!("Number not found: {}", &comparison_record.id)),
                         comparison_record
                     )
                 }
@@ -118,7 +118,7 @@ pub fn check_records_against_database(
                     assert_eq!(
                         StockLineRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
-                            .unwrap(),
+                            .expect(&format!("StockLine not found: {}", &comparison_record.id)),
                         comparison_record
                     )
                 }
@@ -127,7 +127,10 @@ pub fn check_records_against_database(
                         NameStoreJoinRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
                             .unwrap()
-                            .unwrap(),
+                            .expect(&format!(
+                                "NameStoreJoin not found: {}",
+                                &comparison_record.id
+                            )),
                         comparison_record
                     )
                 }
@@ -135,7 +138,7 @@ pub fn check_records_against_database(
                     assert_eq!(
                         InvoiceRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
-                            .unwrap(),
+                            .expect(&format!("Invoice not found: {}", &comparison_record.id)),
                         comparison_record
                     )
                 }
@@ -143,7 +146,7 @@ pub fn check_records_against_database(
                     assert_eq!(
                         InvoiceLineRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
-                            .unwrap(),
+                            .expect(&format!("InvoiceLine not found: {}", &comparison_record.id)),
                         comparison_record
                     )
                 }
@@ -152,7 +155,7 @@ pub fn check_records_against_database(
                         StocktakeRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
                             .unwrap()
-                            .unwrap(),
+                            .expect(&format!("Stocktake not found: {}", &comparison_record.id)),
                         comparison_record
                     )
                 }
@@ -161,7 +164,10 @@ pub fn check_records_against_database(
                         StocktakeLineRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
                             .unwrap()
-                            .unwrap(),
+                            .expect(&format!(
+                                "StocktakeLine not found: {}",
+                                &comparison_record.id
+                            )),
                         comparison_record
                     )
                 }
@@ -170,7 +176,7 @@ pub fn check_records_against_database(
                         RequisitionRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
                             .unwrap()
-                            .unwrap(),
+                            .expect(&format!("Requisition not found: {}", &comparison_record.id)),
                         comparison_record
                     )
                 }
