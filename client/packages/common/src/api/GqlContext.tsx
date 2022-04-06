@@ -9,6 +9,33 @@ import {
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 
+interface ResponseError {
+  message?: string;
+  path?: string[];
+  extensions?: { details?: string };
+}
+
+function hasError(errors: ResponseError[], error: AuthError) {
+  return errors.some(({ message }: { message?: string }) => message === error);
+}
+
+const handleResponseError = (errors: ResponseError[]) => {
+  if (hasError(errors, AuthError.Unauthenticated)) {
+    LocalStorage.setItem('/auth/error', AuthError.Unauthenticated);
+    return;
+  }
+
+  if (hasError(errors, AuthError.PermissionDenied)) {
+    LocalStorage.setItem('/auth/error', AuthError.PermissionDenied);
+    return;
+  }
+
+  const error = errors[0];
+  const { extensions } = error || {};
+  const { details } = extensions || {};
+  throw new Error(details || error?.message || 'Unknown error');
+};
+
 class GQLClient extends GraphQLClient {
   private client: GraphQLClient;
   private emptyData: object;
@@ -44,21 +71,10 @@ class GQLClient extends GraphQLClient {
       data => data ?? this.emptyData,
       ({ response }) => {
         if (response && response.errors) {
-          if (
-            response.errors.some(
-              ({ message }: { message?: string }) =>
-                message === AuthError.Unauthenticated
-            )
-          ) {
-            LocalStorage.setItem('/auth/error', AuthError.Unauthenticated);
-          } else {
-            const error = response.errors[0];
-            const { extensions } = error;
-            const { details } = extensions || {};
-            throw new Error(details || error.message);
-          }
+          handleResponseError(response.errors);
+        } else {
+          throw new Error('Unknown error');
         }
-        throw new Error('Unknown error');
       }
     );
   }

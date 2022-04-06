@@ -9,6 +9,7 @@ import {
   useLocalStorage,
   useLocation,
   useNavigate,
+  LocalStorage,
 } from '@openmsupply-client/common';
 import { AlertModal } from '@common/components';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
@@ -38,6 +39,11 @@ export const AuthenticationAlert = () => {
     const state = {} as { from?: Location };
     if (error === AuthError.Unauthenticated) {
       state.from = location;
+    }
+
+    if (error === AuthError.PermissionDenied) {
+      LocalStorage.setItem('/auth/error', undefined);
+      return;
     }
 
     navigate(`/${AppRoute.Login}`, {
