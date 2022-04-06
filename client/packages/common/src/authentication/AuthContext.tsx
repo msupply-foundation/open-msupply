@@ -49,7 +49,7 @@ interface AuthControl {
   setStore: (store: UserStoreNodeFragment) => void;
   store?: UserStoreNodeFragment;
   storeId: string;
-  token?: string;
+  token: string;
   user?: User;
 }
 
@@ -86,6 +86,7 @@ const useRefreshingAuth = (
   }, [enabled, isSuccess, data]);
 };
 const AuthContext = createContext<AuthControl>({
+  token: '',
   isLoggingIn: false,
   login: () =>
     new Promise(() => ({
@@ -130,7 +131,11 @@ export const AuthProvider: FC = ({ children }) => {
       mostRecentlyUsedCredentials?.store &&
       stores?.some(store => store.id === mostRecentlyUsedCredentials?.store?.id)
     ) {
-      return mostRecentlyUsedCredentials.store;
+      return (
+        stores.find(
+          store => store.id === mostRecentlyUsedCredentials.store?.id
+        ) || mostRecentlyUsedCredentials.store
+      );
     }
 
     if (!!defaultStore) return defaultStore;
@@ -189,7 +194,7 @@ export const AuthProvider: FC = ({ children }) => {
       login,
       logout,
       storeId,
-      token: cookie?.token,
+      token: cookie?.token || '',
       user: cookie?.user,
       store: cookie?.store,
       mostRecentlyUsedCredentials,
