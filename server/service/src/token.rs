@@ -104,8 +104,8 @@ pub struct TokenPair {
 /// Q: Still why an auth token? the long lived refresh token could be invalidated on the server
 /// site to revoke access.
 /// A: This requires a reliable mechanism to do the token invalidation. This can be hard to do. With
-/// the current solution the auth token simply expires when we stop issuing tokens to the 3rd party,
-/// e.g. by deactivated a plugin.
+/// the current solution the auth token simply expires when we stop issuing tokens to the 3rd party
+/// (which doesn't has the refresh token), e.g. by deactivated a plugin.
 pub struct TokenService<'a> {
     token_bucket: &'a RwLock<TokenBucket>,
     jwt_token_secret: &'a [u8],
