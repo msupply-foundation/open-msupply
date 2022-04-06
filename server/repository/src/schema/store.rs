@@ -3,7 +3,7 @@ table! {
         id -> Text,
         name_id -> Text,
         code -> Text,
-        remote_site_id -> Integer,
+        site_id -> Integer,
     }
 }
 
@@ -13,5 +13,5 @@ pub struct StoreRow {
     pub id: String,
     pub name_id: String,
     pub code: String,
-    pub remote_site_id: i32,
+    pub site_id: i32,
 }

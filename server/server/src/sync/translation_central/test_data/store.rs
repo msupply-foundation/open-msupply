@@ -191,7 +191,7 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
                 s.id = STORE_1.0.to_owned();
                 s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
                 s.code = "GEN".to_string();
-                s.remote_site_id = 1;
+                s.site_id = 1;
             }))),
             identifier: "General",
             central_sync_buffer_row: CentralSyncBufferRow {
