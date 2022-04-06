@@ -1,5 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
+use repository::{
+    schema::user_permission, EqualFilter, RepositoryError, StorageConnectionManager,
+    UserPermissionFilter, UserPermissionRepository,
+};
+
 use crate::{
     auth_data::AuthData,
     permissions::{ApiRole, PermissionServiceTrait, StoreRole, UserPermissions},
@@ -234,13 +239,18 @@ pub trait ValidationServiceTrait: Send + Sync {
 pub struct ValidationService {
     pub permission_service: Arc<dyn PermissionServiceTrait>,
     pub permissions: HashMap<Resource, PermissionDSL>,
+    pub connection_manager: StorageConnectionManager,
 }
 
 impl ValidationService {
-    pub fn new(permission_service: Arc<dyn PermissionServiceTrait>) -> Self {
+    pub fn new(
+        permission_service: Arc<dyn PermissionServiceTrait>,
+        connection_manager: StorageConnectionManager,
+    ) -> Self {
         ValidationService {
             permission_service,
             permissions: all_permissions(),
+            connection_manager,
         }
     }
 }
@@ -277,11 +287,40 @@ impl ValidationServiceTrait for ValidationService {
             }
         };
 
+        // TODO temp validation of  Resource::MutateRequisition
+        if let (Some(store_id), Resource::MutateRequisition, false) = (
+            &resource_request.store_id,
+            &resource_request.resource,
+            auth_data.debug_no_access_control,
+        ) {
+            let connection = self.connection_manager.connection()?;
+
+            let matched_permission = UserPermissionRepository::new(&connection).query_by_filter(
+                UserPermissionFilter::new()
+                    .user_id(EqualFilter::equal_to(&validated_auth.user_id))
+                    .store_id(EqualFilter::equal_to(&store_id))
+                    .resource(user_permission::Resource::Requisition.equal_to())
+                    .permission(user_permission::Permission::Mutate.equal_to()),
+            )?;
+
+            if matched_permission.is_empty() {
+                return Err(ValidationError::Denied(
+                    ValidationDeniedKind::InsufficientPermission((String::new(), permissions)),
+                ));
+            }
+        }
+
         Ok(ValidatedUser {
             user_id: validated_auth.user_id,
             claims: validated_auth.claims,
             permissions,
         })
+    }
+}
+
+impl From<RepositoryError> for ValidationError {
+    fn from(error: RepositoryError) -> Self {
+        ValidationError::InternalError(format!("{:#?}", error))
     }
 }
 
@@ -294,7 +333,16 @@ mod permission_validation_test {
         auth_data::AuthData, permissions::PermissionService, service_provider::ServiceProvider,
         token_bucket::TokenBucket,
     };
-    use repository::{get_storage_connection_manager, test_db};
+    use repository::{
+        get_storage_connection_manager,
+        mock::{MockData, MockDataInserts},
+        schema::{
+            user_permission::{self, UserPermissionRow},
+            NameRow, StoreRow, UserAccountRow,
+        },
+        test_db::{self, setup_all_with_data},
+    };
+    use util::inline_init;
 
     #[actix_rt::test]
     async fn test_basic_permission_validation() {
@@ -315,15 +363,18 @@ mod permission_validation_test {
             test_db::get_test_db_settings("omsupply-database-basic_permission_validation");
         test_db::setup(&settings).await;
         let connection_manager = get_storage_connection_manager(&settings);
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider.context().unwrap();
 
-        let mut service = ValidationService::new(Arc::new(PermissionService {
-            user_permissions: UserPermissions {
-                api: vec![ApiRole::User],
-                stores: HashMap::new(),
-            },
-        }));
+        let mut service = ValidationService::new(
+            Arc::new(PermissionService {
+                user_permissions: UserPermissions {
+                    api: vec![ApiRole::User],
+                    stores: HashMap::new(),
+                },
+            }),
+            connection_manager.clone(),
+        );
         service.permissions.clear();
         service
             .permissions
@@ -354,5 +405,113 @@ mod permission_validation_test {
                 &resource_access_request,
             )
             .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_basic_user_store_permissions() {
+        fn name() -> NameRow {
+            inline_init(|r: &mut NameRow| {
+                r.id = "name".to_string();
+            })
+        }
+
+        fn store() -> StoreRow {
+            StoreRow {
+                id: "store".to_string(),
+                name_id: name().id,
+                code: "n/a".to_string(),
+            }
+        }
+
+        fn user() -> UserAccountRow {
+            UserAccountRow {
+                id: "user".to_string(),
+                username: "user".to_string(),
+                hashed_password: "n/a".to_string(),
+                email: None,
+            }
+        }
+
+        fn user_without_permission() -> UserAccountRow {
+            UserAccountRow {
+                id: "user_without_permission".to_string(),
+                username: "user".to_string(),
+                hashed_password: "n/a".to_string(),
+                email: None,
+            }
+        }
+
+        fn permission() -> UserPermissionRow {
+            UserPermissionRow {
+                id: "permission".to_string(),
+                user_id: user().id,
+                store_id: Some(store().id),
+                resource: user_permission::Resource::Requisition,
+                permission: user_permission::Permission::Mutate,
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_basic_user_store_permissions",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.stores = vec![store()];
+                r.names = vec![name()];
+                r.user_accounts = vec![user(), user_without_permission()];
+                r.user_permissions = vec![permission()]
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
+
+        let auth_data = AuthData {
+            auth_token_secret: "some secret".to_string(),
+            token_bucket: RwLock::new(TokenBucket::new()),
+            debug_no_ssl: true,
+            debug_no_access_control: false,
+        };
+
+        let token = TokenService::new(
+            &auth_data.token_bucket,
+            auth_data.auth_token_secret.as_bytes(),
+        )
+        .jwt_token(&user().id, 60, 120)
+        .unwrap()
+        .token;
+
+        assert!(service_provider
+            .validation_service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token),
+                &ResourceAccessRequest {
+                    resource: Resource::MutateRequisition,
+                    store_id: Some(store().id)
+                }
+            )
+            .is_ok());
+
+        let token = TokenService::new(
+            &auth_data.token_bucket,
+            auth_data.auth_token_secret.as_bytes(),
+        )
+        .jwt_token(&user_without_permission().id, 60, 120)
+        .unwrap()
+        .token;
+        assert!(service_provider
+            .validation_service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token),
+                &ResourceAccessRequest {
+                    resource: Resource::MutateRequisition,
+                    store_id: Some(store().id)
+                }
+            )
+            .is_err());
     }
 }
