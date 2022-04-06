@@ -96,8 +96,8 @@ const useDraftInboundLines = (item: ItemRowFragment | null) => {
   );
 
   const saveLines = async () => {
+    if (isDirty) await mutateAsync(draftLines);
     setIsDirty(false);
-    await mutateAsync(draftLines);
   };
 
   return {
