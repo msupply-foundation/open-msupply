@@ -2,7 +2,7 @@ import { useRef } from 'react';
 
 type DirtyState = {
   isDirty: boolean;
-  setIsDirty: (open: boolean) => void;
+  setIsDirty: (value: boolean) => void;
 };
 
 export const useDirtyCheck = (): DirtyState => {
