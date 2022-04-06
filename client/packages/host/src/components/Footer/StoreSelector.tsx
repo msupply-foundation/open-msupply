@@ -13,8 +13,6 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { UserStoreNodeFragment } from 'packages/common/src/authentication/api/operations.generated';
 
-const POPPER_HEIGHT = 400;
-
 export const StoreSelector: FC = ({ children }) => {
   const { store, setStore, token } = useAuthContext();
   const navigate = useNavigate();
@@ -28,7 +26,6 @@ export const StoreSelector: FC = ({ children }) => {
     return 0;
   };
   const stores = data?.sort(storeSorter) || [];
-
   if (!store?.name) return null;
 
   if (stores.length < 2) return <>{children}</>;
@@ -44,8 +41,12 @@ export const StoreSelector: FC = ({ children }) => {
       }}
       key={s.id}
       sx={{
-        justifyContent: 'flex-start',
         whiteSpace: 'nowrap',
+        overflowX: 'hidden',
+        overflowY: 'visible',
+        textOverflow: 'ellipsis',
+        display: 'block',
+        textAlign: 'left',
       }}
     />
   ));
@@ -53,7 +54,6 @@ export const StoreSelector: FC = ({ children }) => {
     <PaperClickPopover
       placement="top"
       width={300}
-      height={POPPER_HEIGHT}
       Content={
         <PaperPopoverSection label={t('select-store')}>
           {isLoading ? (
@@ -61,13 +61,9 @@ export const StoreSelector: FC = ({ children }) => {
           ) : (
             <Box
               style={{
-                overflowX: 'hidden',
-                textOverflow: 'ellipsis',
                 overflowY: 'auto',
-                maxHeight: POPPER_HEIGHT - 100,
+                maxHeight: 300,
               }}
-              display="flex"
-              flexDirection="column"
             >
               {storeButtons}
             </Box>
