@@ -14,7 +14,10 @@
     "build-storybook": "build-storybook -s ./packages/host/public ",
     "generate": "graphql-codegen --config codegen.yml",
     "android:build-remote_server": "cd ./packages/android && ./build_remote_server_libs.sh",
-    "android:build": "yarn build && npx cap copy && cd ./packages/android && ./gradlew assembleRelease"
+    "android:build": "yarn build && npx cap copy && cd ./packages/android && ./gradlew assembleRelease",
+    "i18n-unused-display": "i18n-unused display-unused",
+    "i18n-unused-remove": "i18n-unused remove-unused",
+    "i18n-missing": "i18n-unused display-missed"
   },
   "workspaces": {
     "packages": [
@@ -53,6 +56,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jest-dom": "^3.9.2",
     "eslint-plugin-react": "^7.27.1",
+    "i18n-unused": "^0.8.0",
     "jest": "^27.4.5",
     "msw": "^0.36.3",
     "msw-storybook-addon": "^1.5.0",
