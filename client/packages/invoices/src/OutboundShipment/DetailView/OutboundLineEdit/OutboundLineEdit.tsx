@@ -55,13 +55,14 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   } = useDraftOutboundLines(currentItem);
   const packSizeController = usePackSizeController(draftOutboundLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
-  const { setIsDirty } = useDirtyCheck();
+  const { isDirty, setIsDirty } = useDirtyCheck();
 
   const onNext = async () => {
-    await mutate(draftOutboundLines);
+    if (isDirty) await mutate(draftOutboundLines);
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(null);
     else onClose();
+    setIsDirty(false);
     // Returning true here triggers the slide animation
     return true;
   };
@@ -98,7 +99,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           variant="ok"
           onClick={async () => {
             try {
-              await mutate(draftOutboundLines);
+              if (isDirty) await mutate(draftOutboundLines);
+              setIsDirty(false);
               onClose();
             } catch (e) {
               // console.log(e);
