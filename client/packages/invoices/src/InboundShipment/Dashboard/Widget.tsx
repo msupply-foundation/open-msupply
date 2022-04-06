@@ -5,14 +5,15 @@ import {
   PlusCircleIcon,
   StatsPanel,
   useQuery,
-  useTranslation,
   Widget,
 } from '@openmsupply-client/common';
+import { useFormatNumber, useTranslation } from '@common/intl';
 import { useInboundApi } from '../api';
 
 export const InboundShipmentWidget: React.FC = () => {
   const api = useInboundApi();
   const t = useTranslation(['app', 'dashboard']);
+  const formatNumber = useFormatNumber();
   const { data, isLoading } = useQuery(
     ['inbound-shipment', 'count'],
     api.dashboard.shipmentCount,
@@ -36,11 +37,11 @@ export const InboundShipmentWidget: React.FC = () => {
             stats={[
               {
                 label: t('label.today', { ns: 'dashboard' }),
-                value: data?.today ?? 0,
+                value: formatNumber.round(data?.today),
               },
               {
                 label: t('label.this-week', { ns: 'dashboard' }),
-                value: data?.thisWeek ?? 0,
+                value: formatNumber.round(data?.thisWeek),
               },
             ]}
           />

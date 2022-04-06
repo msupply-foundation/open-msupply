@@ -22,7 +22,7 @@ export const StockListView: FC = () => {
     key: 'itemName',
     direction: 'asc',
   });
-  const { data, isLoading } = useStockLines();
+  const { data, isLoading, isError } = useStockLines();
   const onChangeSortBy = (column: Column<StockRow>) => {
     const isDesc = column.key === sortBy.key ? !sortBy.isDesc : false;
     setSortBy({ key: column.key, isDesc, direction: isDesc ? 'desc' : 'asc' });
@@ -68,6 +68,7 @@ export const StockListView: FC = () => {
         )}
         onChangePage={pagination.onChangePage}
         noDataMessage={t('error.no-items')}
+        isError={isError}
         isLoading={isLoading}
       />
     </TableProvider>
