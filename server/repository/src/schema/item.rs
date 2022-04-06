@@ -18,4 +18,19 @@ pub struct ItemRow {
     pub unit_id: Option<String>,
     #[column_name = "type_"]
     pub r#type: ItemRowType,
+    // TODO, this is temporary, remove
+    pub legacy_record: String,
+}
+
+impl Default for ItemRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            name: Default::default(),
+            code: Default::default(),
+            unit_id: Default::default(),
+            r#type: ItemRowType::Stock,
+            legacy_record: Default::default(),
+        }
+    }
 }

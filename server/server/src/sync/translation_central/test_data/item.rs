@@ -170,6 +170,7 @@ pub fn get_test_item_records() -> Vec<TestSyncRecord> {
             code: "NSI".to_owned(),
             unit_id: None,
             r#type: ItemRowType::NonStock,
+            legacy_record: ITEM_1.1.to_owned(),
         })),
         identifier: "Non stock items",
         central_sync_buffer_row: CentralSyncBufferRow {
@@ -189,6 +190,7 @@ pub fn get_test_item_upsert_records() -> Vec<TestSyncRecord> {
             code: "NSI".to_owned(),
             unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
             r#type: ItemRowType::Stock,
+            legacy_record: ITEM_1_UPSERT.1.to_owned(),
         })),
         identifier: "Non stock items 2",
         central_sync_buffer_row: CentralSyncBufferRow {

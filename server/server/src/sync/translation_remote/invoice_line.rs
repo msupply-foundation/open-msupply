@@ -94,8 +94,7 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 // use new om_* fields
                 (
                     item_code,
-                    data.tax
-                        .and_then(|tax| if tax < 0.0 { None } else { Some(tax) }),
+                    data.tax,
                     data.total_before_tax.unwrap_or(0.0),
                     data.total_after_tax.unwrap_or(0.0),
                 )
@@ -207,8 +206,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             item_code: Some(item_code),
-            // encode None as -1
-            tax: tax.or(Some(-1.0)),
+            tax,
             total_before_tax: Some(total_before_tax),
             total_after_tax: Some(total_after_tax),
         };
