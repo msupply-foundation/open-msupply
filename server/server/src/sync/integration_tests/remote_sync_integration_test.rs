@@ -25,9 +25,9 @@ mod remote_sync_integration_tests {
 
     use crate::sync::{
         integration_tests::{
-            invoice::InvoiceRecordTester, number::NumberSyncRecordTester,
-            requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
-            stocktake::StocktakeRecordTester,
+            invoice::InvoiceRecordTester, location::LocationSyncRecordTester,
+            number::NumberSyncRecordTester, requisition::RequisitionRecordTester,
+            stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
         },
         Synchroniser,
     };
@@ -35,9 +35,15 @@ mod remote_sync_integration_tests {
     use super::SyncRecordTester;
 
     #[allow(dead_code)]
-    async fn init_db(sync_settings: &SyncSettings) -> (StorageConnection, Synchroniser) {
-        let (_, connection, connection_manager, _) =
-            setup_all("remote_sync_integration_tests", MockDataInserts::none()).await;
+    async fn init_db(
+        sync_settings: &SyncSettings,
+        step: &str,
+    ) -> (StorageConnection, Synchroniser) {
+        let (_, connection, connection_manager, _) = setup_all(
+            &format!("remote_sync_integration_{}_tests", step),
+            MockDataInserts::none(),
+        )
+        .await;
 
         let synchroniser = Synchroniser::new(sync_settings.clone(), connection_manager).unwrap();
         synchroniser
@@ -60,7 +66,7 @@ mod remote_sync_integration_tests {
         sync_settings: &SyncSettings,
         tester: &dyn SyncRecordTester<T>,
     ) {
-        let (connection, synchroniser) = init_db(sync_settings).await;
+        let (connection, synchroniser) = init_db(sync_settings, "step0").await;
         synchroniser
             .remote_data
             .initial_pull(&connection)
@@ -74,8 +80,9 @@ mod remote_sync_integration_tests {
             .push_changes(&connection)
             .await
             .unwrap();
+
         // reset local DB and pull changes
-        let (connection, synchroniser) = init_db(sync_settings).await;
+        let (connection, synchroniser) = init_db(sync_settings, "step1").await;
         synchroniser
             .remote_data
             .initial_pull(&connection)
@@ -92,7 +99,7 @@ mod remote_sync_integration_tests {
             .await
             .unwrap();
         // reset local DB and pull changes
-        let (connection, synchroniser) = init_db(sync_settings).await;
+        let (connection, synchroniser) = init_db(sync_settings, "step2").await;
         synchroniser
             .remote_data
             .initial_pull(&connection)
@@ -126,6 +133,10 @@ mod remote_sync_integration_tests {
         println!("number:");
         let number_tester = NumberSyncRecordTester {};
         test_sync_record(store_id, &sync_settings, &number_tester).await;
+
+        println!("Location:");
+        let location_tester = LocationSyncRecordTester {};
+        test_sync_record(store_id, &sync_settings, &location_tester).await;
 
         println!("stock line:");
         let stock_line_tester = StockLineRecordTester {};
