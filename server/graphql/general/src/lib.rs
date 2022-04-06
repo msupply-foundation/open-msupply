@@ -1,7 +1,5 @@
-mod mutations;
 mod queries;
 
-use self::mutations::user_register::*;
 use self::queries::*;
 
 use async_graphql::*;
@@ -125,19 +123,5 @@ impl GeneralQueries {
             consumption_options_input,
             stock_evolution_options_input,
         )
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct GeneralMutations;
-
-#[Object]
-impl GeneralMutations {
-    async fn register_user(
-        &self,
-        ctx: &Context<'_>,
-        input: UserRegisterInput,
-    ) -> UserRegisterResponse {
-        user_register(ctx, input)
     }
 }
