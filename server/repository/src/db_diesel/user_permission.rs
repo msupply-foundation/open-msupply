@@ -3,7 +3,8 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::user_permission::{
-        user_permission, user_permission::dsl as user_permission_dsl, Resource, UserPermissionRow,
+        user_permission, user_permission::dsl as user_permission_dsl, Permission, Resource,
+        UserPermissionRow,
     },
 };
 use crate::{EqualFilter, Pagination, Sort};
@@ -16,7 +17,9 @@ pub type UserPermission = UserPermissionRow;
 pub struct UserPermissionFilter {
     pub id: Option<EqualFilter<String>>,
     pub user_id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
     pub resource: Option<EqualFilter<Resource>>,
+    pub permission: Option<EqualFilter<Permission>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -98,11 +101,15 @@ fn create_filtered_query(filter: Option<UserPermissionFilter>) -> BoxedUserPermi
             id,
             user_id,
             resource,
+            store_id,
+            permission,
         } = f;
 
         apply_equal_filter!(query, id, user_permission_dsl::id);
         apply_equal_filter!(query, user_id, user_permission_dsl::user_id);
         apply_equal_filter!(query, resource, user_permission_dsl::resource);
+        apply_equal_filter!(query, store_id, user_permission_dsl::store_id);
+        apply_equal_filter!(query, permission, user_permission_dsl::permission);
     }
 
     query
@@ -125,6 +132,16 @@ impl UserPermissionFilter {
 
     pub fn resource(mut self, filter: EqualFilter<Resource>) -> Self {
         self.resource = Some(filter);
+        self
+    }
+
+    pub fn permission(mut self, filter: EqualFilter<Permission>) -> Self {
+        self.permission = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }

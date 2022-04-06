@@ -59,9 +59,12 @@ impl ServiceProvider {
     pub fn new(connection_manager: StorageConnectionManager) -> Self {
         let permission_service = Arc::new(PermissionService::new());
         ServiceProvider {
-            connection_manager,
+            connection_manager: connection_manager.clone(),
             permission_service: permission_service.clone(),
-            validation_service: Box::new(ValidationService::new(permission_service)),
+            validation_service: Box::new(ValidationService::new(
+                permission_service,
+                connection_manager.clone(),
+            )),
             location_service: Box::new(LocationService {}),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
