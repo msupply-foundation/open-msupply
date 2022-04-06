@@ -31,7 +31,7 @@ export const LoginLayout = ({
   };
 
   return (
-    <Box display="flex">
+    <Box display="flex" style={{ width: '100%' }}>
       <Box
         flex="1 0 50%"
         sx={{
@@ -47,10 +47,16 @@ export const LoginLayout = ({
           <Typography
             sx={{
               color: theme => theme.typography.login.color,
-              fontSize: '64px',
+              fontSize: {
+                xs: '38px',
+                sm: '38px',
+                md: '48px',
+                lg: '64px',
+                xl: '64px',
+              },
               fontWeight: 'bold',
               lineHeight: 'normal',
-              maxWidth: '525px',
+              whiteSpace: 'pre-line',
             }}
           >
             {t('login.heading')}
@@ -59,9 +65,15 @@ export const LoginLayout = ({
         <Box style={{ marginTop: 45 }}>
           <Typography
             sx={{
-              fontSize: theme => theme.typography.login.fontSize,
+              fontSize: {
+                xs: '12px',
+                sm: '14px',
+                md: '16px',
+                lg: '20px',
+                xl: '20px',
+              },
               color: theme => theme.typography.login.color,
-              fontWeight: theme => theme.typography.login.fontWeight,
+              fontWeight: 600,
             }}
           >
             {t('login.body')}
