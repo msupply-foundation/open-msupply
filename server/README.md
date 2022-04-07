@@ -134,3 +134,15 @@ cargo test --features postgres
 ## Building docs
 
 Docs are built via github action, but can build local version with docker: [how to build docs locally](docker/zola_docs/README.md)
+
+## Development Mode
+
+In production certificates are needed to start the server.
+Furthermore, the central server must be running.
+For convenience these requirements are disabled in development mode.
+To enable development mode the `develop` flag must be set to `true` in the settings (`true` on default when using local.yaml):
+
+```yaml
+server:
+  develop: true
+```
