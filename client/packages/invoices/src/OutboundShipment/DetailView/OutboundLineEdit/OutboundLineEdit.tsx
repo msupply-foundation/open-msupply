@@ -20,6 +20,7 @@ import {
   useDraftOutboundLines,
   usePackSizeController,
   useNextItem,
+  PackSizeController,
 } from './hooks';
 import {
   allocateQuantities,
@@ -27,6 +28,8 @@ import {
   getAllocatedQuantity,
 } from './utils';
 import { useOutbound } from '../../api';
+import { DraftOutboundLine } from '../../../types';
+
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -123,41 +126,67 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           canAutoAllocate={canAutoAllocate}
         />
 
-        {!!currentItem ? (
-          !isLoading ? (
-            canAutoAllocate ? (
-              <TableProvider createStore={createTableStore}>
-                <OutboundLineEditTable
-                  packSizeController={packSizeController}
-                  onChange={updateQuantity}
-                  rows={draftOutboundLines}
-                />
-              </TableProvider>
-            ) : (
-              <NoStock />
-            )
-          ) : (
-            <Box
-              display="flex"
-              flex={1}
-              height={400}
-              justifyContent="center"
-              alignItems="center"
-            >
-              <InlineSpinner />
-            </Box>
-          )
-        ) : null}
+        <TableWrapper
+          canAutoAllocate={canAutoAllocate}
+          currentItem={currentItem}
+          isLoading={isLoading}
+          packSizeController={packSizeController}
+          updateQuantity={updateQuantity}
+          draftOutboundLines={draftOutboundLines}
+        />
       </Grid>
     </Modal>
   );
 };
 
-const NoStock = () => {
+interface TableProps {
+  canAutoAllocate: boolean;
+  currentItem: ItemRowFragment | null;
+  isLoading: boolean;
+  packSizeController: PackSizeController;
+  updateQuantity: (batchId: string, updateQuantity: number) => void;
+  draftOutboundLines: DraftOutboundLine[];
+}
+
+const TableWrapper: React.FC<TableProps> = ({
+  canAutoAllocate,
+  currentItem,
+  isLoading,
+  packSizeController,
+  updateQuantity,
+  draftOutboundLines,
+}) => {
   const t = useTranslation('distribution');
+
+  if (!currentItem) return null;
+
+  if (isLoading)
+    return (
+      <Box
+        display="flex"
+        flex={1}
+        height={400}
+        justifyContent="center"
+        alignItems="center"
+      >
+        <InlineSpinner />
+      </Box>
+    );
+
+  if (!canAutoAllocate)
+    return (
+      <Box sx={{ margin: 'auto' }}>
+        <Typography>{t('messages.no-stock-available')}</Typography>
+      </Box>
+    );
+
   return (
-    <Box sx={{ margin: 'auto' }}>
-      <Typography>{t('messages.no-stock-available')}</Typography>
-    </Box>
+    <TableProvider createStore={createTableStore}>
+      <OutboundLineEditTable
+        packSizeController={packSizeController}
+        onChange={updateQuantity}
+        rows={draftOutboundLines}
+      />
+    </TableProvider>
   );
 };

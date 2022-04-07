@@ -150,9 +150,14 @@ export const useDraftOutboundLines = (
         .sort(SortUtils.byExpiryAsc);
 
       if (status === InvoiceNodeStatus.New) {
-        const placeholder = lines?.find(
+        let placeholder = lines?.find(
           ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
         );
+        if (!placeholder) {
+          placeholder = draftOutboundLines.find(
+            ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+          );
+        }
         if (placeholder) {
           rows.push(
             createDraftOutboundLine({ invoiceId, invoiceLine: placeholder })
