@@ -10,6 +10,7 @@ pub fn get_test_settings(db_name: &str) -> Settings {
         server: ServerSettings {
             host: "localhost".to_string(),
             port: 5432,
+            develop: true,
             debug_no_access_control: true,
         },
         database: get_test_db_settings(db_name),

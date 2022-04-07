@@ -87,6 +87,7 @@ pub mod android {
                     server: ServerSettings {
                         host: "127.0.0.1".to_string(),
                         port,
+                        develop: false,
                         debug_no_access_control: false,
                     },
                     database: DatabaseSettings {
