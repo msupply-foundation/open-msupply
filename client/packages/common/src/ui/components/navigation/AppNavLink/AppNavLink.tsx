@@ -92,6 +92,8 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   );
 
   const expandChildren = () => {
+    drawer.setHoverOpen(true);
+    drawer.open();
     drawer.setClickedNavPath(to);
   };
 
