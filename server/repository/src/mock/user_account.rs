@@ -1,5 +1,5 @@
 use crate::schema::{
-    user_permission::{Permission, Resource, UserPermissionRow},
+    user_permission::{Permission, UserPermissionRow},
     user_store_join::UserStoreJoinRow,
     UserAccountRow,
 };
@@ -60,8 +60,7 @@ pub fn mock_user_permission_a1() -> UserPermissionRow {
         id: "user_permission_a1".to_string(),
         user_id: "user_account_a".to_string(),
         store_id: Some("store_a".to_string()),
-        resource: Resource::Stocktake,
-        permission: Permission::Mutate,
+        permission: Permission::StocktakeMutate,
     }
 }
 
@@ -70,8 +69,7 @@ pub fn mock_user_permission_a2() -> UserPermissionRow {
         id: "user_permission_a2".to_string(),
         user_id: "user_account_a".to_string(),
         store_id: Some("store_a".to_string()),
-        resource: Resource::Requisition,
-        permission: Permission::Query,
+        permission: Permission::RequisitionQuery,
     }
 }
 
@@ -80,8 +78,7 @@ pub fn mock_user_permission_b1() -> UserPermissionRow {
         id: "user_permission_b1".to_string(),
         user_id: "user_account_b".to_string(),
         store_id: Some("store_a".to_string()),
-        resource: Resource::OutboundShipment,
-        permission: Permission::Query,
+        permission: Permission::OutboundShipmentQuery,
     }
 }
 
