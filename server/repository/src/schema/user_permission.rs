@@ -5,26 +5,32 @@ table! {
       id -> Text,
       user_id -> Text,
       store_id -> Nullable<Text>,
-      resource -> crate::schema::user_permission::ResourceMapping,
       permission -> crate::schema::user_permission::PermissionMapping,
   }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum Resource {
-    Stocktake,
-    InboundShipment,
-    OutboundShipment,
-    Requisition,
-}
-
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum Permission {
-    Query,
-    /// Edit + Delete
-    Mutate,
+    /// User has access to the store this permission is associated with.
+    /// This acts like a master switch to enable/disable all user's permissions associated with a store.
+    StoreAccess,
+    // stock line
+    StockLineQuery,
+    // stocktake
+    StocktakeQuery,
+    StocktakeMutate,
+    // requisition
+    RequisitionQuery,
+    RequisitionMutate,
+    // outbound shipment
+    OutboundShipmentQuery,
+    OutboundShipmentMutate,
+    // inbound shipment
+    InboundShipmentQuery,
+    InboundShipmentMutate,
+    // reporting
+    Report,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
@@ -33,6 +39,5 @@ pub struct UserPermissionRow {
     pub id: String,
     pub user_id: String,
     pub store_id: Option<String>,
-    pub resource: Resource,
     pub permission: Permission,
 }

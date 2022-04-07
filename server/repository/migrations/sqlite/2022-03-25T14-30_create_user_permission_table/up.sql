@@ -2,6 +2,17 @@ CREATE TABLE user_permission (
     id TEXT NOT NULL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES user_account(id),
     store_id TEXT NOT NULL REFERENCES store(id),
-    resource TEXT CHECK (resource IN ('STOCKTAKE', 'OUTBOUND_SHIPMENT', 'INBOUND_SHIPMENT', 'REQUISITION')) NOT NULL,
-    permission TEXT CHECK (permission IN ('QUERY', 'MUTATE')) NOT NULL
+    permission TEXT CHECK (permission IN (
+        'STORE_ACCESS',
+        'STOCK_LINE_QUERY',
+        'STOCKTAKE_QUERY',
+        'STOCKTAKE_MUTATE',
+        'REQUISITION_QUERY',
+        'REQUISITION_MUTATE',
+        'OUTBOUND_SHIPMENT_QUERY',
+        'OUTBOUND_SHIPMENT_MUTATE',
+        'INBOUND_SHIPMENT_QUERY',
+        'INBOUND_SHIPMENT_MUTATE',
+        'REPORT'
+    )) NOT NULL
 )

@@ -187,7 +187,7 @@ impl<'a> UserAccountService<'a> {
 mod user_account_test {
     use repository::{
         mock::{mock_user_account_a, mock_user_account_b, MockDataInserts},
-        schema::user_permission::{Permission, Resource},
+        schema::user_permission::Permission,
         test_db::{self, setup_all},
         EqualFilter, UserFilter, UserPermissionFilter, UserPermissionRepository, UserRepository,
     };
@@ -284,8 +284,7 @@ mod user_account_test {
                         id: "new_permission".to_string(),
                         user_id: mock_user_account_a().id,
                         store_id: Some("store_b".to_string()),
-                        resource: Resource::InboundShipment,
-                        permission: Permission::Mutate,
+                        permission: Permission::InboundShipmentMutate,
                     }],
                 }],
             )

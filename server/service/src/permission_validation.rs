@@ -299,8 +299,7 @@ impl ValidationServiceTrait for ValidationService {
                 UserPermissionFilter::new()
                     .user_id(EqualFilter::equal_to(&validated_auth.user_id))
                     .store_id(EqualFilter::equal_to(&store_id))
-                    .resource(user_permission::Resource::Requisition.equal_to())
-                    .permission(user_permission::Permission::Mutate.equal_to()),
+                    .permission(user_permission::Permission::RequisitionMutate.equal_to()),
             )?;
 
             if matched_permission.is_empty() {
@@ -446,8 +445,7 @@ mod permission_validation_test {
                 id: "permission".to_string(),
                 user_id: user().id,
                 store_id: Some(store().id),
-                resource: user_permission::Resource::Requisition,
-                permission: user_permission::Permission::Mutate,
+                permission: user_permission::Permission::RequisitionMutate,
             }
         }
 
