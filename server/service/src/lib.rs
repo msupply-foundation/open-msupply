@@ -16,7 +16,6 @@ pub mod master_list;
 pub mod name;
 pub mod number;
 pub mod permission_validation;
-pub mod permissions;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;

@@ -79,9 +79,13 @@ pub fn validate_auth(
                 ValidationDeniedKind::NotAuthenticated(_) => {
                     StandardGraphqlError::Unauthenticated(format!("{:?}", kind))
                 }
-                ValidationDeniedKind::InsufficientPermission(_) => {
-                    StandardGraphqlError::Forbidden(format!("{:?}", kind))
-                }
+                ValidationDeniedKind::InsufficientPermission {
+                    msg: _,
+                    required_permissions,
+                } => StandardGraphqlError::Forbidden(format!(
+                    "Required permissions: {:?}",
+                    required_permissions
+                )),
             },
             ValidationError::InternalError(err) => StandardGraphqlError::InternalError(err),
         };
@@ -101,8 +105,11 @@ pub fn list_error_to_gql_err(err: ListError) -> async_graphql::Error {
 pub fn validation_denied_kind_to_string(kind: ValidationDeniedKind) -> String {
     match kind {
         ValidationDeniedKind::NotAuthenticated(msg) => format!("Not authenticated: {}", msg),
-        ValidationDeniedKind::InsufficientPermission((msg, _)) => {
-            format!("Insufficient permission: {}", msg)
+        ValidationDeniedKind::InsufficientPermission {
+            msg: _,
+            required_permissions,
+        } => {
+            format!("Required permissions: {:?}", required_permissions)
         }
     }
 }
