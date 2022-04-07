@@ -15,7 +15,7 @@ use service::{auth_data::AuthData, service_provider::ServiceProvider, token_buck
 
 use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
-use std::{net::TcpListener, path::Path, sync::RwLock};
+use std::{io::ErrorKind, net::TcpListener, path::Path, sync::RwLock};
 use tokio::sync::oneshot;
 
 pub mod configuration;
@@ -38,8 +38,8 @@ pub async fn start_server(
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
         token_bucket: RwLock::new(TokenBucket::new()),
-        debug_no_ssl: matches!(cert_type, ServerCertType::None),
-        debug_no_access_control: settings.server.debug_no_access_control,
+        debug_no_ssl: settings.server.develop && matches!(cert_type, ServerCertType::None),
+        debug_no_access_control: settings.server.develop && settings.server.debug_no_access_control,
     });
 
     let connection_manager = get_storage_connection_manager(&settings.database);
@@ -87,7 +87,16 @@ pub async fn start_server(
             )?;
         }
         ServerCertType::None => {
-            warn!("No certificates found. Run in HTTP mode");
+            if !settings.server.develop {
+                error!("No certificates found");
+                return Err(std::io::Error::new(
+                    ErrorKind::Other,
+                    "Certificate required in production",
+                ));
+            } else {
+                warn!("No certificates found: Run in HTTP development mode");
+            }
+
             let listener = TcpListener::bind(settings.server.address())
                 .expect("Failed to bind server to address");
             http_server = http_server.listen(listener)?;
@@ -98,8 +107,15 @@ pub async fn start_server(
     // Do the initial pull before doing anything else
     match synchroniser.initial_pull().await {
         Ok(_) => {}
-        // TODO: remove for production
-        Err(err) => error!("Failed to perform the initial sync: {}", err),
+        Err(err) => {
+            error!("Failed to perform the initial sync: {}", err);
+            if !settings.server.develop {
+                return Err(std::io::Error::new(
+                    ErrorKind::Other,
+                    "Initial sync must succeed in production",
+                ));
+            }
+        }
     };
 
     // http_server is the only one that should quit; a proper shutdown signal can cause this,

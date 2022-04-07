@@ -19,6 +19,10 @@ pub struct Settings {
 pub struct ServerSettings {
     pub host: String,
     pub port: u16,
+    /// Indicates if the server runs in development mode
+    #[serde(default)]
+    pub develop: bool,
+    /// Only used in development mode
     #[serde(default)]
     pub debug_no_access_control: bool,
 }
