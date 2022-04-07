@@ -66,6 +66,10 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const drawer = useDrawer();
 
   const selected = useSelectedNavMenuItem(to, !!end);
+  const handleClick = () => {
+    if (onClick) onClick();
+    drawer.onClick();
+  };
 
   const CustomLink = React.useMemo(
     () =>
@@ -84,7 +88,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             role="link"
             aria-label={text}
             title={text}
-            onClick={onClick}
+            onClick={handleClick}
           />
         )
       ),
