@@ -74,13 +74,15 @@ export const getAuthQueries = (sdk: Sdk) => ({
       return refreshTokenGuard(result);
     },
     me: async (token?: string) => {
-      const result = await sdk.me(
-        {},
-        {
-          Authorization: `Bearer ${token}`,
-        }
-      );
-      return result.me;
+      try {
+        const result = await sdk.me(
+          {},
+          {
+            Authorization: `Bearer ${token}`,
+          }
+        );
+        return result.me;
+      } catch {}
     },
     stores: () => async () => {
       const result = await sdk.me();

@@ -115,11 +115,11 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     patch: Partial<ResponseFragment> & { id: string }
   ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
     const input = responseParser.toUpdate(patch);
-    const result = await sdk.updateResponse({ storeId, input });
+    const result = (await sdk.updateResponse({ storeId, input })) || {};
 
     const { updateResponseRequisition } = result;
 
-    if (updateResponseRequisition.__typename === 'RequisitionNode') {
+    if (updateResponseRequisition?.__typename === 'RequisitionNode') {
       return updateResponseRequisition;
     }
 
@@ -145,29 +145,31 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not delete requisition lines!');
   },
   updateLine: async (patch: DraftResponseLine) => {
-    const result = await sdk.updateResponseLine({
-      storeId,
-      input: responseParser.toUpdateLine(patch),
-    });
+    const result =
+      (await sdk.updateResponseLine({
+        storeId,
+        input: responseParser.toUpdateLine(patch),
+      })) || {};
 
     if (
-      result.updateResponseRequisitionLine.__typename === 'RequisitionLineNode'
+      result?.updateResponseRequisitionLine.__typename === 'RequisitionLineNode'
     ) {
       return result.updateResponseRequisitionLine;
     } else throw new Error('Could not update response line');
   },
   createOutboundFromResponse: async (responseId: string): Promise<number> => {
-    const result = await sdk.createOutboundFromResponse({
-      storeId,
-      responseId,
-    });
+    const result =
+      (await sdk.createOutboundFromResponse({
+        storeId,
+        responseId,
+      })) || {};
 
-    if (result.createRequisitionShipment.__typename === 'InvoiceNode') {
+    if (result?.createRequisitionShipment.__typename === 'InvoiceNode') {
       return result.createRequisitionShipment.invoiceNumber;
     }
 
     if (
-      result.createRequisitionShipment.__typename ===
+      result?.createRequisitionShipment.__typename ===
       'CreateRequisitionShipmentError'
     ) {
       throw new Error(result.createRequisitionShipment.error.__typename);
@@ -178,7 +180,8 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   supplyRequestedQuantity: async (
     responseId: string
   ): Promise<SupplyRequestedQuantityMutation> => {
-    const result = await sdk.supplyRequestedQuantity({ storeId, responseId });
+    const result =
+      (await sdk.supplyRequestedQuantity({ storeId, responseId })) || {};
     return result;
   },
 });
