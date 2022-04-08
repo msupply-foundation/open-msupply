@@ -38,7 +38,7 @@ export const useOutboundDelete = () => {
           onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
         });
         const deletedMessage = t('messages.deleted-invoices', {
-          number: numberSelected,
+          count: numberSelected,
         });
         const successSnack = success(deletedMessage);
         successSnack();
