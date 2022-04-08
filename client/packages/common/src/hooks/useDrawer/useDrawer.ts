@@ -9,8 +9,10 @@ type DrawerController = {
   open: () => void;
   close: () => void;
   toggle: () => void;
+  onClick: () => void;
   setHoverOpen: (open: boolean) => void;
   setClickedNavPath: (clicked?: string) => void;
+  onExpand: (clicked?: string) => void;
 };
 
 export const useDrawer = create<DrawerController>(set => {
@@ -26,6 +28,18 @@ export const useDrawer = create<DrawerController>(set => {
     close: () => set(state => ({ ...state, isOpen: false, hoverOpen: false })),
     toggle: () =>
       set(state => ({ ...state, isOpen: !state.isOpen, hasUserSet: true })),
+    onClick: () =>
+      set(state => {
+        if (state.isOpen && state.hoverOpen) {
+          return { ...state, isOpen: false, hoverOpen: false };
+        }
+        return state;
+      }),
+    onExpand: (clickedNavPath?: string) =>
+      set(state => {
+        const hoverOpen = state.isOpen ? state.hoverOpen : true;
+        return { ...state, hoverOpen, clickedNavPath, isOpen: true };
+      }),
   };
 });
 
