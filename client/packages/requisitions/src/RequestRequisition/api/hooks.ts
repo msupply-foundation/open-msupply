@@ -250,7 +250,7 @@ export const useDeleteSelectedRequisitions = () => {
       } else {
         mutate(selectedRows);
         const deletedMessage = t('messages.deleted-requisitions', {
-          number: numberSelected,
+          count: numberSelected,
         });
         const successSnack = success(deletedMessage);
         successSnack();
