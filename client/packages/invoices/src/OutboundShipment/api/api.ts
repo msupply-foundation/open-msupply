@@ -207,28 +207,30 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   insert: async (
     invoice: Omit<InsertOutboundShipmentMutationVariables, 'storeId'>
   ): Promise<number> => {
-    const result = await sdk.insertOutboundShipment({
-      id: invoice.id,
-      otherPartyId: invoice.otherPartyId,
-      storeId,
-    });
+    const result =
+      (await sdk.insertOutboundShipment({
+        id: invoice.id,
+        otherPartyId: invoice.otherPartyId,
+        storeId,
+      })) || {};
 
     const { insertOutboundShipment } = result;
 
-    if (insertOutboundShipment.__typename === 'InvoiceNode') {
+    if (insertOutboundShipment?.__typename === 'InvoiceNode') {
       return insertOutboundShipment.invoiceNumber;
     }
 
     throw new Error('Could not insert invoice');
   },
   delete: async (invoices: OutboundRowFragment[]): Promise<string[]> => {
-    const result = await sdk.deleteOutboundShipments({
-      storeId,
-      deleteOutboundShipments: invoices.map(invoice => invoice.id),
-    });
+    const result =
+      (await sdk.deleteOutboundShipments({
+        storeId,
+        deleteOutboundShipments: invoices.map(invoice => invoice.id),
+      })) || {};
 
     const { batchOutboundShipment } = result;
-    if (batchOutboundShipment.deleteOutboundShipments) {
+    if (batchOutboundShipment?.deleteOutboundShipments) {
       return batchOutboundShipment.deleteOutboundShipments.map(({ id }) => id);
     }
 
@@ -237,16 +239,17 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   update: async (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
   ) => {
-    const result = await sdk.upsertOutboundShipment({
-      storeId,
-      input: {
-        updateOutboundShipments: [outboundParsers.toUpdate(patch)],
-      },
-    });
+    const result =
+      (await sdk.upsertOutboundShipment({
+        storeId,
+        input: {
+          updateOutboundShipments: [outboundParsers.toUpdate(patch)],
+        },
+      })) || {};
 
     const { batchOutboundShipment } = result;
 
-    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+    if (batchOutboundShipment?.__typename === 'BatchOutboundShipmentResponse') {
       return patch;
     }
 
@@ -340,10 +343,10 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       allocatedOutboundShipmentUnallocatedLines,
     };
 
-    const result = await sdk.upsertOutboundShipment({ storeId, input });
+    const result = (await sdk.upsertOutboundShipment({ storeId, input })) || {};
     const { batchOutboundShipment } = result;
 
-    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+    if (batchOutboundShipment?.__typename === 'BatchOutboundShipmentResponse') {
       return batchOutboundShipment;
     }
 
@@ -369,23 +372,24 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     const toUpdateServiceLine = (line: OutboundLineFragment) =>
       outboundParsers.toUpdateServiceCharge({ ...line, taxPercentage: tax });
 
-    const result = await sdk.upsertOutboundShipment({
-      storeId,
-      input: {
-        updateOutboundShipmentLines:
-          type === InvoiceLineNodeType.StockOut
-            ? lines.filter(isA.stockOutLine).map(toUpdateStockLine)
-            : [],
-        updateOutboundShipmentServiceLines:
-          type === InvoiceLineNodeType.Service
-            ? lines.filter(isA.serviceLine).map(toUpdateServiceLine)
-            : [],
-      },
-    });
+    const result =
+      (await sdk.upsertOutboundShipment({
+        storeId,
+        input: {
+          updateOutboundShipmentLines:
+            type === InvoiceLineNodeType.StockOut
+              ? lines.filter(isA.stockOutLine).map(toUpdateStockLine)
+              : [],
+          updateOutboundShipmentServiceLines:
+            type === InvoiceLineNodeType.Service
+              ? lines.filter(isA.serviceLine).map(toUpdateServiceLine)
+              : [],
+        },
+      })) || {};
 
     const { batchOutboundShipment } = result;
 
-    if (batchOutboundShipment.__typename === 'BatchOutboundShipmentResponse') {
+    if (batchOutboundShipment?.__typename === 'BatchOutboundShipmentResponse') {
       return batchOutboundShipment;
     }
 

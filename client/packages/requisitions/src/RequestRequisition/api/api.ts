@@ -165,8 +165,8 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         input,
       });
 
-      const { insertRequestRequisitionLine } = result;
-      if (insertRequestRequisitionLine.__typename === 'RequisitionLineNode') {
+      const { insertRequestRequisitionLine } = result || {};
+      if (insertRequestRequisitionLine?.__typename === 'RequisitionLineNode') {
         return insertRequestRequisitionLine;
       }
     } else {
@@ -176,8 +176,8 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         input,
       });
 
-      const { updateRequestRequisitionLine } = result;
-      if (updateRequestRequisitionLine.__typename === 'RequisitionLineNode') {
+      const { updateRequestRequisitionLine } = result || {};
+      if (updateRequestRequisitionLine?.__typename === 'RequisitionLineNode') {
         return updateRequestRequisitionLine;
       }
     }
@@ -191,9 +191,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       input,
     });
 
-    const { updateRequestRequisition } = result;
+    const { updateRequestRequisition } = result || {};
 
-    if (updateRequestRequisition.__typename === 'RequisitionNode') {
+    if (updateRequestRequisition?.__typename === 'RequisitionNode') {
       return updateRequestRequisition;
     }
 
@@ -220,9 +220,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       },
     });
 
-    const { insertRequestRequisition } = result;
+    const { insertRequestRequisition } = result || {};
 
-    if (insertRequestRequisition.__typename === 'RequisitionNode') {
+    if (insertRequestRequisition?.__typename === 'RequisitionNode') {
       return insertRequestRequisition;
     }
 
@@ -235,9 +235,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       input: { deleteRequestRequisitions },
     });
 
-    const { batchRequestRequisition } = result;
+    const { batchRequestRequisition } = result || {};
 
-    if (batchRequestRequisition.deleteRequestRequisitions) {
+    if (batchRequestRequisition?.deleteRequestRequisitions) {
       return batchRequestRequisition.deleteRequestRequisitions.length;
     }
 

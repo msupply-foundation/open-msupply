@@ -16,7 +16,11 @@ export const QueryErrorHandler = () => {
     if (!!errorMessage) {
       error(errorMessage)();
     }
-  }, [errorMessage, location.pathname]);
+  }, [errorMessage]);
+
+  useEffect(() => {
+    setErrorMessage(null);
+  }, [setErrorMessage, location.pathname]);
 
   useEffect(() => {
     const currentDefaults = client.getDefaultOptions();

@@ -134,23 +134,24 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     patch: RecordPatch<StocktakeFragment>
   ): Promise<UpdateStocktakeInput> => {
     const input = stocktakeParser.toUpdate(patch);
-    const result = await sdk.updateStocktake({ input, storeId });
+    const result = (await sdk.updateStocktake({ input, storeId })) || {};
 
     const { updateStocktake } = result;
 
-    if (updateStocktake.__typename === 'StocktakeNode') {
+    if (updateStocktake?.__typename === 'StocktakeNode') {
       return input;
     }
 
     throw new Error('Could not update stocktake');
   },
   deleteStocktakes: async (stocktakes: StocktakeRowFragment[]) => {
-    const result = await sdk.deleteStocktakes({
-      ids: stocktakes.map(stocktake => ({ id: stocktake.id })),
-      storeId,
-    });
+    const result =
+      (await sdk.deleteStocktakes({
+        ids: stocktakes.map(stocktake => ({ id: stocktake.id })),
+        storeId,
+      })) || {};
     const { batchStocktake } = result;
-    if (batchStocktake.__typename === 'BatchStocktakeResponse') {
+    if (batchStocktake?.__typename === 'BatchStocktakeResponse') {
       return batchStocktake;
     }
 
@@ -162,14 +163,15 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     return result;
   },
   insertStocktake: async (itemIds?: string[]) => {
-    const result = await sdk.insertStocktake({
-      input: {
-        id: FnUtils.generateUUID(),
-      },
-      storeId,
-    });
+    const result =
+      (await sdk.insertStocktake({
+        input: {
+          id: FnUtils.generateUUID(),
+        },
+        storeId,
+      })) || {};
     const { insertStocktake } = result;
-    if (insertStocktake.__typename === 'StocktakeNode') {
+    if (insertStocktake?.__typename === 'StocktakeNode') {
       if (itemIds) {
         const insertStocktakeLines = itemIds.map(itemId => ({
           id: FnUtils.generateUUID(),
