@@ -66,6 +66,10 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const drawer = useDrawer();
 
   const selected = useSelectedNavMenuItem(to, !!end);
+  const handleClick = () => {
+    if (onClick) onClick();
+    drawer.onClick();
+  };
 
   const CustomLink = React.useMemo(
     () =>
@@ -73,7 +77,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         !end && !!inactive ? (
           <span
             {...linkProps}
-            onClick={expandChildren}
+            onClick={() => drawer.onExpand(to)}
             data-testid={`${to}_hover`}
           />
         ) : (
@@ -84,16 +88,12 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             role="link"
             aria-label={text}
             title={text}
-            onClick={onClick}
+            onClick={handleClick}
           />
         )
       ),
     [to]
   );
-
-  const expandChildren = () => {
-    drawer.setClickedNavPath(to);
-  };
 
   return (
     <StyledListItem isSelected={selected} to={to}>
