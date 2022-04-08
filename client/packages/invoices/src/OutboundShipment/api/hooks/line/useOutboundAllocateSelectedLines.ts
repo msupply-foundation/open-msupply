@@ -32,7 +32,7 @@ export const useOutboundAllocateLines = () => {
 export const useOutboundAllocateSelectedLines = (): {
   onAllocate: () => Promise<void>;
 } => {
-  const { success, info } = useNotification();
+  const { success, info, warning, error } = useNotification();
   const { items, lines } = useOutboundRows();
   const { mutateAsync } = useOutboundAllocateLines();
   const t = useTranslation('distribution');
@@ -67,12 +67,45 @@ export const useOutboundAllocateSelectedLines = (): {
       return;
     }
 
-    const response = await mutateAsync(selectedUnallocatedLines);
-    const { allocateOutboundShipmentUnallocatedLines } = response;
-    const number = allocateOutboundShipmentUnallocatedLines?.length;
-    const onSuccess = success(t('messages.allocated-lines', { number }));
-    onSuccess();
-  };
+    const batchResponse = await mutateAsync(selectedUnallocatedLines);
 
+    if (batchResponse?.__typename === 'BatchOutboundShipmentResponse') {
+      const { allocateOutboundShipmentUnallocatedLines } = batchResponse;
+      const count = {
+        success: 0,
+        partial: 0,
+        failed: 0,
+      };
+
+      allocateOutboundShipmentUnallocatedLines?.forEach(line => {
+        const { id, response } = line;
+        if (
+          response?.__typename === 'AllocateOutboundShipmentUnallocatedLineNode'
+        ) {
+          if (response?.deletes.some(({ id: deleted }) => id === deleted)) {
+            count.success++;
+            return;
+          }
+          if (response.inserts.totalCount > 0) {
+            count.partial++;
+            return;
+          }
+          count.failed++;
+        }
+      });
+
+      if (count.success > 0) {
+        success(t('messages.allocated-lines', { count: count.success }))();
+      }
+      if (count.partial > 0) {
+        warning(
+          t('messages.allocated-lines-partial', { count: count.partial })
+        )();
+      }
+      if (count.failed > 0) {
+        error(t('messages.allocated-lines-failed', { count: count.failed }))();
+      }
+    }
+  };
   return { onAllocate };
 };
