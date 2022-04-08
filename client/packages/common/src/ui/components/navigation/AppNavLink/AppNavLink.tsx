@@ -77,7 +77,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         !end && !!inactive ? (
           <span
             {...linkProps}
-            onClick={expandChildren}
+            onClick={() => drawer.onExpand(to)}
             data-testid={`${to}_hover`}
           />
         ) : (
@@ -94,12 +94,6 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
       ),
     [to]
   );
-
-  const expandChildren = () => {
-    drawer.setHoverOpen(true);
-    drawer.open();
-    drawer.setClickedNavPath(to);
-  };
 
   return (
     <StyledListItem isSelected={selected} to={to}>
