@@ -1,12 +1,17 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound, standard_graphql_error::StandardGraphqlError, ContextExt,
+    simple_generic_errors::RecordNotFound,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
-use service::invoice_line::outbound_shipment_unallocated_line::{
-    UpdateOutboundShipmentUnallocatedLine as ServiceInput,
-    UpdateOutboundShipmentUnallocatedLineError as ServiceError,
+use service::{
+    invoice_line::outbound_shipment_unallocated_line::{
+        UpdateOutboundShipmentUnallocatedLine as ServiceInput,
+        UpdateOutboundShipmentUnallocatedLineError as ServiceError,
+    },
+    permission_validation::{Resource, ResourceAccessRequest},
 };
 
 #[derive(InputObject)]
@@ -45,6 +50,14 @@ impl UpdateInput {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
