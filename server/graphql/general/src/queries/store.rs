@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterInput, EqualFilterStringInput};
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::{
     generic_filters::SimpleStringFilterInput, pagination::PaginationInput,
     standard_graphql_error::list_error_to_gql_err, ContextExt,
@@ -7,6 +8,7 @@ use graphql_core::{
 use graphql_types::types::StoreNode;
 use repository::{EqualFilter, StoreFilter, StoreSort, StoreSortField};
 use repository::{PaginationOption, SimpleStringFilter};
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject, Clone)]
 pub struct StoreFilterInput {
@@ -51,6 +53,14 @@ pub fn stores(
     filter: Option<StoreFilterInput>,
     sort: Option<Vec<StoreSortInput>>,
 ) -> Result<StoresResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryStore,
+            store_id: None,
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
     let service = &service_provider.general_service;

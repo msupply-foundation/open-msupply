@@ -3,21 +3,33 @@ use graphql_core::{
     simple_generic_errors::{
         DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
     },
+    standard_graphql_error::validate_auth,
     ContextExt,
 };
 use graphql_types::types::LocationNode;
 use repository::RepositoryError;
-use service::location::insert::{InsertLocation, InsertLocationError as InError};
+use service::{
+    location::insert::{InsertLocation, InsertLocationError as InError},
+    permission_validation::{Resource, ResourceAccessRequest},
+};
 
 pub fn insert_location(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertLocationInput,
-) -> InsertLocationResponse {
+) -> Result<InsertLocationResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateLocation,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = match service_provider.context() {
         Ok(service) => service,
-        Err(error) => return InsertLocationResponse::Error(error.into()),
+        Err(error) => return Ok(InsertLocationResponse::Error(error.into())),
     };
 
     match service_provider.location_service.insert_location(
@@ -25,8 +37,10 @@ pub fn insert_location(
         store_id,
         input.into(),
     ) {
-        Ok(location) => InsertLocationResponse::Response(LocationNode::from_domain(location)),
-        Err(error) => InsertLocationResponse::Error(error.into()),
+        Ok(location) => Ok(InsertLocationResponse::Response(LocationNode::from_domain(
+            location,
+        ))),
+        Err(error) => Ok(InsertLocationResponse::Error(error.into())),
     }
 }
 

@@ -4,6 +4,7 @@ CREATE TABLE user_permission (
     store_id TEXT NOT NULL REFERENCES store(id),
     permission TEXT CHECK (permission IN (
         'STORE_ACCESS',
+        'LOCATION_MUTATE',
         'STOCK_LINE_QUERY',
         'STOCKTAKE_QUERY',
         'STOCKTAKE_MUTATE',

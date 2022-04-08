@@ -1,8 +1,14 @@
 use async_graphql::*;
 use chrono::{FixedOffset, Utc};
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use repository::schema::{InvoiceRowStatus, InvoiceRowType};
-use service::dashboard::invoice_count::{CountTimeRange, InvoiceCountError};
+use service::{
+    dashboard::invoice_count::{CountTimeRange, InvoiceCountError},
+    permission_validation::{Resource, ResourceAccessRequest},
+};
 use util::timezone::offset_to_timezone;
 
 fn do_invoice_count(
@@ -131,7 +137,19 @@ impl InvoiceCounts {
     }
 }
 
-pub fn invoice_counts(timezone_offset: Option<i32>) -> Result<InvoiceCounts> {
+pub fn invoice_counts(
+    ctx: &Context<'_>,
+    store_id: String,
+    timezone_offset: Option<i32>,
+) -> Result<InvoiceCounts> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::InvoiceCount,
+            store_id: Some(store_id),
+        },
+    )?;
+
     let timezone_offset = offset_to_timezone(&timezone_offset).ok_or(
         StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()),
     )?;

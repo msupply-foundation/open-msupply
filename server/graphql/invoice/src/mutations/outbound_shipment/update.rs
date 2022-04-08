@@ -5,7 +5,7 @@ use graphql_core::simple_generic_errors::{
     CannotReverseInvoiceStatus, NodeError, OtherPartyNotACustomer, OtherPartyNotVisible,
     RecordNotFound,
 };
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
 
@@ -14,6 +14,7 @@ use service::invoice::outbound_shipment::{
     UpdateOutboundShipment as ServiceInput, UpdateOutboundShipmentError as ServiceError,
     UpdateOutboundShipmentStatus,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateOutboundShipmentInput")]
@@ -56,6 +57,14 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

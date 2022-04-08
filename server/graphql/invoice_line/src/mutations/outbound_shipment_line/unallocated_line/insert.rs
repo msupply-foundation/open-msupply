@@ -1,14 +1,17 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{ForeignKey, ForeignKeyError},
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
-use service::invoice_line::outbound_shipment_unallocated_line::{
-    InsertOutboundShipmentUnallocatedLine as ServiceInput,
-    InsertOutboundShipmentUnallocatedLineError as ServiceError,
+use service::{
+    invoice_line::outbound_shipment_unallocated_line::{
+        InsertOutboundShipmentUnallocatedLine as ServiceInput,
+        InsertOutboundShipmentUnallocatedLineError as ServiceError,
+    },
+    permission_validation::{Resource, ResourceAccessRequest},
 };
 #[derive(InputObject)]
 #[graphql(name = "InsertOutboundShipmentUnallocatedLineInput")]
@@ -76,6 +79,14 @@ impl InsertInput {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

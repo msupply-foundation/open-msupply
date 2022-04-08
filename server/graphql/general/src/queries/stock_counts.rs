@@ -1,7 +1,11 @@
 use async_graphql::*;
 use chrono::{Duration, FixedOffset, Utc};
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 
+use service::permission_validation::{Resource, ResourceAccessRequest};
 use util::timezone::offset_to_timezone;
 pub struct StockCounts {
     timezone_offset: FixedOffset,
@@ -36,9 +40,19 @@ impl StockCounts {
 }
 
 pub fn stock_counts(
+    ctx: &Context<'_>,
+    store_id: String,
     timezone_offset: Option<i32>,
     days_till_expired: Option<i32>,
 ) -> Result<StockCounts> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::StockCount,
+            store_id: Some(store_id),
+        },
+    )?;
+
     let timezone_offset = offset_to_timezone(&timezone_offset).ok_or(
         StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()),
     )?;

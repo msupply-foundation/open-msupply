@@ -5,21 +5,33 @@ use graphql_core::{
         DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound, UniqueValueKey,
         UniqueValueViolation,
     },
+    standard_graphql_error::validate_auth,
     ContextExt,
 };
 use graphql_types::types::LocationNode;
 use repository::RepositoryError;
-use service::location::update::{UpdateLocation, UpdateLocationError as InError};
+use service::{
+    location::update::{UpdateLocation, UpdateLocationError as InError},
+    permission_validation::{Resource, ResourceAccessRequest},
+};
 
 pub fn update_location(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateLocationInput,
-) -> UpdateLocationResponse {
+) -> Result<UpdateLocationResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateLocation,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = match service_provider.context() {
         Ok(service) => service,
-        Err(error) => return UpdateLocationResponse::Error(error.into()),
+        Err(error) => return Ok(UpdateLocationResponse::Error(error.into())),
     };
 
     match service_provider.location_service.update_location(
@@ -27,8 +39,10 @@ pub fn update_location(
         store_id,
         input.into(),
     ) {
-        Ok(location) => UpdateLocationResponse::Response(LocationNode::from_domain(location)),
-        Err(error) => UpdateLocationResponse::Error(error.into()),
+        Ok(location) => Ok(UpdateLocationResponse::Response(LocationNode::from_domain(
+            location,
+        ))),
+        Err(error) => Ok(UpdateLocationResponse::Error(error.into())),
     }
 }
 

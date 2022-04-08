@@ -23,16 +23,33 @@ pub enum PermissionDSL {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Resource {
     RouteMe,
+    // name
+    QueryName,
+    // location
+    QueryLocation,
+    MutateLocation,
+    // store
+    QueryStore,
+    // master list
+    QueryMasterList,
+    // items
+    QueryItems,
+    // stock
+    StockCount,
     // stocktake
     QueryStocktake,
     MutateStocktake,
     // requisition
     QueryRequisition,
     MutateRequisition,
+    RequisitionChart,
     // stock take line
     InsertStocktakeLine,
     UpdateStocktakeLine,
     DeleteStocktakeLine,
+    // invoice
+    InvoiceCount,
+    QueryInvoice,
     // outbound shipment
     MutateOutboundShipment,
     // inbound shipment
@@ -43,7 +60,37 @@ pub enum Resource {
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
-    // /me: No permission needed
+    // me: No permission needed
+
+    // name
+    map.insert(Resource::QueryName, PermissionDSL::HasStoreAccess);
+
+    // location
+    map.insert(Resource::QueryLocation, PermissionDSL::HasStoreAccess);
+    map.insert(
+        Resource::MutateLocation,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::LocationMutate),
+        ]),
+    );
+
+    // store: No permission needed
+
+    // master list
+    map.insert(Resource::QueryMasterList, PermissionDSL::HasStoreAccess);
+
+    // items
+    map.insert(Resource::QueryItems, PermissionDSL::HasStoreAccess);
+
+    // stock
+    map.insert(
+        Resource::StockCount,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::StockLineQuery),
+        ]),
+    );
 
     // stocktake
     map.insert(
@@ -97,7 +144,31 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::RequisitionMutate),
         ]),
     );
+    map.insert(
+        Resource::RequisitionChart,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::RequisitionQuery),
+        ]),
+    );
 
+    // invoice
+    map.insert(
+        Resource::QueryInvoice,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::OutboundShipmentQuery),
+            PermissionDSL::HasPermission(Permission::InboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::InvoiceCount,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::OutboundShipmentQuery),
+            PermissionDSL::HasPermission(Permission::InboundShipmentQuery),
+        ]),
+    );
     // outbound shipment
     map.insert(
         Resource::MutateOutboundShipment,
@@ -114,6 +185,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::InboundShipmentMutate),
         ]),
     );
+
     // report
     map.insert(
         Resource::Report,

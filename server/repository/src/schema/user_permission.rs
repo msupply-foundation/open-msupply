@@ -15,6 +15,8 @@ pub enum Permission {
     /// User has access to the store this permission is associated with.
     /// This acts like a master switch to enable/disable all user's permissions associated with a store.
     StoreAccess,
+    // location,
+    LocationMutate,
     // stock line
     StockLineQuery,
     // stocktake

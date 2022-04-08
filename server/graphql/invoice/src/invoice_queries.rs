@@ -7,7 +7,7 @@ use graphql_core::{
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::{NodeError, NodeErrorInterface},
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{InvoiceConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType};
@@ -15,6 +15,7 @@ use repository::{
     DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, PaginationOption,
     SimpleStringFilter,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
 pub enum InvoiceResponse {
@@ -87,12 +88,24 @@ pub struct InvoiceFilterInput {
     pub linked_invoice_id: Option<EqualFilterStringInput>,
 }
 
-pub fn get_invoice(ctx: &Context<'_>, store_id: Option<&str>, id: &str) -> Result<InvoiceResponse> {
+pub fn get_invoice(
+    ctx: &Context<'_>,
+    store_id: Option<String>,
+    id: &str,
+) -> Result<InvoiceResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryInvoice,
+            store_id: store_id.clone(),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
     let invoice_service = &service_provider.invoice_service;
 
-    let invoice_option = invoice_service.get_invoice(&service_context, store_id, id)?;
+    let invoice_option = invoice_service.get_invoice(&service_context, store_id.as_deref(), id)?;
 
     let response = match invoice_option {
         Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
@@ -106,11 +119,19 @@ pub fn get_invoice(ctx: &Context<'_>, store_id: Option<&str>, id: &str) -> Resul
 
 pub fn get_invoices(
     ctx: &Context<'_>,
-    store_id: &str,
+    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<InvoiceFilterInput>,
     sort: Option<Vec<InvoiceSortInput>>,
 ) -> Result<InvoicesResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryInvoice,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
@@ -134,17 +155,25 @@ pub fn get_invoices(
 
 pub fn get_invoice_by_number(
     ctx: &Context<'_>,
-    store_id: &str,
+    store_id: String,
     invoice_number: u32,
     r#type: InvoiceNodeType,
 ) -> Result<InvoiceResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryInvoice,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
     let invoice_service = &service_provider.invoice_service;
 
     let invoice_option = invoice_service.get_invoice_by_number(
         &service_context,
-        store_id,
+        &store_id,
         invoice_number,
         r#type.to_domain(),
     )?;

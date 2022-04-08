@@ -51,7 +51,7 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<NameSortInput>>,
     ) -> Result<NamesResponse> {
-        get_names(ctx, &store_id, page, filter, sort)
+        get_names(ctx, store_id, page, filter, sort)
     }
 
     pub async fn stores(
@@ -69,43 +69,45 @@ impl GeneralQueries {
     pub async fn master_lists(
         &self,
         ctx: &Context<'_>,
-        _store_id: String,
+        store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<MasterListFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<MasterListSortInput>>,
     ) -> Result<MasterListsResponse> {
-        master_lists(ctx, page, filter, sort)
+        master_lists(ctx, store_id, page, filter, sort)
     }
 
     /// Query omSupply "item" entries
     pub async fn items(
         &self,
         ctx: &Context<'_>,
-        _store_id: String,
+        store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<ItemFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<ItemSortInput>>,
     ) -> Result<ItemsResponse> {
-        items(ctx, page, filter, sort)
+        items(ctx, store_id, page, filter, sort)
     }
 
     pub async fn invoice_counts(
         &self,
-        _store_id: String,
+        ctx: &Context<'_>,
+        store_id: String,
         #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
     ) -> Result<InvoiceCounts> {
-        invoice_counts(timezone_offset)
+        invoice_counts(ctx, store_id, timezone_offset)
     }
 
     pub async fn stock_counts(
         &self,
-        _store_id: String,
+        ctx: &Context<'_>,
+        store_id: String,
         #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
         #[graphql(desc = "Expiring soon threshold")] days_till_expired: Option<i32>,
     ) -> Result<StockCounts> {
-        stock_counts(timezone_offset, days_till_expired)
+        stock_counts(ctx, store_id, timezone_offset, days_till_expired)
     }
 
     pub async fn requisition_line_chart(

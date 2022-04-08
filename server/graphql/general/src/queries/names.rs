@@ -2,13 +2,16 @@ use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::NameNode;
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
-use service::ListResult;
+use service::{
+    permission_validation::{Resource, ResourceAccessRequest},
+    ListResult,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -62,11 +65,19 @@ pub enum NamesResponse {
 
 pub fn get_names(
     ctx: &Context<'_>,
-    store_id: &str,
+    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<NameFilterInput>,
     sort: Option<Vec<NameSortInput>>,
 ) -> Result<NamesResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryName,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

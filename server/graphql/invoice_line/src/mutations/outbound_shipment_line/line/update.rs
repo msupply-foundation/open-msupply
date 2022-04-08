@@ -1,7 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::generic_inputs::TaxUpdate;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
     ContextExt,
@@ -15,6 +15,7 @@ use service::invoice_line::{
     },
     ShipmentTaxUpdate,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
@@ -35,6 +36,14 @@ pub struct UpdateInput {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

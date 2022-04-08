@@ -243,6 +243,10 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
     let mut output = HashSet::new();
     for per in permissions {
         match per {
+            // location
+            Permissions::ManageLocations => {
+                output.insert(Permission::LocationMutate);
+            }
             // stock line
             Permissions::ViewStock => {
                 output.insert(Permission::StockLineQuery);
@@ -371,6 +375,6 @@ mod test {
                     .user_id(EqualFilter::equal_to(&expected_user_info.user.id)),
             )
             .unwrap();
-        assert_eq!(9, permissions.len());
+        assert!(permissions.len() > 0);
     }
 }
