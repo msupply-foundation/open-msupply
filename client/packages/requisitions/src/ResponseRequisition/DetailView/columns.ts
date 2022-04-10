@@ -89,9 +89,9 @@ export const useResponseColumns = () => {
         width: 100,
         align: ColumnAlign.Right,
         accessor: ({ rowData }) =>
-          rowData.supplyQuantity - rowData.remainingQuantityToSupply,
+          rowData.requestedQuantity - rowData.remainingQuantityToSupply,
         getSortValue: rowData =>
-          rowData.supplyQuantity - rowData.remainingQuantityToSupply,
+          rowData.requestedQuantity - rowData.remainingQuantityToSupply,
       },
       {
         label: 'label.remaining-to-supply',
