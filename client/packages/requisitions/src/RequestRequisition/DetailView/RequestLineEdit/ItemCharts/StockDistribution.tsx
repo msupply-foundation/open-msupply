@@ -43,7 +43,13 @@ const ValueBar = ({
       <Tooltip title={`${label}: ${formatNumber.round(value)}`} placement="top">
         <Box flexBasis={`${flexBasis}%`} flexGrow={1}>
           <Box sx={{ backgroundColor: colour, height: '20px' }} />
-          <Box style={{ textAlign: 'end', paddingRight: 10, paddingTop: 10 }}>
+          <Box
+            style={{
+              textAlign: 'end',
+              paddingRight: 10,
+              paddingTop: 10,
+            }}
+          >
             {flexBasis > MIN_FLEX_BASIS_TO_SHOW_LABEL ? (
               <Typography
                 fontSize={12}
@@ -106,13 +112,20 @@ const MonthlyBar = ({
         borderColor: 'gray.dark',
         borderStyle: 'solid',
         height: '20px',
+        overflow: 'hidden',
       }}
       style={{ ...directionStyle, textAlign: left ? undefined : 'right' }}
       flexBasis={flexBasis}
     >
-      <Typography variant="body1" fontSize={12} style={{ color: 'gray.dark' }}>
-        {label}
-      </Typography>
+      <Tooltip title={label} placement="top">
+        <Typography
+          variant="body1"
+          fontSize={12}
+          style={{ color: 'gray.dark' }}
+        >
+          {label}
+        </Typography>
+      </Tooltip>
     </Box>
   );
 };
@@ -218,7 +231,6 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
   averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
 }) => {
-  const t = useTranslation('replenishment');
   return (
     <Box
       sx={{
@@ -228,9 +240,6 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
         paddingBottom: 2,
       }}
     >
-      <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
-        {t('heading.stock-distribution')}
-      </Typography>
       <StockDistributionContent
         availableStockOnHand={availableStockOnHand}
         averageMonthlyConsumption={averageMonthlyConsumption}
