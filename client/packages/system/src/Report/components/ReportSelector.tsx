@@ -49,8 +49,12 @@ export const ReportSelector: FC<ReportSelectorProps> = ({
   ));
 
   const noReports = !isLoading && !data?.nodes.length;
+  const oneReport =
+    !isLoading && data?.nodes.length === 1 ? data.nodes[0] : null;
 
-  return (
+  return !!oneReport ? (
+    <div onClick={() => onClick(oneReport)}>{children}</div>
+  ) : (
     <PaperClickPopover
       placement="bottom"
       width={350}
