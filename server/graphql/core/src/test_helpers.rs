@@ -8,8 +8,6 @@ use actix_web::{
 use async_graphql::{EmptySubscription, ObjectType, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use repository::{
-    database_settings::DatabaseSettings,
-    get_storage_connection_manager,
     mock::{MockData, MockDataCollection, MockDataInserts},
     test_db::setup_all_with_data,
     StorageConnection, StorageConnectionManager,
@@ -25,7 +23,7 @@ use crate::{
 pub struct TestGraphlSettings<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone> {
     pub queries: Q,
     pub mutations: M,
-    pub database_settings: DatabaseSettings,
+    pub connection_manager: StorageConnectionManager,
 }
 
 pub async fn run_test_gql_query<
@@ -37,7 +35,7 @@ pub async fn run_test_gql_query<
     variables: &Option<serde_json::Value>,
     service_provider_override: Option<ServiceProvider>,
 ) -> serde_json::Value {
-    let connection_manager = get_storage_connection_manager(&settings.database_settings);
+    let connection_manager = settings.connection_manager.clone();
     let connection_manager_data = Data::new(connection_manager.clone());
 
     let service_provider_data = Data::new(match service_provider_override {
@@ -221,17 +219,17 @@ pub async fn setup_graphl_test_with_data<
     StorageConnectionManager,
     TestGraphlSettings<Q, M>,
 ) {
-    let (mock_data, connection, connection_manager, database_settings) =
+    let (mock_data, connection, connection_manager, _) =
         setup_all_with_data(db_name, inserts, extra_mock_data).await;
 
     (
         mock_data,
         connection,
-        connection_manager,
+        connection_manager.clone(),
         TestGraphlSettings {
             queries,
             mutations,
-            database_settings,
+            connection_manager,
         },
     )
 }
