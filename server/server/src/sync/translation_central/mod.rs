@@ -199,13 +199,10 @@ async fn store_integration_records(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        sync::translation_central::{
-            import_sync_records, test_data::store::get_test_store_records,
-        },
-        test_utils::get_test_settings,
+    use crate::sync::translation_central::{
+        import_sync_records, test_data::store::get_test_store_records,
     };
-    use repository::{get_storage_connection_manager, test_db};
+    use repository::test_db;
 
     use super::test_data::{
         check_records_against_database, extract_sync_buffer_rows,
@@ -219,12 +216,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_store_translation_insert() {
-        let settings = get_test_settings("omsupply-database-translation-insert");
-
-        test_db::setup(&settings.database).await;
-        let connection = get_storage_connection_manager(&settings.database)
-            .connection()
-            .unwrap();
+        let settings = test_db::get_test_db_settings("omsupply-database-translation-insert");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
 
         let mut records = Vec::new();
         // Need to be in order of reference dependency
@@ -246,12 +240,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_store_translation_upsert() {
-        let settings = get_test_settings("omsupply-database-translation-upsert");
-
-        test_db::setup(&settings.database).await;
-        let connection = get_storage_connection_manager(&settings.database)
-            .connection()
-            .unwrap();
+        let settings = test_db::get_test_db_settings("omsupply-database-translation-upsert");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
 
         let mut init_records = Vec::new();
         init_records.append(&mut get_test_name_records());

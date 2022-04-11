@@ -228,10 +228,7 @@ mod tests {
         },
         test_utils::get_test_settings,
     };
-    use repository::{
-        get_storage_connection_manager, schema::CentralSyncBufferRow, test_db,
-        CentralSyncBufferRepository,
-    };
+    use repository::{schema::CentralSyncBufferRow, test_db, CentralSyncBufferRepository};
     use reqwest::{Client, Url};
 
     use super::CentralDataSynchroniser;
@@ -239,9 +236,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_integrate_central_records() {
         let settings = get_test_settings("omsupply-database-integrate_central_records");
-
-        test_db::setup(&settings.database).await;
-        let connection_manager = get_storage_connection_manager(&settings.database);
+        let connection_manager = test_db::setup(&settings.database).await;
 
         // use test records with cursors that are out of order
         let mut test_records = Vec::new();
