@@ -3,7 +3,10 @@ import {
   RequisitionNodeStatus,
   LocaleKey,
   useTranslation,
+  TypedTFunction,
+  Formatter,
 } from '@openmsupply-client/common';
+import { ResponseRowFragment } from './ResponseRequisition/api';
 
 export const requestStatuses = [
   RequisitionNodeStatus.Draft,
@@ -60,4 +63,56 @@ export const isRequestDisabled = (request: RequestRowFragment): boolean => {
 
 export const isResponseDisabled = (request: RequestRowFragment): boolean => {
   return request.status !== RequisitionNodeStatus.New;
+};
+
+export const requestsToCsv = (
+  invoices: RequestRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.number'),
+    t('label.status'),
+    t('label.entered'),
+    t('label.reference'),
+    t('label.comment'),
+  ];
+
+  const data = invoices.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.requisitionNumber,
+    node.status,
+    node.createdDatetime,
+    node.theirReference,
+    node.comment,
+  ]);
+  return Formatter.csv({ fields, data });
+};
+
+export const responsesToCsv = (
+  invoices: ResponseRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.number'),
+    t('label.entered'),
+    t('label.status'),
+    t('label.reference'),
+    t('label.comment'),
+  ];
+
+  const data = invoices.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.requisitionNumber,
+    node.status,
+    node.createdDatetime,
+    node.theirReference,
+    node.comment,
+  ]);
+  return Formatter.csv({ fields, data });
 };

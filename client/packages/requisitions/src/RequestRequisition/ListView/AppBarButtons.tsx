@@ -10,15 +10,29 @@ import {
   Grid,
   useTranslation,
   useToggle,
+  FileUtils,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
-import { useInsertRequest } from '../api';
+import { useInsertRequest, useRequests } from '../api';
+import { requestsToCsv } from '../../utils';
 
 export const AppBarButtons: FC = () => {
   const { mutate: onCreate } = useInsertRequest();
   const modalController = useToggle();
-  const { success } = useNotification();
+  const { success, error } = useNotification();
   const t = useTranslation('common');
+  const { data } = useRequests();
+
+  const csvExport = () => {
+    if (!data) {
+      error(t('error.no-data'))();
+      return;
+    }
+
+    const csv = requestsToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, 'internal-orders');
+    success(t('success'))();
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -31,7 +45,7 @@ export const AppBarButtons: FC = () => {
         <ButtonWithIcon
           Icon={<DownloadIcon />}
           label={t('button.export')}
-          onClick={success('Downloaded successfully')}
+          onClick={csvExport}
         />
       </Grid>
       <InternalSupplierSearchModal

@@ -150,5 +150,5 @@
   "placeholder.filter-items": "Filter items",
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code",
-  "success.download": "Downloaded successfully"
+  "success": "Success!"
 }

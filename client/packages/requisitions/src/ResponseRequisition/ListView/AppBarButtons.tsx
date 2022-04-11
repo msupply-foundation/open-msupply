@@ -6,11 +6,26 @@ import {
   AppBarButtonsPortal,
   Grid,
   ButtonWithIcon,
+  FileUtils,
 } from '@openmsupply-client/common';
+import { useResponses } from '../api';
+import { responsesToCsv } from '../../utils';
 
 export const AppBarButtons: FC = () => {
-  const { success } = useNotification();
+  const { success, error } = useNotification();
   const t = useTranslation('common');
+  const { data } = useResponses();
+
+  const csvExport = () => {
+    if (!data) {
+      error(t('error.no-data'))();
+      return;
+    }
+
+    const csv = responsesToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, 'requisitions');
+    success(t('success'))();
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -18,7 +33,7 @@ export const AppBarButtons: FC = () => {
         <ButtonWithIcon
           Icon={<DownloadIcon />}
           label={t('button.export')}
-          onClick={success('Downloaded successfully')}
+          onClick={csvExport}
         />
       </Grid>
     </AppBarButtonsPortal>
