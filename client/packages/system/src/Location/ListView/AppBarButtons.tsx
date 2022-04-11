@@ -8,15 +8,30 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
+  FileUtils,
 } from '@openmsupply-client/common';
+import { useLocations } from '..';
+import { locationsToCsv } from '../../utils';
 
 interface AppBarButtonsProps {
   onCreate: () => void;
 }
 
 export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
-  const { success } = useNotification();
+  const { success, error } = useNotification();
   const t = useTranslation(['inventory', 'common']);
+  const { data } = useLocations();
+
+  const csvExport = () => {
+    if (!data) {
+      error(t('error.no-data'))();
+      return;
+    }
+
+    const csv = locationsToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, t('filename.locations'));
+    success(t('success'))();
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -29,7 +44,7 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
         <ButtonWithIcon
           Icon={<DownloadIcon />}
           label={t('button.export')}
-          onClick={success('Downloaded successfully')}
+          onClick={csvExport}
         />
       </Grid>
     </AppBarButtonsPortal>
