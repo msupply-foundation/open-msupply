@@ -48,6 +48,7 @@
     "@types/jest": "^27.0.3",
     "@types/lodash": "^4.14.178",
     "@types/node": "^16.11.12",
+    "@types/papaparse": "^5.3.2",
     "@types/react": "^17.0.37",
     "@types/recharts": "^1.8.23",
     "@typescript-eslint/eslint-plugin": "^5.7.0",
@@ -76,7 +77,8 @@
   "dependencies": {
     "@types/react-dom": "^17.0.9",
     "graphql": "16.0.0",
-    "lerna": "^4.0.0"
+    "lerna": "^4.0.0",
+    "papaparse": "^5.3.2"
   },
   "msw": {
     "workerDirectory": "packages/host/public"
