@@ -93,10 +93,9 @@ pub async fn start_server(
                     ErrorKind::Other,
                     "Certificate required in production",
                 ));
-            } else {
-                warn!("No certificates found: Run in HTTP development mode");
             }
 
+            warn!("No certificates found: Run in HTTP development mode");
             let listener = TcpListener::bind(settings.server.address())
                 .expect("Failed to bind server to address");
             http_server = http_server.listen(listener)?;
