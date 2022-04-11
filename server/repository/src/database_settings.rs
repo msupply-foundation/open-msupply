@@ -12,6 +12,7 @@ pub struct DatabaseSettings {
     pub database_name: String,
 }
 
+// feature postgres
 #[cfg(feature = "postgres")]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
@@ -29,14 +30,27 @@ impl DatabaseSettings {
     }
 }
 
-#[cfg(not(feature = "postgres"))]
+// feature sqlite
+#[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        format!("{}.sqlite", self.database_name)
+        format!("test_output/{}.sqlite", self.database_name)
     }
 
     pub fn connection_string_without_db(&self) -> String {
-        return self.connection_string();
+        self.connection_string()
+    }
+}
+
+// feature memory
+#[cfg(feature = "memory")]
+impl DatabaseSettings {
+    pub fn connection_string(&self) -> String {
+        format!("file:{}?mode=memory&cache=shared", self.database_name)
+    }
+
+    pub fn connection_string_without_db(&self) -> String {
+        self.connection_string()
     }
 }
 
