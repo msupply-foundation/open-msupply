@@ -75,6 +75,7 @@
     ]
   },
   "dependencies": {
+    "@bugsnag/js": "^7.16.2",
     "@types/react-dom": "^17.0.9",
     "graphql": "16.0.0",
     "lerna": "^4.0.0"

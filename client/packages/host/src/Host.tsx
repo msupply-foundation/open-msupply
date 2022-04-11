@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import Bugsnag from '@bugsnag/js';
 
 import {
   BrowserRouter,
@@ -24,6 +25,7 @@ import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Login, Viewport } from './components';
 import { Site } from './Site';
 import { AuthenticationAlert } from './components/AuthenticationAlert';
+import packageJson from 'package.json';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +42,11 @@ const queryClient = new QueryClient({
       notifyOnChangeProps: 'tracked',
     },
   },
+});
+
+Bugsnag.start({
+  apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
+  appVersion: packageJson.version,
 });
 
 const Host: FC = () => (
