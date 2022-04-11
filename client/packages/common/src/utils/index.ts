@@ -10,3 +10,4 @@ export * from './navigation';
 export * from './environment';
 export * from './object';
 export * from './types';
+export * from './files';

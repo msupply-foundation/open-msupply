@@ -8,7 +8,6 @@ import {
   createTableStore,
   useTranslation,
   InvoiceNodeStatus,
-  useCurrency,
   useTableStore,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
@@ -42,7 +41,6 @@ export const OutboundShipmentListViewComponent: FC = () => {
   } = useOutbound.document.list();
   useDisableOutboundRows(data?.nodes);
 
-  const { c } = useCurrency();
   const columns = useColumns<OutboundRowFragment>(
     [
       [getNameAndColorColumn(), { setter: onUpdate }],
@@ -67,7 +65,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       [
         'totalAfterTax',
         {
-          accessor: ({ rowData }) => c(rowData.pricing.totalAfterTax).format(),
+          accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
           width: '100%',
         },
       ],

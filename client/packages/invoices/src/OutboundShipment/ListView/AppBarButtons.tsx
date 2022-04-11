@@ -9,15 +9,29 @@ import {
   useTranslation,
   useToggle,
   FnUtils,
+  FileUtils,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
+import { outboundsToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC = () => {
   const { success, error } = useNotification();
   const { mutate: onCreate } = useOutbound.document.insert();
   const t = useTranslation(['distribution', 'common']);
   const modalController = useToggle();
+  const { data } = useOutbound.document.list();
+
+  const csvExport = () => {
+    if (!data) {
+      error(t('error.no-data'))();
+      return;
+    }
+
+    const csv = outboundsToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, 'outbound-shipments');
+    success(t('success.download'))();
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -48,7 +62,7 @@ export const AppBarButtonsComponent: FC = () => {
         <ButtonWithIcon
           Icon={<DownloadIcon />}
           label={t('button.export')}
-          onClick={success('Downloaded successfully')}
+          onClick={csvExport}
         />
       </Grid>
     </AppBarButtonsPortal>

@@ -5,6 +5,8 @@ import {
   InvoiceNodeStatus,
   useTranslation,
   ArrayUtils,
+  Formatter,
+  TypedTFunction,
 } from '@openmsupply-client/common';
 import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
@@ -170,4 +172,60 @@ export const get = {
 
     return totalBeforeTax * (1 + taxPercentage / 100);
   },
+};
+
+export const outboundsToCsv = (
+  invoices: OutboundRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.status'),
+    t('label.invoice-number'),
+    t('label.entered'),
+    t('label.reference'),
+    t('label.comment'),
+    t('label.total'),
+  ];
+
+  const data = invoices.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.status,
+    node.invoiceNumber,
+    node.createdDatetime,
+    node.theirReference,
+    node.comment,
+    node.pricing.totalAfterTax,
+  ]);
+  return Formatter.csv({ fields, data });
+};
+
+export const inboundsToCsv = (
+  invoices: InboundRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.status'),
+    t('label.invoice-number'),
+    t('label.entered'),
+    t('label.confirmed'),
+    t('label.comment'),
+    t('label.total'),
+  ];
+
+  const data = invoices.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.status,
+    node.invoiceNumber,
+    node.createdDatetime,
+    node.allocatedDatetime,
+    node.comment,
+    node.pricing.totalAfterTax,
+  ]);
+  return Formatter.csv({ fields, data });
 };

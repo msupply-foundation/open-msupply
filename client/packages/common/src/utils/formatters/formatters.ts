@@ -1,5 +1,6 @@
 import format from 'date-fns/format';
 import isValid from 'date-fns/isValid';
+import Papa, { UnparseConfig, UnparseObject } from 'papaparse';
 
 export const Formatter = {
   // tax as a number like 12 for 12%
@@ -22,4 +23,8 @@ export const Formatter = {
     const expiryDate = date ? Formatter.expiryDate(new Date(date)) : null;
     return expiryDate ?? '';
   },
+  csv: (
+    data: unknown[] | UnparseObject<unknown>,
+    config?: UnparseConfig
+  ): string => Papa.unparse(data, config),
 };
