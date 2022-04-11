@@ -73,8 +73,6 @@ export const Settings: React.FC = () => {
     }
   };
 
-  console.log('version', data);
-
   return (
     <Grid
       container
