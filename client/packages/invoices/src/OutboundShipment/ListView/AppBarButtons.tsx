@@ -30,7 +30,7 @@ export const AppBarButtonsComponent: FC = () => {
 
     const csv = outboundsToCsv(data.nodes, t);
     FileUtils.exportCSV(csv, 'outbound-shipments');
-    success(t('success.download'))();
+    success(t('success'))();
   };
 
   return (
