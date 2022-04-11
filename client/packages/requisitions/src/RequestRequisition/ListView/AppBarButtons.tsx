@@ -24,7 +24,7 @@ export const AppBarButtons: FC = () => {
   const { data } = useRequests();
 
   const csvExport = () => {
-    if (!data) {
+    if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
     }
