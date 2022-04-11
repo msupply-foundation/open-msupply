@@ -18,7 +18,7 @@ export const AppBarButtons: FC = () => {
   const { data } = useStocktakes();
 
   const csvExport = () => {
-    if (!data) {
+    if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
     }

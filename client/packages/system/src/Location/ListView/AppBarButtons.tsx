@@ -23,7 +23,7 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
   const { data } = useLocations();
 
   const csvExport = () => {
-    if (!data) {
+    if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
     }

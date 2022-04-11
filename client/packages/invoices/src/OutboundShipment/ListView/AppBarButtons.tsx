@@ -23,7 +23,7 @@ export const AppBarButtonsComponent: FC = () => {
   const { data } = useOutbound.document.list();
 
   const csvExport = () => {
-    if (!data) {
+    if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
     }
