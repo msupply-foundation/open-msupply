@@ -269,7 +269,6 @@ mod repository_test {
     use std::convert::TryInto;
 
     use crate::{
-        database_settings::get_storage_connection_manager,
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
@@ -302,8 +301,7 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_name_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-name-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         let repo = NameRepository::new(&connection);
@@ -316,8 +314,7 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_store_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         // setup
@@ -336,8 +333,7 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_stock_line() {
         let settings = test_db::get_test_db_settings("omsupply-database-item-line-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         // setup
@@ -362,8 +358,7 @@ mod repository_test {
     async fn test_stock_line_query() {
         let settings =
             test_db::get_test_db_settings("omsupply-database-item-line-query-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         // setup
@@ -409,8 +404,7 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_master_list_row_repository() {
         let settings = test_db::get_test_db_settings("test_master_list_row_repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         let repo = MasterListRowRepository::new(&connection);
@@ -436,7 +430,6 @@ mod repository_test {
     async fn test_master_list_repository() {
         let (_, connection, _, _) =
             test_db::setup_all("test_master_list_repository", MockDataInserts::all()).await;
-
         let repo = MasterListRepository::new(&connection);
 
         let id_rows: Vec<String> = repo
@@ -517,8 +510,7 @@ mod repository_test {
     async fn test_master_list_line_repository() {
         let settings =
             test_db::get_test_db_settings("omsupply-database-master-list-line-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         // setup
@@ -551,8 +543,7 @@ mod repository_test {
     async fn test_master_list_name_join_repository() {
         let settings =
             test_db::get_test_db_settings("omsupply-database-master-list-name-join-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         // setup
@@ -577,8 +568,7 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_invoice_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-invoice-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         // setup
@@ -613,8 +603,7 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_invoice_line_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-invoice-line-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         // setup
@@ -655,8 +644,7 @@ mod repository_test {
     async fn test_invoice_line_query_repository() {
         let settings =
             test_db::get_test_db_settings("omsupply-database-invoice-line-query-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         // setup
@@ -709,8 +697,7 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_user_account_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-user-account-repository");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         let repo = UserAccountRowRepository::new(&connection);
@@ -729,8 +716,7 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_central_sync_buffer() {
         let settings = test_db::get_test_db_settings("omsupply-database-central-sync_buffer");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         let repo = CentralSyncBufferRepository::new(&connection);

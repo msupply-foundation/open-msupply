@@ -209,13 +209,12 @@ impl StorageConnectionManager {
 
 #[cfg(test)]
 mod connection_manager_tests {
-    use crate::{get_storage_connection_manager, test_db, RepositoryError, TransactionError};
+    use crate::{test_db, RepositoryError, TransactionError};
 
     #[actix_rt::test]
     async fn test_nested_tx() {
         let settings = test_db::get_test_db_settings("omsupply-nested-tx");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         assert_eq!(connection.transaction_level.get(), 0);

@@ -28,5 +28,6 @@ actix-rt = "2.6.0"
 [features]
 default = ["sqlite"]
 sqlite = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
+memory = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
 postgres = ["diesel/postgres" , "diesel-derive-enum/postgres"]
 

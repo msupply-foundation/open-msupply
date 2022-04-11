@@ -186,7 +186,6 @@ impl<'a> UserAccountService<'a> {
 #[cfg(test)]
 mod user_account_test {
     use repository::{
-        get_storage_connection_manager,
         mock::{mock_user_account_a, mock_user_account_b, MockDataInserts},
         schema::user_permission::{Permission, Resource},
         test_db::{self, setup_all},
@@ -201,8 +200,7 @@ mod user_account_test {
     #[actix_rt::test]
     async fn test_user_auth() {
         let settings = test_db::get_test_db_settings("omsupply-database-user-account-service");
-        test_db::setup(&settings).await;
-        let connection_manager = get_storage_connection_manager(&settings);
+        let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
         let service = UserAccountService::new(&connection);
