@@ -13,6 +13,8 @@ import { themeOptions } from '@common/styles';
 import { LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
+import packageJson from 'package.json';
+import { useApiVersion } from '../api/hooks';
 
 export const Settings: React.FC = () => {
   const t = useTranslation('common');
@@ -20,6 +22,7 @@ export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
+  const { data } = useApiVersion();
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
 
@@ -70,6 +73,8 @@ export const Settings: React.FC = () => {
     }
   };
 
+  console.log('version', data);
+
   return (
     <Grid
       container
@@ -98,6 +103,32 @@ export const Settings: React.FC = () => {
         onToggle={onToggleCustomLogo}
         title={t('heading.custom-logo')}
       />
+      <Grid style={{ position: 'absolute', right: 0, bottom: 30 }}>
+        <Grid container padding={1} flexDirection="column">
+          <Grid item display="flex" flex={1} gap={1}>
+            <Grid item justifyContent="flex-end" flex={1} display="flex">
+              <Typography fontWeight={700} whiteSpace="nowrap">
+                App version:
+              </Typography>
+            </Grid>
+            <Grid item flex={1}>
+              <Typography>{packageJson.version}</Typography>
+            </Grid>
+          </Grid>
+          {!!data && (
+            <Grid item display="flex" flex={1} gap={1}>
+              <Grid item justifyContent="flex-end" flex={1} display="flex">
+                <Typography fontWeight={700} whiteSpace="nowrap">
+                  API version:
+                </Typography>
+              </Grid>
+              <Grid item flex={1}>
+                <Typography>{data}</Typography>
+              </Grid>
+            </Grid>
+          )}
+        </Grid>
+      </Grid>
     </Grid>
   );
 };
