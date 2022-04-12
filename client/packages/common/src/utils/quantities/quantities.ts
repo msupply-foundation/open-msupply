@@ -11,7 +11,7 @@ export const QuantityUtils = {
     const total = amc * mos;
 
     // Subtract the available stock on hand
-    const suggested = total - Math.max(soh, 0);
+    const suggested = Math.round(total - Math.max(soh, 0));
 
     return Math.max(suggested, 0);
   },

@@ -43,7 +43,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
           ? t('label.consumption')
           : t('label.amc');
         return [value, label];
-      case 'amc':
+      case 'averageMonthlyConsumption':
         return [value, t('label.moving-average')];
       default:
         return [value, name];
@@ -123,7 +123,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
               ))}
             </Bar>
             <Line
-              dataKey="amc"
+              dataKey="averageMonthlyConsumption"
               stroke={theme.palette.secondary.light}
               type="monotone"
               dot={false}
