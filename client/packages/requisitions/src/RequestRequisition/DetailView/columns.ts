@@ -59,17 +59,6 @@ export const useRequestColumns = () => {
           getSortValue: rowData => rowData.item.name,
         },
       ],
-
-      [
-        'monthlyConsumption',
-        {
-          width: 150,
-          accessor: ({ rowData }) =>
-            rowData.itemStats.averageMonthlyConsumption,
-          getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
-        },
-      ],
-
       {
         key: 'availableStockOnHand',
         label: 'label.stock-on-hand',
@@ -91,6 +80,25 @@ export const useRequestColumns = () => {
         },
         getSortValue: rowData => rowData.itemStats.availableStockOnHand,
       },
+      [
+        'monthlyConsumption',
+        {
+          width: 150,
+          accessor: ({ rowData }) =>
+            rowData.itemStats.averageMonthlyConsumption,
+          getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
+        },
+      ],
+      {
+        key: 'targetStock',
+        label: 'label.target-stock',
+        align: ColumnAlign.Right,
+        width: 150,
+        accessor: ({ rowData }) =>
+          rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
+        getSortValue: rowData =>
+          rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
+      },
       {
         key: 'suggestedQuantity',
         label: 'label.forecast-quantity',
@@ -109,16 +117,6 @@ export const useRequestColumns = () => {
             rowData.itemStats.availableStockOnHand,
             maxMonthsOfStock
           ),
-      },
-      {
-        key: 'targetStock',
-        label: 'label.target-stock',
-        align: ColumnAlign.Right,
-        width: 150,
-        accessor: ({ rowData }) =>
-          rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
-        getSortValue: rowData =>
-          rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       },
       {
         key: 'requestedQuantity',
