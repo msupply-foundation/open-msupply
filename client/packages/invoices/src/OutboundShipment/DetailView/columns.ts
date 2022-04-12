@@ -82,7 +82,6 @@ export const useOutboundColumns = ({
       [
         'itemName',
         {
-          maxWidth: 400,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;

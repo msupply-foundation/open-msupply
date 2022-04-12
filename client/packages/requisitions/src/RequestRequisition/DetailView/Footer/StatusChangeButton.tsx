@@ -3,10 +3,10 @@ import {
   ArrowRightIcon,
   useTranslation,
   useNotification,
-  SplitButton,
   SplitButtonOption,
   useConfirmationModal,
   RequisitionNodeStatus,
+  ButtonWithIcon,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useIsRequestDisabled, useRequestFields } from '../../api';
@@ -98,7 +98,7 @@ const useStatusChangeButton = () => {
     onConfirm: onConfirmStatusChange,
   });
 
-  // When the status of the invoice changes (after an update), set the selected option to the next status.
+  // When the status changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
     setSelectedOption(() => getNextStatusOption(status, options));
@@ -108,18 +108,18 @@ const useStatusChangeButton = () => {
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, getConfirmation } =
-    useStatusChangeButton();
+  const { selectedOption, getConfirmation } = useStatusChangeButton();
   const isDisabled = useIsRequestDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
   return (
-    <SplitButton
-      options={options}
-      selectedOption={selectedOption}
-      onSelectOption={setSelectedOption}
+    <ButtonWithIcon
+      color="secondary"
+      variant="contained"
+      disabled={isDisabled}
+      label={selectedOption.label}
       Icon={<ArrowRightIcon />}
       onClick={() => getConfirmation()}
     />
