@@ -11,7 +11,7 @@ import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { useStocktakeRows } from 'packages/inventory/src/Stocktake/api';
+import { useStocktakeRows } from '../../../api';
 
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;

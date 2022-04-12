@@ -11,7 +11,7 @@ import {
   useUserStores,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { UserStoreNodeFragment } from 'packages/common/src/authentication/api/operations.generated';
+import { UserStoreNodeFragment } from '@common/types';
 
 export const StoreSelector: FC = ({ children }) => {
   const { store, setStore, token } = useAuthContext();

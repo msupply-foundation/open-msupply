@@ -12,6 +12,30 @@ import { BasicCell, BasicHeader } from '../../components';
 import { SortBy } from '@common/hooks';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
 
+const getColumnWidths = <T extends RecordWithId>(
+  column: ColumnDefinition<T>
+) => {
+  const getDefaultWidth = () => {
+    switch (column.format) {
+      case ColumnFormat.Integer:
+        return 60;
+      case ColumnFormat.Real:
+      case ColumnFormat.Date:
+        return 100;
+      default: {
+        return undefined;
+      }
+    }
+  };
+
+  const defaultWidth = getDefaultWidth();
+
+  const minWidth = column.minWidth || column.width || defaultWidth;
+  const width = column.width || defaultWidth;
+
+  return { minWidth, width, maxWidth: column.maxWidth };
+};
+
 const getSortType = (column: { format?: ColumnFormat }) => {
   switch (column.format) {
     case ColumnFormat.Date:
@@ -140,6 +164,8 @@ export const createColumnWithDefaults = <T extends RecordWithId>(
     align: getDefaultColumnAlign(column),
     formatter: getDefaultFormatter<T>(column),
     setter: getDefaultColumnSetter<T>(column),
+
+    ...getColumnWidths(column),
   };
 
   return { ...defaults, ...column };

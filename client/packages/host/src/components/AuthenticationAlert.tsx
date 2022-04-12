@@ -1,5 +1,5 @@
 import { useToggle } from '@common/hooks';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 import React, { useEffect } from 'react';
 import {
   AuthError,
