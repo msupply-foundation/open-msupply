@@ -17,8 +17,8 @@ describe('useColumns', () => {
       sortInverted: false,
       sortDescFirst: false,
       align: ColumnAlign.Left,
-      width: 100,
-      minWidth: 100,
+      width: undefined,
+      minWidth: undefined,
     };
 
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));

@@ -1,4 +1,4 @@
-import { useParams } from 'packages/common/src';
+import { useParams } from '@openmsupply-client/common';
 import { useQuery } from 'react-query';
 import { useItemApi } from './../useItemApi';
 
