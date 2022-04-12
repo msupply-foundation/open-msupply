@@ -17,8 +17,6 @@ describe('useColumns', () => {
       sortInverted: false,
       sortDescFirst: false,
       align: ColumnAlign.Left,
-      width: undefined,
-      minWidth: undefined,
     };
 
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));
@@ -39,8 +37,6 @@ describe('useColumns', () => {
       sortInverted: false,
       sortDescFirst: false,
       align: ColumnAlign.Right,
-      width: 60,
-      minWidth: 60,
     };
 
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));
@@ -61,8 +57,6 @@ describe('useColumns', () => {
       sortInverted: false,
       sortDescFirst: false,
       align: ColumnAlign.Right,
-      width: 100,
-      minWidth: 100,
     };
 
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));
@@ -83,8 +77,6 @@ describe('useColumns', () => {
       sortInverted: true,
       sortDescFirst: true,
       align: ColumnAlign.Right,
-      width: 100,
-      minWidth: 100,
     };
 
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));
@@ -92,19 +84,6 @@ describe('useColumns', () => {
     expect(result.current[0]?.Header).toBeTruthy();
     expect(result.current[0]?.accessor).toBeTruthy();
     expect(result.current[0]?.formatter).toBeTruthy();
-  });
-
-  it('uses the width as specified for the minWidth if unspecified', () => {
-    const { result } = renderHook(() =>
-      useColumns<Test>([{ key: 'default', width: 200 }])
-    );
-
-    const defaults = {
-      width: 200,
-      minWidth: 200,
-    };
-
-    expect(result.current[0]).toEqual(expect.objectContaining(defaults));
   });
 
   it('uses the correct width and min width if specified', () => {
@@ -137,14 +116,6 @@ describe('useColumns', () => {
       useColumns<Test>([{ key: 'default', width: 200, minWidth: 100 }])
     );
     const defaults = { width: 200, minWidth: 100 };
-    expect(result.current[0]).toEqual(expect.objectContaining(defaults));
-  });
-
-  it('defaults to a width of 60 for integers', () => {
-    const { result } = renderHook(() =>
-      useColumns<Test>([{ key: 'default', format: ColumnFormat.Integer }])
-    );
-    const defaults = { width: 60, minWidth: 60 };
     expect(result.current[0]).toEqual(expect.objectContaining(defaults));
   });
 
