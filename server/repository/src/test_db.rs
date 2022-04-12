@@ -76,14 +76,17 @@ pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     use std::fs;
 
     let db_path = db_settings.connection_string();
-    // Note, if running "in memory" this call is not needed but since the connection string is not
-    // a valid file name it will not delete anything
-    fs::remove_file(&db_path).ok();
 
-    // create parent dirs
-    let path = Path::new(&db_path);
-    let prefix = path.parent().unwrap();
-    fs::create_dir_all(prefix).unwrap();
+    // If not in-memory mode clean up and create test directory
+    // (in in-memory mode the db_path starts with "file:")
+    if !db_path.starts_with("file:") {
+        // remove existing db file
+        fs::remove_file(&db_path).ok();
+        // create parent dirs
+        let path = Path::new(&db_path);
+        let prefix = path.parent().unwrap();
+        fs::create_dir_all(prefix).unwrap();
+    }
 
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
@@ -106,8 +109,7 @@ pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     StorageConnectionManager::new(pool)
 }
 
-// The following settings work for PG and Sqlite (username, password, host and port are
-// ignored for the later)
+#[cfg(feature = "postgres")]
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
     DatabaseSettings {
         username: "postgres".to_string(),
@@ -115,6 +117,19 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         port: 5432,
         host: "localhost".to_string(),
         database_name: db_name.to_string(),
+    }
+}
+
+// sqlite (username, password, host and port are ignored)
+#[cfg(not(feature = "postgres"))]
+pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
+    DatabaseSettings {
+        username: "postgres".to_string(),
+        password: "password".to_string(),
+        port: 5432,
+        host: "localhost".to_string(),
+        // put DB test files into a test directory (also works for in-memory)
+        database_name: format!("test_output/{}.sqlite", db_name),
     }
 }
 
