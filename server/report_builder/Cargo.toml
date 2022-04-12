@@ -1,0 +1,19 @@
+[package]
+name = "report_builder"
+version = "0.1.0"
+edition = "2018"
+
+[[bin]]
+path = "report_builder.rs"
+name = "report_builder"
+test = false
+bench = false
+
+[dependencies]
+service = { path = "../service" }
+
+anyhow = "1.0.56"
+clap = { version = "3.1.8", features = ["derive"] }
+serde = "1.0.126"
+serde_json = "1.0.66"
+log = "0.4.16"

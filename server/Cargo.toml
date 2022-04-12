@@ -2,6 +2,7 @@
 
 members = [
     "android",
+    "report_builder",
     "repository",
     "graphql",
     "server",
