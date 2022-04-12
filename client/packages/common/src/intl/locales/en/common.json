@@ -55,6 +55,8 @@
   "heading.shipments-to-be-picked": "Shipments to be picked",
   "label.already-issued": "Issued",
   "label.allocated": "Allocated",
+  "label.api-version": "API version:",
+  "label.app-version": "App version:",
   "label.available": "Available",
   "label.amc": "AMC",
   "label.batch": "Batch",
