@@ -2,7 +2,6 @@
   "button.delete-lines": "Delete lines",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "error.cant-save": "There was a problem saving.",
-  "error.no-items": "No items",
   "error.stocktake-not-found": "Stocktake not found",
   "label.add-batch": "Add batch",
   "label.add-new-line": "Add a new line",
