@@ -49,6 +49,7 @@ export const RequestRequisitionListView: FC = () => {
         label: 'label.number',
         width: 100,
       },
+      'createdDatetime',
       [
         'status',
         {

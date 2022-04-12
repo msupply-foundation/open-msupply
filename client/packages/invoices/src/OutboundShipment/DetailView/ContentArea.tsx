@@ -107,7 +107,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
   if (!rows) return null;
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" style={{ width: '100%' }}>
       {rows.length !== 0 && (
         <Box style={{ padding: 5, marginInlineStart: 15 }}>
           <Switch
