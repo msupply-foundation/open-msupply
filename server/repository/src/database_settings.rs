@@ -34,7 +34,7 @@ impl DatabaseSettings {
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        format!("test_output/{}.sqlite", self.database_name)
+        self.database_name.clone()
     }
 
     pub fn connection_string_without_db(&self) -> String {
