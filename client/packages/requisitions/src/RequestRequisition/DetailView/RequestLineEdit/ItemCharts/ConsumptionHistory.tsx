@@ -41,7 +41,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
       case 'consumption':
         const label = props.payload.isHistoric
           ? t('label.consumption')
-          : t('label.requested-quantity');
+          : t('label.amc');
         return [value, label];
       case 'amc':
         return [value, t('label.moving-average')];
@@ -97,7 +97,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
                   color: theme.palette.gray.main,
                 },
                 {
-                  value: t('label.requested-quantity'),
+                  value: t('label.amc'),
                   type: 'rect',
                   id: '2',
                   color: theme.palette.primary.light,

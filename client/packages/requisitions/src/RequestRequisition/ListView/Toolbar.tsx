@@ -16,7 +16,7 @@ export const Toolbar: FC<{
   const onDelete = useDeleteSelectedRequisitions();
   const t = useTranslation('replenishment');
 
-  const key = 'comment' as keyof RequestRowFragment;
+  const key = 'otherPartyName' as keyof RequestRowFragment;
   const filterString = filter.filterBy?.[key]?.like as string;
 
   return (
@@ -29,13 +29,17 @@ export const Toolbar: FC<{
       }}
     >
       <SearchBar
-        placeholder="Search by comment..."
+        placeholder={t('placeholder.search-by-name')}
         value={filterString}
         onChange={newValue => {
           if (!newValue) {
-            return filter.onClearFilterRule('comment');
+            return filter.onClearFilterRule('otherPartyName');
           }
-          return filter.onChangeStringFilterRule('comment', 'like', newValue);
+          return filter.onChangeStringFilterRule(
+            'otherPartyName',
+            'like',
+            newValue
+          );
         }}
       />
 
