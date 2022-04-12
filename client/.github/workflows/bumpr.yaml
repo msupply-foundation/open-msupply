@@ -1,0 +1,2 @@
+- name: bumpr - Bump version when merging Pull Request with specific labels
+  uses: haya14busa/action-bumpr@v1.0.0
