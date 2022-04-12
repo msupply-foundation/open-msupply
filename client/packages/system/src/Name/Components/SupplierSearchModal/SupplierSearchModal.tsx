@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { ListSearch, useTranslation } from '@openmsupply-client/common';
 import { useSuppliers, NameRowFragment } from '../../api';
 import { filterByNameAndCode, NameSearchProps } from '../../utils';
-import { NameOptionRenderer } from '../NameOptionRenderer';
+import { getNameOptionRenderer } from '../NameOptionRenderer';
 
 export const SupplierSearchModal: FC<NameSearchProps> = ({
   open,
@@ -11,6 +11,7 @@ export const SupplierSearchModal: FC<NameSearchProps> = ({
 }) => {
   const { data, isLoading } = useSuppliers();
   const t = useTranslation('app');
+  const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (
     <ListSearch
@@ -25,6 +26,7 @@ export const SupplierSearchModal: FC<NameSearchProps> = ({
       onChange={(_, name: NameRowFragment | NameRowFragment[] | null) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
+      getOptionDisabled={option => option.isOnHold}
     />
   );
 };

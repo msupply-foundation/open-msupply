@@ -33,6 +33,7 @@ export type AutocompleteListProps<T> = {
   clearText?: string;
   value?: T extends unknown[] ? T : T[];
   disableClearable?: boolean;
+  getOptionDisabled?: (option: T) => boolean;
 };
 
 export const AutocompleteList = <T,>({
@@ -56,6 +57,7 @@ export const AutocompleteList = <T,>({
   clearText,
   value,
   disableClearable,
+  getOptionDisabled,
 }: AutocompleteListProps<T>): JSX.Element => {
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
   const optionRenderer = optionKey
@@ -118,6 +120,7 @@ export const AutocompleteList = <T,>({
       inputValue={inputValue}
       clearText={clearText}
       value={value}
+      getOptionDisabled={getOptionDisabled}
     />
   );
 };
