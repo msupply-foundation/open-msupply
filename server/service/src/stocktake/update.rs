@@ -1,5 +1,5 @@
 use chrono::{NaiveDate, Utc};
-use repository::EqualFilter;
+use repository::schema::StocktakeLineRow;
 use repository::{
     schema::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -9,6 +9,7 @@ use repository::{
     StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeRowRepository, StorageConnection,
 };
+use repository::{EqualFilter, StocktakeLineRowRepository};
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
@@ -116,6 +117,9 @@ pub fn check_stocktake_is_not_locked(input: &UpdateStocktake, existing: &Stockta
 
 struct StocktakeGenerateJob {
     stocktake: StocktakeRow,
+    // list of stocktake lines to be updated, e.g. to link newly created stock_lines during
+    // stocktake finialisation.
+    stocktake_lines: Vec<StocktakeLineRow>,
 
     // new inventory adjustment
     inventory_adjustment: Option<InvoiceRow>,
@@ -125,13 +129,20 @@ struct StocktakeGenerateJob {
     stock_lines: Vec<StockLineRow>,
 }
 
+/// Contains entities to be updated when a stock line is update/created
+struct StockLineJob {
+    stock_line: StockLineRow,
+    invoice_line: Option<InvoiceLineRow>,
+    stocktake_line: Option<StocktakeLineRow>,
+}
+
 /// Returns new stock line and matching invoice line
 fn generate_stock_line_update(
     connection: &StorageConnection,
     invoice_id: &str,
     stocktake_line: &StocktakeLine,
     stock_line: &StockLineRow,
-) -> Result<(StockLineRow, Option<InvoiceLineRow>), UpdateStocktakeError> {
+) -> Result<StockLineJob, UpdateStocktakeError> {
     let counted_number_of_packs = stocktake_line
         .line
         .counted_number_of_packs
@@ -194,7 +205,11 @@ fn generate_stock_line_update(
     } else {
         None
     };
-    Ok((updated_line, shipment_line))
+    Ok(StockLineJob {
+        stock_line: updated_line,
+        invoice_line: shipment_line,
+        stocktake_line: None,
+    })
 }
 
 /// Returns new stock line and matching invoice line
@@ -203,16 +218,23 @@ fn generate_new_stock_line(
     store_id: &str,
     invoice_id: &str,
     stocktake_line: StocktakeLine,
-) -> Result<(StockLineRow, Option<InvoiceLineRow>), UpdateStocktakeError> {
+) -> Result<StockLineJob, UpdateStocktakeError> {
     let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0);
     let row = stocktake_line.line;
     let pack_size = row.pack_size.unwrap_or(0);
     let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
     let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
-    let item_id = row.item_id;
+    let stock_line_id = uuid();
 
+    // update the stock_line_id in the existing stocktake_line
+    let updated_stocktake_line = inline_edit(&row, |mut l: StocktakeLineRow| {
+        l.stock_line_id = Some(stock_line_id.clone());
+        l
+    });
+
+    let item_id = row.item_id;
     let new_line = StockLineRow {
-        id: uuid(),
+        id: stock_line_id,
         item_id: item_id.clone(),
         store_id: store_id.to_string(),
         location_id: row.location_id.clone(),
@@ -260,7 +282,12 @@ fn generate_new_stock_line(
     } else {
         None
     };
-    Ok((new_line, shipment_line))
+
+    Ok(StockLineJob {
+        stock_line: new_line,
+        invoice_line: shipment_line,
+        stocktake_line: Some(updated_stocktake_line),
+    })
 }
 
 fn generate(
@@ -290,6 +317,7 @@ fn generate(
         });
         return Ok(StocktakeGenerateJob {
             stocktake: stocktake,
+            stocktake_lines: vec![],
             inventory_adjustment: None,
             inventory_adjustment_lines: vec![],
             stock_lines: vec![],
@@ -299,9 +327,14 @@ fn generate(
     // finalise the stocktake
     let mut inventory_adjustment_lines: Vec<InvoiceLineRow> = Vec::new();
     let mut stock_lines: Vec<StockLineRow> = Vec::new();
+    let mut stocktake_line_updates: Vec<StocktakeLineRow> = Vec::new();
     let shipment_id = uuid();
     for stocktake_line in stocktake_lines {
-        let (stock_line, shipment_line) = if let Some(ref stock_line) = stocktake_line.stock_line {
+        let StockLineJob {
+            stock_line,
+            invoice_line,
+            stocktake_line,
+        } = if let Some(ref stock_line) = stocktake_line.stock_line {
             // adjust existing stock line
             generate_stock_line_update(connection, &shipment_id, &stocktake_line, stock_line)?
         } else {
@@ -309,8 +342,11 @@ fn generate(
             generate_new_stock_line(connection, store_id, &shipment_id, stocktake_line)?
         };
         stock_lines.push(stock_line);
-        if let Some(shipment_line) = shipment_line {
+        if let Some(shipment_line) = invoice_line {
             inventory_adjustment_lines.push(shipment_line);
+        }
+        if let Some(stocktake_line) = stocktake_line {
+            stocktake_line_updates.push(stocktake_line);
         }
     }
 
@@ -359,6 +395,7 @@ fn generate(
 
     Ok(StocktakeGenerateJob {
         stocktake,
+        stocktake_lines: stocktake_line_updates,
         inventory_adjustment: Some(shipment),
         inventory_adjustment_lines,
         stock_lines,
@@ -390,6 +427,11 @@ pub fn update_stocktake(
             let stock_line_repo = StockLineRowRepository::new(connection);
             for stock_line in result.stock_lines {
                 stock_line_repo.upsert_one(&stock_line)?;
+            }
+            // write updated stocktake lines
+            let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
+            for stocktake_line in result.stocktake_lines {
+                stocktake_line_repo.upsert_one(&stocktake_line)?;
             }
             // write inventory adjustment
             if let Some(inventory_adjustment) = result.inventory_adjustment {
@@ -433,7 +475,8 @@ mod test {
         },
         schema::{InvoiceLineRowType, StocktakeRow, StocktakeStatus},
         test_db::setup_all,
-        InvoiceLineRowRepository, StockLineRowRepository, StocktakeLine, StocktakeRepository,
+        InvoiceLineRowRepository, StockLineRowRepository, StocktakeLine,
+        StocktakeLineRowRepository, StocktakeRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -755,5 +798,12 @@ mod test {
             stocktake_line.sell_price_per_pack.unwrap()
         );
         assert_eq!(stock_line.note, stocktake_line.note);
+
+        // assert stocktake_line has been updated
+        let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)
+            .find_one_by_id(&stocktake_line.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated_stocktake_line.stock_line_id, Some(stock_line.id));
     }
 }
