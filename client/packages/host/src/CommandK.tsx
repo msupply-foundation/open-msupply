@@ -167,13 +167,6 @@ export const CommandK: FC = ({ children }) => {
         ),
     },
     {
-      id: 'navigation:reports',
-      name: `${t('cmdk.goto-reports')} (r)`,
-      shortcut: ['r'],
-      keywords: 'reports',
-      perform: () => navigate(RouteBuilder.create(AppRoute.Reports).build()),
-    },
-    {
       id: 'navigation:suppliers',
       name: `${t('cmdk.goto-suppliers')} (g+s)`,
       keywords: 'suppliers',

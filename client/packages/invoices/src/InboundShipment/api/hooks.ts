@@ -296,8 +296,8 @@ export const useDeleteSelectedInbounds = () => {
   );
 
   const deleteAction = () => {
-    const number = selectedRows?.length;
-    if (selectedRows && number > 0) {
+    const count = selectedRows?.length;
+    if (selectedRows && count > 0) {
       const canDeleteRows = selectedRows.every(
         ({ status }) => status === InvoiceNodeStatus.New
       );
@@ -308,7 +308,7 @@ export const useDeleteSelectedInbounds = () => {
         mutate(selectedRows, {
           onSettled: () => queryClient.invalidateQueries(api.keys.base()),
         });
-        const deletedMessage = t('messages.deleted-invoices', { number });
+        const deletedMessage = t('messages.deleted-invoices', { count });
         const successSnack = success(deletedMessage);
         successSnack();
       }
