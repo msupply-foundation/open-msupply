@@ -1,12 +1,16 @@
 import React, { FC } from 'react';
-import { Autocomplete, useBufferState } from '@openmsupply-client/common';
+import {
+  Autocomplete,
+  useBufferState,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useSuppliers } from '../../api';
 import {
   basicFilterOptions,
   filterByNameAndCode,
   NameSearchInputProps,
 } from '../../utils';
-import { NameOptionRenderer } from '../NameOptionRenderer';
+import { getNameOptionRenderer } from '../NameOptionRenderer';
 
 export const SupplierSearchInput: FC<NameSearchInputProps> = ({
   onChange,
@@ -16,6 +20,8 @@ export const SupplierSearchInput: FC<NameSearchInputProps> = ({
 }) => {
   const { data, isLoading } = useSuppliers();
   const [buffer, setBuffer] = useBufferState(value);
+  const t = useTranslation();
+  const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (
     <Autocomplete
@@ -34,6 +40,7 @@ export const SupplierSearchInput: FC<NameSearchInputProps> = ({
       width={`${width}px`}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       autoWidthPopper
+      getOptionDisabled={option => option.isOnHold}
     />
   );
 };

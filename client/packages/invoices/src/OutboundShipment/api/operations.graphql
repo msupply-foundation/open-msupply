@@ -114,6 +114,7 @@ fragment Outbound on InvoiceNode {
     code
     isCustomer
     isSupplier
+    isOnHold
   }
 
   pricing {

@@ -97,6 +97,7 @@ fragment Response on RequisitionNode {
     code
     isCustomer
     isSupplier
+    isOnHold
     name
     store {
       id
