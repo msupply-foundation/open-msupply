@@ -82,6 +82,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   itemName: {
     key: 'itemName',
     label: 'label.name',
+    maxWidth: 400,
   },
   name: {
     key: 'name',
