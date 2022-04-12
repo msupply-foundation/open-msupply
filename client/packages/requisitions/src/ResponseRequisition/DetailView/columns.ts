@@ -6,6 +6,7 @@ import {
   ColumnAlign,
   zustand,
   useSortBy,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment } from './../api';
 
@@ -36,6 +37,7 @@ export const useResponseColumns = () => {
   const { sortBy, onChangeSortBy } = useSharedSortBy();
   const columns = useColumns<ResponseLineFragment>(
     [
+      getCommentPopoverColumn(),
       [
         'itemCode',
         {
@@ -103,7 +105,6 @@ export const useResponseColumns = () => {
         getSortValue: rowData => rowData.remainingQuantityToSupply,
       },
       ['supplyQuantity', { getSortValue: rowData => rowData.supplyQuantity }],
-      ['comment', { getSortValue: rowData => rowData.comment ?? '' }],
       GenericColumnKey.Selection,
     ],
     {
