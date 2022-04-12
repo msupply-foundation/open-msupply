@@ -24,13 +24,15 @@ import { AppRoute } from '@openmsupply-client/config';
 
 const AdditionalInfoSection: FC = () => {
   const isDisabled = useIsRequestDisabled();
-  const { user, colour, comment, update } = useRequestFields([
+  const { user, colour, comment, createdDatetime, update } = useRequestFields([
     'colour',
+    'createdDatetime',
     'comment',
     'user',
   ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const t = useTranslation('common');
+  const { localisedDate } = useFormatDateTime();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -39,6 +41,10 @@ const AdditionalInfoSection: FC = () => {
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelField>{localisedDate(createdDatetime)}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>

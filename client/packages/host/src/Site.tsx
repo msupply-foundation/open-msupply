@@ -40,11 +40,12 @@ const Heading: FC = ({ children }) => (
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
-  const { store } = useAuthContext();
+  const { store, storeId } = useAuthContext();
+  const { name } = store || {};
   const t = useTranslation('app');
   useEffect(() => {
-    if (!!store) success(t('login.store-changed', { store: store.name }))();
-  }, [store]);
+    if (!!name) success(t('login.store-changed', { store: name }))();
+  }, [storeId]);
 
   return <></>;
 };

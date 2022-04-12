@@ -288,7 +288,7 @@ export type CreateRequisitionShipmentInput = {
 
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
-export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UserRegisterErrorInterface & {
+export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -575,6 +575,12 @@ export type EqualFilterItemTypeInput = {
   notEqualTo?: InputMaybe<ItemNodeType>;
 };
 
+export type EqualFilterNumberInput = {
+  equalAny?: InputMaybe<Array<Scalars['Int']>>;
+  equalTo?: InputMaybe<Scalars['Int']>;
+  notEqualTo?: InputMaybe<Scalars['Int']>;
+};
+
 export type EqualFilterReportCategoryInput = {
   equalAny?: InputMaybe<Array<ReportCategory>>;
   equalTo?: InputMaybe<ReportCategory>;
@@ -666,7 +672,6 @@ export type FullMutation = {
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
-  registerUser: UserRegisterResponse;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
@@ -871,11 +876,6 @@ export type FullMutationInsertStocktakeArgs = {
 export type FullMutationInsertStocktakeLineArgs = {
   input: InsertStocktakeLineInput;
   storeId: Scalars['String'];
-};
-
-
-export type FullMutationRegisterUserArgs = {
-  input: UserRegisterInput;
 };
 
 
@@ -1486,7 +1486,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertLocationErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UserRegisterErrorInterface & {
+export type InternalError = InsertLocationErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -1734,7 +1734,7 @@ export type ItemNode = {
   atcCategory: Scalars['String'];
   availableBatches: StockLineConnector;
   code: Scalars['String'];
-  ddd: Scalars['Float'];
+  ddd: Scalars['String'];
   defaultPackSize: Scalars['Int'];
   doses: Scalars['Int'];
   id: Scalars['String'];
@@ -1749,7 +1749,7 @@ export type ItemNode = {
   strength: Scalars['String'];
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']>;
-  volumePerOuterPack: Scalars['Int'];
+  volumePerOuterPack: Scalars['Float'];
   volumePerPack: Scalars['Float'];
   weight: Scalars['Float'];
 };
@@ -2105,7 +2105,7 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
-export type RecordAlreadyExist = InsertLocationErrorInterface & UserRegisterErrorInterface & {
+export type RecordAlreadyExist = InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String'];
 };
@@ -2136,13 +2136,6 @@ export type RefreshTokenErrorInterface = {
 };
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
-
-export type RegisteredUser = {
-  __typename: 'RegisteredUser';
-  email?: Maybe<Scalars['String']>;
-  id: Scalars['String'];
-  username: Scalars['String'];
-};
 
 export enum ReportCategory {
   Invoice = 'INVOICE',
@@ -2546,6 +2539,7 @@ export type StoreFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<SimpleStringFilterInput>;
   nameCode?: InputMaybe<SimpleStringFilterInput>;
+  siteId?: InputMaybe<EqualFilterNumberInput>;
 };
 
 export type StoreNode = {
@@ -2553,6 +2547,7 @@ export type StoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: NameNode;
+  siteId: Scalars['Int'];
 };
 
 
@@ -3040,23 +3035,6 @@ export type UserNode = {
   userId: Scalars['String'];
   username: Scalars['String'];
 };
-
-export type UserRegisterError = {
-  __typename: 'UserRegisterError';
-  error: UserRegisterErrorInterface;
-};
-
-export type UserRegisterErrorInterface = {
-  description: Scalars['String'];
-};
-
-export type UserRegisterInput = {
-  email?: InputMaybe<Scalars['String']>;
-  password: Scalars['String'];
-  username: Scalars['String'];
-};
-
-export type UserRegisterResponse = RegisteredUser | UserRegisterError;
 
 export type UserResponse = UserNode;
 

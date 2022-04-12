@@ -61,7 +61,13 @@ export const RequestLineEditFormLayout = ({
       <Grid item xs={4}>
         {Left}
       </Grid>
-      <Grid item xs={4}>
+      <Grid
+        item
+        xs={4}
+        display="flex"
+        flexDirection="column"
+        justifyContent="flex-end"
+      >
         {Middle}
       </Grid>
       <Grid item xs={4}>
@@ -78,16 +84,13 @@ export const RequestLineEditForm = ({
   update,
   draftLine,
 }: RequestLineEditFormProps) => {
-  const t = useTranslation(['replenishment', 'common']);
+  const t = useTranslation('replenishment');
   const formatNumber = useFormatNumber();
   const { lines } = useRequestLines();
   return (
     <RequestLineEditFormLayout
       Left={
         <>
-          <Typography variant="body1" fontWeight="bold">
-            {t('label.stock-details', { ns: 'replenishment' })}
-          </Typography>
           <StockItemSearchInput
             autoFocus={!item}
             width={300}
@@ -115,27 +118,16 @@ export const RequestLineEditForm = ({
               )}
             />
           ) : null}
+          {item && item?.stats.availableStockOnHand != null ? (
+            <InfoRow
+              label={t('label.soh')}
+              value={formatNumber.round(item?.stats.availableStockOnHand, 2)}
+            />
+          ) : null}
         </>
       }
       Middle={
         <>
-          <Typography variant="body1" fontWeight="bold">
-            {t('heading.comment')}
-          </Typography>
-          <TextArea
-            value={draftLine?.comment ?? ''}
-            onChange={e => update({ comment: e.target.value })}
-            InputProps={{
-              sx: { backgroundColor: theme => theme.palette.background.menu },
-            }}
-          />
-        </>
-      }
-      Right={
-        <>
-          <Typography variant="body1" fontWeight="bold">
-            {t('heading.order')}
-          </Typography>
           <InputWithLabelRow
             Input={
               <NumericTextInput
@@ -145,12 +137,12 @@ export const RequestLineEditForm = ({
               />
             }
             labelWidth="150px"
-            labelProps={{ sx: { fontWeight: 500 } }}
             label={t('label.suggested-quantity', { ns: 'replenishment' })}
           />
           <InputWithLabelRow
             Input={
               <NumericTextInput
+                autoFocus
                 value={formatNumber.round(draftLine?.requestedQuantity)}
                 width={150}
                 onChange={e =>
@@ -161,8 +153,21 @@ export const RequestLineEditForm = ({
               />
             }
             labelWidth="150px"
-            labelProps={{ sx: { fontWeight: 500 } }}
             label={t('label.order-quantity', { ns: 'replenishment' })}
+          />
+        </>
+      }
+      Right={
+        <>
+          <Typography variant="body1" fontWeight="bold">
+            {t('heading.comment')}
+          </Typography>
+          <TextArea
+            value={draftLine?.comment ?? ''}
+            onChange={e => update({ comment: e.target.value })}
+            InputProps={{
+              sx: { backgroundColor: theme => theme.palette.background.menu },
+            }}
           />
         </>
       }
