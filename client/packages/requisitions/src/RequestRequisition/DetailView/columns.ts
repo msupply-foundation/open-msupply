@@ -10,6 +10,7 @@ import {
   SortBy,
   zustand,
   getCommentPopoverColumn,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { useRequestFields } from '../api';
 
@@ -40,6 +41,7 @@ export const useRequestColumns = () => {
   const t = useTranslation('common');
   const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
   const { sortBy, onChangeSortBy } = useSharedSortBy();
+  const formatNumber = useFormatNumber();
   const columns = useColumns<RequestLineFragment>(
     [
       getCommentPopoverColumn(),
@@ -72,9 +74,12 @@ export const useRequestColumns = () => {
             itemStats;
 
           const monthsString = availableMonthsOfStockOnHand
-            ? `(${availableMonthsOfStockOnHand.toFixed(2)} ${t('label.months', {
-                count: availableMonthsOfStockOnHand,
-              })})`
+            ? `(${formatNumber.round(availableMonthsOfStockOnHand, 1)} ${t(
+                'label.months',
+                {
+                  count: availableMonthsOfStockOnHand,
+                }
+              )})`
             : '';
           return `${availableStockOnHand} ${monthsString}`;
         },
