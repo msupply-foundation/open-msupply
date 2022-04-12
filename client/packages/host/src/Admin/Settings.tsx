@@ -106,7 +106,7 @@ export const Settings: React.FC = () => {
           <Grid item display="flex" flex={1} gap={1}>
             <Grid item justifyContent="flex-end" flex={1} display="flex">
               <Typography fontWeight={700} whiteSpace="nowrap">
-                App version:
+                {t('label.app-version')}
               </Typography>
             </Grid>
             <Grid item flex={1}>
@@ -117,7 +117,7 @@ export const Settings: React.FC = () => {
             <Grid item display="flex" flex={1} gap={1}>
               <Grid item justifyContent="flex-end" flex={1} display="flex">
                 <Typography fontWeight={700} whiteSpace="nowrap">
-                  API version:
+                  {t('label.api-version')}
                 </Typography>
               </Grid>
               <Grid item flex={1}>
