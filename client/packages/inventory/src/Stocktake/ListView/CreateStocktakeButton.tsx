@@ -8,7 +8,7 @@ import { StockItemSelectModal } from 'packages/system/src';
 
 export const CreateStocktakeButton: React.FC = () => {
   const t = useTranslation(['distribution', 'common']);
-  const { mutate } = useInsertStocktake();
+  const { mutateAsync } = useInsertStocktake();
   const modalController = useToggle();
 
   return (
@@ -16,7 +16,7 @@ export const CreateStocktakeButton: React.FC = () => {
       {modalController.isOn && (
         <StockItemSelectModal
           isOpen={modalController.isOn}
-          onChange={mutate}
+          onChange={mutateAsync}
           onClose={modalController.toggleOff}
         />
       )}

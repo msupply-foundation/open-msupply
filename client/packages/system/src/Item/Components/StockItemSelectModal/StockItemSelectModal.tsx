@@ -1,19 +1,12 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   BasicSpinner,
   Box,
   useDialog,
   DialogButton,
-  AutocompleteList,
   Checkbox,
-  TextField,
-  Typography,
-  AutocompleteRenderInputParams,
   AutocompleteOptionRenderer,
-  AutocompleteOnChange,
-  RegexUtils,
-  CloseIcon,
-  IconButton,
+  AutocompleteMultiList,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useStockItemsWithStats } from '../../api';
@@ -23,7 +16,7 @@ interface StockItemSelectModalProps {
   extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
   isOpen: boolean;
   onClose: () => void;
-  onChange: (itemIds?: string[]) => void;
+  onChange: (itemIds?: string[]) => Promise<any>;
 }
 
 const renderOption: AutocompleteOptionRenderer<ItemRowWithStatsFragment> = (
@@ -62,93 +55,15 @@ export const StockItemSelectModal = ({
 }: StockItemSelectModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation('inventory');
-  const { data, isLoading: loading } = useStockItemsWithStats();
+  const { data, isLoading } = useStockItemsWithStats();
   const [saving, setSaving] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<
-    ItemRowWithStatsFragment[]
-  >([]);
-  const [inputValue, setInputValue] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const onChangeSelectedIds = (ids: string[]) => setSelectedIds(ids);
 
   const options = extraFilter
     ? data?.nodes?.filter(extraFilter) ?? []
     : data?.nodes ?? [];
-
-  const onChangeItems: AutocompleteOnChange<
-    ItemRowWithStatsFragment | ItemRowWithStatsFragment[]
-  > = (_event, items) => setSelectedItems(items instanceof Array ? items : []);
-
-  const selectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const filtered = options.filter(option =>
-      RegexUtils.matchObjectProperties(inputValue, option, ['name', 'code'])
-    );
-    if (event.target.checked) {
-      setSelectedItems([...selectedItems, ...filtered]);
-    } else {
-      const filteredIds = filtered.map(item => item.id);
-      setSelectedItems(
-        selectedItems.filter(item => !filteredIds.includes(item.id))
-      );
-    }
-  };
-
-  const ItemInput: FC<AutocompleteRenderInputParams> = props => {
-    const { InputProps, ...rest } = props;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { startAdornment, ...restInputProps } = InputProps ?? {};
-    const t = useTranslation('common');
-    const filtered = options.filter(option =>
-      RegexUtils.matchObjectProperties(inputValue, option, ['name', 'code'])
-    );
-
-    const selectedIds = selectedItems.map(item => item.id);
-    const filteredSelectedCount = filtered.filter(item =>
-      selectedIds.includes(item.id)
-    ).length;
-    const indeterminate =
-      filteredSelectedCount > 0 && filteredSelectedCount < filtered.length;
-    const checked =
-      filteredSelectedCount > 0 && filteredSelectedCount === filtered.length;
-
-    const clearInputButton = !!inputValue && (
-      <IconButton
-        sx={{ color: 'gray.main' }}
-        onClick={() => setInputValue('')}
-        icon={<CloseIcon fontSize="small" />}
-        label={t('label.clear-filter')}
-      />
-    );
-
-    return (
-      <>
-        <Box display="flex">
-          <Typography
-            flex={1}
-            style={{ verticalAlign: 'bottom' }}
-            display="flex"
-            alignItems="center"
-          >
-            {t('label.items-selected', { count: selectedItems.length })}
-          </Typography>
-          <Typography textAlign="right" flex={1}>
-            {t('label.select-all')}
-            <Checkbox
-              onChange={selectAll}
-              indeterminate={indeterminate}
-              checked={checked}
-            />
-          </Typography>
-        </Box>
-        <TextField
-          autoFocus
-          InputProps={{ ...restInputProps, endAdornment: clearInputButton }}
-          {...rest}
-          placeholder={t('placeholder.search-by-name-or-code')}
-          onChange={e => setInputValue(e.target.value)}
-          value={inputValue}
-        />
-      </>
-    );
-  };
 
   return (
     <Modal
@@ -157,7 +72,7 @@ export const StockItemSelectModal = ({
       width={650}
       height={600}
       cancelButton={
-        <DialogButton disabled={loading} variant="cancel" onClick={onClose} />
+        <DialogButton disabled={isLoading} variant="cancel" onClick={onClose} />
       }
       okButton={
         <DialogButton
@@ -165,7 +80,7 @@ export const StockItemSelectModal = ({
           variant="ok"
           onClick={async () => {
             setSaving(true);
-            await onChange(selectedItems.map(item => item.id));
+            await onChange(selectedIds);
             setSaving(false);
             onClose();
           }}
@@ -174,29 +89,14 @@ export const StockItemSelectModal = ({
     >
       <Box flex={1} display="flex" justifyContent="center">
         {!saving ? (
-          <AutocompleteList
-            options={options}
-            loading={loading}
-            height={365}
-            width={600}
-            disableCloseOnSelect
-            multiple
+          <AutocompleteMultiList
+            filterPlaceholder={t('placeholder.search-by-name-or-code')}
+            filterProperties={['name', 'code']}
             getOptionLabel={option => `${option.code} ${option.name}`}
-            filterOptions={(options, state) =>
-              options.filter(option =>
-                RegexUtils.matchObjectProperties(state.inputValue, option, [
-                  'name',
-                  'code',
-                ])
-              )
-            }
-            renderInput={ItemInput}
-            limitTags={0}
+            isLoading={isLoading}
+            onChange={onChangeSelectedIds}
+            options={options}
             renderOption={renderOption}
-            onChange={onChangeItems}
-            inputValue={inputValue}
-            value={selectedItems}
-            disableClearable
           />
         ) : (
           <Box sx={{ height: '100%' }}>

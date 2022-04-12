@@ -31,7 +31,7 @@ export type AutocompleteListProps<T> = {
   limitTags?: number;
   inputValue?: string;
   clearText?: string;
-  value?: T extends unknown[] ? T : T[];
+  value?: any;
   disableClearable?: boolean;
   getOptionDisabled?: (option: T) => boolean;
 };
