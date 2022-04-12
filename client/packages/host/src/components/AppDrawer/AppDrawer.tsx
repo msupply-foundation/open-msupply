@@ -19,6 +19,8 @@ import {
   AppNavLink,
   useIsMediumScreen,
   useAuthContext,
+  useLocation,
+  EnvUtils,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -134,6 +136,7 @@ export const AppDrawer: React.FC = () => {
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
   const { logout } = useAuthContext();
+  const location = useLocation();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -154,6 +157,10 @@ export const AppDrawer: React.FC = () => {
     drawer.open();
     drawer.setHoverOpen(true);
   };
+
+  const docsUrl = `${ExternalURL.PublicDocs}${
+    EnvUtils.mapRoute(location.pathname).docs
+  }`;
 
   return (
     <StyledDrawer
@@ -215,7 +222,7 @@ export const AppDrawer: React.FC = () => {
             text={t('sync')}
           />
           <ExternalNavLink
-            to={ExternalURL.PublicDocs}
+            to={docsUrl}
             icon={<BookIcon fontSize="small" color="primary" />}
             text={t('docs')}
             trustedSite={true}
