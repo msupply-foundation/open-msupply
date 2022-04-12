@@ -3,6 +3,7 @@ fragment NameRow on NameNode {
   id
   isCustomer
   isSupplier
+  isOnHold
   name
   store {
     id

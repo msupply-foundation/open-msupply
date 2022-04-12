@@ -14,6 +14,7 @@ interface ListSearchProps<T> extends AutocompleteListProps<T> {
   onClose: () => void;
   optionKey?: keyof T;
   renderOption?: AutocompleteOptionRenderer<T>;
+  getOptionDisabled?: (option: T) => boolean;
 }
 
 export const ListSearch = <T,>({
@@ -26,6 +27,7 @@ export const ListSearch = <T,>({
   open,
   onClose,
   onChange,
+  getOptionDisabled,
   loading = false,
 }: ListSearchProps<T>): JSX.Element => {
   const { height } = useWindowDimensions();
@@ -45,6 +47,7 @@ export const ListSearch = <T,>({
         options={options}
         optionKey={optionKey}
         height={listViewHeight}
+        getOptionDisabled={getOptionDisabled}
       />
     </BasicModal>
   );
