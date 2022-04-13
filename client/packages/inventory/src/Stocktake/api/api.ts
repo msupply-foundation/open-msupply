@@ -86,6 +86,18 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         });
         return result.stocktakes;
       },
+    listAll:
+      ({ sortBy }: { sortBy: SortBy<StocktakeRowFragment> }) =>
+      async () => {
+        const result = await sdk.stocktakes({
+          storeId,
+          sort: {
+            key: sortBy.key as StocktakeSortFieldInput,
+            desc: !!sortBy.isDesc,
+          },
+        });
+        return result.stocktakes;
+      },
     byId: async (id: string): Promise<StocktakeFragment> => {
       const result = await sdk.stocktake({ stocktakeId: id, storeId });
 
