@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::SystemTime};
 
+use chrono::{DateTime, Utc};
 use repository::{
     schema::report::{ReportRow, ReportType},
     PaginationOption, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
@@ -103,8 +104,9 @@ pub trait ReportServiceTrait: Sync + Send {
             .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
 
         let file_service = StaticFileService::new();
+        let now: DateTime<Utc> = SystemTime::now().into();
         let file = file_service
-            .store_file(&format!("{}.pdf", report.name), &pdf)
+            .store_file(&format!("{}_{}.pdf", now.to_rfc3339(), report.name), &pdf)
             .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
         Ok(file.id)
     }
