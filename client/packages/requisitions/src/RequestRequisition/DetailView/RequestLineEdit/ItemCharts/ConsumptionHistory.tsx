@@ -14,6 +14,7 @@ import {
 } from '@common/components';
 import {
   Box,
+  ConsumptionHistoryNode,
   useFormatDateTime,
   useTheme,
   useTranslation,
@@ -34,7 +35,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   const dateFormatter = (date: string) => dayMonthShort(date);
   const tooltipFormatter = (
     value: number,
-    name: string,
+    name: keyof ConsumptionHistoryNode,
     props: { payload: { date: string; isHistoric: boolean } }
   ) => {
     switch (name) {
