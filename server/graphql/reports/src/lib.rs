@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use printing::{print_report, PrintReportResponse};
+use printing::{print_report, print_report_definition, PrintReportResponse};
 use reports::{reports, ReportFilterInput, ReportSortInput, ReportsResponse};
 
 mod printing;
@@ -40,5 +40,16 @@ impl ReportQueries {
         data_id: String,
     ) -> Result<PrintReportResponse> {
         print_report(ctx, store_id, report_id, data_id).await
+    }
+
+    pub async fn print_report_definition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Name of the report")] name: Option<String>,
+        #[graphql(desc = "The report definition to be printed")] report: serde_json::Value,
+        data_id: String,
+    ) -> Result<PrintReportResponse> {
+        print_report_definition(ctx, store_id, name, report, data_id).await
     }
 }
