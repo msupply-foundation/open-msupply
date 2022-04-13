@@ -34,6 +34,7 @@
   "error.general-query-error": "There was an error communicating with the server 😢",
   "error.no-data": "No data available",
   "error.no-items": "No items",
+  "error.no-items-filter-on": "No items to display. Try changing the filter criteria.",
   "error.no-reports-available": "No reports available",
   "error.no-results": "No records to display",
   "error.something-wrong": "Oops! Something's gone wrong.",

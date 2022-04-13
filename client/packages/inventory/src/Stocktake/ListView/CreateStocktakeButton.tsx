@@ -4,7 +4,7 @@ import { PlusCircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import { useToggle } from '@common/hooks';
 import { useInsertStocktake } from '../api';
-import { StockItemSelectModal } from 'packages/system/src';
+import { StockItemSelectModal } from '@openmsupply-client/system';
 
 export const CreateStocktakeButton: React.FC = () => {
   const t = useTranslation(['distribution', 'common']);

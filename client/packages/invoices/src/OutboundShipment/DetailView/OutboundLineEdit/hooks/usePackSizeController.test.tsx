@@ -1,5 +1,5 @@
 import { createDraftOutboundLine } from './useDraftOutboundLines';
-import { DraftOutboundLine } from 'packages/invoices/src/types';
+import { DraftOutboundLine } from '../../../../types';
 import { usePackSizeController } from './usePackSizeController';
 import { act } from '@testing-library/react';
 import {
