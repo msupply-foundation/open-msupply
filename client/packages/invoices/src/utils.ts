@@ -222,8 +222,8 @@ export const inboundsToCsv = (
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
-    node.createdDatetime,
-    node.allocatedDatetime,
+    Formatter.csvDateString(node.createdDatetime),
+    Formatter.csvDateString(node.allocatedDatetime),
     node.comment,
     node.pricing.totalAfterTax,
   ]);
