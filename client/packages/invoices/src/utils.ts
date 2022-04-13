@@ -194,7 +194,7 @@ export const outboundsToCsv = (
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
-    node.createdDatetime,
+    Formatter.csvDateString(node.createdDatetime),
     node.theirReference,
     node.comment,
     node.pricing.totalAfterTax,

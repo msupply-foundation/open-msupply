@@ -1,3 +1,5 @@
+import { Formatter } from '..';
+
 const exportFile = (data: string, type: string, title?: string) => {
   let extension = 'txt';
   switch (type) {
@@ -6,7 +8,8 @@ const exportFile = (data: string, type: string, title?: string) => {
       break;
   }
 
-  const filename = `${title || 'export'}.${extension}`;
+  const today = Formatter.naiveDate(new Date());
+  const filename = `${title || 'export'}_${today}.${extension}`;
   const blob = new Blob([data], { type: `${type};charset=utf-8;` });
   const link = document.createElement('a');
 
