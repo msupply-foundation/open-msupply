@@ -71,13 +71,18 @@ pub enum ReportDefinitionEntry {
     Ref(ReportRef),
 }
 
+/// Specifies which report definition entries are the "main" entries.
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct ReportDefinitionIndex {
+    pub template: Option<String>,
+    pub header: Option<String>,
+    pub footer: Option<String>,
+    pub query: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ReportDefinition {
-    /// The map has a couple of special keys used in the template:
-    /// - `template`: the main template to generate the document
-    /// - `template_header`: optional template for a header
-    /// - `template_footer`: optional template for a footer
-    /// - `query`: the query to fetch the report data
+    pub index: ReportDefinitionIndex,
     pub entries: HashMap<String, ReportDefinitionEntry>,
 }
 
@@ -88,8 +93,8 @@ mod report_dsl_test {
     use serde_json::json;
 
     use crate::report::definition::{
-        DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportOutputType, ReportRef,
-        TeraTemplate,
+        DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
+        ReportOutputType, ReportRef, TeraTemplate,
     };
 
     #[test]
@@ -99,8 +104,13 @@ mod report_dsl_test {
         Some resource data: {{res.icon1}} and {{res.mainIcon}},
         "#;
         let template = json!({
-          "entries": {
-              "template": {
+            "index": {
+                "template": "template.html",
+                "footer": "local_footer.html",
+                "query": "query"
+            },
+            "entries": {
+              "template.html": {
                   "type": "TeraTemplate",
                   "data": {
                       "output": "Html",
@@ -134,6 +144,12 @@ mod report_dsl_test {
         assert_eq!(
             report,
             ReportDefinition {
+                index: ReportDefinitionIndex {
+                    template: Some("template.html".to_string()),
+                    header: None,
+                    footer: Some("local_footer.html".to_string()),
+                    query: Some("query".to_string()),
+                },
                 entries: HashMap::from([
                     (
                         "local_footer.html".to_string(),
@@ -143,7 +159,7 @@ mod report_dsl_test {
                         })
                     ),
                     (
-                        "template".to_string(),
+                        "template.html".to_string(),
                         ReportDefinitionEntry::TeraTemplate(TeraTemplate {
                             output: ReportOutputType::Html,
                             template: template_data.to_string()

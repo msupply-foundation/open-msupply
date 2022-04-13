@@ -22,12 +22,6 @@ use super::{
     html_printing::html_to_pdf,
 };
 
-// Reserved template entry keys:
-const TEMPLATE_KEY: &'static str = "template";
-const TEMPLATE_HEADER_KEY: &'static str = "template_header";
-const TEMPLATE_FOOTER_KEY: &'static str = "template_footer";
-const QUERY_KEY: &'static str = "query";
-
 #[derive(Debug)]
 pub enum ReportError {
     RepositoryError(RepositoryError),
@@ -47,8 +41,17 @@ pub enum ResolvedReportQuery {
     Default(DefaultQuery),
 }
 
+/// Resolved and validated report definition, i.e. its guaranteed that there is a main template and
+/// query present that can be rendered
 pub struct ResolvedReportDefinition {
     pub name: String,
+    /// Reference to the main template in the templates map
+    pub template: String,
+    /// Reference to the header entry in the templates map
+    pub header: Option<String>,
+    /// Reference to the footer entry in the templates map
+    pub footer: Option<String>,
+    /// Map of all found Tera templates in the report definition
     pub templates: HashMap<String, TeraTemplate>,
     pub query: GraphQlQuery,
     pub resources: HashMap<String, serde_json::Value>,
@@ -141,20 +144,71 @@ fn resolve_report(
     let repo = ReportRowRepository::new(&ctx.connection);
 
     let (name, resolved_report) = resolve_template_definition(&repo, store_id, report_id)?;
-
-    let templates = template_from_resolved_template(&resolved_report)
+    let templates = tera_templates_from_resolved_template(&resolved_report)
         .ok_or(ReportError::TemplateNotSpecified)?;
-    let query =
-        query_from_resolved_template(&resolved_report).ok_or(ReportError::QueryNotSpecified)?;
-    let resources = resources_from_resolved_template(&resolved_report);
 
+    // validate index entries are present
+    let template =
+        resolved_report
+            .index
+            .template
+            .clone()
+            .ok_or(ReportError::InvalidReportDefinition(
+                "Template reference missing".to_string(),
+            ))?;
+    if !templates.contains_key(&template) {
+        return Err(ReportError::InvalidReportDefinition(format!(
+            "Invalid template reference: {}",
+            template
+        )));
+    }
+    if let Some(header) = resolved_report.index.header.clone() {
+        if !templates.contains_key(&header) {
+            return Err(ReportError::InvalidReportDefinition(format!(
+                "Invalid template header reference: {}",
+                header
+            )));
+        }
+    }
+    if let Some(footer) = resolved_report.index.footer.clone() {
+        if !templates.contains_key(&footer) {
+            return Err(ReportError::InvalidReportDefinition(format!(
+                "Invalid template footer reference: {}",
+                footer
+            )));
+        }
+    }
+    let query = resolved_report
+        .index
+        .query
+        .clone()
+        .ok_or(ReportError::InvalidReportDefinition(
+            "Query reference missing".to_string(),
+        ))?;
+    let query_entry = match resolved_report.entries.get(&query) {
+        Some(query_entry) => query_entry,
+        None => {
+            return Err(ReportError::InvalidReportDefinition(format!(
+                "Invalid query reference: {}",
+                query
+            )))
+        }
+    };
+
+    // resolve the query entry
+    let query = query_from_resolved_template(query_entry).ok_or(ReportError::QueryNotSpecified)?;
     let query = match query {
         ResolvedReportQuery::GraphQlQuery(query) => query,
         ResolvedReportQuery::Default(query) => get_default_gql_query(query),
     };
 
+    let resources = resources_from_resolved_template(&resolved_report);
+
     Ok(ResolvedReportDefinition {
         name,
+        template,
+        header: resolved_report.index.header.clone(),
+        footer: resolved_report.index.footer.clone(),
         templates,
         query,
         resources,
@@ -179,23 +233,25 @@ fn generate_report(
     })?;
 
     let document = tera
-        .render(TEMPLATE_KEY, &context)
+        .render(&report.template, &context)
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-    let header = if templates.contains_key(TEMPLATE_HEADER_KEY) {
-        let header = tera.render(TEMPLATE_HEADER_KEY, &context).map_err(|err| {
-            ReportError::DocGenerationError(format!("Header generation: {}", err))
-        })?;
-        Some(header)
-    } else {
-        None
+    let header = match &report.header {
+        Some(header_key) => {
+            let header = tera.render(header_key, &context).map_err(|err| {
+                ReportError::DocGenerationError(format!("Header generation: {}", err))
+            })?;
+            Some(header)
+        }
+        None => None,
     };
-    let footer = if templates.contains_key(TEMPLATE_FOOTER_KEY) {
-        let footer = tera.render(TEMPLATE_FOOTER_KEY, &context).map_err(|err| {
-            ReportError::DocGenerationError(format!("Footer generation: {}", err))
-        })?;
-        Some(footer)
-    } else {
-        None
+    let footer = match &report.footer {
+        Some(footer_ref) => {
+            let footer = tera.render(footer_ref, &context).map_err(|err| {
+                ReportError::DocGenerationError(format!("Footer generation: {}", err))
+            })?;
+            Some(footer)
+        }
+        None => None,
     };
 
     Ok(GeneratedReport {
@@ -205,12 +261,9 @@ fn generate_report(
     })
 }
 
-fn template_from_resolved_template(
+fn tera_templates_from_resolved_template(
     report: &ReportDefinition,
 ) -> Option<HashMap<String, TeraTemplate>> {
-    // validate that the main template is present
-    report.entries.get(TEMPLATE_KEY)?;
-
     let mut templates = HashMap::new();
     for (name, entry) in &report.entries {
         match entry {
@@ -223,9 +276,10 @@ fn template_from_resolved_template(
     Some(templates)
 }
 
-fn query_from_resolved_template(report: &ReportDefinition) -> Option<ResolvedReportQuery> {
-    let query = report.entries.get(QUERY_KEY)?;
-    let query = match query {
+fn query_from_resolved_template(
+    query_entry: &ReportDefinitionEntry,
+) -> Option<ResolvedReportQuery> {
+    let query = match query_entry {
         ReportDefinitionEntry::GraphGLQuery(query) => {
             ResolvedReportQuery::GraphQlQuery(query.clone())
         }
@@ -275,6 +329,7 @@ fn resolve_template_definition(
     let (report_name, main) = load_report_definition(repo, report_id)?;
 
     let mut out = ReportDefinition {
+        index: main.index.clone(),
         entries: HashMap::new(),
     };
     for (name, entry) in main.entries {
@@ -332,8 +387,8 @@ mod report_service_test {
 
     use crate::{
         report::definition::{
-            DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportOutputType, ReportRef,
-            TeraTemplate,
+            DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
+            ReportOutputType, ReportRef, TeraTemplate,
         },
         service_provider::ServiceProvider,
     };
@@ -341,9 +396,15 @@ mod report_service_test {
     #[actix_rt::test]
     async fn generate_tera_html_document() {
         let report_1 = ReportDefinition {
+            index: ReportDefinitionIndex {
+                template: Some("template.html".to_string()),
+                header: None,
+                footer: Some("footer.html".to_string()),
+                query: Some("query".to_string()),
+            },
             entries: HashMap::from([
                 (
-                    "template".to_string(),
+                    "template.html".to_string(),
                     ReportDefinitionEntry::TeraTemplate(TeraTemplate {
                         output: ReportOutputType::Html,
                         template: "Template: {{data.test}} {% include \"footer.html\" %}"
@@ -364,6 +425,12 @@ mod report_service_test {
             ]),
         };
         let report_base_1 = ReportDefinition {
+            index: ReportDefinitionIndex {
+                template: None,
+                header: None,
+                footer: Some("footer.html".to_string()),
+                query: None,
+            },
             entries: HashMap::from([(
                 "footer.html".to_string(),
                 ReportDefinitionEntry::TeraTemplate(TeraTemplate {
