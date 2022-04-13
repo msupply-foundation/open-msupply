@@ -3,21 +3,25 @@ import {
   DownloadIcon,
   useNotification,
   AppBarButtonsPortal,
-  ButtonWithIcon,
   Grid,
   FileUtils,
+  SortBy,
+  LoadingButton,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { CreateStocktakeButton } from './CreateStocktakeButton';
-import { useStocktakes } from '../api';
+import { StocktakeRowFragment, useStocktakesAll } from '../api';
 import { stocktakesToCsv } from '../../utils';
 
-export const AppBarButtons: FC = () => {
+export const AppBarButtons: FC<{
+  sortBy: SortBy<StocktakeRowFragment>;
+}> = ({ sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation(['distribution', 'common']);
-  const { data } = useStocktakes();
+  const { isLoading, mutateAsync } = useStocktakesAll(sortBy);
 
-  const csvExport = () => {
+  const csvExport = async () => {
+    const data = await mutateAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
@@ -32,11 +36,14 @@ export const AppBarButtons: FC = () => {
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <CreateStocktakeButton />
-        <ButtonWithIcon
-          Icon={<DownloadIcon />}
-          label={t('button.export')}
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          variant="outlined"
+          isLoading={isLoading}
           onClick={csvExport}
-        />
+        >
+          {t('button.export')}
+        </LoadingButton>
       </Grid>
     </AppBarButtonsPortal>
   );
