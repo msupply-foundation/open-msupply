@@ -10,19 +10,24 @@ import {
   useToggle,
   FnUtils,
   FileUtils,
+  LoadingButton,
+  SortBy,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
-import { useOutbound } from '../api';
+import { OutboundRowFragment, useOutbound } from '../api';
 import { outboundsToCsv } from '../../utils';
 
-export const AppBarButtonsComponent: FC = () => {
+export const AppBarButtonsComponent: FC<{
+  sortBy: SortBy<OutboundRowFragment>;
+}> = ({ sortBy }) => {
   const { success, error } = useNotification();
   const { mutate: onCreate } = useOutbound.document.insert();
   const t = useTranslation(['distribution', 'common']);
   const modalController = useToggle();
-  const { data } = useOutbound.document.list();
+  const { mutateAsync, isLoading } = useOutbound.document.listAll(sortBy);
 
-  const csvExport = () => {
+  const csvExport = async () => {
+    const data = await mutateAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
@@ -59,11 +64,14 @@ export const AppBarButtonsComponent: FC = () => {
             }
           }}
         />
-        <ButtonWithIcon
-          Icon={<DownloadIcon />}
-          label={t('button.export')}
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          isLoading={isLoading}
+          variant="outlined"
           onClick={csvExport}
-        />
+        >
+          {t('button.export')}
+        </LoadingButton>
       </Grid>
     </AppBarButtonsPortal>
   );
