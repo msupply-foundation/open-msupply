@@ -14,5 +14,8 @@ export const useUserDetails = () => {
 
 export const useUserStores = (token: string) => {
   const api = useAuthApi();
-  return useQuery(api.keys.me(token), api.get.stores(), { cacheTime: 0 });
+  return useQuery(api.keys.me(token), api.get.stores(), {
+    cacheTime: 0,
+    enabled: !!token,
+  });
 };
