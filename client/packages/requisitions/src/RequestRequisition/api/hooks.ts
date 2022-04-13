@@ -20,6 +20,7 @@ import {
   useTableStore,
   RequisitionNodeStatus,
   RegexUtils,
+  SortBy,
 } from '@openmsupply-client/common';
 import { MasterListRowFragment } from '@openmsupply-client/system';
 import { getRequestQueries, ListParams } from './api';
@@ -44,6 +45,8 @@ export const useRequestApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<RequestRowFragment>) =>
+      [...keys.list(), sortBy] as const,
     chartData: (lineId: string) => [...keys.base(), storeId, lineId] as const,
   };
 
@@ -72,6 +75,16 @@ export const useRequests = (options?: { enabled: boolean }) => {
       options
     ),
     ...queryParams,
+  };
+};
+
+export const useRequestsAll = (sortBy: SortBy<RequestRowFragment>) => {
+  const api = useRequestApi();
+
+  return {
+    ...useMutation(api.keys.sortedList(sortBy), () =>
+      api.get.listAll({ sortBy })
+    ),
   };
 };
 

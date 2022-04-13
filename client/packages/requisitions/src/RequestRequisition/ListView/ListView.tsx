@@ -74,7 +74,7 @@ export const RequestRequisitionListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons />
+      <AppBarButtons sortBy={sortBy} />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}

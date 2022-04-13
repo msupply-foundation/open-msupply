@@ -19,6 +19,7 @@ import {
   useAuthContext,
   useQueryParams,
   useTableStore,
+  SortBy,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
 import { getStocktakeQueries, ListParams } from './api';
@@ -37,6 +38,8 @@ export const useStocktakeApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<StocktakeRowFragment>) =>
+      [...keys.list(), sortBy] as const,
   };
 
   const { client } = useGql();
@@ -82,6 +85,13 @@ export const useStocktakes = () => {
       })
     ),
     ...queryParams,
+  };
+};
+export const useStocktakesAll = (sortBy: SortBy<StocktakeRowFragment>) => {
+  const api = useStocktakeApi();
+
+  return {
+    ...useMutation(api.keys.sortedList(sortBy), api.get.listAll({ sortBy })),
   };
 };
 

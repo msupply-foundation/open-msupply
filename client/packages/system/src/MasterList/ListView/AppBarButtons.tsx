@@ -3,23 +3,46 @@ import {
   DownloadIcon,
   useNotification,
   AppBarButtonsPortal,
-  ButtonWithIcon,
   Grid,
   useTranslation,
+  FileUtils,
+  LoadingButton,
+  SortBy,
 } from '@openmsupply-client/common';
+import { useMasterListsAll } from '../api/hooks';
+import { masterListsToCsv } from '../../utils';
+import { MasterListRowFragment } from '../api';
 
-export const AppBarButtons: FC = () => {
-  const { success } = useNotification();
+export const AppBarButtons: FC<{
+  sortBy: SortBy<MasterListRowFragment>;
+}> = ({ sortBy }) => {
+  const { success, error } = useNotification();
   const t = useTranslation('inventory');
+  const { isLoading, mutateAsync } = useMasterListsAll(sortBy);
+
+  const csvExport = async () => {
+    const data = await mutateAsync();
+    if (!data || !data?.nodes.length) {
+      error(t('error.no-data'))();
+      return;
+    }
+
+    const csv = masterListsToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, t('filename.master-lists'));
+    success(t('success'))();
+  };
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<DownloadIcon />}
-          label={t('button.export')}
-          onClick={success('Downloaded successfully')}
-        />
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          variant="outlined"
+          isLoading={isLoading}
+          onClick={csvExport}
+        >
+          {t('button.export')}
+        </LoadingButton>
       </Grid>
     </AppBarButtonsPortal>
   );

@@ -8,7 +8,6 @@ import {
   createTableStore,
   InvoiceNodeStatus,
   useTranslation,
-  useCurrency,
   useTableStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
@@ -27,7 +26,6 @@ const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
 export const InboundListView: FC = () => {
   const { mutate: onUpdate } = useUpdateInbound();
   const navigate = useNavigate();
-  const { c } = useCurrency();
   const {
     data,
     isError,
@@ -59,7 +57,7 @@ export const InboundListView: FC = () => {
       [
         'totalAfterTax',
         {
-          accessor: ({ rowData }) => c(rowData.pricing.totalAfterTax).format(),
+          accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
         },
       ],
       'selection',
@@ -71,7 +69,7 @@ export const InboundListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons />
+      <AppBarButtons sortBy={sortBy} />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}

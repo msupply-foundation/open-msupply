@@ -45,7 +45,7 @@ export const LocationListView: FC = () => {
         />
       )}
       <Toolbar data={locations} filter={filter} />
-      <AppBarButtons onCreate={() => onOpen()} />
+      <AppBarButtons onCreate={() => onOpen()} sortBy={sortBy} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={onChangePage}

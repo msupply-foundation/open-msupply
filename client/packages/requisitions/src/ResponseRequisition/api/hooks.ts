@@ -20,6 +20,7 @@ import {
   Column,
   RegexUtils,
   useTableStore,
+  SortBy,
 } from '@openmsupply-client/common';
 import { getResponseQueries, ListParams } from './api';
 import { useItemFilter } from '../../RequestRequisition/api';
@@ -38,6 +39,8 @@ export const useResponseApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<ResponseRowFragment>) =>
+      [...keys.list(), sortBy] as const,
   };
 
   const { client } = useGql();
@@ -83,6 +86,18 @@ export const useResponses = () => {
       })
     ),
     ...queryParams,
+  };
+};
+
+export const useResponsesAll = (sortBy: SortBy<ResponseRowFragment>) => {
+  const api = useResponseApi();
+
+  return {
+    ...useMutation(api.keys.sortedList(sortBy), () =>
+      api.get.listAll({
+        sortBy,
+      })
+    ),
   };
 };
 

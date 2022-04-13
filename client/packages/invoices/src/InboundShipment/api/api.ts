@@ -153,6 +153,19 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.invoices;
     },
+    listAll: async ({ sortBy }: { sortBy: SortBy<InboundRowFragment> }) => {
+      const filter = {
+        type: { equalTo: InvoiceNodeType.InboundShipment },
+      };
+
+      const result = await sdk.invoices({
+        key: inboundParsers.toSortField(sortBy),
+        desc: !!sortBy.isDesc,
+        filter,
+        storeId,
+      });
+      return result.invoices;
+    },
     byId: async (id: string): Promise<InboundRowFragment> => {
       const result = await sdk.invoice({ id, storeId });
 
