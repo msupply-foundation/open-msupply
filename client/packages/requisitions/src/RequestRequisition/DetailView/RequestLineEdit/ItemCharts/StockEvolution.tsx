@@ -18,9 +18,13 @@ import { useRequestLineChartData } from '../../../api/hooks';
 
 export interface StockEvolutionProps {
   id: string;
+  requestedQuantity?: number;
 }
 
-export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
+export const StockEvolution: React.FC<StockEvolutionProps> = ({
+  id,
+  requestedQuantity = 0,
+}) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();
@@ -31,17 +35,20 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
     switch (name) {
       case 'stockOnHand':
         return [value, t('label.stock-level')];
-      case 'min':
+      case 'minimumStockOnHand':
         return [value, t('label.min')];
-      case 'max':
+      case 'maximumStockOnHand':
         return [value, t('label.max')];
       default:
         return [value, name];
     }
   };
-
   if (!data || !data.stockEvolution) return null;
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
+  const chartData = data.stockEvolution.nodes.map(node => ({
+    ...node,
+    stockOnHand: node.stockOnHand + (node.isHistoric ? 0 : requestedQuantity),
+  }));
 
   return isLoading ? (
     <CircularProgress />
@@ -60,11 +67,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
         {data.stockEvolution.nodes.length === 0 ? (
           <Typography width={450}>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart
-            width={450}
-            height={255}
-            data={data.stockEvolution.nodes}
-          >
+          <ComposedChart width={450} height={255} data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -119,7 +122,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
               ))}
             </Bar>
             <Line
-              dataKey="max"
+              dataKey="maximumStockOnHand"
               stroke={theme.palette.success.main}
               strokeDasharray="4"
               dot={false}
@@ -127,7 +130,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
             />
 
             <Line
-              dataKey="min"
+              dataKey="minimumStockOnHand"
               stroke={theme.palette.error.main}
               dot={false}
               strokeWidth={2}

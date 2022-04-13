@@ -37,5 +37,5 @@ export enum AppRoute {
 }
 
 export enum ExternalURL {
-  PublicDocs = 'https://docs.msupply.foundation',
+  PublicDocs = 'https://docs.msupply.foundation/docs',
 }

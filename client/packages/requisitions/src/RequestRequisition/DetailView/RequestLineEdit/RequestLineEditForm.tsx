@@ -109,19 +109,22 @@ export const RequestLineEditForm = ({
           {item && item?.unitName ? (
             <InfoRow label="Unit" value={item.unitName} />
           ) : null}
-          {item && item?.stats.averageMonthlyConsumption != null ? (
+          {!!draftLine?.itemStats.averageMonthlyConsumption ? (
             <InfoRow
               label={t('label.amc')}
               value={formatNumber.round(
-                item?.stats.averageMonthlyConsumption,
+                draftLine?.itemStats.averageMonthlyConsumption,
                 2
               )}
             />
           ) : null}
-          {item && item?.stats.availableStockOnHand != null ? (
+          {!!draftLine?.itemStats.availableStockOnHand ? (
             <InfoRow
               label={t('label.soh')}
-              value={formatNumber.round(item?.stats.availableStockOnHand, 2)}
+              value={formatNumber.round(
+                draftLine?.itemStats.availableStockOnHand,
+                2
+              )}
             />
           ) : null}
         </>
