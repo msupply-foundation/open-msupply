@@ -43,16 +43,17 @@ export const StocktakeListView: FC = () => {
 
   const columns = useColumns<StocktakeRowFragment>(
     [
-      ['stocktakeNumber', { maxWidth: 50 }],
+      ['stocktakeNumber', { maxWidth: 50, sortable: false }],
       [
         'status',
         {
           formatter: status => statusTranslator(status as StocktakeNodeStatus),
         },
       ],
-      'description',
-      'comment',
-      'stocktakeDate',
+      ['description', { sortable: false }],
+      'createdDatetime',
+      ['stocktakeDate', { sortable: false }],
+      ['comment', { sortable: false }],
       'selection',
     ],
     { onChangeSortBy, sortBy },
@@ -62,7 +63,7 @@ export const StocktakeListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons />
+      <AppBarButtons sortBy={sortBy} />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}

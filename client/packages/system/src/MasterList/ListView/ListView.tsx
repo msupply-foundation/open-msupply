@@ -35,7 +35,7 @@ export const MasterListListView: FC = () => {
   return (
     <TableProvider createStore={createTableStore}>
       <Toolbar filter={filter} />
-      <AppBarButtons />
+      <AppBarButtons sortBy={sortBy} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={onChangePage}

@@ -7,6 +7,8 @@ import {
   UseQueryResult,
   useParams,
   SortUtils,
+  SortBy,
+  useMutation,
 } from '@openmsupply-client/common';
 import {
   getSdk,
@@ -23,6 +25,8 @@ export const useMasterListApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<MasterListRowFragment>) =>
+      [...keys.list(), sortBy] as const,
   };
   const { client } = useGql();
   const sdk = getSdk(client);
@@ -52,6 +56,15 @@ export const useMasterLists = ({ enabled } = { enabled: true }) => {
       }
     ),
     ...queryParams,
+  };
+};
+export const useMasterListsAll = (sortBy: SortBy<MasterListRowFragment>) => {
+  const api = useMasterListApi();
+
+  return {
+    ...useMutation(api.keys.sortedList(sortBy), () =>
+      api.get.listAll({ sortBy })
+    ),
   };
 };
 

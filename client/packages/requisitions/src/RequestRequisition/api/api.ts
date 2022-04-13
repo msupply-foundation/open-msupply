@@ -114,6 +114,20 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.requisitions;
     },
+    listAll: async ({ sortBy }: { sortBy: SortBy<RequestRowFragment> }) => {
+      const filter = {
+        type: { equalTo: RequisitionNodeType.Request },
+      };
+      const result = await sdk.requests({
+        storeId,
+        sort: {
+          key: requestParser.toSortField(sortBy),
+          desc: !!sortBy.isDesc,
+        },
+        filter,
+      });
+      return result.requisitions;
+    },
     byNumber: async (requisitionNumber: string): Promise<RequestFragment> => {
       const result = await sdk.requestByNumber({
         storeId,

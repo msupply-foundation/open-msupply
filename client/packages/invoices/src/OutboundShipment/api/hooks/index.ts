@@ -12,6 +12,7 @@ export const useOutbound = {
   document: {
     get: Document.useOutbound,
     list: Document.useOutbounds,
+    listAll: Document.useOutboundsAll,
 
     update: Document.useOutboundUpdate,
     delete: Document.useOutboundDelete,

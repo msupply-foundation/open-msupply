@@ -17,6 +17,7 @@ import {
   useMutation,
   useFieldsSelector,
   InvoiceNodeStatus,
+  SortBy,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import {
@@ -40,6 +41,8 @@ export const useInboundApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<InboundRowFragment>) =>
+      [...keys.list(), sortBy] as const,
   };
 
   const { client } = useGql();
@@ -258,6 +261,16 @@ export const useInbounds = () => {
       })
     ),
     ...queryParams,
+  };
+};
+
+export const useInboundsAll = (sortBy: SortBy<InboundRowFragment>) => {
+  const api = useInboundApi();
+
+  return {
+    ...useMutation(api.keys.sortedList(sortBy), () =>
+      api.get.listAll({ sortBy })
+    ),
   };
 };
 

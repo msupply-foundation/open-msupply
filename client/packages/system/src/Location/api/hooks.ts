@@ -4,6 +4,7 @@ import {
   useAuthContext,
   useQueryParams,
   useQuery,
+  SortBy,
 } from '@openmsupply-client/common';
 import { getLocationQueries, ListParams } from './api';
 import { getSdk, LocationRowFragment } from './operations.generated';
@@ -15,6 +16,8 @@ export const useLocationApi = () => {
     detail: (id: string) => [...keys.base(), id] as const,
     list: () => [...keys.base(), 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<LocationRowFragment>) =>
+      [...keys.list(), sortBy] as const,
   };
   const { client } = useGql();
   const sdk = getSdk(client);
@@ -66,6 +69,15 @@ export const useLocations = () => {
   );
 
   return { ...queryParams, ...result };
+};
+
+export const useLocationsAll = (sortBy: SortBy<LocationRowFragment>) => {
+  const api = useLocationApi();
+  const result = useMutation(api.keys.sortedList(sortBy), () =>
+    api.get.list({ sortBy })
+  );
+
+  return { ...result };
 };
 
 export const useNextLocation = (
