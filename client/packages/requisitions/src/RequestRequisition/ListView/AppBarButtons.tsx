@@ -11,19 +11,24 @@ import {
   useTranslation,
   useToggle,
   FileUtils,
+  SortBy,
+  LoadingButton,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
-import { useInsertRequest, useRequests } from '../api';
+import { RequestRowFragment, useInsertRequest, useRequestsAll } from '../api';
 import { requestsToCsv } from '../../utils';
 
-export const AppBarButtons: FC = () => {
+export const AppBarButtons: FC<{
+  sortBy: SortBy<RequestRowFragment>;
+}> = ({ sortBy }) => {
   const { mutate: onCreate } = useInsertRequest();
   const modalController = useToggle();
   const { success, error } = useNotification();
   const t = useTranslation('common');
-  const { data } = useRequests();
+  const { isLoading, mutateAsync } = useRequestsAll(sortBy);
 
-  const csvExport = () => {
+  const csvExport = async () => {
+    const data = await mutateAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
@@ -42,11 +47,14 @@ export const AppBarButtons: FC = () => {
           label={t('label.new-requisition')}
           onClick={modalController.toggleOn}
         />
-        <ButtonWithIcon
-          Icon={<DownloadIcon />}
-          label={t('button.export')}
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          variant="outlined"
+          isLoading={isLoading}
           onClick={csvExport}
-        />
+        >
+          {t('button.export')}
+        </LoadingButton>
       </Grid>
       <InternalSupplierSearchModal
         open={modalController.isOn}
