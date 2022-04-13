@@ -33,19 +33,16 @@ export const useFieldsSelector = <Entity, KeyOfEntity extends keyof Entity>(
   timeout = 1000
 ): FieldSelectorControl<Entity, KeyOfEntity> => {
   const queryClient = useQueryClient();
-  const select = useCallback((requisition: Entity) => {
+  const select = useCallback((entity: Entity) => {
     if (Array.isArray(keyOrKeys)) {
       const mapped = keyOrKeys.reduce((acc, val) => {
-        acc[val] = requisition[val];
+        acc[val] = entity[val];
         return acc;
       }, {} as Pick<Entity, KeyOfEntity>);
 
       return mapped;
     } else {
-      return { [keyOrKeys]: requisition[keyOrKeys] } as Pick<
-        Entity,
-        KeyOfEntity
-      >;
+      return { [keyOrKeys]: entity[keyOrKeys] } as Pick<Entity, KeyOfEntity>;
     }
   }, []);
 

@@ -10,6 +10,7 @@ const Breadcrumb = styled(Link)({
   color: 'inherit',
   fontWeight: 'bold',
   textDecoration: 'none',
+  '&:hover': { textDecoration: 'underline' },
 });
 
 export const Breadcrumbs: React.FC = () => {

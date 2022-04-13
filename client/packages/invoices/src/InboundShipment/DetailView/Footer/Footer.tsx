@@ -10,7 +10,11 @@ import {
 } from '@openmsupply-client/common';
 
 import React, { FC } from 'react';
-import { getStatusTranslator, inboundStatuses } from '../../../utils';
+import {
+  getStatusTranslator,
+  inboundStatuses,
+  manualInboundStatuses,
+} from '../../../utils';
 import { InboundFragment, useInbound } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
@@ -26,8 +30,6 @@ const createStatusLog = (invoice: InboundFragment) => {
     // Placeholder for typescript, not used in inbounds
     [InvoiceNodeStatus.Allocated]: null,
   };
-
-  statusLog;
 
   if (statusIdx >= 0) {
     statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
@@ -52,6 +54,7 @@ export const FooterComponent: FC = () => {
   const t = useTranslation('replenishment');
   const { navigateUpOne } = useBreadcrumbs();
   const { data } = useInbound();
+  const isManuallyCreated = !data?.linkedShipment?.id;
 
   return (
     <AppFooterPortal
@@ -67,7 +70,9 @@ export const FooterComponent: FC = () => {
             <OnHoldButton />
 
             <StatusCrumbs
-              statuses={inboundStatuses}
+              statuses={
+                isManuallyCreated ? manualInboundStatuses : inboundStatuses
+              }
               statusLog={createStatusLog(data)}
               statusFormatter={getStatusTranslator(t)}
             />

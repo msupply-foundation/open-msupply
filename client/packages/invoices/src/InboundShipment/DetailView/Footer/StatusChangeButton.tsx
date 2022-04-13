@@ -9,7 +9,7 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import { getStatusTranslation, getNextInboundStatus } from '../../../utils';
-import { useIsInboundDisabled, useInboundFields } from '../../api';
+import { useInboundFields, useIsStatusChangeDisabled } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -64,6 +64,46 @@ const getStatusOptions = (
   return options;
 };
 
+const getManualStatusOptions = (
+  currentStatus: InvoiceNodeStatus,
+  getButtonLabel: (status: InvoiceNodeStatus) => string
+): SplitButtonOption<InvoiceNodeStatus>[] => {
+  const options: [
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>
+  ] = [
+    {
+      value: InvoiceNodeStatus.New,
+      label: getButtonLabel(InvoiceNodeStatus.New),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Delivered,
+      label: getButtonLabel(InvoiceNodeStatus.Delivered),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Verified,
+      label: getButtonLabel(InvoiceNodeStatus.Verified),
+      isDisabled: true,
+    },
+  ];
+
+  if (currentStatus === InvoiceNodeStatus.New) {
+    // When the status is new, delivered and verified are available to
+    // select.
+    options[1].isDisabled = false;
+  }
+
+  // When the status is delivered, only verified is available to select.
+  if (currentStatus === InvoiceNodeStatus.Delivered) {
+    options[2].isDisabled = false;
+  }
+
+  return options;
+};
+
 const getNextStatusOption = (
   status: InvoiceNodeStatus,
   options: SplitButtonOption<InvoiceNodeStatus>[]
@@ -84,12 +124,20 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, onHold, update } = useInboundFields(['status', 'onHold']);
+  const { status, onHold, linkedShipment, update } = useInboundFields([
+    'status',
+    'onHold',
+    'linkedShipment',
+  ]);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
+  const isManuallyCreated = !linkedShipment?.id;
 
   const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
+    () =>
+      isManuallyCreated
+        ? getManualStatusOptions(status, getButtonLabel(t))
+        : getStatusOptions(status, getButtonLabel(t)),
     [status, getButtonLabel]
   );
 
@@ -141,10 +189,10 @@ export const StatusChangeButton = () => {
     getConfirmation,
     onHold,
   } = useStatusChangeButton();
-  const isDisabled = useIsInboundDisabled();
+  const isStatusChangeDisabled = useIsStatusChangeDisabled();
 
   if (!selectedOption) return null;
-  if (isDisabled) return null;
+  if (isStatusChangeDisabled) return null;
 
   return (
     <SplitButton
