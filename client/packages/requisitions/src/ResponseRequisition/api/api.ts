@@ -98,6 +98,19 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.requisitions;
     },
+    listAll: async ({ sortBy }: { sortBy: SortBy<ResponseRowFragment> }) => {
+      const result = await sdk.responses({
+        storeId,
+        sort: {
+          key: responseParser.toSortField(sortBy),
+          desc: !!sortBy.isDesc,
+        },
+        filter: {
+          type: { equalTo: RequisitionNodeType.Response },
+        },
+      });
+      return result.requisitions;
+    },
     byNumber: async (requisitionNumber: string): Promise<ResponseFragment> => {
       const result = await sdk.responseByNumber({
         storeId,

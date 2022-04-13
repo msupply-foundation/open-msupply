@@ -5,18 +5,22 @@ import {
   useTranslation,
   AppBarButtonsPortal,
   Grid,
-  ButtonWithIcon,
   FileUtils,
+  SortBy,
+  LoadingButton,
 } from '@openmsupply-client/common';
-import { useResponses } from '../api';
+import { ResponseRowFragment, useResponsesAll } from '../api';
 import { responsesToCsv } from '../../utils';
 
-export const AppBarButtons: FC = () => {
+export const AppBarButtons: FC<{
+  sortBy: SortBy<ResponseRowFragment>;
+}> = ({ sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation('common');
-  const { data } = useResponses();
+  const { mutateAsync, isLoading } = useResponsesAll(sortBy);
 
-  const csvExport = () => {
+  const csvExport = async () => {
+    const data = await mutateAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
@@ -30,11 +34,14 @@ export const AppBarButtons: FC = () => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<DownloadIcon />}
-          label={t('button.export')}
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          isLoading={isLoading}
           onClick={csvExport}
-        />
+          variant="outlined"
+        >
+          {t('button.export')}
+        </LoadingButton>
       </Grid>
     </AppBarButtonsPortal>
   );
