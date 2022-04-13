@@ -1,5 +1,4 @@
 import { LocaleKey } from '@common/intl';
-import { RegexUtils } from '@common/utils';
 
 interface RouteMapping {
   title?: LocaleKey;
@@ -7,47 +6,47 @@ interface RouteMapping {
 }
 
 const mapRoute = (route: string): RouteMapping => {
+  const inRoute = (sub: string) => new RegExp(`/${sub}/|/${sub}\$`).test(route);
   switch (true) {
-    case RegexUtils.includes('dashboard', route):
+    case inRoute('dashboard'):
       return { title: 'dashboard', docs: '/dashboard/' };
-    case RegexUtils.includes('outbound-shipment', route):
+    case inRoute('outbound-shipment'):
       return {
         title: 'outbound-shipments',
         docs: '/distribution/outbound-shipments/',
       };
-    case RegexUtils.includes('customer-requisition', route):
+    case inRoute('customer-requisition'):
       return {
         title: 'customer-requisition',
         docs: '/distribution/requisitions/',
       };
-    case RegexUtils.includes('customers', route):
+    case inRoute('customers'):
       return { title: 'customers', docs: '/distribution/customers/' };
-    case RegexUtils.includes('inbound-shipment', route):
+    case inRoute('inbound-shipment'):
       return {
         title: 'inbound-shipments',
         docs: '/replenishment/inbound-shipments/',
       };
-    case RegexUtils.includes('internal-order', route):
+    case inRoute('internal-order'):
       return {
         title: 'internal-order',
         docs: '/replenishment/internal-orders/',
       };
-    case RegexUtils.includes('suppliers', route):
+    case inRoute('suppliers'):
       return { title: 'suppliers', docs: '/replenishment/suppliers/' };
-    case RegexUtils.includes('items', route):
+    case inRoute('items'):
       return { title: 'items', docs: '/catalogue/items/' };
-    case RegexUtils.includes('master-lists', route):
+    case inRoute('master-lists'):
       return { title: 'master-lists', docs: '/catalogue/master-list/' };
-    case RegexUtils.includes('locations', route):
+    case inRoute('locations'):
       return { title: 'locations', docs: '/inventory/locations/' };
-    case RegexUtils.includes('stocktakes', route):
-      return { title: 'stocktakes', docs: '/inventory/stock-takes/' };
-    // Stocktakes needs to go before stock so matching is correct
-    case RegexUtils.includes('stock', route):
+    case inRoute('stock'):
       return { title: 'stock', docs: '/inventory/stock-view/' };
-    case RegexUtils.includes('sync', route):
+    case inRoute('stocktakes'):
+      return { title: 'stocktakes', docs: '/inventory/stock-takes/' };
+    case inRoute('sync'):
       return { title: 'sync', docs: '/introduction/' };
-    case RegexUtils.includes('admin', route):
+    case inRoute('admin'):
       return { title: 'admin', docs: '/introduction/' };
     default:
       return { title: undefined, docs: '/introduction/' };
