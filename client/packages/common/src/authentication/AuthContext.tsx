@@ -175,8 +175,8 @@ export const AuthProvider: FC = ({ children }) => {
       username: mostRecentlyUsedCredentials?.username ?? '',
       store,
     });
-    const authCookie = getAuthCookie();
-    const newCookie = { ...authCookie, store };
+    // const authCookie = getAuthCookie();
+    const newCookie = { ...cookie, store };
     setAuthCookie(newCookie);
     setCookie(newCookie);
   };
