@@ -1,8 +1,7 @@
 use anyhow::Result;
-use clap::Parser;
 use service::report::definition::{
-    DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex, ReportOutputType,
-    TeraTemplate,
+    DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
+    ReportOutputType, TeraTemplate,
 };
 use std::{
     self,
@@ -11,34 +10,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    /// Project directory name
-    #[clap(short, long)]
-    dir: String,
-    /// output path
-    #[clap(short, long)]
-    output: Option<String>,
-    /// Main template name
-    #[clap(long)]
-    template: String,
-    #[clap(long)]
-    header: Option<String>,
-    #[clap(long)]
-    footer: Option<String>,
-
-    /// Name of the file containing a graphql query in json format, e.g.
-    /// {
-    ///     "query": "query string ...",
-    ///     "variables": { ... }
-    /// }
-    #[clap(long)]
-    query_gql: Option<String>,
-    /// Default query type, one of: "invoice" | "stocktake" | "requisition",
-    #[clap(long)]
-    query_default: Option<String>,
-}
+use crate::BuildArgs;
 
 fn find_project_files(dir: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
     let mut map = HashMap::new();
@@ -72,7 +44,7 @@ fn parse_default_query(input: &str) -> anyhow::Result<DefaultQuery> {
     Ok(query)
 }
 
-fn build(args: &Args, mut files: HashMap<String, PathBuf>) -> Result<ReportDefinition> {
+fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<ReportDefinition> {
     let mut index = ReportDefinitionIndex {
         template: Some(args.template.clone()),
         header: None,
@@ -134,13 +106,15 @@ fn build(args: &Args, mut files: HashMap<String, PathBuf>) -> Result<ReportDefin
         let file_path = files
             .remove(query_gql)
             .ok_or(anyhow::Error::msg("GraphQl query file does not exist"))?;
-        let data = fs::read_to_string(file_path)
+        let query = fs::read_to_string(file_path)
             .map_err(|err| anyhow::Error::msg(format!("Failed to load GQL query file: {}", err)))?;
-        let query = serde_json::from_str(&data)?;
         index.query = Some(query_gql.clone());
         entries.insert(
             query_gql.clone(),
-            ReportDefinitionEntry::GraphGLQuery(query),
+            ReportDefinitionEntry::GraphGLQuery(GraphQlQuery {
+                query,
+                variables: None,
+            }),
         );
     } else if let Some(query_default) = &args.query_default {
         index.query = Some("query_default".to_string());
@@ -156,6 +130,10 @@ fn build(args: &Args, mut files: HashMap<String, PathBuf>) -> Result<ReportDefin
 
     // resources: try to use remaining files as resources
     for (name, path) in files {
+        if name.ends_with(".graphql") {
+            // ignore graphql files
+            continue;
+        }
         let data = match fs::read_to_string(&path) {
             Ok(data) => data,
             Err(_) => {
@@ -163,22 +141,29 @@ fn build(args: &Args, mut files: HashMap<String, PathBuf>) -> Result<ReportDefin
                 continue;
             }
         };
+        let (name, value) = if name.ends_with(".json") {
+            // add data as json
+            let name = name.strip_suffix(".json").unwrap();
+            (
+                name.to_string(),
+                serde_json::from_str(&data).map_err(|err| {
+                    anyhow::Error::msg(format!("Failed to parse json resource {}: {}", name, err))
+                })?,
+            )
+        } else {
+            (name, serde_json::Value::String(data))
+        };
 
-        entries.insert(
-            name,
-            ReportDefinitionEntry::Resource(serde_json::Value::String(data)),
-        );
+        entries.insert(name, ReportDefinitionEntry::Resource(value));
     }
 
     Ok(ReportDefinition { index, entries })
 }
 
-fn main() -> anyhow::Result<()> {
-    let args = Args::parse();
-
+pub fn build(args: BuildArgs) -> anyhow::Result<()> {
     let project_dir = Path::new(&args.dir);
     let files = find_project_files(&project_dir)?;
-    let definition = build(&args, files)?;
+    let definition = make_report(&args, files)?;
 
     let output_path = args.output.unwrap_or("./output.json".to_string());
     fs::write(&output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
