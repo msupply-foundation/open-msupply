@@ -1,5 +1,5 @@
 {
-  "button.delete-lines": "Delete lines",
+  "button.delete-lines": "Delete selected lines",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "error.cant-save": "There was a problem saving.",
   "error.stocktake-not-found": "Stocktake not found",

@@ -19,6 +19,7 @@ import {
   useConfirmOnLeaving,
   TableProvider,
   createTableStore,
+  TabKeybindings,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -133,29 +134,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
 
-  useEffect(() => {
-    const keybindings = (e: KeyboardEvent) => {
-      if (e.code === 'Digit1' && e.shiftKey) {
-        e.preventDefault();
-        setCurrentTab(Tabs.Batch);
-      }
-      if (e.code === 'Digit2' && e.shiftKey) {
-        e.preventDefault();
-        setCurrentTab(Tabs.Pricing);
-      }
-      if (e.code === 'Digit3' && e.shiftKey) {
-        e.preventDefault();
-        setCurrentTab(Tabs.Location);
-      }
-    };
-
-    if (currentItem) {
-      window.addEventListener('keydown', keybindings);
-    }
-
-    return () => window.removeEventListener('keydown', keybindings);
-  }, [currentItem]);
-
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
@@ -212,6 +190,12 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             <Divider margin={5} />
             {draftLines.length > 0 ? (
               <TabContext value={currentTab}>
+                <TabKeybindings
+                  tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
+                  onAdd={addDraftLine}
+                  setCurrentTab={setCurrentTab}
+                />
+
                 <Box flex={1} display="flex" justifyContent="space-between">
                   <Box flex={1} />
                   <Box flex={1}>
@@ -222,17 +206,17 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                     >
                       <Tab
                         value={Tabs.Batch}
-                        label={`${t('label.quantities')} (⇧+1)`}
+                        label={`${t('label.quantities')} (Ctrl+1)`}
                         tabIndex={-1}
                       />
                       <Tab
                         value={Tabs.Pricing}
-                        label={`${t('label.pricing')} (⇧+2)`}
+                        label={`${t('label.pricing')} (Ctrl+2)`}
                         tabIndex={-1}
                       />
                       <Tab
                         value={Tabs.Location}
-                        label={`${t('label.location')} (⇧+3)`}
+                        label={`${t('label.location')} (Ctrl+3)`}
                         tabIndex={-1}
                       />
                     </TabList>
@@ -243,7 +227,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                       color="primary"
                       variant="outlined"
                       onClick={addDraftLine}
-                      label={t('label.add-batch')}
+                      label={`${t('label.add-batch')} (+)`}
                       Icon={<PlusCircleIcon />}
                     />
                   </Box>

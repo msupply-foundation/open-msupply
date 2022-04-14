@@ -1,5 +1,5 @@
 {
-  "button.delete-lines": "Delete lines",
+  "button.delete-lines": "Delete selected lines",
   "button.add-from-master-list": "Add from master list",
   "button.new-shipment": "New Shipment",
   "button.save-and-confirm-status": "Confirm {{status}}",

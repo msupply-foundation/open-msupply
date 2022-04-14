@@ -65,6 +65,10 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     }
   };
 
+  const hasValidBatches = draftLines.some(
+    line => line.countThisLine && line.countedNumberOfPacks !== undefined
+  );
+
   return (
     <TableProvider createStore={createTableStore}>
       <StocktakeLineEditModal
@@ -74,6 +78,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         mode={mode}
         isOpen={isOpen}
         hasNext={!!nextItem}
+        isValid={hasValidBatches}
       >
         {(() => {
           if (isLoading) {

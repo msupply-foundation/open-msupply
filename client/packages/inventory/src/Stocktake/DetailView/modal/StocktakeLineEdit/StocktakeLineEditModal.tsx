@@ -8,6 +8,7 @@ import {
 
 interface StocktakeLineEditModalProps {
   isOpen: boolean;
+  isValid: boolean;
   mode: ModalMode | null;
   onCancel: () => void;
   onOk: () => void;
@@ -17,6 +18,7 @@ interface StocktakeLineEditModalProps {
 
 export const StocktakeLineEditModal: FC<StocktakeLineEditModalProps> = ({
   isOpen,
+  isValid,
   children,
   mode,
   onCancel,
@@ -39,10 +41,12 @@ export const StocktakeLineEditModal: FC<StocktakeLineEditModalProps> = ({
         <DialogButton
           variant="next"
           onClick={onNext}
-          disabled={!hasNext && mode === ModalMode.Update}
+          disabled={(!hasNext && mode === ModalMode.Update) || !isValid}
         />
       }
-      okButton={<DialogButton variant="ok" onClick={onOk} />}
+      okButton={
+        <DialogButton variant="ok" onClick={onOk} disabled={!isValid} />
+      }
       height={600}
       width={1024}
     >
