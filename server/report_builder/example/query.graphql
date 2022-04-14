@@ -1,0 +1,15 @@
+query StocktakeQuery($storeId: String!, $dataId: String!) {
+  stocktake(storeId: $storeId, id: $dataId) {
+    ... on StocktakeNode {
+      id
+      comment
+      createdDatetime
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
