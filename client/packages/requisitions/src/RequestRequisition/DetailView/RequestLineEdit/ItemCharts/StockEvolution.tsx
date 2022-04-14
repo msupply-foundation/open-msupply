@@ -18,13 +18,9 @@ import { useRequestLineChartData } from '../../../api/hooks';
 
 export interface StockEvolutionProps {
   id: string;
-  requestedQuantity?: number;
 }
 
-export const StockEvolution: React.FC<StockEvolutionProps> = ({
-  id,
-  requestedQuantity = 0,
-}) => {
+export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();
@@ -45,10 +41,6 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
   };
   if (!data || !data.stockEvolution) return null;
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
-  const chartData = data.stockEvolution.nodes.map(node => ({
-    ...node,
-    stockOnHand: node.stockOnHand + (node.isHistoric ? 0 : requestedQuantity),
-  }));
 
   return isLoading ? (
     <CircularProgress />
@@ -67,7 +59,11 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
         {data.stockEvolution.nodes.length === 0 ? (
           <Typography width={450}>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart width={450} height={255} data={chartData}>
+          <ComposedChart
+            width={450}
+            height={255}
+            data={data?.stockEvolution.nodes}
+          >
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"

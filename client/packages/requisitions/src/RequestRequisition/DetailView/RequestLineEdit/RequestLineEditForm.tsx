@@ -146,7 +146,7 @@ export const RequestLineEditForm = ({
             Input={
               <NumericTextInput
                 autoFocus
-                value={formatNumber.round(draftLine?.requestedQuantity)}
+                value={draftLine?.requestedQuantity}
                 width={150}
                 onChange={e =>
                   update({
