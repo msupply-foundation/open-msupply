@@ -250,18 +250,32 @@ fn generate_report(
     context.insert("data", &report_data);
     context.insert("res", &report.resources);
     let mut tera = tera::Tera::default();
-    let templates: HashMap<String, String> = report
+    let mut templates: HashMap<String, String> = report
         .templates
         .iter()
         .map(|(name, template)| (name.to_string(), template.template.to_string()))
         .collect();
+    // also add resources to the templates
+    for resource in &report.resources {
+        let string_value = if let serde_json::Value::String(string) = resource.1 {
+            string.clone()
+        } else {
+            serde_json::to_string(&resource.1).map_err(|err| {
+                ReportError::DocGenerationError(format!(
+                    "Failed to stringify resource {}: {}",
+                    resource.0, err
+                ))
+            })?
+        };
+        templates.insert(resource.0.clone(), string_value);
+    }
     tera.add_raw_templates(templates.iter()).map_err(|err| {
         ReportError::DocGenerationError(format!("Failed to add templates: {}", err))
     })?;
 
     let document = tera
         .render(&report.template, &context)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("Tera rendering: {:?}", err)))?;
     let header = match &report.header {
         Some(header_key) => {
             let header = tera.render(header_key, &context).map_err(|err| {
