@@ -92,10 +92,7 @@ export const RequestLineEdit = ({
             justifyContent="space-between"
           >
             <ConsumptionHistory id={draft?.id || ''} />
-            <StockEvolution
-              id={draft?.id || ''}
-              requestedQuantity={draft?.requestedQuantity}
-            />
+            <StockEvolution id={draft?.id || ''} />
           </Box>
         </>
       ) : (
