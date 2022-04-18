@@ -22,7 +22,7 @@ impl InvoiceQueries {
         store_id: String,
         #[graphql(desc = "id of the invoice")] id: String,
     ) -> Result<InvoiceResponse> {
-        get_invoice(ctx, Some(&store_id), &id)
+        get_invoice(ctx, Some(store_id), &id)
     }
 
     pub async fn invoice_by_number(
@@ -32,7 +32,7 @@ impl InvoiceQueries {
         invoice_number: u32,
         r#type: InvoiceNodeType,
     ) -> Result<InvoiceResponse> {
-        get_invoice_by_number(ctx, &store_id, invoice_number, r#type)
+        get_invoice_by_number(ctx, store_id, invoice_number, r#type)
     }
 
     pub async fn invoices(
@@ -44,7 +44,7 @@ impl InvoiceQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, &store_id, page, filter, sort)
+        get_invoices(ctx, store_id, page, filter, sort)
     }
 }
 

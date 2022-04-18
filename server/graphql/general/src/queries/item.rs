@@ -3,13 +3,16 @@ use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     map_filter,
     pagination::PaginationInput,
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{ItemConnector, ItemNodeType};
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
-use service::item::get_items;
+use service::{
+    item::get_items,
+    permission_validation::{Resource, ResourceAccessRequest},
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::ItemSortField")]
@@ -51,10 +54,19 @@ pub enum ItemsResponse {
 
 pub fn items(
     ctx: &Context<'_>,
+    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<ItemFilterInput>,
     sort: Option<Vec<ItemSortInput>>,
 ) -> Result<ItemsResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryItems,
+            store_id: Some(store_id),
+        },
+    )?;
+
     let connection_manager = ctx.get_connection_manager();
     let items = get_items(
         connection_manager,

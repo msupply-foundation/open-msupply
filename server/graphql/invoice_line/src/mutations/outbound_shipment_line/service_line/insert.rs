@@ -1,7 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::generic_inputs::TaxUpdate;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError},
     ContextExt,
@@ -13,6 +13,7 @@ use service::invoice_line::outbound_shipment_service_line::{
     InsertOutboundShipmentServiceLine as ServiceInput,
     InsertOutboundShipmentServiceLineError as ServiceError,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertOutboundShipmentServiceLineInput")]
@@ -41,6 +42,14 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

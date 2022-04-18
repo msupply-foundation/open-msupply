@@ -1,4 +1,4 @@
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, RecordNotFound},
     ContextExt,
@@ -10,6 +10,7 @@ use graphql_types::{
 
 use async_graphql::*;
 use service::invoice::outbound_shipment::DeleteOutboundShipmentError as ServiceError;
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
 #[graphql(name = "DeleteOutboundShipmentError")]
@@ -25,6 +26,14 @@ pub enum DeleteResponse {
 }
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

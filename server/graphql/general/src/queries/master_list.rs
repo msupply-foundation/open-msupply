@@ -2,13 +2,16 @@ use async_graphql::*;
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::MasterListNode;
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{MasterList, MasterListFilter, MasterListSort};
-use service::ListResult;
+use service::{
+    permission_validation::{Resource, ResourceAccessRequest},
+    ListResult,
+};
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::MasterListSortField")]
 #[graphql(rename_items = "camelCase")]
@@ -88,10 +91,19 @@ pub enum MasterListsResponse {
 
 pub fn master_lists(
     ctx: &Context<'_>,
+    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<MasterListFilterInput>,
     sort: Option<Vec<MasterListSortInput>>,
 ) -> Result<MasterListsResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryMasterList,
+            store_id: Some(store_id),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

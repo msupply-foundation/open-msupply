@@ -3,10 +3,13 @@ use self::mutations::*;
 
 use async_graphql::*;
 use graphql_core::{
-    pagination::PaginationInput, standard_graphql_error::StandardGraphqlError, ContextExt,
+    pagination::PaginationInput,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 use graphql_types::types::*;
 use repository::{LocationFilter, PaginationOption};
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
 pub struct LocationQueries;
@@ -17,12 +20,20 @@ impl LocationQueries {
     pub async fn locations(
         &self,
         ctx: &Context<'_>,
-        _store_id: String,
+        store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<LocationFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<LocationSortInput>>,
     ) -> Result<LocationsResponse> {
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryLocation,
+                store_id: Some(store_id),
+            },
+        )?;
+
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context()?;
 
@@ -54,7 +65,7 @@ impl LocationMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: InsertLocationInput,
-    ) -> InsertLocationResponse {
+    ) -> Result<InsertLocationResponse> {
         insert_location(ctx, &store_id, input)
     }
 
@@ -63,7 +74,7 @@ impl LocationMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: UpdateLocationInput,
-    ) -> UpdateLocationResponse {
+    ) -> Result<UpdateLocationResponse> {
         update_location(ctx, &store_id, input)
     }
 
@@ -72,7 +83,7 @@ impl LocationMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: DeleteLocationInput,
-    ) -> DeleteLocationResponse {
+    ) -> Result<DeleteLocationResponse> {
         delete_location(ctx, &store_id, input)
     }
 }

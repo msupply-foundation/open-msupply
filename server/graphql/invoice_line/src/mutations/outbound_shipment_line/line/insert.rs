@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use graphql_core::generic_inputs::TaxUpdate;
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
 
@@ -10,6 +10,7 @@ use repository::InvoiceLine;
 use service::invoice_line::outbound_shipment_line::{
     InsertOutboundShipmentLine as ServiceInput, InsertOutboundShipmentLineError as ServiceError,
 };
+use service::permission_validation::{Resource, ResourceAccessRequest};
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
@@ -43,6 +44,14 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

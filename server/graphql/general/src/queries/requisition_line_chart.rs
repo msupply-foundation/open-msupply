@@ -1,10 +1,15 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound, standard_graphql_error::StandardGraphqlError, ContextExt,
+    simple_generic_errors::RecordNotFound,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 use graphql_types::types::ItemChartNode;
-use service::requisition_line::chart::{
-    ConsumptionHistoryOptions, RequisitionLineChartError, StockEvolutionOptions,
+use service::{
+    permission_validation::{Resource, ResourceAccessRequest},
+    requisition_line::chart::{
+        ConsumptionHistoryOptions, RequisitionLineChartError, StockEvolutionOptions,
+    },
 };
 
 type ServiceError = RequisitionLineChartError;
@@ -52,6 +57,14 @@ pub fn chart(
     consumption_options_input: Option<ConsumptionOptionsInput>,
     stock_evolution_options_input: Option<StockEvolutionOptionsInput>,
 ) -> Result<ChartResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::RequisitionChart,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 

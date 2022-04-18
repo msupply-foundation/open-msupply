@@ -1,23 +1,35 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
+    standard_graphql_error::validate_auth,
     ContextExt,
 };
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use repository::RepositoryError;
-use service::location::delete::{
-    DeleteLocation, DeleteLocationError as InError, LocationInUse as ServiceLocationInUse,
+use service::{
+    location::delete::{
+        DeleteLocation, DeleteLocationError as InError, LocationInUse as ServiceLocationInUse,
+    },
+    permission_validation::{Resource, ResourceAccessRequest},
 };
 
 pub fn delete_location(
     ctx: &Context<'_>,
     store_id: &str,
     input: DeleteLocationInput,
-) -> DeleteLocationResponse {
+) -> Result<DeleteLocationResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateLocation,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let service_context = match service_provider.context() {
         Ok(service) => service,
-        Err(error) => return DeleteLocationResponse::Error(error.into()),
+        Err(error) => return Ok(DeleteLocationResponse::Error(error.into())),
     };
 
     match service_provider.location_service.delete_location(
@@ -25,8 +37,10 @@ pub fn delete_location(
         store_id,
         input.into(),
     ) {
-        Ok(location_id) => DeleteLocationResponse::Response(DeleteResponse(location_id)),
-        Err(error) => DeleteLocationResponse::Error(error.into()),
+        Ok(location_id) => Ok(DeleteLocationResponse::Response(DeleteResponse(
+            location_id,
+        ))),
+        Err(error) => Ok(DeleteLocationResponse::Error(error.into())),
     }
 }
 
