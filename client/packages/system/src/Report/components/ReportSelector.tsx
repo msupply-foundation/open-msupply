@@ -15,14 +15,20 @@ interface ReportSelectorProps {
   onClick: (report: ReportRowFragment) => void;
 }
 
-const NoReports = () => {
+const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
   const t = useTranslation('common');
   return (
     <Box display="flex" alignItems="center" gap={1} padding={2}>
       <Box flex={0}>
         <AlertIcon fontSize="small" color="primary" />
       </Box>
-      <Typography flex={1}>{t('error.no-reports-available')}</Typography>
+      <Typography flex={1}>
+        {t(
+          hasPermission
+            ? 'error.no-reports-available'
+            : 'error.no-report-permission'
+        )}
+      </Typography>
     </Box>
   );
 };
@@ -36,7 +42,7 @@ export const ReportSelector: FC<ReportSelectorProps> = ({
   const { data, isLoading } = useReports(category);
   const t = useTranslation('app');
 
-  const reportButtons = data?.nodes.map(report => (
+  const reportButtons = data?.nodes?.map(report => (
     <FlatButton
       label={report.name}
       onClick={() => {
@@ -48,9 +54,10 @@ export const ReportSelector: FC<ReportSelectorProps> = ({
     />
   ));
 
-  const noReports = !isLoading && !data?.nodes.length;
+  const hasPermission = !isLoading && data !== undefined;
+  const noReports = !isLoading && !data?.nodes?.length;
   const oneReport =
-    !isLoading && data?.nodes.length === 1 ? data.nodes[0] : null;
+    !isLoading && data?.nodes?.length === 1 ? data.nodes[0] : null;
 
   return !!oneReport ? (
     <div onClick={() => onClick(oneReport)}>{children}</div>
@@ -59,16 +66,27 @@ export const ReportSelector: FC<ReportSelectorProps> = ({
       placement="bottom"
       width={350}
       Content={
-        <PaperPopoverSection label={t('select-report')}>
+        <PaperPopoverSection
+          label={t('select-report')}
+          labelStyle={{ width: '100%' }}
+          alignItems="center"
+        >
           {isLoading ? (
             <CircularProgress size={12} />
           ) : (
             <Box
-              style={{ maxHeight: '200px', overflowY: 'auto' }}
+              style={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+              }}
               display="flex"
               flexDirection="column"
             >
-              {noReports ? <NoReports /> : reportButtons}
+              {noReports ? (
+                <NoReports hasPermission={hasPermission} />
+              ) : (
+                reportButtons
+              )}
             </Box>
           )}
         </PaperPopoverSection>
