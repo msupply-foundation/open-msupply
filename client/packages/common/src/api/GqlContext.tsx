@@ -9,7 +9,7 @@ import {
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 
-const permissionExceptions = ['reports'];
+const permissionExceptions = ['reports', 'stockCounts', 'invoiceCounts'];
 interface ResponseError {
   message?: string;
   path?: string[];
