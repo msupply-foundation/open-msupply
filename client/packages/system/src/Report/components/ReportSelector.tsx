@@ -12,6 +12,7 @@ import { ReportRowFragment, useReports } from '../api';
 
 interface ReportSelectorProps {
   category?: ReportCategory;
+  children?: React.ReactNode;
   onClick: (report: ReportRowFragment) => void;
 }
 

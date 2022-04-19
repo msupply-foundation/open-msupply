@@ -40,7 +40,9 @@ const AlertModal = ({
   </BasicModal>
 );
 
-export const AlertModalProvider: FC = ({ children }) => {
+export const AlertModalProvider: FC<{ children?: React.ReactNode }> = ({
+  children,
+}) => {
   const [alertModalState, setState] = useState<AlertModalState>({
     important: false,
     open: false,

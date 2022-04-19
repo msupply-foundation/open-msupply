@@ -6,7 +6,9 @@ import {
 } from './ConfirmationModalContext';
 import { ConfirmationModal } from './ConfirmationModal';
 
-export const ConfirmationModalProvider: FC = ({ children }) => {
+export const ConfirmationModalProvider: FC<{ children?: React.ReactNode }> = ({
+  children,
+}) => {
   const [confirmationModalState, setState] = useState<ConfirmationModalState>({
     open: false,
     message: '',

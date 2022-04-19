@@ -14,6 +14,7 @@ interface StocktakeLineEditModalProps {
   onOk: () => void;
   onNext: () => void;
   hasNext: boolean;
+  children?: React.ReactNode;
 }
 
 export const StocktakeLineEditModal: FC<StocktakeLineEditModalProps> = ({

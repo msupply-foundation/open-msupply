@@ -1,4 +1,4 @@
-import React, { createContext, FC, useMemo, useState, useEffect } from 'react';
+import React, { createContext, useMemo, useState, useEffect } from 'react';
 import { IntlUtils } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
@@ -99,7 +99,7 @@ const AuthContext = createContext<AuthControl>({
 
 const { Provider } = AuthContext;
 
-export const AuthProvider: FC = ({ children }) => {
+export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
   const i18n = IntlUtils.useI18N();

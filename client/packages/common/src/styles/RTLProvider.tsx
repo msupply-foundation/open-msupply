@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { IntlUtils } from '@common/intl';
 
-export const RTLProvider: FC = props => {
+export const RTLProvider: FC<{ children?: React.ReactNode }> = props => {
   const isRtl = IntlUtils?.useRtl();
 
   return (

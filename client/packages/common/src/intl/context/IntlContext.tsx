@@ -7,7 +7,7 @@ import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 const defaultNS = 'common';
-export const IntlProvider: React.FC = ({ children }) => {
+export const IntlProvider = ({ children }: { children?: React.ReactNode }) => {
   React.useEffect(() => {
     const minuteInMilliseconds = 60 * 1000;
     const expirationTime =

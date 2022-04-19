@@ -6,7 +6,10 @@ import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 
-export const HeaderRow: FC<{ dense?: boolean }> = ({ dense, ...props }) => (
+export const HeaderRow: FC<{ dense?: boolean; children?: React.ReactNode }> = ({
+  dense,
+  ...props
+}) => (
   <TableRow
     {...props}
     sx={{

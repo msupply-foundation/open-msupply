@@ -9,6 +9,7 @@ export interface ClickPopoverProps {
   Popover: React.FC<Partial<BasePopoverProps>>;
   show: MouseEventHandler<HTMLDivElement | HTMLButtonElement>;
   hide: () => void;
+  children?: React.ReactNode;
 }
 
 export const ClickPopover: React.FC<ClickPopoverProps> = ({

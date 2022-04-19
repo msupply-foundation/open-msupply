@@ -71,6 +71,7 @@ const StyledSelect = styled(Select)(({ theme }) => ({
 interface DropdownMenuProps {
   label: string;
   disabled?: boolean;
+  children?: React.ReactNode;
 }
 
 // Styled doesn't like `sx` prop being passed to it.
