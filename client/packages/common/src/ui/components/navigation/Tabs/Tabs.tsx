@@ -19,7 +19,6 @@ export const TabList = styled(MuiTabList)({
 export const Tab = styled(MuiTab)({
   color: '#8f90a6',
   fontSize: '12px',
-  width: '100px',
   height: 50,
   fontWeight: 'bold',
   textTransform: 'none',

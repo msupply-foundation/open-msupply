@@ -1,4 +1,4 @@
-import React, { useEffect, FC, useState } from 'react';
+import React, { FC, useState } from 'react';
 import {
   TabContext,
   TabList,
@@ -9,6 +9,7 @@ import {
   useTranslation,
   styled,
   TabPanel,
+  TabKeybindings,
 } from '@openmsupply-client/common';
 
 export enum Tabs {
@@ -34,33 +35,13 @@ export const StocktakeLineEditTabs: FC<{
   const t = useTranslation('inventory');
   const [currentTab, setCurrentTab] = useState(Tabs.Batch);
 
-  useEffect(() => {
-    const keybindings = (e: KeyboardEvent) => {
-      if (e.code === 'Digit1' && e.shiftKey) {
-        e.preventDefault();
-        setCurrentTab(Tabs.Batch);
-      }
-      if (e.code === 'Digit2' && e.shiftKey) {
-        e.preventDefault();
-        setCurrentTab(Tabs.Pricing);
-      }
-      if (e.code === 'Digit3' && e.shiftKey) {
-        e.preventDefault();
-        setCurrentTab(Tabs.Location);
-      }
-      if (e.code === 'Equal' && e.shiftKey) {
-        e.preventDefault();
-        onAddLine();
-      }
-    };
-
-    window.addEventListener('keydown', keybindings);
-
-    return () => window.removeEventListener('keydown', keybindings);
-  }, []);
-
   return (
     <TabContext value={currentTab}>
+      <TabKeybindings
+        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
+        onAdd={onAddLine}
+        setCurrentTab={setCurrentTab}
+      />
       <Box flex={1} display="flex" justifyContent="space-between">
         <Box flex={1} />
 
@@ -69,9 +50,12 @@ export const StocktakeLineEditTabs: FC<{
           centered
           onChange={(_, v) => setCurrentTab(v)}
         >
-          <Tab value={Tabs.Batch} label={`${t('label.batch')} (⇧+1)`} />
-          <Tab value={Tabs.Pricing} label={`${t('label.pricing')} (⇧+2)`} />
-          <Tab value={Tabs.Location} label={`${t('label.location')} (⇧+3)`} />
+          <Tab value={Tabs.Batch} label={`${t('label.batch')} (Ctrl+1)`} />
+          <Tab value={Tabs.Pricing} label={`${t('label.pricing')} (Ctrl+2)`} />
+          <Tab
+            value={Tabs.Location}
+            label={`${t('label.location')} (Ctrl+3)`}
+          />
         </TabList>
         <Box flex={1} justifyContent="flex-end" display="flex">
           <ButtonWithIcon
