@@ -23,6 +23,7 @@ import { ItemRowFragment } from '@openmsupply-client/system';
 import {
   inboundLinesToSummaryItems,
   isInboundDisabled,
+  useIsInboundStatusChangeDisabled,
   isA,
 } from './../../utils';
 import { InboundItem } from './../../types';
@@ -74,6 +75,12 @@ export const useIsInboundDisabled = (): boolean => {
   const { data } = useInbound();
   if (!data) return true;
   return isInboundDisabled(data);
+};
+
+export const useIsStatusChangeDisabled = (): boolean => {
+  const { data } = useInbound();
+  if (!data) return true;
+  return useIsInboundStatusChangeDisabled(data);
 };
 
 export const useInboundSelector = <T = InboundFragment>(

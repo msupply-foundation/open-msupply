@@ -1,4 +1,7 @@
-import { InboundRowFragment } from './InboundShipment/api/operations.generated';
+import {
+  InboundFragment,
+  InboundRowFragment,
+} from './InboundShipment/api/operations.generated';
 import {
   InvoiceLineNodeType,
   LocaleKey,
@@ -25,6 +28,12 @@ export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
+
+export const manualInboundStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
   InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Verified,
 ];
@@ -103,10 +112,22 @@ export const isOutboundDisabled = (outbound: OutboundRowFragment): boolean => {
 };
 
 export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
-  return (
-    inbound.status === InvoiceNodeStatus.Verified ||
-    inbound.status === InvoiceNodeStatus.Picked
-  );
+  const isManuallyCreated = !inbound.linkedShipment?.id;
+  return isManuallyCreated
+    ? inbound.status === InvoiceNodeStatus.Verified
+    : inbound.status === InvoiceNodeStatus.Picked ||
+        inbound.status === InvoiceNodeStatus.Shipped ||
+        inbound.status === InvoiceNodeStatus.Verified;
+};
+
+export const useIsInboundStatusChangeDisabled = (
+  inbound: InboundFragment
+): boolean => {
+  const isManuallyCreated = !inbound.linkedShipment?.id;
+  return isManuallyCreated
+    ? inbound.status === InvoiceNodeStatus.Verified
+    : inbound.status === InvoiceNodeStatus.Picked ||
+        inbound.status === InvoiceNodeStatus.Verified;
 };
 
 export const createSummaryItem = (
