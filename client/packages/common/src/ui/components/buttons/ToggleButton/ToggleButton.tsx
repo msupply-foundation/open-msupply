@@ -7,7 +7,7 @@ import { Checkbox } from '../../inputs/Checkbox';
 
 interface ToggleButtonProps extends Omit<MuiToggleButtonProps, 'onClick'> {
   label: string;
-  onClick: (event: React.MouseEvent<HTMLButtonElement>, value: unknown) => void;
+  onClick: (event: React.MouseEvent<HTMLElement>, value: unknown) => void;
   selected: boolean;
 }
 

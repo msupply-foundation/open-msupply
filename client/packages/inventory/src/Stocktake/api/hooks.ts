@@ -182,9 +182,9 @@ export const useStocktakeItems = (): UseQueryResult<StocktakeSummaryItem[]> => {
       ([itemId, lines]) => {
         return {
           id: itemId,
-          item: lines[0].item,
+          item: lines[0]?.item,
           lines,
-        };
+        } as StocktakeSummaryItem;
       }
     );
   }, []);

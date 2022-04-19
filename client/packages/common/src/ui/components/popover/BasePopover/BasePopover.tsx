@@ -4,6 +4,7 @@ import Popper, { PopperProps } from '@mui/material/Popper';
 import { useAppTheme } from '@common/styles';
 
 export interface BasePopoverProps extends Omit<PopperProps, 'open'> {
+  children?: React.ReactNode;
   isOpen: boolean;
   anchorEl: PopperProps['anchorEl'];
   width?: number;
