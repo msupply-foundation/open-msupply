@@ -37,11 +37,13 @@ export const StockWidget: React.FC = () => {
 
   React.useEffect(() => {
     if (!isExpiryLoading && expiryData === undefined) setHasExpiryError(true);
+    return () => setHasExpiryError(false);
   }, [expiryData, isExpiryLoading]);
 
   React.useEffect(() => {
     if (!isItemStatsLoading && itemStatsData === undefined)
       setHasItemStatsError(true);
+    return () => setHasItemStatsError(false);
   }, [itemStatsData, isItemStatsLoading]);
 
   return (
