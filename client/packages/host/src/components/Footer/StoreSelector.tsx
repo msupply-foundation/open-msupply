@@ -11,9 +11,9 @@ import {
   useUserStores,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { UserStoreNodeFragment } from '@common/types';
+import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 
-export const StoreSelector: FC = ({ children }) => {
+export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { store, setStore, token } = useAuthContext();
   const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();

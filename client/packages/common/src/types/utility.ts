@@ -1,3 +1,5 @@
+import { PropsWithChildren } from 'react';
+
 export type ObjectWithStringKeys = Record<string, unknown>;
 
 // Easy to use when you know the object always has an ID.
@@ -14,3 +16,5 @@ export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 // Type alias for UUIDs
 export type UUID = string;
+
+export type PropsWithChildrenOnly = PropsWithChildren<unknown>;

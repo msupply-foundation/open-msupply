@@ -7,7 +7,6 @@ export interface PaperPopoverProps {
   width?: number;
   height?: number;
   placement?: 'top' | 'bottom' | 'left' | 'right';
-  children?: React.ReactNode;
 }
 
 export * from './PaperClickPopover';

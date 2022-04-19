@@ -1,6 +1,7 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, PropsWithChildren, useEffect } from 'react';
 import { AppThemeProvider } from '@common/styles';
 import { SupportedLocales } from '@common/intl';
+import { PropsWithChildrenOnly } from '@common/types';
 import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
@@ -34,7 +35,6 @@ const queryClient = new QueryClient({
 
 interface IntlTestProviderProps {
   locale: SupportedLocales;
-  children?: React.ReactNode;
 }
 
 const resources = {
@@ -49,7 +49,7 @@ const resources = {
   },
 };
 
-export const IntlTestProvider: FC<IntlTestProviderProps> = ({
+export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   children,
   locale,
 }) => {
@@ -71,17 +71,11 @@ export const IntlTestProvider: FC<IntlTestProviderProps> = ({
   return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
 };
 
-interface StoryProviderProps {
-  locale?: SupportedLocales;
-  children?: React.ReactNode;
-}
-
 interface TestingRouterProps {
   initialEntries: string[];
-  children?: React.ReactNode;
 }
 
-export const TestingRouter: FC<TestingRouterProps> = ({
+export const TestingRouter: FC<PropsWithChildren<TestingRouterProps>> = ({
   children,
   initialEntries,
 }) => (
@@ -90,7 +84,7 @@ export const TestingRouter: FC<TestingRouterProps> = ({
   </MemoryRouter>
 );
 
-export const TestingRouterContext: FC<{ children?: React.ReactNode }> = ({
+export const TestingRouterContext: FC<PropsWithChildrenOnly> = ({
   children,
 }) => (
   <TestingRouter initialEntries={['/testing']}>
@@ -98,10 +92,11 @@ export const TestingRouterContext: FC<{ children?: React.ReactNode }> = ({
   </TestingRouter>
 );
 
-export const TestingProvider: FC<{
-  locale?: 'en' | 'fr' | 'ar';
-  children?: React.ReactNode;
-}> = ({ children, locale = 'en' }) => (
+export const TestingProvider: FC<
+  PropsWithChildren<{
+    locale?: 'en' | 'fr' | 'ar';
+  }>
+> = ({ children, locale = 'en' }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
       <GqlProvider url={Environment.GRAPHQL_URL}>
@@ -117,7 +112,7 @@ export const TestingProvider: FC<{
   </React.Suspense>
 );
 
-export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
+export const StoryProvider: FC<PropsWithChildrenOnly> = ({ children }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
       <GqlProvider url={Environment.GRAPHQL_URL}>

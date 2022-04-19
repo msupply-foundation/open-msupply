@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import { Box, CircularProgress, Paper, Typography } from '@mui/material';
 
 const Loading = () => (
@@ -8,12 +8,11 @@ const Loading = () => (
 );
 
 interface WidgetProps {
-  children?: React.ReactNode;
   height?: number | string;
   title: string;
 }
 
-export const Widget: React.FC<WidgetProps> = ({
+export const Widget: React.FC<PropsWithChildren<WidgetProps>> = ({
   children,
   height = '100%',
   title,

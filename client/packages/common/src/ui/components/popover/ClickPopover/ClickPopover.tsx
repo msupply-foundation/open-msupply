@@ -1,4 +1,4 @@
-import React, { MouseEventHandler } from 'react';
+import React, { MouseEventHandler, PropsWithChildren } from 'react';
 import { CloseIcon } from '@common/icons';
 import { Box, IconButton } from '@mui/material';
 import { BasePopoverProps } from '../BasePopover';
@@ -9,10 +9,9 @@ export interface ClickPopoverProps {
   Popover: React.FC<Partial<BasePopoverProps>>;
   show: MouseEventHandler<HTMLDivElement | HTMLButtonElement>;
   hide: () => void;
-  children?: React.ReactNode;
 }
 
-export const ClickPopover: React.FC<ClickPopoverProps> = ({
+export const ClickPopover: React.FC<PropsWithChildren<ClickPopoverProps>> = ({
   children,
   Content,
   placement = 'left',

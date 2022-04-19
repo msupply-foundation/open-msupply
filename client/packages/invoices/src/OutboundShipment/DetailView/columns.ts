@@ -189,7 +189,7 @@ export const useOutboundColumns = ({
         {
           getSortValue: row => {
             if ('lines' in row) {
-              return row.lines[0].item.unitName ?? '';
+              return row.lines[0]?.item.unitName ?? '';
             } else {
               return row.item.unitName ?? '';
             }

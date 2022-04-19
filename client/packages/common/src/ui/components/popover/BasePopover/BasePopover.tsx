@@ -1,17 +1,16 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import Fade from '@mui/material/Fade';
 import Popper, { PopperProps } from '@mui/material/Popper';
 import { useAppTheme } from '@common/styles';
 
 export interface BasePopoverProps extends Omit<PopperProps, 'open'> {
-  children?: React.ReactNode;
   isOpen: boolean;
   anchorEl: PopperProps['anchorEl'];
   width?: number;
   height?: number;
 }
 
-export const BasePopover: FC<BasePopoverProps> = ({
+export const BasePopover: FC<PropsWithChildren<BasePopoverProps>> = ({
   children,
   isOpen,
   anchorEl,

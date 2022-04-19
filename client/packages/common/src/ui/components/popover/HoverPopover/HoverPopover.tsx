@@ -1,13 +1,12 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import { usePopover } from '../BasePopover';
 
 interface PopoverProps {
   Content: React.ReactElement<any, any>;
   placement?: 'top' | 'bottom' | 'left' | 'right';
-  children?: React.ReactNode;
 }
 
-export const HoverPopover: React.FC<PopoverProps> = ({
+export const HoverPopover: React.FC<PropsWithChildren<PopoverProps>> = ({
   children,
   Content,
   placement = 'left',

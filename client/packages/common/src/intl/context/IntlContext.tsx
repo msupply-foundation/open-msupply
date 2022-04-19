@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { FC } from 'react';
 import i18next from 'i18next';
 import Backend from 'i18next-chained-backend';
 import LocalStorageBackend from 'i18next-localstorage-backend';
 import HttpApi from 'i18next-http-backend';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { PropsWithChildrenOnly } from '@common/types';
 
 const defaultNS = 'common';
-export const IntlProvider = ({ children }: { children?: React.ReactNode }) => {
+export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   React.useEffect(() => {
     const minuteInMilliseconds = 60 * 1000;
     const expirationTime =

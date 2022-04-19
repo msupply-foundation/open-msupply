@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import { IntlUtils } from '@common/intl';
+import { PropsWithChildrenOnly } from '@common/types';
 
-export const RTLProvider: FC<{ children?: React.ReactNode }> = props => {
+export const RTLProvider: FC<PropsWithChildrenOnly> = props => {
   const isRtl = IntlUtils?.useRtl();
 
   return (
