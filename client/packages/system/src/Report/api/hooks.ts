@@ -40,8 +40,15 @@ export const useReports = (category?: ReportCategory) => {
     initialListParameters
   );
 
-  return useQuery(api.keys.paramList(queryParams), async () =>
-    api.get.list({ filterBy, sortBy, offset })
+  return useQuery(
+    api.keys.paramList(queryParams),
+    async () => api.get.list({ filterBy, sortBy, offset }),
+    {
+      onError: (e: Error) => {
+        if (/HasPermission\(Report\)/.test(e.message)) return null;
+        return [];
+      },
+    }
   );
 };
 

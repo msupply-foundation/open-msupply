@@ -420,7 +420,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const result = await sdk.invoiceCounts({ storeId });
       return {
-        toBePicked: result.invoiceCounts.outbound.toBePicked ?? 0,
+        toBePicked: result?.invoiceCounts?.outbound.toBePicked ?? 0,
       };
     },
   },

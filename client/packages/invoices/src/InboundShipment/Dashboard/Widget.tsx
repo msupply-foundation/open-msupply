@@ -13,12 +13,14 @@ import { useInboundApi } from '../api';
 export const InboundShipmentWidget: React.FC = () => {
   const api = useInboundApi();
   const t = useTranslation(['app', 'dashboard']);
+  const [hasError, setHasError] = React.useState(false);
   const formatNumber = useFormatNumber();
   const { data, isLoading } = useQuery(
     ['inbound-shipment', 'count'],
     api.dashboard.shipmentCount,
     {
       retry: false,
+      onError: () => setHasError(true),
     }
   );
 
@@ -31,20 +33,22 @@ export const InboundShipmentWidget: React.FC = () => {
         flexDirection="column"
       >
         <Grid item>
-          <StatsPanel
-            isLoading={isLoading}
-            title={t('inbound-shipments')}
-            stats={[
-              {
-                label: t('label.today', { ns: 'dashboard' }),
-                value: formatNumber.round(data?.today),
-              },
-              {
-                label: t('label.this-week', { ns: 'dashboard' }),
-                value: formatNumber.round(data?.thisWeek),
-              },
-            ]}
-          />
+          {!hasError && (
+            <StatsPanel
+              isLoading={isLoading}
+              title={t('inbound-shipments')}
+              stats={[
+                {
+                  label: t('label.today', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.today),
+                },
+                {
+                  label: t('label.this-week', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.thisWeek),
+                },
+              ]}
+            />
+          )}
         </Grid>
         <Grid
           item

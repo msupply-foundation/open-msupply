@@ -21,6 +21,8 @@ export const StockWidget: React.FC = () => {
   const formatNumber = useFormatNumber();
   const { data: expiryData, isLoading: isExpiryLoading } = useStockCounts();
   const { data: itemStatsData, isLoading: isItemStatsLoading } = useItemStats();
+  const [hasExpiryError, setHasExpiryError] = React.useState(false);
+  const [hasItemStatsError, setHasItemStatsError] = React.useState(false);
 
   const lowStockItemsCount =
     itemStatsData?.filter(
@@ -33,6 +35,17 @@ export const StockWidget: React.FC = () => {
     itemStatsData?.filter(item => item.stats.availableStockOnHand === 0)
       .length || 0;
 
+  React.useEffect(() => {
+    if (!isExpiryLoading && expiryData === undefined) setHasExpiryError(true);
+    return () => setHasExpiryError(false);
+  }, [expiryData, isExpiryLoading]);
+
+  React.useEffect(() => {
+    if (!isItemStatsLoading && itemStatsData === undefined)
+      setHasItemStatsError(true);
+    return () => setHasItemStatsError(false);
+  }, [itemStatsData, isItemStatsLoading]);
+
   return (
     <Widget title={t('heading-stock')}>
       <Grid
@@ -42,38 +55,42 @@ export const StockWidget: React.FC = () => {
         flexDirection="column"
       >
         <Grid item>
-          <StatsPanel
-            isLoading={isExpiryLoading}
-            title={t('heading.expiring-stock')}
-            stats={[
-              {
-                label: t('label.expired', { ns: 'dashboard' }),
-                value: formatNumber.round(expiryData?.expired),
-              },
-              {
-                label: t('label.expiring-soon'),
-                value: formatNumber.round(expiryData?.expiringSoon),
-              },
-            ]}
-          />
-          <StatsPanel
-            isLoading={isItemStatsLoading}
-            title={t('heading.stock-levels')}
-            stats={[
-              {
-                label: t('label.total-items', { ns: 'dashboard' }),
-                value: formatNumber.round(itemStatsData?.length),
-              },
-              {
-                label: t('label.items-no-stock'),
-                value: formatNumber.round(noStockItemsCount),
-              },
-              {
-                label: t('label.low-stock-items'),
-                value: formatNumber.round(lowStockItemsCount),
-              },
-            ]}
-          />
+          {!hasExpiryError && (
+            <StatsPanel
+              isLoading={isExpiryLoading}
+              title={t('heading.expiring-stock')}
+              stats={[
+                {
+                  label: t('label.expired', { ns: 'dashboard' }),
+                  value: formatNumber.round(expiryData?.expired),
+                },
+                {
+                  label: t('label.expiring-soon'),
+                  value: formatNumber.round(expiryData?.expiringSoon),
+                },
+              ]}
+            />
+          )}
+          {!hasItemStatsError && (
+            <StatsPanel
+              isLoading={isItemStatsLoading}
+              title={t('heading.stock-levels')}
+              stats={[
+                {
+                  label: t('label.total-items', { ns: 'dashboard' }),
+                  value: formatNumber.round(itemStatsData?.length),
+                },
+                {
+                  label: t('label.items-no-stock'),
+                  value: formatNumber.round(noStockItemsCount),
+                },
+                {
+                  label: t('label.low-stock-items'),
+                  value: formatNumber.round(lowStockItemsCount),
+                },
+              ]}
+            />
+          )}
         </Grid>
         <Grid
           item
