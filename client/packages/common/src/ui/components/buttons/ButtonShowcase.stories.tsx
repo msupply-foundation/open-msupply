@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, PropsWithChildren, useState } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { Story } from '@storybook/react';
 
@@ -31,7 +31,10 @@ const getOnClick = (someText: string) => () => {
   alert(someText);
 };
 
-const Wrapper: FC<{ text: string }> = ({ children, text }) => {
+const Wrapper: FC<PropsWithChildren<{ text: string }>> = ({
+  children,
+  text,
+}) => {
   return (
     <Grid item>
       <Paper

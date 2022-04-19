@@ -18,6 +18,7 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
+import { PropsWithChildrenOnly } from '@common/types';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
@@ -32,7 +33,7 @@ import {
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
 
-const Heading: FC = ({ children }) => (
+const Heading: FC<PropsWithChildrenOnly> = ({ children }) => (
   <div style={{ margin: 50 }}>
     <Typography>[ Placeholder page: {children} ]</Typography>
   </div>

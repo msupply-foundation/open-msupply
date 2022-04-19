@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, PropsWithChildren, ReactNode } from 'react';
 import { TestingRouterContext } from '@openmsupply-client/common';
 import { TestingProvider } from '../../utils/testing';
 import { useTheme } from '@common/styles';
@@ -23,7 +23,7 @@ describe('useQueryParams', () => {
     jest.useFakeTimers();
   });
 
-  const ThemeChangerer: FC<ThemeChangererProps> = ({
+  const ThemeChangerer: FC<PropsWithChildren<ThemeChangererProps>> = ({
     children,
     paginationRowHeight,
     dataRowHeight,

@@ -132,7 +132,7 @@ export const useIsInboundStatusChangeDisabled = (
 
 export const createSummaryItem = (
   itemId: string,
-  lines: [InboundLineFragment, ...InboundLineFragment[]]
+  lines: InboundLineFragment[]
 ): InboundItem => {
   const item: InboundItem = {
     // TODO: Could generate a unique UUID here if wanted for the id. But not needed for now.

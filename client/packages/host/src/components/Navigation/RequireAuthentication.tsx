@@ -5,8 +5,11 @@ import {
   useNavigate,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import { PropsWithChildrenOnly } from '@common/types';
 
-export const RequireAuthentication: FC = ({ children }) => {
+export const RequireAuthentication: FC<PropsWithChildrenOnly> = ({
+  children,
+}) => {
   const { token } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();

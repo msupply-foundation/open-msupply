@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import { TableCell, TableRow, TableSortLabel, Tooltip } from '@mui/material';
 import { Column } from '../../columns/types';
 import { SortDescIcon } from '@common/icons';
@@ -6,7 +6,7 @@ import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 
-export const HeaderRow: FC<{ dense?: boolean; children?: React.ReactNode }> = ({
+export const HeaderRow: FC<PropsWithChildren<{ dense?: boolean }>> = ({
   dense,
   ...props
 }) => (

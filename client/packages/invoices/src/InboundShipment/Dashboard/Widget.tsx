@@ -8,11 +8,10 @@ import {
   Widget,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
+import { PropsWithChildrenOnly } from '@common/types';
 import { useInboundApi } from '../api';
 
-export const InboundShipmentWidget: React.FC<{
-  children?: React.ReactNode;
-}> = () => {
+export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const api = useInboundApi();
   const t = useTranslation(['app', 'dashboard']);
   const [hasError, setHasError] = React.useState(false);

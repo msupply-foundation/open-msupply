@@ -16,11 +16,11 @@ export interface DraftOutboundLine extends OutboundLineFragment {
 export type InboundItem = {
   id: string;
   itemId: string;
-  lines: [InboundLineFragment, ...InboundLineFragment[]];
+  lines: InboundLineFragment[];
 };
 
 export type OutboundItem = {
   id: string;
   itemId: string;
-  lines: [OutboundLineFragment, ...OutboundLineFragment[]];
+  lines: OutboundLineFragment[];
 };

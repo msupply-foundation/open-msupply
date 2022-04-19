@@ -1,4 +1,4 @@
-import React, { createContext, useMemo, useState, useEffect } from 'react';
+import React, { createContext, useMemo, useState, useEffect, FC } from 'react';
 import { IntlUtils } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
@@ -9,6 +9,7 @@ import { useGetAuthToken } from './api/hooks/useGetAuthToken';
 import { useUserDetails } from './api/hooks/useUserDetails';
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
+import { PropsWithChildrenOnly } from '@common/types';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
@@ -99,7 +100,7 @@ const AuthContext = createContext<AuthControl>({
 
 const { Provider } = AuthContext;
 
-export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
+export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
   const i18n = IntlUtils.useI18N();

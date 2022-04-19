@@ -1,5 +1,6 @@
 import React from 'react';
 import { GlobalStyles, CssBaseline } from '@openmsupply-client/common';
+import { PropsWithChildrenOnly } from '@common/types';
 
 const globalStyles = {
   '*:-webkit-full-screen': {
@@ -19,7 +20,7 @@ const globalStyles = {
   },
 } as const;
 
-export const Viewport: React.FC = props => {
+export const Viewport: React.FC<PropsWithChildrenOnly> = props => {
   return (
     <React.Fragment>
       <GlobalStyles styles={globalStyles} {...props} />

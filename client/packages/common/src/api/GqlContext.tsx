@@ -1,4 +1,11 @@
-import React, { FC, useMemo, useEffect, useState, useCallback } from 'react';
+import React, {
+  FC,
+  useMemo,
+  useEffect,
+  useState,
+  useCallback,
+  PropsWithChildren,
+} from 'react';
 import { createContext } from 'react';
 import {
   BatchRequestDocument,
@@ -121,10 +128,12 @@ const { Provider } = GqlContext;
 
 interface ApiProviderProps {
   url: string;
-  children?: React.ReactNode;
 }
 
-export const GqlProvider: FC<ApiProviderProps> = ({ url, children }) => {
+export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
+  url,
+  children,
+}) => {
   const [{ client }, setApi] = useState<{
     client: GQLClient;
   }>(() => createGql(url));

@@ -8,9 +8,10 @@ import {
 } from '@openmsupply-client/common';
 import { DetailPanel, DetailPanelPortal } from './DetailPanel';
 import { TestingProvider } from '@common/utils';
+import { PropsWithChildrenOnly } from '@common/types';
 
 describe('DetailPanel', () => {
-  const DetailPanelExample: FC = ({ children }) => {
+  const DetailPanelExample: FC<PropsWithChildrenOnly> = ({ children }) => {
     const { OpenButton } = useDetailPanel();
 
     return (
