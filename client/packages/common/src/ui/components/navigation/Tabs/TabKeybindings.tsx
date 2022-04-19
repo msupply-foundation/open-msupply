@@ -6,6 +6,11 @@ interface TabKeybindingsProps<T> {
   setCurrentTab: React.Dispatch<React.SetStateAction<T>>;
 }
 
+// adds a key down event listener to the current window
+// and will check for the key combination of CTRL+[number]
+// and navigate to that tab, according to the order in the
+// tabs parameter
+// An optional `onAdd` callback will be called when [+] is pressed
 export function TabKeybindings<T>({
   tabs,
   onAdd,
