@@ -22,10 +22,10 @@ pub enum RemoteSyncActionV5 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RemoteSyncRecordV5 {
-    #[serde(rename = "syncID")]
+    #[serde(rename = "syncId")]
     pub sync_id: String,
     pub table: String,
-    #[serde(rename = "recordID")]
+    #[serde(rename = "recordId")]
     pub record_id: String,
     pub action: RemoteSyncActionV5,
     /// Not set when record is deleted
