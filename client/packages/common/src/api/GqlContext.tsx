@@ -9,15 +9,20 @@ import {
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 
+const permissionExceptions = ['reports'];
 interface ResponseError {
   message?: string;
   path?: string[];
   extensions?: { details?: string };
 }
 
-function hasError(errors: ResponseError[], error: AuthError) {
-  return errors.some(({ message }: { message?: string }) => message === error);
-}
+const hasError = (errors: ResponseError[], error: AuthError) =>
+  errors.some(({ message }: { message?: string }) => message === error);
+
+const hasPermissionException = (errors: ResponseError[]) =>
+  errors.every(({ path }: { path?: string[] }) =>
+    (path || []).every(p => permissionExceptions.includes(p))
+  );
 
 const handleResponseError = (errors: ResponseError[]) => {
   if (hasError(errors, AuthError.Unauthenticated)) {
@@ -25,7 +30,10 @@ const handleResponseError = (errors: ResponseError[]) => {
     return;
   }
 
-  if (hasError(errors, AuthError.PermissionDenied)) {
+  if (
+    hasError(errors, AuthError.PermissionDenied) &&
+    !hasPermissionException(errors)
+  ) {
     LocalStorage.setItem('/auth/error', AuthError.PermissionDenied);
     return;
   }
