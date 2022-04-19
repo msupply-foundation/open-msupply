@@ -65,6 +65,10 @@ fragment Inbound on InvoiceNode {
   status
   theirReference
   type
+  linkedShipment {
+    __typename
+    id
+  }
 
   user {
     __typename
@@ -126,6 +130,9 @@ fragment InboundRow on InvoiceNode {
   pricing {
     __typename
     totalAfterTax
+  }
+  linkedShipment {
+    id
   }
 }
 
