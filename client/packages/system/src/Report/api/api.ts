@@ -17,7 +17,7 @@ export const getReportQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
       });
 
-      return result.reports;
+      return result?.reports || [];
     },
     print: async ({
       dataId,
@@ -31,11 +31,11 @@ export const getReportQueries = (sdk: Sdk, storeId: string) => ({
         reportId,
         storeId,
       });
-      if (result.printReport.__typename === 'PrintReportNode') {
+      if (result?.printReport.__typename === 'PrintReportNode') {
         return result.printReport.fileId;
       }
 
-      throw new Error('Report not found');
+      throw new Error('Unable to print report');
     },
   },
 });

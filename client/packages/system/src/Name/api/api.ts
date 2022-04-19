@@ -39,7 +39,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         filter: { isSupplier: true, isStore: true },
       });
 
-      return result.names;
+      return result?.names;
     },
     suppliers: async ({ sortBy }: ListParams) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
@@ -51,7 +51,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         filter: { isSupplier: true },
       });
 
-      return result.names;
+      return result?.names;
     },
     customers: async ({ sortBy }: ListParams) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
@@ -63,7 +63,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         filter: { isCustomer: true },
       });
 
-      return result.names;
+      return result?.names;
     },
 
     list: async ({
@@ -91,7 +91,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         },
       });
 
-      return result.names;
+      return result?.names;
     },
   },
 });

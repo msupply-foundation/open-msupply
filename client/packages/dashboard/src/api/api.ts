@@ -13,13 +13,13 @@ export const getDashboardQueries = (
     stockCounts: async () => {
       const result = await queries.stockCounts({ storeId });
       return {
-        expired: result.stockCounts.expired ?? 0,
-        expiringSoon: result.stockCounts.expiringSoon ?? 0,
+        expired: result?.stockCounts.expired ?? 0,
+        expiringSoon: result?.stockCounts.expiringSoon ?? 0,
       };
     },
     itemStats: async () => {
       const result = await queries.itemStats({ storeId });
-      return result.items.nodes;
+      return result?.items.nodes;
     },
   },
 });
