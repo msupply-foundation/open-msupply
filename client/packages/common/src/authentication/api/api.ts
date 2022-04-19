@@ -86,7 +86,7 @@ export const getAuthQueries = (sdk: Sdk) => ({
     },
     stores: () => async () => {
       const result = await sdk.me();
-      return result.me?.stores?.nodes;
+      return result?.me?.stores?.nodes;
     },
   },
 });

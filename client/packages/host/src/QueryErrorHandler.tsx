@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNotification } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { useQueryClient } from 'react-query';
-import { useLocation } from '@openmsupply-client/common';
+import {
+  AuthError,
+  useLocalStorage,
+  useLocation,
+} from '@openmsupply-client/common';
 
 export const QueryErrorHandler = () => {
   const client = useQueryClient();
@@ -11,9 +15,10 @@ export const QueryErrorHandler = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const location = useLocation();
   const generalError = t('error.general-query-error');
+  const [authError] = useLocalStorage('/auth/error');
 
   useEffect(() => {
-    if (!!errorMessage) {
+    if (!!errorMessage && authError !== AuthError.Unauthenticated) {
       error(errorMessage)();
     }
   }, [errorMessage]);

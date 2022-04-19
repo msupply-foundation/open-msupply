@@ -303,8 +303,8 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.invoiceCounts({ storeId });
 
       return {
-        thisWeek: result.invoiceCounts.inbound.created?.thisWeek ?? 0,
-        today: result.invoiceCounts.inbound.created?.today ?? 0,
+        thisWeek: result?.invoiceCounts?.inbound?.created?.thisWeek ?? 0,
+        today: result?.invoiceCounts?.inbound?.created?.today ?? 0,
       };
     },
   },
