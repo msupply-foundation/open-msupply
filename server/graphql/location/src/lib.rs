@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{LocationFilter, PaginationOption};
+use repository::{EqualFilter, LocationFilter, PaginationOption};
 use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -30,19 +30,25 @@ impl LocationQueries {
             ctx,
             &ResourceAccessRequest {
                 resource: Resource::QueryLocation,
-                store_id: Some(store_id),
+                store_id: Some(store_id.clone()),
             },
         )?;
 
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context()?;
 
+        // always filter by store_id
+        let filter = filter
+            .map(LocationFilter::from)
+            .unwrap_or(LocationFilter::new())
+            .store_id(EqualFilter::equal_to(&store_id));
+
         let locations = service_provider
             .location_service
             .get_locations(
                 &service_context,
                 page.map(PaginationOption::from),
-                filter.map(LocationFilter::from),
+                Some(filter),
                 // Currently only one sort option is supported, use the first from the list.
                 sort.and_then(|mut sort_list| sort_list.pop())
                     .map(|sort| sort.to_domain()),
@@ -93,6 +99,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
+    use repository::mock::mock_locations;
     use repository::{
         mock::MockDataInserts, schema::LocationRow, Location, LocationFilter, LocationSort,
         LocationSortField, StorageConnectionManager,
@@ -350,5 +357,60 @@ mod test {
             &expected,
             Some(service_provider(test_service, &connection_manager))
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_locations_always_filtered_by_store() {
+        let (_, _, _, settings) = setup_graphl_test(
+            LocationQueries,
+            EmptyMutation,
+            "test_locations_always_filtered_by_store",
+            MockDataInserts::none().names().stores().locations(),
+        )
+        .await;
+
+        let count_store_a = mock_locations()
+            .iter()
+            .filter(|v| v.store_id == "store_a")
+            .count();
+        let count_store_b = mock_locations()
+            .iter()
+            .filter(|v| v.store_id == "store_b")
+            .count();
+        assert!(count_store_a != count_store_b);
+
+        let query = r#"
+        query {
+            locations(storeId: \"store_a\") {
+              ... on LocationConnector {
+                totalCount
+              }
+            }
+        }
+        "#;
+        let expected = json!({
+              "locations": {
+                  "totalCount": count_store_a
+              }
+          }
+        );
+        assert_graphql_query!(&settings, query, &None, &expected, None);
+
+        let query = r#"
+        query {
+            locations(storeId: \"store_b\") {
+              ... on LocationConnector {
+                totalCount
+              }
+            }
+        }
+        "#;
+        let expected = json!({
+              "locations": {
+                  "totalCount": count_store_b
+              }
+          }
+        );
+        assert_graphql_query!(&settings, query, &None, &expected, None);
     }
 }
