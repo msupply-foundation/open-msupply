@@ -29,6 +29,7 @@ export const StyledTabContainer = styled(Box)(() => ({
 }));
 
 export const StocktakeLineEditTabs: FC<{
+  children?: React.ReactNode;
   onAddLine: () => void;
   isDisabled: boolean;
 }> = ({ children, onAddLine, isDisabled }) => {

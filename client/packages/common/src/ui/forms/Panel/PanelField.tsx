@@ -1,7 +1,7 @@
 import React from 'react';
 import { Grid } from '@mui/material';
 
-export const PanelField: React.FC = props => (
+export const PanelField: React.FC<{ children?: React.ReactNode }> = props => (
   <Grid
     item
     flex={1}
