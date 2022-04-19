@@ -33,7 +33,7 @@ async fn files(
 
     let response = fs::NamedFile::open(file.path)?
         .set_content_disposition(ContentDisposition {
-            disposition: DispositionType::Attachment,
+            disposition: DispositionType::Inline,
             parameters: vec![DispositionParam::Filename(file.name)],
         })
         .into_response(&req);
