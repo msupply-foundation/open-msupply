@@ -9,10 +9,12 @@ import {
   DropdownMenuItem,
   DeleteIcon,
   useTranslation,
+  InfoPanel,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import {
   useDeleteSelectedLines,
+  useInbound,
   useInboundFields,
   useInboundItems,
   useIsInboundDisabled,
@@ -21,6 +23,7 @@ import {
 export const Toolbar: FC = () => {
   const isDisabled = useIsInboundDisabled();
   const { data } = useInboundItems();
+  const { data: shipment } = useInbound();
 
   const { onDelete } = useDeleteSelectedLines();
   const { otherParty, theirReference, update } = useInboundFields([
@@ -29,6 +32,7 @@ export const Toolbar: FC = () => {
   ]);
 
   const t = useTranslation('replenishment');
+  const isManuallyCreated = !shipment?.linkedShipment?.id;
 
   if (!data) return null;
 
@@ -70,6 +74,13 @@ export const Toolbar: FC = () => {
                   }}
                 />
               }
+            />
+            <InfoPanel
+              message={t(
+                isManuallyCreated
+                  ? 'info.manual-shipment'
+                  : 'info.automatic-shipment'
+              )}
             />
           </Box>
         </Grid>
