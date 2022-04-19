@@ -19,12 +19,13 @@ export const OutboundShipmentWidget: React.FC = () => {
   const { error } = useNotification();
   const t = useTranslation(['app', 'dashboard']);
   const formatNumber = useFormatNumber();
+  const [hasError, setHasError] = React.useState(false);
 
   const api = useOutbound.utils.api();
   const { data, isLoading } = useQuery(
     ['outbound-shipment', 'count'],
     api.dashboard.shipmentCount,
-    { retry: false }
+    { retry: false, onError: () => setHasError(true) }
   );
 
   const { mutate: onCreate } = useOutbound.document.insert();
@@ -58,16 +59,18 @@ export const OutboundShipmentWidget: React.FC = () => {
           flexDirection="column"
         >
           <Grid item>
-            <StatsPanel
-              isLoading={isLoading}
-              title={t('heading.shipments-to-be-picked')}
-              stats={[
-                {
-                  label: t('label.today', { ns: 'dashboard' }),
-                  value: formatNumber.round(data?.toBePicked),
-                },
-              ]}
-            />
+            {!hasError && (
+              <StatsPanel
+                isLoading={isLoading}
+                title={t('heading.shipments-to-be-picked')}
+                stats={[
+                  {
+                    label: t('label.today', { ns: 'dashboard' }),
+                    value: formatNumber.round(data?.toBePicked),
+                  },
+                ]}
+              />
+            )}
           </Grid>
           <Grid
             item
