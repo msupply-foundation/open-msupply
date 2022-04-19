@@ -339,7 +339,11 @@ mod test {
         let test_service = TestService(Box::new(|_, filter, _| {
             assert_eq!(
                 filter,
-                Some(LocationFilter::new().name(EqualFilter::equal_to("match_name")))
+                Some(
+                    LocationFilter::new()
+                        .store_id(EqualFilter::equal_to("store_a"))
+                        .name(EqualFilter::equal_to("match_name"))
+                )
             );
             Ok(ListResult::empty())
         }));
