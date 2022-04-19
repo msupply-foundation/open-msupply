@@ -121,6 +121,7 @@ const { Provider } = GqlContext;
 
 interface ApiProviderProps {
   url: string;
+  children?: React.ReactNode;
 }
 
 export const GqlProvider: FC<ApiProviderProps> = ({ url, children }) => {

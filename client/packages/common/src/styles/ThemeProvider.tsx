@@ -30,7 +30,7 @@ const cacheRtl = createCache({
   stylisPlugins: [rtlPlugin as any],
 });
 
-const ThemeProvider: React.FC = ({ children }) => {
+const ThemeProvider = ({ children }: { children?: React.ReactNode }) => {
   const appTheme = useAppTheme();
 
   return (

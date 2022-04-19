@@ -3,6 +3,7 @@ import { Box, Grid, Typography } from '@mui/material';
 
 interface DetailSectionProps {
   title: string;
+  children?: React.ReactNode;
 }
 export const DetailSection: FC<DetailSectionProps> = ({ children, title }) => (
   <Grid container flex={1} flexDirection="column" gap={1}>

@@ -10,7 +10,9 @@ import {
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useInboundApi } from '../api';
 
-export const InboundShipmentWidget: React.FC = () => {
+export const InboundShipmentWidget: React.FC<{
+  children?: React.ReactNode;
+}> = () => {
   const api = useInboundApi();
   const t = useTranslation(['app', 'dashboard']);
   const [hasError, setHasError] = React.useState(false);

@@ -24,6 +24,7 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
 export interface DetailPanelSectionProps {
   title: string;
   defaultExpanded?: boolean;
+  children?: React.ReactNode;
 }
 
 export const DetailPanelSection: React.FC<DetailPanelSectionProps> = ({

@@ -6,6 +6,7 @@ export interface PaperPopoverSectionProps {
   label?: string;
   labelStyle?: React.CSSProperties;
   alignItems?: 'center' | 'flex-start' | 'flex-end' | 'stretch';
+  children?: React.ReactNode;
 }
 
 export const PaperPopoverSection: FC<PaperPopoverSectionProps> = ({

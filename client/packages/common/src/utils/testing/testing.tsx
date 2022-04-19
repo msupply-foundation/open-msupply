@@ -34,6 +34,7 @@ const queryClient = new QueryClient({
 
 interface IntlTestProviderProps {
   locale: SupportedLocales;
+  children?: React.ReactNode;
 }
 
 const resources = {
@@ -72,10 +73,12 @@ export const IntlTestProvider: FC<IntlTestProviderProps> = ({
 
 interface StoryProviderProps {
   locale?: SupportedLocales;
+  children?: React.ReactNode;
 }
 
 interface TestingRouterProps {
   initialEntries: string[];
+  children?: React.ReactNode;
 }
 
 export const TestingRouter: FC<TestingRouterProps> = ({
@@ -87,16 +90,18 @@ export const TestingRouter: FC<TestingRouterProps> = ({
   </MemoryRouter>
 );
 
-export const TestingRouterContext: FC = ({ children }) => (
+export const TestingRouterContext: FC<{ children?: React.ReactNode }> = ({
+  children,
+}) => (
   <TestingRouter initialEntries={['/testing']}>
     <Route path="/testing" element={<>{children}</>} />
   </TestingRouter>
 );
 
-export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
-  children,
-  locale = 'en',
-}) => (
+export const TestingProvider: FC<{
+  locale?: 'en' | 'fr' | 'ar';
+  children?: React.ReactNode;
+}> = ({ children, locale = 'en' }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
       <GqlProvider url={Environment.GRAPHQL_URL}>
@@ -158,7 +163,7 @@ export const renderHookWithProvider = <Props, Result>(
 ): RenderHookResult<Props, Result> =>
   renderHook(hook, {
     ...options?.renderHookOptions,
-    wrapper: ({ children }) => (
+    wrapper: ({ children }: { children?: React.ReactNode }) => (
       <TestingProvider {...options?.providerProps}>{children}</TestingProvider>
     ),
   });

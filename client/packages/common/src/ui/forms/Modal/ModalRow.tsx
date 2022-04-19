@@ -1,6 +1,7 @@
 import { Grid } from '@mui/material';
 import React from 'react';
 interface ModalRowProps {
+  children?: React.ReactNode;
   margin?: number;
 }
 

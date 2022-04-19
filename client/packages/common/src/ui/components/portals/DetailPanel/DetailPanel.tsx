@@ -13,6 +13,7 @@ import { LocalStorage } from '../../../../localStorage';
 
 export interface DetailPanelPortalProps {
   Actions?: ReactNode;
+  children?: React.ReactNode;
 }
 
 const openedMixin = (theme: Theme) => ({

@@ -8,6 +8,7 @@ const Loading = () => (
 );
 
 interface WidgetProps {
+  children?: React.ReactNode;
   height?: number | string;
   title: string;
 }
