@@ -6,6 +6,9 @@ import {
   KBarAnimatorProps,
   KBarSearchProps,
 } from 'kbar';
+
+// This is a temporary workaround for type definitions to cope with react v18
+// Please remove when kbar is updated.. hopefully this won't be required
 declare module 'kbar' {
   interface RenderParams<T = ActionImpl | string> {
     item: T;

@@ -1,7 +1,6 @@
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
-// const HotModuleReplacementPlugin = webpack.HotModuleReplacementPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 // const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
 const path = require('path');
@@ -77,8 +76,6 @@ module.exports = env => {
       ],
     },
     plugins: [
-      // new HotModuleReplacementPlugin(),
-
       new ReactRefreshWebpackPlugin(),
 
       new BundleAnalyzerPlugin({
