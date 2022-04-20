@@ -51,7 +51,7 @@
   "cmdk.placeholder": "Type a command or search",
   "login.heading": "Simple.\nPowerful.\nPharmaceutical\nManagement.",
   "login.body": "Whether you run a pharmaceutical distribution warehouse, or are a manufacturer needing dozens of connected users, or a small dispensary, mSupply is a valuable partner.",
-  "login.store-changed": "Welcome to the {{store, string}} store",
+  "login.store-changed": "Welcome to the {{store}} store",
   "heading.username": "Username",
   "heading.password": "Password",
   "button.login": "Log in",

@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
-import { GlobalStyles, Typography } from '@mui/material';
+import { GlobalStyles } from '@mui/material';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
-import { useTranslation } from '@common/intl';
 import { MSupplyGuy } from '../../../icons';
 
 const Container = styled(Box)({
@@ -16,10 +15,6 @@ const Container = styled(Box)({
   width: '100%',
   height: '100%',
 });
-
-const StyledText = styled(Typography)(({ theme }) => ({
-  marginTop: theme.spacing(3),
-}));
 
 const styles = {
   '.enter': {
@@ -91,19 +86,15 @@ const styles = {
   },
 };
 
-export const BouncingGuy: FC = () => {
-  const t = useTranslation('app');
-  return (
-    <Container>
-      <GlobalStyles styles={styles} />
-      <div className="enter">
-        <div className="bounce">
-          <div className="logo">
-            <MSupplyGuy size="large" />
-          </div>
+export const BouncingGuy: FC = () => (
+  <Container>
+    <GlobalStyles styles={styles} />
+    <div className="enter">
+      <div className="bounce">
+        <div className="logo">
+          <MSupplyGuy size="large" />
         </div>
       </div>
-      <StyledText>{t('loading')}</StyledText>
-    </Container>
-  );
-};
+    </div>
+  </Container>
+);
