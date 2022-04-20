@@ -1,4 +1,5 @@
-mod graphql {
+#[cfg(test)]
+mod pagination_test {
     use async_graphql::EmptyMutation;
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
