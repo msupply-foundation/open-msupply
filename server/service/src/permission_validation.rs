@@ -20,7 +20,7 @@ pub enum PermissionDSL {
 }
 
 /// Resources for permission checks
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Resource {
     RouteMe,
     // name
@@ -287,6 +287,7 @@ pub struct ValidatedUser {
 }
 
 /// Information about the resource a user wants to access
+#[derive(Debug, Clone)]
 pub struct ResourceAccessRequest {
     pub resource: Resource,
     /// The store id if specified
