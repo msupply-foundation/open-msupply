@@ -1,9 +1,16 @@
-import React, { FC, useMemo, useEffect, useState, useCallback } from 'react';
+import React, {
+  FC,
+  useMemo,
+  useEffect,
+  useState,
+  useCallback,
+  PropsWithChildren,
+} from 'react';
 import { createContext } from 'react';
 import {
-  BatchRequestDocument,
   GraphQLClient,
   RequestDocument,
+  RequestOptions,
   Variables,
 } from 'graphql-request';
 import { AuthError } from '../authentication/AuthContext';
@@ -54,25 +61,19 @@ class GQLClient extends GraphQLClient {
     this.emptyData = {};
   }
 
-  public rawRequest<T, V = Variables>(
-    query: string,
-    variables?: V,
-    requestHeaders?: RequestInit['headers']
-  ): Promise<{
-    data: T;
-    extensions?: any;
-    headers: Headers;
-    status: number;
-  }> {
-    return this.client.rawRequest(query, variables, requestHeaders);
-  }
-
   public request<T, V = Variables>(
-    document: RequestDocument,
+    documentOrOptions: RequestDocument | RequestOptions<V>,
     variables?: V,
     requestHeaders?: RequestInit['headers']
   ): Promise<T> {
-    const response = this.client.request(document, variables, requestHeaders);
+    const options = documentOrOptions as RequestOptions<V>;
+    const response = options.document
+      ? this.client.request(options)
+      : this.client.request(
+          documentOrOptions as RequestDocument,
+          variables,
+          requestHeaders
+        );
     // returning an empty object in order to give the caller a stable reference
     // without it, the page will re-render continuously
     return response.then(
@@ -86,12 +87,7 @@ class GQLClient extends GraphQLClient {
       }
     );
   }
-  public batchRequests<T, V = Variables>(
-    documents: BatchRequestDocument<V>[],
-    requestHeaders?: RequestInit['headers']
-  ): Promise<T> {
-    return this.client.batchRequests(documents, requestHeaders);
-  }
+
   public setHeaders = (headers: RequestInit['headers']): GraphQLClient =>
     this.client.setHeaders(headers);
   public setHeader = (key: string, value: string): GraphQLClient =>
@@ -123,7 +119,10 @@ interface ApiProviderProps {
   url: string;
 }
 
-export const GqlProvider: FC<ApiProviderProps> = ({ url, children }) => {
+export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
+  url,
+  children,
+}) => {
   const [{ client }, setApi] = useState<{
     client: GQLClient;
   }>(() => createGql(url));

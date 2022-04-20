@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { CacheProvider } from '@emotion/react';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import createCache from '@emotion/cache';
@@ -7,6 +7,7 @@ import { useAppTheme } from './useAppTheme';
 import { RTLProvider } from './RTLProvider';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import { PropsWithChildrenOnly } from '@common/types';
 
 /**
  * Need a cache with the rtl plugin for when we are using rtl.
@@ -30,7 +31,7 @@ const cacheRtl = createCache({
   stylisPlugins: [rtlPlugin as any],
 });
 
-const ThemeProvider: React.FC = ({ children }) => {
+const ThemeProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const appTheme = useAppTheme();
 
   return (

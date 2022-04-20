@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import { usePopover } from '../../BasePopover';
 import {
   PaperClickPopover as ClickPopover,
@@ -11,7 +11,7 @@ export const usePaperClickPopover = () => {
     showDebounceDelay: 0,
   });
   const PaperClickPopover: FC<
-    Omit<PaperClickPopoverProps, 'show' | 'hide' | 'Popover'>
+    PropsWithChildren<Omit<PaperClickPopoverProps, 'show' | 'hide' | 'Popover'>>
   > = props => (
     <ClickPopover show={show} hide={hide} Popover={Popover} {...props} />
   );

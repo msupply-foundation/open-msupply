@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import { Box, ReportCategory, Typography } from '@openmsupply-client/common';
 import { AlertIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
@@ -33,7 +33,7 @@ const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
   );
 };
 
-export const ReportSelector: FC<ReportSelectorProps> = ({
+export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   category,
   children,
   onClick,

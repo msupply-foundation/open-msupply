@@ -1,6 +1,7 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, PropsWithChildren, useEffect } from 'react';
 import { AppThemeProvider } from '@common/styles';
 import { SupportedLocales } from '@common/intl';
+import { PropsWithChildrenOnly } from '@common/types';
 import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
@@ -48,7 +49,7 @@ const resources = {
   },
 };
 
-export const IntlTestProvider: FC<IntlTestProviderProps> = ({
+export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   children,
   locale,
 }) => {
@@ -70,15 +71,11 @@ export const IntlTestProvider: FC<IntlTestProviderProps> = ({
   return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
 };
 
-interface StoryProviderProps {
-  locale?: SupportedLocales;
-}
-
 interface TestingRouterProps {
   initialEntries: string[];
 }
 
-export const TestingRouter: FC<TestingRouterProps> = ({
+export const TestingRouter: FC<PropsWithChildren<TestingRouterProps>> = ({
   children,
   initialEntries,
 }) => (
@@ -87,16 +84,19 @@ export const TestingRouter: FC<TestingRouterProps> = ({
   </MemoryRouter>
 );
 
-export const TestingRouterContext: FC = ({ children }) => (
+export const TestingRouterContext: FC<PropsWithChildrenOnly> = ({
+  children,
+}) => (
   <TestingRouter initialEntries={['/testing']}>
     <Route path="/testing" element={<>{children}</>} />
   </TestingRouter>
 );
 
-export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
-  children,
-  locale = 'en',
-}) => (
+export const TestingProvider: FC<
+  PropsWithChildren<{
+    locale?: 'en' | 'fr' | 'ar';
+  }>
+> = ({ children, locale = 'en' }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
       <GqlProvider url={Environment.GRAPHQL_URL}>
@@ -112,7 +112,7 @@ export const TestingProvider: FC<{ locale?: 'en' | 'fr' | 'ar' }> = ({
   </React.Suspense>
 );
 
-export const StoryProvider: FC<StoryProviderProps> = ({ children }) => (
+export const StoryProvider: FC<PropsWithChildrenOnly> = ({ children }) => (
   <React.Suspense fallback={<span>?</span>}>
     <QueryClientProvider client={queryClient}>
       <GqlProvider url={Environment.GRAPHQL_URL}>
@@ -158,7 +158,7 @@ export const renderHookWithProvider = <Props, Result>(
 ): RenderHookResult<Props, Result> =>
   renderHook(hook, {
     ...options?.renderHookOptions,
-    wrapper: ({ children }) => (
+    wrapper: ({ children }: { children?: React.ReactNode }) => (
       <TestingProvider {...options?.providerProps}>{children}</TestingProvider>
     ),
   });

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import {
   useDialog,
   useTranslation,
@@ -16,16 +16,9 @@ interface StocktakeLineEditModalProps {
   hasNext: boolean;
 }
 
-export const StocktakeLineEditModal: FC<StocktakeLineEditModalProps> = ({
-  isOpen,
-  isValid,
-  children,
-  mode,
-  onCancel,
-  onOk,
-  onNext,
-  hasNext,
-}) => {
+export const StocktakeLineEditModal: FC<
+  PropsWithChildren<StocktakeLineEditModalProps>
+> = ({ isOpen, isValid, children, mode, onCancel, onOk, onNext, hasNext }) => {
   const { Modal } = useDialog({ onClose: onCancel, isOpen });
   const t = useTranslation('inventory');
 

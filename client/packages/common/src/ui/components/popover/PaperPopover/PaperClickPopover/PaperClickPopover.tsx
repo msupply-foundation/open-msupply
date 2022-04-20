@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import { ClickPopover, ClickPopoverProps } from '../../ClickPopover';
 import Paper, { PaperProps } from '@mui/material/Paper';
 
@@ -8,7 +8,9 @@ export interface PaperClickPopoverProps extends ClickPopoverProps {
   width?: number;
 }
 
-export const PaperClickPopover: FC<PaperClickPopoverProps> = ({
+export const PaperClickPopover: FC<
+  PropsWithChildren<PaperClickPopoverProps>
+> = ({
   children,
   Content,
   paperProps,

@@ -13,6 +13,7 @@ import {
   KBarProvider,
   KBarPositioner,
   KBarPortal,
+  PropsWithChildrenOnly,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -76,7 +77,7 @@ const actionSorter = (a: Action, b: Action) => {
   return 0;
 };
 
-export const CommandK: FC = ({ children }) => {
+export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation('app');

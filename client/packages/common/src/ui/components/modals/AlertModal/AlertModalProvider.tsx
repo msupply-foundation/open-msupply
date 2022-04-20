@@ -8,6 +8,7 @@ import { Grid, Typography } from '@mui/material';
 import { DialogButton } from '../../buttons';
 import { AlertIcon } from '@common/icons';
 import { BasicModal } from '@common/components';
+import { PropsWithChildrenOnly } from '@common/types';
 
 const AlertModal = ({
   open,
@@ -40,7 +41,7 @@ const AlertModal = ({
   </BasicModal>
 );
 
-export const AlertModalProvider: FC = ({ children }) => {
+export const AlertModalProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const [alertModalState, setState] = useState<AlertModalState>({
     important: false,
     open: false,

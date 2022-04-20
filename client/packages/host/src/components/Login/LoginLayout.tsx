@@ -6,6 +6,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { LoginIcon } from './LoginIcon';
+import { Theme } from '@common/styles';
 
 type LoginLayoutProps = {
   UsernameInput: React.ReactNode;
@@ -35,7 +36,7 @@ export const LoginLayout = ({
       <Box
         flex="1 0 50%"
         sx={{
-          backgroundImage: theme => theme.mixins.gradient.primary,
+          backgroundImage: (theme: Theme) => theme.mixins.gradient.primary,
           padding: '0 80px 7% 80px',
         }}
         display="flex"
@@ -46,7 +47,7 @@ export const LoginLayout = ({
         <Box>
           <Typography
             sx={{
-              color: theme => theme.typography.login.color,
+              color: (theme: Theme) => theme.typography.login.color,
               fontSize: {
                 xs: '38px',
                 sm: '38px',
@@ -72,7 +73,7 @@ export const LoginLayout = ({
                 lg: '20px',
                 xl: '20px',
               },
-              color: theme => theme.typography.login.color,
+              color: (theme: Theme) => theme.typography.login.color,
               fontWeight: 600,
             }}
           >

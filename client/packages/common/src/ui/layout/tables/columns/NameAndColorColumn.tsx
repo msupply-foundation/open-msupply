@@ -35,13 +35,15 @@ export const getNameAndColorColumn = <
         display: 'flex',
       }}
     >
-      <ColorSelectButton
-        disabled={isDisabled}
-        onChange={color => column.setter({ ...rowData, colour: color.hex })}
-        color={rowData.colour}
-      />
-      <Box ml={1} />
-      {column.accessor({ rowData, rows })}
+      <>
+        <ColorSelectButton
+          disabled={isDisabled}
+          onChange={color => column.setter({ ...rowData, colour: color.hex })}
+          color={rowData.colour}
+        />
+        <Box ml={1} />
+        {column.accessor({ rowData, rows })}
+      </>
     </Box>
   ),
   minWidth: 400,

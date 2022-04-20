@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import { Box, CircularProgress, Paper, Typography } from '@mui/material';
 
 const Loading = () => (
@@ -12,7 +12,7 @@ interface WidgetProps {
   title: string;
 }
 
-export const Widget: React.FC<WidgetProps> = ({
+export const Widget: React.FC<PropsWithChildren<WidgetProps>> = ({
   children,
   height = '100%',
   title,

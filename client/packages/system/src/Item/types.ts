@@ -8,5 +8,5 @@ export interface ItemLikeLine {
 
 export interface ItemLikeAggregate {
   itemId: string;
-  lines: [ItemLikeLine, ...ItemLikeLine[]];
+  lines: ItemLikeLine[];
 }

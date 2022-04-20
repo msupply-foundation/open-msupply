@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -26,11 +26,9 @@ export interface DetailPanelSectionProps {
   defaultExpanded?: boolean;
 }
 
-export const DetailPanelSection: React.FC<DetailPanelSectionProps> = ({
-  children,
-  title,
-  defaultExpanded = true,
-}) => (
+export const DetailPanelSection: React.FC<
+  PropsWithChildren<DetailPanelSectionProps>
+> = ({ children, title, defaultExpanded = true }) => (
   <Box>
     <StyledAccordion defaultExpanded={defaultExpanded}>
       <AccordionSummary expandIcon={<ChevronDownIcon />}>

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 
 import { styled, TabPanel, Box } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
@@ -19,7 +19,7 @@ interface InboundLineEditPanel {
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
 }
 
-export const InboundLineEditPanel: FC<InboundLineEditPanel> = ({
+export const InboundLineEditPanel: FC<PropsWithChildren<InboundLineEditPanel>> = ({
   value,
   children,
 }) => {

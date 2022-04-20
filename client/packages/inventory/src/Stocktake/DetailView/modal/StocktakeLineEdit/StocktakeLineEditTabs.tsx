@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, PropsWithChildren, useState } from 'react';
 import {
   TabContext,
   TabList,
@@ -28,10 +28,10 @@ export const StyledTabContainer = styled(Box)(() => ({
   display: 'flex',
 }));
 
-export const StocktakeLineEditTabs: FC<{
+export const StocktakeLineEditTabs: FC<PropsWithChildren<{
   onAddLine: () => void;
   isDisabled: boolean;
-}> = ({ children, onAddLine, isDisabled }) => {
+}>> = ({ children, onAddLine, isDisabled }) => {
   const t = useTranslation('inventory');
   const [currentTab, setCurrentTab] = useState(Tabs.Batch);
 

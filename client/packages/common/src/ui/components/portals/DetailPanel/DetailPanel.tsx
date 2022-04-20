@@ -1,6 +1,11 @@
-import React, { FC, ReactNode, useEffect, useRef } from 'react';
-import { Box, Grid, Theme, Typography, styled } from '@mui/material';
-import { Portal } from '@mui/base';
+import React, {
+  FC,
+  PropsWithChildren,
+  ReactNode,
+  useEffect,
+  useRef,
+} from 'react';
+import { Box, Grid, Portal, Theme, Typography, styled } from '@mui/material';
 import {
   useDetailPanelStore,
   useHostContext,
@@ -57,10 +62,9 @@ export const DetailPanel: FC = () => {
   return <StyledDrawer data-testid="detail-panel" isOpen={isOpen} ref={ref} />;
 };
 
-export const DetailPanelPortal: FC<DetailPanelPortalProps> = ({
-  Actions,
-  children,
-}) => {
+export const DetailPanelPortal: FC<
+  PropsWithChildren<DetailPanelPortalProps>
+> = ({ Actions, children }) => {
   const t = useTranslation('common');
   const { detailPanelRef } = useHostContext();
   const { hasUserSet, isOpen, close } = useDetailPanelStore();

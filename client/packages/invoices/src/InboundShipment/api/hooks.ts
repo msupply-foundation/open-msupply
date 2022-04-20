@@ -158,7 +158,7 @@ export const useNextItem = (
   if (!nextItem) return { next, disabled };
 
   return {
-    next: nextItem.lines[0].item,
+    next: nextItem.lines[0]?.item || null,
     disabled: currentIndex === numberOfItems - 1,
   };
 };
