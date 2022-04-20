@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
-import { Box, GlobalStyles, Typography } from '@mui/material';
+import { Box, GlobalStyles } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useTranslation } from '@common/intl';
 
 const Container = styled(Box)({
   display: 'flex',
@@ -14,12 +13,6 @@ const Container = styled(Box)({
   width: '100%',
   height: '100%',
 });
-
-const StyledText = styled(Typography)(({ theme }) => ({
-  text: {
-    marginTop: theme.spacing(3),
-  },
-}));
 
 const StyledSvg = styled('svg')(({ theme }) => ({
   stroke: theme.palette.primary.main,
@@ -48,21 +41,17 @@ const styles = {
   },
 };
 
-export const Pulse: FC = () => {
-  const t = useTranslation('app');
-  return (
-    <Container>
-      <GlobalStyles styles={styles} />
-      <StyledSvg height="210" width="260">
-        <path
-          className="pulse-spinner"
-          fill="none"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          d="M0,90L100,90Q107,60 112,87T117,95 120,88 123,92t6,35 7,-60T140,127 147,107s2,-11 10,-10 1,1 8,-10T169,95c6,4 8,-6 10,-17s2,10 9,11h80"
-        />
-      </StyledSvg>
-      <StyledText>{t('loading')}</StyledText>
-    </Container>
-  );
-};
+export const Pulse: FC = () => (
+  <Container>
+    <GlobalStyles styles={styles} />
+    <StyledSvg height="210" width="260">
+      <path
+        className="pulse-spinner"
+        fill="none"
+        strokeWidth="2"
+        strokeLinejoin="round"
+        d="M0,90L100,90Q107,60 112,87T117,95 120,88 123,92t6,35 7,-60T140,127 147,107s2,-11 10,-10 1,1 8,-10T169,95c6,4 8,-6 10,-17s2,10 9,11h80"
+      />
+    </StyledSvg>
+  </Container>
+);
