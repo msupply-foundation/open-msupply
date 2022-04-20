@@ -27,7 +27,7 @@ const Template: Story<DetailPanelArgs> = args => {
   const { Actions, Sections } = args;
 
   return (
-    <StoryProvider locale="en">
+    <StoryProvider>
       <Grid container>
         <Grid item flex={1}>
           {OpenButton}

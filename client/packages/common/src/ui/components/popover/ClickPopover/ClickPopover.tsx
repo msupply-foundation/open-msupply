@@ -6,7 +6,7 @@ import { BasePopoverProps } from '../BasePopover';
 export interface ClickPopoverProps {
   Content: React.ReactElement<any, any>;
   placement?: 'top' | 'bottom' | 'left' | 'right';
-  Popover: React.FC<Partial<BasePopoverProps>>;
+  Popover: React.FC<Partial<PropsWithChildren<BasePopoverProps>>>;
   show: MouseEventHandler<HTMLDivElement | HTMLButtonElement>;
   hide: () => void;
 }

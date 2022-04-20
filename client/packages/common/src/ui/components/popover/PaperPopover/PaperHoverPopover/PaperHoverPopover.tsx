@@ -1,9 +1,9 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import { HoverPopover } from '../../HoverPopover';
 import Paper from '@mui/material/Paper';
 import { PaperPopoverProps } from '..';
 
-export const PaperHoverPopover: FC<PaperPopoverProps> = ({
+export const PaperHoverPopover: FC<PropsWithChildren<PaperPopoverProps>> = ({
   children,
   Content,
   paperProps,

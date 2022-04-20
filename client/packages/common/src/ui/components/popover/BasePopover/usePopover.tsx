@@ -1,4 +1,11 @@
-import React, { Dispatch, FC, useState, useRef, MutableRefObject } from 'react';
+import React, {
+  Dispatch,
+  FC,
+  useState,
+  useRef,
+  MutableRefObject,
+  PropsWithChildren,
+} from 'react';
 import { BasePopoverProps } from '.';
 import { useDebounceCallback } from '@common/hooks';
 import { BasePopover } from './BasePopover';
@@ -17,7 +24,7 @@ type IsOpenSetterRef = MutableRefObject<Dispatch<
 interface UsePopoverControl {
   show: React.MouseEventHandler<HTMLDivElement | HTMLButtonElement>;
   hide: () => void;
-  Popover: FC<Partial<BasePopoverProps>>;
+  Popover: FC<Partial<PropsWithChildren<BasePopoverProps>>>;
 }
 
 interface UsePopoverOptions {
@@ -73,23 +80,24 @@ export const usePopover = ({
   const show = useDebounceCallback(showCallback, [], showDebounceDelay);
   const hide = useDebounceCallback(hideCallback, [], hideDebounceDelay);
 
-  const Popover: FC<Partial<BasePopoverProps>> = React.useCallback(props => {
-    const [internalAnchorEl, setInternalAnchorEl] =
-      useState<VirtualElement | null>(null);
+  const Popover: FC<Partial<PropsWithChildren<BasePopoverProps>>> =
+    React.useCallback(props => {
+      const [internalAnchorEl, setInternalAnchorEl] =
+        useState<VirtualElement | null>(null);
 
-    const [internalIsOpen, internalSetOpen] = useState(false);
+      const [internalIsOpen, internalSetOpen] = useState(false);
 
-    isOpenCallback.current = internalSetOpen;
-    setAnchorElCallback.current = setInternalAnchorEl;
+      isOpenCallback.current = internalSetOpen;
+      setAnchorElCallback.current = setInternalAnchorEl;
 
-    return (
-      <BasePopover
-        {...props}
-        anchorEl={internalAnchorEl}
-        isOpen={internalIsOpen}
-      />
-    );
-  }, []);
+      return (
+        <BasePopover
+          {...props}
+          anchorEl={internalAnchorEl}
+          isOpen={internalIsOpen}
+        />
+      );
+    }, []);
 
   return {
     Popover,
