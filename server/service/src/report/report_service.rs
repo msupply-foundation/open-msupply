@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::SystemTime};
 
+use chrono::{DateTime, Utc};
 use repository::{
     schema::report::{ReportRow, ReportType},
     PaginationOption, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
@@ -74,6 +75,7 @@ pub trait ReportServiceTrait: Sync + Send {
         query_reports(ctx, pagination, filter, sort)
     }
 
+    /// Loads a report definition by id and resolves it
     fn resolve_report(
         &self,
         ctx: &ServiceContext,
@@ -81,6 +83,17 @@ pub trait ReportServiceTrait: Sync + Send {
         report_id: &str,
     ) -> Result<ResolvedReportDefinition, ReportError> {
         resolve_report(ctx, store_id, report_id)
+    }
+
+    /// Resolve a already loaded report definition
+    fn resolve_report_definition(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        name: String,
+        report_definition: ReportDefinition,
+    ) -> Result<ResolvedReportDefinition, ReportError> {
+        resolve_report_definition(ctx, store_id, name, report_definition)
     }
 
     fn generate_report(
@@ -103,8 +116,9 @@ pub trait ReportServiceTrait: Sync + Send {
             .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
 
         let file_service = StaticFileService::new();
+        let now: DateTime<Utc> = SystemTime::now().into();
         let file = file_service
-            .store_file(&format!("{}.pdf", report.name), &pdf)
+            .store_file(&format!("{}_{}.pdf", now.to_rfc3339(), report.name), &pdf)
             .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
         Ok(file.id)
     }
@@ -143,13 +157,25 @@ fn resolve_report(
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
 
-    let (name, resolved_report) = resolve_template_definition(&repo, store_id, report_id)?;
-    let templates = tera_templates_from_resolved_template(&resolved_report)
+    let (report_name, main) = load_report_definition(&repo, report_id)?;
+    resolve_report_definition(ctx, store_id, report_name, main)
+}
+
+fn resolve_report_definition(
+    ctx: &ServiceContext,
+    store_id: &str,
+    name: String,
+    main: ReportDefinition,
+) -> Result<ResolvedReportDefinition, ReportError> {
+    let repo = ReportRowRepository::new(&ctx.connection);
+    let fully_loaded_report = load_template_references(&repo, store_id, main)?;
+
+    let templates = tera_templates_from_resolved_template(&fully_loaded_report)
         .ok_or(ReportError::TemplateNotSpecified)?;
 
     // validate index entries are present
     let template =
-        resolved_report
+        fully_loaded_report
             .index
             .template
             .clone()
@@ -162,7 +188,7 @@ fn resolve_report(
             template
         )));
     }
-    if let Some(header) = resolved_report.index.header.clone() {
+    if let Some(header) = fully_loaded_report.index.header.clone() {
         if !templates.contains_key(&header) {
             return Err(ReportError::InvalidReportDefinition(format!(
                 "Invalid template header reference: {}",
@@ -170,7 +196,7 @@ fn resolve_report(
             )));
         }
     }
-    if let Some(footer) = resolved_report.index.footer.clone() {
+    if let Some(footer) = fully_loaded_report.index.footer.clone() {
         if !templates.contains_key(&footer) {
             return Err(ReportError::InvalidReportDefinition(format!(
                 "Invalid template footer reference: {}",
@@ -178,14 +204,15 @@ fn resolve_report(
             )));
         }
     }
-    let query = resolved_report
-        .index
-        .query
-        .clone()
-        .ok_or(ReportError::InvalidReportDefinition(
-            "Query reference missing".to_string(),
-        ))?;
-    let query_entry = match resolved_report.entries.get(&query) {
+    let query =
+        fully_loaded_report
+            .index
+            .query
+            .clone()
+            .ok_or(ReportError::InvalidReportDefinition(
+                "Query reference missing".to_string(),
+            ))?;
+    let query_entry = match fully_loaded_report.entries.get(&query) {
         Some(query_entry) => query_entry,
         None => {
             return Err(ReportError::InvalidReportDefinition(format!(
@@ -202,13 +229,13 @@ fn resolve_report(
         ResolvedReportQuery::Default(query) => get_default_gql_query(query),
     };
 
-    let resources = resources_from_resolved_template(&resolved_report);
+    let resources = resources_from_resolved_template(&fully_loaded_report);
 
     Ok(ResolvedReportDefinition {
         name,
         template,
-        header: resolved_report.index.header.clone(),
-        footer: resolved_report.index.footer.clone(),
+        header: fully_loaded_report.index.header.clone(),
+        footer: fully_loaded_report.index.footer.clone(),
         templates,
         query,
         resources,
@@ -223,18 +250,32 @@ fn generate_report(
     context.insert("data", &report_data);
     context.insert("res", &report.resources);
     let mut tera = tera::Tera::default();
-    let templates: HashMap<String, String> = report
+    let mut templates: HashMap<String, String> = report
         .templates
         .iter()
         .map(|(name, template)| (name.to_string(), template.template.to_string()))
         .collect();
+    // also add resources to the templates
+    for resource in &report.resources {
+        let string_value = if let serde_json::Value::String(string) = resource.1 {
+            string.clone()
+        } else {
+            serde_json::to_string(&resource.1).map_err(|err| {
+                ReportError::DocGenerationError(format!(
+                    "Failed to stringify resource {}: {}",
+                    resource.0, err
+                ))
+            })?
+        };
+        templates.insert(resource.0.clone(), string_value);
+    }
     tera.add_raw_templates(templates.iter()).map_err(|err| {
         ReportError::DocGenerationError(format!("Failed to add templates: {}", err))
     })?;
 
     let document = tera
         .render(&report.template, &context)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("Tera rendering: {:?}", err)))?;
     let header = match &report.header {
         Some(header_key) => {
             let header = tera.render(header_key, &context).map_err(|err| {
@@ -321,18 +362,16 @@ fn load_report_definition(
     Ok((row.name, def))
 }
 
-fn resolve_template_definition(
+fn load_template_references(
     repo: &ReportRowRepository,
     store_id: &str,
-    report_id: &str,
-) -> Result<(String, ReportDefinition), ReportError> {
-    let (report_name, main) = load_report_definition(repo, report_id)?;
-
+    report: ReportDefinition,
+) -> Result<ReportDefinition, ReportError> {
     let mut out = ReportDefinition {
-        index: main.index.clone(),
+        index: report.index.clone(),
         entries: HashMap::new(),
     };
-    for (name, entry) in main.entries {
+    for (name, entry) in report.entries {
         match entry {
             ReportDefinitionEntry::Ref(reference) => {
                 let resolved_ref = resolve_ref(repo, store_id, &name, &reference)?;
@@ -341,7 +380,7 @@ fn resolve_template_definition(
             _ => out.entries.insert(name, entry),
         };
     }
-    Ok((report_name, out))
+    Ok(out)
 }
 
 fn resolve_ref(
