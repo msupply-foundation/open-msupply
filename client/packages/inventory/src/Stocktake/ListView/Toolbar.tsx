@@ -5,10 +5,19 @@ import {
   useTranslation,
   DeleteIcon,
   AppBarContentPortal,
-  SearchBar,
   FilterController,
+  StocktakeNodeStatus,
+  Autocomplete,
+  AutocompleteOnChange,
+  InputLabel,
+  Box,
 } from '@openmsupply-client/common';
 import { useDeleteSelectedStocktakes } from '../api';
+
+type StatusOption = {
+  label: string;
+  value: StocktakeNodeStatus;
+};
 
 export const Toolbar: FC<{
   filter: FilterController;
@@ -16,8 +25,13 @@ export const Toolbar: FC<{
   const onDelete = useDeleteSelectedStocktakes();
   const t = useTranslation('inventory');
 
-  const key = 'comment';
-  const filterString = filter.filterBy?.[key]?.like as string;
+  const onFilterChange: AutocompleteOnChange<StatusOption> = (_, option) => {
+    if (!option) {
+      filter.onClearFilterRule('status');
+      return;
+    }
+    filter.onChangeStringFilterRule('status', 'equalTo', option.value);
+  };
 
   return (
     <AppBarContentPortal
@@ -28,15 +42,22 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder="Search by comment..."
-        value={filterString}
-        onChange={newValue => {
-          filter.onChangeStringFilterRule('comment', 'like', newValue);
-        }}
-      />
-
-      <DropdownMenu label="Select">
+      <Box display="flex" alignItems="center" gap={1}>
+        <InputLabel>{t('placeholder.filter-by-status')}</InputLabel>
+        <Autocomplete
+          isOptionEqualToValue={(option, value) => option.value === value.value}
+          width="150px"
+          options={[
+            { label: t('status.new'), value: StocktakeNodeStatus.New },
+            {
+              label: t('status.finalised'),
+              value: StocktakeNodeStatus.Finalised,
+            },
+          ]}
+          onChange={onFilterChange}
+        />
+      </Box>
+      <DropdownMenu label={t('label.select')}>
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
           {t('button.delete-lines')}
         </DropdownMenuItem>
