@@ -129,8 +129,8 @@ mod remote_sync_integration_tests {
         let sync_settings = SyncSettings {
             url: "http://192.168.178.77:8080".to_string(),
             username: "mobiletest".to_string(),
-            password: "mobiletest".to_string(),
-            interval: 60 * 60,
+            password_sha256: "mobiletest".to_string(),
+            interval_sec: 60 * 60,
             central_server_site_id: 1,
             site_id: 7,
             site_hardware_id: "49149896-E713-4535-9DA8-C30AB06F9D5E".to_string(),

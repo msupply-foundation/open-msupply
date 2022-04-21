@@ -16,9 +16,9 @@ pub fn get_test_settings(db_name: &str) -> Settings {
         database: get_test_db_settings(db_name),
         sync: SyncSettings {
             username: "postgres".to_string(),
-            password: "password".to_string(),
+            password_sha256: "password".to_string(),
             url: "http://localhost:5432".to_string(),
-            interval: 100000000,
+            interval_sec: 100000000,
             central_server_site_id: 0,
             site_id: 1,
             site_hardware_id: "".to_string(),
