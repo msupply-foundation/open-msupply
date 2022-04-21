@@ -4,9 +4,9 @@ Report template definition files are json files containing all information requi
 
 Editing the template definition json file directly would be quite cumbersome.
 The report builder aids the template designer to create the template definition file from a more convenient project structure, e.g. from a flat directory of Tera html templates and css files.
-The report builder also helps to test/print template definition file locally.
+The report builder also helps to test/print template definition files locally.
 
-To summaries, the report builder has two functionalities:
+To summarise, the report builder has two functions:
 1) **Build** a report template which can be uploaded straight to the central server
 2) **Print** a report template, e.g. to test a report template during development before uploading it.
 
@@ -23,6 +23,10 @@ There are three main template entry points:
 
 All files in the project dir should be text files.
 The reason for this is that all files will be bundled into a single json template definition file and, for this to work, binary files such as images needs to be encoded in base64.
+For example, an image could be encoded using a tools like:
+http://jpillora.com/base64-encoder/
+which generates a data URI (https://en.wikipedia.org/wiki/Data_URI_scheme) which can be used straight in `<img>` `src` tags (see example project).
+Note: don't upload sensitive data to online encoders.
 
 ### Special file types:
 - **`*.graphql` files:**
@@ -54,6 +58,13 @@ There are two sub commands:
 > report_build print
 ```
 
+To see a full list of command line argument options use the `--help` flag:
+``` bash
+> report_build build --help
+# Print a report definition template
+> report_build print --help
+```
+
 ### Build a report template definition
 For example, to build the example template including header and footer using the default stocktake query:
 
@@ -76,6 +87,7 @@ Moreover, report_build requires config details for how to access the remote-serv
 To provide this information create a config file, e.g. `config.yaml`:
 ```yaml
 url: "https://demo-open.msupply.org:8000"
+# standard omSupply username and password
 username: "username"
 password: "password"
 ```
