@@ -57,7 +57,7 @@ export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
     i18next.use(initReactI18next).init({
       resources,
       debug: false,
-      lng: 'en',
+      lng: locale,
       fallbackLng: 'en',
       ns: ['app', 'common'],
       defaultNS: 'common',
@@ -65,7 +65,6 @@ export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
       interpolation: {
         escapeValue: false,
       },
-      react: { useSuspense: false },
     });
   }
   return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
