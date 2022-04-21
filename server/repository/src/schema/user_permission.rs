@@ -12,6 +12,8 @@ table! {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum Permission {
+    ServerAdmin,
+
     /// User has access to the store this permission is associated with.
     /// This acts like a master switch to enable/disable all user's permissions associated with a store.
     StoreAccess,

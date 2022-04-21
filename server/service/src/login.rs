@@ -243,6 +243,10 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
     let mut output = HashSet::new();
     for per in permissions {
         match per {
+            // admin
+            Permissions::AccessServerAdministration => {
+                output.insert(Permission::ServerAdmin);
+            }
             // location
             Permissions::ManageLocations => {
                 output.insert(Permission::LocationMutate);

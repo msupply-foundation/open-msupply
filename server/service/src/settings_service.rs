@@ -33,7 +33,7 @@ pub trait SettingsServiceTrait: Sync + Send {
         Ok(make_settings())
     }
 
-    fn store_sync_settings(
+    fn update_sync_settings(
         &self,
         ctx: &ServiceContext,
         settings: &SyncSettings,
