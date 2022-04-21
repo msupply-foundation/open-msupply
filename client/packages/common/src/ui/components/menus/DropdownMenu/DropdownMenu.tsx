@@ -23,6 +23,7 @@ interface DropdownMenuItemProps extends MenuItemProps {
 export const DropdownMenuItem: FC<DropdownMenuItemProps> = ({
   IconComponent,
   color,
+  children,
   ...props
 }) => {
   return (
@@ -39,7 +40,7 @@ export const DropdownMenuItem: FC<DropdownMenuItemProps> = ({
           '&.MuiListItemText-inset': { paddingLeft: '22px' },
         }}
       >
-        {props.children}
+        {children}
       </ListItemText>
     </MenuItem>
   );

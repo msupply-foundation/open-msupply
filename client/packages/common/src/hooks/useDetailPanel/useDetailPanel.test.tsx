@@ -1,8 +1,6 @@
 import React, { FC } from 'react';
-import { render } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
+import { fireEvent, render } from '@testing-library/react';
 import { useDetailPanel } from './useDetailPanel';
-import userEvent from '@testing-library/user-event';
 import {
   TestingProvider,
   setScreenSize_ONLY_FOR_TESTING,
@@ -32,11 +30,8 @@ describe('useDetailPanel', () => {
         <DetailPanelExample />
       </TestingProvider>
     );
-    const node = getByRole('button', { name: /more/i });
-
-    act(() => {
-      userEvent.click(node);
-    });
+    const button = getByRole('button', { name: /more/i });
+    fireEvent.click(button);
 
     expect(queryByRole('button', { name: /more/i })).not.toBeInTheDocument();
   });

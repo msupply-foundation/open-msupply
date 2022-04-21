@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { ColumnAlign, ColumnFormat } from '../../columns';
 import { useColumns } from './useColumns';
 import { RecordWithId } from '@common/types';
@@ -123,7 +123,9 @@ describe('useColumns', () => {
     const { result, rerender } = renderHook(() =>
       useColumns<Test>([{ key: 'default', format: ColumnFormat.Integer }])
     );
+    const firstResult = result.current;
     rerender();
-    expect(result.all[0]).toBe(result.all[1]);
+    const secondResult = result.current;
+    expect(firstResult).toBe(secondResult);
   });
 });

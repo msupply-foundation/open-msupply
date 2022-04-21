@@ -1,13 +1,13 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import {
+  fireEvent,
   render,
   waitFor,
   waitForElementToBeRemoved,
 } from '@testing-library/react';
 import { BaseButton } from '../../buttons';
 import { usePopover } from './usePopover';
-import userEvent from '@testing-library/user-event';
 import { TestingProvider } from '@common/utils';
 
 describe('usePopover', () => {
@@ -32,7 +32,7 @@ describe('usePopover', () => {
       </TestingProvider>
     );
 
-    userEvent.click(getByRole('button', { name: /show/i }));
+    fireEvent.click(getByRole('button', { name: /show/i }));
 
     return waitFor(() => expect(queryByRole('tooltip')).toBeInTheDocument());
   });
@@ -57,11 +57,11 @@ describe('usePopover', () => {
     const show = getByRole('button', { name: /show/i });
     const hide = getByRole('button', { name: /hide/i });
 
-    userEvent.click(show);
+    fireEvent.click(show);
 
     await waitFor(() => expect(queryByRole('tooltip')).toBeVisible());
 
-    userEvent.click(hide);
+    fireEvent.click(hide);
 
     await waitForElementToBeRemoved(queryByRole('tooltip'));
 

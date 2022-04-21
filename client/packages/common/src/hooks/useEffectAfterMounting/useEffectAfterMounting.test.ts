@@ -1,5 +1,5 @@
 import { useEffectAfterMounting } from './useEffectAfterMounting';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 
 describe('useEffectAfterMounting', () => {
   it('does not call the provided callback during the initial mount and render', () => {

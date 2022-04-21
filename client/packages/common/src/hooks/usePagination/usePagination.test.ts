@@ -1,5 +1,5 @@
 import { TestingRouterContext } from '@openmsupply-client/common';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import { usePagination } from './usePagination';
 

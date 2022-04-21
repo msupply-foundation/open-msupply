@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { setScreenSize_ONLY_FOR_TESTING, TestingProvider } from '../../utils';
 import { useIsMediumScreen } from './useIsMediumScreen';
 

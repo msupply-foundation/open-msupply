@@ -10,19 +10,9 @@ import { TableProvider, createTableStore } from '../../ui/layout/tables';
 import { GqlProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../../ui/components/modals';
-import {
-  renderHook,
-  RenderHookOptions,
-  RenderHookResult,
-} from '@testing-library/react-hooks/dom';
-import i18next from 'i18next';
-import { I18nextProvider, initReactI18next } from 'react-i18next';
-import app from '@common/intl/locales/en/app.json';
-import common from '@common/intl/locales/en/common.json';
-import appFr from '@common/intl/locales/fr/app.json';
-import commonFr from '@common/intl/locales/fr/common.json';
-import appAr from '@common/intl/locales/ar/app.json';
-import commonAr from '@common/intl/locales/ar/common.json';
+import { renderHook } from '@testing-library/react';
+import i18next from './i18next';
+import { I18nextProvider } from 'react-i18next';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,37 +27,13 @@ interface IntlTestProviderProps {
   locale: SupportedLocales;
 }
 
-const resources = {
-  ar: {
-    app: { ...app, ...appAr },
-    common: { ...common, ...commonAr },
-  },
-  en: { app, common },
-  fr: {
-    app: { ...app, ...appFr },
-    common: { ...common, ...commonFr },
-  },
-};
-
 export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   children,
   locale,
 }) => {
   useEffect(() => {
-    i18next.use(initReactI18next).init({
-      resources,
-      debug: false,
-      lng: locale,
-      fallbackLng: 'en',
-      ns: ['app', 'common'],
-      defaultNS: 'common',
-      fallbackNS: 'common',
-      interpolation: {
-        escapeValue: false,
-      },
-    });
-  }, [resources]);
-
+    i18next.changeLanguage(locale);
+  }, [locale]);
   return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
 };
 
@@ -97,7 +63,7 @@ export const TestingProvider: FC<
     locale?: 'en' | 'fr' | 'ar';
   }>
 > = ({ children, locale = 'en' }) => (
-  <React.Suspense fallback={<span>?</span>}>
+  <React.Suspense fallback={<span>[suspended]</span>}>
     <QueryClientProvider client={queryClient}>
       <GqlProvider url={Environment.GRAPHQL_URL}>
         <SnackbarProvider maxSnack={3}>
@@ -152,12 +118,10 @@ export const setScreenSize_ONLY_FOR_TESTING = (screenSize: number): void => {
 export const renderHookWithProvider = <Props, Result>(
   hook: (props: Props) => Result,
   options?: {
-    renderHookOptions?: RenderHookOptions<Props>;
     providerProps?: { locale: 'en' | 'fr' | 'ar' };
   }
-): RenderHookResult<Props, Result> =>
+) =>
   renderHook(hook, {
-    ...options?.renderHookOptions,
     wrapper: ({ children }: { children?: React.ReactNode }) => (
       <TestingProvider {...options?.providerProps}>{children}</TestingProvider>
     ),

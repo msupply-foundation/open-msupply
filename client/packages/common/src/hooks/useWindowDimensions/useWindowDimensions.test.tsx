@@ -1,5 +1,6 @@
+import React, { useRef } from 'react';
 import { useWindowDimensions } from './useWindowDimensions';
-import { renderHook } from '@testing-library/react-hooks';
+import { render, renderHook } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 
 const original = {
@@ -7,6 +8,14 @@ const original = {
   innerHeight: window.innerHeight,
   outerWidth: window.outerWidth,
   outerHeight: window.outerHeight,
+};
+
+const Component = () => {
+  const renderCounter = useRef(0);
+  renderCounter.current = renderCounter.current + 1;
+  useWindowDimensions();
+
+  return <span>{renderCounter.current}</span>;
 };
 
 describe('useWindowDimensions', () => {
@@ -30,7 +39,7 @@ describe('useWindowDimensions', () => {
   });
 
   it('triggers a state change on resize event', () => {
-    const { result } = renderHook(useWindowDimensions);
+    const { getByText } = render(<Component />);
 
     act(() => {
       window.resizeTo(500, 500);
@@ -40,7 +49,8 @@ describe('useWindowDimensions', () => {
       jest.advanceTimersByTime(1000);
     });
 
-    expect(result.all.length).toEqual(2);
+    const hasRenderedTwice = getByText(/2/);
+    expect(hasRenderedTwice).toBeInTheDocument();
   });
 
   it('returns the new window dimensions after a resize event', () => {

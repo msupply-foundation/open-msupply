@@ -1,13 +1,11 @@
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render } from '@testing-library/react';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
 import { TestingProvider } from '../../../../utils';
 
 describe('Dropdown', () => {
-  it('Renders the dropdown item children when the dropdown is clicked', () => {
-    const { getByRole, getByText } = render(
+  it('Renders the dropdown item children when the dropdown is clicked', async () => {
+    const { getByRole, findByText } = render(
       <TestingProvider>
         <DropdownMenu label="dropdown">
           <DropdownMenuItem>One</DropdownMenuItem>
@@ -17,16 +15,14 @@ describe('Dropdown', () => {
 
     const button = getByRole('button');
 
-    act(() => {
-      userEvent.click(button);
-    });
+    fireEvent.mouseDown(button);
 
-    const node = getByText(/one/i);
+    const node = await findByText(/one/i);
 
     expect(node).toBeInTheDocument();
   });
 
-  it('Renders the dropdown item children when the dropdown is clicked and triggers the callback when an item is selected', () => {
+  it('Renders the dropdown item children when the dropdown is clicked and triggers the callback when an item is selected', async () => {
     const TestDropdown = () => {
       const [text, setText] = React.useState('one');
 
@@ -41,21 +37,17 @@ describe('Dropdown', () => {
       );
     };
 
-    const { getByRole, getByText } = render(<TestDropdown />);
+    const { getByRole, findByText } = render(<TestDropdown />);
 
     const button = getByRole('button');
 
-    act(() => {
-      userEvent.click(button);
-    });
+    fireEvent.mouseDown(button);
 
-    let node = getByText(/one/i);
+    let node = await findByText(/one/i);
 
-    act(() => {
-      userEvent.click(node);
-    });
+    fireEvent.click(node);
 
-    node = getByText(/two/i);
+    node = await findByText(/two/i);
 
     expect(node).toBeInTheDocument();
   });
