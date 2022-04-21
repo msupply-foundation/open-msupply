@@ -1,5 +1,5 @@
 import { useTabs } from './useTabs';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 
 describe('useTabs', () => {

@@ -1,7 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render } from '@testing-library/react';
 import { TabList, Tab, TabPanel, TabContext } from './Tabs';
 import { useTabs } from './useTabs';
 
@@ -40,9 +38,7 @@ describe('Tabs', () => {
 
     const tabButton = getByRole('tab', { name: /one/i });
 
-    act(() => {
-      userEvent.click(tabButton);
-    });
+    fireEvent.click(tabButton);
 
     const node1 = queryByText(/content1/i);
     const node2 = queryByText(/content2/i);

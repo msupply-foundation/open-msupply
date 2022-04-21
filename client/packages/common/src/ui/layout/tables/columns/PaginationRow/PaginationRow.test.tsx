@@ -1,8 +1,6 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { PaginationRow } from './PaginationRow';
-import { act } from 'react-dom/test-utils';
-import userEvent from '@testing-library/user-event';
 import { createTableStore, TableProvider } from '../../context';
 import { TestingProvider } from '../../../../../utils';
 
@@ -141,9 +139,7 @@ describe('PaginationRow', () => {
 
     const node = getByRole('button', { name: /page 1/i });
 
-    act(() => {
-      userEvent.click(node);
-    });
+    fireEvent.click(node);
 
     expect(onChange).toBeCalledTimes(1);
     expect(onChange).toBeCalledWith(0);

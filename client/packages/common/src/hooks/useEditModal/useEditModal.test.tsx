@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { useEditModal } from './useEditModal';
 import { act } from '@testing-library/react';
 import { ModalMode } from './useEditModal';
