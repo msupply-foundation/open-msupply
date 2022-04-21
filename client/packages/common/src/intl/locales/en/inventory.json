@@ -27,5 +27,7 @@
   "messages.error-deleting-locations_one": "{{count}} location could not be deleted",
   "messages.error-deleting-locations_other": "{{count}} locations could not be deleted",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
-  "messages.deleted-lines": "Deleted {{number}} lines"
+  "messages.deleted-lines": "Deleted {{number}} lines",
+  "status.new": "New",
+  "status.finalised": "Finalised"
 }

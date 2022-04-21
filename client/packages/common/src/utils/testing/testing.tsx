@@ -11,8 +11,14 @@ import { GqlProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../../ui/components/modals';
 import { renderHook } from '@testing-library/react';
-import i18next from './i18next';
-import { I18nextProvider } from 'react-i18next';
+import i18next from 'i18next';
+import { initReactI18next, I18nextProvider } from 'react-i18next';
+import app from '@common/intl/locales/en/app.json';
+import common from '@common/intl/locales/en/common.json';
+import appFr from '@common/intl/locales/fr/app.json';
+import commonFr from '@common/intl/locales/fr/common.json';
+import appAr from '@common/intl/locales/ar/app.json';
+import commonAr from '@common/intl/locales/ar/common.json';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +33,18 @@ interface IntlTestProviderProps {
   locale: SupportedLocales;
 }
 
+const resources = {
+  ar: {
+    app: { ...app, ...appAr },
+    common: { ...common, ...commonAr },
+  },
+  en: { app, common },
+  fr: {
+    app: { ...app, ...appFr },
+    common: { ...common, ...commonFr },
+  },
+};
+
 export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   children,
   locale,
@@ -34,6 +52,22 @@ export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   useEffect(() => {
     i18next.changeLanguage(locale);
   }, [locale]);
+
+  if (!i18next.isInitialized) {
+    i18next.use(initReactI18next).init({
+      resources,
+      debug: false,
+      lng: 'en',
+      fallbackLng: 'en',
+      ns: ['app', 'common'],
+      defaultNS: 'common',
+      fallbackNS: 'common',
+      interpolation: {
+        escapeValue: false,
+      },
+      react: { useSuspense: false },
+    });
+  }
   return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
 };
 

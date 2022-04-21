@@ -157,6 +157,7 @@
   "label.phone": "Phone",
   "label.website": "Website",
   "link.copy-to-clipboard": "Copy to Clipboard",
+  "placeholder.filter-by-status": "Filter by status",
   "placeholder.filter-items": "Filter items",
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code",
