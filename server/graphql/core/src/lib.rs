@@ -33,7 +33,8 @@ pub trait ContextExt {
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
     fn self_request(&self) -> Option<&Box<dyn SelfRequest>>;
-    fn get_sync_settings(&self) -> &SyncSettings;
+    // Sync settings might not be available during initial setup phase
+    fn get_sync_settings(&self) -> Option<&SyncSettings>;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -58,8 +59,9 @@ impl<'a> ContextExt for Context<'a> {
             .and_then(|d| d.auth_token.to_owned())
     }
 
-    fn get_sync_settings(&self) -> &SyncSettings {
-        self.data_unchecked::<Data<SyncSettings>>()
+    fn get_sync_settings(&self) -> Option<&SyncSettings> {
+        self.data_opt::<Data<SyncSettings>>()
+            .map(|data| data.get_ref())
     }
 
     fn self_request(&self) -> Option<&Box<dyn SelfRequest>> {
