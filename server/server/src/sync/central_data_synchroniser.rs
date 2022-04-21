@@ -257,7 +257,10 @@ mod tests {
 
         let client = Client::new();
         let url = Url::parse(&settings.sync.url).unwrap();
-        let credentials = SyncCredentials::new(&settings.sync.username, &settings.sync.password);
+        let credentials = SyncCredentials {
+            username: settings.sync.username,
+            password_sha256: settings.sync.password_sha256,
+        };
         let sync_api_v5 = SyncApiV5::new(url, credentials, client);
 
         let sync = CentralDataSynchroniser { sync_api_v5 };
