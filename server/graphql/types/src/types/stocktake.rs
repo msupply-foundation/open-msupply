@@ -1,5 +1,5 @@
 use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
     schema::{StocktakeRow, StocktakeStatus},
     unknown_user,
@@ -67,16 +67,18 @@ impl StocktakeNode {
         StocktakeNodeStatus::from_domain(&self.stocktake.status)
     }
 
-    pub async fn created_datetime(&self) -> &NaiveDateTime {
-        &self.stocktake.created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.stocktake.created_datetime, Utc)
     }
 
     pub async fn stocktake_date(&self) -> &Option<NaiveDate> {
         &self.stocktake.stocktake_date
     }
 
-    pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.stocktake.finalised_datetime
+    pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
+        self.stocktake
+            .finalised_datetime
+            .map(|dt| DateTime::<Utc>::from_utc(dt, Utc))
     }
 
     pub async fn inventory_adjustment_id(&self) -> &Option<String> {

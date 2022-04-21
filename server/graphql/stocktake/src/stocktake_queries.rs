@@ -344,9 +344,9 @@ mod test {
               "comment": "comment",
               "description": "description",
               "status": "FINALISED",
-              "createdDatetime": "2022-01-22T15:16:00",
+              "createdDatetime": "2022-01-22T15:16:00+00:00",
               "stocktakeDate": "2022-01-23",
-              "finalisedDatetime": "2022-01-23T15:16:00",
+              "finalisedDatetime": "2022-01-23T15:16:00+00:00",
               "inventoryAdjustmentId": "inv id",
               "isLocked": true,
               "lines": {

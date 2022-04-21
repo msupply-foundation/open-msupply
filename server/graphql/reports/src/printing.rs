@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use service::permission_validation::{Resource, ResourceAccessRequest};
-use service::report::definition::GraphQlQuery;
+use service::report::definition::{GraphQlQuery, ReportDefinition};
 use service::report::report_service::ReportError;
 
 pub struct FailedToFetchReportData {
@@ -70,6 +70,71 @@ pub async fn print_report(
 
     // get the required report
     let resolved_report = match service.resolve_report(&service_context, &store_id, &report_id) {
+        Ok(resolved_report) => resolved_report,
+        Err(err) => {
+            return Ok(PrintReportResponse::Error(PrintReportError {
+                error: map_error(err)?,
+            }))
+        }
+    };
+    let query = resolved_report.query.clone();
+
+    // fetch data required for the report
+    let result = fetch_data(ctx, query, &store_id, &data_id)
+        .await
+        .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)))?;
+    let report_data = match result {
+        FetchResult::Data(data) => data,
+        FetchResult::Error(errors) => {
+            return Ok(PrintReportResponse::Error(PrintReportError {
+                error: PrintReportErrorInterface::FailedToFetchReportData(
+                    FailedToFetchReportData { errors },
+                ),
+            }))
+        }
+    };
+
+    // print the report with the fetched data
+    let file_id = match service.print_report(&resolved_report, report_data) {
+        Ok(file_id) => file_id,
+        Err(err) => {
+            return Ok(PrintReportResponse::Error(PrintReportError {
+                error: map_error(err)?,
+            }))
+        }
+    };
+
+    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
+}
+
+pub async fn print_report_definition(
+    ctx: &Context<'_>,
+    store_id: String,
+    name: Option<String>,
+    report: serde_json::Value,
+    data_id: String,
+) -> Result<PrintReportResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::Report,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+    let service = &service_provider.report_service;
+
+    // get the required report
+    let report_definition: ReportDefinition = serde_json::from_value(report)
+        .map_err(|err| StandardGraphqlError::BadUserInput(format!("{}", err)).extend())?;
+    let resolved_report = match service.resolve_report_definition(
+        &service_context,
+        &store_id,
+        name.unwrap_or("report".to_string()),
+        report_definition,
+    ) {
         Ok(resolved_report) => resolved_report,
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
