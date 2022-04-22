@@ -212,6 +212,7 @@ mod graphql {
                         })
                         .exists_for_name(SimpleStringFilter::like("exists_for_name_filter"))
                         .exists_for_name_id(EqualFilter::not_equal_to("test_name_id_filter"))
+                        .exists_for_store_id(EqualFilter::equal_to("store_a"))
                 )
             );
             Ok(ListResult::empty())
@@ -235,5 +236,63 @@ mod graphql {
             &expected,
             Some(service_provider(test_service, &connection_manager))
         );
+    }
+    #[actix_rt::test]
+    async fn test_master_lists_always_filtered_by_store() {
+        let (_, _, _, settings) = setup_graphl_test(
+            GeneralQueries,
+            EmptyMutation,
+            "test_master_lists_always_filtered_by_store",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        // let count_store_a = MockDataInserts::all()
+        //     .iter()
+        //     .filter(|v| v.store_id == "store_a")
+        //     .count();
+        // let count_store_b = mock_locations()
+        //     .iter()
+        //     .filter(|v| v.store_id == "store_b")
+        //     .count();
+        // assert!(count_store_a != count_store_b);
+
+        //TODO: Fix mocks
+        let count_store_a = 1;
+        let count_store_b = 0;
+
+        let query = r#"
+        query {
+            masterLists(storeId: \"store_a\") {
+              ... on MasterListConnector {
+                totalCount
+              }
+            }
+        }
+        "#;
+        let expected = json!({
+              "masterLists": {
+                  "totalCount": count_store_a
+              }
+          }
+        );
+        assert_graphql_query!(&settings, query, &None, &expected, None);
+
+        let query = r#"
+        query {
+            masterLists(storeId: \"store_b\") {
+              ... on MasterListConnector {
+                totalCount
+              }
+            }
+        }
+        "#;
+        let expected = json!({
+              "masterLists": {
+                  "totalCount": count_store_b
+              }
+          }
+        );
+        assert_graphql_query!(&settings, query, &None, &expected, None);
     }
 }
