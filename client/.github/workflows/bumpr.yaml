@@ -1,2 +1,17 @@
-- name: bumpr - Bump version when merging Pull Request with specific labels
-  uses: haya14busa/action-bumpr@v1.0.0
+name: release - Bump version when merging Pull Request with specific labels
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Bump version on merging Pull Requests with specific labels.
+      # (bump:major,bump:minor,bump:patch)
+      - uses: haya14busa/action-bumpr@v1
