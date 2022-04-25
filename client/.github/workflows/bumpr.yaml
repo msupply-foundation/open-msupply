@@ -1,4 +1,4 @@
-name: release - Bump version when merging Pull Request with specific labels
+name: Bump version when merging PR with specific labels
 on:
   push:
     branches:
