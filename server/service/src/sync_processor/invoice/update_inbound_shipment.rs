@@ -2,7 +2,7 @@ use super::common::regenerate_linked_invoice_lines;
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing, SyncProcessor};
 use repository::{
     schema::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceLineRowRepository, InvoiceRepository, StorageConnection,
+    InvoiceLineRowRepository, InvoiceRowRepository, StorageConnection,
 };
 
 const DESCRIPTION: &'static str =
@@ -64,7 +64,7 @@ impl<'a> SyncProcessor for UpdateInboundShipmentProcessor<'a> {
         updated_linked_invoice.status = source_invoice.status.clone();
         updated_linked_invoice.shipped_datetime = source_invoice.shipped_datetime.clone();
 
-        InvoiceRepository::new(self.connection).upsert_one(&updated_linked_invoice)?;
+        InvoiceRowRepository::new(self.connection).upsert_one(&updated_linked_invoice)?;
 
         let result = format!(
         "{}\nnew_invoice_lines: {:#?}\ndeleted_invoice_lines: {:#?}\nupdated_linked_invoice: {:#?}",

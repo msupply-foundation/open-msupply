@@ -5,9 +5,9 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus,
     },
-    InvoiceLineRowRepository, InvoiceRepository, ItemRepository, NameRepository, RepositoryError,
-    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
-    StocktakeRowRepository, StorageConnection,
+    InvoiceLineRowRepository, InvoiceRowRepository, ItemRepository, NameRepository,
+    RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
+    StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
 };
 use repository::{EqualFilter, StocktakeLineRowRepository};
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
@@ -435,7 +435,7 @@ pub fn update_stocktake(
             }
             // write inventory adjustment
             if let Some(inventory_adjustment) = result.inventory_adjustment {
-                let shipment_repo = InvoiceRepository::new(connection);
+                let shipment_repo = InvoiceRowRepository::new(connection);
                 shipment_repo.upsert_one(&inventory_adjustment)?;
             }
             let shipment_line_repo = InvoiceLineRowRepository::new(connection);

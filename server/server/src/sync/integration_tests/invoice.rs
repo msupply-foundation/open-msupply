@@ -5,7 +5,7 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         LocationRow,
     },
-    EqualFilter, InvoiceLineRowRepository, InvoiceRepository, ItemFilter, ItemQueryRepository,
+    EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, ItemFilter, ItemQueryRepository,
     LocationRowRepository, NameFilter, NameQueryRepository, RequisitionRowRepository,
     StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };
@@ -157,7 +157,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             },
         ];
 
-        let repo = InvoiceRepository::new(connection);
+        let repo = InvoiceRowRepository::new(connection);
         let line_repo = InvoiceLineRowRepository::new(connection);
         for row in &rows {
             repo.upsert_one(&row.row).unwrap();
@@ -169,7 +169,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
     }
 
     fn mutate(&self, connection: &StorageConnection, rows: &Vec<FullInvoice>) -> Vec<FullInvoice> {
-        let repo = InvoiceRepository::new(connection);
+        let repo = InvoiceRowRepository::new(connection);
         let line_repo = InvoiceLineRowRepository::new(connection);
         let rows = rows
             .iter()
@@ -264,7 +264,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
     }
 
     fn validate(&self, connection: &StorageConnection, rows: &Vec<FullInvoice>) {
-        let repo = InvoiceRepository::new(connection);
+        let repo = InvoiceRowRepository::new(connection);
         let line_repo = InvoiceLineRowRepository::new(connection);
         for row_expected in rows {
             let row = repo

@@ -5,7 +5,7 @@ mod test {
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, get_invoice_lines_inline};
     use repository::EqualFilter;
-    use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceQueryRepository};
+    use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceRepository};
     use serde_json::json;
 
     use crate::InvoiceQueries;
@@ -20,7 +20,7 @@ mod test {
         )
         .await;
 
-        let invoices = InvoiceQueryRepository::new(&connection)
+        let invoices = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
             .unwrap();
 
@@ -73,7 +73,7 @@ mod test {
         )
         .await;
 
-        let invoices = InvoiceQueryRepository::new(&connection)
+        let invoices = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
             .unwrap();
 
@@ -192,7 +192,7 @@ mod test {
         )
         .await;
 
-        let mut invoices = InvoiceQueryRepository::new(&connection)
+        let mut invoices = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
             .unwrap();
 

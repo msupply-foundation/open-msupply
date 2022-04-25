@@ -1,5 +1,5 @@
 use repository::Name;
-use repository::{InvoiceRepository, RepositoryError, StorageConnection};
+use repository::{InvoiceRowRepository, RepositoryError, StorageConnection};
 
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 
@@ -36,7 +36,7 @@ pub fn check_invoice_does_not_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), InsertOutboundShipmentError> {
-    let result = InvoiceRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
 
     if let Err(RepositoryError::NotFound) = &result {
         Ok(())

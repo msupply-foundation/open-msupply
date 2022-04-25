@@ -7,7 +7,7 @@ mod test_update {
             mock_new_response_requisition_test, mock_sent_request_requisition, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+        InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
     };
     use util::inline_init;
 
@@ -105,7 +105,7 @@ mod test_update {
             )
             .unwrap();
 
-        let invoice = InvoiceRepository::new(&connection)
+        let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice.invoice_row.id)
             .unwrap();
 
@@ -165,7 +165,7 @@ mod test_update {
             )
             .unwrap();
 
-        let invoice = InvoiceRepository::new(&connection)
+        let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice.invoice_row.id)
             .unwrap();
 
