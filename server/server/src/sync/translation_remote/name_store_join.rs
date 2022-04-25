@@ -1,7 +1,7 @@
 use log::warn;
 use repository::{
     schema::{NameStoreJoinRow, RemoteSyncBufferRow},
-    NameRepository, StorageConnection,
+    NameRowRepository, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};
@@ -38,7 +38,7 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
 
         let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data)?;
 
-        let name = match NameRepository::new(connection).find_one_by_id(&data.name_ID)? {
+        let name = match NameRowRepository::new(connection).find_one_by_id(&data.name_ID)? {
             Some(name) => name,
             None => {
                 // TODO: support patients?

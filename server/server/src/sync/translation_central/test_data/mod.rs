@@ -12,7 +12,7 @@ use repository::{
         NameRow, StoreRow, UnitRow,
     },
     ItemRowRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-    MasterListRowRepository, NameRepository, RepositoryError, StorageConnection,
+    MasterListRowRepository, NameRowRepository, RepositoryError, StorageConnection,
     StoreRowRepository, UnitRowRepository,
 };
 
@@ -80,7 +80,7 @@ pub async fn check_records_against_database(
             }
             TestSyncDataRecord::Name(comparison_record) => {
                 assert_eq!(
-                    NameRepository::new(&connection)
+                    NameRowRepository::new(&connection)
                         .find_one_by_id(&record.central_sync_buffer_row.record_id)
                         .unwrap(),
                     comparison_record

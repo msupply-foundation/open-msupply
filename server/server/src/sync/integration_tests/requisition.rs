@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use repository::{
     mock::mock_request_draft_requisition,
     schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    EqualFilter, ItemFilter, ItemRepository, NameFilter, NameQueryRepository,
+    EqualFilter, ItemFilter, ItemRepository, NameFilter, NameRepository,
     RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::{inline_edit, uuid::uuid};
@@ -17,7 +17,7 @@ pub struct FullRequisition {
 pub struct RequisitionRecordTester {}
 impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
     fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<FullRequisition> {
-        let name = NameQueryRepository::new(connection)
+        let name = NameRepository::new(connection)
             .query_by_filter(store_id, NameFilter::new().is_store(true))
             .unwrap()
             .pop()
@@ -109,7 +109,7 @@ impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
         let rows = rows
             .iter()
             .map(|row_existing| {
-                let name = NameQueryRepository::new(connection)
+                let name = NameRepository::new(connection)
                     .query_by_filter(
                         &row_existing.row.store_id,
                         NameFilter::new().id(EqualFilter::equal_to(&row_existing.row.name_id)),

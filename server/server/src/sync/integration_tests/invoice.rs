@@ -6,8 +6,8 @@ use repository::{
         LocationRow,
     },
     EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, ItemFilter, ItemRepository,
-    LocationRowRepository, NameFilter, NameQueryRepository, RequisitionRowRepository,
-    StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
+    LocationRowRepository, NameFilter, NameRepository, RequisitionRowRepository, StockLineFilter,
+    StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 use util::{inline_edit, uuid::uuid};
 
@@ -174,7 +174,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
         let rows = rows
             .iter()
             .map(|row_existing| {
-                let name = NameQueryRepository::new(connection)
+                let name = NameRepository::new(connection)
                     .query_by_filter(
                         &row_existing.row.store_id,
                         NameFilter::new().id(EqualFilter::equal_to(&row_existing.row.name_id)),

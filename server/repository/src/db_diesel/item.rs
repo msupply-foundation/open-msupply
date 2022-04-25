@@ -205,7 +205,7 @@ mod tests {
             },
             mock::MockDataInserts,
             schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
-            ItemRepository, ItemRowRepository, NameRepository,
+            ItemRepository, ItemRowRepository, NameRowRepository,
         },
     };
 
@@ -470,7 +470,7 @@ mod tests {
                 .unwrap();
         }
 
-        NameRepository::new(&storage_connection)
+        NameRowRepository::new(&storage_connection)
             .upsert_one(&name_row)
             .unwrap();
         // Test

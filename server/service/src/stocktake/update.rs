@@ -5,7 +5,7 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus,
     },
-    InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, NameRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, NameRowRepository,
     RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
     StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
 };
@@ -351,7 +351,7 @@ fn generate(
     }
 
     // find inventory adjustment name:
-    let invad_name = NameRepository::new(connection)
+    let invad_name = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
         .ok_or(UpdateStocktakeError::InternalError(
             "Missing inventory adjustment name".to_string(),

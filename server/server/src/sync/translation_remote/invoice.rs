@@ -4,7 +4,7 @@ use repository::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow,
         RemoteSyncBufferRow,
     },
-    InvoiceRowRepository, NameRepository, StorageConnection, StoreRowRepository,
+    InvoiceRowRepository, NameRowRepository, StorageConnection, StoreRowRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -166,7 +166,7 @@ impl RemotePullTranslation for InvoiceTranslation {
 
         let data = serde_json::from_str::<LegacyTransactRow>(&sync_record.data)?;
 
-        let name = NameRepository::new(connection)
+        let name = NameRowRepository::new(connection)
             .find_one_by_id(&data.name_ID)
             .ok()
             .flatten()
