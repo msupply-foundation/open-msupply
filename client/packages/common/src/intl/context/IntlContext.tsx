@@ -10,12 +10,15 @@ import { PropsWithChildrenOnly } from '@common/types';
 const defaultNS = 'common';
 export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   React.useEffect(() => {
+    if (i18next.isInitialized) return;
+
     const minuteInMilliseconds = 60 * 1000;
-    const expirationTime =
-      process.env['NODE_ENV'] === 'development'
-        ? 0
-        : // TODO: change back to a week when things are stable
-          60 * minuteInMilliseconds; // 7 * 24 * 60 * minuteInMilliseconds;
+    const isDevelopment = process.env['NODE_ENV'] === 'development';
+    const expirationTime = isDevelopment
+      ? 0
+      : // TODO: change back to a week when things are stable
+        60 * minuteInMilliseconds; // 7 * 24 * 60 * minuteInMilliseconds;
+
     i18next
       .use(initReactI18next) // passes i18n down to react-i18next
       .use(Backend)
@@ -37,7 +40,7 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
             },
           ],
         },
-        debug: true,
+        debug: isDevelopment,
         defaultNS,
         ns: defaultNS, // behaving as I expect defaultNS should. Without specifying ns here, a request is made to 'translation.json'
         fallbackLng: 'en',

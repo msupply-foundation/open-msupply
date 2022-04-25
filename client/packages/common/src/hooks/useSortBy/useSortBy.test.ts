@@ -1,7 +1,7 @@
 import { createColumnWithDefaults } from './../../ui/layout/tables/hooks/useColumns/useColumns';
 import { TestingRouterContext } from '@openmsupply-client/common';
 import { useSortBy } from './useSortBy';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 
 interface TestSortBy {

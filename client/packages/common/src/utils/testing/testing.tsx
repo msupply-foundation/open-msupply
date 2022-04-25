@@ -10,13 +10,9 @@ import { TableProvider, createTableStore } from '../../ui/layout/tables';
 import { GqlProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../../ui/components/modals';
-import {
-  renderHook,
-  RenderHookOptions,
-  RenderHookResult,
-} from '@testing-library/react-hooks/dom';
+import { renderHook } from '@testing-library/react';
 import i18next from 'i18next';
-import { I18nextProvider, initReactI18next } from 'react-i18next';
+import { initReactI18next, I18nextProvider } from 'react-i18next';
 import app from '@common/intl/locales/en/app.json';
 import common from '@common/intl/locales/en/common.json';
 import appFr from '@common/intl/locales/fr/app.json';
@@ -54,6 +50,10 @@ export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   locale,
 }) => {
   useEffect(() => {
+    i18next.changeLanguage(locale);
+  }, [locale]);
+
+  if (!i18next.isInitialized) {
     i18next.use(initReactI18next).init({
       resources,
       debug: false,
@@ -66,8 +66,7 @@ export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
         escapeValue: false,
       },
     });
-  }, [resources]);
-
+  }
   return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
 };
 
@@ -97,7 +96,7 @@ export const TestingProvider: FC<
     locale?: 'en' | 'fr' | 'ar';
   }>
 > = ({ children, locale = 'en' }) => (
-  <React.Suspense fallback={<span>?</span>}>
+  <React.Suspense fallback={<span>[suspended]</span>}>
     <QueryClientProvider client={queryClient}>
       <GqlProvider url={Environment.GRAPHQL_URL}>
         <SnackbarProvider maxSnack={3}>
@@ -152,12 +151,10 @@ export const setScreenSize_ONLY_FOR_TESTING = (screenSize: number): void => {
 export const renderHookWithProvider = <Props, Result>(
   hook: (props: Props) => Result,
   options?: {
-    renderHookOptions?: RenderHookOptions<Props>;
     providerProps?: { locale: 'en' | 'fr' | 'ar' };
   }
-): RenderHookResult<Props, Result> =>
+) =>
   renderHook(hook, {
-    ...options?.renderHookOptions,
     wrapper: ({ children }: { children?: React.ReactNode }) => (
       <TestingProvider {...options?.providerProps}>{children}</TestingProvider>
     ),
