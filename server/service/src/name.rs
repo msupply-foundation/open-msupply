@@ -1,4 +1,4 @@
-use repository::NameQueryRepository;
+use repository::NameRepository;
 use repository::PaginationOption;
 use repository::{Name, NameFilter, NameSort};
 
@@ -17,7 +17,7 @@ pub fn get_names(
     sort: Option<NameSort>,
 ) -> Result<ListResult<Name>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = NameQueryRepository::new(&ctx.connection);
+    let repository = NameRepository::new(&ctx.connection);
 
     Ok(ListResult {
         rows: repository.query(store_id, pagination, filter.clone(), sort)?,

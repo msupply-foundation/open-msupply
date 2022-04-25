@@ -1,6 +1,6 @@
 use actix_web::web::Data;
 use repository::schema::NameRow;
-use repository::NameRepository;
+use repository::NameRowRepository;
 use repository::RepositoryError;
 
 use async_graphql::dataloader::*;
@@ -19,7 +19,7 @@ impl Loader<String> for NameRowLoader {
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let service_context = self.service_provider.context()?;
-        let results = NameRepository::new(&service_context.connection).find_many_by_id(keys)?;
+        let results = NameRowRepository::new(&service_context.connection).find_many_by_id(keys)?;
 
         Ok(results
             .into_iter()
