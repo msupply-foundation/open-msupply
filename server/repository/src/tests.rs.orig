@@ -331,7 +331,7 @@ mod repository_test {
         },
         schema::{PricingRow, NumberRowType, RequisitionRowStatus},
         test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
-        InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListLineRowRepository,
+        InvoiceRepository, ItemRowRepository, MasterListLineRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
         NumberRowRepository, OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
@@ -345,7 +345,7 @@ mod repository_test {
             ChangelogAction, ChangelogRow, ChangelogTableName, PricingRow, NumberRowType,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, MasterListLineRowRepository,
+        InvoiceLineRowRepository, InvoiceRepository, ItemRowRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
         NumberRowRepository, OutboundShipmentRepository, RequisitionLineRepository,
         RequisitionRepository, StockLineRepository, StockLineRowRepository, StockTakeRowRepository,
@@ -561,7 +561,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
@@ -587,7 +587,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
@@ -661,7 +661,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
         MasterListRowRepository::new(&connection)
@@ -757,7 +757,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
         let name_repo = NameRepository::new(&connection);
@@ -799,7 +799,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
         item_repo.insert_one(&data::item_service_1()).await.unwrap();

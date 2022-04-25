@@ -3,7 +3,7 @@ use repository::{
     schema::{
         ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowType, RemoteSyncBufferRow,
     },
-    InvoiceLineRowRepository, ItemRepository, StorageConnection,
+    InvoiceLineRowRepository, ItemRowRepository, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};
@@ -100,7 +100,7 @@ impl RemotePullTranslation for InvoiceLineTranslation {
                 )
             }
             None => {
-                let item = match ItemRepository::new(connection).find_one_by_id(&data.item_ID)? {
+                let item = match ItemRowRepository::new(connection).find_one_by_id(&data.item_ID)? {
                     Some(item) => item,
                     None => {
                         return Err(anyhow::Error::msg(format!(

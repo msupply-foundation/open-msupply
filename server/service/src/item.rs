@@ -1,5 +1,5 @@
 use repository::PaginationOption;
-use repository::{Item, ItemFilter, ItemQueryRepository, ItemSort, StorageConnectionManager};
+use repository::{Item, ItemFilter, ItemRepository, ItemSort, StorageConnectionManager};
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
@@ -14,7 +14,7 @@ pub fn get_items(
 ) -> Result<ListResult<Item>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let connection = connection_manager.connection()?;
-    let repository = ItemQueryRepository::new(&connection);
+    let repository = ItemRepository::new(&connection);
 
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,

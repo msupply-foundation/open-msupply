@@ -206,7 +206,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 //     use repository::{
 //         mock::MockDataInserts,
 //         schema::{InvoiceLineRow, StockLineRow},
-//         ItemRepository,
+//         ItemRowRepository,
 //     };
 //     use server::test_utils::setup_all;
 
@@ -573,7 +573,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 //             get_stock_line_inline!(&secondary_draft_stock_line_id, &connection);
 //         let start_new_stock_line =
 //             get_stock_line_inline!(&stock_line_not_in_invoices_id, &connection);
-//         let new_item = ItemRepository::new(&connection)
+//         let new_item = ItemRowRepository::new(&connection)
 //             .find_one_by_id(&item_not_in_invoices_id)
 //             .unwrap()
 //             .unwrap();

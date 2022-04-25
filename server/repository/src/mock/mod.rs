@@ -79,7 +79,7 @@ use self::unit::mock_units;
 
 use super::{
     db_diesel::{
-        InvoiceRowRepository, ItemRepository, NameRepository, NameStoreJoinRepository,
+        InvoiceRowRepository, ItemRowRepository, NameRepository, NameStoreJoinRepository,
         StorageConnection, StoreRowRepository, UnitRowRepository,
     },
     schema::*,
@@ -397,7 +397,7 @@ pub async fn insert_mock_data(
         }
 
         if inserts.items {
-            let repo = ItemRepository::new(connection);
+            let repo = ItemRowRepository::new(connection);
             for row in &mock_data.items {
                 repo.insert_one(&row).await.unwrap();
             }

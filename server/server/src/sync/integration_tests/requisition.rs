@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use repository::{
     mock::mock_request_draft_requisition,
     schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    EqualFilter, ItemFilter, ItemQueryRepository, NameFilter, NameQueryRepository,
+    EqualFilter, ItemFilter, ItemRepository, NameFilter, NameQueryRepository,
     RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::{inline_edit, uuid::uuid};
@@ -22,7 +22,7 @@ impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
             .unwrap()
             .pop()
             .unwrap();
-        let item = ItemQueryRepository::new(connection)
+        let item = ItemRepository::new(connection)
             .query_one(ItemFilter::new())
             .unwrap()
             .unwrap();

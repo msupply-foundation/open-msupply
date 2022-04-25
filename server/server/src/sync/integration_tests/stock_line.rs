@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
     schema::{LocationRow, StockLineRow},
-    EqualFilter, ItemFilter, ItemQueryRepository, LocationRowRepository, StockLineRowRepository,
+    EqualFilter, ItemFilter, ItemRepository, LocationRowRepository, StockLineRowRepository,
     StorageConnection,
 };
 use util::{inline_edit, uuid::uuid};
@@ -23,7 +23,7 @@ impl SyncRecordTester<Vec<StockLineRow>> for StockLineRecordTester {
             .upsert_one(&location)
             .unwrap();
 
-        let item = ItemQueryRepository::new(connection)
+        let item = ItemRepository::new(connection)
             .query_one(ItemFilter::new())
             .unwrap()
             .unwrap();
@@ -58,7 +58,7 @@ impl SyncRecordTester<Vec<StockLineRow>> for StockLineRecordTester {
         let rows = rows
             .iter()
             .map(|row| {
-                let new_item = ItemQueryRepository::new(connection)
+                let new_item = ItemRepository::new(connection)
                     .query_one(ItemFilter::new().id(EqualFilter::not_equal_to(&row.item_id)))
                     .unwrap()
                     .unwrap();

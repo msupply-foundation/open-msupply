@@ -1,6 +1,6 @@
 use repository::{
     schema::{InvoiceRow, InvoiceRowType, ItemRow, ItemRowType},
-    ItemFilter, ItemQueryRepository, RepositoryError, SimpleStringFilter, StorageConnection,
+    ItemFilter, ItemRepository, RepositoryError, SimpleStringFilter, StorageConnection,
 };
 use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
@@ -49,7 +49,7 @@ pub fn validate(
 fn get_default_service_item(
     connection: &StorageConnection,
 ) -> Result<Option<ItemRow>, RepositoryError> {
-    let item_row = ItemQueryRepository::new(connection)
+    let item_row = ItemRepository::new(connection)
         .query_one(ItemFilter::new().code(SimpleStringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE)))?
         .map(|item| item.item_row);
 
