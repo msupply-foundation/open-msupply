@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { act, render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { BasePopover } from './BasePopover';
-import userEvent from '@testing-library/user-event';
 import { TestingProvider } from '@common/utils';
 
 type VirtualElement = { getBoundingClientRect: () => DOMRect };
@@ -44,9 +43,7 @@ describe('BasePopover', () => {
 
     const button = queryByRole('button');
 
-    act(() => {
-      if (button) userEvent.click(button);
-    });
+    if (button) fireEvent.click(button);
 
     const tooltip = queryByRole('tooltip');
 

@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
-import { waitFor, render } from '@testing-library/react';
+import { waitFor, render, fireEvent } from '@testing-library/react';
 import { HeaderCell, HeaderRow } from './Header';
-import userEvent from '@testing-library/user-event';
 import { useColumns } from '../../hooks';
 import { TestingProvider } from '../../../../../utils';
 
@@ -82,7 +81,7 @@ describe('HeaderRow', () => {
 
     const nameHeader = getByRole('button', { name: /status/i });
 
-    userEvent.click(nameHeader);
+    fireEvent.click(nameHeader);
 
     waitFor(() => expect(onSortBy).toBeCalledTimes(1));
   });
@@ -99,7 +98,7 @@ describe('HeaderRow', () => {
 
     const nameHeader = getByRole('button', { name: /status/i });
 
-    userEvent.click(nameHeader);
+    fireEvent.click(nameHeader);
 
     waitFor(() => {
       expect(onSortBy).toBeCalledWith(

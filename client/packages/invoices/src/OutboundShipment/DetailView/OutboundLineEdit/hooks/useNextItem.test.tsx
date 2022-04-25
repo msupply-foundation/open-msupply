@@ -4,7 +4,7 @@ import {
   InvoiceLineNodeType,
   ItemNodeType,
 } from '@openmsupply-client/common';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { graphql } from 'msw';
 import { setupServer } from 'msw/node';
 import { useNextItem } from './useNextItem';
@@ -227,7 +227,7 @@ describe('useNextItem', () => {
       wrapper: TestingProvider,
     });
 
-    return result.waitForNextUpdate().then(() => {
+    result.rerender(() => {
       expect(result.result.current.next).toEqual(
         expect.objectContaining({ id: invoiceByNumber.lines.nodes[1]?.id })
       );

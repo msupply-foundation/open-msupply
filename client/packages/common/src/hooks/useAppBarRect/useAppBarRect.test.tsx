@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { renderHook } from '@testing-library/react-hooks';
+import React, { useRef } from 'react';
+import { render, renderHook } from '@testing-library/react';
 import { useAppBarRect, useAppBarRectStore } from '@common/hooks';
 
 const original = {
@@ -39,9 +40,18 @@ describe('useAppBarRect', () => {
     expect(state).toEqual(expected);
   });
 
-  it('Triggers a new state update when the window dimensions change', () => {
-    const { result } = renderHook(useAppBarRect);
+  const Component = () => {
+    const renderCounter = useRef(0);
+    renderCounter.current = renderCounter.current + 1;
+    useAppBarRect();
 
-    expect(result.all.length).toBe(2);
+    return <span>{renderCounter.current}</span>;
+  };
+
+  it('Triggers a new state update when the window dimensions change', () => {
+    const { getByText } = render(<Component />);
+
+    const hasRenderedTwice = getByText(/2/);
+    expect(hasRenderedTwice).toBeInTheDocument();
   });
 });

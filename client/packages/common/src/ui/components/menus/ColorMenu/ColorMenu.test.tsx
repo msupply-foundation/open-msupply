@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { Color, ColorMenu } from './ColorMenu';
 import { IconButton } from '../../buttons';
 import { TestingProvider } from '../../../../utils';
-import { act } from 'react-dom/test-utils';
-import userEvent from '@testing-library/user-event';
 import { CircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
@@ -57,9 +55,7 @@ describe('ColorMenu', () => {
 
     const button = getByRole('button');
 
-    await act(async () => {
-      userEvent.click(button);
-    });
+    fireEvent.click(button);
 
     const red = getByLabelText('red');
     const blue = getByLabelText('blue');
@@ -86,16 +82,10 @@ describe('ColorMenu', () => {
     );
 
     const button = getByRole('button');
-
-    await act(async () => {
-      userEvent.click(button);
-    });
+    fireEvent.click(button);
 
     const red = getByLabelText('red');
-
-    await act(async () => {
-      userEvent.click(red);
-    });
+    fireEvent.click(red);
 
     expect(fn).toBeCalledTimes(1);
     expect(fn).toBeCalledWith({ name: 'red', hex: '#ff3b3b' });

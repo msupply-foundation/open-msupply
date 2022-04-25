@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { render } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { fireEvent, render, renderHook } from '@testing-library/react';
 import { useRef } from 'react';
 import { act } from 'react-dom/test-utils';
 import { useBoundingClientRect } from './useBoundingClientRect';
-import userEvent from '@testing-library/user-event';
 
 describe('useBoundingClientRect', () => {
   beforeEach(() => {
@@ -56,7 +54,7 @@ describe('useBoundingClientRect', () => {
       );
     };
 
-    const { getByText, getByRole } = render(<X />);
+    const { getByText, getByRole, findByText } = render(<X />);
 
     act(() => {
       jest.advanceTimersByTime(1000);
@@ -67,15 +65,8 @@ describe('useBoundingClientRect', () => {
 
     // Find the button and click it to trigger a resize
     const button = getByRole('button');
-    await act(async () => {
-      await userEvent.click(button);
-    });
-
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    const hasRenderedThrice = getByText(/3/);
+    fireEvent.click(button);
+    const hasRenderedThrice = await findByText(/3/);
 
     expect(hasRenderedTwice).toBeInTheDocument();
     expect(hasRenderedThrice).toBeInTheDocument();

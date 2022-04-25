@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
-import { act, render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render } from '@testing-library/react';
 import { AppBarContentPortal, AppBarContent } from './AppBarContent';
 
 describe('AppBarContent', () => {
@@ -41,9 +40,7 @@ describe('AppBarContent', () => {
 
     const button = getByRole(/button/);
 
-    act(() => {
-      userEvent.click(button);
-    });
+    fireEvent.click(button);
 
     const node = queryByText(/josh/);
 
