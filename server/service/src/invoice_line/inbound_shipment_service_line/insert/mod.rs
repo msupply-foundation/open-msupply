@@ -83,7 +83,7 @@ mod test {
             mock_outbound_shipment_c, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository, ItemFilter, ItemQueryRepository, SimpleStringFilter,
+        InvoiceLineRowRepository, ItemFilter, ItemRepository, SimpleStringFilter,
     };
     use util::{constants::DEFAULT_SERVICE_ITEM_CODE, inline_edit, inline_init};
 
@@ -212,7 +212,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        let default_service_item = ItemQueryRepository::new(&connection)
+        let default_service_item = ItemRepository::new(&connection)
             .query_one(
                 ItemFilter::new().code(SimpleStringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE)),
             )

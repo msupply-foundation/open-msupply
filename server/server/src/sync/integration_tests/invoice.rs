@@ -5,7 +5,7 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         LocationRow,
     },
-    EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, ItemFilter, ItemQueryRepository,
+    EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, ItemFilter, ItemRepository,
     LocationRowRepository, NameFilter, NameQueryRepository, RequisitionRowRepository,
     StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };
@@ -38,7 +38,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             .unwrap()
             .pop()
             .unwrap();
-        let item = ItemQueryRepository::new(connection)
+        let item = ItemRepository::new(connection)
             .query_one(ItemFilter::new())
             .unwrap()
             .unwrap();

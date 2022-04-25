@@ -1,6 +1,6 @@
 use repository::EqualFilter;
 use repository::{
-    schema::StocktakeLineRow, ItemFilter, ItemQueryRepository, LocationFilter, LocationRepository,
+    schema::StocktakeLineRow, ItemFilter, ItemRepository, LocationFilter, LocationRepository,
     RepositoryError, StocktakeLineRowRepository, StorageConnection,
 };
 
@@ -24,7 +24,7 @@ pub fn check_item_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<bool, RepositoryError> {
-    let count = ItemQueryRepository::new(connection)
+    let count = ItemRepository::new(connection)
         .count(Some(ItemFilter::new().id(EqualFilter::equal_to(id))))?;
     Ok(count == 1)
 }

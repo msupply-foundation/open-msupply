@@ -164,7 +164,7 @@ mod test_insert {
         },
         schema::{InvoiceLineRow, InvoiceLineRowType},
         test_db::setup_all,
-        InvoiceLineRowRepository, ItemRepository,
+        InvoiceLineRowRepository, ItemRowRepository,
     };
 
     use crate::{
@@ -305,7 +305,7 @@ mod test_insert {
 
         // Successful insert
         let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();
-        let item = ItemRepository::new(&connection)
+        let item = ItemRowRepository::new(&connection)
             .find_one_by_id(&mock_unallocated_line2().item_id)
             .unwrap()
             .unwrap();

@@ -1,4 +1,4 @@
-use repository::{EqualFilter, Item, ItemFilter, ItemQueryRepository, Pagination};
+use repository::{EqualFilter, Item, ItemFilter, ItemRepository, Pagination};
 use repository::{RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
@@ -16,7 +16,7 @@ impl Loader<String> for ItemLoader {
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
-        let repo = ItemQueryRepository::new(&connection);
+        let repo = ItemRepository::new(&connection);
         let result = repo
             .query(
                 Pagination {

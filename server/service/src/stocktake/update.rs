@@ -5,7 +5,7 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus,
     },
-    InvoiceLineRowRepository, InvoiceRowRepository, ItemRepository, NameRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, NameRepository,
     RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
     StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
 };
@@ -165,7 +165,7 @@ fn generate_stock_line_update(
         note: stock_line.note.clone(),
     };
 
-    let item = match ItemRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
+    let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
         Some(item) => item,
         None => {
             return Err(UpdateStocktakeError::InternalError(format!(
@@ -249,7 +249,7 @@ fn generate_new_stock_line(
         note: row.note.clone(),
     };
 
-    let item = match ItemRepository::new(connection).find_one_by_id(&item_id)? {
+    let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
         Some(item) => item,
         None => {
             return Err(UpdateStocktakeError::InternalError(format!(

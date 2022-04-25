@@ -1,6 +1,7 @@
 use super::OutError;
 use crate::{
-    number::next_number, requisition::requisition_supply_status::RequisitionLineSupplyStatus, validate::get_other_party,
+    number::next_number, requisition::requisition_supply_status::RequisitionLineSupplyStatus,
+    validate::get_other_party,
 };
 use chrono::Utc;
 use repository::{
@@ -8,7 +9,7 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         NumberRowType, RequisitionRow,
     },
-    ItemRepository, StorageConnection,
+    ItemRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -60,7 +61,7 @@ pub fn generate_invoice_lines(
     let mut invoice_line_rows = vec![];
 
     for requisition_line_supply_status in requisition_line_supply_statuses.into_iter() {
-        let item_row = ItemRepository::new(connection)
+        let item_row = ItemRowRepository::new(connection)
             .find_one_by_id(requisition_line_supply_status.item_id())?
             .ok_or(OutError::ProblemFindingItem)?;
 

@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use repository::{
     schema::{InvoiceLineRow, InvoiceRow, ItemRow},
-    InvoiceLineRowRepository, ItemRepository, RepositoryError, StorageConnection,
+    InvoiceLineRowRepository, ItemRowRepository, RepositoryError, StorageConnection,
 };
 
 pub struct LineAlreadyExists;
@@ -55,7 +55,7 @@ pub fn check_item(
     item_id: &str,
     connection: &StorageConnection,
 ) -> Result<ItemRow, WithDBError<ItemNotFound>> {
-    let item_result = ItemRepository::new(connection).find_one_by_id(item_id)?;
+    let item_result = ItemRowRepository::new(connection).find_one_by_id(item_id)?;
 
     match item_result {
         Some(item) => Ok(item),
@@ -68,7 +68,7 @@ pub fn check_item_exists_option(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<ItemRow>, RepositoryError> {
-    ItemRepository::new(connection).find_one_by_id(id)
+    ItemRowRepository::new(connection).find_one_by_id(id)
 }
 
 pub struct LineDoesNotExist;

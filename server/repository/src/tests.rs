@@ -284,7 +284,7 @@ mod repository_test {
             RequisitionRowStatus,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRowRepository, ItemRepository, KeyValueStoreRepository,
+        InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository,
         MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
         MasterListRowRepository, NameRepository, NumberRowRepository,
@@ -337,7 +337,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
@@ -362,7 +362,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         let name_repo = NameRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
@@ -514,7 +514,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
         MasterListRowRepository::new(&connection)
@@ -607,7 +607,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
         let name_repo = NameRepository::new(&connection);
@@ -648,7 +648,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
         item_repo.insert_one(&data::item_service_1()).await.unwrap();
