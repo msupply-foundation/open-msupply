@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
     schema::{LocationRow, StocktakeLineRow, StocktakeRow, StocktakeStatus},
-    InvoiceFilter, InvoiceQueryRepository, ItemFilter, ItemQueryRepository, ItemRepository,
+    InvoiceFilter, InvoiceRepository, ItemFilter, ItemQueryRepository, ItemRepository,
     LocationRowRepository, StockLineFilter, StockLineRepository, StocktakeLineRowRepository,
     StocktakeRowRepository, StorageConnection,
 };
@@ -83,7 +83,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
         connection: &StorageConnection,
         rows: &Vec<FullStocktake>,
     ) -> Vec<FullStocktake> {
-        let invoice = InvoiceQueryRepository::new(connection)
+        let invoice = InvoiceRepository::new(connection)
             .query_one(InvoiceFilter::new())
             .unwrap()
             .unwrap();

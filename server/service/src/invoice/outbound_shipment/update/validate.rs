@@ -5,7 +5,7 @@ use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::EqualFilter;
 use repository::{
     schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, Name, RepositoryError,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository, Name, RepositoryError,
     StorageConnection,
 };
 
@@ -49,7 +49,7 @@ fn check_invoice_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, UpdateOutboundShipmentError> {
-    let result = InvoiceRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
 
     if let Err(RepositoryError::NotFound) = &result {
         return Err(UpdateOutboundShipmentError::InvoiceDoesNotExists);

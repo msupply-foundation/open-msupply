@@ -1,7 +1,7 @@
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLine, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
+    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -49,7 +49,7 @@ pub fn insert_inbound_shipment_line(
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
 
             if let Some(invoice_row) = invoice_row_option {
-                InvoiceRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
             }
 
             get_invoice_line(ctx, &new_line.id)

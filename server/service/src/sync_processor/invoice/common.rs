@@ -9,7 +9,7 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         NumberRowType,
     },
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository,
     RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
 };
 use util::uuid::uuid;
@@ -48,7 +48,7 @@ pub fn generate_and_integrate_linked_invoice(
     let (lines_to_delete, invoice_line_rows) =
         regenerate_linked_invoice_lines(connection, &invoice_row, &source_invoice)?;
 
-    InvoiceRepository::new(connection).upsert_one(&invoice_row)?;
+    InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
 
     let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 

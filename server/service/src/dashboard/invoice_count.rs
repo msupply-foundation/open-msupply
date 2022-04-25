@@ -2,7 +2,7 @@ use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone
 use repository::DatetimeFilter;
 use repository::{
     schema::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceFilter, InvoiceQueryRepository, RepositoryError,
+    InvoiceFilter, InvoiceRepository, RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;
@@ -83,7 +83,7 @@ fn start_of_week(datetime: &NaiveDateTime) -> NaiveDateTime {
 pub struct InvoiceCountService {}
 
 fn invoices_count(
-    repo: &InvoiceQueryRepository,
+    repo: &InvoiceRepository,
     invoice_type: &InvoiceRowType,
     invoice_status: &InvoiceRowStatus,
     oldest: NaiveDateTime,
@@ -129,7 +129,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         now: &DateTime<Utc>,
         timezone_offset: &FixedOffset,
     ) -> Result<i64, InvoiceCountError> {
-        let repo = InvoiceQueryRepository::new(&ctx.connection);
+        let repo = InvoiceRepository::new(&ctx.connection);
         let now = to_local(now, &timezone_offset);
         let oldest = match range {
             CountTimeRange::Today => to_utc(&start_of_day(&now), &timezone_offset)
@@ -151,7 +151,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         &self,
         ctx: &ServiceContext,
     ) -> Result<i64, RepositoryError> {
-        let repo = InvoiceQueryRepository::new(&ctx.connection);
+        let repo = InvoiceRepository::new(&ctx.connection);
         Ok(repo.count(Some(
             InvoiceFilter::new()
                 .r#type(InvoiceRowType::OutboundShipment.equal_to())
@@ -167,7 +167,7 @@ mod invoice_count_service_test {
             mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a, mock_store_b,
             MockDataInserts,
         },
-        test_db, InvoiceRepository, NameRepository, StoreRowRepository,
+        test_db, InvoiceRowRepository, NameRepository, StoreRowRepository,
     };
     use util::timezone::offset_to_timezone;
 
@@ -191,10 +191,10 @@ mod invoice_count_service_test {
         name_repo.insert_one(&name_store_b).await.unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&store_1).await.unwrap();
-        let invoice_repo = InvoiceRepository::new(&connection);
+        let invoice_repo = InvoiceRowRepository::new(&connection);
         invoice_repo.upsert_one(&invoice_1).unwrap();
 
-        let repo = InvoiceQueryRepository::new(&connection);
+        let repo = InvoiceRepository::new(&connection);
         let status = InvoiceRowStatus::New;
 
         // oldest > item1.created_datetime

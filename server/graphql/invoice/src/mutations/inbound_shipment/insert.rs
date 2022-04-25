@@ -135,7 +135,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 //             mock_name_not_linked_to_store, mock_store_linked_to_name, MockDataInserts,
 //         },
 //         schema::{InvoiceRow, InvoiceRowType},
-//         InvoiceRepository, NameFilter,
+//         InvoiceRowRepository, NameFilter,
 //     };
 //     use server::test_utils::setup_all;
 //     use util::uuid::uuid;
@@ -247,7 +247,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 //         let invoice = assert_unwrap_invoice_response!(response);
 //         assert_eq!(invoice.id, variables.id);
 
-//         let new_invoice = InvoiceRepository::new(&connection)
+//         let new_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -273,7 +273,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 //         let invoice = assert_unwrap_invoice_response!(response);
 //         assert_eq!(invoice.id, variables.id);
 
-//         let new_invoice = InvoiceRepository::new(&connection)
+//         let new_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -308,7 +308,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 //         let invoice = assert_unwrap_invoice_response!(response);
 //         assert_eq!(invoice.id, variables.id);
 
-//         let new_invoice = InvoiceRepository::new(&connection)
+//         let new_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -337,7 +337,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 //         let query = Insert::build_query(variables.clone());
 //         let _: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
 
-//         let new_invoice = InvoiceRepository::new(&connection)
+//         let new_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -360,7 +360,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 //         let query = Insert::build_query(variables.clone());
 //         let _: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
 
-//         let new_invoice = InvoiceRepository::new(&connection)
+//         let new_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 

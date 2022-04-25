@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
     RepositoryError, TransactionError,
 };
 
@@ -45,10 +45,10 @@ pub fn delete_outbound_shipment(
                 })?;
             }
 
-            InvoiceRepository::new(&connection).delete(&id)?;
+            InvoiceRowRepository::new(&connection).delete(&id)?;
             // End TODO
 
-            match InvoiceRepository::new(&connection).delete(&id) {
+            match InvoiceRowRepository::new(&connection).delete(&id) {
                 Ok(_) => Ok(id),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }

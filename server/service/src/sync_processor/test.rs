@@ -11,7 +11,7 @@ mod test_update {
         },
         schema::{InvoiceRowStatus, InvoiceRowType, RequisitionRowStatus, RequisitionRowType},
         test_db::setup_all,
-        InvoiceFilter, InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository,
+        InvoiceFilter, InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
         RequisitionFilter, RequisitionRepository, RequisitionRowRepository,
     };
 
@@ -135,14 +135,14 @@ mod test_update {
         process_records(&connection, vec![Record::InvoiceRow(start_invoice.clone())]).unwrap();
         let after_processor = Utc::now().naive_utc();
 
-        let new_invoice = InvoiceQueryRepository::new(&connection)
+        let new_invoice = InvoiceRepository::new(&connection)
             .query_one(
                 InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(&start_invoice.id)),
             )
             .unwrap()
             .unwrap();
 
-        let new_invoice = InvoiceRepository::new(&connection)
+        let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&new_invoice.invoice_row.id)
             .unwrap();
 
@@ -163,7 +163,7 @@ mod test_update {
             Some(mock_request_requisition_for_invoice_sync_processor().id)
         );
 
-        let mut start_invoice = InvoiceRepository::new(&connection)
+        let mut start_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&start_invoice.id)
             .unwrap();
 
@@ -213,7 +213,7 @@ mod test_update {
         start_invoice.shipped_datetime = Some(Utc::now().naive_utc());
         start_invoice.status = InvoiceRowStatus::Shipped;
 
-        InvoiceRepository::new(&connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&start_invoice)
             .unwrap();
 
@@ -226,7 +226,7 @@ mod test_update {
 
         process_records(&connection, vec![Record::InvoiceRow(start_invoice.clone())]).unwrap();
 
-        let mut new_invoice = InvoiceRepository::new(&connection)
+        let mut new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&new_invoice.id)
             .unwrap();
 
@@ -247,13 +247,13 @@ mod test_update {
         new_invoice.delivered_datetime = Some(Utc::now().naive_utc());
         new_invoice.status = InvoiceRowStatus::Delivered;
 
-        InvoiceRepository::new(&connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&new_invoice)
             .unwrap();
 
         process_records(&connection, vec![Record::InvoiceRow(new_invoice.clone())]).unwrap();
 
-        let start_invoice = InvoiceRepository::new(&connection)
+        let start_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&start_invoice.id)
             .unwrap();
 
@@ -265,13 +265,13 @@ mod test_update {
         new_invoice.verified_datetime = Some(Utc::now().naive_utc());
         new_invoice.status = InvoiceRowStatus::Verified;
 
-        InvoiceRepository::new(&connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&new_invoice)
             .unwrap();
 
         process_records(&connection, vec![Record::InvoiceRow(new_invoice.clone())]).unwrap();
 
-        let start_invoice = InvoiceRepository::new(&connection)
+        let start_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&start_invoice.id)
             .unwrap();
 

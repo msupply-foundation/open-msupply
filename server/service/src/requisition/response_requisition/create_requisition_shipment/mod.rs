@@ -1,7 +1,7 @@
 use crate::service_provider::ServiceContext;
 use repository::EqualFilter;
 use repository::{
-    Invoice, InvoiceFilter, InvoiceLineRowRepository, InvoiceQueryRepository, InvoiceRepository,
+    Invoice, InvoiceFilter, InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
     RepositoryError,
 };
 
@@ -45,7 +45,7 @@ pub fn create_requisition_shipment(
             let (invoice_row, invoice_line_rows) =
                 generate(connection, store_id, user_id, requisition_row, fullfilments)?;
 
-            InvoiceRepository::new(&connection).upsert_one(&invoice_row)?;
+            InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
 
             let invoice_line_repository = InvoiceLineRowRepository::new(&connection);
             for row in invoice_line_rows {
@@ -53,7 +53,7 @@ pub fn create_requisition_shipment(
             }
 
             // TODO use invoice service if it accepts ctx
-            let mut result = InvoiceQueryRepository::new(&connection)
+            let mut result = InvoiceRepository::new(&connection)
                 .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&invoice_row.id)))?;
 
             result.pop().ok_or(OutError::CreatedInvoiceDoesNotExist)

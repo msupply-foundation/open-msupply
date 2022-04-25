@@ -1,7 +1,7 @@
 use repository::EqualFilter;
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
-    InvoiceFilter, InvoiceQueryRepository, NameRepository, RepositoryError, RequisitionFilter,
+    InvoiceFilter, InvoiceRepository, NameRepository, RepositoryError, RequisitionFilter,
     RequisitionRepository, StorageConnection, StoreRowRepository,
 };
 
@@ -174,7 +174,7 @@ fn get_linked_record(
                     .linked_requisition_id(EqualFilter::equal_to(&requisition_row.id)),
             )?
             .map(|requisition| Record::RequisitionRow(requisition.requisition_row)),
-        Record::InvoiceRow(invoice) => InvoiceQueryRepository::new(connection)
+        Record::InvoiceRow(invoice) => InvoiceRepository::new(connection)
             .query_one(InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(&invoice.id)))?
             .map(|invoice| Record::InvoiceRow(invoice.invoice_row)),
     };

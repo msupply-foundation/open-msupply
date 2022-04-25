@@ -1,7 +1,7 @@
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing, SyncProcessor};
 use repository::{
     schema::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceRepository, StorageConnection,
+    InvoiceRowRepository, StorageConnection,
 };
 
 const DESCRIPTION: &'static str = "Update outbound shipment status from inbound shipment";
@@ -53,7 +53,7 @@ impl<'a> SyncProcessor for UpdateOutboundShipmentStatusProcessor<'a> {
         updated_linked_invoice.delivered_datetime = source_invoice.delivered_datetime.clone();
         updated_linked_invoice.verified_datetime = source_invoice.verified_datetime.clone();
 
-        InvoiceRepository::new(self.connection).upsert_one(&updated_linked_invoice)?;
+        InvoiceRowRepository::new(self.connection).upsert_one(&updated_linked_invoice)?;
 
         let result = format!(
             "{}\nupdated_linked_invoice: {:#?}",

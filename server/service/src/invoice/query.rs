@@ -2,8 +2,7 @@ use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 use repository::{
-    schema::InvoiceRowType, Invoice, InvoiceFilter, InvoiceQueryRepository, InvoiceSort,
-    RepositoryError,
+    schema::InvoiceRowType, Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, RepositoryError,
 };
 use repository::{EqualFilter, PaginationOption};
 
@@ -18,7 +17,7 @@ pub fn get_invoices(
     sort: Option<InvoiceSort>,
 ) -> Result<ListResult<Invoice>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = InvoiceQueryRepository::new(&ctx.connection);
+    let repository = InvoiceRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or(InvoiceFilter::new());
     filter.store_id = store_id_option.map(EqualFilter::equal_to);
@@ -37,7 +36,7 @@ pub fn get_invoice(
     let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(id));
     filter.store_id = store_id_option.map(EqualFilter::equal_to);
 
-    let mut result = InvoiceQueryRepository::new(&ctx.connection).query_by_filter(filter)?;
+    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(filter)?;
 
     Ok(result.pop())
 }
@@ -48,7 +47,7 @@ pub fn get_invoice_by_number(
     invoice_number: u32,
     r#type: InvoiceRowType,
 ) -> Result<Option<Invoice>, RepositoryError> {
-    let mut result = InvoiceQueryRepository::new(&ctx.connection).query_by_filter(
+    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(
         InvoiceFilter::new()
             .invoice_number(EqualFilter::equal_to_i64(invoice_number as i64))
             .store_id(EqualFilter::equal_to(store_id))

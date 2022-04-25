@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
     RepositoryError,
 };
 
@@ -54,7 +54,7 @@ pub fn delete_inbound_shipment(
             }
             // End TODO
 
-            match InvoiceRepository::new(&connection).delete(&input.id) {
+            match InvoiceRowRepository::new(&connection).delete(&input.id) {
                 Ok(_) => Ok(input.id),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }

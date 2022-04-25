@@ -2,7 +2,7 @@ use crate::WithDBError;
 use repository::EqualFilter;
 use repository::{
     schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, RepositoryError,
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository, RepositoryError,
     StorageConnection,
 };
 
@@ -82,7 +82,7 @@ pub fn check_invoice_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, WithDBError<InvoiceDoesNotExist>> {
-    let result = InvoiceRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
 
     match result {
         Ok(invoice_row) => Ok(invoice_row),
@@ -96,7 +96,7 @@ pub fn check_invoice_exists_option(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<InvoiceRow>, RepositoryError> {
-    let result = InvoiceRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
 
     match result {
         Ok(invoice_row) => Ok(Some(invoice_row)),

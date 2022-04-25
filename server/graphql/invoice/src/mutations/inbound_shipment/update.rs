@@ -187,7 +187,7 @@ impl UpdateInboundShipmentStatusInput {
 //             MockDataInserts,
 //         },
 //         schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow},
-//         EqualFilter, InvoiceFilter, InvoiceRepository, NameFilter, StockLineRowRepository,
+//         EqualFilter, InvoiceFilter, InvoiceRowRepository, NameFilter, StockLineRowRepository,
 //     };
 //     use server::test_utils::setup_all;
 
@@ -365,7 +365,7 @@ impl UpdateInboundShipmentStatusInput {
 //         let invoice = assert_unwrap_invoice_response!(response);
 //         assert_eq!(invoice.id, variables.id);
 
-//         let updated_invoice = InvoiceRepository::new(&connection)
+//         let updated_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -396,7 +396,7 @@ impl UpdateInboundShipmentStatusInput {
 //         variables.comment_option = None;
 //         variables.their_reference_option = None;
 
-//         let start_invoice = InvoiceRepository::new(&connection)
+//         let start_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -406,7 +406,7 @@ impl UpdateInboundShipmentStatusInput {
 //         let invoice = assert_unwrap_invoice_response!(response);
 //         assert_eq!(invoice.id, variables.id);
 
-//         let end_invoice = InvoiceRepository::new(&connection)
+//         let end_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -426,7 +426,7 @@ impl UpdateInboundShipmentStatusInput {
 //         let query = Update::build_query(variables.clone());
 //         let _: Response<update::ResponseData> = get_gql_result(&settings, query).await;
 
-//         let new_invoice = InvoiceRepository::new(&connection)
+//         let new_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -450,7 +450,7 @@ impl UpdateInboundShipmentStatusInput {
 //         let query = Update::build_query(variables.clone());
 //         let _: Response<update::ResponseData> = get_gql_result(&settings, query).await;
 
-//         let new_invoice = InvoiceRepository::new(&connection)
+//         let new_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -470,7 +470,7 @@ impl UpdateInboundShipmentStatusInput {
 //         let invoice = assert_unwrap_invoice_response!(response);
 //         assert_eq!(invoice.id, variables.id);
 
-//         let updated_invoice = InvoiceRepository::new(&connection)
+//         let updated_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 
@@ -539,7 +539,7 @@ impl UpdateInboundShipmentStatusInput {
 //         let invoice = assert_unwrap_invoice_response!(response);
 //         assert_eq!(invoice.id, variables.id);
 
-//         let updated_invoice = InvoiceRepository::new(&connection)
+//         let updated_invoice = InvoiceRowRepository::new(&connection)
 //             .find_one_by_id(&variables.id)
 //             .unwrap();
 

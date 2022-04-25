@@ -284,14 +284,14 @@ mod repository_test {
             RequisitionRowStatus,
         },
         test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, KeyValueStoreRepository,
+        InvoiceLineRowRepository, InvoiceRowRepository, ItemRepository, KeyValueStoreRepository,
         MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameRepository, NumberRowRepository, OutboundShipmentRepository,
-        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
-        StockLineFilter, StockLineRepository, StockLineRowRepository, StocktakeRowRepository,
-        StoreRowRepository, UserAccountRowRepository,
+        MasterListRowRepository, NameRepository, NumberRowRepository,
+        OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        StocktakeRowRepository, StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
@@ -577,8 +577,8 @@ mod repository_test {
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
-        let repo = InvoiceRepository::new(&connection);
-        let outbound_shipment_repo = OutboundShipmentRepository::new(&connection);
+        let repo = InvoiceRowRepository::new(&connection);
+        let outbound_shipment_repo = OutboundShipmentRowRepository::new(&connection);
 
         let item1 = data::invoice_1();
         repo.upsert_one(&item1).unwrap();
@@ -616,7 +616,7 @@ mod repository_test {
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.upsert_one(&data::stock_line_1()).unwrap();
-        let invoice_repo = InvoiceRepository::new(&connection);
+        let invoice_repo = InvoiceRowRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
 
@@ -658,7 +658,7 @@ mod repository_test {
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.upsert_one(&data::stock_line_1()).unwrap();
-        let invoice_repo = InvoiceRepository::new(&connection);
+        let invoice_repo = InvoiceRowRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
         let repo = InvoiceLineRowRepository::new(&connection);

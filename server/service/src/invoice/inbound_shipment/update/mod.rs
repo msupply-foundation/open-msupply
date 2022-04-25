@@ -6,7 +6,7 @@ use crate::{
 };
 use repository::Invoice;
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
+    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -50,7 +50,7 @@ pub fn update_inbound_shipment(
             let (lines_and_invoice_lines_option, update_invoice) =
                 generate(connection, user_id, invoice, other_party, patch)?;
 
-            InvoiceRepository::new(connection).upsert_one(&update_invoice)?;
+            InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
 
             if let Some(lines_and_invoice_lines) = lines_and_invoice_lines_option {
                 let stock_line_repository = StockLineRowRepository::new(connection);
@@ -141,7 +141,7 @@ mod test {
         },
         schema::{NameRow, NameStoreJoinRow},
         test_db::setup_all_with_data,
-        InvoiceRepository,
+        InvoiceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -277,7 +277,7 @@ mod test {
             )
             .unwrap();
 
-        let invoice = InvoiceRepository::new(&connection)
+        let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
             .unwrap();
 
