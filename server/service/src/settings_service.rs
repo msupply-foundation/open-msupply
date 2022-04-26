@@ -1,6 +1,30 @@
 use repository::{schema::KeyValueType, KeyValueStoreRepository, RepositoryError};
+use reqwest::Url;
 
 use crate::{service_provider::ServiceContext, sync_settings::SyncSettings};
+
+#[derive(Debug)]
+pub enum UpdateSettingsError {
+    RepositoryError(RepositoryError),
+    InvalidSettings(String),
+}
+
+fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
+    if let Err(err) = Url::parse(&settings.url) {
+        return Err(UpdateSettingsError::InvalidSettings(format!(
+            "Invalid url: {:?}",
+            err
+        )));
+    }
+
+    if settings.username == "" {
+        return Err(UpdateSettingsError::InvalidSettings(
+            "Empty username not allowed".to_string(),
+        ));
+    }
+
+    Ok(())
+}
 
 pub trait SettingsServiceTrait: Sync + Send {
     /// Loads sync settings from the DB
@@ -37,37 +61,42 @@ pub trait SettingsServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         settings: &SyncSettings,
-    ) -> Result<(), RepositoryError> {
-        let result = ctx.connection.transaction_sync(|con| {
-            let key_value_store = KeyValueStoreRepository::new(con);
-            key_value_store
-                .set_string(KeyValueType::SettingsSyncUrl, Some(settings.url.clone()))?;
-            key_value_store.set_string(
-                KeyValueType::SettingsSyncUsername,
-                Some(settings.username.clone()),
-            )?;
-            key_value_store.set_string(
-                KeyValueType::SettingsSyncPasswordSha256,
-                Some(settings.password_sha256.clone()),
-            )?;
-            key_value_store.set_i64(
-                KeyValueType::SettingsSyncIntervalSec,
-                Some(settings.interval_sec as i64),
-            )?;
-            key_value_store.set_i32(
-                KeyValueType::SettingsSyncCentralServerSiteId,
-                Some(settings.central_server_site_id as i32),
-            )?;
-            key_value_store.set_i32(
-                KeyValueType::SettingsSyncSideId,
-                Some(settings.site_id as i32),
-            )?;
-            key_value_store.set_string(
-                KeyValueType::SettingsSyncSideHardwareId,
-                Some(settings.site_hardware_id.clone()),
-            )?;
-            Ok(())
-        })?;
+    ) -> Result<(), UpdateSettingsError> {
+        validate(settings)?;
+
+        let result = ctx
+            .connection
+            .transaction_sync(|con| {
+                let key_value_store = KeyValueStoreRepository::new(con);
+                key_value_store
+                    .set_string(KeyValueType::SettingsSyncUrl, Some(settings.url.clone()))?;
+                key_value_store.set_string(
+                    KeyValueType::SettingsSyncUsername,
+                    Some(settings.username.clone()),
+                )?;
+                key_value_store.set_string(
+                    KeyValueType::SettingsSyncPasswordSha256,
+                    Some(settings.password_sha256.clone()),
+                )?;
+                key_value_store.set_i64(
+                    KeyValueType::SettingsSyncIntervalSec,
+                    Some(settings.interval_sec as i64),
+                )?;
+                key_value_store.set_i32(
+                    KeyValueType::SettingsSyncCentralServerSiteId,
+                    Some(settings.central_server_site_id as i32),
+                )?;
+                key_value_store.set_i32(
+                    KeyValueType::SettingsSyncSideId,
+                    Some(settings.site_id as i32),
+                )?;
+                key_value_store.set_string(
+                    KeyValueType::SettingsSyncSideHardwareId,
+                    Some(settings.site_hardware_id.clone()),
+                )?;
+                Ok(())
+            })
+            .map_err(|err| UpdateSettingsError::RepositoryError(err.to_inner_error()))?;
         Ok(result)
     }
 }
