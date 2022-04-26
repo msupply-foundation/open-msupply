@@ -45,5 +45,30 @@ mod query {
         assert_eq!(result.count, 1);
         assert_eq!(master_list_row.id, "master_list_filter_test");
         assert_eq!(master_list_row.name, "name_master_list_filter_test");
+
+        //Test filter on exists_for_store_id "store_a" finds something
+        let result = service
+            .get_master_lists(
+                &context,
+                None,
+                Some(MasterListFilter::new().exists_for_store_id(EqualFilter::equal_to("store_a"))),
+                None,
+            )
+            .unwrap();
+        assert!(result.count >= 1);
+
+        //Test filter for non existant store finds nothing
+        let result = service
+            .get_master_lists(
+                &context,
+                None,
+                Some(
+                    MasterListFilter::new()
+                        .exists_for_store_id(EqualFilter::equal_to("not_a_real_store")),
+                ),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.count, 0);
     }
 }
