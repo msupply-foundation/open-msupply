@@ -31,6 +31,7 @@ use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::sync_settings::SyncSettings;
+use tokio::sync::mpsc::Sender;
 
 #[derive(MergedObject, Default, Clone)]
 pub struct FullQuery(
@@ -118,7 +119,8 @@ pub fn build_schema(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    sync_settings_data: Data<SyncSettings>,
+    sync_settings_data: Option<Data<SyncSettings>>,
+    restart_switch: Data<Sender<bool>>,
     self_request: Option<Data<Box<dyn SelfRequest>>>,
     include_logger: bool,
 ) -> Schema {
@@ -127,7 +129,22 @@ pub fn build_schema(
         .data(loader_registry)
         .data(service_provider)
         .data(auth_data)
-        .data(sync_settings_data);
+        .data(restart_switch);
+
+    match sync_settings_data {
+        Some(sync_settings_data) => builder = builder.data(sync_settings_data),
+        None => {}
+    }
+    match self_request {
+        Some(self_request) => builder = builder.data(self_request),
+        None => {}
+    }
+    if include_logger {
+        builder = builder.extension(Logger).extension(ResponseLogger);
+    }
+    builder.finish()
+}
+
     match self_request {
         Some(self_request) => builder = builder.data(self_request),
         None => {}
@@ -158,7 +175,8 @@ pub fn config(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    sync_settings_data: Data<SyncSettings>,
+    sync_settings_data: Option<Data<SyncSettings>>,
+    restart_switch: Data<Sender<bool>>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         let self_requester: Data<Box<dyn SelfRequest>> = Data::new(Box::new(SelfRequestImpl {
@@ -168,6 +186,7 @@ pub fn config(
                 service_provider.clone(),
                 auth_data.clone(),
                 sync_settings_data.clone(),
+                restart_switch.clone(),
                 None,
                 false,
             ),
@@ -179,6 +198,7 @@ pub fn config(
             service_provider,
             auth_data,
             sync_settings_data,
+            restart_switch,
             Some(self_requester),
             true,
         );

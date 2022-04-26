@@ -10,7 +10,7 @@ use mutations::server_settings::{
 };
 use queries::{
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
-    server_settings::{get_server_settings, ServerSettingsResponse},
+    server_settings::{get_server_settings, server_restart, RestartNode, ServerSettingsResponse},
 };
 
 #[derive(Default, Clone)]
@@ -145,6 +145,11 @@ impl ServerAdminQueries {
     pub async fn server_settings(&self, ctx: &Context<'_>) -> Result<ServerSettingsResponse> {
         get_server_settings(ctx, false)
     }
+
+    /// Restarts the server
+    pub async fn server_restart(&self, ctx: &Context<'_>) -> Result<RestartNode> {
+        server_restart(ctx).await
+    }
 }
 #[derive(Default, Clone)]
 pub struct ServerAdminMutations;
@@ -170,6 +175,11 @@ impl ServerAdminStage0Queries {
     /// The refresh token is returned as a cookie
     pub async fn server_settings(&self, ctx: &Context<'_>) -> Result<ServerSettingsResponse> {
         get_server_settings(ctx, true)
+    }
+
+    /// Restarts the server
+    pub async fn server_restart(&self, ctx: &Context<'_>) -> Result<RestartNode> {
+        server_restart(ctx).await
     }
 }
 /// No access control during init stage

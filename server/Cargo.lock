@@ -1819,6 +1819,7 @@ dependencies = [
  "serde_json",
  "service",
  "thiserror",
+ "tokio",
  "util",
 ]
 
@@ -1868,6 +1869,7 @@ dependencies = [
  "serde_json",
  "service",
  "thiserror",
+ "tokio",
  "util",
 ]
 
