@@ -3,7 +3,7 @@ use serde;
 
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct DatabaseSettings {
     pub username: String,
     pub password: String,

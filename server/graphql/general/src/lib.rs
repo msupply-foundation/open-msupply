@@ -1,10 +1,17 @@
+mod mutations;
 mod queries;
 
 use self::queries::*;
 
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use queries::requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput};
+use mutations::server_settings::{
+    update_server_settings, UpdateServerSettingsInput, UpdateServerSettingsResponse,
+};
+use queries::{
+    requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
+    server_settings::{get_server_settings, server_restart, RestartNode, ServerSettingsResponse},
+};
 
 #[derive(Default, Clone)]
 pub struct GeneralQueries;
@@ -125,5 +132,67 @@ impl GeneralQueries {
             consumption_options_input,
             stock_evolution_options_input,
         )
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct ServerAdminQueries;
+
+#[Object]
+impl ServerAdminQueries {
+    /// Retrieves a new auth bearer and refresh token
+    /// The refresh token is returned as a cookie
+    pub async fn server_settings(&self, ctx: &Context<'_>) -> Result<ServerSettingsResponse> {
+        get_server_settings(ctx, false)
+    }
+
+    /// Restarts the server
+    pub async fn server_restart(&self, ctx: &Context<'_>) -> Result<RestartNode> {
+        server_restart(ctx, false).await
+    }
+}
+#[derive(Default, Clone)]
+pub struct ServerAdminMutations;
+
+#[Object]
+impl ServerAdminMutations {
+    pub async fn update_server_settings(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateServerSettingsInput,
+    ) -> Result<UpdateServerSettingsResponse> {
+        update_server_settings(ctx, input, false)
+    }
+}
+
+/// No access control during init stage
+#[derive(Default, Clone)]
+pub struct ServerAdminStage0Queries;
+
+#[Object]
+impl ServerAdminStage0Queries {
+    /// Retrieves a new auth bearer and refresh token
+    /// The refresh token is returned as a cookie
+    pub async fn server_settings(&self, ctx: &Context<'_>) -> Result<ServerSettingsResponse> {
+        get_server_settings(ctx, true)
+    }
+
+    /// Restarts the server
+    pub async fn server_restart(&self, ctx: &Context<'_>) -> Result<RestartNode> {
+        server_restart(ctx, true).await
+    }
+}
+/// No access control during init stage
+#[derive(Default, Clone)]
+pub struct ServerAdminStage0Mutations;
+
+#[Object]
+impl ServerAdminStage0Mutations {
+    pub async fn update_server_settings(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateServerSettingsInput,
+    ) -> Result<UpdateServerSettingsResponse> {
+        update_server_settings(ctx, input, true)
     }
 }

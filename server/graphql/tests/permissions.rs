@@ -17,7 +17,7 @@ mod permission_tests {
     // lib.rs. As a workaround these defs are copied here. Hopefully this should be possible but I
     // gave up on this for now.
     use graphql_batch_mutations::BatchMutations;
-    use graphql_general::GeneralQueries;
+    use graphql_general::{GeneralQueries, ServerAdminMutations, ServerAdminQueries};
     use graphql_invoice::{InvoiceMutations, InvoiceQueries};
     use graphql_invoice_line::InvoiceLineMutations;
     use graphql_location::{LocationMutations, LocationQueries};
@@ -35,6 +35,7 @@ mod permission_tests {
         pub GeneralQueries,
         pub RequisitionQueries,
         pub ReportQueries,
+        pub ServerAdminQueries,
     );
 
     #[derive(MergedObject, Default, Clone)]
@@ -47,6 +48,7 @@ mod permission_tests {
         pub BatchMutations,
         pub RequisitionMutations,
         pub RequisitionLineMutations,
+        pub ServerAdminMutations,
     );
 
     pub fn full_query() -> FullQuery {
@@ -57,6 +59,7 @@ mod permission_tests {
             GeneralQueries,
             RequisitionQueries,
             ReportQueries,
+            ServerAdminQueries,
         )
     }
 
@@ -70,6 +73,7 @@ mod permission_tests {
             BatchMutations,
             RequisitionMutations,
             RequisitionLineMutations,
+            ServerAdminMutations,
         )
     }
 
@@ -238,6 +242,21 @@ mod permission_tests {
                 expected: ResourceAccessRequest {
                     resource: Resource::Report,
                     store_id: Some("some".to_string()),
+                },
+            },
+            TestData {
+                name: "serverSettings",
+                query: r#"query Query {
+                serverSettings {
+                  ... on ServerSettingsNode {
+                    __typename
+                    status
+                  }
+                }
+              }"#,
+                expected: ResourceAccessRequest {
+                    resource: Resource::ServerAdmin,
+                    store_id: None,
                 },
             },
             TestData {
@@ -1001,6 +1020,21 @@ mod permission_tests {
                 expected: ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
                     store_id: Some("some".to_string()),
+                },
+            },
+            TestData {
+                name: "updateServerSettings",
+                query: r#"mutation Mutation {
+                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10, centralServerSiteId: 10, siteId: 10, siteHardwareId: ""}}) {
+                  ... on ServerSettingsNode {
+                    __typename
+                    status
+                  }
+                }
+            }"#,
+                expected: ResourceAccessRequest {
+                    resource: Resource::ServerAdmin,
+                    store_id: None,
                 },
             },
             TestData {

@@ -56,11 +56,18 @@ pub enum Resource {
     MutateInboundShipment,
     // reporting
     Report,
+    // view/edit server setting
+    ServerAdmin,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
     // me: No permission needed
+
+    map.insert(
+        Resource::ServerAdmin,
+        PermissionDSL::HasPermission(Permission::ServerAdmin),
+    );
 
     // name
     map.insert(Resource::QueryName, PermissionDSL::HasStoreAccess);
