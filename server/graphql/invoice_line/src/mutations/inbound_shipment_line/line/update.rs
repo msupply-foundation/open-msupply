@@ -173,7 +173,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 //     use repository::{
 //         mock::MockDataInserts,
 //         schema::{InvoiceLineRow, StockLineRow},
-//         ItemRepository, RepositoryError,
+//         ItemRowRepository, RepositoryError,
 //     };
 //     use repository::{InvoiceFilter, InvoiceLineRowRepository, StockLineRowRepository};
 //     use server::test_utils::setup_all;
@@ -500,7 +500,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 //         variables.item_id_option = Some(item_not_in_invoices_id.clone());
 
 //         let deleted_stock_line_id = delivered_invoice_lines[0].stock_line_id.as_ref().unwrap();
-//         let new_item = ItemRepository::new(&connection)
+//         let new_item = ItemRowRepository::new(&connection)
 //             .find_one_by_id(&item_not_in_invoices_id)
 //             .unwrap()
 //             .unwrap();

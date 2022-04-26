@@ -1,6 +1,6 @@
 use repository::{
     schema::{ChangelogRow, RemoteSyncBufferRow},
-    InvoiceLineRowRepository, InvoiceRepository, LocationRowRepository, NameStoreJoinRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository, NameStoreJoinRepository,
     NumberRowRepository, RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
     StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
 };
@@ -136,7 +136,7 @@ pub fn check_records_against_database(
                 }
                 IntegrationUpsertRecord::Invoice(comparison_record) => {
                     assert_eq!(
-                        InvoiceRepository::new(&connection)
+                        InvoiceRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
                             .expect(&format!("Invoice not found: {}", &comparison_record.id)),
                         comparison_record

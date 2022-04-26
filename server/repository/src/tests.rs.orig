@@ -331,8 +331,8 @@ mod repository_test {
         },
         schema::{PricingRow, NumberRowType, RequisitionRowStatus},
         test_db, CentralSyncBufferRepository, InvoiceLineRepository, InvoiceLineRowRepository,
-        InvoiceRepository, ItemRepository, MasterListLineRepository, MasterListLineRowRepository,
-        MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
+        InvoiceRepository, ItemRowRepository, MasterListLineRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRowRepository, NameRepository, NameRowRepository,
         NumberRowRepository, OutboundShipmentRepository, RequisitionFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
         RequisitionRowRepository, StockLineRepository, StockLineRowRepository, StoreRowRepository,
@@ -344,9 +344,9 @@ mod repository_test {
         schema::{
             ChangelogAction, ChangelogRow, ChangelogTableName, PricingRow, NumberRowType,
         },
-        test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRepository, ItemRepository, MasterListLineRowRepository,
-        MasterListNameJoinRepository, MasterListRowRepository, NameQueryRepository, NameRepository,
+        test_db, CentralSyncBufferRepository, ChangelogRowRepository, InvoiceLineRepository,
+        InvoiceLineRowRepository, InvoiceRepository, ItemRowRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRowRepository, NameRepository, NameRowRepository,
         NumberRowRepository, OutboundShipmentRepository, RequisitionLineRepository,
         RequisitionRepository, StockLineRepository, StockLineRowRepository, StockTakeRowRepository,
         StoreRowRepository, UserAccountRepository,
@@ -368,7 +368,7 @@ mod repository_test {
         let connection_manager = get_storage_connection_manager(&settings);
         let connection = connection_manager.connection().unwrap();
 
-        let repo = NameRepository::new(&connection);
+        let repo = NameRowRepository::new(&connection);
         let name_1 = data::name_1();
         repo.insert_one(&name_1).await.unwrap();
         let loaded_item = repo.find_one_by_id(name_1.id.as_str()).await.unwrap();
@@ -385,13 +385,13 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repo = NameRepository::new(&connection);
+        let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         name_repo.insert_one(&data::name_2()).await.unwrap();
         name_repo.insert_one(&data::name_3()).await.unwrap();
         name_repo.insert_one(&data::name_a_umlaut()).await.unwrap();
 
-        let repo = NameQueryRepository::new(&connection);
+        let repo = NameRepository::new(&connection);
         // test filter:
         let result = repo
             .query(
@@ -541,7 +541,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        NameRepository::new(&connection)
+        NameRowRepository::new(&connection)
             .insert_one(&data::name_1())
             .await
             .unwrap();
@@ -561,9 +561,9 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
-        let name_repo = NameRepository::new(&connection);
+        let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
@@ -587,9 +587,9 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
-        let name_repo = NameRepository::new(&connection);
+        let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
@@ -661,7 +661,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
         MasterListRowRepository::new(&connection)
@@ -695,7 +695,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repo = NameRepository::new(&connection);
+        let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         MasterListRowRepository::new(&connection)
             .upsert_one(&data::master_list_1())
@@ -721,7 +721,7 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let name_repo = NameRepository::new(&connection);
+        let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
@@ -757,10 +757,10 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
-        let name_repo = NameRepository::new(&connection);
+        let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
@@ -799,11 +799,11 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRepository::new(&connection);
+        let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&data::item_1()).await.unwrap();
         item_repo.insert_one(&data::item_2()).await.unwrap();
         item_repo.insert_one(&data::item_service_1()).await.unwrap();
-        let name_repo = NameRepository::new(&connection);
+        let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
@@ -966,7 +966,7 @@ mod repository_test {
 
         // use stock take entries to populate the changelog (via the trigger)
         let stock_take_repo = StockTakeRowRepository::new(&connection);
-        let repo = ChangelogRepository::new(&connection);
+        let repo = ChangelogRowRepository::new(&connection);
 
         // single entry:
         let stock_take_a = mock_stock_take_a();

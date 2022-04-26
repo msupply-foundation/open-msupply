@@ -216,7 +216,7 @@ mod graphql {
     };
     use repository::mock::{mock_name_store_c, MockDataInserts};
     use repository::schema::{InvoiceLineRow, StockLineRow};
-    use repository::{InvoiceLineRowRepository, InvoiceRepository, StockLineRowRepository};
+    use repository::{InvoiceLineRowRepository, InvoiceRowRepository, StockLineRowRepository};
     use serde_json::json;
 
     use crate::{InvoiceMutations, InvoiceQueries};
@@ -399,7 +399,7 @@ mod graphql {
 
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        let new_invoice = InvoiceRepository::new(&connection)
+        let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("outbound_shipment_c")
             .unwrap();
 
@@ -425,7 +425,7 @@ mod graphql {
 
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        let new_invoice = InvoiceRepository::new(&connection)
+        let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("outbound_shipment_c")
             .unwrap();
 

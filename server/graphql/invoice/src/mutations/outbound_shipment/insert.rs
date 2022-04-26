@@ -132,7 +132,7 @@ mod graphql {
         mock_outbound_shipment_number_store_a, mock_store_linked_to_name,
     };
     use repository::mock::{mock_name_store_c, MockDataInserts};
-    use repository::InvoiceRepository;
+    use repository::InvoiceRowRepository;
     use serde_json::json;
     use util::uuid::uuid;
 
@@ -242,7 +242,7 @@ mod graphql {
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
         // make sure item has been inserted
-        InvoiceRepository::new(&connection)
+        InvoiceRowRepository::new(&connection)
             .find_one_by_id("ci_insert_1")
             .unwrap();
 
@@ -308,7 +308,7 @@ mod graphql {
 
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        let new_invoice = InvoiceRepository::new(&connection)
+        let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&id)
             .unwrap();
 
@@ -335,7 +335,7 @@ mod graphql {
 
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        let new_invoice = InvoiceRepository::new(&connection)
+        let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&id)
             .unwrap();
 

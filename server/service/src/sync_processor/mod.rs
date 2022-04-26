@@ -1,7 +1,7 @@
 use repository::EqualFilter;
 use repository::{
     schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
-    InvoiceFilter, InvoiceQueryRepository, NameRepository, RepositoryError, RequisitionFilter,
+    InvoiceFilter, InvoiceRepository, NameRowRepository, RepositoryError, RequisitionFilter,
     RequisitionRepository, StorageConnection, StoreRowRepository,
 };
 
@@ -154,7 +154,7 @@ fn get_source_name(
             record.clone(),
         ))?;
 
-    let result = NameRepository::new(connection)
+    let result = NameRowRepository::new(connection)
         .find_one_by_id(&store.name_id)?
         .ok_or(ProcessRecordError::CannotFindNameForStoreSourceRecord(
             store,
@@ -174,7 +174,7 @@ fn get_linked_record(
                     .linked_requisition_id(EqualFilter::equal_to(&requisition_row.id)),
             )?
             .map(|requisition| Record::RequisitionRow(requisition.requisition_row)),
-        Record::InvoiceRow(invoice) => InvoiceQueryRepository::new(connection)
+        Record::InvoiceRow(invoice) => InvoiceRepository::new(connection)
             .query_one(InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(&invoice.id)))?
             .map(|invoice| Record::InvoiceRow(invoice.invoice_row)),
     };

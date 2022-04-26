@@ -1,6 +1,6 @@
 use super::common::{can_create_inbound_invoice, generate_and_integrate_linked_invoice};
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing, SyncProcessor};
-use repository::{InvoiceRepository, StorageConnection};
+use repository::{InvoiceRowRepository, StorageConnection};
 
 const DESCRIPTION: &'static str =
     "Create inbound shipment from outbound shipment (linking source shipment)";
@@ -37,7 +37,7 @@ impl<'a> SyncProcessor for CreateAndLinkInboundShipmentProcessor<'a> {
 
         let mut updated_source_invoice = source_invoice.clone();
         updated_source_invoice.linked_invoice_id = Some(new_invoice.id.clone());
-        InvoiceRepository::new(self.connection).upsert_one(&updated_source_invoice)?;
+        InvoiceRowRepository::new(self.connection).upsert_one(&updated_source_invoice)?;
 
         let result = format!(
             "{}\nnew_invoice: {:#?}\nnew_invoice_lines: {:#?}\nupdated_source_invoice: {:#?}",

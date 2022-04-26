@@ -3,7 +3,7 @@ use crate::{
         InvoiceLineRow, InvoiceRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         RequisitionLineRow, RequisitionRow, StockLineRow,
     },
-    InvoiceLineRowRepository, InvoiceRepository, MasterListLineRowRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, MasterListLineRowRepository,
     MasterListNameJoinRepository, MasterListRowRepository, RequisitionLineRowRepository,
     RequisitionRowRepository, StockLineRowRepository, StorageConnection,
 };
@@ -48,7 +48,7 @@ impl FullMockInvoice {
 }
 
 pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &StorageConnection) {
-    InvoiceRepository::new(&connection)
+    InvoiceRowRepository::new(&connection)
         .upsert_one(&invoice.invoice)
         .unwrap();
     for line in invoice.lines.iter() {

@@ -1,6 +1,6 @@
 use crate::{service_provider::ServiceContext, WithDBError};
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRepository, RepositoryError,
+    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -29,7 +29,7 @@ pub fn delete_outbound_shipment_line(
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
 
             if let Some(stock_line_id) = stock_line_id_option {
-                let invoice_repository = InvoiceRepository::new(&connection);
+                let invoice_repository = InvoiceRowRepository::new(&connection);
                 let stock_line_repository = StockLineRowRepository::new(&connection);
 
                 let mut stock_line = stock_line_repository.find_one_by_id(&stock_line_id)?;

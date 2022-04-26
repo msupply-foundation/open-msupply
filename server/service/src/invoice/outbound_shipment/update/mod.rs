@@ -1,6 +1,6 @@
 use repository::Invoice;
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLine, InvoiceRepository, RepositoryError,
+    schema::InvoiceRowStatus, InvoiceLine, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository, TransactionError,
 };
 
@@ -64,7 +64,7 @@ pub fn update_outbound_shipment(
             let (stock_lines_option, update_invoice) =
                 generate(invoice, other_party_option, patch, connection)?;
 
-            InvoiceRepository::new(connection).upsert_one(&update_invoice)?;
+            InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
             if let Some(stock_lines) = stock_lines_option {
                 let repository = StockLineRowRepository::new(connection);
                 for stock_line in stock_lines {
@@ -144,7 +144,7 @@ mod test {
         mock::{mock_name_a, mock_outbound_shipment_a, mock_store_a, MockData, MockDataInserts},
         schema::{InvoiceRow, InvoiceRowType, NameRow, NameStoreJoinRow},
         test_db::setup_all_with_data,
-        InvoiceRepository,
+        InvoiceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -292,7 +292,7 @@ mod test {
 
         assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
 
-        let updated_record = InvoiceRepository::new(&connection)
+        let updated_record = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice().id)
             .unwrap();
 

@@ -5,9 +5,9 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         LocationRow,
     },
-    EqualFilter, InvoiceLineRowRepository, InvoiceRepository, ItemFilter, ItemQueryRepository,
-    LocationRowRepository, NameFilter, NameQueryRepository, RequisitionRowRepository,
-    StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
+    EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, ItemFilter, ItemRepository,
+    LocationRowRepository, NameFilter, NameRepository, RequisitionRowRepository, StockLineFilter,
+    StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 use util::{inline_edit, uuid::uuid};
 
@@ -38,7 +38,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             .unwrap()
             .pop()
             .unwrap();
-        let item = ItemQueryRepository::new(connection)
+        let item = ItemRepository::new(connection)
             .query_one(ItemFilter::new())
             .unwrap()
             .unwrap();
@@ -157,7 +157,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             },
         ];
 
-        let repo = InvoiceRepository::new(connection);
+        let repo = InvoiceRowRepository::new(connection);
         let line_repo = InvoiceLineRowRepository::new(connection);
         for row in &rows {
             repo.upsert_one(&row.row).unwrap();
@@ -169,12 +169,12 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
     }
 
     fn mutate(&self, connection: &StorageConnection, rows: &Vec<FullInvoice>) -> Vec<FullInvoice> {
-        let repo = InvoiceRepository::new(connection);
+        let repo = InvoiceRowRepository::new(connection);
         let line_repo = InvoiceLineRowRepository::new(connection);
         let rows = rows
             .iter()
             .map(|row_existing| {
-                let name = NameQueryRepository::new(connection)
+                let name = NameRepository::new(connection)
                     .query_by_filter(
                         &row_existing.row.store_id,
                         NameFilter::new().id(EqualFilter::equal_to(&row_existing.row.name_id)),
@@ -264,7 +264,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
     }
 
     fn validate(&self, connection: &StorageConnection, rows: &Vec<FullInvoice>) {
-        let repo = InvoiceRepository::new(connection);
+        let repo = InvoiceRowRepository::new(connection);
         let line_repo = InvoiceLineRowRepository::new(connection);
         for row_expected in rows {
             let row = repo

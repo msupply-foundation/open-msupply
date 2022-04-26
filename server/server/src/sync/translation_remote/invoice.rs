@@ -4,7 +4,7 @@ use repository::{
         ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow,
         RemoteSyncBufferRow,
     },
-    InvoiceRepository, NameRepository, StorageConnection, StoreRowRepository,
+    InvoiceRowRepository, NameRowRepository, StorageConnection, StoreRowRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -166,7 +166,7 @@ impl RemotePullTranslation for InvoiceTranslation {
 
         let data = serde_json::from_str::<LegacyTransactRow>(&sync_record.data)?;
 
-        let name = NameRepository::new(connection)
+        let name = NameRowRepository::new(connection)
             .find_one_by_id(&data.name_ID)
             .ok()
             .flatten()
@@ -394,7 +394,7 @@ impl RemotePushUpsertTranslation for InvoiceTranslation {
             requisition_id,
             linked_invoice_id,
             transport_reference,
-        } = InvoiceRepository::new(connection).find_one_by_id(&changelog.row_id)?;
+        } = InvoiceRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
             "Invalid invoice type: {:?}",

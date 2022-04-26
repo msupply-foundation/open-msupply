@@ -2,7 +2,7 @@ use crate::{
     invoice::common::generate_invoice_user_id_update, service_provider::ServiceContext, WithDBError,
 };
 use repository::{
-    InvoiceLineRowRepository, InvoiceRepository, RepositoryError, StockLineRowRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
 };
 
 mod validate;
@@ -37,7 +37,7 @@ pub fn delete_inbound_shipment_line(
             }
 
             if let Some(invoice_row) = generate_invoice_user_id_update(user_id, invoice_row) {
-                InvoiceRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
             }
 
             Ok(line.id) as Result<String, OutError>

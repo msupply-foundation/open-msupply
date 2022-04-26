@@ -1,4 +1,4 @@
-use repository::{Invoice, InvoiceRepository};
+use repository::{Invoice, InvoiceRowRepository};
 use repository::{RepositoryError, TransactionError};
 
 pub mod generate;
@@ -47,7 +47,7 @@ pub fn insert_outbound_shipment(
             let other_party = validate(connection, store_id, &input)?;
             let new_invoice = generate(connection, store_id, user_id, input, other_party)?;
 
-            InvoiceRepository::new(&connection).upsert_one(&new_invoice)?;
+            InvoiceRowRepository::new(&connection).upsert_one(&new_invoice)?;
 
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
@@ -84,7 +84,7 @@ mod test {
         mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
         schema::{NameRow, NameStoreJoinRow},
         test_db::setup_all_with_data,
-        InvoiceRepository,
+        InvoiceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -220,7 +220,7 @@ mod test {
             )
             .unwrap();
 
-        let invoice = InvoiceRepository::new(&connection)
+        let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("new_id")
             .unwrap();
 

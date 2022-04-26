@@ -5,9 +5,9 @@ use repository::{
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
         NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus,
     },
-    InvoiceLineRowRepository, InvoiceRepository, ItemRepository, NameRepository, RepositoryError,
-    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
-    StocktakeRowRepository, StorageConnection,
+    InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, NameRowRepository,
+    RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
+    StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
 };
 use repository::{EqualFilter, StocktakeLineRowRepository};
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
@@ -165,7 +165,7 @@ fn generate_stock_line_update(
         note: stock_line.note.clone(),
     };
 
-    let item = match ItemRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
+    let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
         Some(item) => item,
         None => {
             return Err(UpdateStocktakeError::InternalError(format!(
@@ -249,7 +249,7 @@ fn generate_new_stock_line(
         note: row.note.clone(),
     };
 
-    let item = match ItemRepository::new(connection).find_one_by_id(&item_id)? {
+    let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
         Some(item) => item,
         None => {
             return Err(UpdateStocktakeError::InternalError(format!(
@@ -351,7 +351,7 @@ fn generate(
     }
 
     // find inventory adjustment name:
-    let invad_name = NameRepository::new(connection)
+    let invad_name = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
         .ok_or(UpdateStocktakeError::InternalError(
             "Missing inventory adjustment name".to_string(),
@@ -435,7 +435,7 @@ pub fn update_stocktake(
             }
             // write inventory adjustment
             if let Some(inventory_adjustment) = result.inventory_adjustment {
-                let shipment_repo = InvoiceRepository::new(connection);
+                let shipment_repo = InvoiceRowRepository::new(connection);
                 shipment_repo.upsert_one(&inventory_adjustment)?;
             }
             let shipment_line_repo = InvoiceLineRowRepository::new(connection);

@@ -198,7 +198,7 @@ mod test {
     use repository::{
         mock::{mock_item_a, mock_name_a, mock_outbound_shipment_b, MockDataInserts},
         test_db::setup_all,
-        InvoiceLineRowRepository, InvoiceRepository,
+        InvoiceLineRowRepository, InvoiceRowRepository,
     };
     use util::inline_init;
 
@@ -263,7 +263,7 @@ mod test {
         );
 
         assert_eq!(
-            InvoiceRepository::new(&connection)
+            InvoiceRowRepository::new(&connection)
                 .find_one_by_id_option("new_id")
                 .unwrap(),
             None
@@ -284,7 +284,7 @@ mod test {
             .unwrap();
 
         assert_ne!(
-            InvoiceRepository::new(&connection)
+            InvoiceRowRepository::new(&connection)
                 .find_one_by_id_option("new_id")
                 .unwrap(),
             None

@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, Name, NameFilter, NameQueryRepository, RepositoryError, StorageConnection,
+    EqualFilter, Name, NameFilter, NameRepository, RepositoryError, StorageConnection,
     StoreRowRepository,
 };
 
@@ -33,7 +33,7 @@ pub fn get_other_party(
     store_id: &str,
     other_party_id: &str,
 ) -> Result<Option<Name>, RepositoryError> {
-    NameQueryRepository::new(connection).query_one(
+    NameRepository::new(connection).query_one(
         store_id,
         NameFilter::new().id(EqualFilter::equal_to(other_party_id)),
     )

@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
     schema::{LocationRow, StocktakeLineRow, StocktakeRow, StocktakeStatus},
-    InvoiceFilter, InvoiceQueryRepository, ItemFilter, ItemQueryRepository, ItemRepository,
+    InvoiceFilter, InvoiceRepository, ItemFilter, ItemRepository, ItemRowRepository,
     LocationRowRepository, StockLineFilter, StockLineRepository, StocktakeLineRowRepository,
     StocktakeRowRepository, StorageConnection,
 };
@@ -29,7 +29,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
             .upsert_one(&location)
             .unwrap();
 
-        let item = ItemQueryRepository::new(connection)
+        let item = ItemRepository::new(connection)
             .query_one(ItemFilter::new())
             .unwrap()
             .unwrap();
@@ -83,7 +83,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
         connection: &StorageConnection,
         rows: &Vec<FullStocktake>,
     ) -> Vec<FullStocktake> {
-        let invoice = InvoiceQueryRepository::new(connection)
+        let invoice = InvoiceRepository::new(connection)
             .query_one(InvoiceFilter::new())
             .unwrap()
             .unwrap();
@@ -114,7 +114,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                             .pop()
                             .unwrap()
                             .stock_line_row;
-                        let item = ItemRepository::new(connection)
+                        let item = ItemRowRepository::new(connection)
                             .find_one_by_id(&stock_line.item_id)
                             .unwrap()
                             .unwrap();

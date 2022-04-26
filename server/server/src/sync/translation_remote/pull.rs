@@ -4,7 +4,7 @@ use repository::{
         InvoiceLineRow, InvoiceRow, LocationRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow,
         RequisitionLineRow, RequisitionRow, StockLineRow, StocktakeLineRow, StocktakeRow,
     },
-    InvoiceLineRowRepository, InvoiceRepository, LocationRowRepository, NameStoreJoinRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository, NameStoreJoinRepository,
     NumberRowRepository, RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
     StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
     TransactionError,
@@ -136,7 +136,9 @@ fn integrate_record(
         IntegrationUpsertRecord::NameStoreJoin(record) => {
             NameStoreJoinRepository::new(con).upsert_one(record)
         }
-        IntegrationUpsertRecord::Invoice(record) => InvoiceRepository::new(con).upsert_one(record),
+        IntegrationUpsertRecord::Invoice(record) => {
+            InvoiceRowRepository::new(con).upsert_one(record)
+        }
         IntegrationUpsertRecord::InvoiceLine(record) => {
             InvoiceLineRowRepository::new(con).upsert_one(record)
         }

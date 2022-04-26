@@ -2,7 +2,7 @@ use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
 use repository::Invoice;
-use repository::{InvoiceRepository, RepositoryError};
+use repository::{InvoiceRowRepository, RepositoryError};
 
 mod generate;
 mod validate;
@@ -33,7 +33,7 @@ pub fn insert_inbound_shipment(
         .transaction_sync(|connection| {
             let other_party = validate(connection, store_id, &input)?;
             let new_invoice = generate(connection, store_id, user_id, input, other_party)?;
-            InvoiceRepository::new(connection).upsert_one(&new_invoice)?;
+            InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
@@ -78,7 +78,7 @@ mod test {
         mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
         schema::{NameRow, NameStoreJoinRow},
         test_db::setup_all_with_data,
-        InvoiceRepository,
+        InvoiceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -214,7 +214,7 @@ mod test {
             )
             .unwrap();
 
-        let invoice = InvoiceRepository::new(&connection)
+        let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("new_id")
             .unwrap();
 
