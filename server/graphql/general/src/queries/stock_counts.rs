@@ -23,7 +23,7 @@ impl StockCounts {
             .with_timezone(&self.timezone_offset)
             .date()
             .naive_utc();
-        Ok(service.count_expired_stock(&service_ctx, date, &self.store_id)?)
+        Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)?)
     }
 
     async fn expiring_soon(&self, ctx: &Context<'_>) -> Result<i64> {
@@ -36,7 +36,7 @@ impl StockCounts {
             .date()
             .naive_utc()
             + Duration::days(days_till_expired as i64);
-        Ok(service.count_expired_stock(&service_ctx, date, &self.store_id)?)
+        Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)?)
     }
 }
 

@@ -57,7 +57,7 @@ mod query {
             .unwrap();
         assert!(result.count >= 1);
 
-        //Test filter for non existant store finds nothing
+        //Test filter for non existent store finds nothing
         let result = service
             .get_master_lists(
                 &context,

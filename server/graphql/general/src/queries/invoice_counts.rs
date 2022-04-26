@@ -25,12 +25,12 @@ fn do_invoice_count(
     let count = service
         .invoices_count(
             &service_ctx,
+            store_id,
             invoice_type,
             invoice_status,
             range,
             &Utc::now(),
             timezone_offset,
-            store_id,
         )
         .map_err(|err| match err {
             InvoiceCountError::RepositoryError(err) => StandardGraphqlError::from(err),

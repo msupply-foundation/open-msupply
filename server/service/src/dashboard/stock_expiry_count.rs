@@ -10,10 +10,10 @@ pub trait StockExpiryCountServiceTrait: Send + Sync {
     fn count_expired_stock(
         &self,
         ctx: &ServiceContext,
-        date_time: NaiveDate,
         store_id: &str,
+        date_time: NaiveDate,
     ) -> Result<i64, RepositoryError> {
-        StockExpiryServiceCount {}.count_expired_stock(ctx, date_time, store_id)
+        StockExpiryServiceCount {}.count_expired_stock(ctx, store_id, date_time)
     }
 }
 
@@ -23,8 +23,8 @@ impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
     fn count_expired_stock(
         &self,
         ctx: &ServiceContext,
-        date_time: NaiveDate,
         store_id: &str,
+        date_time: NaiveDate,
     ) -> Result<i64, RepositoryError> {
         let repo = StockLineRepository::new(&ctx.connection);
         repo.count(Some(
