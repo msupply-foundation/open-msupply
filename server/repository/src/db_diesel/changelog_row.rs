@@ -6,13 +6,13 @@ use crate::{
 };
 use std::convert::TryInto;
 
-pub struct ChangelogRepository<'a> {
+pub struct ChangelogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> ChangelogRepository<'a> {
+impl<'a> ChangelogRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        ChangelogRepository { connection }
+        ChangelogRowRepository { connection }
     }
 
     /// # Arguments:

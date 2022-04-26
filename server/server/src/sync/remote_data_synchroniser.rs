@@ -1,7 +1,7 @@
 use log::info;
 use repository::{
     schema::{ChangelogRow, KeyValueType, RemoteSyncBufferAction, RemoteSyncBufferRow},
-    ChangelogRepository, KeyValueStoreRepository, RemoteSyncBufferRepository, RepositoryError,
+    ChangelogRowRepository, KeyValueStoreRepository, RemoteSyncBufferRepository, RepositoryError,
     StorageConnection,
 };
 use thiserror::Error;
@@ -74,7 +74,7 @@ impl RemoteDataSynchroniser {
 
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
-        let cursor = ChangelogRepository::new(connection)
+        let cursor = ChangelogRowRepository::new(connection)
             .latest_changelog()?
             .map(|row| row.id)
             .unwrap_or(0) as u32;
@@ -182,7 +182,7 @@ impl RemoteDataSynchroniser {
     // push
 
     pub async fn push_changes(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
-        let changelog = ChangelogRepository::new(connection);
+        let changelog = ChangelogRowRepository::new(connection);
 
         const BATCH_SIZE: u32 = 1000;
         let state = RemoteSyncState::new(connection);

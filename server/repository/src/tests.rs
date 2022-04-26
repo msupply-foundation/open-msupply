@@ -283,7 +283,7 @@ mod repository_test {
             ChangelogAction, ChangelogRow, ChangelogTableName, KeyValueType, NumberRowType,
             RequisitionRowStatus,
         },
-        test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
+        test_db, CentralSyncBufferRepository, ChangelogRowRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository,
         MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
@@ -769,7 +769,7 @@ mod repository_test {
 
         // use stock take entries to populate the changelog (via the trigger)
         let stocktake_repo = StocktakeRowRepository::new(&connection);
-        let repo = ChangelogRepository::new(&connection);
+        let repo = ChangelogRowRepository::new(&connection);
 
         // single entry:
         let stocktake_a = mock_stocktake_a();
@@ -877,7 +877,7 @@ mod repository_test {
 
         // use stock take entries to populate the changelog (via the trigger)
         let stocktake_repo = StocktakeRowRepository::new(&connection);
-        let repo = ChangelogRepository::new(&connection);
+        let repo = ChangelogRowRepository::new(&connection);
 
         let stocktake_a = mock_stocktake_a();
         let stocktake_b = mock_stocktake_no_line_a();
