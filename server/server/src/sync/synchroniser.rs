@@ -54,7 +54,10 @@ impl Synchroniser {
     ) -> anyhow::Result<Self> {
         let client = Client::new();
         let url = Url::parse(&settings.url)?;
-        let credentials = SyncCredentials::new(&settings.username, &settings.password);
+        let credentials = SyncCredentials {
+            username: settings.username.clone(),
+            password_sha256: settings.password_sha256.clone(),
+        };
         let sync_api_v5 = SyncApiV5::new(url.clone(), credentials.clone(), client.clone());
         let sync_api_v3 = SyncApiV3::new(url, credentials, client, &settings.site_hardware_id)?;
         Ok(Synchroniser {
@@ -115,7 +118,7 @@ impl Synchroniser {
 
         tokio::select! {
             () = async {
-              sync_sender.schedule_send(Duration::from_secs(self.settings.interval)).await;
+              sync_sender.schedule_send(Duration::from_secs(self.settings.interval_sec)).await;
             } => unreachable!("Sync receiver unexpectedly died!?"),
             () = async {
                 sync_receiver.listen(self).await;

@@ -11,6 +11,14 @@ pub enum KeyValueType {
     /// Possible value: "true"
     RemoteSyncInitilisationFinished,
     RemoteSyncPushCursor,
+
+    SettingsSyncUrl,
+    SettingsSyncUsername,
+    SettingsSyncPasswordSha256,
+    SettingsSyncIntervalSec,
+    SettingsSyncCentralServerSiteId,
+    SettingsSyncSideId,
+    SettingsSyncSideHardwareId,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

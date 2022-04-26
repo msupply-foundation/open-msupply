@@ -213,7 +213,7 @@ mod tests {
 
     fn create_api(url: &str, username: &str, password: &str) -> SyncApiV5 {
         let url = Url::parse(url).unwrap();
-        let credentials = SyncCredentials::new(username, password);
+        let credentials = SyncCredentials::from_plain(username, password);
         let client = Client::new();
         SyncApiV5::new(url, credentials, client)
     }

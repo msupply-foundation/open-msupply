@@ -7,15 +7,15 @@ use std::{
     io::Error as IoError,
 };
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct Settings {
     pub server: ServerSettings,
     pub database: DatabaseSettings,
-    pub sync: SyncSettings,
+    pub sync: Option<SyncSettings>,
     pub auth: AuthSettings,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct ServerSettings {
     pub host: String,
     pub port: u16,
@@ -33,7 +33,7 @@ impl ServerSettings {
     }
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct AuthSettings {
     pub token_secret: String,
 }

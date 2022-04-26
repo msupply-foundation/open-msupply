@@ -236,6 +236,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_integrate_central_records() {
         let settings = get_test_settings("omsupply-database-integrate_central_records");
+        let sync_settings = settings.sync.unwrap();
         let connection_manager = test_db::setup(&settings.database).await;
 
         // use test records with cursors that are out of order
@@ -256,8 +257,11 @@ mod tests {
             .expect("Failed to insert central sync records into sync buffer");
 
         let client = Client::new();
-        let url = Url::parse(&settings.sync.url).unwrap();
-        let credentials = SyncCredentials::new(&settings.sync.username, &settings.sync.password);
+        let url = Url::parse(&sync_settings.url).unwrap();
+        let credentials = SyncCredentials {
+            username: sync_settings.username,
+            password_sha256: sync_settings.password_sha256,
+        };
         let sync_api_v5 = SyncApiV5::new(url, credentials, client);
 
         let sync = CentralDataSynchroniser { sync_api_v5 };
