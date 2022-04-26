@@ -28,22 +28,22 @@ pub trait InvoiceCountServiceTrait: Send + Sync {
     fn invoices_count(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         invoice_type: &InvoiceRowType,
         invoice_status: &InvoiceRowStatus,
         range: &CountTimeRange,
         now: &DateTime<Utc>,
         timezone_offset: &FixedOffset,
-        store_id: &str,
     ) -> Result<i64, InvoiceCountError> {
         // default implementation:
         InvoiceCountService {}.invoices_count(
             ctx,
+            store_id,
             invoice_type,
             invoice_status,
             range,
             now,
             timezone_offset,
-            store_id,
         )
     }
 
@@ -128,12 +128,12 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
     fn invoices_count(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         invoice_type: &InvoiceRowType,
         invoice_status: &InvoiceRowStatus,
         range: &CountTimeRange,
         now: &DateTime<Utc>,
         timezone_offset: &FixedOffset,
-        store_id: &str,
     ) -> Result<i64, InvoiceCountError> {
         let repo = InvoiceQueryRepository::new(&ctx.connection);
         let now = to_local(now, &timezone_offset);
@@ -289,24 +289,24 @@ mod invoice_count_service_test {
         let today = service
             .invoices_count(
                 &ctx,
+                &store_id,
                 &InvoiceRowType::InboundShipment,
                 &InvoiceRowStatus::New,
                 &CountTimeRange::Today,
                 &test_now,
                 &nz_tz_offset,
-                &store_id,
             )
             .unwrap();
         assert_eq!(today, 2);
         let this_week = service
             .invoices_count(
                 &ctx,
+                &store_id,
                 &InvoiceRowType::InboundShipment,
                 &InvoiceRowStatus::New,
                 &CountTimeRange::ThisWeek,
                 &test_now,
                 &nz_tz_offset,
-                &store_id,
             )
             .unwrap();
         assert_eq!(this_week, 2);
@@ -317,24 +317,24 @@ mod invoice_count_service_test {
         let today = service
             .invoices_count(
                 &ctx,
+                &store_id,
                 &InvoiceRowType::InboundShipment,
                 &InvoiceRowStatus::New,
                 &CountTimeRange::Today,
                 &test_now,
                 &utc_offset,
-                &store_id,
             )
             .unwrap();
         assert_eq!(today, 1);
         let this_week = service
             .invoices_count(
                 &ctx,
+                &store_id,
                 &InvoiceRowType::InboundShipment,
                 &InvoiceRowStatus::New,
                 &CountTimeRange::ThisWeek,
                 &test_now,
                 &utc_offset,
-                &store_id,
             )
             .unwrap();
         assert_eq!(this_week, 2);
