@@ -8,7 +8,7 @@ pub struct SyncCredentials {
 }
 
 impl SyncCredentials {
-    pub fn new(username: &str, password: &str) -> SyncCredentials {
+    pub fn from_plain(username: &str, password: &str) -> SyncCredentials {
         let username = username.to_owned();
         let password = hash::sha256(password);
 
