@@ -42,7 +42,7 @@ async fn run_stage0(
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
     connection_manager: StorageConnectionManager,
 ) -> std::io::Result<bool> {
-    info!("Start server in bootstrap mode. Please use API to configure the server.");
+    info!("Starting server in bootstrap mode. Please use API to configure the server.");
 
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
@@ -95,7 +95,7 @@ async fn run_stage0(
                 ));
             }
 
-            warn!("No certificates found: Run in HTTP development mode");
+            warn!("No certificates found: Running in HTTP development mode");
             let listener = TcpListener::bind(settings.server.address())
                 .expect("Failed to bind server to address");
             http_server = http_server.listen(listener)?;
