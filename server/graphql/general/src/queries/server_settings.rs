@@ -88,6 +88,9 @@ pub enum ServerSettingsResponse {
     Response(ServerSettingsNode),
 }
 
+#[derive(Debug)]
+pub struct RestartNode {}
+
 pub fn get_server_settings(ctx: &Context<'_>, stage0: bool) -> Result<ServerSettingsResponse> {
     if !stage0 {
         validate_auth(
@@ -125,6 +128,24 @@ impl ServerSettingsNode {
                 false => ServerStatus::Running,
             },
             sync_settings,
+        }
+    }
+}
+
+#[Object]
+impl RestartNode {
+    async fn message(&self) -> &'static str {
+        "Restarting"
+    }
+}
+
+pub async fn server_restart(ctx: &Context<'_>) -> Result<RestartNode> {
+    match ctx.restart_switch().send(true).await {
+        Ok(_) => Ok(RestartNode {}),
+        Err(err) => {
+            let formatted_error = format!("{:#?}", err);
+            let graphql_error = StandardGraphqlError::InternalError(formatted_error);
+            Err(graphql_error.extend())
         }
     }
 }
