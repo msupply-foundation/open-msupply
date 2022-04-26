@@ -344,7 +344,7 @@ mod repository_test {
         schema::{
             ChangelogAction, ChangelogRow, ChangelogTableName, PricingRow, NumberRowType,
         },
-        test_db, CentralSyncBufferRepository, ChangelogRepository, InvoiceLineRepository,
+        test_db, CentralSyncBufferRepository, ChangelogRowRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRepository, ItemRowRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRowRepository, NameRepository, NameRowRepository,
         NumberRowRepository, OutboundShipmentRepository, RequisitionLineRepository,
@@ -966,7 +966,7 @@ mod repository_test {
 
         // use stock take entries to populate the changelog (via the trigger)
         let stock_take_repo = StockTakeRowRepository::new(&connection);
-        let repo = ChangelogRepository::new(&connection);
+        let repo = ChangelogRowRepository::new(&connection);
 
         // single entry:
         let stock_take_a = mock_stock_take_a();
