@@ -16,7 +16,10 @@ use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::{auth_data_from_request, RequestUserData, SelfRequest};
-use graphql_general::{GeneralQueries, ServerAdminMutations, ServerAdminQueries};
+use graphql_general::{
+    GeneralQueries, ServerAdminMutations, ServerAdminQueries, ServerAdminStage0Mutations,
+    ServerAdminStage0Queries,
+};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
@@ -145,6 +148,37 @@ pub fn build_schema(
     builder.finish()
 }
 
+pub type SchemaStage0 = async_graphql::Schema<
+    ServerAdminStage0Queries,
+    ServerAdminStage0Mutations,
+    async_graphql::EmptySubscription,
+>;
+
+pub fn build_schema_stage0(
+    connection_manager: Data<StorageConnectionManager>,
+    loader_registry: Data<LoaderRegistry>,
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    sync_settings_data: Option<Data<SyncSettings>>,
+    restart_switch: Data<Sender<bool>>,
+    self_request: Option<Data<Box<dyn SelfRequest>>>,
+    include_logger: bool,
+) -> SchemaStage0 {
+    let mut builder = SchemaStage0::build(
+        ServerAdminStage0Queries,
+        ServerAdminStage0Mutations,
+        EmptySubscription,
+    )
+    .data(connection_manager)
+    .data(loader_registry)
+    .data(service_provider)
+    .data(auth_data)
+    .data(restart_switch);
+
+    match sync_settings_data {
+        Some(sync_settings_data) => builder = builder.data(sync_settings_data),
+        None => {}
+    }
     match self_request {
         Some(self_request) => builder = builder.data(self_request),
         None => {}
@@ -167,6 +201,36 @@ impl SelfRequest for SelfRequestImpl {
     ) -> async_graphql::Response {
         let query = request.data(user_data);
         self.schema.execute(query).await.into()
+    }
+}
+
+pub fn config_stage0(
+    connection_manager: Data<StorageConnectionManager>,
+    loader_registry: Data<LoaderRegistry>,
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    sync_settings_data: Option<Data<SyncSettings>>,
+    restart_switch: Data<Sender<bool>>,
+) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
+    |cfg| {
+        let schema = build_schema_stage0(
+            connection_manager,
+            loader_registry,
+            service_provider,
+            auth_data,
+            sync_settings_data,
+            restart_switch,
+            None,
+            true,
+        );
+
+        cfg.app_data(Data::new(schema))
+            .service(web::resource("/graphql").guard(guard::Post()).to(
+                |schema: Data<SchemaStage0>, http_req, req: GraphQLRequest| {
+                    graphql(schema, http_req, req)
+                },
+            ))
+            .service(web::resource("/graphql").guard(guard::Get()).to(playground));
     }
 }
 
@@ -219,8 +283,12 @@ async fn playground() -> HttpResponse {
         .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
 }
 
-async fn graphql(
-    schema: Data<Schema>,
+async fn graphql<
+    Query: 'static + async_graphql::ObjectType,
+    Mutation: 'static + async_graphql::ObjectType,
+    Subscription: 'static + async_graphql::SubscriptionType,
+>(
+    schema: Data<async_graphql::Schema<Query, Mutation, Subscription>>,
     http_req: HttpRequest,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
