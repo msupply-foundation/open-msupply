@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use service::{
     permission_validation::{Resource, ResourceAccessRequest},
-    settings_service::{SettingsService, SettingsServiceTrait},
+    settings_service::{SettingsService, SettingsServiceTrait, UpdateSettingsError},
     sync_settings::SyncSettings,
 };
 use util::hash::sha256;
@@ -64,7 +64,14 @@ pub fn update_server_settings(
                 Ok(sync_settings) => sync_settings,
                 Err(error) => {
                     let formatted_error = format!("{:#?}", error);
-                    let graphql_error = StandardGraphqlError::InternalError(formatted_error);
+                    let graphql_error = match error {
+                        UpdateSettingsError::RepositoryError(_) => {
+                            StandardGraphqlError::InternalError(formatted_error)
+                        }
+                        UpdateSettingsError::InvalidSettings(_) => {
+                            StandardGraphqlError::BadUserInput(formatted_error)
+                        }
+                    };
                     return Err(graphql_error.extend());
                 }
             };
