@@ -362,7 +362,7 @@ mod tests {
             .expect("Failed to insert remote sync records into sync buffer");
 
         let url = Url::parse("http://localhost").unwrap();
-        let credentials = SyncCredentials::new("username", "password");
+        let credentials = SyncCredentials::from_plain("username", "password");
         let client = Client::new();
 
         let site_id = 1;

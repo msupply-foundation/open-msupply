@@ -14,7 +14,7 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             debug_no_access_control: true,
         },
         database: get_test_db_settings(db_name),
-        sync: SyncSettings {
+        sync: Some(SyncSettings {
             username: "postgres".to_string(),
             password_sha256: "password".to_string(),
             url: "http://localhost:5432".to_string(),
@@ -22,7 +22,7 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             central_server_site_id: 0,
             site_id: 1,
             site_hardware_id: "".to_string(),
-        },
+        }),
         auth: AuthSettings {
             token_secret: "testtokensecret".to_string(),
         },
