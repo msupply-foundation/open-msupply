@@ -148,7 +148,7 @@ impl ServerAdminQueries {
 
     /// Restarts the server
     pub async fn server_restart(&self, ctx: &Context<'_>) -> Result<RestartNode> {
-        server_restart(ctx).await
+        server_restart(ctx, false).await
     }
 }
 #[derive(Default, Clone)]
@@ -179,7 +179,7 @@ impl ServerAdminStage0Queries {
 
     /// Restarts the server
     pub async fn server_restart(&self, ctx: &Context<'_>) -> Result<RestartNode> {
-        server_restart(ctx).await
+        server_restart(ctx, true).await
     }
 }
 /// No access control during init stage
@@ -193,6 +193,6 @@ impl ServerAdminStage0Mutations {
         ctx: &Context<'_>,
         input: UpdateServerSettingsInput,
     ) -> Result<UpdateServerSettingsResponse> {
-        update_server_settings(ctx, input, false)
+        update_server_settings(ctx, input, true)
     }
 }

@@ -139,7 +139,17 @@ impl RestartNode {
     }
 }
 
-pub async fn server_restart(ctx: &Context<'_>) -> Result<RestartNode> {
+pub async fn server_restart(ctx: &Context<'_>, stage0: bool) -> Result<RestartNode> {
+    if !stage0 {
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::ServerAdmin,
+                store_id: None,
+            },
+        )?;
+    }
+
     match ctx.restart_switch().send(true).await {
         Ok(_) => Ok(RestartNode {}),
         Err(err) => {
