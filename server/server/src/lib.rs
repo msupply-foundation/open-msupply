@@ -42,7 +42,7 @@ async fn run_stage0(
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
     connection_manager: StorageConnectionManager,
 ) -> std::io::Result<bool> {
-    info!("Starting server in bootstrap mode. Please use API to configure the server.");
+    warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
@@ -127,8 +127,8 @@ async fn run_server(
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(connection_manager.clone());
 
-    let sync_settings = match settings.sync {
-        Some(sync_settings) => sync_settings,
+    let sync_settings = match &settings.sync {
+        Some(sync_settings) => sync_settings.clone(),
         None => {
             // try to load settings from DB
             let service = SettingsService {};
@@ -161,6 +161,19 @@ async fn run_server(
     let sync_settings_data = Some(Data::new(sync_settings.clone()));
 
     let restart_switch = Data::new(restart_switch);
+
+    let mut synchroniser = Synchroniser::new(sync_settings, connection_manager.clone()).unwrap();
+    // Do the initial pull before doing anything else
+    match synchroniser.initial_pull().await {
+        Ok(_) => {}
+        Err(err) => {
+            error!("Failed to perform the initial sync: {}", err);
+            if !settings.server.develop {
+                warn!("Falling back to bootstrap mode");
+                return run_stage0(settings, off_switch, connection_manager).await;
+            }
+        }
+    };
 
     let mut http_server = HttpServer::new(move || {
         App::new()
@@ -201,22 +214,6 @@ async fn run_server(
             http_server = http_server.listen(listener)?;
         }
     }
-
-    let mut synchroniser = Synchroniser::new(sync_settings, connection_manager).unwrap();
-    // Do the initial pull before doing anything else
-    match synchroniser.initial_pull().await {
-        Ok(_) => {}
-        Err(err) => {
-            error!("Failed to perform the initial sync: {}", err);
-            if !settings.server.develop {
-                return Err(std::io::Error::new(
-                    ErrorKind::Other,
-                    "Initial sync must succeed in production",
-                ));
-            }
-        }
-    };
-
     let running_sever = http_server.run();
     let server_handle = running_sever.handle();
     // run server in another task so that we can handle restart/off events here
