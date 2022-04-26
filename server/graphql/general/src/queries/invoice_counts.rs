@@ -17,6 +17,7 @@ fn do_invoice_count(
     invoice_status: &InvoiceRowStatus,
     range: &CountTimeRange,
     timezone_offset: &FixedOffset,
+    store_id: &str,
 ) -> Result<i64> {
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context()?;
@@ -29,6 +30,7 @@ fn do_invoice_count(
             range,
             &Utc::now(),
             timezone_offset,
+            store_id,
         )
         .map_err(|err| match err {
             InvoiceCountError::RepositoryError(err) => StandardGraphqlError::from(err),
@@ -44,6 +46,7 @@ pub struct InvoiceCountsSummary {
     invoice_type: InvoiceRowType,
     invoice_status: InvoiceRowStatus,
     timezone_offset: FixedOffset,
+    store_id: String,
 }
 
 #[Object]
@@ -55,6 +58,7 @@ impl InvoiceCountsSummary {
             &self.invoice_status,
             &CountTimeRange::Today,
             &self.timezone_offset,
+            &self.store_id,
         )
     }
 
@@ -65,12 +69,14 @@ impl InvoiceCountsSummary {
             &self.invoice_status,
             &CountTimeRange::ThisWeek,
             &self.timezone_offset,
+            &self.store_id,
         )
     }
 }
 
 pub struct OutboundInvoiceCounts {
     timezone_offset: FixedOffset,
+    store_id: String,
 }
 
 #[Object]
@@ -80,6 +86,7 @@ impl OutboundInvoiceCounts {
             invoice_type: InvoiceRowType::OutboundShipment,
             invoice_status: InvoiceRowStatus::New,
             timezone_offset: self.timezone_offset,
+            store_id: self.store_id.clone(),
         }
     }
 
@@ -105,6 +112,7 @@ impl OutboundInvoiceCounts {
 
 pub struct InboundInvoiceCounts {
     timezone_offset: FixedOffset,
+    store_id: String,
 }
 
 #[Object]
@@ -114,12 +122,14 @@ impl InboundInvoiceCounts {
             invoice_type: InvoiceRowType::InboundShipment,
             invoice_status: InvoiceRowStatus::New,
             timezone_offset: self.timezone_offset,
+            store_id: self.store_id.clone(),
         }
     }
 }
 
 pub struct InvoiceCounts {
     timezone_offset: FixedOffset,
+    store_id: String,
 }
 
 #[Object]
@@ -127,12 +137,14 @@ impl InvoiceCounts {
     async fn outbound(&self) -> OutboundInvoiceCounts {
         OutboundInvoiceCounts {
             timezone_offset: self.timezone_offset.clone(),
+            store_id: self.store_id.clone(),
         }
     }
 
     async fn inbound(&self) -> InboundInvoiceCounts {
         InboundInvoiceCounts {
             timezone_offset: self.timezone_offset.clone(),
+            store_id: self.store_id.clone(),
         }
     }
 }
@@ -146,12 +158,15 @@ pub fn invoice_counts(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::InvoiceCount,
-            store_id: Some(store_id),
+            store_id: Some(store_id.clone()),
         },
     )?;
 
     let timezone_offset = offset_to_timezone(&timezone_offset).ok_or(
         StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()),
     )?;
-    Ok(InvoiceCounts { timezone_offset })
+    Ok(InvoiceCounts {
+        timezone_offset,
+        store_id,
+    })
 }

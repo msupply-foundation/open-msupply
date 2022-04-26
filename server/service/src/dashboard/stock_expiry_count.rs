@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{DateFilter, RepositoryError, StockLineFilter, StockLineRepository};
+use repository::{DateFilter, EqualFilter, RepositoryError, StockLineFilter, StockLineRepository};
 
 use crate::service_provider::ServiceContext;
 
@@ -11,8 +11,9 @@ pub trait StockExpiryCountServiceTrait: Send + Sync {
         &self,
         ctx: &ServiceContext,
         date_time: NaiveDate,
+        store_id: &str,
     ) -> Result<i64, RepositoryError> {
-        StockExpiryServiceCount {}.count_expired_stock(ctx, date_time)
+        StockExpiryServiceCount {}.count_expired_stock(ctx, date_time, store_id)
     }
 }
 
@@ -23,12 +24,17 @@ impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
         &self,
         ctx: &ServiceContext,
         date_time: NaiveDate,
+        store_id: &str,
     ) -> Result<i64, RepositoryError> {
         let repo = StockLineRepository::new(&ctx.connection);
-        repo.count(Some(StockLineFilter::new().expiry_date(DateFilter {
-            equal_to: None,
-            before_or_equal_to: Some(date_time),
-            after_or_equal_to: None,
-        })))
+        repo.count(Some(
+            StockLineFilter::new()
+                .expiry_date(DateFilter {
+                    equal_to: None,
+                    before_or_equal_to: Some(date_time),
+                    after_or_equal_to: None,
+                })
+                .store_id(EqualFilter::equal_to(&store_id)),
+        ))
     }
 }
