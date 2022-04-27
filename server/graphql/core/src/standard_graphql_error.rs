@@ -80,11 +80,11 @@ pub fn validate_auth(
                     StandardGraphqlError::Unauthenticated(format!("{:?}", kind))
                 }
                 ValidationDeniedKind::InsufficientPermission {
-                    msg: _,
+                    msg,
                     required_permissions,
                 } => StandardGraphqlError::Forbidden(format!(
-                    "Required permissions: {:?}",
-                    required_permissions
+                    "{}, Required permissions: {:?}",
+                    msg, required_permissions
                 )),
             },
             ValidationError::InternalError(err) => StandardGraphqlError::InternalError(err),
