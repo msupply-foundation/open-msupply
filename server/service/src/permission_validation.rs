@@ -329,7 +329,7 @@ fn validate_resource_permissions(
                 return Ok(());
             }
 
-            return Err(format!("Missing store access to store: {}", store_id));
+            return Err(format!("Missing access to store: {}", store_id));
         }
         PermissionDSL::And(children) => {
             for child in children {
