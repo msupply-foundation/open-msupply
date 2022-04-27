@@ -2,8 +2,7 @@ use crate::{
     invoice::common::generate_invoice_user_id_update, invoice_line::generate_batch, u32_to_i32,
 };
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus},
-    schema::{ItemRow, StockLineRow},
+    schema::StockLineRow, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow,
 };
 
 use super::InsertInboundShipmentLine;

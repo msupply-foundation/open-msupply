@@ -1,5 +1,9 @@
 use super::store::store;
-use crate::db_diesel::{invoice_row::invoice, invoice_line_row::invoice_line};
+use crate::db_diesel::{
+    invoice_line_row::invoice_line,
+    invoice_row::invoice,
+    item_row::{item, item_is_visible},
+};
 
 table! {
     central_sync_buffer (id) {
@@ -36,18 +40,6 @@ table! {
         code -> Text,
         on_hold -> Bool,
         store_id -> Text,
-    }
-}
-
-table! {
-    item (id) {
-        id -> Text,
-        name -> Text,
-        code -> Text,
-        unit_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::schema::item::ItemRowTypeMapping,
-        // TODO, this is temporary, remove
-        legacy_record -> Text,
     }
 }
 
@@ -185,13 +177,6 @@ table! {
         id -> Text,
         master_list_id -> Text,
         name_id -> Text,
-    }
-}
-
-table! {
-    item_is_visible (id) {
-        id -> Text,
-        is_visible -> Bool,
     }
 }
 

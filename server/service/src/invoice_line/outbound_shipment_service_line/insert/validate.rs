@@ -1,7 +1,6 @@
 use repository::{
-    db_diesel::{InvoiceRow, InvoiceRowType},
-    schema::{ItemRow, ItemRowType},
-    ItemFilter, ItemRepository, RepositoryError, SimpleStringFilter, StorageConnection,
+    InvoiceRow, InvoiceRowType, ItemFilter, ItemRepository, ItemRow, ItemRowType, RepositoryError,
+    SimpleStringFilter, StorageConnection,
 };
 use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 

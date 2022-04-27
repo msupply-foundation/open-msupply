@@ -15,11 +15,7 @@ use crate::{
     },
     u32_to_i32,
 };
-use repository::{
-    db_diesel::{InvoiceRow, InvoiceRowType},
-    schema::{ItemRow, StockLineRow},
-    StorageConnection,
-};
+use repository::{schema::StockLineRow, InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
 
 use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};
 

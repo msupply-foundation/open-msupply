@@ -1,7 +1,4 @@
-use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
-    schema::ItemRow,
-};
+use repository::{InvoiceLineRow, InvoiceLineRowType, ItemRow};
 
 use super::{InsertOutboundShipmentServiceLine, InsertOutboundShipmentServiceLineError};
 

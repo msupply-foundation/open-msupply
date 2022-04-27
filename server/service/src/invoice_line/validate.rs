@@ -1,8 +1,7 @@
 use crate::WithDBError;
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceRow},
-    schema::ItemRow,
-    InvoiceLineRowRepository, ItemRowRepository, RepositoryError, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 pub struct LineAlreadyExists;

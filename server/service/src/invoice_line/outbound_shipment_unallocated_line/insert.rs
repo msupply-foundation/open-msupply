@@ -1,9 +1,8 @@
 use repository::EqualFilter;
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType},
-    schema::{ItemRow, ItemRowType},
-    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
-    RepositoryError, StorageConnection,
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType, ItemRow,
+    ItemRowType, RepositoryError, StorageConnection,
 };
 
 use crate::invoice_line::query::get_invoice_line;

@@ -1,7 +1,5 @@
 mod central_sync_buffer;
 mod changelog;
-mod item;
-mod item_is_visible;
 mod item_stats;
 mod key_value_store;
 mod location;
@@ -28,7 +26,7 @@ pub mod diesel_schema;
 pub mod user_permission;
 pub mod user_store_join;
 
-use crate::db_diesel::{InvoiceLineRow, InvoiceRow};
+use crate::db_diesel::{item_row::ItemRow, InvoiceLineRow, InvoiceRow};
 
 #[derive(Clone)]
 pub enum DatabaseRow {
@@ -47,8 +45,6 @@ pub enum DatabaseRow {
 
 pub use central_sync_buffer::CentralSyncBufferRow;
 pub use changelog::*;
-pub use item::{ItemRow, ItemRowType};
-pub use item_is_visible::ItemIsVisibleRow;
 pub use item_stats::*;
 pub use key_value_store::*;
 pub use location::LocationRow;
