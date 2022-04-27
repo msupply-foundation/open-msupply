@@ -1,4 +1,4 @@
-use repository::schema::{InvoiceLineRow, ItemRow};
+use repository::{db_diesel::InvoiceLineRow, schema::ItemRow};
 
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
 

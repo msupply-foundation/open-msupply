@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowType},
+    db_diesel::{InvoiceLineRow, InvoiceRow, InvoiceRowType},
     StorageConnection,
 };
 

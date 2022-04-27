@@ -16,7 +16,8 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    schema::{InvoiceRow, InvoiceRowType, ItemRow, StockLineRow},
+    db_diesel::{InvoiceRow, InvoiceRowType},
+    schema::{ItemRow, StockLineRow},
     StorageConnection,
 };
 

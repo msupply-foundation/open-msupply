@@ -1,7 +1,7 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
 use repository::DatetimeFilter;
 use repository::{
-    schema::{InvoiceRowStatus, InvoiceRowType},
+    db_diesel::{InvoiceRowStatus, InvoiceRowType},
     InvoiceFilter, InvoiceRepository, RepositoryError,
 };
 

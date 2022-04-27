@@ -4,7 +4,7 @@ use crate::invoice::{
     InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
 };
 use repository::{
-    schema::{InvoiceRow, InvoiceRowType},
+    db_diesel::{InvoiceRow, InvoiceRowType},
     StorageConnection,
 };
 

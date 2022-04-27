@@ -5,10 +5,8 @@ use crate::{
 use chrono::Utc;
 use repository::EqualFilter;
 use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        NumberRowType,
-    },
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::NumberRowType,
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository,
     RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
 };

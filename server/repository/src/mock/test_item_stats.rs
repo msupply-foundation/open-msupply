@@ -1,9 +1,9 @@
 use chrono::{Duration, Utc};
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, inline_edit, inline_init, uuid::uuid};
 
-use crate::schema::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType,
-    StockLineRow,
+use crate::{
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType},
+    schema::{ItemRow, ItemRowType, StockLineRow},
 };
 
 use super::{mock_name_a, mock_store_a, mock_store_b, MockData};

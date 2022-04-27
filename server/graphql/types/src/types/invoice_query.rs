@@ -11,7 +11,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
+use repository::{schema::PricingRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
 use repository::{unknown_user, Invoice};
 use serde::Serialize;
@@ -388,11 +388,11 @@ mod test {
 
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
     use repository::{
+        db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow},
         mock::{
             mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
             MockDataInserts,
         },
-        schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow},
         Invoice,
     };
     use serde_json::json;

@@ -1,7 +1,7 @@
 use super::common::regenerate_linked_invoice_lines;
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing, SyncProcessor};
 use repository::{
-    schema::{InvoiceRowStatus, InvoiceRowType},
+    db_diesel::{InvoiceRowStatus, InvoiceRowType},
     InvoiceLineRowRepository, InvoiceRowRepository, StorageConnection,
 };
 

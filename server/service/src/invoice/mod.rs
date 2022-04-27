@@ -1,4 +1,4 @@
-use repository::schema::InvoiceRowType;
+use repository::db_diesel::InvoiceRowType;
 use repository::Invoice;
 use repository::InvoiceFilter;
 use repository::InvoiceSort;

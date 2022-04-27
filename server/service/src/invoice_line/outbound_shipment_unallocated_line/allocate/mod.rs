@@ -10,7 +10,7 @@ use crate::{
     service_provider::ServiceContext,
 };
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType},
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
     InvoiceLine, RepositoryError, StockLine, StorageConnection,
 };
 

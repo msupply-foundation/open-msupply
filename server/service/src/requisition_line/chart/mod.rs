@@ -163,13 +163,13 @@ mod test {
     use super::*;
     use crate::service_provider::ServiceProvider;
     use repository::{
+        db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType},
         mock::{
             mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
             mock_request_draft_requisition_calculation_test, MockData, MockDataInserts,
         },
         schema::{
-            InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow,
-            RequisitionLineRow, RequisitionRow, RequisitionRowType, StockLineRow, StoreRow,
+            NameRow, RequisitionLineRow, RequisitionRow, RequisitionRowType, StockLineRow, StoreRow,
         },
         test_db::{setup_all, setup_all_with_data},
     };

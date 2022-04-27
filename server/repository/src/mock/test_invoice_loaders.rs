@@ -1,9 +1,9 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::schema::{
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, RequisitionRow, RequisitionRowStatus,
-    RequisitionRowType,
+use crate::{
+    db_diesel::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
 };
 
 use super::{mock_name_store_b, mock_store_a, MockData};

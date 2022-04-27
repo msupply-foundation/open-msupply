@@ -1,5 +1,5 @@
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType},
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
     InvoiceLineRowRepository, RepositoryError, StorageConnection,
 };
 

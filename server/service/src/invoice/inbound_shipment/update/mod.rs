@@ -6,7 +6,7 @@ use crate::{
 };
 use repository::Invoice;
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+    db_diesel::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository,
 };
 

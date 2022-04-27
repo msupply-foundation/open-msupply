@@ -85,10 +85,12 @@ mod test {
     use util::{inline_edit, inline_init, uuid::uuid};
 
     use crate::{
-        mock::{mock_item_a, mock_name_a, MockData, MockDataInserts},
-        schema::{
-            InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow, StoreRow,
+        db_diesel::{
+            invoice_line_row::{InvoiceLineRow, InvoiceLineRowType},
+            invoice_row::{InvoiceRow, InvoiceRowType},
         },
+        mock::{mock_item_a, mock_name_a, MockData, MockDataInserts},
+        schema::{NameRow, StoreRow},
         test_db::setup_all_with_data,
     };
 

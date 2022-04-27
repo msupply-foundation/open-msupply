@@ -5,7 +5,7 @@ use crate::invoice::{
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::Name;
 use repository::{
-    schema::{InvoiceRow, InvoiceRowType},
+    db_diesel::{InvoiceRow, InvoiceRowType},
     StorageConnection,
 };
 

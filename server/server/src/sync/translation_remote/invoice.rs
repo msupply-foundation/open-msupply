@@ -1,9 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    schema::{
-        ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow,
-        RemoteSyncBufferRow,
-    },
+    db_diesel::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::{ChangelogRow, ChangelogTableName, NameRow, RemoteSyncBufferRow},
     InvoiceRowRepository, NameRowRepository, StorageConnection, StoreRowRepository,
 };
 

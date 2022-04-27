@@ -4,7 +4,7 @@ mod repository_test {
         use chrono::{NaiveDate, NaiveDateTime};
         use util::inline_init;
 
-        use crate::schema::*;
+        use crate::{schema::*, db_diesel::*};
 
         pub fn name_1() -> NameRow {
             inline_init(|r: &mut NameRow| {

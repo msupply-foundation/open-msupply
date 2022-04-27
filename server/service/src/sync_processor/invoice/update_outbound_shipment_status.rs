@@ -1,6 +1,6 @@
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing, SyncProcessor};
 use repository::{
-    schema::{InvoiceRowStatus, InvoiceRowType},
+    db_diesel::{InvoiceRowStatus, InvoiceRowType},
     InvoiceRowRepository, StorageConnection,
 };
 

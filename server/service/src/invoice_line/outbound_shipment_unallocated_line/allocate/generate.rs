@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType},
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, Pagination,
     RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineSort,
     StockLineSortField, StorageConnection,

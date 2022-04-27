@@ -1,6 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
+    db_diesel::InvoiceRow,
+    schema::{NameRow, RequisitionRow, StoreRow},
     InvoiceFilter, InvoiceRepository, NameRowRepository, RepositoryError, RequisitionFilter,
     RequisitionRepository, StorageConnection, StoreRowRepository,
 };
