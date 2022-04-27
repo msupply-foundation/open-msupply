@@ -40,6 +40,7 @@
   "error.no-results": "No records to display",
   "error.something-wrong": "Oops! Something's gone wrong.",
   "error.unable-to-load-data": "An error has occurred: there was a problem loading the data.",
+  "error.unable-to-update-sync-settings": "Unable to update sync settings",
   "filename.inbounds": "inbound-shipments",
   "filename.locations": "locations",
   "filename.master-lists": "master-lists",
@@ -59,7 +60,8 @@
   "heading.edit-item": "Edit Item",
   "heading.expiring-stock": "Expiring Stock",
   "heading.select-items": "Select Items",
-  "heading.settings": "Settings",
+  "heading.settings-display": "Display settings",
+  "heading.settings-sync": "Synchronisation",
   "heading.shipments-to-be-picked": "Shipments to be picked",
   "label.already-issued": "Issued",
   "label.allocated": "Allocated",
@@ -135,6 +137,12 @@
   "label.sell": "Sell",
   "label.shipped": "Shipped",
   "label.snapshot-num-of-packs": "Snapshot # of Packs",
+  "label.settings-central-site-id": "Central server Site ID",
+  "label.settings-interval": "Interval (seconds)",
+  "label.settings-password": "Password",
+  "label.settings-site-id": "Site ID",
+  "label.settings-url": "Url",
+  "label.settings-username": "Username",
   "label.status": "Status",
   "label.stock-on-hand": "SoH (Est. remaining)",
   "label.suggested": "Suggested",
@@ -161,5 +169,6 @@
   "placeholder.filter-items": "Filter items",
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code",
-  "success": "Success!"
+  "success": "Success!",
+  "success.sync-settings": "Sync settings updated successfully!"
 }
