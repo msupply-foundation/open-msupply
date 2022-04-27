@@ -28,14 +28,6 @@ export type Scalars = {
    * * `2000-02-24`
    */
   NaiveDate: string;
-  /**
-   * ISO 8601 combined date and time without timezone.
-   *
-   * # Examples
-   *
-   * * `2015-07-01T08:59:60.123`,
-   */
-  NaiveDateTime: string;
 };
 
 export type AccessDenied = LogoutErrorInterface & {
@@ -686,6 +678,7 @@ export type FullMutation = {
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
   updateResponseRequisitionLine: UpdateResponseRequisitionLineResponse;
+  updateServerSettings: UpdateServerSettingsResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   /** Set requested for each line in request requisition to calculated */
@@ -957,6 +950,11 @@ export type FullMutationUpdateResponseRequisitionLineArgs = {
 };
 
 
+export type FullMutationUpdateServerSettingsArgs = {
+  input: UpdateServerSettingsInput;
+};
+
+
 export type FullMutationUpdateStocktakeArgs = {
   input: UpdateStocktakeInput;
   storeId: Scalars['String'];
@@ -1004,6 +1002,7 @@ export type FullQuery = {
    * The printed report can be retrieved from the `/files` endpoint using the returned file id.
    */
   printReport: PrintReportResponse;
+  printReportDefinition: PrintReportResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -1015,6 +1014,13 @@ export type FullQuery = {
   requisitionByNumber: RequisitionResponse;
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
+  /** Restarts the server */
+  serverRestart: RestartNode;
+  /**
+   * Retrieves a new auth bearer and refresh token
+   * The refresh token is returned as a cookie
+   */
+  serverSettings: ServerSettingsResponse;
   stockCounts: StockCounts;
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
@@ -1091,6 +1097,14 @@ export type FullQueryNamesArgs = {
 export type FullQueryPrintReportArgs = {
   dataId: Scalars['String'];
   reportId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryPrintReportDefinitionArgs = {
+  dataId: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
+  report: Scalars['JSON'];
   storeId: Scalars['String'];
 };
 
@@ -2359,6 +2373,28 @@ export type RequisitionSortInput = {
 
 export type RequisitionsResponse = RequisitionConnector;
 
+export type RestartNode = {
+  __typename: 'RestartNode';
+  message: Scalars['String'];
+};
+
+export type ServerSettingsNode = {
+  __typename: 'ServerSettingsNode';
+  status: ServerStatus;
+  /** Currently used sync settings (may differ from what is stored in the DB) */
+  syncSettings?: Maybe<SyncSettingsNode>;
+  /** Returns sync settings as currently stored on the server. If null no sync settings are set. */
+  syncSettingsDb?: Maybe<SyncSettingsNode>;
+};
+
+export type ServerSettingsResponse = ServerSettingsNode;
+
+export enum ServerStatus {
+  Running = 'RUNNING',
+  /** Server misses configuration to start up fully */
+  Stage_0 = 'STAGE_0'
+}
+
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
@@ -2487,9 +2523,9 @@ export type StocktakeLineNode = {
 export type StocktakeNode = {
   __typename: 'StocktakeNode';
   comment?: Maybe<Scalars['String']>;
-  createdDatetime: Scalars['NaiveDateTime'];
+  createdDatetime: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
-  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']>;
+  finalisedDatetime?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   inventoryAdjustment?: Maybe<InvoiceNode>;
   inventoryAdjustmentId?: Maybe<Scalars['String']>;
@@ -2596,6 +2632,19 @@ export type SupplyRequestedQuantityInput = {
 };
 
 export type SupplyRequestedQuantityResponse = RequisitionLineConnector | SupplyRequestedQuantityError;
+
+export type SyncSettingsNode = {
+  __typename: 'SyncSettingsNode';
+  centralServerSiteId: Scalars['Int'];
+  /** How frequently central data is synced */
+  intervalSec: Scalars['Int'];
+  siteHardwareId: Scalars['String'];
+  siteId: Scalars['Int'];
+  /** Central server url */
+  url: Scalars['String'];
+  /** Central server username */
+  username: Scalars['String'];
+};
 
 export type TaxUpdate = {
   /** Set or unset the tax value (in percentage) */
@@ -2953,6 +3002,12 @@ export enum UpdateResponseRequisitionStatusInput {
   Finalised = 'FINALISED'
 }
 
+export type UpdateServerSettingsInput = {
+  syncSettings?: InputMaybe<UpdateSyncSettingsInput>;
+};
+
+export type UpdateServerSettingsResponse = ServerSettingsNode;
+
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';
   error: UpdateStocktakeErrorInterface;
@@ -3008,6 +3063,18 @@ export type UpdateStocktakeResponseWithId = {
   __typename: 'UpdateStocktakeResponseWithId';
   id: Scalars['String'];
   response: UpdateStocktakeResponse;
+};
+
+export type UpdateSyncSettingsInput = {
+  centralServerSiteId: Scalars['Int'];
+  /** Sync interval in sec */
+  intervalSec: Scalars['Int'];
+  /** Plain text password */
+  password: Scalars['String'];
+  siteHardwareId: Scalars['String'];
+  siteId: Scalars['Int'];
+  url: Scalars['String'];
+  username: Scalars['String'];
 };
 
 export type UseSuggestedQuantityError = {

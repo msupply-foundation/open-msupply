@@ -1,3 +1,44 @@
+fragment SyncSettings on SyncSettingsNode {
+  __typename
+  centralServerSiteId
+  intervalSec
+  siteHardwareId
+  siteId
+  url
+  username
+}
+
 query apiVersion {
   apiVersion
+}
+
+query serverSettings {
+  serverSettings {
+    ... on ServerSettingsNode {
+      __typename
+      status
+      syncSettingsDb {
+        ...SyncSettings
+      }
+      syncSettings {
+        ...SyncSettings
+      }
+    }
+  }
+}
+
+query serverRestart {
+  serverRestart {
+    __typename
+    message
+  }
+}
+
+mutation updateServerSettings($syncSettings: UpdateSyncSettingsInput!) {
+  updateServerSettings(input: { syncSettings: $syncSettings }) {
+    ... on ServerSettingsNode {
+      __typename
+      status
+    }
+  }
 }

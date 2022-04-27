@@ -14,7 +14,8 @@ import { LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
 import packageJson from 'package.json';
-import { useApiVersion } from '../api/hooks';
+import { useHost } from '../api/hooks';
+import { SyncSettings } from './SyncSettings';
 
 export const Settings: React.FC = () => {
   const t = useTranslation('common');
@@ -22,7 +23,7 @@ export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
-  const { data } = useApiVersion();
+  const { data } = useHost.utils.version();
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
 
@@ -82,7 +83,7 @@ export const Settings: React.FC = () => {
       flexWrap="nowrap"
     >
       <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
-        {t('heading.settings')}
+        {t('heading.settings-display')}
       </Typography>
       <Setting
         component={<LanguageMenu />}
@@ -101,6 +102,7 @@ export const Settings: React.FC = () => {
         onToggle={onToggleCustomLogo}
         title={t('heading.custom-logo')}
       />
+      <SyncSettings />
       <Grid style={{ position: 'absolute', right: 0, bottom: 30 }}>
         <Grid container padding={1} flexDirection="column">
           <Grid item display="flex" flex={1} gap={1}>
