@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::schema::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow,
+use crate::{
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::StockLineRow,
 };
 
 use super::common::{FullMockInvoice, FullMockInvoiceLine};

@@ -4,9 +4,9 @@ mod test {
 
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
+    use repository::db_diesel::InvoiceRowType;
     use repository::mock::MockDataInserts;
     use repository::mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a};
-    use repository::schema::InvoiceRowType;
     use repository::{Invoice, RepositoryError, StorageConnectionManager};
     use serde_json::json;
     use service::invoice::InvoiceServiceTrait;

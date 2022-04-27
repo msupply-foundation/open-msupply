@@ -1,6 +1,6 @@
 use util::inline_init;
 
-use crate::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use crate::db_diesel::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
 use super::{mock_default_service_item, mock_name_a, MockData};
 

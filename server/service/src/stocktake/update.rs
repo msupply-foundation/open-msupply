@@ -1,10 +1,8 @@
 use chrono::{NaiveDate, Utc};
 use repository::schema::StocktakeLineRow;
 use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus,
-    },
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::{NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus},
     InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, NameRowRepository,
     RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
     StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
@@ -465,6 +463,7 @@ mod test {
 
     use chrono::NaiveDate;
     use repository::{
+        db_diesel::InvoiceLineRowType,
         mock::{
             mock_locked_stocktake, mock_stock_line_a, mock_stocktake_a,
             mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
@@ -473,7 +472,7 @@ mod test {
             mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a,
             MockDataInserts,
         },
-        schema::{InvoiceLineRowType, StocktakeRow, StocktakeStatus},
+        schema::{StocktakeRow, StocktakeStatus},
         test_db::setup_all,
         InvoiceLineRowRepository, StockLineRowRepository, StocktakeLine,
         StocktakeLineRowRepository, StocktakeRepository,

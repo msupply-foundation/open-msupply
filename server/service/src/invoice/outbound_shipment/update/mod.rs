@@ -1,6 +1,6 @@
 use repository::Invoice;
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLine, InvoiceRowRepository, RepositoryError,
+    db_diesel::InvoiceRowStatus, InvoiceLine, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository, TransactionError,
 };
 
@@ -141,8 +141,9 @@ impl UpdateOutboundShipment {
 #[cfg(test)]
 mod test {
     use repository::{
+        db_diesel::{InvoiceRow, InvoiceRowType},
         mock::{mock_name_a, mock_outbound_shipment_a, mock_store_a, MockData, MockDataInserts},
-        schema::{InvoiceRow, InvoiceRowType, NameRow, NameStoreJoinRow},
+        schema::{NameRow, NameStoreJoinRow},
         test_db::setup_all_with_data,
         InvoiceRowRepository,
     };

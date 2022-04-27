@@ -1,7 +1,8 @@
 use chrono::Utc;
 
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType},
+    db_diesel::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::NumberRowType,
     Name, RepositoryError, StorageConnection,
 };
 

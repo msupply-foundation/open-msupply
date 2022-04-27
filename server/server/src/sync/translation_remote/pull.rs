@@ -1,8 +1,9 @@
 use log::{info, warn};
 use repository::{
+    db_diesel::{InvoiceLineRow, InvoiceRow},
     schema::{
-        InvoiceLineRow, InvoiceRow, LocationRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow,
-        RequisitionLineRow, RequisitionRow, StockLineRow, StocktakeLineRow, StocktakeRow,
+        LocationRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, RequisitionLineRow,
+        RequisitionRow, StockLineRow, StocktakeLineRow, StocktakeRow,
     },
     InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository, NameStoreJoinRepository,
     NumberRowRepository, RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,

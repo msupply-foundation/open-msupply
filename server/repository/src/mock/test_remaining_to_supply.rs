@@ -1,6 +1,6 @@
-use crate::schema::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    RequisitionLineRow, RequisitionRow, RequisitionRowType,
+use crate::{
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowType},
 };
 use util::inline_init;
 

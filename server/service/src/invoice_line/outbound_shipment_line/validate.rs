@@ -1,6 +1,7 @@
 use crate::WithDBError;
 use repository::{
-    schema::{InvoiceLineRow, ItemRow, StockLineRow},
+    db_diesel::InvoiceLineRow,
+    schema::{ItemRow, StockLineRow},
     InvoiceLineRowRepository, LocationRowRepository, RepositoryError, StockLineRowRepository,
     StorageConnection,
 };

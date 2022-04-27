@@ -1,6 +1,7 @@
 use crate::u32_to_i32;
-use repository::schema::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
+use repository::{
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus},
+    schema::{ItemRow, StockLineRow},
 };
 
 use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};

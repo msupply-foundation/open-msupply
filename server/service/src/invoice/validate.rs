@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use repository::EqualFilter;
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    db_diesel::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository, RepositoryError,
     StorageConnection,
 };

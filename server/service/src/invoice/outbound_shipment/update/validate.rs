@@ -4,7 +4,7 @@ use crate::invoice::{
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::EqualFilter;
 use repository::{
-    schema::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    db_diesel::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository, Name, RepositoryError,
     StorageConnection,
 };

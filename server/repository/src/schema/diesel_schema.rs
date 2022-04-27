@@ -1,4 +1,5 @@
 use super::store::store;
+use crate::db_diesel::{invoice_row::invoice, invoice_line_row::invoice_line};
 
 table! {
     central_sync_buffer (id) {
@@ -127,55 +128,6 @@ table! {
         store_id -> Text,
         site_id -> Integer,
         action -> crate::schema::sync_out::SyncOutRowActionTypeMapping,
-    }
-}
-
-table! {
-    invoice (id) {
-        id -> Text,
-        name_id -> Text,
-        name_store_id -> Nullable<Text>,
-        store_id -> Text,
-        user_id -> Nullable<Text>,
-        invoice_number -> BigInt,
-        #[sql_name = "type"] type_ -> crate::schema::invoice::InvoiceRowTypeMapping,
-        status -> crate::schema::invoice::InvoiceRowStatusMapping,
-        on_hold -> Bool,
-        comment -> Nullable<Text>,
-        their_reference -> Nullable<Text>,
-        transport_reference -> Nullable<Text>,
-        created_datetime -> Timestamp,
-        allocated_datetime -> Nullable<Timestamp>,
-        picked_datetime -> Nullable<Timestamp>,
-        shipped_datetime -> Nullable<Timestamp>,
-        delivered_datetime -> Nullable<Timestamp>,
-        verified_datetime -> Nullable<Timestamp>,
-        colour -> Nullable<Text>,
-        requisition_id -> Nullable<Text>,
-        linked_invoice_id -> Nullable<Text>,
-    }
-}
-
-table! {
-    invoice_line (id) {
-        id -> Text,
-        invoice_id -> Text,
-        item_id -> Text,
-        item_name -> Text,
-        item_code -> Text,
-        stock_line_id -> Nullable<Text>,
-        location_id -> Nullable<Text>,
-        batch -> Nullable<Text>,
-        expiry_date -> Nullable<Date>,
-        pack_size -> Integer,
-        cost_price_per_pack -> Double,
-        sell_price_per_pack -> Double,
-        total_before_tax -> Double,
-        total_after_tax -> Double,
-        tax -> Nullable<Double>,
-        #[sql_name = "type"] type_ -> crate::schema::invoice_line::InvoiceLineRowTypeMapping,
-        number_of_packs -> Integer,
-        note -> Nullable<Text>,
     }
 }
 

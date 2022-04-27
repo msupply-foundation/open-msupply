@@ -1,7 +1,5 @@
 mod central_sync_buffer;
 mod changelog;
-mod invoice;
-mod invoice_line;
 mod item;
 mod item_is_visible;
 mod item_stats;
@@ -30,6 +28,8 @@ pub mod diesel_schema;
 pub mod user_permission;
 pub mod user_store_join;
 
+use crate::db_diesel::{InvoiceLineRow, InvoiceRow};
+
 #[derive(Clone)]
 pub enum DatabaseRow {
     Unit(UnitRow),
@@ -47,8 +47,6 @@ pub enum DatabaseRow {
 
 pub use central_sync_buffer::CentralSyncBufferRow;
 pub use changelog::*;
-pub use invoice::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
-pub use invoice_line::{InvoiceLineRow, InvoiceLineRowType};
 pub use item::{ItemRow, ItemRowType};
 pub use item_is_visible::ItemIsVisibleRow;
 pub use item_stats::*;

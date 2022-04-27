@@ -5,10 +5,8 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        NumberRowType, RequisitionRow,
-    },
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
+    schema::{NumberRowType, RequisitionRow},
     ItemRowRepository, StorageConnection,
 };
 use util::uuid::uuid;

@@ -4,7 +4,7 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType},
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
     InvoiceLine, InvoiceLineRowRepository, RepositoryError, StorageConnection,
 };
 #[derive(Clone, Debug, PartialEq, Default)]

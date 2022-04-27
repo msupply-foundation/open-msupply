@@ -1,8 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType, ItemRow, ItemRowType,
-    },
+    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType},
+    schema::{ItemRow, ItemRowType},
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
     RepositoryError, StorageConnection,
 };
@@ -157,12 +156,12 @@ impl From<RepositoryError> for InsertOutboundShipmentUnallocatedLineError {
 #[cfg(test)]
 mod test_insert {
     use repository::{
+        db_diesel::{InvoiceLineRow, InvoiceLineRowType},
         mock::{
             mock_allocated_invoice, mock_inbound_shipment_a, mock_item_service_item,
             mock_new_invoice_with_unallocated_line, mock_unallocated_line, mock_unallocated_line2,
             MockDataInserts,
         },
-        schema::{InvoiceLineRow, InvoiceLineRowType},
         test_db::setup_all,
         InvoiceLineRowRepository, ItemRowRepository,
     };

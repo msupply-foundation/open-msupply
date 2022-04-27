@@ -1,5 +1,8 @@
 use crate::u32_to_i32;
-use repository::schema::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
+use repository::{
+    db_diesel::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus},
+    schema::{ItemRow, StockLineRow},
+};
 
 use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
 
