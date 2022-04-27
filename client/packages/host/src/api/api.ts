@@ -13,6 +13,10 @@ export const getHostQueries = (sdk: Sdk) => ({
     },
   },
   update: {
+    restart: async () => {
+      const result = await sdk.serverRestart();
+      return result.serverRestart.message;
+    },
     syncSettings: async (settings: UpdateSyncSettingsInput) => {
       const result = await sdk.updateServerSettings({
         syncSettings: settings,
