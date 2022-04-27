@@ -1,13 +1,14 @@
 use super::{DBType, StorageConnection};
 use crate::{
+    db_diesel::item_row::{
+        item, item::dsl as item_dsl, item_is_visible, item_is_visible::dsl as item_is_visible_dsl,
+        ItemIsVisibleRow, ItemRow, ItemRowType,
+    },
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
-        diesel_schema::{
-            item, item::dsl as item_dsl, item_is_visible,
-            item_is_visible::dsl as item_is_visible_dsl, unit, unit::dsl as unit_dsl,
-        },
-        ItemIsVisibleRow, ItemRow, ItemRowType, UnitRow,
+        diesel_schema::{unit, unit::dsl as unit_dsl},
+        UnitRow,
     },
 };
 use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
@@ -196,15 +197,14 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        db_diesel::item::ItemFilter,
-        schema::ItemRowType,
+        db_diesel::{item::ItemFilter, ItemRow, ItemRowType},
         test_db, EqualFilter, Pagination, DEFAULT_PAGINATION_LIMIT,
         {
             db_diesel::{
                 MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
             },
             mock::MockDataInserts,
-            schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
+            schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
             ItemRepository, ItemRowRepository, NameRowRepository,
         },
     };

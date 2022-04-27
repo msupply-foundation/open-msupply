@@ -13,11 +13,7 @@ use crate::{
         LocationDoesNotExist, PackSizeBelowOne,
     },
 };
-use repository::{
-    db_diesel::{InvoiceRow, InvoiceRowType},
-    schema::ItemRow,
-    StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
 
 use super::{InsertInboundShipmentLine, InsertInboundShipmentLineError};
 

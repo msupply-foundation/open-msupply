@@ -1,6 +1,6 @@
 use util::inline_init;
 
-use crate::schema::{ItemRow, ItemRowType as ItemType};
+use crate::db_diesel::{ItemRow, ItemRowType as ItemType};
 
 pub fn mock_item_a() -> ItemRow {
     inline_init(|r: &mut ItemRow| {

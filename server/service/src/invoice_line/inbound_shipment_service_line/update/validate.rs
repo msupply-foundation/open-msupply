@@ -1,7 +1,5 @@
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceRow, InvoiceRowType},
-    schema::{ItemRow, ItemRowType},
-    StorageConnection,
+    InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType, StorageConnection,
 };
 
 use crate::{

@@ -1,9 +1,7 @@
 use crate::WithDBError;
 use repository::{
-    db_diesel::InvoiceLineRow,
-    schema::{ItemRow, StockLineRow},
-    InvoiceLineRowRepository, LocationRowRepository, RepositoryError, StockLineRowRepository,
-    StorageConnection,
+    schema::StockLineRow, InvoiceLineRow, InvoiceLineRowRepository, ItemRow, LocationRowRepository,
+    RepositoryError, StockLineRowRepository, StorageConnection,
 };
 
 pub struct StockLineNotFound;
