@@ -17,6 +17,7 @@ import { Setting } from './Setting';
 type SyncSettings = Omit<UpdateSyncSettingsInput, '__typename'>;
 
 export interface SyncSettingProps {
+  autocomplete?: string;
   property: keyof SyncSettings;
   settings?: SyncSettings;
   type?: string;
@@ -28,6 +29,7 @@ const StringSyncSetting: FC<SyncSettingProps> = ({
   settings,
   update,
   type = 'text',
+  autocomplete = 'off',
 }) => {
   const value = settings?.[property] || '';
   const onChange = (value: string) => {
@@ -39,6 +41,7 @@ const StringSyncSetting: FC<SyncSettingProps> = ({
       value={value}
       onChange={e => onChange(e.target.value)}
       type={type}
+      inputProps={{ autoComplete: autocomplete }}
     />
   );
 };
@@ -85,7 +88,7 @@ const SyncSettingsForm = ({
 }) => {
   const t = useTranslation('common');
   return (
-    <>
+    <form style={{ width: '100%' }}>
       <Setting
         title={t('label.settings-url')}
         component={
@@ -114,6 +117,7 @@ const SyncSettingsForm = ({
             settings={settings}
             update={setSyncSettings}
             type="password"
+            autocomplete="sync-password"
           />
         }
       />
@@ -159,16 +163,17 @@ const SyncSettingsForm = ({
           {t('button.save')}
         </LoadingButton>
       </Grid>
-    </>
+    </form>
   );
 };
 
 export const SyncSettings = ({}) => {
   const { data, isLoading } = useHost.utils.settings();
   const { mutate, isLoading: isSaving } = useHost.sync.update();
+  const { mutateAsync: serverRestart } = useHost.utils.restart();
   const t = useTranslation('common');
   const [syncSettings, setSyncSettings] = useState<SyncSettings | null>(null);
-  const { success } = useNotification();
+  const { success, info } = useNotification();
 
   const currentSettings = {
     centralServerSiteId: data?.syncSettings?.centralServerSiteId || 1,
@@ -186,7 +191,13 @@ export const SyncSettings = ({}) => {
   const onSave = () => {
     if (!syncSettings) return;
     const successSnack = success(t('success.sync-settings'));
-    mutate(syncSettings, { onSuccess: successSnack });
+    const restart = async () => {
+      successSnack();
+      await serverRestart(); // returns 'Restarting'
+      const infoSnack = info(t('info.server-restarting'));
+      infoSnack();
+    };
+    mutate(syncSettings, { onSuccess: restart });
   };
 
   return (

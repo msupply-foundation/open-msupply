@@ -6,6 +6,7 @@ export const useHost = {
     update: Sync.useSyncSettingsUpdate,
   },
   utils: {
+    restart: Utils.useServerRestart,
     settings: Utils.useServerSettings,
     version: Utils.useHostVersion,
   },
