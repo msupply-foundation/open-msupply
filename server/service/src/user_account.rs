@@ -1,8 +1,6 @@
 use repository::{
-    schema::{
-        user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow, UserAccountRow,
-    },
-    EqualFilter, RepositoryError, StorageConnection, TransactionError, User,
+    schema::{user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow},
+    EqualFilter, RepositoryError, StorageConnection, TransactionError, User, UserAccountRow,
     UserAccountRowRepository, UserFilter, UserPermissionRowRepository, UserRepository,
     UserStoreJoinRowRepository,
 };

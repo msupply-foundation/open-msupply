@@ -1,12 +1,28 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError,
-    schema::{diesel_schema::user_account::dsl as user_account_dsl, UserAccountRow},
-    User,
+    repository_error::RepositoryError, user_row::user_account::dsl as user_account_dsl, User,
 };
 
 use diesel::prelude::*;
+
+table! {
+    user_account (id) {
+        id -> Text,
+        username -> Text,
+        hashed_password -> Text,
+        email -> Nullable<Text>,
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, Default)]
+#[table_name = "user_account"]
+pub struct UserAccountRow {
+    pub id: String,
+    pub username: String,
+    pub hashed_password: String,
+    pub email: Option<String>,
+}
 
 pub struct UserAccountRowRepository<'a> {
     connection: &'a StorageConnection,

@@ -72,7 +72,7 @@ use crate::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow,
     LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRow, UserAccountRowRepository,
     UserPermissionRowRepository, UserStoreJoinRowRepository,
 };
 

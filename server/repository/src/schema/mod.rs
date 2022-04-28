@@ -14,7 +14,6 @@ mod stocktake;
 mod stocktake_line;
 pub mod store;
 mod sync_out;
-mod user_account;
 
 pub mod diesel_schema;
 pub mod user_permission;
@@ -22,6 +21,7 @@ pub mod user_store_join;
 
 use crate::db_diesel::{
     InvoiceLineRow, InvoiceRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, UnitRow,
+    UserAccountRow,
 };
 
 #[derive(Clone)]
@@ -54,4 +54,3 @@ pub use stocktake::*;
 pub use stocktake_line::*;
 pub use store::StoreRow;
 pub use sync_out::{SyncOutRow, SyncOutRowActionType, SyncOutRowTableNameType};
-pub use user_account::UserAccountRow;
