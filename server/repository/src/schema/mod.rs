@@ -3,7 +3,7 @@ mod changelog;
 mod master_list;
 mod master_list_line;
 mod master_list_name_join;
-mod pricing;
+pub mod pricing;
 mod remote_sync_buffer;
 pub mod report;
 mod sync_out;

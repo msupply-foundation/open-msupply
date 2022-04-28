@@ -1,3 +1,4 @@
+use super::pricing::invoice_stats;
 use crate::db_diesel::{
     invoice_line_row::invoice_line,
     invoice_row::invoice,
@@ -43,19 +44,6 @@ table! {
         store_id -> Text,
         site_id -> Integer,
         action -> crate::schema::sync_out::SyncOutRowActionTypeMapping,
-    }
-}
-
-table! {
-    invoice_stats (invoice_id) {
-        invoice_id -> Text,
-        total_before_tax -> Double,
-        total_after_tax -> Double,
-        stock_total_before_tax -> Double,
-        stock_total_after_tax -> Double,
-        service_total_before_tax -> Double,
-        service_total_after_tax -> Double,
-        tax_percentage -> Nullable<Double>,
     }
 }
 
