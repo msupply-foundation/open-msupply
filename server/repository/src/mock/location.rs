@@ -1,4 +1,4 @@
-use crate::schema::LocationRow;
+use crate::db_diesel::LocationRow;
 
 pub fn mock_location_1() -> LocationRow {
     LocationRow {

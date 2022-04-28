@@ -1,8 +1,7 @@
 use super::StorageConnection;
 use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
+use crate::location_row::{location, location::dsl as location_dsl, LocationRow};
 use crate::repository_error::RepositoryError;
-use crate::schema::diesel_schema::{location, location::dsl as location_dsl};
-use crate::schema::LocationRow;
 use crate::DBType;
 
 use crate::{EqualFilter, Pagination, Sort};

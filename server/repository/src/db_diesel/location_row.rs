@@ -1,10 +1,29 @@
 use super::StorageConnection;
 
+use crate::db_diesel::location_row::location::dsl as location_dsl;
 use crate::repository_error::RepositoryError;
-use crate::schema::diesel_schema::location::dsl as location_dsl;
-use crate::schema::LocationRow;
 
 use diesel::prelude::*;
+
+table! {
+    location (id) {
+        id -> Text,
+        name -> Text,
+        code -> Text,
+        on_hold -> Bool,
+        store_id -> Text,
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[table_name = "location"]
+pub struct LocationRow {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub on_hold: bool,
+    pub store_id: String,
+}
 
 pub struct LocationRowRepository<'a> {
     connection: &'a StorageConnection,

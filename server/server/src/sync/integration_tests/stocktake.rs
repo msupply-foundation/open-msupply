@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::{LocationRow, StocktakeLineRow, StocktakeRow, StocktakeStatus},
-    InvoiceFilter, InvoiceRepository, ItemFilter, ItemRepository, ItemRowRepository,
+    schema::{StocktakeLineRow, StocktakeRow, StocktakeStatus},
+    InvoiceFilter, InvoiceRepository, ItemFilter, ItemRepository, ItemRowRepository, LocationRow,
     LocationRowRepository, StockLineFilter, StockLineRepository, StocktakeLineRowRepository,
     StocktakeRowRepository, StorageConnection,
 };

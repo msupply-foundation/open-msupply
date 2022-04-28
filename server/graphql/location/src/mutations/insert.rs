@@ -120,9 +120,7 @@ mod test {
 
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
-    use repository::{
-        mock::MockDataInserts, schema::LocationRow, Location, StorageConnectionManager,
-    };
+    use repository::{mock::MockDataInserts, Location, LocationRow, StorageConnectionManager};
     use serde_json::json;
 
     use service::{

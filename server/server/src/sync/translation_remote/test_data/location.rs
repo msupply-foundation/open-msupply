@@ -1,6 +1,9 @@
-use repository::schema::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, LocationRow, RemoteSyncBufferAction,
-    RemoteSyncBufferRow,
+use repository::{
+    schema::{
+        ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction,
+        RemoteSyncBufferRow,
+    },
+    LocationRow,
 };
 use serde_json::json;
 

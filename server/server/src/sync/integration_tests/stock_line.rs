@@ -1,8 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::{LocationRow, StockLineRow},
-    EqualFilter, ItemFilter, ItemRepository, LocationRowRepository, StockLineRowRepository,
-    StorageConnection,
+    schema::StockLineRow, EqualFilter, ItemFilter, ItemRepository, LocationRow,
+    LocationRowRepository, StockLineRowRepository, StorageConnection,
 };
 use util::{inline_edit, uuid::uuid};
 

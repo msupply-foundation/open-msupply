@@ -2,7 +2,6 @@ mod central_sync_buffer;
 mod changelog;
 mod item_stats;
 mod key_value_store;
-mod location;
 mod master_list;
 mod master_list_line;
 mod master_list_name_join;
@@ -23,7 +22,7 @@ pub mod user_permission;
 pub mod user_store_join;
 
 use crate::db_diesel::{
-    InvoiceLineRow, InvoiceRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, UnitRow
+    InvoiceLineRow, InvoiceRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, UnitRow,
 };
 
 #[derive(Clone)]
@@ -45,7 +44,6 @@ pub use central_sync_buffer::CentralSyncBufferRow;
 pub use changelog::*;
 pub use item_stats::*;
 pub use key_value_store::*;
-pub use location::LocationRow;
 pub use master_list::*;
 pub use master_list_line::*;
 pub use master_list_name_join::MasterListNameJoinRow;

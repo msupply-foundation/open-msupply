@@ -210,7 +210,7 @@ mod test {
     use repository::{
         db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow},
         mock::MockDataInserts,
-        schema::LocationRow,
+        LocationRow,
     };
     use serde_json::json;
     use util::inline_init;

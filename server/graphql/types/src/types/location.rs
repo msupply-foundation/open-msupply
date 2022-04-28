@@ -4,9 +4,9 @@ use async_graphql::{dataloader::DataLoader, Context};
 use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
-use repository::schema::LocationRow;
-use repository::EqualFilter;
-use repository::{Location, LocationFilter, LocationSort, LocationSortField};
+use repository::{
+    EqualFilter, Location, LocationFilter, LocationRow, LocationSort, LocationSortField,
+};
 use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

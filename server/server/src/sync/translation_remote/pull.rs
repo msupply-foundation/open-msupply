@@ -1,10 +1,10 @@
 use log::{info, warn};
 use repository::{
     schema::{
-        LocationRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow,
-        StocktakeLineRow, StocktakeRow,
+        NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow, StocktakeLineRow,
+        StocktakeRow,
     },
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationRow,
     LocationRowRepository, NameStoreJoinRepository, NumberRowRepository, RepositoryError,
     RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
     StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
