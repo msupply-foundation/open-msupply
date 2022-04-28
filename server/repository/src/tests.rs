@@ -4,7 +4,7 @@ mod repository_test {
         use chrono::{NaiveDate, NaiveDateTime};
         use util::inline_init;
 
-        use crate::{schema::*, db_diesel::*};
+        use crate::{db_diesel::*, schema::*};
 
         pub fn name_1() -> NameRow {
             inline_init(|r: &mut NameRow| {
@@ -269,6 +269,7 @@ mod repository_test {
     use std::convert::TryInto;
 
     use crate::{
+        db_diesel::requisition_row::RequisitionRowStatus,
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
@@ -279,10 +280,7 @@ mod repository_test {
             mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
             mock_test_master_list_store1, MockDataInserts,
         },
-        schema::{
-            ChangelogAction, ChangelogRow, ChangelogTableName, KeyValueType, NumberRowType,
-            RequisitionRowStatus,
-        },
+        schema::{ChangelogAction, ChangelogRow, ChangelogTableName, KeyValueType, NumberRowType},
         test_db, CentralSyncBufferRepository, ChangelogRowRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository,
         MasterListFilter, MasterListLineFilter, MasterListLineRepository,

@@ -1,8 +1,40 @@
+use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
-use crate::{repository_error::RepositoryError, schema::RequisitionLineRow};
 
-use crate::schema::diesel_schema::requisition_line::dsl as requisition_line_dsl;
+use crate::db_diesel::requisition_line_row::requisition_line::dsl as requisition_line_dsl;
 use diesel::prelude::*;
+
+use chrono::NaiveDateTime;
+
+table! {
+    requisition_line (id) {
+        id -> Text,
+        requisition_id -> Text,
+        item_id -> Text,
+        requested_quantity -> Integer,
+        suggested_quantity -> Integer,
+        supply_quantity -> Integer,
+        available_stock_on_hand -> Integer ,
+        average_monthly_consumption -> Integer,
+        snapshot_datetime -> Nullable<Timestamp>,
+        comment -> Nullable<Text>,
+    }
+}
+
+#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
+#[table_name = "requisition_line"]
+pub struct RequisitionLineRow {
+    pub id: String,
+    pub requisition_id: String,
+    pub item_id: String,
+    pub requested_quantity: i32,
+    pub suggested_quantity: i32,
+    pub supply_quantity: i32,
+    pub available_stock_on_hand: i32,
+    pub average_monthly_consumption: i32,
+    pub snapshot_datetime: Option<NaiveDateTime>,
+    pub comment: Option<String>,
+}
 
 pub struct RequisitionLineRowRepository<'a> {
     connection: &'a StorageConnection,

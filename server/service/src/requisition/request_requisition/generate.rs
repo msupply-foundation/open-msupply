@@ -1,9 +1,6 @@
 use chrono::Utc;
 use repository::EqualFilter;
-use repository::{
-    schema::{RequisitionLineRow, RequisitionRow},
-    RepositoryError,
-};
+use repository::{RepositoryError, RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
 use crate::item_stats::{get_item_stats, ItemStatsFilter};

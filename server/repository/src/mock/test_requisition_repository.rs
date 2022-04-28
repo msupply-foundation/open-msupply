@@ -1,7 +1,10 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType};
+use crate::db_diesel::{
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    RequisitionRow,
+};
 
 use super::MockData;
 

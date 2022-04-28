@@ -1,9 +1,10 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+use crate::db_diesel::{
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+    RequisitionLineRow, RequisitionRow,
 };
 
 use super::{

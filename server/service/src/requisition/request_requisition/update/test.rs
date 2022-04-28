@@ -8,7 +8,8 @@ mod test_update {
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
             mock_store_a, MockData, MockDataInserts,
         },
-        schema::{NameRow, NameStoreJoinRow, RequisitionRowStatus},
+        requisition_row::RequisitionRowStatus,
+        schema::{NameRow, NameStoreJoinRow},
         test_db::{setup_all, setup_all_with_data},
         RequisitionLineRowRepository, RequisitionRowRepository,
     };

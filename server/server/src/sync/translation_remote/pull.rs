@@ -1,12 +1,12 @@
 use log::{info, warn};
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceRow},
     schema::{
-        LocationRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, RequisitionLineRow,
-        RequisitionRow, StockLineRow, StocktakeLineRow, StocktakeRow,
+        LocationRow, NameStoreJoinRow, NumberRow, RemoteSyncBufferRow, StockLineRow,
+        StocktakeLineRow, StocktakeRow,
     },
-    InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository, NameStoreJoinRepository,
-    NumberRowRepository, RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
+    LocationRowRepository, NameStoreJoinRepository, NumberRowRepository, RepositoryError,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
     StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
     TransactionError,
 };

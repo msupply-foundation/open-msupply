@@ -9,11 +9,11 @@ mod test_update {
             mock_request_requisition_for_invoice_sync_processor,
             mock_sent_requistion_sync_processor, MockDataInserts,
         },
-        schema::{RequisitionRowStatus, RequisitionRowType},
-        db_diesel::{InvoiceRowStatus, InvoiceRowType},
+        requisition_row::{RequisitionRowStatus, RequisitionRowType},
         test_db::setup_all,
         InvoiceFilter, InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
-        RequisitionFilter, RequisitionRepository, RequisitionRowRepository,
+        InvoiceRowStatus, InvoiceRowType, RequisitionFilter, RequisitionRepository,
+        RequisitionRowRepository,
     };
 
     use crate::{

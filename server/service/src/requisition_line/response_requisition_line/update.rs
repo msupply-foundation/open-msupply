@@ -5,9 +5,9 @@ use crate::{
 };
 
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionLine, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 

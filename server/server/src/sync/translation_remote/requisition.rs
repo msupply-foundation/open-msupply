@@ -1,10 +1,8 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    schema::{
-        ChangelogRow, ChangelogTableName, RemoteSyncBufferRow, RequisitionRow,
-        RequisitionRowStatus, RequisitionRowType,
-    },
-    RequisitionRowRepository, StorageConnection,
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    schema::{ChangelogRow, ChangelogTableName, RemoteSyncBufferRow},
+    RequisitionRow, RequisitionRowRepository, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};

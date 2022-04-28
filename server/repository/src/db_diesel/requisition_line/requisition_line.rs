@@ -1,13 +1,12 @@
 use crate::{
+    db_diesel::{
+        requisition_line_row::{
+            requisition_line, requisition_line::dsl as requisition_line_dsl, RequisitionLineRow,
+        },
+        requisition_row::{requisition, requisition::dsl as requisition_dsl, RequisitionRow},
+    },
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{
-            requisition, requisition::dsl as requisition_dsl, requisition_line,
-            requisition_line::dsl as requisition_line_dsl,
-        },
-        RequisitionLineRow, RequisitionRow,
-    },
     DBType, StorageConnection,
 };
 

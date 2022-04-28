@@ -3,7 +3,7 @@ use crate::{
     requisition_line::common::check_requisition_line_exists, service_provider::ServiceContext,
 };
 use repository::{
-    schema::{RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLineRowRepository, StorageConnection,
 };
 

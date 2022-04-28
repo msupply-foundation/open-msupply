@@ -1,9 +1,9 @@
 use repository::EqualFilter;
 use repository::{
-    db_diesel::InvoiceRow,
-    schema::{NameRow, RequisitionRow, StoreRow},
-    InvoiceFilter, InvoiceRepository, NameRowRepository, RepositoryError, RequisitionFilter,
-    RequisitionRepository, StorageConnection, StoreRowRepository,
+    schema::{NameRow, StoreRow},
+    InvoiceFilter, InvoiceRepository, InvoiceRow, NameRowRepository, RepositoryError,
+    RequisitionFilter, RequisitionRepository, RequisitionRow, StorageConnection,
+    StoreRowRepository,
 };
 
 use self::{
