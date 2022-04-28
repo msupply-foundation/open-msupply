@@ -9,6 +9,7 @@ use crate::db_diesel::{
     requisition_line_row::requisition_line,
     requisition_row::requisition,
     unit_row::unit,
+    user_row::user_account,
 };
 
 table! {
@@ -70,15 +71,6 @@ table! {
         service_total_before_tax -> Double,
         service_total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
-    }
-}
-
-table! {
-    user_account (id) {
-        id -> Text,
-        username -> Text,
-        hashed_password -> Text,
-        email -> Nullable<Text>,
     }
 }
 
