@@ -1,8 +1,16 @@
+import { useEffect, useState } from 'react';
 import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
-import { AuthenticationError, useNavigate } from '@openmsupply-client/common';
+import {
+  AuthenticationError,
+  AuthError,
+  LocalStorage,
+  ServerStatus,
+  useNavigate,
+} from '@openmsupply-client/common';
 import { useHost } from '../api/hooks';
 
+const SERVER_RESTART_TIMEOUT = 90000;
 interface InitialiseForm {
   error?: AuthenticationError;
   isLoading: boolean;
@@ -48,11 +56,18 @@ export const useInitialiseForm = () => {
     url,
     siteId,
   } = state;
+  const [isPolling, setIsPolling] = useState(false);
+  const [isBootstrap, setIsBootstrap] = useState(false);
   const { mutateAsync: update } = useHost.sync.update();
+  const { data } = useHost.utils.settings({
+    refetchInterval: 5000,
+    enabled: isPolling,
+  });
 
   const onSave = async () => {
     setError();
     setIsLoading(true);
+    setIsBootstrap(false);
     const syncSettings = {
       centralServerSiteId: 1,
       intervalSec: 300,
@@ -78,13 +93,33 @@ export const useInitialiseForm = () => {
       return;
     });
 
-    setIsLoading(false);
+    setIsPolling(true);
+    LocalStorage.setItem('/auth/error', undefined);
+    LocalStorage.addListener<AuthError>((key, value) => {
+      if (key === '/auth/error' && value === AuthError.Unauthenticated) {
+        // Server is up! and rejecting our request!
+        setIsLoading(false);
+        setIsPolling(false);
 
-    navigate(`/${AppRoute.Login}`, { replace: true });
+        navigate(`/${AppRoute.Login}`, { replace: true });
+      }
+    });
+
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsPolling(false);
+      console.log('Timed out', data);
+      const message = isBootstrap
+        ? 'Unable to sync! Please check your settings.'
+        : 'Server restart has timed out';
+      setError({ message });
+    }, SERVER_RESTART_TIMEOUT);
   };
 
   const isValid = !!username && !!password && !!url;
-
+  useEffect(() => {
+    if (!!data) setIsBootstrap(data?.status === ServerStatus.Stage_0);
+  }, [data]);
   return {
     isValid,
     onSave,

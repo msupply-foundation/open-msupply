@@ -5,7 +5,7 @@ export const getHostQueries = (sdk: Sdk) => ({
   get: {
     settings: async () => {
       const result = await sdk.serverSettings();
-      return result.serverSettings;
+      return result?.serverSettings;
     },
     version: async () => {
       const result = await sdk.apiVersion();
@@ -15,13 +15,13 @@ export const getHostQueries = (sdk: Sdk) => ({
   update: {
     restart: async () => {
       const result = await sdk.serverRestart();
-      return result.serverRestart.message;
+      return result?.serverRestart?.message || '';
     },
     syncSettings: async (settings: UpdateSyncSettingsInput) => {
       const result = await sdk.updateServerSettings({
         syncSettings: settings,
       });
-      return result.updateServerSettings;
+      return result?.updateServerSettings;
     },
   },
 });
