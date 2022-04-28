@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::{ChangelogRow, ChangelogTableName, RemoteSyncBufferRow},
-    StockLineRow, StockLineRowRepository, StorageConnection,
+    schema::RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, StockLineRow,
+    StockLineRowRepository, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};

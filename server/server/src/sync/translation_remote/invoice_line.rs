@@ -1,8 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
-    schema::{ChangelogRow, ChangelogTableName, RemoteSyncBufferRow},
-    InvoiceLineRowRepository, ItemRowRepository, StorageConnection,
+    schema::RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceLineRowType, ItemRowRepository, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};

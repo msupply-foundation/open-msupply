@@ -1,7 +1,7 @@
 use crate::repository_error::RepositoryError;
 
 mod central_sync_buffer;
-mod changelog_row;
+pub mod changelog_row;
 pub mod consumption;
 mod filter_sort_pagination;
 mod invoice;
