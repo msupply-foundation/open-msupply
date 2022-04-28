@@ -40,6 +40,7 @@ pub mod test_utils;
 async fn run_stage0(
     settings: Settings,
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
+    token_bucket: Arc<RwLock<TokenBucket>>,
     connection_manager: StorageConnectionManager,
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
@@ -47,7 +48,7 @@ async fn run_stage0(
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
-        token_bucket: RwLock::new(TokenBucket::new()),
+        token_bucket,
         debug_no_ssl: settings.server.develop && matches!(cert_type, ServerCertType::None),
         debug_no_access_control: settings.server.develop && settings.server.debug_no_access_control,
     });
@@ -123,6 +124,7 @@ async fn run_stage0(
 async fn run_server(
     settings: Settings,
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
+    token_bucket: Arc<RwLock<TokenBucket>>,
     connection_manager: StorageConnectionManager,
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(connection_manager.clone());
@@ -144,9 +146,9 @@ async fn run_server(
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
         auth_token_secret: settings.auth.token_secret.to_owned(),
-        token_bucket: RwLock::new(TokenBucket::new()),
         debug_no_ssl: settings.server.develop && matches!(cert_type, ServerCertType::None),
         debug_no_access_control: settings.server.develop && settings.server.debug_no_access_control,
+        token_bucket: token_bucket.clone(),
     });
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
@@ -170,7 +172,12 @@ async fn run_server(
             error!("Failed to perform the initial sync: {}", err);
             if !settings.server.develop {
                 warn!("Falling back to bootstrap mode");
-                return run_stage0(settings, off_switch, connection_manager).await;
+                return run_stage0(
+                    config_settings,
+                    token_bucket,
+                    connection_manager,
+                )
+                .await;
             }
         }
     };
@@ -256,10 +263,13 @@ pub async fn start_server(
 
     // allow the off_switch to be passed around during multiple server stages
     let off_switch = Arc::new(Mutex::new(off_switch));
+    let mut prefer_config_settings = true;
+    let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     loop {
         match run_server(
             settings.clone(),
             off_switch.clone(),
+            token_bucket.clone(),
             connection_manager.clone(),
         )
         .await
