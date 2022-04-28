@@ -1,4 +1,12 @@
-use super::diesel_schema::name_store_join;
+table! {
+    name_store_join (id) {
+        id -> Text,
+        name_id -> Text,
+        store_id -> Text,
+        name_is_customer -> Bool,
+        name_is_supplier -> Bool,
+    }
+}
 
 #[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Clone, Default)]
 #[table_name = "name_store_join"]

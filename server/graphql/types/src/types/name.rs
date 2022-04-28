@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{schema::NameRow, Name};
+use repository::{Name, NameRow};
 
 use graphql_core::{loader::StoreByIdLoader, simple_generic_errors::NodeError, ContextExt};
 use serde_json::json;

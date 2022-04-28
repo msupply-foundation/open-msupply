@@ -1,16 +1,17 @@
 use super::{DBType, StorageConnection};
 use crate::{
-    db_diesel::invoice_row::{
-        invoice, invoice::dsl as invoice_dsl, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+    db_diesel::{
+        invoice_row::{invoice, invoice::dsl as invoice_dsl, InvoiceRowStatus, InvoiceRowType},
+        name_row::{name, name::dsl as name_dsl},
+        InvoiceRow, NameRow,
     },
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
         apply_sort_no_case,
     },
     schema::{
-        diesel_schema::{name, name::dsl as name_dsl},
         store::{store, store::dsl as store_dsl},
-        NameRow, StoreRow,
+        StoreRow,
     },
     RepositoryError,
 };

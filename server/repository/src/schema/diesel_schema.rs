@@ -1,8 +1,10 @@
+use super::name_store_join::name_store_join;
 use super::store::store;
 use crate::db_diesel::{
     invoice_line_row::invoice_line,
     invoice_row::invoice,
     item_row::{item, item_is_visible},
+    name_row::name,
     requisition_line_row::requisition_line,
     requisition_row::requisition,
 };
@@ -64,19 +66,6 @@ table! {
 }
 
 table! {
-    #[sql_name = "name"]
-    name (id) {
-        id -> Text,
-        #[sql_name = "name"] name_  -> Text,
-        code -> Text,
-        is_customer -> Bool,
-        is_supplier -> Bool,
-        // TODO, this is temporary, remove
-        legacy_record -> Text,
-    }
-}
-
-table! {
     sync_out (id) {
         id -> Text,
         created_at -> Date,
@@ -107,16 +96,6 @@ table! {
         username -> Text,
         hashed_password -> Text,
         email -> Nullable<Text>,
-    }
-}
-
-table! {
-    name_store_join (id) {
-        id -> Text,
-        name_id -> Text,
-        store_id -> Text,
-        name_is_customer -> Bool,
-        name_is_supplier -> Bool,
     }
 }
 

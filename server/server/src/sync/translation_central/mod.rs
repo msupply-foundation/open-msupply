@@ -13,11 +13,11 @@ use crate::sync::translation_central::{
 };
 use repository::{
     schema::{
-        CentralSyncBufferRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow,
-        StoreRow, UnitRow,
+        CentralSyncBufferRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, StoreRow,
+        UnitRow,
     },
     ItemRow, ItemRowRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-    MasterListRowRepository, NameRowRepository, RepositoryError, StorageConnection,
+    MasterListRowRepository, NameRow, NameRowRepository, RepositoryError, StorageConnection,
     StoreRowRepository, TransactionError, UnitRowRepository,
 };
 

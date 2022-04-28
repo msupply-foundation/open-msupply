@@ -2,7 +2,7 @@ use super::StorageConnection;
 
 use crate::{
     repository_error::RepositoryError,
-    schema::diesel_schema::name_store_join::dsl as name_store_join_dsl, schema::NameStoreJoinRow,
+    schema::name_store_join::name_store_join::dsl as name_store_join_dsl, schema::NameStoreJoinRow,
 };
 
 use diesel::prelude::*;

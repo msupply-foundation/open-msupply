@@ -1,16 +1,13 @@
 use crate::{
-    db_diesel::requisition_row::{
-        requisition, requisition::dsl as requisition_dsl, RequisitionRow,
+    db_diesel::{
+        name_row::{name, name::dsl as name_dsl, NameRow},
+        requisition_row::{requisition, requisition::dsl as requisition_dsl, RequisitionRow},
     },
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
         apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{name, name::dsl as name_dsl},
-        NameRow,
-    },
     DBType, StorageConnection,
 };
 

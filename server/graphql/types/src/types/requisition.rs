@@ -12,8 +12,7 @@ use graphql_core::{
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    schema::NameRow,
-    unknown_user, Requisition,
+    unknown_user, NameRow, Requisition,
 };
 use service::ListResult;
 
@@ -294,8 +293,7 @@ mod test {
     };
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        schema::NameRow,
-        unknown_user, Requisition, RequisitionRow,
+        unknown_user, NameRow, Requisition, RequisitionRow,
     };
     use serde_json::json;
     use util::inline_init;

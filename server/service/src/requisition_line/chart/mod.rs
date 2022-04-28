@@ -165,13 +165,13 @@ mod test {
     use repository::{
         db_diesel::{
             requisition_row::RequisitionRowType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
-            InvoiceRowType, RequisitionLineRow, RequisitionRow,
+            InvoiceRowType, NameRow, RequisitionLineRow, RequisitionRow,
         },
         mock::{
             mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
             mock_request_draft_requisition_calculation_test, MockData, MockDataInserts,
         },
-        schema::{NameRow, StockLineRow, StoreRow},
+        schema::{StockLineRow, StoreRow},
         test_db::{setup_all, setup_all_with_data},
     };
     use util::{

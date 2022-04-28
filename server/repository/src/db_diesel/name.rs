@@ -1,14 +1,15 @@
 use super::{DBType, StorageConnection};
 use crate::{
+    db_diesel::{
+        name_row::{name, name::dsl as name_dsl},
+        NameRow,
+    },
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
-        diesel_schema::{
-            name, name::dsl as name_dsl, name_store_join,
-            name_store_join::dsl as name_store_join_dsl,
-        },
+        name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
         store::{store, store::dsl as store_dsl},
-        NameRow, NameStoreJoinRow, StoreRow,
+        NameStoreJoinRow, StoreRow,
     },
 };
 use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
@@ -286,13 +287,10 @@ mod tests {
     use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
     use crate::{
+        db_diesel::{NameRepository, NameRow, NameRowRepository},
+        mock::MockDataInserts,
         mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
         test_db, NameFilter, Pagination, SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
-        {
-            db_diesel::{NameRepository, NameRowRepository},
-            mock::MockDataInserts,
-            schema::NameRow,
-        },
     };
 
     use std::convert::TryFrom;

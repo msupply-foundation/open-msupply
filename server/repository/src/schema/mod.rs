@@ -6,8 +6,7 @@ mod location;
 mod master_list;
 mod master_list_line;
 mod master_list_name_join;
-mod name;
-mod name_store_join;
+pub mod name_store_join;
 mod number;
 mod pricing;
 mod remote_sync_buffer;
@@ -24,7 +23,9 @@ pub mod diesel_schema;
 pub mod user_permission;
 pub mod user_store_join;
 
-use crate::db_diesel::{InvoiceLineRow, InvoiceRow, ItemRow, RequisitionLineRow, RequisitionRow};
+use crate::db_diesel::{
+    InvoiceLineRow, InvoiceRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow,
+};
 
 #[derive(Clone)]
 pub enum DatabaseRow {
@@ -49,7 +50,6 @@ pub use location::LocationRow;
 pub use master_list::*;
 pub use master_list_line::*;
 pub use master_list_name_join::MasterListNameJoinRow;
-pub use name::NameRow;
 pub use name_store_join::NameStoreJoinRow;
 pub use number::{NumberRow, NumberRowType};
 pub use pricing::PricingRow;
