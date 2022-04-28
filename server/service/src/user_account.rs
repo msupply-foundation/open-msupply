@@ -1,8 +1,7 @@
 use repository::{
-    schema::{user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow},
     EqualFilter, RepositoryError, StorageConnection, TransactionError, User, UserAccountRow,
-    UserAccountRowRepository, UserFilter, UserPermissionRowRepository, UserRepository,
-    UserStoreJoinRowRepository,
+    UserAccountRowRepository, UserFilter, UserPermissionRow, UserPermissionRowRepository,
+    UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -185,9 +184,9 @@ impl<'a> UserAccountService<'a> {
 mod user_account_test {
     use repository::{
         mock::{mock_user_account_a, mock_user_account_b, MockDataInserts},
-        schema::user_permission::Permission,
         test_db::{self, setup_all},
-        EqualFilter, UserFilter, UserPermissionFilter, UserPermissionRepository, UserRepository,
+        EqualFilter, Permission, UserFilter, UserPermissionFilter, UserPermissionRepository,
+        UserRepository,
     };
     use util::inline_edit;
 

@@ -2,7 +2,7 @@ use super::{DBType, StorageConnection};
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    schema::user_permission::{
+    user_permission_row::{
         user_permission, user_permission::dsl as user_permission_dsl, Permission, UserPermissionRow,
     },
 };

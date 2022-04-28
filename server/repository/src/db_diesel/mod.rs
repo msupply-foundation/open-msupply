@@ -41,9 +41,9 @@ mod store_row;
 pub mod unit_row;
 mod user;
 mod user_permission;
-mod user_permission_row;
+pub mod user_permission_row;
 pub mod user_row;
-mod user_store_join_row;
+pub mod user_store_join_row;
 
 pub use central_sync_buffer::CentralSyncBufferRepository;
 pub use changelog_row::*;

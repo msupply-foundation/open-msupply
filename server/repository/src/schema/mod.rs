@@ -16,8 +16,6 @@ pub mod store;
 mod sync_out;
 
 pub mod diesel_schema;
-pub mod user_permission;
-pub mod user_store_join;
 
 use crate::db_diesel::{
     InvoiceLineRow, InvoiceRow, ItemRow, NameRow, RequisitionLineRow, RequisitionRow, UnitRow,
@@ -52,5 +50,5 @@ pub use remote_sync_buffer::*;
 pub use stock_line::StockLineRow;
 pub use stocktake::*;
 pub use stocktake_line::*;
-pub use store::StoreRow;
+pub use store::*;
 pub use sync_out::{SyncOutRow, SyncOutRowActionType, SyncOutRowTableNameType};
