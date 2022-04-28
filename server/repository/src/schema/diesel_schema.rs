@@ -7,6 +7,7 @@ use crate::db_diesel::{
     name_row::name,
     requisition_line_row::requisition_line,
     requisition_row::requisition,
+    unit_row::unit,
 };
 
 table! {
@@ -25,15 +26,6 @@ table! {
         record_id -> Text,
         action -> crate::schema::remote_sync_buffer::RemoteSyncBufferActionMapping,
         data -> Text,
-    }
-}
-
-table! {
-    unit (id) {
-        id -> Text,
-        name -> Text,
-        description -> Nullable<Text>,
-        index -> Integer,
     }
 }
 

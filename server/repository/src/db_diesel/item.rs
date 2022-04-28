@@ -1,15 +1,15 @@
 use super::{DBType, StorageConnection};
 use crate::{
-    db_diesel::item_row::{
-        item, item::dsl as item_dsl, item_is_visible, item_is_visible::dsl as item_is_visible_dsl,
-        ItemIsVisibleRow, ItemRow, ItemRowType,
+    db_diesel::{
+        item_row::{
+            item, item::dsl as item_dsl, item_is_visible,
+            item_is_visible::dsl as item_is_visible_dsl,
+        },
+        unit_row::{unit, unit::dsl as unit_dsl},
+        ItemIsVisibleRow, ItemRow, ItemRowType, UnitRow,
     },
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{unit, unit::dsl as unit_dsl},
-        UnitRow,
-    },
 };
 use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
