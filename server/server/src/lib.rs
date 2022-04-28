@@ -122,33 +122,43 @@ async fn run_stage0(
 
 /// Return true if restart has been requested
 async fn run_server(
-    settings: Settings,
+    config_settings: Settings,
+    prefer_config_settings: bool,
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     connection_manager: StorageConnectionManager,
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(connection_manager.clone());
 
-    let sync_settings = match &settings.sync {
-        Some(sync_settings) => sync_settings.clone(),
+    let service = SettingsService {};
+    let service_context = service_provider.context().unwrap();
+    let db_settings = service.sync_settings(&service_context).unwrap();
+    let sync_settings = if prefer_config_settings {
+        config_settings.sync.clone().or(db_settings)
+    } else {
+        db_settings.or(config_settings.sync.clone())
+    };
+    let sync_settings = match sync_settings {
+        Some(sync_settings) => sync_settings,
+        // No sync settings found, start in stage0 mode
         None => {
-            // try to load settings from DB
-            let service = SettingsService {};
-            let service_context = service_provider.context().unwrap();
-            match service.sync_settings(&service_context).unwrap() {
-                Some(sync_settings) => sync_settings,
-                // No sync settings found, start in stage0 mode
-                None => return run_stage0(settings, off_switch, connection_manager).await,
-            }
+            return run_stage0(
+                config_settings,
+                off_switch,
+                token_bucket.clone(),
+                connection_manager,
+            )
+            .await
         }
     };
 
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
-        auth_token_secret: settings.auth.token_secret.to_owned(),
-        debug_no_ssl: settings.server.develop && matches!(cert_type, ServerCertType::None),
-        debug_no_access_control: settings.server.develop && settings.server.debug_no_access_control,
+        auth_token_secret: config_settings.auth.token_secret.to_owned(),
         token_bucket: token_bucket.clone(),
+        debug_no_ssl: config_settings.server.develop && matches!(cert_type, ServerCertType::None),
+        debug_no_access_control: config_settings.server.develop
+            && config_settings.server.debug_no_access_control,
     });
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
@@ -170,10 +180,11 @@ async fn run_server(
         Ok(_) => {}
         Err(err) => {
             error!("Failed to perform the initial sync: {}", err);
-            if !settings.server.develop {
+            if !config_settings.server.develop {
                 warn!("Falling back to bootstrap mode");
                 return run_stage0(
                     config_settings,
+                    off_switch,
                     token_bucket,
                     connection_manager,
                 )
@@ -202,12 +213,15 @@ async fn run_server(
         ServerCertType::SelfSigned(cert_path) => {
             let ssl_builder = load_certs(cert_path).expect("Invalid self signed certificates");
             http_server = http_server.bind_openssl(
-                format!("{}:{}", settings.server.host, settings.server.port),
+                format!(
+                    "{}:{}",
+                    config_settings.server.host, config_settings.server.port
+                ),
                 ssl_builder,
             )?;
         }
         ServerCertType::None => {
-            if !settings.server.develop {
+            if !config_settings.server.develop {
                 error!("No certificates found");
                 return Err(std::io::Error::new(
                     ErrorKind::Other,
@@ -216,7 +230,7 @@ async fn run_server(
             }
 
             warn!("No certificates found: Run in HTTP development mode");
-            let listener = TcpListener::bind(settings.server.address())
+            let listener = TcpListener::bind(config_settings.server.address())
                 .expect("Failed to bind server to address");
             http_server = http_server.listen(listener)?;
         }
@@ -246,10 +260,10 @@ async fn run_server(
 ///
 /// This method doesn't return until a message is send to the off_switch.
 pub async fn start_server(
-    settings: Settings,
+    config_settings: Settings,
     off_switch: oneshot::Receiver<()>,
 ) -> std::io::Result<()> {
-    let connection_manager = get_storage_connection_manager(&settings.database);
+    let connection_manager = get_storage_connection_manager(&config_settings.database);
 
     info!("Run DB migrations...");
     match run_db_migrations(&connection_manager.connection().unwrap()) {
@@ -267,7 +281,8 @@ pub async fn start_server(
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     loop {
         match run_server(
-            settings.clone(),
+            config_settings.clone(),
+            prefer_config_settings,
             off_switch.clone(),
             token_bucket.clone(),
             connection_manager.clone(),
@@ -281,6 +296,8 @@ pub async fn start_server(
 
                 // restart the server in next loop
                 info!("Restart server");
+                // use DB settings in next restart
+                prefer_config_settings = false;
             }
             Err(err) => return Err(err),
         }
