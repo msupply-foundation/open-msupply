@@ -2,11 +2,8 @@ use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
-    schema::{
-        diesel_schema::stocktake::{self, dsl as stocktake_dsl},
-        StocktakeRow, StocktakeStatus,
-    },
-    DBType, RepositoryError, StorageConnection,
+    stocktake_row::stocktake::{self, dsl as stocktake_dsl},
+    DBType, RepositoryError, StocktakeRow, StocktakeStatus, StorageConnection,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};

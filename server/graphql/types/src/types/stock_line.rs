@@ -8,7 +8,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{schema::StockLineRow, StockLine, StorageConnectionManager};
+use repository::{StockLine, StockLineRow, StorageConnectionManager};
 use service::{stock_line::get_stock_line, usize_to_u32, ListResult};
 
 pub struct StockLineNode {

@@ -2,9 +2,8 @@ use chrono::Utc;
 
 use repository::Name;
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus},
-    schema::StockLineRow,
-    InvoiceLineRowRepository, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, StockLineRow,
+    StorageConnection,
 };
 use util::uuid::uuid;
 

@@ -8,6 +8,9 @@ use crate::db_diesel::{
     name_row::name,
     requisition_line_row::requisition_line,
     requisition_row::requisition,
+    stock_line_row::stock_line,
+    stocktake_line_row::stocktake_line,
+    stocktake_row::stocktake,
     unit_row::unit,
     user_row::user_account,
 };
@@ -28,24 +31,6 @@ table! {
         record_id -> Text,
         action -> crate::schema::remote_sync_buffer::RemoteSyncBufferActionMapping,
         data -> Text,
-    }
-}
-
-table! {
-    stock_line (id) {
-        id -> Text,
-        item_id -> Text,
-        store_id -> Text,
-        location_id -> Nullable<Text>,
-        batch -> Nullable<Text>,
-        pack_size -> Integer,
-        cost_price_per_pack -> Double,
-        sell_price_per_pack -> Double,
-        available_number_of_packs -> Integer,
-        total_number_of_packs -> Integer,
-        expiry_date -> Nullable<Date>,
-        on_hold -> Bool,
-        note -> Nullable<Text>,
     }
 }
 
@@ -100,44 +85,6 @@ table! {
 }
 
 table! {
-    stocktake (id) {
-        id -> Text,
-        store_id -> Text,
-        user_id -> Text,
-        stocktake_number -> BigInt,
-        comment	-> Nullable<Text>,
-        description -> Nullable<Text>,
-        status -> crate::schema::stocktake::StocktakeStatusMapping,
-        created_datetime -> Timestamp,
-        stocktake_date -> Nullable<Date>,
-        finalised_datetime -> Nullable<Timestamp>,
-        inventory_adjustment_id -> Nullable<Text>,
-        is_locked -> Bool,
-    }
-}
-
-table! {
-    stocktake_line (id) {
-        id -> Text,
-        stocktake_id -> Text,
-        stock_line_id -> Nullable<Text>,
-        location_id	-> Nullable<Text>,
-        comment	-> Nullable<Text>,
-        snapshot_number_of_packs -> Integer,
-        counted_number_of_packs -> Nullable<Integer>,
-
-        // stock line related fields:
-        item_id -> Text,
-        batch -> Nullable<Text>,
-        expiry_date -> Nullable<Date>,
-        pack_size -> Nullable<Integer>,
-        cost_price_per_pack -> Nullable<Double>,
-        sell_price_per_pack -> Nullable<Double>,
-        note -> Nullable<Text>,
-    }
-}
-
-table! {
     changelog (id) {
         id -> BigInt,
         table_name -> crate::schema::changelog::ChangelogTableNameMapping,
@@ -152,35 +99,6 @@ table! {
         table_name -> crate::schema::changelog::ChangelogTableNameMapping,
         row_id -> Text,
         row_action -> crate::schema::changelog::ChangelogActionMapping,
-    }
-}
-
-table! {
-    stock_movement (id) {
-        id -> Text,
-        item_id -> Text,
-        store_id -> Text,
-        quantity -> Integer,
-        datetime -> Timestamp,
-    }
-}
-
-table! {
-    consumption (id) {
-        id -> Text,
-        item_id -> Text,
-        store_id -> Text,
-        quantity -> Integer,
-        date -> Date,
-    }
-}
-
-table! {
-    stock_on_hand (id) {
-        id -> Text,
-        item_id -> Text,
-        store_id -> Text,
-        available_stock_on_hand -> BigInt,
     }
 }
 

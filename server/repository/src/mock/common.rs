@@ -1,10 +1,9 @@
 use crate::{
-    db_diesel::{requisition_row::RequisitionRow, InvoiceRow},
-    schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow, StockLineRow},
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRowRepository, MasterListLineRowRepository,
-    MasterListNameJoinRepository, MasterListRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
-    StorageConnection,
+    schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow},
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
+    MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
+    StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
 #[derive(Clone)]

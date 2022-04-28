@@ -4,8 +4,8 @@ use crate::{
     u32_to_i32, WithDBError,
 };
 use repository::{
-    db_diesel::InvoiceLineRow, schema::StockLineRow, InvoiceLine, InvoiceLineRowRepository,
-    RepositoryError, StockLineRowRepository,
+    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLineRow,
+    StockLineRowRepository,
 };
 
 mod generate;

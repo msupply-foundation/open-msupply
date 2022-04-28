@@ -1,6 +1,6 @@
 use crate::u32_to_i32;
 use repository::{
-    schema::StockLineRow, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow,
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
 
 use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};

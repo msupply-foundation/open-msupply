@@ -215,9 +215,9 @@ mod graphql {
         mock_new_invoice_with_unallocated_line, mock_store_linked_to_name,
     };
     use repository::mock::{mock_name_store_c, MockDataInserts};
-    use repository::schema::StockLineRow;
     use repository::{
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRowRepository, StockLineRowRepository,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRowRepository, StockLineRow,
+        StockLineRowRepository,
     };
     use serde_json::json;
 

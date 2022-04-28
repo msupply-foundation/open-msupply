@@ -1,10 +1,44 @@
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
-    schema::{diesel_schema::stock_movement::dsl as stock_movement_dsl, StockMovementRow},
+    stock_movement::stock_movement::dsl as stock_movement_dsl,
     DatetimeFilter, EqualFilter, RepositoryError, StorageConnection,
 };
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
+use util::Defaults;
+
+table! {
+    stock_movement (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        quantity -> Integer,
+        datetime -> Timestamp,
+    }
+}
+
+#[derive(Clone, Queryable, Debug, PartialEq)]
+pub struct StockMovementRow {
+    pub id: String,
+    pub item_id: String,
+    pub store_id: String,
+    pub quantity: i32,
+    pub datetime: NaiveDateTime,
+}
+
+impl Default for StockMovementRow {
+    fn default() -> Self {
+        Self {
+            datetime: Defaults::naive_date_time(),
+            // Default
+            id: Default::default(),
+            item_id: Default::default(),
+            store_id: Default::default(),
+            quantity: Default::default(),
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct StockMovementFilter {
