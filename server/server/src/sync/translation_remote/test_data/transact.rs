@@ -1,10 +1,8 @@
 use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::{
-    db_diesel::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    schema::{
-        ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction,
-        RemoteSyncBufferRow,
-    },
+    schema::{RemoteSyncBufferAction, RemoteSyncBufferRow},
+    ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus,
+    InvoiceRowType,
 };
 use serde_json::json;
 

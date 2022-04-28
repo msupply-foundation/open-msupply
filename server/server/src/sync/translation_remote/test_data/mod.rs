@@ -1,8 +1,8 @@
 use repository::{
-    schema::{ChangelogRow, RemoteSyncBufferRow},
-    InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository, NameStoreJoinRepository,
-    NumberRowRepository, RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
-    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
+    schema::RemoteSyncBufferRow, ChangelogRow, InvoiceLineRowRepository, InvoiceRowRepository,
+    LocationRowRepository, NameStoreJoinRepository, NumberRowRepository, RepositoryError,
+    RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
 };
 
 use self::{

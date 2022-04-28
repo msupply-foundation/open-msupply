@@ -1,11 +1,8 @@
 use chrono::NaiveDate;
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
     mock::{mock_item_a, mock_stock_line_a},
-    schema::{
-        ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction,
-        RemoteSyncBufferRow,
-    },
+    schema::{RemoteSyncBufferAction, RemoteSyncBufferRow},
+    ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowType,
 };
 use serde_json::json;
 

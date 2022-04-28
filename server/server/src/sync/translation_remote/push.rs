@@ -1,8 +1,5 @@
 use log::{info, warn};
-use repository::{
-    schema::{ChangelogAction, ChangelogRow},
-    StorageConnection,
-};
+use repository::{ChangelogAction, ChangelogRow, StorageConnection};
 
 use crate::sync::{
     translation_remote::{
