@@ -68,12 +68,11 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    schema::{user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow},
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow,
     LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRowRepository, UserStoreJoinRowRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::unit::mock_units;

@@ -6,14 +6,11 @@ use crate::{
     repository_error::RepositoryError,
     schema::{
         store::{store, store::dsl as store_dsl},
-        user_permission::UserPermissionRow,
-        user_store_join::{
-            user_store_join, user_store_join::dsl as user_store_join_dsl, UserStoreJoinRow,
-        },
         StoreRow,
     },
     user_row::{user_account, user_account::dsl as user_dsl},
-    UserAccountRow,
+    user_store_join_row::{user_store_join, user_store_join::dsl as user_store_join_dsl},
+    UserAccountRow, UserPermissionRow, UserStoreJoinRow,
 };
 use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 

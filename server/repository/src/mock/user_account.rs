@@ -1,10 +1,4 @@
-use crate::{
-    schema::{
-        user_permission::{Permission, UserPermissionRow},
-        user_store_join::UserStoreJoinRow,
-    },
-    UserAccountRow,
-};
+use crate::{Permission, UserAccountRow, UserPermissionRow, UserStoreJoinRow};
 
 // users
 
