@@ -81,7 +81,7 @@ use self::unit::mock_units;
 use super::{
     db_diesel::{
         InvoiceRowRepository, ItemRowRepository, NameRowRepository, NameStoreJoinRepository,
-        StorageConnection, StoreRowRepository, UnitRowRepository,
+        StorageConnection, StoreRowRepository, UnitRowRepository, NameRow
     },
     schema::*,
 };

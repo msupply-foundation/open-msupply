@@ -88,9 +88,10 @@ mod test {
         db_diesel::{
             invoice_line_row::{InvoiceLineRow, InvoiceLineRowType},
             invoice_row::{InvoiceRow, InvoiceRowType},
+            NameRow,
         },
         mock::{mock_item_a, mock_name_a, MockData, MockDataInserts},
-        schema::{NameRow, StoreRow},
+        schema::StoreRow,
         test_db::setup_all_with_data,
     };
 

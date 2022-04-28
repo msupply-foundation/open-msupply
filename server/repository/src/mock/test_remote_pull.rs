@@ -1,6 +1,6 @@
 use util::inline_init;
 
-use crate::schema::{NameRow, StoreRow};
+use crate::{schema::StoreRow, NameRow};
 
 use super::MockData;
 

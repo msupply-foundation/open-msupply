@@ -1,10 +1,11 @@
 use crate::{
+    db_diesel::name_row::name::dsl as name_dsl,
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     schema::{
         diesel_schema::{
             master_list, master_list::dsl as master_list_dsl,
-            master_list_name_join::dsl as master_list_name_join_dsl, name::dsl as name_dsl,
+            master_list_name_join::dsl as master_list_name_join_dsl,
         },
         store::store::dsl as store_dsl,
         MasterListRow,

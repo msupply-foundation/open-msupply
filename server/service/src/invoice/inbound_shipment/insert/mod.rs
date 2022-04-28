@@ -76,9 +76,9 @@ where
 mod test {
     use repository::{
         mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
-        schema::{NameRow, NameStoreJoinRow},
+        schema::NameStoreJoinRow,
         test_db::setup_all_with_data,
-        InvoiceRowRepository,
+        InvoiceRowRepository, NameRow,
     };
     use util::{inline_edit, inline_init};
 

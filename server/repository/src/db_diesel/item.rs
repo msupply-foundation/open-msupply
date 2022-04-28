@@ -197,14 +197,14 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        db_diesel::{item::ItemFilter, ItemRow, ItemRowType},
+        db_diesel::{item::ItemFilter, ItemRow, ItemRowType, NameRow},
         test_db, EqualFilter, Pagination, DEFAULT_PAGINATION_LIMIT,
         {
             db_diesel::{
                 MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
             },
             mock::MockDataInserts,
-            schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
+            schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow},
             ItemRepository, ItemRowRepository, NameRowRepository,
         },
     };

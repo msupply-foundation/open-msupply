@@ -452,10 +452,10 @@ mod permission_validation_test {
         mock::{mock_user_account_a, MockData, MockDataInserts},
         schema::{
             user_permission::{self, UserPermissionRow},
-            NameRow, StoreRow, UserAccountRow,
+            StoreRow, UserAccountRow,
         },
         test_db::{setup_all, setup_all_with_data},
-        UserPermissionRowRepository,
+        NameRow, UserPermissionRowRepository,
     };
     use util::inline_init;
 

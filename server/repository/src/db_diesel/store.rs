@@ -1,11 +1,13 @@
 use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
-use crate::schema::NameRow;
 use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use crate::{
+    db_diesel::{
+        name_row::{name, name::dsl as name_dsl},
+        NameRow,
+    },
     diesel_macros::apply_simple_string_filter,
     schema::{
-        diesel_schema::{name, name::dsl as name_dsl},
         store::{store, store::dsl as store_dsl},
         StoreRow,
     },

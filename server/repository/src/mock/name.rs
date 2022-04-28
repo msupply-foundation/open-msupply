@@ -1,6 +1,6 @@
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
-use crate::schema::NameRow;
+use crate::db_diesel::NameRow;
 
 pub fn mock_name_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
