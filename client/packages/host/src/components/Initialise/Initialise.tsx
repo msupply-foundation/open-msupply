@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
-import { useInitialiseForm } from '../hooks';
+import { useInitialiseForm } from './hooks';
 
 export const Initialise = () => {
   const t = useTranslation('app');

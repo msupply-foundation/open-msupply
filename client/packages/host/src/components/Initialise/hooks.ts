@@ -8,9 +8,11 @@ import {
   ServerStatus,
   useNavigate,
 } from '@openmsupply-client/common';
-import { useHost } from '../api/hooks';
+import { useHost } from '../../api/hooks';
 
 const SERVER_RESTART_TIMEOUT = 90000;
+const POLLING_INTERVAL = 3000;
+
 interface InitialiseForm {
   error?: AuthenticationError;
   isLoading: boolean;
@@ -60,7 +62,7 @@ export const useInitialiseForm = () => {
   const [isBootstrap, setIsBootstrap] = useState(false);
   const { mutateAsync: update } = useHost.sync.update();
   const { data } = useHost.utils.settings({
-    refetchInterval: 5000,
+    refetchInterval: POLLING_INTERVAL,
     enabled: isPolling,
   });
 
@@ -108,7 +110,6 @@ export const useInitialiseForm = () => {
     setTimeout(() => {
       setIsLoading(false);
       setIsPolling(false);
-      console.log('Timed out', data);
       const message = isBootstrap
         ? 'Unable to sync! Please check your settings.'
         : 'Server restart has timed out';
