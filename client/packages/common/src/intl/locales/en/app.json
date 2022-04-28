@@ -49,6 +49,8 @@
   "cmdk.goto-reports": "Go to: Reports",
   "cmdk.goto-master-lists": "Go to: Master Lists",
   "cmdk.placeholder": "Type a command or search",
+  "initialise.heading": "Welcome!",
+  "initialise.body": "To get started, we'll need to configure the settings to synchronise with mSupply. Please enter the values and click Save.\n\nIf you're not sure what to enter, contact support@msupply.foundation.",
   "login.heading": "Simple.\nPowerful.\nPharmaceutical\nManagement.",
   "login.body": "Whether you run a pharmaceutical distribution warehouse, or are a manufacturer needing dozens of connected users, or a small dispensary, mSupply is a valuable partner.",
   "login.store-changed": "Welcome to the {{store}} store",
