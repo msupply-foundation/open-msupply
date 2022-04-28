@@ -7,9 +7,9 @@ use graphql_core::{
     standard_graphql_error::validate_auth,
 };
 use graphql_core::{map_filter, ContextExt};
-use repository::schema::report::{ReportCategory as ReportCategoryDomain, ReportRow};
 use repository::{
-    EqualFilter, PaginationOption, ReportFilter, ReportSort, ReportSortField, SimpleStringFilter,
+    EqualFilter, PaginationOption, ReportCategory as ReportCategoryDomain, ReportFilter, ReportRow,
+    ReportSort, ReportSortField, SimpleStringFilter,
 };
 use service::permission_validation::{Resource, ResourceAccessRequest};
 

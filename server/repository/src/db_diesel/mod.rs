@@ -24,7 +24,7 @@ pub mod name_store_join;
 pub mod number_row;
 mod remote_sync_buffer;
 mod report;
-mod report_row;
+pub mod report_row;
 mod requisition;
 mod requisition_line;
 mod stock_line;
