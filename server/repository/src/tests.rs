@@ -280,16 +280,16 @@ mod repository_test {
             mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
             mock_test_master_list_store1, MockDataInserts,
         },
-        schema::{ChangelogAction, ChangelogRow, ChangelogTableName, KeyValueType},
+        schema::{ChangelogAction, ChangelogRow, ChangelogTableName},
         test_db, CentralSyncBufferRepository, ChangelogRowRepository, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository,
-        MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+        KeyValueType, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameRowRepository, NumberRowRepository,
+        MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
         OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
         RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
-        StocktakeRowRepository, StoreRowRepository, UserAccountRowRepository, NumberRowType
+        StocktakeRowRepository, StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;

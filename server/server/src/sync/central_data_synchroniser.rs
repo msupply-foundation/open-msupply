@@ -5,9 +5,8 @@ use crate::sync::{
 };
 use log::info;
 use repository::{
-    schema::{CentralSyncBufferRow, KeyValueType},
-    CentralSyncBufferRepository, KeyValueStoreRepository, RepositoryError, StorageConnection,
-    TransactionError,
+    schema::CentralSyncBufferRow, CentralSyncBufferRepository, KeyValueStoreRepository,
+    KeyValueType, RepositoryError, StorageConnection, TransactionError,
 };
 use thiserror::Error;
 

@@ -143,9 +143,8 @@ mod test {
     use repository::{
         db_diesel::{InvoiceRow, InvoiceRowType},
         mock::{mock_name_a, mock_outbound_shipment_a, mock_store_a, MockData, MockDataInserts},
-        schema::NameStoreJoinRow,
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow,
+        InvoiceRowRepository, NameRow, NameStoreJoinRow,
     };
     use util::{inline_edit, inline_init};
 

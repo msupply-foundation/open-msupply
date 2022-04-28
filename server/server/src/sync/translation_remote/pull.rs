@@ -1,12 +1,11 @@
 use log::{info, warn};
 use repository::{
-    schema::{NameStoreJoinRow, RemoteSyncBufferRow},
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationRow,
-    LocationRowRepository, NameStoreJoinRepository, NumberRow, NumberRowRepository,
-    RepositoryError, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, StockLineRow, StockLineRowRepository, StocktakeLineRow,
-    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StorageConnection,
-    TransactionError,
+    schema::RemoteSyncBufferRow, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, LocationRow, LocationRowRepository, NameStoreJoinRepository,
+    NameStoreJoinRow, NumberRow, NumberRowRepository, RepositoryError, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRow,
+    StockLineRowRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow,
+    StocktakeRowRepository, StorageConnection, TransactionError,
 };
 
 use crate::sync::{

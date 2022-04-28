@@ -1,9 +1,6 @@
 use util::inline_init;
 
-use crate::{
-    schema::{NameStoreJoinRow, StoreRow},
-    NameRow,
-};
+use crate::{NameRow, NameStoreJoinRow, StoreRow};
 
 use super::MockData;
 

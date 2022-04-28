@@ -1,9 +1,53 @@
 use diesel::prelude::*;
 
 use super::StorageConnection;
+use crate::key_value_store::key_value_store::dsl as kv_store_dsl;
 use crate::repository_error::RepositoryError;
-use crate::schema::diesel_schema::key_value_store::dsl as kv_store_dsl;
-use crate::schema::{KeyValueStoreRow, KeyValueType};
+
+use diesel_derive_enum::DbEnum;
+
+table! {
+    key_value_store (id) {
+        id -> crate::db_diesel::key_value_store::KeyValueTypeMapping,
+        value_string -> Nullable<Text>,
+        value_int-> Nullable<Integer>,
+        value_bigint-> Nullable<BigInt>,
+        value_float-> Nullable<Double>,
+        value_bool-> Nullable<Bool>,
+    }
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum KeyValueType {
+    CentralSyncPullCursor,
+    /// Indicates if the sync queue on the remote server has been initialised
+    RemoteSyncInitilisationStarted,
+    /// Indicates if the remote data has been pulled and integrated from the central server
+    /// Possible value: "true"
+    RemoteSyncInitilisationFinished,
+    RemoteSyncPushCursor,
+
+    SettingsSyncUrl,
+    SettingsSyncUsername,
+    SettingsSyncPasswordSha256,
+    SettingsSyncIntervalSec,
+    SettingsSyncCentralServerSiteId,
+    SettingsSyncSideId,
+    SettingsSyncSideHardwareId,
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[changeset_options(treat_none_as_null = "true")]
+#[table_name = "key_value_store"]
+pub struct KeyValueStoreRow {
+    pub id: KeyValueType,
+    pub value_string: Option<String>,
+    pub value_int: Option<i32>,
+    pub value_bigint: Option<i64>,
+    pub value_float: Option<f64>,
+    pub value_bool: Option<bool>,
+}
 
 pub struct KeyValueStoreRepository<'a> {
     connection: &'a StorageConnection,

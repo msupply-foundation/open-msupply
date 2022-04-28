@@ -9,9 +9,8 @@ mod test_update {
             mock_store_a, MockData, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        schema::NameStoreJoinRow,
         test_db::{setup_all, setup_all_with_data},
-        NameRow, RequisitionLineRowRepository, RequisitionRowRepository,
+        NameRow, NameStoreJoinRow, RequisitionLineRowRepository, RequisitionRowRepository,
     };
     use util::{inline_edit, inline_init};
 

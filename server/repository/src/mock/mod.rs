@@ -77,13 +77,10 @@ use crate::{
 
 use self::unit::mock_units;
 
-use super::{
-    db_diesel::{
-        InvoiceRowRepository, ItemRowRepository, NameRow, NameRowRepository,
-        NameStoreJoinRepository, StockLineRow, StocktakeLineRow, StocktakeRow, StorageConnection,
-        StoreRowRepository, UnitRow, UnitRowRepository,
-    },
-    schema::*,
+use super::db_diesel::{
+    InvoiceRowRepository, ItemRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,
+    NameStoreJoinRow, StockLineRow, StocktakeLineRow, StocktakeRow, StorageConnection, StoreRow,
+    StoreRowRepository, UnitRow, UnitRowRepository,
 };
 
 #[derive(Default, Clone)]
