@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import Bugsnag from '@bugsnag/js';
 
 import {
@@ -22,7 +22,7 @@ import {
   EnvUtils,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import { Login, Viewport } from './components';
+import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
 import { AuthenticationAlert } from './components/AuthenticationAlert';
 import packageJson from 'package.json';
@@ -49,7 +49,7 @@ Bugsnag.start({
   appVersion: packageJson.version,
 });
 
-const Host: FC = () => (
+const Host = () => (
   <React.Suspense fallback={<div />}>
     <IntlProvider>
       <React.Suspense fallback={<RandomLoader />}>
@@ -65,6 +65,12 @@ const Host: FC = () => (
                         <Viewport>
                           <Box display="flex" style={{ minHeight: '100%' }}>
                             <Routes>
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Initialise
+                                ).build()}
+                                element={<Initialise />}
+                              />
                               <Route
                                 path={RouteBuilder.create(
                                   AppRoute.Login

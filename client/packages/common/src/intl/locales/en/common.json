@@ -1,4 +1,5 @@
 {
+  "app.initialise": "Initialise",
   "app.login": "Login",
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Add Item",
