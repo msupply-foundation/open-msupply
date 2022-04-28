@@ -5,7 +5,6 @@ mod master_list_line;
 mod master_list_name_join;
 pub mod pricing;
 mod remote_sync_buffer;
-pub mod report;
 mod sync_out;
 
 pub mod diesel_schema;
