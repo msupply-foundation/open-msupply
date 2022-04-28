@@ -15,7 +15,7 @@ use crate::{
     },
     u32_to_i32,
 };
-use repository::{schema::StockLineRow, InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
+use repository::{InvoiceRow, InvoiceRowType, ItemRow, StockLineRow, StorageConnection};
 
 use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};
 

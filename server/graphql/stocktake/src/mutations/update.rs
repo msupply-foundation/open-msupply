@@ -146,9 +146,7 @@ mod graphql {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        mock::MockDataInserts,
-        schema::{StocktakeRow, StocktakeStatus},
-        StorageConnectionManager,
+        mock::MockDataInserts, StocktakeRow, StocktakeStatus, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{

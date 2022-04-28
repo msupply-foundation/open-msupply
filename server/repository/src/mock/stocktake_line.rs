@@ -1,4 +1,4 @@
-use crate::schema::StocktakeLineRow;
+use crate::db_diesel::StocktakeLineRow;
 
 pub fn mock_stocktake_line_a() -> StocktakeLineRow {
     StocktakeLineRow {

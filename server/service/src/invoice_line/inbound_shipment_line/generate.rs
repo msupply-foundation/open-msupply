@@ -1,4 +1,4 @@
-use repository::{db_diesel::InvoiceLineRow, schema::StockLineRow};
+use repository::{InvoiceLineRow, StockLineRow};
 use util::uuid::uuid;
 
 pub fn generate_batch(

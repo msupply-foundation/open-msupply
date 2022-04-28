@@ -1,8 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    schema::{StocktakeRow, StocktakeStatus},
-    RepositoryError, StocktakeLineFilter, StocktakeLineRepository, StocktakeRowRepository,
-    StorageConnection,
+    RepositoryError, StocktakeLineFilter, StocktakeLineRepository, StocktakeRow,
+    StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 
 pub fn check_stocktake_exist(

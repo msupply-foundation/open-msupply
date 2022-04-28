@@ -1,9 +1,9 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::{StocktakeLineRow, StocktakeRow, StocktakeStatus},
     InvoiceFilter, InvoiceRepository, ItemFilter, ItemRepository, ItemRowRepository, LocationRow,
-    LocationRowRepository, StockLineFilter, StockLineRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, StorageConnection,
+    LocationRowRepository, StockLineFilter, StockLineRepository, StocktakeLineRow,
+    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+    StorageConnection,
 };
 use util::{inline_edit, uuid::uuid};
 

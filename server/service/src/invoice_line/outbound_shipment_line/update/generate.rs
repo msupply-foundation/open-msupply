@@ -1,5 +1,5 @@
 use crate::u32_to_i32;
-use repository::{schema::StockLineRow, InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
 use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
 

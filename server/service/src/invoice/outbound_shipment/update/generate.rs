@@ -2,9 +2,8 @@ use chrono::Utc;
 
 use repository::Name;
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus},
-    schema::StockLineRow,
-    InvoiceLineRowRepository, StockLineRowRepository, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
+    StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};

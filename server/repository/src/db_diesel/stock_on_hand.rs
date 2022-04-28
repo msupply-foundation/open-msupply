@@ -1,10 +1,26 @@
 use crate::{
-    diesel_macros::apply_equal_filter,
-    schema::{diesel_schema::stock_on_hand::dsl as stock_on_hand_dsl, StockOnHandRow},
+    diesel_macros::apply_equal_filter, stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl,
     EqualFilter, RepositoryError, StorageConnection,
 };
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
+
+table! {
+    stock_on_hand (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        available_stock_on_hand -> BigInt,
+    }
+}
+
+#[derive(Clone, Queryable, Debug, PartialEq)]
+pub struct StockOnHandRow {
+    pub id: String,
+    pub item_id: String,
+    pub store_id: String,
+    pub available_stock_on_hand: i64,
+}
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct StockOnHandFilter {

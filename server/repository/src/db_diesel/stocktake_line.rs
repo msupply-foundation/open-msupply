@@ -7,14 +7,9 @@ use diesel::{
 use crate::{
     diesel_macros::apply_equal_filter,
     location_row::{location, location::dsl as location_dsl},
-    schema::{
-        diesel_schema::{
-            stock_line::{self, dsl as stock_line_dsl},
-            stocktake_line::{self, dsl as stocktake_line_dsl},
-        },
-        StockLineRow, StocktakeLineRow,
-    },
-    DBType, LocationRow, RepositoryError, StorageConnection,
+    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
+    stocktake_line_row::stocktake_line::{self, dsl as stocktake_line_dsl},
+    DBType, LocationRow, RepositoryError, StockLineRow, StocktakeLineRow, StorageConnection,
 };
 
 #[derive(Clone)]

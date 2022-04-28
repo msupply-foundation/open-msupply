@@ -1,9 +1,56 @@
 use super::StorageConnection;
 
-use crate::schema::diesel_schema::stocktake_line::dsl as stocktake_line_dsl;
-use crate::{repository_error::RepositoryError, schema::StocktakeLineRow};
+use crate::repository_error::RepositoryError;
+use crate::stocktake_line_row::stocktake_line::dsl as stocktake_line_dsl;
 
 use diesel::prelude::*;
+
+use chrono::NaiveDate;
+
+table! {
+    stocktake_line (id) {
+        id -> Text,
+        stocktake_id -> Text,
+        stock_line_id -> Nullable<Text>,
+        location_id	-> Nullable<Text>,
+        comment	-> Nullable<Text>,
+        snapshot_number_of_packs -> Integer,
+        counted_number_of_packs -> Nullable<Integer>,
+
+        // stock line related fields:
+        item_id -> Text,
+        batch -> Nullable<Text>,
+        expiry_date -> Nullable<Date>,
+        pack_size -> Nullable<Integer>,
+        cost_price_per_pack -> Nullable<Double>,
+        sell_price_per_pack -> Nullable<Double>,
+        note -> Nullable<Text>,
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[table_name = "stocktake_line"]
+pub struct StocktakeLineRow {
+    pub id: String,
+    pub stocktake_id: String,
+    /// If missing, a new stock line needs to be created when finalizing the stocktake
+    pub stock_line_id: Option<String>,
+    pub location_id: Option<String>,
+    /// Comment for this stocktake line
+    pub comment: Option<String>,
+    pub snapshot_number_of_packs: i32,
+    pub counted_number_of_packs: Option<i32>,
+
+    // stock line related fields:
+    /// When a creating a new stock line this field holds the required item id
+    pub item_id: String,
+    pub batch: Option<String>,
+    pub expiry_date: Option<NaiveDate>,
+    pub pack_size: Option<i32>,
+    pub cost_price_per_pack: Option<f64>,
+    pub sell_price_per_pack: Option<f64>,
+    pub note: Option<String>,
+}
 
 pub struct StocktakeLineRowRepository<'a> {
     connection: &'a StorageConnection,
