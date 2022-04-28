@@ -6,7 +6,8 @@ use crate::{
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
-    schema::{NumberRowType, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    schema::NumberRowType,
     RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 

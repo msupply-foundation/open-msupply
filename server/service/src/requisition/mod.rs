@@ -20,7 +20,7 @@ use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 use repository::PaginationOption;
 use repository::{
-    schema::RequisitionRowType, Invoice, RepositoryError, Requisition, RequisitionFilter,
+    requisition_row::RequisitionRowType, Invoice, RepositoryError, Requisition, RequisitionFilter,
     RequisitionLine, RequisitionSort,
 };
 

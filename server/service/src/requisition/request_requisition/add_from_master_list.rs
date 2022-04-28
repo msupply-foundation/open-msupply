@@ -4,10 +4,10 @@ use crate::{
 };
 use repository::EqualFilter;
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     MasterList, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
     MasterListRepository, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRowRepository, StorageConnection,
+    RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
 };
 
 use super::generate_requisition_lines;

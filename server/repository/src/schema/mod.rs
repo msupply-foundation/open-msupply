@@ -12,8 +12,6 @@ mod number;
 mod pricing;
 mod remote_sync_buffer;
 pub mod report;
-mod requisition;
-mod requisition_line;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
@@ -26,7 +24,7 @@ pub mod diesel_schema;
 pub mod user_permission;
 pub mod user_store_join;
 
-use crate::db_diesel::{item_row::ItemRow, InvoiceLineRow, InvoiceRow};
+use crate::db_diesel::{InvoiceLineRow, InvoiceRow, ItemRow, RequisitionLineRow, RequisitionRow};
 
 #[derive(Clone)]
 pub enum DatabaseRow {
@@ -56,8 +54,6 @@ pub use name_store_join::NameStoreJoinRow;
 pub use number::{NumberRow, NumberRowType};
 pub use pricing::PricingRow;
 pub use remote_sync_buffer::*;
-pub use requisition::*;
-pub use requisition_line::RequisitionLineRow;
 pub use stock_line::StockLineRow;
 pub use stocktake::*;
 pub use stocktake_line::*;

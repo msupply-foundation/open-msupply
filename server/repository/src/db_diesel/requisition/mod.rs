@@ -1,10 +1,10 @@
 use crate::SimpleStringFilter;
 use crate::{DatetimeFilter, EqualFilter, Sort};
 
-use crate::schema::{RequisitionRowStatus, RequisitionRowType};
+use crate::db_diesel::requisition_row::{RequisitionRowStatus, RequisitionRowType};
 
 mod requisition;
-mod requisition_row;
+pub mod requisition_row;
 
 pub use self::requisition::*;
 pub use self::requisition_row::*;

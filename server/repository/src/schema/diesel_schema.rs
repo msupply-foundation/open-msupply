@@ -3,6 +3,8 @@ use crate::db_diesel::{
     invoice_line_row::invoice_line,
     invoice_row::invoice,
     item_row::{item, item_is_visible},
+    requisition_line_row::requisition_line,
+    requisition_row::requisition,
 };
 
 table! {
@@ -71,43 +73,6 @@ table! {
         is_supplier -> Bool,
         // TODO, this is temporary, remove
         legacy_record -> Text,
-    }
-}
-
-table! {
-    requisition (id) {
-        id -> Text,
-        requisition_number -> Bigint,
-        name_id -> Text,
-        store_id -> Text,
-        user_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::schema::requisition::RequisitionRowTypeMapping,
-        #[sql_name = "status"] status -> crate::schema::requisition::RequisitionRowStatusMapping,
-        created_datetime -> Timestamp,
-        sent_datetime -> Nullable<Timestamp>,
-        finalised_datetime -> Nullable<Timestamp>,
-        expected_delivery_date -> Nullable<Date>,
-        colour -> Nullable<Text>,
-        comment -> Nullable<Text>,
-        their_reference -> Nullable<Text>,
-        max_months_of_stock -> Double,
-        min_months_of_stock -> Double,
-        linked_requisition_id -> Nullable<Text>,
-    }
-}
-
-table! {
-    requisition_line (id) {
-        id -> Text,
-        requisition_id -> Text,
-        item_id -> Text,
-        requested_quantity -> Integer,
-        suggested_quantity -> Integer,
-        supply_quantity -> Integer,
-        available_stock_on_hand -> Integer ,
-        average_monthly_consumption -> Integer,
-        snapshot_datetime -> Nullable<Timestamp>,
-        comment -> Nullable<Text>,
     }
 }
 

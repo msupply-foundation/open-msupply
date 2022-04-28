@@ -1,8 +1,99 @@
+use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
-use crate::{repository_error::RepositoryError, schema::RequisitionRow};
 
-use crate::schema::diesel_schema::requisition::dsl as requisition_dsl;
+use crate::db_diesel::requisition_row::requisition::dsl as requisition_dsl;
 use diesel::prelude::*;
+
+use chrono::{NaiveDate, NaiveDateTime};
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use util::Defaults;
+
+table! {
+    requisition (id) {
+        id -> Text,
+        requisition_number -> Bigint,
+        name_id -> Text,
+        store_id -> Text,
+        user_id -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> crate::db_diesel::requisition_row::RequisitionRowTypeMapping,
+        #[sql_name = "status"] status -> crate::db_diesel::requisition_row::RequisitionRowStatusMapping,
+        created_datetime -> Timestamp,
+        sent_datetime -> Nullable<Timestamp>,
+        finalised_datetime -> Nullable<Timestamp>,
+        expected_delivery_date -> Nullable<Date>,
+        colour -> Nullable<Text>,
+        comment -> Nullable<Text>,
+        their_reference -> Nullable<Text>,
+        max_months_of_stock -> Double,
+        min_months_of_stock -> Double,
+        linked_requisition_id -> Nullable<Text>,
+    }
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RequisitionRowType {
+    Request,
+    Response,
+}
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RequisitionRowStatus {
+    Draft,
+    New,
+    Sent,
+    Finalised,
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[table_name = "requisition"]
+pub struct RequisitionRow {
+    pub id: String,
+    pub requisition_number: i64,
+    pub name_id: String,
+    pub store_id: String,
+    pub user_id: Option<String>,
+    #[column_name = "type_"]
+    pub r#type: RequisitionRowType,
+    pub status: RequisitionRowStatus,
+    pub created_datetime: NaiveDateTime,
+    pub sent_datetime: Option<NaiveDateTime>,
+    pub finalised_datetime: Option<NaiveDateTime>,
+    pub expected_delivery_date: Option<NaiveDate>,
+    pub colour: Option<String>,
+    pub comment: Option<String>,
+    pub their_reference: Option<String>,
+    pub max_months_of_stock: f64,
+    pub min_months_of_stock: f64,
+    pub linked_requisition_id: Option<String>,
+}
+
+impl Default for RequisitionRow {
+    fn default() -> Self {
+        Self {
+            r#type: RequisitionRowType::Request,
+            status: RequisitionRowStatus::Draft,
+            created_datetime: Defaults::naive_date_time(),
+            // Defaults
+            id: Default::default(),
+            user_id: Default::default(),
+            requisition_number: Default::default(),
+            name_id: Default::default(),
+            store_id: Default::default(),
+            sent_datetime: Default::default(),
+            finalised_datetime: Default::default(),
+            expected_delivery_date: Default::default(),
+            colour: Default::default(),
+            comment: Default::default(),
+            their_reference: Default::default(),
+            max_months_of_stock: Default::default(),
+            min_months_of_stock: Default::default(),
+            linked_requisition_id: Default::default(),
+        }
+    }
+}
 
 pub struct RequisitionRowRepository<'a> {
     connection: &'a StorageConnection,
