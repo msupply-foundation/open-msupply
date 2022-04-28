@@ -1,9 +1,9 @@
 use chrono::{NaiveDate, Utc};
 use repository::schema::StocktakeLineRow;
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    schema::{NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus},
-    InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, NameRowRepository,
+    schema::{StockLineRow, StocktakeRow, StocktakeStatus},
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
+    InvoiceRowStatus, InvoiceRowType, ItemRowRepository, NameRowRepository, NumberRowType,
     RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
     StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
 };

@@ -7,8 +7,8 @@ use chrono::Utc;
 
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    schema::NumberRowType,
-    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
+    NumberRowType, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
+    StorageConnection,
 };
 use util::uuid::uuid;
 
