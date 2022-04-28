@@ -7,8 +7,7 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    schema::NumberRowType,
-    RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    NumberRowType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]

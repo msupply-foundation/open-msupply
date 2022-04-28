@@ -69,11 +69,11 @@ pub use user_account::*;
 
 use crate::{
     schema::{user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow},
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRowRepository,
-    NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, UserAccountRowRepository, UserPermissionRowRepository,
-    UserStoreJoinRowRepository, LocationRow
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow,
+    LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRowRepository,
+    UserPermissionRowRepository, UserStoreJoinRowRepository,
 };
 
 use self::unit::mock_units;

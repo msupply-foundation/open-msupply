@@ -1,6 +1,5 @@
 use repository::{
-    schema::{NumberRow, NumberRowType},
-    NumberRowRepository, RepositoryError, StorageConnection,
+    NumberRow, NumberRowRepository, NumberRowType, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -44,8 +43,8 @@ mod test {
             mock_inbound_shipment_number_store_a, mock_outbound_shipment_number_store_a,
             MockDataInserts,
         },
-        schema::NumberRowType,
         test_db::setup_all,
+        NumberRowType,
     };
 
     use crate::number::next_number;

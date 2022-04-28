@@ -1,9 +1,8 @@
 use chrono::Utc;
 
 use repository::{
-    db_diesel::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    schema::NumberRowType,
-    Name, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceRowStatus, InvoiceRowType, Name, NumberRowType, RepositoryError,
+    StorageConnection,
 };
 
 use crate::number::next_number;

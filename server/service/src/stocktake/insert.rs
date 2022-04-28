@@ -2,9 +2,8 @@ use chrono::{NaiveDate, Utc};
 use repository::schema::StocktakeStatus;
 use repository::EqualFilter;
 use repository::{
-    schema::{NumberRowType, StocktakeRow},
-    RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository, StocktakeRowRepository,
-    StorageConnection,
+    schema::StocktakeRow, NumberRowType, RepositoryError, Stocktake, StocktakeFilter,
+    StocktakeRepository, StocktakeRowRepository, StorageConnection,
 };
 
 use crate::{number::next_number, service_provider::ServiceContext, validate::check_store_exists};

@@ -108,15 +108,6 @@ table! {
 }
 
 table! {
-    number (id) {
-        id -> Text,
-        value -> BigInt,
-        store_id -> Text,
-        #[sql_name = "type"] type_ -> crate::schema::number::NumberRowTypeMapping,
-    }
-}
-
-table! {
     stocktake (id) {
         id -> Text,
         store_id -> Text,
