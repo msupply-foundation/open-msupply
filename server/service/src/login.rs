@@ -313,7 +313,7 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
 
 #[cfg(test)]
 mod test {
-    use std::sync::RwLock;
+    use std::sync::{Arc, RwLock};
 
     use httpmock::{Method::POST, MockServer};
     use repository::{
@@ -344,7 +344,7 @@ mod test {
         let central_server_url = mock_server.base_url();
         let auth_data = AuthData {
             auth_token_secret: "secret".to_string(),
-            token_bucket: RwLock::new(TokenBucket::new()),
+            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
             debug_no_ssl: true,
             debug_no_access_control: false,
         };
