@@ -119,14 +119,11 @@ mod test {
     use util::{inline_edit, inline_init, uuid::uuid};
 
     use crate::{
-        db_diesel::{
-            invoice_line_row::{InvoiceLineRow, InvoiceLineRowType},
-            invoice_row::{InvoiceRow, InvoiceRowType},
-            NameRow,
-        },
+        invoice_line_row::{InvoiceLineRow, InvoiceLineRowType},
+        invoice_row::{InvoiceRow, InvoiceRowType},
         mock::{mock_item_a, mock_name_a, MockData, MockDataInserts},
-        schema::StoreRow,
         test_db::setup_all_with_data,
+        NameRow, StoreRow,
     };
 
     use super::*;

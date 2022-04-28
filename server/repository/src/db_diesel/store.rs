@@ -7,11 +7,8 @@ use crate::{
         NameRow,
     },
     diesel_macros::apply_simple_string_filter,
-    schema::{
-        store::{store, store::dsl as store_dsl},
-        StoreRow,
-    },
-    DBType, RepositoryError, StorageConnection,
+    store_row::{store, store::dsl as store_dsl},
+    DBType, RepositoryError, StorageConnection, StoreRow,
 };
 
 use diesel::dsl::InnerJoin;

@@ -1,7 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    schema::StoreRow, InvoiceFilter, InvoiceRepository, InvoiceRow, NameRow, NameRowRepository,
-    RepositoryError, RequisitionFilter, RequisitionRepository, RequisitionRow, StorageConnection,
+    InvoiceFilter, InvoiceRepository, InvoiceRow, NameRow, NameRowRepository, RepositoryError,
+    RequisitionFilter, RequisitionRepository, RequisitionRow, StorageConnection, StoreRow,
     StoreRowRepository,
 };
 

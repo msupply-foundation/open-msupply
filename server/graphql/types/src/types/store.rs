@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{schema::StoreRow, Store};
+use repository::{Store, StoreRow};
 
 use super::NameNode;
 

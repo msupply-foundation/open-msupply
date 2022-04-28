@@ -1,7 +1,6 @@
 use log::warn;
 use repository::{
-    schema::{NameStoreJoinRow, RemoteSyncBufferRow},
-    NameRowRepository, StorageConnection,
+    schema::RemoteSyncBufferRow, NameRowRepository, NameStoreJoinRow, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};

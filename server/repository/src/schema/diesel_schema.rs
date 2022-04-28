@@ -1,16 +1,16 @@
-use super::name_store_join::name_store_join;
-use super::store::store;
 use crate::db_diesel::{
     invoice_line_row::invoice_line,
     invoice_row::invoice,
     item_row::{item, item_is_visible},
     location_row::location,
     name_row::name,
+    name_store_join::name_store_join,
     requisition_line_row::requisition_line,
     requisition_row::requisition,
     stock_line_row::stock_line,
     stocktake_line_row::stocktake_line,
     stocktake_row::stocktake,
+    store_row::store,
     unit_row::unit,
     user_row::user_account,
 };
@@ -102,17 +102,6 @@ table! {
     }
 }
 
-table! {
-    key_value_store (id) {
-        id -> crate::schema::key_value_store::KeyValueTypeMapping,
-        value_string -> Nullable<Text>,
-        value_int-> Nullable<Integer>,
-        value_bigint-> Nullable<BigInt>,
-        value_float-> Nullable<Double>,
-        value_bool-> Nullable<Bool>,
-    }
-}
-
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
@@ -129,8 +118,6 @@ joinable!(invoice_line -> item (item_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
-joinable!(name_store_join -> store (store_id));
-joinable!(name_store_join -> name (name_id));
 joinable!(master_list_line -> master_list (master_list_id));
 joinable!(master_list_line -> item (item_id));
 joinable!(master_list_name_join -> master_list (master_list_id));

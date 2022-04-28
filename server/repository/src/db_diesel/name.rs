@@ -1,18 +1,12 @@
 use super::{DBType, StorageConnection};
 use crate::{
-    db_diesel::{
-        name_row::{name, name::dsl as name_dsl},
-        NameRow,
-    },
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    name_row::{name, name::dsl as name_dsl},
+    name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
     repository_error::RepositoryError,
-    schema::{
-        name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
-        store::{store, store::dsl as store_dsl},
-        NameStoreJoinRow, StoreRow,
-    },
+    store_row::{store, store::dsl as store_dsl},
+    EqualFilter, NameRow, NameStoreJoinRow, Pagination, SimpleStringFilter, Sort, StoreRow,
 };
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{
     dsl::{And, Eq, IntoBoxed, LeftJoin},

@@ -1,9 +1,27 @@
 use super::StorageConnection;
 
-use crate::schema::store::store::dsl as store_dsl;
-use crate::{repository_error::RepositoryError, schema::StoreRow};
+use crate::repository_error::RepositoryError;
+use crate::store_row::store::dsl as store_dsl;
 
 use diesel::prelude::*;
+
+table! {
+    store (id) {
+        id -> Text,
+        name_id -> Text,
+        code -> Text,
+        site_id -> Integer,
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[table_name = "store"]
+pub struct StoreRow {
+    pub id: String,
+    pub name_id: String,
+    pub code: String,
+    pub site_id: i32,
+}
 
 pub struct StoreRowRepository<'a> {
     connection: &'a StorageConnection,

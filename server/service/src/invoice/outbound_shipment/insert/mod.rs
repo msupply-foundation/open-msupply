@@ -82,9 +82,8 @@ impl From<TransactionError<InsertOutboundShipmentError>> for InsertOutboundShipm
 mod test {
     use repository::{
         mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
-        schema::NameStoreJoinRow,
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow,
+        InvoiceRowRepository, NameRow, NameStoreJoinRow,
     };
     use util::{inline_edit, inline_init};
 

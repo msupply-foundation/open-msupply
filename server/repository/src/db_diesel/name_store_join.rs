@@ -1,11 +1,34 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError,
-    schema::name_store_join::name_store_join::dsl as name_store_join_dsl, schema::NameStoreJoinRow,
+    name_row::name, name_store_join::name_store_join::dsl as name_store_join_dsl,
+    repository_error::RepositoryError, store_row::store,
 };
 
 use diesel::prelude::*;
+
+table! {
+    name_store_join (id) {
+        id -> Text,
+        name_id -> Text,
+        store_id -> Text,
+        name_is_customer -> Bool,
+        name_is_supplier -> Bool,
+    }
+}
+
+#[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Clone, Default)]
+#[table_name = "name_store_join"]
+pub struct NameStoreJoinRow {
+    pub id: String,
+    pub name_id: String,
+    pub store_id: String,
+    pub name_is_customer: bool,
+    pub name_is_supplier: bool,
+}
+
+joinable!(name_store_join -> store (store_id));
+joinable!(name_store_join -> name (name_id));
 
 pub struct NameStoreJoinRepository<'a> {
     connection: &'a StorageConnection,

@@ -168,10 +168,9 @@ mod test {
             mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
             mock_request_draft_requisition_calculation_test, MockData, MockDataInserts,
         },
-        schema::StoreRow,
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow,
-        RequisitionLineRow, RequisitionRow, StockLineRow,
+        RequisitionLineRow, RequisitionRow, StockLineRow, StoreRow,
     };
     use util::{
         constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, inline_edit, inline_init, uuid::uuid,
