@@ -1,4 +1,15 @@
-use super::diesel_schema::invoice_stats;
+table! {
+    invoice_stats (invoice_id) {
+        invoice_id -> Text,
+        total_before_tax -> Double,
+        total_after_tax -> Double,
+        stock_total_before_tax -> Double,
+        stock_total_after_tax -> Double,
+        service_total_before_tax -> Double,
+        service_total_after_tax -> Double,
+        tax_percentage -> Nullable<Double>,
+    }
+}
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq)]
 #[table_name = "invoice_stats"]

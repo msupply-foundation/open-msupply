@@ -7,7 +7,7 @@ use crate::{
     invoice_row::{invoice, invoice::dsl as invoice_dsl, InvoiceRow},
     location_row::{location, location::dsl as location_dsl, LocationRow},
     repository_error::RepositoryError,
-    schema::{diesel_schema::invoice_stats::dsl as invoice_stats_dsl, PricingRow},
+    schema::{pricing::invoice_stats::dsl as invoice_stats_dsl, PricingRow},
 };
 use crate::{EqualFilter, Pagination};
 use diesel::{
