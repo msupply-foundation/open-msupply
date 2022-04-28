@@ -442,7 +442,7 @@ impl From<RepositoryError> for ValidationError {
 
 #[cfg(test)]
 mod permission_validation_test {
-    use std::sync::RwLock;
+    use std::sync::{Arc, RwLock};
 
     use super::*;
     use crate::{
@@ -463,7 +463,7 @@ mod permission_validation_test {
     async fn test_basic_permission_validation() {
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),
-            token_bucket: RwLock::new(TokenBucket::new()),
+            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
             debug_no_ssl: true,
             debug_no_access_control: false,
         };
@@ -631,7 +631,7 @@ mod permission_validation_test {
 
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),
-            token_bucket: RwLock::new(TokenBucket::new()),
+            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
             debug_no_ssl: true,
             debug_no_access_control: false,
         };
