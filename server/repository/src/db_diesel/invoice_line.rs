@@ -1,19 +1,13 @@
 use super::{DBType, StorageConnection};
 use crate::{
-    db_diesel::{
-        invoice_line_row::{
-            invoice_line, invoice_line::dsl as invoice_line_dsl, InvoiceLineRow, InvoiceLineRowType,
-        },
-        invoice_row::{invoice, invoice::dsl as invoice_dsl, InvoiceRow},
-    },
     diesel_macros::apply_equal_filter,
-    repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{
-            invoice_stats::dsl as invoice_stats_dsl, location, location::dsl as location_dsl,
-        },
-        LocationRow, PricingRow,
+    invoice_line_row::{
+        invoice_line, invoice_line::dsl as invoice_line_dsl, InvoiceLineRow, InvoiceLineRowType,
     },
+    invoice_row::{invoice, invoice::dsl as invoice_dsl, InvoiceRow},
+    location_row::{location, location::dsl as location_dsl, LocationRow},
+    repository_error::RepositoryError,
+    schema::{diesel_schema::invoice_stats::dsl as invoice_stats_dsl, PricingRow},
 };
 use crate::{EqualFilter, Pagination};
 use diesel::{

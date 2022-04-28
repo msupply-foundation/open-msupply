@@ -2,10 +2,9 @@ use chrono::NaiveDate;
 use repository::{
     db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     mock::{mock_outbound_shipment_a, mock_request_draft_requisition},
-    schema::LocationRow,
     EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, ItemFilter, ItemRepository,
-    LocationRowRepository, NameFilter, NameRepository, RequisitionRowRepository, StockLineFilter,
-    StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
+    LocationRow, LocationRowRepository, NameFilter, NameRepository, RequisitionRowRepository,
+    StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 use util::{inline_edit, uuid::uuid};
 

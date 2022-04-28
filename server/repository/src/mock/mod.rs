@@ -73,7 +73,7 @@ use crate::{
     NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
     StocktakeRowRepository, UserAccountRowRepository, UserPermissionRowRepository,
-    UserStoreJoinRowRepository,
+    UserStoreJoinRowRepository, LocationRow
 };
 
 use self::unit::mock_units;

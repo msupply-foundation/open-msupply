@@ -4,6 +4,7 @@ use crate::db_diesel::{
     invoice_line_row::invoice_line,
     invoice_row::invoice,
     item_row::{item, item_is_visible},
+    location_row::location,
     name_row::name,
     requisition_line_row::requisition_line,
     requisition_row::requisition,
@@ -26,16 +27,6 @@ table! {
         record_id -> Text,
         action -> crate::schema::remote_sync_buffer::RemoteSyncBufferActionMapping,
         data -> Text,
-    }
-}
-
-table! {
-    location (id) {
-        id -> Text,
-        name -> Text,
-        code -> Text,
-        on_hold -> Bool,
-        store_id -> Text,
     }
 }
 

@@ -2,14 +2,13 @@ use super::{DBType, StorageConnection};
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort_asc_nulls_last},
+    location_row::{location, location::dsl as location_dsl},
     repository_error::RepositoryError,
     schema::{
-        diesel_schema::{
-            location, location::dsl as location_dsl, stock_line, stock_line::dsl as stock_line_dsl,
-        },
-        LocationRow, StockLineRow,
+        diesel_schema::{stock_line, stock_line::dsl as stock_line_dsl},
+        StockLineRow,
     },
-    DateFilter, EqualFilter, Pagination, Sort,
+    DateFilter, EqualFilter, LocationRow, Pagination, Sort,
 };
 
 use diesel::{
