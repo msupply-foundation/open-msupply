@@ -56,18 +56,18 @@ export const ItemStatsDocument = gql`
 }
     ${ItemStatsFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     stockCounts(variables: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts');
+      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts', 'query');
     },
     itemStats(variables: ItemStatsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemStatsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemStatsQuery>(ItemStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemStats');
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemStatsQuery>(ItemStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemStats', 'query');
     }
   };
 }
