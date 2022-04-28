@@ -9,11 +9,10 @@ pub mod unit;
 use repository::{
     schema::{
         CentralSyncBufferRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, StoreRow,
-        UnitRow,
     },
     ItemRow, ItemRowRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
     MasterListRowRepository, NameRow, NameRowRepository, RepositoryError, StorageConnection,
-    StoreRowRepository, UnitRowRepository,
+    StoreRowRepository, UnitRow, UnitRowRepository,
 };
 
 #[allow(dead_code)]

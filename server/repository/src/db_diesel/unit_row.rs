@@ -1,7 +1,24 @@
 use super::StorageConnection;
-use crate::schema::diesel_schema::unit::dsl::*;
-use crate::{repository_error::RepositoryError, schema::UnitRow};
+use crate::{db_diesel::unit_row::unit::dsl::*, repository_error::RepositoryError};
 use diesel::prelude::*;
+
+table! {
+    unit (id) {
+        id -> Text,
+        name -> Text,
+        description -> Nullable<Text>,
+        index -> Integer,
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[table_name = "unit"]
+pub struct UnitRow {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub index: i32,
+}
 
 pub struct UnitRowRepository<'a> {
     connection: &'a StorageConnection,
