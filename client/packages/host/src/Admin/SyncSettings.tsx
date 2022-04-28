@@ -16,6 +16,61 @@ import { Setting } from './Setting';
 
 type SyncSettings = Omit<UpdateSyncSettingsInput, '__typename'>;
 
+interface SyncSettingProps {
+  autocomplete?: string;
+  disabled?: boolean;
+  property: keyof SyncSettings;
+  settings?: SyncSettings;
+  type?: string;
+  update: (syncSettings: SyncSettings) => void;
+}
+
+const StringSyncSetting: FC<SyncSettingProps> = ({
+  autocomplete = 'off',
+  disabled = false,
+  property,
+  type = 'text',
+  settings,
+  update,
+}) => {
+  const value = settings?.[property] || '';
+  const onChange = (value: string) => {
+    const patched = { ...settings, [property]: value } as SyncSettings;
+    update(patched);
+  };
+  return (
+    <BasicTextInput
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      type={type}
+      inputProps={{ autoComplete: autocomplete }}
+      disabled={disabled}
+    />
+  );
+};
+
+const NumericSyncSetting: FC<SyncSettingProps> = ({
+  property,
+  settings,
+  update,
+  disabled,
+}) => {
+  const value = settings?.[property] || '';
+  const onChange = (value: string) => {
+    const patched = {
+      ...settings,
+      [property]: Number(value),
+    } as SyncSettings;
+    update(patched);
+  };
+  return (
+    <NumericTextInput
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      disabled={disabled}
+    />
+  );
+};
 const isValid = (syncSettings: SyncSettings | null) => {
   if (!syncSettings) return false;
   return (
@@ -44,60 +99,29 @@ const SyncSettingsForm = ({
   setSyncSettings: (syncSettings: SyncSettings) => void;
 }) => {
   const t = useTranslation('common');
-  interface SyncSettingProps {
-    autocomplete?: string;
-    property: keyof SyncSettings;
-    type?: string;
-  }
-
-  const StringSyncSetting: FC<SyncSettingProps> = ({
-    property,
-    type = 'text',
-    autocomplete = 'off',
-  }) => {
-    const value = settings?.[property] || '';
-    const onChange = (value: string) => {
-      const patched = { ...settings, [property]: value } as SyncSettings;
-      setSyncSettings(patched);
-    };
-    return (
-      <BasicTextInput
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        type={type}
-        inputProps={{ autoComplete: autocomplete }}
-        disabled={isDisabled}
-      />
-    );
-  };
-
-  const NumericSyncSetting: FC<SyncSettingProps> = ({ property }) => {
-    const value = settings?.[property] || '';
-    const onChange = (value: string) => {
-      const patched = {
-        ...settings,
-        [property]: Number(value),
-      } as SyncSettings;
-      setSyncSettings(patched);
-    };
-    return (
-      <NumericTextInput
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        disabled={isDisabled}
-      />
-    );
-  };
-
   return (
     <form style={{ width: '100%' }}>
       <Setting
         title={t('label.settings-url')}
-        component={<StringSyncSetting property="url" />}
+        component={
+          <StringSyncSetting
+            property="url"
+            settings={settings}
+            disabled={isDisabled}
+            update={setSyncSettings}
+          />
+        }
       />
       <Setting
         title={t('label.settings-username')}
-        component={<StringSyncSetting property="username" />}
+        component={
+          <StringSyncSetting
+            property="username"
+            settings={settings}
+            disabled={isDisabled}
+            update={setSyncSettings}
+          />
+        }
       />
       <Setting
         title={t('label.settings-password')}
@@ -106,20 +130,44 @@ const SyncSettingsForm = ({
             property="password"
             type="password"
             autocomplete="sync-password"
+            settings={settings}
+            disabled={isDisabled}
+            update={setSyncSettings}
           />
         }
       />
       <Setting
         title={t('label.settings-interval')}
-        component={<NumericSyncSetting property="intervalSec" />}
+        component={
+          <NumericSyncSetting
+            property="intervalSec"
+            settings={settings}
+            disabled={isDisabled}
+            update={setSyncSettings}
+          />
+        }
       />
       <Setting
         title={t('label.settings-central-site-id')}
-        component={<NumericSyncSetting property="centralServerSiteId" />}
+        component={
+          <NumericSyncSetting
+            property="centralServerSiteId"
+            settings={settings}
+            disabled={isDisabled}
+            update={setSyncSettings}
+          />
+        }
       />
       <Setting
         title={t('label.settings-site-id')}
-        component={<NumericSyncSetting property="siteId" />}
+        component={
+          <NumericSyncSetting
+            property="siteId"
+            settings={settings}
+            disabled={isDisabled}
+            update={setSyncSettings}
+          />
+        }
       />
       <Grid item justifyContent="flex-end" width="100%" display="flex">
         <LoadingButton
