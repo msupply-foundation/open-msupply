@@ -1,9 +1,6 @@
 use util::inline_init;
 
-use crate::{
-    schema::{MasterListNameJoinRow, MasterListRow},
-    NameRow, StoreRow,
-};
+use crate::{MasterListNameJoinRow, MasterListRow, NameRow, StoreRow};
 
 use super::{common::FullMockMasterList, MockData};
 

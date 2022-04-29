@@ -1,5 +1,5 @@
 use super::common::FullMockMasterList;
-use crate::schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow};
+use crate::{MasterListLineRow, MasterListNameJoinRow, MasterListRow};
 
 pub fn mock_full_master_lists() -> Vec<FullMockMasterList> {
     vec![

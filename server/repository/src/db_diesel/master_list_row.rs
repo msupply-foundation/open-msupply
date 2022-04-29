@@ -1,8 +1,26 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, schema::MasterListRow};
+use crate::{master_list_row::master_list::dsl::*, repository_error::RepositoryError};
 
 use diesel::prelude::*;
+
+table! {
+    master_list (id) {
+        id -> Text,
+        name -> Text,
+        code -> Text,
+        description -> Text,
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[table_name = "master_list"]
+pub struct MasterListRow {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub description: String,
+}
 
 pub struct MasterListRowRepository<'a> {
     connection: &'a StorageConnection,
@@ -28,7 +46,6 @@ impl<'a> MasterListRowRepository<'a> {
 
     #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::master_list::dsl::*;
         diesel::replace_into(master_list)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -36,7 +53,6 @@ impl<'a> MasterListRowRepository<'a> {
     }
 
     pub async fn find_one_by_id(&self, item_id: &str) -> Result<MasterListRow, RepositoryError> {
-        use crate::schema::diesel_schema::master_list::dsl::*;
         let result = master_list
             .filter(id.eq(item_id))
             .first(&self.connection.connection)?;

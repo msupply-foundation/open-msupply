@@ -4,6 +4,9 @@ use crate::db_diesel::{
     invoice_row::invoice,
     item_row::{item, item_is_visible},
     location_row::location,
+    master_list_line_row::master_list_line,
+    master_list_name_join::master_list_name_join,
+    master_list_row::master_list,
     name_row::name,
     name_store_join::name_store_join,
     requisition_line_row::requisition_line,
@@ -47,31 +50,6 @@ table! {
     }
 }
 
-table! {
-    master_list (id) {
-        id -> Text,
-        name -> Text,
-        code -> Text,
-        description -> Text,
-    }
-}
-
-table! {
-    master_list_line (id) {
-        id -> Text,
-        item_id -> Text,
-        master_list_id -> Text,
-    }
-}
-
-table! {
-    master_list_name_join (id) {
-        id -> Text,
-        master_list_id -> Text,
-        name_id -> Text,
-    }
-}
-
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
@@ -90,8 +68,7 @@ joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
 joinable!(master_list_line -> master_list (master_list_id));
 joinable!(master_list_line -> item (item_id));
-joinable!(master_list_name_join -> master_list (master_list_id));
-joinable!(master_list_name_join -> name (name_id));
+
 joinable!(item_is_visible -> item (id));
 joinable!(location -> store (store_id));
 joinable!(stocktake_line -> location (location_id));
