@@ -96,7 +96,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
           type: { equalTo: RequisitionNodeType.Response },
         },
       });
-      return result.requisitions;
+      return result?.requisitions;
     },
     listAll: async ({ sortBy }: { sortBy: SortBy<ResponseRowFragment> }) => {
       const result = await sdk.responses({
@@ -109,7 +109,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
           type: { equalTo: RequisitionNodeType.Response },
         },
       });
-      return result.requisitions;
+      return result?.requisitions;
     },
     byNumber: async (requisitionNumber: string): Promise<ResponseFragment> => {
       const result = await sdk.responseByNumber({
@@ -117,8 +117,8 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
         requisitionNumber: Number(requisitionNumber),
       });
 
-      if (result.requisitionByNumber.__typename === 'RequisitionNode') {
-        return result.requisitionByNumber;
+      if (result?.requisitionByNumber.__typename === 'RequisitionNode') {
+        return result?.requisitionByNumber;
       }
 
       throw new Error('Record not found');
