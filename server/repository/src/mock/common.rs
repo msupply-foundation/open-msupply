@@ -1,9 +1,9 @@
 use crate::{
-    schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow},
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
-    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
-    StockLineRow, StockLineRowRepository, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, MasterListLineRow,
+    MasterListLineRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
+    MasterListRow, MasterListRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRow, RequisitionRowRepository, StockLineRow, StockLineRowRepository,
+    StorageConnection,
 };
 
 #[derive(Clone)]

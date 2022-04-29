@@ -151,8 +151,8 @@ mod test {
             test_item_stats::{self},
             MockData, MockDataInserts,
         },
-        schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow},
         test_db::{setup_all, setup_all_with_data},
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
     use util::inline_init;
 

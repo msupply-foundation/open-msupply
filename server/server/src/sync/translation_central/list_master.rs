@@ -1,5 +1,5 @@
 use crate::sync::translation_central::TRANSLATION_RECORD_LIST_MASTER;
-use repository::schema::{CentralSyncBufferRow, MasterListRow};
+use repository::{schema::CentralSyncBufferRow, MasterListRow};
 
 use serde::Deserialize;
 

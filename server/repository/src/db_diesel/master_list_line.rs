@@ -1,11 +1,8 @@
 use crate::{
     diesel_macros::apply_equal_filter,
+    master_list_line_row::{master_list_line, master_list_line::dsl as master_list_line_dsl},
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{master_list_line, master_list_line::dsl as master_list_line_dsl},
-        MasterListLineRow,
-    },
-    EqualFilter, Pagination,
+    EqualFilter, MasterListLineRow, Pagination,
 };
 
 use super::{DBType, StorageConnection};
