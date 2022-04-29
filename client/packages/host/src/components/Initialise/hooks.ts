@@ -10,8 +10,9 @@ import {
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 
-const SERVER_RESTART_TIMEOUT = 90000;
+const SERVER_RESTART_TIMEOUT = 60000;
 const POLLING_INTERVAL = 3000;
+const POLLING_DELAY = 6000;
 
 interface InitialiseForm {
   error?: AuthenticationError;
@@ -33,7 +34,7 @@ const useInitialiseFormState = create<InitialiseForm>(set => ({
   isLoading: false,
   password: '',
   username: '',
-  url: '',
+  url: 'https://',
   siteId: undefined,
   setError: (error?: AuthenticationError) =>
     set(state => ({ ...state, error })),
@@ -95,7 +96,10 @@ export const useInitialiseForm = () => {
       return;
     });
 
-    setIsPolling(true);
+    setTimeout(() => {
+      setIsPolling(true);
+    }, POLLING_DELAY);
+
     LocalStorage.setItem('/auth/error', undefined);
     LocalStorage.addListener<AuthError>((key, value) => {
       if (key === '/auth/error' && value === AuthError.Unauthenticated) {
