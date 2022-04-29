@@ -40,7 +40,7 @@ export const InitialiseLayout = ({
       <Box
         flex="1 0 50%"
         sx={{
-          backgroundImage: (theme: Theme) => theme.mixins.gradient.primary,
+          backgroundImage: (theme: Theme) => theme.mixins.gradient.secondary,
           padding: '0 80px 7% 80px',
         }}
         display="flex"
@@ -94,12 +94,13 @@ export const InitialiseLayout = ({
           justifyContent: 'center',
         }}
         display="flex"
+        flexDirection="column"
       >
         <Box style={{ width: 285 }}>
           <form onSubmit={onSave} onKeyDown={handleKeyDown}>
             <Stack spacing={5}>
               <Box display="flex" justifyContent="center">
-                <LoginIcon />
+                <LoginIcon small />
               </Box>
               {UrlInput}
               {SiteIdInput}

@@ -7,9 +7,9 @@ import {
   useIsSmallScreen,
 } from '@openmsupply-client/common';
 
-export const LoginIcon: React.FC = () => {
+export const LoginIcon = ({ small = false }: { small?: boolean }) => {
   const [customLogo] = useLocalStorage('/theme/logo');
-  const isSmallScreen = useIsSmallScreen();
+  const isSmallScreen = useIsSmallScreen() || small;
   const logoStyle = isSmallScreen
     ? { width: 61, height: 90 }
     : { width: 122, height: 180 };
