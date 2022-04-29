@@ -5,8 +5,8 @@ use crate::sync::{
 };
 use log::info;
 use repository::{
-    schema::CentralSyncBufferRow, CentralSyncBufferRepository, KeyValueStoreRepository,
-    KeyValueType, RepositoryError, StorageConnection, TransactionError,
+    CentralSyncBufferRepository, CentralSyncBufferRow, KeyValueStoreRepository, KeyValueType,
+    RepositoryError, StorageConnection, TransactionError,
 };
 use thiserror::Error;
 
@@ -227,7 +227,7 @@ mod tests {
         },
         test_utils::get_test_settings,
     };
-    use repository::{schema::CentralSyncBufferRow, test_db, CentralSyncBufferRepository};
+    use repository::{test_db, CentralSyncBufferRepository, CentralSyncBufferRow};
     use reqwest::{Client, Url};
 
     use super::CentralDataSynchroniser;

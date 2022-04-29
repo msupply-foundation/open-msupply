@@ -1,5 +1,5 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{schema::CentralSyncBufferRow, NameRow};
+use repository::{CentralSyncBufferRow, NameRow};
 
 const NAME_1: (&'static str, &'static str) = (
     "1FB32324AF8049248D929CFB35F255BA",

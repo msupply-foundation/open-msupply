@@ -1,6 +1,6 @@
 use crate::repository_error::RepositoryError;
 
-mod central_sync_buffer;
+pub mod central_sync_buffer;
 pub mod changelog_row;
 pub mod consumption;
 mod filter_sort_pagination;
@@ -45,7 +45,7 @@ pub mod user_permission_row;
 pub mod user_row;
 pub mod user_store_join_row;
 
-pub use central_sync_buffer::CentralSyncBufferRepository;
+pub use central_sync_buffer::*;
 pub use changelog_row::*;
 pub use consumption::*;
 pub use filter_sort_pagination::*;
