@@ -5,7 +5,7 @@ import { RecordWithId } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
 
 // where NonNegative is n >=0
-export const NonNegativeNumberInputCell = <T extends RecordWithId>({
+export const NonNegativeIntegerCell = <T extends RecordWithId>({
   rowData,
   column,
   rows,
@@ -29,8 +29,9 @@ export const NonNegativeNumberInputCell = <T extends RecordWithId>({
       type="number"
       value={buffer}
       onChange={newValue => {
-        setBuffer(newValue.toString());
-        updater({ ...rowData, [column.key]: newValue });
+        const intValue = Math.round(newValue);
+        setBuffer(intValue.toString());
+        updater({ ...rowData, [column.key]: intValue });
       }}
     />
   );

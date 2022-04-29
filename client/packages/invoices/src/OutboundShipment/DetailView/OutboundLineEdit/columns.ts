@@ -1,7 +1,7 @@
 import {
   useCurrencyFormat,
   useColumns,
-  NonNegativeNumberInputCell,
+  NonNegativeIntegerCell,
   ColumnAlign,
   ExpiryDateCell,
   CheckCell,
@@ -19,7 +19,7 @@ export const useOutboundLineEditColumns = ({
       [
         'numberOfPacks',
         {
-          Cell: NonNegativeNumberInputCell,
+          Cell: NonNegativeIntegerCell,
           width: 100,
           label: 'label.num-packs',
           setter: ({ packSize, id, numberOfPacks }) =>

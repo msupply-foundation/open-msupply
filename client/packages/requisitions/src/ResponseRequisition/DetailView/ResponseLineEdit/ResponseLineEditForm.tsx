@@ -126,7 +126,9 @@ export const ResponseLineEditForm = ({
                 width={150}
                 onChange={e =>
                   update({
-                    supplyQuantity: Math.max(Number(e.target.value), 0),
+                    supplyQuantity: Math.round(
+                      Math.max(Number(e.target.value), 0)
+                    ),
                   })
                 }
               />

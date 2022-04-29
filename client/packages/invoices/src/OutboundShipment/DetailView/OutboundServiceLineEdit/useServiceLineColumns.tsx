@@ -7,7 +7,7 @@ import {
   XCircleIcon,
   CurrencyInputCell,
   ColumnAlign,
-  NonNegativeNumberInputCell,
+  NonNegativeIntegerCell,
   TextInputCell,
   useFormatCurrency,
 } from '@openmsupply-client/common';
@@ -58,7 +58,7 @@ export const useServiceLineColumns = (
       label: 'label.tax',
       width: 75,
       setter,
-      Cell: NonNegativeNumberInputCell,
+      Cell: NonNegativeIntegerCell,
     },
     {
       key: 'totalAfterTax',
