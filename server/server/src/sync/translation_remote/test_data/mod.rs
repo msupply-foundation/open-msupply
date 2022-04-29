@@ -1,6 +1,6 @@
 use repository::{
-    schema::RemoteSyncBufferRow, ChangelogRow, InvoiceLineRowRepository, InvoiceRowRepository,
-    LocationRowRepository, NameStoreJoinRepository, NumberRowRepository, RepositoryError,
+    ChangelogRow, InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository,
+    NameStoreJoinRepository, NumberRowRepository, RemoteSyncBufferRow, RepositoryError,
     RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
 };

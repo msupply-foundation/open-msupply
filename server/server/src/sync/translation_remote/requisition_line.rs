@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use repository::{
-    schema::RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, RequisitionLineRow,
+    RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, RequisitionLineRow,
     RequisitionLineRowRepository, StorageConnection,
 };
 

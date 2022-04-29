@@ -1,5 +1,16 @@
-use super::diesel_schema::sync_out;
 use diesel_derive_enum::DbEnum;
+
+table! {
+    sync_out (id) {
+        id -> Text,
+        created_at -> Date,
+        table_name -> crate::schema::sync_out::SyncOutRowTableNameTypeMapping,
+        record_id -> Text,
+        store_id -> Text,
+        site_id -> Integer,
+        action -> crate::schema::sync_out::SyncOutRowActionTypeMapping,
+    }
+}
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 pub enum SyncOutRowTableNameType {

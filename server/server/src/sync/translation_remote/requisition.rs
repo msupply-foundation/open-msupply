@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    schema::RemoteSyncBufferRow,
+    RemoteSyncBufferRow,
     ChangelogRow, ChangelogTableName, RequisitionRow, RequisitionRowRepository, StorageConnection,
 };
 

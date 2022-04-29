@@ -1,4 +1,4 @@
-use super::pricing::invoice_stats;
+use super::{pricing::invoice_stats, sync_out::sync_out};
 use crate::db_diesel::{
     invoice_line_row::invoice_line,
     invoice_row::invoice,
@@ -18,28 +18,6 @@ use crate::db_diesel::{
     unit_row::unit,
     user_row::user_account,
 };
-
-table! {
-    remote_sync_buffer (id) {
-        id -> Text,
-        table_name -> Text,
-        record_id -> Text,
-        action -> crate::schema::remote_sync_buffer::RemoteSyncBufferActionMapping,
-        data -> Text,
-    }
-}
-
-table! {
-    sync_out (id) {
-        id -> Text,
-        created_at -> Date,
-        table_name -> crate::schema::sync_out::SyncOutRowTableNameTypeMapping,
-        record_id -> Text,
-        store_id -> Text,
-        site_id -> Integer,
-        action -> crate::schema::sync_out::SyncOutRowActionTypeMapping,
-    }
-}
 
 joinable!(item -> unit (unit_id));
 joinable!(stock_line -> item (item_id));

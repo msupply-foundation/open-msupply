@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    schema::{RemoteSyncBufferAction, RemoteSyncBufferRow},
-    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
+    RequisitionRow,
 };
 use serde_json::json;
 
