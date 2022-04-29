@@ -1,57 +1,48 @@
 import React, { useEffect } from 'react';
 import {
-  ArrowRightIcon,
   useTranslation,
   LoadingButton,
   Box,
   Typography,
   AlertIcon,
   useHostContext,
-  useNavigate,
-  ServerStatus,
+  SaveIcon,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
-import { useHost } from '../../api/hooks';
-import { LoginTextInput } from './LoginTextInput';
-import { useLoginForm } from './hooks';
-import { LoginLayout } from './LoginLayout';
+import { LoginTextInput } from '../Login/LoginTextInput';
+import { InitialiseLayout } from './InitialiseLayout';
+import { useInitialiseForm } from './hooks';
 
-export const Login = () => {
+export const Initialise = () => {
   const t = useTranslation('app');
   const { setPageTitle } = useHostContext();
-  const { data } = useHost.utils.settings();
-  const navigate = useNavigate();
 
-  const passwordRef = React.useRef(null);
   const {
     isValid,
+    isLoading,
     password,
-    setPassword,
+    siteId,
+    url,
     username,
+    onSave,
+    setPassword,
     setUsername,
-    isLoggingIn,
-    onLogin,
+    setSiteId,
+    setUrl,
     error,
-  } = useLoginForm(passwordRef);
+  } = useInitialiseForm();
 
   useEffect(() => {
-    setPageTitle(`${t('app.login')} | ${t('app')} `);
+    setPageTitle(`${t('app.initialise')} | ${t('app')} `);
   }, []);
 
-  useEffect(() => {
-    if (data?.status === ServerStatus.Stage_0) {
-      navigate(`/${AppRoute.Initialise}`);
-    }
-  }, [data]);
-
   return (
-    <LoginLayout
+    <InitialiseLayout
       UsernameInput={
         <LoginTextInput
           fullWidth
-          label={t('heading.username')}
+          label={t('label.settings-username')}
           value={username}
-          disabled={isLoggingIn}
+          disabled={isLoading}
           onChange={e => setUsername(e.target.value)}
           inputProps={{
             autoComplete: 'username',
@@ -62,26 +53,46 @@ export const Login = () => {
       PasswordInput={
         <LoginTextInput
           fullWidth
-          label={t('heading.password')}
+          label={t('label.settings-password')}
           type="password"
           value={password}
-          disabled={isLoggingIn}
+          disabled={isLoading}
           onChange={e => setPassword(e.target.value)}
           inputProps={{
             autoComplete: 'current-password',
           }}
-          inputRef={passwordRef}
         />
       }
-      LoginButton={
+      UrlInput={
+        <LoginTextInput
+          fullWidth
+          label={t('label.settings-url')}
+          value={url}
+          disabled={isLoading}
+          onChange={e => setUrl(e.target.value)}
+        />
+      }
+      SiteIdInput={
+        <LoginTextInput
+          fullWidth
+          label={t('label.settings-site-id')}
+          value={siteId}
+          disabled={isLoading}
+          onChange={e => {
+            const siteId = Number(e.target.value);
+            setSiteId(Number.isNaN(siteId) ? 0 : siteId);
+          }}
+        />
+      }
+      SaveButton={
         <LoadingButton
-          isLoading={isLoggingIn}
-          onClick={onLogin}
+          isLoading={isLoading}
+          onClick={onSave}
           variant="outlined"
-          endIcon={<ArrowRightIcon />}
+          startIcon={<SaveIcon />}
           disabled={!isValid}
         >
-          {t('button.login')}
+          {t('button.save')}
         </LoadingButton>
       }
       ErrorMessage={
@@ -98,8 +109,8 @@ export const Login = () => {
           </Box>
         )
       }
-      onLogin={async () => {
-        if (isValid) await onLogin();
+      onSave={async () => {
+        if (isValid) await onSave();
       }}
     />
   );
