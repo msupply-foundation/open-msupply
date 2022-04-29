@@ -7,7 +7,7 @@ pub mod store;
 pub mod unit;
 
 use repository::{
-    schema::CentralSyncBufferRow, ItemRow, ItemRowRepository, MasterListLineRow,
+    CentralSyncBufferRow, ItemRow, ItemRowRepository, MasterListLineRow,
     MasterListLineRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
     MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, RepositoryError,
     StorageConnection, StoreRow, StoreRowRepository, UnitRow, UnitRowRepository,

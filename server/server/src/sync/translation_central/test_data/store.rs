@@ -1,5 +1,5 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{schema::CentralSyncBufferRow, StoreRow};
+use repository::{CentralSyncBufferRow, StoreRow};
 use util::inline_init;
 
 const STORE_1: (&'static str, &'static str) = (

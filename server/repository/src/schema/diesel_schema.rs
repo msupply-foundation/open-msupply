@@ -20,15 +20,6 @@ use crate::db_diesel::{
 };
 
 table! {
-    central_sync_buffer (id) {
-        id -> Integer,
-        table_name -> Text,
-        record_id -> Text,
-        data -> Text,
-    }
-}
-
-table! {
     remote_sync_buffer (id) {
         id -> Text,
         table_name -> Text,
