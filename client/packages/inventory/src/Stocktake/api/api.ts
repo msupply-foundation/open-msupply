@@ -84,7 +84,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
           },
           filter: filterBy,
         });
-        return result.stocktakes;
+        return result?.stocktakes;
       },
     listAll:
       ({ sortBy }: { sortBy: SortBy<StocktakeRowFragment> }) =>
@@ -96,13 +96,13 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
             desc: !!sortBy.isDesc,
           },
         });
-        return result.stocktakes;
+        return result?.stocktakes;
       },
     byId: async (id: string): Promise<StocktakeFragment> => {
       const result = await sdk.stocktake({ stocktakeId: id, storeId });
 
-      if (result.stocktake.__typename === 'StocktakeNode') {
-        return result.stocktake;
+      if (result?.stocktake?.__typename === 'StocktakeNode') {
+        return result?.stocktake;
       }
 
       throw new Error('Could not find stocktake!');
@@ -113,8 +113,8 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
       });
 
-      if (result.stocktakeByNumber.__typename === 'StocktakeNode') {
-        return result.stocktakeByNumber;
+      if (result?.stocktakeByNumber?.__typename === 'StocktakeNode') {
+        return result?.stocktakeByNumber;
       }
 
       throw new Error('Could not find stocktake!');

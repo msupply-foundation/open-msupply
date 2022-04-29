@@ -151,7 +151,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         filter,
         storeId,
       });
-      return result.invoices;
+      return result?.invoices;
     },
     listAll: async ({ sortBy }: { sortBy: SortBy<InboundRowFragment> }) => {
       const filter = {
@@ -164,18 +164,18 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         filter,
         storeId,
       });
-      return result.invoices;
+      return result?.invoices;
     },
     byId: async (id: string): Promise<InboundRowFragment> => {
       const result = await sdk.invoice({ id, storeId });
 
-      const invoice = result.invoice;
+      const invoice = result?.invoice;
 
-      if (invoice.__typename === 'InvoiceNode') {
+      if (invoice?.__typename === 'InvoiceNode') {
         return invoice;
       }
 
-      throw new Error(result.invoice.__typename);
+      throw new Error(result?.invoice?.__typename || 'Could not find invoice!');
     },
     byNumber: async (invoiceNumber: string) => {
       const result = await sdk.inboundByNumber({
@@ -183,9 +183,9 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
       });
 
-      const invoice = result.invoiceByNumber;
+      const invoice = result?.invoiceByNumber;
 
-      if (invoice.__typename === 'InvoiceNode') {
+      if (invoice?.__typename === 'InvoiceNode') {
         return invoice;
       }
 

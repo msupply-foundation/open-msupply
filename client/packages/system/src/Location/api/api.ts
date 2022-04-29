@@ -38,7 +38,7 @@ export const getLocationQueries = (sdk: Sdk, storeId: string) => ({
         sort: [locationParsers.toSortInput(sortBy)],
         storeId,
       });
-      return response.locations;
+      return response?.locations;
     },
   },
   insert: (location: LocationRowFragment) =>

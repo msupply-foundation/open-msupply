@@ -31,9 +31,9 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
         storeId,
       });
 
-      const items = result.items;
+      const items = result?.items;
       const nodes: StockRow[] = [];
-      items.nodes.forEach(item => {
+      (items?.nodes || []).forEach(item => {
         const availableBatches = item.availableBatches;
         availableBatches.nodes
           .filter(batch => batch.totalNumberOfPacks > 0)
