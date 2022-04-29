@@ -150,7 +150,9 @@ export const RequestLineEditForm = ({
                 width={150}
                 onChange={e =>
                   update({
-                    requestedQuantity: Math.max(Number(e.target.value), 0),
+                    requestedQuantity: Math.round(
+                      Math.max(Number(e.target.value), 0)
+                    ),
                   })
                 }
               />

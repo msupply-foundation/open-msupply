@@ -109,7 +109,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
               value={quantity}
               onChange={event => {
                 onChangeQuantity(
-                  Number(event.target.value),
+                  Math.round(Number(event.target.value)),
                   packSizeController.selected?.value === -1
                     ? null
                     : Number(packSizeController.selected?.value)

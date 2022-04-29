@@ -1,3 +1,3 @@
 export * from './NumberInputCell';
 export * from './PositiveNumberInputCell';
-export * from './NonNegativeNumberInputCell';
+export * from './NonNegativeIntegerCell';
