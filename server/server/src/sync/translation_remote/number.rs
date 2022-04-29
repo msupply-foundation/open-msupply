@@ -1,5 +1,5 @@
 use repository::{
-    schema::RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, NumberRow, NumberRowRepository,
+    RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, NumberRow, NumberRowRepository,
     NumberRowType, StorageConnection,
 };
 

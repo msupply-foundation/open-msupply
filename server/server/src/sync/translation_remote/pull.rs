@@ -1,8 +1,8 @@
 use log::{info, warn};
 use repository::{
-    schema::RemoteSyncBufferRow, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    InvoiceRowRepository, LocationRow, LocationRowRepository, NameStoreJoinRepository,
-    NameStoreJoinRow, NumberRow, NumberRowRepository, RepositoryError, RequisitionLineRow,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationRow,
+    LocationRowRepository, NameStoreJoinRepository, NameStoreJoinRow, NumberRow,
+    NumberRowRepository, RemoteSyncBufferRow, RepositoryError, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRow,
     StockLineRowRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow,
     StocktakeRowRepository, StorageConnection, TransactionError,

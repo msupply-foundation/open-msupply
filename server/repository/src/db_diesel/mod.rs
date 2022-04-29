@@ -22,7 +22,7 @@ mod name;
 pub mod name_row;
 pub mod name_store_join;
 pub mod number_row;
-mod remote_sync_buffer;
+pub mod remote_sync_buffer;
 mod report;
 pub mod report_row;
 mod requisition;

@@ -1,8 +1,8 @@
 use log::info;
 use repository::{
-    schema::{RemoteSyncBufferAction, RemoteSyncBufferRow},
     ChangelogRow, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType,
-    RemoteSyncBufferRepository, RepositoryError, StorageConnection,
+    RemoteSyncBufferAction, RemoteSyncBufferRepository, RemoteSyncBufferRow, RepositoryError,
+    StorageConnection,
 };
 use thiserror::Error;
 

@@ -1,5 +1,4 @@
 pub mod pricing;
-mod remote_sync_buffer;
 mod sync_out;
 
 pub mod diesel_schema;
@@ -25,5 +24,4 @@ pub enum DatabaseRow {
 }
 
 pub use pricing::PricingRow;
-pub use remote_sync_buffer::*;
 pub use sync_out::{SyncOutRow, SyncOutRowActionType, SyncOutRowTableNameType};
