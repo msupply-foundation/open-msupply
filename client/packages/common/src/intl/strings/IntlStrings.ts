@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Namespace, useTranslation as useTranslationNext } from 'react-i18next';
 import { TOptions } from 'i18next';
 import { LocaleKey } from '../locales';
@@ -18,5 +19,5 @@ export interface TypedTFunction<Keys> {
 
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   const { t } = useTranslationNext(ns);
-  return (key, options) => (key ? t(key, options) : '');
+  return useCallback((key, options) => (key ? t(key, options) : ''), [t]);
 };
