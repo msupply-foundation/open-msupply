@@ -10,6 +10,7 @@ use util::timezone::offset_to_timezone;
 pub struct StockCounts {
     timezone_offset: FixedOffset,
     days_till_expired: Option<i32>,
+    store_id: String,
 }
 
 #[Object]
@@ -22,7 +23,7 @@ impl StockCounts {
             .with_timezone(&self.timezone_offset)
             .date()
             .naive_utc();
-        Ok(service.count_expired_stock(&service_ctx, date)?)
+        Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)?)
     }
 
     async fn expiring_soon(&self, ctx: &Context<'_>) -> Result<i64> {
@@ -35,7 +36,7 @@ impl StockCounts {
             .date()
             .naive_utc()
             + Duration::days(days_till_expired as i64);
-        Ok(service.count_expired_stock(&service_ctx, date)?)
+        Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)?)
     }
 }
 
@@ -49,7 +50,7 @@ pub fn stock_counts(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::StockCount,
-            store_id: Some(store_id),
+            store_id: Some(store_id.clone()),
         },
     )?;
 
@@ -59,5 +60,6 @@ pub fn stock_counts(
     Ok(StockCounts {
         timezone_offset,
         days_till_expired,
+        store_id,
     })
 }

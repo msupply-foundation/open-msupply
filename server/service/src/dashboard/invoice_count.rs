@@ -1,9 +1,9 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
-use repository::DatetimeFilter;
 use repository::{
     schema::{InvoiceRowStatus, InvoiceRowType},
     InvoiceFilter, InvoiceRepository, RepositoryError,
 };
+use repository::{DatetimeFilter, EqualFilter};
 
 use crate::service_provider::ServiceContext;
 
@@ -28,6 +28,7 @@ pub trait InvoiceCountServiceTrait: Send + Sync {
     fn invoices_count(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         invoice_type: &InvoiceRowType,
         invoice_status: &InvoiceRowStatus,
         range: &CountTimeRange,
@@ -37,6 +38,7 @@ pub trait InvoiceCountServiceTrait: Send + Sync {
         // default implementation:
         InvoiceCountService {}.invoices_count(
             ctx,
+            store_id,
             invoice_type,
             invoice_status,
             range,
@@ -88,6 +90,7 @@ fn invoices_count(
     invoice_status: &InvoiceRowStatus,
     oldest: NaiveDateTime,
     earliest: Option<NaiveDateTime>,
+    store_id: &str,
 ) -> Result<i64, RepositoryError> {
     let mut datetime_filter = DatetimeFilter {
         equal_to: None,
@@ -97,7 +100,9 @@ fn invoices_count(
     if let Some(earliest) = earliest {
         datetime_filter.before_or_equal_to = Some(earliest);
     }
-    let mut invoice_filter = InvoiceFilter::new().r#type(invoice_type.equal_to());
+    let mut invoice_filter = InvoiceFilter::new()
+        .r#type(invoice_type.equal_to())
+        .store_id(EqualFilter::equal_to(store_id));
     match invoice_status {
         InvoiceRowStatus::New => invoice_filter = invoice_filter.created_datetime(datetime_filter),
         InvoiceRowStatus::Allocated => {
@@ -123,6 +128,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
     fn invoices_count(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         invoice_type: &InvoiceRowType,
         invoice_status: &InvoiceRowStatus,
         range: &CountTimeRange,
@@ -143,6 +149,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
             &invoice_status,
             oldest.naive_utc(),
             None,
+            store_id,
         )?;
         Ok(count)
     }
@@ -185,6 +192,7 @@ mod invoice_count_service_test {
         let name_store_a = mock_name_store_a();
         let name_store_b = mock_name_store_b();
         let store_1 = mock_store_b();
+        let invalid_store_id = "invalid_store_id";
         let invoice_1 = mock_outbound_shipment_a();
         let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&name_store_a).await.unwrap();
@@ -199,8 +207,15 @@ mod invoice_count_service_test {
 
         // oldest > item1.created_datetime
         let item1_type: InvoiceRowType = invoice_1.r#type.into();
-        let count =
-            invoices_count(&repo, &item1_type, &status, Utc::now().naive_local(), None).unwrap();
+        let count = invoices_count(
+            &repo,
+            &item1_type,
+            &status,
+            Utc::now().naive_local(),
+            None,
+            &store_1.id,
+        )
+        .unwrap();
         assert_eq!(0, count);
         // oldest = item1.created_datetime
         let count = invoices_count(
@@ -209,12 +224,21 @@ mod invoice_count_service_test {
             &status,
             invoice_1.created_datetime.clone(),
             None,
+            &store_1.id,
         )
         .unwrap();
         assert_eq!(1, count);
         // oldest < item1.created_datetime
         let oldest = invoice_1.created_datetime - chrono::Duration::milliseconds(50);
-        let count = invoices_count(&repo, &item1_type, &status, oldest.clone(), None).unwrap();
+        let count = invoices_count(
+            &repo,
+            &item1_type,
+            &status,
+            oldest.clone(),
+            None,
+            &store_1.id,
+        )
+        .unwrap();
         assert_eq!(1, count);
         // test that earliest exclude the invoice
         let earliest = invoice_1.created_datetime - chrono::Duration::milliseconds(20);
@@ -224,6 +248,20 @@ mod invoice_count_service_test {
             &status,
             oldest.clone(),
             Some(earliest.clone()),
+            &store_1.id,
+        )
+        .unwrap();
+        assert_eq!(0, count);
+
+        //Test that invoice isn't found for invalid store id
+        let oldest = invoice_1.created_datetime - chrono::Duration::milliseconds(50);
+        let count = invoices_count(
+            &repo,
+            &item1_type,
+            &status,
+            oldest.clone(),
+            None,
+            &invalid_store_id,
         )
         .unwrap();
         assert_eq!(0, count);
@@ -239,9 +277,10 @@ mod invoice_count_service_test {
         let ctx = ServiceContext { connection };
         let service = InvoiceCountService {};
 
-        // There are two invoice created at:
+        // There are two invoices created at these times for store_a:
         // 1) UTC 2021_12_7 20:30 -> NZ 2021_12_8 13:30
         // 2) UTC 2021_12_8 08:30 -> NZ 2021_12_8 21:30
+        let store_id = "store_a";
 
         let nz_tz_offset = offset_to_timezone(&Some(13)).unwrap();
         // Create UTC date that is already one day later in NZ time, i.e. both event should be
@@ -250,6 +289,7 @@ mod invoice_count_service_test {
         let today = service
             .invoices_count(
                 &ctx,
+                &store_id,
                 &InvoiceRowType::InboundShipment,
                 &InvoiceRowStatus::New,
                 &CountTimeRange::Today,
@@ -261,6 +301,7 @@ mod invoice_count_service_test {
         let this_week = service
             .invoices_count(
                 &ctx,
+                &store_id,
                 &InvoiceRowType::InboundShipment,
                 &InvoiceRowStatus::New,
                 &CountTimeRange::ThisWeek,
@@ -276,6 +317,7 @@ mod invoice_count_service_test {
         let today = service
             .invoices_count(
                 &ctx,
+                &store_id,
                 &InvoiceRowType::InboundShipment,
                 &InvoiceRowStatus::New,
                 &CountTimeRange::Today,
@@ -287,6 +329,7 @@ mod invoice_count_service_test {
         let this_week = service
             .invoices_count(
                 &ctx,
+                &store_id,
                 &InvoiceRowType::InboundShipment,
                 &InvoiceRowStatus::New,
                 &CountTimeRange::ThisWeek,
