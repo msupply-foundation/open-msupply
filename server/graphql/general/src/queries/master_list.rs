@@ -100,19 +100,26 @@ pub fn master_lists(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryMasterList,
-            store_id: Some(store_id),
+            store_id: Some(store_id.clone()),
         },
     )?;
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
+    // always filter by store_id
+    let mut query_filter = MasterListFilter::new();
+    if let Some(filter_input) = filter {
+        query_filter = filter_input.to_domain()
+    }
+    query_filter = query_filter.exists_for_store_id(EqualFilter::equal_to(&store_id));
+
     let master_lists = service_provider
         .master_list_service
         .get_master_lists(
             &service_context,
             page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
+            Some(query_filter),
             // Currently only one sort option is supported, use the first from the list.
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
