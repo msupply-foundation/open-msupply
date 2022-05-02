@@ -93,12 +93,14 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
   const t = useTranslation(['inventory', 'common']);
   const { draft, onUpdate, onChangeLocation, onSave, isLoading } =
     useDraftLocation(location, mode);
+  const isInvalid = !draft.code || !draft.name;
 
   return (
     <Modal
       okButton={
         <DialogButton
           variant="ok"
+          disabled={isInvalid}
           onClick={async () => {
             await onSave();
             onClose();
@@ -109,6 +111,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
       nextButton={
         <DialogButton
           variant="next"
+          disabled={isInvalid}
           onClick={async () => {
             await onSave();
             onChangeLocation();
