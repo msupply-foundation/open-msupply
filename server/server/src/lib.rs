@@ -153,8 +153,13 @@ async fn run_server(
     };
 
     let cert_type = find_certs();
+    let token_secret: String = if prefer_config_settings {
+        config_settings.auth.token_secret.to_owned()
+    } else {
+        service.token_secret(&service_context).unwrap()
+    };
     let auth_data = Data::new(AuthData {
-        auth_token_secret: config_settings.auth.token_secret.to_owned(),
+        auth_token_secret: token_secret,
         token_bucket: token_bucket.clone(),
         debug_no_ssl: config_settings.server.develop && matches!(cert_type, ServerCertType::None),
         debug_no_access_control: config_settings.server.develop
