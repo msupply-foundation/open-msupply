@@ -87,12 +87,13 @@ impl StorageConnection {
 
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
-        transaction_manager
-            .begin_transaction(con)
-            .map_err(|_| TransactionError::Transaction {
-                msg: "Failed to start tx".to_string(),
+        transaction_manager.begin_transaction(con).map_err(|err| {
+            error!("Failed to begin tx: {:?}", err);
+            TransactionError::Transaction {
+                msg: format!("Failed to begin tx: {}", err),
                 level: current_level + 1,
-            })?;
+            }
+        })?;
 
         self.transaction_level.set(current_level + 1);
         let result = f(self).await;
@@ -100,21 +101,25 @@ impl StorageConnection {
 
         match result {
             Ok(value) => {
-                transaction_manager.commit_transaction(con).map_err(|_| {
+                transaction_manager.commit_transaction(con).map_err(|err| {
+                    error!("Failed to end tx: {:?}", err);
                     TransactionError::Transaction {
-                        msg: "Failed to end tx".to_string(),
+                        msg: format!("Failed to end tx: {}", err),
                         level: current_level + 1,
                     }
                 })?;
                 Ok(value)
             }
             Err(e) => {
-                transaction_manager.rollback_transaction(con).map_err(|_| {
-                    TransactionError::Transaction {
-                        msg: "Failed to rollback tx".to_string(),
-                        level: current_level + 1,
-                    }
-                })?;
+                transaction_manager
+                    .rollback_transaction(con)
+                    .map_err(|err| {
+                        error!("Failed to rollback tx: {:?}", err);
+                        TransactionError::Transaction {
+                            msg: format!("Failed to rollback tx: {}", err),
+                            level: current_level + 1,
+                        }
+                    })?;
                 Err(TransactionError::Inner(e))
             }
         }
@@ -151,9 +156,9 @@ impl StorageConnection {
         let transaction_manager = con.transaction_manager();
 
         transaction_manager.begin_transaction(con).map_err(|err| {
-            error!("Failed to rollback tx: {:?}", err);
+            error!("Failed to begin tx: {:?}", err);
             TransactionError::Transaction {
-                msg: "Failed to start tx".to_string(),
+                msg: format!("Failed to begin tx: {}", err),
                 level: current_level + 1,
             }
         })?;
@@ -167,7 +172,7 @@ impl StorageConnection {
                 transaction_manager.commit_transaction(con).map_err(|err| {
                     error!("Failed to end tx: {:?}", err);
                     TransactionError::Transaction {
-                        msg: "Failed to end tx".to_string(),
+                        msg: format!("Failed to end tx: {}", err),
                         level: current_level + 1,
                     }
                 })?;
@@ -179,7 +184,7 @@ impl StorageConnection {
                     .map_err(|err| {
                         error!("Failed to rollback tx: {:?}", err);
                         TransactionError::Transaction {
-                            msg: "Failed to rollback tx".to_string(),
+                            msg: format!("Failed to rollback tx: {}", err),
                             level: current_level + 1,
                         }
                     })?;
