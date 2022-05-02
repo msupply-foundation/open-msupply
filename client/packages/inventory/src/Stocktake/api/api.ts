@@ -174,7 +174,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.upsertStocktakeLines(input);
     return result;
   },
-  insertStocktake: async (itemIds?: string[]) => {
+  insertStocktake: async (description: string, itemIds?: string[]) => {
     const result =
       (await sdk.insertStocktake({
         input: {
@@ -183,6 +183,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
       })) || {};
     const { insertStocktake } = result;
+
     if (insertStocktake?.__typename === 'StocktakeNode') {
       if (itemIds) {
         const insertStocktakeLines = itemIds.map(itemId => ({
@@ -195,6 +196,11 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
           insertStocktakeLines,
         });
       }
+      const input = {
+        id: insertStocktake.id,
+        description,
+      };
+      sdk.updateStocktake({ input, storeId });
       return insertStocktake;
     }
 
