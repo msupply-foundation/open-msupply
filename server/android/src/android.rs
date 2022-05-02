@@ -11,7 +11,6 @@ pub mod android {
 
     use server::settings::{ServerSettings, Settings};
     use server::start_server;
-    use service::sync_settings::SyncSettings;
     use tokio::sync::oneshot;
 
     use self::jni::objects::{JClass, JString};
@@ -87,6 +86,7 @@ pub mod android {
                     server: ServerSettings {
                         host: "127.0.0.1".to_string(),
                         port,
+                        danger_allow_http: true,
                         develop: false,
                         debug_no_access_control: false,
                         debug_cors_permissive: false,
@@ -99,15 +99,8 @@ pub mod android {
                         host: "n/a".to_string(),
                         database_name: db_path,
                     },
-                    sync: Some(SyncSettings {
-                        url: "http://localhost".to_string(),
-                        username: "username".to_string(),
-                        password_sha256: "password".to_string(),
-                        interval_sec: 300,
-                        central_server_site_id: 1,
-                        site_id: 2,
-                        site_hardware_id: "".to_string(),
-                    }),
+                    // sync settings need to be configured at runtime
+                    sync: None,
                 };
                 let _ = start_server(settings, off_switch_receiver).await;
             });

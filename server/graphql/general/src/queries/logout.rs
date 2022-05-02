@@ -66,7 +66,7 @@ pub enum LogoutResponse {
 pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     let auth_data = ctx.get_auth_data();
     // invalid the refresh token cookie first (just in case an error happens before we do so)
-    set_refresh_token_cookie(ctx, "logged out", 0, auth_data.debug_no_ssl);
+    set_refresh_token_cookie(ctx, "logged out", 0, auth_data.danger_no_ssl);
 
     let user_auth = match validate_auth(auth_data, &ctx.get_auth_token()) {
         Ok(value) => value,
