@@ -178,7 +178,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         filter,
         storeId,
       });
-      return result.invoices;
+      return result?.invoices;
     },
     listAll: async ({
       sortBy,
@@ -197,13 +197,13 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         filter,
         storeId,
       });
-      return result.invoices;
+      return result?.invoices;
     },
     byId: async (id: string): Promise<OutboundFragment> => {
       const result = await sdk.invoice({ id, storeId });
-      const invoice = result.invoice;
+      const invoice = result?.invoice;
 
-      if (invoice.__typename === 'InvoiceNode') {
+      if (invoice?.__typename === 'InvoiceNode') {
         return invoice;
       } else {
         throw new Error('Could not find invoice');
@@ -214,9 +214,9 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         invoiceNumber: Number(invoiceNumber),
         storeId,
       });
-      const invoice = result.invoiceByNumber;
+      const invoice = result?.invoiceByNumber;
 
-      if (invoice.__typename === 'InvoiceNode') {
+      if (invoice?.__typename === 'InvoiceNode') {
         return invoice;
       } else {
         throw new Error('Could not find invoice');

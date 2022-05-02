@@ -67,7 +67,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       const { items } = result;
 
-      if (result.items.__typename === 'ItemConnector') {
+      if (result?.items?.__typename === 'ItemConnector') {
         return items;
       }
 
@@ -88,7 +88,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: filterBy,
       });
 
-      const items = result.items;
+      const items = result?.items;
 
       return items;
     },

@@ -33,7 +33,7 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
         filter: { ...filterBy, existsForStoreId: { equalTo: storeId } },
         storeId,
       });
-      return result.masterLists;
+      return result?.masterLists;
     },
     listAll: async ({ sortBy }: { sortBy: SortBy<MasterListRowFragment> }) => {
       const key = masterListParser.toSort(sortBy);
@@ -44,7 +44,7 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
         filter: { existsForStoreId: { equalTo: storeId } },
         storeId,
       });
-      return result.masterLists;
+      return result?.masterLists;
     },
     byId: async (id: string) => {
       const filter = { id: { equalTo: id } };
@@ -54,10 +54,10 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
       });
 
       if (
-        result.masterLists.totalCount === 1 &&
-        result.masterLists.nodes[0]?.__typename === 'MasterListNode'
+        result?.masterLists?.totalCount === 1 &&
+        result?.masterLists?.nodes[0]?.__typename === 'MasterListNode'
       ) {
-        return result.masterLists.nodes[0];
+        return result?.masterLists.nodes[0];
       }
 
       throw new Error('Record not found');
