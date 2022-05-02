@@ -129,9 +129,9 @@ export const useInboundShipmentColumns = () => {
                 null
               );
 
-              return Formatter.expiryDateString(expiryDate);
+              return expiryDate;
             } else {
-              return Formatter.expiryDateString(rowData.expiryDate);
+              return rowData.expiryDate;
             }
           },
           getSortValue: rowData => {
@@ -183,11 +183,13 @@ export const useInboundShipmentColumns = () => {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return c(
-                ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
-              ).format();
+              return ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'sellPricePerPack',
+                ''
+              );
             } else {
-              return c(rowData.sellPricePerPack).format();
+              return rowData.sellPricePerPack;
             }
           },
           getSortValue: rowData => {

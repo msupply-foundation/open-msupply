@@ -152,9 +152,9 @@ export const useOutboundColumns = ({
                 'expiryDate',
                 null
               );
-              return Formatter.expiryDateString(expiryDate);
+              return expiryDate;
             } else {
-              return Formatter.expiryDateString(rowData.expiryDate);
+              return rowData.expiryDate;
             }
           },
         },
