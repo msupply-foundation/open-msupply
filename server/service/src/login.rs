@@ -300,7 +300,7 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
                 output.insert(Permission::RequisitionQuery);
             }
             Permissions::CreateAndEditRequisitions => {
-                output.insert(Permission::RequisitionQuery);
+                output.insert(Permission::RequisitionMutate);
             }
             // reports
             Permissions::ViewReports => {
