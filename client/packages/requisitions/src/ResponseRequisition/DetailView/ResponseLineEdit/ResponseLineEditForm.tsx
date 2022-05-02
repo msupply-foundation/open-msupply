@@ -3,6 +3,7 @@ import {
   Grid,
   InputWithLabelRow,
   NumericTextInput,
+  NonNegativeIntegerInput,
   TextArea,
   Typography,
   useTranslation,
@@ -119,16 +120,12 @@ export const ResponseLineEditForm = ({
           </Typography>
           <InputWithLabelRow
             Input={
-              <NumericTextInput
+              <NonNegativeIntegerInput
                 disabled={disabled}
                 autoFocus
                 value={draftLine.supplyQuantity}
                 width={150}
-                onChange={e =>
-                  update({
-                    supplyQuantity: Math.max(Number(e.target.value), 0),
-                  })
-                }
+                onChange={supplyQuantity => update({ supplyQuantity })}
               />
             }
             labelWidth="150px"
