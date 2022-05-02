@@ -7,7 +7,7 @@ import {
   Select,
   useTranslation,
   InputLabel,
-  NumericTextInput,
+  NonNegativeIntegerInput,
   Divider,
   Box,
   Typography,
@@ -105,11 +105,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
           <Grid container>
             <ModalLabel label={t('label.issue')} />
-            <NumericTextInput
+            <NonNegativeIntegerInput
               value={quantity}
-              onChange={event => {
+              onChange={value => {
                 onChangeQuantity(
-                  Math.round(Number(event.target.value)),
+                  value,
                   packSizeController.selected?.value === -1
                     ? null
                     : Number(packSizeController.selected?.value)

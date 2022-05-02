@@ -3,6 +3,7 @@ import {
   Grid,
   InputWithLabelRow,
   NumericTextInput,
+  NonNegativeIntegerInput,
   TextArea,
   Typography,
 } from '@openmsupply-client/common';
@@ -144,17 +145,11 @@ export const RequestLineEditForm = ({
           />
           <InputWithLabelRow
             Input={
-              <NumericTextInput
+              <NonNegativeIntegerInput
                 autoFocus
                 value={draftLine?.requestedQuantity}
                 width={150}
-                onChange={e =>
-                  update({
-                    requestedQuantity: Math.round(
-                      Math.max(Number(e.target.value), 0)
-                    ),
-                  })
-                }
+                onChange={requestedQuantity => update({ requestedQuantity })}
               />
             }
             labelWidth="150px"
