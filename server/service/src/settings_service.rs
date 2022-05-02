@@ -1,5 +1,6 @@
 use repository::{schema::KeyValueType, KeyValueStoreRepository, RepositoryError};
 use reqwest::Url;
+use util::uuid::uuid;
 
 use crate::{service_provider::ServiceContext, sync_settings::SyncSettings};
 
@@ -98,6 +99,33 @@ pub trait SettingsServiceTrait: Sync + Send {
             })
             .map_err(|err| UpdateSettingsError::RepositoryError(err.to_inner_error()))?;
         Ok(result)
+    }
+
+    /// Loads auth settings from the DB
+    fn token_secret(&self, ctx: &ServiceContext) -> Result<String, UpdateSettingsError> {
+        let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
+        println!("token_secret got connection");
+
+        let mut token_secret = key_value_store
+            .get_string(KeyValueType::SettingsTokenSecret)
+            .map_err(|err| UpdateSettingsError::RepositoryError(err))?;
+
+        println!("token_secret is {:?}", token_secret);
+        if token_secret.is_none() {
+            //There is no token set, so we want to generate a secure one and store it for next startup
+            token_secret = Some(uuid());
+            //store new token in Key Value Store so it doesn't change on next startup
+            let _result = ctx
+                .connection
+                .transaction_sync(|con| {
+                    let key_value_store = KeyValueStoreRepository::new(con);
+                    key_value_store
+                        .set_string(KeyValueType::SettingsTokenSecret, token_secret.clone())?;
+                    Ok(())
+                })
+                .map_err(|err| UpdateSettingsError::RepositoryError(err.to_inner_error()))?;
+        }
+        Ok(token_secret.unwrap())
     }
 }
 
