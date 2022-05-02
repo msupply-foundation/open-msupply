@@ -10,7 +10,7 @@ import {
   Theme,
   alpha,
   PositiveNumberInputCell,
-  NonNegativeNumberInputCell,
+  NonNegativeIntegerCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { getLocationInputColumn } from '@openmsupply-client/system';
@@ -62,7 +62,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
       [
         'numberOfPacks',
         {
-          Cell: NonNegativeNumberInputCell,
+          Cell: NonNegativeIntegerCell,
           width: 100,
           label: 'label.num-packs',
           setter: updateDraftLine,
