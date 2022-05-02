@@ -104,13 +104,11 @@ pub trait SettingsServiceTrait: Sync + Send {
     /// Loads auth settings from the DB
     fn token_secret(&self, ctx: &ServiceContext) -> Result<String, UpdateSettingsError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
-        println!("token_secret got connection");
 
         let mut token_secret = key_value_store
             .get_string(KeyValueType::SettingsTokenSecret)
             .map_err(|err| UpdateSettingsError::RepositoryError(err))?;
 
-        println!("token_secret is {:?}", token_secret);
         if token_secret.is_none() {
             //There is no token set, so we want to generate a secure one and store it for next startup
             token_secret = Some(uuid());
