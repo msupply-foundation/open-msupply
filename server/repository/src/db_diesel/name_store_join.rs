@@ -1,9 +1,9 @@
-use super::StorageConnection;
-
-use crate::{
-    name_row::name, name_store_join::name_store_join::dsl as name_store_join_dsl,
-    repository_error::RepositoryError, store_row::store,
+use super::{
+    name_row::name, name_store_join::name_store_join::dsl as name_store_join_dsl, store_row::store,
+    StorageConnection,
 };
+
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 

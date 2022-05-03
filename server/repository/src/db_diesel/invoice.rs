@@ -1,14 +1,16 @@
-use super::{DBType, StorageConnection};
-use crate::{
-    diesel_macros::{
-        apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
-        apply_sort_no_case,
-    },
-    invoice_row::{invoice, invoice::dsl as invoice_dsl, InvoiceRowStatus, InvoiceRowType},
+use super::{
+    invoice_row::{invoice, invoice::dsl as invoice_dsl},
     name_row::{name, name::dsl as name_dsl},
     store_row::{store, store::dsl as store_dsl},
-    InvoiceRow, NameRow, RepositoryError, StoreRow,
+    DBType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, RepositoryError,
+    StorageConnection, StoreRow,
 };
+
+use crate::diesel_macros::{
+    apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
+    apply_sort_no_case,
+};
+
 use crate::{DatetimeFilter, EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{

@@ -1,6 +1,6 @@
-use super::StorageConnection;
+use super::{master_list_row::master_list::dsl::*, StorageConnection};
 
-use crate::{master_list_row::master_list::dsl::*, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -33,8 +33,6 @@ impl<'a> MasterListRowRepository<'a> {
 
     #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::master_list::dsl::*;
-
         diesel::insert_into(master_list)
             .values(row)
             .on_conflict(id)

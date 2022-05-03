@@ -1,8 +1,6 @@
-use super::StorageConnection;
+use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection, User};
 
-use crate::{
-    repository_error::RepositoryError, user_row::user_account::dsl as user_account_dsl, User,
-};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 

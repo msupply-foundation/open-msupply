@@ -1,7 +1,6 @@
-use crate::{
-    diesel_macros::apply_equal_filter, stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl,
-    EqualFilter, RepositoryError, StorageConnection,
-};
+use super::{stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl, StorageConnection};
+
+use crate::{diesel_macros::apply_equal_filter, EqualFilter, RepositoryError};
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
 

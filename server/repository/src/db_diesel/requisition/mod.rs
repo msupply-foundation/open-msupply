@@ -1,7 +1,7 @@
 use crate::SimpleStringFilter;
 use crate::{DatetimeFilter, EqualFilter, Sort};
 
-use crate::db_diesel::requisition_row::{RequisitionRowStatus, RequisitionRowType};
+use crate::requisition_row::{RequisitionRowStatus, RequisitionRowType};
 
 mod requisition;
 pub mod requisition_row;

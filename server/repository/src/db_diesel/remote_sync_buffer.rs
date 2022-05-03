@@ -1,9 +1,8 @@
-use super::StorageConnection;
-
-use crate::{
-    remote_sync_buffer::remote_sync_buffer::dsl as remote_sync_buffer_dsl,
-    repository_error::RepositoryError,
+use super::{
+    remote_sync_buffer::remote_sync_buffer::dsl as remote_sync_buffer_dsl, StorageConnection,
 };
+
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -14,7 +13,7 @@ table! {
         id -> Text,
         table_name -> Text,
         record_id -> Text,
-        action -> crate::remote_sync_buffer::RemoteSyncBufferActionMapping,
+        action -> crate::db_diesel::remote_sync_buffer::RemoteSyncBufferActionMapping,
         data -> Text,
     }
 }

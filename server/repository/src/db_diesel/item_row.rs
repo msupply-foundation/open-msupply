@@ -1,6 +1,6 @@
-use super::StorageConnection;
+use super::{item_row::item::dsl::*, StorageConnection};
 
-use crate::{db_diesel::item_row::item::dsl::*, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -75,8 +75,6 @@ impl<'a> ItemRowRepository<'a> {
 
     #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::item::dsl::*;
-
         diesel::insert_into(item)
             .values(item_row)
             .on_conflict(id)

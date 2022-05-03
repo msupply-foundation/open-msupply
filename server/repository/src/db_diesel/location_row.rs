@@ -1,6 +1,5 @@
-use super::StorageConnection;
+use super::{StorageConnection, location_row::location::dsl as location_dsl};
 
-use crate::db_diesel::location_row::location::dsl as location_dsl;
 use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;

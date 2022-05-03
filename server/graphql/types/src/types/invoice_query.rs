@@ -11,7 +11,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{schema::PricingRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
 
 use repository::{unknown_user, Invoice};
 use serde::Serialize;

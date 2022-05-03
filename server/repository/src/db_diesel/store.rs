@@ -1,14 +1,12 @@
-use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
+use super::{
+    name_row::{name, name::dsl as name_dsl},
+    store_row::{store, store::dsl as store_dsl},
+    NameRow, StorageConnection, StoreRow,
+};
 
 use crate::{
-    db_diesel::{
-        name_row::{name, name::dsl as name_dsl},
-        NameRow,
-    },
-    diesel_macros::apply_simple_string_filter,
-    store_row::{store, store::dsl as store_dsl},
-    DBType, RepositoryError, StorageConnection, StoreRow,
+    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    DBType, EqualFilter, Pagination, RepositoryError, SimpleStringFilter, Sort,
 };
 
 use diesel::dsl::InnerJoin;

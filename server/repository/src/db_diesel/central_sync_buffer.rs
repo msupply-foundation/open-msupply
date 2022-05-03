@@ -1,12 +1,10 @@
 use std::ops::Deref;
 
-use super::StorageConnection;
+use super::{central_sync_buffer::central_sync_buffer::dsl::*, StorageConnection};
 
-use crate::{central_sync_buffer::central_sync_buffer::dsl::*, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
-
-use std::fmt::{self, Debug, Display};
 
 table! {
     central_sync_buffer (id) {
@@ -24,12 +22,6 @@ pub struct CentralSyncBufferRow {
     pub table_name: String,
     pub record_id: String,
     pub data: String,
-}
-
-impl Display for CentralSyncBufferRow {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
 
 pub struct CentralSyncBufferRepository<'a> {

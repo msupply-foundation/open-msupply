@@ -1,6 +1,6 @@
-use super::StorageConnection;
+use super::{invoice_line_row::invoice_line::dsl::*, StorageConnection};
 
-use crate::{db_diesel::invoice_line_row::invoice_line::dsl::*, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -82,8 +82,6 @@ impl<'a> InvoiceLineRowRepository<'a> {
 
     #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::invoice_line::dsl::*;
-
         diesel::insert_into(invoice_line)
             .values(row)
             .on_conflict(id)
