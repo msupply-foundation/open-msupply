@@ -5,12 +5,14 @@ import {
   Box,
   Switch,
   MiniTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { InboundItem } from '../../../types';
 import { useInboundRows, InboundLineFragment } from '../../api';
 import { useExpansionColumns } from './columns';
 
 interface ContentAreaProps {
+  onAddItem: () => void;
   onRowClick?: null | ((rowData: InboundLineFragment | InboundItem) => void);
 }
 
@@ -28,7 +30,7 @@ const Expando = ({
 };
 
 export const ContentArea: FC<ContentAreaProps> = React.memo(
-  ({ onRowClick }) => {
+  ({ onAddItem, onRowClick }) => {
     const t = useTranslation('replenishment');
     const { columns, rows, isGrouped, toggleIsGrouped } = useInboundRows();
 
@@ -51,7 +53,13 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
           ExpandContent={Expando}
           columns={columns}
           data={rows}
-          noDataMessage={t('error.no-items')}
+          noDataElement={
+            <NothingHere
+              body={t('error.no-inbound-items')}
+              onCreate={onAddItem}
+              buttonText={t('button.add-item')}
+            />
+          }
         />
       </Box>
     );

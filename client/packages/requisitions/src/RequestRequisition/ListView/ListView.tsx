@@ -9,6 +9,8 @@ import {
   useTranslation,
   RequisitionNodeStatus,
   useTableStore,
+  NothingHere,
+  useToggle,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -26,6 +28,7 @@ const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
 export const RequestRequisitionListView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
+  const modalController = useToggle();
 
   const { mutate: onUpdate } = useUpdateRequest();
 
@@ -74,7 +77,7 @@ export const RequestRequisitionListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
@@ -84,6 +87,12 @@ export const RequestRequisitionListView: FC = () => {
         onRowClick={onRowClick}
         isError={isError}
         isLoading={isLoading}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-internal-orders')}
+            onCreate={modalController.toggleOn}
+          />
+        }
       />
     </>
   );

@@ -9,6 +9,8 @@ import {
   InvoiceNodeStatus,
   useTranslation,
   useTableStore,
+  NothingHere,
+  useToggle,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -26,6 +28,7 @@ const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
 export const InboundListView: FC = () => {
   const { mutate: onUpdate } = useUpdateInbound();
   const navigate = useNavigate();
+  const modalController = useToggle();
   const {
     data,
     isError,
@@ -38,7 +41,7 @@ export const InboundListView: FC = () => {
   } = useInbounds();
   useDisableInboundRows(data?.nodes);
 
-  const t = useTranslation();
+  const t = useTranslation('replenishment');
 
   const columns = useColumns<InboundRowFragment>(
     [
@@ -69,7 +72,7 @@ export const InboundListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
@@ -81,6 +84,12 @@ export const InboundListView: FC = () => {
           navigate(String(row.invoiceNumber));
         }}
         isError={isError}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-inbound-shipments')}
+            onCreate={modalController.toggleOn}
+          />
+        }
       />
     </>
   );

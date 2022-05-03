@@ -5,6 +5,8 @@ import {
   useColumns,
   createTableStore,
   useEditModal,
+  NothingHere,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useLocations, LocationRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -22,7 +24,7 @@ export const LocationListView: FC = () => {
     sortBy,
     filter,
   } = useLocations();
-
+  const t = useTranslation('inventory');
   const columns = useColumns<LocationRowFragment>(
     ['code', 'name', 'selection'],
     {
@@ -34,6 +36,7 @@ export const LocationListView: FC = () => {
   const { isOpen, entity, mode, onClose, onOpen } =
     useEditModal<LocationRowFragment>();
   const locations = data?.nodes ?? [];
+
   return (
     <TableProvider createStore={createTableStore}>
       {isOpen && (
@@ -54,6 +57,12 @@ export const LocationListView: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={onOpen}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-locations')}
+            onCreate={() => onOpen()}
+          />
+        }
       />
     </TableProvider>
   );

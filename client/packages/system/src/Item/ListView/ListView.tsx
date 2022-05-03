@@ -5,6 +5,8 @@ import {
   DataTable,
   useColumns,
   createTableStore,
+  NothingHere,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useItems, ItemRowFragment } from '../api';
 
@@ -19,6 +21,7 @@ export const ItemListView: FC = () => {
     onChangeSortBy,
   } = useItems();
   const navigate = useNavigate();
+  const t = useTranslation('catalogue');
 
   const columns = useColumns<ItemRowFragment>(
     ['name', 'code'],
@@ -41,6 +44,7 @@ export const ItemListView: FC = () => {
         onRowClick={row => {
           navigate(`/catalogue/items/${row.id}`);
         }}
+        noDataElement={<NothingHere body={t('error.no-items')} />}
       />
     </TableProvider>
   );

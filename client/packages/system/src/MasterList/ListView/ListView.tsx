@@ -5,6 +5,8 @@ import {
   useColumns,
   createTableStore,
   useNavigate,
+  NothingHere,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -23,6 +25,7 @@ export const MasterListListView: FC = () => {
   } = useMasterLists();
 
   const navigate = useNavigate();
+  const t = useTranslation('catalogue');
   const columns = useColumns<MasterListRowFragment>(
     ['code', 'name', 'description'],
     {
@@ -44,6 +47,7 @@ export const MasterListListView: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={row => navigate(row.id)}
+        noDataElement={<NothingHere body={t('error.no-master-lists')} />}
       />
     </TableProvider>
   );

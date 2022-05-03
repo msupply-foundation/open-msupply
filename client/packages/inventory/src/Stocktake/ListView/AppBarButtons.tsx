@@ -7,6 +7,7 @@ import {
   FileUtils,
   SortBy,
   LoadingButton,
+  ToggleState,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { CreateStocktakeButton } from './CreateStocktakeButton';
@@ -14,8 +15,9 @@ import { StocktakeRowFragment, useStocktakesAll } from '../api';
 import { stocktakesToCsv } from '../../utils';
 
 export const AppBarButtons: FC<{
+  modalController: ToggleState;
   sortBy: SortBy<StocktakeRowFragment>;
-}> = ({ sortBy }) => {
+}> = ({ modalController, sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation(['distribution', 'common']);
   const { isLoading, mutateAsync } = useStocktakesAll(sortBy);
@@ -35,7 +37,7 @@ export const AppBarButtons: FC<{
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <CreateStocktakeButton />
+        <CreateStocktakeButton modalController={modalController} />
         <LoadingButton
           startIcon={<DownloadIcon />}
           variant="outlined"

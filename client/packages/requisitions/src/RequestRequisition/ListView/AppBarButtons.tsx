@@ -9,20 +9,20 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  useToggle,
   FileUtils,
   SortBy,
   LoadingButton,
+  ToggleState,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { RequestRowFragment, useInsertRequest, useRequestsAll } from '../api';
 import { requestsToCsv } from '../../utils';
 
 export const AppBarButtons: FC<{
+  modalController: ToggleState;
   sortBy: SortBy<RequestRowFragment>;
-}> = ({ sortBy }) => {
+}> = ({ modalController, sortBy }) => {
   const { mutate: onCreate } = useInsertRequest();
-  const modalController = useToggle();
   const { success, error } = useNotification();
   const t = useTranslation('common');
   const { isLoading, mutateAsync } = useRequestsAll(sortBy);

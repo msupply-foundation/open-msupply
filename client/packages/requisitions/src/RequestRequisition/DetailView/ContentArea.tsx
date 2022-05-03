@@ -1,5 +1,9 @@
 import React from 'react';
-import { DataTable, useTranslation } from '@openmsupply-client/common';
+import {
+  DataTable,
+  NothingHere,
+  useTranslation,
+} from '@openmsupply-client/common';
 import {
   RequestLineFragment,
   useHideOverStocked,
@@ -7,11 +11,12 @@ import {
 } from '../api';
 
 interface ContentAreaProps {
+  onAddItem: () => void;
   onRowClick: null | ((line: RequestLineFragment) => void);
 }
 
-export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
-  const t = useTranslation('common');
+export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
+  const t = useTranslation('replenishment');
   const { lines, columns } = useRequestLines();
   const { on } = useHideOverStocked();
   const { itemFilter } = useRequestLines();
@@ -22,9 +27,17 @@ export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
       onRowClick={onRowClick}
       columns={columns}
       data={lines}
-      noDataMessage={t(
-        isFiltered ? 'error.no-items-filter-on' : 'error.no-items'
-      )}
+      noDataElement={
+        <NothingHere
+          body={t(
+            isFiltered
+              ? 'error.no-items-filter-on'
+              : 'error.no-requisition-items'
+          )}
+          onCreate={onAddItem}
+          buttonText={t('button.add-item')}
+        />
+      }
     />
   );
 };
