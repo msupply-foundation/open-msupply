@@ -11,6 +11,8 @@
   "button.select-a-color": "Select a color",
   "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
   "error.failed-to-save-service-charges": "Failed to save service charges",
+  "error.no-outbound-items": "No items have been added to this shipment.",
+  "error.no-outbound-shipments": "There are no Outbound Shipments in this store.",
   "error.requisition-not-found": "Requisition not found",
   "error.shipment-not-found": "Shipment not found",
   "heading.are-you-sure": "Are you sure?",
