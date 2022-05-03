@@ -19,7 +19,7 @@ use service::{
 };
 
 use actix_cors::Cors;
-use actix_web::{web::Data, App, HttpServer};
+use actix_web::{http::header, web::Data, App, HttpServer};
 use std::{
     io::ErrorKind,
     net::TcpListener,
@@ -160,6 +160,7 @@ async fn run_server(
         debug_no_access_control: config_settings.server.develop
             && config_settings.server.debug_no_access_control,
     });
+    let cors_origin = config_settings.server.cors_origin.clone();
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
@@ -196,7 +197,18 @@ async fn run_server(
     let mut http_server = HttpServer::new(move || {
         App::new()
             .wrap(logger_middleware())
-            .wrap(Cors::permissive())
+            .wrap(
+                Cors::default()
+                    .allowed_origin(&cors_origin)
+                    .supports_credentials()
+                    .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+                    .allowed_headers(vec![
+                        header::AUTHORIZATION,
+                        header::ACCEPT,
+                        header::CONTENT_TYPE,
+                    ])
+                    .max_age(3600),
+            )
             .wrap(compress_middleware())
             .configure(graphql_config(
                 connection_manager_data_app.clone(),

@@ -25,6 +25,7 @@ pub struct ServerSettings {
     /// Only used in development mode
     #[serde(default)]
     pub debug_no_access_control: bool,
+    pub cors_origin: String,
 }
 
 impl ServerSettings {
