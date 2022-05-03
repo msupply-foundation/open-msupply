@@ -49,8 +49,7 @@ export const NothingHere: React.FC<NothingHereProps> = ({
         </Typography>
       </Box>
       <Box display="flex" alignContent="center">
-        {Body}
-        {CreateButton}
+        {Body}{CreateButton}
       </Box>
     </Stack>
   );
