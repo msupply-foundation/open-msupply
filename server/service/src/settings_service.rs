@@ -101,29 +101,28 @@ pub trait SettingsServiceTrait: Sync + Send {
         Ok(result)
     }
 
-    /// Loads auth settings from the DB
+    /// gets the token secret from the KV store, or creates a new one (saving to the store)
     fn token_secret(&self, ctx: &ServiceContext) -> Result<String, UpdateSettingsError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        let mut token_secret = key_value_store
-            .get_string(KeyValueType::SettingsTokenSecret)
+        let token_secret = key_value_store
+            .get_string(KeyValueType::SettingsAuthTokenSecret)
             .map_err(|err| UpdateSettingsError::RepositoryError(err))?;
 
-        if token_secret.is_none() {
-            //There is no token set, so we want to generate a secure one and store it for next startup
-            token_secret = Some(uuid());
-            //store new token in Key Value Store so it doesn't change on next startup
-            let _result = ctx
-                .connection
-                .transaction_sync(|con| {
-                    let key_value_store = KeyValueStoreRepository::new(con);
-                    key_value_store
-                        .set_string(KeyValueType::SettingsTokenSecret, token_secret.clone())?;
-                    Ok(())
-                })
-                .map_err(|err| UpdateSettingsError::RepositoryError(err.to_inner_error()))?;
-        }
-        Ok(token_secret.unwrap())
+        let token_secret = match token_secret {
+            Some(token_secret) => token_secret,
+            None => {
+                let token_secret = uuid();
+                //Result is ignored here, as server can operate with the current secret (will change on next startup though)
+                let _result = key_value_store.set_string(
+                    KeyValueType::SettingsAuthTokenSecret,
+                    Some(token_secret.clone()),
+                );
+                token_secret
+            }
+        };
+
+        Ok(token_secret)
     }
 }
 

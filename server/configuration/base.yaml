@@ -15,5 +15,3 @@ database:
   username: "postgres"
   password: "password"
   database_name: "omsupply-database"
-auth:
-  token_secret: "token-secret"
