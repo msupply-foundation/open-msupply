@@ -1,13 +1,11 @@
-use super::StorageConnection;
-
-use crate::{
-    repository_error::RepositoryError, store_row::store,
-    user_store_join_row::user_store_join::dsl as user_store_join_dsl,
+use super::{
+    store_row::store, user_row::user_account,
+    user_store_join_row::user_store_join::dsl as user_store_join_dsl, StorageConnection,
 };
 
-use diesel::prelude::*;
+use crate::repository_error::RepositoryError;
 
-use crate::user_row::user_account;
+use diesel::prelude::*;
 
 table! {
   user_store_join (id) {

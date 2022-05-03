@@ -1,9 +1,8 @@
 use diesel::prelude::*;
 
-use crate::{
-    changelog_row::changelog_deduped::dsl as changelog_deduped_dsl, RepositoryError,
-    StorageConnection,
-};
+use super::{changelog_row::changelog_deduped::dsl as changelog_deduped_dsl, StorageConnection};
+
+use crate::RepositoryError;
 use std::convert::TryInto;
 
 use diesel_derive_enum::DbEnum;

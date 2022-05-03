@@ -1,5 +1,5 @@
-use super::StorageConnection;
-use crate::{db_diesel::unit_row::unit::dsl::*, repository_error::RepositoryError};
+use super::{unit_row::unit::dsl::*, StorageConnection};
+use crate::repository_error::RepositoryError;
 use diesel::prelude::*;
 
 table! {

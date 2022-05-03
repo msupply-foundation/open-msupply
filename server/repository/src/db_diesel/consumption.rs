@@ -1,7 +1,8 @@
+use super::{consumption::consumption::dsl as consumption_dsl, StorageConnection};
+
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
-    consumption::consumption::dsl as consumption_dsl,
-    DateFilter, EqualFilter, RepositoryError, StorageConnection,
+    DateFilter, EqualFilter, RepositoryError,
 };
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};

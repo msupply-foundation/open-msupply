@@ -1,5 +1,5 @@
-use super::{pricing::invoice_stats, sync_out::sync_out};
-use crate::db_diesel::{
+use super::{
+    invoice_line::invoice_stats,
     invoice_line_row::invoice_line,
     invoice_row::invoice,
     item_row::{item, item_is_visible},
@@ -28,7 +28,6 @@ joinable!(requisition -> store (store_id));
 joinable!(requisition_line -> item (item_id));
 joinable!(requisition_line -> requisition (requisition_id));
 joinable!(store -> name (name_id));
-joinable!(sync_out -> store (store_id));
 joinable!(invoice -> name (name_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice_line -> item (item_id));

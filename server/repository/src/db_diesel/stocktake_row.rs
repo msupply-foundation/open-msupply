@@ -1,6 +1,6 @@
-use super::StorageConnection;
+use super::{stocktake_row::stocktake::dsl as stocktake_dsl, StorageConnection};
 
-use crate::{repository_error::RepositoryError, stocktake_row::stocktake::dsl as stocktake_dsl};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 

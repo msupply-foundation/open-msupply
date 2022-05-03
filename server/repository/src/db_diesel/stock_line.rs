@@ -1,11 +1,13 @@
-use super::{DBType, StorageConnection};
+use super::{
+    location_row::{location, location::dsl as location_dsl},
+    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
+    DBType, LocationRow, StockLineRow, StorageConnection,
+};
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort_asc_nulls_last},
-    location_row::{location, location::dsl as location_dsl},
     repository_error::RepositoryError,
-    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
-    DateFilter, EqualFilter, LocationRow, Pagination, Sort, StockLineRow,
+    DateFilter, EqualFilter, Pagination, Sort,
 };
 
 use diesel::{

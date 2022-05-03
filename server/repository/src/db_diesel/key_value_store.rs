@@ -1,7 +1,6 @@
 use diesel::prelude::*;
 
-use super::StorageConnection;
-use crate::key_value_store::key_value_store::dsl as kv_store_dsl;
+use super::{key_value_store::key_value_store::dsl as kv_store_dsl, StorageConnection};
 use crate::repository_error::RepositoryError;
 
 use diesel_derive_enum::DbEnum;

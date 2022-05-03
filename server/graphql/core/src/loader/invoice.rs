@@ -1,10 +1,11 @@
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use repository::schema::PricingRow;
 use repository::EqualFilter;
-use repository::{Invoice, InvoiceFilter, InvoiceLineRepository};
-use repository::{RepositoryError, StorageConnectionManager};
+use repository::{
+    Invoice, InvoiceFilter, InvoiceLineRepository, PricingRow, RepositoryError,
+    StorageConnectionManager,
+};
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 

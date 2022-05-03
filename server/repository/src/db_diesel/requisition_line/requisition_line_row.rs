@@ -1,7 +1,7 @@
+use super::requisition_line_row::requisition_line::dsl as requisition_line_dsl;
+
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
-
-use crate::db_diesel::requisition_line_row::requisition_line::dsl as requisition_line_dsl;
 use diesel::prelude::*;
 
 use chrono::NaiveDateTime;

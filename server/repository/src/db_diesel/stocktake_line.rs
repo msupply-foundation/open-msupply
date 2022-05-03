@@ -1,15 +1,17 @@
-use crate::{EqualFilter, Pagination, Sort};
+use super::{
+    location_row::{location, location::dsl as location_dsl},
+    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
+    stocktake_line_row::stocktake_line::{self, dsl as stocktake_line_dsl},
+    LocationRow, StockLineRow, StocktakeLineRow, StorageConnection,
+};
+
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
 
 use crate::{
-    diesel_macros::apply_equal_filter,
-    location_row::{location, location::dsl as location_dsl},
-    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
-    stocktake_line_row::stocktake_line::{self, dsl as stocktake_line_dsl},
-    DBType, LocationRow, RepositoryError, StockLineRow, StocktakeLineRow, StorageConnection,
+    diesel_macros::apply_equal_filter, DBType, EqualFilter, Pagination, RepositoryError, Sort,
 };
 
 #[derive(Clone)]

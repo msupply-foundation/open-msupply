@@ -1,17 +1,16 @@
-use super::{DBType, StorageConnection};
-use crate::{
-    db_diesel::{
-        item_row::{
-            item, item::dsl as item_dsl, item_is_visible,
-            item_is_visible::dsl as item_is_visible_dsl,
-        },
-        unit_row::{unit, unit::dsl as unit_dsl},
-        ItemIsVisibleRow, ItemRow, ItemRowType, UnitRow,
+use super::{
+    item_row::{
+        item, item::dsl as item_dsl, item_is_visible, item_is_visible::dsl as item_is_visible_dsl,
     },
+    unit_row::{unit, unit::dsl as unit_dsl},
+    DBType, ItemIsVisibleRow, ItemRow, ItemRowType, StorageConnection, UnitRow,
+};
+
+use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
+    EqualFilter, Pagination, SimpleStringFilter, Sort,
 };
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Item {

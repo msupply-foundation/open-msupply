@@ -1,6 +1,6 @@
-use super::StorageConnection;
+use super::{number_row::number::dsl as number_dsl, StorageConnection};
 
-use crate::{number_row::number::dsl as number_dsl, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 

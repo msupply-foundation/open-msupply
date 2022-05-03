@@ -1,7 +1,8 @@
+use super::{stock_movement::stock_movement::dsl as stock_movement_dsl, StorageConnection};
+
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
-    stock_movement::stock_movement::dsl as stock_movement_dsl,
-    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection,
+    DatetimeFilter, EqualFilter, RepositoryError,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -119,11 +120,9 @@ mod test {
     use util::{inline_edit, inline_init, uuid::uuid};
 
     use crate::{
-        invoice_line_row::{InvoiceLineRow, InvoiceLineRowType},
-        invoice_row::{InvoiceRow, InvoiceRowType},
         mock::{mock_item_a, mock_name_a, MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        NameRow, StoreRow,
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow, StoreRow,
     };
 
     use super::*;

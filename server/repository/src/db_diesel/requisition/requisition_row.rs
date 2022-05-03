@@ -1,7 +1,8 @@
+use super::requisition_row::requisition::dsl as requisition_dsl;
+
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 
-use crate::db_diesel::requisition_row::requisition::dsl as requisition_dsl;
 use diesel::prelude::*;
 
 use chrono::{NaiveDate, NaiveDateTime};
@@ -16,8 +17,8 @@ table! {
         name_id -> Text,
         store_id -> Text,
         user_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::requisition_row::RequisitionRowTypeMapping,
-        #[sql_name = "status"] status -> crate::db_diesel::requisition_row::RequisitionRowStatusMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionRowTypeMapping,
+        #[sql_name = "status"] status -> crate::db_diesel::requisition::requisition_row::RequisitionRowStatusMapping,
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,

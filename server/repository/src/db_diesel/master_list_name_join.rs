@@ -1,9 +1,9 @@
-use super::StorageConnection;
-
-use crate::{
+use super::{
     master_list_name_join::master_list_name_join::dsl::*, master_list_row::master_list,
-    name_row::name, repository_error::RepositoryError,
+    name_row::name, StorageConnection,
 };
+
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -37,7 +37,6 @@ impl<'a> MasterListNameJoinRepository<'a> {
 
     #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::master_list_name_join::dsl::*;
         diesel::insert_into(master_list_name_join)
             .values(row)
             .on_conflict(id)

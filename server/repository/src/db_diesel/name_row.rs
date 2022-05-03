@@ -1,6 +1,6 @@
-use super::StorageConnection;
+use super::{name_row::name::dsl::*, StorageConnection};
 
-use crate::{db_diesel::name_row::name::dsl::*, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -41,7 +41,6 @@ impl<'a> NameRowRepository<'a> {
 
     #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
-        use crate::schema::diesel_schema::name::dsl::*;
         diesel::insert_into(name)
             .values(name_row)
             .on_conflict(id)
