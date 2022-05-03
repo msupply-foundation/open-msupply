@@ -157,7 +157,7 @@ async fn run_server(
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
         token_bucket: token_bucket.clone(),
-        auth_token_secret: token_secret.clone(),
+        auth_token_secret: token_secret,
         debug_no_ssl: config_settings.server.develop && matches!(cert_type, ServerCertType::None),
         debug_no_access_control: config_settings.server.develop
             && config_settings.server.debug_no_access_control,
