@@ -1,7 +1,7 @@
 server:
   port: 8000
   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
-  cors_origin: http://localhost:3003 #Used 
+  cors_origin: http://localhost:3003 #Used to set the allowed Origin in Cross Origin Requst Security
 sync:
   url: "http://localhost:2048"
   username: "username"
