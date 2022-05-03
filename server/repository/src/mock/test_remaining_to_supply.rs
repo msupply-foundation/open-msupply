@@ -1,4 +1,4 @@
-use crate::db_diesel::{
+use crate::{
     requisition_row::RequisitionRowType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
     InvoiceRowStatus, InvoiceRowType, RequisitionLineRow, RequisitionRow,
 };

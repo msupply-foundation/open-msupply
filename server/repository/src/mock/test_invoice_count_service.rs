@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::db_diesel::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use crate::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
 use super::MockData;
 

@@ -2,10 +2,7 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
     InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
 };
-use repository::{
-    db_diesel::{InvoiceRow, InvoiceRowType},
-    StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
 
 use super::{DeleteInboundShipment, DeleteInboundShipmentError};
 

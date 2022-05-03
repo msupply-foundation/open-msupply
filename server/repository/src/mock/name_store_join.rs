@@ -1,4 +1,4 @@
-use crate::db_diesel::NameStoreJoinRow;
+use crate::NameStoreJoinRow;
 
 pub fn mock_name_store_join_a() -> NameStoreJoinRow {
     NameStoreJoinRow {

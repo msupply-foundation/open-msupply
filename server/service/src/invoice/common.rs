@@ -1,4 +1,4 @@
-use repository::db_diesel::InvoiceRow;
+use repository::InvoiceRow;
 use util::inline_edit;
 
 pub fn generate_invoice_user_id_update(

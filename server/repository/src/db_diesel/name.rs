@@ -284,10 +284,10 @@ mod tests {
     use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
     use crate::{
-        db_diesel::{NameRepository, NameRow, NameRowRepository},
         mock::MockDataInserts,
         mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
-        test_db, NameFilter, Pagination, SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
+        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination,
+        SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use std::convert::TryFrom;

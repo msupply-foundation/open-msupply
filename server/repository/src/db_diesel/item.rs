@@ -196,8 +196,8 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        db_diesel::item::ItemFilter, mock::MockDataInserts, test_db, EqualFilter, ItemRepository,
-        ItemRow, ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
+        mock::MockDataInserts, test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow,
+        ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
         MasterListRowRepository, NameRow, NameRowRepository, Pagination, DEFAULT_PAGINATION_LIMIT,
     };

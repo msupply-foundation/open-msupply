@@ -1,16 +1,16 @@
 use super::{
     requisition_row::{requisition, requisition::dsl as requisition_dsl},
-    RequisitionRow,
+    RequisitionFilter, RequisitionRow, RequisitionSort, RequisitionSortField,
 };
 
 use crate::{
-    db_diesel::name_row::{name, name::dsl as name_dsl, NameRow},
+    db_diesel::name_row::{name, name::dsl as name_dsl},
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
         apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    DBType, StorageConnection,
+    DBType, NameRow, StorageConnection,
 };
 
 use crate::Pagination;
@@ -18,8 +18,6 @@ use diesel::{
     dsl::{InnerJoin, IntoBoxed},
     prelude::*,
 };
-
-use super::{RequisitionFilter, RequisitionSort, RequisitionSortField};
 
 pub type RequisitionJoin = (RequisitionRow, NameRow);
 

@@ -11,10 +11,7 @@ use crate::{
         BatchIsReserved,
     },
 };
-use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceRow, InvoiceRowType},
-    StorageConnection,
-};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowType, StorageConnection};
 
 use super::{DeleteInboundShipmentLine, DeleteInboundShipmentLineError};
 

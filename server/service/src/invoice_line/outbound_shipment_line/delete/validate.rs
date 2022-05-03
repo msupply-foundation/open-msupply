@@ -7,10 +7,7 @@ use crate::{
         check_line_belongs_to_invoice, check_line_exists, LineDoesNotExist, NotInvoiceLine,
     },
 };
-use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceRowType},
-    StorageConnection,
-};
+use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
 
 use super::{DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError};
 

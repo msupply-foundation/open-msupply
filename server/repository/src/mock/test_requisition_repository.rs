@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::db_diesel::{
+use crate::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
     RequisitionRow,
 };

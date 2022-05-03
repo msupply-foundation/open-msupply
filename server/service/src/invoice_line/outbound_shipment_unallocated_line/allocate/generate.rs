@@ -1,10 +1,9 @@
 use std::cmp::Ordering;
 
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, Pagination,
-    RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineSort,
-    StockLineSortField, StorageConnection,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowType, Pagination, RepositoryError, StockLine, StockLineFilter,
+    StockLineRepository, StockLineSort, StockLineSortField, StorageConnection,
 };
 use util::{
     constants::stock_line_expiring_soon_offset, date_now, date_now_with_offset,

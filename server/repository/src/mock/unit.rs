@@ -1,4 +1,4 @@
-use crate::db_diesel::UnitRow;
+use crate::UnitRow;
 
 pub fn item_query_test2_unit() -> UnitRow {
     UnitRow {

@@ -208,9 +208,7 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow},
-        mock::MockDataInserts,
-        LocationRow,
+        mock::MockDataInserts, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow,
     };
     use serde_json::json;
     use util::inline_init;

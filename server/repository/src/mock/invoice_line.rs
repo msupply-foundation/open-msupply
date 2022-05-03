@@ -1,4 +1,4 @@
-use crate::db_diesel::{InvoiceLineRow, InvoiceLineRowType};
+use crate::{InvoiceLineRow, InvoiceLineRowType};
 
 use chrono::NaiveDate;
 

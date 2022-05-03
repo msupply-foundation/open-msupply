@@ -1,6 +1,6 @@
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType},
-    InvoiceLineRowRepository, RepositoryError, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, RepositoryError,
+    StorageConnection,
 };
 
 use crate::{invoice_line::validate::check_line_exists_option, service_provider::ServiceContext};

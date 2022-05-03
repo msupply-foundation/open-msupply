@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use util::inline_init;
 
-use crate::db_diesel::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use crate::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
 pub fn mock_outbound_shipment_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {

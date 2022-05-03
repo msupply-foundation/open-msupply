@@ -10,10 +10,7 @@ use crate::{
         DeleteOutboundShipmentLine,
     },
 };
-use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceRowType},
-    StorageConnection,
-};
+use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
 
 use super::DeleteOutboundShipmentServiceLineError;
 

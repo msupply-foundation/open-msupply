@@ -1,8 +1,7 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
 use repository::DatetimeFilter;
 use repository::{
-    db_diesel::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceFilter, InvoiceRepository, RepositoryError,
+    InvoiceFilter, InvoiceRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;
