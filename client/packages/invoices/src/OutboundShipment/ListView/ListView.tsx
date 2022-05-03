@@ -9,6 +9,8 @@ import {
   useTranslation,
   InvoiceNodeStatus,
   useTableStore,
+  NothingHere,
+  useToggle,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -26,8 +28,9 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 
 export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useOutbound.document.update();
-  const t = useTranslation('common');
+  const t = useTranslation('distribution');
   const navigate = useNavigate();
+  const modalController = useToggle();
 
   const {
     data,
@@ -78,7 +81,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
@@ -87,6 +90,12 @@ export const OutboundShipmentListViewComponent: FC = () => {
         data={data?.nodes ?? []}
         isError={isError}
         isLoading={isLoading}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-outbound-shipments')}
+            onCreate={modalController.toggleOn}
+          />
+        }
         onRowClick={row => {
           navigate(String(row.invoiceNumber));
         }}

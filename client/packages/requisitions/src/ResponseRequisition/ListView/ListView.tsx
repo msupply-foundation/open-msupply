@@ -9,6 +9,7 @@ import {
   useTableStore,
   RequisitionNodeStatus,
   useTranslation,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -76,6 +77,7 @@ export const ResponseRequisitionListView: FC = () => {
         }}
         isError={isError}
         isLoading={isLoading}
+        noDataElement={<NothingHere body={t('error.no-requisitions')} />}
       />
     </>
   );

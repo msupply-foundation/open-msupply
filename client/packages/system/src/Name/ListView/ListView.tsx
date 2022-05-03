@@ -7,6 +7,7 @@ import {
   useDialog,
   DialogButton,
   Fade,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -58,6 +59,7 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
           setSelectedId(row.id);
           showDialog();
         }}
+        noDataElement={<NothingHere />}
       />
       <Modal
         title=""

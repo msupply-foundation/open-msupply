@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataTable, useTranslation } from '@openmsupply-client/common';
+import { DataTable, NothingHere } from '@openmsupply-client/common';
 import { useResponseLines, ResponseLineFragment } from '../api';
 
 interface ContentAreaProps {
@@ -8,14 +8,13 @@ interface ContentAreaProps {
 
 export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
   const { columns, lines } = useResponseLines();
-  const t = useTranslation('common');
 
   return (
     <DataTable
       onRowClick={onRowClick}
       columns={columns}
       data={lines}
-      noDataMessage={t('error.no-items')}
+      noDataElement={<NothingHere />}
     />
   );
 };

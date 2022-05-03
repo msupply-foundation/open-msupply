@@ -8,6 +8,8 @@ import {
   createTableStore,
   useTranslation,
   useTableStore,
+  useToggle,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -25,7 +27,8 @@ const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
 
 export const StocktakeListView: FC = () => {
   const navigate = useNavigate();
-  const t = useTranslation(['common', 'inventory']);
+  const t = useTranslation('inventory');
+  const modalController = useToggle();
 
   const {
     data,
@@ -63,7 +66,7 @@ export const StocktakeListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
@@ -75,6 +78,12 @@ export const StocktakeListView: FC = () => {
         onRowClick={row => {
           navigate(String(row.stocktakeNumber));
         }}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-stocktakes')}
+            onCreate={modalController.toggleOn}
+          />
+        }
       />
     </>
   );

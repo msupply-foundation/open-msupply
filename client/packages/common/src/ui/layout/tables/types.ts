@@ -24,6 +24,7 @@ export interface TableProps<T extends RecordWithId> {
   isError?: boolean;
   isLoading?: boolean;
   noDataMessage?: string;
+  noDataElement?: JSX.Element;
   pagination?: Pagination & { total?: number };
   onChangePage?: (page: number) => void;
   onRowClick?: null | ((row: T) => void);

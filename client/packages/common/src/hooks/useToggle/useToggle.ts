@@ -1,6 +1,6 @@
 import { SetStateAction, useState, Dispatch } from 'react';
 
-interface ToggleState {
+export interface ToggleState {
   isOn: boolean;
   toggle: () => void;
   toggleOn: () => void;
