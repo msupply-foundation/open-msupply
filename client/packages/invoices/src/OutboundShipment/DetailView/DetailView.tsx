@@ -43,7 +43,7 @@ export const DetailView: FC = () => {
     >
       {data ? (
         <TableProvider createStore={createTableStore}>
-          <AppBarButtons onAddItem={() => onOpen()} />
+          <AppBarButtons onAddItem={onOpen} />
           {isOpen && (
             <OutboundLineEdit
               item={entity}
@@ -54,7 +54,10 @@ export const DetailView: FC = () => {
           )}
 
           <Toolbar />
-          <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
+          <ContentArea
+            onRowClick={!isDisabled ? onRowClick : null}
+            onAddItem={onOpen}
+          />
           <Footer />
           <SidePanel />
         </TableProvider>

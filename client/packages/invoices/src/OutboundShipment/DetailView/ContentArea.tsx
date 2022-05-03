@@ -11,6 +11,7 @@ import {
   useRowStyle,
   AppSxProp,
   ArrayUtils,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { useOutbound } from '../api';
@@ -18,6 +19,7 @@ import { useOutboundColumns } from './columns';
 import { OutboundLineFragment } from '../api/operations.generated';
 
 interface ContentAreaProps {
+  onAddItem: () => void;
   onRowClick?: null | ((rowData: OutboundLineFragment | OutboundItem) => void);
 }
 
@@ -97,7 +99,10 @@ export const useHighlightPlaceholderRows = (
   }, [rows, setRowStyles]);
 };
 
-export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
+export const ContentAreaComponent: FC<ContentAreaProps> = ({
+  onAddItem,
+  onRowClick,
+}) => {
   const t = useTranslation('distribution');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const { rows, onChangeSortBy, sortBy } = useOutbound.line.rows(isGrouped);
@@ -125,7 +130,13 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
         ExpandContent={Expand}
         columns={columns}
         data={rows}
-        noDataMessage={t('error.no-items')}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-outbound-items')}
+            onCreate={onAddItem}
+            buttonText={t('button.add-item')}
+          />
+        }
       />
     </Box>
   );

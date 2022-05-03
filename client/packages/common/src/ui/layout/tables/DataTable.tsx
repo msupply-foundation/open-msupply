@@ -27,6 +27,7 @@ export const DataTableComponent = <T extends RecordWithId>({
   isDisabled = false,
   isError = false,
   isLoading = false,
+  noDataElement,
   noDataMessage,
   pagination,
   onChangePage,
@@ -91,11 +92,13 @@ export const DataTableComponent = <T extends RecordWithId>({
 
   if (data.length === 0) {
     return (
-      <Box sx={{ padding: 2 }}>
-        <Typography variant="h6">
-          {noDataMessage || t('error.no-results')}
-        </Typography>
-      </Box>
+      noDataElement || (
+        <Box sx={{ padding: 2 }}>
+          <Typography variant="h6">
+            {noDataMessage || t('error.no-results')}
+          </Typography>
+        </Box>
+      )
     );
   }
 
