@@ -101,7 +101,7 @@ pub trait SettingsServiceTrait: Sync + Send {
         Ok(result)
     }
 
-    /// gets the token secret from the KV store, or creates a new one (saving to the store)
+    /// Get the token secret from the KV store, or Create a new one (saving to the store)
     fn token_secret(&self, ctx: &ServiceContext) -> Result<String, UpdateSettingsError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
@@ -113,7 +113,7 @@ pub trait SettingsServiceTrait: Sync + Send {
             Some(token_secret) => token_secret,
             None => {
                 let token_secret = uuid();
-                let _result = key_value_store
+                key_value_store
                     .set_string(
                         KeyValueType::SettingsAuthTokenSecret,
                         Some(token_secret.clone()),
