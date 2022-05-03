@@ -12,6 +12,7 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             port: 5432,
             develop: true,
             debug_no_access_control: true,
+            cors_origin: "http://localhost:3003".to_string(),
         },
         database: get_test_db_settings(db_name),
         sync: Some(SyncSettings {
