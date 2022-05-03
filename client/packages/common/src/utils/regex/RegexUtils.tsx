@@ -44,4 +44,6 @@ export const RegexUtils = {
       RegexUtils.includes(substring, String(object[key]))
     );
   },
+  escapeChars: (regexString: string) =>
+    regexString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
 };

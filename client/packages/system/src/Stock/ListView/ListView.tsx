@@ -9,6 +9,7 @@ import {
   Column,
   SortUtils,
   SortBy,
+  RegexUtils,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
 import { useStockLines } from '../api';
@@ -47,7 +48,7 @@ export const StockListView: FC = () => {
   );
 
   const filterData = (row: StockRow) => {
-    const re = RegExp(`^${filterString ?? '.'}`, 'i');
+    const re = RegExp(`^${RegexUtils.escapeChars(filterString) ?? '.'}`, 'i');
     return re.test(row.itemName) || re.test(row.itemCode);
   };
 
