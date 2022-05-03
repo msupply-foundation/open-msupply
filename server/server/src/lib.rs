@@ -28,6 +28,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
+use util::uuid::uuid;
 
 pub mod configuration;
 pub mod environment;
@@ -47,7 +48,7 @@ async fn run_stage0(
 
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
-        auth_token_secret: settings.auth.token_secret.to_owned(),
+        auth_token_secret: uuid(), //Temporary uuid secret for bootstrap mode
         token_bucket,
         debug_no_ssl: settings.server.develop && matches!(cert_type, ServerCertType::None),
         debug_no_access_control: settings.server.develop && settings.server.debug_no_access_control,

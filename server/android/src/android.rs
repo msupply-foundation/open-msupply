@@ -9,7 +9,7 @@ pub mod android {
     use jni::sys::{jchar, jshort};
     use repository::database_settings::DatabaseSettings;
 
-    use server::settings::{AuthSettings, ServerSettings, Settings};
+    use server::settings::{ServerSettings, Settings};
     use server::start_server;
     use service::sync_settings::SyncSettings;
     use tokio::sync::oneshot;
@@ -106,10 +106,6 @@ pub mod android {
                         site_id: 2,
                         site_hardware_id: "".to_string(),
                     }),
-                    auth: AuthSettings {
-                        // TODO:
-                        token_secret: "Make me configurable".to_string(),
-                    },
                 };
                 let _ = start_server(settings, off_switch_receiver).await;
             });
