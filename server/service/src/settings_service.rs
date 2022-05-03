@@ -1,6 +1,5 @@
 use repository::{schema::KeyValueType, KeyValueStoreRepository, RepositoryError};
 use reqwest::Url;
-use util::uuid::uuid;
 
 use crate::{service_provider::ServiceContext, sync_settings::SyncSettings};
 
@@ -99,31 +98,6 @@ pub trait SettingsServiceTrait: Sync + Send {
             })
             .map_err(|err| UpdateSettingsError::RepositoryError(err.to_inner_error()))?;
         Ok(result)
-    }
-
-    /// Get the token secret from the KV store, or Create a new one (saving to the store)
-    fn token_secret(&self, ctx: &ServiceContext) -> Result<String, UpdateSettingsError> {
-        let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
-
-        let token_secret = key_value_store
-            .get_string(KeyValueType::SettingsAuthTokenSecret)
-            .map_err(|err| UpdateSettingsError::RepositoryError(err))?;
-
-        let token_secret = match token_secret {
-            Some(token_secret) => token_secret,
-            None => {
-                let token_secret = uuid();
-                key_value_store
-                    .set_string(
-                        KeyValueType::SettingsAuthTokenSecret,
-                        Some(token_secret.clone()),
-                    )
-                    .map_err(|err| UpdateSettingsError::RepositoryError(err))?;
-                token_secret
-            }
-        };
-
-        Ok(token_secret)
     }
 }
 
