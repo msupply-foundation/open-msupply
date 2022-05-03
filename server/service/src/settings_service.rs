@@ -113,11 +113,12 @@ pub trait SettingsServiceTrait: Sync + Send {
             Some(token_secret) => token_secret,
             None => {
                 let token_secret = uuid();
-                //Result is ignored here, as server can operate with the current secret (will change on next startup though)
-                let _result = key_value_store.set_string(
-                    KeyValueType::SettingsAuthTokenSecret,
-                    Some(token_secret.clone()),
-                );
+                let _result = key_value_store
+                    .set_string(
+                        KeyValueType::SettingsAuthTokenSecret,
+                        Some(token_secret.clone()),
+                    )
+                    .map_err(|err| UpdateSettingsError::RepositoryError(err))?;
                 token_secret
             }
         };
