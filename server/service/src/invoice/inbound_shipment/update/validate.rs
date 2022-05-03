@@ -3,11 +3,7 @@ use crate::invoice::{
     InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceRowStatusError, WrongInvoiceRowType,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use repository::Name;
-use repository::{
-    db_diesel::{InvoiceRow, InvoiceRowType},
-    StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceRowType, Name, StorageConnection};
 
 use super::{UpdateInboundShipment, UpdateInboundShipmentError};
 

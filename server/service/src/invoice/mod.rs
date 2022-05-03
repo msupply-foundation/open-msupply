@@ -1,6 +1,6 @@
-use repository::db_diesel::InvoiceRowType;
 use repository::Invoice;
 use repository::InvoiceFilter;
+use repository::InvoiceRowType;
 use repository::InvoiceSort;
 use repository::PaginationOption;
 use repository::RepositoryError;

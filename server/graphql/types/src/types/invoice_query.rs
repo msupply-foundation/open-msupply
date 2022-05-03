@@ -388,12 +388,11 @@ mod test {
 
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
     use repository::{
-        db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow},
         mock::{
             mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
             MockDataInserts,
         },
-        Invoice,
+        Invoice, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
     };
     use serde_json::json;
     use util::inline_init;

@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
 use repository::{
-    db_diesel::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
     mock::{mock_outbound_shipment_a, mock_request_draft_requisition},
-    EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, ItemFilter, ItemRepository,
+    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
+    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemFilter, ItemRepository,
     LocationRow, LocationRowRepository, NameFilter, NameRepository, RequisitionRowRepository,
     StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };

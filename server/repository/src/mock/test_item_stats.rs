@@ -1,7 +1,7 @@
 use chrono::{Duration, Utc};
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, inline_edit, inline_init, uuid::uuid};
 
-use crate::db_diesel::{
+use crate::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType,
     StockLineRow,
 };

@@ -4,9 +4,8 @@ use crate::invoice::{
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::EqualFilter;
 use repository::{
-    db_diesel::{InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository, Name, RepositoryError,
-    StorageConnection,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
+    InvoiceRowStatus, InvoiceRowType, Name, RepositoryError, StorageConnection,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};

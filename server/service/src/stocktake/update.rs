@@ -461,7 +461,6 @@ mod test {
 
     use chrono::NaiveDate;
     use repository::{
-        db_diesel::InvoiceLineRowType,
         mock::{
             mock_locked_stocktake, mock_stock_line_a, mock_stocktake_a,
             mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
@@ -471,7 +470,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository, StockLineRowRepository, StocktakeLine,
+        InvoiceLineRowRepository, InvoiceLineRowType, StockLineRowRepository, StocktakeLine,
         StocktakeLineRowRepository, StocktakeRepository, StocktakeRow, StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
