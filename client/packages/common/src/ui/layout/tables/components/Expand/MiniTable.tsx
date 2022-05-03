@@ -3,6 +3,7 @@ import { Column } from './../../columns/types';
 import { Box, alpha } from '@mui/material';
 import { RecordWithId } from '@common/types';
 import { DataTable } from '../../DataTable';
+import { createTableStore, TableProvider } from '../../context/TableContext';
 
 interface MiniTableProps<T extends RecordWithId> {
   rows: T[];
@@ -30,7 +31,9 @@ export const MiniTable = <T extends RecordWithId>({
           overflow: 'hidden',
         }}
       >
-        <DataTable dense columns={columns} data={rows} />
+        <TableProvider createStore={createTableStore}>
+          <DataTable dense columns={columns} data={rows} />
+        </TableProvider>
       </Box>
     </Box>
   );
