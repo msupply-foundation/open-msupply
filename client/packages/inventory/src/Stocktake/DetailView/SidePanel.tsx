@@ -24,7 +24,7 @@ const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
 
   const { comment, user, update } = useStocktakeFields(['comment', 'user']);
-  const [bufferedComment, setBufferedComment] = useBufferState(comment);
+  const [bufferedComment, setBufferedComment] = useBufferState(comment ?? '');
   const isDisabled = useIsStocktakeDisabled();
 
   return (

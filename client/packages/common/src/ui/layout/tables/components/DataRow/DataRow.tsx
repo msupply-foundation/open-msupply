@@ -9,7 +9,7 @@ import {
   useIsFocused,
   useRowStyle,
 } from '../../context';
-import { Collapse, Fade } from '@mui/material';
+import { Fade } from '@mui/material';
 
 interface DataRowProps<T extends RecordWithId> {
   columns: Column<T>[];
@@ -17,7 +17,7 @@ interface DataRowProps<T extends RecordWithId> {
   onClick?: (rowData: T) => void;
   rowData: T;
   rowKey: string;
-  ExpandContent?: FC<{ rowData: T }>;
+  ExpandContent?: FC<{ rowData: T; isExpanded: boolean }>;
   dense?: boolean;
   rowIndex: number;
   keyboardActivated?: boolean;
@@ -108,21 +108,13 @@ export const DataRow = <T extends RecordWithId>({
           })}
         </TableRow>
       </Fade>
-      <tr>
-        <td colSpan={columns.length}>
-          <Collapse
-            sx={{
-              flex: 1,
-              '& .MuiCollapse-wrapperInner': {
-                display: 'flex',
-              },
-            }}
-            in={isExpanded}
-          >
-            {ExpandContent ? <ExpandContent rowData={rowData} /> : null}
-          </Collapse>
-        </td>
-      </tr>
+      {isExpanded && !!ExpandContent ? (
+        <tr>
+          <td colSpan={columns.length}>
+            <ExpandContent rowData={rowData} isExpanded={isExpanded} />
+          </td>
+        </tr>
+      ) : null}
     </>
   );
 };

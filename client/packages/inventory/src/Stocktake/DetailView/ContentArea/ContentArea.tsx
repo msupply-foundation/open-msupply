@@ -17,6 +17,7 @@ const Expando = ({
   rowData: StocktakeSummaryItem | StocktakeLineFragment;
 }) => {
   const expandoColumns = useExpansionColumns();
+
   if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
   } else {
