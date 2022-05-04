@@ -88,6 +88,7 @@ export const RequestLineEditForm = ({
   const t = useTranslation('replenishment');
   const formatNumber = useFormatNumber();
   const { lines } = useRequestLines();
+
   return (
     <RequestLineEditFormLayout
       Left={
@@ -147,7 +148,7 @@ export const RequestLineEditForm = ({
             Input={
               <NonNegativeIntegerInput
                 autoFocus
-                value={draftLine?.requestedQuantity}
+                value={draftLine?.requestedQuantity ?? 0}
                 width={150}
                 onChange={requestedQuantity => update({ requestedQuantity })}
               />
