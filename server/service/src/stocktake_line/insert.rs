@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
 use repository::EqualFilter;
 use repository::{
-    schema::StocktakeLineRow, RepositoryError, StockLine, StockLineFilter, StockLineRepository,
-    StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRowRepository,
+    RepositoryError, StockLine, StockLineFilter, StockLineRepository, StocktakeLine,
+    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository,
     StorageConnection,
 };
 

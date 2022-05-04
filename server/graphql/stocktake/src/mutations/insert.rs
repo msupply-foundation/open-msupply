@@ -105,9 +105,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
-    use repository::{
-        mock::MockDataInserts, schema::StocktakeRow, Stocktake, StorageConnectionManager,
-    };
+    use repository::{mock::MockDataInserts, Stocktake, StocktakeRow, StorageConnectionManager};
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},

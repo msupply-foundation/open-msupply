@@ -1,7 +1,7 @@
 use crate::WithDBError;
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, ItemRow},
-    InvoiceLineRowRepository, ItemRowRepository, RepositoryError, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 pub struct LineAlreadyExists;

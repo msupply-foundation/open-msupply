@@ -1,8 +1,8 @@
 use super::common::regenerate_linked_invoice_lines;
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing, SyncProcessor};
 use repository::{
-    schema::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceLineRowRepository, InvoiceRowRepository, StorageConnection,
+    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+    StorageConnection,
 };
 
 const DESCRIPTION: &'static str =

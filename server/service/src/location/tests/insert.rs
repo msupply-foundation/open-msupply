@@ -2,8 +2,8 @@
 mod query {
     use repository::EqualFilter;
     use repository::{
-        mock::MockDataInserts, schema::LocationRow, test_db::setup_all, Location, LocationFilter,
-        LocationRepository,
+        mock::MockDataInserts, test_db::setup_all, Location, LocationFilter, LocationRepository,
+        LocationRow,
     };
 
     use crate::{

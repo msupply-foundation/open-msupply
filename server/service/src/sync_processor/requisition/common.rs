@@ -6,10 +6,9 @@ use crate::{
 use chrono::Utc;
 
 use repository::{
-    schema::{
-        NumberRowType, RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType,
-    },
-    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    NumberRowType, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
+    StorageConnection,
 };
 use util::uuid::uuid;
 

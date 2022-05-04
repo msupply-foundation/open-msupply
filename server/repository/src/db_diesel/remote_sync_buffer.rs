@@ -1,13 +1,42 @@
-use super::StorageConnection;
-
-use crate::{
-    repository_error::RepositoryError,
-    schema::{
-        diesel_schema::remote_sync_buffer::dsl as remote_sync_buffer_dsl, RemoteSyncBufferRow,
-    },
+use super::{
+    remote_sync_buffer::remote_sync_buffer::dsl as remote_sync_buffer_dsl, StorageConnection,
 };
 
+use crate::repository_error::RepositoryError;
+
 use diesel::prelude::*;
+
+use diesel_derive_enum::DbEnum;
+
+table! {
+    remote_sync_buffer (id) {
+        id -> Text,
+        table_name -> Text,
+        record_id -> Text,
+        action -> crate::db_diesel::remote_sync_buffer::RemoteSyncBufferActionMapping,
+        data -> Text,
+    }
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RemoteSyncBufferAction {
+    Create,
+    Update,
+    Delete,
+    Merge,
+}
+
+#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Eq)]
+#[table_name = "remote_sync_buffer"]
+pub struct RemoteSyncBufferRow {
+    /// the sync id
+    pub id: String,
+    pub table_name: String,
+    pub record_id: String,
+    pub action: RemoteSyncBufferAction,
+    pub data: String,
+}
 
 pub struct RemoteSyncBufferRepository<'a> {
     connection: &'a StorageConnection,

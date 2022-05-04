@@ -1,7 +1,7 @@
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing, SyncProcessor};
 use chrono::Utc;
 use repository::{
-    schema::{RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
     RequisitionRowRepository, StorageConnection,
 };
 

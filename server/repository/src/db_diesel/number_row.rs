@@ -1,11 +1,42 @@
-use super::StorageConnection;
+use super::{number_row::number::dsl as number_dsl, StorageConnection};
 
-use crate::{
-    repository_error::RepositoryError,
-    schema::{diesel_schema::number::dsl as number_dsl, NumberRow, NumberRowType},
-};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
+
+use diesel_derive_enum::DbEnum;
+
+table! {
+    number (id) {
+        id -> Text,
+        value -> BigInt,
+        store_id -> Text,
+        #[sql_name = "type"] type_ -> crate::db_diesel::number_row::NumberRowTypeMapping,
+    }
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum NumberRowType {
+    InboundShipment,
+    OutboundShipment,
+    InventoryAdjustment,
+    RequestRequisition,
+    ResponseRequisition,
+    Stocktake,
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[table_name = "number"]
+pub struct NumberRow {
+    pub id: String,
+    pub value: i64,
+    /// Note, store id will be needed mainly for sync.
+    pub store_id: String,
+    // Table
+    #[column_name = "type_"]
+    pub r#type: NumberRowType,
+}
 
 pub struct NumberRowRepository<'a> {
     connection: &'a StorageConnection,

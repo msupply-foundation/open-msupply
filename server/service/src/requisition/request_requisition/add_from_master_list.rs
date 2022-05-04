@@ -4,10 +4,10 @@ use crate::{
 };
 use repository::EqualFilter;
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     MasterList, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
     MasterListRepository, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRowRepository, StorageConnection,
+    RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
 };
 
 use super::generate_requisition_lines;
@@ -151,8 +151,8 @@ mod test {
             test_item_stats::{self},
             MockData, MockDataInserts,
         },
-        schema::{MasterListLineRow, MasterListNameJoinRow, MasterListRow},
         test_db::{setup_all, setup_all_with_data},
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
     use util::inline_init;
 

@@ -1,7 +1,4 @@
-use repository::{
-    schema::{NumberRow, NumberRowType},
-    NumberRowRepository, StorageConnection,
-};
+use repository::{NumberRow, NumberRowRepository, NumberRowType, StorageConnection};
 use util::{inline_edit, uuid::uuid};
 
 use super::remote_sync_integration_test::{gen_i64, SyncRecordTester};

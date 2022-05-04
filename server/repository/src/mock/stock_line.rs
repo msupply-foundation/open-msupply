@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 
-use crate::schema::StockLineRow;
+use crate::StockLineRow;
 
 pub fn mock_stock_line_a() -> StockLineRow {
     StockLineRow {

@@ -1,7 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    schema::StocktakeLineRow, ItemFilter, ItemRepository, LocationFilter, LocationRepository,
-    RepositoryError, StocktakeLineRowRepository, StorageConnection,
+    ItemFilter, ItemRepository, LocationFilter, LocationRepository, RepositoryError,
+    StocktakeLineRow, StocktakeLineRowRepository, StorageConnection,
 };
 
 pub fn check_stocktake_line_exist(

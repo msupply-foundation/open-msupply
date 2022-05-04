@@ -1,10 +1,46 @@
+use super::{consumption::consumption::dsl as consumption_dsl, StorageConnection};
+
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
-    schema::{diesel_schema::consumption::dsl as consumption_dsl, ConsumptionRow},
-    DateFilter, EqualFilter, RepositoryError, StorageConnection,
+    DateFilter, EqualFilter, RepositoryError,
 };
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
+
+table! {
+    consumption (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        quantity -> Integer,
+        date -> Date,
+    }
+}
+
+use chrono::NaiveDate;
+use util::Defaults;
+
+#[derive(Clone, Queryable, Debug, PartialEq)]
+pub struct ConsumptionRow {
+    pub id: String,
+    pub item_id: String,
+    pub store_id: String,
+    pub quantity: i32,
+    pub date: NaiveDate,
+}
+
+impl Default for ConsumptionRow {
+    fn default() -> Self {
+        Self {
+            date: Defaults::naive_date(),
+            // Default
+            id: Default::default(),
+            item_id: Default::default(),
+            store_id: Default::default(),
+            quantity: Default::default(),
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct ConsumptionFilter {

@@ -1,7 +1,5 @@
 use actix_web::web::Data;
-use repository::schema::NameRow;
-use repository::NameRowRepository;
-use repository::RepositoryError;
+use repository::{NameRow, NameRowRepository, RepositoryError};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

@@ -1,5 +1,5 @@
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
-use repository::schema::ChangelogTableName;
+use repository::ChangelogTableName;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 mod invoice;

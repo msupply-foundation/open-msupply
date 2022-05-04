@@ -1,9 +1,8 @@
 use crate::WithDBError;
 use repository::EqualFilter;
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType},
-    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository, RepositoryError,
-    StorageConnection,
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRow, InvoiceRowRepository,
+    InvoiceRowStatus, InvoiceRowType, RepositoryError, StorageConnection,
 };
 
 pub struct WrongInvoiceRowType;

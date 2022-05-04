@@ -1,5 +1,5 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::schema::{CentralSyncBufferRow, MasterListRow};
+use repository::{CentralSyncBufferRow, MasterListRow};
 
 const MASTER_LIST_1: (&'static str, &'static str) = (
     "87027C44835B48E6989376F42A58F7E3",

@@ -6,7 +6,7 @@ mod graphql {
     };
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition_all_fields, MockDataInserts},
-        schema::{RequisitionRowStatus, RequisitionRowType},
+        requisition_row::{RequisitionRowStatus, RequisitionRowType},
         Requisition, RequisitionFilter, RequisitionSort, RequisitionSortField,
         StorageConnectionManager,
     };

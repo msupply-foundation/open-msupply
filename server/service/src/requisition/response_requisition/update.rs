@@ -5,7 +5,7 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
@@ -136,7 +136,7 @@ mod test_update {
             mock_new_response_requisition, mock_sent_request_requisition, mock_user_account_b,
             MockDataInserts,
         },
-        schema::{RequisitionRow, RequisitionRowStatus},
+        requisition_row::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
         RequisitionRowRepository,
     };

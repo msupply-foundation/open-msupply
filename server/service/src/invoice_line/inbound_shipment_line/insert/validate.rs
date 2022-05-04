@@ -13,10 +13,7 @@ use crate::{
         LocationDoesNotExist, PackSizeBelowOne,
     },
 };
-use repository::{
-    schema::{InvoiceRow, InvoiceRowType, ItemRow},
-    StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
 
 use super::{InsertInboundShipmentLine, InsertInboundShipmentLineError};
 

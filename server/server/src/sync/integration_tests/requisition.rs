@@ -1,9 +1,9 @@
 use chrono::NaiveDate;
 use repository::{
     mock::mock_request_draft_requisition,
-    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    EqualFilter, ItemFilter, ItemRepository, NameFilter, NameRepository,
-    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    EqualFilter, ItemFilter, ItemRepository, NameFilter, NameRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorageConnection,
 };
 use util::{inline_edit, uuid::uuid};
 

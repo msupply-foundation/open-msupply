@@ -1,11 +1,35 @@
-use super::StorageConnection;
-
-use crate::{
-    repository_error::RepositoryError,
-    schema::user_store_join::{user_store_join::dsl as user_store_join_dsl, UserStoreJoinRow},
+use super::{
+    store_row::store, user_row::user_account,
+    user_store_join_row::user_store_join::dsl as user_store_join_dsl, StorageConnection,
 };
 
+use crate::repository_error::RepositoryError;
+
 use diesel::prelude::*;
+
+table! {
+  user_store_join (id) {
+      id -> Text,
+      user_id -> Text,
+      store_id -> Text,
+      is_default -> Bool,
+  }
+}
+
+joinable!(user_store_join -> user_account (user_id));
+joinable!(user_store_join -> store (store_id));
+
+allow_tables_to_appear_in_same_query!(user_store_join, user_account);
+allow_tables_to_appear_in_same_query!(user_store_join, store);
+
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[table_name = "user_store_join"]
+pub struct UserStoreJoinRow {
+    pub id: String,
+    pub user_id: String,
+    pub store_id: String,
+    pub is_default: bool,
+}
 
 pub struct UserStoreJoinRowRepository<'a> {
     connection: &'a StorageConnection,

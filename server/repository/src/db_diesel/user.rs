@@ -1,20 +1,16 @@
 use std::collections::HashMap;
 
-use super::{DBType, StorageConnection};
+use super::{
+    store_row::{store, store::dsl as store_dsl},
+    user_row::{user_account, user_account::dsl as user_dsl},
+    user_store_join_row::{user_store_join, user_store_join::dsl as user_store_join_dsl},
+    DBType, StorageConnection, StoreRow, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
+};
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{user_account, user_account::dsl as user_dsl},
-        store::{store, store::dsl as store_dsl},
-        user_permission::UserPermissionRow,
-        user_store_join::{
-            user_store_join, user_store_join::dsl as user_store_join_dsl, UserStoreJoinRow,
-        },
-        StoreRow, UserAccountRow,
-    },
+    EqualFilter, Pagination, SimpleStringFilter, Sort,
 };
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{
     dsl::{Eq, IntoBoxed, LeftJoin},

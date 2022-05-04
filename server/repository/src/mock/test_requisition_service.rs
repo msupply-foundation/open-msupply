@@ -1,9 +1,10 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::schema::{
+use crate::{
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    MasterListRow, RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType,
+    MasterListRow, RequisitionLineRow, RequisitionRow,
 };
 
 use super::{

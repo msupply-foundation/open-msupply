@@ -1,8 +1,8 @@
 use chrono::Utc;
 
 use repository::{
-    schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType},
-    Name, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceRowStatus, InvoiceRowType, Name, NumberRowType, RepositoryError,
+    StorageConnection,
 };
 
 use crate::number::next_number;
