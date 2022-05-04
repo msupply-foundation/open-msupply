@@ -1,4 +1,6 @@
-use super::{stocktake_row::stocktake::dsl as stocktake_dsl, StorageConnection};
+use super::{
+    stocktake_row::stocktake::dsl as stocktake_dsl, user_row::user_account, StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
@@ -24,6 +26,8 @@ table! {
         is_locked -> Bool,
     }
 }
+
+joinable!(stocktake -> user_account (user_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

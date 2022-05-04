@@ -1,4 +1,4 @@
-use super::{master_list_line_row::master_list_line::dsl::*, StorageConnection};
+use super::{master_list_line_row::master_list_line::dsl::*, StorageConnection, master_list_row::master_list, item_row::item};
 
 use crate::repository_error::RepositoryError;
 
@@ -11,6 +11,9 @@ table! {
         master_list_id -> Text,
     }
 }
+
+joinable!(master_list_line -> master_list (master_list_id));
+joinable!(master_list_line -> item (item_id));
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
 #[table_name = "master_list_line"]
