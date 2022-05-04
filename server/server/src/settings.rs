@@ -12,7 +12,6 @@ pub struct Settings {
     pub server: ServerSettings,
     pub database: DatabaseSettings,
     pub sync: Option<SyncSettings>,
-    pub auth: AuthSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -31,11 +30,6 @@ impl ServerSettings {
     pub fn address(&self) -> String {
         format!("{}:{}", self.host, self.port)
     }
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct AuthSettings {
-    pub token_secret: String,
 }
 
 pub enum SettingsError {
