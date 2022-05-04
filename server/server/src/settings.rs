@@ -29,7 +29,7 @@ pub struct ServerSettings {
     // allow any origin in development mode
     pub debug_cors_permissive: bool,
     //  Sets the allowed origin for cors requests
-    pub cors_origin: String,
+    pub cors_origins: Vec<String>,
 }
 
 impl ServerSettings {

@@ -160,7 +160,7 @@ async fn run_server(
         debug_no_access_control: config_settings.server.develop
             && config_settings.server.debug_no_access_control,
     });
-    let cors_origin = config_settings.server.cors_origin.clone();
+    let cors_origins = config_settings.server.cors_origins.clone();
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
@@ -201,8 +201,7 @@ async fn run_server(
         let cors = if cors_permsissive_mode {
             Cors::permissive()
         } else {
-            Cors::default()
-                .allowed_origin(&cors_origin)
+            let mut cors_tmp = Cors::default()
                 .supports_credentials()
                 .allowed_methods(vec!["GET", "POST", "OPTIONS"])
                 .allowed_headers(vec![
@@ -210,7 +209,11 @@ async fn run_server(
                     header::ACCEPT,
                     header::CONTENT_TYPE,
                 ])
-                .max_age(3600)
+                .max_age(3600);
+            for origin in cors_origins.iter() {
+                cors_tmp = cors_tmp.allowed_origin(origin);
+            }
+            cors_tmp
         };
         App::new()
             .wrap(logger_middleware())
