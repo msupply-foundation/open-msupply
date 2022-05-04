@@ -106,7 +106,9 @@ fn map_error(error: ServiceError) -> Result<InsertLocationErrorInterface> {
 mod test {
 
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_standard_graphql_error, test_helpers::setup_graphl_test};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{mock::MockDataInserts, Location, LocationRow, StorageConnectionManager};
     use serde_json::json;
 
