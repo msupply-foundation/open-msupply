@@ -1,8 +1,8 @@
 use async_graphql::*;
 use dataloader::DataLoader;
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowType},
-    RequisitionLine,
+    requisition_row::{RequisitionRow, RequisitionRowType},
+    RequisitionLine, RequisitionLineRow,
 };
 use service::{item_stats::ItemStats, usize_to_u32, ListResult};
 

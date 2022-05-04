@@ -1,7 +1,6 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
 use repository::{
-    schema::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceFilter, InvoiceRepository, RepositoryError,
+    InvoiceFilter, InvoiceRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
 };
 use repository::{DatetimeFilter, EqualFilter};
 

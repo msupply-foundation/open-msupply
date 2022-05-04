@@ -3,7 +3,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
-        schema::RequisitionRowType,
+        requisition_row::RequisitionRowType,
         RepositoryError, Requisition, StorageConnectionManager,
     };
     use serde_json::json;

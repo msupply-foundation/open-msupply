@@ -1,10 +1,8 @@
 use repository::EqualFilter;
 use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType, ItemRow, ItemRowType,
-    },
-    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
-    RepositoryError, StorageConnection,
+    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType, ItemRow,
+    ItemRowType, RepositoryError, StorageConnection,
 };
 
 use crate::invoice_line::query::get_invoice_line;
@@ -162,9 +160,8 @@ mod test_insert {
             mock_new_invoice_with_unallocated_line, mock_unallocated_line, mock_unallocated_line2,
             MockDataInserts,
         },
-        schema::{InvoiceLineRow, InvoiceLineRowType},
         test_db::setup_all,
-        InvoiceLineRowRepository, ItemRowRepository,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, ItemRowRepository,
     };
 
     use crate::{

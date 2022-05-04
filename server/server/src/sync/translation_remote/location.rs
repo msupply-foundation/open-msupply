@@ -1,5 +1,5 @@
 use repository::{
-    schema::{ChangelogRow, ChangelogTableName, LocationRow, RemoteSyncBufferRow},
+    RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, LocationRow,
     LocationRowRepository, StorageConnection,
 };
 use serde::{Deserialize, Serialize};

@@ -2,9 +2,8 @@ use std::{collections::HashMap, time::SystemTime};
 
 use chrono::{DateTime, Utc};
 use repository::{
-    schema::report::{ReportRow, ReportType},
-    PaginationOption, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
-    RepositoryError,
+    PaginationOption, ReportFilter, ReportRepository, ReportRow, ReportRowRepository, ReportSort,
+    ReportType, RepositoryError,
 };
 use util::uuid::uuid;
 
@@ -418,10 +417,8 @@ mod report_service_test {
     use std::collections::HashMap;
 
     use repository::{
-        mock::MockDataInserts,
-        schema::report::{ReportCategory, ReportRow, ReportType},
-        test_db::setup_all,
-        ReportRowRepository,
+        mock::MockDataInserts, test_db::setup_all, ReportCategory, ReportRow, ReportRowRepository,
+        ReportType,
     };
 
     use crate::{

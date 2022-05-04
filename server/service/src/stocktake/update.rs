@@ -1,15 +1,11 @@
 use chrono::{NaiveDate, Utc};
-use repository::schema::StocktakeLineRow;
 use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        NumberRowType, StockLineRow, StocktakeRow, StocktakeStatus,
-    },
-    InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, NameRowRepository,
-    RepositoryError, StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter,
-    StocktakeLineRepository, StocktakeRowRepository, StorageConnection,
+    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
+    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository, NameRowRepository,
+    NumberRowType, RepositoryError, StockLineRow, StockLineRowRepository, Stocktake, StocktakeLine,
+    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository,
+    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
-use repository::{EqualFilter, StocktakeLineRowRepository};
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
@@ -473,10 +469,9 @@ mod test {
             mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a,
             MockDataInserts,
         },
-        schema::{InvoiceLineRowType, StocktakeRow, StocktakeStatus},
         test_db::setup_all,
-        InvoiceLineRowRepository, StockLineRowRepository, StocktakeLine,
-        StocktakeLineRowRepository, StocktakeRepository,
+        InvoiceLineRowRepository, InvoiceLineRowType, StockLineRowRepository, StocktakeLine,
+        StocktakeLineRowRepository, StocktakeRepository, StocktakeRow, StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
 

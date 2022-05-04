@@ -1,5 +1,5 @@
 use repository::{
-    schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     StorageConnection,
 };
 

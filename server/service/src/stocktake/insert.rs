@@ -1,10 +1,7 @@
 use chrono::{NaiveDate, Utc};
-use repository::schema::StocktakeStatus;
-use repository::EqualFilter;
 use repository::{
-    schema::{NumberRowType, StocktakeRow},
-    RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository, StocktakeRowRepository,
-    StorageConnection,
+    EqualFilter, NumberRowType, RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository,
+    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 
 use crate::{number::next_number, service_provider::ServiceContext, validate::check_store_exists};
@@ -115,9 +112,8 @@ mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{mock_stocktake_a, mock_store_a, mock_user_account_a, MockDataInserts},
-        schema::{StocktakeRow, StocktakeStatus},
         test_db::setup_all,
-        StocktakeRowRepository,
+        StocktakeRow, StocktakeRowRepository, StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
 

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::schema::{
+use crate::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow,
 };
 

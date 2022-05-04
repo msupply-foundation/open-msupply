@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveTime};
-use repository::schema::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
-    StocktakeRow, StocktakeStatus,
+use repository::{
+    RemoteSyncBufferAction, RemoteSyncBufferRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeStatus,
 };
 use serde_json::json;
 

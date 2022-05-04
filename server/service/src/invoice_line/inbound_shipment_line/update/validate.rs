@@ -12,10 +12,7 @@ use crate::{
         BatchIsReserved, LocationDoesNotExist, PackSizeBelowOne,
     },
 };
-use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow},
-    StorageConnection,
-};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
 
 use super::{UpdateInboundShipmentLine, UpdateInboundShipmentLineError};
 

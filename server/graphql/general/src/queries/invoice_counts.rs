@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::schema::{InvoiceRowStatus, InvoiceRowType};
+use repository::{InvoiceRowStatus, InvoiceRowType};
 use service::{
     dashboard::invoice_count::{CountTimeRange, InvoiceCountError},
     permission_validation::{Resource, ResourceAccessRequest},

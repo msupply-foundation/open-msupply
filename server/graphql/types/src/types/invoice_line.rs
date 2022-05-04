@@ -8,10 +8,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType},
-    InvoiceLine,
-};
+use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineRowType};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -211,8 +208,7 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        mock::MockDataInserts,
-        schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow},
+        mock::MockDataInserts, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow,
     };
     use serde_json::json;
     use util::inline_init;

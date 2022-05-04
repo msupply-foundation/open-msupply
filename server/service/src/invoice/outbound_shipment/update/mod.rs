@@ -1,6 +1,5 @@
-use repository::Invoice;
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLine, InvoiceRowRepository, RepositoryError,
+    Invoice, InvoiceLine, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository, TransactionError,
 };
 
@@ -142,9 +141,8 @@ impl UpdateOutboundShipment {
 mod test {
     use repository::{
         mock::{mock_name_a, mock_outbound_shipment_a, mock_store_a, MockData, MockDataInserts},
-        schema::{InvoiceRow, InvoiceRowType, NameRow, NameStoreJoinRow},
         test_db::setup_all_with_data,
-        InvoiceRowRepository,
+        InvoiceRow, InvoiceRowRepository, InvoiceRowType, NameRow, NameStoreJoinRow,
     };
     use util::{inline_edit, inline_init};
 

@@ -1,7 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::StocktakeLineRow, RepositoryError, StocktakeLine, StocktakeLineRowRepository,
-    StorageConnection,
+    RepositoryError, StocktakeLine, StocktakeLineRow, StocktakeLineRowRepository, StorageConnection,
 };
 
 use crate::{
@@ -154,8 +153,8 @@ mod stocktake_line_test {
             mock_locations, mock_locked_stocktake_line, mock_stocktake_line_a,
             mock_stocktake_line_finalised, mock_store_a, MockDataInserts,
         },
-        schema::StocktakeLineRow,
         test_db::setup_all,
+        StocktakeLineRow,
     };
     use util::inline_init;
 

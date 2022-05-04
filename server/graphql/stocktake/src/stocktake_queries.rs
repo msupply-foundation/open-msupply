@@ -229,8 +229,8 @@ mod test {
     use repository::PaginationOption;
     use repository::{
         mock::{mock_stocktake_a, MockDataInserts},
-        schema::{StocktakeRow, StocktakeStatus},
-        Stocktake, StocktakeFilter, StocktakeSort, StorageConnectionManager,
+        Stocktake, StocktakeFilter, StocktakeRow, StocktakeSort, StocktakeStatus,
+        StorageConnectionManager,
     };
     use serde_json::json;
     use service::{

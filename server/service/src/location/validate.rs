@@ -1,7 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    schema::LocationRow, LocationFilter, LocationRepository, LocationRowRepository,
-    RepositoryError, StorageConnection,
+    LocationFilter, LocationRepository, LocationRow, LocationRowRepository, RepositoryError,
+    StorageConnection,
 };
 
 pub fn check_location_code_is_unique(

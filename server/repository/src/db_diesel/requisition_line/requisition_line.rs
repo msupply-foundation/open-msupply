@@ -1,14 +1,8 @@
 use crate::{
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{
-            requisition, requisition::dsl as requisition_dsl, requisition_line,
-            requisition_line::dsl as requisition_line_dsl,
-        },
-        RequisitionLineRow, RequisitionRow,
-    },
-    DBType, StorageConnection,
+    requisition_row::{requisition, requisition::dsl as requisition_dsl},
+    DBType, RequisitionRow, StorageConnection,
 };
 
 use crate::Pagination;
@@ -17,7 +11,10 @@ use diesel::{
     prelude::*,
 };
 
-use super::RequisitionLineFilter;
+use super::{
+    requisition_line_row::{requisition_line, requisition_line::dsl as requisition_line_dsl},
+    RequisitionLineFilter, RequisitionLineRow,
+};
 
 pub type RequisitionLineJoin = (RequisitionLineRow, RequisitionRow);
 

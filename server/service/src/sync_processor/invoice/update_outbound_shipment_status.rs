@@ -1,8 +1,5 @@
 use crate::sync_processor::{ProcessRecordError, Record, RecordForProcessing, SyncProcessor};
-use repository::{
-    schema::{InvoiceRowStatus, InvoiceRowType},
-    InvoiceRowRepository, StorageConnection,
-};
+use repository::{InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, StorageConnection};
 
 const DESCRIPTION: &'static str = "Update outbound shipment status from inbound shipment";
 

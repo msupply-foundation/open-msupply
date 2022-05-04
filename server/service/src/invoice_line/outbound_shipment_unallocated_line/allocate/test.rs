@@ -7,9 +7,9 @@ mod test {
             mock_item_a, mock_item_b, mock_name_a, mock_outbound_shipment_a_invoice_lines,
             mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
-        schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, StockLineRow},
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRowRepository, RepositoryError, StockLine,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowType,
+        RepositoryError, StockLine, StockLineRow,
     };
     use util::{
         constants::stock_line_expiring_soon_offset, date_now, date_now_with_offset, inline_edit,

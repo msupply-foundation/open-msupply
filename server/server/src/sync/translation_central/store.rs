@@ -1,5 +1,5 @@
 use crate::sync::translation_central::TRANSLATION_RECORD_STORE;
-use repository::schema::{CentralSyncBufferRow, StoreRow};
+use repository::{CentralSyncBufferRow, StoreRow};
 
 use serde::Deserialize;
 

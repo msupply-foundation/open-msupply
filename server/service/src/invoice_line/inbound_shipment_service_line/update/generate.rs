@@ -1,4 +1,4 @@
-use repository::schema::{InvoiceLineRow, ItemRow};
+use repository::{InvoiceLineRow, ItemRow};
 
 use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError};
 

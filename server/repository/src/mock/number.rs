@@ -1,4 +1,4 @@
-use crate::schema::{NumberRow, NumberRowType};
+use crate::{NumberRow, NumberRowType};
 
 pub fn mock_inbound_shipment_number_store_a() -> NumberRow {
     NumberRow {

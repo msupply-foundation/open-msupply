@@ -11,7 +11,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::schema::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
+use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
 
 use repository::{unknown_user, Invoice};
 use serde::Serialize;
@@ -392,8 +392,7 @@ mod test {
             mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
             MockDataInserts,
         },
-        schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow},
-        Invoice,
+        Invoice, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
     };
     use serde_json::json;
     use util::inline_init;

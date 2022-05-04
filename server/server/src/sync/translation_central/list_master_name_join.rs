@@ -1,5 +1,5 @@
 use crate::sync::translation_central::TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN;
-use repository::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
+use repository::{CentralSyncBufferRow, MasterListNameJoinRow};
 
 use serde::Deserialize;
 

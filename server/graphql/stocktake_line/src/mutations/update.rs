@@ -143,8 +143,7 @@ mod test {
     };
     use repository::{
         mock::{mock_location_1, mock_stock_line_a, MockDataInserts},
-        schema::StocktakeLineRow,
-        StocktakeLine, StorageConnectionManager,
+        StocktakeLine, StocktakeLineRow, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{

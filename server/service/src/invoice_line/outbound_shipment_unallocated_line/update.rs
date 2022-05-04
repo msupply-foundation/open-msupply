@@ -4,8 +4,8 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType},
-    InvoiceLine, InvoiceLineRowRepository, RepositoryError, StorageConnection,
+    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, RepositoryError,
+    StorageConnection,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateOutboundShipmentUnallocatedLine {

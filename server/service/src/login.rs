@@ -5,12 +5,7 @@ use std::{
 
 use log::info;
 use repository::{
-    schema::{
-        user_permission::{Permission, UserPermissionRow},
-        user_store_join::UserStoreJoinRow,
-        UserAccountRow,
-    },
-    RepositoryError,
+    Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use util::uuid::uuid;

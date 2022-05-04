@@ -28,6 +28,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
+use util::uuid::uuid;
 
 pub mod configuration;
 pub mod environment;
@@ -41,13 +42,14 @@ async fn run_stage0(
     settings: Settings,
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
+    token_secret: String,
     connection_manager: StorageConnectionManager,
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
-        auth_token_secret: settings.auth.token_secret.to_owned(),
+        auth_token_secret: token_secret,
         token_bucket,
         debug_no_ssl: settings.server.develop && matches!(cert_type, ServerCertType::None),
         debug_no_access_control: settings.server.develop && settings.server.debug_no_access_control,
@@ -126,6 +128,7 @@ async fn run_server(
     prefer_config_settings: bool,
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
+    token_secret: String,
     connection_manager: StorageConnectionManager,
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(connection_manager.clone());
@@ -146,6 +149,7 @@ async fn run_server(
                 config_settings,
                 off_switch,
                 token_bucket.clone(),
+                token_secret,
                 connection_manager,
             )
             .await
@@ -154,8 +158,8 @@ async fn run_server(
 
     let cert_type = find_certs();
     let auth_data = Data::new(AuthData {
-        auth_token_secret: config_settings.auth.token_secret.to_owned(),
         token_bucket: token_bucket.clone(),
+        auth_token_secret: token_secret.clone(),
         debug_no_ssl: config_settings.server.develop && matches!(cert_type, ServerCertType::None),
         debug_no_access_control: config_settings.server.develop
             && config_settings.server.debug_no_access_control,
@@ -186,6 +190,7 @@ async fn run_server(
                     config_settings,
                     off_switch,
                     token_bucket,
+                    token_secret,
                     connection_manager,
                 )
                 .await;
@@ -279,12 +284,14 @@ pub async fn start_server(
     let off_switch = Arc::new(Mutex::new(off_switch));
     let mut prefer_config_settings = true;
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
+    let token_secret = uuid();
     loop {
         match run_server(
             config_settings.clone(),
             prefer_config_settings,
             off_switch.clone(),
             token_bucket.clone(),
+            token_secret.clone(),
             connection_manager.clone(),
         )
         .await

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use repository::{
-    schema::report::{ReportCategory, ReportRow, ReportType},
+    ReportCategory, ReportRow, ReportType,
     ReportRowRepository, RepositoryError, StorageConnection,
 };
 

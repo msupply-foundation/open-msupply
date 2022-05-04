@@ -1,17 +1,15 @@
-use super::{DBType, StorageConnection};
+use super::{
+    name_row::{name, name::dsl as name_dsl},
+    name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
+    store_row::{store, store::dsl as store_dsl},
+    DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
+};
+
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{
-            name, name::dsl as name_dsl, name_store_join,
-            name_store_join::dsl as name_store_join_dsl,
-        },
-        store::{store, store::dsl as store_dsl},
-        NameRow, NameStoreJoinRow, StoreRow,
-    },
+    EqualFilter, Pagination, SimpleStringFilter, Sort,
 };
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::{
     dsl::{And, Eq, IntoBoxed, LeftJoin},
@@ -286,13 +284,10 @@ mod tests {
     use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
     use crate::{
+        mock::MockDataInserts,
         mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
-        test_db, NameFilter, Pagination, SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
-        {
-            db_diesel::{NameRepository, NameRowRepository},
-            mock::MockDataInserts,
-            schema::NameRow,
-        },
+        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination,
+        SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use std::convert::TryFrom;

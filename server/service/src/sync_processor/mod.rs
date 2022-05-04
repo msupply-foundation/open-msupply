@@ -1,8 +1,8 @@
 use repository::EqualFilter;
 use repository::{
-    schema::{InvoiceRow, NameRow, RequisitionRow, StoreRow},
-    InvoiceFilter, InvoiceRepository, NameRowRepository, RepositoryError, RequisitionFilter,
-    RequisitionRepository, StorageConnection, StoreRowRepository,
+    InvoiceFilter, InvoiceRepository, InvoiceRow, NameRow, NameRowRepository, RepositoryError,
+    RequisitionFilter, RequisitionRepository, RequisitionRow, StorageConnection, StoreRow,
+    StoreRowRepository,
 };
 
 use self::{

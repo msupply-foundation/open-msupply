@@ -2,8 +2,8 @@ use chrono::Utc;
 
 use repository::Name;
 use repository::{
-    schema::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow},
-    InvoiceLineRowRepository, StockLineRowRepository, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
+    StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};

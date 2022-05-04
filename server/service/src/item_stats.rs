@@ -3,9 +3,9 @@ use std::{collections::HashMap, ops::Neg};
 use crate::{i64_to_u32, service_provider::ServiceContext};
 use chrono::Duration;
 use repository::{
-    schema::{ConsumptionRow, RequisitionLineRow, StockOnHandRow},
-    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, RepositoryError,
-    StockOnHandFilter, StockOnHandRepository, StorageConnection,
+    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
+    RepositoryError, RequisitionLineRow, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
+    StorageConnection,
 };
 use util::{
     constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},

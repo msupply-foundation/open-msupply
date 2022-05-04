@@ -4,9 +4,9 @@ use crate::{
 };
 use repository::EqualFilter;
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
-    RequisitionLineRowRepository, StorageConnection,
+    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq)]

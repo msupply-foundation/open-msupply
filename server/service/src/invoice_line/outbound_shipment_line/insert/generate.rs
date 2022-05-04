@@ -1,5 +1,5 @@
 use crate::u32_to_i32;
-use repository::schema::{
+use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
 

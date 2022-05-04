@@ -1,6 +1,6 @@
 use repository::EqualFilter;
 use repository::{
-    schema::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;

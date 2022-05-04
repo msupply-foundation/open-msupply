@@ -7,7 +7,7 @@ use crate::{
     service_provider::ServiceContext,
 };
 use repository::{
-    schema::{RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
     EqualFilter, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
     RequisitionRowRepository, StorageConnection,
 };

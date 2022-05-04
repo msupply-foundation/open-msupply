@@ -1,5 +1,5 @@
 use repository::{
-    schema::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter,
+    requisition_row::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter,
     RequisitionRepository, RequisitionSort,
 };
 use repository::{EqualFilter, PaginationOption};

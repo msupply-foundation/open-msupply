@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use repository::{
-    schema::user_permission::{Permission, UserPermissionRow},
-    EqualFilter, RepositoryError, UserPermissionFilter, UserPermissionRepository,
+    EqualFilter, Permission, RepositoryError, UserPermissionFilter, UserPermissionRepository,
+    UserPermissionRow,
 };
 
 use crate::{
@@ -450,11 +450,8 @@ mod permission_validation_test {
     };
     use repository::{
         mock::{mock_user_account_a, MockData, MockDataInserts},
-        schema::{
-            user_permission::{self, UserPermissionRow},
-            NameRow, StoreRow, UserAccountRow,
-        },
         test_db::{setup_all, setup_all_with_data},
+        NameRow, Permission, StoreRow, UserAccountRow, UserPermissionRow,
         UserPermissionRowRepository,
     };
     use util::inline_init;
@@ -603,13 +600,13 @@ mod permission_validation_test {
                     id: "permission_requisition_mutation".to_string(),
                     user_id: user().id,
                     store_id: Some(store().id),
-                    permission: user_permission::Permission::RequisitionMutate,
+                    permission: Permission::RequisitionMutate,
                 },
                 UserPermissionRow {
                     id: "permission_store_access".to_string(),
                     user_id: user().id,
                     store_id: Some(store().id),
-                    permission: user_permission::Permission::StoreAccess,
+                    permission: Permission::StoreAccess,
                 },
             ]
         }

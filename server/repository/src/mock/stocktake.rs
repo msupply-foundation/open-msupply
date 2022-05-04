@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::schema::StocktakeRow;
+use crate::StocktakeRow;
 
 pub fn mock_stocktake_a() -> StocktakeRow {
     inline_init(|r: &mut StocktakeRow| {

@@ -1,9 +1,6 @@
 use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{
-    schema::{StocktakeRow, StocktakeStatus},
-    unknown_user,
-};
+use repository::{unknown_user, StocktakeRow, StocktakeStatus};
 use serde::Serialize;
 
 use graphql_core::{
@@ -144,8 +141,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        schema::StocktakeRow,
-        unknown_user,
+        unknown_user, StocktakeRow,
     };
     use serde_json::json;
     use util::inline_init;

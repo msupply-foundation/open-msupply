@@ -2,8 +2,8 @@ use std::ops::Neg;
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    schema::StockMovementRow, DatetimeFilter, EqualFilter, RepositoryError, StockMovementFilter,
-    StockMovementRepository, StorageConnection,
+    DatetimeFilter, EqualFilter, RepositoryError, StockMovementFilter, StockMovementRepository,
+    StockMovementRow, StorageConnection,
 };
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_with_days_offset};
 

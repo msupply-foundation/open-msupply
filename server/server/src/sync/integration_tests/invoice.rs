@@ -1,13 +1,10 @@
 use chrono::NaiveDate;
 use repository::{
     mock::{mock_outbound_shipment_a, mock_request_draft_requisition},
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        LocationRow,
-    },
-    EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, ItemFilter, ItemRepository,
-    LocationRowRepository, NameFilter, NameRepository, RequisitionRowRepository, StockLineFilter,
-    StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
+    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
+    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemFilter, ItemRepository,
+    LocationRow, LocationRowRepository, NameFilter, NameRepository, RequisitionRowRepository,
+    StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 use util::{inline_edit, uuid::uuid};
 

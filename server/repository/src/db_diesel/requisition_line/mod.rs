@@ -1,7 +1,7 @@
 use crate::EqualFilter;
 
 mod requisition_line;
-mod requisition_line_row;
+pub mod requisition_line_row;
 
 pub use self::requisition_line::*;
 pub use self::requisition_line_row::*;

@@ -5,11 +5,8 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        NumberRowType, RequisitionRow,
-    },
-    ItemRowRepository, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+    ItemRowRepository, NumberRowType, RequisitionRow, StorageConnection,
 };
 use util::uuid::uuid;
 

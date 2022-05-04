@@ -1,4 +1,4 @@
-use repository::schema::{
+use repository::{
     ChangelogAction, ChangelogRow, ChangelogTableName, LocationRow, RemoteSyncBufferAction,
     RemoteSyncBufferRow,
 };

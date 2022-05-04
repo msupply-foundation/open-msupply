@@ -1,10 +1,10 @@
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
-use repository::{
-    schema::InvoiceRowType, Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, RepositoryError,
-};
 use repository::{EqualFilter, PaginationOption};
+use repository::{
+    Invoice, InvoiceFilter, InvoiceRepository, InvoiceRowType, InvoiceSort, RepositoryError,
+};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -60,8 +60,8 @@ pub fn get_invoice_by_number(
 #[cfg(test)]
 mod test_query {
     use repository::{
+        db_diesel::InvoiceRowType,
         mock::{mock_unique_number_inbound_shipment, MockDataInserts},
-        schema::InvoiceRowType,
         test_db::setup_all,
     };
 

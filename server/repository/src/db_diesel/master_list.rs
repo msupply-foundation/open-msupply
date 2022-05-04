@@ -1,18 +1,17 @@
+use super::{
+    master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
+    master_list_row::{master_list, master_list::dsl as master_list_dsl},
+    name_row::name::dsl as name_dsl,
+    store_row::store::dsl as store_dsl,
+    DBType, MasterListRow, StorageConnection,
+};
+
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{
-            master_list, master_list::dsl as master_list_dsl,
-            master_list_name_join::dsl as master_list_name_join_dsl, name::dsl as name_dsl,
-        },
-        store::store::dsl as store_dsl,
-        MasterListRow,
-    },
 };
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
-use super::{DBType, StorageConnection};
+use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 use diesel::prelude::*;
 
