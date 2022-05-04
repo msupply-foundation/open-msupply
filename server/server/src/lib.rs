@@ -194,21 +194,27 @@ async fn run_server(
         }
     };
 
+    let cors_permsissive_mode =
+        config_settings.server.develop && config_settings.server.debug_cors_permissive;
+
     let mut http_server = HttpServer::new(move || {
+        let cors = if cors_permsissive_mode {
+            Cors::permissive()
+        } else {
+            Cors::default()
+                .allowed_origin(&cors_origin)
+                .supports_credentials()
+                .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+                .allowed_headers(vec![
+                    header::AUTHORIZATION,
+                    header::ACCEPT,
+                    header::CONTENT_TYPE,
+                ])
+                .max_age(3600)
+        };
         App::new()
             .wrap(logger_middleware())
-            .wrap(
-                Cors::default()
-                    .allowed_origin(&cors_origin)
-                    .supports_credentials()
-                    .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-                    .allowed_headers(vec![
-                        header::AUTHORIZATION,
-                        header::ACCEPT,
-                        header::CONTENT_TYPE,
-                    ])
-                    .max_age(3600),
-            )
+            .wrap(cors)
             .wrap(compress_middleware())
             .configure(graphql_config(
                 connection_manager_data_app.clone(),
