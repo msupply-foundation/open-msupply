@@ -4,7 +4,7 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use repository::{
-    schema::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     StorageConnection,
 };
 

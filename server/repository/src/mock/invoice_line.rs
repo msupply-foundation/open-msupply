@@ -1,4 +1,4 @@
-use crate::schema::{InvoiceLineRow, InvoiceLineRowType};
+use crate::{InvoiceLineRow, InvoiceLineRowType};
 
 use chrono::NaiveDate;
 

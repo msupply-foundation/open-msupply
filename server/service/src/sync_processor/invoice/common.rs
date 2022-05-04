@@ -5,12 +5,9 @@ use crate::{
 use chrono::Utc;
 use repository::EqualFilter;
 use repository::{
-    schema::{
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        NumberRowType,
-    },
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository,
-    RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowRepository,
+    InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+    NumberRowType, RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
 };
 use util::uuid::uuid;
 

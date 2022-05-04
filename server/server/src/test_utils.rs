@@ -1,7 +1,7 @@
 use repository::test_db::get_test_db_settings;
 use service::sync_settings::SyncSettings;
 
-use super::settings::{AuthSettings, ServerSettings, Settings};
+use super::settings::{ServerSettings, Settings};
 
 // The following settings work for PG and Sqlite (username, password, host and port are
 // ignored for the later)
@@ -23,8 +23,5 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             site_id: 1,
             site_hardware_id: "".to_string(),
         }),
-        auth: AuthSettings {
-            token_secret: "testtokensecret".to_string(),
-        },
     }
 }

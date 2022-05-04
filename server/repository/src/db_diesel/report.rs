@@ -1,12 +1,12 @@
+use super::{
+    report_row::{report, report::dsl as report_dsl},
+    ReportCategory, ReportRow, ReportType, StorageConnection,
+};
+
 use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
-use crate::schema::report::{ReportCategory, ReportRow, ReportType};
 use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
-use crate::{
-    diesel_macros::apply_simple_string_filter,
-    schema::report::{report, report::dsl as report_dsl},
-    DBType, RepositoryError, StorageConnection,
-};
+use crate::{diesel_macros::apply_simple_string_filter, DBType, RepositoryError};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 

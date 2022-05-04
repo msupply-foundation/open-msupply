@@ -1,6 +1,6 @@
 use util::inline_init;
 
-use crate::schema::RequisitionLineRow;
+use crate::RequisitionLineRow;
 
 use super::{mock_item_a, mock_request_draft_requisition, MockData};
 

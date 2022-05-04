@@ -1,21 +1,45 @@
-use super::{DBType, StorageConnection};
-use crate::{
-    diesel_macros::apply_equal_filter,
-    repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{
-            invoice, invoice::dsl as invoice_dsl, invoice_line,
-            invoice_line::dsl as invoice_line_dsl, invoice_stats::dsl as invoice_stats_dsl,
-            location, location::dsl as location_dsl,
-        },
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow, PricingRow,
-    },
+use super::{
+    invoice_line::invoice_stats::dsl as invoice_stats_dsl,
+    invoice_line_row::{invoice_line, invoice_line::dsl as invoice_line_dsl},
+    invoice_row::{invoice, invoice::dsl as invoice_dsl},
+    location_row::{location, location::dsl as location_dsl},
+    DBType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow, StorageConnection,
 };
-use crate::{EqualFilter, Pagination};
+
+use crate::{
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, Pagination,
+};
+
 use diesel::{
     dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
+
+table! {
+    invoice_stats (invoice_id) {
+        invoice_id -> Text,
+        total_before_tax -> Double,
+        total_after_tax -> Double,
+        stock_total_before_tax -> Double,
+        stock_total_after_tax -> Double,
+        service_total_before_tax -> Double,
+        service_total_after_tax -> Double,
+        tax_percentage -> Nullable<Double>,
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq)]
+#[table_name = "invoice_stats"]
+pub struct PricingRow {
+    pub invoice_id: String,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub stock_total_before_tax: f64,
+    pub stock_total_after_tax: f64,
+    pub service_total_before_tax: f64,
+    pub service_total_after_tax: f64,
+    pub tax_percentage: Option<f64>,
+}
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InvoiceLine {

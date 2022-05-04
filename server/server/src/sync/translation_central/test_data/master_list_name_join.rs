@@ -1,5 +1,5 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::schema::{CentralSyncBufferRow, MasterListNameJoinRow};
+use repository::{CentralSyncBufferRow, MasterListNameJoinRow};
 
 const LIST_MASTER_NAME_JOIN_1: (&'static str, &'static str) = (
     "A7A06D78361041448B836857ED4330C4",

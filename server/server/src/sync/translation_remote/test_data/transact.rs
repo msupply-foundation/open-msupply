@@ -1,5 +1,5 @@
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::schema::{
+use repository::{
     ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus,
     InvoiceRowType, RemoteSyncBufferAction, RemoteSyncBufferRow,
 };

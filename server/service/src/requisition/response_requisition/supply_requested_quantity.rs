@@ -4,11 +4,12 @@ use crate::{
     },
     service_provider::ServiceContext,
 };
-use repository::{schema::RequisitionRow, EqualFilter, RequisitionRowRepository};
+
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
-    RequisitionLineRowRepository, StorageConnection,
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq)]

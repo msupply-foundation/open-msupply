@@ -6,7 +6,7 @@ use crate::{
 };
 use repository::Invoice;
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -139,9 +139,8 @@ mod test {
         mock::{
             mock_inbound_shipment_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
-        schema::{NameRow, NameStoreJoinRow},
         test_db::setup_all_with_data,
-        InvoiceRowRepository,
+        InvoiceRowRepository, NameRow, NameStoreJoinRow,
     };
     use util::{inline_edit, inline_init};
 

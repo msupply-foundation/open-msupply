@@ -1,6 +1,6 @@
-use crate::schema::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    RequisitionLineRow, RequisitionRow, RequisitionRowType,
+use crate::{
+    requisition_row::RequisitionRowType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
+    InvoiceRowStatus, InvoiceRowType, RequisitionLineRow, RequisitionRow,
 };
 use util::inline_init;
 

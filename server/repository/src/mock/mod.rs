@@ -68,21 +68,19 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    schema::{user_permission::UserPermissionRow, user_store_join::UserStoreJoinRow},
-    InvoiceLineRowRepository, LocationRowRepository, NumberRowRepository,
-    RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRowRepository,
-    UserPermissionRowRepository, UserStoreJoinRowRepository,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow,
+    LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRow, UserAccountRowRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::unit::mock_units;
 
 use super::{
-    db_diesel::{
-        InvoiceRowRepository, ItemRowRepository, NameRowRepository, NameStoreJoinRepository,
-        StorageConnection, StoreRowRepository, UnitRowRepository,
-    },
-    schema::*,
+    InvoiceRowRepository, ItemRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,
+    NameStoreJoinRow, StockLineRow, StocktakeLineRow, StocktakeRow, StorageConnection, StoreRow,
+    StoreRowRepository, UnitRow, UnitRowRepository,
 };
 
 #[derive(Default, Clone)]

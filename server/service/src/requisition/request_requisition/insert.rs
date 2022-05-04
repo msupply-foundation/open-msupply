@@ -6,8 +6,8 @@ use crate::{
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
-    schema::{NumberRowType, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    NumberRowType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -151,9 +151,8 @@ mod test_insert {
             mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
             mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
-        schema::NameRow,
         test_db::{setup_all, setup_all_with_data},
-        RequisitionRowRepository,
+        NameRow, RequisitionRowRepository,
     };
     use util::{inline_edit, inline_init};
 

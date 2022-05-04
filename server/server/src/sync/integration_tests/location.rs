@@ -1,4 +1,4 @@
-use repository::{schema::LocationRow, LocationRowRepository, StorageConnection};
+use repository::{LocationRow, LocationRowRepository, StorageConnection};
 use util::{inline_edit, uuid::uuid};
 
 use super::remote_sync_integration_test::SyncRecordTester;

@@ -1,6 +1,5 @@
 use repository::{
-    schema::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType},
-    StorageConnection,
+    InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType, StorageConnection,
 };
 
 use crate::{

@@ -10,10 +10,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{
-    schema::{ItemRow, ItemRowType},
-    Item,
-};
+use repository::{Item, ItemRow, ItemRowType};
 use serde_json::json;
 use service::ListResult;
 

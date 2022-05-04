@@ -5,8 +5,8 @@ use crate::requisition::{
 };
 use chrono::Utc;
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus},
-    RepositoryError, RequisitionLine, StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionRowStatus},
+    RepositoryError, RequisitionLine, RequisitionLineRow, StorageConnection,
 };
 use util::inline_edit;
 

@@ -1,6 +1,6 @@
 use util::inline_init;
 
-use crate::schema::StoreRow;
+use crate::StoreRow;
 
 pub fn mock_store_a() -> StoreRow {
     inline_init(|s: &mut StoreRow| {

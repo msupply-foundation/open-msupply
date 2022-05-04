@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
-use repository::schema::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
-    RequisitionLineRow,
+use repository::{
+    RemoteSyncBufferAction, RemoteSyncBufferRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionLineRow,
 };
 use serde_json::json;
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;

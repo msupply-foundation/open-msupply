@@ -1,10 +1,10 @@
-use super::{DBType, StorageConnection};
+use super::{
+    user_permission_row::{user_permission, user_permission::dsl as user_permission_dsl},
+    DBType, Permission, StorageConnection, UserPermissionRow,
+};
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    schema::user_permission::{
-        user_permission, user_permission::dsl as user_permission_dsl, Permission, UserPermissionRow,
-    },
 };
 use crate::{EqualFilter, Pagination, Sort};
 

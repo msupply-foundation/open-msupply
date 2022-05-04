@@ -1,11 +1,53 @@
-use super::StorageConnection;
-
-use crate::{
-    repository_error::RepositoryError,
-    schema::{diesel_schema::stock_line::dsl as stock_line_dsl, StockLineRow},
+use super::{
+    item_row::item, location_row::location, stock_line_row::stock_line::dsl as stock_line_dsl,
+    store_row::store, StorageConnection,
 };
 
+use crate::repository_error::RepositoryError;
+
 use diesel::prelude::*;
+
+use chrono::NaiveDate;
+
+table! {
+    stock_line (id) {
+        id -> Text,
+        item_id -> Text,
+        store_id -> Text,
+        location_id -> Nullable<Text>,
+        batch -> Nullable<Text>,
+        pack_size -> Integer,
+        cost_price_per_pack -> Double,
+        sell_price_per_pack -> Double,
+        available_number_of_packs -> Integer,
+        total_number_of_packs -> Integer,
+        expiry_date -> Nullable<Date>,
+        on_hold -> Bool,
+        note -> Nullable<Text>,
+    }
+}
+
+joinable!(stock_line -> item (item_id));
+joinable!(stock_line -> store (store_id));
+joinable!(stock_line -> location (location_id));
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[table_name = "stock_line"]
+pub struct StockLineRow {
+    pub id: String,
+    pub item_id: String,
+    pub store_id: String,
+    pub location_id: Option<String>,
+    pub batch: Option<String>,
+    pub pack_size: i32,
+    pub cost_price_per_pack: f64,
+    pub sell_price_per_pack: f64,
+    pub available_number_of_packs: i32,
+    pub total_number_of_packs: i32,
+    pub expiry_date: Option<NaiveDate>,
+    pub on_hold: bool,
+    pub note: Option<String>,
+}
 
 pub struct StockLineRowRepository<'a> {
     connection: &'a StorageConnection,

@@ -1,16 +1,16 @@
-use super::{DBType, StorageConnection};
+use super::{
+    item_row::{
+        item, item::dsl as item_dsl, item_is_visible, item_is_visible::dsl as item_is_visible_dsl,
+    },
+    unit_row::{unit, unit::dsl as unit_dsl},
+    DBType, ItemIsVisibleRow, ItemRow, ItemRowType, StorageConnection, UnitRow,
+};
+
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{
-            item, item::dsl as item_dsl, item_is_visible,
-            item_is_visible::dsl as item_is_visible_dsl, unit, unit::dsl as unit_dsl,
-        },
-        ItemIsVisibleRow, ItemRow, ItemRowType, UnitRow,
-    },
+    EqualFilter, Pagination, SimpleStringFilter, Sort,
 };
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Item {
@@ -196,17 +196,10 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        db_diesel::item::ItemFilter,
-        schema::ItemRowType,
-        test_db, EqualFilter, Pagination, DEFAULT_PAGINATION_LIMIT,
-        {
-            db_diesel::{
-                MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRowRepository,
-            },
-            mock::MockDataInserts,
-            schema::{ItemRow, MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow},
-            ItemRepository, ItemRowRepository, NameRowRepository,
-        },
+        mock::MockDataInserts, test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow,
+        ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};

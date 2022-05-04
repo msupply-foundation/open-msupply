@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::schema::{StockLineRow, StocktakeLineRow, StocktakeRow, StocktakeStatus};
+use crate::{StockLineRow, StocktakeLineRow, StocktakeRow, StocktakeStatus};
 
 use super::{mock_item_a, mock_stock_line_a, mock_stock_line_b, MockData};
 

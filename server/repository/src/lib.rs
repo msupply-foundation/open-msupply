@@ -4,12 +4,11 @@ extern crate diesel;
 extern crate diesel_migrations;
 
 pub mod database_settings;
-mod db_diesel;
+pub mod db_diesel;
 pub mod diesel_extensions;
 pub mod diesel_macros;
 pub mod mock;
 mod repository_error;
-pub mod schema;
 pub mod test_db;
 
 pub use self::db_diesel::*;

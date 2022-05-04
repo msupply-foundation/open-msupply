@@ -1,4 +1,4 @@
-use repository::{schema::KeyValueType, KeyValueStoreRepository, RepositoryError};
+use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
 use reqwest::Url;
 
 use crate::{service_provider::ServiceContext, sync_settings::SyncSettings};

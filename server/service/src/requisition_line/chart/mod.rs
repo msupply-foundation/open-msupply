@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRowType},
-    RepositoryError, RequisitionLine, StorageConnection,
+    requisition_row::RequisitionRowType, RepositoryError, RequisitionLine, RequisitionLineRow,
+    StorageConnection,
 };
 mod historic_consumption;
 pub use historic_consumption::*;
@@ -163,15 +163,14 @@ mod test {
     use super::*;
     use crate::service_provider::ServiceProvider;
     use repository::{
+        db_diesel::requisition_row::RequisitionRowType,
         mock::{
             mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
             mock_request_draft_requisition_calculation_test, MockData, MockDataInserts,
         },
-        schema::{
-            InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow,
-            RequisitionLineRow, RequisitionRow, RequisitionRowType, StockLineRow, StoreRow,
-        },
         test_db::{setup_all, setup_all_with_data},
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow,
+        RequisitionLineRow, RequisitionRow, StockLineRow, StoreRow,
     };
     use util::{
         constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, inline_edit, inline_init, uuid::uuid,

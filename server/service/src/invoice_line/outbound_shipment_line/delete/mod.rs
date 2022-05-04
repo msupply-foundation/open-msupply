@@ -1,6 +1,6 @@
 use crate::{service_provider::ServiceContext, WithDBError};
 use repository::{
-    schema::InvoiceRowStatus, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
 };
 

@@ -1,14 +1,12 @@
-use super::{DBType, StorageConnection};
+use super::{
+    location_row::{location, location::dsl as location_dsl},
+    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
+    DBType, LocationRow, StockLineRow, StorageConnection,
+};
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort_asc_nulls_last},
     repository_error::RepositoryError,
-    schema::{
-        diesel_schema::{
-            location, location::dsl as location_dsl, stock_line, stock_line::dsl as stock_line_dsl,
-        },
-        LocationRow, StockLineRow,
-    },
     DateFilter, EqualFilter, Pagination, Sort,
 };
 
@@ -199,8 +197,8 @@ mod test {
     use crate::{
         mock::MockDataInserts,
         mock::{mock_item_a, mock_store_a, MockData},
-        schema::StockLineRow,
-        test_db, Pagination, StockLine, StockLineRepository, StockLineSort, StockLineSortField,
+        test_db, Pagination, StockLine, StockLineRepository, StockLineRow, StockLineSort,
+        StockLineSortField,
     };
 
     fn from_row(stock_line_row: StockLineRow) -> StockLine {

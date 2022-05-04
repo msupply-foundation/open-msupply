@@ -1,4 +1,4 @@
-use crate::schema::StockLineRow;
+use crate::StockLineRow;
 
 use super::MockData;
 

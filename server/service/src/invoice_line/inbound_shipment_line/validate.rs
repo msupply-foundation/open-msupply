@@ -1,6 +1,5 @@
 use repository::{
-    schema::{InvoiceLineRow, StockLineRow},
-    LocationRowRepository, StockLineRowRepository, StorageConnection,
+    InvoiceLineRow, LocationRowRepository, StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
 use crate::WithDBError;

@@ -2,7 +2,7 @@ use std::ops::Neg;
 
 use chrono::NaiveDate;
 use repository::{
-    schema::ConsumptionRow, ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter,
+    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
     RepositoryError, StorageConnection,
 };
 use util::{

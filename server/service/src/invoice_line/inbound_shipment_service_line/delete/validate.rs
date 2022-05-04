@@ -10,10 +10,7 @@ use crate::{
         DeleteInboundShipmentLine,
     },
 };
-use repository::{
-    schema::{InvoiceLineRow, InvoiceRowType},
-    StorageConnection,
-};
+use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
 
 use super::DeleteInboundShipmentServiceLineError;
 

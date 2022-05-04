@@ -11,8 +11,9 @@ use crate::{
 };
 
 use repository::{
-    schema::{RequisitionLineRow, RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionLine, RequisitionLineRowRepository, StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
+    StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
