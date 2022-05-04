@@ -1,4 +1,4 @@
-use self::{
+pub use self::{
     delete::{delete_location, DeleteLocation, DeleteLocationError},
     insert::{insert_location, InsertLocation, InsertLocationError},
     query::{get_location, get_locations},
