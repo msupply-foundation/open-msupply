@@ -8,13 +8,11 @@ interface UseExpandedControl {
 
 export const useExpanded = (rowId: string): UseExpandedControl => {
   const selector = useCallback(
-    (state: TableStore) => {
-      return {
-        rowId,
-        isExpanded: state.rowState[rowId]?.isExpanded ?? false,
-        toggleExpanded: () => state.toggleExpanded(rowId),
-      };
-    },
+    (state: TableStore) => ({
+      rowId,
+      isExpanded: state.rowState[rowId]?.isExpanded ?? false,
+      toggleExpanded: () => state.toggleExpanded(rowId),
+    }),
     [rowId]
   );
 
