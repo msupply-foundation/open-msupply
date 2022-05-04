@@ -1,5 +1,6 @@
 use super::requisition_row::requisition::dsl as requisition_dsl;
 
+use crate::db_diesel::{name_row::name, store_row::store, user_row::user_account};
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 
@@ -31,6 +32,10 @@ table! {
         linked_requisition_id -> Nullable<Text>,
     }
 }
+
+joinable!(requisition -> name (name_id));
+joinable!(requisition -> store (store_id));
+joinable!(requisition -> user_account (user_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

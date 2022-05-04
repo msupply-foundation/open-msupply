@@ -1,4 +1,4 @@
-use super::{item_row::item::dsl::*, StorageConnection};
+use super::{item_row::item::dsl::*, unit_row::unit, StorageConnection};
 
 use crate::repository_error::RepositoryError;
 
@@ -23,6 +23,9 @@ table! {
         is_visible -> Bool,
     }
 }
+
+joinable!(item -> unit (unit_id));
+joinable!(item_is_visible -> item (id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

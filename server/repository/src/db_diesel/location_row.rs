@@ -1,4 +1,4 @@
-use super::{StorageConnection, location_row::location::dsl as location_dsl};
+use super::{StorageConnection, location_row::location::dsl as location_dsl, store_row::store};
 
 use crate::repository_error::RepositoryError;
 
@@ -13,6 +13,8 @@ table! {
         store_id -> Text,
     }
 }
+
+joinable!(location -> store (store_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "location"]

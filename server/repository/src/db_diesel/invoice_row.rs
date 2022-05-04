@@ -1,4 +1,4 @@
-use super::{invoice_row::invoice::dsl::*, StorageConnection};
+use super::{invoice_row::invoice::dsl::*, StorageConnection, name_row::name, store_row::store, user_row::user_account};
 
 use crate::repository_error::RepositoryError;
 
@@ -34,6 +34,10 @@ table! {
         linked_invoice_id -> Nullable<Text>,
     }
 }
+
+joinable!(invoice -> name (name_id));
+joinable!(invoice -> store (store_id));
+joinable!(invoice -> user_account (user_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

@@ -1,4 +1,7 @@
-use super::{stock_line_row::stock_line::dsl as stock_line_dsl, StorageConnection};
+use super::{
+    item_row::item, location_row::location, stock_line_row::stock_line::dsl as stock_line_dsl,
+    store_row::store, StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
@@ -23,6 +26,10 @@ table! {
         note -> Nullable<Text>,
     }
 }
+
+joinable!(stock_line -> item (item_id));
+joinable!(stock_line -> store (store_id));
+joinable!(stock_line -> location (location_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "stock_line"]
