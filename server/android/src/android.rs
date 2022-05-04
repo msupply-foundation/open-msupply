@@ -90,7 +90,7 @@ pub mod android {
                         develop: false,
                         debug_no_access_control: false,
                         debug_cors_permissive: false,
-                        cors_origin: "http://localhost:3003".to_string(),
+                        cors_origins: vec!["http://localhost:3003".to_string()],
                     },
                     database: DatabaseSettings {
                         username: "n/a".to_string(),
