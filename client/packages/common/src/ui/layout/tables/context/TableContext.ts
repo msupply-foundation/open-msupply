@@ -172,8 +172,7 @@ export const createTableStore = (): UseBoundStore<TableStore> =>
 
         // Get currently focused row, if any
         const [currentFocusId, currentFocusObj] =
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          rows.find(([_, { isFocused }]) => isFocused === true) || [];
+          rows.find(([, { isFocused }]) => isFocused === true) || [];
 
         // Deduce what the next row is, wrapping around if reaching top/bottom
         const nextIndex =
