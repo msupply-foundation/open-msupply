@@ -3,13 +3,14 @@ use graphql_core::{
     simple_generic_errors::{
         DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
     },
-    standard_graphql_error::validate_auth,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::LocationNode;
 use repository::RepositoryError;
 use service::{
     location::insert::{InsertLocation, InsertLocationError as InError},
+    location::InsertLocationError as ServiceError,
     permission_validation::{Resource, ResourceAccessRequest},
 };
 
@@ -40,7 +41,9 @@ pub fn insert_location(
         Ok(location) => Ok(InsertLocationResponse::Response(LocationNode::from_domain(
             location,
         ))),
-        Err(error) => Ok(InsertLocationResponse::Error(error.into())),
+        Err(error) => Ok(InsertLocationResponse::Error(InsertLocationError {
+            error: map_error(error)?,
+        })),
     }
 }
 
@@ -87,6 +90,21 @@ pub enum InsertLocationErrorInterface {
     UniqueValueViolation(UniqueValueViolation),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
+}
+
+fn map_error(error: ServiceError) -> Result<InsertLocationErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Standard Graphql Errors
+        ServiceError::LocationAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::LocationWithCodeAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 impl From<RepositoryError> for InsertLocationError {

@@ -5,13 +5,14 @@ use graphql_core::{
         DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound, UniqueValueKey,
         UniqueValueViolation,
     },
-    standard_graphql_error::validate_auth,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::LocationNode;
 use repository::RepositoryError;
 use service::{
     location::update::{UpdateLocation, UpdateLocationError as InError},
+    location::UpdateLocationError as ServiceError,
     permission_validation::{Resource, ResourceAccessRequest},
 };
 
@@ -42,7 +43,9 @@ pub fn update_location(
         Ok(location) => Ok(UpdateLocationResponse::Response(LocationNode::from_domain(
             location,
         ))),
-        Err(error) => Ok(UpdateLocationResponse::Error(error.into())),
+        Err(error) => Ok(UpdateLocationResponse::Error(UpdateLocationError {
+            error: map_error(error)?,
+        })),
     }
 }
 
@@ -98,6 +101,22 @@ impl From<RepositoryError> for UpdateLocationError {
         let error = UpdateLocationErrorInterface::DatabaseError(DatabaseError(error));
         UpdateLocationError { error }
     }
+}
+
+fn map_error(error: ServiceError) -> Result<UpdateLocationErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Standard Graphql Errors
+        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CodeAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::LocationDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
+        ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 impl From<InError> for UpdateLocationError {

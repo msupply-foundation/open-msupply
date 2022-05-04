@@ -1,15 +1,17 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
-    standard_graphql_error::validate_auth,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use repository::RepositoryError;
 use service::{
     location::delete::{
         DeleteLocation, DeleteLocationError as InError, LocationInUse as ServiceLocationInUse,
     },
+    location::DeleteLocationError as ServiceError,
     permission_validation::{Resource, ResourceAccessRequest},
 };
 
@@ -40,7 +42,9 @@ pub fn delete_location(
         Ok(location_id) => Ok(DeleteLocationResponse::Response(DeleteResponse(
             location_id,
         ))),
-        Err(error) => Ok(DeleteLocationResponse::Error(error.into())),
+        Err(error) => Ok(DeleteLocationResponse::Error(DeleteLocationError {
+            error: map_error(error)?,
+        })),
     }
 }
 
@@ -73,6 +77,28 @@ pub enum DeleteLocationErrorInterface {
     RecordBelongsToAnotherStore(RecordBelongsToAnotherStore),
     LocationInUse(LocationInUse),
     DatabaseError(DatabaseError),
+}
+
+fn map_error(error: ServiceError) -> Result<DeleteLocationErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::LocationInUse(location_in_use) => {
+            return Ok(DeleteLocationErrorInterface::LocationInUse(LocationInUse {
+                stock_lines: StockLineConnector::from_vec(location_in_use.stock_lines),
+                invoice_lines: InvoiceLineConnector::from_vec(location_in_use.invoice_lines),
+            }));
+        }
+
+        // Standard Graphql Errors
+        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::LocationDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 pub struct LocationInUse {
