@@ -1,4 +1,4 @@
-import create, { UseStore } from 'zustand';
+import create, { UseBoundStore } from 'zustand';
 import createContext from 'zustand/context';
 import { AppSxProp } from '../../../../styles';
 
@@ -47,7 +47,7 @@ const getRowState = (
   ...updates,
 });
 
-export const createTableStore = (): UseStore<TableStore> =>
+export const createTableStore = (): UseBoundStore<TableStore> =>
   create<TableStore>(set => ({
     rowState: {},
     numberSelected: 0,
@@ -172,7 +172,7 @@ export const createTableStore = (): UseStore<TableStore> =>
 
         // Get currently focused row, if any
         const [currentFocusId, currentFocusObj] =
-          rows.find(([_, { isFocused }]) => isFocused === true) || [];
+          rows.find(([, { isFocused }]) => isFocused === true) || [];
 
         // Deduce what the next row is, wrapping around if reaching top/bottom
         const nextIndex =
