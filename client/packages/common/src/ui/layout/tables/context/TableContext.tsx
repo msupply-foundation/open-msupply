@@ -1,3 +1,10 @@
+import { RecordWithId } from '@common/types';
+import {
+  createQueryParamsStore,
+  QueryParamsProvider,
+  QueryParamsStateNew,
+} from 'packages/common/src/hooks/useQueryParams';
+import React, { PropsWithChildren } from 'react';
 import create, { UseBoundStore } from 'zustand';
 import createContext from 'zustand/context';
 import { AppSxProp } from '../../../../styles';
@@ -30,8 +37,30 @@ export interface TableStore {
   setRowStyles: (ids: string[], style: AppSxProp) => void;
 }
 
-export const { Provider: TableProvider, useStore: useTableStore } =
-  createContext<TableStore>();
+const { Provider, useStore: useTableStore } = createContext<TableStore>();
+
+const TableProvider = <T extends RecordWithId>({
+  children,
+  queryParamsStore,
+  ...props
+}: PropsWithChildren<{
+  initialStore?: UseBoundStore<TableStore>;
+  createStore: () => UseBoundStore<TableStore>;
+  queryParamsStore?: UseBoundStore<QueryParamsStateNew<T>>;
+}>) => (
+  <Provider {...props}>
+    <QueryParamsProvider
+      createStore={() =>
+        queryParamsStore ??
+        createQueryParamsStore({ initialSortBy: { key: 'none' } })
+      }
+    >
+      {children}
+    </QueryParamsProvider>
+  </Provider>
+);
+
+export { TableProvider, useTableStore };
 
 const getRowState = (
   state: TableStore,
