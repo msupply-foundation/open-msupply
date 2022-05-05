@@ -63,11 +63,13 @@ async fn run_stage0(
     let loader_registry_data = Data::new(LoaderRegistry { loaders });
 
     let restart_switch = Data::new(restart_switch);
+    let cors_permsissive_mode = settings.server.develop && settings.server.debug_cors_permissive;
+    let cors_origins = settings.server.cors_origins.clone();
 
     let mut http_server = HttpServer::new(move || {
         App::new()
             .wrap(logger_middleware())
-            .wrap(Cors::permissive())
+            .wrap(choose_cors_policy(cors_permsissive_mode, &cors_origins))
             .wrap(compress_middleware())
             .configure(config_stage0(
                 connection_manager_data_app.clone(),
@@ -160,7 +162,10 @@ async fn run_server(
         debug_no_access_control: config_settings.server.develop
             && config_settings.server.debug_no_access_control,
     });
+
     let cors_origins = config_settings.server.cors_origins.clone();
+    let cors_permsissive_mode =
+        config_settings.server.develop && config_settings.server.debug_cors_permissive;
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
@@ -194,27 +199,8 @@ async fn run_server(
         }
     };
 
-    let cors_permsissive_mode =
-        config_settings.server.develop && config_settings.server.debug_cors_permissive;
-
     let mut http_server = HttpServer::new(move || {
-        let cors = if cors_permsissive_mode {
-            Cors::permissive()
-        } else {
-            let mut cors_tmp = Cors::default()
-                .supports_credentials()
-                .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-                .allowed_headers(vec![
-                    header::AUTHORIZATION,
-                    header::ACCEPT,
-                    header::CONTENT_TYPE,
-                ])
-                .max_age(3600);
-            for origin in cors_origins.iter() {
-                cors_tmp = cors_tmp.allowed_origin(origin);
-            }
-            cors_tmp
-        };
+        let cors = choose_cors_policy(cors_permsissive_mode, &cors_origins);
         App::new()
             .wrap(logger_middleware())
             .wrap(cors)
@@ -356,4 +342,25 @@ fn load_certs(cert_files: SelfSignedCertFiles) -> Result<SslAcceptorBuilder, any
     builder.set_private_key_file(cert_files.private_cert_file, SslFiletype::PEM)?;
     builder.set_certificate_chain_file(cert_files.public_cert_file)?;
     Ok(builder)
+}
+
+fn choose_cors_policy(cors_permsissive_mode: bool, cors_origins: &Vec<String>) -> Cors {
+    let cors = if cors_permsissive_mode {
+        Cors::permissive()
+    } else {
+        let mut cors_tmp = Cors::default()
+            .supports_credentials()
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            .allowed_headers(vec![
+                header::AUTHORIZATION,
+                header::ACCEPT,
+                header::CONTENT_TYPE,
+            ])
+            .max_age(3600);
+        for origin in cors_origins.iter() {
+            cors_tmp = cors_tmp.allowed_origin(origin);
+        }
+        cors_tmp
+    };
+    cors
 }
