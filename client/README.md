@@ -16,6 +16,8 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 - Install dependencies (Using node v16+ and using yarn):
 
+Make sure that the URL for the `remote-server` is set properly here `packages/host/public/config.js`
+
 `yarn install`
 
 - Run on development mode:
