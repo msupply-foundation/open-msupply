@@ -146,3 +146,25 @@ To enable development mode the `develop` flag must be set to `true` in the setti
 server:
   develop: true
 ```
+
+## CORS settings
+
+By default remote-server limits Cross-Origin Resource Sharing to the origins configured in the server section of the configuration yaml
+This is a security mechanism to reduce risk of a malicious site accessing an authenticated connection with msupply.
+Rust enforces the allowed origins, even if the browser doesn't returning a 400 error if the Origin isn't specified in a request, or doesn't match one that's configured.
+
+Set the cors_origins section of the yaml to include any URLs you want to access omSupply's GraphQL API from this includes the url for the omsupply-client you are using.
+e.g. local.yaml
+```
+server:
+  port: 8000
+  cors_origins: [http://localhost:3003, https://youwebserver:yourport]
+````
+
+For development purposes you can set the `debug_cors_permissive` parameter to 'true' to allow any origin.
+```
+server:
+  port: 8000
+  ddebug_cors_permissive: true
+  cors_origins: [http://localhost:3003, https://youwebserver:yourport]
+```
