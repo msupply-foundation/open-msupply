@@ -2,9 +2,9 @@ import { useQueryClient, useMutation } from 'react-query';
 import {
   useGql,
   useAuthContext,
-  useQueryParams,
   useQuery,
   SortBy,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { getLocationQueries, ListParams } from './api';
 import { getSdk, LocationRowFragment } from './operations.generated';
@@ -60,12 +60,9 @@ export const useLocationDelete = () => {
 
 export const useLocations = () => {
   const api = useLocationApi();
-  const queryParams = useQueryParams<LocationRowFragment>({
-    initialSortBy: { key: 'name' },
-  });
-
-  const result = useQuery(api.keys.paramList(queryParams), () =>
-    api.get.list(queryParams)
+  const queryParams = useQueryParamsStore();
+  const result = useQuery(api.keys.paramList(queryParams.paramList()), () =>
+    api.get.list(queryParams.paramList())
   );
 
   return { ...queryParams, ...result };

@@ -1,11 +1,11 @@
 import {
-  useQueryParams,
   useGql,
   useAuthContext,
   useQuery,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { getNameQueries, ListParams } from './api';
-import { getSdk, NameRowFragment } from './operations.generated';
+import { getSdk } from './operations.generated';
 
 const useNameApi = () => {
   const { storeId } = useAuthContext();
@@ -34,15 +34,13 @@ export const useName = (nameId: string) => {
 
 export const useNames = (type: 'customer' | 'supplier') => {
   const api = useNameApi();
-  const queryParams = useQueryParams<NameRowFragment>({
-    initialSortBy: { key: 'name' },
-  });
+  const queryParams = useQueryParamsStore();
   return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
+    ...useQuery(api.keys.paramList(queryParams.paramList()), () =>
       api.get.list({
-        first: queryParams.first,
-        offset: queryParams.offset,
-        sortBy: queryParams.sortBy,
+        first: queryParams.pagination.first,
+        offset: queryParams.pagination.offset,
+        sortBy: queryParams.sort.sortBy,
         type: type === 'customer' ? 'customer' : 'supplier',
       })
     ),
@@ -52,33 +50,27 @@ export const useNames = (type: 'customer' | 'supplier') => {
 
 export const useCustomers = () => {
   const api = useNameApi();
-  const queryParams = useQueryParams<NameRowFragment>({
-    initialSortBy: { key: 'name' },
-  });
+  const queryParams = useQueryParamsStore();
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.customers(queryParams)
+  return useQuery(api.keys.paramList(queryParams.paramList()), () =>
+    api.get.customers(queryParams.paramList())
   );
 };
 
 export const useSuppliers = () => {
   const api = useNameApi();
-  const queryParams = useQueryParams<NameRowFragment>({
-    initialSortBy: { key: 'name' },
-  });
+  const queryParams = useQueryParamsStore();
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.suppliers(queryParams)
+  return useQuery(api.keys.paramList(queryParams.paramList()), () =>
+    api.get.suppliers(queryParams.paramList())
   );
 };
 
 export const useInternalSuppliers = () => {
   const api = useNameApi();
-  const queryParams = useQueryParams<NameRowFragment>({
-    initialSortBy: { key: 'name' },
-  });
+  const queryParams = useQueryParamsStore();
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.internalSuppliers(queryParams)
+  return useQuery(api.keys.paramList(queryParams.paramList()), () =>
+    api.get.internalSuppliers(queryParams.paramList())
   );
 };

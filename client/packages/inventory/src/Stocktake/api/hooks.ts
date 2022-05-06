@@ -17,9 +17,9 @@ import {
   SortUtils,
   useSortBy,
   useAuthContext,
-  useQueryParams,
   useTableStore,
   SortBy,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../types';
 import { getStocktakeQueries, ListParams } from './api';
@@ -69,20 +69,13 @@ export const useStocktake = (): UseQueryResult<StocktakeFragment> => {
 };
 
 export const useStocktakes = () => {
-  const queryParams = useQueryParams<StocktakeRowFragment>({
-    initialSortBy: { key: 'createdDatetime' },
-  });
+  const queryParams = useQueryParamsStore();
   const api = useStocktakeApi();
 
   return {
     ...useQuery(
-      api.keys.paramList(queryParams),
-      api.get.list({
-        first: queryParams.first,
-        offset: queryParams.offset,
-        sortBy: queryParams.sortBy,
-        filterBy: queryParams.filter.filterBy,
-      })
+      api.keys.paramList(queryParams.paramList()),
+      api.get.list(queryParams.paramList())
     ),
     ...queryParams,
   };
@@ -255,7 +248,7 @@ export const useDeleteSelectedLines = (): { onDelete: () => Promise<void> } => {
         onSuccess: successSnack,
       });
     } else {
-      const infoSnack = info(t('label.select-rows-to-delete-them'));
+      const infoSnack = info(t('messages.select-rows-to-delete-them'));
       infoSnack();
     }
   };
