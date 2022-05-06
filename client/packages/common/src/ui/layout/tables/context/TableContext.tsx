@@ -1,6 +1,5 @@
 import { RecordWithId } from '@common/types';
 import {
-  createQueryParamsStore,
   QueryParamsProvider,
   QueryParamsStateNew,
 } from 'packages/common/src/hooks/useQueryParams';
@@ -47,18 +46,16 @@ const TableProvider = <T extends RecordWithId>({
   initialStore?: UseBoundStore<TableStore>;
   createStore: () => UseBoundStore<TableStore>;
   queryParamsStore?: UseBoundStore<QueryParamsStateNew<T>>;
-}>) => (
-  <Provider {...props}>
-    <QueryParamsProvider
-      createStore={() =>
-        queryParamsStore ??
-        createQueryParamsStore({ initialSortBy: { key: 'none' } })
-      }
-    >
-      {children}
-    </QueryParamsProvider>
-  </Provider>
-);
+}>) =>
+  queryParamsStore ? (
+    <Provider {...props}>
+      <QueryParamsProvider createStore={() => queryParamsStore}>
+        {children}
+      </QueryParamsProvider>
+    </Provider>
+  ) : (
+    <Provider {...props}>{children}</Provider>
+  );
 
 export { TableProvider, useTableStore };
 

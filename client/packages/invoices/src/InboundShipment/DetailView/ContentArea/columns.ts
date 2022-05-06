@@ -7,18 +7,15 @@ import {
   Column,
   ArrayUtils,
   useCurrency,
-  useSortBy,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 
 export const useInboundShipmentColumns = () => {
-  const { sortBy, onChangeSortBy } = useSortBy<
-    InboundLineFragment | InboundItem
-  >({
-    key: 'itemName',
-  });
+  const { sort } = useQueryParamsStore();
+  const { sortBy, onChangeSortBy } = sort;
   const { c } = useCurrency();
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [

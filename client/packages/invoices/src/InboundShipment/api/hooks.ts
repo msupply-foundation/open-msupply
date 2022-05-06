@@ -6,7 +6,6 @@ import {
   useNotification,
   useNavigate,
   SortUtils,
-  useSortBy,
   FieldSelectorControl,
   useQueryClient,
   useParams,
@@ -32,6 +31,7 @@ import { useInboundShipmentColumns } from '../DetailView/ContentArea';
 import {
   getSdk,
   InboundFragment,
+  InboundLineFragment,
   InboundRowFragment,
 } from './operations.generated';
 
@@ -125,17 +125,23 @@ export const useInboundLines = (itemId?: string) => {
 };
 
 export const useInboundItems = () => {
-  const { sortBy, onChangeSortBy } = useSortBy<InboundItem>({
-    key: 'itemName',
-  });
-
-  const selectItems = useCallback((invoice: InboundFragment) => {
-    return inboundLinesToSummaryItems(
+  const { sort } = useQueryParamsStore();
+  const { sortBy, onChangeSortBy } = sort;
+  const selectItems = (invoice: InboundFragment) =>
+    inboundLinesToSummaryItems(
       invoice.lines.nodes.filter(line => isA.stockInLine(line))
-    ).sort(
-      SortUtils.getDataSorter(sortBy.key as keyof InboundItem, !!sortBy.isDesc)
-    );
-  }, []);
+    )
+      .map(item => ({
+        ...item,
+        [String(sortBy.key)]:
+          item.lines[0]?.[sortBy.key as keyof InboundLineFragment],
+      }))
+      .sort(
+        SortUtils.getDataSorter(
+          sortBy.key as keyof InboundItem,
+          !!sortBy.isDesc
+        )
+      );
 
   const { data } = useInboundSelector(selectItems);
 

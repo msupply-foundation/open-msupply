@@ -8,6 +8,7 @@ import {
   useNavigate,
   RouteBuilder,
   useTranslation,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { toItemRow, ItemRowFragment } from '@openmsupply-client/system';
@@ -42,7 +43,16 @@ export const DetailView: FC = () => {
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
       {data ? (
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore<
+            InboundLineFragment | InboundItem
+          >({
+            initialSortBy: {
+              key: 'itemName',
+            },
+          })}
+        >
           <AppBarButtons onAddItem={() => onOpen()} />
 
           <Toolbar />

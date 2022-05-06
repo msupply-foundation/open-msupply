@@ -15,7 +15,6 @@ import {
   useFieldsSelector,
   ArrayUtils,
   SortUtils,
-  useSortBy,
   useAuthContext,
   useTableStore,
   SortBy,
@@ -257,11 +256,8 @@ export const useDeleteSelectedLines = (): { onDelete: () => Promise<void> } => {
 };
 
 export const useStocktakeRows = (isGrouped = true) => {
-  const { sortBy, onChangeSortBy } = useSortBy<
-    StocktakeLineFragment | StocktakeSummaryItem
-  >({
-    key: 'itemName',
-  });
+  const { sort } = useQueryParamsStore();
+  const { sortBy, onChangeSortBy } = sort;
   const { data: lines } = useStocktakeLines();
   const { data: items } = useStocktakeItems();
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
