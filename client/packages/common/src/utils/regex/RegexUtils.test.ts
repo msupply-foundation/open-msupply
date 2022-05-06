@@ -73,4 +73,9 @@ describe('String matching for object properties', () => {
     expect(RegexUtils.matchObjectProperties('blue', obj)).toBeTruthy();
     expect(RegexUtils.matchObjectProperties('green', obj)).toBeTruthy();
   });
+
+  describe('escapeChars', () => {
+    expect(RegexUtils.escapeChars('a')).toBe('a');
+    expect(RegexUtils.escapeChars('about[ ]time')).toBe('about time');
+  });
 });
