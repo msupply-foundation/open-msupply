@@ -15,5 +15,6 @@ module.exports = {
     ...pathsToModuleNameMapper(compilerOptions.paths, {
       prefix: '<rootDir>/',
     }),
+    '.+\\.(gif)$': 'jest-transform-stub',
   },
 };
