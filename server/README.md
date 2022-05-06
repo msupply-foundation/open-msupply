@@ -150,8 +150,8 @@ server:
 ## CORS settings
 
 By default remote-server limits Cross-Origin Resource Sharing to the origins configured in the server section of the configuration yaml
-This is a security mechanism to reduce risk of a malicious site accessing an authenticated connection with msupply.
-Rust enforces the allowed origins, even if the browser doesn't returning a 400 error if the Origin isn't specified in a request, or doesn't match one that's configured.
+This is a security mechanism to reduce the risk of a malicious site accessing an authenticated connection with mSupply.
+Rust enforces the allowed origins in requests, even if the browser doesn't, by returning a 400 error when the Origin isn't specified in a request, or if doesn't match one of origins configured in cors_origins.
 
 Set the cors_origins section of the yaml to include any URLs you want to access omSupply's GraphQL API from this includes the url for the omsupply-client you are using.
 e.g. local.yaml
