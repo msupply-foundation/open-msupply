@@ -67,7 +67,7 @@ async fn run_stage0(
     let closure_settings = settings.clone();
 
     let mut http_server = HttpServer::new(move || {
-        let cors = choose_cors_policy(&closure_settings);
+        let cors = cors_policy(&closure_settings);
         App::new()
             .wrap(logger_middleware())
             .wrap(cors)
@@ -198,7 +198,7 @@ async fn run_server(
 
     let closure_settings = config_settings.clone();
     let mut http_server = HttpServer::new(move || {
-        let cors = choose_cors_policy(&closure_settings);
+        let cors = cors_policy(&closure_settings);
         App::new()
             .wrap(logger_middleware())
             .wrap(cors)
@@ -342,7 +342,7 @@ fn load_certs(cert_files: SelfSignedCertFiles) -> Result<SslAcceptorBuilder, any
     Ok(builder)
 }
 
-fn choose_cors_policy(config_settings: &Settings) -> Cors {
+fn cors_policy(config_settings: &Settings) -> Cors {
     let cors = if config_settings.server.develop && config_settings.server.debug_cors_permissive {
         Cors::permissive()
     } else {
