@@ -1,5 +1,8 @@
 import React, { FC, useState } from 'react';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import {
+  ItemRowFragment,
+  LocationRowFragment,
+} from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Divider,
@@ -10,6 +13,8 @@ import {
   useNotification,
   TableProvider,
   createTableStore,
+  createQueryParamsStore,
+  QueryParamsProvider,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -128,11 +133,19 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
 
                     <StyledTabPanel value={Tabs.Location}>
                       <StyledTabContainer>
-                        <LocationTable
-                          isDisabled={isDisabled}
-                          batches={draftLines}
-                          update={update}
-                        />
+                        <QueryParamsProvider
+                          createStore={() =>
+                            createQueryParamsStore<LocationRowFragment>({
+                              initialSortBy: { key: 'name' },
+                            })
+                          }
+                        >
+                          <LocationTable
+                            isDisabled={isDisabled}
+                            batches={draftLines}
+                            update={update}
+                          />
+                        </QueryParamsProvider>
                       </StyledTabContainer>
                     </StyledTabPanel>
                   </StocktakeLineEditTabs>

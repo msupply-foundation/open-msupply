@@ -8,6 +8,7 @@ import {
   useNavigate,
   useTranslation,
   useEditModal,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest, useIsRequestDisabled } from '../api';
@@ -37,7 +38,12 @@ export const DetailView: FC = () => {
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore<RequestLineFragment>({
+        initialSortBy: { key: 'itemName' },
+      })}
+    >
       <AppBarButtons
         isDisabled={!data || isDisabled}
         onAddItem={() => onOpen(null)}
