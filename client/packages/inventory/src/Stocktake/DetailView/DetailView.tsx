@@ -8,6 +8,7 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -43,7 +44,14 @@ export const DetailView: FC = () => {
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   return !!data ? (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore<
+        StocktakeLineFragment | StocktakeSummaryItem
+      >({
+        initialSortBy: { key: 'itemName' },
+      })}
+    >
       <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
 

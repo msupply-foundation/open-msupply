@@ -1,21 +1,15 @@
 import { useMemo } from 'react';
-import { SortUtils, useSortBy } from '@openmsupply-client/common';
+import { SortUtils, useQueryParamsStore } from '@openmsupply-client/common';
 import { useOutboundItems } from './useOutboundItems';
 import { useOutboundLines } from './useOutboundLines';
 import { useOutboundColumns } from './../../../DetailView/columns';
-import { OutboundLineFragment } from './../../operations.generated';
-import { OutboundItem } from '../../../../types';
 
 export const useOutboundRows = (isGrouped = true) => {
-  const { sortBy, onChangeSortBy } = useSortBy<
-    OutboundLineFragment | OutboundItem
-  >({
-    key: 'itemName',
-  });
+  const { sort } = useQueryParamsStore();
+  const { sortBy, onChangeSortBy } = sort;
   const { data: lines } = useOutboundLines();
   const { data: items } = useOutboundItems();
   const columns = useOutboundColumns({ onChangeSortBy, sortBy });
-
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;

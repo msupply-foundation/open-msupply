@@ -11,9 +11,14 @@ import {
   alpha,
   PositiveNumberInputCell,
   NonNegativeIntegerCell,
+  QueryParamsProvider,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
-import { getLocationInputColumn } from '@openmsupply-client/system';
+import {
+  getLocationInputColumn,
+  LocationRowFragment,
+} from '@openmsupply-client/system';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -155,7 +160,15 @@ export const LocationTableComponent: FC<TableProps> = ({
   );
 
   return (
-    <DataTable columns={columns} data={lines} dense isDisabled={isDisabled} />
+    <QueryParamsProvider
+      createStore={() =>
+        createQueryParamsStore<LocationRowFragment>({
+          initialSortBy: { key: 'name' },
+        })
+      }
+    >
+      <DataTable columns={columns} data={lines} dense isDisabled={isDisabled} />
+    </QueryParamsProvider>
   );
 };
 
