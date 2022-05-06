@@ -89,6 +89,8 @@ pub mod android {
                         port,
                         develop: false,
                         debug_no_access_control: false,
+                        debug_cors_permissive: false,
+                        cors_origins: vec!["http://localhost:3003".to_string()],
                     },
                     database: DatabaseSettings {
                         username: "n/a".to_string(),
