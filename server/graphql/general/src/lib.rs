@@ -34,7 +34,7 @@ impl GeneralQueries {
         login(ctx, &username, &password).await
     }
 
-    pub async fn logout(&self, ctx: &Context<'_>) -> LogoutResponse {
+    pub async fn logout(&self, ctx: &Context<'_>) -> Result<LogoutResponse> {
         logout(ctx)
     }
 
