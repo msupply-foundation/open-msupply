@@ -63,7 +63,7 @@ const Template: Story = () => {
       <TableHead>
         <HeaderRow>
           <HeaderCell column={column1} />
-          <HeaderCell column={column1} />
+          <HeaderCell column={column2} />
         </HeaderRow>
       </TableHead>
     </Table>
