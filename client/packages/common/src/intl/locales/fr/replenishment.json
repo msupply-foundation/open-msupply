@@ -10,7 +10,7 @@
   "button.save-and-confirm-status": "Valider {{status}}",
   "heading.related-documents": "Documents associés",
   "label.add-batch": "Ajouter un lot",
-  "label.select-rows-to-delete-them": "Sélectionner une ligne pour la supprimer",
+  "messages.select-rows-to-delete-them": "Sélectionner une ligne pour la supprimer",
   "label.supplier-name": "Fournisseur",
   "label.supplier-ref": "Ref. Fournisseur",
   "button.new-shipment": "Nouveau",

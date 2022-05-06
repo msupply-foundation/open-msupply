@@ -134,7 +134,7 @@ export const createQueryParamsStore = <T extends RecordWithId>({
     },
     sort: {
       sortBy: {
-        key: 'initialSortBy.key',
+        key: initialSortBy.key,
         isDesc: initialSortBy.isDesc ?? false,
         direction: getDirection(initialSortBy.isDesc ?? false),
       },

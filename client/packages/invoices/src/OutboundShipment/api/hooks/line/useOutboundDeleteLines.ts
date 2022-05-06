@@ -82,7 +82,7 @@ export const useOutboundDeleteSelectedLines = (): {
         onSuccess,
       });
     } else {
-      const infoSnack = info(t('label.select-rows-to-delete-them'));
+      const infoSnack = info(t('messages.select-rows-to-delete-them'));
       infoSnack();
     }
   };

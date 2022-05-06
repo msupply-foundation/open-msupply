@@ -8,24 +8,16 @@ import {
   DialogButton,
   Fade,
   NothingHere,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
 import { useNames, NameRowFragment } from '../api';
 
-export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
-  type,
-}) => {
+const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   const [selectedId, setSelectedId] = useState<string>('');
-  const {
-    data,
-    isError,
-    isLoading,
-    onChangePage,
-    pagination,
-    sortBy,
-    onChangeSortBy,
-  } = useNames(type);
+  const { data, isError, isLoading, pagination, sort } = useNames(type);
+  const { sortBy, onChangeSortBy } = sort;
   const { Modal, showDialog, hideDialog } = useDialog();
 
   const columns = useColumns<NameRowFragment>(
@@ -47,10 +39,10 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   );
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <>
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
+        onChangePage={pagination.onChangePage}
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
@@ -70,6 +62,19 @@ export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
       >
         <DetailModal nameId={selectedId} />
       </Modal>
-    </TableProvider>
+    </>
   );
 };
+
+export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
+  type,
+}) => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<NameRowFragment>({
+      initialSortBy: { key: 'name' },
+    })}
+  >
+    <NameListComponent type={type} />
+  </TableProvider>
+);

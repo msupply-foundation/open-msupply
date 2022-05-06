@@ -13,7 +13,6 @@ import {
   useFieldsSelector,
   SortController,
   SortUtils,
-  useQueryParams,
   useMutation,
   useNotification,
   useTranslation,
@@ -21,6 +20,7 @@ import {
   RegexUtils,
   useTableStore,
   SortBy,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { getResponseQueries, ListParams } from './api';
 import { useItemFilter } from '../../RequestRequisition/api';
@@ -71,19 +71,12 @@ export const useUpdateResponse = () => {
 };
 
 export const useResponses = () => {
-  const queryParams = useQueryParams<ResponseRowFragment>({
-    initialSortBy: { key: 'otherPartyName' },
-  });
+  const queryParams = useQueryParamsStore();
   const api = useResponseApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.list({
-        first: queryParams.first,
-        offset: queryParams.offset,
-        sortBy: queryParams.sortBy,
-        filterBy: queryParams.filter.filterBy,
-      })
+    ...useQuery(api.keys.paramList(queryParams.paramList()), () =>
+      api.get.list(queryParams.paramList())
     ),
     ...queryParams,
   };
@@ -252,7 +245,7 @@ export const useDeleteResponseLines = () => {
         onSuccess: success(t('messages.deleted-lines', { number: number })),
       });
     } else {
-      info(t('label.select-rows-to-delete-them'))();
+      info(t('messages.select-rows-to-delete-them'))();
     }
   };
 
