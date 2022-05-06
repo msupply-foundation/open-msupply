@@ -11,16 +11,19 @@ import {
   DialogButton,
   TableProvider,
   createTableStore,
+  QueryParamsProvider,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
+import { ItemRowFragment } from '@openmsupply-client/system';
 interface OutboundServiceLineEditProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const OutboundServiceLineEdit = ({
+const OutboundServiceLineEditComponent = ({
   isOpen,
   onClose,
 }: OutboundServiceLineEditProps) => {
@@ -82,3 +85,17 @@ export const OutboundServiceLineEdit = ({
     </Modal>
   );
 };
+
+export const OutboundServiceLineEdit = (
+  props: OutboundServiceLineEditProps
+) => (
+  <QueryParamsProvider
+    createStore={() =>
+      createQueryParamsStore<ItemRowFragment>({
+        initialSortBy: { key: 'name' },
+      })
+    }
+  >
+    <OutboundServiceLineEditComponent {...props} />
+  </QueryParamsProvider>
+);

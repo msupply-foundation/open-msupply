@@ -1,4 +1,8 @@
-import { useGql, useQueryParams, useQuery } from '@openmsupply-client/common';
+import {
+  useGql,
+  useQueryParamsStore,
+  useQuery,
+} from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
 import { getStoreQueries, ListParams } from './api';
 
@@ -18,12 +22,12 @@ const useStoreApi = () => {
 
 export const useStores = () => {
   const api = useStoreApi();
-  const initialListParameters = { initialSortBy: { key: 'code' } };
-  const { filterBy, queryParams, first, offset } = useQueryParams(
-    initialListParameters
-  );
+  const queryParams = useQueryParamsStore();
+  const { filter, pagination } = queryParams;
+  const { filterBy } = filter;
+  const { first, offset } = pagination;
 
-  return useQuery(api.keys.paramList(queryParams), async () =>
+  return useQuery(api.keys.paramList(queryParams.paramList()), async () =>
     api.get.list({ filterBy, first, offset })
   );
 };

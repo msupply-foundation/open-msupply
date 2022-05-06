@@ -1,37 +1,9 @@
-import { useEffect } from 'react';
 import { MasterListLineFragment } from '../api/operations.generated';
-import {
-  useColumns,
-  useSortBy,
-  SortBy,
-  zustand,
-} from '@openmsupply-client/common';
-
-type Store = {
-  sortBy: SortBy<MasterListLineFragment>;
-  setSortBy: (sortBy: SortBy<MasterListLineFragment>) => void;
-};
-
-const useStore = zustand<Store>(set => ({
-  sortBy: { key: 'itemName', isDesc: false, direction: 'asc' },
-  setSortBy: (sortBy: SortBy<MasterListLineFragment>) =>
-    set(state => ({ ...state, sortBy })),
-}));
-
-const useSharedSortBy = () => {
-  const sharedSortBy = useStore();
-  const { sortBy, onChangeSortBy } = useSortBy<MasterListLineFragment>(
-    sharedSortBy.sortBy
-  );
-
-  useEffect(() => {
-    sharedSortBy.setSortBy(sortBy);
-  }, [sortBy]);
-  return { sortBy, onChangeSortBy };
-};
+import { useColumns, useQueryParamsStore } from '@openmsupply-client/common';
 
 export const useMasterListColumns = () => {
-  const { sortBy, onChangeSortBy } = useSharedSortBy();
+  const { sort } = useQueryParamsStore();
+  const { sortBy, onChangeSortBy } = sort;
   const columns = useColumns<MasterListLineFragment>(
     [
       [

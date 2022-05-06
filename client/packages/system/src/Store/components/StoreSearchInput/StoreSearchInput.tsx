@@ -1,9 +1,11 @@
-import { StoreRowFragment, useStores } from '../../api';
 import React from 'react';
+import { StoreRowFragment, useStores } from '../../api';
 import {
   Autocomplete,
   AutocompleteProps,
+  createQueryParamsStore,
   defaultOptionMapper,
+  QueryParamsProvider,
 } from '@openmsupply-client/common';
 
 type StoreSearchInputProps = {
@@ -13,7 +15,7 @@ type StoreSearchInputProps = {
   value?: StoreRowFragment;
 };
 
-export const StoreSearchInput = ({
+const StoreSearchComponent = ({
   renderInput,
   isDisabled = false,
   onChange,
@@ -34,3 +36,15 @@ export const StoreSearchInput = ({
     />
   );
 };
+
+export const StoreSearchInput = (props: StoreSearchInputProps) => (
+  <QueryParamsProvider
+    createStore={() =>
+      createQueryParamsStore<StoreRowFragment>({
+        initialSortBy: { key: 'code' },
+      })
+    }
+  >
+    <StoreSearchComponent {...props} />
+  </QueryParamsProvider>
+);

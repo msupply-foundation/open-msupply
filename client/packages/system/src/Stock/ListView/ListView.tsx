@@ -4,7 +4,6 @@ import {
   DataTable,
   useColumns,
   createTableStore,
-  usePagination,
   useTranslation,
   Column,
   SortUtils,
@@ -12,13 +11,14 @@ import {
   RegexUtils,
   NothingHere,
   createQueryParamsStore,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
 import { useStockLines } from '../api';
 import { StockRow } from '../types';
 
 const StockListComponent: FC = () => {
-  const { pagination } = usePagination();
+  const { pagination } = useQueryParamsStore();
   const t = useTranslation('inventory');
   const [filterString, setFilterString] = React.useState<string>('');
   const [sortBy, setSortBy] = React.useState<SortBy<StockRow>>({

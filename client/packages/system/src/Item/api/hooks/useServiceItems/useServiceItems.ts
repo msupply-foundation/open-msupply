@@ -1,6 +1,5 @@
-import { useQuery, useQueryParams } from '@openmsupply-client/common';
+import { useQuery, useQueryParamsStore } from '@openmsupply-client/common';
 import { useItemApi } from './../useItemApi';
-import { ItemRowFragment } from '../../operations.generated';
 
 interface UseServiceItemsOptions {
   refetchOnMount?: boolean;
@@ -15,14 +14,12 @@ interface UseServiceItemsOptions {
 export const useServiceItems = ({
   refetchOnMount,
 }: UseServiceItemsOptions = {}) => {
-  const queryParams = useQueryParams<ItemRowFragment>({
-    initialSortBy: { key: 'name' },
-  });
+  const queryParams = useQueryParamsStore();
   const api = useItemApi();
 
   return useQuery(
-    api.keys.paramList(queryParams),
-    () => api.get.serviceItems(queryParams),
+    api.keys.paramList(queryParams.paramList()),
+    () => api.get.serviceItems(queryParams.paramList()),
     { refetchOnMount }
   );
 };

@@ -1,5 +1,4 @@
-import { useQuery } from '@openmsupply-client/common';
-import { useQueryParamsStore } from 'packages/common/src/hooks/useQueryParams';
+import { useQuery, useQueryParamsStore } from '@openmsupply-client/common';
 import { useOutboundApi } from './../utils/useOutboundApi';
 
 export const useOutbounds = () => {
