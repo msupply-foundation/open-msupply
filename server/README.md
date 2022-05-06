@@ -118,6 +118,9 @@ cargo run --features postgres
 APP_ENVIRONMENT=production cargo run --features sqlite
 ```
 
+The default port used to run the server is : 8000
+To check you can view the Graphql interface here  :http://localhost:8000/graphql
+
 ## Tests
 
 `important` graphql test require latest export of graphql schema, need to run `cargo run --bin export_graphql --features sqlite` when making changes to graphql schema (changes that may affect tests). Make sure to `commit` schema.graphql for CI tests to work.
