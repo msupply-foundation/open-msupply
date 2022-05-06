@@ -119,7 +119,8 @@ APP_ENVIRONMENT=production cargo run --features sqlite
 ```
 
 The default port used to run the server is : 8000
-To check you can view the Graphql interface here  :http://localhost:8000/graphql
+
+To check you can view the graphql interface here  :http://localhost:8000/graphql
 
 ## Tests
 
