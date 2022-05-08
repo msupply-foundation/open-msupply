@@ -7,23 +7,16 @@ import {
   useNavigate,
   NothingHere,
   useTranslation,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useMasterLists, MasterListRowFragment } from '../api';
 
-export const MasterListListView: FC = () => {
-  const {
-    data,
-    isError,
-    isLoading,
-    onChangePage,
-    pagination,
-    sortBy,
-    onChangeSortBy,
-    filter,
-  } = useMasterLists();
-
+const MasterListComponent: FC = () => {
+  const { data, isError, isLoading, pagination, filter, sort } =
+    useMasterLists();
+  const { sortBy, onChangeSortBy } = sort;
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const columns = useColumns<MasterListRowFragment>(
@@ -36,12 +29,12 @@ export const MasterListListView: FC = () => {
   );
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <>
       <Toolbar filter={filter} />
       <AppBarButtons sortBy={sortBy} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
+        onChangePage={pagination.onChangePage}
         columns={columns}
         data={data?.nodes}
         isError={isError}
@@ -49,6 +42,17 @@ export const MasterListListView: FC = () => {
         onRowClick={row => navigate(row.id)}
         noDataElement={<NothingHere body={t('error.no-master-lists')} />}
       />
-    </TableProvider>
+    </>
   );
 };
+
+export const MasterListListView: FC = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<MasterListRowFragment>({
+      initialSortBy: { key: 'name' },
+    })}
+  >
+    <MasterListComponent />
+  </TableProvider>
+);

@@ -11,6 +11,7 @@ import {
   useTableStore,
   NothingHere,
   useToggle,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -29,16 +30,8 @@ export const InboundListView: FC = () => {
   const { mutate: onUpdate } = useUpdateInbound();
   const navigate = useNavigate();
   const modalController = useToggle();
-  const {
-    data,
-    isError,
-    isLoading,
-    sortBy,
-    onChangeSortBy,
-    onChangePage,
-    pagination,
-    filter,
-  } = useInbounds();
+  const { data, isError, isLoading, sort, pagination, filter } = useInbounds();
+  const { sortBy, onChangeSortBy } = sort;
   useDisableInboundRows(data?.nodes);
 
   const t = useTranslation('replenishment');
@@ -76,7 +69,7 @@ export const InboundListView: FC = () => {
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
+        onChangePage={pagination.onChangePage}
         columns={columns}
         data={data?.nodes ?? []}
         isLoading={isLoading}
@@ -95,10 +88,13 @@ export const InboundListView: FC = () => {
   );
 };
 
-export const ListView: FC = () => {
-  return (
-    <TableProvider createStore={createTableStore}>
-      <InboundListView />
-    </TableProvider>
-  );
-};
+export const ListView: FC = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<InboundRowFragment>({
+      initialSortBy: { key: 'otherPartyName' },
+    })}
+  >
+    <InboundListView />
+  </TableProvider>
+);

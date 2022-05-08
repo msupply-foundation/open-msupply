@@ -1,10 +1,15 @@
 import React, { FC } from 'react';
-import { ListSearch, useTranslation } from '@openmsupply-client/common';
+import {
+  createQueryParamsStore,
+  ListSearch,
+  QueryParamsProvider,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useInternalSuppliers, NameRowFragment } from '../../api';
 import { filterByNameAndCode, NameSearchProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-export const InternalSupplierSearchModal: FC<NameSearchProps> = ({
+const InternalSupplierSearchComponent: FC<NameSearchProps> = ({
   open,
   onClose,
   onChange,
@@ -30,3 +35,15 @@ export const InternalSupplierSearchModal: FC<NameSearchProps> = ({
     />
   );
 };
+
+export const InternalSupplierSearchModal: FC<NameSearchProps> = props => (
+  <QueryParamsProvider
+    createStore={() =>
+      createQueryParamsStore<NameRowFragment>({
+        initialSortBy: { key: 'name' },
+      })
+    }
+  >
+    <InternalSupplierSearchComponent {...props} />
+  </QueryParamsProvider>
+);

@@ -3,12 +3,12 @@ import {
   useQuery,
   useGql,
   useAuthContext,
-  useQueryParams,
   UseQueryResult,
   useParams,
   SortUtils,
   SortBy,
   useMutation,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import {
   getSdk,
@@ -36,21 +36,13 @@ export const useMasterListApi = () => {
 };
 
 export const useMasterLists = ({ enabled } = { enabled: true }) => {
-  const queryParams = useQueryParams<MasterListRowFragment>({
-    initialSortBy: { key: 'name' },
-  });
+  const queryParams = useQueryParamsStore();
   const api = useMasterListApi();
 
   return {
     ...useQuery(
-      api.keys.paramList(queryParams),
-      () =>
-        api.get.list({
-          first: queryParams.first,
-          offset: queryParams.offset,
-          sortBy: queryParams.sortBy,
-          filterBy: queryParams.filter.filterBy,
-        }),
+      api.keys.paramList(queryParams.paramList()),
+      () => api.get.list(queryParams.paramList()),
       {
         enabled,
       }

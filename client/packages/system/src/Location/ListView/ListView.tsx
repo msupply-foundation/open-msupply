@@ -7,23 +7,16 @@ import {
   useEditModal,
   NothingHere,
   useTranslation,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useLocations, LocationRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
 import { Toolbar } from './Toolbar';
 
-export const LocationListView: FC = () => {
-  const {
-    pagination,
-    onChangePage,
-    data,
-    isError,
-    isLoading,
-    onChangeSortBy,
-    sortBy,
-    filter,
-  } = useLocations();
+const LocationListComponent: FC = () => {
+  const { pagination, data, isError, isLoading, sort, filter } = useLocations();
+  const { sortBy, onChangeSortBy } = sort;
   const t = useTranslation('inventory');
   const columns = useColumns<LocationRowFragment>(
     ['code', 'name', 'selection'],
@@ -38,7 +31,7 @@ export const LocationListView: FC = () => {
   const locations = data?.nodes ?? [];
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <>
       {isOpen && (
         <LocationEditModal
           mode={mode}
@@ -51,7 +44,7 @@ export const LocationListView: FC = () => {
       <AppBarButtons onCreate={() => onOpen()} sortBy={sortBy} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
+        onChangePage={pagination.onChangePage}
         columns={columns}
         data={locations}
         isError={isError}
@@ -64,6 +57,17 @@ export const LocationListView: FC = () => {
           />
         }
       />
-    </TableProvider>
+    </>
   );
 };
+
+export const LocationListView: FC = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<LocationRowFragment>({
+      initialSortBy: { key: 'name' },
+    })}
+  >
+    <LocationListComponent />
+  </TableProvider>
+);

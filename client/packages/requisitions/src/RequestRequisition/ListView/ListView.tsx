@@ -11,6 +11,7 @@ import {
   useTableStore,
   NothingHere,
   useToggle,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -32,16 +33,8 @@ export const RequestRequisitionListView: FC = () => {
 
   const { mutate: onUpdate } = useUpdateRequest();
 
-  const {
-    data,
-    isError,
-    isLoading,
-    sortBy,
-    onChangeSortBy,
-    filter,
-    pagination,
-    onChangePage,
-  } = useRequests();
+  const { data, isError, isLoading, sort, filter, pagination } = useRequests();
+  const { sortBy, onChangeSortBy } = sort;
   useDisableRequestRows(data?.nodes);
 
   const columns = useColumns<RequestRowFragment>(
@@ -81,7 +74,7 @@ export const RequestRequisitionListView: FC = () => {
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
+        onChangePage={pagination.onChangePage}
         columns={columns}
         data={data?.nodes}
         onRowClick={onRowClick}
@@ -98,10 +91,13 @@ export const RequestRequisitionListView: FC = () => {
   );
 };
 
-export const ListView: FC = () => {
-  return (
-    <TableProvider createStore={createTableStore}>
-      <RequestRequisitionListView />
-    </TableProvider>
-  );
-};
+export const ListView: FC = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<RequestRowFragment>({
+      initialSortBy: { key: 'otherPartyName' },
+    })}
+  >
+    <RequestRequisitionListView />
+  </TableProvider>
+);
