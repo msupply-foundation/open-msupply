@@ -1,210 +1,174 @@
-// import React, { FC, PropsWithChildren, ReactNode } from 'react';
-// import { TestingRouterContext } from '@openmsupply-client/common';
-// import { TestingProvider } from '../../utils/testing';
-// import { useTheme } from '@common/styles';
-// import { renderHook } from '@testing-library/react';
-// import { useQueryParams } from './useQueryParams';
+import React, { FC, PropsWithChildren, ReactNode } from 'react';
+import { TestingRouterContext } from '@openmsupply-client/common';
+import { TestingProvider } from '../../utils/testing';
+import { useTheme } from '@common/styles';
+import { act, renderHook } from '@testing-library/react';
+import { useQueryParamsStore } from './useQueryParams';
 
 // type TestSortBy = {
 //   id: string;
 //   quantity: number;
 // };
 
-// type ThemeChangererProps = {
-//   paginationRowHeight: number;
-//   dataRowHeight: number;
-//   headerRowHeight: number;
-//   footerHeight: number;
-//   saveButtonRowHeight: number;
-// };
+type ThemeChangererProps = {
+  paginationRowHeight: number;
+  dataRowHeight: number;
+  headerRowHeight: number;
+  footerHeight: number;
+  saveButtonRowHeight: number;
+};
 
-// describe('useQueryParams', () => {
-//   beforeEach(() => {
-//     jest.useFakeTimers();
-//   });
+const ThemeChangerer: FC<PropsWithChildren<ThemeChangererProps>> = ({
+  children,
+  paginationRowHeight,
+  dataRowHeight,
+  headerRowHeight,
+  footerHeight,
+  saveButtonRowHeight,
+}) => {
+  const theme = useTheme();
+  theme.mixins.table.dataRow = { height: dataRowHeight };
+  theme.mixins.table.paginationRow = { height: paginationRowHeight };
+  theme.mixins.table.headerRow = { height: headerRowHeight };
+  theme.mixins.footer = { height: footerHeight };
+  theme.mixins.saveButtonRow = { height: saveButtonRowHeight };
 
-//   const ThemeChangerer: FC<PropsWithChildren<ThemeChangererProps>> = ({
-//     children,
-//     paginationRowHeight,
-//     dataRowHeight,
-//     headerRowHeight,
-//     footerHeight,
-//     saveButtonRowHeight,
-//   }) => {
-//     const theme = useTheme();
-//     theme.mixins.table.dataRow = { height: dataRowHeight };
-//     theme.mixins.table.paginationRow = { height: paginationRowHeight };
-//     theme.mixins.table.headerRow = { height: headerRowHeight };
-//     theme.mixins.footer = { height: footerHeight };
-//     theme.mixins.saveButtonRow = { height: saveButtonRowHeight };
+  return <>{children}</>;
+};
 
-//     return <>{children}</>;
-//   };
+const getWrapper =
+  (
+    dataRowHeight = 10,
+    headerRowHeight = 0,
+    paginationRowHeight = 0,
+    footerHeight = 0,
+    saveButtonRowHeight = 0
+  ) =>
+  ({ children }: { children: ReactNode }) => {
+    return (
+      <TestingProvider>
+        <TestingRouterContext>
+          <ThemeChangerer
+            paginationRowHeight={paginationRowHeight}
+            dataRowHeight={dataRowHeight}
+            headerRowHeight={headerRowHeight}
+            footerHeight={footerHeight}
+            saveButtonRowHeight={saveButtonRowHeight}
+          >
+            {children}
+          </ThemeChangerer>
+        </TestingRouterContext>
+      </TestingProvider>
+    );
+  };
 
-//   const getWrapper =
-//     (
-//       dataRowHeight = 10,
-//       headerRowHeight = 0,
-//       paginationRowHeight = 0,
-//       footerHeight = 0,
-//       saveButtonRowHeight = 0
-//     ) =>
-//     ({ children }: { children: ReactNode }) => {
-//       return (
-//         <TestingProvider>
-//           <TestingRouterContext>
-//             <ThemeChangerer
-//               paginationRowHeight={paginationRowHeight}
-//               dataRowHeight={dataRowHeight}
-//               headerRowHeight={headerRowHeight}
-//               footerHeight={footerHeight}
-//               saveButtonRowHeight={saveButtonRowHeight}
-//             >
-//               {children}
-//             </ThemeChangerer>
-//           </TestingRouterContext>
-//         </TestingProvider>
-//       );
-//     };
+describe('useQueryParamsStore', () => {
+  it('Returns the correct initial state', () => {
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
 
-//   it('Returns the correct initial state', () => {
-//     window.resizeTo(1000, 1000);
+    expect(result.current).toEqual(
+      expect.objectContaining({
+        sort: expect.objectContaining({
+          sortBy: { key: 'id', isDesc: false, direction: 'asc' },
+        }),
+        pagination: expect.objectContaining({ page: 0, offset: 0, first: 20 }),
+        filter: expect.objectContaining({
+          filterBy: {
+            comment: { equalTo: 'a' },
+            allocatedDatetime: { equalTo: '1/1/2020' },
+          },
+        }),
+      })
+    );
+  });
+});
 
-//     const { result } = renderHook(
-//       () => useQueryParams<TestSortBy>({ initialSortBy: { key: 'id' } }),
-//       {
-//         wrapper: getWrapper(),
-//       }
-//     );
+describe('filter', () => {
+  it('updates date filter values', () => {
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
+    const now = new Date();
+    act(() => {
+      result.current.filter.onChangeDateFilterRule(
+        'allocatedDatetime',
+        'beforeOrEqualTo',
+        now
+      );
+    });
+    expect(
+      result.current.filter.filterBy?.['allocatedDatetime']?.beforeOrEqualTo
+    ).toEqual(now);
+  });
 
-//     expect(result.current).toEqual(
-//       expect.objectContaining({
-//         sortBy: { key: 'id', isDesc: false, direction: 'asc' },
-//         pagination: expect.objectContaining({ page: 0, offset: 0, first: 20 }),
-//         page: 0,
-//         offset: 0,
-//         first: 20,
-//       })
-//     );
-//   });
-// });
+  it('updates date filters', () => {
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
+    const now = new Date();
+    act(() => {
+      result.current.filter.onChangeDateFilterRule(
+        'allocatedDatetime',
+        'beforeOrEqualTo',
+        now
+      );
+    });
+    expect(result.current.filter.filterBy).toEqual({
+      comment: { equalTo: 'a' },
+      allocatedDatetime: { beforeOrEqualTo: now },
+    });
+  });
 
-// describe('useFilterBy', () => {
-//   it('returns the correct initial state', () => {
-//     const { result } = renderHook(() =>
-//       useFilterBy({
-//         comment: { equalTo: 'a' },
-//         allocatedDatetime: { equalTo: '1/1/2020' },
-//       })
-//     );
+  it('updates string filter values', () => {
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
+    act(() => {
+      result.current.filter.onChangeStringFilterRule(
+        'comment',
+        'equalTo',
+        'josh'
+      );
+    });
+    expect(result.current.filter.filterBy?.['comment']?.equalTo).toEqual(
+      'josh'
+    );
+  });
 
-//     expect(result.current.filterBy).toEqual({
-//       comment: { equalTo: 'a' },
-//       allocatedDatetime: { equalTo: '1/1/2020' },
-//     });
-//   });
+  it('updates string filters', () => {
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
+    act(() => {
+      result.current.filter.onChangeStringFilterRule('comment', 'like', 'josh');
+    });
+    expect(result.current.filter.filterBy).toEqual({
+      comment: { like: 'josh' },
+      allocatedDatetime: { equalTo: '1/1/2020' },
+    });
+  });
 
-//   it('updates date filter values', () => {
-//     const { result } = renderHook(() =>
-//       useFilterBy({
-//         comment: { equalTo: 'a' },
-//         allocatedDatetime: { equalTo: '1/1/2020' },
-//       })
-//     );
-
-//     const now = new Date();
-
-//     act(() => {
-//       result.current.onChangeDateFilterRule(
-//         'allocatedDatetime',
-//         'beforeOrEqualTo',
-//         now
-//       );
-//     });
-
-//     expect(
-//       result.current.filterBy?.['allocatedDatetime']?.beforeOrEqualTo
-//     ).toEqual(now);
-//   });
-
-//   it('updates date filters', () => {
-//     const { result } = renderHook(() =>
-//       useFilterBy({
-//         comment: { equalTo: 'a' },
-//         allocatedDatetime: { equalTo: '1/1/2020' },
-//       })
-//     );
-
-//     const now = new Date();
-
-//     act(() => {
-//       result.current.onChangeDateFilterRule(
-//         'allocatedDatetime',
-//         'beforeOrEqualTo',
-//         now
-//       );
-//     });
-
-//     expect(result.current.filterBy).toEqual({
-//       comment: { equalTo: 'a' },
-//       allocatedDatetime: { beforeOrEqualTo: now },
-//     });
-//   });
-
-//   it('updates string filter values', () => {
-//     const { result } = renderHook(() =>
-//       useFilterBy({ comment: { equalTo: 'a' } })
-//     );
-
-//     act(() => {
-//       result.current.onChangeStringFilterRule('comment', 'equalTo', 'josh');
-//     });
-
-//     expect(result.current.filterBy?.['comment']?.equalTo).toEqual('josh');
-//   });
-
-//   it('updates string filters', () => {
-//     const { result } = renderHook(() =>
-//       useFilterBy({
-//         comment: { equalTo: 'a' },
-//         allocatedDatetime: { equalTo: '1/1/2020' },
-//       })
-//     );
-
-//     act(() => {
-//       result.current.onChangeStringFilterRule('comment', 'like', 'josh');
-//     });
-
-//     expect(result.current.filterBy).toEqual({
-//       comment: { like: 'josh' },
-//       allocatedDatetime: { equalTo: '1/1/2020' },
-//     });
-//   });
-
-//   it('clears string filters', () => {
-//     const { result } = renderHook(() =>
-//       useFilterBy({
-//         comment: { equalTo: 'a' },
-//         allocatedDatetime: { equalTo: '1/1/2020' },
-//       })
-//     );
-
-//     act(() => {
-//       result.current.onClearFilterRule('comment');
-//     });
-
-//     expect(result.current.filterBy).toEqual({
-//       allocatedDatetime: { equalTo: '1/1/2020' },
-//     });
-//   });
-// });
+  it('clears string filters', () => {
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
+    act(() => {
+      result.current.filter.onClearFilterRule('comment');
+    });
+    expect(result.current.filter.filterBy).toEqual({
+      allocatedDatetime: { equalTo: '1/1/2020' },
+    });
+  });
+});
 
 // interface TestSortBy {
 //   id: string;
 //   quantity: number;
 // }
 
-// describe('useSortBy', () => {
+// describe('sort', () => {
 //   it('Has the correct initial value', () => {
 //     const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
 //     const { result } = renderHook(() => useSortBy<TestSortBy>(idColumn), {
