@@ -1,7 +1,3 @@
-type AccessDenied implements LogoutErrorInterface {
-	description: String!
-	fullError: String!
-}
 type AddFromMasterListError {
 	error: AddFromMasterListErrorInterface!
 }
