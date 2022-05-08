@@ -1,14 +1,17 @@
 import React, { FC, PropsWithChildren, ReactNode } from 'react';
-import { TestingRouterContext } from '@openmsupply-client/common';
+import {
+  createColumnWithDefaults,
+  TestingRouterContext,
+} from '@openmsupply-client/common';
 import { TestingProvider } from '../../utils/testing';
 import { useTheme } from '@common/styles';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useQueryParamsStore } from './useQueryParams';
 
-// type TestSortBy = {
-//   id: string;
-//   quantity: number;
-// };
+type TestSortBy = {
+  id: string;
+  quantity: number;
+};
 
 type ThemeChangererProps = {
   paginationRowHeight: number;
@@ -163,131 +166,110 @@ describe('filter', () => {
   });
 });
 
-// interface TestSortBy {
-//   id: string;
-//   quantity: number;
-// }
+describe('sort', () => {
+  it('has the correct values after triggering a sort by', () => {
+    const quantityColumn = createColumnWithDefaults<TestSortBy>({
+      key: 'quantity',
+    });
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
 
-// describe('sort', () => {
-//   it('Has the correct initial value', () => {
-//     const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
-//     const { result } = renderHook(() => useSortBy<TestSortBy>(idColumn), {
-//       wrapper: TestingRouterContext,
-//     });
+    act(() => {
+      result.current.sort.onChangeSortBy(quantityColumn);
+    });
 
-//     expect(result.current.sortBy).toEqual({
-//       key: 'id',
-//       isDesc: false,
-//       direction: 'asc',
-//     });
-//   });
+    expect(result.current.sort.sortBy).toEqual({
+      key: 'quantity',
+      isDesc: false,
+      direction: 'asc',
+    });
+  });
 
-//   it('has the correct values after triggering a sort by', () => {
-//     const quantityColumn = createColumnWithDefaults<TestSortBy>({
-//       key: 'quantity',
-//     });
-//     const { result } = renderHook(() => useSortBy<TestSortBy>({ key: 'id' }), {
-//       wrapper: TestingRouterContext,
-//     });
+  it('has the correct values after triggering a sort by for the same column that is set', () => {
+    const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
 
-//     act(() => {
-//       result.current.onChangeSortBy(quantityColumn);
-//     });
+    act(() => {
+      result.current.sort.onChangeSortBy(idColumn);
+    });
 
-//     expect(result.current.sortBy).toEqual({
-//       key: 'quantity',
-//       isDesc: false,
-//       direction: 'asc',
-//     });
-//   });
+    expect(result.current.sort.sortBy).toEqual({
+      key: 'id',
+      isDesc: true,
+      direction: 'desc',
+    });
+  });
 
-//   it('has the correct values after triggering a sort by for the same column that is set', () => {
-//     const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
-//     const { result } = renderHook(() => useSortBy<TestSortBy>({ key: 'id' }), {
-//       wrapper: TestingRouterContext,
-//     });
+  it('has the correct values after triggering a few sort bys in sequence', () => {
+    const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
+    const quantityColumn = createColumnWithDefaults<TestSortBy>({
+      key: 'quantity',
+    });
+    const { result } = renderHook(() => useQueryParamsStore(), {
+      wrapper: getWrapper(),
+    });
 
-//     act(() => {
-//       result.current.onChangeSortBy(idColumn);
-//     });
+    act(() => {
+      // initially: id/asc
+      result.current.sort.onChangeSortBy(idColumn);
+      // should be: id/desc
+      result.current.sort.onChangeSortBy(idColumn);
+      // should be: quantity/asc
+      result.current.sort.onChangeSortBy(quantityColumn);
+      // should be: id/asc
+      result.current.sort.onChangeSortBy(idColumn);
+      // should be: quantity/asc
+      result.current.sort.onChangeSortBy(quantityColumn);
+      // should be: quantity/desc
+      result.current.sort.onChangeSortBy(quantityColumn);
+    });
+    expect(result.current.sort.sortBy).toEqual({
+      key: 'quantity',
+      isDesc: true,
+      direction: 'desc',
+    });
+  });
 
-//     expect(result.current.sortBy).toEqual({
-//       key: 'id',
-//       isDesc: true,
-//       direction: 'desc',
-//     });
-//   });
+  describe('pagination', () => {
+    it('has correct offset, first and page values When the page is changed', () => {
+      const { result } = renderHook(() => useQueryParamsStore(), {
+        wrapper: getWrapper(),
+      });
 
-//   it('has the correct values after triggering a few sort bys in sequence', () => {
-//     const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
-//     const quantityColumn = createColumnWithDefaults<TestSortBy>({
-//       key: 'quantity',
-//     });
-//     const { result } = renderHook(() => useSortBy<TestSortBy>({ key: 'id' }), {
-//       wrapper: TestingRouterContext,
-//     });
+      const { pagination } = result.current;
+      act(() => {
+        pagination.onChangePage(3);
+      });
 
-//     act(() => {
-//       // initially: id/asc
-//       result.current.onChangeSortBy(idColumn);
-//       // should be: id/desc
-//       result.current.onChangeSortBy(idColumn);
-//       // should be: quantity/asc
-//       result.current.onChangeSortBy(quantityColumn);
-//       // should be: id/asc
-//       result.current.onChangeSortBy(idColumn);
-//       // should be: quantity/asc
-//       result.current.onChangeSortBy(quantityColumn);
-//       // should be: quantity/desc
-//       result.current.onChangeSortBy(quantityColumn);
-//     });
+      waitFor(() => {
+        expect(pagination.offset).toEqual(30);
+        expect(pagination.first).toEqual(10);
+        expect(pagination.page).toEqual(3);
+      });
+    });
 
-//     expect(result.current.sortBy).toEqual({
-//       key: 'quantity',
-//       isDesc: true,
-//       direction: 'desc',
-//     });
-//   });
-// });
+    it('still has correct state after a series of page changes', () => {
+      const { result } = renderHook(() => useQueryParamsStore(), {
+        wrapper: getWrapper(),
+      });
+      const { pagination } = result.current;
 
-// describe('usePagination', () => {
-//   it('has first correctly set to the initial value passed', () => {
-//     const { result } = renderHook(() => usePagination(10), {
-//       wrapper: TestingRouterContext,
-//     });
+      act(() => {
+        pagination.onChangePage(3);
+        pagination.onChangePage(1);
+        pagination.onChangePage(99);
+        pagination.onChangePage(32);
+        pagination.onChangePage(7);
+      });
 
-//     expect(result.current.first).toEqual(10);
-//   });
-
-//   it('has correct offset, first and page values When the page is changed', () => {
-//     const { result } = renderHook(() => usePagination(10), {
-//       wrapper: TestingRouterContext,
-//     });
-
-//     act(() => {
-//       result.current.onChangePage(3);
-//     });
-
-//     expect(result.current.offset).toEqual(30);
-//     expect(result.current.first).toEqual(10);
-//     expect(result.current.page).toEqual(3);
-//   });
-
-//   it('still has correct state after a series of page changes', () => {
-//     const { result } = renderHook(() => usePagination(10), {
-//       wrapper: TestingRouterContext,
-//     });
-
-//     act(() => {
-//       result.current.onChangePage(3);
-//       result.current.onChangePage(1);
-//       result.current.onChangePage(99);
-//       result.current.onChangePage(32);
-//       result.current.onChangePage(7);
-//     });
-
-//     expect(result.current.offset).toEqual(70);
-//     expect(result.current.first).toEqual(10);
-//     expect(result.current.page).toEqual(7);
-//   });
-// });
+      waitFor(() => {
+        expect(pagination.offset).toEqual(70);
+        expect(pagination.first).toEqual(10);
+        expect(pagination.page).toEqual(7);
+      });
+    });
+  });
+});
