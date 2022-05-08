@@ -2,73 +2,17 @@ import create, { SetState, UseBoundStore } from 'zustand';
 import createContext from 'zustand/context';
 import { RecordWithId } from '@common/types';
 import {
-  usePagination,
-  PaginationState,
-  PaginationController,
-} from '../usePagination';
-import {
-  useSortBy,
-  SortState,
-  SortRule,
-  SortController,
-  SortBy,
-} from '../useSortBy';
-import {
-  useFilterBy,
-  FilterState,
   FilterBy,
   FilterController,
   FilterByConditionByType,
-} from '../useFilterBy';
+  PaginationController,
+  SortRule,
+  SortController,
+  SortBy,
+} from './types';
 import { Column } from '../../ui';
 
-export interface QueryParams<T extends RecordWithId>
-  extends SortState<T>,
-    FilterState,
-    PaginationState {}
-
-export interface QueryParamsState<T extends RecordWithId>
-  extends SortState<T>,
-    FilterState,
-    PaginationState {
-  pagination: PaginationState;
-  sort: SortState<T>;
-  filter: FilterState;
-  queryParams: QueryParams<T>;
-}
-
-export const useQueryParams = <T extends RecordWithId>({
-  initialSortBy,
-  initialFilterBy,
-}: {
-  initialSortBy: SortRule<T>;
-  initialFilterBy?: FilterBy;
-}): QueryParamsState<T> => {
-  const filter = useFilterBy(initialFilterBy);
-  const sort = useSortBy(initialSortBy);
-  const pagination = usePagination();
-
-  const queryParams: QueryParams<T> = {
-    ...pagination,
-    ...filter,
-    ...sort,
-    filter,
-    sort,
-    pagination,
-  };
-
-  return {
-    ...pagination,
-    ...sort,
-    ...filter,
-    sort,
-    filter,
-    pagination,
-    queryParams,
-  };
-};
-
-export interface QueryParamsStateNew<T extends RecordWithId> {
+export interface QueryParamsState<T extends RecordWithId> {
   pagination: PaginationController;
   sort: SortController<T>;
   filter: FilterController;
@@ -81,7 +25,7 @@ export interface QueryParamsStateNew<T extends RecordWithId> {
 }
 
 export const { Provider: QueryParamsProvider, useStore: useQueryParamsStore } =
-  createContext<QueryParamsStateNew<any>>();
+  createContext<QueryParamsState<any>>();
 
 export const createQueryParamsStore = <T extends RecordWithId>({
   initialSortBy,
@@ -89,16 +33,16 @@ export const createQueryParamsStore = <T extends RecordWithId>({
 }: {
   initialSortBy: SortRule<T>;
   initialFilterBy?: FilterBy;
-}): UseBoundStore<QueryParamsStateNew<T>> => {
+}): UseBoundStore<QueryParamsState<T>> => {
   const setFilterBy =
-    (set: SetState<QueryParamsStateNew<T>>) => (newFilterBy: FilterBy) =>
+    (set: SetState<QueryParamsState<T>>) => (newFilterBy: FilterBy) =>
       set(state => {
         const { filterBy: previousFilterBy, ...rest } = { ...state.filter };
         const filterBy = { ...previousFilterBy, ...newFilterBy };
         return { ...state, filter: { ...rest, filterBy } };
       });
 
-  return create<QueryParamsStateNew<T>>((set, get) => ({
+  return create<QueryParamsState<T>>((set, get) => ({
     pagination: {
       first: 20,
       offset: 0,

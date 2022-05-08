@@ -1,6 +1,5 @@
 import {
   useGql,
-  useQueryParams,
   useQuery,
   useAuthContext,
   ReportCategory,
@@ -29,20 +28,15 @@ const useReportApi = () => {
 
 export const useReports = (category?: ReportCategory) => {
   const api = useReportApi();
-  const initialFilterBy = category
-    ? { category: { equalTo: category } }
-    : undefined;
-  const initialListParameters = {
-    initialSortBy: { key: 'name' },
-    initialFilterBy,
+  const filterBy = category ? { category: { equalTo: category } } : null;
+  const queryParams = {
+    filterBy,
+    sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
+    offset: 0,
   };
-  const { filterBy, queryParams, sortBy, offset } = useQueryParams(
-    initialListParameters
-  );
-
   return useQuery(
     api.keys.paramList(queryParams),
-    async () => api.get.list({ filterBy, sortBy, offset }),
+    async () => api.get.list(queryParams),
     {
       onError: (e: Error) => {
         if (/HasPermission\(Report\)/.test(e.message)) return null;

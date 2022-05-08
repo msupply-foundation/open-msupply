@@ -5,6 +5,8 @@ import {
   Autocomplete,
   defaultOptionMapper,
   styled,
+  QueryParamsProvider,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useServiceItems } from '../../api';
 import { ServiceItemRowFragment } from '../../api/operations.generated';
@@ -38,7 +40,7 @@ export const optionRenderer = (
   </ItemOption>
 );
 
-export const ServiceItemSearchInput: FC<ItemSearchInputProps> = ({
+const ServiceItemSearchComponent: FC<ItemSearchInputProps> = ({
   onChange,
   currentItemId,
   disabled = false,
@@ -73,3 +75,15 @@ export const ServiceItemSearchInput: FC<ItemSearchInputProps> = ({
     />
   );
 };
+
+export const ServiceItemSearchInput = (props: ItemSearchInputProps) => (
+  <QueryParamsProvider
+    createStore={() =>
+      createQueryParamsStore<ServiceItemRowFragment>({
+        initialSortBy: { key: 'name' },
+      })
+    }
+  >
+    <ServiceItemSearchComponent {...props} />
+  </QueryParamsProvider>
+);

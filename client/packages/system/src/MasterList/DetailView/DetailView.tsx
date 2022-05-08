@@ -7,6 +7,7 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useMasterList } from '../api';
 import { Toolbar } from './Toolbar';
@@ -14,6 +15,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
+import { MasterListLineFragment } from '../api/operations.generated';
 
 export const MasterListDetailView: FC = () => {
   const { data, isLoading } = useMasterList();
@@ -23,7 +25,12 @@ export const MasterListDetailView: FC = () => {
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore<MasterListLineFragment>({
+        initialSortBy: { key: 'itemName' },
+      })}
+    >
       <AppBarButtons />
       <Toolbar />
       <ContentArea />

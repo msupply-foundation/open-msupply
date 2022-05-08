@@ -1,9 +1,5 @@
 import { RecordWithId } from '@common/types';
-import {
-  createQueryParamsStore,
-  QueryParamsProvider,
-  QueryParamsStateNew,
-} from 'packages/common/src/hooks/useQueryParams';
+import { QueryParamsProvider, QueryParamsState } from '@common/hooks';
 import React, { PropsWithChildren } from 'react';
 import create, { UseBoundStore } from 'zustand';
 import createContext from 'zustand/context';
@@ -46,19 +42,17 @@ const TableProvider = <T extends RecordWithId>({
 }: PropsWithChildren<{
   initialStore?: UseBoundStore<TableStore>;
   createStore: () => UseBoundStore<TableStore>;
-  queryParamsStore?: UseBoundStore<QueryParamsStateNew<T>>;
-}>) => (
-  <Provider {...props}>
-    <QueryParamsProvider
-      createStore={() =>
-        queryParamsStore ??
-        createQueryParamsStore({ initialSortBy: { key: 'none' } })
-      }
-    >
-      {children}
-    </QueryParamsProvider>
-  </Provider>
-);
+  queryParamsStore?: UseBoundStore<QueryParamsState<T>>;
+}>) =>
+  queryParamsStore ? (
+    <Provider {...props}>
+      <QueryParamsProvider createStore={() => queryParamsStore}>
+        {children}
+      </QueryParamsProvider>
+    </Provider>
+  ) : (
+    <Provider {...props}>{children}</Provider>
+  );
 
 export { TableProvider, useTableStore };
 
