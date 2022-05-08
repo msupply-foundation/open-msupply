@@ -76,6 +76,6 @@ describe('String matching for object properties', () => {
 
   describe('escapeChars', () => {
     expect(RegexUtils.escapeChars('a')).toBe('a');
-    expect(RegexUtils.escapeChars('about[ ]time')).toBe('about time');
+    expect(RegexUtils.escapeChars('about[ ]time')).toBe('about\\[ \\]time');
   });
 });
