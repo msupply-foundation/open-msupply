@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-interface FilterByConditionByType {
+export interface FilterByConditionByType {
   string: 'equalTo' | 'like';
   date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo';
 }
