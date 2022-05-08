@@ -51,19 +51,6 @@ impl From<RepositoryError> for NodeError {
 use repository::RepositoryError;
 use service::SingleRecordError;
 
-pub struct AccessDenied(pub String);
-
-#[Object]
-impl AccessDenied {
-    pub async fn description(&self) -> &'static str {
-        "Access Denied"
-    }
-
-    pub async fn full_error(&self) -> &str {
-        &self.0
-    }
-}
-
 pub struct DatabaseError(pub RepositoryError);
 
 #[Object]
