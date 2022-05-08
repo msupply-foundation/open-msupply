@@ -104,7 +104,11 @@ export const TestingProvider: FC<
             <TableProvider
               createStore={createTableStore}
               queryParamsStore={createQueryParamsStore({
-                initialSortBy: { key: 'name' },
+                initialSortBy: { key: 'id' },
+                initialFilterBy: {
+                  comment: { equalTo: 'a' },
+                  allocatedDatetime: { equalTo: '1/1/2020' },
+                },
               })}
             >
               <AppThemeProvider>{children}</AppThemeProvider>
@@ -125,7 +129,7 @@ export const StoryProvider: FC<PropsWithChildrenOnly> = ({ children }) => (
             <TableProvider
               createStore={createTableStore}
               queryParamsStore={createQueryParamsStore({
-                initialSortBy: { key: 'name' },
+                initialSortBy: { key: 'id' },
               })}
             >
               <AppThemeProvider>
