@@ -1,40 +1,15 @@
-import { useEffect } from 'react';
 import {
   useColumns,
   GenericColumnKey,
-  SortBy,
   ColumnAlign,
-  zustand,
-  useSortBy,
   getCommentPopoverColumn,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment } from './../api';
 
-type Store = {
-  sortBy: SortBy<ResponseLineFragment>;
-  setSortBy: (sortBy: SortBy<ResponseLineFragment>) => void;
-};
-
-const useStore = zustand<Store>(set => ({
-  sortBy: { key: 'itemName', isDesc: false, direction: 'asc' },
-  setSortBy: (sortBy: SortBy<ResponseLineFragment>) =>
-    set(state => ({ ...state, sortBy })),
-}));
-
-const useSharedSortBy = () => {
-  const sharedSortBy = useStore();
-  const { sortBy, onChangeSortBy } = useSortBy<ResponseLineFragment>(
-    sharedSortBy.sortBy
-  );
-
-  useEffect(() => {
-    sharedSortBy.setSortBy(sortBy);
-  }, [sortBy]);
-  return { sortBy: sharedSortBy.sortBy, onChangeSortBy };
-};
-
 export const useResponseColumns = () => {
-  const { sortBy, onChangeSortBy } = useSharedSortBy();
+  const { sort } = useQueryParamsStore();
+  const { sortBy, onChangeSortBy } = sort;
   const columns = useColumns<ResponseLineFragment>(
     [
       getCommentPopoverColumn(),

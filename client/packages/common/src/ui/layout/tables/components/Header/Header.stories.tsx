@@ -1,21 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ComponentMeta, Story } from '@storybook/react';
 import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
-import { useSortBy } from '@common/hooks';
 import { useColumns } from '../../hooks';
+import { SortBy } from '@common/hooks';
+import { Column } from '../../columns';
 
 export default {
   title: 'Table/HeaderRow',
   component: HeaderRow,
 } as ComponentMeta<typeof HeaderRow>;
 
+type Test = {
+  id: string;
+  name: string;
+  packSize: number;
+};
+
 const Template: Story = () => {
-  const { onChangeSortBy, sortBy } = useSortBy<{
-    id: string;
-    name: string;
-    packSize: number;
-  }>({ key: 'name' });
+  const [sortBy, setSortBy] = useState<SortBy<Test>>({
+    key: 'name',
+    isDesc: false,
+    direction: 'asc',
+  });
+
+  const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
+    isDesc ? 'desc' : 'asc';
+
+  const onChangeSortBy = (column: Column<Test>) => {
+    let newSortBy = sortBy;
+    setSortBy(({ key: prevSortKey, isDesc: prevIsDesc = false }) => {
+      const { key: newSortKey, sortBy: { isDesc: maybeNewIsDesc } = {} } =
+        column;
+      const newIsDesc =
+        prevSortKey === newSortKey ? !prevIsDesc : !!maybeNewIsDesc ?? false;
+      newSortBy = {
+        key: newSortKey,
+        isDesc: newIsDesc,
+        direction: getDirection(newIsDesc),
+      };
+      return newSortBy;
+    });
+    return { ...newSortBy, direction: getDirection(!!newSortBy?.isDesc) };
+  };
 
   const [column1, column2] = useColumns(
     ['name', 'packSize'],
@@ -36,7 +63,7 @@ const Template: Story = () => {
       <TableHead>
         <HeaderRow>
           <HeaderCell column={column1} />
-          <HeaderCell column={column1} />
+          <HeaderCell column={column2} />
         </HeaderRow>
       </TableHead>
     </Table>

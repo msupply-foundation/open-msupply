@@ -8,6 +8,7 @@ import {
   AlertModal,
   RouteBuilder,
   useEditModal,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -40,7 +41,12 @@ export const DetailView: FC = () => {
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore<ResponseLineFragment>({
+        initialSortBy: { key: 'itemName' },
+      })}
+    >
       <AppBarButtons />
       <Toolbar />
       <ContentArea onRowClick={!isDisabled ? onRowClick : null} />

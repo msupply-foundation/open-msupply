@@ -11,17 +11,20 @@ import {
   DialogButton,
   TableProvider,
   createTableStore,
+  QueryParamsProvider,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useIsInboundDisabled } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 interface InboundServiceLineEditProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const InboundServiceLineEdit = ({
+const InboundServiceLineEditComponent = ({
   isOpen,
   onClose,
 }: InboundServiceLineEditProps) => {
@@ -83,3 +86,15 @@ export const InboundServiceLineEdit = ({
     </Modal>
   );
 };
+
+export const InboundServiceLineEdit = (props: InboundServiceLineEditProps) => (
+  <QueryParamsProvider
+    createStore={() =>
+      createQueryParamsStore<ItemRowFragment>({
+        initialSortBy: { key: 'name' },
+      })
+    }
+  >
+    <InboundServiceLineEditComponent {...props} />
+  </QueryParamsProvider>
+);

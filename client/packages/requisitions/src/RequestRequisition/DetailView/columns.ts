@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { RequestLineFragment } from '../api/operations.generated';
 import {
   useTranslation,
@@ -6,41 +5,17 @@ import {
   useColumns,
   GenericColumnKey,
   QuantityUtils,
-  useSortBy,
-  SortBy,
-  zustand,
   getCommentPopoverColumn,
   useFormatNumber,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useRequestFields } from '../api';
-
-type Store = {
-  sortBy: SortBy<RequestLineFragment>;
-  setSortBy: (sortBy: SortBy<RequestLineFragment>) => void;
-};
-
-const useStore = zustand<Store>(set => ({
-  sortBy: { key: 'itemName', isDesc: false, direction: 'asc' },
-  setSortBy: (sortBy: SortBy<RequestLineFragment>) =>
-    set(state => ({ ...state, sortBy })),
-}));
-
-const useSharedSortBy = () => {
-  const sharedSortBy = useStore();
-  const { sortBy, onChangeSortBy } = useSortBy<RequestLineFragment>(
-    sharedSortBy.sortBy
-  );
-
-  useEffect(() => {
-    sharedSortBy.setSortBy(sortBy);
-  }, [sortBy]);
-  return { sortBy, onChangeSortBy };
-};
 
 export const useRequestColumns = () => {
   const t = useTranslation('common');
   const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
-  const { sortBy, onChangeSortBy } = useSharedSortBy();
+  const { sort } = useQueryParamsStore();
+  const { sortBy, onChangeSortBy } = sort;
   const formatNumber = useFormatNumber();
   const columns = useColumns<RequestLineFragment>(
     [
