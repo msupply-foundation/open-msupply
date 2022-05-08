@@ -11,6 +11,7 @@ import {
   useTableStore,
   NothingHere,
   useToggle,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -32,16 +33,9 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const navigate = useNavigate();
   const modalController = useToggle();
 
-  const {
-    data,
-    isError,
-    isLoading,
-    sortBy,
-    onChangeSortBy,
-    onChangePage,
-    pagination,
-    filter,
-  } = useOutbound.document.list();
+  const { data, isError, isLoading, sort, pagination, filter } =
+    useOutbound.document.list();
+  const { onChangeSortBy, sortBy } = sort;
   useDisableOutboundRows(data?.nodes);
 
   const columns = useColumns<OutboundRowFragment>(
@@ -85,7 +79,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
+        onChangePage={pagination.onChangePage}
         columns={columns}
         data={data?.nodes ?? []}
         isError={isError}
@@ -104,10 +98,13 @@ export const OutboundShipmentListViewComponent: FC = () => {
   );
 };
 
-export const OutboundShipmentListView: FC = () => {
-  return (
-    <TableProvider createStore={createTableStore}>
-      <OutboundShipmentListViewComponent />
-    </TableProvider>
-  );
-};
+export const OutboundShipmentListView: FC = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore({
+      initialSortBy: { key: 'otherPartyName' },
+    })}
+  >
+    <OutboundShipmentListViewComponent />
+  </TableProvider>
+);
