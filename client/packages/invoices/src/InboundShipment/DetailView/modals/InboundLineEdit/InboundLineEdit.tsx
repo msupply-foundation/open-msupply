@@ -20,6 +20,7 @@ import {
   TableProvider,
   createTableStore,
   TabKeybindings,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -138,7 +139,12 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore({
+        initialSortBy: { key: 'expiryDate' },
+      })}
+    >
       <Modal
         title={
           mode === ModalMode.Create
