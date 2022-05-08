@@ -42,7 +42,7 @@ const TableProvider = <T extends RecordWithId>({
 }: PropsWithChildren<{
   initialStore?: UseBoundStore<TableStore>;
   createStore: () => UseBoundStore<TableStore>;
-  queryParamsStore?: UseBoundStore<QueryParamsState<T>>;
+  queryParamsStore: UseBoundStore<QueryParamsState<T>>;
 }>) =>
   queryParamsStore ? (
     <Provider {...props}>

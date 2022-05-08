@@ -7,7 +7,7 @@ import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TableProvider, createTableStore } from '../../ui/layout/tables';
-import { GqlProvider } from '../..';
+import { createQueryParamsStore, GqlProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../../ui/components/modals';
 import { renderHook } from '@testing-library/react';
@@ -101,7 +101,12 @@ export const TestingProvider: FC<
       <GqlProvider url={Environment.GRAPHQL_URL}>
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale={locale}>
-            <TableProvider createStore={createTableStore}>
+            <TableProvider
+              createStore={createTableStore}
+              queryParamsStore={createQueryParamsStore({
+                initialSortBy: { key: 'name' },
+              })}
+            >
               <AppThemeProvider>{children}</AppThemeProvider>
             </TableProvider>
           </IntlTestProvider>
@@ -117,7 +122,12 @@ export const StoryProvider: FC<PropsWithChildrenOnly> = ({ children }) => (
       <GqlProvider url={Environment.GRAPHQL_URL}>
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale="en">
-            <TableProvider createStore={createTableStore}>
+            <TableProvider
+              createStore={createTableStore}
+              queryParamsStore={createQueryParamsStore({
+                initialSortBy: { key: 'name' },
+              })}
+            >
               <AppThemeProvider>
                 <ConfirmationModalProvider>
                   {children}

@@ -12,6 +12,7 @@ import {
   useDirtyCheck,
   TableProvider,
   createTableStore,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
@@ -181,7 +182,12 @@ const TableWrapper: React.FC<TableProps> = ({
     );
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore({
+        initialSortBy: { key: 'expiryDate' },
+      })}
+    >
       <OutboundLineEditTable
         packSizeController={packSizeController}
         onChange={updateQuantity}

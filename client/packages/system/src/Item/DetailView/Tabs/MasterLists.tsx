@@ -10,6 +10,7 @@ import {
   useColumns,
   createTableStore,
   Box,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 
 export const MasterListsTab = () => {
@@ -25,7 +26,12 @@ export const MasterListsTab = () => {
   return (
     <Box justifyContent="center" display="flex">
       <Box flex={1} display="flex" style={{ maxWidth: 1000 }}>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'name' },
+          })}
+        >
           <DataTable data={data?.nodes} columns={columns} />
         </TableProvider>
       </Box>

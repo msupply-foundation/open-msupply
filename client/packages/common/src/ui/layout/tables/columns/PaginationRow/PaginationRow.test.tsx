@@ -3,6 +3,7 @@ import { fireEvent, render } from '@testing-library/react';
 import { PaginationRow } from './PaginationRow';
 import { createTableStore, TableProvider } from '../../context';
 import { TestingProvider } from '../../../../../utils';
+import { createQueryParamsStore } from '@common/hooks';
 
 describe('PaginationRow', () => {
   it('Renders a string : Showing X-Y of Z', () => {
@@ -12,7 +13,12 @@ describe('PaginationRow', () => {
 
     const { getByText } = render(
       <TestingProvider>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
           <PaginationRow
             page={0}
             offset={offset}
@@ -38,7 +44,12 @@ describe('PaginationRow', () => {
   it('Renders at least one page button', () => {
     const { getByRole } = render(
       <TestingProvider>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
           <PaginationRow
             page={0}
             offset={1}
@@ -62,7 +73,12 @@ describe('PaginationRow', () => {
 
     const { queryByRole, getByRole } = render(
       <TestingProvider>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
           <PaginationRow
             page={0}
             offset={offset}
@@ -98,7 +114,12 @@ describe('PaginationRow', () => {
 
     const { queryByRole, queryByText } = render(
       <TestingProvider>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
           <PaginationRow
             page={0}
             offset={offset}
@@ -125,7 +146,12 @@ describe('PaginationRow', () => {
 
     const { getByRole } = render(
       <TestingProvider>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
           <PaginationRow
             page={0}
             offset={offset}
@@ -153,7 +179,12 @@ describe('PaginationRow', () => {
 
     const { getByRole } = render(
       <TestingProvider>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
           <PaginationRow
             page={0}
             offset={offset}
@@ -178,7 +209,12 @@ describe('PaginationRow', () => {
 
     const { getByRole } = render(
       <TestingProvider>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
           <PaginationRow
             page={0}
             offset={offset}
@@ -203,7 +239,12 @@ describe('PaginationRow', () => {
 
     const { getByRole } = render(
       <TestingProvider>
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
           <PaginationRow
             page={1}
             offset={offset}
