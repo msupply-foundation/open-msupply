@@ -7,19 +7,13 @@ import {
   createTableStore,
   NothingHere,
   useTranslation,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useItems, ItemRowFragment } from '../api';
 
-export const ItemListView: FC = () => {
-  const {
-    data,
-    isError,
-    isLoading,
-    onChangePage,
-    pagination,
-    sortBy,
-    onChangeSortBy,
-  } = useItems();
+const ItemListComponent: FC = () => {
+  const { data, isError, isLoading, pagination, sort } = useItems();
+  const { sortBy, onChangeSortBy } = sort;
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
 
@@ -33,19 +27,28 @@ export const ItemListView: FC = () => {
   );
 
   return (
-    <TableProvider createStore={createTableStore}>
-      <DataTable
-        pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
-        columns={columns}
-        data={data?.nodes}
-        isError={isError}
-        isLoading={isLoading}
-        onRowClick={row => {
-          navigate(`/catalogue/items/${row.id}`);
-        }}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
-      />
-    </TableProvider>
+    <DataTable
+      pagination={{ ...pagination, total: data?.totalCount }}
+      onChangePage={pagination.onChangePage}
+      columns={columns}
+      data={data?.nodes}
+      isError={isError}
+      isLoading={isLoading}
+      onRowClick={row => {
+        navigate(`/catalogue/items/${row.id}`);
+      }}
+      noDataElement={<NothingHere body={t('error.no-items')} />}
+    />
   );
 };
+
+export const ItemListView: FC = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<ItemRowFragment>({
+      initialSortBy: { key: 'name' },
+    })}
+  >
+    <ItemListComponent />
+  </TableProvider>
+);

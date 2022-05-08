@@ -58,7 +58,6 @@
   "label.requisition": "Requisition",
   "label.requested-quantity": "Requested quantity",
   "label.select-rows-to-allocate-them": "Select rows to allocate them",
-  "label.select-rows-to-delete-them": "Select rows to delete them",
   "label.cant-delete-disabled-requisition": "Can only delete lines when requisition is in Draft",
   "label.cant-delete-disabled-shipment": "You cannot delete a line when status is Shipped, Delivered or Verified",
   "label.supply-quantity": "Quantity to supply",
@@ -98,7 +97,7 @@
   "messages.deleted-requisitions": "Deleted {{number}} requisitions",
   "messages.error-saving-shipment": "Error saving shipment 🥺",
   "messages.must-allocate-all-lines": "Cannot change the status until all lines have been allocated.",
-  "messages.select-rows-to-delete": "Select rows to delete",
+  "messages.select-rows-to-delete-them": "Select rows to delete them",
   "messages.shipment-saved": "Shipment saved 🥳",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
   "warning.nothing-to-supply": "Nothing left to supply!"

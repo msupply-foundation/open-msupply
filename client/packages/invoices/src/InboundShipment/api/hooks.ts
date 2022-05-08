@@ -1,7 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import {
   useIsGrouped,
-  useQueryParams,
   useTableStore,
   useTranslation,
   useNotification,
@@ -18,6 +17,7 @@ import {
   useFieldsSelector,
   InvoiceNodeStatus,
   SortBy,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import {
@@ -244,7 +244,7 @@ export const useDeleteSelectedLines = (): {
         onSuccess,
       });
     } else {
-      const infoSnack = info(t('label.select-rows-to-delete-them'));
+      const infoSnack = info(t('messages.select-rows-to-delete-them'));
       infoSnack();
     }
   };
@@ -253,19 +253,12 @@ export const useDeleteSelectedLines = (): {
 };
 
 export const useInbounds = () => {
-  const queryParams = useQueryParams<InboundRowFragment>({
-    initialSortBy: { key: 'otherPartyName' },
-  });
+  const queryParams = useQueryParamsStore();
   const api = useInboundApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.list({
-        first: queryParams.first,
-        offset: queryParams.offset,
-        sortBy: queryParams.sortBy,
-        filterBy: queryParams.filter.filterBy,
-      })
+    ...useQuery(api.keys.paramList(queryParams.paramList()), () =>
+      api.get.list(queryParams.paramList())
     ),
     ...queryParams,
   };

@@ -11,12 +11,13 @@ import {
   SortBy,
   RegexUtils,
   NothingHere,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
 import { useStockLines } from '../api';
 import { StockRow } from '../types';
 
-export const StockListView: FC = () => {
+const StockListComponent: FC = () => {
   const { pagination } = usePagination();
   const t = useTranslation('inventory');
   const [filterString, setFilterString] = React.useState<string>('');
@@ -59,7 +60,7 @@ export const StockListView: FC = () => {
       .sort(SortUtils.getDataSorter(sortBy.key, !!sortBy.isDesc)) ?? [];
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <>
       <Toolbar onChangeFilter={setFilterString} filterString={filterString} />
       <DataTable
         pagination={{ ...pagination, total: filteredSortedData.length }}
@@ -73,6 +74,17 @@ export const StockListView: FC = () => {
         isError={isError}
         isLoading={isLoading}
       />
-    </TableProvider>
+    </>
   );
 };
+
+export const StockListView: FC = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<StockRow>({
+      initialSortBy: { key: 'itemName' },
+    })}
+  >
+    <StockListComponent />
+  </TableProvider>
+);

@@ -10,6 +10,7 @@ import {
   useTableStore,
   useToggle,
   NothingHere,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -30,16 +31,9 @@ export const StocktakeListView: FC = () => {
   const t = useTranslation('inventory');
   const modalController = useToggle();
 
-  const {
-    data,
-    isError,
-    isLoading,
-    sortBy,
-    onChangeSortBy,
-    onChangePage,
-    pagination,
-    filter,
-  } = useStocktakes();
+  const { data, isError, isLoading, sort, pagination, filter } =
+    useStocktakes();
+  const { sortBy, onChangeSortBy } = sort;
   useDisableStocktakeRows(data?.nodes);
 
   const statusTranslator = getStocktakeTranslator(t);
@@ -70,7 +64,7 @@ export const StocktakeListView: FC = () => {
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
+        onChangePage={pagination.onChangePage}
         columns={columns}
         data={data?.nodes ?? []}
         isError={isError}
@@ -89,10 +83,13 @@ export const StocktakeListView: FC = () => {
   );
 };
 
-export const ListView: FC = () => {
-  return (
-    <TableProvider createStore={createTableStore}>
-      <StocktakeListView />
-    </TableProvider>
-  );
-};
+export const ListView: FC = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<StocktakeRowFragment>({
+      initialSortBy: { key: 'createdDatetime' },
+    })}
+  >
+    <StocktakeListView />
+  </TableProvider>
+);

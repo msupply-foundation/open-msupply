@@ -48,7 +48,6 @@
   "label.projected": "Projected",
   "label.quantities": "Quantities",
   "label.amc": "AMC",
-  "label.select-rows-to-delete-them": "Select rows to delete them",
   "label.cant-delete-disabled": "Can only delete lines when status is New",
   "label.sent": "Sent",
   "label.soh": "SOH",
@@ -82,5 +81,5 @@
   "messages.deleted-requisitions_one": "Deleted {{count}} order",
   "messages.deleted-requisitions_other": "Deleted {{count}} orders",
   "messages.saved": "Saved",
-  "messages.select-rows-to-delete": "Select rows to delete"
+  "messages.select-rows-to-delete-them": "Select rows to delete them"
 }

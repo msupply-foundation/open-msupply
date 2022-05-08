@@ -5,7 +5,6 @@ import {
   useConfirmationModal,
   useAuthContext,
   useTranslation,
-  useQueryParams,
   useQueryClient,
   useNavigate,
   useMutation,
@@ -21,6 +20,7 @@ import {
   RequisitionNodeStatus,
   RegexUtils,
   SortBy,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { MasterListRowFragment } from '@openmsupply-client/system';
 import { getRequestQueries, ListParams } from './api';
@@ -57,21 +57,13 @@ export const useRequestApi = () => {
 };
 
 export const useRequests = (options?: { enabled: boolean }) => {
-  const queryParams = useQueryParams<RequestRowFragment>({
-    initialSortBy: { key: 'otherPartyName' },
-  });
+  const queryParams = useQueryParamsStore();
   const api = useRequestApi();
 
   return {
     ...useQuery(
-      api.keys.paramList(queryParams),
-      () =>
-        api.get.list({
-          first: queryParams.first,
-          offset: queryParams.offset,
-          sortBy: queryParams.sortBy,
-          filterBy: queryParams.filter.filterBy,
-        }),
+      api.keys.paramList(queryParams.paramList()),
+      () => api.get.list(queryParams.paramList()),
       options
     ),
     ...queryParams,
@@ -357,7 +349,7 @@ export const useDeleteRequestLines = () => {
         onSuccess: success(t('messages.deleted-lines', { number: number })),
       });
     } else {
-      info(t('label.select-rows-to-delete-them'))();
+      info(t('messages.select-rows-to-delete-them'))();
     }
   };
 

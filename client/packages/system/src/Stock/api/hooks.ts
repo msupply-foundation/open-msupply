@@ -2,9 +2,8 @@ import {
   useAuthContext,
   useGql,
   useQuery,
-  useQueryParams,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
-import { StockRow } from './../types';
 import { getSdk } from './operations.generated';
 import { getStockQueries } from './api';
 
@@ -17,17 +16,10 @@ export const useStockApi = () => {
 
 export const useStockLines = () => {
   const api = useStockApi();
-  const queryParams = useQueryParams<StockRow>({
-    initialSortBy: { key: 'itemName' },
-  });
+  const queryParams = useQueryParamsStore();
   return {
-    ...useQuery(['stock', 'list', api.storeId, queryParams], () =>
-      api.get.list({
-        first: queryParams.first,
-        offset: queryParams.offset,
-        sortBy: queryParams.sortBy,
-        filterBy: queryParams.filter.filterBy,
-      })
+    ...useQuery(['stock', 'list', api.storeId, queryParams.paramList()], () =>
+      api.get.list(queryParams.paramList())
     ),
     ...queryParams,
   };
