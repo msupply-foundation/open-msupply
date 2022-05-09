@@ -75,7 +75,12 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   );
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore({
+        initialSortBy: { key: 'expiryDate' },
+      })}
+    >
       <StocktakeLineEditModal
         onNext={onNext}
         onOk={onOk}

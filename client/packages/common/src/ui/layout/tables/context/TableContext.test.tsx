@@ -5,6 +5,7 @@ import { useIsGrouped } from './hooks';
 import { TableStore, TableProvider, createTableStore } from './TableContext';
 import { LocalStorage } from '../../../../localStorage';
 import { PropsWithChildrenOnly } from '@common/types';
+import { createQueryParamsStore } from '@common/hooks';
 
 const useStore = createTableStore();
 
@@ -301,7 +302,14 @@ describe('TableContext - grouping rows', () => {
 describe('useIsGrouped', () => {
   const Wrapper: FC<PropsWithChildrenOnly> = ({ children }) => {
     return (
-      <TableProvider createStore={createTableStore}>{children}</TableProvider>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore({
+          initialSortBy: { key: 'id' },
+        })}
+      >
+        {children}
+      </TableProvider>
     );
   };
 
