@@ -1,13 +1,12 @@
-import { isA } from './../../../../utils';
+import { useQueryParamsStore } from '@common/hooks';
+import { SortUtils } from '@common/utils';
+import { InboundItem } from 'packages/invoices/src/types';
+import { inboundLinesToSummaryItems, isA } from '../../../../utils';
 import {
   InboundFragment,
   InboundLineFragment,
 } from '../../operations.generated';
-import { useInboundSelector } from './index';
-import { useQueryParamsStore } from '@common/hooks';
-import { InboundItem } from './../../../../types';
-import { inboundLinesToSummaryItems } from './../../../../utils';
-import { SortUtils } from '@common/utils';
+import { useInboundSelector } from './useInboundLines';
 
 export const useInboundItems = () => {
   const { sort } = useQueryParamsStore();
@@ -27,7 +26,6 @@ export const useInboundItems = () => {
           !!sortBy.isDesc
         )
       );
-
   const { data } = useInboundSelector(selectItems);
 
   return { data, sortBy, onSort: onChangeSortBy };
