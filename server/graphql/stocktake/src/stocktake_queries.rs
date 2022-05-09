@@ -50,8 +50,8 @@ pub struct EqualFilterStocktakeStatusInput {
 pub struct StocktakeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub stocktake_number: Option<EqualFilterBigNumberInput>,
-    pub comment: Option<EqualFilterStringInput>,
-    pub description: Option<EqualFilterStringInput>,
+    pub comment: Option<SimpleStringFilter>,
+    pub description: Option<SimpleStringFilter>,
     pub status: Option<EqualFilterStocktakeStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub stocktake_date: Option<DatetimeFilterInput>,
