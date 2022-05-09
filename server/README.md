@@ -124,8 +124,6 @@ To check you can view the graphql interface here  :http://localhost:8000/graphql
 
 ## Tests
 
-`important` graphql test require latest export of graphql schema, need to run `cargo run --bin export_graphql --features sqlite` when making changes to graphql schema (changes that may affect tests). Make sure to `commit` schema.graphql for CI tests to work.
-
 - To run all tests:
 
 ```bash
@@ -150,3 +148,8 @@ To enable development mode the `develop` flag must be set to `true` in the setti
 server:
   develop: true
 ```
+
+## Cli
+
+* `remote_server_cli` -> provides general commands, for help run: `cargo run --bin remote_server_cli -- --help`
+* `demo_cli` -> provides command specific to demo purposes, i.e. refresh-dates will move forward all dates, for help run: `cargo run --bin demo_cli -- --help`
