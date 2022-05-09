@@ -1,21 +1,21 @@
 import {
+  useTranslation,
   useQueryClient,
   useMutation,
   useNotification,
-  useTranslation,
   useTableStore,
 } from '@openmsupply-client/common';
-import { useResponse } from '..';
-import { useResponseNumber } from '../document/useResponse';
-import { useResponseApi } from '../utils/useResponseApi';
-import { useResponseLines } from './useResponseLines';
+import { useRequestNumber } from '../document/useRequest';
+import { useIsRequestDisabled } from '../utils/useIsRequestDisabled';
+import { useRequestApi } from '../utils/useRequestApi';
+import { useRequestLines } from './useRequestLines';
 
-export const useDeleteResponseLines = () => {
+export const useDeleteRequestLines = () => {
   const { success, info } = useNotification();
-  const { lines } = useResponseLines();
-  const api = useResponseApi();
-  const requestNumber = useResponseNumber();
-  const isDisabled = useResponse.utils.isDisabled();
+  const { lines } = useRequestLines();
+  const api = useRequestApi();
+  const requestNumber = useRequestNumber();
+  const isDisabled = useIsRequestDisabled();
   const queryClient = useQueryClient();
   const { mutate } = useMutation(api.deleteLines, {
     onSettled: () =>
@@ -32,8 +32,6 @@ export const useDeleteResponseLines = () => {
       info(t('label.cant-delete-disabled-requisition'))();
       return;
     }
-    info('Deleting response lines not yet implemented in API')();
-    return;
     const number = selectedRows?.length;
     if (selectedRows && number) {
       mutate(selectedRows, {

@@ -4,11 +4,7 @@ import {
   NothingHere,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  RequestLineFragment,
-  useHideOverStocked,
-  useRequestLines,
-} from '../api';
+import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
 
 interface ContentAreaProps {
   onAddItem: () => void;
@@ -17,9 +13,9 @@ interface ContentAreaProps {
 
 export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
-  const { lines, columns } = useRequestLines();
+  const { lines, columns } = useRequest.line.list();
   const { on } = useHideOverStocked();
-  const { itemFilter } = useRequestLines();
+  const { itemFilter } = useRequest.line.list();
 
   const isFiltered = !!itemFilter || on;
   return (

@@ -4,8 +4,8 @@ import {
   SortUtils,
   Column,
   RegexUtils,
+  zustand,
 } from '@openmsupply-client/common';
-import { useItemFilter } from '../../../../RequestRequisition/api';
 import { ResponseLineFragment } from '../../operations.generated';
 import { useResponseColumns } from '../../../DetailView/columns';
 import { useResponseFields } from '../document/useResponseFields';
@@ -17,6 +17,15 @@ interface UseResponseLinesController
   itemFilter: string;
   setItemFilter: (itemFilter: string) => void;
 }
+
+const useItemFilter = zustand<{
+  itemFilter: string;
+  setItemFilter: (itemFilter: string) => void;
+}>(set => ({
+  setItemFilter: (itemFilter: string) =>
+    set(state => ({ ...state, itemFilter })),
+  itemFilter: '',
+}));
 
 export const useResponseLines = (): UseResponseLinesController => {
   const { lines } = useResponseFields('lines');
