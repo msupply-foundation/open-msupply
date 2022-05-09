@@ -4,15 +4,19 @@ import { Box, alpha } from '@mui/material';
 import { RecordWithId } from '@common/types';
 import { DataTable } from '../../DataTable';
 import { createTableStore, TableProvider } from '../../context/TableContext';
+import { UseBoundStore } from 'zustand';
+import { createQueryParamsStore, QueryParamsState } from '@common/hooks';
 
 interface MiniTableProps<T extends RecordWithId> {
   rows: T[];
   columns: Column<T>[];
+  queryParamsStore?: UseBoundStore<QueryParamsState<T>>;
 }
 
 export const MiniTable = <T extends RecordWithId>({
   rows,
   columns,
+  queryParamsStore,
 }: MiniTableProps<T>): React.ReactElement<
   MiniTableProps<T>,
   JSXElementConstructor<MiniTableProps<T>>
@@ -31,7 +35,13 @@ export const MiniTable = <T extends RecordWithId>({
           overflow: 'hidden',
         }}
       >
-        <TableProvider createStore={createTableStore}>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={
+            queryParamsStore ||
+            createQueryParamsStore<T>({ initialSortBy: { key: 'name' } })
+          }
+        >
           <DataTable dense columns={columns} data={rows} />
         </TableProvider>
       </Box>

@@ -6,6 +6,7 @@ import {
   Switch,
   useIsGrouped,
   MiniTable,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { StocktakeLineFragment, useStocktakeRows } from '../../api';
@@ -19,7 +20,15 @@ const Expando = ({
   const expandoColumns = useExpansionColumns();
 
   if ('lines' in rowData && rowData.lines.length > 1) {
-    return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
+    return (
+      <MiniTable
+        rows={rowData.lines}
+        columns={expandoColumns}
+        queryParamsStore={createQueryParamsStore<StocktakeLineFragment>({
+          initialSortBy: { key: 'expiryDate' },
+        })}
+      />
+    );
   } else {
     return null;
   }

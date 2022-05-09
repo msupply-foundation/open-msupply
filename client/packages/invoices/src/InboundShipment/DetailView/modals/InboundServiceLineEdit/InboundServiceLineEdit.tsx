@@ -74,7 +74,12 @@ const InboundServiceLineEditComponent = ({
               Icon={<PlusCircleIcon />}
             />
           </Box>
-          <TableProvider createStore={createTableStore}>
+          <TableProvider
+            createStore={createTableStore}
+            queryParamsStore={createQueryParamsStore({
+              initialSortBy: { key: 'serviceItemName' },
+            })}
+          >
             <DataTable
               columns={columns}
               data={lines.filter(({ isDeleted }) => !isDeleted)}
