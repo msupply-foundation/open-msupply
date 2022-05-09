@@ -60,6 +60,12 @@ impl From<TransactionError<RepositoryError>> for RepositoryError {
 }
 
 impl StorageConnection {
+    pub fn new(connection: DBConnection) -> StorageConnection {
+        StorageConnection {
+            connection,
+            transaction_level: Cell::new(0),
+        }
+    }
     /// Executes operations in transaction. A new transaction is only started if not already in a
     /// transaction.
     pub async fn transaction<'a, T, E, F, Fut>(&'a self, f: F) -> Result<T, TransactionError<E>>
@@ -200,10 +206,7 @@ impl StorageConnectionManager {
     }
 
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
-        Ok(StorageConnection {
-            connection: get_connection(&self.pool)?,
-            transaction_level: Cell::new(0),
-        })
+        Ok(StorageConnection::new(get_connection(&self.pool)?))
     }
 }
 
