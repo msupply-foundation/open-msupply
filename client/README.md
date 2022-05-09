@@ -160,7 +160,7 @@ If the `C_INCLUDE_PATH` env var is set, that may cause compilation issues, as it
 
 ### Run the Android app
 
-In `packages/host/public/config.js` change `API_HOST` to `API_HOST: 'http://localhost:8082'` to use the remote server running on Android.
+In `packages/host/public/config.js` change `API_HOST` to `API_HOST: 'http://localhost:8000'` to use the remote server running on Android.
 
 Then run the command `yarn android:build:debug` to
 
