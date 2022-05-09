@@ -16,18 +16,14 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import {
-  useIsResponseDisabled,
-  useResponse,
-  ResponseLineFragment,
-} from '../api';
+import { useResponse, ResponseLineFragment } from '../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 
 export const DetailView: FC = () => {
-  const isDisabled = useIsResponseDisabled();
+  const isDisabled = useResponse.utils.isDisabled();
   const { onOpen, onClose, entity, isOpen } =
     useEditModal<ResponseLineFragment>();
-  const { data, isLoading } = useResponse();
+  const { data, isLoading } = useResponse.document.get();
   const navigate = useNavigate();
   const t = useTranslation('distribution');
 

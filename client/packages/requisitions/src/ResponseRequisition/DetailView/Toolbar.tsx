@@ -13,23 +13,18 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
-import {
-  useResponseFields,
-  useIsResponseDisabled,
-  useResponseLines,
-  useDeleteResponseLines,
-} from '../api';
+import { useResponse } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
-  const isDisabled = useIsResponseDisabled();
-  const { itemFilter, setItemFilter } = useResponseLines();
-  const { otherParty, theirReference, update } = useResponseFields([
+  const isDisabled = useResponse.utils.isDisabled();
+  const { itemFilter, setItemFilter } = useResponse.line.list();
+  const { otherParty, theirReference, update } = useResponse.document.fields([
     'lines',
     'otherParty',
     'theirReference',
   ]);
-  const { onDelete } = useDeleteResponseLines();
+  const { onDelete } = useResponse.line.delete();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
