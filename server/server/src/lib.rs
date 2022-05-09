@@ -293,6 +293,10 @@ pub async fn start_server(
 ) -> std::io::Result<()> {
     let connection_manager = get_storage_connection_manager(&config_settings.database);
 
+    if let Some(init_sql) = &config_settings.database.init_sql {
+        connection_manager.execute(init_sql).unwrap();
+    }
+
     info!("Run DB migrations...");
     match run_db_migrations(&connection_manager.connection().unwrap()) {
         Ok(_) => info!("DB migrations succeeded"),

@@ -210,6 +210,14 @@ impl StorageConnectionManager {
             transaction_level: Cell::new(0),
         })
     }
+
+    // Note, this method is only needed for an Android workaround to avoid adding a diesel
+    // dependency to the server crate.
+    pub fn execute(&self, sql: &str) -> Result<(), RepositoryError> {
+        let con = get_connection(&self.pool)?;
+        con.execute(sql)?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
