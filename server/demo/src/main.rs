@@ -1,7 +1,9 @@
 use chrono::Utc;
 use clap::StructOpt;
 use demo::RefreshDatesRepository;
-use repository::{get_storage_connection_manager, KeyValueStoreRepository, KeyValueType, ChangelogRowRepository};
+use repository::{
+    get_storage_connection_manager, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType,
+};
 use server::{configuration, settings::Settings};
 
 /// omSupply demo cli
@@ -15,7 +17,7 @@ struct Args {
 #[derive(clap::Subcommand)]
 enum Action {
     /// Make data current, base on latest date difference to now
-    RefreshData,
+    RefreshDates,
 }
 
 fn main() {
@@ -25,7 +27,7 @@ fn main() {
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
     match args.action {
-        Action::RefreshData => {
+        Action::RefreshDates => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let connection = connection_manager.connection().unwrap();
 

@@ -43,7 +43,7 @@ async fn main() {
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
     match args.action {
-        Action::ExportSchema => {
+        Action::ExportGraphqlSchema => {
             let schema = schema_builder().finish();
             fs::write("schema.graphql", &schema.sdl()).unwrap();
         }
