@@ -10,7 +10,7 @@ import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { useStocktakeRows } from '../../../api';
+import { useStocktake } from '../../../api';
 
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
@@ -24,7 +24,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   onChangeItem,
 }) => {
   const t = useTranslation(['common', 'inventory']);
-  const { items } = useStocktakeRows();
+  const { items } = useStocktake.line.rows();
   const disabled = mode === ModalMode.Update;
 
   return (

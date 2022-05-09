@@ -20,7 +20,7 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
 
 export const Footer: FC = () => {
   const t = useTranslation(['common', 'inventory']);
-  const { data } = useStocktake();
+  const { data } = useStocktake.document.get();
 
   return (
     <AppFooterPortal

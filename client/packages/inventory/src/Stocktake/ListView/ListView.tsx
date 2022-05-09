@@ -16,7 +16,7 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
-import { useStocktakes } from '../api';
+import { useStocktake } from '../api';
 
 const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -32,7 +32,7 @@ export const StocktakeListView: FC = () => {
   const modalController = useToggle();
 
   const { data, isError, isLoading, sort, pagination, filter } =
-    useStocktakes();
+    useStocktake.document.list();
   const { sortBy, onChangeSortBy } = sort;
   useDisableStocktakeRows(data?.nodes);
 
