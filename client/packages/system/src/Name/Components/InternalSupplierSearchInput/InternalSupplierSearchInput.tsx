@@ -4,7 +4,7 @@ import {
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
-import { NameRowFragment, useInternalSuppliers } from '../../api';
+import { NameRowFragment, useName } from '../../api';
 import {
   basicFilterOptions,
   filterByNameAndCode,
@@ -18,7 +18,7 @@ export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
   value,
   disabled = false,
 }) => {
-  const { data, isLoading } = useInternalSuppliers();
+  const { data, isLoading } = useName.document.internalSuppliers();
   const [buffer, setBuffer] = useBufferState(value);
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));

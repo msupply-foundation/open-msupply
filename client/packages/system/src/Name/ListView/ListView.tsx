@@ -12,11 +12,12 @@ import {
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
-import { useNames, NameRowFragment } from '../api';
+import { useName, NameRowFragment } from '../api';
 
 const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   const [selectedId, setSelectedId] = useState<string>('');
-  const { data, isError, isLoading, pagination, sort } = useNames(type);
+  const { data, isError, isLoading, pagination, sort } =
+    useName.document.list(type);
   const { sortBy, onChangeSortBy } = sort;
   const { Modal, showDialog, hideDialog } = useDialog();
 
