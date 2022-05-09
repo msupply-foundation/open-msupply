@@ -8,19 +8,15 @@ import {
   SearchBar,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
-import {
-  useRequestFields,
-  useIsRequestDisabled,
-  useRequestLines,
-} from '../../api';
+import { useRequest } from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
 import { ToolbarActions } from './ToolbarActions';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
-  const isDisabled = useIsRequestDisabled();
-  const { itemFilter, setItemFilter } = useRequestLines();
-  const { theirReference, update, otherParty } = useRequestFields([
+  const isDisabled = useRequest.utils.isDisabled();
+  const { itemFilter, setItemFilter } = useRequest.line.list();
+  const { theirReference, update, otherParty } = useRequest.document.fields([
     'theirReference',
     'otherParty',
   ]);

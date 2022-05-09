@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
-import { useIsRequestDisabled } from '../../api';
+import { useRequest } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
@@ -28,7 +28,7 @@ export const RequestLineEdit = ({
   mode,
   item,
 }: RequestLineEditProps) => {
-  const disabled = useIsRequestDisabled();
+  const disabled = useRequest.utils.isDisabled();
   const { Modal } = useDialog({ onClose, isOpen, animationTimeout: 100 });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const { draft, isLoading, save, update } =

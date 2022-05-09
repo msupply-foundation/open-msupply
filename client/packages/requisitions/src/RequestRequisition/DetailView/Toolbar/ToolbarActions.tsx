@@ -7,22 +7,16 @@ import {
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import {
-  useRequestFields,
-  useIsRequestDisabled,
-  useHideOverStocked,
-} from '../../api';
+import { useRequest, useHideOverStocked } from '../../api';
 
 const months = [1, 2, 3, 4, 5, 6];
 
 export const ToolbarActions = () => {
   const { on, toggle } = useHideOverStocked();
   const t = useTranslation('replenishment');
-  const isDisabled = useIsRequestDisabled();
-  const { minMonthsOfStock, maxMonthsOfStock, update } = useRequestFields([
-    'minMonthsOfStock',
-    'maxMonthsOfStock',
-  ]);
+  const isDisabled = useRequest.utils.isDisabled();
+  const { minMonthsOfStock, maxMonthsOfStock, update } =
+    useRequest.document.fields(['minMonthsOfStock', 'maxMonthsOfStock']);
 
   const getMinMOSConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),

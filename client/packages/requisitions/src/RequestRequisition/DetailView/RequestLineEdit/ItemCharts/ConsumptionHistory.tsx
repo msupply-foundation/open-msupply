@@ -19,7 +19,7 @@ import {
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useRequestLineChartData } from '../../../api/hooks';
+import { useRequest } from '../../../api/hooks';
 
 export interface ConsumptionHistoryProps {
   id: string;
@@ -31,7 +31,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   const t = useTranslation('replenishment');
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();
-  const { data, isLoading } = useRequestLineChartData(id);
+  const { data, isLoading } = useRequest.line.chartData(id);
   const dateFormatter = (date: string) => dayMonthShort(date);
   const tooltipFormatter = (
     value: number,

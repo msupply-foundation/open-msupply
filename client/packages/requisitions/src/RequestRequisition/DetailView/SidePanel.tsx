@@ -19,17 +19,18 @@ import {
   RouteBuilder,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import { useIsRequestDisabled, useRequest, useRequestFields } from '../api';
+import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
 const AdditionalInfoSection: FC = () => {
-  const isDisabled = useIsRequestDisabled();
-  const { user, colour, comment, createdDatetime, update } = useRequestFields([
-    'colour',
-    'createdDatetime',
-    'comment',
-    'user',
-  ]);
+  const isDisabled = useRequest.utils.isDisabled();
+  const { user, colour, comment, createdDatetime, update } =
+    useRequest.document.fields([
+      'colour',
+      'createdDatetime',
+      'comment',
+      'user',
+    ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const t = useTranslation('common');
   const { localisedDate } = useFormatDateTime();
@@ -86,7 +87,7 @@ const RelatedDocumentsRow: FC<{
 const RelatedDocumentsSection: FC = () => {
   const t = useTranslation('replenishment');
   const { localisedDate: d } = useFormatDateTime();
-  const { shipments } = useRequestFields('shipments');
+  const { shipments } = useRequest.document.fields('shipments');
 
   const getTooltip = (createdDatetime: string, username?: string) => {
     let tooltip = t('messages.inbound-shipment-created-on', {
@@ -133,7 +134,7 @@ const RelatedDocumentsSection: FC = () => {
 };
 
 export const SidePanel: FC = () => {
-  const { data } = useRequest();
+  const { data } = useRequest.document.get();
   const { success } = useNotification();
   const t = useTranslation(['replenishment', 'common']);
 

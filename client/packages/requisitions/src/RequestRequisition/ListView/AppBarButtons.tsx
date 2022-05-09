@@ -15,17 +15,17 @@ import {
   ToggleState,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
-import { RequestRowFragment, useInsertRequest, useRequestsAll } from '../api';
+import { RequestRowFragment, useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
   sortBy: SortBy<RequestRowFragment>;
 }> = ({ modalController, sortBy }) => {
-  const { mutate: onCreate } = useInsertRequest();
+  const { mutate: onCreate } = useRequest.document.insert();
   const { success, error } = useNotification();
   const t = useTranslation('common');
-  const { isLoading, mutateAsync } = useRequestsAll(sortBy);
+  const { isLoading, mutateAsync } = useRequest.document.listAll(sortBy);
 
   const csvExport = async () => {
     const data = await mutateAsync();

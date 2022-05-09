@@ -9,11 +9,11 @@ import {
   useFormatNumber,
   useQueryParamsStore,
 } from '@openmsupply-client/common';
-import { useRequestFields } from '../api';
+import { useRequest } from '../api';
 
 export const useRequestColumns = () => {
   const t = useTranslation('common');
-  const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
+  const { maxMonthsOfStock } = useRequest.document.fields('maxMonthsOfStock');
   const { sort } = useQueryParamsStore();
   const { sortBy, onChangeSortBy } = sort;
   const formatNumber = useFormatNumber();
