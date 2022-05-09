@@ -18,7 +18,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { MasterListLineFragment } from '../api/operations.generated';
 
 export const MasterListDetailView: FC = () => {
-  const { data, isLoading } = useMasterList();
+  const { data, isLoading } = useMasterList.document.get();
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
 

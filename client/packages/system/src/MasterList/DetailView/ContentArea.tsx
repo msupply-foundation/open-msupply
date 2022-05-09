@@ -1,10 +1,10 @@
 import React from 'react';
 import { DataTable, useTranslation } from '@openmsupply-client/common';
-import { useMasterListLines } from '../api';
+import { useMasterList } from '../api';
 
 export const ContentArea = () => {
   const t = useTranslation('common');
-  const { lines, columns } = useMasterListLines();
+  const { lines, columns } = useMasterList.line.rows();
   return (
     <DataTable
       columns={columns}

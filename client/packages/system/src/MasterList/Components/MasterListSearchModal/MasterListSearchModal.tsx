@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { ListSearch, useTranslation } from '@openmsupply-client/common';
-import { useMasterLists, MasterListRowFragment } from '../../api';
+import { useMasterList, MasterListRowFragment } from '../../api';
 
 interface MasterListSearchProps {
   open: boolean;
@@ -14,7 +14,7 @@ export const MasterListSearchModal: FC<MasterListSearchProps> = ({
   onChange,
 }) => {
   // Only query for data once the modal has been opened at least once
-  const { data, isLoading } = useMasterLists({ enabled: open });
+  const { data, isLoading } = useMasterList.document.list({ enabled: open });
   const t = useTranslation(['app', 'common']);
 
   return (

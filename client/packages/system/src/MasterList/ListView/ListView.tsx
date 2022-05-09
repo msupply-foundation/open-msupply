@@ -11,11 +11,11 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { useMasterLists, MasterListRowFragment } from '../api';
+import { useMasterList, MasterListRowFragment } from '../api';
 
 const MasterListComponent: FC = () => {
   const { data, isError, isLoading, pagination, filter, sort } =
-    useMasterLists();
+    useMasterList.document.list();
   const { sortBy, onChangeSortBy } = sort;
   const navigate = useNavigate();
   const t = useTranslation('catalogue');

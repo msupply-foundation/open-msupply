@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   MasterListRowFragment,
-  useMasterLists,
+  useMasterList,
 } from '@openmsupply-client/system';
 import { BasicSpinner } from '@common/components';
 import {
@@ -13,8 +13,8 @@ import {
   createQueryParamsStore,
 } from '@openmsupply-client/common';
 
-export const MasterListsTab = () => {
-  const { data, isLoading } = useMasterLists();
+const MasterListsTable = () => {
+  const { data, isLoading } = useMasterList.document.list();
   const columns = useColumns<MasterListRowFragment>([
     'code',
     ['name', { width: 150 }],
@@ -23,18 +23,20 @@ export const MasterListsTab = () => {
 
   if (isLoading) return <BasicSpinner />;
 
-  return (
-    <Box justifyContent="center" display="flex">
-      <Box flex={1} display="flex" style={{ maxWidth: 1000 }}>
-        <TableProvider
-          createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore({
-            initialSortBy: { key: 'name' },
-          })}
-        >
-          <DataTable data={data?.nodes} columns={columns} />
-        </TableProvider>
-      </Box>
-    </Box>
-  );
+  return <DataTable data={data?.nodes} columns={columns} />;
 };
+
+export const MasterListsTab = () => (
+  <Box justifyContent="center" display="flex">
+    <Box flex={1} display="flex" style={{ maxWidth: 1000 }}>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore({
+          initialSortBy: { key: 'name' },
+        })}
+      >
+        <MasterListsTable />
+      </TableProvider>
+    </Box>
+  </Box>
+);
