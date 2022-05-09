@@ -12,7 +12,7 @@ import {
   SortBy,
   LoadingButton,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, useLocationsAll } from '..';
+import { LocationRowFragment, useLocation } from '..';
 import { locationsToCsv } from '../../utils';
 
 interface AppBarButtonsProps {
@@ -23,7 +23,7 @@ interface AppBarButtonsProps {
 export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate, sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation(['inventory', 'common']);
-  const { isLoading, mutateAsync } = useLocationsAll(sortBy);
+  const { isLoading, mutateAsync } = useLocation.document.listAll(sortBy);
 
   const csvExport = async () => {
     const data = await mutateAsync();

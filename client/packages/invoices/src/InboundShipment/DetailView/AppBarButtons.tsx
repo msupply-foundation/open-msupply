@@ -14,7 +14,7 @@ import { useInbound, useIsInboundDisabled } from '../api';
 import {
   ReportRowFragment,
   ReportSelector,
-  usePrintReport,
+  useReport,
 } from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
@@ -28,7 +28,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { data } = useInbound();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
-  const { print, isPrinting } = usePrintReport();
+  const { print, isPrinting } = useReport.utils.print();
 
   const printReport = (report: ReportRowFragment) => {
     if (!data) return;

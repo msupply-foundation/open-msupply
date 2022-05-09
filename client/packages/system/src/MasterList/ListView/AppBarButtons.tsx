@@ -9,7 +9,7 @@ import {
   LoadingButton,
   SortBy,
 } from '@openmsupply-client/common';
-import { useMasterListsAll } from '../api/hooks';
+import { useMasterList } from '../api/hooks';
 import { masterListsToCsv } from '../../utils';
 import { MasterListRowFragment } from '../api';
 
@@ -18,7 +18,7 @@ export const AppBarButtons: FC<{
 }> = ({ sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { isLoading, mutateAsync } = useMasterListsAll(sortBy);
+  const { isLoading, mutateAsync } = useMasterList.document.listAll(sortBy);
 
   const csvExport = async () => {
     const data = await mutateAsync();

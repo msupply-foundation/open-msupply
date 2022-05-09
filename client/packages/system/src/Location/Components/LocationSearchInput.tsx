@@ -4,7 +4,7 @@ import {
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@openmsupply-client/common';
-import { useLocations, LocationRowFragment } from '../api';
+import { useLocation, LocationRowFragment } from '../api';
 
 interface LocationSearchInputProps {
   value: LocationRowFragment | null;
@@ -21,7 +21,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   disabled,
   autoFocus = false,
 }) => {
-  const { data, isLoading } = useLocations();
+  const { data, isLoading } = useLocation.document.list();
 
   return (
     <Autocomplete<LocationRowFragment>
