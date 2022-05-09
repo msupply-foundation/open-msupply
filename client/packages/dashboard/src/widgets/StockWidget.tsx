@@ -10,7 +10,7 @@ import {
   useTranslation,
   Widget,
 } from '@openmsupply-client/common';
-import { useItemStats, useStockCounts } from '../api';
+import { useDashboard } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
 const LOW_MOS_THRESHOLD = 3;
@@ -19,8 +19,10 @@ export const StockWidget: React.FC = () => {
   const t = useTranslation(['dashboard']);
   const navigate = useNavigate();
   const formatNumber = useFormatNumber();
-  const { data: expiryData, isLoading: isExpiryLoading } = useStockCounts();
-  const { data: itemStatsData, isLoading: isItemStatsLoading } = useItemStats();
+  const { data: expiryData, isLoading: isExpiryLoading } =
+    useDashboard.statistics.stock();
+  const { data: itemStatsData, isLoading: isItemStatsLoading } =
+    useDashboard.statistics.item();
   const [hasExpiryError, setHasExpiryError] = React.useState(false);
   const [hasItemStatsError, setHasItemStatsError] = React.useState(false);
 
