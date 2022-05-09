@@ -1,19 +1,15 @@
 import React, { useEffect } from 'react';
 import { RecordPatch } from '@openmsupply-client/common';
 import { useDefaultServiceItem } from '@openmsupply-client/system';
-import {
-  useInboundFields,
-  useSaveInboundLines,
-  useInboundServiceLines,
-} from '../../../api';
+import { useInbound } from '../../../api';
 import { DraftInboundLine } from './../../../../types';
 import { CreateDraft } from '../utils';
 
 export const useDraftServiceLines = () => {
-  const { id } = useInboundFields('id');
-  const { data: lines } = useInboundServiceLines();
+  const { id } = useInbound.document.fields('id');
+  const { data: lines } = useInbound.lines.serviceLines();
   const { defaultServiceItem, isLoading } = useDefaultServiceItem();
-  const { mutate } = useSaveInboundLines();
+  const { mutate } = useInbound.lines.save();
 
   const [draftLines, setDraftLines] = React.useState<DraftInboundLine[]>([]);
 

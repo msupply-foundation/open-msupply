@@ -9,7 +9,7 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import { getStatusTranslation, getNextInboundStatus } from '../../../utils';
-import { useInboundFields, useIsStatusChangeDisabled } from '../../api';
+import { useInbound } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -124,11 +124,9 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, onHold, linkedShipment, update } = useInboundFields([
-    'status',
-    'onHold',
-    'linkedShipment',
-  ]);
+  const { status, onHold, linkedShipment, update } = useInbound.document.fields(
+    ['status', 'onHold', 'linkedShipment']
+  );
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
   const isManuallyCreated = !linkedShipment?.id;
@@ -189,7 +187,7 @@ export const StatusChangeButton = () => {
     getConfirmation,
     onHold,
   } = useStatusChangeButton();
-  const isStatusChangeDisabled = useIsStatusChangeDisabled();
+  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
 
   if (!selectedOption) return null;
   if (isStatusChangeDisabled) return null;

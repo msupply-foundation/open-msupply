@@ -11,14 +11,14 @@ import {
   IconButton,
   EditIcon,
 } from '@openmsupply-client/common';
-import { useInboundFields } from '../../api';
+import { useInbound } from '../../api';
 import { InboundServiceLineEdit } from '../modals';
 
 export const PricingSectionComponent = () => {
   const t = useTranslation('replenishment');
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
-  const { pricing } = useInboundFields(['pricing']);
+  const { pricing } = useInbound.document.fields(['pricing']);
 
   return (
     <DetailPanelSection title={t('heading.charges')}>

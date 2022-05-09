@@ -16,7 +16,7 @@ import {
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStatusTranslator, isInboundDisabled } from '../../utils';
-import { useInbounds, useUpdateInbound, InboundRowFragment } from '../api';
+import { useInbound, InboundRowFragment } from '../api';
 
 const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -27,10 +27,11 @@ const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
 };
 
 export const InboundListView: FC = () => {
-  const { mutate: onUpdate } = useUpdateInbound();
+  const { mutate: onUpdate } = useInbound.document.update();
   const navigate = useNavigate();
   const modalController = useToggle();
-  const { data, isError, isLoading, sort, pagination, filter } = useInbounds();
+  const { data, isError, isLoading, sort, pagination, filter } =
+    useInbound.document.list();
   const { sortBy, onChangeSortBy } = sort;
   useDisableInboundRows(data?.nodes);
 

@@ -10,7 +10,7 @@ import {
   ItemRowFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { useInboundItems } from '../../../api';
+import { useInbound } from '../../../api';
 
 interface InboundLineEditProps {
   item: ItemRowFragment | null;
@@ -24,7 +24,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   onChangeItem,
 }) => {
   const t = useTranslation('common');
-  const { data: items } = useInboundItems();
+  const { data: items } = useInbound.lines.items();
 
   return (
     <>
