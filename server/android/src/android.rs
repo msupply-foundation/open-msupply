@@ -74,11 +74,14 @@ pub mod android {
         _: JClass,
         port: jchar,
         db_path: JString,
+        cache_dir: JString,
     ) -> jlong {
         android_logger::init_once(Config::default().with_min_level(Level::Trace));
 
         let (off_switch, off_switch_receiver) = oneshot::channel();
         let db_path: String = env.get_string(db_path).unwrap().into();
+        let cache_dir: String = env.get_string(cache_dir).unwrap().into();
+
         // run server in background thread
         let thread = thread::spawn(move || {
             actix_web::rt::System::new().block_on(async move {
@@ -90,7 +93,7 @@ pub mod android {
                         develop: false,
                         debug_no_access_control: false,
                         debug_cors_permissive: false,
-                        cors_origins: vec!["http://localhost:3003".to_string()],
+                        cors_origins: vec!["http://localhost".to_string()],
                     },
                     database: DatabaseSettings {
                         username: "n/a".to_string(),
@@ -98,6 +101,8 @@ pub mod android {
                         port: 0,
                         host: "n/a".to_string(),
                         database_name: db_path,
+                        // See https://github.com/openmsupply/remote-server/issues/1076
+                        init_sql: Some(format!("PRAGMA temp_store_directory = '{}';", cache_dir)),
                     },
                     // sync settings need to be configured at runtime
                     sync: None,
