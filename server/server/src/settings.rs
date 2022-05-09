@@ -24,6 +24,11 @@ pub struct ServerSettings {
     /// Only used in development mode
     #[serde(default)]
     pub debug_no_access_control: bool,
+    #[serde(default)]
+    // allow any origin in development mode
+    pub debug_cors_permissive: bool,
+    //  Sets the allowed origin for cors requests
+    pub cors_origins: Vec<String>,
 }
 
 impl ServerSettings {

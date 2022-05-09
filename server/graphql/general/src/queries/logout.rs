@@ -1,9 +1,5 @@
 use async_graphql::*;
-use graphql_core::{
-    simple_generic_errors::{AccessDenied, InternalError},
-    standard_graphql_error::validation_denied_kind_to_string,
-    ContextExt,
-};
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use service::permission_validation::{validate_auth, ValidationError};
 use service::token::TokenService;
@@ -62,25 +58,12 @@ impl NotAnApiToken {
     }
 }
 
-#[derive(Interface)]
-#[graphql(field(name = "description", type = "&str"))]
-pub enum LogoutErrorInterface {
-    AccessDenied(AccessDenied),
-    InternalError(InternalError),
-}
-
-#[derive(SimpleObject)]
-pub struct LogoutError {
-    pub error: LogoutErrorInterface,
-}
-
 #[derive(Union)]
 pub enum LogoutResponse {
-    Error(LogoutError),
     Response(Logout),
 }
 
-pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
+pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     let auth_data = ctx.get_auth_data();
     // invalid the refresh token cookie first (just in case an error happens before we do so)
     set_refresh_token_cookie(ctx, "logged out", 0, auth_data.debug_no_ssl);
@@ -88,15 +71,14 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
     let user_auth = match validate_auth(auth_data, &ctx.get_auth_token()) {
         Ok(value) => value,
         Err(err) => {
-            let error = match err {
-                ValidationError::Denied(denied) => LogoutErrorInterface::AccessDenied(
-                    AccessDenied(validation_denied_kind_to_string(denied)),
-                ),
-                ValidationError::InternalError(err) => {
-                    LogoutErrorInterface::InternalError(InternalError(err))
+            let formatted_error = format!("{:#?}", err);
+            let graphql_error = match err {
+                ValidationError::Denied(_) => StandardGraphqlError::Forbidden(formatted_error),
+                ValidationError::InternalError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
                 }
             };
-            return LogoutResponse::Error(LogoutError { error });
+            return Err(graphql_error.extend());
         }
     };
 
@@ -108,16 +90,16 @@ pub fn logout(ctx: &Context<'_>) -> LogoutResponse {
     );
     match service.logout(&user_id) {
         Ok(_) => {}
-        Err(e) => match e {
-            service::token::JWTLogoutError::ConcurrencyLockError(_) => {
-                return LogoutResponse::Error(LogoutError {
-                    error: LogoutErrorInterface::InternalError(InternalError(
-                        "Lock error".to_string(),
-                    )),
-                });
-            }
-        },
+        Err(e) => {
+            let formatted_error = format!("{:#?}", e);
+            let graphql_error = match e {
+                service::token::JWTLogoutError::ConcurrencyLockError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+            };
+            return Err(graphql_error.extend());
+        }
     };
 
-    LogoutResponse::Response(Logout { user_id })
+    Ok(LogoutResponse::Response(Logout { user_id }))
 }

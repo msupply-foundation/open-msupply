@@ -1,6 +1,8 @@
 server:
   port: 8000
   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
+  # debug_cors_permissive: true # enable this to allow any origin for development purposes
+  cors_origins: [http://localhost:3003, https://demo-open.msupply.org, http://localhost:8000] # Used to set the allowed Origin in Cross Origin Requst Security
 sync:
   url: "http://localhost:2048"
   username: "username"

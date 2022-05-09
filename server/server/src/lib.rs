@@ -19,7 +19,7 @@ use service::{
 };
 
 use actix_cors::Cors;
-use actix_web::{web::Data, App, HttpServer};
+use actix_web::{http::header, web::Data, App, HttpServer};
 use std::{
     io::ErrorKind,
     net::TcpListener,
@@ -66,10 +66,13 @@ async fn run_stage0(
 
     let restart_switch = Data::new(restart_switch);
 
+    let closure_settings = settings.clone();
+
     let mut http_server = HttpServer::new(move || {
+        let cors = cors_policy(&closure_settings);
         App::new()
             .wrap(logger_middleware())
-            .wrap(Cors::permissive())
+            .wrap(cors)
             .wrap(compress_middleware())
             .configure(config_stage0(
                 connection_manager_data_app.clone(),
@@ -198,10 +201,12 @@ async fn run_server(
         }
     };
 
+    let closure_settings = config_settings.clone();
     let mut http_server = HttpServer::new(move || {
+        let cors = cors_policy(&closure_settings);
         App::new()
             .wrap(logger_middleware())
-            .wrap(Cors::permissive())
+            .wrap(cors)
             .wrap(compress_middleware())
             .configure(graphql_config(
                 connection_manager_data_app.clone(),
@@ -342,4 +347,25 @@ fn load_certs(cert_files: SelfSignedCertFiles) -> Result<SslAcceptorBuilder, any
     builder.set_private_key_file(cert_files.private_cert_file, SslFiletype::PEM)?;
     builder.set_certificate_chain_file(cert_files.public_cert_file)?;
     Ok(builder)
+}
+
+fn cors_policy(config_settings: &Settings) -> Cors {
+    let cors = if config_settings.server.develop && config_settings.server.debug_cors_permissive {
+        Cors::permissive()
+    } else {
+        let mut cors_tmp = Cors::default()
+            .supports_credentials()
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            .allowed_headers(vec![
+                header::AUTHORIZATION,
+                header::ACCEPT,
+                header::CONTENT_TYPE,
+            ])
+            .max_age(3600);
+        for origin in config_settings.server.cors_origins.iter() {
+            cors_tmp = cors_tmp.allowed_origin(origin);
+        }
+        cors_tmp
+    };
+    cors
 }
