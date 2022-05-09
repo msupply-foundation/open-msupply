@@ -14,18 +14,17 @@ import {
   PanelField,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import {
-  useIsStocktakeDisabled,
-  useStocktake,
-  useStocktakeFields,
-} from '../api';
+import { useStocktake } from '../api';
 
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
 
-  const { comment, user, update } = useStocktakeFields(['comment', 'user']);
+  const { comment, user, update } = useStocktake.document.fields([
+    'comment',
+    'user',
+  ]);
   const [bufferedComment, setBufferedComment] = useBufferState(comment ?? '');
-  const isDisabled = useIsStocktakeDisabled();
+  const isDisabled = useStocktake.utils.isDisabled();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -53,7 +52,7 @@ const AdditionalInfoSection: FC = () => {
 export const SidePanel: FC = () => {
   const { success } = useNotification();
   const t = useTranslation(['inventory', 'common']);
-  const { data } = useStocktake();
+  const { data } = useStocktake.document.get();
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');

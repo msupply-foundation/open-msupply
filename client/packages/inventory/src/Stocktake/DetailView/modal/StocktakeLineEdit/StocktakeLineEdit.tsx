@@ -24,7 +24,7 @@ import {
   StyledTabPanel,
   Tabs,
 } from './StocktakeLineEditTabs';
-import { useIsStocktakeDisabled } from '../../../api';
+import { useStocktake } from '../../../api';
 import {
   LocationTable,
   BatchTable,
@@ -44,7 +44,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   onClose,
   isOpen,
 }) => {
-  const isDisabled = useIsStocktakeDisabled();
+  const isDisabled = useStocktake.utils.isDisabled();
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();

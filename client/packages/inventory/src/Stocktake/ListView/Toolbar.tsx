@@ -12,7 +12,7 @@ import {
   InputLabel,
   Box,
 } from '@openmsupply-client/common';
-import { useDeleteSelectedStocktakes } from '../api';
+import { useStocktake } from '../api';
 
 type StatusOption = {
   label: string;
@@ -22,7 +22,7 @@ type StatusOption = {
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const onDelete = useDeleteSelectedStocktakes();
+  const onDelete = useStocktake.document.deleteSelected();
   const t = useTranslation('inventory');
 
   const onFilterChange: AutocompleteOnChange<StatusOption> = (_, option) => {

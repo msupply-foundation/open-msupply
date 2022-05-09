@@ -10,7 +10,7 @@ import {
   LoadingButton,
   PrinterIcon,
 } from '@openmsupply-client/common';
-import { useIsStocktakeDisabled, useStocktake } from '../api';
+import { useStocktake } from '../api';
 import {
   ReportRowFragment,
   ReportSelector,
@@ -24,10 +24,10 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const isDisabled = useIsStocktakeDisabled();
+  const isDisabled = useStocktake.utils.isDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
-  const { data } = useStocktake();
+  const { data } = useStocktake.document.get();
   const { print, isPrinting } = useReport.utils.print();
 
   const printReport = (report: ReportRowFragment) => {
