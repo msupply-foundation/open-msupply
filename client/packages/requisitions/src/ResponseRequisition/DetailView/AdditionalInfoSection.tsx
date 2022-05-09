@@ -11,11 +11,11 @@ import {
   BufferedTextArea,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import { useIsResponseDisabled, useResponseFields } from '../api';
+import { useResponse } from '../api';
 
 export const AdditionalInfoSection: FC = () => {
-  const isDisabled = useIsResponseDisabled();
-  const { user, colour, comment, update } = useResponseFields([
+  const isDisabled = useResponse.utils.isDisabled();
+  const { user, colour, comment, update } = useResponse.document.fields([
     'colour',
     'comment',
     'user',

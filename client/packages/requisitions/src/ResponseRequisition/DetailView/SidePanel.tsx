@@ -13,7 +13,7 @@ import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 export const SidePanel: FC = () => {
   const { success } = useNotification();
   const t = useTranslation(['distribution', 'common']);
-  const { data } = useResponse();
+  const { data } = useResponse.document.get();
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');

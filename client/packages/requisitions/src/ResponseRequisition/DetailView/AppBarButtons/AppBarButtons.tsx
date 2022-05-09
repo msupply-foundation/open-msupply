@@ -19,7 +19,7 @@ import { useResponse } from '../../api';
 
 export const AppBarButtonsComponent = () => {
   const { OpenButton } = useDetailPanel();
-  const { data } = useResponse();
+  const { data } = useResponse.document.get();
   const { print, isPrinting } = useReport.utils.print();
   const t = useTranslation('common');
 
