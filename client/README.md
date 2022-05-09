@@ -99,6 +99,14 @@ You can also specify multiple namespaces when using the hook:
 ```
 
 ## Android App
+Short version to build an Android apk (if everything is already set up correctly):
+
+```bash
+# Compile the remote server and copy libs over:
+yarn android:build-remote_server
+# Create the apk
+yarn android:build:debug
+```
 
 ### Pre requisites
 
@@ -134,15 +142,16 @@ git clone git@github.com:openmsupply/remote-server.git
 
 You may need to install `armv7` i.e. `rustup target add armv7-linux-androideabi`
 
+```bash
+# Compile the remote server and copy libs over:
+yarn android:build-remote_server
+```
+
 #### MacOS issues
 
 If you have the error: `fatal error: 'stdio.h' file not found`. If so, specify a location for the headers using the`CPATH`env var, for example`/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/`or`/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/`
 
 If the `C_INCLUDE_PATH` env var is set, that may cause compilation issues, as it will include the macOS headers and give you `warning: #error architecture not supported` and `warning: fatal error: too many errors emitted, stopping now [-ferror-limit=]`. In which case `unset C_INCLUDE_PATH`
-
-```
-yarn android:build-remote_server
-```
 
 #### Unsolved issue that will hopefully be fixed at some point:
 
@@ -153,7 +162,7 @@ yarn android:build-remote_server
 
 In `packages/host/public/config.js` change `API_HOST` to `API_HOST: 'http://localhost:8082'` to use the remote server running on Android.
 
-Then run the command `yarn android:build` to
+Then run the command `yarn android:build:debug` to
 
 - build the react app
 - copy the built files for capacitor
@@ -165,6 +174,8 @@ The steps, if you need to run them manually are:
 yarn build
 npx cap copy
 ```
+
+There is no release build yet.
 
 Enable clear text traffic in `android/app/src/main/AndroidManifest.xml`:
 
