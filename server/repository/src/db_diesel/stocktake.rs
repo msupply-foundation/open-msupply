@@ -67,6 +67,10 @@ pub enum StocktakeSortField {
     Status,
     CreatedDatetime,
     FinalisedDatetime,
+    StocktakeNumber,
+    Comment,
+    Description,
+    StocktakeDate,
 }
 
 pub type Stocktake = StocktakeRow;
@@ -134,6 +138,16 @@ impl<'a> StocktakeRepository<'a> {
                 }
                 StocktakeSortField::FinalisedDatetime => {
                     apply_sort!(query, sort, stocktake_dsl::finalised_datetime)
+                }
+                StocktakeSortField::StocktakeNumber => {
+                    apply_sort!(query, sort, stocktake_dsl::stocktake_number)
+                }
+                StocktakeSortField::Comment => apply_sort!(query, sort, stocktake_dsl::comment),
+                StocktakeSortField::Description => {
+                    apply_sort!(query, sort, stocktake_dsl::description)
+                }
+                StocktakeSortField::StocktakeDate => {
+                    apply_sort!(query, sort, stocktake_dsl::stocktake_date)
                 }
             }
         } else {

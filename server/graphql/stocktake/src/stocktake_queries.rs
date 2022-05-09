@@ -24,6 +24,10 @@ pub enum StocktakeSortFieldInput {
     Status,
     CreatedDatetime,
     FinalisedDatetime,
+    StocktakeNumber,
+    Comment,
+    Description,
+    StocktakeDate,
 }
 
 #[derive(InputObject)]
@@ -46,8 +50,11 @@ pub struct EqualFilterStocktakeStatusInput {
 pub struct StocktakeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub stocktake_number: Option<EqualFilterBigNumberInput>,
+    pub comment: Option<EqualFilterStringInput>,
+    pub description: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterStocktakeStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
+    pub stocktake_date: Option<DatetimeFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
 }
 
@@ -196,6 +203,10 @@ impl StocktakeSortInput {
             from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
             from::FinalisedDatetime => to::FinalisedDatetime,
+            from::StocktakeNumber => to::StocktakeNumber,
+            from::StocktakeDate => to::StocktakeDate,
+            from::Comment => to::Comment,
+            from::Description => to::Description,
         };
 
         StocktakeSort {
