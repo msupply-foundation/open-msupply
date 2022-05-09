@@ -197,9 +197,6 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
             Some(false) => query.filter(store_dsl::id.is_null()),
             None => query,
         };
-
-        // Filter out name for current store
-        query = query.filter(store_dsl::id.ne(store_id).or(store_dsl::id.is_null()));
     };
 
     query
@@ -482,27 +479,6 @@ mod tests {
 
         let store_id = &mock_test_name_query_store_1().id;
         // test filter:
-
-        // Name should be filtered out from it's own store
-
-        let result = repo
-            .query_by_filter(
-                store_id,
-                NameFilter::new().name(SimpleStringFilter::equal_to("name_1")),
-            )
-            .unwrap();
-        assert_eq!(result.len(), 0);
-
-        // Name should be filtered out from it's own store
-
-        let result = repo
-            .query_by_filter(
-                &mock_test_name_query_store_2().id,
-                NameFilter::new().name(SimpleStringFilter::equal_to("name_1")),
-            )
-            .unwrap();
-        assert_eq!(result.len(), 1);
-        assert_eq!(result.get(0).unwrap().name_row.name, "name_1");
 
         // Two matched, name_2 and name_3
 
