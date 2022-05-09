@@ -161,7 +161,7 @@ impl From<DieselError> for RepositoryError {
 
 fn get_connection(
     pool: &Pool<ConnectionManager<DBBackendConnection>>,
-) -> Result<PooledConnection<ConnectionManager<DBBackendConnection>>, RepositoryError> {
+) -> Result<DBConnection, RepositoryError> {
     pool.get().map_err(|error| RepositoryError::DBError {
         msg: "Failed to open Connection".to_string(),
         extra: format!("{:?}", error),
