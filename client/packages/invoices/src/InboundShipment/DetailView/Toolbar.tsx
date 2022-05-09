@@ -12,21 +12,15 @@ import {
   InfoPanel,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import {
-  useDeleteSelectedLines,
-  useInbound,
-  useInboundFields,
-  useInboundItems,
-  useIsInboundDisabled,
-} from '../api';
+import { useInbound } from '../api';
 
 export const Toolbar: FC = () => {
-  const isDisabled = useIsInboundDisabled();
-  const { data } = useInboundItems();
-  const { data: shipment } = useInbound();
+  const isDisabled = useInbound.utils.isDisabled();
+  const { data } = useInbound.lines.items();
+  const { data: shipment } = useInbound.document.get();
 
-  const { onDelete } = useDeleteSelectedLines();
-  const { otherParty, theirReference, update } = useInboundFields([
+  const { onDelete } = useInbound.lines.deleteSelected();
+  const { otherParty, theirReference, update } = useInbound.document.fields([
     'otherParty',
     'theirReference',
   ]);

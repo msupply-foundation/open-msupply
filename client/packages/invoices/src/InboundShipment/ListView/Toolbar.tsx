@@ -8,13 +8,13 @@ import {
   FilterController,
   SearchBar,
 } from '@openmsupply-client/common';
-import { useDeleteSelectedInbounds, InboundRowFragment } from '../api';
+import { useInbound, InboundRowFragment } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
   const t = useTranslation('replenishment');
-  const onDelete = useDeleteSelectedInbounds();
+  const onDelete = useInbound.document.delete();
 
   const key = 'otherPartyName' as keyof InboundRowFragment;
   const filterString = (filter.filterBy?.[key]?.like as string) || '';
