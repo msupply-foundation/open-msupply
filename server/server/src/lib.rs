@@ -276,7 +276,7 @@ pub async fn start_server(
     let connection_manager = get_storage_connection_manager(&config_settings.database);
 
     info!("Run DB migrations...");
-    match run_db_migrations(&connection_manager.connection().unwrap()) {
+    match run_db_migrations(&connection_manager.connection().unwrap(), true) {
         Ok(_) => info!("DB migrations succeeded"),
         Err(err) => {
             let msg = format!("Failed to run DB migrations: {}", err);

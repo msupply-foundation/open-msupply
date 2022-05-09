@@ -41,6 +41,7 @@ pub enum LoginError {
     DatabaseError(RepositoryError),
 }
 
+#[derive(Clone, Debug)]
 pub struct LoginInput {
     pub username: String,
     pub password: String,
