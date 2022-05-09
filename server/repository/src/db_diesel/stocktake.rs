@@ -4,8 +4,12 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
+    diesel_macros::{
+        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
+        apply_sort,
+    },
+    DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, RepositoryError,
+    SimpleStringFilter, Sort,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -15,8 +19,11 @@ pub struct StocktakeFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub stocktake_number: Option<EqualFilter<i64>>,
+    pub comment: Option<SimpleStringFilter>,
+    pub description: Option<SimpleStringFilter>,
     pub status: Option<EqualFilter<StocktakeStatus>>,
     pub created_datetime: Option<DatetimeFilter>,
+    pub stocktake_date: Option<DateFilter>,
     pub finalised_datetime: Option<DatetimeFilter>,
 }
 
@@ -26,8 +33,11 @@ impl StocktakeFilter {
             id: None,
             store_id: None,
             stocktake_number: None,
+            comment: None,
+            description: None,
             status: None,
             created_datetime: None,
+            stocktake_date: None,
             finalised_datetime: None,
         }
     }
@@ -47,6 +57,16 @@ impl StocktakeFilter {
         self
     }
 
+    pub fn comment(mut self, filter: SimpleStringFilter) -> Self {
+        self.comment = Some(filter);
+        self
+    }
+
+    pub fn description(mut self, filter: SimpleStringFilter) -> Self {
+        self.description = Some(filter);
+        self
+    }
+
     pub fn status(mut self, filter: EqualFilter<StocktakeStatus>) -> Self {
         self.status = Some(filter);
         self
@@ -54,6 +74,11 @@ impl StocktakeFilter {
 
     pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.created_datetime = Some(filter);
+        self
+    }
+
+    pub fn stocktake_date(mut self, filter: DateFilter) -> Self {
+        self.stocktake_date = Some(filter);
         self
     }
 
@@ -86,13 +111,15 @@ fn create_filtered_query<'a>(filter: Option<StocktakeFilter>) -> BoxedStocktakeQ
         apply_equal_filter!(query, f.id, stocktake::id);
         apply_equal_filter!(query, f.store_id, stocktake::store_id);
         apply_equal_filter!(query, f.stocktake_number, stocktake::stocktake_number);
-
+        apply_simple_string_filter!(query, f.comment, stocktake::comment);
+        apply_simple_string_filter!(query, f.description, stocktake::description);
         if let Some(value) = f.status {
             if let Some(eq) = value.equal_to {
                 query = query.filter(stocktake::status.eq(eq));
             }
         }
         apply_date_time_filter!(query, f.created_datetime, stocktake::created_datetime);
+        apply_date_filter!(query, f.stocktake_date, stocktake::stocktake_date);
         apply_date_time_filter!(query, f.finalised_datetime, stocktake::finalised_datetime);
     }
     query

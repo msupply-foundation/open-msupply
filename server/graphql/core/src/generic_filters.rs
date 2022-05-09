@@ -1,6 +1,6 @@
 use async_graphql::{InputObject, InputType};
-use chrono::{DateTime, Utc};
-use repository::{DatetimeFilter, EqualFilter, SimpleStringFilter};
+use chrono::{DateTime, NaiveDate, Utc};
+use repository::{DateFilter, DatetimeFilter, EqualFilter, SimpleStringFilter};
 
 // simple string filter
 #[derive(InputObject, Clone)]
@@ -85,6 +85,23 @@ impl From<DatetimeFilterInput> for DatetimeFilter {
             equal_to: f.equal_to.map(|t| t.naive_utc()),
             before_or_equal_to: f.before_or_equal_to.map(|t| t.naive_utc()),
             after_or_equal_to: f.after_or_equal_to.map(|t| t.naive_utc()),
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct DateFilterInput {
+    pub equal_to: Option<NaiveDate>,
+    pub before_or_equal_to: Option<NaiveDate>,
+    pub after_or_equal_to: Option<NaiveDate>,
+}
+
+impl From<DateFilterInput> for DateFilter {
+    fn from(f: DateFilterInput) -> Self {
+        DateFilter {
+            equal_to: f.equal_to.map(|t| t.clone()),
+            before_or_equal_to: f.before_or_equal_to.map(|t| t.clone()),
+            after_or_equal_to: f.after_or_equal_to.map(|t| t.clone()),
         }
     }
 }
