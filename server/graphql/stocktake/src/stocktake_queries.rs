@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{
-    DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
+    DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, SimpleStringFilterInput,
 };
 use graphql_core::pagination::PaginationInput;
 use graphql_core::simple_generic_errors::{
@@ -50,8 +50,8 @@ pub struct EqualFilterStocktakeStatusInput {
 pub struct StocktakeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub stocktake_number: Option<EqualFilterBigNumberInput>,
-    pub comment: Option<SimpleStringFilter>,
-    pub description: Option<SimpleStringFilter>,
+    pub comment: Option<SimpleStringFilterInput>,
+    pub description: Option<SimpleStringFilterInput>,
     pub status: Option<EqualFilterStocktakeStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub stocktake_date: Option<DatetimeFilterInput>,
