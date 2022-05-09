@@ -1,0 +1,2131 @@
+type AddFromMasterListError {
+	error: AddFromMasterListErrorInterface!
+}
+interface AddFromMasterListErrorInterface {
+	description: String!
+}
+input AddFromMasterListInput {
+	requestRequisitionId: String!
+	masterListId: String!
+}
+union AddFromMasterListResponse = | AddFromMasterListError | RequisitionLineConnector
+type AllocateOutboundShipmentUnallocatedLineError {
+	error: AllocateOutboundShipmentUnallocatedLineErrorInterface!
+}
+interface AllocateOutboundShipmentUnallocatedLineErrorInterface {
+	description: String!
+}
+type AllocateOutboundShipmentUnallocatedLineNode {
+	updates: InvoiceLineConnector!
+	inserts: InvoiceLineConnector!
+	deletes: [DeleteResponse!]!
+	skippedExpiredStockLines: StockLineConnector!
+	skippedOnHoldStockLines: StockLineConnector!
+	issuedExpiringSoonStockLines: StockLineConnector!
+}
+union AllocateOutboundShipmentUnallocatedLineResponse = | AllocateOutboundShipmentUnallocatedLineError | AllocateOutboundShipmentUnallocatedLineNode
+type AllocateOutboundShipmentUnallocatedLineResponseWithId {
+	id: String!
+	response: AllocateOutboundShipmentUnallocatedLineResponse!
+}
+type AuthToken {
+	"""
+	Bearer token
+	"""
+	token: String!
+}
+type AuthTokenError {
+	error: AuthTokenErrorInterface!
+}
+interface AuthTokenErrorInterface {
+	description: String!
+}
+union AuthTokenResponse = | AuthToken | AuthTokenError
+input BatchInboundShipmentInput {
+	insertInboundShipments: [InsertInboundShipmentInput!]
+	insertInboundShipmentLines: [InsertInboundShipmentLineInput!]
+	updateInboundShipmentLines: [UpdateInboundShipmentLineInput!]
+	deleteInboundShipmentLines: [DeleteInboundShipmentLineInput!]
+	insertInboundShipmentServiceLines: [InsertInboundShipmentServiceLineInput!]
+	updateInboundShipmentServiceLines: [UpdateInboundShipmentServiceLineInput!]
+	deleteInboundShipmentServiceLines: [DeleteInboundShipmentServiceLineInput!]
+	updateInboundShipments: [UpdateInboundShipmentInput!]
+	deleteInboundShipments: [DeleteInboundShipmentInput!]
+	continueOnError: Boolean
+}
+type BatchInboundShipmentResponse {
+	insertInboundShipments: [InsertInboundShipmentResponseWithId!]
+	insertInboundShipmentLines: [InsertInboundShipmentLineResponseWithId!]
+	updateInboundShipmentLines: [UpdateInboundShipmentLineResponseWithId!]
+	deleteInboundShipmentLines: [DeleteInboundShipmentLineResponseWithId!]
+	insertInboundShipmentServiceLines: [InsertInboundShipmentServiceLineResponseWithId!]
+	updateInboundShipmentServiceLines: [UpdateInboundShipmentServiceLineResponseWithId!]
+	deleteInboundShipmentServiceLines: [DeleteInboundShipmentServiceLineResponseWithId!]
+	updateInboundShipments: [UpdateInboundShipmentResponseWithId!]
+	deleteInboundShipments: [DeleteInboundShipmentResponseWithId!]
+}
+type BatchIsReserved implements UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface {
+	description: String!
+}
+input BatchOutboundShipmentInput {
+	insertOutboundShipments: [InsertOutboundShipmentInput!]
+	insertOutboundShipmentLines: [InsertOutboundShipmentLineInput!]
+	updateOutboundShipmentLines: [UpdateOutboundShipmentLineInput!]
+	deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]
+	insertOutboundShipmentServiceLines: [InsertOutboundShipmentServiceLineInput!]
+	updateOutboundShipmentServiceLines: [UpdateOutboundShipmentServiceLineInput!]
+	deleteOutboundShipmentServiceLines: [DeleteOutboundShipmentServiceLineInput!]
+	insertOutboundShipmentUnallocatedLines: [InsertOutboundShipmentUnallocatedLineInput!]
+	updateOutboundShipmentUnallocatedLines: [UpdateOutboundShipmentUnallocatedLineInput!]
+	deleteOutboundShipmentUnallocatedLines: [DeleteOutboundShipmentUnallocatedLineInput!]
+	allocatedOutboundShipmentUnallocatedLines: [String!]
+	updateOutboundShipments: [UpdateOutboundShipmentInput!]
+	deleteOutboundShipments: [String!]
+	continueOnError: Boolean
+}
+type BatchOutboundShipmentResponse {
+	insertOutboundShipments: [InsertOutboundShipmentResponseWithId!]
+	insertOutboundShipmentLines: [InsertOutboundShipmentLineResponseWithId!]
+	updateOutboundShipmentLines: [UpdateOutboundShipmentLineResponseWithId!]
+	deleteOutboundShipmentLines: [DeleteOutboundShipmentLineResponseWithId!]
+	insertOutboundShipmentServiceLines: [InsertOutboundShipmentServiceLineResponseWithId!]
+	updateOutboundShipmentServiceLines: [UpdateOutboundShipmentServiceLineResponseWithId!]
+	deleteOutboundShipmentServiceLines: [DeleteOutboundShipmentServiceLineResponseWithId!]
+	insertOutboundShipmentUnallocatedLines: [InsertOutboundShipmentUnallocatedLineResponseWithId!]
+	updateOutboundShipmentUnallocatedLines: [UpdateOutboundShipmentUnallocatedLineResponseWithId!]
+	deleteOutboundShipmentUnallocatedLines: [DeleteOutboundShipmentUnallocatedLineResponseWithId!]
+	allocateOutboundShipmentUnallocatedLines: [AllocateOutboundShipmentUnallocatedLineResponseWithId!]
+	updateOutboundShipments: [UpdateOutboundShipmentResponseWithId!]
+	deleteOutboundShipments: [DeleteOutboundShipmentResponseWithId!]
+}
+input BatchRequestRequisitionInput {
+	insertRequestRequisitions: [InsertRequestRequisitionInput!]
+	insertRequestRequisitionLines: [InsertRequestRequisitionLineInput!]
+	updateRequestRequisitionLines: [UpdateRequestRequisitionLineInput!]
+	deleteRequestRequisitionLines: [DeleteRequestRequisitionLineInput!]
+	updateRequestRequisitions: [UpdateRequestRequisitionInput!]
+	deleteRequestRequisitions: [DeleteRequestRequisitionInput!]
+	continueOnError: Boolean
+}
+type BatchRequestRequisitionResponse {
+	insertRequestRequisitions: [InsertRequestRequisitionResponseWithId!]
+	insertRequestRequisitionLines: [InsertRequestRequisitionLineResponseWithId!]
+	updateRequestRequisitionLines: [UpdateRequestRequisitionLineResponseWithId!]
+	deleteRequestRequisitionLines: [DeleteRequestRequisitionLineResponseWithId!]
+	updateRequestRequisitions: [UpdateRequestRequisitionResponseWithId!]
+	deleteRequestRequisitions: [DeleteRequestRequisitionResponseWithId!]
+}
+input BatchStocktakeInput {
+	insertStocktakes: [InsertStocktakeInput!]
+	insertStocktakeLines: [InsertStocktakeLineInput!]
+	updateStocktakeLines: [UpdateStocktakeLineInput!]
+	deleteStocktakeLines: [DeleteStocktakeLineInput!]
+	updateStocktakes: [UpdateStocktakeInput!]
+	deleteStocktakes: [DeleteStocktakeInput!]
+	continueOnError: Boolean
+}
+type BatchStocktakeResponse {
+	insertStocktakes: [InsertStocktakeResponseWithId!]
+	insertStocktakeLines: [InsertStocktakeLineResponseWithId!]
+	updateStocktakeLines: [UpdateStocktakeLineResponseWithId!]
+	deleteStocktakeLines: [DeleteStocktakeLineResponseWithId!]
+	updateStocktakes: [UpdateStocktakeResponseWithId!]
+	deleteStocktakes: [DeleteStocktakeResponseWithId!]
+}
+type CanOnlyChangeToAllocatedWhenNoUnallocatedLines implements UpdateErrorInterface {
+	description: String!
+	invoiceLines: InvoiceLineConnector!
+}
+type CannotChangeStatusOfInvoiceOnHold implements UpdateInboundShipmentErrorInterface & UpdateErrorInterface {
+	description: String!
+}
+type CannotDeleteInvoiceWithLines implements DeleteInboundShipmentErrorInterface & DeleteErrorInterface {
+	description: String!
+	lines: InvoiceLineConnector!
+}
+type CannotDeleteRequisitionWithLines implements DeleteRequestRequisitionErrorInterface {
+	description: String!
+}
+type CannotEditInvoice implements UpdateOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & DeleteErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface {
+	description: String!
+}
+type CannotEditRequisition implements SupplyRequestedQuantityErrorInterface & DeleteRequestRequisitionErrorInterface & UpdateRequestRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & CreateRequisitionShipmentErrorInterface & InsertRequestRequisitionLineErrorInterface & AddFromMasterListErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface {
+	description: String!
+}
+type CannotEditStocktake implements InsertStocktakeLineErrorInterface & DeleteStocktakeLineErrorInterface & UpdateStocktakeErrorInterface & UpdateStocktakeLineErrorInterface & DeleteStocktakeErrorInterface {
+	description: String!
+}
+type CannotReverseInvoiceStatus implements UpdateErrorInterface & UpdateInboundShipmentErrorInterface {
+	description: String!
+}
+type ConsumptionHistoryConnector {
+	totalCount: Int!
+	nodes: [ConsumptionHistoryNode!]!
+}
+type ConsumptionHistoryNode {
+	date: NaiveDate!
+	consumption: Int!
+	averageMonthlyConsumption: Int!
+	isHistoric: Boolean!
+	isCurrent: Boolean!
+}
+input ConsumptionOptionsInput {
+	"""
+	Defaults to 3 months
+	"""
+	amcLookbackMonths: Int
+	"""
+	Defaults to 12
+	"""
+	numberOfDataPoints: Int
+}
+type CreateRequisitionShipmentError {
+	error: CreateRequisitionShipmentErrorInterface!
+}
+interface CreateRequisitionShipmentErrorInterface {
+	description: String!
+}
+input CreateRequisitionShipmentInput {
+	responseRequisitionId: String!
+}
+union CreateRequisitionShipmentResponse = | CreateRequisitionShipmentError | InvoiceNode
+type DatabaseError implements DeleteLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & InsertLocationErrorInterface & UpdateLocationErrorInterface {
+	description: String!
+	fullError: String!
+}
+"""
+Implement the DateTime<Utc> scalar
+
+The input/output is a string in RFC3339 format.
+"""
+scalar DateTime
+input DatetimeFilterInput {
+	equalTo: DateTime
+	beforeOrEqualTo: DateTime
+	afterOrEqualTo: DateTime
+}
+interface DeleteErrorInterface {
+	description: String!
+}
+type DeleteInboundShipmentError {
+	error: DeleteInboundShipmentErrorInterface!
+}
+interface DeleteInboundShipmentErrorInterface {
+	description: String!
+}
+input DeleteInboundShipmentInput {
+	id: String!
+}
+type DeleteInboundShipmentLineError {
+	error: DeleteInboundShipmentLineErrorInterface!
+}
+interface DeleteInboundShipmentLineErrorInterface {
+	description: String!
+}
+input DeleteInboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+}
+union DeleteInboundShipmentLineResponse = | DeleteInboundShipmentLineError | DeleteResponse
+type DeleteInboundShipmentLineResponseWithId {
+	id: String!
+	response: DeleteInboundShipmentLineResponse!
+}
+union DeleteInboundShipmentResponse = | DeleteInboundShipmentError | DeleteResponse
+type DeleteInboundShipmentResponseWithId {
+	id: String!
+	response: DeleteInboundShipmentResponse!
+}
+type DeleteInboundShipmentServiceLineError {
+	error: DeleteInboundShipmentServiceLineErrorInterface!
+}
+interface DeleteInboundShipmentServiceLineErrorInterface {
+	description: String!
+}
+input DeleteInboundShipmentServiceLineInput {
+	id: String!
+	invoiceId: String!
+}
+union DeleteInboundShipmentServiceLineResponse = | DeleteInboundShipmentServiceLineError | DeleteResponse
+type DeleteInboundShipmentServiceLineResponseWithId {
+	id: String!
+	response: DeleteInboundShipmentServiceLineResponse!
+}
+type DeleteLocationError {
+	error: DeleteLocationErrorInterface!
+}
+interface DeleteLocationErrorInterface {
+	description: String!
+}
+input DeleteLocationInput {
+	id: String!
+}
+union DeleteLocationResponse = | DeleteLocationError | DeleteResponse
+type DeleteOutboundShipmentError {
+	error: DeleteErrorInterface!
+}
+type DeleteOutboundShipmentLineError {
+	error: DeleteOutboundShipmentLineErrorInterface!
+}
+interface DeleteOutboundShipmentLineErrorInterface {
+	description: String!
+}
+input DeleteOutboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+}
+union DeleteOutboundShipmentLineResponse = | DeleteOutboundShipmentLineError | DeleteResponse
+type DeleteOutboundShipmentLineResponseWithId {
+	id: String!
+	response: DeleteOutboundShipmentLineResponse!
+}
+union DeleteOutboundShipmentResponse = | DeleteOutboundShipmentError | DeleteResponse
+type DeleteOutboundShipmentResponseWithId {
+	id: String!
+	response: DeleteOutboundShipmentResponse!
+}
+type DeleteOutboundShipmentServiceLineError {
+	error: DeleteOutboundShipmentServiceLineErrorInterface!
+}
+interface DeleteOutboundShipmentServiceLineErrorInterface {
+	description: String!
+}
+input DeleteOutboundShipmentServiceLineInput {
+	id: String!
+	invoiceId: String!
+}
+union DeleteOutboundShipmentServiceLineResponse = | DeleteOutboundShipmentServiceLineError | DeleteResponse
+type DeleteOutboundShipmentServiceLineResponseWithId {
+	id: String!
+	response: DeleteOutboundShipmentServiceLineResponse!
+}
+type DeleteOutboundShipmentUnallocatedLineError {
+	error: DeleteOutboundShipmentUnallocatedLineErrorInterface!
+}
+interface DeleteOutboundShipmentUnallocatedLineErrorInterface {
+	description: String!
+}
+input DeleteOutboundShipmentUnallocatedLineInput {
+	id: String!
+}
+union DeleteOutboundShipmentUnallocatedLineResponse = | DeleteOutboundShipmentUnallocatedLineError | DeleteResponse
+type DeleteOutboundShipmentUnallocatedLineResponseWithId {
+	id: String!
+	response: DeleteOutboundShipmentUnallocatedLineResponse!
+}
+type DeleteRequestRequisitionError {
+	error: DeleteRequestRequisitionErrorInterface!
+}
+interface DeleteRequestRequisitionErrorInterface {
+	description: String!
+}
+input DeleteRequestRequisitionInput {
+	id: String!
+}
+type DeleteRequestRequisitionLineError {
+	error: DeleteRequestRequisitionLineErrorInterface!
+}
+interface DeleteRequestRequisitionLineErrorInterface {
+	description: String!
+}
+input DeleteRequestRequisitionLineInput {
+	id: String!
+}
+union DeleteRequestRequisitionLineResponse = | DeleteRequestRequisitionLineError | DeleteResponse
+type DeleteRequestRequisitionLineResponseWithId {
+	id: String!
+	response: DeleteRequestRequisitionLineResponse!
+}
+union DeleteRequestRequisitionResponse = | DeleteRequestRequisitionError | DeleteResponse
+type DeleteRequestRequisitionResponseWithId {
+	id: String!
+	response: DeleteRequestRequisitionResponse!
+}
+type DeleteResponse {
+	id: String!
+}
+type DeleteStocktakeError {
+	error: DeleteStocktakeErrorInterface!
+}
+interface DeleteStocktakeErrorInterface {
+	description: String!
+}
+input DeleteStocktakeInput {
+	id: String!
+}
+type DeleteStocktakeLineError {
+	error: DeleteStocktakeLineErrorInterface!
+}
+interface DeleteStocktakeLineErrorInterface {
+	description: String!
+}
+input DeleteStocktakeLineInput {
+	id: String!
+}
+union DeleteStocktakeLineResponse = | DeleteStocktakeLineError | DeleteResponse
+type DeleteStocktakeLineResponseWithId {
+	id: String!
+	response: DeleteStocktakeLineResponse!
+}
+union DeleteStocktakeResponse = | DeleteStocktakeError | DeleteResponse
+type DeleteStocktakeResponseWithId {
+	id: String!
+	response: DeleteStocktakeResponse!
+}
+input EqualFilterBigNumberInput {
+	equalTo: Int
+	equalAny: [Int!]
+	notEqualTo: Int
+}
+input EqualFilterInvoiceStatusInput {
+	equalTo: InvoiceNodeStatus
+	equalAny: [InvoiceNodeStatus!]
+	notEqualTo: InvoiceNodeStatus
+}
+input EqualFilterInvoiceTypeInput {
+	equalTo: InvoiceNodeType
+	equalAny: [InvoiceNodeType!]
+	notEqualTo: InvoiceNodeType
+}
+input EqualFilterItemTypeInput {
+	equalTo: ItemNodeType
+	equalAny: [ItemNodeType!]
+	notEqualTo: ItemNodeType
+}
+input EqualFilterNumberInput {
+	equalTo: Int
+	equalAny: [Int!]
+	notEqualTo: Int
+}
+input EqualFilterReportCategoryInput {
+	equalTo: ReportCategory
+	equalAny: [ReportCategory!]
+	notEqualTo: ReportCategory
+}
+input EqualFilterRequisitionStatusInput {
+	equalTo: RequisitionNodeStatus
+	equalAny: [RequisitionNodeStatus!]
+	notEqualTo: RequisitionNodeStatus
+}
+input EqualFilterRequisitionTypeInput {
+	equalTo: RequisitionNodeType
+	equalAny: [RequisitionNodeType!]
+	notEqualTo: RequisitionNodeType
+}
+input EqualFilterStocktakeStatusInput {
+	equalTo: StocktakeNodeStatus
+	equalAny: [StocktakeNodeStatus!]
+	notEqualTo: StocktakeNodeStatus
+}
+input EqualFilterStringInput {
+	equalTo: String
+	equalAny: [String!]
+	notEqualTo: String
+}
+type FailedToFetchReportData implements PrintReportErrorInterface {
+	description: String!
+	errors: JSON!
+}
+enum ForeignKey {
+	otherPartyId
+	itemId
+	invoiceId
+	stockLineId
+	locationId
+	requisitionId
+}
+type ForeignKeyError implements InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & InsertInboundShipmentLineErrorInterface {
+	description: String!
+	key: ForeignKey!
+}
+type FullMutation {
+	insertOutboundShipment(storeId: String!, input: InsertOutboundShipmentInput!): InsertOutboundShipmentResponse!
+	updateOutboundShipment(storeId: String!, input: UpdateOutboundShipmentInput!): UpdateOutboundShipmentResponse!
+	deleteOutboundShipment(storeId: String!, id: String!): DeleteOutboundShipmentResponse!
+	insertInboundShipment(storeId: String!, input: InsertInboundShipmentInput!): InsertInboundShipmentResponse!
+	updateInboundShipment(storeId: String!, input: UpdateInboundShipmentInput!): UpdateInboundShipmentResponse!
+	deleteInboundShipment(storeId: String!, input: DeleteInboundShipmentInput!): DeleteInboundShipmentResponse!
+	insertOutboundShipmentLine(storeId: String!, input: InsertOutboundShipmentLineInput!): InsertOutboundShipmentLineResponse!
+	updateOutboundShipmentLine(storeId: String!, input: UpdateOutboundShipmentLineInput!): UpdateOutboundShipmentLineResponse!
+	deleteOutboundShipmentLine(storeId: String!, input: DeleteOutboundShipmentLineInput!): DeleteOutboundShipmentLineResponse!
+	insertOutboundShipmentServiceLine(storeId: String!, input: InsertOutboundShipmentServiceLineInput!): InsertOutboundShipmentServiceLineResponse!
+	updateOutboundShipmentServiceLine(storeId: String!, input: UpdateOutboundShipmentServiceLineInput!): UpdateOutboundShipmentServiceLineResponse!
+	deleteOutboundShipmentServiceLine(storeId: String!, input: DeleteOutboundShipmentServiceLineInput!): DeleteOutboundShipmentServiceLineResponse!
+	insertOutboundShipmentUnallocatedLine(storeId: String!, input: InsertOutboundShipmentUnallocatedLineInput!): InsertOutboundShipmentUnallocatedLineResponse!
+	updateOutboundShipmentUnallocatedLine(storeId: String!, input: UpdateOutboundShipmentUnallocatedLineInput!): UpdateOutboundShipmentUnallocatedLineResponse!
+	deleteOutboundShipmentUnallocatedLine(storeId: String!, input: DeleteOutboundShipmentUnallocatedLineInput!): DeleteOutboundShipmentUnallocatedLineResponse!
+	allocateOutboundShipmentUnallocatedLine(storeId: String!, lineId: String!): AllocateOutboundShipmentUnallocatedLineResponse!
+	insertInboundShipmentLine(storeId: String!, input: InsertInboundShipmentLineInput!): InsertInboundShipmentLineResponse!
+	updateInboundShipmentLine(storeId: String!, input: UpdateInboundShipmentLineInput!): UpdateInboundShipmentLineResponse!
+	deleteInboundShipmentLine(storeId: String!, input: DeleteInboundShipmentLineInput!): DeleteInboundShipmentLineResponse!
+	insertInboundShipmentServiceLine(storeId: String!, input: InsertInboundShipmentServiceLineInput!): InsertInboundShipmentServiceLineResponse!
+	updateInboundShipmentServiceLine(storeId: String!, input: UpdateInboundShipmentServiceLineInput!): UpdateInboundShipmentServiceLineResponse!
+	deleteInboundShipmentServiceLine(storeId: String!, input: DeleteInboundShipmentServiceLineInput!): DeleteInboundShipmentServiceLineResponse!
+	insertLocation(storeId: String!, input: InsertLocationInput!): InsertLocationResponse!
+	updateLocation(storeId: String!, input: UpdateLocationInput!): UpdateLocationResponse!
+	deleteLocation(storeId: String!, input: DeleteLocationInput!): DeleteLocationResponse!
+	insertStocktake(storeId: String!, input: InsertStocktakeInput!): InsertStocktakeResponse!
+	updateStocktake(storeId: String!, input: UpdateStocktakeInput!): UpdateStocktakeResponse!
+	deleteStocktake(storeId: String!, input: DeleteStocktakeInput!): DeleteStocktakeResponse!
+	insertStocktakeLine(storeId: String!, input: InsertStocktakeLineInput!): InsertStocktakeLineResponse!
+	updateStocktakeLine(storeId: String!, input: UpdateStocktakeLineInput!): UpdateStocktakeLineResponse!
+	deleteStocktakeLine(storeId: String!, input: DeleteStocktakeLineInput!): DeleteStocktakeLineResponse!
+	batchInboundShipment(storeId: String!, input: BatchInboundShipmentInput!): BatchInboundShipmentResponse!
+	batchOutboundShipment(storeId: String!, input: BatchOutboundShipmentInput!): BatchOutboundShipmentResponse!
+	batchRequestRequisition(storeId: String!, input: BatchRequestRequisitionInput!): BatchRequestRequisitionResponse!
+	batchStocktake(storeId: String!, input: BatchStocktakeInput!): BatchStocktakeResponse!
+	insertRequestRequisition(storeId: String!, input: InsertRequestRequisitionInput!): InsertRequestRequisitionResponse!
+	updateRequestRequisition(storeId: String!, input: UpdateRequestRequisitionInput!): UpdateRequestRequisitionResponse!
+	deleteRequestRequisition(storeId: String!, input: DeleteRequestRequisitionInput!): DeleteRequestRequisitionResponse!
+	"""
+	Set requested for each line in request requisition to calculated
+	"""
+	useSuggestedQuantity(storeId: String!, input: UseSuggestedQuantityInput!): UseSuggestedQuantityResponse!
+	"""
+	Add requisition lines from master item master list
+	"""
+	addFromMasterList(storeId: String!, input: AddFromMasterListInput!): AddFromMasterListResponse!
+	updateResponseRequisition(storeId: String!, input: UpdateResponseRequisitionInput!): UpdateResponseRequisitionResponse!
+	"""
+	Set supply quantity to requested quantity
+	"""
+	supplyRequestedQuantity(storeId: String!, input: SupplyRequestedQuantityInput!): SupplyRequestedQuantityResponse!
+	"""
+	Create shipment for response requisition
+	Will create Outbound Shipment with placeholder lines for each requisition line
+	placeholder line quantity will be set to requisitionLine.supply - all linked outbound shipments
+	lines quantity (placeholder and filled) for requisitionLine.item
+	"""
+	createRequisitionShipment(storeId: String!, input: CreateRequisitionShipmentInput!): CreateRequisitionShipmentResponse!
+	insertRequestRequisitionLine(storeId: String!, input: InsertRequestRequisitionLineInput!): InsertRequestRequisitionLineResponse!
+	updateRequestRequisitionLine(storeId: String!, input: UpdateRequestRequisitionLineInput!): UpdateRequestRequisitionLineResponse!
+	deleteRequestRequisitionLine(storeId: String!, input: DeleteRequestRequisitionLineInput!): DeleteRequestRequisitionLineResponse!
+	updateResponseRequisitionLine(storeId: String!, input: UpdateResponseRequisitionLineInput!): UpdateResponseRequisitionLineResponse!
+	updateServerSettings(input: UpdateServerSettingsInput!): UpdateServerSettingsResponse!
+}
+type FullQuery {
+	invoice(storeId: String!, id: String!): InvoiceResponse!
+	invoiceByNumber(storeId: String!, invoiceNumber: Int!, type: InvoiceNodeType!): InvoiceResponse!
+	invoices(storeId: String!, page: PaginationInput, filter: InvoiceFilterInput, sort: [InvoiceSortInput!]): InvoicesResponse!
+	"""
+	Query omSupply "locations" entries
+	"""
+	locations(storeId: String!, page: PaginationInput, filter: LocationFilterInput, sort: [LocationSortInput!]): LocationsResponse!
+	stocktake(storeId: String!, id: String!): StocktakeResponse!
+	stocktakeByNumber(storeId: String!, stocktakeNumber: Int!): StocktakeResponse!
+	stocktakes(storeId: String!, page: PaginationInput, filter: StocktakeFilterInput, sort: [StocktakeSortInput!]): StocktakesResponse!
+	apiVersion: String!
+	"""
+	Retrieves a new auth bearer and refresh token
+	The refresh token is returned as a cookie
+	"""
+	authToken(username: String!, password: String!): AuthTokenResponse!
+	logout: LogoutResponse!
+	"""
+	Retrieves a new auth bearer and refresh token
+	The refresh token is returned as a cookie
+	"""
+	refreshToken: RefreshTokenResponse!
+	me: UserResponse!
+	"""
+	Query omSupply "name" entries
+	"""
+	names(storeId: String!, page: PaginationInput, filter: NameFilterInput, sort: [NameSortInput!]): NamesResponse!
+	stores(page: PaginationInput, filter: StoreFilterInput, sort: [StoreSortInput!]): StoresResponse!
+	"""
+	Query omSupply "master_lists" entries
+	"""
+	masterLists(storeId: String!, page: PaginationInput, filter: MasterListFilterInput, sort: [MasterListSortInput!]): MasterListsResponse!
+	"""
+	Query omSupply "item" entries
+	"""
+	items(storeId: String!, page: PaginationInput, filter: ItemFilterInput, sort: [ItemSortInput!]): ItemsResponse!
+	invoiceCounts(storeId: String!, timezoneOffset: Int): InvoiceCounts!
+	stockCounts(storeId: String!, timezoneOffset: Int, daysTillExpired: Int): StockCounts!
+	requisitionLineChart(storeId: String!, requestRequisitionLineId: String!, consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): RequisitionLineChartResponse!
+	requisition(storeId: String!, id: String!): RequisitionResponse!
+	requisitions(storeId: String!, page: PaginationInput, filter: RequisitionFilterInput, sort: [RequisitionSortInput!]): RequisitionsResponse!
+	requisitionByNumber(storeId: String!, requisitionNumber: Int!, type: RequisitionNodeType!): RequisitionResponse!
+	"""
+	Queries a list of available reports
+	"""
+	reports(storeId: String!, page: PaginationInput, filter: ReportFilterInput, sort: [ReportSortInput!]): ReportsResponse!
+	"""
+	Creates a printed report.
+	
+	All details about the report, e.g. the output format, are specified in the report definition
+	which is referred to by the report_id.
+	The printed report can be retrieved from the `/files` endpoint using the returned file id.
+	"""
+	printReport(storeId: String!, reportId: String!, dataId: String!): PrintReportResponse!
+	printReportDefinition(storeId: String!, name: String, report: JSON!, dataId: String!): PrintReportResponse!
+	"""
+	Retrieves a new auth bearer and refresh token
+	The refresh token is returned as a cookie
+	"""
+	serverSettings: ServerSettingsResponse!
+	"""
+	Restarts the server
+	"""
+	serverRestart: RestartNode!
+}
+type InboundInvoiceCounts {
+	created: InvoiceCountsSummary!
+}
+interface InsertErrorInterface {
+	description: String!
+}
+type InsertInboundShipmentError {
+	error: InsertInboundShipmentErrorInterface!
+}
+interface InsertInboundShipmentErrorInterface {
+	description: String!
+}
+input InsertInboundShipmentInput {
+	id: String!
+	otherPartyId: String!
+	onHold: Boolean
+	comment: String
+	theirReference: String
+	colour: String
+}
+type InsertInboundShipmentLineError {
+	error: InsertInboundShipmentLineErrorInterface!
+}
+interface InsertInboundShipmentLineErrorInterface {
+	description: String!
+}
+input InsertInboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String!
+	packSize: Int!
+	batch: String
+	locationId: String
+	costPricePerPack: Float!
+	sellPricePerPack: Float!
+	expiryDate: NaiveDate
+	numberOfPacks: Int!
+	totalBeforeTax: Float!
+	totalAfterTax: Float!
+	tax: TaxUpdate
+}
+union InsertInboundShipmentLineResponse = | InsertInboundShipmentLineError | InvoiceLineNode
+type InsertInboundShipmentLineResponseWithId {
+	id: String!
+	response: InsertInboundShipmentLineResponse!
+}
+union InsertInboundShipmentResponse = | InsertInboundShipmentError | InvoiceNode
+type InsertInboundShipmentResponseWithId {
+	id: String!
+	response: InsertInboundShipmentResponse!
+}
+type InsertInboundShipmentServiceLineError {
+	error: InsertInboundShipmentServiceLineErrorInterface!
+}
+interface InsertInboundShipmentServiceLineErrorInterface {
+	description: String!
+}
+input InsertInboundShipmentServiceLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String
+	name: String
+	totalBeforeTax: Float!
+	totalAfterTax: Float!
+	tax: TaxUpdate
+	note: String
+}
+union InsertInboundShipmentServiceLineResponse = | InsertInboundShipmentServiceLineError | InvoiceLineNode
+type InsertInboundShipmentServiceLineResponseWithId {
+	id: String!
+	response: InsertInboundShipmentServiceLineResponse!
+}
+type InsertLocationError {
+	error: InsertLocationErrorInterface!
+}
+interface InsertLocationErrorInterface {
+	description: String!
+}
+input InsertLocationInput {
+	id: String!
+	code: String!
+	name: String
+	onHold: Boolean
+}
+union InsertLocationResponse = | InsertLocationError | LocationNode
+type InsertOutboundShipmentError {
+	error: InsertErrorInterface!
+}
+input InsertOutboundShipmentInput {
+	"""
+	The new invoice id provided by the client
+	"""
+	id: String!
+	"""
+	The other party must be an customer of the current store
+	"""
+	otherPartyId: String!
+	onHold: Boolean
+	comment: String
+	theirReference: String
+	colour: String
+}
+type InsertOutboundShipmentLineError {
+	error: InsertOutboundShipmentLineErrorInterface!
+}
+interface InsertOutboundShipmentLineErrorInterface {
+	description: String!
+}
+input InsertOutboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String!
+	stockLineId: String!
+	numberOfPacks: Int!
+	totalBeforeTax: Float!
+	totalAfterTax: Float!
+	tax: TaxUpdate
+}
+union InsertOutboundShipmentLineResponse = | InsertOutboundShipmentLineError | InvoiceLineNode
+type InsertOutboundShipmentLineResponseWithId {
+	id: String!
+	response: InsertOutboundShipmentLineResponse!
+}
+union InsertOutboundShipmentResponse = | InsertOutboundShipmentError | NodeError | InvoiceNode
+type InsertOutboundShipmentResponseWithId {
+	id: String!
+	response: InsertOutboundShipmentResponse!
+}
+type InsertOutboundShipmentServiceLineError {
+	error: InsertOutboundShipmentServiceLineErrorInterface!
+}
+interface InsertOutboundShipmentServiceLineErrorInterface {
+	description: String!
+}
+input InsertOutboundShipmentServiceLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String
+	name: String
+	totalBeforeTax: Float!
+	totalAfterTax: Float!
+	tax: TaxUpdate
+	note: String
+}
+union InsertOutboundShipmentServiceLineResponse = | InsertOutboundShipmentServiceLineError | InvoiceLineNode
+type InsertOutboundShipmentServiceLineResponseWithId {
+	id: String!
+	response: InsertOutboundShipmentServiceLineResponse!
+}
+type InsertOutboundShipmentUnallocatedLineError {
+	error: InsertOutboundShipmentUnallocatedLineErrorInterface!
+}
+interface InsertOutboundShipmentUnallocatedLineErrorInterface {
+	description: String!
+}
+input InsertOutboundShipmentUnallocatedLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String!
+	quantity: Int!
+}
+union InsertOutboundShipmentUnallocatedLineResponse = | InsertOutboundShipmentUnallocatedLineError | InvoiceLineNode
+type InsertOutboundShipmentUnallocatedLineResponseWithId {
+	id: String!
+	response: InsertOutboundShipmentUnallocatedLineResponse!
+}
+type InsertRequestRequisitionError {
+	error: InsertRequestRequisitionErrorInterface!
+}
+interface InsertRequestRequisitionErrorInterface {
+	description: String!
+}
+input InsertRequestRequisitionInput {
+	id: String!
+	otherPartyId: String!
+	colour: String
+	theirReference: String
+	comment: String
+	maxMonthsOfStock: Float!
+	minMonthsOfStock: Float!
+	"""
+	Defaults to 2 weeks from now
+	"""
+	expectedDeliveryDate: NaiveDate
+}
+type InsertRequestRequisitionLineError {
+	error: InsertRequestRequisitionLineErrorInterface!
+}
+interface InsertRequestRequisitionLineErrorInterface {
+	description: String!
+}
+input InsertRequestRequisitionLineInput {
+	id: String!
+	itemId: String!
+	requisitionId: String!
+	requestedQuantity: Int
+	comment: String
+}
+union InsertRequestRequisitionLineResponse = | InsertRequestRequisitionLineError | RequisitionLineNode
+type InsertRequestRequisitionLineResponseWithId {
+	id: String!
+	response: InsertRequestRequisitionLineResponse!
+}
+union InsertRequestRequisitionResponse = | InsertRequestRequisitionError | RequisitionNode
+type InsertRequestRequisitionResponseWithId {
+	id: String!
+	response: InsertRequestRequisitionResponse!
+}
+input InsertStocktakeInput {
+	id: String!
+	comment: String
+	description: String
+	isLocked: Boolean
+	stocktakeDate: NaiveDate
+}
+type InsertStocktakeLineError {
+	error: InsertStocktakeLineErrorInterface!
+}
+interface InsertStocktakeLineErrorInterface {
+	description: String!
+}
+input InsertStocktakeLineInput {
+	id: String!
+	stocktakeId: String!
+	stockLineId: String
+	locationId: String
+	comment: String
+	countedNumberOfPacks: Int
+	itemId: String
+	batch: String
+	expiryDate: NaiveDate
+	packSize: Int
+	costPricePerPack: Float
+	sellPricePerPack: Float
+	note: String
+}
+union InsertStocktakeLineResponse = | InsertStocktakeLineError | StocktakeLineNode
+type InsertStocktakeLineResponseWithId {
+	id: String!
+	response: InsertStocktakeLineResponse!
+}
+union InsertStocktakeResponse = | StocktakeNode
+type InsertStocktakeResponseWithId {
+	id: String!
+	response: InsertStocktakeResponse!
+}
+type InternalError implements UpdateLocationErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface {
+	description: String!
+	fullError: String!
+}
+type InvalidCredentials implements AuthTokenErrorInterface {
+	description: String!
+}
+type InvalidToken implements RefreshTokenErrorInterface {
+	description: String!
+}
+type InvoiceConnector {
+	totalCount: Int!
+	nodes: [InvoiceNode!]!
+}
+type InvoiceCounts {
+	outbound: OutboundInvoiceCounts!
+	inbound: InboundInvoiceCounts!
+}
+type InvoiceCountsSummary {
+	today: Int!
+	thisWeek: Int!
+}
+input InvoiceFilterInput {
+	id: EqualFilterStringInput
+	invoiceNumber: EqualFilterBigNumberInput
+	otherPartyName: SimpleStringFilterInput
+	otherPartyId: EqualFilterStringInput
+	storeId: EqualFilterStringInput
+	type: EqualFilterInvoiceTypeInput
+	status: EqualFilterInvoiceStatusInput
+	comment: SimpleStringFilterInput
+	theirReference: EqualFilterStringInput
+	createdDatetime: DatetimeFilterInput
+	allocatedDatetime: DatetimeFilterInput
+	pickedDatetime: DatetimeFilterInput
+	shippedDatetime: DatetimeFilterInput
+	deliveredDatetime: DatetimeFilterInput
+	verifiedDatetime: DatetimeFilterInput
+	requisitionId: EqualFilterStringInput
+	linkedInvoiceId: EqualFilterStringInput
+}
+type InvoiceIsNotEditable implements UpdateErrorInterface {
+	description: String!
+}
+type InvoiceLineConnector {
+	totalCount: Int!
+	nodes: [InvoiceLineNode!]!
+}
+type InvoiceLineNode {
+	id: String!
+	invoiceId: String!
+	type: InvoiceLineNodeType!
+	itemId: String!
+	itemName: String!
+	itemCode: String!
+	item: ItemNode!
+	packSize: Int!
+	numberOfPacks: Int!
+	batch: String
+	expiryDate: NaiveDate
+	stockLine: StockLineNode
+	pricing: PricingNode!
+	totalBeforeTax: Float!
+	totalAfterTax: Float!
+	costPricePerPack: Float!
+	sellPricePerPack: Float!
+	taxPercentage: Float
+	locationName: String
+	locationId: String
+	location: LocationNode
+	note: String
+}
+enum InvoiceLineNodeType {
+	STOCK_IN
+	STOCK_OUT
+	UNALLOCATED_STOCK
+	SERVICE
+}
+type InvoiceNode {
+	id: String!
+	otherPartyName: String!
+	otherPartyId: String!
+	otherPartyStore: StoreNode
+	"""
+	User that last edited invoice, if user is not found in system default unknown user is returned
+	Null is returned for transfers, where inbound has not been edited yet
+	Null is also returned for system created invoices like inventory adjustments
+	"""
+	user: UserNode
+	type: InvoiceNodeType!
+	status: InvoiceNodeStatus!
+	invoiceNumber: Int!
+	theirReference: String
+	transportReference: String
+	comment: String
+	onHold: Boolean!
+	createdDatetime: DateTime!
+	allocatedDatetime: DateTime
+	pickedDatetime: DateTime
+	shippedDatetime: DateTime
+	deliveredDatetime: DateTime
+	verifiedDatetime: DateTime
+	colour: String
+	"""
+	Response Requisition that is the origin of this Outbound Shipment
+	Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
+	"""
+	requisition: RequisitionNode
+	"""
+	Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment
+	"""
+	linkedShipment: InvoiceNode
+	lines: InvoiceLineConnector!
+	pricing: PricingNode!
+	otherParty(storeId: String!): NameNode!
+}
+enum InvoiceNodeStatus {
+	NEW
+	ALLOCATED
+	PICKED
+	SHIPPED
+	DELIVERED
+	VERIFIED
+}
+enum InvoiceNodeType {
+	OUTBOUND_SHIPMENT
+	INBOUND_SHIPMENT
+	INVENTORY_ADJUSTMENT
+}
+union InvoiceResponse = | NodeError | InvoiceNode
+enum InvoiceSortFieldInput {
+	type
+	otherPartyName
+	invoiceNumber
+	comment
+	status
+	createdDatetime
+	allocatedDatetime
+	pickedDatetime
+	shippedDatetime
+	deliveredDatetime
+	verifiedDatetime
+}
+input InvoiceSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: InvoiceSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union InvoicesResponse = | InvoiceConnector
+type ItemChartNode {
+	consumptionHistory: ConsumptionHistoryConnector
+	stockEvolution: StockEvolutionConnector
+	suggestedQuantityCalculation: SuggestedQuantityCalculationNode!
+	calculationDate: NaiveDate
+}
+type ItemConnector {
+	totalCount: Int!
+	nodes: [ItemNode!]!
+}
+input ItemFilterInput {
+	id: EqualFilterStringInput
+	name: SimpleStringFilterInput
+	type: EqualFilterItemTypeInput
+	code: SimpleStringFilterInput
+	isVisible: Boolean
+}
+type ItemNode {
+	id: String!
+	name: String!
+	code: String!
+	isVisible: Boolean!
+	unitName: String
+	type: ItemNodeType!
+	stats(storeId: String!, amcLookbackMonths: Int): ItemStatsNode!
+	availableBatches(storeId: String!): StockLineConnector!
+	msupplyUniversalCode: String!
+	msupplyUniversalName: String!
+	doses: Int!
+	isVaccine: Boolean!
+	defaultPackSize: Int!
+	outerPackSize: Int!
+	volumePerOuterPack: Float!
+	volumePerPack: Float!
+	margin: Float!
+	weight: Float!
+	strength: String!
+	atcCategory: String!
+	ddd: String!
+}
+enum ItemNodeType {
+	SERVICE
+	STOCK
+	NON_STOCK
+}
+enum ItemSortFieldInput {
+	name
+	code
+}
+input ItemSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: ItemSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+type ItemStatsNode {
+	averageMonthlyConsumption: Float!
+	availableStockOnHand: Int!
+	availableMonthsOfStockOnHand: Float
+}
+union ItemsResponse = | ItemConnector
+"""
+A scalar that can represent any JSON value.
+"""
+scalar JSON
+type LocationConnector {
+	totalCount: Int!
+	nodes: [LocationNode!]!
+}
+input LocationFilterInput {
+	name: EqualFilterStringInput
+	code: EqualFilterStringInput
+	id: EqualFilterStringInput
+}
+type LocationInUse implements DeleteLocationErrorInterface {
+	description: String!
+	stockLines: StockLineConnector!
+	invoiceLines: InvoiceLineConnector!
+}
+type LocationIsOnHold implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+	description: String!
+}
+type LocationNode {
+	id: String!
+	name: String!
+	code: String!
+	onHold: Boolean!
+	stock: StockLineConnector!
+}
+type LocationNotFound implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
+	description: String!
+}
+enum LocationSortFieldInput {
+	name
+	code
+}
+input LocationSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: LocationSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union LocationsResponse = | LocationConnector
+type Logout {
+	"""
+	User id of the logged out user
+	"""
+	userId: String!
+}
+union LogoutResponse = | Logout
+type MasterListConnector {
+	totalCount: Int!
+	nodes: [MasterListNode!]!
+}
+input MasterListFilterInput {
+	id: EqualFilterStringInput
+	name: SimpleStringFilterInput
+	code: SimpleStringFilterInput
+	description: SimpleStringFilterInput
+	existsForName: SimpleStringFilterInput
+	existsForNameId: EqualFilterStringInput
+	existsForStoreId: EqualFilterStringInput
+}
+type MasterListLineConnector {
+	totalCount: Int!
+	nodes: [MasterListLineNode!]!
+}
+type MasterListLineNode {
+	id: String!
+	itemId: String!
+	item: ItemNode!
+}
+type MasterListNode {
+	id: String!
+	name: String!
+	code: String!
+	description: String!
+	lines: MasterListLineConnector!
+}
+type MasterListNotFoundForThisStore implements AddFromMasterListErrorInterface {
+	description: String!
+}
+enum MasterListSortFieldInput {
+	name
+	code
+	description
+}
+input MasterListSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: MasterListSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union MasterListsResponse = | MasterListConnector
+"""
+ISO 8601 calendar date without timezone.
+Format: %Y-%m-%d
+
+# Examples
+
+* `1994-11-13`
+* `2000-02-24`
+"""
+scalar NaiveDate
+type NameConnector {
+	totalCount: Int!
+	nodes: [NameNode!]!
+}
+input NameFilterInput {
+	id: EqualFilterStringInput
+	"""
+	Filter by name
+	"""
+	name: SimpleStringFilterInput
+	"""
+	Filter by code
+	"""
+	code: SimpleStringFilterInput
+	"""
+	Filter by customer property
+	"""
+	isCustomer: Boolean
+	"""
+	Filter by supplier property
+	"""
+	isSupplier: Boolean
+	"""
+	Is this name a store
+	"""
+	isStore: Boolean
+	"""
+	Code of the store if store is linked to name
+	"""
+	storeCode: SimpleStringFilterInput
+	"""
+	Visibility in current store (based on store_id parameter and existance of name_store_join record)
+	"""
+	isVisible: Boolean
+	"""
+	Show system names (defaults to false)
+System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
+if is_visible is set to true and is_system_name is also true no system names will be returned
+	"""
+	isSystemName: Boolean
+}
+type NameNode {
+	id: String!
+	name: String!
+	code: String!
+	isCustomer: Boolean!
+	isSupplier: Boolean!
+	isVisible: Boolean!
+	isSystemName: Boolean!
+	store: StoreNode
+	phone: String!
+	chargeCode: String!
+	comment: String!
+	country: String!
+	address: String!
+	email: String!
+	website: String!
+	isManufacturer: Boolean!
+	isDonor: Boolean!
+	createdDate: NaiveDate
+	isOnHold: Boolean!
+}
+enum NameSortFieldInput {
+	name
+	code
+}
+input NameSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: NameSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union NamesResponse = | NameConnector
+type NoRefreshTokenProvided implements RefreshTokenErrorInterface {
+	description: String!
+}
+"""
+Generic Error Wrapper
+"""
+type NodeError {
+	error: NodeErrorInterface!
+}
+interface NodeErrorInterface {
+	description: String!
+}
+type NotARefreshToken implements RefreshTokenErrorInterface {
+	description: String!
+}
+type NotAnInboundShipment implements UpdateInboundShipmentLineErrorInterface {
+	description: String!
+}
+type NotAnOutboundShipmentError implements UpdateErrorInterface {
+	description: String!
+}
+type NotEnoughStockForReduction implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
+	description: String!
+	line: InvoiceLineNode
+	batch: StockLineResponse!
+}
+type NothingRemainingToSupply implements CreateRequisitionShipmentErrorInterface {
+	description: String!
+}
+type OtherPartyNotACustomer implements UpdateErrorInterface & InsertErrorInterface {
+	description: String!
+}
+type OtherPartyNotASupplier implements UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & InsertRequestRequisitionErrorInterface & InsertInboundShipmentErrorInterface {
+	description: String!
+}
+type OtherPartyNotVisible implements UpdateRequestRequisitionErrorInterface & InsertInboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & UpdateErrorInterface & InsertErrorInterface & InsertRequestRequisitionErrorInterface {
+	description: String!
+}
+type OutboundInvoiceCounts {
+	created: InvoiceCountsSummary!
+	"""
+	Number of outbound shipments ready to be picked
+	"""
+	toBePicked: Int!
+}
+"""
+Pagination input.
+
+Option to limit the number of returned items and/or queries large lists in "pages".
+"""
+input PaginationInput {
+	"""
+	Max number of returned items
+	"""
+	first: Int
+	"""
+	First returned item is at the `offset` position in the full list
+	"""
+	offset: Int
+}
+type PricingNode {
+	totalBeforeTax: Float!
+	totalAfterTax: Float!
+	stockTotalBeforeTax: Float!
+	stockTotalAfterTax: Float!
+	serviceTotalBeforeTax: Float!
+	serviceTotalAfterTax: Float!
+	taxPercentage: Float
+}
+type PrintReportError {
+	error: PrintReportErrorInterface!
+}
+interface PrintReportErrorInterface {
+	description: String!
+}
+type PrintReportNode {
+	"""
+	Return the file id of the printed report.
+	The file can be fetched using the /files?id={id} endpoint
+	"""
+	fileId: String!
+}
+union PrintReportResponse = | PrintReportError | PrintReportNode
+type RecordAlreadyExist implements InsertLocationErrorInterface {
+	description: String!
+}
+type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & DeleteLocationErrorInterface {
+	description: String!
+}
+type RecordNotFound implements UpdateInboundShipmentLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & UpdateLocationErrorInterface & UpdateInboundShipmentErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & DeleteInboundShipmentErrorInterface & UpdateResponseRequisitionErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & AddFromMasterListErrorInterface & UpdateErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & RequisitionLineChartErrorInterface & NodeErrorInterface & UseSuggestedQuantityErrorInterface & DeleteRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface {
+	description: String!
+}
+type RefreshToken {
+	"""
+	New Bearer token
+	"""
+	token: String!
+}
+type RefreshTokenError {
+	error: RefreshTokenErrorInterface!
+}
+interface RefreshTokenErrorInterface {
+	description: String!
+}
+union RefreshTokenResponse = | RefreshTokenError | RefreshToken
+enum ReportCategory {
+	INVOICE
+	REQUISITION
+	STOCKTAKE
+	RESOURCE
+}
+type ReportConnector {
+	totalCount: Int!
+	nodes: [ReportNode!]!
+}
+input ReportFilterInput {
+	id: EqualFilterStringInput
+	name: SimpleStringFilterInput
+	category: EqualFilterReportCategoryInput
+}
+type ReportNode {
+	id: String!
+	"""
+	Human readable name of the report
+	"""
+	name: String!
+	category: ReportCategory!
+}
+enum ReportSortFieldInput {
+	id
+	name
+}
+input ReportSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: ReportSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union ReportsResponse = | ReportConnector
+type RequisitionConnector {
+	totalCount: Int!
+	nodes: [RequisitionNode!]!
+}
+input RequisitionFilterInput {
+	id: EqualFilterStringInput
+	requisitionNumber: EqualFilterBigNumberInput
+	type: EqualFilterRequisitionTypeInput
+	status: EqualFilterRequisitionStatusInput
+	createdDatetime: DatetimeFilterInput
+	sentDatetime: DatetimeFilterInput
+	finalisedDatetime: DatetimeFilterInput
+	otherPartyName: SimpleStringFilterInput
+	otherPartyId: EqualFilterStringInput
+	colour: EqualFilterStringInput
+	theirReference: SimpleStringFilterInput
+	comment: SimpleStringFilterInput
+}
+type RequisitionLineChartError {
+	error: RequisitionLineChartErrorInterface!
+}
+interface RequisitionLineChartErrorInterface {
+	description: String!
+}
+union RequisitionLineChartResponse = | ItemChartNode | RequisitionLineChartError
+type RequisitionLineConnector {
+	totalCount: Int!
+	nodes: [RequisitionLineNode!]!
+}
+type RequisitionLineNode {
+	id: String!
+	itemId: String!
+	comment: String
+	item: ItemNode!
+	"""
+	Quantity requested
+	"""
+	requestedQuantity: Int!
+	"""
+	Quantity to be supplied in the next shipment, only used in response requisition
+	"""
+	supplyQuantity: Int!
+	"""
+	Calculated quantity
+	When months_of_stock < requisition.min_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
+	"""
+	suggestedQuantity: Int!
+	"""
+	OutboundShipment lines linked to requisitions line
+	"""
+	outboundShipmentLines: InvoiceLineConnector!
+	"""
+	InboundShipment lines linked to requisitions line
+	"""
+	inboundShipmentLines: InvoiceLineConnector!
+	"""
+	For request requisition: snapshot stats (when requisition was created)
+	For response requisition current item stats
+	"""
+	itemStats(amcLookbackMonths: Int): ItemStatsNode!
+	"""
+	Quantity remaining to supply
+	supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
+	Only available in response requisition, request requistion returns 0
+	"""
+	remainingQuantityToSupply: Int!
+	linkedRequisitionLine: RequisitionLineNode
+}
+type RequisitionLineWithItemIdExists implements InsertRequestRequisitionLineErrorInterface {
+	description: String!
+}
+type RequisitionNode {
+	id: String!
+	type: RequisitionNodeType!
+	status: RequisitionNodeStatus!
+	createdDatetime: DateTime!
+	expectedDeliveryDate: NaiveDate
+	"""
+	User that last edited requisition, if user is not found in system default unknown user is returned
+	Null is returned for transfers, where response requisition has not been edited yet
+	"""
+	user: UserNode
+	"""
+	Applicable to request requisition only
+	"""
+	sentDatetime: DateTime
+	finalisedDatetime: DateTime
+	requisitionNumber: Int!
+	colour: String
+	theirReference: String
+	comment: String
+	"""
+	Request Requisition: Supplying store (store that is supplying stock)
+	Response Requisition: Customer store (store that is ordering stock)
+	"""
+	otherParty(storeId: String!): NameNode!
+	otherPartyName: String!
+	otherPartyId: String!
+	"""
+	Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line
+	"""
+	maxMonthsOfStock: Float!
+	"""
+	Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
+	"""
+	minMonthsOfStock: Float!
+	lines: RequisitionLineConnector!
+	"""
+	Link to request requisition
+	"""
+	requestRequisition: RequisitionNode
+	"""
+	Response Requisition: Outbound Shipments linked requisition
+	Request Requisition: Inbound Shipments linked to requisition
+	"""
+	shipments: InvoiceConnector!
+	"""
+	All lines that have not been supplied
+	based on same logic as RequisitionLineNode.remainingQuantityToSupply
+	only applicable to Response requisition, Request requisition will empty connector
+	"""
+	linesRemainingToSupply: RequisitionLineConnector!
+}
+enum RequisitionNodeStatus {
+	DRAFT
+	NEW
+	SENT
+	FINALISED
+}
+enum RequisitionNodeType {
+	REQUEST
+	RESPONSE
+}
+union RequisitionResponse = | RecordNotFound | RequisitionNode
+enum RequisitionSortFieldInput {
+	requisitionNumber
+	type
+	comment
+	status
+	otherPartyName
+	sentDatetime
+	createdDatetime
+	finalisedDatetime
+}
+input RequisitionSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: RequisitionSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union RequisitionsResponse = | RequisitionConnector
+type RestartNode {
+	message: String!
+}
+type ServerSettingsNode {
+	status: ServerStatus!
+	"""
+	Currently used sync settings (may differ from what is stored in the DB)
+	"""
+	syncSettings: SyncSettingsNode
+	"""
+	Returns sync settings as currently stored on the server. If null no sync settings are set.
+	"""
+	syncSettingsDb: SyncSettingsNode
+}
+union ServerSettingsResponse = | ServerSettingsNode
+enum ServerStatus {
+	STAGE_0
+	RUNNING
+}
+input SimpleStringFilterInput {
+	"""
+	Search term must be an exact match (case sensitive)
+	"""
+	equalTo: String
+	"""
+	Search term must be included in search candidate (case insensitive)
+	"""
+	like: String
+}
+type SnapshotCountCurrentCountMismatch implements UpdateStocktakeErrorInterface {
+	description: String!
+	lines: StocktakeLineConnector!
+}
+type StockCounts {
+	expired: Int!
+	expiringSoon: Int!
+}
+type StockEvolutionConnector {
+	totalCount: Int!
+	nodes: [StockEvolutionNode!]!
+}
+type StockEvolutionNode {
+	date: NaiveDate!
+	stockOnHand: Int!
+	isHistoric: Boolean!
+	isProjected: Boolean!
+	minimumStockOnHand: Int!
+	maximumStockOnHand: Int!
+}
+input StockEvolutionOptionsInput {
+	"""
+	Defaults to 30, number of data points for historic stock on hand in stock evolution chart
+	"""
+	numberOfHistoricDataPoints: Int
+	"""
+	Defaults to 20, number of data points for projected stock on hand in stock evolution chart
+	"""
+	numberOfProjectedDataPoints: Int
+}
+type StockLineAlreadyExistsInInvoice implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
+	description: String!
+	line: InvoiceLineNode!
+}
+type StockLineConnector {
+	totalCount: Int!
+	nodes: [StockLineNode!]!
+}
+type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
+	description: String!
+}
+type StockLineNode {
+	id: String!
+	itemId: String!
+	storeId: String!
+	batch: String
+	packSize: Int!
+	costPricePerPack: Float!
+	sellPricePerPack: Float!
+	availableNumberOfPacks: Int!
+	totalNumberOfPacks: Int!
+	expiryDate: NaiveDate
+	onHold: Boolean!
+	note: String
+	locationId: String
+	locationName: String
+	location: LocationNode
+	item: ItemNode!
+}
+union StockLineResponse = | NodeError | StockLineNode
+type StocktakeConnector {
+	totalCount: Int!
+	nodes: [StocktakeNode!]!
+}
+input StocktakeFilterInput {
+	id: EqualFilterStringInput
+	stocktakeNumber: EqualFilterBigNumberInput
+	status: EqualFilterStocktakeStatusInput
+	createdDatetime: DatetimeFilterInput
+	finalisedDatetime: DatetimeFilterInput
+}
+type StocktakeIsLocked implements UpdateStocktakeErrorInterface {
+	description: String!
+}
+type StocktakeLineConnector {
+	totalCount: Int!
+	nodes: [StocktakeLineNode!]!
+}
+type StocktakeLineNode {
+	id: String!
+	stocktakeId: String!
+	stockLine: StockLineNode
+	location: LocationNode
+	comment: String
+	snapshotNumberOfPacks: Int!
+	countedNumberOfPacks: Int
+	itemId: String!
+	item: ItemNode!
+	batch: String
+	expiryDate: NaiveDate
+	packSize: Int
+	costPricePerPack: Float
+	sellPricePerPack: Float
+	note: String
+}
+type StocktakeNode {
+	id: String!
+	storeId: String!
+	"""
+	User that created stocktake, if user is not found in system default unknown user is returned
+	"""
+	user: UserNode!
+	stocktakeNumber: Int!
+	comment: String
+	description: String
+	isLocked: Boolean!
+	status: StocktakeNodeStatus!
+	createdDatetime: DateTime!
+	stocktakeDate: NaiveDate
+	finalisedDatetime: DateTime
+	inventoryAdjustmentId: String
+	inventoryAdjustment: InvoiceNode
+	lines: StocktakeLineConnector!
+}
+enum StocktakeNodeStatus {
+	NEW
+	FINALISED
+}
+union StocktakeResponse = | StocktakeNode | NodeError
+enum StocktakeSortFieldInput {
+	status
+	createdDatetime
+	finalisedDatetime
+}
+input StocktakeSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: StocktakeSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union StocktakesResponse = | StocktakeConnector
+type StoreConnector {
+	totalCount: Int!
+	nodes: [StoreNode!]!
+}
+input StoreFilterInput {
+	id: EqualFilterStringInput
+	code: SimpleStringFilterInput
+	name: SimpleStringFilterInput
+	nameCode: SimpleStringFilterInput
+	siteId: EqualFilterNumberInput
+}
+type StoreNode {
+	id: String!
+	code: String!
+	name(storeId: String!): NameNode!
+	siteId: Int!
+}
+enum StoreSortFieldInput {
+	code
+	name
+	nameCode
+}
+input StoreSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: StoreSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union StoresResponse = | StoreConnector
+type SuggestedQuantityCalculationNode {
+	averageMonthlyConsumption: Int!
+	stockOnHand: Int!
+	minimumStockOnHand: Int!
+	maximumStockOnHand: Int!
+	suggestedQuantity: Int!
+}
+type SupplyRequestedQuantityError {
+	error: SupplyRequestedQuantityErrorInterface!
+}
+interface SupplyRequestedQuantityErrorInterface {
+	description: String!
+}
+input SupplyRequestedQuantityInput {
+	responseRequisitionId: String!
+}
+union SupplyRequestedQuantityResponse = | SupplyRequestedQuantityError | RequisitionLineConnector
+type SyncSettingsNode {
+	"""
+	Central server url
+	"""
+	url: String!
+	"""
+	Central server username
+	"""
+	username: String!
+	"""
+	How frequently central data is synced
+	"""
+	intervalSec: Int!
+	centralServerSiteId: Int!
+	siteId: Int!
+	siteHardwareId: String!
+}
+input TaxUpdate {
+	"""
+	Set or unset the tax value (in percentage)
+	"""
+	percentage: Float
+}
+type TokenExpired implements RefreshTokenErrorInterface {
+	description: String!
+}
+type UnallocatedLineForItemAlreadyExists implements InsertOutboundShipmentUnallocatedLineErrorInterface {
+	description: String!
+}
+type UnallocatedLinesOnlyEditableInNewInvoice implements InsertOutboundShipmentUnallocatedLineErrorInterface {
+	description: String!
+}
+enum UniqueValueKey {
+	code
+}
+type UniqueValueViolation implements UpdateLocationErrorInterface & InsertLocationErrorInterface {
+	description: String!
+	field: UniqueValueKey!
+}
+interface UpdateErrorInterface {
+	description: String!
+}
+type UpdateInboundShipmentError {
+	error: UpdateInboundShipmentErrorInterface!
+}
+interface UpdateInboundShipmentErrorInterface {
+	description: String!
+}
+input UpdateInboundShipmentInput {
+	id: String!
+	otherPartyId: String
+	status: UpdateInboundShipmentStatusInput
+	onHold: Boolean
+	comment: String
+	theirReference: String
+	colour: String
+}
+type UpdateInboundShipmentLineError {
+	error: UpdateInboundShipmentLineErrorInterface!
+}
+interface UpdateInboundShipmentLineErrorInterface {
+	description: String!
+}
+input UpdateInboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String
+	locationId: String
+	packSize: Int
+	batch: String
+	costPricePerPack: Float
+	sellPricePerPack: Float
+	expiryDate: NaiveDate
+	numberOfPacks: Int
+}
+union UpdateInboundShipmentLineResponse = | UpdateInboundShipmentLineError | InvoiceLineNode
+type UpdateInboundShipmentLineResponseWithId {
+	id: String!
+	response: UpdateInboundShipmentLineResponse!
+}
+union UpdateInboundShipmentResponse = | UpdateInboundShipmentError | InvoiceNode
+type UpdateInboundShipmentResponseWithId {
+	id: String!
+	response: UpdateInboundShipmentResponse!
+}
+type UpdateInboundShipmentServiceLineError {
+	error: UpdateInboundShipmentServiceLineErrorInterface!
+}
+interface UpdateInboundShipmentServiceLineErrorInterface {
+	description: String!
+}
+input UpdateInboundShipmentServiceLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String
+	name: String
+	totalBeforeTax: Float
+	totalAfterTax: Float
+	tax: TaxUpdate
+	note: String
+}
+union UpdateInboundShipmentServiceLineResponse = | UpdateInboundShipmentServiceLineError | InvoiceLineNode
+type UpdateInboundShipmentServiceLineResponseWithId {
+	id: String!
+	response: UpdateInboundShipmentServiceLineResponse!
+}
+enum UpdateInboundShipmentStatusInput {
+	DELIVERED
+	VERIFIED
+}
+type UpdateLocationError {
+	error: UpdateLocationErrorInterface!
+}
+interface UpdateLocationErrorInterface {
+	description: String!
+}
+input UpdateLocationInput {
+	id: String!
+	code: String
+	name: String
+	onHold: Boolean
+}
+union UpdateLocationResponse = | UpdateLocationError | LocationNode
+type UpdateOutboundShipmentError {
+	error: UpdateErrorInterface!
+}
+input UpdateOutboundShipmentInput {
+	"""
+	The new invoice id provided by the client
+	"""
+	id: String!
+	"""
+	The other party must be a customer of the current store.
+This field can be used to change the other_party of an invoice
+	"""
+	otherPartyId: String
+	"""
+	When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
+existing invoice items gets updated.
+	"""
+	status: UpdateOutboundShipmentStatusInput
+	onHold: Boolean
+	comment: String
+	"""
+	External invoice reference, e.g. purchase or shipment number
+	"""
+	theirReference: String
+	transportReference: String
+	colour: String
+}
+type UpdateOutboundShipmentLineError {
+	error: UpdateOutboundShipmentLineErrorInterface!
+}
+interface UpdateOutboundShipmentLineErrorInterface {
+	description: String!
+}
+input UpdateOutboundShipmentLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String
+	stockLineId: String
+	numberOfPacks: Int
+	totalBeforeTax: Float
+	totalAfterTax: Float
+	tax: TaxUpdate
+}
+union UpdateOutboundShipmentLineResponse = | UpdateOutboundShipmentLineError | InvoiceLineNode
+type UpdateOutboundShipmentLineResponseWithId {
+	id: String!
+	response: UpdateOutboundShipmentLineResponse!
+}
+union UpdateOutboundShipmentResponse = | UpdateOutboundShipmentError | NodeError | InvoiceNode
+type UpdateOutboundShipmentResponseWithId {
+	id: String!
+	response: UpdateOutboundShipmentResponse!
+}
+type UpdateOutboundShipmentServiceLineError {
+	error: UpdateOutboundShipmentServiceLineErrorInterface!
+}
+interface UpdateOutboundShipmentServiceLineErrorInterface {
+	description: String!
+}
+input UpdateOutboundShipmentServiceLineInput {
+	id: String!
+	invoiceId: String!
+	itemId: String
+	name: String
+	totalBeforeTax: Float
+	totalAfterTax: Float
+	tax: TaxUpdate
+	note: String
+}
+union UpdateOutboundShipmentServiceLineResponse = | UpdateOutboundShipmentServiceLineError | InvoiceLineNode
+type UpdateOutboundShipmentServiceLineResponseWithId {
+	id: String!
+	response: UpdateOutboundShipmentServiceLineResponse!
+}
+enum UpdateOutboundShipmentStatusInput {
+	ALLOCATED
+	PICKED
+	SHIPPED
+}
+type UpdateOutboundShipmentUnallocatedLineError {
+	error: UpdateOutboundShipmentUnallocatedLineErrorInterface!
+}
+interface UpdateOutboundShipmentUnallocatedLineErrorInterface {
+	description: String!
+}
+input UpdateOutboundShipmentUnallocatedLineInput {
+	id: String!
+	quantity: Int!
+}
+union UpdateOutboundShipmentUnallocatedLineResponse = | UpdateOutboundShipmentUnallocatedLineError | InvoiceLineNode
+type UpdateOutboundShipmentUnallocatedLineResponseWithId {
+	id: String!
+	response: UpdateOutboundShipmentUnallocatedLineResponse!
+}
+type UpdateRequestRequisitionError {
+	error: UpdateRequestRequisitionErrorInterface!
+}
+interface UpdateRequestRequisitionErrorInterface {
+	description: String!
+}
+input UpdateRequestRequisitionInput {
+	id: String!
+	colour: String
+	theirReference: String
+	comment: String
+	maxMonthsOfStock: Float
+	minMonthsOfStock: Float
+	status: UpdateRequestRequisitionStatusInput
+	otherPartyId: String
+	expectedDeliveryDate: NaiveDate
+}
+type UpdateRequestRequisitionLineError {
+	error: UpdateRequestRequisitionLineErrorInterface!
+}
+interface UpdateRequestRequisitionLineErrorInterface {
+	description: String!
+}
+input UpdateRequestRequisitionLineInput {
+	id: String!
+	requestedQuantity: Int
+	comment: String
+}
+union UpdateRequestRequisitionLineResponse = | UpdateRequestRequisitionLineError | RequisitionLineNode
+type UpdateRequestRequisitionLineResponseWithId {
+	id: String!
+	response: UpdateRequestRequisitionLineResponse!
+}
+union UpdateRequestRequisitionResponse = | UpdateRequestRequisitionError | RequisitionNode
+type UpdateRequestRequisitionResponseWithId {
+	id: String!
+	response: UpdateRequestRequisitionResponse!
+}
+enum UpdateRequestRequisitionStatusInput {
+	SENT
+}
+type UpdateResponseRequisitionError {
+	error: UpdateResponseRequisitionErrorInterface!
+}
+interface UpdateResponseRequisitionErrorInterface {
+	description: String!
+}
+input UpdateResponseRequisitionInput {
+	id: String!
+	colour: String
+	theirReference: String
+	comment: String
+	status: UpdateResponseRequisitionStatusInput
+}
+type UpdateResponseRequisitionLineError {
+	error: UpdateResponseRequisitionLineErrorInterface!
+}
+interface UpdateResponseRequisitionLineErrorInterface {
+	description: String!
+}
+input UpdateResponseRequisitionLineInput {
+	id: String!
+	supplyQuantity: Int
+	comment: String
+}
+union UpdateResponseRequisitionLineResponse = | UpdateResponseRequisitionLineError | RequisitionLineNode
+union UpdateResponseRequisitionResponse = | UpdateResponseRequisitionError | RequisitionNode
+enum UpdateResponseRequisitionStatusInput {
+	FINALISED
+}
+input UpdateServerSettingsInput {
+	syncSettings: UpdateSyncSettingsInput
+}
+union UpdateServerSettingsResponse = | ServerSettingsNode
+type UpdateStocktakeError {
+	error: UpdateStocktakeErrorInterface!
+}
+interface UpdateStocktakeErrorInterface {
+	description: String!
+}
+input UpdateStocktakeInput {
+	id: String!
+	comment: String
+	description: String
+	status: StocktakeNodeStatus
+	stocktakeDate: NaiveDate
+	isLocked: Boolean
+}
+type UpdateStocktakeLineError {
+	error: UpdateStocktakeLineErrorInterface!
+}
+interface UpdateStocktakeLineErrorInterface {
+	description: String!
+}
+input UpdateStocktakeLineInput {
+	id: String!
+	locationId: String
+	comment: String
+	snapshotNumberOfPacks: Int
+	countedNumberOfPacks: Int
+	batch: String
+	expiryDate: NaiveDate
+	packSize: Int
+	costPricePerPack: Float
+	sellPricePerPack: Float
+	note: String
+}
+union UpdateStocktakeLineResponse = | UpdateStocktakeLineError | StocktakeLineNode
+type UpdateStocktakeLineResponseWithId {
+	id: String!
+	response: UpdateStocktakeLineResponse!
+}
+union UpdateStocktakeResponse = | UpdateStocktakeError | StocktakeNode
+type UpdateStocktakeResponseWithId {
+	id: String!
+	response: UpdateStocktakeResponse!
+}
+input UpdateSyncSettingsInput {
+	url: String!
+	username: String!
+	"""
+	Plain text password
+	"""
+	password: String!
+	"""
+	Sync interval in sec
+	"""
+	intervalSec: Int!
+	centralServerSiteId: Int!
+	siteId: Int!
+	siteHardwareId: String!
+}
+type UseSuggestedQuantityError {
+	error: UseSuggestedQuantityErrorInterface!
+}
+interface UseSuggestedQuantityErrorInterface {
+	description: String!
+}
+input UseSuggestedQuantityInput {
+	requestRequisitionId: String!
+}
+union UseSuggestedQuantityResponse = | UseSuggestedQuantityError | RequisitionLineConnector
+type UserNode {
+	"""
+	Internal user id
+	"""
+	userId: String!
+	"""
+	The user's email address
+	"""
+	email: String
+	username: String!
+	defaultStore: UserStoreNode
+	stores: UserStoreConnector!
+}
+union UserResponse = | UserNode
+type UserStoreConnector {
+	totalCount: Int!
+	nodes: [UserStoreNode!]!
+}
+type UserStoreNode {
+	id: String!
+	code: String!
+	name: String!
+}
+schema {
+	query: FullQuery
+	mutation: FullMutation
+}
