@@ -107,8 +107,12 @@ pub trait GeneralServiceTrait: Sync + Send {
         get_stores(ctx, pagination, filter, sort)
     }
 
-    fn get_store(&self, ctx: &ServiceContext, id: &str) -> Result<Option<Store>, RepositoryError> {
-        get_store(ctx, id)
+    fn get_store(
+        &self,
+        ctx: &ServiceContext,
+        filter: StoreFilter,
+    ) -> Result<Option<Store>, RepositoryError> {
+        get_store(ctx, filter)
     }
 }
 
