@@ -1,15 +1,13 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
-    standard_graphql_error::validate_auth,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
-use repository::RepositoryError;
 use service::{
-    location::delete::{
-        DeleteLocation, DeleteLocationError as InError, LocationInUse as ServiceLocationInUse,
-    },
+    location::delete::{DeleteLocation, DeleteLocationError as ServiceError},
     permission_validation::{Resource, ResourceAccessRequest},
 };
 
@@ -27,10 +25,7 @@ pub fn delete_location(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = match service_provider.context() {
-        Ok(service) => service,
-        Err(error) => return Ok(DeleteLocationResponse::Error(error.into())),
-    };
+    let service_context = service_provider.context()?;
 
     match service_provider.location_service.delete_location(
         &service_context,
@@ -40,7 +35,9 @@ pub fn delete_location(
         Ok(location_id) => Ok(DeleteLocationResponse::Response(DeleteResponse(
             location_id,
         ))),
-        Err(error) => Ok(DeleteLocationResponse::Error(error.into())),
+        Err(error) => Ok(DeleteLocationResponse::Error(DeleteLocationError {
+            error: map_error(error)?,
+        })),
     }
 }
 
@@ -75,6 +72,28 @@ pub enum DeleteLocationErrorInterface {
     DatabaseError(DatabaseError),
 }
 
+fn map_error(error: ServiceError) -> Result<DeleteLocationErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::LocationInUse(location_in_use) => {
+            return Ok(DeleteLocationErrorInterface::LocationInUse(LocationInUse {
+                stock_lines: StockLineConnector::from_vec(location_in_use.stock_lines),
+                invoice_lines: InvoiceLineConnector::from_vec(location_in_use.invoice_lines),
+            }));
+        }
+
+        // Standard Graphql Errors
+        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::LocationDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
+}
+
 pub struct LocationInUse {
     stock_lines: StockLineConnector,
     invoice_lines: InvoiceLineConnector,
@@ -95,38 +114,12 @@ impl LocationInUse {
     }
 }
 
-impl From<RepositoryError> for DeleteLocationError {
-    fn from(error: RepositoryError) -> Self {
-        let error = DeleteLocationErrorInterface::DatabaseError(DatabaseError(error));
-        DeleteLocationError { error }
-    }
-}
-
-impl From<InError> for DeleteLocationError {
-    fn from(error: InError) -> Self {
-        use DeleteLocationErrorInterface as OutError;
-        let error = match error {
-            InError::LocationDoesNotExist => OutError::LocationNotFound(RecordNotFound {}),
-            InError::LocationInUse(ServiceLocationInUse {
-                stock_lines,
-                invoice_lines,
-            }) => OutError::LocationInUse(LocationInUse {
-                stock_lines: StockLineConnector::from_vec(stock_lines),
-                invoice_lines: InvoiceLineConnector::from_vec(invoice_lines),
-            }),
-            InError::LocationDoesNotBelongToCurrentStore => {
-                OutError::RecordBelongsToAnotherStore(RecordBelongsToAnotherStore {})
-            }
-            InError::DatabaseError(error) => OutError::DatabaseError(DatabaseError(error)),
-        };
-        DeleteLocationError { error }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{
         mock::{
             mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines, mock_stock_line_a,
@@ -202,21 +195,14 @@ mod test {
         // Record Not Found
         let test_service =
             TestService(Box::new(|_| Err(DeleteLocationError::LocationDoesNotExist)));
+        let expected_message = "Bad user input";
 
-        let expected = json!({
-            "deleteLocation": {
-              "error": {
-                "__typename": "RecordNotFound"
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(
+        assert_standard_graphql_error!(
             &settings,
             mutation,
             &variables,
-            &expected,
+            &expected_message,
+            None,
             Some(service_provider(test_service, &connection_manager))
         );
 
@@ -224,21 +210,14 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(DeleteLocationError::LocationDoesNotBelongToCurrentStore)
         }));
+        let expected_message = "Bad user input";
 
-        let expected = json!({
-            "deleteLocation": {
-              "error": {
-                "__typename": "RecordBelongsToAnotherStore",
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(
+        assert_standard_graphql_error!(
             &settings,
             mutation,
             &variables,
-            &expected,
+            &expected_message,
+            None,
             Some(service_provider(test_service, &connection_manager))
         );
 
