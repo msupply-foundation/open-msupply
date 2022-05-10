@@ -172,3 +172,8 @@ server:
   debug_cors_permissive: true
   cors_origins: [http://localhost:3003, https://youwebserver:yourport]
 ```
+
+## Cli
+
+* `remote_server_cli` -> provides general commands, for help run: `cargo run --bin remote_server_cli -- --help`
+* `demo_cli` -> provides command specific to demo purposes, i.e. refresh-dates will move forward all dates, for help run: `cargo run --bin demo_cli -- --help`
