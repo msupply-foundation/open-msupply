@@ -1,4 +1,4 @@
-use repository::{PaginationOption, Store};
+use repository::{EqualFilter, RepositoryError, Store, PaginationOption};
 use repository::{StoreFilter, StoreRepository, StoreSort};
 
 use crate::{
@@ -18,4 +18,11 @@ pub fn get_stores(
         rows: repository.query(pagination, filter.clone(), sort)?,
         count: i64_to_u32(repository.count(filter)?),
     })
+}
+
+pub fn get_store(ctx: &ServiceContext, id: &str) -> Result<Option<Store>, RepositoryError> {
+    let mut result = StoreRepository::new(&ctx.connection)
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(id)))?;
+
+    Ok(result.pop())
 }

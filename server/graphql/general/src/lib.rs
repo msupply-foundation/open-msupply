@@ -61,6 +61,15 @@ impl GeneralQueries {
         get_names(ctx, store_id, page, filter, sort)
     }
 
+    pub async fn store(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<StoreResponse> {
+        get_store(ctx, &store_id, &id)
+    }
+
     pub async fn stores(
         &self,
         ctx: &Context<'_>,

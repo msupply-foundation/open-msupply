@@ -20,7 +20,7 @@ use crate::{
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
-    store::get_stores,
+    store::{get_store, get_stores},
     ListError, ListResult,
 };
 
@@ -105,6 +105,10 @@ pub trait GeneralServiceTrait: Sync + Send {
         sort: Option<StoreSort>,
     ) -> Result<ListResult<Store>, ListError> {
         get_stores(ctx, pagination, filter, sort)
+    }
+
+    fn get_store(&self, ctx: &ServiceContext, id: &str) -> Result<Option<Store>, RepositoryError> {
+        get_store(ctx, id)
     }
 }
 
