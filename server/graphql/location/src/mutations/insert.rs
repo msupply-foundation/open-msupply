@@ -1,15 +1,14 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
+        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueViolation,
     },
-    standard_graphql_error::validate_auth,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::LocationNode;
-use repository::RepositoryError;
 use service::{
-    location::insert::{InsertLocation, InsertLocationError as InError},
+    location::insert::{InsertLocation, InsertLocationError as ServiceError},
     permission_validation::{Resource, ResourceAccessRequest},
 };
 
@@ -27,10 +26,7 @@ pub fn insert_location(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = match service_provider.context() {
-        Ok(service) => service,
-        Err(error) => return Ok(InsertLocationResponse::Error(error.into())),
-    };
+    let service_context = service_provider.context()?;
 
     match service_provider.location_service.insert_location(
         &service_context,
@@ -40,7 +36,9 @@ pub fn insert_location(
         Ok(location) => Ok(InsertLocationResponse::Response(LocationNode::from_domain(
             location,
         ))),
-        Err(error) => Ok(InsertLocationResponse::Error(error.into())),
+        Err(error) => Ok(InsertLocationResponse::Error(InsertLocationError {
+            error: map_error(error)?,
+        })),
     }
 }
 
@@ -89,37 +87,28 @@ pub enum InsertLocationErrorInterface {
     DatabaseError(DatabaseError),
 }
 
-impl From<RepositoryError> for InsertLocationError {
-    fn from(error: RepositoryError) -> Self {
-        let error = InsertLocationErrorInterface::DatabaseError(DatabaseError(error));
-        InsertLocationError { error }
-    }
-}
+fn map_error(error: ServiceError) -> Result<InsertLocationErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
 
-impl From<InError> for InsertLocationError {
-    fn from(error: InError) -> Self {
-        use InsertLocationErrorInterface as OutError;
-        let error = match error {
-            InError::LocationAlreadyExists => {
-                OutError::LocationAlreadyExists(RecordAlreadyExist {})
-            }
-            InError::LocationWithCodeAlreadyExists => {
-                OutError::UniqueValueViolation(UniqueValueViolation(UniqueValueKey::Code))
-            }
-            InError::CreatedRecordNotFound => OutError::InternalError(InternalError(
-                "Could not find record after creation".to_owned(),
-            )),
-            InError::DatabaseError(error) => OutError::DatabaseError(DatabaseError(error)),
-        };
-        InsertLocationError { error }
-    }
+    let graphql_error = match error {
+        // Standard Graphql Errors
+        ServiceError::LocationAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::LocationWithCodeAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 #[cfg(test)]
 mod test {
 
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
     use repository::{mock::MockDataInserts, Location, LocationRow, StorageConnectionManager};
     use serde_json::json;
 
@@ -192,21 +181,13 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(InsertLocationError::LocationAlreadyExists)
         }));
-
-        let expected = json!({
-            "insertLocation": {
-              "error": {
-                "__typename": "RecordAlreadyExist"
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
             &settings,
             mutation,
             &variables,
-            &expected,
+            &expected_message,
+            None,
             Some(service_provider(test_service, &connection_manager))
         );
 
@@ -229,22 +210,13 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(InsertLocationError::LocationWithCodeAlreadyExists)
         }));
-
-        let expected = json!({
-            "insertLocation": {
-              "error": {
-                "__typename": "UniqueValueViolation",
-                "field": "code"
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
             &settings,
             mutation,
             &variables,
-            &expected,
+            &expected_message,
+            None,
             Some(service_provider(test_service, &connection_manager))
         );
 
@@ -268,23 +240,13 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(InsertLocationError::CreatedRecordNotFound)
         }));
-
-        let expected = json!({
-            "insertLocation": {
-              "error": {
-                "__typename": "InternalError",
-                "description": "Internal Error",
-                "fullError": "Internal Error: Could not find record after creation"
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(
+        let expected_message = "Internal error";
+        assert_standard_graphql_error!(
             &settings,
             mutation,
             &variables,
-            &expected,
+            &expected_message,
+            None,
             Some(service_provider(test_service, &connection_manager))
         );
     }
