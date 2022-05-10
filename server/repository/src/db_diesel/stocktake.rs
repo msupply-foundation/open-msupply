@@ -6,7 +6,7 @@ use super::{
 use crate::{
     diesel_macros::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
-        apply_sort,
+        apply_sort, apply_sort_no_case,
     },
     DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, RepositoryError,
     SimpleStringFilter, Sort,
@@ -171,10 +171,10 @@ impl<'a> StocktakeRepository<'a> {
                 }
                 StocktakeSortField::Comment => apply_sort!(query, sort, stocktake_dsl::comment),
                 StocktakeSortField::Description => {
-                    apply_sort!(query, sort, stocktake_dsl::description)
+                    apply_sort_no_case!(query, sort, stocktake_dsl::description)
                 }
                 StocktakeSortField::StocktakeDate => {
-                    apply_sort!(query, sort, stocktake_dsl::stocktake_date)
+                    apply_sort_no_case!(query, sort, stocktake_dsl::stocktake_date)
                 }
             }
         } else {
