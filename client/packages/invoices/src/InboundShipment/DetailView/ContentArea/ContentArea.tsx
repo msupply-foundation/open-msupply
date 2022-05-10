@@ -8,7 +8,7 @@ import {
   NothingHere,
 } from '@openmsupply-client/common';
 import { InboundItem } from '../../../types';
-import { useInboundRows, InboundLineFragment } from '../../api';
+import { useInbound, InboundLineFragment } from '../../api';
 import { useExpansionColumns } from './columns';
 
 interface ContentAreaProps {
@@ -32,7 +32,8 @@ const Expando = ({
 export const ContentArea: FC<ContentAreaProps> = React.memo(
   ({ onAddItem, onRowClick }) => {
     const t = useTranslation('replenishment');
-    const { columns, rows, isGrouped, toggleIsGrouped } = useInboundRows();
+    const { columns, rows, isGrouped, toggleIsGrouped } =
+      useInbound.lines.rows();
 
     return (
       <Box flexDirection="column" display="flex" flex={1}>

@@ -8,7 +8,7 @@ import {
   PaperPopoverSection,
   usePaperClickPopover,
 } from '@common/components';
-import { ReportRowFragment, useReports } from '../api';
+import { ReportRowFragment, useReport } from '../api';
 
 interface ReportSelectorProps {
   category?: ReportCategory;
@@ -39,7 +39,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   onClick,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReports(category);
+  const { data, isLoading } = useReport.document.list(category);
   const t = useTranslation('app');
 
   const reportButtons = data?.nodes?.map(report => (

@@ -6,7 +6,7 @@ import {
   Typography,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
-import { useRequestFields } from '../../../api';
+import { useRequest } from '../../../api';
 
 export interface StockDistributionProps {
   availableStockOnHand?: number;
@@ -162,7 +162,7 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
 }) => {
   if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
 
-  const { maxMonthsOfStock } = useRequestFields('maxMonthsOfStock');
+  const { maxMonthsOfStock } = useRequest.document.fields('maxMonthsOfStock');
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
   const t = useTranslation('replenishment');
 

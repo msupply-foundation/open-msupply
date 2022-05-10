@@ -11,15 +11,15 @@ import {
   useBufferState,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import { useInboundFields, useIsInboundDisabled } from '../../api';
+import { useInbound } from '../../api';
 
 export const AdditionalInfoSectionComponent = () => {
-  const { user, comment, colour, update } = useInboundFields([
+  const { user, comment, colour, update } = useInbound.document.fields([
     'comment',
     'colour',
     'user',
   ]);
-  const isDisabled = useIsInboundDisabled();
+  const isDisabled = useInbound.utils.isDisabled();
   const t = useTranslation(['common', 'replenishment']);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
 

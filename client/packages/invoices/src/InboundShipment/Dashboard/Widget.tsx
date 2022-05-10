@@ -9,10 +9,10 @@ import {
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { PropsWithChildrenOnly } from '@common/types';
-import { useInboundApi } from '../api';
+import { useInbound } from '../api';
 
 export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
-  const api = useInboundApi();
+  const api = useInbound.utils.api();
   const t = useTranslation(['app', 'dashboard']);
   const [hasError, setHasError] = React.useState(false);
   const formatNumber = useFormatNumber();

@@ -11,7 +11,7 @@ import {
   createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
-import { RequestLineFragment, useRequest, useIsRequestDisabled } from '../api';
+import { RequestLineFragment, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -21,10 +21,10 @@ import { AppRoute } from '@openmsupply-client/config';
 import { RequestLineEdit } from './RequestLineEdit';
 
 export const DetailView: FC = () => {
-  const { data, isLoading } = useRequest();
+  const { data, isLoading } = useRequest.document.get();
   const { onOpen, onClose, mode, entity, isOpen } =
     useEditModal<ItemRowWithStatsFragment>();
-  const isDisabled = useIsRequestDisabled();
+  const isDisabled = useRequest.utils.isDisabled();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 

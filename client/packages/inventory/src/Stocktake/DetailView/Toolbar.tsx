@@ -12,20 +12,16 @@ import {
   DatePickerInput,
   Formatter,
 } from '@openmsupply-client/common';
-import {
-  useStocktakeFields,
-  useIsStocktakeDisabled,
-  useDeleteSelectedLines,
-} from '../api';
+import { useStocktake } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('inventory');
-  const isDisabled = useIsStocktakeDisabled();
-  const { stocktakeDate, description, update } = useStocktakeFields([
+  const isDisabled = useStocktake.utils.isDisabled();
+  const { stocktakeDate, description, update } = useStocktake.document.fields([
     'description',
     'stocktakeDate',
   ]);
-  const { onDelete } = useDeleteSelectedLines();
+  const { onDelete } = useStocktake.line.deleteSelected();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
   const [bufferedDate, setBufferedDate] = useBufferState(stocktakeDate);
   return (

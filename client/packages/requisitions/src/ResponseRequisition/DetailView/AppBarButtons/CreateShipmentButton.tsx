@@ -6,14 +6,14 @@ import {
   useConfirmationModal,
   useAlertModal,
 } from '@openmsupply-client/common';
-import { useCreateOutboundFromResponse, useResponseFields } from '../../api';
+import { useResponse } from '../../api';
 
 export const CreateShipmentButtonComponent = () => {
-  const { linesRemainingToSupply } = useResponseFields(
+  const { linesRemainingToSupply } = useResponse.document.fields(
     'linesRemainingToSupply'
   );
   const t = useTranslation('distribution');
-  const { mutate: createOutbound } = useCreateOutboundFromResponse();
+  const { mutate: createOutbound } = useResponse.utils.createOutbound();
   const getConfirmation = useConfirmationModal({
     onConfirm: createOutbound,
     message: t('messages.create-outbound-from-requisition'),

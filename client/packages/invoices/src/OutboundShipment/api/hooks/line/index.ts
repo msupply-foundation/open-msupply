@@ -9,7 +9,7 @@ import {
 } from './useOutboundDeleteLines';
 import { useOutboundAllocateSelectedLines } from './useOutboundAllocateSelectedLines';
 
-export {
+export const Lines = {
   useOutboundServiceLines,
   useOutboundSaveLines,
   useOutboundRows,

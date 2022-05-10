@@ -13,9 +13,9 @@ import {
 import {
   ReportRowFragment,
   ReportSelector,
-  usePrintReport,
+  useReport,
 } from '@openmsupply-client/system';
-import { useIsRequestDisabled, useRequest } from '../../api';
+import { useRequest } from '../../api';
 import { UseSuggestedQuantityButton } from './UseSuggestedQuantityButton';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
 
@@ -27,11 +27,11 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const isDisabled = useIsRequestDisabled();
+  const isDisabled = useRequest.utils.isDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('distribution');
-  const { data } = useRequest();
-  const { print, isPrinting } = usePrintReport();
+  const { data } = useRequest.document.get();
+  const { print, isPrinting } = useReport.utils.print();
 
   const printReport = (report: ReportRowFragment) => {
     if (!data) return;

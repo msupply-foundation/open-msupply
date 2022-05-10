@@ -4,7 +4,7 @@ import {
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useCustomers } from '../../api';
+import { useName } from '../../api';
 import {
   NameSearchInputProps,
   basicFilterOptions,
@@ -18,7 +18,7 @@ export const CustomerSearchInput: FC<NameSearchInputProps> = ({
   value,
   disabled = false,
 }) => {
-  const { data, isLoading } = useCustomers();
+  const { data, isLoading } = useName.document.customers();
   const [buffer, setBuffer] = useBufferState(value);
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));

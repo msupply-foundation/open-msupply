@@ -12,7 +12,7 @@ import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 
 export const SidePanel: FC = () => {
-  const { data } = useInbound();
+  const { data } = useInbound.document.get();
   const { success } = useNotification();
   const t = useTranslation('common');
 
