@@ -58,7 +58,7 @@ pub fn get_store(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<StoreRes
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInvoice,
+            resource: Resource::QueryStore,
             store_id: Some(store_id.to_string()),
         },
     )?;
