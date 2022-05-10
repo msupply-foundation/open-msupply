@@ -6,6 +6,9 @@ import {
 import { StocktakeFragment } from '../../operations.generated';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 
+// helper function, only only within the ./hooks folder, so not lifted out to its own file
+// in here, rather than index, to prevent dependency issues
+// used by [useStocktake, useStocktakeFields, useStocktakeDeleteLines, useStocktakeLines, useStocktakeSaveLines]
 export const useStocktakeNumber = () => {
   const { stocktakeNumber = '' } = useParams();
   return stocktakeNumber;
