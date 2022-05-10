@@ -5,11 +5,11 @@ import {
   DeleteIcon,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useDeleteRequestLines } from '../../api';
+import { useRequest } from '../../api';
 
 export const ToolbarDropDown = () => {
   const t = useTranslation('replenishment');
-  const { onDelete } = useDeleteRequestLines();
+  const { onDelete } = useRequest.line.delete();
   return (
     <DropdownMenu label={t('label.actions')}>
       <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>

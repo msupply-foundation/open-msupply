@@ -4,12 +4,12 @@ import {
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { useInboundFields, useIsInboundDisabled } from '../../api';
+import { useInbound } from '../../api';
 
 export const OnHoldButtonComponent = memo(() => {
   const t = useTranslation('replenishment');
-  const { onHold, update } = useInboundFields('onHold');
-  const isDisabled = useIsInboundDisabled();
+  const { onHold, update } = useInbound.document.fields('onHold');
+  const isDisabled = useInbound.utils.isDisabled();
   const getConfirmation = useConfirmationModal({
     message: t(
       onHold

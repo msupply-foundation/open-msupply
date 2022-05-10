@@ -14,7 +14,7 @@ import {
   useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
-import { useStockLines } from '../api';
+import { useStock } from '../api';
 import { StockRow } from '../types';
 
 const StockListComponent: FC = () => {
@@ -25,7 +25,7 @@ const StockListComponent: FC = () => {
     key: 'itemName',
     direction: 'asc',
   });
-  const { data, isLoading, isError } = useStockLines();
+  const { data, isLoading, isError } = useStock.document.list();
   const onChangeSortBy = (column: Column<StockRow>) => {
     const isDesc = column.key === sortBy.key ? !sortBy.isDesc : false;
     setSortBy({ key: column.key, isDesc, direction: isDesc ? 'desc' : 'asc' });

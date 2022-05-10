@@ -20,7 +20,7 @@ interface DetailModalProps {
 }
 
 export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
-  const { data, isLoading } = useName(nameId);
+  const { data, isLoading } = useName.document.get(nameId);
   const t = useTranslation('common');
   const { setSuffix } = useBreadcrumbs();
   const isDisabled = true;

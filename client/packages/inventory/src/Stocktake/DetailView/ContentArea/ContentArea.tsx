@@ -9,7 +9,7 @@ import {
   createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
-import { StocktakeLineFragment, useStocktakeRows } from '../../api';
+import { StocktakeLineFragment, useStocktake } from '../../api';
 import { StocktakeSummaryItem } from '../../../types';
 
 const Expando = ({
@@ -43,7 +43,7 @@ interface ContentAreaProps {
 export const ContentArea: FC<ContentAreaProps> = ({ onRowClick }) => {
   const t = useTranslation('inventory');
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
-  const { rows, onChangeSortBy, sortBy } = useStocktakeRows(isGrouped);
+  const { rows, onChangeSortBy, sortBy } = useStocktake.line.rows(isGrouped);
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
 
   return (

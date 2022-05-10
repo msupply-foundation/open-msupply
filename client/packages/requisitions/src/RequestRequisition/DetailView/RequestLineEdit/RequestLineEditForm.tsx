@@ -12,7 +12,7 @@ import {
   StockItemSearchInput,
   ItemRowWithStatsFragment,
 } from '@openmsupply-client/system';
-import { useRequestLines } from '../../api';
+import { useRequest } from '../../api';
 import { DraftRequestLine } from './hooks';
 
 interface RequestLineEditFormProps {
@@ -87,7 +87,7 @@ export const RequestLineEditForm = ({
 }: RequestLineEditFormProps) => {
   const t = useTranslation('replenishment');
   const formatNumber = useFormatNumber();
-  const { lines } = useRequestLines();
+  const { lines } = useRequest.line.list();
 
   return (
     <RequestLineEditFormLayout

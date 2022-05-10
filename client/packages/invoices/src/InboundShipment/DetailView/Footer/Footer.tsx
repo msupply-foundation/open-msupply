@@ -53,7 +53,7 @@ const createStatusLog = (invoice: InboundFragment) => {
 export const FooterComponent: FC = () => {
   const t = useTranslation('replenishment');
   const { navigateUpOne } = useBreadcrumbs();
-  const { data } = useInbound();
+  const { data } = useInbound.document.get();
   const isManuallyCreated = !data?.linkedShipment?.id;
 
   return (

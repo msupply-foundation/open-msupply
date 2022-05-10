@@ -10,7 +10,7 @@ import {
   FilterController,
   AlertModal,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, useLocationDelete } from '../api';
+import { LocationRowFragment, useLocation } from '../api';
 
 type DeleteError = {
   locationName: string;
@@ -22,7 +22,7 @@ export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ data }) => {
   const t = useTranslation('inventory');
-  const { mutateAsync: deleteLocation } = useLocationDelete();
+  const { mutateAsync: deleteLocation } = useLocation.document.delete();
   const { success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
   const { selectedRows } = useTableStore(state => ({

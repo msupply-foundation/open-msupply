@@ -1,6 +1,6 @@
-import * as Utils from './utils';
-import * as Lines from './line';
-import * as Document from './document';
+import { Utils } from './utils';
+import { Lines } from './line';
+import { Document } from './document';
 
 export const useOutbound = {
   utils: {

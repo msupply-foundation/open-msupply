@@ -15,7 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { RequestRowFragment, useUpdateRequest, useRequests } from '../api';
+import { RequestRowFragment, useRequest } from '../api';
 import { getRequisitionTranslator, isRequestDisabled } from '../../utils';
 
 const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
@@ -31,9 +31,10 @@ export const RequestRequisitionListView: FC = () => {
   const t = useTranslation('replenishment');
   const modalController = useToggle();
 
-  const { mutate: onUpdate } = useUpdateRequest();
+  const { mutate: onUpdate } = useRequest.document.update();
 
-  const { data, isError, isLoading, sort, filter, pagination } = useRequests();
+  const { data, isError, isLoading, sort, filter, pagination } =
+    useRequest.document.list();
   const { sortBy, onChangeSortBy } = sort;
   useDisableRequestRows(data?.nodes);
 

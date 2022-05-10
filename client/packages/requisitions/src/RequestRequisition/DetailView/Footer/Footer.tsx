@@ -23,7 +23,7 @@ export const createStatusLog = (requisition: RequestFragment) => {
 };
 
 export const Footer: FC = () => {
-  const { data } = useRequest();
+  const { data } = useRequest.document.get();
   const t = useTranslation('replenishment');
 
   return (

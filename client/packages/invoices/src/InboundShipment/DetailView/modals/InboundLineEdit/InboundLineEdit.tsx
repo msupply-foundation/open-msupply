@@ -26,12 +26,7 @@ import { ItemRowFragment } from '@openmsupply-client/system';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
 import { InboundLineEditForm } from './InboundLineEditForm';
-import {
-  useInboundLines,
-  useInboundFields,
-  useSaveInboundLines,
-  useNextItem,
-} from '../../../api';
+import { useInbound } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 
@@ -50,9 +45,9 @@ enum Tabs {
 }
 
 const useDraftInboundLines = (item: ItemRowFragment | null) => {
-  const { data: lines } = useInboundLines(item?.id ?? '');
-  const { id } = useInboundFields('id');
-  const { mutateAsync, isLoading } = useSaveInboundLines();
+  const { data: lines } = useInbound.lines.list(item?.id ?? '');
+  const { id } = useInbound.document.fields('id');
+  const { mutateAsync, isLoading } = useInbound.lines.save();
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
   const { isDirty, setIsDirty } = useDirtyCheck();
   useConfirmOnLeaving(isDirty);
@@ -121,7 +116,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const t = useTranslation('replenishment');
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
-  const { next: nextItem, disabled: nextDisabled } = useNextItem(
+  const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
     currentItem?.id ?? ''
   );
   const isMediumScreen = useIsMediumScreen();

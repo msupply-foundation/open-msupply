@@ -11,7 +11,7 @@ import {
 import {
   ReportRowFragment,
   ReportSelector,
-  usePrintReport,
+  useReport,
 } from '@openmsupply-client/system';
 import { CreateShipmentButton } from './CreateShipmentButton';
 import { SupplyRequestedQuantityButton } from './SupplyRequestedQuantityButton';
@@ -19,8 +19,8 @@ import { useResponse } from '../../api';
 
 export const AppBarButtonsComponent = () => {
   const { OpenButton } = useDetailPanel();
-  const { data } = useResponse();
-  const { print, isPrinting } = usePrintReport();
+  const { data } = useResponse.document.get();
+  const { print, isPrinting } = useReport.utils.print();
   const t = useTranslation('common');
 
   const printReport = (report: ReportRowFragment) => {

@@ -6,7 +6,7 @@ import {
   useBufferState,
 } from '@openmsupply-client/common';
 import { ResponseLineEditForm } from './ResponseLineEditForm';
-import { useIsResponseDisabled, ResponseLineFragment } from '../../api';
+import { useResponse, ResponseLineFragment } from '../../api';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 
 interface ResponseLineEditProps {
@@ -21,7 +21,7 @@ export const ResponseLineEdit = ({
   line,
 }: ResponseLineEditProps) => {
   const [currentLine, setCurrentLine] = useBufferState(line);
-  const isDisabled = useIsResponseDisabled();
+  const isDisabled = useResponse.utils.isDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentLine);

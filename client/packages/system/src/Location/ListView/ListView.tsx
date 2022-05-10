@@ -9,13 +9,14 @@ import {
   useTranslation,
   createQueryParamsStore,
 } from '@openmsupply-client/common';
-import { useLocations, LocationRowFragment } from '../api';
+import { useLocation, LocationRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
 import { Toolbar } from './Toolbar';
 
 const LocationListComponent: FC = () => {
-  const { pagination, data, isError, isLoading, sort, filter } = useLocations();
+  const { pagination, data, isError, isLoading, sort, filter } =
+    useLocation.document.list();
   const { sortBy, onChangeSortBy } = sort;
   const t = useTranslation('inventory');
   const columns = useColumns<LocationRowFragment>(

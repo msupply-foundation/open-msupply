@@ -1,10 +1,6 @@
 import { RecordPatch, ArrayUtils } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import {
-  StocktakeLineFragment,
-  useStocktakeFields,
-  useSaveStocktakeLines,
-} from './../../../../api';
+import { StocktakeLineFragment, useStocktake } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
@@ -21,10 +17,10 @@ interface useStocktakeLineEditController {
 export const useStocktakeLineEdit = (
   item: ItemRowFragment | null
 ): useStocktakeLineEditController => {
-  const { id } = useStocktakeFields('id');
+  const { id } = useStocktake.document.fields('id');
   const nextItem = useNextItem(item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
-  const { mutate: save, isLoading } = useSaveStocktakeLines();
+  const { mutate: save, isLoading } = useStocktake.line.save();
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) => {
     setDraftLines(lines =>

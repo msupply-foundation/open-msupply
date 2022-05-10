@@ -14,7 +14,7 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
 } from '@openmsupply-client/common';
-import { useIsInboundDisabled } from '../../../api';
+import { useInbound } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
 import { ItemRowFragment } from '@openmsupply-client/system';
@@ -29,7 +29,7 @@ const InboundServiceLineEditComponent = ({
   onClose,
 }: InboundServiceLineEditProps) => {
   const { error } = useNotification();
-  const isDisabled = useIsInboundDisabled();
+  const isDisabled = useInbound.utils.isDisabled();
   const { Modal } = useDialog({ isOpen, onClose });
   const { lines, update, add, save, isLoading } = useDraftServiceLines();
   const columns = useServiceLineColumns(update);

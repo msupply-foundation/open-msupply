@@ -5,11 +5,12 @@ import {
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { useSuggestedQuantity } from '../../api';
+import { useRequest } from '../../api';
 
 export const UseSuggestedQuantityButtonComponent = () => {
   const t = useTranslation('replenishment');
-  const { mutate: setRequestedToSuggested } = useSuggestedQuantity();
+  const { mutate: setRequestedToSuggested } =
+    useRequest.utils.suggestedQuantity();
   const getConfirmation = useConfirmationModal({
     onConfirm: setRequestedToSuggested,
     message: t('messages.requested-to-suggested'),

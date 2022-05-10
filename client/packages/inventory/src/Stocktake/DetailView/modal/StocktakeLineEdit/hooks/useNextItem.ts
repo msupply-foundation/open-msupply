@@ -1,8 +1,8 @@
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { useStocktakeRows } from '../../../../api';
+import { useStocktake } from '../../../../api';
 
 export const useNextItem = (currentItemId?: string): ItemRowFragment | null => {
-  const { items } = useStocktakeRows();
+  const { items } = useStocktake.line.rows();
   if (!items || !currentItemId) return null;
 
   const numberOfItems = items.length;

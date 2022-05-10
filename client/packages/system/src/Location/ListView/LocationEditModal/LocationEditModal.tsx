@@ -10,12 +10,7 @@ import {
   ToggleButton,
   InlineSpinner,
 } from '@openmsupply-client/common';
-import {
-  useLocationInsert,
-  useNextLocation,
-  useLocationUpdate,
-  LocationRowFragment,
-} from '../../api';
+import { LocationRowFragment, useLocation } from '../../api';
 interface LocationEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
@@ -50,9 +45,11 @@ const useDraftLocation = (
   const [location, setLocation] = useState<LocationRowFragment>(() =>
     createNewLocation(seed)
   );
-  const nextLocation = useNextLocation(location);
-  const { mutate: insert, isLoading: insertIsLoading } = useLocationInsert();
-  const { mutate: update, isLoading: updateIsLoading } = useLocationUpdate();
+  const nextLocation = useLocation.document.next(location);
+  const { mutate: insert, isLoading: insertIsLoading } =
+    useLocation.document.insert();
+  const { mutate: update, isLoading: updateIsLoading } =
+    useLocation.document.update();
 
   const onUpdate = (patch: Partial<LocationRowFragment>) => {
     setLocation({ ...location, ...patch });

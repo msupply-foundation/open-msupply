@@ -9,7 +9,7 @@ import {
   StocktakeNodeStatus,
 } from '@openmsupply-client/common';
 import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
-import { useIsStocktakeDisabled, useStocktakeFields } from '../../api';
+import { useStocktake } from '../../api';
 
 const getStatusOptions = (
   getButtonLabel: (status: StocktakeNodeStatus) => string
@@ -51,7 +51,10 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { lines, status, update } = useStocktakeFields(['status', 'lines']);
+  const { lines, status, update } = useStocktake.document.fields([
+    'status',
+    'lines',
+  ]);
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
 
@@ -103,7 +106,7 @@ const useStatusChangeButton = () => {
 export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, getConfirmation, lines } =
     useStatusChangeButton();
-  const isDisabled = useIsStocktakeDisabled();
+  const isDisabled = useStocktake.utils.isDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;

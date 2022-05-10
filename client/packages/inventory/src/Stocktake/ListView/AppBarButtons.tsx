@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { CreateStocktakeButton } from './CreateStocktakeButton';
-import { StocktakeRowFragment, useStocktakesAll } from '../api';
+import { StocktakeRowFragment, useStocktake } from '../api';
 import { stocktakesToCsv } from '../../utils';
 
 export const AppBarButtons: FC<{
@@ -20,7 +20,7 @@ export const AppBarButtons: FC<{
 }> = ({ modalController, sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation(['distribution', 'common']);
-  const { isLoading, mutateAsync } = useStocktakesAll(sortBy);
+  const { isLoading, mutateAsync } = useStocktake.document.listAll(sortBy);
 
   const csvExport = async () => {
     const data = await mutateAsync();

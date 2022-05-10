@@ -9,7 +9,7 @@ import {
   SortBy,
   LoadingButton,
 } from '@openmsupply-client/common';
-import { ResponseRowFragment, useResponsesAll } from '../api';
+import { ResponseRowFragment, useResponse } from '../api';
 import { responsesToCsv } from '../../utils';
 
 export const AppBarButtons: FC<{
@@ -17,7 +17,7 @@ export const AppBarButtons: FC<{
 }> = ({ sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation('common');
-  const { mutateAsync, isLoading } = useResponsesAll(sortBy);
+  const { mutateAsync, isLoading } = useResponse.document.listAll(sortBy);
 
   const csvExport = async () => {
     const data = await mutateAsync();
