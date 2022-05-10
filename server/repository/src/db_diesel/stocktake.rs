@@ -169,12 +169,14 @@ impl<'a> StocktakeRepository<'a> {
                 StocktakeSortField::StocktakeNumber => {
                     apply_sort!(query, sort, stocktake_dsl::stocktake_number)
                 }
-                StocktakeSortField::Comment => apply_sort!(query, sort, stocktake_dsl::comment),
+                StocktakeSortField::Comment => {
+                    apply_sort_no_case!(query, sort, stocktake_dsl::comment)
+                }
                 StocktakeSortField::Description => {
                     apply_sort_no_case!(query, sort, stocktake_dsl::description)
                 }
                 StocktakeSortField::StocktakeDate => {
-                    apply_sort_no_case!(query, sort, stocktake_dsl::stocktake_date)
+                    apply_sort!(query, sort, stocktake_dsl::stocktake_date)
                 }
             }
         } else {
