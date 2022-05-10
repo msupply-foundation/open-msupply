@@ -13,7 +13,7 @@ import { useOutbound, OutboundRowFragment } from '../api';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('common');
 
   const onDelete = useOutbound.document.delete();
 

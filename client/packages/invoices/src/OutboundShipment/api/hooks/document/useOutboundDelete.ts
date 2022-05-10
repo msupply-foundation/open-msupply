@@ -55,7 +55,7 @@ export const useOutboundDelete = () => {
         confirmDelete();
       }
     } else {
-      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
+      const selectRowsSnack = info(t('messages.select-rows-to-delete-them'));
       selectRowsSnack();
     }
   };
