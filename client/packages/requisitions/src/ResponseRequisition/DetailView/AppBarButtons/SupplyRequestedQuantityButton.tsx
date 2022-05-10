@@ -5,12 +5,13 @@ import {
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { useSupplyRequestedQuantity, useIsResponseDisabled } from '../../api';
+import { useResponse } from '../../api';
 
 export const SupplyRequestedQuantityButtonComponent = () => {
   const t = useTranslation('distribution');
-  const isDisabled = useIsResponseDisabled();
-  const { mutate: supplyRequestedQuantity } = useSupplyRequestedQuantity();
+  const isDisabled = useResponse.utils.isDisabled();
+  const { mutate: supplyRequestedQuantity } =
+    useResponse.utils.supplyRequested();
   const getConfirmation = useConfirmationModal({
     onConfirm: supplyRequestedQuantity,
     message: t('messages.supply-to-requested'),

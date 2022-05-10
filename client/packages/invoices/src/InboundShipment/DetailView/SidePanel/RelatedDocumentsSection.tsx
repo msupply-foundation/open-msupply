@@ -12,12 +12,12 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { useInboundFields } from '../../api';
+import { useInbound } from '../../api';
 
 export const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation('replenishment');
   const { localisedDate: d } = useFormatDateTime();
-  const { requisition } = useInboundFields('requisition');
+  const { requisition } = useInbound.document.fields('requisition');
 
   let tooltip = '';
   if (requisition) {

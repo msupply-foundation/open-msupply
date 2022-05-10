@@ -5,7 +5,7 @@ import {
   QueryParamsProvider,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useSuppliers, NameRowFragment } from '../../api';
+import { useName, NameRowFragment } from '../../api';
 import { filterByNameAndCode, NameSearchProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
@@ -14,7 +14,7 @@ const SupplierSearchComponent: FC<NameSearchProps> = ({
   onClose,
   onChange,
 }) => {
-  const { data, isLoading } = useSuppliers();
+  const { data, isLoading } = useName.document.suppliers();
   const t = useTranslation('app');
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 

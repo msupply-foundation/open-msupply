@@ -6,12 +6,12 @@ import {
   PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
-import { useAddFromMasterList, useIsRequestDisabled } from '../../api';
+import { useRequest } from '../../api';
 
 export const AddFromMasterListButtonComponent = () => {
   const t = useTranslation('replenishment');
-  const isDisabled = useIsRequestDisabled();
-  const { addFromMasterList } = useAddFromMasterList();
+  const isDisabled = useRequest.utils.isDisabled();
+  const { addFromMasterList } = useRequest.utils.addFromMasterList();
   const modalController = useToggle();
 
   return (

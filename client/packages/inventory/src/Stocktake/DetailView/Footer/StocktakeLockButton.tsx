@@ -6,12 +6,12 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 
-import { useStocktakeFields } from '../../api';
+import { useStocktake } from '../../api';
 
 export const StocktakeLockButton: FC = () => {
   const t = useTranslation('inventory');
 
-  const { isLocked, status, update } = useStocktakeFields([
+  const { isLocked, status, update } = useStocktake.document.fields([
     'isLocked',
     'status',
   ]);

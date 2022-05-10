@@ -23,7 +23,7 @@ export const createStatusLog = (requisition: ResponseFragment) => {
 };
 
 export const Footer: FC = () => {
-  const { data } = useResponse();
+  const { data } = useResponse.document.get();
   const t = useTranslation('distribution');
 
   return (

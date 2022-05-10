@@ -1,5 +1,5 @@
 import React from 'react';
-import { StoreRowFragment, useStores } from '../../api';
+import { StoreRowFragment, useStore } from '../../api';
 import {
   Autocomplete,
   AutocompleteProps,
@@ -21,7 +21,7 @@ const StoreSearchComponent = ({
   onChange,
   value,
 }: StoreSearchInputProps) => {
-  const { data, isLoading } = useStores();
+  const { data, isLoading } = useStore.document.list();
 
   return (
     <Autocomplete

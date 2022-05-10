@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FnUtils, QuantityUtils } from '@openmsupply-client/common';
 import {
-  useSaveRequestLines,
   useRequest,
-  useRequestLines,
   RequestLineFragment,
   ItemWithStatsFragment,
   RequestFragment,
@@ -54,9 +52,9 @@ const createDraftFromRequestLine = (
 });
 
 export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
-  const { lines } = useRequestLines();
-  const { data } = useRequest();
-  const { mutate: save, isLoading } = useSaveRequestLines();
+  const { lines } = useRequest.line.list();
+  const { data } = useRequest.document.get();
+  const { mutate: save, isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
 
@@ -87,7 +85,7 @@ export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
 export const useNextRequestLine = (
   currentItem: ItemWithStatsFragment | null
 ) => {
-  const { lines } = useRequestLines();
+  const { lines } = useRequest.line.list();
 
   const nextState: {
     hasNext: boolean;

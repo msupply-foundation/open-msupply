@@ -9,7 +9,7 @@ import {
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { getNextResponseStatus, getStatusTranslation } from '../../../utils';
-import { useIsResponseDisabled, useResponseFields } from '../../api';
+import { useResponse } from '../../api';
 
 const getStatusOptions = (
   currentStatus: RequisitionNodeStatus,
@@ -58,7 +58,7 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = useResponseFields('status');
+  const { status, update } = useResponse.document.fields('status');
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
 
@@ -104,7 +104,7 @@ const useStatusChangeButton = () => {
 export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, getConfirmation } =
     useStatusChangeButton();
-  const isDisabled = useIsResponseDisabled();
+  const isDisabled = useResponse.utils.isDisabled();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;

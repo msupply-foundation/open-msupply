@@ -3,7 +3,7 @@ import { ButtonWithIcon } from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState } from '@common/hooks';
-import { useInsertStocktake } from '../api';
+import { useStocktake } from '../api';
 import { StockItemSelectModal } from '@openmsupply-client/system';
 import { useAuthContext } from '@openmsupply-client/common';
 
@@ -11,7 +11,7 @@ export const CreateStocktakeButton: React.FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
   const t = useTranslation(['distribution', 'common']);
-  const { mutateAsync } = useInsertStocktake();
+  const { mutateAsync } = useStocktake.document.insert();
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
 

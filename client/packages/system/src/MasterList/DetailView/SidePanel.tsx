@@ -10,10 +10,10 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useMasterList, useMasterListFields } from '../api';
+import { useMasterList } from '../api';
 
 const AdditionalInfoSection: FC = () => {
-  const { description } = useMasterListFields();
+  const { description } = useMasterList.document.fields();
   const t = useTranslation('catalogue');
 
   return (
@@ -27,7 +27,7 @@ const AdditionalInfoSection: FC = () => {
 };
 
 export const SidePanel: FC = () => {
-  const { data } = useMasterList();
+  const { data } = useMasterList.document.get();
   const { success } = useNotification();
   const t = useTranslation('catalogue');
 

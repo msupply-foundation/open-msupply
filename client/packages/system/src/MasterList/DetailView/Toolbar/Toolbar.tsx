@@ -6,12 +6,12 @@ import {
   Grid,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useMasterListFields } from '../../api';
+import { useMasterList } from '../../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('catalogue');
 
-  const { name } = useMasterListFields();
+  const { name } = useMasterList.document.fields();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>

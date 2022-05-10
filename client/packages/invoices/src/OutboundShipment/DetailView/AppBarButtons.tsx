@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 import {
-  usePrintReport,
+  useReport,
   ReportRowFragment,
   ReportSelector,
 } from '@openmsupply-client/system';
@@ -28,7 +28,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
-  const { print, isPrinting } = usePrintReport();
+  const { print, isPrinting } = useReport.utils.print();
 
   const printReport = (report: ReportRowFragment) => {
     if (!data) return;

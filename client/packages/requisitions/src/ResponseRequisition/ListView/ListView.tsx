@@ -15,7 +15,7 @@ import {
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getRequisitionTranslator, isResponseDisabled } from '../../utils';
-import { useUpdateResponse, useResponses, ResponseRowFragment } from '../api';
+import { useResponse, ResponseRowFragment } from '../api';
 
 const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -26,10 +26,11 @@ const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
 };
 
 export const ResponseRequisitionListView: FC = () => {
-  const { mutate: onUpdate } = useUpdateResponse();
+  const { mutate: onUpdate } = useResponse.document.update();
   const navigate = useNavigate();
   const t = useTranslation('distribution');
-  const { data, isError, isLoading, sort, pagination, filter } = useResponses();
+  const { data, isError, isLoading, sort, pagination, filter } =
+    useResponse.document.list();
   const { sortBy, onChangeSortBy } = sort;
   useDisableResponseRows(data?.nodes);
 

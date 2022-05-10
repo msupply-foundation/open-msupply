@@ -10,11 +10,11 @@ import {
   ReportCategory,
   LoadingButton,
 } from '@openmsupply-client/common';
-import { useInbound, useIsInboundDisabled } from '../api';
+import { useInbound } from '../api';
 import {
   ReportRowFragment,
   ReportSelector,
-  usePrintReport,
+  useReport,
 } from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
@@ -24,11 +24,11 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const isDisabled = useIsInboundDisabled();
-  const { data } = useInbound();
+  const isDisabled = useInbound.utils.isDisabled();
+  const { data } = useInbound.document.get();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
-  const { print, isPrinting } = usePrintReport();
+  const { print, isPrinting } = useReport.utils.print();
 
   const printReport = (report: ReportRowFragment) => {
     if (!data) return;
