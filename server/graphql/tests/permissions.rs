@@ -392,6 +392,22 @@ mod permission_tests {
                     store_id: None,
                 },
             },
+            TestData {
+                name: "stores",
+                query: r#"query Query {
+              stores {
+                ... on StoreConnector {
+                  nodes {
+                    id
+                  }
+                }
+              }
+            }"#,
+                expected: ResourceAccessRequest {
+                    resource: Resource::QueryStore,
+                    store_id: None,
+                },
+            },
         ]
     }
 

@@ -54,12 +54,12 @@ pub enum StoresResponse {
     Response(StoreConnector),
 }
 
-pub fn get_store(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<StoreResponse> {
+pub fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryStore,
-            store_id: Some(store_id.to_string()),
+            store_id: None,
         },
     )?;
 
@@ -207,8 +207,8 @@ mod graphql {
         .await;
 
         let query = r#"
-            query TestQuery($recordId: String!, $storeId: String!) {
-                store(id: $recordId, storeId: $storeId) {
+            query TestQuery($id: String!) {
+                store(id: $id) {
                     ... on NodeError {
                         error {
                         __typename
@@ -222,8 +222,7 @@ mod graphql {
         "#;
 
         let variables = Some(json!({
-            "recordId": "record_id",
-            "storeId": "store_id"
+            "id": "store_id"
         }));
 
         // Test error mapping
@@ -249,7 +248,7 @@ mod graphql {
         // Test ok mapping
         let test_service = TestService(Box::new(|filter| {
             assert_eq!(
-                StoreFilter::new().id(EqualFilter::equal_to("record_id")),
+                StoreFilter::new().id(EqualFilter::equal_to("store_id")),
                 filter
             );
 
