@@ -1,4 +1,4 @@
-use crate::static_files::config_static_files;
+use crate::{cors::cors_policy, static_files::config_static_files};
 
 use self::{
     middleware::{compress as compress_middleware, logger as logger_middleware},
@@ -18,8 +18,7 @@ use service::{
     token_bucket::TokenBucket,
 };
 
-use actix_cors::Cors;
-use actix_web::{http::header, web::Data, App, HttpServer};
+use actix_web::{web::Data, App, HttpServer};
 use settings::ServerSettings;
 use std::{
     io::ErrorKind,
@@ -32,6 +31,7 @@ use tokio::sync::{oneshot, Mutex};
 use util::uuid::uuid;
 
 pub mod configuration;
+pub mod cors;
 pub mod environment;
 pub mod middleware;
 pub mod settings;
@@ -369,25 +369,4 @@ fn load_certs(cert_files: SelfSignedCertFiles) -> Result<SslAcceptorBuilder, any
     builder.set_private_key_file(cert_files.private_cert_file, SslFiletype::PEM)?;
     builder.set_certificate_chain_file(cert_files.public_cert_file)?;
     Ok(builder)
-}
-
-fn cors_policy(config_settings: &Settings) -> Cors {
-    let cors = if config_settings.server.develop && config_settings.server.debug_cors_permissive {
-        Cors::permissive()
-    } else {
-        let mut cors_tmp = Cors::default()
-            .supports_credentials()
-            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-            .allowed_headers(vec![
-                header::AUTHORIZATION,
-                header::ACCEPT,
-                header::CONTENT_TYPE,
-            ])
-            .max_age(3600);
-        for origin in config_settings.server.cors_origins.iter() {
-            cors_tmp = cors_tmp.allowed_origin(origin);
-        }
-        cors_tmp
-    };
-    cors
 }
