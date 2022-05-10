@@ -124,6 +124,8 @@ To check you can view the graphql interface here  :http://localhost:8000/graphql
 
 ## Tests
 
+`important` graphql test require latest export of graphql schema, need to run `cargo run --bin export_graphql --features sqlite` when making changes to graphql schema (changes that may affect tests). Make sure to `commit` schema.graphql for CI tests to work.
+
 - To run all tests:
 
 ```bash
@@ -149,7 +151,24 @@ server:
   develop: true
 ```
 
-## Cli
+## CORS settings
 
-* `remote_server_cli` -> provides general commands, for help run: `cargo run --bin remote_server_cli -- --help`
-* `demo_cli` -> provides command specific to demo purposes, i.e. refresh-dates will move forward all dates, for help run: `cargo run --bin demo_cli -- --help`
+By default remote-server limits Cross-Origin Resource Sharing to the origins configured in the server section of the configuration yaml.
+This is a security mechanism to reduce the risk of a malicious site accessing an authenticated connection with mSupply.
+Rust enforces the allowed origins in requests, even if the browser doesn't, by returning a 400 error when the Origin isn't specified in a request, or if doesn't match one of origins configured in cors_origins.
+
+Set the cors_origins section of the yaml to include any URLs you want to access omSupply's GraphQL API from this includes the url for the omsupply-client you are using.
+e.g. local.yaml
+```
+server:
+  port: 8000
+  cors_origins: [http://localhost:3003, https://youwebserver:yourport]
+````
+
+For development purposes you can set the `debug_cors_permissive` parameter to 'true' to allow any origin.
+```
+server:
+  port: 8000
+  debug_cors_permissive: true
+  cors_origins: [http://localhost:3003, https://youwebserver:yourport]
+```
