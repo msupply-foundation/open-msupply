@@ -6,6 +6,7 @@ import {
   useMutation,
   useNotification,
   useTableStore,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { useOutbounds } from './useOutbounds';
 import { canDeleteInvoice } from '../../../../utils';
@@ -15,7 +16,7 @@ export const useOutboundDelete = () => {
   const { data: rows } = useOutbounds();
   const api = useOutboundApi();
   const { mutate } = useMutation(api.delete);
-  const t = useTranslation('replenishment');
+  const t = useTranslation(['common', 'replenishment']);
 
   const { success, info } = useNotification();
 
@@ -26,6 +27,23 @@ export const useOutboundDelete = () => {
       .filter(Boolean) as OutboundRowFragment[],
   }));
 
+  const deleteData = () => {
+    mutate(selectedRows, {
+      onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+    });
+    const deletedMessage = t('messages.deleted-invoices', {
+      count: selectedRows.length,
+    });
+    const successSnack = success(deletedMessage);
+    successSnack();
+  };
+
+  const confirmDelete = useConfirmationModal({
+    onConfirm: deleteData,
+    message: t('messages.delete-shipment-warning'),
+    title: t('heading.are-you-sure'),
+  });
+
   const deleteAction = () => {
     const numberSelected = selectedRows.length;
     if (selectedRows && numberSelected > 0) {
@@ -34,14 +52,7 @@ export const useOutboundDelete = () => {
         const cannotDeleteSnack = info(t('messages.cant-delete-invoices'));
         cannotDeleteSnack();
       } else {
-        mutate(selectedRows, {
-          onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
-        });
-        const deletedMessage = t('messages.deleted-invoices', {
-          count: numberSelected,
-        });
-        const successSnack = success(deletedMessage);
-        successSnack();
+        confirmDelete();
       }
     } else {
       const selectRowsSnack = info(t('messages.select-rows-to-delete'));
