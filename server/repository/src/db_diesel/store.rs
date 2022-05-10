@@ -18,7 +18,7 @@ pub struct Store {
     pub name_row: NameRow,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct StoreFilter {
     pub id: Option<EqualFilter<String>>,
     pub code: Option<SimpleStringFilter>,
