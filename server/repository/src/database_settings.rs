@@ -10,6 +10,8 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+    /// SQL run once at startup. For example, to run pragma statements
+    pub init_sql: Option<String>,
 }
 
 // feature postgres

@@ -34,7 +34,7 @@ pub enum SyncImportError {
         #[from]
         source: SyncTranslationError,
     },
-    #[error("Failed to integrate sync records")]
+    #[error("Failed to integrate sync records: {extra}, {source}")]
     IntegrationError {
         source: RepositoryError,
         extra: String,
