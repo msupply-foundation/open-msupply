@@ -67,7 +67,10 @@ pub fn get_store(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<StoreRes
     let service_context = service_provider.context()?;
     let service = &service_provider.general_service;
 
-    let store_option = service.get_store(&service_context, id)?;
+    let store_option = service.get_store(
+        &service_context,
+        StoreFilter::new().id(EqualFilter::equal_to(id)),
+    )?;
 
     let response = match store_option {
         Some(store) => StoreResponse::Response(StoreNode::from_domain(store)),
@@ -163,14 +166,14 @@ mod graphql {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::mock::{mock_name_a, mock_store_a};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
-    use repository::{RepositoryError, Store};
+    use repository::{EqualFilter, RepositoryError, Store, StoreFilter};
     use serde_json::json;
     use service::service_provider::GeneralServiceTrait;
     use service::service_provider::{ServiceContext, ServiceProvider};
 
     use crate::GeneralQueries;
 
-    type GetStore = dyn Fn(&str) -> Result<Option<Store>, RepositoryError> + Sync + Send;
+    type GetStore = dyn Fn(StoreFilter) -> Result<Option<Store>, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<GetStore>);
 
@@ -178,9 +181,9 @@ mod graphql {
         fn get_store(
             &self,
             _: &ServiceContext,
-            id: &str,
+            filter: StoreFilter,
         ) -> Result<Option<Store>, RepositoryError> {
-            self.0(id)
+            self.0(filter)
         }
     }
 
@@ -244,8 +247,11 @@ mod graphql {
         );
 
         // Test ok mapping
-        let test_service = TestService(Box::new(|id| {
-            assert_eq!(id, "record_id");
+        let test_service = TestService(Box::new(|filter| {
+            assert_eq!(
+                StoreFilter::new().id(EqualFilter::equal_to("record_id")),
+                filter
+            );
 
             Ok(Some(Store {
                 store_row: mock_store_a(),
