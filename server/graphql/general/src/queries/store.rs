@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterInput, EqualFilterStringInput};
+use graphql_core::simple_generic_errors::{NodeError, NodeErrorInterface};
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::{
     generic_filters::SimpleStringFilterInput, pagination::PaginationInput,
@@ -43,8 +44,39 @@ pub struct StoreConnector {
 }
 
 #[derive(Union)]
+pub enum StoreResponse {
+    Error(NodeError),
+    Response(StoreNode),
+}
+
+#[derive(Union)]
 pub enum StoresResponse {
     Response(StoreConnector),
+}
+
+pub fn get_store(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<StoreResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryInvoice,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context()?;
+    let service = &service_provider.general_service;
+
+    let store_option = service.get_store(&service_context, id)?;
+
+    let response = match store_option {
+        Some(store) => StoreResponse::Response(StoreNode::from_domain(store)),
+        None => StoreResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
+    };
+
+    Ok(response)
 }
 
 pub fn stores(
@@ -122,5 +154,118 @@ impl StoreSortInput {
             key,
             desc: self.desc,
         }
+    }
+}
+
+#[cfg(test)]
+mod graphql {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use repository::mock::{mock_name_a, mock_store_a};
+    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{RepositoryError, Store};
+    use serde_json::json;
+    use service::service_provider::GeneralServiceTrait;
+    use service::service_provider::{ServiceContext, ServiceProvider};
+
+    use crate::GeneralQueries;
+
+    type GetStore = dyn Fn(&str) -> Result<Option<Store>, RepositoryError> + Sync + Send;
+
+    pub struct TestService(pub Box<GetStore>);
+
+    impl GeneralServiceTrait for TestService {
+        fn get_store(
+            &self,
+            _: &ServiceContext,
+            id: &str,
+        ) -> Result<Option<Store>, RepositoryError> {
+            self.0(id)
+        }
+    }
+
+    fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        service_provider.general_service = Box::new(test_service);
+        service_provider
+    }
+
+    #[actix_rt::test]
+    async fn graphql_store_mapping() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            GeneralQueries,
+            EmptyMutation,
+            "graphql_store_mapping",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let query = r#"
+            query TestQuery($recordId: String!, $storeId: String!) {
+                store(id: $recordId, storeId: $storeId) {
+                    ... on NodeError {
+                        error {
+                        __typename
+                        }
+                    }
+                    ... on StoreNode {
+                        id
+                    }
+                }
+            }          
+        "#;
+
+        let variables = Some(json!({
+            "recordId": "record_id",
+            "storeId": "store_id"
+        }));
+
+        // Test error mapping
+        let test_service = TestService(Box::new(|_| Ok(None)));
+
+        let expected = json!({
+            "store": {
+                "error" : {
+                    "__typename": "RecordNotFound"
+                }
+            }
+        }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            &query,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // Test ok mapping
+        let test_service = TestService(Box::new(|id| {
+            assert_eq!(id, "record_id");
+
+            Ok(Some(Store {
+                store_row: mock_store_a(),
+                name_row: mock_name_a(),
+            }))
+        }));
+
+        let expected = json!({
+            "store": {
+                "id": mock_store_a().id
+            }
+        }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            &query,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
     }
 }
