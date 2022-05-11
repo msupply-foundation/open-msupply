@@ -2,7 +2,7 @@ import { OutboundRowFragment } from './../../operations.generated';
 import { useOutboundApi } from './../utils/useOutboundApi';
 import {
   useQueryClient,
-  // useTranslation,
+  useTranslation,
   useMutation,
   useTableStore,
   useDeleteConfirmation,
@@ -14,8 +14,8 @@ export const useOutboundDelete = () => {
   const queryClient = useQueryClient();
   const { data: rows } = useOutbounds();
   const api = useOutboundApi();
-  const { mutate } = useMutation(api.delete);
-  // const t = useTranslation('replenishment');
+  const { mutateAsync } = useMutation(api.delete);
+  const t = useTranslation('distribution');
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -24,17 +24,24 @@ export const useOutboundDelete = () => {
       .filter(Boolean) as OutboundRowFragment[],
   }));
 
-  const deleteAction = () => {
-    mutate(selectedRows, {
-      onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
-    });
+  const deleteAction = async () => {
+    await mutateAsync(selectedRows)
+      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .catch(err => {
+        throw err;
+      });
   };
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction,
-    confirmMessage: 'This will delete...',
-    canDelete: canDeleteInvoice,
+    canDelete: selectedRows.every(canDeleteInvoice),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-shipments'),
+      deleteSuccess: t('messages.deleted-shipments', {
+        count: selectedRows.length,
+      }),
+    },
   });
 
   return confirmAndDelete;

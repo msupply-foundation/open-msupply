@@ -1,4 +1,4 @@
-import { useDeleteSelectedInbounds } from './useDeleteSelectedInbounds';
+import { useInboundDelete } from './useInboundDelete';
 import { useInbound } from './useInbound';
 import { useInboundFields } from './useInboundFields';
 import { useInbounds } from './useInbounds';
@@ -8,7 +8,7 @@ import { useNextItem } from './useNextItem';
 import { useUpdateInbound } from './useUpdateInbound';
 
 export const Document = {
-  useDeleteSelectedInbounds,
+  useInboundDelete,
   useInbound,
   useInboundFields,
   useInbounds,
