@@ -18,6 +18,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 pub struct StocktakeFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub user_id: Option<EqualFilter<String>>,
     pub stocktake_number: Option<EqualFilter<i64>>,
     pub comment: Option<SimpleStringFilter>,
     pub description: Option<SimpleStringFilter>,
@@ -25,6 +26,8 @@ pub struct StocktakeFilter {
     pub created_datetime: Option<DatetimeFilter>,
     pub stocktake_date: Option<DateFilter>,
     pub finalised_datetime: Option<DatetimeFilter>,
+    pub inventory_adjustment_id: Option<EqualFilter<String>>,
+    pub is_locked: Option<bool>,
 }
 
 impl StocktakeFilter {
@@ -32,6 +35,7 @@ impl StocktakeFilter {
         StocktakeFilter {
             id: None,
             store_id: None,
+            user_id: None,
             stocktake_number: None,
             comment: None,
             description: None,
@@ -39,6 +43,8 @@ impl StocktakeFilter {
             created_datetime: None,
             stocktake_date: None,
             finalised_datetime: None,
+            inventory_adjustment_id: None,
+            is_locked: None,
         }
     }
 
@@ -49,6 +55,11 @@ impl StocktakeFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn user_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.user_id = Some(filter);
         self
     }
 
@@ -86,6 +97,16 @@ impl StocktakeFilter {
         self.finalised_datetime = Some(filter);
         self
     }
+
+    pub fn inventory_adjustment_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.inventory_adjustment_id = Some(filter);
+        self
+    }
+
+    pub fn is_locked(mut self, filter: bool) -> Self {
+        self.is_locked = Some(filter);
+        self
+    }
 }
 
 pub enum StocktakeSortField {
@@ -110,17 +131,29 @@ fn create_filtered_query<'a>(filter: Option<StocktakeFilter>) -> BoxedStocktakeQ
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, stocktake::id);
         apply_equal_filter!(query, f.store_id, stocktake::store_id);
+        apply_equal_filter!(query, f.user_id, stocktake::user_id);
         apply_equal_filter!(query, f.stocktake_number, stocktake::stocktake_number);
         apply_simple_string_filter!(query, f.comment, stocktake::comment);
         apply_simple_string_filter!(query, f.description, stocktake::description);
+
         if let Some(value) = f.status {
             if let Some(eq) = value.equal_to {
                 query = query.filter(stocktake::status.eq(eq));
             }
         }
+
         apply_date_time_filter!(query, f.created_datetime, stocktake::created_datetime);
         apply_date_filter!(query, f.stocktake_date, stocktake::stocktake_date);
         apply_date_time_filter!(query, f.finalised_datetime, stocktake::finalised_datetime);
+        apply_equal_filter!(
+            query,
+            f.inventory_adjustment_id,
+            stocktake::inventory_adjustment_id
+        );
+
+        if let Some(value) = f.is_locked {
+            query = query.filter(stocktake::is_locked.eq(value));
+        }
     }
     query
 }
