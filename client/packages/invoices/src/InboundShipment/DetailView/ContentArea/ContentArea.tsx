@@ -32,6 +32,7 @@ const Expando = ({
 export const ContentArea: FC<ContentAreaProps> = React.memo(
   ({ onAddItem, onRowClick }) => {
     const t = useTranslation('replenishment');
+    const isDisabled = useInbound.utils.isDisabled();
     const { columns, rows, isGrouped, toggleIsGrouped } =
       useInbound.lines.rows();
 
@@ -57,7 +58,7 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
           noDataElement={
             <NothingHere
               body={t('error.no-inbound-items')}
-              onCreate={onAddItem}
+              onCreate={isDisabled ? undefined : onAddItem}
               buttonText={t('button.add-item')}
             />
           }
