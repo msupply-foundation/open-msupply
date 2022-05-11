@@ -2,8 +2,8 @@ import {
   useTranslation,
   useQueryClient,
   useMutation,
-  useNotification,
   useTableStore,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useRequestNumber } from '../document/useRequest';
 import { useIsRequestDisabled } from '../utils/useIsRequestDisabled';
@@ -11,13 +11,12 @@ import { useRequestApi } from '../utils/useRequestApi';
 import { useRequestLines } from './useRequestLines';
 
 export const useDeleteRequestLines = () => {
-  const { success, info } = useNotification();
   const { lines } = useRequestLines();
   const api = useRequestApi();
   const requestNumber = useRequestNumber();
   const isDisabled = useIsRequestDisabled();
   const queryClient = useQueryClient();
-  const { mutate } = useMutation(api.deleteLines, {
+  const { mutateAsync } = useMutation(api.deleteLines, {
     onSettled: () =>
       queryClient.invalidateQueries(api.keys.detail(requestNumber)),
   });
@@ -28,19 +27,25 @@ export const useDeleteRequestLines = () => {
   );
 
   const onDelete = async () => {
-    if (isDisabled) {
-      info(t('label.cant-delete-disabled-requisition'))();
-      return;
-    }
-    const number = selectedRows?.length;
-    if (selectedRows && number) {
-      mutate(selectedRows, {
-        onSuccess: success(t('messages.deleted-lines', { number: number })),
+    mutateAsync(selectedRows)
+      // .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .catch(err => {
+        throw err;
       });
-    } else {
-      info(t('messages.select-rows-to-delete-them'))();
-    }
   };
 
-  return { onDelete };
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: onDelete,
+    canDelete: !isDisabled,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-lines'),
+      deleteSuccess: t('messages.deleted-lines', {
+        number: selectedRows.length,
+      }),
+      cantDelete: t('label.cant-delete-disabled-requisition'),
+    },
+  });
+
+  return confirmAndDelete;
 };

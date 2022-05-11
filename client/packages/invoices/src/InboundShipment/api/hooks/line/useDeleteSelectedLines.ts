@@ -26,7 +26,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
     }) || [];
 
   const onDelete = async () => {
-    mutateAsync(selectedRows)
+    await mutateAsync(selectedRows)
       // .then(() => queryClient.invalidateQueries(api.keys.base()))
       .catch(err => {
         throw err;
