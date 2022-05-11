@@ -38,7 +38,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
     deleteAction: onDelete,
     canDelete: !isDisabled,
     messages: {
-      confirmMessage: t('messages.confirm-delete-lines'),
+      confirmMessage: t('messages.confirm-delete-shipment-lines'),
       deleteSuccess: t('messages.deleted-lines', {
         number: selectedRows.length,
       }),
