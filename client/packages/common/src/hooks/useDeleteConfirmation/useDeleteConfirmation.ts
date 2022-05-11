@@ -45,7 +45,7 @@ export const useDeleteConfirmation = <T>({
           const successSnack = success(deletedMessage);
           successSnack();
         })
-        .catch(err => console.log('ERROR', err.message));
+        .catch(err => console.log(err.message));
     },
     message: confirmMessage || t('messages.confirm-delete-generic'),
     title: confirmTitle || t('heading.are-you-sure'),

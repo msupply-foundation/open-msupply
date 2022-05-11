@@ -83,7 +83,7 @@ export const useOutboundDeleteSelectedLines = (): (() => void) => {
     messages: {
       confirmMessage: t('messages.confirm-delete-lines'),
       deleteSuccess: t('messages.deleted-lines', {
-        number: selectedRows?.length,
+        number: selectedRows.length,
       }),
     },
   });
