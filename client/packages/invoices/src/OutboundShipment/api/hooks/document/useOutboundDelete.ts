@@ -2,11 +2,10 @@ import { OutboundRowFragment } from './../../operations.generated';
 import { useOutboundApi } from './../utils/useOutboundApi';
 import {
   useQueryClient,
-  useTranslation,
+  // useTranslation,
   useMutation,
-  useNotification,
   useTableStore,
-  useConfirmationModal,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useOutbounds } from './useOutbounds';
 import { canDeleteInvoice } from '../../../../utils';
@@ -16,9 +15,7 @@ export const useOutboundDelete = () => {
   const { data: rows } = useOutbounds();
   const api = useOutboundApi();
   const { mutate } = useMutation(api.delete);
-  const t = useTranslation(['common', 'replenishment']);
-
-  const { success, info } = useNotification();
+  // const t = useTranslation('replenishment');
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -27,38 +24,18 @@ export const useOutboundDelete = () => {
       .filter(Boolean) as OutboundRowFragment[],
   }));
 
-  const deleteData = () => {
+  const deleteAction = () => {
     mutate(selectedRows, {
       onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
     });
-    const deletedMessage = t('messages.deleted-invoices', {
-      count: selectedRows.length,
-    });
-    const successSnack = success(deletedMessage);
-    successSnack();
   };
 
-  const confirmDelete = useConfirmationModal({
-    onConfirm: deleteData,
-    message: t('messages.delete-shipment-warning'),
-    title: t('heading.are-you-sure'),
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction,
+    confirmMessage: 'This will delete...',
+    canDelete: canDeleteInvoice,
   });
 
-  const deleteAction = () => {
-    const numberSelected = selectedRows.length;
-    if (selectedRows && numberSelected > 0) {
-      const canDeleteRows = selectedRows.every(canDeleteInvoice);
-      if (!canDeleteRows) {
-        const cannotDeleteSnack = info(t('messages.cant-delete-invoices'));
-        cannotDeleteSnack();
-      } else {
-        confirmDelete();
-      }
-    } else {
-      const selectRowsSnack = info(t('messages.select-rows-to-delete-them'));
-      selectRowsSnack();
-    }
-  };
-
-  return deleteAction;
+  return confirmAndDelete;
 };
