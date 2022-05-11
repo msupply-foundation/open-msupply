@@ -51,7 +51,10 @@ export const DetailView: FC = () => {
       <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
 
-      <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
+      <ContentArea
+        onRowClick={!isDisabled ? onRowClick : null}
+        onAddItem={() => onOpen()}
+      />
       <Footer />
       <SidePanel />
 
