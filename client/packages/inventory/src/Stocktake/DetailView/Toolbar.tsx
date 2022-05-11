@@ -21,7 +21,7 @@ export const Toolbar: FC = () => {
     'description',
     'stocktakeDate',
   ]);
-  const { onDelete } = useStocktake.line.deleteSelected();
+  const onDelete = useStocktake.line.deleteSelected();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
   const [bufferedDate, setBufferedDate] = useBufferState(stocktakeDate);
   return (

@@ -9,6 +9,7 @@ import {
   AppBarContentPortal,
   FilterController,
   AlertModal,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocation } from '../api';
 
@@ -21,7 +22,7 @@ export const Toolbar: FC<{
   data: LocationRowFragment[];
   filter: FilterController;
 }> = ({ data }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation(['inventory', 'common']);
   const { mutateAsync: deleteLocation } = useLocation.document.delete();
   const { success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
@@ -63,6 +64,12 @@ export const Toolbar: FC<{
     }
   };
 
+  const showDeleteConfirmation = useConfirmationModal({
+    onConfirm: deleteAction,
+    message: t('messages.confirm-delete-locations'),
+    title: t('heading.are-you-sure'),
+  });
+
   const ref = useRef(deleteAction);
 
   useEffect(() => {
@@ -96,7 +103,10 @@ export const Toolbar: FC<{
       />
 
       <DropdownMenu label="Select">
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={deleteAction}>
+        <DropdownMenuItem
+          IconComponent={DeleteIcon}
+          onClick={() => showDeleteConfirmation()}
+        >
           {t('button.delete-lines')}
         </DropdownMenuItem>
       </DropdownMenu>

@@ -7,7 +7,7 @@ import {
 interface DeleteConfirmationProps<T> {
   selectedRows: T[];
   deleteAction: () => Promise<void>;
-  canDelete: boolean;
+  canDelete?: boolean;
   messages?: {
     confirmTitle?: string;
     confirmMessage?: string;
@@ -20,7 +20,7 @@ interface DeleteConfirmationProps<T> {
 export const useDeleteConfirmation = <T>({
   selectedRows,
   deleteAction,
-  canDelete,
+  canDelete = true,
   messages = {},
 }: DeleteConfirmationProps<T>) => {
   const {
