@@ -8,7 +8,7 @@ export const useInbound = {
     list: Document.useInbounds,
     listAll: Document.useInboundsAll,
 
-    delete: Document.useDeleteSelectedInbounds,
+    delete: Document.useInboundDelete,
     insert: Document.useInsertInbound,
     update: Document.useUpdateInbound,
 
