@@ -50,6 +50,7 @@ pub struct EqualFilterStocktakeStatusInput {
 #[derive(InputObject, Clone)]
 pub struct StocktakeFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub user_id: Option<EqualFilterStringInput>,
     pub stocktake_number: Option<EqualFilterBigNumberInput>,
     pub comment: Option<SimpleStringFilterInput>,
     pub description: Option<SimpleStringFilterInput>,
@@ -57,6 +58,8 @@ pub struct StocktakeFilterInput {
     pub created_datetime: Option<DatetimeFilterInput>,
     pub stocktake_date: Option<DateFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
+    pub inventory_adjustment_id: Option<EqualFilterStringInput>,
+    pub is_locked: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -222,6 +225,7 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
         StocktakeFilter {
             id: f.id.map(EqualFilter::from),
             store_id: None,
+            user_id: f.user_id.map(EqualFilter::from),
             stocktake_number: f.stocktake_number.map(EqualFilter::from),
             comment: f.comment.map(SimpleStringFilter::from),
             description: f.description.map(SimpleStringFilter::from),
@@ -231,6 +235,8 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             stocktake_date: f.stocktake_date.map(DateFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
+            inventory_adjustment_id: f.inventory_adjustment_id.map(EqualFilter::from),
+            is_locked: f.is_locked,
         }
     }
 }
