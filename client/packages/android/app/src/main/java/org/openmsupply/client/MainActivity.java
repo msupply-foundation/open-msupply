@@ -12,7 +12,8 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
 
         String path = getFilesDir().getAbsolutePath();
-        server.start(8082, path + "/omsupply-database");
+        String cache = getCacheDir().getAbsolutePath();
+        server.start(8000, path + "/omsupply-database", cache);
     }
 
     @Override
