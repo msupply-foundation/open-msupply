@@ -41,6 +41,7 @@ pub enum LoginError {
     DatabaseError(RepositoryError),
 }
 
+#[derive(Clone, Debug)]
 pub struct LoginInput {
     pub username: String,
     pub password: String,
@@ -71,9 +72,12 @@ impl LoginService {
         match LoginService::do_login(service_provider, auth_data, input).await {
             Ok(result) => Ok(result),
             Err(err) => {
-                let delay = Duration::from_secs(min_err_response_time_sec)
-                    - now.elapsed().unwrap_or(Duration::from_secs(0));
-                tokio::time::sleep(delay).await;
+                let elapsed = now.elapsed().unwrap_or(Duration::from_secs(0));
+                let minimum = Duration::from_secs(min_err_response_time_sec);
+                if elapsed < minimum {
+                    tokio::time::sleep(minimum - elapsed).await;
+                }
+
                 Err(err)
             }
         }

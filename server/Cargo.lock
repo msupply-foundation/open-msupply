@@ -1304,6 +1304,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "demo"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "chrono",
+ "clap",
+ "diesel",
+ "repository",
+ "server",
+ "util",
+]
+
+[[package]]
 name = "derive_builder"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3889,6 +3902,7 @@ dependencies = [
  "anyhow",
  "assert-json-diff",
  "chrono",
+ "clap",
  "config",
  "env_logger 0.8.4",
  "graphql",
