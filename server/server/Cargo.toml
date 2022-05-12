@@ -12,6 +12,10 @@ path = "src/lib.rs"
 path = "src/main.rs"
 name = "remote_server"
 
+[[bin]]
+path = "src/cli.rs"
+name = "remote_server_cli"
+
 [dependencies]
 
 graphql = { path = "../graphql" }
@@ -35,6 +39,7 @@ serde = "1.0.126"
 serde_json = "1.0.66"
 tokio = { version = "1.17.0", features = ["macros" ] }
 thiserror = "1"
+clap = { version = "3.1.8", features = ["derive"] }
 
 [dev-dependencies]
 actix-rt = "2.6.0"

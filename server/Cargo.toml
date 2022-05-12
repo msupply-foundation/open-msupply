@@ -19,4 +19,5 @@ members = [
     "graphql/location",
     "graphql/general",
     "graphql/batch_mutations",
+    "demo"
 ]

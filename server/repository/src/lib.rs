@@ -22,9 +22,14 @@ embed_migrations!("./migrations/postgres");
 #[cfg(not(feature = "postgres"))]
 embed_migrations!("./migrations/sqlite");
 
-pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
+pub fn run_db_migrations(connection: &StorageConnection, show_output: bool) -> Result<(), String> {
+    let mut stream: Box<dyn std::io::Write> = match show_output {
+        true => Box::new(std::io::stdout()),
+        false => Box::new(std::io::sink()),
+    };
+
     Ok(
-        embedded_migrations::run_with_output(&connection.connection, &mut std::io::stdout())
+        embedded_migrations::run_with_output(&connection.connection, &mut stream)
             .map_err(|err| format!("{}", err))?,
     )
 }

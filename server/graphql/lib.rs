@@ -107,7 +107,7 @@ impl Extension for ResponseLoggerExtension {
         let resp = next.run(ctx, operation_name).await;
         info!(
             target: "async-graphql",
-            "[Execute Response] {:?}\n{:?}", operation_name, resp
+            "[Execute Response] {:?}\nresponse_length: {}", operation_name, format!("{:?}", resp).len()
         );
         resp
     }

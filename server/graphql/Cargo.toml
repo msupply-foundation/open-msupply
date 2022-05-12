@@ -6,12 +6,6 @@ edition = "2018"
 [lib]
 path = "./lib.rs"
 
-[[bin]]
-path = "graphql_schema/export.rs"
-name = "export_graphql"
-test = false
-bench = false
-
 [dependencies]
 
 repository = { path = "../repository" }
