@@ -6,11 +6,11 @@ use self::{
     sync::Synchroniser,
 };
 use graphql_core::loader::{get_loaders, LoaderRegistry};
-use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
 
 use graphql::{config as graphql_config, config_stage0};
 use log::{error, info, warn};
 use repository::{get_storage_connection_manager, run_db_migrations, StorageConnectionManager};
+use rustls::ServerConfig;
 use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
@@ -21,10 +21,10 @@ use service::{
 use actix_web::{web::Data, App, HttpServer};
 use settings::ServerSettings;
 use std::{
-    io::ErrorKind,
+    io::{BufReader, ErrorKind},
     net::TcpListener,
     ops::DerefMut,
-    path::Path,
+    path::PathBuf,
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
@@ -109,14 +109,14 @@ async fn run_stage0(
     })
     .disable_signals();
     match cert_type {
-        ServerCertType::SelfSigned(cert_path) => {
-            let ssl_builder = load_certs(cert_path).expect("Invalid self signed certificates");
-            http_server = http_server.bind_openssl(
+        ServerCertType::SelfSigned(cert_files) => {
+            let config = load_certs(cert_files).expect("Invalid self signed certificates");
+            http_server = http_server.bind_rustls(
                 format!(
                     "{}:{}",
                     config_settings.server.host, config_settings.server.port
                 ),
-                ssl_builder,
+                config,
             )?;
         }
         ServerCertType::None => {
@@ -252,14 +252,14 @@ async fn run_server(
     })
     .disable_signals();
     match cert_type {
-        ServerCertType::SelfSigned(cert_path) => {
-            let ssl_builder = load_certs(cert_path).expect("Invalid self signed certificates");
-            http_server = http_server.bind_openssl(
+        ServerCertType::SelfSigned(cert_files) => {
+            let config = load_certs(cert_files).expect("Invalid self signed certificates");
+            http_server = http_server.bind_rustls(
                 format!(
                     "{}:{}",
                     config_settings.server.host, config_settings.server.port
                 ),
-                ssl_builder,
+                config,
             )?;
         }
         ServerCertType::None => {
@@ -383,9 +383,39 @@ fn find_certs(cert_dir: &str) -> ServerCertType {
     });
 }
 
-fn load_certs(cert_files: SelfSignedCertFiles) -> Result<SslAcceptorBuilder, anyhow::Error> {
-    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    builder.set_private_key_file(cert_files.private_cert_file, SslFiletype::PEM)?;
-    builder.set_certificate_chain_file(cert_files.public_cert_file)?;
-    Ok(builder)
+/// Load rustls server config
+fn load_certs(cert_files: SelfSignedCertFiles) -> Result<ServerConfig, anyhow::Error> {
+    let certfile = std::fs::File::open(&cert_files.public_cert_file)?;
+    let mut reader = BufReader::new(certfile);
+    let certs = rustls_pemfile::certs(&mut reader)
+        .unwrap()
+        .iter()
+        .map(|v| rustls::Certificate(v.clone()))
+        .collect();
+
+    let private_key = load_private_key(&cert_files.private_cert_file)?;
+
+    let config = ServerConfig::builder()
+        .with_safe_defaults()
+        .with_no_client_auth()
+        .with_single_cert(certs, private_key)?;
+    Ok(config)
+}
+
+/// Helper to load a rustls::PrivateKey
+fn load_private_key(filename: &str) -> Result<rustls::PrivateKey, anyhow::Error> {
+    let keyfile = std::fs::File::open(filename)?;
+    let mut reader = BufReader::new(keyfile);
+
+    loop {
+        match rustls_pemfile::read_one(&mut reader)? {
+            Some(rustls_pemfile::Item::RSAKey(key)) => return Ok(rustls::PrivateKey(key)),
+            Some(rustls_pemfile::Item::PKCS8Key(key)) => return Ok(rustls::PrivateKey(key)),
+            Some(rustls_pemfile::Item::ECKey(key)) => return Ok(rustls::PrivateKey(key)),
+            None => break,
+            _ => {}
+        }
+    }
+
+    Err(anyhow::Error::msg("No private key found"))
 }
