@@ -1,4 +1,8 @@
-use crate::{cors::cors_policy, static_files::config_static_files};
+use crate::{
+    cors::cors_policy,
+    self_signed_certs::{find_self_signed_certs, load_self_signed_certs_rustls},
+    static_files::config_static_files,
+};
 
 use self::{
     middleware::{compress as compress_middleware, logger as logger_middleware},
@@ -10,7 +14,7 @@ use graphql_core::loader::{get_loaders, LoaderRegistry};
 use graphql::{config as graphql_config, config_stage0};
 use log::{error, info, warn};
 use repository::{get_storage_connection_manager, run_db_migrations, StorageConnectionManager};
-use rustls::ServerConfig;
+use self_signed_certs::SelfSignedCertFiles;
 use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
@@ -21,10 +25,9 @@ use service::{
 use actix_web::{web::Data, App, HttpServer};
 use settings::ServerSettings;
 use std::{
-    io::{BufReader, ErrorKind},
+    io::ErrorKind,
     net::TcpListener,
     ops::DerefMut,
-    path::PathBuf,
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
@@ -34,12 +37,11 @@ pub mod configuration;
 pub mod cors;
 pub mod environment;
 pub mod middleware;
+pub mod self_signed_certs;
 pub mod settings;
 pub mod static_files;
 pub mod sync;
 pub mod test_utils;
-
-const CERTS_PATH_DEFAULT: &str = "./certs";
 
 fn auth_data(
     server_settings: &ServerSettings,
@@ -65,13 +67,10 @@ async fn run_stage0(
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
-    let cert_type = find_certs(
-        config_settings
-            .server
-            .certs_dir
-            .as_deref()
-            .unwrap_or(CERTS_PATH_DEFAULT),
-    );
+    let cert_type = match find_self_signed_certs(&config_settings.server) {
+        Some(files) => ServerCertType::SelfSigned(files),
+        None => ServerCertType::None,
+    };
     let auth_data = auth_data(
         &config_settings.server,
         token_bucket,
@@ -110,7 +109,8 @@ async fn run_stage0(
     .disable_signals();
     match cert_type {
         ServerCertType::SelfSigned(cert_files) => {
-            let config = load_certs(cert_files).expect("Invalid self signed certificates");
+            let config = load_self_signed_certs_rustls(cert_files)
+                .expect("Invalid self signed certificates");
             http_server = http_server.bind_rustls(
                 format!(
                     "{}:{}",
@@ -186,13 +186,10 @@ async fn run_server(
         }
     };
 
-    let cert_type = find_certs(
-        config_settings
-            .server
-            .certs_dir
-            .as_deref()
-            .unwrap_or(CERTS_PATH_DEFAULT),
-    );
+    let cert_type = match find_self_signed_certs(&config_settings.server) {
+        Some(files) => ServerCertType::SelfSigned(files),
+        None => ServerCertType::None,
+    };
     let auth_data = auth_data(
         &config_settings.server,
         token_bucket.clone(),
@@ -253,7 +250,8 @@ async fn run_server(
     .disable_signals();
     match cert_type {
         ServerCertType::SelfSigned(cert_files) => {
-            let config = load_certs(cert_files).expect("Invalid self signed certificates");
+            let config = load_self_signed_certs_rustls(cert_files)
+                .expect("Invalid self signed certificates");
             http_server = http_server.bind_rustls(
                 format!(
                     "{}:{}",
@@ -355,67 +353,9 @@ pub async fn start_server(
     Ok(())
 }
 
-#[derive(Debug)]
-pub struct SelfSignedCertFiles {
-    pub private_cert_file: String,
-    pub public_cert_file: String,
-}
-
 /// Details about the certs used by the running server
 #[derive(Debug)]
 pub enum ServerCertType {
     None,
     SelfSigned(SelfSignedCertFiles),
-}
-
-pub const PRIVATE_CERT_FILE: &str = "key.pem";
-pub const PUBLIC_CERT_FILE: &str = "cert.pem";
-
-fn find_certs(cert_dir: &str) -> ServerCertType {
-    let key_file = PathBuf::new().join(cert_dir).join(PRIVATE_CERT_FILE);
-    let cert_file = PathBuf::new().join(cert_dir).join(PUBLIC_CERT_FILE);
-    if !key_file.exists() || !cert_file.exists() {
-        return ServerCertType::None;
-    }
-    return ServerCertType::SelfSigned(SelfSignedCertFiles {
-        private_cert_file: key_file.to_string_lossy().to_string(),
-        public_cert_file: cert_file.to_string_lossy().to_string(),
-    });
-}
-
-/// Load rustls server config
-fn load_certs(cert_files: SelfSignedCertFiles) -> Result<ServerConfig, anyhow::Error> {
-    let certfile = std::fs::File::open(&cert_files.public_cert_file)?;
-    let mut reader = BufReader::new(certfile);
-    let certs = rustls_pemfile::certs(&mut reader)
-        .unwrap()
-        .iter()
-        .map(|v| rustls::Certificate(v.clone()))
-        .collect();
-
-    let private_key = load_private_key(&cert_files.private_cert_file)?;
-
-    let config = ServerConfig::builder()
-        .with_safe_defaults()
-        .with_no_client_auth()
-        .with_single_cert(certs, private_key)?;
-    Ok(config)
-}
-
-/// Helper to load a rustls::PrivateKey
-fn load_private_key(filename: &str) -> Result<rustls::PrivateKey, anyhow::Error> {
-    let keyfile = std::fs::File::open(filename)?;
-    let mut reader = BufReader::new(keyfile);
-
-    loop {
-        match rustls_pemfile::read_one(&mut reader)? {
-            Some(rustls_pemfile::Item::RSAKey(key)) => return Ok(rustls::PrivateKey(key)),
-            Some(rustls_pemfile::Item::PKCS8Key(key)) => return Ok(rustls::PrivateKey(key)),
-            Some(rustls_pemfile::Item::ECKey(key)) => return Ok(rustls::PrivateKey(key)),
-            None => break,
-            _ => {}
-        }
-    }
-
-    Err(anyhow::Error::msg("No private key found"))
 }

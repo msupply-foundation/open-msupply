@@ -12,8 +12,9 @@ pub mod android {
     use rcgen::generate_simple_self_signed;
     use repository::database_settings::DatabaseSettings;
 
+    use server::self_signed_certs::{PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
     use server::settings::{ServerSettings, Settings};
-    use server::{start_server, PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
+    use server::start_server;
     use tokio::sync::oneshot;
 
     use self::jni::objects::{JClass, JString};
