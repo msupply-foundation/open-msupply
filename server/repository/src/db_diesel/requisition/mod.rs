@@ -1,5 +1,4 @@
-use crate::SimpleStringFilter;
-use crate::{DatetimeFilter, EqualFilter, Sort};
+use crate::{DateFilter, DatetimeFilter, EqualFilter, SimpleStringFilter, Sort};
 
 use crate::requisition_row::{RequisitionRowStatus, RequisitionRowType};
 
@@ -12,12 +11,14 @@ pub use self::requisition_row::*;
 #[derive(Clone, Debug, PartialEq)]
 pub struct RequisitionFilter {
     pub id: Option<EqualFilter<String>>,
+    pub user_id: Option<EqualFilter<String>>,
     pub requisition_number: Option<EqualFilter<i64>>,
     pub r#type: Option<EqualFilter<RequisitionRowType>>,
     pub status: Option<EqualFilter<RequisitionRowStatus>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub sent_datetime: Option<DatetimeFilter>,
     pub finalised_datetime: Option<DatetimeFilter>,
+    pub expected_delivery_date: Option<DateFilter>,
     pub name_id: Option<EqualFilter<String>>,
     pub name: Option<SimpleStringFilter>,
     pub colour: Option<EqualFilter<String>>,
@@ -37,6 +38,8 @@ pub enum RequisitionSortField {
     SentDatetime,
     CreatedDatetime,
     FinalisedDatetime,
+    ExpectedDeliveryDate,
+    TheirReference,
 }
 
 pub type RequisitionSort = Sort<RequisitionSortField>;
@@ -45,12 +48,14 @@ impl RequisitionFilter {
     pub fn new() -> RequisitionFilter {
         RequisitionFilter {
             id: None,
+            user_id: None,
             requisition_number: None,
             r#type: None,
             status: None,
             created_datetime: None,
             sent_datetime: None,
             finalised_datetime: None,
+            expected_delivery_date: None,
             name_id: None,
             name: None,
             colour: None,
@@ -63,6 +68,11 @@ impl RequisitionFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn user_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.user_id = Some(filter);
         self
     }
 
