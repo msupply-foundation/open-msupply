@@ -27,7 +27,7 @@ enum Action {
     ExportGraphqlSchema,
     /// Initialise empty database (existing database will be dropped, and new one created and migrated)
     InitialiseDatabase,
-    /// Initilise from running mSupply server
+    /// Initilise from running mSupply server (uses configuration/.*yaml for sync credentials), drops existin database, creates new with latest schema and initialises (syncs) initial data from central server (including users)
     InitialiseFromCentral {
         /// Users to sync, in format "username:password,username2:password2"
         #[clap(short, long)]
