@@ -62,7 +62,7 @@ async fn main() {
             let auth_data = AuthData {
                 auth_token_secret: "secret".to_string(),
                 token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
-                debug_no_ssl: true,
+                danger_no_ssl: true,
                 debug_no_access_control: false,
             };
 
