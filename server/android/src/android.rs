@@ -4,7 +4,7 @@ pub mod android {
     extern crate jni;
 
     use std::io::Write;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
     use std::thread::{self, JoinHandle};
     use std::{collections::HashMap, sync::Mutex};
 
@@ -90,21 +90,19 @@ pub mod android {
         env: JNIEnv,
         _: JClass,
         port: jchar,
-        db_path: JString,
+        files_dir: JString,
         cache_dir: JString,
     ) -> jlong {
         android_logger::init_once(Config::default().with_min_level(Level::Trace));
 
         let (off_switch, off_switch_receiver) = oneshot::channel();
-        let db_path: String = env.get_string(db_path).unwrap().into();
+        let files_dir: String = env.get_string(files_dir).unwrap().into();
+        let files_dir = PathBuf::from(&files_dir);
+        let db_path = files_dir.join("omsupply-database");
+
         let cache_dir: String = env.get_string(cache_dir).unwrap().into();
 
-        // TODO pass in the files directory and configure DB file here?
-        let cert_path = Path::new(&db_path)
-            .parent()
-            .unwrap()
-            .to_path_buf()
-            .join("certs");
+        let cert_path = files_dir.join("certs");
         if !cert_path.join(PRIVATE_CERT_FILE).exists() {
             generate_certs(&cert_path);
         }
@@ -128,7 +126,7 @@ pub mod android {
                         password: "n/a".to_string(),
                         port: 0,
                         host: "n/a".to_string(),
-                        database_name: db_path,
+                        database_name: db_path.to_string_lossy().to_string(),
                         // See https://github.com/openmsupply/remote-server/issues/1076
                         init_sql: Some(format!("PRAGMA temp_store_directory = '{}';", cache_dir)),
                     },
