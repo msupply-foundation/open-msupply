@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren } from 'react';
+import React, { FC, PropsWithChildren, useState } from 'react';
 import {
   MenuItem,
   MenuItemProps,
@@ -81,6 +81,7 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
   children,
   disabled = false,
 }) => {
+  const [open, setOpen] = useState(false);
   return (
     <FormControl size="small">
       <InputLabel
@@ -94,9 +95,11 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
         disabled={disabled}
         value=""
         size="small"
+        open={open}
         labelId={`action-drop-down-label-${label}`}
         variant="outlined"
         IconComponent={ChevronDownIcon}
+        onClick={() => setOpen(curr => !curr)}
       >
         {children}
       </StyledSelect>

@@ -1,9 +1,9 @@
 import {
   useQueryClient,
   useMutation,
-  useNotification,
   useTranslation,
   useTableStore,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { OutboundFragment } from './../../operations.generated';
 import { useOutboundApi } from './../utils/useOutboundApi';
@@ -50,42 +50,43 @@ export const useOutboundDeleteLines = () => {
   });
 };
 
-export const useOutboundDeleteSelectedLines = (): {
-  onDelete: () => Promise<void>;
-} => {
-  const { success, info } = useNotification();
+export const useOutboundDeleteSelectedLines = (): (() => void) => {
   const { items, lines } = useOutboundRows();
-  const { mutate } = useOutboundDeleteLines();
+  const { mutateAsync } = useOutboundDeleteLines();
   const isDisabled = useOutboundIsDisabled();
   const t = useTranslation('distribution');
 
-  const selectedRows = useTableStore(state => {
-    const { isGrouped } = state;
+  const selectedRows =
+    useTableStore(state => {
+      const { isGrouped } = state;
 
-    return isGrouped
-      ? items
-          ?.filter(({ id }) => state.rowState[id]?.isSelected)
-          .map(({ lines }) => lines.flat())
-          .flat()
-      : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-  });
+      return isGrouped
+        ? items
+            ?.filter(({ id }) => state.rowState[id]?.isSelected)
+            .map(({ lines }) => lines.flat())
+            .flat()
+        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
+    }) || [];
 
   const onDelete = async () => {
-    if (isDisabled) {
-      info(t('label.cant-delete-disabled-shipment'))();
-      return;
-    }
-    if (selectedRows && selectedRows?.length > 0) {
-      const number = selectedRows?.length;
-      const onSuccess = success(t('messages.deleted-lines', { number }));
-      mutate(selectedRows, {
-        onSuccess,
-      });
-    } else {
-      const infoSnack = info(t('messages.select-rows-to-delete-them'));
-      infoSnack();
-    }
+    await mutateAsync(selectedRows || []).catch(err => {
+      throw err;
+    });
   };
 
-  return { onDelete };
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: onDelete,
+    canDelete: !isDisabled,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-lines', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-lines', {
+        count: selectedRows.length,
+      }),
+    },
+  });
+
+  return confirmAndDelete;
 };

@@ -19,7 +19,7 @@ export const Toolbar: FC = () => {
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
 
-  const { onDelete } = useInbound.lines.deleteSelected();
+  const onDelete = useInbound.lines.deleteSelected();
   const { otherParty, theirReference, update } = useInbound.document.fields([
     'otherParty',
     'theirReference',

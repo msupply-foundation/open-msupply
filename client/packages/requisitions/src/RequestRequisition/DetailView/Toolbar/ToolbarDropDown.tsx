@@ -9,7 +9,7 @@ import { useRequest } from '../../api';
 
 export const ToolbarDropDown = () => {
   const t = useTranslation('replenishment');
-  const { onDelete } = useRequest.line.delete();
+  const onDelete = useRequest.line.delete();
   return (
     <DropdownMenu label={t('label.actions')}>
       <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>

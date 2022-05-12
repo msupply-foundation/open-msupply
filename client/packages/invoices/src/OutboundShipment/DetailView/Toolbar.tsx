@@ -16,7 +16,7 @@ import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 
 export const Toolbar: FC = () => {
-  const { onDelete } = useOutbound.line.deleteSelected();
+  const onDelete = useOutbound.line.deleteSelected();
   const { onAllocate } = useOutbound.line.allocateSelected();
   const { otherParty, theirReference, update } = useOutbound.document.fields([
     'otherParty',

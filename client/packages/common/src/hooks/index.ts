@@ -4,6 +4,7 @@ export * from './useBreadcrumbs';
 export * from './useBufferState';
 export * from './useConfirmOnLeaving';
 export * from './useDebounce';
+export * from './useDeleteConfirmation';
 export * from './useDetailPanel';
 export * from './useDialog';
 export * from './useDirtyCheck/useDirtyCheck';

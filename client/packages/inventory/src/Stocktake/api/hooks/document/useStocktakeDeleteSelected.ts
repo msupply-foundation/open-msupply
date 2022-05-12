@@ -1,7 +1,7 @@
 import {
   useTranslation,
-  useNotification,
   useTableStore,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { canDeleteStocktake } from '../../../../utils';
 import { StocktakeRowFragment } from '../../operations.generated';
@@ -11,8 +11,7 @@ import { useStocktakes } from './useStocktakes';
 export const useStocktakeDeleteSelected = () => {
   const t = useTranslation('inventory');
   const { data: rows } = useStocktakes();
-  const { success, info } = useNotification();
-  const { mutate } = useStocktakeDelete();
+  const { mutateAsync } = useStocktakeDelete();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -21,25 +20,26 @@ export const useStocktakeDeleteSelected = () => {
       .filter(Boolean) as StocktakeRowFragment[],
   }));
 
-  const deleteAction = () => {
-    const numberSelected = selectedRows.length;
-    if (selectedRows && numberSelected > 0) {
-      const canDeleteRows = selectedRows.every(canDeleteStocktake);
-      if (!canDeleteRows) {
-        const cannotDeleteSnack = info(t('messages.cant-delete-stocktakes'));
-        cannotDeleteSnack();
-      } else {
-        const deletedMessage = t('messages.deleted-stocktakes', {
-          number: numberSelected,
-        });
-        const successSnack = success(deletedMessage);
-        mutate(selectedRows, { onSuccess: successSnack });
-      }
-    } else {
-      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
-      selectRowsSnack();
-    }
+  const deleteAction = async () => {
+    await mutateAsync(selectedRows).catch(err => {
+      throw err;
+    });
   };
 
-  return deleteAction;
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction,
+    canDelete: selectedRows.every(canDeleteStocktake),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-stocktakes', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-stocktakes', {
+        count: selectedRows.length,
+      }),
+      cantDelete: t('label.cant-delete-disabled'),
+    },
+  });
+
+  return confirmAndDelete;
 };
