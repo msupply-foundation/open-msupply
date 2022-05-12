@@ -13,7 +13,7 @@ public class MainActivity extends BridgeActivity {
 
         String path = getFilesDir().getAbsolutePath();
         String cache = getCacheDir().getAbsolutePath();
-        server.start(8000, path + "/omsupply-database", cache);
+        server.start(8000, path, cache);
     }
 
     @Override

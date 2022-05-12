@@ -18,8 +18,8 @@ public class RemoteServer {
         return rustHelloWorld(name);
     }
 
-    public void start(int port, String dbPath, String cacheDir) {
-        handle = startServer(port, dbPath, cacheDir);
+    public void start(int port, String filesDir, String cacheDir) {
+        handle = startServer(port, filesDir, cacheDir);
     }
 
     public void stop() {
@@ -31,6 +31,6 @@ public class RemoteServer {
 
     private static native String rustHelloWorld(String seed);
 
-    private static native long startServer(int port, String dbPath, String cacheDir);
+    private static native long startServer(int port, String filesDir, String cacheDir);
     private static native int stopServer(long handle);
 }
