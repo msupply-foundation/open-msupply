@@ -82,6 +82,12 @@ pub mod android {
         let db_path: String = env.get_string(db_path).unwrap().into();
         let cache_dir: String = env.get_string(cache_dir).unwrap().into();
 
+        // TODO pass in the files directory and configure DB file here?
+        let cert_path = Path::new(&db_path)
+            .parent()
+            .unwrap()
+            .to_path_buf()
+            .join("certs");
         // run server in background thread
         let thread = thread::spawn(move || {
             actix_web::rt::System::new().block_on(async move {
@@ -94,6 +100,7 @@ pub mod android {
                         debug_no_access_control: false,
                         debug_cors_permissive: false,
                         cors_origins: vec!["http://localhost".to_string()],
+                        certs_dir: Some(cert_path.to_str().unwrap().to_string()),
                     },
                     database: DatabaseSettings {
                         username: "n/a".to_string(),

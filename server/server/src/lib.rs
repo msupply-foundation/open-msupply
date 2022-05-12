@@ -39,6 +39,8 @@ pub mod static_files;
 pub mod sync;
 pub mod test_utils;
 
+const CERTS_PATH_DEFAULT: &str = "./certs";
+
 fn auth_data(
     server_settings: &ServerSettings,
     token_bucket: Arc<RwLock<TokenBucket>>,
@@ -63,7 +65,13 @@ async fn run_stage0(
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
-    let cert_type = find_certs();
+    let cert_type = find_certs(
+        config_settings
+            .server
+            .certs_dir
+            .as_deref()
+            .unwrap_or(CERTS_PATH_DEFAULT),
+    );
     let auth_data = auth_data(
         &config_settings.server,
         token_bucket,
@@ -178,7 +186,13 @@ async fn run_server(
         }
     };
 
-    let cert_type = find_certs();
+    let cert_type = find_certs(
+        config_settings
+            .server
+            .certs_dir
+            .as_deref()
+            .unwrap_or(CERTS_PATH_DEFAULT),
+    );
     let auth_data = auth_data(
         &config_settings.server,
         token_bucket.clone(),
@@ -341,26 +355,31 @@ pub async fn start_server(
     Ok(())
 }
 
+#[derive(Debug)]
 pub struct SelfSignedCertFiles {
     pub private_cert_file: String,
     pub public_cert_file: String,
 }
 
 /// Details about the certs used by the running server
+#[derive(Debug)]
 pub enum ServerCertType {
     None,
     SelfSigned(SelfSignedCertFiles),
 }
 
-const PRIVATE_CERT_FILE: &str = "./certs/key.pem";
-const PUBLIC_CERT_FILE: &str = "./certs/cert.pem";
-fn find_certs() -> ServerCertType {
-    if !Path::new(PRIVATE_CERT_FILE).exists() || !Path::new(PUBLIC_CERT_FILE).exists() {
+pub const PRIVATE_CERT_FILE: &str = "key.pem";
+pub const PUBLIC_CERT_FILE: &str = "cert.pem";
+
+fn find_certs(cert_dir: &str) -> ServerCertType {
+    let key_file = PathBuf::new().join(cert_dir).join(PRIVATE_CERT_FILE);
+    let cert_file = PathBuf::new().join(cert_dir).join(PUBLIC_CERT_FILE);
+    if !key_file.exists() || !cert_file.exists() {
         return ServerCertType::None;
     }
     return ServerCertType::SelfSigned(SelfSignedCertFiles {
-        private_cert_file: PRIVATE_CERT_FILE.to_string(),
-        public_cert_file: PUBLIC_CERT_FILE.to_string(),
+        private_cert_file: key_file.to_string_lossy().to_string(),
+        public_cert_file: cert_file.to_string_lossy().to_string(),
     });
 }
 
