@@ -15,6 +15,9 @@ import {
 } from 'graphql-request';
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
+import { DocumentNode } from 'graphql';
+
+export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
 const permissionExceptions = ['reports', 'stockCounts', 'invoiceCounts'];
 interface ResponseError {
@@ -54,11 +57,13 @@ const handleResponseError = (errors: ResponseError[]) => {
 class GQLClient extends GraphQLClient {
   private client: GraphQLClient;
   private emptyData: object;
+  private skipRequest: SkipRequest;
 
-  constructor(url: string, options?: RequestInit) {
+  constructor(url: string, options?: RequestInit, skipRequest?: SkipRequest) {
     super(url, options);
     this.client = new GraphQLClient(url, options);
     this.emptyData = {};
+    this.skipRequest = skipRequest || (() => false);
   }
 
   public request<T, V = Variables>(
@@ -67,6 +72,12 @@ class GQLClient extends GraphQLClient {
     requestHeaders?: RequestInit['headers']
   ): Promise<T> {
     const options = documentOrOptions as RequestOptions<V>;
+    const document = (documentOrOptions as DocumentNode) || options.document;
+
+    if (this.skipRequest(document)) {
+      return new Promise(() => this.emptyData);
+    }
+
     const response = options.document
       ? this.client.request(options)
       : this.client.request(
@@ -94,10 +105,15 @@ class GQLClient extends GraphQLClient {
     this.client.setHeader(key, value);
   public setEndpoint = (value: string): GraphQLClient =>
     this.client.setEndpoint(value);
+  public setSkipRequest = (skipRequest: SkipRequest) =>
+    (this.skipRequest = skipRequest);
 }
 
-export const createGql = (url: string): { client: GQLClient } => {
-  const client = new GQLClient(url, { credentials: 'include' });
+export const createGql = (
+  url: string,
+  skipRequest?: SkipRequest
+): { client: GQLClient } => {
+  const client = new GQLClient(url, { credentials: 'include' }, skipRequest);
   return { client };
 };
 
@@ -105,27 +121,31 @@ interface GqlControl {
   client: GQLClient;
   setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
+  setSkipRequest: (skipRequest: SkipRequest) => void;
 }
 
 const GqlContext = createContext<GqlControl>({
   ...createGql(''),
   setHeader: () => {},
   setUrl: () => {},
+  setSkipRequest: () => {},
 });
 
 const { Provider } = GqlContext;
 
 interface ApiProviderProps {
   url: string;
+  skipRequest?: (documentNode: DocumentNode) => boolean;
 }
 
 export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
   url,
+  skipRequest,
   children,
 }) => {
   const [{ client }, setApi] = useState<{
     client: GQLClient;
-  }>(() => createGql(url));
+  }>(() => createGql(url, skipRequest));
 
   const setUrl = useCallback(
     (newUrl: string) => {
@@ -141,17 +161,25 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
     [client]
   );
 
+  const setSkipRequest = useCallback(
+    (skipRequest: (documentNode: DocumentNode) => boolean) => {
+      client.setSkipRequest(skipRequest);
+    },
+    [client]
+  );
+
   useEffect(() => {
-    setApi(createGql(url));
-  }, [url]);
+    setApi(createGql(url, skipRequest));
+  }, [url, skipRequest]);
 
   const val = useMemo(
     () => ({
       client,
       setUrl,
       setHeader,
+      setSkipRequest,
     }),
-    [client, setUrl, setHeader]
+    [client, setUrl, setHeader, setSkipRequest]
   );
 
   return <Provider value={val}>{children}</Provider>;

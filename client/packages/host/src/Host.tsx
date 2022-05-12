@@ -20,6 +20,8 @@ import {
   AuthProvider,
   AlertModalProvider,
   EnvUtils,
+  LocalStorage,
+  AuthError,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -49,13 +51,19 @@ Bugsnag.start({
   appVersion: packageJson.version,
 });
 
+const skipRequest = () =>
+  LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned;
+
 const Host = () => (
   <React.Suspense fallback={<div />}>
     <IntlProvider>
       <React.Suspense fallback={<RandomLoader />}>
         <ErrorBoundary Fallback={GenericErrorFallback}>
           <QueryClientProvider client={queryClient}>
-            <GqlProvider url={Environment.GRAPHQL_URL}>
+            <GqlProvider
+              url={Environment.GRAPHQL_URL}
+              skipRequest={skipRequest}
+            >
               <AuthProvider>
                 <AppThemeProvider>
                   <ConfirmationModalProvider>

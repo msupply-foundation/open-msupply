@@ -1,7 +1,7 @@
 import React, { createContext, useMemo, useState, useEffect, FC } from 'react';
 import { IntlUtils } from '@common/intl';
 import { AppRoute } from '@openmsupply-client/config';
-import { useLocalStorage } from '../localStorage';
+import { LocalStorage, useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns';
 import { useGql } from '../api';
@@ -13,6 +13,7 @@ import { UserStoreNodeFragment } from './api/operations.generated';
 import { PropsWithChildrenOnly } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
+import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
@@ -114,7 +115,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const [error, setError] = useLocalStorage('/auth/error');
   const storeId = cookie?.store?.id ?? '';
   const { mutateAsync: getStores } = useUserDetails();
-  const { setHeader } = useGql();
+  const { setHeader, setSkipRequest } = useGql();
 
   const saveToken = (token?: string) => {
     const authCookie = getAuthCookie();
@@ -147,7 +148,42 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
   };
 
+  const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
+    switch (true) {
+      case isLoggedIn && hasValidStore: {
+        setError(undefined);
+        break;
+      }
+      case !hasValidStore: {
+        setError(AuthError.NoStoreAssigned);
+        console.warn('error!', AuthError.NoStoreAssigned);
+        break;
+      }
+      default: {
+        setError(AuthError.Unauthenticated);
+      }
+    }
+  };
+
+  const authNameQueries = ['authToken', 'me'];
+  const isAuthRequest = (definitionNode: DefinitionNode) => {
+    const operationNode = definitionNode as OperationDefinitionNode;
+    if (!operationNode) return false;
+    if (operationNode.operation !== 'query') return false;
+
+    return authNameQueries.indexOf(operationNode.name?.value ?? '') !== -1;
+  };
+
+  const skipNoStoreRequests = (documentNode?: DocumentNode) => {
+    if (!documentNode) return false;
+
+    if (documentNode.definitions.some(isAuthRequest)) return false;
+
+    return LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned;
+  };
+
   const login = async (username: string, password: string) => {
+    setSkipRequest(skipNoStoreRequests);
     const { token, error } = await mutateAsync({ username, password });
     setHeader('Authorization', `Bearer ${token}`);
     const store = await getStore(token);
@@ -167,7 +203,10 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     setMRUCredentials({ username, store });
     setAuthCookie(authCookie);
     setCookie(authCookie);
-    setError(store ? undefined : AuthError.NoStoreAssigned);
+    setLoginError(!!token, !!store);
+    setSkipRequest(
+      () => LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned
+    );
 
     return { token, error };
   };
