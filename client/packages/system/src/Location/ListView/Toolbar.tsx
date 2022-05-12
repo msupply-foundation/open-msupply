@@ -22,7 +22,7 @@ export const Toolbar: FC<{
   data: LocationRowFragment[];
   filter: FilterController;
 }> = ({ data }) => {
-  const t = useTranslation(['inventory', 'common']);
+  const t = useTranslation('inventory');
   const { mutateAsync: deleteLocation } = useLocation.document.delete();
   const { success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
