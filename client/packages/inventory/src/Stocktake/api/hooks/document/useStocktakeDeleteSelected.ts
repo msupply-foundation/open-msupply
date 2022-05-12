@@ -33,9 +33,11 @@ export const useStocktakeDeleteSelected = () => {
     deleteAction,
     canDelete: selectedRows.every(canDeleteStocktake),
     messages: {
-      confirmMessage: t('messages.confirm-delete-stocktakes'),
+      confirmMessage: t('messages.confirm-delete-stocktakes', {
+        count: selectedRows.length,
+      }),
       deleteSuccess: t('messages.deleted-stocktakes', {
-        number: selectedRows.length,
+        count: selectedRows.length,
       }),
       cantDelete: t('label.cant-delete-disabled'),
     },

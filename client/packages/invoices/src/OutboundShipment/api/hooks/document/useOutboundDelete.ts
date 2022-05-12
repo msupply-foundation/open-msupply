@@ -37,7 +37,9 @@ export const useOutboundDelete = () => {
     deleteAction,
     canDelete: selectedRows.every(canDeleteInvoice),
     messages: {
-      confirmMessage: t('messages.confirm-delete-shipments'),
+      confirmMessage: t('messages.confirm-delete-shipments', {
+        count: selectedRows.length,
+      }),
       deleteSuccess: t('messages.deleted-shipments', {
         count: selectedRows.length,
       }),

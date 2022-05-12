@@ -33,7 +33,9 @@ export const useDeleteSelectedRequisitions = () => {
       ({ status }) => status === RequisitionNodeStatus.Draft
     ),
     messages: {
-      confirmMessage: t('messages.confirm-delete-requisitions'),
+      confirmMessage: t('messages.confirm-delete-requisitions', {
+        count: selectedRows.length,
+      }),
       deleteSuccess: t('messages.deleted-requisitions', {
         count: selectedRows.length,
       }),
