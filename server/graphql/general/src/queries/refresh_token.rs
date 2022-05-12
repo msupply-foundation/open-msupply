@@ -126,7 +126,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
         }
     };
 
-    set_refresh_token_cookie(ctx, &pair.refresh, max_age_refresh, auth_data.debug_no_ssl);
+    set_refresh_token_cookie(ctx, &pair.refresh, max_age_refresh, auth_data.danger_no_ssl);
 
     RefreshTokenResponse::Response(RefreshToken { pair })
 }

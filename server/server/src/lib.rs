@@ -19,6 +19,7 @@ use service::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
+use settings::ServerSettings;
 use std::{
     io::ErrorKind,
     net::TcpListener,
@@ -38,8 +39,23 @@ pub mod static_files;
 pub mod sync;
 pub mod test_utils;
 
+fn auth_data(
+    server_settings: &ServerSettings,
+    token_bucket: Arc<RwLock<TokenBucket>>,
+    token_secret: String,
+    cert_type: &ServerCertType,
+) -> Data<AuthData> {
+    Data::new(AuthData {
+        auth_token_secret: token_secret,
+        token_bucket,
+        danger_no_ssl: (server_settings.develop || server_settings.danger_allow_http)
+            && matches!(cert_type, ServerCertType::None),
+        debug_no_access_control: server_settings.develop && server_settings.debug_no_access_control,
+    })
+}
+
 async fn run_stage0(
-    settings: Settings,
+    config_settings: Settings,
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
@@ -48,12 +64,12 @@ async fn run_stage0(
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
     let cert_type = find_certs();
-    let auth_data = Data::new(AuthData {
-        auth_token_secret: token_secret,
+    let auth_data = auth_data(
+        &config_settings.server,
         token_bucket,
-        debug_no_ssl: settings.server.develop && matches!(cert_type, ServerCertType::None),
-        debug_no_access_control: settings.server.develop && settings.server.debug_no_access_control,
-    });
+        token_secret,
+        &cert_type,
+    );
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
@@ -66,7 +82,7 @@ async fn run_stage0(
 
     let restart_switch = Data::new(restart_switch);
 
-    let closure_settings = settings.clone();
+    let closure_settings = config_settings.clone();
 
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
@@ -88,21 +104,24 @@ async fn run_stage0(
         ServerCertType::SelfSigned(cert_path) => {
             let ssl_builder = load_certs(cert_path).expect("Invalid self signed certificates");
             http_server = http_server.bind_openssl(
-                format!("{}:{}", settings.server.host, settings.server.port),
+                format!(
+                    "{}:{}",
+                    config_settings.server.host, config_settings.server.port
+                ),
                 ssl_builder,
             )?;
         }
         ServerCertType::None => {
-            if !settings.server.develop {
+            if !config_settings.server.develop && !config_settings.server.danger_allow_http {
                 error!("No certificates found");
                 return Err(std::io::Error::new(
                     ErrorKind::Other,
-                    "Certificate required in production",
+                    "Certificate required",
                 ));
             }
 
             warn!("No certificates found: Running in HTTP development mode");
-            let listener = TcpListener::bind(settings.server.address())
+            let listener = TcpListener::bind(config_settings.server.address())
                 .expect("Failed to bind server to address");
             http_server = http_server.listen(listener)?;
         }
@@ -160,13 +179,12 @@ async fn run_server(
     };
 
     let cert_type = find_certs();
-    let auth_data = Data::new(AuthData {
-        token_bucket: token_bucket.clone(),
-        auth_token_secret: token_secret.clone(),
-        debug_no_ssl: config_settings.server.develop && matches!(cert_type, ServerCertType::None),
-        debug_no_access_control: config_settings.server.develop
-            && config_settings.server.debug_no_access_control,
-    });
+    let auth_data = auth_data(
+        &config_settings.server,
+        token_bucket.clone(),
+        token_secret.clone(),
+        &cert_type,
+    );
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
@@ -231,11 +249,11 @@ async fn run_server(
             )?;
         }
         ServerCertType::None => {
-            if !config_settings.server.develop {
+            if !config_settings.server.develop && !config_settings.server.danger_allow_http {
                 error!("No certificates found");
                 return Err(std::io::Error::new(
                     ErrorKind::Other,
-                    "Certificate required in production",
+                    "Certificate required",
                 ));
             }
 
@@ -274,6 +292,10 @@ pub async fn start_server(
     off_switch: oneshot::Receiver<()>,
 ) -> std::io::Result<()> {
     let connection_manager = get_storage_connection_manager(&config_settings.database);
+
+    if let Some(init_sql) = &config_settings.database.init_sql {
+        connection_manager.execute(init_sql).unwrap();
+    }
 
     info!("Run DB migrations...");
     match run_db_migrations(&connection_manager.connection().unwrap(), true) {

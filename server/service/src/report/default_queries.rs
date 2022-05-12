@@ -101,10 +101,28 @@ query InvoiceQuery($storeId: String, $dataId: String) {
         }
       }
     }
-    ... on NodeError {
-      __typename
-      error {
-        description
+    store(id: $storeId) {
+      ... on StoreNode {
+        id
+        name(storeId: $storeId) {
+          address
+          chargeCode
+          code
+          comment
+          country
+          email
+          name
+          phone
+          website
+        }
+        code
+        storeName
+      }
+      ... on NodeError {
+        __typename
+        error {
+          description
+        }
       }
     }
   }
@@ -165,6 +183,30 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
           snapshotNumberOfPacks
           stocktakeId
         }
+      }
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      id
+      name(storeId: $storeId) {
+        address
+        chargeCode
+        code
+        comment
+        country
+        email
+        name
+        phone
+        website
+      }
+      code
+      storeName
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
       }
     }
   }
@@ -231,6 +273,30 @@ const REQUISITION_QUERY: &str = r#"query RequisitionQuery($storeId: String, $dat
     ... on RecordNotFound {
       __typename
       description
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      id
+      name(storeId: $storeId) {
+        address
+        chargeCode
+        code
+        comment
+        country
+        email
+        name
+        phone
+        website
+      }
+      code
+      storeName
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
     }
   }
 }"#;
