@@ -6,12 +6,15 @@ import HttpApi from 'i18next-http-backend';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { PropsWithChildrenOnly } from '@common/types';
+import { browserLanguageDetector } from './browserLanguageDetector';
 
 const defaultNS = 'common';
 export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   React.useEffect(() => {
     if (i18next.isInitialized) return;
 
+    const languageDetector = new LanguageDetector();
+    languageDetector.addDetector(browserLanguageDetector);
     const minuteInMilliseconds = 60 * 1000;
     const isDevelopment = process.env['NODE_ENV'] === 'development';
     const expirationTime = isDevelopment
@@ -22,7 +25,7 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     i18next
       .use(initReactI18next) // passes i18n down to react-i18next
       .use(Backend)
-      .use(LanguageDetector)
+      .use(languageDetector)
       .init({
         backend: {
           backends: [
@@ -42,6 +45,18 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
         },
         debug: isDevelopment,
         defaultNS,
+        detection: {
+          order: [
+            'omsBrowserLanguageDetector',
+            'querystring',
+            'cookie',
+            'localStorage',
+            'sessionStorage',
+            'navigator',
+            'htmlTag',
+          ],
+        },
+
         ns: defaultNS, // behaving as I expect defaultNS should. Without specifying ns here, a request is made to 'translation.json'
         fallbackLng: 'en',
         fallbackNS: 'common',
@@ -50,6 +65,7 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
           escapeValue: false, // not needed for react!!
         },
       });
+    console.log(`i18next initialized, language=${i18next.language}`);
   }, []);
 
   return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
