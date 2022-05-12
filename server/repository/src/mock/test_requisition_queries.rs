@@ -58,6 +58,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
     FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
             r.id = requisition_id.clone();
+            r.user_id = Some("user_id".to_owned());
             r.requisition_number = 3;
             r.name_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
@@ -66,6 +67,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
             r.sent_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
             r.finalised_datetime = Some(NaiveDate::from_ymd(2021, 01, 03).and_hms(0, 0, 0));
+            r.expected_delivery_date = Some(NaiveDate::from_ymd(2021, 01, 04));
             r.colour = Some("colour".to_owned());
             r.comment = Some("comment".to_owned());
             r.their_reference = Some("their_reference".to_owned());
