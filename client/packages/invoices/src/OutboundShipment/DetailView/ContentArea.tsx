@@ -107,6 +107,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const { rows, onChangeSortBy, sortBy } = useOutbound.line.rows(isGrouped);
   const columns = useOutboundColumns({ onChangeSortBy, sortBy });
+  const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
 
   if (!rows) return null;
@@ -133,7 +134,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
         noDataElement={
           <NothingHere
             body={t('error.no-outbound-items')}
-            onCreate={onAddItem}
+            onCreate={isDisabled ? undefined : onAddItem}
             buttonText={t('button.add-item')}
           />
         }
