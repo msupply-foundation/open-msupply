@@ -20,6 +20,7 @@ use service::{
 pub enum ItemSortFieldInput {
     Name,
     Code,
+    Type,
 }
 
 #[derive(InputObject)]
@@ -108,6 +109,7 @@ impl ItemSortInput {
         let key = match self.key {
             from::Name => to::Name,
             from::Code => to::Code,
+            from::Type => to::Type,
         };
 
         ItemSort {

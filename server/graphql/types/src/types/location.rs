@@ -28,6 +28,7 @@ pub struct LocationSortInput {
 pub struct LocationFilterInput {
     pub name: Option<EqualFilterStringInput>,
     pub code: Option<EqualFilterStringInput>,
+    pub on_hold: Option<bool>,
     pub id: Option<EqualFilterStringInput>,
 }
 
@@ -38,6 +39,7 @@ impl From<LocationFilterInput> for LocationFilter {
             code: f.code.map(EqualFilter::from),
             id: f.id.map(EqualFilter::from),
             store_id: None,
+            on_hold: f.on_hold,
         }
     }
 }
