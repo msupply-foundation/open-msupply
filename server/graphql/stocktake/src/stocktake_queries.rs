@@ -1,6 +1,7 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{
-    DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
+    DateFilterInput, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
+    SimpleStringFilterInput,
 };
 use graphql_core::pagination::PaginationInput;
 use graphql_core::simple_generic_errors::{
@@ -24,6 +25,10 @@ pub enum StocktakeSortFieldInput {
     Status,
     CreatedDatetime,
     FinalisedDatetime,
+    StocktakeNumber,
+    Comment,
+    Description,
+    StocktakeDate,
 }
 
 #[derive(InputObject)]
@@ -45,10 +50,16 @@ pub struct EqualFilterStocktakeStatusInput {
 #[derive(InputObject, Clone)]
 pub struct StocktakeFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub user_id: Option<EqualFilterStringInput>,
     pub stocktake_number: Option<EqualFilterBigNumberInput>,
+    pub comment: Option<SimpleStringFilterInput>,
+    pub description: Option<SimpleStringFilterInput>,
     pub status: Option<EqualFilterStocktakeStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
+    pub stocktake_date: Option<DateFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
+    pub inventory_adjustment_id: Option<EqualFilterStringInput>,
+    pub is_locked: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -196,6 +207,10 @@ impl StocktakeSortInput {
             from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
             from::FinalisedDatetime => to::FinalisedDatetime,
+            from::StocktakeNumber => to::StocktakeNumber,
+            from::StocktakeDate => to::StocktakeDate,
+            from::Comment => to::Comment,
+            from::Description => to::Description,
         };
 
         StocktakeSort {
@@ -210,12 +225,18 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
         StocktakeFilter {
             id: f.id.map(EqualFilter::from),
             store_id: None,
+            user_id: f.user_id.map(EqualFilter::from),
             stocktake_number: f.stocktake_number.map(EqualFilter::from),
+            comment: f.comment.map(SimpleStringFilter::from),
+            description: f.description.map(SimpleStringFilter::from),
             status: f
                 .status
                 .map(|t| map_filter!(t, StocktakeNodeStatus::to_domain)),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
+            stocktake_date: f.stocktake_date.map(DateFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
+            inventory_adjustment_id: f.inventory_adjustment_id.map(EqualFilter::from),
+            is_locked: f.is_locked,
         }
     }
 }

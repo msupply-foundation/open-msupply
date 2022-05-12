@@ -124,6 +124,24 @@ macro_rules! apply_date_time_filter {
     }};
 }
 
+macro_rules! apply_date_filter {
+    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(date_filter) = $filter_field {
+            if let Some(value) = date_filter.equal_to {
+                $query = $query.filter($dsl_field.eq(value));
+            }
+
+            if let Some(value) = date_filter.before_or_equal_to {
+                $query = $query.filter($dsl_field.le(value));
+            }
+
+            if let Some(value) = date_filter.after_or_equal_to {
+                $query = $query.filter($dsl_field.ge(value));
+            }
+        }
+    }};
+}
+
 /// Example expand, when called with:
 ///
 /// ```
@@ -195,6 +213,7 @@ macro_rules! apply_sort_asc_nulls_last {
     }};
 }
 
+pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
 pub(crate) use apply_simple_string_filter;
