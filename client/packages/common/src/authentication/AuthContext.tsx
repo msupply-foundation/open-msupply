@@ -156,7 +156,6 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       }
       case !hasValidStore: {
         setError(AuthError.NoStoreAssigned);
-        console.warn('error!', AuthError.NoStoreAssigned);
         break;
       }
       default: {
