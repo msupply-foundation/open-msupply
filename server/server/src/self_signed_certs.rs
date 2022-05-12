@@ -38,10 +38,9 @@ pub fn load_self_signed_certs_rustls(
 ) -> Result<ServerConfig, anyhow::Error> {
     let certfile = std::fs::File::open(&cert_files.public_cert_file)?;
     let mut reader = BufReader::new(certfile);
-    let certs = rustls_pemfile::certs(&mut reader)
-        .unwrap()
-        .iter()
-        .map(|v| rustls::Certificate(v.clone()))
+    let certs = rustls_pemfile::certs(&mut reader)?
+        .into_iter()
+        .map(rustls::Certificate)
         .collect();
 
     let private_key = load_private_key_rusttls(&cert_files.private_cert_file)?;
