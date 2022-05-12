@@ -4,8 +4,8 @@ import {
   useQueryClient,
   useTranslation,
   useMutation,
-  useNotification,
   useTableStore,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useOutbounds } from './useOutbounds';
 import { canDeleteInvoice } from '../../../../utils';
@@ -14,10 +14,8 @@ export const useOutboundDelete = () => {
   const queryClient = useQueryClient();
   const { data: rows } = useOutbounds();
   const api = useOutboundApi();
-  const { mutate } = useMutation(api.delete);
-  const t = useTranslation('replenishment');
-
-  const { success, info } = useNotification();
+  const { mutateAsync } = useMutation(api.delete);
+  const t = useTranslation('distribution');
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -26,28 +24,27 @@ export const useOutboundDelete = () => {
       .filter(Boolean) as OutboundRowFragment[],
   }));
 
-  const deleteAction = () => {
-    const numberSelected = selectedRows.length;
-    if (selectedRows && numberSelected > 0) {
-      const canDeleteRows = selectedRows.every(canDeleteInvoice);
-      if (!canDeleteRows) {
-        const cannotDeleteSnack = info(t('messages.cant-delete-invoices'));
-        cannotDeleteSnack();
-      } else {
-        mutate(selectedRows, {
-          onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
-        });
-        const deletedMessage = t('messages.deleted-invoices', {
-          count: numberSelected,
-        });
-        const successSnack = success(deletedMessage);
-        successSnack();
-      }
-    } else {
-      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
-      selectRowsSnack();
-    }
+  const deleteAction = async () => {
+    await mutateAsync(selectedRows)
+      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .catch(err => {
+        throw err;
+      });
   };
 
-  return deleteAction;
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction,
+    canDelete: selectedRows.every(canDeleteInvoice),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-shipments', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-shipments', {
+        count: selectedRows.length,
+      }),
+    },
+  });
+
+  return confirmAndDelete;
 };

@@ -1,16 +1,16 @@
-import { useNotification, useTableStore } from '@openmsupply-client/common';
+import {
+  useTableStore,
+  useDeleteConfirmation,
+} from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../../../types';
 import { StocktakeLineFragment } from '../../operations.generated';
 import { useTranslation } from '@common/intl';
 import { useStocktakeRows } from './useStocktakeRows';
 import { useStocktakeDeleteLines } from './useStocktakeDeleteLines';
 
-export const useStocktakeDeleteSelectedLines = (): {
-  onDelete: () => Promise<void>;
-} => {
-  const { success, info } = useNotification();
+export const useStocktakeDeleteSelectedLines = (): (() => void) => {
   const { items, lines } = useStocktakeRows();
-  const { mutate } = useStocktakeDeleteLines();
+  const { mutateAsync } = useStocktakeDeleteLines();
   const t = useTranslation('inventory');
 
   const { selectedRows } = useTableStore(state => {
@@ -38,17 +38,24 @@ export const useStocktakeDeleteSelectedLines = (): {
   });
 
   const onDelete = async () => {
-    if (selectedRows && selectedRows?.length > 0) {
-      const number = selectedRows?.length;
-      const successSnack = success(t('messages.deleted-lines', { number }));
-      await mutate(selectedRows, {
-        onSuccess: successSnack,
-      });
-    } else {
-      const infoSnack = info(t('messages.select-rows-to-delete-them'));
-      infoSnack();
-    }
+    await mutateAsync(selectedRows).catch(err => {
+      throw err;
+    });
   };
 
-  return { onDelete };
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: onDelete,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-stocktake_lines', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-lines', {
+        count: selectedRows.length,
+      }),
+      cantDelete: t('label.cant-delete-disabled'),
+    },
+  });
+
+  return confirmAndDelete;
 };
