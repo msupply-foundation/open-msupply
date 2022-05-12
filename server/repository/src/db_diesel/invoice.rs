@@ -31,16 +31,20 @@ pub struct InvoiceFilter {
     pub name_id: Option<EqualFilter<String>>,
     pub name: Option<SimpleStringFilter>,
     pub store_id: Option<EqualFilter<String>>,
+    pub user_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InvoiceRowType>>,
     pub status: Option<EqualFilter<InvoiceRowStatus>>,
+    pub on_hold: Option<bool>,
     pub comment: Option<SimpleStringFilter>,
     pub their_reference: Option<EqualFilter<String>>,
+    pub transport_reference: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub allocated_datetime: Option<DatetimeFilter>,
     pub picked_datetime: Option<DatetimeFilter>,
     pub shipped_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
+    pub colour: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
     pub linked_invoice_id: Option<EqualFilter<String>>,
 }
@@ -57,6 +61,8 @@ pub enum InvoiceSortField {
     ShippedDatetime,
     DeliveredDatetime,
     VerifiedDatetime,
+    TheirReference,
+    TransportReference,
 }
 
 pub type InvoiceSort = Sort<InvoiceSortField>;
@@ -131,6 +137,12 @@ impl<'a> InvoiceRepository<'a> {
                 InvoiceSortField::Comment => {
                     apply_sort_no_case!(query, sort, invoice_dsl::comment);
                 }
+                InvoiceSortField::TheirReference => {
+                    apply_sort_no_case!(query, sort, invoice_dsl::their_reference);
+                }
+                InvoiceSortField::TransportReference => {
+                    apply_sort_no_case!(query, sort, invoice_dsl::transport_reference);
+                }
             }
         } else {
             query = query.order(invoice_dsl::id.asc())
@@ -177,16 +189,20 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
             name_id,
             name,
             store_id,
+            user_id,
             r#type,
             status,
+            on_hold,
             comment,
             their_reference,
+            transport_reference,
             created_datetime,
             allocated_datetime,
             picked_datetime,
             shipped_datetime,
             delivered_datetime,
             verified_datetime,
+            colour,
             requisition_id,
             linked_invoice_id,
         } = f;
@@ -200,9 +216,16 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
         apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
         apply_simple_string_filter!(query, comment, invoice_dsl::comment);
         apply_equal_filter!(query, linked_invoice_id, invoice_dsl::linked_invoice_id);
+        apply_equal_filter!(query, user_id, invoice_dsl::user_id);
+        apply_equal_filter!(query, transport_reference, invoice_dsl::transport_reference);
+        apply_equal_filter!(query, colour, invoice_dsl::colour);
 
         apply_equal_filter!(query, r#type, invoice_dsl::type_);
         apply_equal_filter!(query, status, invoice_dsl::status);
+
+        if let Some(value) = on_hold {
+            query = query.filter(invoice_dsl::on_hold.eq(value));
+        }
 
         apply_date_time_filter!(query, created_datetime, invoice_dsl::created_datetime);
         apply_date_time_filter!(query, allocated_datetime, invoice_dsl::allocated_datetime);
@@ -282,6 +305,11 @@ impl InvoiceFilter {
         self
     }
 
+    pub fn user_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.user_id = Some(filter);
+        self
+    }
+
     pub fn r#type(mut self, filter: EqualFilter<InvoiceRowType>) -> Self {
         self.r#type = Some(filter);
         self
@@ -294,6 +322,16 @@ impl InvoiceFilter {
 
     pub fn status(mut self, filter: EqualFilter<InvoiceRowStatus>) -> Self {
         self.status = Some(filter);
+        self
+    }
+
+    pub fn on_hold(mut self, filter: bool) -> Self {
+        self.on_hold = Some(filter);
+        self
+    }
+
+    pub fn transport_reference(mut self, filter: EqualFilter<String>) -> Self {
+        self.transport_reference = Some(filter);
         self
     }
 
@@ -324,6 +362,11 @@ impl InvoiceFilter {
 
     pub fn verified_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.verified_datetime = Some(filter);
+        self
+    }
+
+    pub fn colour(mut self, filter: EqualFilter<String>) -> Self {
+        self.colour = Some(filter);
         self
     }
 
