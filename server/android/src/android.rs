@@ -3,14 +3,17 @@
 pub mod android {
     extern crate jni;
 
+    use std::io::Write;
+    use std::path::{Path, PathBuf};
     use std::thread::{self, JoinHandle};
     use std::{collections::HashMap, sync::Mutex};
 
     use jni::sys::{jchar, jshort};
+    use rcgen::generate_simple_self_signed;
     use repository::database_settings::DatabaseSettings;
 
     use server::settings::{ServerSettings, Settings};
-    use server::start_server;
+    use server::{start_server, PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
     use tokio::sync::oneshot;
 
     use self::jni::objects::{JClass, JString};
@@ -56,6 +59,20 @@ pub mod android {
         })
     });
 
+    fn generate_certs(cert_dir: &PathBuf) {
+        let subject_alt_names = vec!["localhost".to_string()];
+        let cert = generate_simple_self_signed(subject_alt_names).unwrap();
+
+        std::fs::create_dir_all(cert_dir).unwrap();
+        let mut file = std::fs::File::create(cert_dir.join(PRIVATE_CERT_FILE)).unwrap();
+        file.write_all(cert.serialize_private_key_pem().as_bytes())
+            .unwrap();
+
+        let mut file = std::fs::File::create(cert_dir.join(PUBLIC_CERT_FILE)).unwrap();
+        file.write_all(cert.serialize_pem().unwrap().as_bytes())
+            .unwrap();
+    }
+
     /// Bindings test method. TODO: remove when not needed anymore
     #[no_mangle]
     pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_rustHelloWorld(
@@ -88,6 +105,10 @@ pub mod android {
             .unwrap()
             .to_path_buf()
             .join("certs");
+        if !cert_path.join(PRIVATE_CERT_FILE).exists() {
+            generate_certs(&cert_path);
+        }
+
         // run server in background thread
         let thread = thread::spawn(move || {
             actix_web::rt::System::new().block_on(async move {
