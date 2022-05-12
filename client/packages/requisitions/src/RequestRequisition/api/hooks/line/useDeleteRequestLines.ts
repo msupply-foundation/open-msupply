@@ -20,7 +20,7 @@ export const useDeleteRequestLines = () => {
     onSettled: () =>
       queryClient.invalidateQueries(api.keys.detail(requestNumber)),
   });
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
 
   const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)
@@ -39,9 +39,11 @@ export const useDeleteRequestLines = () => {
     deleteAction: onDelete,
     canDelete: !isDisabled,
     messages: {
-      confirmMessage: t('messages.confirm-delete-lines'),
+      confirmMessage: t('messages.confirm-delete-requisition-lines', {
+        count: selectedRows.length,
+      }),
       deleteSuccess: t('messages.deleted-lines', {
-        number: selectedRows.length,
+        count: selectedRows.length,
       }),
       cantDelete: t('label.cant-delete-disabled-requisition'),
     },

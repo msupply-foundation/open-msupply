@@ -37,7 +37,7 @@ export const useDeleteResponseLines = () => {
     const number = selectedRows?.length;
     if (selectedRows && number) {
       mutate(selectedRows, {
-        onSuccess: success(t('messages.deleted-lines', { number: number })),
+        onSuccess: success(t('messages.deleted-lines', { count: number })),
       });
     } else {
       info(t('messages.select-rows-to-delete-them'))();

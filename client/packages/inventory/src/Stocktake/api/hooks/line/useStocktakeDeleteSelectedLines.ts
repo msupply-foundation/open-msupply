@@ -49,9 +49,11 @@ export const useStocktakeDeleteSelectedLines = (): (() => void) => {
     selectedRows,
     deleteAction: onDelete,
     messages: {
-      confirmMessage: t('messages.confirm-delete-stocktake_lines'),
+      confirmMessage: t('messages.confirm-delete-stocktake_lines', {
+        count: selectedRows.length,
+      }),
       deleteSuccess: t('messages.deleted-lines', {
-        number: selectedRows.length,
+        count: selectedRows.length,
       }),
       cantDelete: t('label.cant-delete-disabled'),
     },

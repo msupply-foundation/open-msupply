@@ -52,7 +52,7 @@ export const Toolbar: FC<{
         setDeleteErrors(errors);
         if (errors.length === 0) {
           const deletedMessage = t('messages.deleted-locations', {
-            number: numberSelected,
+            count: numberSelected,
           });
           const successSnack = success(deletedMessage);
           successSnack();
@@ -66,7 +66,9 @@ export const Toolbar: FC<{
 
   const showDeleteConfirmation = useConfirmationModal({
     onConfirm: deleteAction,
-    message: t('messages.confirm-delete-locations'),
+    message: t('messages.confirm-delete-locations', {
+      count: selectedRows.length,
+    }),
     title: t('heading.are-you-sure'),
   });
 
