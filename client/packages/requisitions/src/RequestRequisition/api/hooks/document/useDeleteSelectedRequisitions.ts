@@ -19,11 +19,9 @@ export const useDeleteSelectedRequisitions = () => {
       .filter(Boolean) as RequestRowFragment[],
   }));
   const deleteAction = async () => {
-    await mutateAsync(selectedRows)
-      // .then(() => queryClient.invalidateQueries(api.keys.base()))
-      .catch(err => {
-        throw err;
-      });
+    await mutateAsync(selectedRows).catch(err => {
+      throw err;
+    });
   };
 
   const confirmAndDelete = useDeleteConfirmation({

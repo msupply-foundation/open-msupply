@@ -27,11 +27,9 @@ export const useDeleteRequestLines = () => {
   );
 
   const onDelete = async () => {
-    mutateAsync(selectedRows)
-      // .then(() => queryClient.invalidateQueries(api.keys.base()))
-      .catch(err => {
-        throw err;
-      });
+    mutateAsync(selectedRows).catch(err => {
+      throw err;
+    });
   };
 
   const confirmAndDelete = useDeleteConfirmation({
