@@ -7,7 +7,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{
+        apply_equal_filter, apply_simple_string_filter, apply_sort, apply_sort_no_case,
+    },
     repository_error::RepositoryError,
     EqualFilter, Pagination, SimpleStringFilter, Sort,
 };
@@ -22,6 +24,7 @@ pub struct Item {
 pub enum ItemSortField {
     Name,
     Code,
+    Type,
 }
 
 pub type ItemSort = Sort<ItemSortField>;
@@ -119,6 +122,9 @@ impl<'a> ItemRepository<'a> {
                 }
                 ItemSortField::Code => {
                     apply_sort_no_case!(query, sort, item_dsl::code);
+                }
+                ItemSortField::Type => {
+                    apply_sort!(query, sort, item_dsl::type_);
                 }
             }
         } else {

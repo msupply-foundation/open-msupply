@@ -18,6 +18,7 @@ pub struct LocationFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
     pub code: Option<EqualFilter<String>>,
+    pub on_hold: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
 }
 
@@ -92,6 +93,11 @@ fn create_filtered_query(filter: Option<LocationFilter>) -> BoxedLocationQuery {
         apply_equal_filter!(query, filter.id, location_dsl::id);
         apply_equal_filter!(query, filter.name, location_dsl::name);
         apply_equal_filter!(query, filter.code, location_dsl::code);
+
+        if let Some(value) = filter.on_hold {
+            query = query.filter(location_dsl::on_hold.eq(value));
+        }
+
         apply_equal_filter!(query, filter.store_id, location_dsl::store_id);
     }
 
@@ -108,6 +114,7 @@ impl LocationFilter {
             id: None,
             name: None,
             code: None,
+            on_hold: None,
             store_id: None,
         }
     }
@@ -124,6 +131,11 @@ impl LocationFilter {
 
     pub fn code(mut self, filter: EqualFilter<String>) -> Self {
         self.code = Some(filter);
+        self
+    }
+
+    pub fn on_hold(mut self, filter: bool) -> Self {
+        self.on_hold = Some(filter);
         self
     }
 
