@@ -29,10 +29,13 @@ pub struct ServerSettings {
     #[serde(default)]
     pub debug_no_access_control: bool,
     #[serde(default)]
-    // allow any origin in development mode
+    /// Allow any origin in development mode
     pub debug_cors_permissive: bool,
-    //  Sets the allowed origin for cors requests
+    /// Sets the allowed origin for cors requests
     pub cors_origins: Vec<String>,
+
+    /// Directory where certificate files are located (default is "./certs").
+    pub certs_dir: Option<String>,
 }
 
 impl ServerSettings {

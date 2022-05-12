@@ -15,6 +15,7 @@ pub fn get_test_settings(db_name: &str) -> Settings {
             debug_no_access_control: true,
             debug_cors_permissive: true,
             cors_origins: vec!["http://localhost:3003".to_string()],
+            certs_dir: None,
         },
         database: get_test_db_settings(db_name),
         sync: Some(SyncSettings {
