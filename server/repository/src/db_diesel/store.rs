@@ -58,6 +58,11 @@ impl StoreFilter {
         self
     }
 
+    pub fn name_code(mut self, filter: SimpleStringFilter) -> Self {
+        self.name_code = Some(filter);
+        self
+    }
+
     pub fn site_id(mut self, filter: EqualFilter<i32>) -> Self {
         self.site_id = Some(filter);
         self
