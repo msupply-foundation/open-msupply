@@ -46,7 +46,7 @@ query InvoiceQuery($storeId: String, $dataId: String) {
         totalAfterTax
         totalBeforeTax
       }
-      otherParty(storeId: "") {
+      otherParty(storeId: $storeId) {
         name
         isSupplier
         isCustomer
@@ -101,28 +101,28 @@ query InvoiceQuery($storeId: String, $dataId: String) {
         }
       }
     }
-    store(id: $storeId) {
-      ... on StoreNode {
-        id
-        name(storeId: $storeId) {
-          address
-          chargeCode
-          code
-          comment
-          country
-          email
-          name
-          phone
-          website
-        }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      id
+      name(storeId: $storeId) {
+        address
+        chargeCode
         code
-        storeName
+        comment
+        country
+        email
+        name
+        phone
+        website
       }
-      ... on NodeError {
-        __typename
-        error {
-          description
-        }
+      code
+      storeName
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
       }
     }
   }
