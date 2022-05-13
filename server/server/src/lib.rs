@@ -1,4 +1,8 @@
-use crate::{cors::cors_policy, static_files::config_static_files};
+use crate::{
+    cors::cors_policy,
+    self_signed_certs::{find_self_signed_certs, load_self_signed_certs_rustls},
+    static_files::config_static_files,
+};
 
 use self::{
     middleware::{compress as compress_middleware, logger as logger_middleware},
@@ -6,11 +10,11 @@ use self::{
     sync::Synchroniser,
 };
 use graphql_core::loader::{get_loaders, LoaderRegistry};
-use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
 
 use graphql::{config as graphql_config, config_stage0};
 use log::{error, info, warn};
 use repository::{get_storage_connection_manager, run_db_migrations, StorageConnectionManager};
+use self_signed_certs::SelfSignedCertFiles;
 use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
@@ -24,7 +28,6 @@ use std::{
     io::ErrorKind,
     net::TcpListener,
     ops::DerefMut,
-    path::Path,
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
@@ -34,6 +37,7 @@ pub mod configuration;
 pub mod cors;
 pub mod environment;
 pub mod middleware;
+pub mod self_signed_certs;
 pub mod settings;
 pub mod static_files;
 pub mod sync;
@@ -63,7 +67,10 @@ async fn run_stage0(
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
-    let cert_type = find_certs();
+    let cert_type = match find_self_signed_certs(&config_settings.server) {
+        Some(files) => ServerCertType::SelfSigned(files),
+        None => ServerCertType::None,
+    };
     let auth_data = auth_data(
         &config_settings.server,
         token_bucket,
@@ -101,14 +108,15 @@ async fn run_stage0(
     })
     .disable_signals();
     match cert_type {
-        ServerCertType::SelfSigned(cert_path) => {
-            let ssl_builder = load_certs(cert_path).expect("Invalid self signed certificates");
-            http_server = http_server.bind_openssl(
+        ServerCertType::SelfSigned(cert_files) => {
+            let config = load_self_signed_certs_rustls(cert_files)
+                .expect("Invalid self signed certificates");
+            http_server = http_server.bind_rustls(
                 format!(
                     "{}:{}",
                     config_settings.server.host, config_settings.server.port
                 ),
-                ssl_builder,
+                config,
             )?;
         }
         ServerCertType::None => {
@@ -178,7 +186,10 @@ async fn run_server(
         }
     };
 
-    let cert_type = find_certs();
+    let cert_type = match find_self_signed_certs(&config_settings.server) {
+        Some(files) => ServerCertType::SelfSigned(files),
+        None => ServerCertType::None,
+    };
     let auth_data = auth_data(
         &config_settings.server,
         token_bucket.clone(),
@@ -238,14 +249,15 @@ async fn run_server(
     })
     .disable_signals();
     match cert_type {
-        ServerCertType::SelfSigned(cert_path) => {
-            let ssl_builder = load_certs(cert_path).expect("Invalid self signed certificates");
-            http_server = http_server.bind_openssl(
+        ServerCertType::SelfSigned(cert_files) => {
+            let config = load_self_signed_certs_rustls(cert_files)
+                .expect("Invalid self signed certificates");
+            http_server = http_server.bind_rustls(
                 format!(
                     "{}:{}",
                     config_settings.server.host, config_settings.server.port
                 ),
-                ssl_builder,
+                config,
             )?;
         }
         ServerCertType::None => {
@@ -341,32 +353,9 @@ pub async fn start_server(
     Ok(())
 }
 
-pub struct SelfSignedCertFiles {
-    pub private_cert_file: String,
-    pub public_cert_file: String,
-}
-
 /// Details about the certs used by the running server
+#[derive(Debug)]
 pub enum ServerCertType {
     None,
     SelfSigned(SelfSignedCertFiles),
-}
-
-const PRIVATE_CERT_FILE: &str = "./certs/key.pem";
-const PUBLIC_CERT_FILE: &str = "./certs/cert.pem";
-fn find_certs() -> ServerCertType {
-    if !Path::new(PRIVATE_CERT_FILE).exists() || !Path::new(PUBLIC_CERT_FILE).exists() {
-        return ServerCertType::None;
-    }
-    return ServerCertType::SelfSigned(SelfSignedCertFiles {
-        private_cert_file: PRIVATE_CERT_FILE.to_string(),
-        public_cert_file: PUBLIC_CERT_FILE.to_string(),
-    });
-}
-
-fn load_certs(cert_files: SelfSignedCertFiles) -> Result<SslAcceptorBuilder, anyhow::Error> {
-    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    builder.set_private_key_file(cert_files.private_cert_file, SslFiletype::PEM)?;
-    builder.set_certificate_chain_file(cert_files.public_cert_file)?;
-    Ok(builder)
 }
