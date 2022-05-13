@@ -110,6 +110,41 @@ impl RequisitionFilter {
         self.linked_requisition_id = Some(filter);
         self
     }
+
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+
+    pub fn sent_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.sent_datetime = Some(filter);
+        self
+    }
+
+    pub fn finalised_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.finalised_datetime = Some(filter);
+        self
+    }
+
+    pub fn expected_delivery_date(mut self, filter: DateFilter) -> Self {
+        self.expected_delivery_date = Some(filter);
+        self
+    }
+
+    pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.name_id = Some(filter);
+        self
+    }
+
+    pub fn colour(mut self, filter: EqualFilter<String>) -> Self {
+        self.colour = Some(filter);
+        self
+    }
+
+    pub fn their_reference(mut self, filter: SimpleStringFilter) -> Self {
+        self.their_reference = Some(filter);
+        self
+    }
 }
 
 impl RequisitionRowStatus {

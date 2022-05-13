@@ -384,6 +384,21 @@ impl InvoiceFilter {
         self.store_id = Some(filter);
         self
     }
+
+    pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.name_id = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn their_reference(mut self, filter: EqualFilter<String>) -> Self {
+        self.their_reference = Some(filter);
+        self
+    }
 }
 
 impl InvoiceRowStatus {
