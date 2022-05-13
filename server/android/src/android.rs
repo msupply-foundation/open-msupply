@@ -3,12 +3,16 @@
 pub mod android {
     extern crate jni;
 
+    use std::io::Write;
+    use std::path::PathBuf;
     use std::thread::{self, JoinHandle};
     use std::{collections::HashMap, sync::Mutex};
 
     use jni::sys::{jchar, jshort};
+    use rcgen::generate_simple_self_signed;
     use repository::database_settings::DatabaseSettings;
 
+    use server::self_signed_certs::{PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
     use server::settings::{ServerSettings, Settings};
     use server::start_server;
     use tokio::sync::oneshot;
@@ -56,6 +60,20 @@ pub mod android {
         })
     });
 
+    fn generate_certs(cert_dir: &PathBuf) {
+        let subject_alt_names = vec!["localhost".to_string()];
+        let cert = generate_simple_self_signed(subject_alt_names).unwrap();
+
+        std::fs::create_dir_all(cert_dir).unwrap();
+        let mut file = std::fs::File::create(cert_dir.join(PRIVATE_CERT_FILE)).unwrap();
+        file.write_all(cert.serialize_private_key_pem().as_bytes())
+            .unwrap();
+
+        let mut file = std::fs::File::create(cert_dir.join(PUBLIC_CERT_FILE)).unwrap();
+        file.write_all(cert.serialize_pem().unwrap().as_bytes())
+            .unwrap();
+    }
+
     /// Bindings test method. TODO: remove when not needed anymore
     #[no_mangle]
     pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_rustHelloWorld(
@@ -73,14 +91,22 @@ pub mod android {
         env: JNIEnv,
         _: JClass,
         port: jchar,
-        db_path: JString,
+        files_dir: JString,
         cache_dir: JString,
     ) -> jlong {
         android_logger::init_once(Config::default().with_min_level(Level::Trace));
 
         let (off_switch, off_switch_receiver) = oneshot::channel();
-        let db_path: String = env.get_string(db_path).unwrap().into();
+        let files_dir: String = env.get_string(files_dir).unwrap().into();
+        let files_dir = PathBuf::from(&files_dir);
+        let db_path = files_dir.join("omsupply-database");
+
         let cache_dir: String = env.get_string(cache_dir).unwrap().into();
+
+        let cert_path = files_dir.join("certs");
+        if !cert_path.join(PRIVATE_CERT_FILE).exists() {
+            generate_certs(&cert_path);
+        }
 
         // run server in background thread
         let thread = thread::spawn(move || {
@@ -94,13 +120,14 @@ pub mod android {
                         debug_no_access_control: false,
                         debug_cors_permissive: false,
                         cors_origins: vec!["http://localhost".to_string()],
+                        certs_dir: Some(cert_path.to_str().unwrap().to_string()),
                     },
                     database: DatabaseSettings {
                         username: "n/a".to_string(),
                         password: "n/a".to_string(),
                         port: 0,
                         host: "n/a".to_string(),
-                        database_name: db_path,
+                        database_name: db_path.to_string_lossy().to_string(),
                         // See https://github.com/openmsupply/remote-server/issues/1076
                         init_sql: Some(format!("PRAGMA temp_store_directory = '{}';", cache_dir)),
                     },
