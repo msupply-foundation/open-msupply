@@ -154,12 +154,13 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
         setError(undefined);
         break;
       }
+      case !isLoggedIn: {
+        setError(AuthError.Unauthenticated);
+        break;
+      }
       case !hasValidStore: {
         setError(AuthError.NoStoreAssigned);
         break;
-      }
-      default: {
-        setError(AuthError.Unauthenticated);
       }
     }
   };
