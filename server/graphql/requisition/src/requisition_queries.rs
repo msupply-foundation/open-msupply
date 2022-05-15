@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{
-        DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
+        DateFilterInput, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
         SimpleStringFilterInput,
     },
     map_filter,
@@ -13,7 +13,7 @@ use graphql_core::{
 use graphql_types::types::{
     RequisitionConnector, RequisitionNode, RequisitionNodeStatus, RequisitionNodeType,
 };
-use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{DateFilter, DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{RequisitionFilter, RequisitionSort, RequisitionSortField};
 use service::permission_validation::{Resource, ResourceAccessRequest};
 
@@ -28,6 +28,8 @@ pub enum RequisitionSortFieldInput {
     SentDatetime,
     CreatedDatetime,
     FinalisedDatetime,
+    ExpectedDeliveryDate,
+    TheirReference,
 }
 
 #[derive(InputObject)]
@@ -56,12 +58,14 @@ pub struct EqualFilterRequisitionStatusInput {
 #[derive(InputObject, Clone)]
 pub struct RequisitionFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub user_id: Option<EqualFilterStringInput>,
     pub requisition_number: Option<EqualFilterBigNumberInput>,
     pub r#type: Option<EqualFilterRequisitionTypeInput>,
     pub status: Option<EqualFilterRequisitionStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub sent_datetime: Option<DatetimeFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
+    pub expected_delivery_date: Option<DateFilterInput>,
     pub other_party_name: Option<SimpleStringFilterInput>,
     pub other_party_id: Option<EqualFilterStringInput>,
     pub colour: Option<EqualFilterStringInput>,
@@ -193,6 +197,8 @@ impl RequisitionSortInput {
             from::SentDatetime => to::SentDatetime,
             from::CreatedDatetime => to::CreatedDatetime,
             from::FinalisedDatetime => to::FinalisedDatetime,
+            from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
+            from::TheirReference => to::TheirReference,
         };
 
         RequisitionSort {
@@ -206,6 +212,7 @@ impl RequisitionFilterInput {
     pub fn to_domain(self) -> RequisitionFilter {
         RequisitionFilter {
             id: self.id.map(EqualFilter::from),
+            user_id: self.user_id.map(EqualFilter::from),
             requisition_number: self.requisition_number.map(EqualFilter::from),
             r#type: self
                 .r#type
@@ -216,6 +223,7 @@ impl RequisitionFilterInput {
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
             finalised_datetime: self.finalised_datetime.map(DatetimeFilter::from),
+            expected_delivery_date: self.expected_delivery_date.map(DateFilter::from),
             name: self.other_party_name.map(SimpleStringFilter::from),
             name_id: self.other_party_id.map(EqualFilter::from),
             colour: self.colour.map(EqualFilter::from),

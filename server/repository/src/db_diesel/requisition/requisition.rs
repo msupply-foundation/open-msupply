@@ -6,8 +6,8 @@ use super::{
 use crate::{
     db_diesel::name_row::{name, name::dsl as name_dsl},
     diesel_macros::{
-        apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
-        apply_sort_no_case,
+        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
+        apply_sort, apply_sort_no_case,
     },
     repository_error::RepositoryError,
     DBType, NameRow, StorageConnection,
@@ -89,6 +89,12 @@ impl<'a> RequisitionRepository<'a> {
                 RequisitionSortField::FinalisedDatetime => {
                     apply_sort!(query, sort, requisition_dsl::finalised_datetime);
                 }
+                RequisitionSortField::ExpectedDeliveryDate => {
+                    apply_sort!(query, sort, requisition_dsl::expected_delivery_date);
+                }
+                RequisitionSortField::TheirReference => {
+                    apply_sort_no_case!(query, sort, requisition_dsl::their_reference);
+                }
             }
         } else {
             query = query.order(requisition_dsl::id.asc())
@@ -114,12 +120,14 @@ fn create_filtered_query(
 
     if let Some(RequisitionFilter {
         id,
+        user_id,
         requisition_number,
         r#type,
         status,
         created_datetime,
         sent_datetime,
         finalised_datetime,
+        expected_delivery_date,
         name_id,
         name,
         colour,
@@ -142,6 +150,7 @@ fn create_filtered_query(
         );
         apply_equal_filter!(query, r#type, requisition_dsl::type_);
         apply_equal_filter!(query, status, requisition_dsl::status);
+        apply_equal_filter!(query, user_id, requisition_dsl::user_id);
 
         apply_date_time_filter!(query, created_datetime, requisition_dsl::created_datetime);
         apply_date_time_filter!(query, sent_datetime, requisition_dsl::sent_datetime);
@@ -149,6 +158,11 @@ fn create_filtered_query(
             query,
             finalised_datetime,
             requisition_dsl::finalised_datetime
+        );
+        apply_date_filter!(
+            query,
+            expected_delivery_date,
+            requisition_dsl::expected_delivery_date
         );
 
         apply_equal_filter!(query, name_id, requisition_dsl::name_id);

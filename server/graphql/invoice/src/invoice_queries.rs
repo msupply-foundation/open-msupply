@@ -42,6 +42,8 @@ pub enum InvoiceSortFieldInput {
     ShippedDatetime,
     DeliveredDatetime,
     VerifiedDatetime,
+    TheirReference,
+    TransportReference,
 }
 
 #[derive(InputObject)]
@@ -70,20 +72,25 @@ pub struct EqualFilterInvoiceStatusInput {
 #[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub name_id: Option<EqualFilterStringInput>,
     pub invoice_number: Option<EqualFilterBigNumberInput>,
     pub other_party_name: Option<SimpleStringFilterInput>,
     pub other_party_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
+    pub user_id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterInvoiceTypeInput>,
     pub status: Option<EqualFilterInvoiceStatusInput>,
+    pub on_hold: Option<bool>,
     pub comment: Option<SimpleStringFilterInput>,
     pub their_reference: Option<EqualFilterStringInput>,
+    pub transport_reference: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub allocated_datetime: Option<DatetimeFilterInput>,
     pub picked_datetime: Option<DatetimeFilterInput>,
     pub shipped_datetime: Option<DatetimeFilterInput>,
     pub delivered_datetime: Option<DatetimeFilterInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
+    pub colour: Option<EqualFilterStringInput>,
     pub requisition_id: Option<EqualFilterStringInput>,
     pub linked_invoice_id: Option<EqualFilterStringInput>,
 }
@@ -196,20 +203,24 @@ impl InvoiceFilterInput {
             name_id: self.other_party_id.map(EqualFilter::from),
             name: self.other_party_name.map(SimpleStringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
+            user_id: self.user_id.map(EqualFilter::from),
             r#type: self
                 .r#type
                 .map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
             status: self
                 .status
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
+            on_hold: self.on_hold,
             comment: self.comment.map(SimpleStringFilter::from),
             their_reference: self.their_reference.map(EqualFilter::from),
+            transport_reference: self.transport_reference.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             allocated_datetime: self.allocated_datetime.map(DatetimeFilter::from),
             picked_datetime: self.picked_datetime.map(DatetimeFilter::from),
             shipped_datetime: self.shipped_datetime.map(DatetimeFilter::from),
             delivered_datetime: self.delivered_datetime.map(DatetimeFilter::from),
             verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
+            colour: self.colour.map(EqualFilter::from),
             requisition_id: self.requisition_id.map(EqualFilter::from),
             linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
         }
@@ -232,6 +243,8 @@ impl InvoiceSortInput {
             from::ShippedDatetime => to::ShippedDatetime,
             from::DeliveredDatetime => to::DeliveredDatetime,
             from::VerifiedDatetime => to::VerifiedDatetime,
+            from::TheirReference => to::TheirReference,
+            from::TransportReference => to::TransportReference,
         };
 
         InvoiceSort {
