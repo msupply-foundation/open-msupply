@@ -241,6 +241,16 @@ impl NameFilter {
         self.is_store = Some(value);
         self
     }
+
+    pub fn store_code(mut self, filter: SimpleStringFilter) -> Self {
+        self.store_code = Some(filter);
+        self
+    }
+
+    pub fn is_customer(mut self, value: bool) -> Self {
+        self.is_customer = Some(value);
+        self
+    }
 }
 
 impl Name {
