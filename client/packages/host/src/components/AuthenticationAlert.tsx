@@ -46,7 +46,7 @@ export const AuthenticationAlert = () => {
     }
 
     if (error === AuthError.PermissionDenied) {
-      LocalStorage.setItem('/auth/error', undefined);
+      LocalStorage.removeItem('/auth/error');
       return;
     }
 

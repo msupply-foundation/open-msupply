@@ -147,11 +147,18 @@ You may need to install `armv7` i.e. `rustup target add armv7-linux-androideabi`
 yarn android:build-remote_server
 ```
 
-#### MacOS issues
+#### MacOS
 
-If you have the error: `fatal error: 'stdio.h' file not found`. If so, specify a location for the headers using the`CPATH`env var, for example`/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/`or`/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/`
+Have been unable to build the aarch64-linux-android target of remote-server on macOS running on apple silicon. Configuration when using an x86 based macOS is also difficult and we recommend building on a linux host if at all possible. 
 
-If the `C_INCLUDE_PATH` env var is set, that may cause compilation issues, as it will include the macOS headers and give you `warning: #error architecture not supported` and `warning: fatal error: too many errors emitted, stopping now [-ferror-limit=]`. In which case `unset C_INCLUDE_PATH`
+Here are some issues encountered when building on macOS:
+
+1. If you have the error: `fatal error: 'stdio.h' file not found`. If so, specify a location for the headers using the`CPATH`env var, for example`/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/`or`/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/`
+
+2. If the `C_INCLUDE_PATH` env var is set, that may cause compilation issues, as it will include the macOS headers and give you `warning: #error architecture not supported` and `warning: fatal error: too many errors emitted, stopping now [-ferror-limit=]`. In which case `unset C_INCLUDE_PATH`
+
+
+3. `thread 'rustc' panicked at 'called `Option::unwrap()` on a `None` value', compiler/rustc_codegen_llvm/src/back/archive.rs:358:67`: Install openssl (`brew install openssl`) and set the env var for `OPENSSL_DIR` e.g. `export OPENSSL_DIR=/usr/local/opt/openssl@3`
 
 #### Unsolved issue that will hopefully be fixed at some point:
 

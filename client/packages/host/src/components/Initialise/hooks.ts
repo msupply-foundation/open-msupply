@@ -100,7 +100,7 @@ export const useInitialiseForm = () => {
       setIsPolling(true);
     }, POLLING_DELAY);
 
-    LocalStorage.setItem('/auth/error', undefined);
+    LocalStorage.removeItem('/auth/error');
     LocalStorage.addListener<AuthError>((key, value) => {
       if (key === '/auth/error' && value === AuthError.Unauthenticated) {
         // Server is up! and rejecting our request!
