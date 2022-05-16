@@ -1,10 +1,23 @@
-import React, { FC } from 'react';
-import { StandardTextFieldProps, NumericTextInput } from '@openmsupply-client/common';
+import React, { FC, useRef } from 'react';
+import {
+  StandardTextFieldProps,
+  NumericTextInput,
+} from '@openmsupply-client/common';
 
-export const InitialiseNumericInput: FC<StandardTextFieldProps> = React.forwardRef(
-    ({ sx, InputProps, error, ...props }, ref) => (
+export const InitialiseNumericInput: FC<StandardTextFieldProps> =
+  React.forwardRef(({ sx, InputProps, error, ...props }, ref) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const onFocus = () => {
+      if (!ref) {
+        inputRef?.current?.scrollIntoView();
+        return;
+      }
+
+      (ref as React.RefObject<HTMLInputElement>).current?.scrollIntoView();
+    };
+    return (
       <NumericTextInput
-        ref={ref}
+        ref={ref || inputRef}
         sx={{
           '& .MuiInput-underline:before': { borderBottomWidth: 0 },
           '& .MuiInput-input': { color: 'gray.dark' },
@@ -20,6 +33,7 @@ export const InitialiseNumericInput: FC<StandardTextFieldProps> = React.forwardR
         size="small"
         InputProps={{
           disableUnderline: true,
+          onFocus,
           ...InputProps,
           sx: {
             border: theme =>
@@ -37,5 +51,5 @@ export const InitialiseNumericInput: FC<StandardTextFieldProps> = React.forwardR
         }}
         {...props}
       />
-    )
-  );
+    );
+  });
