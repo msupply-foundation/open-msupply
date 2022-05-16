@@ -11,6 +11,7 @@ import {
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
+import { InitialiseNumericInput } from './InitialiseNumericInput';
 
 export const Initialise = () => {
   const t = useTranslation('app');
@@ -73,7 +74,7 @@ export const Initialise = () => {
         />
       }
       SiteIdInput={
-        <LoginTextInput
+        <InitialiseNumericInput
           fullWidth
           label={t('label.settings-site-id')}
           value={siteId}
