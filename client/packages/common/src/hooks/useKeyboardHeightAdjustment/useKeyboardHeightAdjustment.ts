@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Keyboard } from '@capacitor/keyboard';
+import { Capacitor } from '@capacitor/core';
 
 export const useKeyboardHeightAdjustment = (initialHeight: number) => {
   const [height, setHeight] = useState(initialHeight);
 
   useEffect(() => {
+    if (!Capacitor.isPluginAvailable('Keyboard')) return;
+
     Keyboard.addListener('keyboardDidShow', info => {
-      setHeight(700 - info.keyboardHeight);
+      setHeight(initialHeight - info.keyboardHeight);
     });
     Keyboard.addListener('keyboardDidHide', () => {
-      setHeight(700);
+      setHeight(initialHeight);
     });
 
     return () => {
