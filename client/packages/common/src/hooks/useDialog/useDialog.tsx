@@ -130,12 +130,17 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     }
 
     const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
+    const dimensions = {
+      height: height ? Math.min(window.innerHeight - 50, height) : undefined,
+      width: width ? Math.min(window.innerWidth - 50, width) : undefined,
+    };
+
     return (
       <BasicModal
         open={open}
         onClose={handleClose}
-        width={width}
-        height={height}
+        width={dimensions.width}
+        height={dimensions.height}
         sx={sx}
         TransitionComponent={Transition}
       >
