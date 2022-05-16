@@ -1,4 +1,4 @@
-mod default_queries;
+pub mod default_queries;
 pub mod definition;
 mod dummy_reports;
 mod html_printing;

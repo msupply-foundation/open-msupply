@@ -79,6 +79,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         port: 5432,
         host: "localhost".to_string(),
         database_name: db_name.to_string(),
+        init_sql: None,
     }
 }
 
