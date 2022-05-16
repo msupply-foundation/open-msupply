@@ -38,7 +38,7 @@ export const CustomerSearchInput: FC<NameSearchInputProps> = ({
       options={data?.nodes ?? []}
       renderOption={NameOptionRenderer}
       width={`${width}px`}
-      popperMinWidth={850}
+      popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       getOptionDisabled={option => option.isOnHold}
     />

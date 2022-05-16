@@ -4,6 +4,7 @@ import {
   useTranslation,
   ModalMode,
   DialogButton,
+  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 
 interface StocktakeLineEditModalProps {
@@ -21,6 +22,7 @@ export const StocktakeLineEditModal: FC<
 > = ({ isOpen, isValid, children, mode, onCancel, onOk, onNext, hasNext }) => {
   const { Modal } = useDialog({ onClose: onCancel, isOpen });
   const t = useTranslation('inventory');
+  const height = useKeyboardHeightAdjustment(600);
 
   return (
     <Modal
@@ -40,7 +42,7 @@ export const StocktakeLineEditModal: FC<
       okButton={
         <DialogButton variant="ok" onClick={onOk} disabled={!isValid} />
       }
-      height={600}
+      height={height}
       width={1024}
     >
       <>{children}</>

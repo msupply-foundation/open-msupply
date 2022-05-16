@@ -21,6 +21,7 @@ import {
   createTableStore,
   TabKeybindings,
   createQueryParamsStore,
+  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -122,6 +123,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const isMediumScreen = useIsMediumScreen();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const { Modal } = useDialog({ isOpen, onClose });
+  const height = useKeyboardHeightAdjustment(600);
 
   useEffect(() => {
     setCurrentItem(item);
@@ -176,7 +178,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             }}
           />
         }
-        height={600}
+        height={height}
         width={1024}
       >
         {isLoading ? (

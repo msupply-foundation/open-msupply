@@ -39,7 +39,7 @@ export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
       getOptionLabel={(option: NameRowFragment) => option.name}
       filterOptions={filterByNameAndCode}
       width={`${width}px`}
-      popperMinWidth={850}
+      popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       getOptionDisabled={option => option.isOnHold}
     />
