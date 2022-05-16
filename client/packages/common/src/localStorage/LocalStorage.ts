@@ -68,6 +68,18 @@ class LocalStorage {
       return defaultValue;
     }
   }
+
+  removeItem<StorageKey extends Extract<LocalStorageKey, string>>(
+    key: StorageKey
+  ): void {
+    const existingValue = this.getItem(key);
+
+    // no need to alert listeners if already cleared
+    if (existingValue === null) return;
+
+    localStorage.removeItem(this.createStorageKey(key));
+    this.listeners.forEach(listener => listener(key, null));
+  }
 }
 
 export default new LocalStorage();

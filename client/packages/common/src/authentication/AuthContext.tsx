@@ -112,7 +112,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
-  const [error, setError] = useLocalStorage('/auth/error');
+  const [error, setError, removeError] = useLocalStorage('/auth/error');
   const storeId = cookie?.store?.id ?? '';
   const { mutateAsync: getStores } = useUserDetails();
   const { setHeader, setSkipRequest } = useGql();
@@ -151,7 +151,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
     switch (true) {
       case isLoggedIn && hasValidStore: {
-        setError(undefined);
+        removeError();
         break;
       }
       case !isLoggedIn: {
