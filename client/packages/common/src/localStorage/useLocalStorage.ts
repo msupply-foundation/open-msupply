@@ -9,7 +9,11 @@ import LocalStorage from './LocalStorage';
  * Will update localStorage whenever the state changes.
  */
 
-type LocalStorageSetter<T> = [value: T | null, setItem: (value: T) => void];
+type LocalStorageSetter<T> = [
+  value: T | null,
+  setItem: (value: T) => void,
+  removeItem: () => void
+];
 
 export const useLocalStorage = <
   StorageKey extends Extract<LocalStorageKey, string>
@@ -36,5 +40,10 @@ export const useLocalStorage = <
     setValue(value);
   };
 
-  return [value, setItem];
+  const removeItem = () => {
+    LocalStorage.removeItem(key);
+    setValue(undefined as LocalStorageRecord[StorageKey]);
+  };
+
+  return [value, setItem, removeItem];
 };
