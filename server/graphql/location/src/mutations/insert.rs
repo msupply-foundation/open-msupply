@@ -8,8 +8,8 @@ use graphql_core::{
 };
 use graphql_types::types::LocationNode;
 use service::{
+    authorisation::{Resource, ResourceAccessRequest},
     location::insert::{InsertLocation, InsertLocationError as ServiceError},
-    permission_validation::{Resource, ResourceAccessRequest},
 };
 
 pub fn insert_location(

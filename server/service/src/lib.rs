@@ -5,6 +5,7 @@ use std::convert::TryInto;
 
 pub mod apis;
 pub mod auth_data;
+pub mod authorisation;
 pub mod dashboard;
 pub mod invoice;
 pub mod invoice_line;
@@ -15,7 +16,6 @@ pub mod login;
 pub mod master_list;
 pub mod name;
 pub mod number;
-pub mod permission_validation;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;

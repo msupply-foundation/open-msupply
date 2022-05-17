@@ -5,10 +5,10 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
+use service::authorisation::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::{
     InsertInboundShipment as ServiceInput, InsertInboundShipmentError as ServiceError,
 };
-use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentInput")]

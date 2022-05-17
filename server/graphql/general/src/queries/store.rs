@@ -9,7 +9,7 @@ use graphql_core::{
 use graphql_types::types::StoreNode;
 use repository::{EqualFilter, StoreFilter, StoreSort, StoreSortField};
 use repository::{PaginationOption, SimpleStringFilter};
-use service::permission_validation::{Resource, ResourceAccessRequest};
+use service::authorisation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject, Clone)]
 pub struct StoreFilterInput {

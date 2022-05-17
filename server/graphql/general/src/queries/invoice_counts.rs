@@ -6,8 +6,8 @@ use graphql_core::{
 };
 use repository::{InvoiceRowStatus, InvoiceRowType};
 use service::{
+    authorisation::{Resource, ResourceAccessRequest},
     dashboard::invoice_count::{CountTimeRange, InvoiceCountError},
-    permission_validation::{Resource, ResourceAccessRequest},
 };
 use util::timezone::offset_to_timezone;
 

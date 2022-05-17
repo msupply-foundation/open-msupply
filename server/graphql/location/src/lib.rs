@@ -9,7 +9,7 @@ use graphql_core::{
 };
 use graphql_types::types::*;
 use repository::{EqualFilter, LocationFilter, PaginationOption};
-use service::permission_validation::{Resource, ResourceAccessRequest};
+use service::authorisation::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
 pub struct LocationQueries;

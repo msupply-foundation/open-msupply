@@ -7,8 +7,9 @@ mod permission_tests {
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use service::{
         auth_data::AuthData,
-        permission_validation::{
-            Resource, ResourceAccessRequest, ValidatedUser, ValidationError, ValidationServiceTrait,
+        authorisation::{
+            AuthorisationServiceTrait, Resource, ResourceAccessRequest, ValidatedUser,
+            ValidationError,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -1128,7 +1129,7 @@ mod permission_tests {
         }
     }
 
-    impl ValidationServiceTrait for TestService {
+    impl AuthorisationServiceTrait for TestService {
         fn validate(
             &self,
             _: &ServiceContext,

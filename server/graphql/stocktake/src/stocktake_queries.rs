@@ -15,8 +15,8 @@ use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeFilter;
 use repository::*;
 use repository::{StocktakeSort, StocktakeSortField};
-use service::permission_validation::Resource;
-use service::permission_validation::ResourceAccessRequest;
+use service::authorisation::Resource;
+use service::authorisation::ResourceAccessRequest;
 use service::ListError;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
