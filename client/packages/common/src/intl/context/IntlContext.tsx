@@ -47,12 +47,11 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
         defaultNS,
         detection: {
           order: [
-            'omsBrowserLanguageDetector',
             'querystring',
             'cookie',
             'localStorage',
             'sessionStorage',
-            'navigator',
+            'omsBrowserLanguageDetector',
             'htmlTag',
           ],
         },
