@@ -14,6 +14,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub enum PermissionDSL {
     HasPermission(Permission),
+    NoPermissionRequired,
     HasStoreAccess,
     And(Vec<PermissionDSL>),
     Any(Vec<PermissionDSL>),
@@ -63,7 +64,7 @@ pub enum Resource {
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
     // me: No permission needed
-
+    map.insert(Resource::RouteMe, PermissionDSL::NoPermissionRequired);
     map.insert(
         Resource::ServerAdmin,
         PermissionDSL::HasPermission(Permission::ServerAdmin),
@@ -83,7 +84,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     // store: No permission needed
-
+    map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
     // master list
     map.insert(Resource::QueryMasterList, PermissionDSL::HasStoreAccess);
 
@@ -317,6 +318,9 @@ fn validate_resource_permissions(
             }
             return Err(format!("Missing permission: {:?}", permission));
         }
+        PermissionDSL::NoPermissionRequired => {
+            return Ok(());
+        }
         PermissionDSL::HasStoreAccess => {
             let store_id = match &resource_request.store_id {
                 Some(id) => id,
@@ -425,6 +429,14 @@ impl ValidationServiceTrait for ValidationService {
                     ));
                 }
             };
+        } else {
+            //The requested resource doesn't have a permission mapping assigned (server error)
+            return Err(ValidationError::Denied(
+                ValidationDeniedKind::InsufficientPermission {
+                    msg: "Unable to identify required permissions for resource".to_string(),
+                    required_permissions: PermissionDSL::NoPermissionRequired,
+                },
+            ));
         }
 
         Ok(ValidatedUser {
@@ -483,6 +495,20 @@ mod permission_validation_test {
 
         let mut service = ValidationService::new();
         service.resource_permissions.clear();
+
+        // validate user doesn't has access without resource -> permissions mapping
+        assert!(service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token_pair.token.to_owned()),
+                &ResourceAccessRequest {
+                    resource: Resource::QueryStocktake,
+                    store_id: None,
+                }
+            )
+            .is_err());
+
         service.resource_permissions.insert(
             Resource::QueryStocktake,
             PermissionDSL::And(vec![
