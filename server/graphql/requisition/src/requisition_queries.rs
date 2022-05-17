@@ -15,7 +15,7 @@ use graphql_types::types::{
 };
 use repository::{DateFilter, DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{RequisitionFilter, RequisitionSort, RequisitionSortField};
-use service::permission_validation::{Resource, ResourceAccessRequest};
+use service::authorisation::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]

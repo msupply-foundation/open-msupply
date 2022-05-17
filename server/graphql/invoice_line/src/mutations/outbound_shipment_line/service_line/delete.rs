@@ -8,8 +8,8 @@ use graphql_core::simple_generic_errors::{
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
+use service::authorisation::{Resource, ResourceAccessRequest};
 use service::invoice_line::outbound_shipment_line::DeleteOutboundShipmentLine as ServiceInput;
-use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "DeleteOutboundShipmentServiceLineInput")]

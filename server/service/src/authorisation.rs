@@ -363,7 +363,7 @@ fn validate_resource_permissions(
     })
 }
 
-pub trait ValidationServiceTrait: Send + Sync {
+pub trait AuthorisationServiceTrait: Send + Sync {
     fn validate(
         &self,
         ctx: &ServiceContext,
@@ -373,19 +373,19 @@ pub trait ValidationServiceTrait: Send + Sync {
     ) -> Result<ValidatedUser, ValidationError>;
 }
 
-pub struct ValidationService {
+pub struct AuthorisationService {
     pub resource_permissions: HashMap<Resource, PermissionDSL>,
 }
 
-impl ValidationService {
+impl AuthorisationService {
     pub fn new() -> Self {
-        ValidationService {
+        AuthorisationService {
             resource_permissions: all_permissions(),
         }
     }
 }
 
-impl ValidationServiceTrait for ValidationService {
+impl AuthorisationServiceTrait for AuthorisationService {
     fn validate(
         &self,
         context: &ServiceContext,
@@ -492,7 +492,7 @@ mod permission_validation_test {
         let context = service_provider.context().unwrap();
         let permission_repo = UserPermissionRowRepository::new(&context.connection);
 
-        let mut service = ValidationService::new();
+        let mut service = AuthorisationService::new();
         service.resource_permissions.clear();
 
         // validate user doesn't has access without resource -> permissions mapping

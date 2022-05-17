@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use graphql_types::types::ItemChartNode;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    authorisation::{Resource, ResourceAccessRequest},
     requisition_line::chart::{
         ConsumptionHistoryOptions, RequisitionLineChartError, StockEvolutionOptions,
     },

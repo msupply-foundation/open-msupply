@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
-use service::permission_validation::{validate_auth, ValidationError};
+use service::authorisation::{validate_auth, ValidationError};
 use service::token::TokenService;
 
 use super::set_refresh_token_cookie;

@@ -9,11 +9,11 @@ use graphql_core::{
 use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
+use service::authorisation::{Resource, ResourceAccessRequest};
 use service::invoice_line::outbound_shipment_service_line::{
     InsertOutboundShipmentServiceLine as ServiceInput,
     InsertOutboundShipmentServiceLineError as ServiceError,
 };
-use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertOutboundShipmentServiceLineInput")]

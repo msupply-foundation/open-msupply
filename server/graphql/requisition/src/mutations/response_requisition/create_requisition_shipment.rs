@@ -7,7 +7,7 @@ use graphql_core::{
 };
 use graphql_types::types::InvoiceNode;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    authorisation::{Resource, ResourceAccessRequest},
     requisition::response_requisition::{
         CreateRequisitionShipment as ServiceInput, CreateRequisitionShipmentError as ServiceError,
     },

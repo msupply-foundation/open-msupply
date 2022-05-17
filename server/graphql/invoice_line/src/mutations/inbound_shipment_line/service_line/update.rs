@@ -9,6 +9,7 @@ use graphql_core::{
 use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
+use service::authorisation::{Resource, ResourceAccessRequest};
 use service::invoice_line::{
     inbound_shipment_service_line::{
         UpdateInboundShipmentServiceLine as ServiceInput,
@@ -16,7 +17,6 @@ use service::invoice_line::{
     },
     ShipmentTaxUpdate,
 };
-use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentServiceLineInput")]

@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
-use service::permission_validation::{Resource, ResourceAccessRequest};
+use service::authorisation::{Resource, ResourceAccessRequest};
 use service::report::definition::{GraphQlQuery, ReportDefinition};
 use service::report::report_service::ReportError;
 

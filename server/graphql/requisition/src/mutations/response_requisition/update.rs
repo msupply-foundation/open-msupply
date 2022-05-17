@@ -8,7 +8,7 @@ use graphql_core::{
 };
 use graphql_types::types::RequisitionNode;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    authorisation::{Resource, ResourceAccessRequest},
     requisition::response_requisition::{
         UpdateResponseRequisition as ServiceInput, UpdateResponseRequisitionError as ServiceError,
         UpdateResponseRequstionStatus,

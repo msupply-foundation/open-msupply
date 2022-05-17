@@ -10,8 +10,8 @@ use graphql_types::types::{ItemConnector, ItemNodeType};
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::{
+    authorisation::{Resource, ResourceAccessRequest},
     item::get_items,
-    permission_validation::{Resource, ResourceAccessRequest},
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

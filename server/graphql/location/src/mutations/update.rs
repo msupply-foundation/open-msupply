@@ -10,8 +10,8 @@ use graphql_core::{
 };
 use graphql_types::types::LocationNode;
 use service::{
+    authorisation::{Resource, ResourceAccessRequest},
     location::update::{UpdateLocation, UpdateLocationError as ServiceError},
-    permission_validation::{Resource, ResourceAccessRequest},
 };
 
 pub fn update_location(

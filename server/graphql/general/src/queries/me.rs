@@ -5,7 +5,7 @@ use graphql_core::{
 };
 
 use graphql_types::types::UserNode;
-use service::permission_validation::{Resource, ResourceAccessRequest};
+use service::authorisation::{Resource, ResourceAccessRequest};
 use service::user_account::UserAccountService;
 
 #[derive(Union)]

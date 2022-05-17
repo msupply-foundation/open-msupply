@@ -7,7 +7,7 @@ use graphql_core::{
 };
 use graphql_types::types::RequisitionLineConnector;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    authorisation::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
     },
