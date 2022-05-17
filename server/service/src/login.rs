@@ -12,7 +12,7 @@ use util::uuid::uuid;
 
 use crate::{
     apis::{
-        login_v4::{LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserTypeV4},
+        login_v4::{LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserTypeV4, LoginV4Error},
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
@@ -141,19 +141,28 @@ impl LoginService {
         let login_api = LoginApiV4::new(client, central_server_url.clone());
         let username = &input.username;
         let password = &input.password;
-        let user_data = login_api
+        let user_data = match login_api
             .login(LoginInputV4 {
                 username: username.clone(),
                 password: password.clone(),
                 login_type: LoginUserTypeV4::User,
             })
             .await
-            .map_err(|err| {
-                FetchUserError::ConnectionError(format!(
-                    "Failed to reach the central server to fetch data for {}: {:?}",
-                    username, err
-                ))
-            })?;
+        {
+            Ok(user_data) => user_data,
+            Err(err) => match err {
+                LoginV4Error::Unauthorized => {
+                    return Err(FetchUserError::Unauthenticated);
+                }
+                LoginV4Error::ConnectionError(_) => {
+                    return Err(FetchUserError::ConnectionError(format!(
+                        "Failed to reach the central server to fetch data for {}: {:?}",
+                        username, err
+                    )))
+                }
+            },
+        };
+
         if user_data.status == LoginStatusV4::Error {
             return Err(FetchUserError::ConnectionError(
                 "Failed to fetch user from central server".to_string(),
