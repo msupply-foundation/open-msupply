@@ -167,10 +167,14 @@ Here are some issues encountered when building on macOS:
 
 ### Run the Android app
 
-In `packages/host/public/config.js` change `API_HOST` to `API_HOST: 'http://localhost:8000'` to use the remote server running on Android.
+In `packages/host/public/config.js` change `API_HOST` to `API_HOST: 'https://localhost:8000'` to use the remote server running on Android.
 
-Then run the command `yarn android:build:debug` to
+Run:
+```
+yarn android:build:debug
+```
 
+This will:
 - build the react app
 - copy the built files for capacitor
 - build the apk
@@ -182,29 +186,30 @@ yarn build
 npx cap copy
 ```
 
-There is no release build yet.
+Open the `android` folder in Android Studio and start the app.
 
-Enable clear text traffic in `android/app/src/main/AndroidManifest.xml`:
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.openmsupply.client">
+### Release build
+Make sure you have an Android keystore for signing the release apk.
+Create a file `packages/android/local.properties` and add the required key store parameters:
 
-    <application
-      android:usesCleartextTraffic="true"
-      android:allowBackup="true"
-      ...
+```
+storeFile=path/to/key/store.jks
+keyAlias={mykey}
+storePassword={password}
+keyPassword={password}
 ```
 
-Open the `android` folder in Android studio and start the app.
+and run:
 
-To build an .apk, run the command `yarn android:build`
+```
+yarn android:build:release
+```
 
-Currently the remote-server doesn't create a sqlite DB file on first startup.
-For this reason this step needs to be done manually, i.e. create and migrate the db file locally and then copy the file to the app folder on the device (using adb or AndroidStudio).
-The path in AndroidStudio shows as `/data/data/app/org.openmsupply.client/files/omsupply-database.sqlite`
+The apk will be located in `packages/android/app/build/outputs/apk/release`.
 
 ### Java bits
 
 The remote server is started and stopped in: `android/app/src/main/java/org/openmsupply/client/MainActivity.java`
+
+The cert plugin (`packages/android/app/src/main/java/org/openmsupply/client/certplugin/CertPlugin.java`) allows the web client to make https request to the remote-server using a self signed certificate.
