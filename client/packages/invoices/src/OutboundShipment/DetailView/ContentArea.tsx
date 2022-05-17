@@ -134,7 +134,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
         noDataElement={
           <NothingHere
             body={t('error.no-outbound-items')}
-            onCreate={isDisabled ? undefined : onAddItem}
+            onCreate={isDisabled ? undefined : () => onAddItem()}
             buttonText={t('button.add-item')}
           />
         }
