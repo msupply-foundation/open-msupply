@@ -43,7 +43,7 @@ export interface AutocompleteProps<T>
     reason: AutocompleteInputChangeReason
   ) => void;
   inputValue?: string;
-  autoWidthPopper?: boolean;
+  popperMinWidth?: number;
 }
 
 const StyledPopper = styled(Popper)(({ theme }) => ({
@@ -70,7 +70,7 @@ export function Autocomplete<T>({
   inputValue,
   autoFocus = false,
   getOptionLabel,
-  autoWidthPopper = false,
+  popperMinWidth,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
@@ -95,7 +95,7 @@ export function Autocomplete<T>({
     <StyledPopper
       {...props}
       placement="bottom-start"
-      style={{ minWidth: width, width: 'auto' }}
+      style={{ minWidth: popperMinWidth, width: 'auto' }}
     />
   );
 
@@ -120,7 +120,7 @@ export function Autocomplete<T>({
       renderOption={renderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
-      PopperComponent={autoWidthPopper ? CustomPopper : StyledPopper}
+      PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
     />
   );
 }

@@ -6,6 +6,7 @@ import {
   BasicSpinner,
   useBufferState,
   Box,
+  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
@@ -35,6 +36,7 @@ export const RequestLineEdit = ({
     useDraftRequisitionLine(currentItem);
   const { next, hasNext } = useNextRequestLine(currentItem);
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
+  const height = useKeyboardHeightAdjustment(600);
 
   return (
     <Modal
@@ -65,7 +67,7 @@ export const RequestLineEdit = ({
           }}
         />
       }
-      height={600}
+      height={height}
       width={1024}
     >
       {!isLoading ? (

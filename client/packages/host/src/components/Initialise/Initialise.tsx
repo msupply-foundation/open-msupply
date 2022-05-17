@@ -11,6 +11,7 @@ import {
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
+import { InitialiseNumericInput } from './InitialiseNumericInput';
 
 export const Initialise = () => {
   const t = useTranslation('app');
@@ -46,6 +47,7 @@ export const Initialise = () => {
           onChange={e => setUsername(e.target.value)}
           inputProps={{
             autoComplete: 'username',
+            autocapitalize: 'off',
           }}
           autoFocus
         />
@@ -60,6 +62,7 @@ export const Initialise = () => {
           onChange={e => setPassword(e.target.value)}
           inputProps={{
             autoComplete: 'current-password',
+            autocapitalize: 'off',
           }}
         />
       }
@@ -73,7 +76,7 @@ export const Initialise = () => {
         />
       }
       SiteIdInput={
-        <LoginTextInput
+        <InitialiseNumericInput
           fullWidth
           label={t('label.settings-site-id')}
           value={siteId}

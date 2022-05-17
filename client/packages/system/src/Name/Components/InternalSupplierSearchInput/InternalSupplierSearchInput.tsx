@@ -39,8 +39,8 @@ export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
       getOptionLabel={(option: NameRowFragment) => option.name}
       filterOptions={filterByNameAndCode}
       width={`${width}px`}
+      popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
-      autoWidthPopper
       getOptionDisabled={option => option.isOnHold}
     />
   );
