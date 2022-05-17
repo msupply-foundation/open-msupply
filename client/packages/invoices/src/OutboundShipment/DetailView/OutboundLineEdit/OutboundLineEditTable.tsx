@@ -80,7 +80,6 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: 390,
           overflowX: 'hidden',
           overflowY: 'auto',
         }}

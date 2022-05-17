@@ -87,6 +87,7 @@ export const LoginLayout = ({
           backgroundColor: 'background.login',
           alignItems: 'center',
           justifyContent: 'center',
+          overflowY: 'scroll',
         }}
         display="flex"
       >

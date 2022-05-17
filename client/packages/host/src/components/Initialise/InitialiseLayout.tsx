@@ -92,6 +92,7 @@ export const InitialiseLayout = ({
           backgroundColor: 'background.login',
           alignItems: 'center',
           justifyContent: 'center',
+          overflowY: 'scroll',
         }}
         display="flex"
         flexDirection="column"

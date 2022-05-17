@@ -113,7 +113,7 @@ const BasicTemplate: Story = ({ options }) => (
     <Grid item>
       <StyledPaper>
         <Typography>Auto Width Popper</Typography>
-        <Autocomplete options={options} width="300px" autoWidthPopper />
+        <Autocomplete options={options} width="300px" popperMinWidth={300} />
       </StyledPaper>
     </Grid>
     <Grid item>
@@ -171,4 +171,4 @@ export const LongOptions = BasicTemplate.bind({});
 export const MultiList = MultiListTemplate.bind({});
 
 Basic.args = { options: options };
-LongOptions.args = { options: longOptions, autoWidthPopper: true };
+LongOptions.args = { options: longOptions, popperMinWidth: 850 };

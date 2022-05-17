@@ -54,7 +54,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   currentItemId,
   disabled = false,
   extraFilter,
-  width = 850,
+  width,
   autoFocus = false,
 }) => {
   const { data, isLoading } = useStockItemsWithStats();
@@ -82,9 +82,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       options={defaultOptionMapper(options, 'name')}
       getOptionLabel={option => `${option.code}     ${option.name}`}
       renderOption={getOptionRenderer(t('label.units'), formatNumber.format)}
-      width={`${width}px`}
+      width={width ? `${width}px` : '100%'}
+      popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
-      autoWidthPopper
     />
   );
 };

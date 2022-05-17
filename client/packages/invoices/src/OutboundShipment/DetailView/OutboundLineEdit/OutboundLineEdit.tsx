@@ -13,6 +13,7 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
+  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
@@ -60,6 +61,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const packSizeController = usePackSizeController(draftOutboundLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
+  const height = useKeyboardHeightAdjustment(700);
 
   const onNext = async () => {
     if (isDirty) await mutate(draftOutboundLines);
@@ -112,7 +114,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           }}
         />
       }
-      height={700}
+      height={height}
       width={900}
     >
       <Grid container gap={0.5}>
