@@ -1,7 +1,11 @@
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 
-pub type LoginV4Error = anyhow::Error;
+#[derive(Debug)]
+pub enum LoginV4Error {
+    Unauthorized,
+    ConnectionError(anyhow::Error),
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum LoginUserTypeV4 {
@@ -128,13 +132,21 @@ impl LoginApiV4 {
     pub async fn login(&self, input: LoginInputV4) -> Result<LoginResponseV4, LoginV4Error> {
         let response = self
             .client
-            .post(self.server_url.join("/api/v4/login")?)
+            .post(self.server_url.join("/api/v4/login").unwrap())
             .json(&input)
             .send()
-            .await?
-            .error_for_status()?;
+            .await
+            .map_err(|e| LoginV4Error::ConnectionError(e.into()))?;
 
-        let response = response.json().await?;
-        Ok(response)
+        match response.status() {
+            reqwest::StatusCode::UNAUTHORIZED => Err(LoginV4Error::Unauthorized),
+            _ => {
+                let response: LoginResponseV4 = response
+                    .json()
+                    .await
+                    .map_err(|e| LoginV4Error::ConnectionError(e.into()))?;
+                Ok(response)
+            }
+        }
     }
 }
