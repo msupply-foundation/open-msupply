@@ -410,34 +410,33 @@ impl ValidationServiceTrait for ValidationService {
         let user_permission =
             UserPermissionRepository::new(&connection).query_by_filter(permission_filter)?;
 
-        if let Some(required_permissions) =
-            self.resource_permissions.get(&resource_request.resource)
-        {
-            match validate_resource_permissions(
-                &validated_auth.user_id,
-                &user_permission,
-                &resource_request,
-                required_permissions,
-            ) {
-                Ok(_) => {}
-                Err(msg) => {
-                    return Err(ValidationError::Denied(
-                        ValidationDeniedKind::InsufficientPermission {
-                            msg,
-                            required_permissions: required_permissions.clone(),
-                        },
-                    ));
-                }
-            };
-        } else {
-            //The requested resource doesn't have a permission mapping assigned (server error)
-            return Err(ValidationError::Denied(
-                ValidationDeniedKind::InsufficientPermission {
-                    msg: "Unable to identify required permissions for resource".to_string(),
-                    required_permissions: PermissionDSL::NoPermissionRequired,
-                },
-            ));
-        }
+        let required_permissions = match self.resource_permissions.get(&resource_request.resource) {
+            Some(required_permissions) => required_permissions,
+            None => {
+                //The requested resource doesn't have a permission mapping assigned (server error)
+                return Err(ValidationError::InternalError(format!(
+                    "Unable to identify required permissions for resource {:?}",
+                    &resource_request.resource
+                )));
+            }
+        };
+
+        match validate_resource_permissions(
+            &validated_auth.user_id,
+            &user_permission,
+            &resource_request,
+            required_permissions,
+        ) {
+            Ok(_) => {}
+            Err(msg) => {
+                return Err(ValidationError::Denied(
+                    ValidationDeniedKind::InsufficientPermission {
+                        msg,
+                        required_permissions: required_permissions.clone(),
+                    },
+                ));
+            }
+        };
 
         Ok(ValidatedUser {
             user_id: validated_auth.user_id,
