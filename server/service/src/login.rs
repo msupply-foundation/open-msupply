@@ -483,6 +483,7 @@ mod test {
             );
         }
         // If central server is not accessible after trying to login with old password, make sure old password does not work
+        // Issue #1101 in remote-server: Extra login protection when user password has changed
         // {
         //     let mock_server = MockServer::start();
         //     mock_server.mock(|when, then| {
