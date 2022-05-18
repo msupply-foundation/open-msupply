@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug)]
 pub enum LoginV4Error {
     Unauthorized,
-    ConnectionError(anyhow::Error),
+    ConnectionError(reqwest::Error),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -136,17 +136,17 @@ impl LoginApiV4 {
             .json(&input)
             .send()
             .await
-            .map_err(|e| LoginV4Error::ConnectionError(e.into()))?;
+            .map_err(|e| LoginV4Error::ConnectionError(e))?;
 
-        match response.status() {
-            reqwest::StatusCode::UNAUTHORIZED => Err(LoginV4Error::Unauthorized),
-            _ => {
-                let response: LoginResponseV4 = response
-                    .json()
-                    .await
-                    .map_err(|e| LoginV4Error::ConnectionError(e.into()))?;
-                Ok(response)
-            }
+        if reqwest::StatusCode::UNAUTHORIZED == response.status() {
+            return Err(LoginV4Error::Unauthorized);
         }
+
+        let response = response
+            .json()
+            .await
+            .map_err(|e| LoginV4Error::ConnectionError(e))?;
+
+        Ok(response)
     }
 }
