@@ -5,11 +5,11 @@ use graphql_core::{
 };
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use service::{
+    auth::{Resource, ResourceAccessRequest},
     invoice_line::outbound_shipment_unallocated_line::{
         AllocateLineResult as ServiceResult,
         AllocateOutboundShipmentUnallocatedLineError as ServiceError,
     },
-    permission_validation::{Resource, ResourceAccessRequest},
 };
 
 #[derive(Interface)]

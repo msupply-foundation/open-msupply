@@ -11,7 +11,7 @@ use graphql_core::{
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         UpdateRequestRequisition as ServiceInput, UpdateRequestRequisitionError as ServiceError,
         UpdateRequestRequstionStatus,

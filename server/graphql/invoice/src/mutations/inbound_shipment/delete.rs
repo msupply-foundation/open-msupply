@@ -6,11 +6,11 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 use graphql_types::types::{DeleteResponse as GenericDeleteResponse, InvoiceLineConnector};
+use service::auth::Resource;
+use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
     DeleteInboundShipment as ServiceInput, DeleteInboundShipmentError as ServiceError,
 };
-use service::permission_validation::Resource;
-use service::permission_validation::ResourceAccessRequest;
 
 #[derive(InputObject)]
 #[graphql(name = "DeleteInboundShipmentInput")]

@@ -6,11 +6,11 @@ use graphql_core::{
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::{
+    auth::{Resource, ResourceAccessRequest},
     invoice_line::outbound_shipment_unallocated_line::{
         DeleteOutboundShipmentUnallocatedLine as ServiceInput,
         DeleteOutboundShipmentUnallocatedLineError as ServiceError,
     },
-    permission_validation::{Resource, ResourceAccessRequest},
 };
 
 #[derive(InputObject)]

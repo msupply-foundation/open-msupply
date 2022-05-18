@@ -10,11 +10,11 @@ use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
 
 use repository::Invoice;
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::outbound_shipment::{
     UpdateOutboundShipment as ServiceInput, UpdateOutboundShipmentError as ServiceError,
     UpdateOutboundShipmentStatus,
 };
-use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateOutboundShipmentInput")]

@@ -7,8 +7,8 @@ use graphql_core::{
 
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use service::{
+    auth::{Resource, ResourceAccessRequest},
     location::delete::{DeleteLocation, DeleteLocationError as ServiceError},
-    permission_validation::{Resource, ResourceAccessRequest},
 };
 
 pub fn delete_location(

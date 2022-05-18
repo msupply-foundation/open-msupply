@@ -3,7 +3,7 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_requisition::mutations::request_requisition;
 use graphql_requisition_line::mutations::request_requisition_line;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::*,
 };
 

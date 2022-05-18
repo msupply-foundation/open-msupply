@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         DeleteRequestRequisition as ServiceInput, DeleteRequestRequisitionError as ServiceError,
     },

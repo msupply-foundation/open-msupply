@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 
-use service::permission_validation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use util::timezone::offset_to_timezone;
 pub struct StockCounts {
     timezone_offset: FixedOffset,
