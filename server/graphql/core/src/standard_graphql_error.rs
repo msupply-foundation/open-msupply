@@ -3,7 +3,7 @@ use crate::ContextExt;
 use async_graphql::{Context, ErrorExtensions, Result};
 use repository::RepositoryError;
 use service::{
-    auth::{ResourceAccessRequest, ValidatedUser, ValidationDeniedKind, ValidationError},
+    auth::{AuthDeniedKind, AuthError, ResourceAccessRequest, ValidatedUser},
     ListError,
 };
 use thiserror::Error;
@@ -73,11 +73,11 @@ pub fn validate_auth(
     );
     result.map_err(|err| {
         let graphql_error = match err {
-            ValidationError::Denied(kind) => match kind {
-                ValidationDeniedKind::NotAuthenticated(_) => {
+            AuthError::Denied(kind) => match kind {
+                AuthDeniedKind::NotAuthenticated(_) => {
                     StandardGraphqlError::Unauthenticated(format!("{:?}", kind))
                 }
-                ValidationDeniedKind::InsufficientPermission {
+                AuthDeniedKind::InsufficientPermission {
                     msg,
                     required_permissions,
                 } => StandardGraphqlError::Forbidden(format!(
@@ -85,7 +85,7 @@ pub fn validate_auth(
                     msg, required_permissions
                 )),
             },
-            ValidationError::InternalError(err) => StandardGraphqlError::InternalError(err),
+            AuthError::InternalError(err) => StandardGraphqlError::InternalError(err),
         };
         graphql_error.extend()
     })

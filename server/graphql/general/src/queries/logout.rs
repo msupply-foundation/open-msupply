@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
-use service::auth::{validate_auth, ValidationError};
+use service::auth::{validate_auth, AuthError};
 use service::token::TokenService;
 
 use super::set_refresh_token_cookie;
@@ -73,10 +73,8 @@ pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
         Err(err) => {
             let formatted_error = format!("{:#?}", err);
             let graphql_error = match err {
-                ValidationError::Denied(_) => StandardGraphqlError::Forbidden(formatted_error),
-                ValidationError::InternalError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
+                AuthError::Denied(_) => StandardGraphqlError::Forbidden(formatted_error),
+                AuthError::InternalError(_) => StandardGraphqlError::InternalError(formatted_error),
             };
             return Err(graphql_error.extend());
         }

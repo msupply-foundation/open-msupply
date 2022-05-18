@@ -8,7 +8,7 @@ mod permission_tests {
     use service::{
         auth::{
             AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser,
-            ValidationError,
+            AuthError,
         },
         auth_data::AuthData,
         service_provider::{ServiceContext, ServiceProvider},
@@ -1136,11 +1136,11 @@ mod permission_tests {
             _: &AuthData,
             _: &Option<String>,
             resource_request: &ResourceAccessRequest,
-        ) -> Result<ValidatedUser, ValidationError> {
+        ) -> Result<ValidatedUser, AuthError> {
             let mut actual = self.actual.lock().unwrap();
             *actual = Some(resource_request.clone());
             // we collected the info we needed just abort the request:
-            return Err(ValidationError::InternalError(
+            return Err(AuthError::InternalError(
                 "Just abort the request".to_string(),
             ));
         }
