@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod test_update {
 
-    use chrono::Utc;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    use chrono::NaiveDateTime;
     use repository::EqualFilter;
     use repository::{
         mock::{
@@ -21,6 +23,14 @@ mod test_update {
         sync_processor::{invoice::common::get_lines_for_invoice, process_records, Record},
     };
 
+    // Postgres stores timestamps with microsecond precision. This method produces a now
+    // NaiveDateTime timestamp with microsecond precision so that it can be compared to timestamps
+    // from the DB.
+    fn now() -> NaiveDateTime {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        NaiveDateTime::from_timestamp(now.as_secs() as i64, now.subsec_micros() as u32 * 1000)
+    }
+
     #[actix_rt::test]
     async fn test_sync_processor_requisitions() {
         let (_, connection, _, _) =
@@ -29,13 +39,13 @@ mod test_update {
         let start_requisition = mock_sent_requistion_sync_processor().requisition;
         let start_requistion_lines = mock_sent_requistion_sync_processor().lines;
 
-        let before_processor = Utc::now().naive_utc();
+        let before_processor = now();
         process_records(
             &connection,
             vec![Record::RequisitionRow(start_requisition.clone())],
         )
         .unwrap();
-        let after_processor = Utc::now().naive_utc();
+        let after_processor = now();
 
         let mut new_requisition = RequisitionRepository::new(&connection)
             .query_one(
@@ -65,8 +75,8 @@ mod test_update {
             Some("some reference".to_string())
         );
         assert!(
-            new_requisition.created_datetime > before_processor
-                && new_requisition.created_datetime < after_processor
+            new_requisition.created_datetime >= before_processor
+                && new_requisition.created_datetime <= after_processor
         );
 
         // Lines
@@ -105,13 +115,13 @@ mod test_update {
             .upsert_one(&new_requisition)
             .unwrap();
 
-        let before_processor = Utc::now().naive_utc();
+        let before_processor = now();
         process_records(
             &connection,
             vec![Record::RequisitionRow(new_requisition.clone())],
         )
         .unwrap();
-        let after_processor = Utc::now().naive_utc();
+        let after_processor = now();
 
         let start_requisition = RequisitionRepository::new(&connection)
             .query_one(RequisitionFilter::new().id(EqualFilter::equal_to(&start_requisition.id)))
@@ -121,7 +131,7 @@ mod test_update {
 
         assert_eq!(start_requisition.status, RequisitionRowStatus::Finalised);
         let finalised_datetime = start_requisition.finalised_datetime.unwrap();
-        assert!(finalised_datetime > before_processor && finalised_datetime < after_processor);
+        assert!(finalised_datetime >= before_processor && finalised_datetime <= after_processor);
     }
 
     #[actix_rt::test]
@@ -132,9 +142,9 @@ mod test_update {
         let start_invoice = mock_picked_invoice_sync_processor().invoice;
         let mut start_invoice_lines = mock_picked_invoice_sync_processor().get_lines();
 
-        let before_processor = Utc::now().naive_utc();
+        let before_processor = now();
         process_records(&connection, vec![Record::InvoiceRow(start_invoice.clone())]).unwrap();
-        let after_processor = Utc::now().naive_utc();
+        let after_processor = now();
 
         let new_invoice = InvoiceRepository::new(&connection)
             .query_one(
@@ -156,8 +166,8 @@ mod test_update {
             Some("some reference".to_string())
         );
         assert!(
-            new_invoice.created_datetime > before_processor
-                && new_invoice.created_datetime < after_processor
+            new_invoice.created_datetime >= before_processor
+                && new_invoice.created_datetime <= after_processor
         );
         assert_eq!(
             new_invoice.requisition_id,
@@ -211,7 +221,7 @@ mod test_update {
 
         // Outbound changes to 'Shipped'
 
-        start_invoice.shipped_datetime = Some(Utc::now().naive_utc());
+        start_invoice.shipped_datetime = Some(now());
         start_invoice.status = InvoiceRowStatus::Shipped;
 
         InvoiceRowRepository::new(&connection)
@@ -245,7 +255,7 @@ mod test_update {
 
         // Inbound changes to delivered
 
-        new_invoice.delivered_datetime = Some(Utc::now().naive_utc());
+        new_invoice.delivered_datetime = Some(now());
         new_invoice.status = InvoiceRowStatus::Delivered;
 
         InvoiceRowRepository::new(&connection)
@@ -263,7 +273,7 @@ mod test_update {
 
         // Inbound changes to verified
 
-        new_invoice.verified_datetime = Some(Utc::now().naive_utc());
+        new_invoice.verified_datetime = Some(now());
         new_invoice.status = InvoiceRowStatus::Verified;
 
         InvoiceRowRepository::new(&connection)
