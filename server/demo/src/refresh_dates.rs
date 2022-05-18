@@ -17,6 +17,7 @@ struct TableAndFielName {
 
 fn get_timestamp_fields() -> Vec<TableAndFielName> {
     vec![
+        ("name", "created_datetime"),
         ("invoice", "created_datetime"),
         ("invoice", "shipped_datetime"),
         ("invoice", "allocated_datetime"),
@@ -528,7 +529,7 @@ mod tests {
                             && defined_row.field_name == schema_row.column_name
                     )
                     .count(),
-                "Field {:#?} is in schema but not get_timestamp_fields",
+                "Field {:#?} is in schema but not in get_timestamp_fields",
                 schema_row
             );
         }
