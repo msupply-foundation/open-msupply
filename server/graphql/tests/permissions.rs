@@ -6,10 +6,11 @@ mod permission_tests {
     use graphql_core::test_helpers::setup_graphl_test;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use service::{
-        auth_data::AuthData,
-        permission_validation::{
-            Resource, ResourceAccessRequest, ValidatedUser, ValidationError, ValidationServiceTrait,
+        auth::{
+            AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser,
+            AuthError,
         },
+        auth_data::AuthData,
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -1128,18 +1129,18 @@ mod permission_tests {
         }
     }
 
-    impl ValidationServiceTrait for TestService {
+    impl AuthServiceTrait for TestService {
         fn validate(
             &self,
             _: &ServiceContext,
             _: &AuthData,
             _: &Option<String>,
             resource_request: &ResourceAccessRequest,
-        ) -> Result<ValidatedUser, ValidationError> {
+        ) -> Result<ValidatedUser, AuthError> {
             let mut actual = self.actual.lock().unwrap();
             *actual = Some(resource_request.clone());
             // we collected the info we needed just abort the request:
-            return Err(ValidationError::InternalError(
+            return Err(AuthError::InternalError(
                 "Just abort the request".to_string(),
             ));
         }

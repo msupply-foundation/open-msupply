@@ -5,7 +5,7 @@ use graphql_core::{
 };
 use serde::Serialize;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     settings_service::{SettingsService, SettingsServiceTrait},
     sync_settings::SyncSettings,
 };

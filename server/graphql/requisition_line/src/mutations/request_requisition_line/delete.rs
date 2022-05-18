@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     requisition_line::request_requisition_line::{
         DeleteRequestRequisitionLine as ServiceInput,
         DeleteRequestRequisitionLineError as ServiceError,

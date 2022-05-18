@@ -9,13 +9,13 @@ use graphql_core::{
 use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::{
     outbound_shipment_line::{
         UpdateOutboundShipmentLine as ServiceInput, UpdateOutboundShipmentLineError as ServiceError,
     },
     ShipmentTaxUpdate,
 };
-use service::permission_validation::{Resource, ResourceAccessRequest};
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,

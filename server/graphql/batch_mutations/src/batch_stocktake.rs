@@ -3,11 +3,11 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_stocktake::mutations as stocktake;
 use graphql_stocktake_line::mutations as stocktake_line;
 use service::{
-    permission_validation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     stocktake::*,
 };
 
-use crate::{VecOrNone, to_standard_error};
+use crate::{to_standard_error, VecOrNone};
 
 type ServiceResult = BatchStocktakeResult;
 type ServiceInput = BatchStocktake;

@@ -9,11 +9,11 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::{
     UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
     UpdateInboundShipmentStatus,
 };
-use service::permission_validation::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentInput")]

@@ -14,6 +14,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub enum PermissionDSL {
     HasPermission(Permission),
+    NoPermissionRequired,
     HasStoreAccess,
     And(Vec<PermissionDSL>),
     Any(Vec<PermissionDSL>),
@@ -63,7 +64,7 @@ pub enum Resource {
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     let mut map = HashMap::new();
     // me: No permission needed
-
+    map.insert(Resource::RouteMe, PermissionDSL::NoPermissionRequired);
     map.insert(
         Resource::ServerAdmin,
         PermissionDSL::HasPermission(Permission::ServerAdmin),
@@ -83,7 +84,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     // store: No permission needed
-
+    map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
     // master list
     map.insert(Resource::QueryMasterList, PermissionDSL::HasStoreAccess);
 
@@ -205,7 +206,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 }
 
 #[derive(Debug)]
-pub enum ValidationDeniedKind {
+pub enum AuthDeniedKind {
     NotAuthenticated(String),
     InsufficientPermission {
         msg: String,
@@ -214,8 +215,8 @@ pub enum ValidationDeniedKind {
 }
 
 #[derive(Debug)]
-pub enum ValidationError {
-    Denied(ValidationDeniedKind),
+pub enum AuthError {
+    Denied(AuthDeniedKind),
     InternalError(String),
 }
 
@@ -242,7 +243,7 @@ fn dummy_user_auth() -> ValidatedUserAuth {
 pub fn validate_auth(
     auth_data: &AuthData,
     auth_token: &Option<String>,
-) -> Result<ValidatedUserAuth, ValidationError> {
+) -> Result<ValidatedUserAuth, AuthError> {
     if auth_data.debug_no_access_control {
         return Ok(dummy_user_auth());
     }
@@ -250,9 +251,9 @@ pub fn validate_auth(
     let auth_token = match auth_token {
         Some(token) => token,
         None => {
-            return Err(ValidationError::Denied(
-                ValidationDeniedKind::NotAuthenticated("Missing auth token".to_string()),
-            ))
+            return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+                "Missing auth token".to_string(),
+            )))
         }
     };
     let service = TokenService::new(
@@ -263,22 +264,22 @@ pub fn validate_auth(
         Ok(claims) => claims,
         Err(err) => {
             let e = match err {
-                JWTValidationError::ExpiredSignature => ValidationError::Denied(
-                    ValidationDeniedKind::NotAuthenticated("Expired signature".to_string()),
+                JWTValidationError::ExpiredSignature => AuthError::Denied(
+                    AuthDeniedKind::NotAuthenticated("Expired signature".to_string()),
                 ),
-                JWTValidationError::NotAnApiToken => ValidationError::Denied(
-                    ValidationDeniedKind::NotAuthenticated("Not an api token".to_string()),
+                JWTValidationError::NotAnApiToken => AuthError::Denied(
+                    AuthDeniedKind::NotAuthenticated("Not an api token".to_string()),
                 ),
-                JWTValidationError::InvalidToken(_) => ValidationError::Denied(
-                    ValidationDeniedKind::NotAuthenticated("Invalid token".to_string()),
+                JWTValidationError::InvalidToken(_) => AuthError::Denied(
+                    AuthDeniedKind::NotAuthenticated("Invalid token".to_string()),
                 ),
                 JWTValidationError::TokenInvalidated => {
-                    ValidationError::Denied(ValidationDeniedKind::NotAuthenticated(
+                    AuthError::Denied(AuthDeniedKind::NotAuthenticated(
                         "Token has been invalided on the server".to_string(),
                     ))
                 }
                 JWTValidationError::ConcurrencyLockError(_) => {
-                    ValidationError::InternalError("Lock error".to_string())
+                    AuthError::InternalError("Lock error".to_string())
                 }
             };
             return Err(e);
@@ -316,6 +317,9 @@ fn validate_resource_permissions(
                 return Ok(());
             }
             return Err(format!("Missing permission: {:?}", permission));
+        }
+        PermissionDSL::NoPermissionRequired => {
+            return Ok(());
         }
         PermissionDSL::HasStoreAccess => {
             let store_id = match &resource_request.store_id {
@@ -359,36 +363,36 @@ fn validate_resource_permissions(
     })
 }
 
-pub trait ValidationServiceTrait: Send + Sync {
+pub trait AuthServiceTrait: Send + Sync {
     fn validate(
         &self,
         ctx: &ServiceContext,
         auth_data: &AuthData,
         auth_token: &Option<String>,
         resource_request: &ResourceAccessRequest,
-    ) -> Result<ValidatedUser, ValidationError>;
+    ) -> Result<ValidatedUser, AuthError>;
 }
 
-pub struct ValidationService {
+pub struct AuthService {
     pub resource_permissions: HashMap<Resource, PermissionDSL>,
 }
 
-impl ValidationService {
+impl AuthService {
     pub fn new() -> Self {
-        ValidationService {
+        AuthService {
             resource_permissions: all_permissions(),
         }
     }
 }
 
-impl ValidationServiceTrait for ValidationService {
+impl AuthServiceTrait for AuthService {
     fn validate(
         &self,
         context: &ServiceContext,
         auth_data: &AuthData,
         auth_token: &Option<String>,
         resource_request: &ResourceAccessRequest,
-    ) -> Result<ValidatedUser, ValidationError> {
+    ) -> Result<ValidatedUser, AuthError> {
         let validated_auth = validate_auth(auth_data, auth_token)?;
         if auth_data.debug_no_access_control {
             return Ok(ValidatedUser {
@@ -406,26 +410,31 @@ impl ValidationServiceTrait for ValidationService {
         let user_permission =
             UserPermissionRepository::new(&connection).query_by_filter(permission_filter)?;
 
-        if let Some(required_permissions) =
-            self.resource_permissions.get(&resource_request.resource)
-        {
-            match validate_resource_permissions(
-                &validated_auth.user_id,
-                &user_permission,
-                &resource_request,
-                required_permissions,
-            ) {
-                Ok(_) => {}
-                Err(msg) => {
-                    return Err(ValidationError::Denied(
-                        ValidationDeniedKind::InsufficientPermission {
-                            msg,
-                            required_permissions: required_permissions.clone(),
-                        },
-                    ));
-                }
-            };
-        }
+        let required_permissions = match self.resource_permissions.get(&resource_request.resource) {
+            Some(required_permissions) => required_permissions,
+            None => {
+                //The requested resource doesn't have a permission mapping assigned (server error)
+                return Err(AuthError::InternalError(format!(
+                    "Unable to identify required permissions for resource {:?}",
+                    &resource_request.resource
+                )));
+            }
+        };
+
+        match validate_resource_permissions(
+            &validated_auth.user_id,
+            &user_permission,
+            &resource_request,
+            required_permissions,
+        ) {
+            Ok(_) => {}
+            Err(msg) => {
+                return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
+                    msg,
+                    required_permissions: required_permissions.clone(),
+                }));
+            }
+        };
 
         Ok(ValidatedUser {
             user_id: validated_auth.user_id,
@@ -434,9 +443,9 @@ impl ValidationServiceTrait for ValidationService {
     }
 }
 
-impl From<RepositoryError> for ValidationError {
+impl From<RepositoryError> for AuthError {
     fn from(error: RepositoryError) -> Self {
-        ValidationError::InternalError(format!("{:#?}", error))
+        AuthError::InternalError(format!("{:#?}", error))
     }
 }
 
@@ -481,8 +490,22 @@ mod permission_validation_test {
         let context = service_provider.context().unwrap();
         let permission_repo = UserPermissionRowRepository::new(&context.connection);
 
-        let mut service = ValidationService::new();
+        let mut service = AuthService::new();
         service.resource_permissions.clear();
+
+        // validate user doesn't has access without resource -> permissions mapping
+        assert!(service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token_pair.token.to_owned()),
+                &ResourceAccessRequest {
+                    resource: Resource::QueryStocktake,
+                    store_id: None,
+                }
+            )
+            .is_err());
+
         service.resource_permissions.insert(
             Resource::QueryStocktake,
             PermissionDSL::And(vec![
