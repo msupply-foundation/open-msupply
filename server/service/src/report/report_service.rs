@@ -117,7 +117,10 @@ pub trait ReportServiceTrait: Sync + Send {
         let file_service = StaticFileService::new();
         let now: DateTime<Utc> = SystemTime::now().into();
         let file = file_service
-            .store_file(&format!("{}_{}.pdf", now.to_rfc3339(), report.name), &pdf)
+            .store_file(
+                &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report.name),
+                &pdf,
+            )
             .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
         Ok(file.id)
     }

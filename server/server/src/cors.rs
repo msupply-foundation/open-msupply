@@ -13,6 +13,7 @@ pub fn cors_policy(config_settings: &Settings) -> Cors {
                 header::AUTHORIZATION,
                 header::ACCEPT,
                 header::CONTENT_TYPE,
+                header::CONTENT_DISPOSITION,
             ])
             .max_age(3600);
         for origin in config_settings.server.cors_origins.iter() {
