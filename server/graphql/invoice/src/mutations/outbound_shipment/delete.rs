@@ -9,7 +9,7 @@ use graphql_types::{
 };
 
 use async_graphql::*;
-use service::authorisation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::outbound_shipment::DeleteOutboundShipmentError as ServiceError;
 
 #[derive(SimpleObject)]

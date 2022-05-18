@@ -10,7 +10,7 @@ use graphql_types::types::{ItemConnector, ItemNodeType};
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     item::get_items,
 };
 

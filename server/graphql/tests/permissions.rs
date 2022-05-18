@@ -6,11 +6,11 @@ mod permission_tests {
     use graphql_core::test_helpers::setup_graphl_test;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use service::{
-        auth_data::AuthData,
-        authorisation::{
-            AuthorisationServiceTrait, Resource, ResourceAccessRequest, ValidatedUser,
+        auth::{
+            AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser,
             ValidationError,
         },
+        auth_data::AuthData,
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -1129,7 +1129,7 @@ mod permission_tests {
         }
     }
 
-    impl AuthorisationServiceTrait for TestService {
+    impl AuthServiceTrait for TestService {
         fn validate(
             &self,
             _: &ServiceContext,

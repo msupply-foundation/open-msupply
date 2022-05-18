@@ -15,7 +15,7 @@ use repository::{
     DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, PaginationOption,
     SimpleStringFilter,
 };
-use service::authorisation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
 pub enum InvoiceResponse {

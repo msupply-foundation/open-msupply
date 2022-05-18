@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    authorisation::{AuthorisationService, AuthorisationServiceTrait},
+    auth::{AuthService, AuthServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
@@ -26,7 +26,7 @@ use crate::{
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
-    pub validation_service: Box<dyn AuthorisationServiceTrait>,
+    pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
@@ -55,7 +55,7 @@ impl ServiceProvider {
     pub fn new(connection_manager: StorageConnectionManager) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
-            validation_service: Box::new(AuthorisationService::new()),
+            validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),

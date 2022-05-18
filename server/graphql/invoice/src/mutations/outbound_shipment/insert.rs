@@ -5,7 +5,7 @@ use graphql_core::ContextExt;
 use graphql_core::{simple_generic_errors::NodeError, standard_graphql_error::validate_auth};
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
-use service::authorisation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::outbound_shipment::{
     InsertOutboundShipment as ServiceInput, InsertOutboundShipmentError as ServiceError,
 };

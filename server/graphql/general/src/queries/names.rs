@@ -9,7 +9,7 @@ use graphql_types::types::NameNode;
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     ListResult,
 };
 

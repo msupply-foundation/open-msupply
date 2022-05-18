@@ -3,7 +3,7 @@ use crate::ContextExt;
 use async_graphql::{Context, ErrorExtensions, Result};
 use repository::RepositoryError;
 use service::{
-    authorisation::{ResourceAccessRequest, ValidatedUser, ValidationDeniedKind, ValidationError},
+    auth::{ResourceAccessRequest, ValidatedUser, ValidationDeniedKind, ValidationError},
     ListError,
 };
 use thiserror::Error;

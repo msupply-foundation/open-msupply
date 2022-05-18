@@ -4,8 +4,8 @@ use service_provider::ServiceContext;
 use std::convert::TryInto;
 
 pub mod apis;
+pub mod auth;
 pub mod auth_data;
-pub mod authorisation;
 pub mod dashboard;
 pub mod invoice;
 pub mod invoice_line;

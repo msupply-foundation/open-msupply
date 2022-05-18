@@ -11,7 +11,7 @@ use repository::{
     EqualFilter, PaginationOption, ReportCategory as ReportCategoryDomain, ReportFilter, ReportRow,
     ReportSort, ReportSortField, SimpleStringFilter,
 };
-use service::authorisation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]

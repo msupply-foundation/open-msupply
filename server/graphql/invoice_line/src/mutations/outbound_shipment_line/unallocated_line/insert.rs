@@ -7,7 +7,7 @@ use graphql_core::{
 use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     invoice_line::outbound_shipment_unallocated_line::{
         InsertOutboundShipmentUnallocatedLine as ServiceInput,
         InsertOutboundShipmentUnallocatedLineError as ServiceError,

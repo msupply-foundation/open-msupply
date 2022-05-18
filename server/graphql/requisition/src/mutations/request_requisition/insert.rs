@@ -9,7 +9,7 @@ use graphql_core::{
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         InsertRequestRequisition as ServiceInput, InsertRequestRequisitionError as ServiceError,
     },

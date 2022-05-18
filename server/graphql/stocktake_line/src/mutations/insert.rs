@@ -7,7 +7,7 @@ use graphql_core::ContextExt;
 use graphql_types::types::StocktakeLineNode;
 use repository::StocktakeLine;
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     stocktake_line::{
         InsertStocktakeLine as ServiceInput, InsertStocktakeLineError as ServiceError,
     },
