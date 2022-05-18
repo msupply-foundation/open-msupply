@@ -9,7 +9,7 @@ use graphql_types::types::MasterListNode;
 use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
 use repository::{MasterList, MasterListFilter, MasterListSort};
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     ListResult,
 };
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

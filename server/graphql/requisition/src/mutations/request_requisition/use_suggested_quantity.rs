@@ -7,7 +7,7 @@ use graphql_core::{
 };
 use graphql_types::types::RequisitionLineConnector;
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         UseSuggestedQuantity as ServiceInput, UseSuggestedQuantityError as ServiceError,
     },

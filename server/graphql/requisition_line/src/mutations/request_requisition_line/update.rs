@@ -7,7 +7,7 @@ use graphql_core::{
 use graphql_types::types::RequisitionLineNode;
 use repository::RequisitionLine;
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     requisition_line::request_requisition_line::{
         UpdateRequestRequisitionLine as ServiceInput,
         UpdateRequestRequisitionLineError as ServiceError,

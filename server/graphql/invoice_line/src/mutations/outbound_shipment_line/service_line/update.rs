@@ -9,7 +9,7 @@ use graphql_core::{
 use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
-use service::authorisation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::{
     outbound_shipment_service_line::{
         UpdateOutboundShipmentServiceLine as ServiceInput,

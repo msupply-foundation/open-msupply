@@ -7,7 +7,7 @@ use graphql_core::{
 
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     location::delete::{DeleteLocation, DeleteLocationError as ServiceError},
 };
 

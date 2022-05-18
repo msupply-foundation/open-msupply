@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     settings_service::{SettingsService, SettingsServiceTrait, UpdateSettingsError},
     sync_settings::SyncSettings,
 };

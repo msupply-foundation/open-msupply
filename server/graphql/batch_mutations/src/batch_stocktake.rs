@@ -3,7 +3,7 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_stocktake::mutations as stocktake;
 use graphql_stocktake_line::mutations as stocktake_line;
 use service::{
-    authorisation::{Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     stocktake::*,
 };
 

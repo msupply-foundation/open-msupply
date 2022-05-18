@@ -8,7 +8,7 @@ use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
-use service::authorisation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::inbound_shipment_line::{
     InsertInboundShipmentLine as ServiceInput, InsertInboundShipmentLineError as ServiceError,
 };

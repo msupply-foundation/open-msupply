@@ -3,8 +3,8 @@ use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::inbound_shipment;
 use graphql_invoice_line::mutations::inbound_shipment_line;
-use service::authorisation::Resource;
-use service::authorisation::ResourceAccessRequest;
+use service::auth::Resource;
+use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
 use service::invoice::inbound_shipment::{BatchInboundShipment, BatchInboundShipmentResult};
 

@@ -7,7 +7,7 @@ use graphql_core::{
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
-use service::authorisation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::inbound_shipment_line::{
     DeleteInboundShipmentLine as ServiceInput, DeleteInboundShipmentLineError as ServiceError,
 };

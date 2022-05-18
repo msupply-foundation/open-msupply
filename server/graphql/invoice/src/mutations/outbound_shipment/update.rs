@@ -10,7 +10,7 @@ use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
 
 use repository::Invoice;
-use service::authorisation::{Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::outbound_shipment::{
     UpdateOutboundShipment as ServiceInput, UpdateOutboundShipmentError as ServiceError,
     UpdateOutboundShipmentStatus,
