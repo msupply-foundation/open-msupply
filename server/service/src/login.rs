@@ -12,7 +12,7 @@ use util::uuid::uuid;
 
 use crate::{
     apis::{
-        login_v4::{LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserTypeV4},
+        login_v4::{LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserTypeV4, LoginV4Error},
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
@@ -141,19 +141,28 @@ impl LoginService {
         let login_api = LoginApiV4::new(client, central_server_url.clone());
         let username = &input.username;
         let password = &input.password;
-        let user_data = login_api
+        let user_data = match login_api
             .login(LoginInputV4 {
                 username: username.clone(),
                 password: password.clone(),
                 login_type: LoginUserTypeV4::User,
             })
             .await
-            .map_err(|err| {
-                FetchUserError::ConnectionError(format!(
-                    "Failed to reach the central server to fetch data for {}: {:?}",
-                    username, err
-                ))
-            })?;
+        {
+            Ok(user_data) => user_data,
+            Err(err) => match err {
+                LoginV4Error::Unauthorised => {
+                    return Err(FetchUserError::Unauthenticated);
+                }
+                LoginV4Error::ConnectionError(_) => {
+                    return Err(FetchUserError::ConnectionError(format!(
+                        "Failed to reach the central server to fetch data for {}: {:?}",
+                        username, err
+                    )))
+                }
+            },
+        };
+
         if user_data.status == LoginStatusV4::Error {
             return Err(FetchUserError::ConnectionError(
                 "Failed to fetch user from central server".to_string(),
@@ -322,8 +331,11 @@ mod test {
     };
 
     use crate::{
-        apis::login_v4::LoginResponseV4, auth_data::AuthData, login::LoginInput,
-        login_mock_data::LOGIN_V4_RESPONSE_1, service_provider::ServiceProvider,
+        apis::login_v4::LoginResponseV4,
+        auth_data::AuthData,
+        login::{LoginError, LoginInput},
+        login_mock_data::LOGIN_V4_RESPONSE_1,
+        service_provider::ServiceProvider,
         token_bucket::TokenBucket,
     };
 
@@ -334,53 +346,170 @@ mod test {
         let (_, _, connection_manager, _) =
             setup_all("login_test", MockDataInserts::none().names().stores()).await;
         let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.context().unwrap();
 
-        let mock_server = MockServer::start();
-        mock_server.mock(|when, then| {
-            when.method(POST).path("/api/v4/login".to_string());
-            then.status(200).body(LOGIN_V4_RESPONSE_1);
-        });
-
-        let central_server_url = mock_server.base_url();
         let auth_data = AuthData {
             auth_token_secret: "secret".to_string(),
             token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
             danger_no_ssl: true,
             debug_no_access_control: false,
         };
-        LoginService::login(
-            &service_provider,
-            &auth_data,
-            LoginInput {
-                username: "Gryffindor".to_string(),
-                password: "password".to_string(),
-                central_server_url,
-            },
-            0,
-        )
-        .await
-        .unwrap();
 
         let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();
         let expected_user_info = expected.user_info.unwrap();
 
-        let context = service_provider.context().unwrap();
-        let user = UserRepository::new(&context.connection)
-            .query_one(UserFilter::new().id(EqualFilter::equal_to(&expected_user_info.user.id)))
-            .unwrap()
-            .unwrap();
-        assert_eq!(expected_user_info.user.name, user.user_row.username);
-        assert_eq!(
-            expected_user_info.user_stores.first().unwrap().store_id,
-            user.stores.first().unwrap().store_row.id
-        );
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(200).body(LOGIN_V4_RESPONSE_1);
+            });
 
-        let permissions = UserPermissionRepository::new(&context.connection)
-            .query_by_filter(
-                UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(&expected_user_info.user.id)),
+            let central_server_url = mock_server.base_url();
+
+            LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: "Gryffindor".to_string(),
+                    password: "password".to_string(),
+                    central_server_url,
+                },
+                0,
             )
+            .await
             .unwrap();
-        assert!(permissions.len() > 0);
+
+            let user = UserRepository::new(&context.connection)
+                .query_one(UserFilter::new().id(EqualFilter::equal_to(&expected_user_info.user.id)))
+                .unwrap()
+                .unwrap();
+            assert_eq!(expected_user_info.user.name, user.user_row.username);
+            assert_eq!(
+                expected_user_info.user_stores.first().unwrap().store_id,
+                user.stores.first().unwrap().store_row.id
+            );
+
+            let permissions = UserPermissionRepository::new(&context.connection)
+                .query_by_filter(
+                    UserPermissionFilter::new()
+                        .user_id(EqualFilter::equal_to(&expected_user_info.user.id)),
+                )
+                .unwrap();
+            assert!(permissions.len() > 0);
+        }
+        // If server password has changed, and trying to login with other then old password, return LoginFailure
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(401);
+            });
+
+            let central_server_url = mock_server.base_url();
+
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: "Gryffindor".to_string(),
+                    password: "password2".to_string(),
+                    central_server_url,
+                },
+                0,
+            )
+            .await;
+
+            assert!(
+                matches!(result, Err(LoginError::LoginFailure)),
+                "expected login failure, got {:#?}",
+                result
+            );
+        }
+        // Old password should still work in offline mode or if central return an error
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(500);
+            });
+
+            let central_server_url = mock_server.base_url();
+
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: "Gryffindor".to_string(),
+                    password: "password".to_string(),
+                    central_server_url,
+                },
+                0,
+            )
+            .await;
+
+            assert!(
+                matches!(result, Ok(_)),
+                "expected Ok token pair, got {:#?}",
+                result
+            );
+        }
+        // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(401);
+            });
+
+            let central_server_url = mock_server.base_url();
+
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: "Gryffindor".to_string(),
+                    password: "password2".to_string(),
+                    central_server_url,
+                },
+                0,
+            )
+            .await;
+
+            assert!(
+                matches!(result, Err(LoginError::LoginFailure)),
+                "expected login failure, got {:#?}",
+                result
+            );
+        }
+        // If central server is not accessible after trying to login with old password, make sure old password does not work
+        // Issue #1101 in remote-server: Extra login protection when user password has changed
+        // {
+        //     let mock_server = MockServer::start();
+        //     mock_server.mock(|when, then| {
+        //         when.method(POST).path("/api/v4/login".to_string());
+        //         then.status(500);
+        //     });
+
+        //     let central_server_url = mock_server.base_url();
+
+        //     let result = LoginService::login(
+        //         &service_provider,
+        //         &auth_data,
+        //         LoginInput {
+        //             username: "Gryffindor".to_string(),
+        //             password: "password".to_string(),
+        //             central_server_url,
+        //         },
+        //         0,
+        //     )
+        //     .await;
+
+        //     assert!(
+        //         matches!(result, Err(LoginError::LoginFailure)),
+        //         "expected LoginFailure, got {:#?}",
+        //         result
+        //     );
+        // }
     }
 }
