@@ -101,6 +101,40 @@ pub struct LegacyNameRow {
     #[serde(rename = "om_created_datetime")]
     created_datetime: Option<NaiveDateTime>,
 }
+
+pub fn translate_name(data: LegacyNameRow) -> NameRow {
+    NameRow {
+        id: data.ID.to_string(),
+        name: data.name.to_string(),
+        r#type: data.r#type.to_name_type(),
+        code: data.code.to_string(),
+        is_customer: data.customer,
+        is_supplier: data.supplier,
+
+        first_name: data.first_name,
+        last_name: data.last_name,
+        gender: if data.female {
+            Some(Gender::Female)
+        } else {
+            Some(Gender::Male)
+        },
+        phone: data.phone,
+        charge_code: data.charge_code,
+        comment: data.comment,
+        country: data.country,
+        address1: data.address1,
+        address2: data.address2,
+        email: data.email,
+        website: data.website,
+        is_manufacturer: data.is_manufacturer,
+        is_donor: data.is_donor,
+        on_hold: data.on_hold,
+        created_datetime: data
+            .created_datetime
+            .or(data.created_date.map(|date| date.and_hms(0, 0, 0))),
+    }
+}
+
 pub struct NameTranslation {}
 impl CentralPushTranslation for NameTranslation {
     fn try_translate(
@@ -113,36 +147,7 @@ impl CentralPushTranslation for NameTranslation {
         }
 
         let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
-        Ok(Some(IntegrationUpsertRecord::Name(NameRow {
-            id: data.ID.to_string(),
-            name: data.name.to_string(),
-            r#type: data.r#type.to_name_type(),
-            code: data.code.to_string(),
-            is_customer: data.customer,
-            is_supplier: data.supplier,
-
-            first_name: data.first_name,
-            last_name: data.last_name,
-            gender: if data.female {
-                Some(Gender::Female)
-            } else {
-                Some(Gender::Male)
-            },
-            phone: data.phone,
-            charge_code: data.charge_code,
-            comment: data.comment,
-            country: data.country,
-            address1: data.address1,
-            address2: data.address2,
-            email: data.email,
-            website: data.website,
-            is_manufacturer: data.is_manufacturer,
-            is_donor: data.is_donor,
-            on_hold: data.on_hold,
-            created_datetime: data
-                .created_datetime
-                .or(data.created_date.map(|date| date.and_hms(0, 0, 0))),
-        })))
+        Ok(Some(IntegrationUpsertRecord::Name(translate_name(data))))
     }
 }
 
