@@ -22,7 +22,7 @@ pub fn mock_test_sync_processor() -> MockData {
         .push(mock_response_requisition_for_invoice_sync_processor());
     result
         .full_requisitions
-        .push(mock_sent_requistion_sync_processor());
+        .push(mock_sent_requisition_sync_processor());
 
     result.full_invoices = vec![(
         "mock_picked_invoice_sync_processor".to_owned(),
@@ -34,8 +34,8 @@ pub fn mock_test_sync_processor() -> MockData {
     result
 }
 
-pub fn mock_sent_requistion_sync_processor() -> FullMockRequisition {
-    let requisition_id = "mock_sent_requistion_sync_processor".to_owned();
+pub fn mock_sent_requisition_sync_processor() -> FullMockRequisition {
+    let requisition_id = "mock_sent_requisition_sync_processor".to_owned();
     let line1_id = format!("{}1", requisition_id);
     let line2_id = format!("{}2", requisition_id);
 

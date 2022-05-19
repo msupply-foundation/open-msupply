@@ -10,12 +10,12 @@ use repository::RepositoryError;
 use repository::StorageConnection;
 
 #[derive(Debug, PartialEq, Clone)]
-struct TableAndFielName {
+struct TableAndFieldName {
     table_name: &'static str,
     field_name: &'static str,
 }
 
-fn get_timestamp_fields() -> Vec<TableAndFielName> {
+fn get_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
         ("name", "created_datetime"),
         ("invoice", "created_datetime"),
@@ -32,14 +32,14 @@ fn get_timestamp_fields() -> Vec<TableAndFielName> {
         ("stocktake", "finalised_datetime"),
     ]
     .iter()
-    .map(|(table_name, field_name)| TableAndFielName {
+    .map(|(table_name, field_name)| TableAndFieldName {
         table_name,
         field_name,
     })
     .collect()
 }
 
-fn get_date_fields() -> Vec<TableAndFielName> {
+fn get_date_fields() -> Vec<TableAndFieldName> {
     vec![
         ("name", "date_of_birth"),
         ("stock_line", "expiry_date"),
@@ -50,7 +50,7 @@ fn get_date_fields() -> Vec<TableAndFielName> {
         ("sync_out", "created_at"),
     ]
     .iter()
-    .map(|(table_name, field_name)| TableAndFielName {
+    .map(|(table_name, field_name)| TableAndFieldName {
         table_name,
         field_name,
     })
@@ -74,8 +74,8 @@ struct IdAndDate {
 }
 #[derive(Debug, PartialEq)]
 struct AllDateValues {
-    timestamps: Vec<(IdAndTimestamp, TableAndFielName)>,
-    dates: Vec<(IdAndDate, TableAndFielName)>,
+    timestamps: Vec<(IdAndTimestamp, TableAndFieldName)>,
+    dates: Vec<(IdAndDate, TableAndFieldName)>,
 }
 pub struct RefreshDatesRepository<'a> {
     connection: &'a StorageConnection,
@@ -181,11 +181,11 @@ impl<'a> RefreshDatesRepository<'a> {
 
     fn update_timestamps(
         &self,
-        timestamps: Vec<(IdAndTimestamp, TableAndFielName)>,
+        timestamps: Vec<(IdAndTimestamp, TableAndFieldName)>,
     ) -> Result<(), RepositoryError> {
         for (
             IdAndTimestamp { id, dt },
-            TableAndFielName {
+            TableAndFieldName {
                 table_name,
                 field_name,
             },
@@ -220,11 +220,11 @@ impl<'a> RefreshDatesRepository<'a> {
 
     fn update_dates(
         &self,
-        dates: Vec<(IdAndDate, TableAndFielName)>,
+        dates: Vec<(IdAndDate, TableAndFieldName)>,
     ) -> Result<(), RepositoryError> {
         for (
             IdAndDate { id, d },
-            TableAndFielName {
+            TableAndFieldName {
                 table_name,
                 field_name,
             },
@@ -406,7 +406,7 @@ mod tests {
                             id: "invoice1".to_string(),
                             dt: NaiveDate::from_ymd(2021, 01, 11).and_hms(00, 00, 00)
                         },
-                        TableAndFielName {
+                        TableAndFieldName {
                             table_name: "invoice",
                             field_name: "created_datetime"
                         }
@@ -416,7 +416,7 @@ mod tests {
                             id: "invoice2".to_string(),
                             dt: NaiveDate::from_ymd(2021, 02, 11).and_hms(00, 00, 00)
                         },
-                        TableAndFielName {
+                        TableAndFieldName {
                             table_name: "invoice",
                             field_name: "created_datetime"
                         }
@@ -426,7 +426,7 @@ mod tests {
                             id: "invoice2".to_string(),
                             dt: NaiveDate::from_ymd(2021, 01, 11).and_hms(00, 00, 00)
                         },
-                        TableAndFielName {
+                        TableAndFieldName {
                             table_name: "invoice",
                             field_name: "shipped_datetime"
                         }
@@ -437,7 +437,7 @@ mod tests {
                         id: "stock_line1".to_string(),
                         d: NaiveDate::from_ymd(2023, 02, 11)
                     },
-                    TableAndFielName {
+                    TableAndFieldName {
                         table_name: "stock_line",
                         field_name: "expiry_date"
                     }

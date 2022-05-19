@@ -7,7 +7,7 @@ mod test_update {
         mock::{
             mock_picked_invoice_sync_processor,
             mock_request_requisition_for_invoice_sync_processor,
-            mock_sent_requistion_sync_processor, MockDataInserts,
+            mock_sent_requisition_sync_processor, MockDataInserts,
         },
         requisition_row::{RequisitionRowStatus, RequisitionRowType},
         test_db::setup_all,
@@ -26,8 +26,8 @@ mod test_update {
         let (_, connection, _, _) =
             setup_all("test_sync_processor_requisitions", MockDataInserts::all()).await;
 
-        let start_requisition = mock_sent_requistion_sync_processor().requisition;
-        let start_requistion_lines = mock_sent_requistion_sync_processor().lines;
+        let start_requisition = mock_sent_requisition_sync_processor().requisition;
+        let start_requisition_lines = mock_sent_requisition_sync_processor().lines;
 
         let before_processor = Utc::now().naive_utc();
         process_records(
@@ -81,20 +81,20 @@ mod test_update {
         assert_eq!(new_lines.len(), 2);
         assert_eq!(
             new_lines[0].requisition_line_row.item_id,
-            start_requistion_lines[0].item_id
+            start_requisition_lines[0].item_id
         );
         assert_eq!(
             new_lines[0].requisition_line_row.requested_quantity,
-            start_requistion_lines[0].requested_quantity
+            start_requisition_lines[0].requested_quantity
         );
 
         assert_eq!(
             new_lines[1].requisition_line_row.item_id,
-            start_requistion_lines[1].item_id
+            start_requisition_lines[1].item_id
         );
         assert_eq!(
             new_lines[1].requisition_line_row.requested_quantity,
-            start_requistion_lines[1].requested_quantity
+            start_requisition_lines[1].requested_quantity
         );
 
         // Update status
