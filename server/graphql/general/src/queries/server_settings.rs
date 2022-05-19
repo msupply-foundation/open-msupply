@@ -68,9 +68,12 @@ impl ServerSettingsNode {
 
     /// Currently used sync settings (may differ from what is stored in the DB)
     async fn sync_settings(&self, ctx: &Context<'_>) -> Option<SyncSettingsNode> {
-        ctx.get_sync_settings().map(|settings| SyncSettingsNode {
-            settings: settings.clone(),
-        })
+        ctx.get_settings()
+            .sync
+            .as_ref()
+            .map(|settings| SyncSettingsNode {
+                settings: settings.clone(),
+            })
     }
 
     /// Returns sync settings as currently stored on the server. If null no sync settings are set.

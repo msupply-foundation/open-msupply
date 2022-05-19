@@ -1,11 +1,12 @@
 use clap::StructOpt;
 use graphql::schema_builder;
 use repository::{get_storage_connection_manager, test_db};
-use server::{configuration, settings::Settings, sync::Synchroniser};
+use server::{configuration, sync::Synchroniser};
 use service::{
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     service_provider::ServiceProvider,
+    settings::Settings,
     token_bucket::TokenBucket,
 };
 use std::{

@@ -2,7 +2,8 @@
 
 use std::env;
 
-use server::{configuration, settings::Settings, start_server};
+use server::{configuration, start_server};
+use service::settings::Settings;
 use tokio::sync::oneshot;
 
 #[actix_web::main]

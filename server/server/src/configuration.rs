@@ -1,16 +1,25 @@
-use config::{Config, Environment, File, FileSourceFile};
-use std::{env, path::PathBuf};
-
-use crate::{
-    environment::{AppEnvironment, EnvironmentVariable},
-    settings::{Settings, SettingsError},
+use config::{Config, ConfigError, Environment, File, FileSourceFile};
+use service::settings::Settings;
+use std::{
+    env::{self, VarError},
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
+    io::Error as IoError,
+    path::PathBuf,
 };
+
+use crate::environment::{AppEnvironment, EnvironmentVariable};
 
 const CONFIGURATION_DIRECTORY_PATH: &str = "configuration";
 const CONFIGURATION_BASE_FILE_PATH: &str = "base";
 
 const CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
 const CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
+
+pub enum SettingsError {
+    Config(ConfigError),
+    Environment(VarError),
+    File(IoError),
+}
 
 /// Gets directory storing configuration files.
 ///
@@ -73,4 +82,42 @@ pub fn get_configuration() -> Result<Settings, SettingsError> {
         .merge(get_configuration_environment())?;
     let settings: Settings = configuration.try_into()?;
     Ok(settings)
+}
+
+impl Debug for SettingsError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            SettingsError::Config(err) => write!(f, "{:?}", err),
+            SettingsError::Environment(err) => write!(f, "{:?}", err),
+            SettingsError::File(err) => write!(f, "{:?}", err),
+        }
+    }
+}
+
+impl Display for SettingsError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            SettingsError::Config(err) => write!(f, "{}", err),
+            SettingsError::Environment(err) => write!(f, "{}", err),
+            SettingsError::File(err) => write!(f, "{}", err),
+        }
+    }
+}
+
+impl From<ConfigError> for SettingsError {
+    fn from(err: ConfigError) -> SettingsError {
+        SettingsError::Config(err)
+    }
+}
+
+impl From<IoError> for SettingsError {
+    fn from(err: IoError) -> SettingsError {
+        SettingsError::File(err)
+    }
+}
+
+impl From<VarError> for SettingsError {
+    fn from(err: VarError) -> SettingsError {
+        SettingsError::Environment(err)
+    }
 }

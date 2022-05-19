@@ -17,7 +17,7 @@ use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 
 use loader::LoaderRegistry;
-use service::sync_settings::SyncSettings;
+use service::settings::Settings;
 use tokio::sync::mpsc::Sender;
 
 /// Performs a query to ourself, e.g. the report endpoint can query
@@ -34,8 +34,7 @@ pub trait ContextExt {
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
     fn self_request(&self) -> Option<&Box<dyn SelfRequest>>;
-    // Sync settings might not be available during initial setup phase
-    fn get_sync_settings(&self) -> Option<&SyncSettings>;
+    fn get_settings(&self) -> &Settings;
     fn restart_switch(&self) -> Sender<bool>;
 }
 
@@ -61,9 +60,8 @@ impl<'a> ContextExt for Context<'a> {
             .and_then(|d| d.auth_token.to_owned())
     }
 
-    fn get_sync_settings(&self) -> Option<&SyncSettings> {
-        self.data_opt::<Data<SyncSettings>>()
-            .map(|data| data.get_ref())
+    fn get_settings(&self) -> &Settings {
+        self.data_unchecked::<Data<Settings>>()
     }
 
     fn self_request(&self) -> Option<&Box<dyn SelfRequest>> {
