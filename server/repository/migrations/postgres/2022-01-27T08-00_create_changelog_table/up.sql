@@ -2,6 +2,7 @@ CREATE TYPE changelog_table_name AS ENUM (
     'number',
     'location',
     'stock_line',
+    'name',
     'name_store_join',
     'invoice',
     'invoice_line',
