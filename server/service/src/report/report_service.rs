@@ -106,15 +106,18 @@ pub trait ReportServiceTrait: Sync + Send {
     /// Returns the printed pdf file id
     fn print_report(
         &self,
+        base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
     ) -> Result<String, ReportError> {
         let document = self.generate_report(report, report_data)?;
         let id = uuid();
-        let pdf = html_to_pdf(&document, &id)
+        // TODO use a proper tmp dir here instead of base_dir?
+        let pdf = html_to_pdf(base_dir, &document, &id)
             .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
 
-        let file_service = StaticFileService::new();
+        let file_service = StaticFileService::new(base_dir)
+            .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
         let now: DateTime<Utc> = SystemTime::now().into();
         let file = file_service
             .store_file(

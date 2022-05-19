@@ -4,7 +4,8 @@ use demo::RefreshDatesRepository;
 use repository::{
     get_storage_connection_manager, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType,
 };
-use server::{configuration, settings::Settings};
+use server::configuration;
+use service::settings::Settings;
 
 /// omSupply demo cli
 #[derive(clap::Parser)]
