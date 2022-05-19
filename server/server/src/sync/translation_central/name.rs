@@ -5,11 +5,11 @@ use crate::sync::{
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{CentralSyncBufferRow, Gender, NameRow, NameType};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::{CentralPushTranslation, IntegrationUpsertRecord};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyNameType {
     #[serde(rename = "facility")]
     Facility,
@@ -40,66 +40,80 @@ impl LegacyNameType {
             LegacyNameType::Others => NameType::Others,
         }
     }
+
+    pub fn from_name_type(name_type: &NameType) -> Self {
+        match name_type {
+            NameType::Facility => LegacyNameType::Facility,
+            NameType::Patient => LegacyNameType::Patient,
+            NameType::Build => LegacyNameType::Build,
+            NameType::Invad => LegacyNameType::Invad,
+            NameType::Repack => LegacyNameType::Repack,
+            NameType::Store => LegacyNameType::Store,
+            NameType::Others => LegacyNameType::Others,
+        }
+    }
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct LegacyNameRow {
-    ID: String,
-    name: String,
-    code: String,
-    r#type: LegacyNameType,
-    customer: bool,
-    supplier: bool,
+    pub ID: String,
+    pub name: String,
+    pub code: String,
+    pub r#type: LegacyNameType,
+    pub customer: bool,
+    pub supplier: bool,
 
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "first")]
-    first_name: Option<String>,
+    pub first_name: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "last")]
-    last_name: Option<String>,
+    pub last_name: Option<String>,
 
-    female: bool,
+    pub female: bool,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    pub date_of_birth: Option<NaiveDate>,
 
     #[serde(deserialize_with = "empty_str_as_option")]
-    phone: Option<String>,
+    pub phone: Option<String>,
 
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "charge code")]
-    charge_code: Option<String>,
+    pub charge_code: Option<String>,
 
     #[serde(deserialize_with = "empty_str_as_option")]
-    comment: Option<String>,
+    pub comment: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
-    country: Option<String>,
+    pub country: Option<String>,
 
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "bill_address1")]
-    address1: Option<String>,
+    pub address1: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "bill_address2")]
-    address2: Option<String>,
+    pub address2: Option<String>,
 
     #[serde(deserialize_with = "empty_str_as_option")]
-    email: Option<String>,
+    pub email: Option<String>,
 
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "url")]
-    website: Option<String>,
+    pub website: Option<String>,
 
     #[serde(rename = "manufacturer")]
-    is_manufacturer: bool,
+    pub is_manufacturer: bool,
     #[serde(rename = "donor")]
-    is_donor: bool,
+    pub is_donor: bool,
     #[serde(rename = "hold")]
-    on_hold: bool,
+    pub on_hold: bool,
 
     #[serde(deserialize_with = "zero_date_as_option")]
-    created_date: Option<NaiveDate>,
+    pub created_date: Option<NaiveDate>,
 
     // TODO not in mSupply:
-    #[serde(rename = "om_created_datetime")]
-    created_datetime: Option<NaiveDateTime>,
+    pub om_created_datetime: Option<NaiveDateTime>,
+    pub om_gender: Option<Gender>,
 }
 
 pub fn translate_name(data: LegacyNameRow) -> NameRow {
@@ -113,11 +127,12 @@ pub fn translate_name(data: LegacyNameRow) -> NameRow {
 
         first_name: data.first_name,
         last_name: data.last_name,
-        gender: if data.female {
+        gender: data.om_gender.or(if data.female {
             Some(Gender::Female)
         } else {
             Some(Gender::Male)
-        },
+        }),
+        date_of_birth: data.date_of_birth,
         phone: data.phone,
         charge_code: data.charge_code,
         comment: data.comment,
@@ -130,7 +145,7 @@ pub fn translate_name(data: LegacyNameRow) -> NameRow {
         is_donor: data.is_donor,
         on_hold: data.on_hold,
         created_datetime: data
-            .created_datetime
+            .om_created_datetime
             .or(data.created_date.map(|date| date.and_hms(0, 0, 0))),
     }
 }

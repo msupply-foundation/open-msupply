@@ -272,9 +272,9 @@ mod repository_test {
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
+            mock_name_a, mock_name_b, mock_name_store_a, mock_name_store_b,
             mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
-            mock_request_draft_requisition2, mock_stocktake_a, mock_stocktake_b,
-            mock_stocktake_no_line_a, mock_stocktake_no_line_b, mock_test_master_list_name1,
+            mock_request_draft_requisition2, mock_test_master_list_name1,
             mock_test_master_list_name2, mock_test_master_list_name_filter1,
             mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
             mock_test_master_list_store1, MockDataInserts,
@@ -289,7 +289,7 @@ mod repository_test {
         OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
         RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
-        StocktakeRowRepository, StoreRowRepository, UserAccountRowRepository,
+        StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
@@ -763,15 +763,15 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_changelog() {
         let (_, connection, _, _) =
-            test_db::setup_all("test_changelog", MockDataInserts::none().names().stores()).await;
+            test_db::setup_all("test_changelog", MockDataInserts::none()).await;
 
-        // use stock take entries to populate the changelog (via the trigger)
-        let stocktake_repo = StocktakeRowRepository::new(&connection);
+        // use name entries to populate the changelog (via the trigger)
+        let name_repo = NameRowRepository::new(&connection);
         let repo = ChangelogRowRepository::new(&connection);
 
         // single entry:
-        let stocktake_a = mock_stocktake_a();
-        stocktake_repo.upsert_one(&stocktake_a).unwrap();
+        let name_a = mock_name_a();
+        name_repo.upsert_one(&name_a).unwrap();
         let mut result = repo.changelogs(0, 10).unwrap();
         assert_eq!(1, result.len());
         let log_entry = result.pop().unwrap();
@@ -779,8 +779,8 @@ mod repository_test {
             log_entry,
             ChangelogRow {
                 id: 1,
-                table_name: ChangelogTableName::Stocktake,
-                row_id: stocktake_a.id.clone(),
+                table_name: ChangelogTableName::Name,
+                row_id: name_a.id.clone(),
                 row_action: ChangelogAction::Upsert,
             }
         );
@@ -792,9 +792,9 @@ mod repository_test {
         );
 
         // update the entry
-        let mut stocktake_a_update = mock_stocktake_a();
-        stocktake_a_update.comment = Some("updated".to_string());
-        stocktake_repo.upsert_one(&stocktake_a_update).unwrap();
+        let mut name_a_update = mock_name_a();
+        name_a_update.comment = Some("updated".to_string());
+        name_repo.upsert_one(&name_a_update).unwrap();
         let mut result = repo.changelogs((log_entry.id + 1) as u64, 10).unwrap();
         assert_eq!(1, result.len());
         let log_entry = result.pop().unwrap();
@@ -802,8 +802,8 @@ mod repository_test {
             log_entry,
             ChangelogRow {
                 id: 2,
-                table_name: ChangelogTableName::Stocktake,
-                row_id: stocktake_a.id.clone(),
+                table_name: ChangelogTableName::Name,
+                row_id: name_a.id.clone(),
                 row_action: ChangelogAction::Upsert,
             }
         );
@@ -816,15 +816,15 @@ mod repository_test {
             log_entry,
             ChangelogRow {
                 id: 2,
-                table_name: ChangelogTableName::Stocktake,
-                row_id: stocktake_a.id.clone(),
+                table_name: ChangelogTableName::Name,
+                row_id: name_a.id.clone(),
                 row_action: ChangelogAction::Upsert,
             }
         );
 
         // add another entry
-        let stocktake_b = mock_stocktake_b();
-        stocktake_repo.upsert_one(&stocktake_b).unwrap();
+        let name_b = mock_name_b();
+        name_repo.upsert_one(&name_b).unwrap();
         let result = repo.changelogs(0, 10).unwrap();
         assert_eq!(2, result.len());
         assert_eq!(
@@ -832,21 +832,21 @@ mod repository_test {
             vec![
                 ChangelogRow {
                     id: 2,
-                    table_name: ChangelogTableName::Stocktake,
-                    row_id: stocktake_a.id.clone(),
+                    table_name: ChangelogTableName::Name,
+                    row_id: name_a.id.clone(),
                     row_action: ChangelogAction::Upsert,
                 },
                 ChangelogRow {
                     id: 3,
-                    table_name: ChangelogTableName::Stocktake,
-                    row_id: stocktake_b.id.clone(),
+                    table_name: ChangelogTableName::Name,
+                    row_id: name_b.id.clone(),
                     row_action: ChangelogAction::Upsert,
                 }
             ]
         );
 
         // delete an entry
-        stocktake_repo.delete(&stocktake_b.id).unwrap();
+        name_repo.delete(&name_b.id).unwrap();
         let result = repo.changelogs(0, 10).unwrap();
         assert_eq!(2, result.len());
         assert_eq!(
@@ -854,14 +854,14 @@ mod repository_test {
             vec![
                 ChangelogRow {
                     id: 2,
-                    table_name: ChangelogTableName::Stocktake,
-                    row_id: stocktake_a.id.clone(),
+                    table_name: ChangelogTableName::Name,
+                    row_id: name_a.id.clone(),
                     row_action: ChangelogAction::Upsert,
                 },
                 ChangelogRow {
                     id: 4,
-                    table_name: ChangelogTableName::Stocktake,
-                    row_id: stocktake_b.id.clone(),
+                    table_name: ChangelogTableName::Name,
+                    row_id: name_b.id.clone(),
                     row_action: ChangelogAction::Delete,
                 }
             ]
@@ -871,26 +871,26 @@ mod repository_test {
     #[actix_rt::test]
     async fn test_changelog_iteration() {
         let (_, connection, _, _) =
-            test_db::setup_all("test_changelog_2", MockDataInserts::none().names().stores()).await;
+            test_db::setup_all("test_changelog_2", MockDataInserts::none()).await;
 
-        // use stock take entries to populate the changelog (via the trigger)
-        let stocktake_repo = StocktakeRowRepository::new(&connection);
+        // use names entries to populate the changelog (via the trigger)
+        let name_repo = NameRowRepository::new(&connection);
         let repo = ChangelogRowRepository::new(&connection);
 
-        let stocktake_a = mock_stocktake_a();
-        let stocktake_b = mock_stocktake_no_line_a();
-        let stocktake_c = mock_stocktake_no_line_b();
-        let stocktake_d = mock_stocktake_b();
+        let name_a = mock_name_a();
+        let name_b = mock_name_store_a();
+        let name_c = mock_name_store_b();
+        let name_d = mock_name_b();
 
-        stocktake_repo.upsert_one(&stocktake_a).unwrap();
-        stocktake_repo.upsert_one(&stocktake_b).unwrap();
-        stocktake_repo.upsert_one(&stocktake_c).unwrap();
-        stocktake_repo.upsert_one(&stocktake_d).unwrap();
-        stocktake_repo.delete(&stocktake_b.id).unwrap();
-        stocktake_repo.upsert_one(&stocktake_c).unwrap();
-        stocktake_repo.upsert_one(&stocktake_a).unwrap();
-        stocktake_repo.upsert_one(&stocktake_c).unwrap();
-        stocktake_repo.delete(&stocktake_c.id).unwrap();
+        name_repo.upsert_one(&name_a).unwrap();
+        name_repo.upsert_one(&name_b).unwrap();
+        name_repo.upsert_one(&name_c).unwrap();
+        name_repo.upsert_one(&name_d).unwrap();
+        name_repo.delete(&name_b.id).unwrap();
+        name_repo.upsert_one(&name_c).unwrap();
+        name_repo.upsert_one(&name_a).unwrap();
+        name_repo.upsert_one(&name_c).unwrap();
+        name_repo.delete(&name_c.id).unwrap();
 
         // test iterating through the change log
         let changelogs = repo.changelogs(0, 3).unwrap();
@@ -900,7 +900,7 @@ mod repository_test {
                 .into_iter()
                 .map(|it| it.row_id)
                 .collect::<Vec<String>>(),
-            vec![stocktake_d.id, stocktake_b.id, stocktake_a.id]
+            vec![name_d.id, name_b.id, name_a.id]
         );
 
         let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
@@ -911,7 +911,7 @@ mod repository_test {
                 .into_iter()
                 .map(|it| it.row_id)
                 .collect::<Vec<String>>(),
-            vec![stocktake_c.id]
+            vec![name_c.id]
         );
 
         let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();

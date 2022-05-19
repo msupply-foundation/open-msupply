@@ -26,7 +26,7 @@ use self::{
 };
 
 // Also used for remote data sync
-pub use name::{translate_name, LegacyNameRow};
+pub use name::{translate_name, LegacyNameRow, LegacyNameType};
 
 use super::{SyncImportError, SyncTranslationError};
 

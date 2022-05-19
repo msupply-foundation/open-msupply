@@ -41,6 +41,7 @@ fn get_timestamp_fields() -> Vec<TableAndFielName> {
 
 fn get_date_fields() -> Vec<TableAndFielName> {
     vec![
+        ("name", "date_of_birth"),
         ("stock_line", "expiry_date"),
         ("requisition", "expected_delivery_date"),
         ("invoice_line", "expiry_date"),
