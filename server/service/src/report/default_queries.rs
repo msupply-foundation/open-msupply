@@ -182,6 +182,13 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
           sellPricePerPack
           snapshotNumberOfPacks
           stocktakeId
+          item {
+            name
+            code
+          }
+          location {
+            code
+          }
         }
       }
     }
