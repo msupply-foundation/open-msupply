@@ -17,21 +17,25 @@ pub fn get_requisitions_supply_statuses(
         RequisitionLineFilter::new().requisition_id(EqualFilter::equal_any(requisition_ids)),
     )?;
 
-    let mut statuses: HashMap<RequistionAndItemId, RequisitionLineSupplyStatus> = requisition_lines
-        .into_iter()
-        .map(|requisition_line| {
-            (
-                RequistionAndItemId {
-                    requisition_id: requisition_line.requisition_line_row.requisition_id.clone(),
-                    item_id: requisition_line.requisition_line_row.item_id.clone(),
-                },
-                RequisitionLineSupplyStatus {
-                    requisition_line,
-                    invoice_lines: Vec::new(),
-                },
-            )
-        })
-        .collect();
+    let mut statuses: HashMap<RequisitionAndItemId, RequisitionLineSupplyStatus> =
+        requisition_lines
+            .into_iter()
+            .map(|requisition_line| {
+                (
+                    RequisitionAndItemId {
+                        requisition_id: requisition_line
+                            .requisition_line_row
+                            .requisition_id
+                            .clone(),
+                        item_id: requisition_line.requisition_line_row.item_id.clone(),
+                    },
+                    RequisitionLineSupplyStatus {
+                        requisition_line,
+                        invoice_lines: Vec::new(),
+                    },
+                )
+            })
+            .collect();
 
     for line in existing_invoice_lines {
         let requisition_id = if let Some(requisition_id) = &line.invoice_row.requisition_id {
@@ -40,7 +44,7 @@ pub fn get_requisitions_supply_statuses(
             continue;
         };
 
-        let status = if let Some(status) = statuses.get_mut(&RequistionAndItemId {
+        let status = if let Some(status) = statuses.get_mut(&RequisitionAndItemId {
             requisition_id: requisition_id.clone(),
             item_id: line.invoice_line_row.item_id.clone(),
         }) {
@@ -56,7 +60,7 @@ pub fn get_requisitions_supply_statuses(
 }
 
 #[derive(PartialEq, Eq, Hash)]
-pub struct RequistionAndItemId {
+pub struct RequisitionAndItemId {
     pub requisition_id: String,
     pub item_id: String,
 }
