@@ -52,6 +52,7 @@ pub fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
         ChangelogTableName::Number => TRANSLATION_RECORD_NUMBER,
         ChangelogTableName::Location => TRANSLATION_RECORD_LOCATION,
         ChangelogTableName::StockLine => TRANSLATION_RECORD_ITEM_LINE,
+        ChangelogTableName::Name => TRANSLATION_RECORD_NAME,
         ChangelogTableName::NameStoreJoin => TRANSLATION_RECORD_NAME_STORE_JOIN,
         ChangelogTableName::Invoice => TRANSLATION_RECORD_TRANSACT,
         ChangelogTableName::InvoiceLine => TRANSLATION_RECORD_TRANS_LINE,

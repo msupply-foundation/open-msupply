@@ -7,6 +7,8 @@ use repository::{
 
 use self::{
     location::{get_test_location_records, get_test_push_location_records},
+    name::{get_test_name_records, get_test_push_name_records},
+    name_store_join::get_test_name_store_join_records,
     number::{get_test_number_records, get_test_push_number_records},
     requisition::{get_test_push_requisition_records, get_test_requisition_records},
     requisition_line::{get_test_push_requisition_line_records, get_test_requisition_line_records},
@@ -20,6 +22,7 @@ use self::{
 use super::pull::{IntegrationRecord, IntegrationUpsertRecord};
 
 pub mod location;
+pub mod name;
 pub mod name_store_join;
 pub mod number;
 pub mod requisition;
@@ -212,7 +215,8 @@ pub fn get_all_remote_pull_test_records() -> Vec<TestSyncRecord> {
     test_records.append(&mut get_test_number_records());
     test_records.append(&mut get_test_location_records());
     test_records.append(&mut get_test_stock_line_records());
-    //test_records.append(&mut get_test_name_store_join_records());
+    test_records.append(&mut get_test_name_records());
+    test_records.append(&mut get_test_name_store_join_records());
     test_records.append(&mut get_test_transact_records());
     test_records.append(&mut get_test_trans_line_records());
     test_records.append(&mut get_test_stocktake_records());
@@ -227,6 +231,7 @@ pub fn get_all_remote_push_test_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut get_test_push_number_records());
     test_records.append(&mut get_test_push_location_records());
+    test_records.append(&mut get_test_push_name_records());
     //test_records.append(&mut get_test_push_name_store_join_records());
     test_records.append(&mut get_test_push_stock_line_records());
     test_records.append(&mut get_test_push_transact_records());
