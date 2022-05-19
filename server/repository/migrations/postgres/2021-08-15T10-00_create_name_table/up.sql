@@ -35,6 +35,7 @@ CREATE TABLE name (
     first_name Text,
     last_name Text,
     gender gender_type,
+    date_of_birth DATE,
     phone TEXT,
     charge_code TEXT,
     comment TEXT,

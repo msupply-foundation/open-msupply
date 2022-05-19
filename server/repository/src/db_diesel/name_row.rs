@@ -1,7 +1,7 @@
 use super::{name_row::name::dsl::*, StorageConnection};
 
 use crate::repository_error::RepositoryError;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -21,6 +21,7 @@ table! {
         first_name -> Nullable<Text>,
         last_name -> Nullable<Text>,
         gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+        date_of_birth -> Nullable<Date>,
         phone -> Nullable<Text>,
         charge_code-> Nullable<Text>,
         comment -> Nullable<Text>,
@@ -90,6 +91,7 @@ pub struct NameRow {
     pub last_name: Option<String>,
 
     pub gender: Option<Gender>,
+    pub date_of_birth: Option<NaiveDate>,
     pub phone: Option<String>,
     pub charge_code: Option<String>,
 
@@ -135,6 +137,11 @@ impl<'a> NameRowRepository<'a> {
         diesel::replace_into(name)
             .values(name_row)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn delete(&self, name_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(name.filter(id.eq(name_id))).execute(&self.connection.connection)?;
         Ok(())
     }
 

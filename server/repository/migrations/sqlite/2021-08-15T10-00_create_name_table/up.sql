@@ -31,6 +31,7 @@ CREATE TABLE name (
         'UNKNOWN',
         'NON_BINARY'
     )),
+    date_of_birth TEXT,
     phone TEXT,
     charge_code TEXT,
     comment TEXT,
