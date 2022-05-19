@@ -3,6 +3,7 @@ use repository::ChangelogTableName;
 mod invoice;
 mod invoice_line;
 mod location;
+mod name;
 mod name_store_join;
 mod number;
 mod requisition;
@@ -21,6 +22,7 @@ pub const TRANSLATION_RECORD_NUMBER: &'static str = "number";
 pub const TRANSLATION_RECORD_LOCATION: &'static str = "Location";
 /// stock line
 pub const TRANSLATION_RECORD_ITEM_LINE: &'static str = "item_line";
+pub const TRANSLATION_RECORD_NAME: &'static str = "name";
 pub const TRANSLATION_RECORD_NAME_STORE_JOIN: &'static str = "name_store_join";
 pub const TRANSLATION_RECORD_TRANSACT: &'static str = "transact";
 pub const TRANSLATION_RECORD_TRANS_LINE: &'static str = "trans_line";
@@ -35,6 +37,7 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_NUMBER,
     TRANSLATION_RECORD_LOCATION,
     TRANSLATION_RECORD_ITEM_LINE,
+    TRANSLATION_RECORD_NAME,
     TRANSLATION_RECORD_NAME_STORE_JOIN,
     TRANSLATION_RECORD_TRANSACT,
     TRANSLATION_RECORD_TRANS_LINE,

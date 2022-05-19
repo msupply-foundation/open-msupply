@@ -1,8 +1,8 @@
 use log::{info, warn};
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationRow,
-    LocationRowRepository, NameStoreJoinRepository, NameStoreJoinRow, NumberRow,
-    NumberRowRepository, RemoteSyncBufferRow, RepositoryError, RequisitionLineRow,
+    LocationRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
+    NumberRow, NumberRowRepository, RemoteSyncBufferRow, RepositoryError, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRow,
     StockLineRowRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow,
     StocktakeRowRepository, StorageConnection, TransactionError,
@@ -11,10 +11,11 @@ use repository::{
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        location::LocationTranslation, name_store_join::NameStoreJoinTranslation,
-        number::NumberTranslation, requisition::RequisitionTranslation,
-        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
-        stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
+        location::LocationTranslation, name::NameTranslation,
+        name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
+        requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
+        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
+        stocktake_line::StocktakeLineTranslation,
     },
     SyncImportError, SyncTranslationError,
 };
@@ -24,6 +25,7 @@ pub enum IntegrationUpsertRecord {
     Number(NumberRow),
     Location(LocationRow),
     StockLine(StockLineRow),
+    Name(NameRow),
     NameStoreJoin(NameStoreJoinRow),
     Invoice(InvoiceRow),
     InvoiceLine(InvoiceLineRow),
@@ -88,7 +90,7 @@ fn do_translation(
         Box::new(NumberTranslation {}),
         Box::new(LocationTranslation {}),
         Box::new(StockLineTranslation {}),
-        // Don't pull name store joins for now
+        Box::new(NameTranslation {}),
         Box::new(NameStoreJoinTranslation {}),
         Box::new(InvoiceTranslation {}),
         Box::new(InvoiceLineTranslation {}),
@@ -131,6 +133,7 @@ fn integrate_record(
         IntegrationUpsertRecord::StockLine(record) => {
             StockLineRowRepository::new(con).upsert_one(record)
         }
+        IntegrationUpsertRecord::Name(record) => NameRowRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::NameStoreJoin(record) => {
             NameStoreJoinRepository::new(con).upsert_one(record)
         }

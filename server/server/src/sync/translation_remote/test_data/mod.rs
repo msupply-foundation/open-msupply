@@ -1,8 +1,8 @@
 use repository::{
     ChangelogRow, InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository,
-    NameStoreJoinRepository, NumberRowRepository, RemoteSyncBufferRow, RepositoryError,
-    RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
+    NameRowRepository, NameStoreJoinRepository, NumberRowRepository, RemoteSyncBufferRow,
+    RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
+    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
 };
 
 use self::{
@@ -119,6 +119,15 @@ pub fn check_records_against_database(
                         StockLineRowRepository::new(&connection)
                             .find_one_by_id(&comparison_record.id)
                             .expect(&format!("StockLine not found: {}", &comparison_record.id)),
+                        comparison_record
+                    )
+                }
+                IntegrationUpsertRecord::Name(comparison_record) => {
+                    assert_eq!(
+                        NameRowRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap()
+                            .expect(&format!("Name not found: {}", &comparison_record.id)),
                         comparison_record
                     )
                 }
