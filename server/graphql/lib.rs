@@ -33,7 +33,7 @@ use log::info;
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
-use service::sync_settings::SyncSettings;
+use service::settings::Settings;
 use tokio::sync::mpsc::Sender;
 
 #[derive(MergedObject, Default, Clone)]
@@ -122,7 +122,7 @@ pub fn build_schema(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    sync_settings_data: Option<Data<SyncSettings>>,
+    settings_data: Data<Settings>,
     restart_switch: Data<Sender<bool>>,
     self_request: Option<Data<Box<dyn SelfRequest>>>,
     include_logger: bool,
@@ -132,12 +132,9 @@ pub fn build_schema(
         .data(loader_registry)
         .data(service_provider)
         .data(auth_data)
+        .data(settings_data)
         .data(restart_switch);
 
-    match sync_settings_data {
-        Some(sync_settings_data) => builder = builder.data(sync_settings_data),
-        None => {}
-    }
     match self_request {
         Some(self_request) => builder = builder.data(self_request),
         None => {}
@@ -159,7 +156,7 @@ pub fn build_schema_stage0(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    sync_settings_data: Option<Data<SyncSettings>>,
+    settings_data: Data<Settings>,
     restart_switch: Data<Sender<bool>>,
     self_request: Option<Data<Box<dyn SelfRequest>>>,
     include_logger: bool,
@@ -173,12 +170,9 @@ pub fn build_schema_stage0(
     .data(loader_registry)
     .data(service_provider)
     .data(auth_data)
+    .data(settings_data)
     .data(restart_switch);
 
-    match sync_settings_data {
-        Some(sync_settings_data) => builder = builder.data(sync_settings_data),
-        None => {}
-    }
     match self_request {
         Some(self_request) => builder = builder.data(self_request),
         None => {}
@@ -209,7 +203,7 @@ pub fn config_stage0(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    sync_settings_data: Option<Data<SyncSettings>>,
+    settings_data: Data<Settings>,
     restart_switch: Data<Sender<bool>>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
@@ -218,7 +212,7 @@ pub fn config_stage0(
             loader_registry,
             service_provider,
             auth_data,
-            sync_settings_data,
+            settings_data,
             restart_switch,
             None,
             true,
@@ -239,7 +233,7 @@ pub fn config(
     loader_registry: Data<LoaderRegistry>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    sync_settings_data: Option<Data<SyncSettings>>,
+    settings_data: Data<Settings>,
     restart_switch: Data<Sender<bool>>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
@@ -249,7 +243,7 @@ pub fn config(
                 loader_registry.clone(),
                 service_provider.clone(),
                 auth_data.clone(),
-                sync_settings_data.clone(),
+                settings_data.clone(),
                 restart_switch.clone(),
                 None,
                 false,
@@ -261,7 +255,7 @@ pub fn config(
             loader_registry,
             service_provider,
             auth_data,
-            sync_settings_data,
+            settings_data,
             restart_switch,
             Some(self_requester),
             true,

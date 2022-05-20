@@ -1,8 +1,7 @@
 use std::{io::BufReader, path::PathBuf};
 
 use rustls::ServerConfig;
-
-use crate::settings::ServerSettings;
+use service::settings::ServerSettings;
 
 #[derive(Debug)]
 pub struct SelfSignedCertFiles {
@@ -10,19 +9,18 @@ pub struct SelfSignedCertFiles {
     pub public_cert_file: String,
 }
 
-const CERTS_PATH_DEFAULT: &str = "./certs";
+const CERTS_PATH: &str = "certs";
 
 pub const PRIVATE_CERT_FILE: &str = "key.pem";
 pub const PUBLIC_CERT_FILE: &str = "cert.pem";
 
 pub fn find_self_signed_certs(server_settings: &ServerSettings) -> Option<SelfSignedCertFiles> {
-    let cert_dir = server_settings
-        .certs_dir
-        .as_deref()
-        .unwrap_or(CERTS_PATH_DEFAULT);
+    let cert_dir = PathBuf::new()
+        .join(&server_settings.base_dir.clone().unwrap_or(".".to_string()))
+        .join(CERTS_PATH);
 
-    let key_file = PathBuf::new().join(cert_dir).join(PRIVATE_CERT_FILE);
-    let cert_file = PathBuf::new().join(cert_dir).join(PUBLIC_CERT_FILE);
+    let key_file = PathBuf::new().join(&cert_dir).join(PRIVATE_CERT_FILE);
+    let cert_file = PathBuf::new().join(&cert_dir).join(PUBLIC_CERT_FILE);
     if !key_file.exists() || !cert_file.exists() {
         return None;
     }
