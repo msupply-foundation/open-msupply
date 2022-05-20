@@ -1,0 +1,8 @@
+{
+  "name": "open-msupply",
+  "version": "1.0.0-beta.3",
+  "private": true,
+  "scripts": {
+    "start": "cd ./server && cargo run & cd ./client && yarn start"
+  }
+}
