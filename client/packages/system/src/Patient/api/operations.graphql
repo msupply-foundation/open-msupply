@@ -1,0 +1,73 @@
+fragment NameRow on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  isOnHold
+  name
+  store {
+    id
+    code
+  }
+}
+
+fragment Name on NameNode {
+  address
+  chargeCode
+  code
+  comment
+  country
+  createdDate
+  email
+  id
+  isCustomer
+  isDonor
+  isManufacturer
+  isOnHold
+  isSupplier
+  isSystemName
+  isVisible
+  name
+  phone
+  website
+  store {
+    id
+    code
+  }
+}
+
+query names(
+  $storeId: String!
+  $key: NameSortFieldInput!
+  $desc: Boolean
+  $first: Int
+  $offset: Int
+  $filter: NameFilterInput
+) {
+  names(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...NameRow
+      }
+      totalCount
+    }
+  }
+}
+
+query nameById($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...Name
+      }
+      totalCount
+    }
+  }
+}
