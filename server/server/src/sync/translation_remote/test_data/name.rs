@@ -178,8 +178,8 @@ fn name_1_push_record() -> TestSyncPushRecord {
             is_donor: false,
             on_hold: false,
             created_date: Some(NaiveDate::from_ymd(2022, 05, 22)),
-            om_created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
-            om_gender: Some(Gender::Female),
+            //om_created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            //om_gender: Some(Gender::Female),
         }),
     }
 }

@@ -96,8 +96,8 @@ impl RemotePushUpsertTranslation for NameTranslation {
             is_donor,
             on_hold,
             created_date: created_datetime.map(|dt| dt.date()),
-            om_created_datetime: created_datetime,
-            om_gender: gender,
+            //om_created_datetime: created_datetime,
+            //om_gender: gender,
         };
 
         Ok(Some(vec![PushUpsertRecord {

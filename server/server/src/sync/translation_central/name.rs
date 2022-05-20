@@ -1,15 +1,15 @@
 use crate::sync::{
-    sync_serde::{empty_str_as_option, zero_date_as_option},
+    sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option},
     translation_central::TRANSLATION_RECORD_NAME,
 };
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDate;
 use repository::{CentralSyncBufferRow, Gender, NameRow, NameType};
 
 use serde::{Deserialize, Serialize};
 
 use super::{CentralPushTranslation, IntegrationUpsertRecord};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameType {
     #[serde(rename = "facility")]
     Facility,
@@ -110,10 +110,9 @@ pub struct LegacyNameRow {
 
     #[serde(deserialize_with = "zero_date_as_option")]
     pub created_date: Option<NaiveDate>,
-
     // TODO not in mSupply:
-    pub om_created_datetime: Option<NaiveDateTime>,
-    pub om_gender: Option<Gender>,
+    //pub om_created_datetime: Option<NaiveDateTime>,
+    //pub om_gender: Option<Gender>,
 }
 
 pub fn translate_name(data: LegacyNameRow) -> NameRow {
@@ -127,11 +126,6 @@ pub fn translate_name(data: LegacyNameRow) -> NameRow {
 
         first_name: data.first_name,
         last_name: data.last_name,
-        gender: data.om_gender.or(if data.female {
-            Some(Gender::Female)
-        } else {
-            Some(Gender::Male)
-        }),
         date_of_birth: data.date_of_birth,
         phone: data.phone,
         charge_code: data.charge_code,
@@ -144,9 +138,28 @@ pub fn translate_name(data: LegacyNameRow) -> NameRow {
         is_manufacturer: data.is_manufacturer,
         is_donor: data.is_donor,
         on_hold: data.on_hold,
+
+        // TODO replace once mSupply support new fields
+        gender: if data.r#type == LegacyNameType::Patient {
+            if data.female {
+                Some(Gender::Female)
+            } else {
+                Some(Gender::Male)
+            }
+        } else {
+            None
+        },
+        created_datetime: data.created_date.map(|date| date.and_hms(0, 0, 0)),
+        /*
+        gender: data.om_gender.or(if data.female {
+            Some(Gender::Female)
+        } else {
+            Some(Gender::Male)
+        }),
         created_datetime: data
             .om_created_datetime
             .or(data.created_date.map(|date| date.and_hms(0, 0, 0))),
+            */
     }
 }
 
