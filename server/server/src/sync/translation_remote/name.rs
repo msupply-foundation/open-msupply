@@ -47,6 +47,7 @@ impl RemotePushUpsertTranslation for NameTranslation {
             r#type,
             is_customer,
             is_supplier,
+            supplying_store_id,
             first_name,
             last_name,
             gender,
@@ -77,6 +78,7 @@ impl RemotePushUpsertTranslation for NameTranslation {
             r#type: LegacyNameType::from_name_type(&r#type),
             customer: is_customer,
             supplier: is_supplier,
+            supplying_store_id,
             first_name,
             last_name,
             female: gender

@@ -65,6 +65,9 @@ pub struct LegacyNameRow {
     pub supplier: bool,
 
     #[serde(deserialize_with = "empty_str_as_option")]
+    pub supplying_store_id: Option<String>,
+
+    #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "first")]
     pub first_name: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -109,6 +112,7 @@ pub struct LegacyNameRow {
     pub on_hold: bool,
 
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub created_date: Option<NaiveDate>,
     // TODO not in mSupply:
     //pub om_created_datetime: Option<NaiveDateTime>,
@@ -124,6 +128,7 @@ pub fn translate_name(data: LegacyNameRow) -> NameRow {
         is_customer: data.customer,
         is_supplier: data.supplier,
 
+        supplying_store_id: data.supplying_store_id,
         first_name: data.first_name,
         last_name: data.last_name,
         date_of_birth: data.date_of_birth,
