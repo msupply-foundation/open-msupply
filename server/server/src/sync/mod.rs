@@ -4,6 +4,7 @@ mod remote_data_synchroniser;
 mod sync_api_credentials;
 mod sync_api_v3;
 mod sync_api_v5;
+mod sync_serde;
 mod synchroniser;
 mod translation_central;
 mod translation_remote;

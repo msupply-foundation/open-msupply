@@ -126,8 +126,8 @@ const NAME_STORE_JOIN_3: (&'static str, &'static str) = (
       "spare_Category_optional2_id": 0,
       "spare_Category_optional_id": 0,
       "store_ID": "store_b",
-      "name_is_customer": true,
-      "name_is_supplier": true
+      "om_name_is_customer": true,
+      "om_name_is_supplier": true
   }"#,
 );
 fn name_store_join_3_pull_record() -> TestSyncRecord {

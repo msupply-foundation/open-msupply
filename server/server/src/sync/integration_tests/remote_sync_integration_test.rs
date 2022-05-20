@@ -29,8 +29,9 @@ mod remote_sync_integration_tests {
     use crate::sync::{
         integration_tests::{
             invoice::InvoiceRecordTester, location::LocationSyncRecordTester,
-            number::NumberSyncRecordTester, requisition::RequisitionRecordTester,
-            stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
+            name::NameSyncRecordTester, number::NumberSyncRecordTester,
+            requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
+            stocktake::StocktakeRecordTester,
         },
         Synchroniser,
     };
@@ -129,34 +130,39 @@ mod remote_sync_integration_tests {
         let sync_settings = SyncSettings {
             url: "http://192.168.178.77:8080".to_string(),
             username: "mobiletest".to_string(),
-            password_sha256: "mobiletest".to_string(),
+            password_sha256: "e2565cf07cd699f745b0e46c8d647f7174fc9446e01a1ffde672a4cf78bf45ac"
+                .to_string(),
             interval_sec: 60 * 60,
             central_server_site_id: 1,
             site_id: 7,
             site_hardware_id: "49149896-E713-4535-9DA8-C30AB06F9D5E".to_string(),
         };
 
-        println!("number:");
+        println!("number...");
         let number_tester = NumberSyncRecordTester {};
         test_sync_record(&sync_settings, &number_tester).await;
 
-        println!("Location:");
+        println!("name...");
+        let name_tester = NameSyncRecordTester {};
+        test_sync_record(&sync_settings, &name_tester).await;
+
+        println!("Location...");
         let location_tester = LocationSyncRecordTester {};
         test_sync_record(&sync_settings, &location_tester).await;
 
-        println!("stock line:");
+        println!("stock line...");
         let stock_line_tester = StockLineRecordTester {};
         test_sync_record(&sync_settings, &stock_line_tester).await;
 
-        println!("stocktake:");
+        println!("stocktake...");
         let stocktake_tester = StocktakeRecordTester {};
         test_sync_record(&sync_settings, &stocktake_tester).await;
 
-        println!("invoice:");
+        println!("invoice...");
         let invoice_tester = InvoiceRecordTester {};
         test_sync_record(&sync_settings, &invoice_tester).await;
 
-        println!("requisition:");
+        println!("requisition...");
         let requisition_tester = RequisitionRecordTester {};
         test_sync_record(&sync_settings, &requisition_tester).await;
     }

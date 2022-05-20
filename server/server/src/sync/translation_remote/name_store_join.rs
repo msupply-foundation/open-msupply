@@ -1,4 +1,4 @@
-use log::warn;
+use log::error;
 use repository::{NameRowRepository, NameStoreJoinRow, RemoteSyncBufferRow, StorageConnection};
 
 use serde::{Deserialize, Serialize};
@@ -38,9 +38,8 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
         let name = match NameRowRepository::new(connection).find_one_by_id(&data.name_ID)? {
             Some(name) => name,
             None => {
-                // TODO: support patients?
-                warn!(
-                    "Failed to get name \"{}\" for name_store_join \"{}\". Potentially the name refers to a patient but patients are currently not synced.",
+                error!(
+                    "Failed to get name \"{}\" for name_store_join \"{}\" (ignore it).",
                     data.name_ID, data.ID
                 );
                 return Ok(None);

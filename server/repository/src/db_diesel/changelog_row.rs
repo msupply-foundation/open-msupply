@@ -38,6 +38,7 @@ pub enum ChangelogTableName {
     Number,
     Location,
     StockLine,
+    Name,
     NameStoreJoin,
     Invoice,
     InvoiceLine,

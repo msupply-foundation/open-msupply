@@ -25,6 +25,9 @@ use self::{
     unit::UnitTranslation,
 };
 
+// Also used for remote data sync
+pub use name::{translate_name, LegacyNameRow, LegacyNameType};
+
 use super::{SyncImportError, SyncTranslationError};
 
 #[derive(Debug, PartialEq, Eq)]

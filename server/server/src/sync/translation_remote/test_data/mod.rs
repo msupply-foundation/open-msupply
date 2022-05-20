@@ -1,12 +1,14 @@
 use repository::{
     ChangelogRow, InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository,
-    NameStoreJoinRepository, NumberRowRepository, RemoteSyncBufferRow, RepositoryError,
-    RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
+    NameRowRepository, NameStoreJoinRepository, NumberRowRepository, RemoteSyncBufferRow,
+    RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
+    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
 };
 
 use self::{
     location::{get_test_location_records, get_test_push_location_records},
+    name::{get_test_name_records, get_test_push_name_records},
+    name_store_join::get_test_name_store_join_records,
     number::{get_test_number_records, get_test_push_number_records},
     requisition::{get_test_push_requisition_records, get_test_requisition_records},
     requisition_line::{get_test_push_requisition_line_records, get_test_requisition_line_records},
@@ -20,6 +22,7 @@ use self::{
 use super::pull::{IntegrationRecord, IntegrationUpsertRecord};
 
 pub mod location;
+pub mod name;
 pub mod name_store_join;
 pub mod number;
 pub mod requisition;
@@ -122,6 +125,15 @@ pub fn check_records_against_database(
                         comparison_record
                     )
                 }
+                IntegrationUpsertRecord::Name(comparison_record) => {
+                    assert_eq!(
+                        NameRowRepository::new(&connection)
+                            .find_one_by_id(&comparison_record.id)
+                            .unwrap()
+                            .expect(&format!("Name not found: {}", &comparison_record.id)),
+                        comparison_record
+                    )
+                }
                 IntegrationUpsertRecord::NameStoreJoin(comparison_record) => {
                     assert_eq!(
                         NameStoreJoinRepository::new(&connection)
@@ -203,7 +215,8 @@ pub fn get_all_remote_pull_test_records() -> Vec<TestSyncRecord> {
     test_records.append(&mut get_test_number_records());
     test_records.append(&mut get_test_location_records());
     test_records.append(&mut get_test_stock_line_records());
-    //test_records.append(&mut get_test_name_store_join_records());
+    test_records.append(&mut get_test_name_records());
+    test_records.append(&mut get_test_name_store_join_records());
     test_records.append(&mut get_test_transact_records());
     test_records.append(&mut get_test_trans_line_records());
     test_records.append(&mut get_test_stocktake_records());
@@ -218,6 +231,7 @@ pub fn get_all_remote_push_test_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut get_test_push_number_records());
     test_records.append(&mut get_test_push_location_records());
+    test_records.append(&mut get_test_push_name_records());
     //test_records.append(&mut get_test_push_name_store_join_records());
     test_records.append(&mut get_test_push_stock_line_records());
     test_records.append(&mut get_test_push_transact_records());
