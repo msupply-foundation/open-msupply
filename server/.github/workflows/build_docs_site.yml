@@ -1,0 +1,21 @@
+# Docs are rebuilt on each push to main
+name: Build and deploy GH Pages
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: build_and_deploy
+        uses: shalzz/zola-deploy-action@v0.13.0
+        env:
+          # Target branch
+          PAGES_BRANCH: gh-pages
+          # Provide personal access token
+          TOKEN: ${{ secrets.ZOLAGENERATEDOCS }}
+          # build directory
+          BUILD_DIR: docs

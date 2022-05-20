@@ -1,0 +1,21 @@
+# build
+/target
+
+# emacs
+*~
+\#*#
+.\#*
+.DS_Store
+
+# zola dev docs
+/docs/public
+
+# test databases
+*.sqlite
+*.sqlite-journal
+
+# directories used by the server at runtime
+plugins
+certs
+static_files
+omsupply-database

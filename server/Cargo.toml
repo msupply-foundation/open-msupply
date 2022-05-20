@@ -1,0 +1,23 @@
+[workspace]
+
+members = [
+    "android",
+    "report_builder",
+    "repository",
+    "graphql",
+    "server",
+    "service",
+    "util",
+    "graphql/core",
+    "graphql/types",
+    "graphql/requisition",
+    "graphql/requisition_line",
+    "graphql/stocktake",
+    "graphql/stocktake_line",
+    "graphql/invoice",
+    "graphql/invoice_line",
+    "graphql/location",
+    "graphql/general",
+    "graphql/batch_mutations",
+    "demo"
+]

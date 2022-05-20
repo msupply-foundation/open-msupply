@@ -1,0 +1,5 @@
+server:
+  host: 127.0.0.1
+  develop: true
+sync:
+  url: "http://localhost:2048"
