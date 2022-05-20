@@ -1,0 +1,48 @@
+[package]
+name = "graphql"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+path = "./lib.rs"
+
+[dependencies]
+
+repository = { path = "../repository" }
+service = { path = "../service" }
+util = { path = "../util" }
+graphql_core = { path = "core" }
+graphql_types = { path = "types" }
+graphql_general = { path = "general" }
+graphql_location = { path = "location" }
+graphql_reports = { path = "reports" }
+graphql_invoice = { path = "invoice" }
+graphql_invoice_line = { path = "invoice_line" }
+graphql_requisition = { path = "requisition" }
+graphql_requisition_line = { path = "requisition_line" }
+graphql_stocktake = { path = "stocktake" }
+graphql_stocktake_line = { path = "stocktake_line" }
+graphql_batch_mutations = { path = "batch_mutations" }
+
+actix-web = { version = "4.0.1", default-features = false, features = ["macros"] }
+anymap = "0.12"
+async-graphql = { version = "3.0.35", features = ["dataloader", "chrono", "log"] }
+async-graphql-actix-web = "3.0.35"
+async-trait = "0.1.30"
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.11", features = ["json"] } 
+serde = "1.0.126"
+serde_json = "1.0.66"
+thiserror = "1.0.30"
+tokio = { version = "1.17.0", features = ["macros" ] }
+log = "0.4.14"
+
+
+[dev-dependencies]
+actix-rt = "2.6.0"
+assert-json-diff = "2.0.1"
+
+[features]
+default = ["repository/sqlite"]
+postgres = ["repository/postgres"]
+

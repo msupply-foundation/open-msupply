@@ -1,0 +1,3 @@
+CREATE TRIGGER location_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON location
+  FOR EACH ROW EXECUTE PROCEDURE update_changelog();
