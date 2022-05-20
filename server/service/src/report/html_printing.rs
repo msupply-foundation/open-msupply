@@ -1,10 +1,11 @@
-use std::fs;
+use std::{fs, path::PathBuf, str::FromStr};
 
 use headless_chrome::{protocol::page::PrintToPdfOptions, Browser, LaunchOptionsBuilder};
 
 use super::report_service::GeneratedReport;
 
 pub fn html_to_pdf(
+    temp_dir: &Option<String>,
     document: &GeneratedReport,
     document_id: &str,
 ) -> Result<Vec<u8>, failure::Error> {
@@ -27,9 +28,15 @@ pub fn html_to_pdf(
         footer_template: document.footer.clone(),
     });
 
+    let temp_dir = match temp_dir {
+        Some(temp_dir) => PathBuf::from_str(temp_dir)?,
+        None => std::env::current_dir()?,
+    }
+    .join("report_printing_tmp");
+    fs::create_dir_all(&temp_dir)?;
+
     let document_name = format!("{}.html", document_id);
-    let temp_html_doc_path = std::env::current_dir()?.join(document_name);
-    //let file_path = PathBuf::from_str(&document_name)?.canonicalize()?;
+    let temp_html_doc_path = temp_dir.join(document_name);
     fs::write(&temp_html_doc_path, &document.document)?;
 
     // create a new browser and a tab in that browser using headless-chrome

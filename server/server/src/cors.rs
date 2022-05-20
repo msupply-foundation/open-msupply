@@ -1,6 +1,6 @@
-use crate::settings::Settings;
 use actix_cors::Cors;
 use actix_web::http::header;
+use service::settings::Settings;
 
 pub fn cors_policy(config_settings: &Settings) -> Cors {
     let cors = if config_settings.server.develop && config_settings.server.debug_cors_permissive {

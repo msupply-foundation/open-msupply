@@ -13,8 +13,8 @@ pub mod android {
     use repository::database_settings::DatabaseSettings;
 
     use server::self_signed_certs::{PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
-    use server::settings::{ServerSettings, Settings};
     use server::start_server;
+    use service::settings::{ServerSettings, Settings};
     use tokio::sync::oneshot;
 
     use self::jni::objects::{JClass, JString};
@@ -120,7 +120,7 @@ pub mod android {
                         debug_no_access_control: false,
                         debug_cors_permissive: false,
                         cors_origins: vec!["http://localhost".to_string()],
-                        certs_dir: Some(cert_path.to_str().unwrap().to_string()),
+                        base_dir: Some(files_dir.to_str().unwrap().to_string()),
                     },
                     database: DatabaseSettings {
                         username: "n/a".to_string(),

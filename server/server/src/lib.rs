@@ -6,7 +6,6 @@ use crate::{
 
 use self::{
     middleware::{compress as compress_middleware, logger as logger_middleware},
-    settings::Settings,
     sync::Synchroniser,
 };
 use graphql_core::loader::{get_loaders, LoaderRegistry};
@@ -18,12 +17,12 @@ use self_signed_certs::SelfSignedCertFiles;
 use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
+    settings::{ServerSettings, Settings},
     settings_service::{SettingsService, SettingsServiceTrait},
     token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use settings::ServerSettings;
 use std::{
     io::ErrorKind,
     net::TcpListener,
@@ -38,7 +37,6 @@ pub mod cors;
 pub mod environment;
 pub mod middleware;
 pub mod self_signed_certs;
-pub mod settings;
 pub mod static_files;
 pub mod sync;
 pub mod test_utils;
@@ -89,7 +87,7 @@ async fn run_stage0(
 
     let restart_switch = Data::new(restart_switch);
 
-    let closure_settings = config_settings.clone();
+    let closure_settings = Data::new(config_settings.clone());
 
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
@@ -102,7 +100,7 @@ async fn run_stage0(
                 loader_registry_data.clone(),
                 service_provider_data.clone(),
                 auth_data.clone(),
-                None,
+                closure_settings.clone(),
                 restart_switch.clone(),
             ))
     })
@@ -185,13 +183,16 @@ async fn run_server(
             .await
         }
     };
+    // Final settings:
+    let mut settings = config_settings;
+    settings.sync = Some(sync_settings.clone());
 
-    let cert_type = match find_self_signed_certs(&config_settings.server) {
+    let cert_type = match find_self_signed_certs(&settings.server) {
         Some(files) => ServerCertType::SelfSigned(files),
         None => ServerCertType::None,
     };
     let auth_data = auth_data(
-        &config_settings.server,
+        &settings.server,
         token_bucket.clone(),
         token_secret.clone(),
         &cert_type,
@@ -206,7 +207,7 @@ async fn run_server(
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
     let loader_registry_data = Data::new(LoaderRegistry { loaders });
 
-    let sync_settings_data = Some(Data::new(sync_settings.clone()));
+    let settings_data = Data::new(settings.clone());
 
     let restart_switch = Data::new(restart_switch);
 
@@ -216,10 +217,10 @@ async fn run_server(
         Ok(_) => {}
         Err(err) => {
             error!("Failed to perform the initial sync: {}", err);
-            if !config_settings.server.develop {
+            if !settings.server.develop {
                 warn!("Falling back to bootstrap mode");
                 return run_stage0(
-                    config_settings,
+                    settings,
                     off_switch,
                     token_bucket,
                     token_secret,
@@ -230,7 +231,7 @@ async fn run_server(
         }
     };
 
-    let closure_settings = config_settings.clone();
+    let closure_settings = settings.clone();
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
         App::new()
@@ -242,9 +243,10 @@ async fn run_server(
                 loader_registry_data.clone(),
                 service_provider_data.clone(),
                 auth_data.clone(),
-                sync_settings_data.clone(),
+                settings_data.clone(),
                 restart_switch.clone(),
             ))
+            .app_data(Data::new(closure_settings.clone()))
             .configure(config_static_files)
     })
     .disable_signals();
@@ -253,15 +255,12 @@ async fn run_server(
             let config = load_self_signed_certs_rustls(cert_files)
                 .expect("Invalid self signed certificates");
             http_server = http_server.bind_rustls(
-                format!(
-                    "{}:{}",
-                    config_settings.server.host, config_settings.server.port
-                ),
+                format!("{}:{}", settings.server.host, settings.server.port),
                 config,
             )?;
         }
         ServerCertType::None => {
-            if !config_settings.server.develop && !config_settings.server.danger_allow_http {
+            if !settings.server.develop && !settings.server.danger_allow_http {
                 error!("No certificates found");
                 return Err(std::io::Error::new(
                     ErrorKind::Other,
@@ -270,7 +269,7 @@ async fn run_server(
             }
 
             warn!("No certificates found: Run in HTTP development mode");
-            let listener = TcpListener::bind(config_settings.server.address())
+            let listener = TcpListener::bind(settings.server.address())
                 .expect("Failed to bind server to address");
             http_server = http_server.listen(listener)?;
         }

@@ -3,9 +3,11 @@ use std::io::ErrorKind;
 use actix_files as fs;
 use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
+use actix_web::web::Data;
 use actix_web::{guard, web, Error, HttpRequest, HttpResponse};
 use reqwest::StatusCode;
 use serde::Deserialize;
+use service::settings::Settings;
 use service::static_files::StaticFileService;
 
 // this function could be located in different module
@@ -21,8 +23,10 @@ pub struct FileRequestQuery {
 async fn files(
     req: HttpRequest,
     query: web::Query<FileRequestQuery>,
+    settings: Data<Settings>,
 ) -> Result<HttpResponse, Error> {
-    let service = StaticFileService::new();
+    let service = StaticFileService::new(&settings.server.base_dir)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
     let file = service
         .find_file(&query.id)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
