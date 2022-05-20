@@ -4,7 +4,7 @@ use repository::{ChangelogAction, ChangelogRow, StorageConnection};
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        location::LocationTranslation, number::NumberTranslation,
+        location::LocationTranslation, name::NameTranslation, number::NumberTranslation,
         requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
         stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
         stocktake_line::StocktakeLineTranslation, table_name_to_central,
@@ -54,6 +54,7 @@ pub fn translate_changelog(
                 Box::new(NumberTranslation {}),
                 Box::new(LocationTranslation {}),
                 Box::new(StockLineTranslation {}),
+                Box::new(NameTranslation {}),
                 // Don't push name_store_join since it is central data.
                 //
                 // Not like other central data name_store_join rows are pulled through the remote

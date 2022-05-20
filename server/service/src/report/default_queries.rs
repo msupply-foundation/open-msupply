@@ -106,7 +106,8 @@ query InvoiceQuery($storeId: String, $dataId: String) {
     ... on StoreNode {
       id
       name(storeId: $storeId) {
-        address
+        address1
+        address2
         chargeCode
         code
         comment
@@ -197,7 +198,8 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
     ... on StoreNode {
       id
       name(storeId: $storeId) {
-        address
+        address1
+        address2
         chargeCode
         code
         comment
@@ -286,7 +288,8 @@ const REQUISITION_QUERY: &str = r#"query RequisitionQuery($storeId: String, $dat
     ... on StoreNode {
       id
       name(storeId: $storeId) {
-        address
+        address1
+        address2
         chargeCode
         code
         comment

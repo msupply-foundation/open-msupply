@@ -1,12 +1,68 @@
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
-use repository::{Name, NameRow};
+use repository::{Gender, Name, NameRow, NameType};
 
 use graphql_core::{loader::StoreByIdLoader, simple_generic_errors::NodeError, ContextExt};
-use serde_json::json;
+use serde::Serialize;
 
 use super::StoreNode;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum NameNodeType {
+    Facility,
+    Patient,
+    Build,
+    Invad,
+    Repack,
+    Store,
+    Others,
+}
+impl NameNodeType {
+    pub fn from_domain(name_type: &NameType) -> Self {
+        match name_type {
+            NameType::Facility => NameNodeType::Facility,
+            NameType::Patient => NameNodeType::Patient,
+            NameType::Build => NameNodeType::Build,
+            NameType::Invad => NameNodeType::Invad,
+            NameType::Repack => NameNodeType::Repack,
+            NameType::Store => NameNodeType::Store,
+            NameType::Others => NameNodeType::Others,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum GenderType {
+    Female,
+    Male,
+    TransgenderMale,
+    TransgenderMaleHormone,
+    TransgenderMaleSurgical,
+    TransgenderFemale,
+    TransgenderFemaleHormone,
+    TransgenderFemaleSurgical,
+    Unknown,
+    NonBinary,
+}
+impl GenderType {
+    pub fn from_domain(gender: &Gender) -> Self {
+        match gender {
+            Gender::Female => GenderType::Female,
+            Gender::Male => GenderType::Male,
+            Gender::TransgenderMale => GenderType::TransgenderMale,
+            Gender::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
+            Gender::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,
+            Gender::TransgenderFemale => GenderType::TransgenderFemale,
+            Gender::TransgenderFemaleHormone => GenderType::TransgenderFemaleHormone,
+            Gender::TransgenderFemaleSurgical => GenderType::TransgenderFemaleSurgical,
+            Gender::Unknown => GenderType::Unknown,
+            Gender::NonBinary => GenderType::NonBinary,
+        }
+    }
+}
 
 #[Object]
 impl NameNode {
@@ -20,6 +76,10 @@ impl NameNode {
 
     pub async fn code(&self) -> &str {
         &self.row().code
+    }
+
+    pub async fn r#type(&self) -> NameNodeType {
+        NameNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn is_customer(&self) -> bool {
@@ -51,50 +111,64 @@ impl NameNode {
             .map(StoreNode::from_domain))
     }
 
-    // Mock
-
-    pub async fn phone(&self) -> String {
-        self.legacy_string("phone")
+    pub async fn first_name(&self) -> &Option<String> {
+        &self.row().first_name
+    }
+    pub async fn last_name(&self) -> &Option<String> {
+        &self.row().last_name
+    }
+    pub async fn gender(&self) -> Option<GenderType> {
+        self.row().gender.as_ref().map(GenderType::from_domain)
     }
 
-    pub async fn charge_code(&self) -> String {
-        self.legacy_string("charge code")
+    pub async fn phone(&self) -> &Option<String> {
+        &self.row().phone
     }
 
-    pub async fn comment(&self) -> String {
-        self.legacy_string("comment")
+    pub async fn charge_code(&self) -> &Option<String> {
+        &self.row().charge_code
     }
 
-    pub async fn country(&self) -> String {
-        self.legacy_string("country")
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
     }
 
-    pub async fn address(&self) -> &str {
-        ""
+    pub async fn country(&self) -> &Option<String> {
+        &self.row().country
     }
 
-    pub async fn email(&self) -> String {
-        self.legacy_string("email")
+    pub async fn address1(&self) -> &Option<String> {
+        &self.row().address1
     }
 
-    pub async fn website(&self) -> String {
-        self.legacy_string("url")
+    pub async fn address2(&self) -> &Option<String> {
+        &self.row().address2
+    }
+
+    pub async fn email(&self) -> &Option<String> {
+        &self.row().email
+    }
+
+    pub async fn website(&self) -> &Option<String> {
+        &self.row().website
     }
 
     pub async fn is_manufacturer(&self) -> bool {
-        self.legacy_bool("manufacturer")
+        self.row().is_manufacturer
     }
 
     pub async fn is_donor(&self) -> bool {
-        self.legacy_bool("donor")
-    }
-
-    pub async fn created_date(&self) -> Option<NaiveDate> {
-        Some(NaiveDate::from_ymd(2010, 02, 28))
+        self.row().is_donor
     }
 
     pub async fn is_on_hold(&self) -> bool {
-        self.legacy_bool("hold")
+        self.row().on_hold
+    }
+
+    pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .created_datetime
+            .map(|datetime| DateTime::<Utc>::from_utc(datetime, Utc))
     }
 }
 
@@ -117,38 +191,12 @@ impl NameNode {
     pub fn row(&self) -> &NameRow {
         &self.name.name_row
     }
-
-    pub fn legacy_string(&self, key: &str) -> String {
-        let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
-            Ok(value) => value,
-            Err(_) => return "".to_owned(),
-        };
-
-        json_value
-            .get(key)
-            .unwrap_or(&json!(""))
-            .as_str()
-            .unwrap()
-            .to_string()
-    }
-
-    pub fn legacy_bool(&self, key: &str) -> bool {
-        let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
-            Ok(value) => value,
-            Err(_) => return false,
-        };
-
-        json_value
-            .get(key)
-            .unwrap_or(&json!(false))
-            .as_bool()
-            .unwrap()
-    }
 }
 
 #[cfg(test)]
 mod test {
     use async_graphql::{EmptyMutation, Object};
+    use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::mock::MockDataInserts;
     use serde_json::json;
@@ -175,98 +223,23 @@ mod test {
                 NameNode {
                     name: Name {
                         name_row: inline_init(|r: &mut NameRow| {
-                            r.legacy_record = r#"{
-                                "ID": "EBC665F368214F708B2CD908FBE85432",
-                                "name": "test",
-                                "fax": "",
-                                "phone": "0218738201",
-                                "customer": true,
-                                "bill_address1": "",
-                                "bill_address2": "",
-                                "supplier": true,
-                                "charge code": "test",
-                                "margin": 0,
-                                "comment": "name comment",
-                                "currency_ID": "51FE3CF614A542F79DE8BEA99503610E",
-                                "country": "name country",
-                                "freightfac": 1,
-                                "email": "name email",
-                                "custom1": "",
-                                "code": "test",
-                                "last": "",
-                                "first": "",
-                                "title": "",
-                                "female": false,
-                                "date_of_birth": "0000-00-00",
-                                "overpayment": 0,
-                                "group_ID": "",
-                                "hold": true,
-                                "ship_address1": "",
-                                "ship_address2": "",
-                                "url": "name website",
-                                "barcode": "*test*",
-                                "postal_address1": "",
-                                "postal_address2": "",
-                                "category1_ID": "",
-                                "region_ID": "",
-                                "type": "store",
-                                "price_category": "A",
-                                "flag": "",
-                                "manufacturer": true,
-                                "print_invoice_alphabetical": false,
-                                "custom2": "",
-                                "custom3": "",
-                                "default_order_days": 0,
-                                "connection_type": 0,
-                                "PATIENT_PHOTO": "[object Picture]",
-                                "NEXT_OF_KIN_ID": "",
-                                "POBOX": "",
-                                "ZIP": 0,
-                                "middle": "",
-                                "preferred": false,
-                                "Blood_Group": "",
-                                "marital_status": "",
-                                "Benchmark": false,
-                                "next_of_kin_relative": "",
-                                "mother_id": "",
-                                "postal_address3": "",
-                                "postal_address4": "",
-                                "bill_address3": "",
-                                "bill_address4": "",
-                                "ship_address3": "",
-                                "ship_address4": "",
-                                "ethnicity_ID": "",
-                                "occupation_ID": "",
-                                "religion_ID": "",
-                                "national_health_number": "",
-                                "Master_RTM_Supplier_Code": 0,
-                                "ordering_method": "sh",
-                                "donor": false,
-                                "latitude": 0,
-                                "longitude": 0,
-                                "Master_RTM_Supplier_name": "",
-                                "category2_ID": "",
-                                "category3_ID": "",
-                                "category4_ID": "",
-                                "category5_ID": "",
-                                "category6_ID": "",
-                                "bill_address5": "",
-                                "bill_postal_zip_code": "",
-                                "postal_address5": "",
-                                "postal_zip_code": "",
-                                "ship_address5": "",
-                                "ship_postal_zip_code": "",
-                                "supplying_store_id": "0AD994631A1D4BFAB42921DA60BD6474",
-                                "license_number": "",
-                                "license_expiry": "0000-00-00",
-                                "has_current_license": false,
-                                "custom_data": null,
-                                "maximum_credit": 0,
-                                "nationality_ID": "",
-                                "created_date": "0000-00-00",
-                                "integration_ID": ""
-                            }"#
-                            .to_string();
+                            r.r#type = NameType::Patient;
+                            r.first_name = Some("first_name".to_string());
+                            r.last_name = Some("last_name".to_string());
+                            r.gender = Some(Gender::Female);
+                            r.phone = Some("0218738201".to_string());
+                            r.charge_code = Some("test".to_string());
+                            r.comment = Some("name comment".to_string());
+                            r.country = Some("name country".to_string());
+                            r.email = Some("name email".to_string());
+                            r.website = Some("name website".to_string());
+                            r.is_manufacturer = true;
+                            r.is_donor = false;
+                            r.on_hold = true;
+                            r.address1 = Some("address1".to_string());
+                            r.address2 = Some("address2".to_string());
+                            r.created_datetime =
+                                Some(NaiveDate::from_ymd(2022, 05, 18).and_hms(12, 07, 12))
                         }),
                         name_store_join_row: None,
                         store_row: None,
@@ -278,6 +251,10 @@ mod test {
         let expected = json!({
             "testQuery": {
                 "__typename": "NameNode",
+                "type": "PATIENT",
+                "firstName": "first_name",
+                "lastName": "last_name",
+                "gender": "FEMALE",
                 "phone": "0218738201",
                 "chargeCode": "test",
                 "comment": "name comment",
@@ -287,9 +264,9 @@ mod test {
                 "isManufacturer": true,
                 "isDonor": false,
                 "isOnHold": true,
-                // todo
-                // created date
-                // address
+                "address1": "address1",
+                "address2": "address2",
+                "createdDatetime": "2022-05-18T12:07:12+00:00",
             }
         }
         );
@@ -298,16 +275,21 @@ mod test {
         query {
             testQuery {
                 __typename
+            type
+               firstName
+               lastName
+               gender
                phone
                chargeCode
                comment
                country
-               address
+               address1
+               address2
                email
                website
                isManufacturer
                isDonor
-               createdDate
+               createdDatetime
                isOnHold
             }
         }
