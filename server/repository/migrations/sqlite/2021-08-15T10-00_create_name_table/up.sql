@@ -17,6 +17,7 @@ CREATE TABLE name (
     is_customer BOOLEAN NOT NULL,
     is_supplier BOOLEAN NOT NULL,
    
+    supplying_store_id Text REFERENCES store(id),
     first_name Text,
     last_name Text,
     gender TEXT CHECK (gender IN (

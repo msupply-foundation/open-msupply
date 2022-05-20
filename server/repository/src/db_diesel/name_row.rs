@@ -18,6 +18,7 @@ table! {
         is_customer -> Bool,
         is_supplier -> Bool,
 
+        supplying_store_id -> Nullable<Text>,
         first_name -> Nullable<Text>,
         last_name -> Nullable<Text>,
         gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
@@ -87,6 +88,7 @@ pub struct NameRow {
     pub is_customer: bool,
     pub is_supplier: bool,
 
+    pub supplying_store_id: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
 
