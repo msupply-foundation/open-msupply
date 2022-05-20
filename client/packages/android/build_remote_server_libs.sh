@@ -1,9 +1,9 @@
 #! /bin/bash
 set -e
 
-# Path the the remote server dir
-REMOTE_SERVER_DIR="../../../remote-server"
-# The dir where the android project is:
+# Path to the server directory
+REMOTE_SERVER_DIR="../../../server"
+# The android project directory:
 ANDROID_DIR="."
 
 # Make the remote server libs:
