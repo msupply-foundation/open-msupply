@@ -29,6 +29,7 @@ import {
   DistributionRouter,
   ReplenishmentRouter,
   InventoryRouter,
+  PatientRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -123,6 +124,11 @@ export const Site: FC = () => {
                     .addWildCard()
                     .build()}
                   element={<Heading>messages</Heading>}
+                />                <Route
+                  path={RouteBuilder.create(AppRoute.Patients)
+                    .addWildCard()
+                    .build()}
+                  element={<PatientRouter/>}
                 />
 
                 <Route
