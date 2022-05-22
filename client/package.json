@@ -3,6 +3,7 @@
   "version": "1.0.0-beta.2",
   "private": true,
   "scripts": {
+    "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local",
     "start": "lerna run --scope @openmsupply-client/* --parallel start",
     "build": "lerna run --scope @openmsupply-client/* build",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
