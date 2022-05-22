@@ -20,7 +20,7 @@
     "webpack-dev-server": "^4.8.1"
   },
   "scripts": {
-    "start": "webpack-cli serve",
+    "start-remote": "webpack-cli serve",
     "start-local": "webpack-cli serve --env local",
     "build": "yarn clean && webpack --env production",
     "serve": "serve dist -p 3003",

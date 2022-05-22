@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local",
-    "start": "lerna run --scope @openmsupply-client/* --parallel start",
+    "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote",
+    "start": "yarn start-remote",
     "build": "lerna run --scope @openmsupply-client/* build",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
