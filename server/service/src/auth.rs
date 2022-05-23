@@ -59,6 +59,12 @@ pub enum Resource {
     Report,
     // view/edit server setting
     ServerAdmin,
+
+    // document
+    QueryDocument,
+    MutateDocument,
+    QueryJsonSchema,
+    MutateJsonSchema,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -202,6 +208,22 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::Report),
         ]),
     );
+
+    // TODO add permissions from central
+    map.insert(Resource::QueryDocument, PermissionDSL::NoPermissionRequired);
+    map.insert(
+        Resource::MutateJsonSchema,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::QueryJsonSchema,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateJsonSchema,
+        PermissionDSL::NoPermissionRequired,
+    );
+
     map
 }
 
