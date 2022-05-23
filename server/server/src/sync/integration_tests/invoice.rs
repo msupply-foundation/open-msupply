@@ -222,7 +222,10 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
                     .iter()
                     .map(|l| {
                         let stock_line = StockLineRepository::new(connection)
-                            .query_by_filter(StockLineFilter::new())
+                            .query_by_filter(
+                                StockLineFilter::new()
+                                    .store_id(EqualFilter::equal_to(&row_existing.row.store_id)),
+                            )
                             .unwrap()
                             .pop()
                             .unwrap()
