@@ -78,7 +78,7 @@ impl RemotePushUpsertTranslation for NameTranslation {
             r#type: LegacyNameType::from_name_type(&r#type),
             customer: is_customer,
             supplier: is_supplier,
-            supplying_store_id,
+            supplying_store_id: supplying_store_id.clone(),
             first_name,
             last_name,
             female: gender
@@ -104,7 +104,7 @@ impl RemotePushUpsertTranslation for NameTranslation {
 
         Ok(Some(vec![PushUpsertRecord {
             sync_id: changelog.id,
-            store_id: None,
+            store_id: supplying_store_id,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
