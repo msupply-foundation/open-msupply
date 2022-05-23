@@ -14,6 +14,7 @@ anymap = "0.12"
 anyhow = "1.0.44"
 bcrypt = "0.12.0"
 chrono = { version = "0.4", features = ["serde"] }
+jsonschema = "0.16.0"
 jsonwebtoken = "8.0.1"
 log = "0.4.14"
 reqwest = { version = "0.11", features = ["json"] } 
@@ -26,6 +27,7 @@ failure = "0.1.8"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
+assert-json-diff = "2.0.1"
 httpmock= "0.6.6"
 
 [features]
