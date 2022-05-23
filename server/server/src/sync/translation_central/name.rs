@@ -76,6 +76,7 @@ pub struct LegacyNameRow {
 
     pub female: bool,
     #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_birth: Option<NaiveDate>,
 
     #[serde(deserialize_with = "empty_str_as_option")]

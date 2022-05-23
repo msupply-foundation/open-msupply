@@ -132,14 +132,6 @@ For Mac OS, the version of NDK installed by Android Studio does not have all of 
 
 and set the `NDK_HOME` to `$ANDROID_SDK_ROOT/ndk-bundle`
 
-The remote server source code should be located in the `../remote-server` directory.
-If not clone it by doing:
-
-```
-cd ..
-git clone git@github.com:openmsupply/remote-server.git
-```
-
 You may need to install `armv7` i.e. `rustup target add armv7-linux-androideabi`
 
 ```bash
