@@ -48,6 +48,8 @@ const mapRoute = (route: string): RouteMapping => {
       return { title: 'sync', docs: '/introduction/' };
     case inRoute('admin'):
       return { title: 'admin', docs: '/introduction/' };
+    case inRoute('patients'):
+      return { title: 'patients', docs: '/introduction/' };
     default:
       return { title: undefined, docs: '/introduction/' };
   }

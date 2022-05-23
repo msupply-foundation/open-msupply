@@ -1,4 +1,4 @@
-fragment NameRow on NameNode {
+fragment PatientRow on NameNode {
   code
   id
   isCustomer
@@ -11,7 +11,7 @@ fragment NameRow on NameNode {
   }
 }
 
-fragment Name on NameNode {
+fragment Patient on NameNode {
   address1
   address2
   chargeCode
@@ -20,6 +20,7 @@ fragment Name on NameNode {
   country
   createdDatetime
   email
+  firstName
   id
   isCustomer
   isDonor
@@ -30,6 +31,7 @@ fragment Name on NameNode {
   isVisible
   name
   phone
+  type
   website
   store {
     id
@@ -37,7 +39,7 @@ fragment Name on NameNode {
   }
 }
 
-query names(
+query patients(
   $storeId: String!
   $key: NameSortFieldInput!
   $desc: Boolean
@@ -54,19 +56,19 @@ query names(
     ... on NameConnector {
       __typename
       nodes {
-        ...NameRow
+        ...PatientRow
       }
       totalCount
     }
   }
 }
 
-query nameById($storeId: String!, $nameId: String!) {
+query patientById($storeId: String!, $nameId: String!) {
   names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
     ... on NameConnector {
       __typename
       nodes {
-        ...Name
+        ...Patient
       }
       totalCount
     }

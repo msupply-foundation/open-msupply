@@ -21,6 +21,7 @@ import {
   useAuthContext,
   useLocation,
   EnvUtils,
+  CustomersIcon,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -190,11 +191,11 @@ export const AppDrawer: React.FC = () => {
           <CatalogueNav />
           <InventoryNav />
 
-          {/* <AppNavLink
-            to={AppRoute.Suppliers}
-            icon={<SuppliersIcon fontSize="small" color="primary" />}
-            text={t('suppliers')}
-          /> */}
+          <AppNavLink
+            to={AppRoute.Patients}
+            icon={<CustomersIcon fontSize="small" color="primary" />}
+            text={t('patients')}
+          />
 
           {/* <AppNavLink
             to={AppRoute.Tools}

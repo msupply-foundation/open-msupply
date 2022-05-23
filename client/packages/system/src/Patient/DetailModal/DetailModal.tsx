@@ -13,14 +13,14 @@ import {
   BasicSpinner,
   MuiLink,
 } from '@openmsupply-client/common';
-import { useName } from '../api';
+import { usePatient } from '../api';
 
 interface DetailModalProps {
   nameId: string;
 }
 
 export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
-  const { data, isLoading } = useName.document.get(nameId);
+  const { data, isLoading } = usePatient.document.get(nameId);
   const t = useTranslation('common');
   const { setSuffix } = useBreadcrumbs();
   const isDisabled = true;
