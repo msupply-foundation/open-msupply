@@ -5,36 +5,36 @@ import {
   RegexUtils,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { NameRowFragment } from './api';
+import { PatientRowFragment } from './api';
 
 export interface NameSearchProps {
   open: boolean;
   onClose: () => void;
-  onChange: (name: NameRowFragment) => void;
+  onChange: (name: PatientRowFragment) => void;
 }
 
 export interface NameSearchInputProps {
-  onChange: (name: NameRowFragment) => void;
+  onChange: (name: PatientRowFragment) => void;
   width?: number;
-  value: NameRowFragment | null;
+  value: PatientRowFragment | null;
   disabled?: boolean;
 }
 
 export const basicFilterOptions = {
-  stringify: (name: NameRowFragment) => `${name.code} ${name.name}`,
+  stringify: (name: PatientRowFragment) => `${name.code} ${name.name}`,
   limit: 100,
 };
 
 export const filterByNameAndCode = (
-  options: NameRowFragment[],
-  state: FilterOptionsState<NameRowFragment>
+  options: PatientRowFragment[],
+  state: FilterOptionsState<PatientRowFragment>
 ) =>
   options.filter(option =>
     RegexUtils.matchObjectProperties(state.inputValue, option, ['name', 'code'])
   );
 
 export const patientsToCsv = (
-  invoices: NameRowFragment[],
+  invoices: PatientRowFragment[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [

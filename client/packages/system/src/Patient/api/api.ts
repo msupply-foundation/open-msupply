@@ -1,16 +1,16 @@
 import { SortBy, NameSortFieldInput } from '@openmsupply-client/common';
-import { Sdk, NameRowFragment } from './operations.generated';
+import { Sdk, PatientRowFragment } from './operations.generated';
 
 export type ListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<NameRowFragment>;
+  sortBy?: SortBy<PatientRowFragment>;
 };
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     byId: async (nameId: string) => {
-      const result = await sdk.nameById({ storeId, nameId });
+      const result = await sdk.patientById({ storeId, nameId });
       const { names } = result;
       if (names.__typename === 'NameConnector') {
         if (names.nodes.length) {
@@ -25,7 +25,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       offset,
       sortBy,
     }: ListParams): Promise<{
-      nodes: NameRowFragment[];
+      nodes: PatientRowFragment[];
       totalCount: number;
     }> => {
       const key =
@@ -33,7 +33,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
           ? NameSortFieldInput.Name
           : NameSortFieldInput.Code;
 
-      const result = await sdk.names({
+      const result = await sdk.patients({
         first,
         offset,
         key,
@@ -49,7 +49,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     listAll: async ({
       sortBy,
     }: ListParams): Promise<{
-      nodes: NameRowFragment[];
+      nodes: PatientRowFragment[];
       totalCount: number;
     }> => {
       const key =
@@ -57,7 +57,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
           ? NameSortFieldInput.Name
           : NameSortFieldInput.Code;
 
-      const result = await sdk.names({
+      const result = await sdk.patients({
         key,
         desc: !!sortBy?.isDesc,
         storeId,
