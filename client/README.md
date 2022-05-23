@@ -205,3 +205,5 @@ The apk will be located in `packages/android/app/build/outputs/apk/release`.
 The remote server is started and stopped in: `android/app/src/main/java/org/openmsupply/client/MainActivity.java`
 
 The cert plugin (`packages/android/app/src/main/java/org/openmsupply/client/certplugin/CertPlugin.java`) allows the web client to make https request to the remote-server using a self signed certificate.
+
+.
