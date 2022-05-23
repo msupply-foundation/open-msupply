@@ -11,7 +11,7 @@ import {
   useTableStore,
   NothingHere,
   useToggle,
-  createQueryParamsStore,
+  useHandleQueryParams,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -30,13 +30,23 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation('distribution');
+  const { updateSortQuery, updatePaginationQuery, updateFilterQuery } =
+    useHandleQueryParams();
   const navigate = useNavigate();
   const modalController = useToggle();
 
-  const { data, isError, isLoading, sort, pagination, filter } =
+  const { data, isError, isLoading, sortBy, page, first, offset } =
     useOutbound.document.list();
-  const { onChangeSortBy, sortBy } = sort;
+  const pagination = { page, first, offset };
   useDisableOutboundRows(data?.nodes);
+
+  console.log(useOutbound.document.list());
+  // console.log('filter', filter);
+
+  const filter = {
+    onChangeStringFilterRule: (key: string, _, value: string) =>
+      updateFilterQuery(key, value),
+  };
 
   const columns = useColumns<OutboundRowFragment>(
     [
@@ -68,7 +78,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       ],
       'selection',
     ],
-    { onChangeSortBy, sortBy },
+    { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );
 
@@ -79,7 +89,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={pagination.onChangePage}
+        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes ?? []}
         isError={isError}
@@ -101,9 +111,9 @@ export const OutboundShipmentListViewComponent: FC = () => {
 export const OutboundShipmentListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<OutboundRowFragment>({
-      initialSortBy: { key: 'otherPartyName' },
-    })}
+    // queryParamsStore={createQueryParamsStore<OutboundRowFragment>({
+    //   initialSortBy: { key: 'otherPartyName' },
+    // })}
   >
     <OutboundShipmentListViewComponent />
   </TableProvider>
