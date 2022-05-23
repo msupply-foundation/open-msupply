@@ -11,15 +11,15 @@ import {
   LoadingButton,
   SortBy,
 } from '@openmsupply-client/common';
-import { NameRowFragment, useName } from '../api';
+import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
 
-export const AppBarButtons: FC<{ sortBy: SortBy<NameRowFragment> }> = ({
+export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   sortBy,
 }) => {
   const { success, error } = useNotification();
   const t = useTranslation('common');
-  const { isLoading, mutateAsync } = useName.document.listAll(sortBy);
+  const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
 
   const csvExport = async () => {
     const data = await mutateAsync();

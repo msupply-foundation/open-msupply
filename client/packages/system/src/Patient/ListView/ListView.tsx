@@ -12,17 +12,17 @@ import {
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
-import { useName, NameRowFragment } from '../api';
+import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 
 const PatientListComponent: FC = () => {
   const [selectedId, setSelectedId] = useState<string>('');
   const { data, isError, isLoading, pagination, sort } =
-    useName.document.list();
+    usePatient.document.list();
   const { sortBy, onChangeSortBy } = sort;
   const { Modal, showDialog, hideDialog } = useDialog();
 
-  const columns = useColumns<NameRowFragment>(
+  const columns = useColumns<PatientRowFragment>(
     ['name', 'code'],
     {
       sortBy,
@@ -72,7 +72,7 @@ const PatientListComponent: FC = () => {
 export const PatientListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<NameRowFragment>({
+    queryParamsStore={createQueryParamsStore<PatientRowFragment>({
       initialSortBy: { key: 'name' },
     })}
   >

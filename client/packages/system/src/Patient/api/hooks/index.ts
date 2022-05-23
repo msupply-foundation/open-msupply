@@ -1,7 +1,7 @@
 import { Document } from './document';
 import { Utils } from './utils';
 
-export const useName = {
+export const usePatient = {
   api: Utils.usePatientApi,
   document: {
     get: Document.usePatient,

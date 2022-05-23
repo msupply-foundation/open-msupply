@@ -1,8 +1,8 @@
 import { useMutation, SortBy } from '@openmsupply-client/common';
-import { NameRowFragment } from '../../operations.generated';
+import { PatientRowFragment } from '../../operations.generated';
 import { usePatientApi } from '../utils/usePatientApi';
 
-export const usePatientsAll = (sortBy: SortBy<NameRowFragment>) => {
+export const usePatientsAll = (sortBy: SortBy<PatientRowFragment>) => {
   const api = usePatientApi();
 
   return {

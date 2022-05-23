@@ -4,11 +4,11 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type NameRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
+export type PatientRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
-export type NameFragment = { __typename: 'NameNode', address: string, chargeCode: string, code: string, comment: string, country: string, createdDate?: string | null, email: string, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone: string, website: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
+export type PatientFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, firstName?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone?: string | null, type: Types.NameNodeType, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
-export type NamesQueryVariables = Types.Exact<{
+export type PatientsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   key: Types.NameSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
@@ -18,18 +18,18 @@ export type NamesQueryVariables = Types.Exact<{
 }>;
 
 
-export type NamesQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+export type PatientsQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
-export type NameByIdQueryVariables = Types.Exact<{
+export type PatientByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   nameId: Types.Scalars['String'];
 }>;
 
 
-export type NameByIdQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address: string, chargeCode: string, code: string, comment: string, country: string, createdDate?: string | null, email: string, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone: string, website: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+export type PatientByIdQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, firstName?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone?: string | null, type: Types.NameNodeType, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
-export const NameRowFragmentDoc = gql`
-    fragment NameRow on NameNode {
+export const PatientRowFragmentDoc = gql`
+    fragment PatientRow on NameNode {
   code
   id
   isCustomer
@@ -42,15 +42,17 @@ export const NameRowFragmentDoc = gql`
   }
 }
     `;
-export const NameFragmentDoc = gql`
-    fragment Name on NameNode {
-  address
+export const PatientFragmentDoc = gql`
+    fragment Patient on NameNode {
+  address1
+  address2
   chargeCode
   code
   comment
   country
-  createdDate
+  createdDatetime
   email
+  firstName
   id
   isCustomer
   isDonor
@@ -61,6 +63,7 @@ export const NameFragmentDoc = gql`
   isVisible
   name
   phone
+  type
   website
   store {
     id
@@ -68,8 +71,8 @@ export const NameFragmentDoc = gql`
   }
 }
     `;
-export const NamesDocument = gql`
-    query names($storeId: String!, $key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
+export const PatientsDocument = gql`
+    query patients($storeId: String!, $key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
   names(
     storeId: $storeId
     page: {first: $first, offset: $offset}
@@ -79,26 +82,26 @@ export const NamesDocument = gql`
     ... on NameConnector {
       __typename
       nodes {
-        ...NameRow
+        ...PatientRow
       }
       totalCount
     }
   }
 }
-    ${NameRowFragmentDoc}`;
-export const NameByIdDocument = gql`
-    query nameById($storeId: String!, $nameId: String!) {
+    ${PatientRowFragmentDoc}`;
+export const PatientByIdDocument = gql`
+    query patientById($storeId: String!, $nameId: String!) {
   names(storeId: $storeId, filter: {id: {equalTo: $nameId}}) {
     ... on NameConnector {
       __typename
       nodes {
-        ...Name
+        ...Patient
       }
       totalCount
     }
   }
 }
-    ${NameFragmentDoc}`;
+    ${PatientFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -107,11 +110,11 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    names(variables: NamesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<NamesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names', 'query');
+    patients(variables: PatientsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PatientsQuery>(PatientsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patients', 'query');
     },
-    nameById(variables: NameByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<NameByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NameByIdQuery>(NameByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameById', 'query');
+    patientById(variables: PatientByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PatientByIdQuery>(PatientByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientById', 'query');
     }
   };
 }
@@ -121,16 +124,16 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockNamesQuery((req, res, ctx) => {
+ * mockPatientsQuery((req, res, ctx) => {
  *   const { storeId, key, desc, first, offset, filter } = req.variables;
  *   return res(
  *     ctx.data({ names })
  *   )
  * })
  */
-export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQueryVariables>, GraphQLContext<NamesQuery>, any>) =>
-  graphql.query<NamesQuery, NamesQueryVariables>(
-    'names',
+export const mockPatientsQuery = (resolver: ResponseResolver<GraphQLRequest<PatientsQueryVariables>, GraphQLContext<PatientsQuery>, any>) =>
+  graphql.query<PatientsQuery, PatientsQueryVariables>(
+    'patients',
     resolver
   )
 
@@ -138,15 +141,15 @@ export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQu
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockNameByIdQuery((req, res, ctx) => {
+ * mockPatientByIdQuery((req, res, ctx) => {
  *   const { storeId, nameId } = req.variables;
  *   return res(
  *     ctx.data({ names })
  *   )
  * })
  */
-export const mockNameByIdQuery = (resolver: ResponseResolver<GraphQLRequest<NameByIdQueryVariables>, GraphQLContext<NameByIdQuery>, any>) =>
-  graphql.query<NameByIdQuery, NameByIdQueryVariables>(
-    'nameById',
+export const mockPatientByIdQuery = (resolver: ResponseResolver<GraphQLRequest<PatientByIdQueryVariables>, GraphQLContext<PatientByIdQuery>, any>) =>
+  graphql.query<PatientByIdQuery, PatientByIdQueryVariables>(
+    'patientById',
     resolver
   )
