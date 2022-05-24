@@ -49,6 +49,8 @@ clap = { version = "3.1.8", features = ["derive"] }
 rust-embed = "6.4.0"
 mime_guess = "2.0.4"
 local-ip-address = "0.4.4"
+simple-dns = "0.4.6"
+simple-mdns = "0.3.9"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
