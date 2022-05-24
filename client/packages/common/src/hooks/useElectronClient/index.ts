@@ -42,6 +42,7 @@ const initialDiscoveryState: ElectronClientState = {
 
 export const useElectronClient = (discover = false) => {
   const [state, setState] = useState(initialDiscoveryState);
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
     if (window?.electronAPI?.connectedServer) {
@@ -56,11 +57,14 @@ export const useElectronClient = (discover = false) => {
       window.electronAPI.startServerDiscovery();
     }
 
-    setTimeout(() => {
-      if (state.servers.length === 0)
-        setState({ ...state, discoveryTimedOut: true });
-    }, DISCOVERY_TIMEOUT);
+    setTimeout(() => setTimedOut(true), DISCOVERY_TIMEOUT);
   }, []);
+
+  useEffect(() => {
+    if (timedOut && state.servers.length == 0) {
+      setState({ ...state, ...{ discoveryTimedOut: true } });
+    }
+  }, [timedOut]);
 
   if (window?.electronAPI?.serverDiscovered) {
     window.electronAPI.serverDiscovered((_event, server) => {
