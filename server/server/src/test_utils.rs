@@ -9,12 +9,9 @@ use service::{
 pub fn get_test_settings(db_name: &str) -> Settings {
     Settings {
         server: ServerSettings {
-            host: "localhost".to_string(),
             port: 5432,
             danger_allow_http: false,
-            develop: true,
             debug_no_access_control: true,
-            debug_cors_permissive: true,
             cors_origins: vec!["http://localhost:3003".to_string()],
             base_dir: None,
         },
