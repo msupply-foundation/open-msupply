@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { useUrlQuery } from './useUrlQuery';
 import { Column } from '@openmsupply-client/common';
 
-export const useHandleQueryParams = () => {
+// This hook uses the state of the url query parameters to provide query parameters and update methods to tables.
+
+export const useHandleQueryParams = (filterIndex: string) => {
   const { urlQuery, updateQuery } = useUrlQuery();
-  const [currFilterIndex, setCurrFilterIndex] = useState('');
 
   const updateSortQuery = (column: Column<any>) => {
     const currentSort = urlQuery?.['sort'];
@@ -18,25 +18,30 @@ export const useHandleQueryParams = () => {
   };
 
   const updatePaginationQuery = (page: number) => {
+    console.log('Page', page);
     // Page is zero-indexed in useQueryParams store, so increase it by one
     updateQuery({ page: page + 1 });
   };
 
   const updateFilterQuery = (key: string, value: string) => {
-    setCurrFilterIndex(key);
-    updateQuery({ [key]: value });
+    console.log('Updating', key, value);
+    updateQuery({ [filterIndex]: value });
   };
 
   const queryParams = {
-    page: urlQuery.page,
-    offset: 0,
+    page: urlQuery?.page ? urlQuery.page - 1 : 0,
+    offset: urlQuery?.page ? (urlQuery.page - 1) * 20 : 0,
     first: 20,
     sortBy: {
       key: urlQuery.sort,
       direction: urlQuery.dir,
       isDesc: urlQuery.dir === 'desc',
     },
-    filterBy: { [currFilterIndex]: urlQuery[currFilterIndex] },
+    filterBy: urlQuery?.[filterIndex]
+      ? {
+          [filterIndex]: { like: urlQuery?.[filterIndex] ?? '' },
+        }
+      : {},
   };
 
   return {

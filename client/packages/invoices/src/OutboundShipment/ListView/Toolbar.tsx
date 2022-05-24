@@ -20,6 +20,8 @@ export const Toolbar: FC<{
   const key = 'otherPartyName' as keyof OutboundRowFragment;
   const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
+  console.log('filterString', filterString);
+
   return (
     <AppBarContentPortal
       sx={{
