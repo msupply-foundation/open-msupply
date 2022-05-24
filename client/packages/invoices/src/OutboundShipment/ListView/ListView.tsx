@@ -101,12 +101,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
 };
 
 export const OutboundShipmentListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    // queryParamsStore={createQueryParamsStore<OutboundRowFragment>({
-    //   initialSortBy: { key: 'otherPartyName' },
-    // })}
-  >
+  <TableProvider createStore={createTableStore}>
     <OutboundShipmentListViewComponent />
   </TableProvider>
 );
