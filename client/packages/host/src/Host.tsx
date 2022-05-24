@@ -8,7 +8,7 @@ import {
   Box,
   AppThemeProvider,
   QueryClient,
-  ReactQueryDevtools,
+  // ReactQueryDevtools,
   QueryClientProvider,
   RouteBuilder,
   ErrorBoundary,
@@ -94,7 +94,7 @@ const Host = () => (
                   </ConfirmationModalProvider>
                 </AppThemeProvider>
               </AuthProvider>
-              <ReactQueryDevtools initialIsOpen />
+              {/* <ReactQueryDevtools initialIsOpen /> */}
             </GqlProvider>
           </QueryClientProvider>
         </ErrorBoundary>
