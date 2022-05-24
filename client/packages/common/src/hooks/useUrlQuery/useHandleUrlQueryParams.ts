@@ -4,7 +4,7 @@ import { FilterController } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters to provide query parameters and update methods to tables.
 
-export const useHandleQueryParams = (filterIndex: string) => {
+export const useHandleUrlQueryParams = (filterIndex: string) => {
   const { urlQuery, updateQuery } = useUrlQuery();
 
   const updateSortQuery = (column: Column<any>) => {
