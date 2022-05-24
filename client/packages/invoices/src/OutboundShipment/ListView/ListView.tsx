@@ -11,7 +11,7 @@ import {
   useTableStore,
   NothingHere,
   useToggle,
-  useHandleQueryParams,
+  useHandleUrlQueryParams,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -31,7 +31,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation('distribution');
   const { updateSortQuery, updatePaginationQuery, filter } =
-    useHandleQueryParams('otherPartyName');
+    useHandleUrlQueryParams('otherPartyName');
   const navigate = useNavigate();
   const modalController = useToggle();
 
