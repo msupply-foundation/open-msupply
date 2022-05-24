@@ -1,2 +1,2 @@
 export * from './useUrlQuery';
-export * from './useHandleUrlQueryParams';
+export * from './useUrlQueryParams';

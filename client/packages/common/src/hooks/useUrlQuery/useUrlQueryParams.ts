@@ -2,19 +2,30 @@ import { useUrlQuery } from './useUrlQuery';
 import { Column } from '@openmsupply-client/common';
 import { FilterController } from '../useQueryParams';
 
-// This hook uses the state of the url query parameters to provide query parameters and update methods to tables.
+// This hook uses the state of the url query parameters (from useUrlQuery hook)
+// to provide query parameters and update methods to tables.
 
-export const useHandleUrlQueryParams = (filterIndex: string) => {
+const RECORDS_PER_PAGE = 20;
+
+interface UrlQueryParams {
+  filterKey: string;
+  initialSortKey?: string;
+}
+
+export const useUrlQueryParams = ({
+  filterKey,
+  initialSortKey,
+}: UrlQueryParams) => {
   const { urlQuery, updateQuery } = useUrlQuery();
 
   const updateSortQuery = (column: Column<any>) => {
-    const currentSort = urlQuery?.['sort'];
+    const currentSort = urlQuery['sort'];
     const sort = column.key as string;
     if (sort !== currentSort) {
       updateQuery({ sort, dir: '', page: '' });
     } else {
       const dir =
-        column?.sortBy?.direction === 'asc' || !column?.sortBy?.direction
+        column.sortBy?.direction === 'asc' || !column.sortBy?.direction
           ? 'desc'
           : '';
       updateQuery({ dir });
@@ -35,20 +46,20 @@ export const useHandleUrlQueryParams = (filterIndex: string) => {
       updateFilterQuery(key, value),
     onChangeDateFilterRule: () => {},
     onClearFilterRule: () => {},
-    filterBy: urlQuery?.[filterIndex]
+    filterBy: urlQuery[filterKey]
       ? {
-          [filterIndex]: { like: urlQuery?.[filterIndex] ?? '' },
+          [filterKey]: { like: urlQuery[filterKey] ?? '' },
         }
       : {},
   };
 
   const queryParams = {
-    page: urlQuery?.page ? urlQuery.page - 1 : 0,
-    offset: urlQuery?.page ? (urlQuery.page - 1) * 20 : 0,
-    first: 20,
+    page: urlQuery.page ? urlQuery.page - 1 : 0,
+    offset: urlQuery.page ? (urlQuery.page - 1) * RECORDS_PER_PAGE : 0,
+    first: RECORDS_PER_PAGE,
     sortBy: {
-      key: urlQuery.sort,
-      direction: urlQuery.dir,
+      key: urlQuery.sort ?? initialSortKey,
+      direction: urlQuery.dir ?? 'asc',
       isDesc: urlQuery.dir === 'desc',
     },
     filterBy: filter.filterBy,

@@ -94,7 +94,7 @@ const Host = () => (
                   </ConfirmationModalProvider>
                 </AppThemeProvider>
               </AuthProvider>
-              <ReactQueryDevtools initialIsOpen />
+              <ReactQueryDevtools initialIsOpen position={'top-left'} />
             </GqlProvider>
           </QueryClientProvider>
         </ErrorBoundary>
