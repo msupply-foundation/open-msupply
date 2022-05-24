@@ -174,11 +174,13 @@ This will:
 The steps, if you need to run them manually are:
 
 ```
-yarn build
+yarn build-local
 npx cap copy
 ```
 
 Open the `android` folder in Android Studio and start the app.
+Note that the `build-local` script will set the `API_HOST` to `API_HOST: 'https://localhost:8000'` in  `packages/host/public/config.js` which is required when running the remote server running on Android.
+
 
 ### Release build
 
