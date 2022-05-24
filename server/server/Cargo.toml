@@ -46,6 +46,9 @@ serde_json = "1.0.66"
 tokio = { version = "1.17.0", features = ["macros" ] }
 thiserror = "1"
 clap = { version = "3.1.8", features = ["derive"] }
+rust-embed = "6.4.0"
+mime_guess = "2.0.4"
+local-ip-address = "0.4.4"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
