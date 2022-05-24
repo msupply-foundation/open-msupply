@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 
 const DISCOVERY_TIMEOUT = 5000;
 
+// Should match server/server/src/discovery.rs (FrontEndHost)
 export type FrontEndHost = {
   protocol: 'http' | 'https';
   port: number;
   ip: string;
   name: string;
   clientVersion: string;
+  // This one is set by electron.ts
   isLocal: boolean;
 };
 
@@ -78,5 +80,8 @@ export const useElectronClient = (discover = false) => {
   return state;
 };
 
-export const formatServer = ({ ip, port, isLocal }: FrontEndHost) =>
-  ` ${ip}:${port} ${isLocal ? '(local)' : '(remote)'}`;
+export const frontEndHostUrl = ({ protocol, ip, port }: FrontEndHost) =>
+  `${protocol}://${ip}:${port}`;
+
+export const frontEndHostDisplay = (server: FrontEndHost) =>
+  `${frontEndHostUrl(server)} ${server.isLocal ? '(local)' : '(remote)'}`;

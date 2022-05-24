@@ -1,8 +1,8 @@
-import { FrontEndHost } from '@common/hooks';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import startDiscovery from 'multicast-dns';
 import { IPC_MESSAGES } from './shared';
 import ip from 'ip';
+import { FrontEndHost, frontEndHostUrl } from '@openmsupply-client/common/src/hooks/useElectronClient';
 
 const SERVICE_NAME = '_omsupply._tcp.local';
 const SERVICE_TYPE = 'TXT';
@@ -37,16 +37,13 @@ const start = (): void => {
   // and load the index.html of the app.
   window.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-  // Open the DevTools.
-  window.webContents.openDevTools();
-
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
     isDiscovering = true;
   });
 
   ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) => {
     isDiscovering = false;
-    window.loadURL(`http://${server.ip}:${server.port}`);
+    window.loadURL(frontEndHostUrl(server));
     connectedServer = server;
   });
 
@@ -92,8 +89,7 @@ app.on(
   (event, _webContents, url, _error, _certificate, callback) => {
     if (!connectedServer) return callback(false);
 
-    const { protocol, port, ip } = connectedServer;
-    if (url.startsWith(`${protocol}://${ip}:${port}`)) {
+    if (url.startsWith(frontEndHostUrl(connectedServer))) {
       event.preventDefault();
       callback(true);
     } else {

@@ -2,12 +2,12 @@ import React from 'react';
 import {
   useElectronClient,
   InlineSpinner,
-  formatServer,
   BaseButton,
   AlertIcon,
   Box,
   Typography,
   useTranslation,
+  frontEndHostDisplay,
 } from '@openmsupply-client/common';
 
 import { ServerDiscoveryLayout } from './ServerDiscoveryLayout';
@@ -22,7 +22,7 @@ export const ServerDiscovery = () => {
         servers.length === 0 && <InlineSpinner color="secondary" showText />
       }
       ServerNodes={servers.map(server => {
-        const display = formatServer(server);
+        const display = frontEndHostDisplay(server);
 
         return (
           <BaseButton
