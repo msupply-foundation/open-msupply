@@ -65,7 +65,6 @@ async fn run_stage0(
     token_secret: String,
     connection_manager: StorageConnectionManager,
     certificates: &Certificates,
-    server_info: &ServerInfo,
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
@@ -88,7 +87,6 @@ async fn run_stage0(
     let restart_switch = Data::new(restart_switch);
 
     let closure_settings = Data::new(config_settings.clone());
-    let closure_server_info = server_info.clone();
 
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
@@ -104,7 +102,7 @@ async fn run_stage0(
                 closure_settings.clone(),
                 restart_switch.clone(),
             ))
-            .configure(config_server_frontend(closure_server_info.clone()))
+            .configure(config_server_frontend)
     })
     .disable_signals();
 
@@ -140,7 +138,6 @@ async fn run_server(
     token_secret: String,
     connection_manager: StorageConnectionManager,
     certificates: &Certificates,
-    server_info: &ServerInfo,
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(connection_manager.clone());
 
@@ -163,7 +160,6 @@ async fn run_server(
                 token_secret,
                 connection_manager,
                 certificates,
-                server_info,
             )
             .await
         }
@@ -207,7 +203,6 @@ async fn run_server(
                     token_secret,
                     connection_manager,
                     certificates,
-                    server_info,
                 )
                 .await;
             }
@@ -215,7 +210,6 @@ async fn run_server(
     };
 
     let closure_settings = settings.clone();
-    let closure_server_info = server_info.clone();
 
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
@@ -233,7 +227,7 @@ async fn run_server(
             ))
             .app_data(Data::new(closure_settings.clone()))
             .configure(config_static_files)
-            .configure(config_server_frontend(closure_server_info.clone()))
+            .configure(config_server_frontend)
     })
     .disable_signals();
 
@@ -305,7 +299,6 @@ pub async fn start_server(
             token_secret.clone(),
             connection_manager.clone(),
             &certificates,
-            &server_info,
         )
         .await
         {
