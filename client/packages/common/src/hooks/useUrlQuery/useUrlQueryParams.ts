@@ -8,7 +8,7 @@ import { FilterController } from '../useQueryParams';
 const RECORDS_PER_PAGE = 20;
 
 interface UrlQueryParams {
-  filterKey: string;
+  filterKey?: string;
   initialSortKey?: string;
 }
 
@@ -46,13 +46,13 @@ export const useUrlQueryParams = ({
       updateFilterQuery(key, value),
     onChangeDateFilterRule: () => {},
     onClearFilterRule: () => {},
-    filterBy: urlQuery[filterKey]
-      ? {
-          [filterKey]: { like: urlQuery[filterKey] ?? '' },
-        }
-      : {},
+    filterBy:
+      filterKey && urlQuery[filterKey]
+        ? {
+            [filterKey]: { like: urlQuery[filterKey] ?? '' },
+          }
+        : {},
   };
-
   const queryParams = {
     page: urlQuery.page ? urlQuery.page - 1 : 0,
     offset: urlQuery.page ? (urlQuery.page - 1) * RECORDS_PER_PAGE : 0,
