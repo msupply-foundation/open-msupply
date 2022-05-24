@@ -30,14 +30,18 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation('distribution');
-  const { updateSortQuery, updatePaginationQuery, filter } = useUrlQueryParams({
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    filter,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams({
     filterKey: 'otherPartyName',
   });
   const navigate = useNavigate();
   const modalController = useToggle();
 
-  const { data, isError, isLoading, sortBy, page, first, offset } =
-    useOutbound.document.list();
+  const { data, isError, isLoading } = useOutbound.document.list();
   const pagination = { page, first, offset };
   useDisableOutboundRows(data?.nodes);
 
