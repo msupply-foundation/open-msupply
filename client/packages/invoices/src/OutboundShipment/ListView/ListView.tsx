@@ -35,9 +35,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({
-    filterKey: 'otherPartyName',
-  });
+  } = useUrlQueryParams();
   const navigate = useNavigate();
   const modalController = useToggle();
 

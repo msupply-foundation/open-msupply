@@ -45,7 +45,7 @@ export const useUrlQueryParams = ({
     onChangeStringFilterRule: (key: string, _, value: string) =>
       updateFilterQuery(key, value),
     onChangeDateFilterRule: () => {},
-    onClearFilterRule: () => {},
+    onClearFilterRule: key => updateFilterQuery(key, ''),
     filterBy:
       filterKey && urlQuery[filterKey]
         ? {
