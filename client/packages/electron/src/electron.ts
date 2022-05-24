@@ -43,6 +43,7 @@ const start = (): void => {
 
   ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) => {
     isDiscovering = false;
+    // Can change 'frontEndHostUrl(server)' to http://localhost:3003 if you want client to display front end served by webpack
     window.loadURL(frontEndHostUrl(server));
     connectedServer = server;
   });
