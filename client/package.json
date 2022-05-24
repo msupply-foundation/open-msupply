@@ -3,8 +3,11 @@
   "version": "1.0.0-beta.2",
   "private": true,
   "scripts": {
-    "start": "lerna run --scope @openmsupply-client/* --parallel start",
+    "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local",
+    "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote",
+    "start": "yarn start-remote",
     "build": "lerna run --scope @openmsupply-client/* build",
+    "build-local": "lerna run --scope @openmsupply-client/* build-local",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD",
@@ -16,8 +19,8 @@
     "generate": "graphql-codegen --config codegen.yml",
     "android:run": "npx cap run android",
     "android:build-remote_server": "cd ./packages/android && ./build_remote_server_libs.sh",
-    "android:build:debug": "yarn build && npx cap copy && cd ./packages/android && ./gradlew assembleDebug",
-    "android:build:release": "yarn build && npx cap copy && cd ./packages/android && ./gradlew assembleRelease",
+    "android:build:debug": "yarn build-local && npx cap copy && cd ./packages/android && ./gradlew assembleDebug",
+    "android:build:release": "yarn build-local && npx cap copy && cd ./packages/android && ./gradlew assembleRelease",
     "i18n-unused-display": "i18n-unused display-unused",
     "i18n-unused-remove": "i18n-unused remove-unused",
     "i18n-missing": "i18n-unused display-missed"
@@ -28,6 +31,7 @@
     ]
   },
   "devDependencies": {
+    "@capacitor/keyboard": "^1.2.2",
     "@graphql-codegen/cli": "^2.3.0",
     "@graphql-codegen/near-operation-file-preset": "^2.2.5",
     "@graphql-codegen/typescript": "^2.4.1",
