@@ -1,9 +1,9 @@
 {
-  "name": "electron",
-  "productName": "electron",
+  "name": "@openmsupply-client/electron",
+  "productName": "omSupplyClient",
   "version": "1.0.0",
-  "description": "My Electron application description",
-  "main": ".webpack/main",
+  "description": "Client for omSupply running on local network",
+  "main": "./.webpack/main",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
@@ -24,7 +24,7 @@
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "electron"
+            "name": "omSupplyClient"
           }
         },
         {
@@ -53,7 +53,10 @@
                 {
                   "html": "./src/index.html",
                   "js": "./src/renderer.ts",
-                  "name": "main_window"
+                  "name": "main_window",
+                  "preload": {
+                    "js": "./src/preload.ts"
+                  }
                 }
               ]
             }
@@ -71,8 +74,12 @@
     "@electron-forge/plugin-webpack": "6.0.0-beta.63",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
+    "@types/ip": "^1.1.0",
+    "@types/multicast-dns": "^7.2.1",
     "@vercel/webpack-asset-relocator-loader": "1.7.0",
+    "copy-webpack-plugin": "^10.2.4",
     "css-loader": "^6.0.0",
+    "electron": "18.2.4",
     "eslint": "^8.0.1",
     "eslint-plugin-import": "^2.25.0",
     "fork-ts-checker-webpack-plugin": "^6.0.1",
@@ -82,6 +89,12 @@
     "typescript": "~4.5.4"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0"
+    "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/host": "^0.0.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "ip": "^1.1.8",
+    "multicast-dns": "^7.2.5",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   }
 }
