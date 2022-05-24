@@ -4,6 +4,7 @@ interface TabKeybindingsProps<T> {
   tabs: T[];
   onAdd?: () => void;
   setCurrentTab: React.Dispatch<React.SetStateAction<T>>;
+  dependencies?: any[];
 }
 
 // adds a key down event listener to the current window
@@ -12,6 +13,7 @@ interface TabKeybindingsProps<T> {
 // tabs parameter
 // An optional `onAdd` callback will be called when [+] is pressed
 export function TabKeybindings<T>({
+  dependencies,
   tabs,
   onAdd,
   setCurrentTab,
@@ -36,7 +38,7 @@ export function TabKeybindings<T>({
   useEffect(() => {
     window.addEventListener('keydown', keybindings);
     return () => window.removeEventListener('keydown', keybindings);
-  }, []);
+  }, dependencies);
 
   return <></>;
 }
