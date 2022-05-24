@@ -1,9 +1,9 @@
 use actix_cors::Cors;
 use actix_web::http::header;
-use service::settings::Settings;
+use service::settings::{is_develop, Settings};
 
 pub fn cors_policy(config_settings: &Settings) -> Cors {
-    let cors = if config_settings.server.develop && config_settings.server.debug_cors_permissive {
+    let cors = if is_develop() {
         Cors::permissive()
     } else {
         let mut cors = Cors::default()
