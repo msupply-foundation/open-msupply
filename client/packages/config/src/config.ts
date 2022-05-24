@@ -8,7 +8,7 @@ const isProductionBuild = process.env['NODE_ENV'] === 'production';
 const devServerURL = 'https://demo-open.msupply.org:8000'; // Demo - site URL
 // const devServerURL = 'http://localhost:8000'; // - default URL for the backend graphql server
 
-// For mobile always use https://localhost:8000'
+// For mobile always use https://localhost:8000, as per MainActivity.java
 const productionServerUrl =
   Capacitor.getPlatform() === 'web'
     ? `${protocol}//${hostname}:${port}`
