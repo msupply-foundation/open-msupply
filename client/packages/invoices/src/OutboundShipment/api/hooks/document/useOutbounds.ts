@@ -1,8 +1,11 @@
-import { useQuery, useHandleUrlQueryParams } from '@openmsupply-client/common';
+import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { useOutboundApi } from './../utils/useOutboundApi';
 
 export const useOutbounds = () => {
-  const { queryParams } = useHandleUrlQueryParams('otherPartyName');
+  const { queryParams } = useUrlQueryParams({
+    filterKey: 'otherPartyName',
+    initialSortKey: 'otherPartyName',
+  });
   const api = useOutboundApi();
 
   return {
