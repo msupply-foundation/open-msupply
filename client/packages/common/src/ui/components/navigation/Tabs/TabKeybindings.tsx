@@ -4,7 +4,7 @@ interface TabKeybindingsProps<T> {
   tabs: T[];
   onAdd?: () => void;
   setCurrentTab: React.Dispatch<React.SetStateAction<T>>;
-  dependencies?: any[];
+  dependencies?: unknown[];
 }
 
 // adds a key down event listener to the current window
