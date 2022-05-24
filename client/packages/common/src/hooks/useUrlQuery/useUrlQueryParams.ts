@@ -15,7 +15,7 @@ interface UrlQueryParams {
 export const useUrlQueryParams = ({
   filterKey,
   initialSortKey,
-}: UrlQueryParams) => {
+}: UrlQueryParams = {}) => {
   const { urlQuery, updateQuery } = useUrlQuery();
 
   const updateSortQuery = (column: Column<any>) => {

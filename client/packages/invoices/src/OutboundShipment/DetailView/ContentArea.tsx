@@ -108,7 +108,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   const {
     updateSortQuery,
     queryParams: { sortBy },
-  } = useUrlQueryParams({});
+  } = useUrlQueryParams();
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const { rows } = useOutbound.line.rows(isGrouped);
   const columns = useOutboundColumns({

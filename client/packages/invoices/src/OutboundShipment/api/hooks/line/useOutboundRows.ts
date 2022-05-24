@@ -41,7 +41,5 @@ export const useOutboundRows = (isGrouped = true) => {
     rows,
     lines: sortedLines,
     items: sortedItems,
-    onChangeSortBy,
-    sortBy,
   };
 };
