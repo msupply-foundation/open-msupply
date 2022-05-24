@@ -30,12 +30,8 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 export const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation('distribution');
-  const {
-    updateSortQuery,
-    updatePaginationQuery,
-    updateFilterQuery,
-    queryParams: { filterBy },
-  } = useHandleQueryParams('otherPartyName');
+  const { updateSortQuery, updatePaginationQuery, filter } =
+    useHandleQueryParams('otherPartyName');
   const navigate = useNavigate();
   const modalController = useToggle();
 
@@ -80,15 +76,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
 
   return (
     <>
-      <Toolbar
-        filter={{
-          onChangeStringFilterRule: (key: string, _, value: string) =>
-            updateFilterQuery(key, value),
-          onChangeDateFilterRule: () => {},
-          onClearFilterRule: () => {},
-          filterBy,
-        }}
-      />
+      <Toolbar filter={filter} />
       <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable

@@ -1,5 +1,6 @@
 import { useUrlQuery } from './useUrlQuery';
 import { Column } from '@openmsupply-client/common';
+import { FilterController } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters to provide query parameters and update methods to tables.
 
@@ -10,22 +11,35 @@ export const useHandleQueryParams = (filterIndex: string) => {
     const currentSort = urlQuery?.['sort'];
     const sort = column.key as string;
     if (sort !== currentSort) {
-      updateQuery({ sort, dir: 'asc', page: 1 });
+      updateQuery({ sort, dir: '', page: '' });
     } else {
-      const dir = column?.sortBy?.direction === 'asc' ? 'desc' : 'asc';
+      const dir =
+        column?.sortBy?.direction === 'asc' || !column?.sortBy?.direction
+          ? 'desc'
+          : '';
       updateQuery({ dir });
     }
   };
 
   const updatePaginationQuery = (page: number) => {
-    console.log('Page', page);
     // Page is zero-indexed in useQueryParams store, so increase it by one
     updateQuery({ page: page + 1 });
   };
 
   const updateFilterQuery = (key: string, value: string) => {
-    console.log('Updating', key, value);
-    updateQuery({ [filterIndex]: value });
+    updateQuery({ [key]: value });
+  };
+
+  const filter: FilterController = {
+    onChangeStringFilterRule: (key: string, _, value: string) =>
+      updateFilterQuery(key, value),
+    onChangeDateFilterRule: () => {},
+    onClearFilterRule: () => {},
+    filterBy: urlQuery?.[filterIndex]
+      ? {
+          [filterIndex]: { like: urlQuery?.[filterIndex] ?? '' },
+        }
+      : {},
   };
 
   const queryParams = {
@@ -37,11 +51,7 @@ export const useHandleQueryParams = (filterIndex: string) => {
       direction: urlQuery.dir,
       isDesc: urlQuery.dir === 'desc',
     },
-    filterBy: urlQuery?.[filterIndex]
-      ? {
-          [filterIndex]: { like: urlQuery?.[filterIndex] ?? '' },
-        }
-      : {},
+    filterBy: filter.filterBy,
   };
 
   return {
@@ -50,5 +60,6 @@ export const useHandleQueryParams = (filterIndex: string) => {
     updateSortQuery,
     updatePaginationQuery,
     updateFilterQuery,
+    filter,
   };
 };
