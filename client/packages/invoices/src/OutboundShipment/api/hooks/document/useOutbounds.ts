@@ -12,6 +12,5 @@ export const useOutbounds = () => {
     ...useQuery(api.keys.paramList(queryParams), () =>
       api.get.list(queryParams)
     ),
-    ...queryParams,
   };
 };
