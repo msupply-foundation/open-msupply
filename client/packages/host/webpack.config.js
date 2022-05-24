@@ -99,7 +99,6 @@ module.exports = env => {
       new CopyPlugin({
         patterns: [
           { from: './public/mockServiceWorker.js', to: 'mockServiceWorker.js' },
-          { from: './public/config.js', to: 'config.js' },
           {
             context: path.resolve(
               __dirname,
