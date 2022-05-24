@@ -1,6 +1,9 @@
 use crate::{
-    cors::cors_policy, discovery::ServerInfo, self_signed_certs::Certificates,
-    serve_frontend::config_server_frontend, static_files::config_static_files,
+    cors::cors_policy,
+    discovery::{Discovery, ServerInfo},
+    self_signed_certs::Certificates,
+    serve_frontend::config_server_frontend,
+    static_files::config_static_files,
 };
 
 use self::{
@@ -44,12 +47,13 @@ fn auth_data(
     server_settings: &ServerSettings,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
-    certs: &Certificates,
+    certificates: &Certificates,
 ) -> Data<AuthData> {
     Data::new(AuthData {
         auth_token_secret: token_secret,
         token_bucket,
-        danger_no_ssl: (is_develop() || server_settings.danger_allow_http) && certs.is_https(),
+        danger_no_ssl: (is_develop() || server_settings.danger_allow_http)
+            && certificates.is_https(),
         debug_no_access_control: is_develop() && server_settings.debug_no_access_control,
     })
 }
@@ -60,10 +64,10 @@ async fn run_stage0(
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
     connection_manager: StorageConnectionManager,
+    certificates: &Certificates,
+    server_info: &ServerInfo,
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
-
-    let certificates = Certificates::new(&config_settings.server)?;
 
     let auth_data = auth_data(
         &config_settings.server,
@@ -84,8 +88,7 @@ async fn run_stage0(
     let restart_switch = Data::new(restart_switch);
 
     let closure_settings = Data::new(config_settings.clone());
-
-    let server_info = ServerInfo::new(certificates.protocol(), &config_settings.server);
+    let closure_server_info = server_info.clone();
 
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
@@ -101,7 +104,7 @@ async fn run_stage0(
                 closure_settings.clone(),
                 restart_switch.clone(),
             ))
-            .configure(config_server_frontend(server_info.clone()))
+            .configure(config_server_frontend(closure_server_info.clone()))
     })
     .disable_signals();
 
@@ -136,6 +139,8 @@ async fn run_server(
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
     connection_manager: StorageConnectionManager,
+    certificates: &Certificates,
+    server_info: &ServerInfo,
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(connection_manager.clone());
 
@@ -157,6 +162,8 @@ async fn run_server(
                 token_bucket.clone(),
                 token_secret,
                 connection_manager,
+                certificates,
+                server_info,
             )
             .await
         }
@@ -164,8 +171,6 @@ async fn run_server(
     // Final settings:
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
-
-    let certificates = Certificates::new(&settings.server)?;
 
     let auth_data = auth_data(
         &settings.server,
@@ -201,6 +206,8 @@ async fn run_server(
                     token_bucket,
                     token_secret,
                     connection_manager,
+                    certificates,
+                    server_info,
                 )
                 .await;
             }
@@ -208,7 +215,7 @@ async fn run_server(
     };
 
     let closure_settings = settings.clone();
-    let server_info = ServerInfo::new(certificates.protocol(), &settings.server);
+    let closure_server_info = server_info.clone();
 
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
@@ -226,7 +233,7 @@ async fn run_server(
             ))
             .app_data(Data::new(closure_settings.clone()))
             .configure(config_static_files)
-            .configure(config_server_frontend(server_info.clone()))
+            .configure(config_server_frontend(closure_server_info.clone()))
     })
     .disable_signals();
 
@@ -279,6 +286,11 @@ pub async fn start_server(
         }
     };
 
+    let certificates = Certificates::new(&config_settings.server)?;
+    let server_info = ServerInfo::new(certificates.protocol(), &config_settings.server);
+
+    let _ = Discovery::start(&server_info);
+
     // allow the off_switch to be passed around during multiple server stages
     let off_switch = Arc::new(Mutex::new(off_switch));
     let mut prefer_config_settings = true;
@@ -292,6 +304,8 @@ pub async fn start_server(
             token_bucket.clone(),
             token_secret.clone(),
             connection_manager.clone(),
+            &certificates,
+            &server_info,
         )
         .await
         {

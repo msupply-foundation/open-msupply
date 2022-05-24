@@ -5,7 +5,7 @@ use std::{
 
 use log::{error, warn};
 use rustls::ServerConfig;
-use service::settings::{ServerSettings, is_develop};
+use service::settings::{is_develop, ServerSettings};
 
 use crate::discovery::Protocol;
 
@@ -104,8 +104,8 @@ impl Certificates {
         Ok(Certificates { config })
     }
 
-    pub fn config(self) -> Option<ServerConfig> {
-        self.config
+    pub fn config(&self) -> Option<ServerConfig> {
+        self.config.clone()
     }
 
     pub fn is_https(&self) -> bool {
