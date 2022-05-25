@@ -3,6 +3,7 @@ use service::settings::Settings;
 use std::{
     env::{self, VarError},
     fmt::{Debug, Display, Formatter, Result as FmtResult},
+    fs,
     io::Error as IoError,
     path::PathBuf,
 };
@@ -10,10 +11,11 @@ use std::{
 use crate::environment::{AppEnvironment, EnvironmentVariable};
 
 const CONFIGURATION_DIRECTORY_PATH: &str = "configuration";
-const CONFIGURATION_BASE_FILE_PATH: &str = "base";
+const CONFIGURATION_BASE_FILE_PATH: &str = "base.yaml";
 
 const CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
 const CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
+const CONFIGURATION_EXAMPLE_FILE_EXTENSION: &str = "yaml.example";
 
 pub enum SettingsError {
     Config(ConfigError),
@@ -35,9 +37,15 @@ pub fn get_configuration_directory() -> Result<PathBuf, SettingsError> {
 /// production environments.
 pub fn get_configuration_base_file() -> Result<File<FileSourceFile>, SettingsError> {
     let configuration_directory = get_configuration_directory()?;
-    let base_file =
-        File::from(configuration_directory.join(CONFIGURATION_BASE_FILE_PATH)).required(true);
+    let base_file = File::from(get_configuration_base_file_path(configuration_directory));
     Ok(base_file)
+}
+/// Gets base configuration file path
+///
+/// The base configuration file stores configuration properties which are common between local and
+/// production environments.
+pub fn get_configuration_base_file_path(configuration_directory: PathBuf) -> PathBuf {
+    configuration_directory.join(CONFIGURATION_BASE_FILE_PATH)
 }
 
 /// Gets application configuration file.
@@ -46,8 +54,26 @@ pub fn get_configuration_base_file() -> Result<File<FileSourceFile>, SettingsErr
 /// environments are `local` and `production`.
 pub fn get_configuration_app_file() -> Result<File<FileSourceFile>, SettingsError> {
     let configuration_directory = get_configuration_directory()?;
-    let app_file = File::from(configuration_directory.join(AppEnvironment::get())).required(true);
+    let app_file = File::from(get_configuration_app_file_path(configuration_directory));
     Ok(app_file)
+}
+
+/// Gets application configuration filepath
+///
+/// The application configuration file stores environment-specific configuration properties. Valid
+/// environments are `local` and `production`.
+pub fn get_configuration_app_file_path(configuration_directory: PathBuf) -> PathBuf {
+    configuration_directory
+        .join(AppEnvironment::get())
+        .with_extension("yaml")
+}
+
+/// Gets example filepath from filepath
+///
+pub fn get_example_file_path(file_path: &PathBuf) -> PathBuf {
+    let mut example_file_path = file_path.clone();
+    example_file_path.set_extension(CONFIGURATION_EXAMPLE_FILE_EXTENSION);
+    example_file_path
 }
 
 /// Gets environment configuration values.
@@ -66,6 +92,38 @@ pub fn get_configuration_environment() -> Environment {
         .separator(CONFIGURATION_ENVIRONMENT_SEPARATOR)
 }
 
+/// Copies example configuration files into place if the 'real' files don't exist
+pub fn copy_example_configuration_files_if_required() -> Result<(), SettingsError> {
+    let configuration_directory = get_configuration_directory()?;
+    let base = get_configuration_base_file_path(configuration_directory.clone());
+    if !base.exists() {
+        //Config file doesn't exist, Try to copy example file over
+        let example_path = get_example_file_path(&base);
+        if let Err(err) = fs::copy(example_path.clone(), base.clone()) {
+            return Err(SettingsError::Config(ConfigError::Message(format!(
+                "Unable to copy example configuration file from {} Error: {}",
+                example_path.as_path().display(),
+                err
+            ))));
+        }
+    }
+
+    let app = get_configuration_app_file_path(configuration_directory);
+    if !app.exists() {
+        //Config file doesn't exist, Try to copy example file over
+        let example_path = get_example_file_path(&app);
+        if let Err(err) = fs::copy(example_path.clone(), app.clone()) {
+            return Err(SettingsError::Config(ConfigError::Message(format!(
+                "Unable to copy example configuration file from {} Error: {}",
+                example_path.as_path().display(),
+                err
+            ))));
+        }
+    }
+
+    Ok(())
+}
+
 /// Gets app configuration.
 ///
 /// App configuration varies based on whether the app is being run in a `local` or `production`
@@ -75,6 +133,8 @@ pub fn get_configuration_environment() -> Environment {
 /// Individual settings properties can be also manually defined as environment variables: see
 /// `get_configuration_environment` for details.
 pub fn get_configuration() -> Result<Settings, SettingsError> {
+    copy_example_configuration_files_if_required()?;
+
     let mut configuration: Config = Config::default();
     configuration
         .merge(get_configuration_base_file()?)?
