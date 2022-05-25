@@ -1,9 +1,11 @@
 import { MasterListLineFragment } from '../api/operations.generated';
-import { useColumns, useQueryParamsStore } from '@openmsupply-client/common';
+import { useColumns, useUrlQueryParams } from '@openmsupply-client/common';
 
 export const useMasterListColumns = () => {
-  const { sort } = useQueryParamsStore();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    queryParams: { sortBy },
+  } = useUrlQueryParams({ initialSortKey: 'itemName' });
   const columns = useColumns<MasterListLineFragment>(
     [
       [
@@ -32,11 +34,11 @@ export const useMasterListColumns = () => {
       ],
     ],
     {
-      onChangeSortBy,
+      onChangeSortBy: updateSortQuery,
       sortBy,
     },
-    [onChangeSortBy, sortBy]
+    [updateSortQuery, sortBy]
   );
 
-  return { columns, sortBy, onChangeSortBy };
+  return { columns, sortBy, onChangeSortBy: updateSortQuery };
 };
