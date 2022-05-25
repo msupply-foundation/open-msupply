@@ -29,9 +29,9 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       totalCount: number;
     }> => {
       const key =
-        sortBy?.key === 'name'
-          ? NameSortFieldInput.Name
-          : NameSortFieldInput.Code;
+        sortBy?.key === 'code'
+          ? NameSortFieldInput.Code
+          : NameSortFieldInput.Name;
 
       const result = await sdk.patients({
         first,
@@ -40,7 +40,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: {
-          isCustomer: true,
+          isVisible: true,
         },
       });
 
