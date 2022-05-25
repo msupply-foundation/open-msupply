@@ -7,7 +7,8 @@ declare const API_HOST: string;
 const isProductionBuild = process.env['NODE_ENV'] === 'production';
 // http://localhost:8000 is default for remote server
 // API_HOST is available through webpack.DefinePlugin (i.e. webpack server --env API_HOST='http://localhost:8001')
-const devServerURL = API_HOST || 'http://localhost:8000';
+
+const devServerURL = (typeof API_HOST !== 'undefined' && API_HOST) || 'http://localhost:8000';
 
 // const devServerURL = 'http://localhost:8000'; // - default URL for the backend graphql server
 const { port, hostname, protocol } = window.location;
