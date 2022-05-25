@@ -39,20 +39,18 @@ export const patientsToCsv = (
 ) => {
   const fields: string[] = [
     'id',
-    t('label.name'),
-    t('label.status'),
-    t('label.invoice-number'),
-    t('label.entered'),
-    t('label.confirmed'),
-    t('label.comment'),
-    t('label.total'),
+    t('label.code'),
+    t('label.first-name'),
+    t('label.last-name'),
+    t('label.date-of-birth'),
   ];
 
   const data = invoices.map(node => [
     node.id,
     node.code,
-    node.name,
-    node.isOnHold ? t('label.on-hold') : '',
+    node.firstName,
+    node.lastName,
+    Formatter.csvDateString(node.dateOfBirth),
   ]);
   return Formatter.csv({ fields, data });
 };

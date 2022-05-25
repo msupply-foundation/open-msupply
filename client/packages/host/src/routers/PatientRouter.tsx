@@ -14,7 +14,6 @@ export const PatientRouter: FC = () => {
   const gotoPatients = useMatch(fullPatientsPath);
 
   if (gotoPatients) {
-    console.log('GOOO');
     return <PatientService />;
   }
 

@@ -1,14 +1,10 @@
 fragment PatientRow on NameNode {
-  code
   id
-  isCustomer
-  isSupplier
-  isOnHold
+  code
+  firstName
+  lastName
   name
-  store {
-    id
-    code
-  }
+  dateOfBirth
 }
 
 fragment Patient on NameNode {
@@ -19,6 +15,7 @@ fragment Patient on NameNode {
   comment
   country
   createdDatetime
+  dateOfBirth
   email
   firstName
   id

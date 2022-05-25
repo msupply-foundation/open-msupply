@@ -25,7 +25,7 @@ cargo install diesel_cli --no-default-features --features "sqlite-bundled postgr
 
 Don't need to start sqlite, migration scripts should do that for you, but if you are using postgres
 
-`docker` -> `./scripts/init_db.sh`, note, init_db.sh might not be executable if it was commited prior to be made executable. You would need to `chmod +x ./scripts/init_db.sh` to make it exectuable
+`docker` -> `./scripts/init_db.sh`, note, init_db.sh might not be executable if it was committed prior to be made executable. You would need to `chmod +x ./scripts/init_db.sh` to make it executable.
 
 `local` -> make sure to create database matching name in configurations
 
@@ -77,14 +77,14 @@ Worlds your oyster as they say ?
 
 I personally like `https://graphiql-online.com/`, with voyage and pretty easy query builder 
 
-For all queries you can check out `src/graphql_schema/queries.graphql` (for all queries and mutation, can copy paste into your graphql gui and run one at a time, sorry not all yet will add remainder), in the same folder you'll find `schema.graphl`.
+For all queries you can check out `src/graphql_schema/queries.graphql` (for all queries and mutation, can copy paste into your graphql gui and run one at a time, sorry not all yet will add remainder), in the same folder you'll find `schema.graphql`.
 
 We've also made add_and_issue_stock.graphql, use first query `namesAndItems` to get ids, and second query `addStock` to add stock, and `issueStock` to issue stock. 
 
 ###### Add stock variables:
 ```JSON
  {
-    "invoiceId": "new_inoice_id",
+    "invoiceId": "new_invoice_id",
     "otherPartyId": "23B1BFF14620469AAE50B79C7164E135",
     "costPricePerPack": 10,
     "lineId": "new_line_id",
@@ -97,7 +97,7 @@ We've also made add_and_issue_stock.graphql, use first query `namesAndItems` to 
 ###### Issue stock variables:
 ```JSON
 {
-  "invoiceId": "new_inoice_id2",
+  "invoiceId": "new_invoice_id2",
   "otherPartyId": "23B1BFF14620469AAE50B79C7164E135",
   "lineId": "new_line_id2",
   "itemId": "FDD23CE7798F4B109CB486A633DBFFFE",
@@ -116,9 +116,9 @@ To share `sqlite` database just share the `.sqlite` file
 
 To share `postgres` database `pg_dump -U postgres omsupply-database > out.sql`
 
-It's also quite good to have postgres log file, if you running `local` version please add `log_statement = 'all'` to `postgres.conf`, you can then share `postgresql.log` (btw i quite like `tail -f` on postgresql.log while deving to see what sql is actually being run).
+It's also quite good to have postgres log file, if you running `local` version please add `log_statement = 'all'` to `postgres.conf`, you can then share `postgresql.log` (btw i quite like `tail -f` on postgresql.log while developing to see what sql is actually being run).
 
-For `docker postgres`, first find out the current log file:`docker exec postgres_docker cat /var/lib/postgresql/data/current_logfiles`, then to tail `tail -f /var/lib/postgresql/data/log/postgresql-2021-10-20_130619.log` or to cp `docker cp postgres_docker:/var/lib/postgresql/data/log/postgresql-2021-10-20_130619.log log.log`. The exec script should automatically log all statments.
+For `docker postgres`, first find out the current log file:`docker exec postgres_docker cat /var/lib/postgresql/data/current_logfiles`, then to tail `tail -f /var/lib/postgresql/data/log/postgresql-2021-10-20_130619.log` or to cp `docker cp postgres_docker:/var/lib/postgresql/data/log/postgresql-2021-10-20_130619.log log.log`. The exec script should automatically log all statements.
 
 
 ## Known problems and Limitations
@@ -126,7 +126,7 @@ For `docker postgres`, first find out the current log file:`docker exec postgres
 ##### Sync
 
 Back end schema is pretty strict, pretty much all fk relations are not nullable. This caused a few sync problems, since these constraints are not enforced on mSupply end. You should see a pretty clear warning in postgres if sync fails, when using sqlite this problem is skipped (we were trying to skip records in transaction in postgres too, but had an issue). 
-Anyways, one record that we've noticed that can be problematic in master_list_name_join, where name_ID is actually of a name that doens't exists (this happens in other records, like store, but for concrete system records). To metigate this you can run this sql in record browser:
+Anyways, one record that we've noticed that can be problematic in master_list_name_join, where name_ID is actually of a name that doesn't exists (this happens in other records, like store, but for concrete system records). To mitigate this you can run this sql in record browser:
 
 ```SQL
 select * from list_master_name_join limit 1;
@@ -146,7 +146,7 @@ select * from list_master_name_join limit 1
   * `OtherPartyCannotBeThisStoreError`
   * `CannotReverseInvoiceStatus` 
   * `CannotReverseInvoiceStatus` (oops those should be one)
-* Optional nullable inputs (on update mutations) (thierReference, comment, expiryDate and batch), wont' be set to null if null is provided
+* Optional nullable inputs (on update mutations) (theirReference, comment, expiryDate and batch), wont' be set to null if null is provided
 * Can't set expiryDate to null. This also included if stock line is change on invoice line (to a stock line with null expiryDate, invoice line will still show previous stock line expiry date)
 
 
