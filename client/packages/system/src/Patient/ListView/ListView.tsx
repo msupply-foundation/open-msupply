@@ -9,7 +9,7 @@ import {
   Fade,
   NothingHere,
   createQueryParamsStore,
-  Formatter,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -22,6 +22,7 @@ const PatientListComponent: FC = () => {
     usePatient.document.list();
   const { sortBy, onChangeSortBy } = sort;
   const { Modal, showDialog, hideDialog } = useDialog();
+  const { localisedDate } = useFormatDateTime();
 
   const columns = useColumns<PatientRowFragment>(
     [
@@ -39,9 +40,7 @@ const PatientListComponent: FC = () => {
         label: 'label.date-of-birth',
         width: 120,
         formatter: dateString =>
-          dateString
-            ? Formatter.expiryDate(new Date(dateString as string)) || ''
-            : '',
+          dateString ? localisedDate((dateString as string) || '') : '',
       },
     ],
     {
