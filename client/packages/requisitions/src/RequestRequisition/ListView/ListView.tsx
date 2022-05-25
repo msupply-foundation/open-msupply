@@ -37,7 +37,7 @@ export const RequestRequisitionListView: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({ filterKey: 'otherPartyName' });
   const { data, isError, isLoading } = useRequest.document.list();
   const pagination = { page, first, offset };
   useDisableRequestRows(data?.nodes);
