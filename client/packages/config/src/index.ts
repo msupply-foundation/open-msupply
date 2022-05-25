@@ -7,12 +7,6 @@ interface EnvironmentConfig {
   GRAPHQL_URL: string;
 }
 
-declare global {
-  interface Window {
-    env: EnvironmentConfig;
-  }
-}
-
 const { API_HOST } = config;
 
 export const Environment: EnvironmentConfig = {
