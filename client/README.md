@@ -16,13 +16,15 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 - Install dependencies (Using node v16+ and using yarn):
 
-Make sure that the URL for the `remote-server` is set properly here `packages/config/src/config.ts`
-
 `yarn install`
 
 - Run on development mode:
 
-`yarn start`
+`yarn start` (using demo server as API)
+
+`yarn start-local` (using localhost:8000 as API)
+
+`cd packages/host && yarn start -- --env API_HOST='http://localhost:8001'` (using custom API url)
 
 - Bundle for production:
 
@@ -179,7 +181,6 @@ npx cap copy
 ```
 
 Open the `android` folder in Android Studio and start the app.
-Note that the `build-local` script will set the `API_HOST` to `API_HOST: 'https://localhost:8000'` in  `packages/host/public/config.js` which is required when running the remote server running on Android.
 
 
 ### Release build

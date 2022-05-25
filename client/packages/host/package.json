@@ -20,10 +20,10 @@
     "webpack-dev-server": "^4.8.1"
   },
   "scripts": {
-    "start-remote": "webpack-cli serve",
-    "start-local": "webpack-cli serve --env local",
+    "start": "webpack-cli serve",
+    "start-remote": "webpack-cli serve --env API_HOST='https://demo-open.msupply.org:8000'",
+    "start-local": "webpack-cli serve --env API_HOST='http://localhost:8000'",
     "build": "yarn clean && webpack --env production",
-    "build-local": "yarn clean && webpack --env production local",
     "serve": "serve dist -p 3003",
     "clean": "rimraf dist",
     "tsc": "tsc --build"

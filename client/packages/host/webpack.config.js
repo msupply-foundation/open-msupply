@@ -11,7 +11,7 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = env => {
   const isProduction = !!env.production;
-
+  console.log(env, env.API_HOST)
   return {
     entry: './src/index',
     mode: isProduction ? 'production' : 'development',
@@ -81,7 +81,7 @@ module.exports = env => {
     },
     plugins: [
       new ReactRefreshWebpackPlugin(),
-
+      new webpack.DefinePlugin({ 'API_HOST': JSON.stringify(env.API_HOST) }),
       new BundleAnalyzerPlugin({
         /**
          * In "server" mode analyzer will start HTTP server to show bundle report.
