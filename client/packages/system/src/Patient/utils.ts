@@ -50,7 +50,7 @@ export const patientsToCsv = (
     node.code,
     node.firstName,
     node.lastName,
-    node.dateOfBirth,
+    Formatter.csvDateString(node.dateOfBirth),
   ]);
   return Formatter.csv({ fields, data });
 };
