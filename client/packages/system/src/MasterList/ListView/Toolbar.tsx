@@ -4,7 +4,6 @@ import {
   AppBarContentPortal,
   SearchBar,
   FilterController,
-  useUrlQuery,
 } from '@openmsupply-client/common';
 import { MasterListRow } from '../types';
 
@@ -13,9 +12,8 @@ export const Toolbar: FC<{
 }> = ({ filter }) => {
   const t = useTranslation('common');
 
-  const { urlQuery } = useUrlQuery();
   const key = 'name' as keyof MasterListRow;
-  const filterString = urlQuery[key] || '';
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
   return (
     <AppBarContentPortal
       sx={{

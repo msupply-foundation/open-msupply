@@ -7,7 +7,6 @@ import {
   AppBarContentPortal,
   FilterController,
   SearchBar,
-  useUrlQuery,
 } from '@openmsupply-client/common';
 import { useInbound, InboundRowFragment } from '../api';
 
@@ -16,10 +15,9 @@ export const Toolbar: FC<{
 }> = ({ filter }) => {
   const t = useTranslation('replenishment');
   const onDelete = useInbound.document.delete();
-  const { urlQuery } = useUrlQuery();
 
   const key = 'otherPartyName' as keyof InboundRowFragment;
-  const filterString = urlQuery[key] || '';
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
   return (
     <AppBarContentPortal

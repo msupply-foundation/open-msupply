@@ -74,7 +74,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy, filter]
+    [sortBy]
   );
 
   return (
