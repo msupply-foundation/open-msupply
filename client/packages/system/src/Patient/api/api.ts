@@ -40,7 +40,8 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: {
-          isVisible: true,
+          isStore: false,
+          isSystemName: false,
         },
       });
 
