@@ -8,14 +8,16 @@ import { FilterController } from '../useQueryParams';
 const RECORDS_PER_PAGE = 20;
 
 interface UrlQueryParams {
-  filterKey: string;
+  filterKey?: string;
   initialSortKey?: string;
+  filterCondition?: string;
 }
 
 export const useUrlQueryParams = ({
   filterKey,
   initialSortKey,
-}: UrlQueryParams) => {
+  filterCondition = 'like',
+}: UrlQueryParams = {}) => {
   const { urlQuery, updateQuery } = useUrlQuery();
 
   const updateSortQuery = (column: Column<any>) => {
@@ -34,7 +36,7 @@ export const useUrlQueryParams = ({
 
   const updatePaginationQuery = (page: number) => {
     // Page is zero-indexed in useQueryParams store, so increase it by one
-    updateQuery({ page: page + 1 });
+    updateQuery({ page: page === 0 ? '' : page + 1 });
   };
 
   const updateFilterQuery = (key: string, value: string) => {
@@ -45,14 +47,14 @@ export const useUrlQueryParams = ({
     onChangeStringFilterRule: (key: string, _, value: string) =>
       updateFilterQuery(key, value),
     onChangeDateFilterRule: () => {},
-    onClearFilterRule: () => {},
-    filterBy: urlQuery[filterKey]
-      ? {
-          [filterKey]: { like: urlQuery[filterKey] ?? '' },
-        }
-      : {},
+    onClearFilterRule: key => updateFilterQuery(key, ''),
+    filterBy:
+      filterKey && urlQuery[filterKey]
+        ? {
+            [filterKey]: { [filterCondition]: urlQuery[filterKey] ?? '' },
+          }
+        : {},
   };
-
   const queryParams = {
     page: urlQuery.page ? urlQuery.page - 1 : 0,
     offset: urlQuery.page ? (urlQuery.page - 1) * RECORDS_PER_PAGE : 0,

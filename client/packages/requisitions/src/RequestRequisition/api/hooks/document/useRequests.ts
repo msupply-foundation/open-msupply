@@ -1,16 +1,18 @@
-import { useQuery, useQueryParamsStore } from '@openmsupply-client/common';
+import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useRequests = (options?: { enabled: boolean }) => {
-  const queryParams = useQueryParamsStore();
+  const { queryParams } = useUrlQueryParams({
+    filterKey: 'otherPartyName',
+    initialSortKey: 'otherPartyName',
+  });
   const api = useRequestApi();
 
   return {
     ...useQuery(
-      api.keys.paramList(queryParams.paramList()),
-      () => api.get.list(queryParams.paramList()),
+      api.keys.paramList(queryParams),
+      () => api.get.list(queryParams),
       options
     ),
-    ...queryParams,
   };
 };
