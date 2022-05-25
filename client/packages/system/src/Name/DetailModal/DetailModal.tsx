@@ -42,7 +42,10 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
           <DetailSection title="">
             <DetailInputWithLabelRow
               label={t('label.address')}
-              inputProps={{ value: data?.address, disabled: isDisabled }}
+              inputProps={{
+                value: [data?.address1, data?.address2].join(', '),
+                disabled: isDisabled,
+              }}
             />
             <DetailInputWithLabelRow
               label={t('label.code')}
@@ -69,7 +72,11 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               inputProps={{ value: data?.website, disabled: isDisabled }}
               DisabledInput={
                 <>
-                  <MuiLink href={data.website} target="_blank" rel="noopener">
+                  <MuiLink
+                    href={data.website ?? undefined}
+                    target="_blank"
+                    rel="noopener"
+                  >
                     {data.website}
                   </MuiLink>
                 </>
@@ -80,8 +87,8 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
             <DetailInputWithLabelRow
               label={t('label.date-created')}
               inputProps={{
-                value: data?.createdDate
-                  ? localisedDate(data?.createdDate)
+                value: data?.createdDatetime
+                  ? localisedDate(data?.createdDatetime)
                   : '',
                 disabled: isDisabled,
               }}
