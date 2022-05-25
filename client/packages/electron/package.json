@@ -9,9 +9,14 @@
     "package": "electron-forge package",
     "make": "electron-forge make"
   },
+  "author": {
+    "name": "mSupply Foundation"
+  },
   "config": {
     "forge": {
-      "packagerConfig": {},
+      "packagerConfig": {
+        "icon": "/Users/andreievguenov/Downloads/check.icns"
+      },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
