@@ -34,7 +34,7 @@ export const useUrlQueryParams = ({
 
   const updatePaginationQuery = (page: number) => {
     // Page is zero-indexed in useQueryParams store, so increase it by one
-    updateQuery({ page: page + 1 });
+    updateQuery({ page: page === 0 ? '' : page + 1 });
   };
 
   const updateFilterQuery = (key: string, value: string) => {
