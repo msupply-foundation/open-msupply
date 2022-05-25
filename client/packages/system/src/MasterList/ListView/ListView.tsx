@@ -8,24 +8,30 @@ import {
   NothingHere,
   useTranslation,
   createQueryParamsStore,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useMasterList, MasterListRowFragment } from '../api';
 
 const MasterListComponent: FC = () => {
-  const { data, isError, isLoading, pagination, filter, sort } =
-    useMasterList.document.list();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    filter,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams();
+  const { data, isError, isLoading } = useMasterList.document.list();
+  const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const columns = useColumns<MasterListRowFragment>(
     ['code', 'name', 'description'],
     {
-      onChangeSortBy,
+      onChangeSortBy: updateSortQuery,
       sortBy,
     },
-    [onChangeSortBy, sortBy]
+    [updateSortQuery, sortBy]
   );
 
   return (
@@ -34,7 +40,7 @@ const MasterListComponent: FC = () => {
       <AppBarButtons sortBy={sortBy} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={pagination.onChangePage}
+        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
         isError={isError}
