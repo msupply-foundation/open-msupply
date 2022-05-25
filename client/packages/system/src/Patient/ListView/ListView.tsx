@@ -10,6 +10,7 @@ import {
   NothingHere,
   createQueryParamsStore,
   useFormatDateTime,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -38,7 +39,8 @@ const PatientListComponent: FC = () => {
       {
         key: 'dateOfBirth',
         label: 'label.date-of-birth',
-        width: 120,
+        align: ColumnAlign.Right,
+        width: 160,
         formatter: dateString =>
           dateString ? localisedDate((dateString as string) || '') : '',
       },
