@@ -10,11 +10,13 @@ const RECORDS_PER_PAGE = 20;
 interface UrlQueryParams {
   filterKey?: string;
   initialSortKey?: string;
+  filterCondition?: string;
 }
 
 export const useUrlQueryParams = ({
   filterKey,
   initialSortKey,
+  filterCondition = 'like',
 }: UrlQueryParams = {}) => {
   const { urlQuery, updateQuery } = useUrlQuery();
 
@@ -49,7 +51,7 @@ export const useUrlQueryParams = ({
     filterBy:
       filterKey && urlQuery[filterKey]
         ? {
-            [filterKey]: { like: urlQuery[filterKey] ?? '' },
+            [filterKey]: { [filterCondition]: urlQuery[filterKey] ?? '' },
           }
         : {},
   };
