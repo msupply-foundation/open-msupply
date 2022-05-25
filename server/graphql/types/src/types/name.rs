@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 use repository::{Gender, Name, NameRow, NameType};
 
@@ -170,6 +170,10 @@ impl NameNode {
             .created_datetime
             .map(|datetime| DateTime::<Utc>::from_utc(datetime, Utc))
     }
+
+    pub async fn date_of_birth(&self) -> Option<NaiveDate> {
+        self.row().date_of_birth
+    }
 }
 
 #[derive(Union)]
@@ -239,7 +243,9 @@ mod test {
                             r.address1 = Some("address1".to_string());
                             r.address2 = Some("address2".to_string());
                             r.created_datetime =
-                                Some(NaiveDate::from_ymd(2022, 05, 18).and_hms(12, 07, 12))
+                                Some(NaiveDate::from_ymd(2022, 05, 18).and_hms(12, 07, 12));
+                            r.date_of_birth =
+                                Some(NaiveDate::from_ymd(1995, 05, 15).and_hms(00, 00, 00))
                         }),
                         name_store_join_row: None,
                         store_row: None,
@@ -267,6 +273,7 @@ mod test {
                 "address1": "address1",
                 "address2": "address2",
                 "createdDatetime": "2022-05-18T12:07:12+00:00",
+                "dateOfBirth": "1995-05-15T00:00:00+00:00",
             }
         }
         );
@@ -291,6 +298,7 @@ mod test {
                isDonor
                createdDatetime
                isOnHold
+               dateOfBirth
             }
         }
         "#;
