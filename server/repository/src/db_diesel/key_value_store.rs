@@ -32,8 +32,8 @@ pub enum KeyValueType {
     SettingsSyncPasswordSha256,
     SettingsSyncIntervalSec,
     SettingsSyncCentralServerSiteId,
-    SettingsSyncSideId,
-    SettingsSyncSideHardwareId,
+    SettingsSyncSiteId,
+    SettingsSyncSiteHardwareId,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
