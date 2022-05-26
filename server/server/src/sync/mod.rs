@@ -1,9 +1,9 @@
 mod actor;
-mod central_data_synchroniser;
-mod remote_data_synchroniser;
+pub mod central_data_synchroniser;
+pub mod remote_data_synchroniser;
 mod sync_api_credentials;
 mod sync_api_v3;
-mod sync_api_v5;
+pub mod sync_api_v5;
 mod sync_serde;
 mod synchroniser;
 mod translation_central;
@@ -13,7 +13,7 @@ mod translation_remote;
 mod integration_tests;
 
 pub use actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor};
-use repository::RepositoryError;
+use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection};
 pub use sync_api_credentials::SyncCredentials;
 pub use sync_api_v5::{SyncApiV5, SyncConnectionError};
 pub use synchroniser::Synchroniser;
@@ -49,4 +49,10 @@ impl SyncImportError {
             extra: format!("{:?}", extra),
         }
     }
+}
+
+fn is_sync_disabled(connection: &StorageConnection) -> Result<bool, RepositoryError> {
+    Ok(KeyValueStoreRepository::new(connection)
+        .get_bool(KeyValueType::SettingsSyncIsDisabled)?
+        .unwrap_or(false))
 }
