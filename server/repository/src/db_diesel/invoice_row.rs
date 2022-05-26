@@ -1,4 +1,7 @@
-use super::{invoice_row::invoice::dsl::*, StorageConnection, name_row::name, store_row::store, user_row::user_account};
+use super::{
+    invoice_row::invoice::dsl::*, name_row::name, store_row::store, user_row::user_account,
+    StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
