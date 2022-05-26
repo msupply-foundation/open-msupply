@@ -107,13 +107,13 @@ impl SyncApiV5 {
     }
 
     // Get batch of records from remote sync queue.
-    pub async fn get_queued_records(&self) -> Result<RemoteSyncBatchV5, SyncConnectionError> {
-        // Arbitrary batch size.
-        const BATCH_SIZE: u32 = 500;
-
+    pub async fn get_queued_records(
+        &self,
+        batch_size: u32,
+    ) -> Result<RemoteSyncBatchV5, SyncConnectionError> {
         let url = self.server_url.join("/sync/v5/queued_records")?;
 
-        let query = [("limit", &BATCH_SIZE.to_string())];
+        let query = [("limit", &batch_size.to_string())];
 
         // Server rejects initialization request if no `content-length` header is included.
         let mut headers = HeaderMap::new();
@@ -315,7 +315,7 @@ mod tests {
         });
 
         let sync_connection_with_auth = create_api(&url, "username", "password");
-        let pull_result_with_auth = sync_connection_with_auth.get_queued_records().await;
+        let pull_result_with_auth = sync_connection_with_auth.get_queued_records(500).await;
 
         assert!(pull_result_with_auth.is_ok());
         assert_eq!(
@@ -324,7 +324,7 @@ mod tests {
         );
 
         let sync_connection_without_auth = create_api(&url, "", "");
-        let pull_result_without_auth = sync_connection_without_auth.get_queued_records().await;
+        let pull_result_without_auth = sync_connection_without_auth.get_queued_records(500).await;
 
         assert!(pull_result_without_auth.is_err());
     }
