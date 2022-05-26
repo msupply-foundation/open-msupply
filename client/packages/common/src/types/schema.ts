@@ -30,12 +30,6 @@ export type Scalars = {
   NaiveDate: string;
 };
 
-export type AccessDenied = LogoutErrorInterface & {
-  __typename: 'AccessDenied';
-  description: Scalars['String'];
-  fullError: Scalars['String'];
-};
-
 export type AddFromMasterListError = {
   __typename: 'AddFromMasterListError';
   error: AddFromMasterListErrorInterface;
@@ -284,6 +278,12 @@ export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorIn
   __typename: 'DatabaseError';
   description: Scalars['String'];
   fullError: Scalars['String'];
+};
+
+export type DateFilterInput = {
+  afterOrEqualTo?: InputMaybe<Scalars['NaiveDate']>;
+  beforeOrEqualTo?: InputMaybe<Scalars['NaiveDate']>;
+  equalTo?: InputMaybe<Scalars['NaiveDate']>;
 };
 
 export type DatetimeFilterInput = {
@@ -1025,6 +1025,7 @@ export type FullQuery = {
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
   stocktakes: StocktakesResponse;
+  store: StoreResponse;
   stores: StoresResponse;
 };
 
@@ -1173,11 +1174,29 @@ export type FullQueryStocktakesArgs = {
 };
 
 
+export type FullQueryStoreArgs = {
+  id: Scalars['String'];
+};
+
+
 export type FullQueryStoresArgs = {
   filter?: InputMaybe<StoreFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StoreSortInput>>;
 };
+
+export enum GenderType {
+  Female = 'FEMALE',
+  Male = 'MALE',
+  NonBinary = 'NON_BINARY',
+  TransgenderFemale = 'TRANSGENDER_FEMALE',
+  TransgenderFemaleHormone = 'TRANSGENDER_FEMALE_HORMONE',
+  TransgenderFemaleSurgical = 'TRANSGENDER_FEMALE_SURGICAL',
+  TransgenderMale = 'TRANSGENDER_MALE',
+  TransgenderMaleHormone = 'TRANSGENDER_MALE_HORMONE',
+  TransgenderMaleSurgical = 'TRANSGENDER_MALE_SURGICAL',
+  Unknown = 'UNKNOWN'
+}
 
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
@@ -1500,7 +1519,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertLocationErrorInterface & LogoutErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
+export type InternalError = InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String'];
   fullError: Scalars['String'];
@@ -1536,12 +1555,15 @@ export type InvoiceCountsSummary = {
 
 export type InvoiceFilterInput = {
   allocatedDatetime?: InputMaybe<DatetimeFilterInput>;
+  colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<SimpleStringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
+  nameId?: InputMaybe<EqualFilterStringInput>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<SimpleStringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -1550,7 +1572,9 @@ export type InvoiceFilterInput = {
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   theirReference?: InputMaybe<EqualFilterStringInput>;
+  transportReference?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterInvoiceTypeInput>;
+  userId?: InputMaybe<EqualFilterStringInput>;
   verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
 };
 
@@ -1705,6 +1729,8 @@ export enum InvoiceSortFieldInput {
   PickedDatetime = 'pickedDatetime',
   ShippedDatetime = 'shippedDatetime',
   Status = 'status',
+  TheirReference = 'theirReference',
+  TransportReference = 'transportReference',
   Type = 'type',
   VerifiedDatetime = 'verifiedDatetime'
 }
@@ -1787,7 +1813,8 @@ export enum ItemNodeType {
 
 export enum ItemSortFieldInput {
   Code = 'code',
-  Name = 'name'
+  Name = 'name',
+  Type = 'type'
 }
 
 export type ItemSortInput = {
@@ -1819,6 +1846,7 @@ export type LocationFilterInput = {
   code?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<EqualFilterStringInput>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type LocationInUse = DeleteLocationErrorInterface & {
@@ -1870,16 +1898,7 @@ export type Logout = {
   userId: Scalars['String'];
 };
 
-export type LogoutError = {
-  __typename: 'LogoutError';
-  error: LogoutErrorInterface;
-};
-
-export type LogoutErrorInterface = {
-  description: Scalars['String'];
-};
-
-export type LogoutResponse = Logout | LogoutError;
+export type LogoutResponse = Logout;
 
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
@@ -1974,13 +1993,16 @@ export type NameFilterInput = {
 
 export type NameNode = {
   __typename: 'NameNode';
-  address: Scalars['String'];
-  chargeCode: Scalars['String'];
+  address1?: Maybe<Scalars['String']>;
+  address2?: Maybe<Scalars['String']>;
+  chargeCode?: Maybe<Scalars['String']>;
   code: Scalars['String'];
-  comment: Scalars['String'];
-  country: Scalars['String'];
-  createdDate?: Maybe<Scalars['NaiveDate']>;
-  email: Scalars['String'];
+  comment?: Maybe<Scalars['String']>;
+  country?: Maybe<Scalars['String']>;
+  createdDatetime?: Maybe<Scalars['DateTime']>;
+  email?: Maybe<Scalars['String']>;
+  firstName?: Maybe<Scalars['String']>;
+  gender?: Maybe<GenderType>;
   id: Scalars['String'];
   isCustomer: Scalars['Boolean'];
   isDonor: Scalars['Boolean'];
@@ -1989,11 +2011,23 @@ export type NameNode = {
   isSupplier: Scalars['Boolean'];
   isSystemName: Scalars['Boolean'];
   isVisible: Scalars['Boolean'];
+  lastName?: Maybe<Scalars['String']>;
   name: Scalars['String'];
-  phone: Scalars['String'];
+  phone?: Maybe<Scalars['String']>;
   store?: Maybe<StoreNode>;
-  website: Scalars['String'];
+  type: NameNodeType;
+  website?: Maybe<Scalars['String']>;
 };
+
+export enum NameNodeType {
+  Build = 'BUILD',
+  Facility = 'FACILITY',
+  Invad = 'INVAD',
+  Others = 'OTHERS',
+  Patient = 'PATIENT',
+  Repack = 'REPACK',
+  Store = 'STORE'
+}
 
 export enum NameSortFieldInput {
   Code = 'code',
@@ -2205,6 +2239,7 @@ export type RequisitionFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<SimpleStringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
@@ -2214,6 +2249,7 @@ export type RequisitionFilterInput = {
   status?: InputMaybe<EqualFilterRequisitionStatusInput>;
   theirReference?: InputMaybe<SimpleStringFilterInput>;
   type?: InputMaybe<EqualFilterRequisitionTypeInput>;
+  userId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type RequisitionLineChartError = {
@@ -2353,11 +2389,13 @@ export type RequisitionResponse = RecordNotFound | RequisitionNode;
 export enum RequisitionSortFieldInput {
   Comment = 'comment',
   CreatedDatetime = 'createdDatetime',
+  ExpectedDeliveryDate = 'expectedDeliveryDate',
   FinalisedDatetime = 'finalisedDatetime',
   OtherPartyName = 'otherPartyName',
   RequisitionNumber = 'requisitionNumber',
   SentDatetime = 'sentDatetime',
   Status = 'status',
+  TheirReference = 'theirReference',
   Type = 'type'
 }
 
@@ -2483,11 +2521,17 @@ export type StocktakeConnector = {
 };
 
 export type StocktakeFilterInput = {
+  comment?: InputMaybe<SimpleStringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  description?: InputMaybe<SimpleStringFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  inventoryAdjustmentId?: InputMaybe<EqualFilterStringInput>;
+  isLocked?: InputMaybe<Scalars['Boolean']>;
   status?: InputMaybe<EqualFilterStocktakeStatusInput>;
+  stocktakeDate?: InputMaybe<DateFilterInput>;
   stocktakeNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  userId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type StocktakeIsLocked = UpdateStocktakeErrorInterface & {
@@ -2547,9 +2591,13 @@ export enum StocktakeNodeStatus {
 export type StocktakeResponse = NodeError | StocktakeNode;
 
 export enum StocktakeSortFieldInput {
+  Comment = 'comment',
   CreatedDatetime = 'createdDatetime',
+  Description = 'description',
   FinalisedDatetime = 'finalisedDatetime',
-  Status = 'status'
+  Status = 'status',
+  StocktakeDate = 'stocktakeDate',
+  StocktakeNumber = 'stocktakeNumber'
 }
 
 export type StocktakeSortInput = {
@@ -2584,12 +2632,15 @@ export type StoreNode = {
   id: Scalars['String'];
   name: NameNode;
   siteId: Scalars['Int'];
+  storeName: Scalars['String'];
 };
 
 
 export type StoreNodeNameArgs = {
   storeId: Scalars['String'];
 };
+
+export type StoreResponse = NodeError | StoreNode;
 
 export enum StoreSortFieldInput {
   Code = 'code',
