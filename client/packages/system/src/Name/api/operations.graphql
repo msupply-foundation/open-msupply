@@ -12,12 +12,13 @@ fragment NameRow on NameNode {
 }
 
 fragment Name on NameNode {
-  address
+  address1
+  address2
   chargeCode
   code
   comment
   country
-  createdDate
+  createdDatetime
   email
   id
   isCustomer
