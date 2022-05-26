@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use log::warn;
 use repository::StorageConnectionManager;
 
 use reqwest::{Client, Url};
@@ -7,7 +8,7 @@ use service::sync_settings::SyncSettings;
 
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
-    get_sync_actors,
+    get_sync_actors, is_sync_disabled,
     remote_data_synchroniser::RemoteDataSynchroniser,
     sync_api_v3::SyncApiV3,
     SyncApiV5, SyncCredentials, SyncReceiverActor, SyncSenderActor,
@@ -77,7 +78,12 @@ impl Synchroniser {
         let connection = self
             .connection_manager
             .connection()
-            .map_err(|source| CentralSyncError::DBConnectionError { source })?;
+            .map_err(CentralSyncError::from_database_error)?;
+
+        if is_sync_disabled(&connection).map_err(CentralSyncError::from_database_error)? {
+            warn!("Sync is disabled, skipping");
+            return Ok(());
+        }
 
         // first pull data from the central server
         self.central_data
@@ -94,7 +100,12 @@ impl Synchroniser {
         let connection = self
             .connection_manager
             .connection()
-            .map_err(|source| CentralSyncError::DBConnectionError { source })?;
+            .map_err(CentralSyncError::from_database_error)?;
+
+        if is_sync_disabled(&connection).map_err(CentralSyncError::from_database_error)? {
+            warn!("Sync is disabled, skipping");
+            return Ok(());
+        }
 
         // First push before pulling. This avoids problems with the existing central server
         // implementation...
@@ -107,7 +118,7 @@ impl Synchroniser {
             .pull_and_integrate_records(&connection)
             .await?;
 
-        self.remote_data.integrate_records(&connection).await?;
+        RemoteDataSynchroniser::integrate_records(&connection).await?;
         Ok(())
     }
 
@@ -124,5 +135,52 @@ impl Synchroniser {
                 sync_receiver.listen(self).await;
             } => unreachable!("Sync scheduler unexpectedly died!?"),
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use service::{
+        service_provider::ServiceContext,
+        settings_service::{SettingsService, SettingsServiceTrait},
+    };
+    use util::inline_init;
+
+    use super::*;
+
+    #[actix_rt::test]
+    async fn test_disabled_sync() {
+        let (_, connection, connection_manager, _) =
+            setup_all("test_disabled_sync", MockDataInserts::none()).await;
+
+        // 0.0.0.0:0 should hopefully be always unreachable and valid url
+
+        let s = Synchroniser::new(
+            inline_init(|r: &mut SyncSettings| r.url = "http://0.0.0.0:0".to_string()),
+            connection_manager,
+        )
+        .unwrap();
+
+        // First check that both pulls fail (wrong url in default)
+        assert!(
+            matches!(s.initial_pull().await, Err(_)),
+            "initial pull should have failed"
+        );
+        assert!(matches!(s.sync().await, Err(_)), "sync should have failed");
+
+        // Check that disabling return Ok(())
+        let ctx = ServiceContext { connection };
+        SettingsService {}.disable_sync(&ctx).unwrap();
+
+        assert!(
+            matches!(s.initial_pull().await, Ok(_)),
+            "initial should have succeeded with early return"
+        );
+
+        assert!(
+            matches!(s.sync().await, Ok(_)),
+            "sync should succeeded with early return"
+        );
     }
 }
