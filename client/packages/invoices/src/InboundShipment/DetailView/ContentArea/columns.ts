@@ -273,7 +273,7 @@ export const useInboundShipmentColumns = () => {
     [sortBy, updateSortQuery]
   );
 
-  return { columns, onChangeSortBy: updateSortQuery, sortBy };
+  return { columns, sortBy };
 };
 
 export const useExpansionColumns = (): Column<InboundLineFragment>[] =>

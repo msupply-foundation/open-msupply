@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useUrlQuery } from './useUrlQuery';
 import { Column } from '@openmsupply-client/common';
 import { FilterController } from '../useQueryParams';
@@ -19,6 +20,15 @@ export const useUrlQueryParams = ({
   filterCondition = 'like',
 }: UrlQueryParams = {}) => {
   const { urlQuery, updateQuery } = useUrlQuery();
+
+  useEffect(() => {
+    if (!initialSortKey) return;
+
+    updateSortQuery({
+      key: initialSortKey,
+      sortBy: { key: initialSortKey, direction: 'asc' },
+    } as Column<any>);
+  }, [initialSortKey]);
 
   const updateSortQuery = (column: Column<any>) => {
     const currentSort = urlQuery['sort'];
