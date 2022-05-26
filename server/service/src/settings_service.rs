@@ -99,6 +99,11 @@ pub trait SettingsServiceTrait: Sync + Send {
             .map_err(|err| UpdateSettingsError::RepositoryError(err.to_inner_error()))?;
         Ok(result)
     }
+
+    fn disable_sync(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {
+        KeyValueStoreRepository::new(&ctx.connection)
+            .set_bool(KeyValueType::SettingsSyncIsDisabled, Some(true))
+    }
 }
 
 pub struct SettingsService {}
