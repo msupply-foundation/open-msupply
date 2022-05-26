@@ -12,10 +12,10 @@ use crate::environment::{AppEnvironment, EnvironmentVariable};
 
 const CONFIGURATION_DIRECTORY_PATH: &str = "configuration";
 const CONFIGURATION_BASE_FILE_PATH: &str = "base.yaml";
+const CONFIGURATION_EXAMPLE_FILE_PATH: &str = "example.yaml";
 
 const CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
 const CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
-const CONFIGURATION_EXAMPLE_FILE_EXTENSION: &str = "yaml.example";
 
 pub enum SettingsError {
     Config(ConfigError),
@@ -70,10 +70,8 @@ pub fn get_configuration_app_file_path(configuration_directory: PathBuf) -> Path
 
 /// Gets example filepath from filepath
 ///
-pub fn get_example_file_path(file_path: &PathBuf) -> PathBuf {
-    let mut example_file_path = file_path.clone();
-    example_file_path.set_extension(CONFIGURATION_EXAMPLE_FILE_EXTENSION);
-    example_file_path
+pub fn get_example_file_path(configuration_directory: PathBuf) -> PathBuf {
+    configuration_directory.join(CONFIGURATION_EXAMPLE_FILE_PATH)
 }
 
 /// Gets environment configuration values.
@@ -93,25 +91,12 @@ pub fn get_configuration_environment() -> Environment {
 }
 
 /// Copies example configuration files into place if the 'real' files don't exist
-pub fn copy_example_configuration_files_if_required() -> Result<(), SettingsError> {
+pub fn copy_example_environment_configuration_file_if_required() -> Result<(), SettingsError> {
     let configuration_directory = get_configuration_directory()?;
-    let base = get_configuration_base_file_path(configuration_directory.clone());
-    if !base.exists() {
-        //Config file doesn't exist, Try to copy example file over
-        let example_path = get_example_file_path(&base);
-        if let Err(err) = fs::copy(example_path.clone(), base.clone()) {
-            return Err(SettingsError::Config(ConfigError::Message(format!(
-                "Unable to copy example configuration file from {} Error: {}",
-                example_path.as_path().display(),
-                err
-            ))));
-        }
-    }
-
-    let app = get_configuration_app_file_path(configuration_directory);
+    let app = get_configuration_app_file_path(configuration_directory.clone());
     if !app.exists() {
         //Config file doesn't exist, Try to copy example file over
-        let example_path = get_example_file_path(&app);
+        let example_path = get_example_file_path(configuration_directory);
         if let Err(err) = fs::copy(example_path.clone(), app.clone()) {
             return Err(SettingsError::Config(ConfigError::Message(format!(
                 "Unable to copy example configuration file from {} Error: {}",
@@ -133,7 +118,7 @@ pub fn copy_example_configuration_files_if_required() -> Result<(), SettingsErro
 /// Individual settings properties can be also manually defined as environment variables: see
 /// `get_configuration_environment` for details.
 pub fn get_configuration() -> Result<Settings, SettingsError> {
-    copy_example_configuration_files_if_required()?;
+    copy_example_environment_configuration_file_if_required()?;
 
     let mut configuration: Config = Config::default();
     configuration
