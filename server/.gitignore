@@ -19,4 +19,4 @@ plugins
 certs
 static_files
 omsupply-database
-server/configuration/*.yaml
+configuration/local.yaml
