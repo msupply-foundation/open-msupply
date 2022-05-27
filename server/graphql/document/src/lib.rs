@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_core::pagination::PaginationInput;
 use mutations::insert_json_schema::insert_json_schema;
 use mutations::insert_json_schema::InsertJsonSchemaInput;
 use mutations::insert_json_schema::InsertJsonSchemaResponse;
@@ -40,6 +41,17 @@ impl DocumentQueries {
 
     pub async fn json_schema(&self, ctx: &Context<'_>, id: String) -> Result<JSONSchemaResponse> {
         json_schema(ctx, id)
+    }
+
+    pub async fn patients(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<PatientFilterInput>,
+        sort: Option<Vec<PatientSortInput>>,
+    ) -> Result<PatientResponse> {
+        patients(ctx, store_id, page, filter, sort)
     }
 }
 

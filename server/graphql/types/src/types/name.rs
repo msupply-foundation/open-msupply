@@ -20,6 +20,18 @@ pub enum NameNodeType {
     Others,
 }
 impl NameNodeType {
+    pub fn to_domain(self) -> NameType {
+        match self {
+            NameNodeType::Facility => NameType::Facility,
+            NameNodeType::Patient => NameType::Patient,
+            NameNodeType::Build => NameType::Build,
+            NameNodeType::Invad =>NameType::Invad,
+            NameNodeType::Repack => NameType::Repack,
+            NameNodeType::Store => NameType::Store,
+            NameNodeType::Others => NameType::Others,
+        }
+    }
+
     pub fn from_domain(name_type: &NameType) -> Self {
         match name_type {
             NameType::Facility => NameNodeType::Facility,
