@@ -1,13 +1,24 @@
+import React from 'react';
 import {
   TestingProvider,
   InvoiceLineNode,
   InvoiceLineNodeType,
   ItemNodeType,
+  TestingRouter,
+  Route,
 } from '@openmsupply-client/common';
 import { renderHook } from '@testing-library/react';
 import { graphql } from 'msw';
 import { setupServer } from 'msw/node';
 import { useNextItem } from './useNextItem';
+
+const Provider = ({ children }: { children: React.ReactNode }) => (
+  <TestingProvider>
+    <TestingRouter initialEntries={['/distribution']}>
+      <Route path="*" element={children} />
+    </TestingRouter>
+  </TestingProvider>
+);
 
 const getInvoice = () => ({
   __typename: 'InvoiceNode',
@@ -224,7 +235,7 @@ describe('useNextItem', () => {
     });
     server.use(handler);
     const result = renderHook(() => useNextItem('a'), {
-      wrapper: TestingProvider,
+      wrapper: Provider,
     });
 
     result.rerender(() => {
@@ -244,7 +255,7 @@ describe('useNextItem', () => {
 
     server.use(handler);
     const result = renderHook(() => useNextItem('c'), {
-      wrapper: TestingProvider,
+      wrapper: Provider,
     });
 
     expect(result.result.current.next).toEqual(null);
