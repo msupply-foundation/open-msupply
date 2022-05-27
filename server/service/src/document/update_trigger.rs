@@ -52,6 +52,7 @@ pub fn document_updated(
                 }
                 out.join(",")
             };
+            let existing_name = name_repo.find_one_by_id(&patient.id)?;
             name_repo.upsert_one(&NameRow {
                 id: patient.id.clone(),
                 name: patient_name(&patient.first_name, &patient.last_name),
@@ -82,9 +83,11 @@ pub fn document_updated(
                 is_manufacturer: false,
                 is_donor: false,
                 on_hold: false,
-                created_datetime: None,
+                created_datetime: existing_name
+                    .as_ref()
+                    .and_then(|n| n.created_datetime.clone())
+                    .or(Some(doc.timestamp.naive_utc())), // assume there is no earlier doc version
             })?;
-            let existing_name = name_repo.find_one_by_id(&patient.id)?;
             if existing_name.is_none() {
                 // add name store join
                 let name_store_join_repo = NameStoreJoinRepository::new(con);
