@@ -15,9 +15,13 @@ export type FrontEndHost = {
 
 type ServerDiscovered = (event: object, value: FrontEndHost) => void;
 export type ElectronAPI = {
+  // When in discovery mode (initiated by startServerDiscovery) this event is emmited when server is discovered (existing or new)
   serverDiscovered: (eventInfo: ServerDiscovered) => void;
+  // Starts server discovery (connectToServer stops server dsicovery)
   startServerDiscovery: () => void;
+  // Asks client to connect to server (causing window to navigate to server url and stops discovery)
   connectToServer: (server: FrontEndHost) => void;
+  // Will return currently connected client (to display in UI)
   connectedServer: () => Promise<FrontEndHost | null>;
 };
 
