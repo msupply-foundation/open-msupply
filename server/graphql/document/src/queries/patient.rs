@@ -1,5 +1,6 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_core::generic_filters::{
     DateFilterInput, EqualFilterStringInput, SimpleStringFilterInput,
 };
@@ -9,6 +10,7 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
+use graphql_types::types::GenderType;
 use repository::{DateFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::document::patient::{
@@ -31,6 +33,50 @@ impl PatientNode {
 
     pub async fn name(&self) -> &str {
         &self.patient.name_row.name
+    }
+
+    pub async fn store_id(&self) -> Option<String> {
+        self.patient.name_row.supplying_store_id.clone()
+    }
+
+    pub async fn first_name(&self) -> Option<String> {
+        self.patient.name_row.first_name.clone()
+    }
+
+    pub async fn gender(&self) -> Option<GenderType> {
+        self.patient
+            .name_row
+            .gender
+            .as_ref()
+            .map(GenderType::from_domain)
+    }
+
+    pub async fn date_of_birth(&self) -> Option<NaiveDate> {
+        self.patient.name_row.date_of_birth.clone()
+    }
+
+    pub async fn phone(&self) -> Option<String> {
+        self.patient.name_row.phone.clone()
+    }
+
+    pub async fn country(&self) -> Option<String> {
+        self.patient.name_row.country.clone()
+    }
+
+    pub async fn address1(&self) -> Option<String> {
+        self.patient.name_row.address1.clone()
+    }
+
+    pub async fn address2(&self) -> Option<String> {
+        self.patient.name_row.address2.clone()
+    }
+
+    pub async fn email(&self) -> Option<String> {
+        self.patient.name_row.email.clone()
+    }
+
+    pub async fn website(&self) -> Option<String> {
+        self.patient.name_row.website.clone()
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<DocumentNode> {
