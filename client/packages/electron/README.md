@@ -8,7 +8,7 @@ The most robust way we've found to solve this issue is with a client app:
 * Discover local servers with mDNS
 * Trust certificates coming from the discovered server
 * Display web content served by remote server (no need to upgrade client when server upgrades)
-* Allow for future native functionality (potentialy can use another bundler when time comes to implement native functionality, like Tauri)
+* Allow for native functionality in the future (potentially we can use another bundler when time comes to implement native functionality, like Tauri)
 
 ### Running
 
