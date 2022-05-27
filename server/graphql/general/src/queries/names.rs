@@ -1,13 +1,15 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{DateFilterInput, EqualFilterStringInput, SimpleStringFilterInput},
+    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::NameNode;
-use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
+use graphql_types::types::{NameNode, NameNodeType};
+use repository::{DateFilter, EqualFilter, Gender, PaginationOption, SimpleStringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
+use serde::Serialize;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     ListResult,
@@ -30,6 +32,52 @@ pub struct NameSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterNameTypeInput {
+    pub equal_to: Option<NameNodeType>,
+    pub equal_any: Option<Vec<NameNodeType>>,
+    pub not_equal_to: Option<NameNodeType>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum GenderInput {
+    Female,
+    Male,
+    TransgenderMale,
+    TransgenderMaleHormone,
+    TransgenderMaleSurgical,
+    TransgenderFemale,
+    TransgenderFemaleHormone,
+    TransgenderFemaleSurgical,
+    Unknown,
+    NonBinary,
+}
+
+impl GenderInput {
+    pub fn to_domain(self) -> Gender {
+        match self {
+            GenderInput::Female => Gender::Female,
+            GenderInput::Male => Gender::Male,
+            GenderInput::TransgenderMale => Gender::TransgenderMale,
+            GenderInput::TransgenderMaleHormone => Gender::TransgenderMaleHormone,
+            GenderInput::TransgenderMaleSurgical => Gender::TransgenderMaleSurgical,
+            GenderInput::TransgenderFemale => Gender::TransgenderFemale,
+            GenderInput::TransgenderFemaleHormone => Gender::TransgenderFemaleHormone,
+            GenderInput::TransgenderFemaleSurgical => Gender::TransgenderFemaleSurgical,
+            GenderInput::Unknown => Gender::Unknown,
+            GenderInput::NonBinary => Gender::NonBinary,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterGenderInput {
+    pub equal_to: Option<GenderInput>,
+    pub equal_any: Option<Vec<GenderInput>>,
+    pub not_equal_to: Option<GenderInput>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct NameFilterInput {
     pub id: Option<EqualFilterStringInput>,
     /// Filter by name
@@ -44,12 +92,24 @@ pub struct NameFilterInput {
     pub is_store: Option<bool>,
     /// Code of the store if store is linked to name
     pub store_code: Option<SimpleStringFilterInput>,
-    /// Visibility in current store (based on store_id parameter and existance of name_store_join record)
+    /// Visibility in current store (based on store_id parameter and existence of name_store_join record)
     pub is_visible: Option<bool>,
     /// Show system names (defaults to false)
     /// System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
     /// if is_visible is set to true and is_system_name is also true no system names will be returned
     pub is_system_name: Option<bool>,
+    /// Filter by name type
+    pub r#type: Option<EqualFilterNameTypeInput>,
+
+    pub first_name: Option<SimpleStringFilterInput>,
+    pub last_name: Option<SimpleStringFilterInput>,
+    pub gender: Option<EqualFilterGenderInput>,
+    pub date_of_birth: Option<DateFilterInput>,
+    pub phone: Option<SimpleStringFilterInput>,
+    pub address1: Option<SimpleStringFilterInput>,
+    pub address2: Option<SimpleStringFilterInput>,
+    pub country: Option<SimpleStringFilterInput>,
+    pub email: Option<SimpleStringFilterInput>,
 }
 
 #[derive(SimpleObject)]
@@ -110,6 +170,16 @@ impl NameFilterInput {
             store_code,
             is_visible,
             is_system_name,
+            r#type,
+            first_name,
+            last_name,
+            gender,
+            date_of_birth,
+            phone,
+            address1,
+            address2,
+            country,
+            email,
         } = self;
 
         NameFilter {
@@ -122,6 +192,16 @@ impl NameFilterInput {
             is_store,
             is_visible,
             is_system_name: is_system_name.or(Some(false)),
+            r#type: r#type.map(|t| map_filter!(t, NameNodeType::to_domain)),
+            first_name: first_name.map(SimpleStringFilter::from),
+            last_name: last_name.map(SimpleStringFilter::from),
+            gender: gender.map(|t| map_filter!(t, GenderInput::to_domain)),
+            date_of_birth: date_of_birth.map(DateFilter::from),
+            phone: phone.map(SimpleStringFilter::from),
+            address1: address1.map(SimpleStringFilter::from),
+            address2: address2.map(SimpleStringFilter::from),
+            country: country.map(SimpleStringFilter::from),
+            email: email.map(SimpleStringFilter::from),
         }
     }
 }

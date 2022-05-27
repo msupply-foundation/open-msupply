@@ -1,7 +1,7 @@
 mod mutations;
 mod queries;
 
-use self::queries::*;
+pub use self::queries::*;
 
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
