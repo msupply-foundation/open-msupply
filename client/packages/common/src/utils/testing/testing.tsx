@@ -52,7 +52,6 @@ export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   useEffect(() => {
     i18next.changeLanguage(locale);
   }, [locale]);
-
   if (!i18next.isInitialized) {
     i18next.use(initReactI18next).init({
       resources,

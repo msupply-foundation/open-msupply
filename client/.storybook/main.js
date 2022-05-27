@@ -3,6 +3,10 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const toPath = filePath => path.join(process.cwd(), filePath);
 
 module.exports = {
+  core: {
+    builder: 'webpack5',
+  },
+  staticDirs: ['./packages/host/public'],
   typescript: { reactDocgen: 'react-docgen' },
   reactOptions: {
     fastRefresh: true,
