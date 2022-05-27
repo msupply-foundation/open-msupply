@@ -166,7 +166,7 @@ server:
   cors_origins: [http://localhost:3003, https://youwebserver:yourport]
 ````
 
-In development mode (if not built with -release) cors is set to permissive (server will return allow origin = requesting origin)
+In development mode (if not built with --release) cors is set to permissive (server will return allow origin = requesting origin)
 
 ```
 server:
