@@ -1,6 +1,7 @@
 # Open mSupply
 
-This is the home of an open source version of the popular [mSupply](https://msupply.org.nz/) - providing pharmaceutical supply chain management and dispensing, all the way from national warehouses to remote clinics, on servers, laptops and mobile. Used in over 30 countries and for over 20 years and now becoming open source.
+This is the home of an open source version of the popular [mSupply](https://msupply.org.nz/) - providing pharmaceutical supply chain management and dispensing, all the way from national warehouses to remote clinics, on servers, laptops and mobile.
+Used in over 30 countries and for over 20 years and now becoming open source.
 
 The code is separated into two main areas, the client and server:
 
