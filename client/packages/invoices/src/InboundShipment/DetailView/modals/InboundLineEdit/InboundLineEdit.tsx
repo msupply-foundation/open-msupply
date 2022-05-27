@@ -124,16 +124,13 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const { Modal } = useDialog({ isOpen, onClose });
   const height = useKeyboardHeightAdjustment(600);
-
+  const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
+    useDraftInboundLines(currentItem);
+  const okNextDisabled =
+    (mode === ModalMode.Update && nextDisabled) || !currentItem;
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
-
-  const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
-    useDraftInboundLines(currentItem);
-
-  const okNextDisabled =
-    (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   return (
     <TableProvider
@@ -197,6 +194,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                   tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
                   onAdd={addDraftLine}
                   setCurrentTab={setCurrentTab}
+                  dependencies={[draftLines]}
                 />
 
                 <Box flex={1} display="flex" justifyContent="space-between">

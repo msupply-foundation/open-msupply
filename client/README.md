@@ -2,7 +2,7 @@
 
 Welcome! This is the front end application for open mSupply.
 
-This is a multi-lingual, responsive web application making use of the open mSupply [remote-server API](https://github.com/openmsupply/remote-server).
+This is a multi-lingual, responsive web application making use of the open mSupply [remote-server API](https://github.com/open-msupply/server/README.md).
 
 It is built using React, with typescript, and a heavy reliance on hooks. The component framework is material-ui and we're using [storybook](https://storybook.js.org/) to demonstrate the usage and functionality of custom components.
 

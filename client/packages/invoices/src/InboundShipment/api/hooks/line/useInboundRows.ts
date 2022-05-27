@@ -8,7 +8,7 @@ export const useInboundRows = () => {
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
   const { data: lines } = useInboundLines();
   const { data: items } = useInboundItems();
-  const { columns, onChangeSortBy, sortBy } = useInboundShipmentColumns();
+  const { columns, sortBy } = useInboundShipmentColumns();
 
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -39,7 +39,6 @@ export const useInboundRows = () => {
     rows,
     lines: sortedLines,
     items: sortedItems,
-    onChangeSortBy,
     sortBy,
   };
 };

@@ -7,13 +7,18 @@ import {
   createTableStore,
   NothingHere,
   useTranslation,
-  createQueryParamsStore,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useItems, ItemRowFragment } from '../api';
 
 const ItemListComponent: FC = () => {
-  const { data, isError, isLoading, pagination, sort } = useItems();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams();
+  const { data, isError, isLoading } = useItems();
+  const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
 
@@ -21,7 +26,7 @@ const ItemListComponent: FC = () => {
     ['name', 'code'],
     {
       sortBy,
-      onChangeSortBy,
+      onChangeSortBy: updateSortQuery,
     },
     [sortBy]
   );
@@ -29,7 +34,7 @@ const ItemListComponent: FC = () => {
   return (
     <DataTable
       pagination={{ ...pagination, total: data?.totalCount }}
-      onChangePage={pagination.onChangePage}
+      onChangePage={updatePaginationQuery}
       columns={columns}
       data={data?.nodes}
       isError={isError}
@@ -43,12 +48,7 @@ const ItemListComponent: FC = () => {
 };
 
 export const ItemListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<ItemRowFragment>({
-      initialSortBy: { key: 'name' },
-    })}
-  >
+  <TableProvider createStore={createTableStore}>
     <ItemListComponent />
   </TableProvider>
 );

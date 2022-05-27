@@ -16,9 +16,7 @@ import { LocationRowFragment } from '@openmsupply-client/system';
 
 interface UseOutboundColumnOptions {
   sortBy: SortBy<OutboundLineFragment | OutboundItem>;
-  onChangeSortBy: (
-    column: Column<OutboundLineFragment | OutboundItem>
-  ) => SortBy<OutboundLineFragment | OutboundItem>;
+  onChangeSortBy: (column: Column<OutboundLineFragment | OutboundItem>) => void;
 }
 
 const expansionColumn = getRowExpandColumn<

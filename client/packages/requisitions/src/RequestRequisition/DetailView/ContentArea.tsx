@@ -13,9 +13,8 @@ interface ContentAreaProps {
 
 export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
-  const { lines, columns } = useRequest.line.list();
+  const { lines, columns, itemFilter } = useRequest.line.list();
   const { on } = useHideOverStocked();
-  const { itemFilter } = useRequest.line.list();
   const isDisabled = useRequest.utils.isDisabled();
   const isFiltered = !!itemFilter || on;
 
