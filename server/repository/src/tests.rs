@@ -282,19 +282,19 @@ mod repository_test {
         requisition_row::RequisitionRowStatus,
         test_db, CentralSyncBufferRepository, ChangelogAction, ChangelogRow,
         ChangelogRowRepository, ChangelogTableName, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository,
-        KeyValueType, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
-        OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
-        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
-        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
-        StoreRowRepository, UserAccountRowRepository,
+        InvoiceLineRowRepository, InvoiceRowRepository, ItemRow, ItemRowRepository,
+        KeyValueStoreRepository, KeyValueType, MasterListFilter, MasterListLineFilter,
+        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
+        MasterListRepository, MasterListRowRepository, NameRowRepository, NumberRowRepository,
+        NumberRowType, OutboundShipmentRowRepository, RepositoryError, RequisitionFilter,
+        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
+        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
+        StockLineRowRepository, StoreRowRepository, TransactionError, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
-    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use util::inline_edit;
+    use diesel::{sql_query, sql_types::Text, Connection, RunQueryDsl};
+    use util::{inline_edit, inline_init};
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -1180,5 +1180,127 @@ mod repository_test {
             .unwrap();
         let result = repo.get_bool(KeyValueType::CentralSyncPullCursor).unwrap();
         assert_eq!(result, Some(true));
+    }
+
+    #[actix_rt::test]
+    async fn test_tx_deadlock() {
+        let (_, _, connection_manager, _) =
+            test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
+
+        /*
+            Issue Description..
+
+            From https://sqlite.org/forum/info/e4f30c1ed10b1cb5
+            Connection A starts as a reader and does some processing.
+            Connection B starts as a reader and wants to upgrade to a writer; it needs to wait for connectionA to finish.
+            Connection A now wants to upgrade too. This is a deadlock...
+        */
+
+        /*
+            Test Scenario
+
+            Process A starts a transaction, does a read, then sleeps for a 100 milliseconds before continuing to write from within the same transaction.
+            Conncurrently Process B tries to do a similar thing.
+        */
+
+        /*
+            Expected behaviour for this test in SQLite...
+
+            Both Connection A and B start a transaction in 'IMMEDIATE' mode,
+            Connection B will wait for Connection A to finish it's transaction before it can begin it's own transaction.
+            (E.g All transactions are serialised, while read only queries can happen concurrently)
+
+            Output:
+                A: transaction acquired
+                A: read
+                A: sleeping
+                B: Ready to start transaction
+                <~100ms wait>
+                A: write
+                A: written
+                B: transaction acquired
+                B: read
+                B: write 1
+                B: write 2
+        */
+
+        /*
+            Expected behaviour for this test in Postgresql...
+
+            Output:
+                A: transaction acquired
+                A: read
+                A: sleeping
+                B: Ready to start transaction
+                B: transaction acquired
+                B: read
+                B: write 1
+                B: write 2
+                A: write
+                A: written
+        */
+
+        let (a_finished_reading_sender, a_finished_reading_receiver) =
+            tokio::sync::oneshot::channel();
+
+        let manager_a = connection_manager.clone();
+        let process_a = actix_rt::spawn(async move {
+            let connection = manager_a.connection().unwrap();
+            let result: Result<(), TransactionError<RepositoryError>> = connection
+                .transaction(|con| async move {
+                    println!("A: transaction acquired");
+                    let repo = ItemRowRepository::new(con);
+                    let _ = repo.find_one_by_id("tx_deadlock_id")?;
+                    println!("A: read");
+                    a_finished_reading_sender.send(()).unwrap();
+                    println!("A: sleeping");
+                    actix_rt::time::sleep(core::time::Duration::from_millis(100)).await;
+                    println!("A: write");
+                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                        i.id = "tx_deadlock_id2".to_string();
+                        i.name = "name_a".to_string();
+                    }))?;
+                    println!("A: written");
+                    Ok(())
+                })
+                .await;
+            result
+        });
+
+        let process_b = actix_rt::spawn(async move {
+            //Wait for process a to get a transaction started
+            let connection = connection_manager.clone().connection().unwrap();
+            let _ = a_finished_reading_receiver.await;
+            println!("B: Ready to start transaction");
+
+            let result: Result<(), TransactionError<RepositoryError>> = connection
+                .transaction(|con| async move {
+                    println!("B: transaction acquired");
+                    let repo = ItemRowRepository::new(&con);
+                    let _ = repo.find_one_by_id("tx_deadlock_id")?;
+                    println!("B: read");
+
+                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                        i.id = "tx_deadlock_id".to_string();
+                        i.name = "name_b".to_string();
+                    }))?;
+                    println!("B: write 1");
+
+                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                        i.id = "tx_deadlock_id".to_string();
+                        i.name = "name_b_2".to_string();
+                    }))?;
+                    println!("B: write 2");
+                    Ok(())
+                })
+                .await;
+            println!("B: Returning {:?}", result);
+            result
+        });
+
+        let a = process_a.await.unwrap();
+        let b = process_b.await.unwrap();
+        a.unwrap();
+        b.unwrap();
     }
 }

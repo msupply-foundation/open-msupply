@@ -24,6 +24,7 @@ log = "0.4.14"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
+tokio = "1.17.0"
 
 [features]
 default = ["sqlite"]
