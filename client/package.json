@@ -13,7 +13,7 @@
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD",
     "prepare": "cd .. && husky install client/.husky",
     "pre-commit-lint": "yarn compile && yarn lint-staged",
-    "test": "jest --config ./jest.config.js --maxWorkers=50%",
+    "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook -s ./packages/host/public ",
     "generate": "graphql-codegen --config codegen.yml",
@@ -31,6 +31,8 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.18.2",
+    "@babel/preset-env": "^7.18.2",
     "@capacitor/keyboard": "^1.2.2",
     "@graphql-codegen/cli": "^2.3.0",
     "@graphql-codegen/near-operation-file-preset": "^2.2.5",
@@ -61,6 +63,7 @@
     "@types/recharts": "^1.8.23",
     "@typescript-eslint/eslint-plugin": "^5.7.0",
     "@typescript-eslint/parser": "^5.7.0",
+    "babel-jest": "^28.1.0",
     "eslint": "^8.4.1",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jest-dom": "^4.0.1",
@@ -68,6 +71,7 @@
     "eslint-plugin-storybook": "^0.5.12",
     "i18n-unused": "^0.8.0",
     "jest": "^28.1.0",
+    "jest-environment-jsdom": "^28.1.0",
     "jest-transform-stub": "^2.0.0",
     "msw-storybook-addon": "^1.6.3",
     "react": "^18.0.0",

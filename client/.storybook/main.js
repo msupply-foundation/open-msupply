@@ -5,8 +5,11 @@ const toPath = filePath => path.join(process.cwd(), filePath);
 module.exports = {
   core: {
     builder: 'webpack5',
+    options: {
+      lazyCompilation: true,
+    },
   },
-  staticDirs: ['./packages/host/public'],
+  staticDirs: ['../packages/host/public'],
   typescript: { reactDocgen: 'react-docgen' },
   reactOptions: {
     fastRefresh: true,
@@ -26,7 +29,9 @@ module.exports = {
           '@emotion/core': toPath('node_modules/@emotion/react'),
           'emotion-theming': toPath('node_modules/@emotion/react'),
         },
-        plugins: [new TsconfigPathsPlugin()],
+        plugins: [
+          new TsconfigPathsPlugin({ extensions: config.resolve.extensions }),
+        ],
       },
     };
   },
