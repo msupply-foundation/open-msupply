@@ -39,7 +39,7 @@ async fn index(_: HttpRequest) -> impl Responder {
     if result.status() == StatusCode::NOT_FOUND {
         HttpResponse::Ok()
             .content_type(ContentType(mime::TEXT_PLAIN))
-            .body("Cannot find index.html. See https://github.com/openmsupply/open-msupply#readme")
+            .body("Cannot find index.html. See https://github.com/openmsupply/open-msupply#serving-front-end")
     } else {
         result
     }
