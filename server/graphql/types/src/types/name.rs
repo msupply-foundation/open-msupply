@@ -25,7 +25,7 @@ impl NameNodeType {
             NameNodeType::Facility => NameType::Facility,
             NameNodeType::Patient => NameType::Patient,
             NameNodeType::Build => NameType::Build,
-            NameNodeType::Invad =>NameType::Invad,
+            NameNodeType::Invad => NameType::Invad,
             NameNodeType::Repack => NameType::Repack,
             NameNodeType::Store => NameType::Store,
             NameNodeType::Others => NameType::Others,
@@ -126,9 +126,11 @@ impl NameNode {
     pub async fn first_name(&self) -> &Option<String> {
         &self.row().first_name
     }
+
     pub async fn last_name(&self) -> &Option<String> {
         &self.row().last_name
     }
+
     pub async fn gender(&self) -> Option<GenderType> {
         self.row().gender.as_ref().map(GenderType::from_domain)
     }
