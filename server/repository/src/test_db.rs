@@ -41,7 +41,7 @@ pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
-    use crate::DBBackendConnection;
+    use crate::{database_settings::SqliteConnectionOptions, DBBackendConnection};
     use std::{fs, path::Path};
 
     let db_path = db_settings.connection_string();
@@ -59,9 +59,15 @@ pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
 
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
+    const SQLITE_LOCKWAIT_MS: u32 = 5000; //5 second wait for test lock timeout
     let pool = Pool::builder()
         //.max_size(1)
         .min_idle(Some(1))
+        .connection_customizer(Box::new(SqliteConnectionOptions {
+            enable_wal: false,
+            enable_foreign_keys: true,
+            busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
+        }))
         .build(connection_manager)
         .expect("Failed to connect to database");
     let connection = pool.get().expect("Failed to open connection");

@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::{cell::Cell, time::SystemTime};
 
 use super::{get_connection, DBBackendConnection, DBConnection};
 
@@ -11,6 +11,13 @@ use diesel::{
 };
 use futures_util::Future;
 use log::error;
+
+// feature sqlite
+#[cfg(not(feature = "postgres"))]
+const BEGIN_TRANSACTION_STMT: &str = "BEGIN IMMEDIATE";
+// feature sqlite
+#[cfg(feature = "postgres")]
+const BEGIN_TRANSACTION_STMT: &str = "BEGIN";
 
 pub struct StorageConnection {
     pub connection: DBConnection,
@@ -93,13 +100,24 @@ impl StorageConnection {
 
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
-        transaction_manager.begin_transaction(con).map_err(|err| {
-            error!("Failed to begin tx: {:?}", err);
-            TransactionError::Transaction {
-                msg: format!("Failed to begin tx: {}", err),
-                level: current_level + 1,
+        println!("ATTEMPT TRANSACTION ACQUIRE");
+        let start_dt = SystemTime::now();
+        let result = transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STMT);
+        let transaction_duration = start_dt
+            .duration_since(start_dt)
+            .expect("Time went backwards");
+        println!("TRANSACTION CREATE TIME {:?}", transaction_duration);
+        match result {
+            Ok(_) => {}
+            Err(err) => {
+                println!("TRANSACTION Failed to begin tx: {:?}", err);
+                return Err(TransactionError::Transaction {
+                    msg: format!("Failed to begin tx: {}", err),
+                    level: current_level + 1,
+                });
             }
-        })?;
+        }
+        println!("TRANSACTION ACQUIRED");
 
         self.transaction_level.set(current_level + 1);
         let result = f(self).await;
