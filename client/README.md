@@ -206,6 +206,6 @@ The remote server is started and stopped in: `android/app/src/main/java/org/open
 
 The cert plugin (`packages/android/app/src/main/java/org/openmsupply/client/certplugin/CertPlugin.java`) allows the web client to make https request to the remote-server using a self signed certificate.
 
-## Electron Client
+## Desktop App
 
-[Package README](packages/electron/README.md)
+The client application can be bundled as a desktop app. Currently we're using [Electron](https://www.electronjs.org/) for this. For more details about how this is done, and development, see the [electron README](packages/electron/README.md)
