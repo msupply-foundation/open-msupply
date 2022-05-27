@@ -43,7 +43,7 @@ export const ServerDiscovery = () => {
             </Box>
             <Box>
               <Typography sx={{ color: 'inherit' }}>
-                {t('error.finding-servers')}
+                {t('error.server-not-found')}
               </Typography>
             </Box>
           </Box>
