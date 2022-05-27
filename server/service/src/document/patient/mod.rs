@@ -5,6 +5,10 @@ use crate::service_provider::ServiceContext;
 pub use self::query::*;
 mod query;
 
+pub fn patient_doc_name(patient_id: &str) -> String {
+    format!("patients/{}", patient_id)
+}
+
 pub trait PatientServiceTrait: Sync + Send {
     fn get_patients(
         &self,

@@ -69,7 +69,7 @@ pub struct DocumentHeadRow {
     pub head: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Document {
     /// The document data hash
     pub id: String,
@@ -101,6 +101,20 @@ pub struct DocumentFilter {
     pub name: Option<EqualFilter<String>>,
 }
 
+impl DocumentFilter {
+    pub fn new() -> Self {
+        DocumentFilter {
+            store_id: None,
+            name: None,
+        }
+    }
+
+    pub fn name(mut self, name: Option<EqualFilter<String>>) -> Self {
+        self.name = name;
+        self
+    }
+}
+
 #[derive(Clone)]
 pub struct DocumentHeadFilter {
     pub store_id: Option<EqualFilter<String>>,
@@ -125,7 +139,11 @@ impl<'a> DocumentRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn update_document_head(&self, store_id: &str, doc: &Document) -> Result<(), RepositoryError> {
+    pub fn update_document_head(
+        &self,
+        store_id: &str,
+        doc: &Document,
+    ) -> Result<(), RepositoryError> {
         let row = DocumentHeadRow {
             id: make_head_id(&doc.name, store),
             store_id: store_id.to_owned(),

@@ -1,17 +1,23 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::generic_filters::{
     DateFilterInput, EqualFilterStringInput, SimpleStringFilterInput,
 };
+use graphql_core::loader::{DocumentLoader, DocumentLoaderInput};
 use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use repository::{DateFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::document::patient::{
-    Patient, PatientFilter, PatientService, PatientServiceTrait, PatientSort, PatientSortField,
+    patient_doc_name, Patient, PatientFilter, PatientService, PatientServiceTrait, PatientSort,
+    PatientSortField,
 };
 use service::usize_to_u32;
+
+use crate::types::document::DocumentNode;
 
 pub struct PatientNode {
     pub patient: Patient,
@@ -25,6 +31,34 @@ impl PatientNode {
 
     pub async fn name(&self) -> &str {
         &self.patient.name_row.name
+    }
+
+    pub async fn document(&self, ctx: &Context<'_>) -> Result<DocumentNode> {
+        let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
+
+        let document = loader
+            .load_one(DocumentLoaderInput {
+                store_id: self
+                    .patient
+                    .name_row
+                    .supplying_store_id
+                    .as_ref()
+                    .ok_or(StandardGraphqlError::InternalError(
+                        "Patient has no store".to_string(),
+                    ))?
+                    .clone(),
+                document_name: patient_doc_name(&self.patient.name_row.id),
+            })
+            .await?
+            .ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find document for patient ({})",
+                    self.patient.name_row.id
+                ))
+                .extend(),
+            )?;
+
+        Ok(DocumentNode { document })
     }
 }
 
