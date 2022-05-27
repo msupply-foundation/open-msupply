@@ -63,7 +63,7 @@ async fn run_stage0(
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
-    let certificates = Certificates::new(&config_settings.server)?;
+    let certificates = Certificates::load(&config_settings.server)?;
 
     let auth_data = auth_data(
         &config_settings.server,
@@ -165,7 +165,7 @@ async fn run_server(
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
 
-    let certificates = Certificates::new(&settings.server)?;
+    let certificates = Certificates::load(&settings.server)?;
 
     let auth_data = auth_data(
         &settings.server,
