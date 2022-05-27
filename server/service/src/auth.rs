@@ -65,6 +65,9 @@ pub enum Resource {
     MutateDocument,
     QueryJsonSchema,
     MutateJsonSchema,
+    // patient
+    QueryPatient,
+    MutatePatient,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -222,6 +225,22 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::MutateJsonSchema,
         PermissionDSL::NoPermissionRequired,
+    );
+
+    // patient
+    map.insert(
+        Resource::QueryPatient,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::PatientQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutatePatient,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::PatientMutate),
+        ]),
     );
 
     map
