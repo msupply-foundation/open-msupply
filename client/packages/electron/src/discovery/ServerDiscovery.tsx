@@ -19,14 +19,16 @@ export const ServerDiscovery = () => {
   return (
     <ServerDiscoveryLayout
       LoadingIndicator={
-        servers.length === 0 && <InlineSpinner color="secondary" showText />
+        Object.values(servers).length === 0 && (
+          <InlineSpinner color="secondary" showText />
+        )
       }
-      ServerNodes={servers.map(server => {
+      ServerNodes={Object.entries(servers).map(([key, server]) => {
         const display = frontEndHostDisplay(server);
 
         return (
           <BaseButton
-            key={display}
+            key={key}
             onClick={() => {
               window.electronAPI.connectToServer(server);
             }}
