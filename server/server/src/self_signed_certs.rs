@@ -79,7 +79,7 @@ pub struct Certificates {
 }
 
 impl Certificates {
-    pub fn new(settings: &ServerSettings) -> std::io::Result<Self> {
+    pub fn load(settings: &ServerSettings) -> std::io::Result<Self> {
         let cert = find_self_signed_certs(settings);
 
         let config = match cert {
