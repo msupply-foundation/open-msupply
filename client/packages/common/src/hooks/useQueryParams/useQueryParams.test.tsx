@@ -6,7 +6,7 @@ import {
 import { TestingProvider } from '../../utils/testing';
 import { useTheme } from '@common/styles';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useQueryParamsStore } from './useQueryParams';
+import { useQueryParamsStore } from './useQueryParamsStore';
 
 type TestSortBy = {
   id: string;
