@@ -166,7 +166,7 @@ server:
   cors_origins: [http://localhost:3003, https://youwebserver:yourport]
 ````
 
-In development mode (if not built with -release) cors is set to permissive (server will return allow origin = requesting origin)
+In development mode (if not built with --release) cors is set to permissive (server will return allow origin = requesting origin)
 
 ```
 server:
@@ -176,7 +176,13 @@ server:
 
 ## Serving front end
 
-Server will server front end files from (client/packages/host/dist), run `yarn build` from `client` folder and run server to see it in action (navigate to` http://localhost:port`). In production mode (built with -release arg), static front end files will be embeded in binary, make sure to build front end when building server.
+Server will server front end files from (client/packages/host/dist), if the client was not build and the folder is empty, server will return an error message: Cannot find index.html. See https://github.com/openmsupply/open-msupply#serving-front-end.
+
+You can build front end by running `yarn build` from `client` directory in the root of the project. After that if you run the server you can navigate to `http://localhost:port` to see this feature in action.
+
+When app is built in production mode (with build --release) static files will be embeded in the binary. There is `yarn build` command at the root of repository.
+
+TODO build instructions
 
 ## Cli
 
