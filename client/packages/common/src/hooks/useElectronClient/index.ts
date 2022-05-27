@@ -32,14 +32,14 @@ declare global {
 }
 
 type ElectronClientState = {
-  servers: FrontEndHost[];
+  servers: { [key: string]: FrontEndHost };
   connectedServer: FrontEndHost | null;
   // Indicate that server discovery has taken too long without finding server
   discoveryTimedOut: boolean;
 };
 
 const initialDiscoveryState: ElectronClientState = {
-  servers: [],
+  servers: {},
   connectedServer: null,
   discoveryTimedOut: false,
 };
@@ -49,41 +49,45 @@ export const useElectronClient = (discover = false) => {
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
-    if (window?.electronAPI?.connectedServer) {
-      window?.electronAPI
-        ?.connectedServer()
-        .then(server => setState({ ...state, ...{ connectedServer: server } }));
+    const { electronAPI } = window;
+
+    if (!electronAPI) return;
+
+    const { connectedServer, startServerDiscovery, serverDiscovered } =
+      electronAPI;
+
+    if (connectedServer) {
+      connectedServer().then(server =>
+        setState(state => ({ ...state, ...{ connectedServer: server } }))
+      );
     }
 
     if (!discover) return;
 
-    if (window?.electronAPI?.startServerDiscovery) {
-      window.electronAPI.startServerDiscovery();
+    if (startServerDiscovery) {
+      startServerDiscovery();
     }
 
     setTimeout(() => setTimedOut(true), DISCOVERY_TIMEOUT);
+
+    if (serverDiscovered) {
+      serverDiscovered((_event, server) => {
+        setState(state => ({
+          ...state,
+          ...{
+            servers: { ...state.servers, [JSON.stringify(server)]: server },
+            discoveryTimedOut: false,
+          },
+        }));
+      });
+    }
   }, []);
 
   useEffect(() => {
-    if (timedOut && state.servers.length == 0) {
-      setState({ ...state, ...{ discoveryTimedOut: true } });
+    if (timedOut && Object.values(state.servers).length == 0) {
+      setState(state => ({ ...state, ...{ discoveryTimedOut: true } }));
     }
-  }, [timedOut]);
-
-  if (window?.electronAPI?.serverDiscovered) {
-    window.electronAPI.serverDiscovered((_event, server) => {
-      const newServer = !state.servers.some(
-        s => s.port === server.port && s.ip === server.ip
-      );
-
-      if (newServer) {
-        setState({
-          ...state,
-          ...{ servers: [...state.servers, server], discoveryTimedOut: false },
-        });
-      }
-    });
-  }
+  }, [timedOut, state]);
 
   return state;
 };
