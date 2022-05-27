@@ -12,7 +12,7 @@ The most robust way we've found to solve this issue is with a client app:
 
 ### Running
 
-Make sure front end is built and run server (front end needs to be built because server, not webpack, will be serving front end to the client)
+Make sure front end is built and run the server (the front end needs to be built because the server, not webpack, will be serving front end to the client)
 
 ```bash
 cd client
@@ -28,7 +28,7 @@ cd client
 yarn electron:start
 ```
 
-### Deving
+### Developing
 
 In `packages/electron`
 
