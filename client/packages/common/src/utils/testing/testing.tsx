@@ -45,7 +45,7 @@ const resources = {
   },
 };
 
-export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
+const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   children,
   locale,
 }) => {
