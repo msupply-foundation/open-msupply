@@ -1,0 +1,6 @@
+# Server expect this folder to be there for rust_embed to work
+# This file allows commiting empty folder in git (and webpack clean: { keep: './gitignore' } allows for this file to be kept during build)
+
+# Ignore all expect this file
+*
+!.gitignore
