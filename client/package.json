@@ -21,8 +21,8 @@
     "android:build-remote_server": "cd ./packages/android && ./build_remote_server_libs.sh",
     "android:build:debug": "yarn build-local && npx cap copy && cd ./packages/android && ./gradlew assembleDebug",
     "android:build:release": "yarn build-local && npx cap copy && cd ./packages/android && ./gradlew assembleRelease",
-    "electron:start": "lerna run --scope @openmsupply-client/electron --parallel start",
-    "electron:build": "lerna run --scope @openmsupply-client/electron --parallel make",
+    "electron:start": "lerna run --scope @openmsupply-client/electron start",
+    "electron:build": "lerna run --scope @openmsupply-client/electron make",
     "i18n-unused-display": "i18n-unused display-unused",
     "i18n-unused-remove": "i18n-unused remove-unused",
     "i18n-missing": "i18n-unused display-missed"
