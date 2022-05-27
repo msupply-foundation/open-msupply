@@ -5,7 +5,7 @@ use std::{
 
 use log::{error, warn};
 use rustls::ServerConfig;
-use service::settings::{ServerSettings, is_develop};
+use service::settings::{is_develop, ServerSettings};
 
 use crate::discovery::Protocol;
 
@@ -79,7 +79,7 @@ pub struct Certificates {
 }
 
 impl Certificates {
-    pub fn new(settings: &ServerSettings) -> std::io::Result<Self> {
+    pub fn load(settings: &ServerSettings) -> std::io::Result<Self> {
         let cert = find_self_signed_certs(settings);
 
         let config = match cert {
