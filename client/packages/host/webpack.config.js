@@ -41,7 +41,9 @@ module.exports = env => {
       publicPath: isProduction ? '/' : 'http://localhost:3003/',
       filename: '[name].[contenthash].js',
       chunkFilename: '[contenthash].js',
-      clean: true,
+      clean: {
+        keep: '.gitignore' // see dist/.gitignore for comments
+      }
     },
     optimization: {
       splitChunks: {

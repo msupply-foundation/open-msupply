@@ -7,15 +7,17 @@ import {
   QuantityUtils,
   getCommentPopoverColumn,
   useFormatNumber,
-  useQueryParamsStore,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 
 export const useRequestColumns = () => {
   const t = useTranslation('common');
   const { maxMonthsOfStock } = useRequest.document.fields('maxMonthsOfStock');
-  const { sort } = useQueryParamsStore();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    queryParams: { sortBy },
+  } = useUrlQueryParams();
   const formatNumber = useFormatNumber();
   const columns = useColumns<RequestLineFragment>(
     [
@@ -108,11 +110,11 @@ export const useRequestColumns = () => {
       GenericColumnKey.Selection,
     ],
     {
-      onChangeSortBy,
+      onChangeSortBy: updateSortQuery,
       sortBy,
     },
-    [onChangeSortBy, sortBy]
+    [updateSortQuery, sortBy]
   );
 
-  return { columns, sortBy, onChangeSortBy };
+  return { columns, sortBy, onChangeSortBy: updateSortQuery };
 };

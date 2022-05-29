@@ -7,15 +7,17 @@ import {
   Column,
   ArrayUtils,
   useCurrency,
-  useQueryParamsStore,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 
 export const useInboundShipmentColumns = () => {
-  const { sort } = useQueryParamsStore();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    queryParams: { sortBy },
+  } = useUrlQueryParams();
   const { c } = useCurrency();
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
@@ -267,11 +269,11 @@ export const useInboundShipmentColumns = () => {
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],
-    { sortBy, onChangeSortBy },
-    [sortBy, onChangeSortBy]
+    { sortBy, onChangeSortBy: updateSortQuery },
+    [sortBy, updateSortQuery]
   );
 
-  return { columns, onChangeSortBy, sortBy };
+  return { columns, sortBy };
 };
 
 export const useExpansionColumns = (): Column<InboundLineFragment>[] =>

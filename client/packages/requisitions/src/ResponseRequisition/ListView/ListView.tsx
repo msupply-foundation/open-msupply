@@ -10,7 +10,7 @@ import {
   RequisitionNodeStatus,
   useTranslation,
   NothingHere,
-  createQueryParamsStore,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -29,9 +29,14 @@ export const ResponseRequisitionListView: FC = () => {
   const { mutate: onUpdate } = useResponse.document.update();
   const navigate = useNavigate();
   const t = useTranslation('distribution');
-  const { data, isError, isLoading, sort, pagination, filter } =
-    useResponse.document.list();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    filter,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams({ filterKey: 'comment' });
+  const { data, isError, isLoading } = useResponse.document.list();
+  const pagination = { page, first, offset };
   useDisableResponseRows(data?.nodes);
 
   const columns = useColumns<ResponseRowFragment>(
@@ -52,7 +57,7 @@ export const ResponseRequisitionListView: FC = () => {
       ],
       ['comment', { minWidth: 400 }],
     ],
-    { onChangeSortBy, sortBy },
+    { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );
 
@@ -63,7 +68,7 @@ export const ResponseRequisitionListView: FC = () => {
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={pagination.onChangePage}
+        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
         onRowClick={row => {
@@ -79,12 +84,7 @@ export const ResponseRequisitionListView: FC = () => {
 
 export const ListView: FC = () => {
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<ResponseRowFragment>({
-        initialSortBy: { key: 'otherPartyName' },
-      })}
-    >
+    <TableProvider createStore={createTableStore}>
       <ResponseRequisitionListView />
     </TableProvider>
   );

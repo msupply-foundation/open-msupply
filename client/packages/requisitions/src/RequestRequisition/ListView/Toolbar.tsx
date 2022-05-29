@@ -17,7 +17,7 @@ export const Toolbar: FC<{
   const t = useTranslation('replenishment');
 
   const key = 'otherPartyName' as keyof RequestRowFragment;
-  const filterString = filter.filterBy?.[key]?.like as string;
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
   return (
     <AppBarContentPortal
