@@ -176,7 +176,7 @@ This will:
 The steps, if you need to run them manually are:
 
 ```
-yarn build-local
+yarn build
 npx cap copy
 ```
 
