@@ -1,5 +1,8 @@
-use actix_web::{get, web::ServiceConfig, HttpRequest, HttpResponse, Responder};
-use mime_guess::from_path;
+use actix_web::{
+    get, http::header::ContentType, web::ServiceConfig, HttpRequest, HttpResponse, Responder,
+};
+use mime_guess::{from_path, mime};
+use reqwest::StatusCode;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
