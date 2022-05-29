@@ -11,7 +11,6 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = env => {
   const isProduction = !!env.production;
-  console.log(env, env.API_HOST)
   return {
     entry: './src/index',
     mode: isProduction ? 'production' : 'development',
