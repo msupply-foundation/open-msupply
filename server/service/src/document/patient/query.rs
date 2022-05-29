@@ -140,3 +140,52 @@ impl PatientFilter {
         }
     }
 }
+
+impl PatientFilter {
+    pub fn new() -> PatientFilter {
+        PatientFilter::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn first_name(mut self, filter: SimpleStringFilter) -> Self {
+        self.first_name = Some(filter);
+        self
+    }
+
+    pub fn last_name(mut self, filter: SimpleStringFilter) -> Self {
+        self.last_name = Some(filter);
+        self
+    }
+    pub fn gender(mut self, filter: EqualFilter<Gender>) -> Self {
+        self.gender = Some(filter);
+        self
+    }
+    pub fn date_of_birth(mut self, filter: DateFilter) -> Self {
+        self.date_of_birth = Some(filter);
+        self
+    }
+    pub fn phone(mut self, filter: SimpleStringFilter) -> Self {
+        self.phone = Some(filter);
+        self
+    }
+    pub fn address1(mut self, filter: SimpleStringFilter) -> Self {
+        self.address1 = Some(filter);
+        self
+    }
+    pub fn address2(mut self, filter: SimpleStringFilter) -> Self {
+        self.address2 = Some(filter);
+        self
+    }
+    pub fn country(mut self, filter: SimpleStringFilter) -> Self {
+        self.country = Some(filter);
+        self
+    }
+    pub fn email(mut self, filter: SimpleStringFilter) -> Self {
+        self.email = Some(filter);
+        self
+    }
+}
