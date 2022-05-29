@@ -104,8 +104,8 @@ impl Certificates {
         Ok(Certificates { config })
     }
 
-    pub fn config(self) -> Option<ServerConfig> {
-        self.config
+    pub fn config(&self) -> Option<ServerConfig> {
+        self.config.clone()
     }
 
     pub fn is_https(&self) -> bool {
