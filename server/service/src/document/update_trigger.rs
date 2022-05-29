@@ -13,7 +13,7 @@ extern crate serde_json;
 use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
 
-use super::document_service::DocumentInsertError;
+use super::{document_service::DocumentInsertError, patient::PATIENT_TYPE};
 
 schemafy::schemafy!("src/document/schemas/patient.json");
 
@@ -24,7 +24,7 @@ pub fn document_updated(
     doc: &Document,
 ) -> Result<(), DocumentInsertError> {
     match doc.r#type.as_str() {
-        "Patient" => {
+        PATIENT_TYPE => {
             let patient: Patient = serde_json::from_value(doc.data.clone()).map_err(|err| {
                 DocumentInsertError::InternalError(format!("Invalid date of birth format: {}", err))
             })?;
