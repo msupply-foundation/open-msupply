@@ -1,2 +1,2 @@
-export * from './useQueryParams';
+export * from './useQueryParamsStore';
 export * from './types';
