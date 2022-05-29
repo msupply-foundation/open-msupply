@@ -280,7 +280,7 @@ pub async fn start_server(
         }
     };
 
-    let certificates = Certificates::new(&config_settings.server)?;
+    let certificates = Certificates::load(&config_settings.server)?;
     let server_info = ServerInfo::new(certificates.protocol(), &config_settings.server);
 
     let _ = Discovery::start(&server_info);

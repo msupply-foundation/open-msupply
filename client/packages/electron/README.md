@@ -1,18 +1,18 @@
 ## Electron Client
 
-When server is running as an `offline` sync server on local network there are a couple of problems that's a bit hard to solve with configurations: 
-* Discovery (where is server, and what if it's local IP changes)
-* SSL (self signed certs and browsers are not friendly)
+When the server is running as an 'offline' sync server on the local network, there are a couple of problems which are a bit hard to solve with configuration:
+* Discovery ( where is the server, and what if its local IP changes )
+* SSL ( self-signed certificates do not play nicely with browsers )
 
-It seems like the most robust way to solve this issue is with a client app:
-* Discover server with mDNS
-* Trust certificates coming from discovered server
+The most robust way we've found to solve this issue is with a client app:
+* Discover local servers with mDNS
+* Trust certificates coming from the discovered server
 * Display web content served by remote server (no need to upgrade client when server upgrades)
-* Allow for future native functionality (potentialy can use another bundler when time comes to implement native functionality, like Tauri)
+* Allow for native functionality in the future (potentially we can use another bundler when time comes to implement native functionality, like Tauri)
 
 ### Running
 
-Make sure front end is built and run server (front end needs to be built because server, not webpack, will be serving front end to the client)
+Make sure front end is built and run the server (the front end needs to be built because the server, not webpack, will be serving front end to the client)
 
 ```bash
 cd client
@@ -28,7 +28,7 @@ cd client
 yarn electron:start
 ```
 
-### Deving
+### Developing
 
 In `packages/electron`
 

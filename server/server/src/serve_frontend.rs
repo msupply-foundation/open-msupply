@@ -1,5 +1,5 @@
-use actix_web::{get,  web::{ServiceConfig}, HttpRequest, HttpResponse, Responder};
-use mime_guess::{from_path, };
+use actix_web::{get, web::ServiceConfig, HttpRequest, HttpResponse, Responder};
+use mime_guess::from_path;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
@@ -7,14 +7,17 @@ use rust_embed::RustEmbed;
 #[folder = "../../client/packages/host/dist"]
 struct Asset;
 
+const INDEX: &'static str = "index.html";
+
 // https://github.com/pyrossh/rust-embed/blob/master/examples/actix.rs
 fn server_frontend(path: &str) -> HttpResponse {
-    match Asset::get(path) {
-        Some(content) => HttpResponse::Ok()
+    if let Some(content) = Asset::get(path) {
+        return HttpResponse::Ok()
             .content_type(from_path(path).first_or_octet_stream().as_ref())
-            .body(content.data.into_owned()),
-        None => HttpResponse::NotFound().body("file not found"),
+            .body(content.data.into_owned());
     }
+
+    HttpResponse::NotFound().body("file not found")
 }
 
 // Match file paths (ending  ($) with dot (\.) and at least one character (.+) )
@@ -27,7 +30,16 @@ async fn file(req: HttpRequest) -> impl Responder {
 // Match all paths
 #[get("/{_:.*}")]
 async fn index(_: HttpRequest) -> impl Responder {
-    server_frontend("index.html")
+    let result = server_frontend(INDEX);
+
+    // If index not found it's likely the front end was not built
+    if result.status() == StatusCode::NOT_FOUND {
+        HttpResponse::Ok()
+            .content_type(ContentType(mime::TEXT_PLAIN))
+            .body("Cannot find index.html. See https://github.com/openmsupply/open-msupply/tree/main/server#serving-front-end")
+    } else {
+        result
+    }
 }
 
 pub fn config_server_frontend(cfg: &mut ServiceConfig) {
