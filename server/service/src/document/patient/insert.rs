@@ -11,7 +11,8 @@ use crate::{
 };
 
 use super::{
-    patient_doc_name, Patient, PatientFilter, PatientService, PatientServiceTrait, PATIENT_TYPE,
+    patient_doc_name, patient_schema::SchemaPatient, Patient, PatientFilter, PatientService,
+    PatientServiceTrait, PATIENT_TYPE,
 };
 
 #[derive(PartialEq, Debug)]
@@ -28,23 +29,32 @@ pub struct InsertPatient {
 
 pub fn insert_patients(
     ctx: &ServiceContext,
-    store_id: &str,
+    store_id: String,
     user_id: &str,
     input: InsertPatient,
 ) -> Result<Patient, InsertPatientError> {
     let new_patient_id = uuid();
+
+    // update patient id
+    let mut patient: SchemaPatient = serde_json::from_value(input.data).map_err(|err| {
+        InsertPatientError::InvalidDataSchema(vec![format!("Invalid patient data: {}", err)])
+    })?;
+    patient.id = new_patient_id.clone();
+    let patient_data = serde_json::to_value(&patient)
+        .map_err(|err| InsertPatientError::InternalError(format!("{:?}", err)))?;
+
     let doc = RawDocument {
         name: patient_doc_name(&new_patient_id),
         parents: vec![],
         author: user_id.to_string(),
         timestamp: Utc::now(),
         r#type: PATIENT_TYPE.to_string(),
-        data: input.data,
+        data: patient_data,
         schema_id: input.schema_id,
     };
     let service = DocumentService {};
     service
-        .update_document(ctx, store_id, doc)
+        .update_document(ctx, &store_id, doc)
         .map_err(|err| match err {
             DocumentInsertError::InvalidDataSchema(err) => {
                 InsertPatientError::InvalidDataSchema(err)
@@ -58,7 +68,7 @@ pub fn insert_patients(
     let patient = patient_service
         .get_patients(
             ctx,
-            store_id,
+            &store_id,
             None,
             Some(PatientFilter::new().id(EqualFilter::equal_to(&new_patient_id))),
             None,

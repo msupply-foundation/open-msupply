@@ -6,6 +6,8 @@ pub use self::query::*;
 mod query;
 pub use self::insert::*;
 mod insert;
+pub mod patient_document_updated;
+pub mod patient_schema;
 
 pub const PATIENT_TYPE: &str = "Patient";
 
@@ -28,7 +30,7 @@ pub trait PatientServiceTrait: Sync + Send {
     fn insert_patients(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
+        store_id: String,
         user_id: &str,
         input: InsertPatient,
     ) -> Result<Patient, InsertPatientError> {
