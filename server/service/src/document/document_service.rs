@@ -12,10 +12,11 @@ use super::{
     common_ancestor::{common_ancestors, AncestorDB, CommonAncestorError, InMemoryAncestorDB},
     merge::{three_way_merge, two_way_merge, TakeLatestConflictSolver},
     raw_document::RawDocument,
-    topological_sort::{extract_tree, topo_sort}, update_trigger::document_updated,
+    topological_sort::{extract_tree, topo_sort},
+    update_trigger::document_updated,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
     /// Input document doesn't match the provided json schema
     InvalidDataSchema(Vec<String>),
@@ -25,8 +26,6 @@ pub enum DocumentInsertError {
     /// merged data has an invalid data schema.
     MergeRequired(Option<RawDocument>),
     InvalidDocumentHistory,
-    /// Unable to finalise a document (assign an id)
-    FinalisationError(String),
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -106,7 +105,7 @@ pub trait DocumentServiceTrait: Sync + Send {
                     Ok(doc) => {
                         document_updated(con, store_id, &doc)?;
                         Ok(doc)
-                    },
+                    }
                     Err(err) => match err {
                         DocumentInsertError::MergeRequired(ref merged_doc) => {
                             // check that the merged document has a valid schema
@@ -221,7 +220,7 @@ fn insert_document(
     let insert_doc_and_head = |raw_doc: RawDocument| -> Result<Document, DocumentInsertError> {
         let doc = raw_doc
             .finalise()
-            .map_err(|err| DocumentInsertError::FinalisationError(err))?;
+            .map_err(|err| DocumentInsertError::InternalError(err))?;
         repo.insert_document(&doc)?;
         repo.update_document_head(store_id, &doc)?;
         Ok(doc)
