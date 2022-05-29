@@ -80,6 +80,7 @@ impl RemoteDataSynchroniser {
             .unwrap_or(0) as u32;
         state.update_push_cursor(cursor + 1)?;
 
+        state.set_site_id(self.site_id as i32)?;
         state.set_initial_remote_data_synced()?;
         Ok(())
     }
@@ -311,6 +312,11 @@ impl<'a> RemoteSyncState<'a> {
     pub fn set_initial_remote_data_synced(&self) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
+    }
+
+    pub fn set_site_id(&self, site_id: i32) -> Result<(), RepositoryError> {
+        self.key_value_store
+            .set_i32(KeyValueType::SettingsSyncSiteId, Some(site_id))
     }
 
     pub fn get_push_cursor(&self) -> Result<u32, RepositoryError> {
