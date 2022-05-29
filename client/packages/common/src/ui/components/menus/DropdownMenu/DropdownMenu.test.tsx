@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import React from 'react';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
 import { TestingProvider } from '../../../../utils';
@@ -14,9 +14,9 @@ describe('Dropdown', () => {
     );
 
     const button = getByRole('button');
-
-    fireEvent.mouseDown(button);
-
+    act(() => {
+      button.click();
+    });
     const node = await findByText(/one/i);
 
     expect(node).toBeInTheDocument();
@@ -41,11 +41,14 @@ describe('Dropdown', () => {
 
     const button = getByRole('button');
 
-    fireEvent.mouseDown(button);
+    act(() => {
+      button.click();
+    });
 
     let node = await findByText(/one/i);
-
-    fireEvent.click(node);
+    act(() => {
+      node.click();
+    });
 
     node = await findByText(/two/i);
 
