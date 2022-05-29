@@ -3,6 +3,9 @@ use graphql_core::pagination::PaginationInput;
 use mutations::insert_json_schema::insert_json_schema;
 use mutations::insert_json_schema::InsertJsonSchemaInput;
 use mutations::insert_json_schema::InsertJsonSchemaResponse;
+use mutations::patient::insert::insert_patient;
+use mutations::patient::insert::InsertPatientInput;
+use mutations::patient::insert::InsertPatientResponse;
 use mutations::update_document::update_document;
 use mutations::update_document::UpdateDocumentInput;
 use mutations::update_document::UpdateDocumentResponse;
@@ -52,6 +55,15 @@ impl DocumentQueries {
         sort: Option<Vec<PatientSortInput>>,
     ) -> Result<PatientResponse> {
         patients(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn insert_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertPatientInput,
+    ) -> Result<InsertPatientResponse> {
+        insert_patient(ctx, store_id, input)
     }
 }
 
