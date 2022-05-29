@@ -103,9 +103,6 @@ fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface>
         DocumentInsertError::InvalidDocumentHistory => {
             StandardGraphqlError::InternalError(formatted_error)
         }
-        DocumentInsertError::FinalisationError(_) => {
-            StandardGraphqlError::InternalError(formatted_error)
-        }
         DocumentInsertError::InternalError(_) => {
             StandardGraphqlError::InternalError(formatted_error)
         }
