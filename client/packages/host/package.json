@@ -22,10 +22,9 @@
   "scripts": {
     "start-remote": "webpack-cli serve",
     "start-local": "webpack-cli serve --env local",
-    "build": "yarn clean && webpack --env production",
-    "build-local": "yarn clean && webpack --env production local",
+    "build": "webpack --env production",
+    "build-local": "webpack --env production local",
     "serve": "serve dist -p 3003",
-    "clean": "rimraf dist",
     "tsc": "tsc --build"
   },
   "dependencies": {

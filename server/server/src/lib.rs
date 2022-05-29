@@ -1,7 +1,6 @@
 use crate::{
-    cors::cors_policy,
-    self_signed_certs::{find_self_signed_certs, load_self_signed_certs_rustls},
-    static_files::config_static_files,
+    cors::cors_policy, discovery::ServerInfo, self_signed_certs::Certificates,
+    serve_frontend::config_server_frontend, static_files::config_static_files,
 };
 
 use self::{
@@ -13,19 +12,17 @@ use graphql_core::loader::{get_loaders, LoaderRegistry};
 use graphql::{config as graphql_config, config_stage0};
 use log::{error, info, warn};
 use repository::{get_storage_connection_manager, run_db_migrations, StorageConnectionManager};
-use self_signed_certs::SelfSignedCertFiles;
+
 use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
-    settings::{ServerSettings, Settings},
+    settings::{is_develop, ServerSettings, Settings},
     settings_service::{SettingsService, SettingsServiceTrait},
     token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
 use std::{
-    io::ErrorKind,
-    net::TcpListener,
     ops::DerefMut,
     sync::{Arc, RwLock},
 };
@@ -34,9 +31,11 @@ use util::uuid::uuid;
 
 pub mod configuration;
 pub mod cors;
+pub mod discovery;
 pub mod environment;
 pub mod middleware;
 pub mod self_signed_certs;
+mod serve_frontend;
 pub mod static_files;
 pub mod sync;
 pub mod test_utils;
@@ -45,14 +44,13 @@ fn auth_data(
     server_settings: &ServerSettings,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
-    cert_type: &ServerCertType,
+    certs: &Certificates,
 ) -> Data<AuthData> {
     Data::new(AuthData {
         auth_token_secret: token_secret,
         token_bucket,
-        danger_no_ssl: (server_settings.develop || server_settings.danger_allow_http)
-            && matches!(cert_type, ServerCertType::None),
-        debug_no_access_control: server_settings.develop && server_settings.debug_no_access_control,
+        danger_no_ssl: (is_develop() || server_settings.danger_allow_http) && certs.is_https(),
+        debug_no_access_control: is_develop() && server_settings.debug_no_access_control,
     })
 }
 
@@ -65,15 +63,13 @@ async fn run_stage0(
 ) -> std::io::Result<bool> {
     warn!("Starting server in bootstrap mode. Please use API to configure the server.");
 
-    let cert_type = match find_self_signed_certs(&config_settings.server) {
-        Some(files) => ServerCertType::SelfSigned(files),
-        None => ServerCertType::None,
-    };
+    let certificates = Certificates::load(&config_settings.server)?;
+
     let auth_data = auth_data(
         &config_settings.server,
         token_bucket,
         token_secret,
-        &cert_type,
+        &certificates,
     );
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
@@ -89,6 +85,8 @@ async fn run_stage0(
 
     let closure_settings = Data::new(config_settings.clone());
 
+    let server_info = ServerInfo::new(certificates.protocol(), &config_settings.server);
+
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
         App::new()
@@ -103,35 +101,15 @@ async fn run_stage0(
                 closure_settings.clone(),
                 restart_switch.clone(),
             ))
+            .configure(config_server_frontend(server_info.clone()))
     })
     .disable_signals();
-    match cert_type {
-        ServerCertType::SelfSigned(cert_files) => {
-            let config = load_self_signed_certs_rustls(cert_files)
-                .expect("Invalid self signed certificates");
-            http_server = http_server.bind_rustls(
-                format!(
-                    "{}:{}",
-                    config_settings.server.host, config_settings.server.port
-                ),
-                config,
-            )?;
-        }
-        ServerCertType::None => {
-            if !config_settings.server.develop && !config_settings.server.danger_allow_http {
-                error!("No certificates found");
-                return Err(std::io::Error::new(
-                    ErrorKind::Other,
-                    "Certificate required",
-                ));
-            }
 
-            warn!("No certificates found: Running in HTTP development mode");
-            let listener = TcpListener::bind(config_settings.server.address())
-                .expect("Failed to bind server to address");
-            http_server = http_server.listen(listener)?;
-        }
-    }
+    http_server = match certificates.config() {
+        Some(config) => http_server.bind_rustls(config_settings.server.address(), config)?,
+        None => http_server.bind(config_settings.server.address())?,
+    };
+
     let running_sever = http_server.run();
     let server_handle = running_sever.handle();
     // run server in another task so that we can handle restart/off events here
@@ -187,15 +165,13 @@ async fn run_server(
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
 
-    let cert_type = match find_self_signed_certs(&settings.server) {
-        Some(files) => ServerCertType::SelfSigned(files),
-        None => ServerCertType::None,
-    };
+    let certificates = Certificates::load(&settings.server)?;
+
     let auth_data = auth_data(
         &settings.server,
         token_bucket.clone(),
         token_secret.clone(),
-        &cert_type,
+        &certificates,
     );
 
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
@@ -217,7 +193,7 @@ async fn run_server(
         Ok(_) => {}
         Err(err) => {
             error!("Failed to perform the initial sync: {}", err);
-            if !settings.server.develop {
+            if !is_develop() {
                 warn!("Falling back to bootstrap mode");
                 return run_stage0(
                     settings,
@@ -232,6 +208,8 @@ async fn run_server(
     };
 
     let closure_settings = settings.clone();
+    let server_info = ServerInfo::new(certificates.protocol(), &settings.server);
+
     let mut http_server = HttpServer::new(move || {
         let cors = cors_policy(&closure_settings);
         App::new()
@@ -248,32 +226,15 @@ async fn run_server(
             ))
             .app_data(Data::new(closure_settings.clone()))
             .configure(config_static_files)
+            .configure(config_server_frontend(server_info.clone()))
     })
     .disable_signals();
-    match cert_type {
-        ServerCertType::SelfSigned(cert_files) => {
-            let config = load_self_signed_certs_rustls(cert_files)
-                .expect("Invalid self signed certificates");
-            http_server = http_server.bind_rustls(
-                format!("{}:{}", settings.server.host, settings.server.port),
-                config,
-            )?;
-        }
-        ServerCertType::None => {
-            if !settings.server.develop && !settings.server.danger_allow_http {
-                error!("No certificates found");
-                return Err(std::io::Error::new(
-                    ErrorKind::Other,
-                    "Certificate required",
-                ));
-            }
 
-            warn!("No certificates found: Run in HTTP development mode");
-            let listener = TcpListener::bind(settings.server.address())
-                .expect("Failed to bind server to address");
-            http_server = http_server.listen(listener)?;
-        }
-    }
+    http_server = match certificates.config() {
+        Some(config) => http_server.bind_rustls(settings.server.address(), config)?,
+        None => http_server.bind(settings.server.address())?,
+    };
+
     let running_sever = http_server.run();
     let server_handle = running_sever.handle();
     // run server in another task so that we can handle restart/off events here
@@ -350,11 +311,4 @@ pub async fn start_server(
 
     info!("Remote server stopped");
     Ok(())
-}
-
-/// Details about the certs used by the running server
-#[derive(Debug)]
-pub enum ServerCertType {
-    None,
-    SelfSigned(SelfSignedCertFiles),
 }
