@@ -11,7 +11,6 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = env => {
   const isProduction = !!env.production;
-
   return {
     entry: './src/index',
     mode: isProduction ? 'production' : 'development',
@@ -83,7 +82,7 @@ module.exports = env => {
     },
     plugins: [
       new ReactRefreshWebpackPlugin(),
-
+      new webpack.DefinePlugin({ 'API_HOST': JSON.stringify(env.API_HOST) }),
       new BundleAnalyzerPlugin({
         /**
          * In "server" mode analyzer will start HTTP server to show bundle report.
@@ -101,10 +100,6 @@ module.exports = env => {
       new CopyPlugin({
         patterns: [
           { from: './public/mockServiceWorker.js', to: 'mockServiceWorker.js' },
-          {
-            from: env.local ? './public/config.local.js' : './public/config.js',
-            to: 'config.js',
-          },
           {
             context: path.resolve(
               __dirname,
