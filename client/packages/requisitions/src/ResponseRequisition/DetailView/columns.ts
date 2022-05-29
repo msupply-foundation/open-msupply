@@ -3,13 +3,15 @@ import {
   GenericColumnKey,
   ColumnAlign,
   getCommentPopoverColumn,
-  useQueryParamsStore,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment } from './../api';
 
 export const useResponseColumns = () => {
-  const { sort } = useQueryParamsStore();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    queryParams: { sortBy },
+  } = useUrlQueryParams({ initialSortKey: 'itemName' });
   const columns = useColumns<ResponseLineFragment>(
     [
       getCommentPopoverColumn(),
@@ -83,11 +85,11 @@ export const useResponseColumns = () => {
       GenericColumnKey.Selection,
     ],
     {
-      onChangeSortBy,
+      onChangeSortBy: updateSortQuery,
       sortBy,
     },
-    [onChangeSortBy, sortBy]
+    [updateSortQuery, sortBy]
   );
 
-  return { columns, sortBy, onChangeSortBy };
+  return { columns, sortBy, onChangeSortBy: updateSortQuery };
 };

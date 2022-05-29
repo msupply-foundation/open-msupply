@@ -1,14 +1,16 @@
-import { useQuery, useQueryParamsStore } from '@openmsupply-client/common';
+import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { useOutboundApi } from './../utils/useOutboundApi';
 
 export const useOutbounds = () => {
-  const queryParams = useQueryParamsStore();
+  const { queryParams } = useUrlQueryParams({
+    filterKey: 'otherPartyName',
+    initialSortKey: 'otherPartyName',
+  });
   const api = useOutboundApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams.paramList()), () =>
-      api.get.list(queryParams.paramList())
+    ...useQuery(api.keys.paramList(queryParams), () =>
+      api.get.list(queryParams)
     ),
-    ...queryParams,
   };
 };
