@@ -148,9 +148,13 @@ impl<'a> UserAccountService<'a> {
             )
     }
 
-    pub fn find_user(&self, user_id: &str) -> Result<Option<User>, RepositoryError> {
+    pub fn find_user(&self, user_id: &str, site_id: i32) -> Result<Option<User>, RepositoryError> {
         let repo = UserRepository::new(self.connection);
-        repo.query_one(UserFilter::new().id(EqualFilter::equal_to(user_id)))
+        repo.query_one(
+            UserFilter::new()
+                .id(EqualFilter::equal_to(user_id))
+                .site_id(EqualFilter::equal_to_i32(site_id)),
+        )
     }
 
     /// Finds a user account and verifies that the password is ok
