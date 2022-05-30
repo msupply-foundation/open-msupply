@@ -9,6 +9,7 @@ import { LoginIcon } from './LoginIcon';
 import { Theme } from '@common/styles';
 
 type LoginLayoutProps = {
+  ServerInfo: React.ReactNode;
   UsernameInput: React.ReactNode;
   PasswordInput: React.ReactNode;
   LoginButton: React.ReactNode;
@@ -17,6 +18,7 @@ type LoginLayoutProps = {
 };
 
 export const LoginLayout = ({
+  ServerInfo,
   UsernameInput,
   PasswordInput,
   LoginButton,
@@ -83,28 +85,37 @@ export const LoginLayout = ({
       </Box>
       <Box
         flex="1 0 50%"
+        flexDirection="column"
+        alignItems="center"
+        display="flex"
         sx={{
           backgroundColor: 'background.login',
-          alignItems: 'center',
-          justifyContent: 'center',
           overflowY: 'scroll',
         }}
-        display="flex"
       >
-        <Box style={{ width: 285 }}>
-          <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
-            <Stack spacing={5}>
-              <Box display="flex" justifyContent="center">
-                <LoginIcon />
-              </Box>
-              {UsernameInput}
-              {PasswordInput}
-              {ErrorMessage}
-              <Box display="flex" justifyContent="flex-end">
-                {LoginButton}
-              </Box>
-            </Stack>
-          </form>
+        {ServerInfo}
+        <Box
+          display="flex"
+          flexGrow="1"
+          sx={{
+            alignItems: 'center',
+          }}
+        >
+          <Box style={{ width: 285 }}>
+            <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
+              <Stack spacing={5}>
+                <Box display="flex" justifyContent="center">
+                  <LoginIcon />
+                </Box>
+                {UsernameInput}
+                {PasswordInput}
+                {ErrorMessage}
+                <Box display="flex" justifyContent="flex-end">
+                  {LoginButton}
+                </Box>
+              </Stack>
+            </form>
+          </Box>
         </Box>
       </Box>
     </Box>

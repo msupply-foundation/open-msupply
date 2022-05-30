@@ -1,15 +1,20 @@
 import { useMemo } from 'react';
-import { SortUtils, useQueryParamsStore } from '@openmsupply-client/common';
+import { SortUtils, useUrlQueryParams } from '@openmsupply-client/common';
 import { useStocktakeColumns } from '../../../DetailView';
 import { useStocktakeLines } from './useStocktakeLines';
 import { useStocktakeItems } from './useStocktakeItems';
 
 export const useStocktakeRows = (isGrouped = true) => {
-  const { sort } = useQueryParamsStore();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    queryParams: { sortBy },
+  } = useUrlQueryParams({ initialSortKey: 'itemName' });
   const { data: lines } = useStocktakeLines();
   const { data: items } = useStocktakeItems();
-  const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
+  const columns = useStocktakeColumns({
+    onChangeSortBy: updateSortQuery,
+    sortBy,
+  });
 
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -37,7 +42,7 @@ export const useStocktakeRows = (isGrouped = true) => {
     rows,
     lines: sortedLines,
     items: sortedItems,
-    onChangeSortBy,
+    onChangeSortBy: updateSortQuery,
     sortBy,
   };
 };

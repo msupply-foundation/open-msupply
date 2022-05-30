@@ -10,6 +10,7 @@ mSupply remote server is a component of the Open mSupply system:
 
 - To enable ssl place the `key.pem` and `cert.pem` files into the `certs` directory.
 - Update the server.host variable in the configuration if needed
+- In production (-release build) server must be running with ssl
 
 ### Use a self signed cert, e.g. for testing
 
@@ -165,13 +166,23 @@ server:
   cors_origins: [http://localhost:3003, https://youwebserver:yourport]
 ````
 
-For development purposes you can set the `debug_cors_permissive` parameter to 'true' to allow any origin.
+In development mode (if not built with --release) cors is set to permissive (server will return allow origin = requesting origin)
+
 ```
 server:
   port: 8000
-  debug_cors_permissive: true
   cors_origins: [http://localhost:3003, https://youwebserver:yourport]
 ```
+
+## Serving front end
+
+Server will server front end files from (client/packages/host/dist), if the client was not build and the folder is empty, server will return an error message: Cannot find index.html. See https://github.com/openmsupply/open-msupply#serving-front-end.
+
+You can build front end by running `yarn build` from `client` directory in the root of the project. After that if you run the server you can navigate to `http://localhost:port` to see this feature in action.
+
+When app is built in production mode (with build --release) static files will be embeded in the binary. There is `yarn build` command at the root of repository.
+
+TODO build instructions
 
 ## Cli
 

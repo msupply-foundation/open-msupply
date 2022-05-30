@@ -15,7 +15,7 @@ interface UseStocktakeColumnOptions {
   sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
   onChangeSortBy: (
     column: Column<StocktakeLineFragment | StocktakeSummaryItem>
-  ) => SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
+  ) => void;
 }
 
 const expandColumn = getRowExpandColumn<

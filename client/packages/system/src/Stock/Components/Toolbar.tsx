@@ -7,7 +7,7 @@ import {
 
 interface ToolbarProps {
   filterString: string | null;
-  onChangeFilter: (filterString: string) => void;
+  onChangeFilter: (filter: { filter: string }) => void;
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ filterString, onChangeFilter }) => {
@@ -25,7 +25,7 @@ export const Toolbar: FC<ToolbarProps> = ({ filterString, onChangeFilter }) => {
       <SearchBar
         placeholder={t('placeholder.enter-an-item-code-or-name')}
         value={filterString ?? ''}
-        onChange={newValue => onChangeFilter(newValue)}
+        onChange={newValue => onChangeFilter({ filter: newValue })}
       />
     </AppBarContentPortal>
   );

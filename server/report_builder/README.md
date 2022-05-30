@@ -86,7 +86,7 @@ To print a report definition template a running remote-server is required.
 Moreover, report_build requires config details for how to access the remote-server.
 To provide this information create a config file, e.g. `config.yaml`:
 ```yaml
-url: "https://demo-open.msupply.org:8000"
+url: "https://demo-open.msupply.org"
 # standard omSupply username and password
 username: "username"
 password: "password"

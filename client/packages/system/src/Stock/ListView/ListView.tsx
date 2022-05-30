@@ -5,31 +5,28 @@ import {
   useColumns,
   createTableStore,
   useTranslation,
-  Column,
   SortUtils,
-  SortBy,
   RegexUtils,
   NothingHere,
-  createQueryParamsStore,
-  useQueryParamsStore,
+  useUrlQuery,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../Components';
 import { useStock } from '../api';
 import { StockRow } from '../types';
 
 const StockListComponent: FC = () => {
-  const { pagination } = useQueryParamsStore();
+  const { urlQuery, updateQuery } = useUrlQuery();
+  const {
+    updatePaginationQuery,
+    updateSortQuery,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams({ initialSortKey: 'itemName' });
+  const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const [filterString, setFilterString] = React.useState<string>('');
-  const [sortBy, setSortBy] = React.useState<SortBy<StockRow>>({
-    key: 'itemName',
-    direction: 'asc',
-  });
+  const filterString = urlQuery.filter ?? '';
+
   const { data, isLoading, isError } = useStock.document.list();
-  const onChangeSortBy = (column: Column<StockRow>) => {
-    const isDesc = column.key === sortBy.key ? !sortBy.isDesc : false;
-    setSortBy({ key: column.key, isDesc, direction: isDesc ? 'desc' : 'asc' });
-  };
 
   const columns = useColumns<StockRow>(
     [
@@ -44,7 +41,7 @@ const StockListComponent: FC = () => {
     ],
     {
       sortBy,
-      onChangeSortBy,
+      onChangeSortBy: updateSortQuery,
     },
     [sortBy]
   );
@@ -61,7 +58,10 @@ const StockListComponent: FC = () => {
 
   return (
     <>
-      <Toolbar onChangeFilter={setFilterString} filterString={filterString} />
+      <Toolbar
+        onChangeFilter={updateQuery}
+        filterString={urlQuery.filter ?? ''}
+      />
       <DataTable
         pagination={{ ...pagination, total: filteredSortedData.length }}
         columns={columns}
@@ -69,7 +69,7 @@ const StockListComponent: FC = () => {
           pagination.offset,
           pagination.offset + pagination.first
         )}
-        onChangePage={pagination.onChangePage}
+        onChangePage={updatePaginationQuery}
         noDataElement={<NothingHere body={t('error.no-stock')} />}
         isError={isError}
         isLoading={isLoading}
@@ -79,12 +79,7 @@ const StockListComponent: FC = () => {
 };
 
 export const StockListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<StockRow>({
-      initialSortBy: { key: 'itemName' },
-    })}
-  >
+  <TableProvider createStore={createTableStore}>
     <StockListComponent />
   </TableProvider>
 );

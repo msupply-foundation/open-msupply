@@ -39,7 +39,7 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
             },
             {
               /* options for secondary backend */
-              loadPath: '/locales/{{lng}}/{{ns}}.json',
+              loadPath: './locales/{{lng}}/{{ns}}.json',
             },
           ],
         },
