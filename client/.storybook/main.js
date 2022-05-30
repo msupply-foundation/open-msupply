@@ -14,11 +14,33 @@ module.exports = {
   reactOptions: {
     fastRefresh: true,
   },
-  stories: [
-    '../packages/**/*.stories.mdx',
-    '../packages/**/*.stories.@(js|jsx|ts|tsx)',
+  stories: ['../packages/**/*.stories.@(js|jsx|ts|tsx)'],
+  addons: [
+    '@storybook/addon-links',
+    '@storybook/addon-essentials',
+    {
+      name: 'storybook-addon-swc',
+      options: {
+        enable: true,
+        enableSwcLoader: true,
+        swcLoaderOptions: {
+          jsc: {
+            parser: {
+              dynamicImport: true,
+              syntax: 'typescript',
+              tsx: true,
+              sourceMap: true,
+              exportDefaultFrom: true,
+              exportNamespaceFrom: true,
+              // decorators: false,
+              // decoratorsBeforeExport: true,
+            },
+            target: 'es2015',
+          },
+        },
+      },
+    },
   ],
-  addons: ['@storybook/addon-links', '@storybook/addon-essentials'],
   webpackFinal: async config => {
     return {
       ...config,
@@ -29,9 +51,7 @@ module.exports = {
           '@emotion/core': toPath('node_modules/@emotion/react'),
           'emotion-theming': toPath('node_modules/@emotion/react'),
         },
-        plugins: [
-          new TsconfigPathsPlugin({ extensions: config.resolve.extensions }),
-        ],
+        plugins: [new TsconfigPathsPlugin()],
       },
     };
   },
