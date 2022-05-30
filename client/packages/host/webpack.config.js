@@ -8,6 +8,7 @@ const path = require('path');
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const PluginTransformImport = require('swc-plugin-transform-import').default;
 
 module.exports = env => {
   const isProduction = !!env.production;
@@ -62,6 +63,7 @@ module.exports = env => {
                 tsx: true,
               },
               target: 'es2015',
+              plugin: m => new PluginTransformImport().visitProgram(m),
             },
           },
         },

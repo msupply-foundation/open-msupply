@@ -1,6 +1,6 @@
 import { useQueryParamsStore } from '@common/hooks';
 import { SortUtils } from '@common/utils';
-import { InboundItem } from 'packages/invoices/src/types';
+import { InboundItem } from '../../../../types';
 import { inboundLinesToSummaryItems, isA } from '../../../../utils';
 import {
   InboundFragment,
