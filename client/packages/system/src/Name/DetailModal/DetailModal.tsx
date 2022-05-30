@@ -42,7 +42,12 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
           <DetailSection title="">
             <DetailInputWithLabelRow
               label={t('label.address')}
-              inputProps={{ value: data?.address1, disabled: isDisabled }}
+              inputProps={{
+                value: [data?.address1, data?.address2]
+                  .filter(a => !!a)
+                  .join(', '),
+                disabled: isDisabled,
+              }}
             />
             <DetailInputWithLabelRow
               label={t('label.code')}

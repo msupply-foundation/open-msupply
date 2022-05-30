@@ -1,17 +1,17 @@
-import { useEffect, useMemo } from 'react';
-import { zustand, SortUtils, RegexUtils } from '@openmsupply-client/common';
+import { useMemo } from 'react';
+import { SortUtils, RegexUtils, useUrlQuery } from '@openmsupply-client/common';
 import { useRequestColumns } from '../../../DetailView/columns';
 import { useHideOverStocked } from '../index';
 import { useRequestFields } from '../document/useRequestFields';
 
-const useItemFilter = zustand<{
-  itemFilter: string;
-  setItemFilter: (itemFilter: string) => void;
-}>(set => ({
-  setItemFilter: (itemFilter: string) =>
-    set(state => ({ ...state, itemFilter })),
-  itemFilter: '',
-}));
+const useItemFilter = () => {
+  const { urlQuery, updateQuery } = useUrlQuery();
+  return {
+    itemFilter: urlQuery.itemName ?? '',
+    setItemFilter: (itemFilter: string) =>
+      updateQuery({ itemName: itemFilter }),
+  };
+};
 
 export const useRequestLines = () => {
   const { on } = useHideOverStocked();
@@ -21,10 +21,6 @@ export const useRequestLines = () => {
     'lines',
     'minMonthsOfStock',
   ]);
-
-  useEffect(() => {
-    setItemFilter('');
-  }, []);
 
   const sorted = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);

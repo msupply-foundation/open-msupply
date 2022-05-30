@@ -2000,7 +2000,6 @@ export type NameNode = {
   comment?: Maybe<Scalars['String']>;
   country?: Maybe<Scalars['String']>;
   createdDatetime?: Maybe<Scalars['DateTime']>;
-  dateOfBirth?: Maybe<Scalars['NaiveDate']>;
   email?: Maybe<Scalars['String']>;
   firstName?: Maybe<Scalars['String']>;
   gender?: Maybe<GenderType>;

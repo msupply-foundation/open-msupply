@@ -11,7 +11,7 @@ import {
   useTableStore,
   NothingHere,
   useToggle,
-  createQueryParamsStore,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -32,10 +32,14 @@ export const RequestRequisitionListView: FC = () => {
   const modalController = useToggle();
 
   const { mutate: onUpdate } = useRequest.document.update();
-
-  const { data, isError, isLoading, sort, filter, pagination } =
-    useRequest.document.list();
-  const { sortBy, onChangeSortBy } = sort;
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    filter,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams({ filterKey: 'otherPartyName' });
+  const { data, isError, isLoading } = useRequest.document.list();
+  const pagination = { page, first, offset };
   useDisableRequestRows(data?.nodes);
 
   const columns = useColumns<RequestRowFragment>(
@@ -57,8 +61,8 @@ export const RequestRequisitionListView: FC = () => {
       ['comment', { width: '100%' }],
       'selection',
     ],
-    { sortBy, onChangeSortBy },
-    [sortBy, onChangeSortBy]
+    { sortBy, onChangeSortBy: updateSortQuery },
+    [sortBy, updateSortQuery]
   );
 
   const onRowClick = useCallback(
@@ -75,7 +79,7 @@ export const RequestRequisitionListView: FC = () => {
 
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={pagination.onChangePage}
+        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
         onRowClick={onRowClick}
@@ -93,12 +97,7 @@ export const RequestRequisitionListView: FC = () => {
 };
 
 export const ListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<RequestRowFragment>({
-      initialSortBy: { key: 'otherPartyName' },
-    })}
-  >
+  <TableProvider createStore={createTableStore}>
     <RequestRequisitionListView />
   </TableProvider>
 );

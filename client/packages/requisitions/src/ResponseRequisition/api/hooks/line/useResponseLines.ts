@@ -1,10 +1,10 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import {
   SortController,
   SortUtils,
   Column,
   RegexUtils,
-  zustand,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment } from '../../operations.generated';
 import { useResponseColumns } from '../../../DetailView/columns';
@@ -16,25 +16,22 @@ interface UseResponseLinesController
   columns: Column<ResponseLineFragment>[];
   itemFilter: string;
   setItemFilter: (itemFilter: string) => void;
+  onChangeSortBy: any;
 }
 
-const useItemFilter = zustand<{
-  itemFilter: string;
-  setItemFilter: (itemFilter: string) => void;
-}>(set => ({
-  setItemFilter: (itemFilter: string) =>
-    set(state => ({ ...state, itemFilter })),
-  itemFilter: '',
-}));
+const useItemFilter = () => {
+  const { urlQuery, updateQuery } = useUrlQuery();
+  return {
+    itemFilter: urlQuery.itemName ?? '',
+    setItemFilter: (itemFilter: string) =>
+      updateQuery({ itemName: itemFilter }),
+  };
+};
 
 export const useResponseLines = (): UseResponseLinesController => {
   const { lines } = useResponseFields('lines');
   const { columns, onChangeSortBy, sortBy } = useResponseColumns();
   const { itemFilter, setItemFilter } = useItemFilter();
-
-  useEffect(() => {
-    setItemFilter('');
-  }, []);
 
   const sorted = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);

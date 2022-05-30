@@ -97,8 +97,8 @@ pub fn generate_lines_and_stock_lines(
     let mut result = Vec::new();
 
     for invoice_lines in lines.into_iter() {
-        let stock_line_id = uuid();
         let mut line = invoice_lines.clone();
+        let stock_line_id = line.stock_line_id.unwrap_or(uuid());
         line.stock_line_id = Some(stock_line_id.clone());
 
         let InvoiceLineRow {
