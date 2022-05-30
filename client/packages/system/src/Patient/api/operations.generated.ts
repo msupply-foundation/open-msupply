@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type PatientRowFragment = { __typename: 'NameNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null };
 
-export type PatientFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, firstName?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone?: string | null, type: Types.NameNodeType, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null };
+export type PatientFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone?: string | null, type: Types.NameNodeType, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
 export type PatientsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -26,7 +26,7 @@ export type PatientByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientByIdQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, firstName?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone?: string | null, type: Types.NameNodeType, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+export type PatientByIdQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone?: string | null, type: Types.NameNodeType, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on NameNode {
@@ -47,6 +47,7 @@ export const PatientFragmentDoc = gql`
   comment
   country
   createdDatetime
+  dateOfBirth
   email
   firstName
   id
