@@ -157,7 +157,7 @@ fn create_filtered_query(
         let key_value_store = KeyValueStoreRepository::new(&connection);
         let site_id = key_value_store
             .get_i32(KeyValueType::SettingsSyncSiteId)?
-            .unwrap();
+            .unwrap_or(0);
 
         query = match is_site {
             Some(true) => query.filter(store_dsl::site_id.eq(site_id)),
