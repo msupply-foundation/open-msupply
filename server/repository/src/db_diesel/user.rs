@@ -47,6 +47,7 @@ pub struct UserFilter {
     pub id: Option<EqualFilter<String>>,
     pub username: Option<SimpleStringFilter>,
     pub store_id: Option<EqualFilter<String>>,
+    pub site_id: Option<EqualFilter<i32>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -161,11 +162,13 @@ fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
             id,
             username,
             store_id,
+            site_id,
         } = f;
 
         apply_equal_filter!(query, id, user_dsl::id);
         apply_simple_string_filter!(query, username, user_dsl::username);
         apply_equal_filter!(query, store_id, user_store_join_dsl::store_id);
+        apply_equal_filter!(query, site_id, store_dsl::site_id);
     }
 
     query
@@ -188,6 +191,11 @@ impl UserFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn site_id(mut self, filter: EqualFilter<i32>) -> Self {
+        self.site_id = Some(filter);
         self
     }
 }
