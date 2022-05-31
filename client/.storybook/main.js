@@ -12,6 +12,9 @@ module.exports = {
   core: {
     builder: '@storybook/builder-webpack5',
   },
+  features: {
+    storyStoreV7: true,
+  },
   stories: ['../packages/**/*.stories.@(js|jsx|ts|tsx)'],
   addons: [
     '@storybook/addon-links',
@@ -30,9 +33,7 @@ module.exports = {
               tsx: true,
               sourceMap: true,
               exportDefaultFrom: true,
-              exportNamespaceFrom: true,
-              // decorators: false,
-              // decoratorsBeforeExport: true,
+              decoratorsBeforeExport: true,
             },
             target: 'es2015',
           },
