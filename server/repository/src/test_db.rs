@@ -61,7 +61,6 @@ pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
         ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
     const SQLITE_LOCKWAIT_MS: u32 = 5000; //5 second wait for test lock timeout
     let pool = Pool::builder()
-        // .max_size(1)
         .min_idle(Some(1))
         .connection_customizer(Box::new(SqliteConnectionOptions {
             enable_wal: true,
