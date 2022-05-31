@@ -1199,7 +1199,7 @@ mod repository_test {
         /*
             Test Scenario
 
-            Process A starts a transaction, does a read, then sleeps for a 100 milliseconds before continuing to write from within the same transaction.
+            Process A starts a transaction, does a read, then sleeps for a 1000 milliseconds before continuing to write from within the same transaction.
             Conncurrently Process B tries to do a similar thing.
         */
 
@@ -1215,7 +1215,7 @@ mod repository_test {
                 A: read
                 A: sleeping
                 B: Ready to start transaction
-                <~100ms wait>
+                <~1000ms wait>
                 A: write
                 A: written
                 B: transaction acquired
@@ -1236,6 +1236,7 @@ mod repository_test {
                 B: read
                 B: write 1
                 B: write 2
+                <~1000ms wait>
                 A: write
                 A: written
         */
