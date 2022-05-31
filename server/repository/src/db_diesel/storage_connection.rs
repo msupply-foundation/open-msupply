@@ -14,10 +14,10 @@ use log::error;
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
-const BEGIN_TRANSACTION_STMT: &str = "BEGIN IMMEDIATE;";
+const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN IMMEDIATE;";
 // feature postgres
 #[cfg(feature = "postgres")]
-const BEGIN_TRANSACTION_STMT: &str = "BEGIN";
+const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN";
 
 pub struct StorageConnection {
     pub connection: DBConnection,
@@ -104,7 +104,7 @@ impl StorageConnection {
         if current_level == 0 {
             // sqlite can only have 1 writer at a time, so to avoid concurrency issues,
             // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
-            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STMT)
+            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
         } else {
             transaction_manager.begin_transaction(con)
         }
@@ -172,7 +172,7 @@ impl StorageConnection {
         if current_level == 0 {
             // sqlite can only have 1 writer, so to avoid concurrency issues,
             // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
-            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STMT)
+            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
         } else {
             transaction_manager.begin_transaction(con)
         }
