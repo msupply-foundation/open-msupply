@@ -7,7 +7,7 @@ use serde;
 
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 
-//WAIT up to 5 SECONDS for lock in SQLITE(https://www.sqlite.org/c3ref/busy_timeout.html)
+//WAIT up to 5 SECONDS for lock in SQLITE (https://www.sqlite.org/c3ref/busy_timeout.html)
 #[cfg(not(feature = "postgres"))]
 const SQLITE_LOCKWAIT_MS: u32 = 5000;
 
@@ -81,19 +81,19 @@ impl diesel::r2d2::CustomizeConnection<SqliteConnection, diesel::r2d2::Error>
         (|| {
             if self.enable_wal {
                 // println!("Adding WAL");
-                let r =
+                let _r =
                     conn.batch_execute("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;");
-                println!("{:?}", r);
+                // println!("{:?}", r);
             }
             if self.enable_foreign_keys {
                 // println!("Adding foreign_keys");
-                let r = conn.batch_execute("PRAGMA foreign_keys = ON;");
-                println!("{:?}", r);
+                let _r = conn.batch_execute("PRAGMA foreign_keys = ON;");
+                // println!("{:?}", r);
             }
             if let Some(d) = self.busy_timeout_ms {
                 // println!("Adding Busy Timeout");
-                let r = conn.batch_execute(&format!("PRAGMA busy_timeout = {};", d));
-                println!("{:?}", r);
+                let _r = conn.batch_execute(&format!("PRAGMA busy_timeout = {};", d));
+                // println!("{:?}", r);
             }
             Ok(())
         })()

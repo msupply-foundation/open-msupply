@@ -23,8 +23,8 @@ thiserror = "1"
 log = "0.4.14"
 
 [dev-dependencies]
+tokio = {version = "1.17.0", features=["time","rt-multi-thread","macros"]}
 actix-rt = "2.6.0"
-tokio = "1.17.0"
 
 [features]
 default = ["sqlite"]

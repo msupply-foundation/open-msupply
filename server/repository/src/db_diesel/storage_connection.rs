@@ -1,4 +1,4 @@
-use std::{cell::Cell, time::SystemTime};
+use std::cell::Cell;
 
 use super::{get_connection, DBBackendConnection, DBConnection};
 
@@ -14,13 +14,14 @@ use log::error;
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
-const BEGIN_TRANSACTION_STMT: &str = "BEGIN IMMEDIATE";
-// feature sqlite
+const BEGIN_TRANSACTION_STMT: &str = "BEGIN IMMEDIATE;";
+// feature postgres
 #[cfg(feature = "postgres")]
 const BEGIN_TRANSACTION_STMT: &str = "BEGIN";
 
 pub struct StorageConnection {
     pub connection: DBConnection,
+    // pub arc_connection: Arc<DBConnection>,
     /// Current level of nested transaction.
     /// For example:
     /// 0 => no transaction
@@ -100,24 +101,28 @@ impl StorageConnection {
 
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
-        println!("ATTEMPT TRANSACTION ACQUIRE");
-        let start_dt = SystemTime::now();
-        let result = transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STMT);
-        let transaction_duration = start_dt
-            .duration_since(start_dt)
-            .expect("Time went backwards");
-        println!("TRANSACTION CREATE TIME {:?}", transaction_duration);
-        match result {
-            Ok(_) => {}
-            Err(err) => {
-                println!("TRANSACTION Failed to begin tx: {:?}", err);
-                return Err(TransactionError::Transaction {
+        if current_level == 0 {
+            // sqlite can only have 1 writer at a time, so to avoid concurrency issues,
+            // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
+            let result = transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STMT);
+            match result {
+                Ok(_) => {}
+                Err(err) => {
+                    return Err(TransactionError::Transaction {
+                        msg: format!("Failed to begin tx: {}", err),
+                        level: current_level + 1,
+                    });
+                }
+            }
+        } else {
+            transaction_manager.begin_transaction(con).map_err(|err| {
+                error!("Failed to begin tx: {:?}", err);
+                TransactionError::Transaction {
                     msg: format!("Failed to begin tx: {}", err),
                     level: current_level + 1,
-                });
-            }
+                }
+            })?;
         }
-        println!("TRANSACTION ACQUIRED");
 
         self.transaction_level.set(current_level + 1);
         let result = f(self).await;
@@ -178,14 +183,28 @@ impl StorageConnection {
         }
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
-
-        transaction_manager.begin_transaction(con).map_err(|err| {
-            error!("Failed to begin tx: {:?}", err);
-            TransactionError::Transaction {
-                msg: format!("Failed to begin tx: {}", err),
-                level: current_level + 1,
+        if current_level == 0 {
+            // sqlite can only have 1 writer, so to avoid concurrency issues,
+            // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
+            let result = transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STMT);
+            match result {
+                Ok(_) => {}
+                Err(err) => {
+                    return Err(TransactionError::Transaction {
+                        msg: format!("Failed to begin tx: {}", err),
+                        level: current_level + 1,
+                    });
+                }
             }
-        })?;
+        } else {
+            transaction_manager.begin_transaction(con).map_err(|err| {
+                error!("Failed to begin tx: {:?}", err);
+                TransactionError::Transaction {
+                    msg: format!("Failed to begin tx: {}", err),
+                    level: current_level + 1,
+                }
+            })?;
+        }
 
         self.transaction_level.set(current_level + 1);
         let result = f(self);
