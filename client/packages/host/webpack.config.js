@@ -72,8 +72,11 @@ module.exports = env => {
           use: ['style-loader', 'css-loader'],
         },
         {
-          test: /\.(woff|woff2|ttf|eot)$/,
-          use: 'file-loader?name=fonts/[name].[ext]',
+          test: /\.(woff(2)?|ttf|eot)$/,
+          type: 'asset/resource',
+          generator: {
+            filename: './fonts/[name][ext]',
+          },
         },
         {
           test: /\.(png|svg|jpg|jpeg|gif)$/i,
