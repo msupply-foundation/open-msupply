@@ -5,7 +5,6 @@ use graphql_core::{
 };
 
 use graphql_types::types::UserNode;
-use repository::{KeyValueStoreRepository, KeyValueType};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::user_account::UserAccountService;
 
@@ -27,12 +26,7 @@ pub fn me(ctx: &Context<'_>) -> Result<UserResponse> {
     let service_ctx = service_provider.context()?;
     let user_service = UserAccountService::new(&service_ctx.connection);
 
-    let key_value_store = KeyValueStoreRepository::new(&service_ctx.connection);
-    let site_id = key_value_store
-        .get_i32(KeyValueType::SettingsSyncSiteId)?
-        .unwrap();
-
-    let user = match user_service.find_user(&user.user_id, site_id) {
+    let user = match user_service.find_user(&user.user_id) {
         Ok(Some(user)) => user,
         Ok(None) => {
             return Err(StandardGraphqlError::InternalError(

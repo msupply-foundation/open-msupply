@@ -1,7 +1,8 @@
 use repository::{
-    EqualFilter, RepositoryError, StorageConnection, TransactionError, User, UserAccountRow,
-    UserAccountRowRepository, UserFilter, UserPermissionRow, UserPermissionRowRepository,
-    UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    EqualFilter, KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection,
+    TransactionError, User, UserAccountRow, UserAccountRowRepository, UserFilter,
+    UserPermissionRow, UserPermissionRowRepository, UserRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -148,7 +149,12 @@ impl<'a> UserAccountService<'a> {
             )
     }
 
-    pub fn find_user(&self, user_id: &str, site_id: i32) -> Result<Option<User>, RepositoryError> {
+    pub fn find_user(&self, user_id: &str) -> Result<Option<User>, RepositoryError> {
+        let key_value_store = KeyValueStoreRepository::new(self.connection);
+        let site_id = key_value_store
+            .get_i32(KeyValueType::SettingsSyncSiteId)?
+            .unwrap();
+
         let repo = UserRepository::new(self.connection);
         repo.query_one(
             UserFilter::new()
