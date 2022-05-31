@@ -1253,15 +1253,15 @@ mod repository_test {
                     println!("A: Sleeping for 1000ms");
                     let start_dt = SystemTime::now();
                     for _ in 0..2 {
-                        //2*500ms
+                        //2*500ms = 1000ms
                         std::thread::sleep(core::time::Duration::from_millis(500));
-                        println!("A: slept for 500ms");
                     }
-                    let transaction_duration = SystemTime::now()
+                    //Recording sleep duration here, as if the thread is blocked by something other than sleep you should see the duration significantly greater than 1000ms
+                    let sleep_duration = SystemTime::now()
                         .duration_since(start_dt)
                         .expect("Time went backwards");
-                    println!("Slept for {:?}", transaction_duration);
-                    println!("A: write");
+                    println!("A: Slept for {:?}", sleep_duration);
+                    println!("A: writing");
                     let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id2".to_string();
                         i.name = "name_a".to_string();
@@ -1271,19 +1271,20 @@ mod repository_test {
                 });
             result
         });
-
+        let manager_b = connection_manager.clone();
         let process_b = tokio::spawn(async move {
             //Wait for process a to get a transaction started
-            let connection = connection_manager.connection().unwrap();
+            let connection = manager_b.connection().unwrap();
             // let _ = a_finished_reading_receiver.await;
             println!("B: Ready to start transaction");
             // println!("Starting transaction in blocking thread...");
             let result: Result<(), TransactionError<RepositoryError>> = connection
                 .transaction_sync(|con| {
-                    println!("B: transaction acquired");
+                    println!("B: transaction started");
                     let repo = ItemRowRepository::new(&con);
                     let _ = repo.find_one_by_id("tx_deadlock_id")?;
                     println!("B: read");
+
                     let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id".to_string();
                         i.name = "name_b".to_string();
@@ -1303,7 +1304,26 @@ mod repository_test {
 
         let a = process_a.await.unwrap();
         let b = process_b.await.unwrap();
+
         a.unwrap();
         b.unwrap();
+
+        //Verify the database was updated correctly
+        let connection = connection_manager.connection().unwrap();
+        let repo = ItemRowRepository::new(&connection);
+
+        //tx_deadlock_id should now have name:name_b_2
+        let tx_deadlock_item = repo
+            .find_one_by_id("tx_deadlock_id")
+            .unwrap()
+            .expect("tx_deadlock_id record didn't get created!");
+        assert!("name_b_2" == tx_deadlock_item.name);
+
+        //tx_deadlock_id2 should now have name:name_a
+        let tx_deadlock_item2 = repo
+            .find_one_by_id("tx_deadlock_id2")
+            .unwrap()
+            .expect("tx_deadlock_id2 record didn't get created!");
+        assert!("name_a" == tx_deadlock_item2.name);
     }
 }
