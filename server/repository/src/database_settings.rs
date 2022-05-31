@@ -77,27 +77,25 @@ pub struct SqliteConnectionOptions {
 impl diesel::r2d2::CustomizeConnection<SqliteConnection, diesel::r2d2::Error>
     for SqliteConnectionOptions
 {
+    //TODO: make relevant sqlite customisation settings configurable at runtime.
     fn on_acquire(&self, conn: &mut SqliteConnection) -> Result<(), diesel::r2d2::Error> {
-        (|| {
+        {
+            //TODO: Write Ahead Log is a database level setting and doesn't need to be set on a per connection basis (Unlike busy_timeout and foreign_keys)
+            // In theory this should be run at database creation time, not on each acquire
             if self.enable_wal {
-                // println!("Adding WAL");
-                let _r =
-                    conn.batch_execute("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;");
-                // println!("{:?}", r);
+                conn.batch_execute("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;")
+                    .expect("Can't enable Write Ahead Log (WAL) in sqlite");
             }
             if self.enable_foreign_keys {
-                // println!("Adding foreign_keys");
-                let _r = conn.batch_execute("PRAGMA foreign_keys = ON;");
-                // println!("{:?}", r);
+                conn.batch_execute("PRAGMA foreign_keys = ON;")
+                    .expect("Can't enable foreign_keys in sqlite");
             }
             if let Some(d) = self.busy_timeout_ms {
-                // println!("Adding Busy Timeout");
-                let _r = conn.batch_execute(&format!("PRAGMA busy_timeout = {};", d));
-                // println!("{:?}", r);
+                conn.batch_execute(&format!("PRAGMA busy_timeout = {};", d))
+                    .expect("Can't set busy_timeout in sqlite");
             }
             Ok(())
-        })()
-        .map_err(diesel::r2d2::Error::QueryError)
+        }
     }
 }
 
