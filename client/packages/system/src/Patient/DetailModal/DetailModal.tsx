@@ -13,24 +13,30 @@ import {
   BasicSpinner,
   MuiLink,
 } from '@openmsupply-client/common';
-import { usePatient } from '../api';
+// import { usePatient } from '../api';5
+import jsonSchema from './json/schema.json';
+import data from './json/patient_1.json';
+// import Form from '@rjsf/core';
+import Form from '@rjsf/material-ui/v5';
 
 interface DetailModalProps {
   nameId: string;
 }
 
 export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
-  const { data, isLoading } = usePatient.document.get(nameId);
+  // const { data, isLoading } = usePatient.document.get(nameId);
   const t = useTranslation('common');
-  const { setSuffix } = useBreadcrumbs();
+  // const { setSuffix } = useBreadcrumbs();
   const isDisabled = true;
   const { localisedDate } = useFormatDateTime();
 
-  useEffect(() => {
-    setSuffix(data?.name ?? '');
-  }, [data]);
+  console.log('data', data);
 
-  if (isLoading) return <BasicSpinner />;
+  // useEffect(() => {
+  //   setSuffix(data?.name ?? '');
+  // }, [data]);
+
+  // if (isLoading) return <BasicSpinner />;
 
   return !!data ? (
     <DetailContainer>
@@ -38,8 +44,20 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
         <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
           {data.name}
         </Typography>
-        <Grid container flex={1} flexDirection="row" gap={4}>
-          <DetailSection title="">
+        <Grid
+          container
+          flex={1}
+          flexDirection="row"
+          gap={4}
+          style={{ maxWidth: 600 }}
+        >
+          <Form
+            schema={jsonSchema}
+            onChange={() => console.log('changed')}
+            onSubmit={() => console.log('submitted')}
+            onError={() => console.log('errors')}
+          />
+          {/* <DetailSection title="">
             <DetailInputWithLabelRow
               label={t('label.address')}
               inputProps={{ value: data?.address1, disabled: isDisabled }}
@@ -109,7 +127,7 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
                 <Checkbox disabled={isDisabled} checked={data?.isOnHold} />
               }
             />
-          </DetailSection>
+          </DetailSection> */}
         </Grid>
       </Box>
     </DetailContainer>
