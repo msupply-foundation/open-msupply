@@ -6,8 +6,7 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
-    DBType, EqualFilter, KeyValueStoreRepository, KeyValueType, Pagination, RepositoryError,
-    SimpleStringFilter, Sort,
+    DBType, EqualFilter, Pagination, RepositoryError, SimpleStringFilter, Sort,
 };
 
 use diesel::dsl::InnerJoin;
@@ -26,7 +25,6 @@ pub struct StoreFilter {
     pub name: Option<SimpleStringFilter>,
     pub name_code: Option<SimpleStringFilter>,
     pub site_id: Option<EqualFilter<i32>>,
-    pub is_site: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -69,11 +67,6 @@ impl StoreFilter {
         self.site_id = Some(filter);
         self
     }
-
-    pub fn is_site(mut self, filter: bool) -> Self {
-        self.is_site = Some(filter);
-        self
-    }
 }
 
 pub struct StoreRepository<'a> {
@@ -86,7 +79,7 @@ impl<'a> StoreRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<StoreFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter, self.connection)?;
+        let query = create_filtered_query(filter);
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -105,7 +98,7 @@ impl<'a> StoreRepository<'a> {
         sort: Option<StoreSort>,
     ) -> Result<Vec<Store>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = create_filtered_query(filter, self.connection)?;
+        let mut query = create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
                 StoreSortField::Code => {
@@ -132,10 +125,7 @@ impl<'a> StoreRepository<'a> {
 
 type BoxedStoreQuery = IntoBoxed<'static, InnerJoin<store::table, name::table>, DBType>;
 
-fn create_filtered_query(
-    filter: Option<StoreFilter>,
-    connection: &StorageConnection,
-) -> Result<BoxedStoreQuery, RepositoryError> {
+fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
     let mut query = store_dsl::store.inner_join(name_dsl::name).into_boxed();
 
     if let Some(f) = filter {
@@ -145,7 +135,6 @@ fn create_filtered_query(
             name,
             name_code,
             site_id,
-            is_site,
         } = f;
 
         apply_equal_filter!(query, id, store_dsl::id);
@@ -153,20 +142,9 @@ fn create_filtered_query(
         apply_simple_string_filter!(query, name, name_dsl::name_);
         apply_simple_string_filter!(query, name_code, name_dsl::code);
         apply_equal_filter!(query, site_id, store_dsl::site_id);
-
-        let key_value_store = KeyValueStoreRepository::new(&connection);
-        let site_id = key_value_store
-            .get_i32(KeyValueType::SettingsSyncSiteId)?
-            .unwrap_or(0);
-
-        query = match is_site {
-            Some(true) => query.filter(store_dsl::site_id.eq(site_id)),
-            Some(false) => query.filter(store_dsl::site_id.ne(site_id)),
-            None => query,
-        }
     }
 
-    Ok(query)
+    query
 }
 
 fn to_domain((store_row, name_row): StoreJoin) -> Store {

@@ -18,7 +18,6 @@ pub struct StoreFilterInput {
     pub name: Option<SimpleStringFilterInput>,
     pub name_code: Option<SimpleStringFilterInput>,
     pub site_id: Option<EqualFilterInput<i32>>,
-    pub is_site: Option<bool>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -134,7 +133,6 @@ impl StoreFilterInput {
             name,
             name_code,
             site_id,
-            is_site,
         } = self;
 
         StoreFilter {
@@ -143,7 +141,6 @@ impl StoreFilterInput {
             name: name.map(SimpleStringFilter::from),
             name_code: name_code.map(SimpleStringFilter::from),
             site_id: site_id.map(EqualFilter::from),
-            is_site: is_site.or(Some(false)),
         }
     }
 }
