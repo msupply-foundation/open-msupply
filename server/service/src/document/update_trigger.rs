@@ -6,7 +6,7 @@ extern crate serde_json;
 
 use super::{
     document_service::DocumentInsertError,
-    patient::{patient_document_updated::patient_document_updated, PATIENT_TYPE},
+    patient::{patient_document_update::patient_document_updated, PATIENT_TYPE},
 };
 
 /// Callback called when the document has been updated

@@ -6,7 +6,7 @@ pub use self::query::*;
 mod query;
 pub use self::insert::*;
 mod insert;
-pub mod patient_document_updated;
+pub mod patient_document_update;
 pub mod patient_schema;
 
 pub const PATIENT_TYPE: &str = "Patient";
