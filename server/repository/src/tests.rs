@@ -266,7 +266,7 @@ mod repository_test {
         }
     }
 
-    use std::convert::TryInto;
+    use std::{convert::TryInto, time::SystemTime};
 
     use crate::{
         mock::{
@@ -293,7 +293,7 @@ mod repository_test {
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
-    use diesel::{sql_query, sql_types::Text, Connection, RunQueryDsl};
+    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
     use util::{inline_edit, inline_init};
 
     #[actix_rt::test]
@@ -1182,7 +1182,7 @@ mod repository_test {
         assert_eq!(result, Some(true));
     }
 
-    #[actix_rt::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_tx_deadlock() {
         let (_, _, connection_manager, _) =
             test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
@@ -1240,21 +1240,26 @@ mod repository_test {
                 A: written
         */
 
-        let (a_finished_reading_sender, a_finished_reading_receiver) =
-            tokio::sync::oneshot::channel();
-
         let manager_a = connection_manager.clone();
-        let process_a = actix_rt::spawn(async move {
+        let process_a = tokio::spawn(async move {
             let connection = manager_a.connection().unwrap();
             let result: Result<(), TransactionError<RepositoryError>> = connection
-                .transaction(|con| async move {
-                    println!("A: transaction acquired");
+                .transaction_sync(|con| {
+                    println!("A: transaction started");
                     let repo = ItemRowRepository::new(con);
                     let _ = repo.find_one_by_id("tx_deadlock_id")?;
                     println!("A: read");
-                    a_finished_reading_sender.send(()).unwrap();
-                    println!("A: sleeping");
-                    actix_rt::time::sleep(core::time::Duration::from_millis(100)).await;
+                    println!("A: Sleeping for 1000ms");
+                    let start_dt = SystemTime::now();
+                    for _ in 0..2 {
+                        //2*500ms
+                        std::thread::sleep(core::time::Duration::from_millis(500));
+                        println!("A: slept for 500ms");
+                    }
+                    let transaction_duration = SystemTime::now()
+                        .duration_since(start_dt)
+                        .expect("Time went backwards");
+                    println!("Slept for {:?}", transaction_duration);
                     println!("A: write");
                     let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id2".to_string();
@@ -1262,24 +1267,22 @@ mod repository_test {
                     }))?;
                     println!("A: written");
                     Ok(())
-                })
-                .await;
+                });
             result
         });
 
-        let process_b = actix_rt::spawn(async move {
+        let process_b = tokio::spawn(async move {
             //Wait for process a to get a transaction started
-            let connection = connection_manager.clone().connection().unwrap();
-            let _ = a_finished_reading_receiver.await;
+            let connection = connection_manager.connection().unwrap();
+            // let _ = a_finished_reading_receiver.await;
             println!("B: Ready to start transaction");
-
+            // println!("Starting transaction in blocking thread...");
             let result: Result<(), TransactionError<RepositoryError>> = connection
-                .transaction(|con| async move {
+                .transaction_sync(|con| {
                     println!("B: transaction acquired");
                     let repo = ItemRowRepository::new(&con);
                     let _ = repo.find_one_by_id("tx_deadlock_id")?;
                     println!("B: read");
-
                     let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id".to_string();
                         i.name = "name_b".to_string();
@@ -1292,8 +1295,7 @@ mod repository_test {
                     }))?;
                     println!("B: write 2");
                     Ok(())
-                })
-                .await;
+                });
             println!("B: Returning {:?}", result);
             result
         });
