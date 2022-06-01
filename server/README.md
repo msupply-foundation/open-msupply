@@ -214,10 +214,12 @@ Server will server front end files from (client/packages/host/dist), run `yarn b
 
 Some common operations are availalbe via cli `remote_server_cli`, the `--help` flag should give a detailed explanation of how to use `cli`. Here are example of all of the currently available commands. `note:` configurations from `configurations/*.yaml` or env vars will be used when running cli commands.
 
+`note:` All of the cli commands are meant for development purposes, some commands are dangerous to run in production
+
 ```bash
 # overall help
 cargo run --bin remote_server_cli -- --help
-# helpf for an action
+# help for an action
 cargo run --bin remote_server_cli -- initialise-from-export --help
 # exports graphql schema to schema.graphql file
 cargo run --bin remote_server_cli -- export-graphql-schema
