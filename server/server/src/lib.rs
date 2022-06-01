@@ -20,7 +20,6 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
-    settings_service::{SettingsService, SettingsServiceTrait},
     token_bucket::TokenBucket,
 };
 
@@ -139,9 +138,9 @@ async fn run_server(
     certificates: &Certificates,
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(connection_manager.clone());
-
-    let service = SettingsService {};
     let service_context = service_provider.context().unwrap();
+    let service = &service_provider.settings;
+
     let db_settings = service.sync_settings(&service_context).unwrap();
     let sync_settings = db_settings.or(config_settings.sync.clone());
     let sync_settings = match sync_settings {
@@ -183,7 +182,7 @@ async fn run_server(
 
     let restart_switch = Data::new(restart_switch);
 
-    let mut synchroniser = Synchroniser::new(sync_settings, connection_manager.clone()).unwrap();
+    let mut synchroniser = Synchroniser::new(sync_settings, service_provider_data.clone()).unwrap();
     // Do the initial pull before doing anything else
     match synchroniser.initial_pull().await {
         Ok(_) => {}

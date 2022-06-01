@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use chrono::Utc;
 use clap::StructOpt;
 use cli::RefreshDatesRepository;
@@ -23,9 +24,8 @@ use service::{
     apis::login_v4::LoginUserInfoV4,
     auth_data::AuthData,
     login::{LoginInput, LoginService},
-    service_provider::{ServiceContext, ServiceProvider},
+    service_provider::ServiceProvider,
     settings::Settings,
-    settings_service::{SettingsService, SettingsServiceTrait},
     sync_settings::SyncSettings,
     token_bucket::TokenBucket,
 };
@@ -123,7 +123,7 @@ async fn main() {
             info!("Finished database reset");
 
             let connection_manager = get_storage_connection_manager(&settings.database);
-            let service_provider = ServiceProvider::new(connection_manager.clone());
+            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
 
             let sync_settings = settings.sync.unwrap();
             let central_server_url = sync_settings.url.clone();
@@ -136,7 +136,7 @@ async fn main() {
             };
 
             info!("Initialising from central");
-            Synchroniser::new(sync_settings, connection_manager)
+            Synchroniser::new(sync_settings, service_provider.clone())
                 .unwrap()
                 .initial_pull()
                 .await
@@ -226,7 +226,8 @@ async fn main() {
             test_db::setup(&settings.database).await;
 
             let connection_manager = get_storage_connection_manager(&settings.database);
-            let connection = connection_manager.connection().unwrap();
+            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+            let ctx = service_provider.context().unwrap();
 
             let (_, import_file, users_file) = export_paths(&name);
 
@@ -240,27 +241,23 @@ async fn main() {
                 central_sync_batch_records_to_buffer_rows(data.central.data).unwrap()
             {
                 CentralDataSynchroniser::insert_one_and_update_cursor(
-                    &connection,
+                    &ctx.connection,
                     &central_sync_record,
                 )
                 .await
                 .unwrap()
             }
-            CentralDataSynchroniser::integrate_central_records(&connection)
+            CentralDataSynchroniser::integrate_central_records(&ctx.connection)
                 .await
                 .unwrap();
 
             info!("Initialising remote");
             if let Some(data) = data.remote.data {
-                RemoteSyncBufferRepository::new(&connection)
+                RemoteSyncBufferRepository::new(&ctx.connection)
                     .upsert_many(&remote_sync_batch_records_to_buffer_rows(data).unwrap())
                     .unwrap();
-                RemoteDataSynchroniser::do_integrate_records(&connection).unwrap()
+                RemoteDataSynchroniser::do_integrate_records(&ctx.connection).unwrap()
             }
-
-            let ctx = ServiceContext {
-                connection: connection_manager.connection().unwrap(),
-            };
 
             info!("Initialising users");
             for (input, user_info) in data.users {
@@ -270,20 +267,22 @@ async fn main() {
 
             if refresh {
                 info!("Refreshing dates");
-                let result = RefreshDatesRepository::new(&connection)
+                let result = RefreshDatesRepository::new(&ctx.connection)
                     .refresh_dates(Utc::now().naive_local())
                     .expect("Error while refreshing data");
                 info!("Refresh data result: {:#?}", result);
             }
 
             info!("Updating change log cursor for sync operations");
-            RemoteSyncState::new(&connection)
+            RemoteSyncState::new(&ctx.connection)
                 .set_initial_remote_data_synced()
                 .unwrap();
 
             info!("Disabling sync");
             // Need to store SyncSettings in db to avoid bootstrap mode
-            let service = SettingsService {};
+
+            let service = &service_provider.settings;
+
             service
                 .update_sync_settings(
                     &ctx,

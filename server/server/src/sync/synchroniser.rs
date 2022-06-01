@@ -1,14 +1,14 @@
 use std::time::Duration;
 
+use actix_web::web::Data;
 use log::warn;
-use repository::StorageConnectionManager;
 
 use reqwest::{Client, Url};
-use service::sync_settings::SyncSettings;
+use service::{service_provider::ServiceProvider, sync_settings::SyncSettings};
 
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
-    get_sync_actors, is_sync_disabled,
+    get_sync_actors,
     remote_data_synchroniser::RemoteDataSynchroniser,
     sync_api_v3::SyncApiV3,
     SyncApiV5, SyncCredentials, SyncReceiverActor, SyncSenderActor,
@@ -16,7 +16,7 @@ use super::{
 
 pub struct Synchroniser {
     settings: SyncSettings,
-    connection_manager: StorageConnectionManager,
+    service_provider: Data<ServiceProvider>,
     pub(crate) central_data: CentralDataSynchroniser,
     pub(crate) remote_data: RemoteDataSynchroniser,
 }
@@ -51,7 +51,7 @@ pub struct Synchroniser {
 impl Synchroniser {
     pub fn new(
         settings: SyncSettings,
-        connection_manager: StorageConnectionManager,
+        service_provider: Data<ServiceProvider>,
     ) -> anyhow::Result<Self> {
         let client = Client::new();
         let url = Url::parse(&settings.url)?;
@@ -69,56 +69,64 @@ impl Synchroniser {
                 central_server_site_id: settings.central_server_site_id,
             },
             settings,
-            connection_manager,
+            service_provider,
             central_data: CentralDataSynchroniser { sync_api_v5 },
         })
     }
 
     pub async fn initial_pull(&self) -> anyhow::Result<()> {
-        let connection = self
-            .connection_manager
-            .connection()
+        let ctx = self
+            .service_provider
+            .context()
             .map_err(CentralSyncError::from_database_error)?;
+        let service = &self.service_provider.settings;
 
-        if is_sync_disabled(&connection).map_err(CentralSyncError::from_database_error)? {
+        if service
+            .is_sync_disabled(&ctx)
+            .map_err(CentralSyncError::from_database_error)?
+        {
             warn!("Sync is disabled, skipping");
             return Ok(());
         }
 
         // first pull data from the central server
         self.central_data
-            .pull_and_integrate_records(&connection)
+            .pull_and_integrate_records(&ctx.connection)
             .await?;
 
-        self.remote_data.initial_pull(&connection).await?;
+        self.remote_data.initial_pull(&ctx.connection).await?;
 
         Ok(())
     }
 
     /// Sync must not be called concurrently (e.g. sync cursors are fetched/updated without DB tx)
     pub async fn sync(&self) -> anyhow::Result<()> {
-        let connection = self
-            .connection_manager
-            .connection()
+        let ctx = self
+            .service_provider
+            .context()
             .map_err(CentralSyncError::from_database_error)?;
+        let service = &self.service_provider.settings;
 
-        if is_sync_disabled(&connection).map_err(CentralSyncError::from_database_error)? {
+        if service
+            .is_sync_disabled(&ctx)
+            .map_err(CentralSyncError::from_database_error)?
+        {
             warn!("Sync is disabled, skipping");
             return Ok(());
         }
 
         // First push before pulling. This avoids problems with the existing central server
         // implementation...
-        self.remote_data.push_changes(&connection).await?;
-        self.remote_data.pull(&connection).await?;
+        self.remote_data.push_changes(&ctx.connection).await?;
+        self.remote_data.pull(&ctx.connection).await?;
 
         // Check if there is new data on the central server. Do this after pulling the remote data
         // in case the just pulled remote data requires the new central data.
         self.central_data
-            .pull_and_integrate_records(&connection)
+            .pull_and_integrate_records(&ctx.connection)
             .await?;
 
-        RemoteDataSynchroniser::integrate_records(&connection).await?;
+        RemoteDataSynchroniser::integrate_records(&ctx.connection).await?;
         Ok(())
     }
 
@@ -141,10 +149,7 @@ impl Synchroniser {
 #[cfg(test)]
 mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
-    use service::{
-        service_provider::ServiceContext,
-        settings_service::{SettingsService, SettingsServiceTrait},
-    };
+    use service::settings_service::{SettingsService, SettingsServiceTrait};
     use util::inline_init;
 
     use super::*;
@@ -156,9 +161,12 @@ mod tests {
 
         // 0.0.0.0:0 should hopefully be always unreachable and valid url
 
+        let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+        let ctx = service_provider.context().unwrap();
+        let service = &service_provider.settings;
         let s = Synchroniser::new(
             inline_init(|r: &mut SyncSettings| r.url = "http://0.0.0.0:0".to_string()),
-            connection_manager,
+            service_provider.clone(),
         )
         .unwrap();
 
@@ -170,8 +178,7 @@ mod tests {
         assert!(matches!(s.sync().await, Err(_)), "sync should have failed");
 
         // Check that disabling return Ok(())
-        let ctx = ServiceContext { connection };
-        SettingsService {}.disable_sync(&ctx).unwrap();
+        service.disable_sync(&ctx).unwrap();
 
         assert!(
             matches!(s.initial_pull().await, Ok(_)),
