@@ -43,6 +43,10 @@ impl PatientNode {
         self.patient.name_row.first_name.clone()
     }
 
+    pub async fn last_name(&self) -> Option<String> {
+        self.patient.name_row.last_name.clone()
+    }
+
     pub async fn gender(&self) -> Option<GenderType> {
         self.patient
             .name_row
