@@ -88,3 +88,116 @@ fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
     }
     out.join(",")
 }
+
+#[cfg(test)]
+mod test {
+    use chrono::Utc;
+    use repository::{mock::MockDataInserts, test_db::setup_all, EqualFilter};
+
+    use crate::{
+        document::{
+            document_service::{DocumentService, DocumentServiceTrait},
+            patient::{
+                patient_schema::{Address, ContactDetails, Gender, Patient, SocioEconomics},
+                PatientFilter, PatientService, PatientServiceTrait, PATIENT_TYPE,
+            },
+            raw_document::RawDocument,
+        },
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn test_patient_table_update() {
+        let (_, _, connection_manager, _) = setup_all(
+            "patient_table_update",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.context().unwrap();
+
+        let service = DocumentService {};
+        let address = Address {
+            address_1: Some("firstaddressline".to_string()),
+            address_2: Some("secondaddressline".to_string()),
+            city: None,
+            country: Some("countr".to_string()),
+            description: None,
+            district: None,
+            key: "key".to_string(),
+            region: None,
+            zip_code: None,
+        };
+        let contact_details = ContactDetails {
+            description: None,
+            email: Some("myemail".to_string()),
+            key: "key".to_string(),
+            mobile: Some("45678".to_string()),
+            phone: None,
+            website: Some("mywebsite".to_string()),
+        };
+        let patient = Patient {
+            id: "testid".to_string(),
+            addresses: vec![address.clone()],
+            contact_details: vec![contact_details.clone()],
+            date_of_birth: Some("2000-03-04".to_string()),
+            date_of_birth_is_estimated: None,
+            family: None,
+            first_name: Some("firstname".to_string()),
+            last_name: Some("lastname".to_string()),
+            gender: Some(Gender::TransgenderFemale),
+            health_center: None,
+            passport_number: None,
+            socio_economics: SocioEconomics {
+                education: None,
+                literate: None,
+                occupation: None,
+            },
+        };
+        service
+            .update_document(
+                &ctx,
+                "store_a",
+                RawDocument {
+                    name: "test/doc".to_string(),
+                    parents: vec![],
+                    author: "some_user".to_string(),
+                    timestamp: Utc::now(),
+                    r#type: PATIENT_TYPE.to_string(),
+                    data: serde_json::to_value(patient.clone()).unwrap(),
+                    // TODO add and use patient id schema
+                    schema_id: None,
+                },
+            )
+            .unwrap();
+
+        let patient_service = PatientService {};
+        let found_patient = patient_service
+            .get_patients(
+                &ctx,
+                "store_a",
+                None,
+                Some(PatientFilter::new().id(EqualFilter::equal_to(&patient.id))),
+                None,
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert_eq!(found_patient.name_row.first_name, patient.first_name);
+        assert_eq!(found_patient.name_row.last_name, patient.last_name);
+        assert_eq!(
+            found_patient
+                .name_row
+                .date_of_birth
+                .map(|date| date.to_string()),
+            patient.date_of_birth
+        );
+        assert_eq!(found_patient.name_row.phone, contact_details.mobile);
+        assert_eq!(found_patient.name_row.email, contact_details.email);
+        assert_eq!(found_patient.name_row.website, contact_details.website);
+        assert_eq!(found_patient.name_row.address1, address.address_1);
+        assert_eq!(found_patient.name_row.address2, address.address_2);
+        assert_eq!(found_patient.name_row.country, address.country);
+    }
+}
