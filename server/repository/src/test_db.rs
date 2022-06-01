@@ -64,7 +64,6 @@ pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
         .min_idle(Some(1))
         .connection_customizer(Box::new(SqliteConnectionOptions {
             enable_wal: true,
-            enable_foreign_keys: true,
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
         }))
         .build(connection_manager)
