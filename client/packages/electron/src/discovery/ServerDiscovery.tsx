@@ -13,7 +13,7 @@ export const ServerDiscovery = () => {
   const t = useTranslation('app');
   return (
     <Stack display="flex" style={{ minHeight: '100%' }}>
-      <Box display="flex" flex={0} alignSelf="center">
+      <Box display="flex" flex="0 0 50%" alignSelf="center">
         <Box
           display="flex"
           alignItems="center"
@@ -63,14 +63,12 @@ export const ServerDiscovery = () => {
           </Typography>
         </Box>
       </Box>
-      <Box
-        display="flex"
-        flex={1}
-        padding={4}
-        style={{ paddingTop: '5%', paddingRight: '10px' }}
-      >
+      <Box display="flex" flexDirection="column" flex={1} padding={4}>
         <Typography
+          component="div"
           display="flex"
+          flex={0}
+          justifyContent="center"
           sx={{
             fontSize: {
               xs: '12px',
@@ -82,14 +80,12 @@ export const ServerDiscovery = () => {
             color: 'gray.main',
             fontWeight: 600,
             whiteSpace: 'pre-line',
-            flex: '0 0 50%',
-            display: 'flex',
-            justifyContent: 'center',
+            paddingBottom: '2%',
           }}
         >
           {t('discovery.body')}
         </Typography>
-        <Box display="flex" flex="0 0 50%">
+        <Box display="flex" flex={1} justifyContent="center">
           <DiscoveredServers />
         </Box>
       </Box>

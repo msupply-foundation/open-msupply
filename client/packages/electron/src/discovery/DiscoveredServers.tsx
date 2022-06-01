@@ -12,6 +12,7 @@ import {
   useElectronClient,
   useTranslation,
   frontEndHostUrl,
+  CheckboxEmptyIcon,
 } from '@openmsupply-client/common';
 
 export const DiscoveredServers = () => {
@@ -32,23 +33,29 @@ export const DiscoveredServers = () => {
 
   if (discoveryTimedOut)
     return (
-      <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
-        <Box>
-          <AlertIcon />
-        </Box>
-        <Box>
-          <Typography sx={{ color: 'inherit' }}>
-            {t('error.server-not-found')}
-          </Typography>
+      <Box
+        display="flex"
+        sx={{ color: 'error.main' }}
+        justifyContent="center"
+        flexDirection="column"
+      >
+        <Box display="flex" gap={1}>
+          <Box>
+            <AlertIcon />
+          </Box>
+          <Box>
+            <Typography sx={{ color: 'inherit' }}>
+              {t('error.server-not-found')}
+            </Typography>
+          </Box>
         </Box>
       </Box>
     );
 
   return (
-    <div>
+    <Box sx={{ minWidth: '300px', color: 'gray.dark' }}>
       <Typography
         sx={{
-          color: 'gray.main',
           fontSize: {
             xs: '19px',
             sm: '19px',
@@ -57,6 +64,7 @@ export const DiscoveredServers = () => {
             xl: '32px',
           },
           fontWeight: 700,
+          color: 'primary.main',
         }}
       >
         {t('discovery.select-server')}
@@ -68,18 +76,18 @@ export const DiscoveredServers = () => {
             onClick={() => {
               window.electronAPI.connectToServer(server);
             }}
+            sx={{ color: 'inherit' }}
           >
-            {server.isLocal && (
-              <ListItemIcon>
-                <HomeIcon fontSize="small" />
-              </ListItemIcon>
-            )}
-            <ListItemText inset={!server.isLocal}>
+            <ListItemIcon sx={{ color: 'inherit' }}>
+              <CheckboxEmptyIcon fontSize="small" color="inherit" />
+            </ListItemIcon>
+            <ListItemText primaryTypographyProps={{ sx: { color: 'inherit' } }}>
               {frontEndHostUrl(server)}
             </ListItemText>
+            {server.isLocal && <HomeIcon fontSize="small" color="inherit" />}
           </MenuItem>
         ))}
       </MenuList>
-    </div>
+    </Box>
   );
 };
