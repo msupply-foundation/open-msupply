@@ -1197,6 +1197,10 @@ mod repository_test {
         */
 
         /*
+            NOTE: If you want to verify this test is working properly, you can set SQLITE_LOCKWAIT_MS to 0 in test_db.rs (It will only fail on sqlite, postgres should succeed)
+        */
+
+        /*
             Test Scenario
 
             Process A starts a transaction, does a read, then sleeps for a 1000 milliseconds before continuing to write from within the same transaction.
@@ -1215,7 +1219,7 @@ mod repository_test {
                 A: read
                 A: sleeping
                 B: Ready to start transaction
-                <~1000ms wait>
+                <~100ms wait>
                 A: write
                 A: written
                 B: transaction acquired
@@ -1236,7 +1240,7 @@ mod repository_test {
                 B: read
                 B: write 1
                 B: write 2
-                <~1000ms wait>
+                <~100ms wait>
                 A: write
                 A: written
         */
@@ -1250,13 +1254,10 @@ mod repository_test {
                     let repo = ItemRowRepository::new(con);
                     let _ = repo.find_one_by_id("tx_deadlock_id")?;
                     println!("A: read");
-                    println!("A: Sleeping for 1000ms");
+                    println!("A: Sleeping for 100ms");
                     let start_dt = SystemTime::now();
-                    for _ in 0..2 {
-                        //2*500ms = 1000ms
-                        std::thread::sleep(core::time::Duration::from_millis(500));
-                    }
-                    //Recording sleep duration here, as if the thread is blocked by something other than sleep you should see the duration significantly greater than 1000ms
+                    std::thread::sleep(core::time::Duration::from_millis(100));
+                    //Recording sleep duration here, as if the thread is blocked by something other than sleep you should see the duration significantly greater than 100ms
                     let sleep_duration = SystemTime::now()
                         .duration_since(start_dt)
                         .expect("Time went backwards");
@@ -1275,7 +1276,6 @@ mod repository_test {
         let process_b = tokio::spawn(async move {
             //Wait for process a to get a transaction started
             let connection = manager_b.connection().unwrap();
-            // let _ = a_finished_reading_receiver.await;
             println!("B: Ready to start transaction");
             // println!("Starting transaction in blocking thread...");
             let result: Result<(), TransactionError<RepositoryError>> = connection
@@ -1284,7 +1284,6 @@ mod repository_test {
                     let repo = ItemRowRepository::new(&con);
                     let _ = repo.find_one_by_id("tx_deadlock_id")?;
                     println!("B: read");
-
                     let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id".to_string();
                         i.name = "name_b".to_string();
