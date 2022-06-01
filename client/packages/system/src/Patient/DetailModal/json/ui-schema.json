@@ -1,0 +1,39 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/definitions/Patient/properties/firstName",
+      "label": "First Name"
+    },
+    {
+      "type": "Control",
+      "scope": "#/definitions/Patient/properties/lastName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/definitions/Patient/properties/gender"
+    },
+    {
+      "type": "Control",
+      "scope": "#/definitions/Patient/properties/socioEconomics/properties/education"
+    },
+    {
+      "type": "HorizontalLayout",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/definitions/Patient/properties/family/properties/caregiver"
+        },
+        {
+          "type": "Control",
+          "scope": "#/definitions/Patient/properties/dateOfBirth"
+        }
+      ]
+    },
+    {
+      "type": "Control",
+      "scope": "#/definitions/Patient/properties/lastName"
+    }
+  ]
+}

@@ -1,4 +1,9 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useState } from 'react';
+import { JsonForms } from '@jsonforms/react';
+import {
+  materialRenderers,
+  materialCells,
+} from '@jsonforms/material-renderers';
 import {
   useTranslation,
   useBreadcrumbs,
@@ -14,10 +19,9 @@ import {
   MuiLink,
 } from '@openmsupply-client/common';
 // import { usePatient } from '../api';5
-import jsonSchema from './json/schema.json';
-import data from './json/patient_1.json';
-// import Form from '@rjsf/core';
-import Form from '@rjsf/material-ui/v5';
+import schema from './json/schema.json';
+import uiSchema from './json/ui-schema.json';
+import patient from './json/patient_1.json';
 
 interface DetailModalProps {
   nameId: string;
@@ -28,8 +32,10 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
   const t = useTranslation('common');
   // const { setSuffix } = useBreadcrumbs();
   const isDisabled = true;
+  // const [data, setData] = useState(patient1);
   const { localisedDate } = useFormatDateTime();
 
+  const [data, setData] = useState<any>(patient);
   console.log('data', data);
 
   // useEffect(() => {
@@ -51,11 +57,13 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
           gap={4}
           style={{ maxWidth: 600 }}
         >
-          <Form
-            schema={jsonSchema}
-            onChange={() => console.log('changed')}
-            onSubmit={() => console.log('submitted')}
-            onError={() => console.log('errors')}
+          <JsonForms
+            schema={schema}
+            uischema={uiSchema}
+            data={data}
+            renderers={materialRenderers}
+            cells={materialCells}
+            onChange={({ errors, data }) => setData(data)}
           />
           {/* <DetailSection title="">
             <DetailInputWithLabelRow
