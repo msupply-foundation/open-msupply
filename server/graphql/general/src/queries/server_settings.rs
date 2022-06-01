@@ -6,7 +6,6 @@ use graphql_core::{
 use serde::Serialize;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    settings_service::{SettingsService, SettingsServiceTrait},
     sync_settings::SyncSettings,
 };
 
@@ -107,8 +106,8 @@ pub fn get_server_settings(ctx: &Context<'_>, stage0: bool) -> Result<ServerSett
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
+    let service = &service_provider.settings;
 
-    let service = SettingsService {};
     let sync_settings = match service.sync_settings(&service_context) {
         Ok(sync_settings) => sync_settings,
         Err(error) => {

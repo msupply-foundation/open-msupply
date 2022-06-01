@@ -100,6 +100,12 @@ pub trait SettingsServiceTrait: Sync + Send {
         Ok(result)
     }
 
+    fn is_sync_disabled(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
+        Ok(KeyValueStoreRepository::new(&ctx.connection)
+            .get_bool(KeyValueType::SettingsSyncIsDisabled)?
+            .unwrap_or(false))
+    }
+
     fn disable_sync(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {
         KeyValueStoreRepository::new(&ctx.connection)
             .set_bool(KeyValueType::SettingsSyncIsDisabled, Some(true))

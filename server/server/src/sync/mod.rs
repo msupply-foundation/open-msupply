@@ -13,7 +13,7 @@ mod translation_remote;
 mod integration_tests;
 
 pub use actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor};
-use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection};
+use repository::RepositoryError;
 pub use sync_api_credentials::SyncCredentials;
 pub use sync_api_v5::{SyncApiV5, SyncConnectionError};
 pub use synchroniser::Synchroniser;
@@ -49,10 +49,4 @@ impl SyncImportError {
             extra: format!("{:?}", extra),
         }
     }
-}
-
-fn is_sync_disabled(connection: &StorageConnection) -> Result<bool, RepositoryError> {
-    Ok(KeyValueStoreRepository::new(connection)
-        .get_bool(KeyValueType::SettingsSyncIsDisabled)?
-        .unwrap_or(false))
 }
