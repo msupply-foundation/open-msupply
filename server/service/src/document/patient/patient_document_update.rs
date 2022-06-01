@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    Document, Gender, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    NameType, StorageConnection,
+    Document, Gender, NameFilter, NameRepository, NameRow, NameRowRepository,
+    NameStoreJoinRepository, NameStoreJoinRow, NameType, SimpleStringFilter, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -64,7 +64,14 @@ pub fn patient_document_updated(
             .and_then(|n| n.created_datetime.clone())
             .or(Some(doc.timestamp.naive_utc())), // assume there is no earlier doc version
     })?;
-    if existing_name.is_none() {
+    let name_repo = NameRepository::new(con);
+    let name = name_repo.query_one(
+        store_id,
+        NameFilter::new()
+            .is_customer(true)
+            .name(SimpleStringFilter::equal_to(&patient.id)),
+    )?;
+    if name.is_none() {
         // add name store join
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {
@@ -122,7 +129,7 @@ mod test {
             address_1: Some("firstaddressline".to_string()),
             address_2: Some("secondaddressline".to_string()),
             city: None,
-            country: Some("countr".to_string()),
+            country: Some("mycountry".to_string()),
             description: None,
             district: None,
             key: "key".to_string(),
