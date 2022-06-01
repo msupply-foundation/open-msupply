@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use repository::{
     DateFilter, EqualFilter, Gender, NameFilter, NameRepository, NameRow, NameSort, NameSortField,
     NameType, PaginationOption, RepositoryError, SimpleStringFilter, Sort,
@@ -38,24 +37,6 @@ pub type PatientSort = Sort<PatientSortField>;
 
 pub struct Patient {
     pub name_row: NameRow,
-}
-
-impl Patient {
-    pub fn id(&self) -> &String {
-        &self.name_row.name
-    }
-
-    pub fn first_name(&self) -> Option<String> {
-        self.name_row.first_name.clone()
-    }
-
-    pub fn last_name(&self) -> Option<String> {
-        self.name_row.last_name.clone()
-    }
-
-    pub fn date_of_birth(&self) -> Option<NaiveDate> {
-        self.name_row.date_of_birth.clone()
-    }
 }
 
 pub fn get_patients(
