@@ -3,6 +3,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+use bcrypt::BcryptError;
 use log::info;
 use repository::{
     Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
@@ -21,9 +22,7 @@ use crate::{
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
     token::{JWTIssuingError, TokenPair, TokenService},
-    user_account::{
-        CreateUserAccountError, StorePermissions, UserAccountService, VerifyPasswordError,
-    },
+    user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
@@ -36,8 +35,8 @@ pub enum FetchUserError {
 }
 #[derive(Debug)]
 pub enum UpdateUserError {
+    PasswordHashError(BcryptError),
     DatabaseError(RepositoryError),
-    CreateUserAccountError(CreateUserAccountError),
 }
 
 pub struct LoginService {}
@@ -220,7 +219,7 @@ impl LoginService {
             id: user_info.user.id,
             username: username.to_string(),
             hashed_password: UserAccountService::hash_password(&password)
-                .map_err(|e| UpdateUserError::CreateUserAccountError(e))?,
+                .map_err(UpdateUserError::PasswordHashError)?,
             email: match user_info.user.e_mail.as_str() {
                 // TODO do this using serde
                 "" => None,
