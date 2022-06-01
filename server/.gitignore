@@ -21,3 +21,5 @@ plugins
 certs
 static_files
 omsupply-database
+omsupply-database-wal
+omsupply-database-shm
