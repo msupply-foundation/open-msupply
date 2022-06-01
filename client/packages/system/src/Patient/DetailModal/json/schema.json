@@ -1,6 +1,6 @@
 {
-  "$ref": "#/definitions/Patient",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
   "definitions": {
     "Address": {
       "additionalProperties": false,
@@ -39,9 +39,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "key"
-      ],
+      "required": ["key"],
       "type": "object"
     },
     "ContactDetails": {
@@ -71,9 +69,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "key"
-      ],
+      "required": ["key"],
       "type": "object"
     },
     "Family": {
@@ -176,12 +172,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "addresses",
-        "contactDetails",
-        "id",
-        "socioEconomics"
-      ],
+      "required": ["addresses", "contactDetails", "id", "socioEconomics"],
       "type": "object"
     },
     "Person": {
@@ -231,11 +222,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "addresses",
-        "contactDetails",
-        "socioEconomics"
-      ],
+      "required": ["addresses", "contactDetails", "socioEconomics"],
       "type": "object"
     },
     "SocioEconomics": {
