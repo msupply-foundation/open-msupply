@@ -22,3 +22,4 @@ export * from './useUrlQuery';
 export * from './useToggle';
 export * from './useWindowDimensions';
 export * from './useKeyboardHeightAdjustment';
+export * from './useElectronClient';

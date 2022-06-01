@@ -9,7 +9,7 @@ lerna-debug.log*
 
 # Compiled release
 **/build/*
-**/dist/*
+# **/dist/* this is ignored from within dist folder, see comment in dist./.gitingore
 **/storybook-static/*
 
 # Dependency directories
