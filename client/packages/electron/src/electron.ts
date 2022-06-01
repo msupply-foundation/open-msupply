@@ -2,7 +2,10 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import startDiscovery from 'multicast-dns';
 import { IPC_MESSAGES } from './shared';
 import ip from 'ip';
-import { FrontEndHost, frontEndHostUrl } from '@openmsupply-client/common/src/hooks/useElectronClient';
+import {
+  FrontEndHost,
+  frontEndHostUrl,
+} from '@openmsupply-client/common/src/hooks/useElectronClient';
 
 const SERVICE_NAME = '_omsupply._tcp.local';
 const SERVICE_TYPE = 'TXT';
