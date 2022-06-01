@@ -13,6 +13,8 @@
 # test databases
 *.sqlite
 *.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 
 # directories used by the server at runtime
 plugins
