@@ -28,16 +28,6 @@ pub fn patient_document_updated(
     };
     let address = patient.addresses.get(0);
     let name_repo = NameRowRepository::new(con);
-    let patient_name = |first: &Option<String>, last: &Option<String>| {
-        let mut out = vec![];
-        if let Some(first) = first {
-            out.push(first.clone());
-        }
-        if let Some(last) = last {
-            out.push(last.clone());
-        }
-        out.join(",")
-    };
     let existing_name = name_repo.find_one_by_id(&patient.id)?;
     name_repo.upsert_one(&NameRow {
         id: patient.id.clone(),
@@ -86,4 +76,15 @@ pub fn patient_document_updated(
         })?;
     }
     Ok(())
+}
+
+fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
+    let mut out = vec![];
+    if let Some(first) = first {
+        out.push(first.clone());
+    }
+    if let Some(last) = last {
+        out.push(last.clone());
+    }
+    out.join(",")
 }
