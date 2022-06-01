@@ -75,7 +75,7 @@ enum Action {
         #[clap(long, parse(from_flag))]
         pretty: bool,
     },
-    /// Initialise database from exported data), drops existin database, creates new database with latest schema and initialises (syncs) from exported file, also disabling sync
+    /// Initialise database from exported data), drops existing database, creates new database with latest schema and initialises (syncs) from exported file, also disabling sync
     InitialiseFromExport {
         /// Name for import of initialisation data (from `data` folder)
         #[clap(short, long)]
@@ -84,7 +84,7 @@ enum Action {
         #[clap(short, long, parse(from_flag))]
         refresh: bool,
     },
-    /// Make data current, base on latest date difference to now (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference)
+    /// Make data current, base on latest date difference to now (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference). Also make sure refresh dates update does not sync back to central server
     RefreshDates,
 }
 
@@ -276,7 +276,7 @@ async fn main() {
                 info!("Refresh data result: {:#?}", result);
             }
 
-            info!("Updating change log cursor");
+            info!("Updating change log cursor for sync operations");
             RemoteSyncState::new(&connection)
                 .set_initial_remote_data_synced()
                 .unwrap();
@@ -310,7 +310,7 @@ async fn main() {
                 .refresh_dates(Utc::now().naive_local())
                 .unwrap();
 
-            info!("Updating change log cursor");
+            info!("Updating change log cursor for sync operations");
             RemoteSyncState::new(&connection)
                 .set_initial_remote_data_synced()
                 .unwrap();
