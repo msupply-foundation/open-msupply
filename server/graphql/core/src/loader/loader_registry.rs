@@ -182,6 +182,13 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let document_loader = DataLoader::new(
+        DocumentLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -204,6 +211,7 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);
+    loaders.insert(document_loader);
 
     loaders
 }

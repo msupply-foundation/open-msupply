@@ -44,6 +44,11 @@ pub enum Permission {
     InboundShipmentMutate,
     // reporting
     Report,
+    // document
+    Document,
+    // patients
+    PatientQuery,
+    PatientMutate,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
