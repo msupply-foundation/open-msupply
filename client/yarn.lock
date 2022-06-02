@@ -9062,6 +9062,11 @@ ee-first@1.1.1:
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
   integrity sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=
 
+electron-data-storage@^1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/electron-data-storage/-/electron-data-storage-1.1.3.tgz#c12a6797759b4904a4011aa5aefff9d0e556f456"
+  integrity sha512-e1H0Zdwz8lKQKuFRJkhO8j5soA19sNuEGnfAyFYDce2bjcm4wlVeUdKEqXdUYFTd/ufUWaz7o3AG16juB4gSDw==
+
 electron-installer-common@^0.10.2:
   version "0.10.3"
   resolved "https://registry.yarnpkg.com/electron-installer-common/-/electron-installer-common-0.10.3.tgz#40f9db644ca60eb28673d545b67ee0113aef4444"

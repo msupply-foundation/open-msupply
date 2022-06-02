@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, systemPreferences } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import startDiscovery from 'multicast-dns';
 import { IPC_MESSAGES } from './shared';
 import ip from 'ip';
@@ -6,6 +6,7 @@ import {
   FrontEndHost,
   frontEndHostUrl,
 } from '@openmsupply-client/common/src/hooks/useElectronClient';
+import storage from 'electron-data-storage';
 
 const SERVICE_NAME = '_omsupply._tcp.local';
 const SERVICE_TYPE = 'TXT';
@@ -34,7 +35,7 @@ const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   // Can change 'frontEndHostUrl(server)' to http://localhost:3003 if you want client to display front end served by webpack
   window.loadURL(url);
   connectedServer = server;
-  systemPreferences.setUserDefault('/mru/server', 'string', url);
+  storage.set('/mru/server', url);
 };
 
 const start = (): void => {
@@ -52,7 +53,7 @@ const start = (): void => {
   // allow the user to press Alt and force display of the server selection
   window.webContents.on('before-input-event', (event, input) => {
     if (input.alt) {
-      systemPreferences.setUserDefault('/mru/server', 'string', '');
+      storage.remove('/mru/server');
       event.preventDefault();
     }
   });
@@ -81,7 +82,7 @@ const start = (): void => {
 
     window.webContents.send(IPC_MESSAGES.SERVER_DISCOVERED, server);
 
-    const mruServer = systemPreferences.getUserDefault('/mru/server', 'string');
+    const mruServer = storage.get('/mru/server');
     if (mruServer && mruServer === frontEndHostUrl(server)) {
       connectToServer(window, server);
     }
