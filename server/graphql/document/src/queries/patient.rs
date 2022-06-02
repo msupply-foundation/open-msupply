@@ -35,10 +35,6 @@ impl PatientNode {
         &self.patient.name_row.name
     }
 
-    pub async fn store_id(&self) -> Option<String> {
-        self.patient.name_row.supplying_store_id.clone()
-    }
-
     pub async fn first_name(&self) -> Option<String> {
         self.patient.name_row.first_name.clone()
     }
