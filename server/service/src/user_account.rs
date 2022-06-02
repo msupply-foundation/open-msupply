@@ -153,7 +153,7 @@ impl<'a> UserAccountService<'a> {
         let key_value_store = KeyValueStoreRepository::new(self.connection);
         let site_id = key_value_store
             .get_i32(KeyValueType::SettingsSyncSiteId)?
-            .unwrap();
+            .unwrap(); //TODO relocate to service service
 
         let repo = UserRepository::new(self.connection);
         repo.query_one(
