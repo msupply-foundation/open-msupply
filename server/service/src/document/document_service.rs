@@ -13,9 +13,10 @@ use super::{
     merge::{three_way_merge, two_way_merge, TakeLatestConflictSolver},
     raw_document::RawDocument,
     topological_sort::{extract_tree, topo_sort},
+    update_trigger::document_updated,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
     /// Input document doesn't match the provided json schema
     InvalidDataSchema(Vec<String>),
@@ -25,8 +26,6 @@ pub enum DocumentInsertError {
     /// merged data has an invalid data schema.
     MergeRequired(Option<RawDocument>),
     InvalidDocumentHistory,
-    /// Unable to finalise a document (assign an id)
-    FinalisationError(String),
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -103,7 +102,10 @@ pub trait DocumentServiceTrait: Sync + Send {
                 }
 
                 match insert_document(con, store_id, doc) {
-                    Ok(doc) => Ok(doc),
+                    Ok(doc) => {
+                        document_updated(con, store_id, &doc)?;
+                        Ok(doc)
+                    }
                     Err(err) => match err {
                         DocumentInsertError::MergeRequired(ref merged_doc) => {
                             // check that the merged document has a valid schema
@@ -184,26 +186,28 @@ fn json_validator(
     connection: &StorageConnection,
     doc: &RawDocument,
 ) -> Result<Option<JSONSchema>, DocumentInsertError> {
-    if let Some(schema_id) = &doc.schema_id {
-        let schema_repo = JsonSchemaRepository::new(connection);
-        let schema = schema_repo.find_one_by_id(schema_id)?;
-        let compiled = match JSONSchema::compile(&schema.schema) {
-            Ok(v) => Ok(v),
-            Err(err) => Err(DocumentInsertError::InternalError(format!(
-                "Invalid json schema: {}",
-                err
-            ))),
-        }?;
-        return Ok(Some(compiled));
-    }
-    Ok(None)
+    let schema_id = match &doc.schema_id {
+        Some(schema_id) => schema_id,
+        None => return Ok(None),
+    };
+
+    let schema_repo = JsonSchemaRepository::new(connection);
+    let schema = schema_repo.find_one_by_id(&schema_id)?;
+    let compiled = match JSONSchema::compile(&schema.schema) {
+        Ok(v) => Ok(v),
+        Err(err) => Err(DocumentInsertError::InternalError(format!(
+            "Invalid json schema: {}",
+            err
+        ))),
+    }?;
+    Ok(Some(compiled))
 }
 
 fn validate_json(validator: &JSONSchema, data: &serde_json::Value) -> Result<(), Vec<String>> {
-    Ok(validator.validate(data).map_err(|errors| {
-        let errors: Vec<String> = errors.into_iter().map(|err| format!("{}", err)).collect();
+    validator.validate(data).map_err(|errors| {
+        let errors: Vec<String> = errors.map(|err| format!("{}", err)).collect();
         errors
-    })?)
+    })
 }
 
 /// Does a raw insert without schema validation
@@ -218,7 +222,7 @@ fn insert_document(
     let insert_doc_and_head = |raw_doc: RawDocument| -> Result<Document, DocumentInsertError> {
         let doc = raw_doc
             .finalise()
-            .map_err(|err| DocumentInsertError::FinalisationError(err))?;
+            .map_err(|err| DocumentInsertError::InternalError(err))?;
         repo.insert_document(&doc)?;
         repo.update_document_head(store_id, &doc)?;
         Ok(doc)

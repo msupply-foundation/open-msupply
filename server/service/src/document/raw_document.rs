@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use util::{canonical_json::CanonicalJsonValue, hash::sha256};
 
 /// Like Document but without id
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct RawDocument {
     pub name: String,
     pub parents: Vec<String>,

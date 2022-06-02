@@ -15,6 +15,9 @@ CREATE TABLE user_permission (
         'INBOUND_SHIPMENT_QUERY',
         'INBOUND_SHIPMENT_MUTATE',
         'REPORT',
-        'SERVER_ADMIN'
+        'SERVER_ADMIN',
+        'DOCUMENT',
+        'PATIENT_QUERY',
+        'PATIENT_MUTATE'
     )) NOT NULL
 )
