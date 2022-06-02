@@ -69,10 +69,10 @@ export const DiscoveredServers = () => {
       >
         {t('discovery.select-server')}
       </Typography>
-      <MenuList>
-        {Object.entries(servers).map(([key, server]) => (
+      <MenuList style={{ overflowY: 'auto', maxHeight: '200px' }}>
+        {servers.map(server => (
           <MenuItem
-            key={key}
+            key={server.id}
             onClick={() => {
               window.electronAPI.connectToServer(server);
             }}

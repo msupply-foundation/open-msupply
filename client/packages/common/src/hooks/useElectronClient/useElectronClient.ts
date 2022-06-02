@@ -4,6 +4,7 @@ const DISCOVERY_TIMEOUT = 5000;
 
 // Should match server/server/src/discovery.rs (FrontEndHost)
 export type FrontEndHost = {
+  id: string;
   protocol: 'http' | 'https';
   port: number;
   ip: string;
@@ -32,14 +33,14 @@ declare global {
 }
 
 type ElectronClientState = {
-  servers: { [key: string]: FrontEndHost };
+  servers: FrontEndHost[];
   connectedServer: FrontEndHost | null;
   // Indicate that server discovery has taken too long without finding server
   discoveryTimedOut: boolean;
 };
 
 const initialDiscoveryState: ElectronClientState = {
-  servers: {},
+  servers: [],
   connectedServer: null,
   discoveryTimedOut: false,
 };
@@ -72,19 +73,23 @@ export const useElectronClient = (discover = false) => {
 
     if (serverDiscovered) {
       serverDiscovered((_event, server) => {
-        setState(state => ({
-          ...state,
-          ...{
-            servers: { ...state.servers, [JSON.stringify(server)]: server },
-            discoveryTimedOut: false,
-          },
-        }));
+        const id = frontEndHostUrl(server);
+
+        setState(state =>
+          state.servers.some(server => server.id === id)
+            ? state
+            : {
+                ...state,
+                servers: [...state.servers, { ...server, id }],
+                discoveryTimedOut: false,
+              }
+        );
       });
     }
   }, []);
 
   useEffect(() => {
-    if (timedOut && Object.values(state.servers).length == 0) {
+    if (timedOut && state.servers.length == 0) {
       setState(state => ({ ...state, ...{ discoveryTimedOut: true } }));
     }
   }, [timedOut, state]);
