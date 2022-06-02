@@ -6,14 +6,20 @@ use serde_json::Value;
 pub type MergeObject = serde_json::Map<String, serde_json::Value>;
 
 pub trait ConflictSolver {
-    fn solve(&self, our: &Value, their: &Value, base: Option<&Value>) -> Value;
+    /// If None is returned the item will be removed
+    fn solve(
+        &self,
+        our: Option<&Value>,
+        their: Option<&Value>,
+        base: Option<&Value>,
+    ) -> Option<Value>;
 }
 
 pub struct TakeOurConflictSolver {}
 
 impl ConflictSolver for TakeOurConflictSolver {
-    fn solve(&self, our: &Value, _: &Value, _: Option<&Value>) -> Value {
-        our.clone()
+    fn solve(&self, our: Option<&Value>, _: Option<&Value>, _: Option<&Value>) -> Option<Value> {
+        our.map(|our| our.clone())
     }
 }
 
@@ -29,11 +35,16 @@ impl TakeLatestConflictSolver {
 }
 
 impl ConflictSolver for TakeLatestConflictSolver {
-    fn solve(&self, our: &Value, their: &Value, _: Option<&Value>) -> Value {
+    fn solve(
+        &self,
+        our: Option<&Value>,
+        their: Option<&Value>,
+        _: Option<&Value>,
+    ) -> Option<Value> {
         if self.our > self.their {
-            our.clone()
+            our.map(|our| our.clone())
         } else {
-            their.clone()
+            their.map(|their| their.clone())
         }
     }
 }
@@ -77,7 +88,7 @@ fn two_way_merge_value(
             (Value::Object(o), Value::Object(t)) => {
                 Some(Value::Object(two_way_merge_object(o, t, strategy)))
             }
-            _ => Some(strategy.solve(our, their, None)),
+            _ => strategy.solve(Some(our), Some(their), None),
         },
         (Some(our), None) => Some(our.clone()),
         (None, Some(their)) => Some(their.clone()),
@@ -143,7 +154,7 @@ fn three_way_merge_value(
                 } else if their == base {
                     Some(our.clone())
                 } else {
-                    Some(strategy.solve(our, their, Some(base)))
+                    strategy.solve(Some(our), Some(their), Some(base))
                 }
             }
         },
@@ -151,13 +162,13 @@ fn three_way_merge_value(
             let merged = two_way_merge(our, their, strategy);
             Some(merged)
         }
-        (Some(_), None, Some(_)) => {
+        (Some(our), None, Some(base)) => {
             // removed in theirs
-            None
+            strategy.solve(Some(our), None, Some(base))
         }
-        (None, Some(_), Some(_)) => {
+        (None, Some(their), Some(base)) => {
             // removed in ours
-            None
+            strategy.solve(None, Some(their), Some(base))
         }
         (Some(our), None, None) => {
             // added in our's
@@ -279,6 +290,7 @@ mod three_way_merge_test {
         let theirs = json!({
           "value1": "string2",
           "value2": true,
+          "value3": 30,
           "value4": 50,
           "array1": [1, "base"],
           "array2": [2, 3],
@@ -286,7 +298,6 @@ mod three_way_merge_test {
         let ours = json!({
           "value1": "string",
           "value2": false,
-          "value3": 30,
           "value4": 50,
           "array1": [1, "ours"],
         });
@@ -316,6 +327,7 @@ mod three_way_merge_test {
         let theirs = json!({
           "value1": "string2",
           "value2": false,
+          "value3": 30,
           "value4": 51,
           "array1": [1, 2],
           "array2": [{ "t": "theirs"}],
@@ -323,7 +335,6 @@ mod three_way_merge_test {
         let ours = json!({
           "value1": "string3",
           "value2": false,
-          "value3": 30,
           "value4": 52,
           "array1": ["test", "test"],
           "array2": [{ "t": "ours"}],

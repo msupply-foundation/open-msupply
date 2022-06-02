@@ -37,8 +37,13 @@ impl ObjectArrayConflictSolver {
 }
 
 impl ConflictSolver for ObjectArrayConflictSolver {
-    fn solve(&self, our: &Value, their: &Value, base: Option<&Value>) -> Value {
-        if let Some(base) = base {
+    fn solve(
+        &self,
+        our: Option<&Value>,
+        their: Option<&Value>,
+        base: Option<&Value>,
+    ) -> Option<Value> {
+        if let (Some(our), Some(their), Some(base)) = (our, their, base) {
             // three way merge
             match (our, their, base) {
                 (Value::Array(o), Value::Array(t), Value::Array(b)) => {
@@ -50,12 +55,12 @@ impl ConflictSolver for ObjectArrayConflictSolver {
                         OBJECT_ARRAY_KEY,
                         self.prefer_our_for_sorting(),
                     ) {
-                        return Value::Array(merged);
+                        return Some(Value::Array(merged));
                     }
                 }
                 _ => {}
             }
-        } else {
+        } else if let (Some(our), Some(their)) = (our, their) {
             // two way merge
             match (our, their) {
                 (Value::Array(o), Value::Array(t)) => {
@@ -66,7 +71,7 @@ impl ConflictSolver for ObjectArrayConflictSolver {
                         OBJECT_ARRAY_KEY,
                         self.prefer_our_for_sorting(),
                     ) {
-                        return Value::Array(merged);
+                        return Some(Value::Array(merged));
                     }
                 }
                 _ => {}
@@ -373,24 +378,24 @@ mod object_array_merge_test {
             "value1": "value1",
           }]
         });
-        let theirs = json!({
+        let ours = json!({
           "array1": [{
             "key": "2",
-            "value1": "theirs",
+            "value1": "ours",
           },
           {
             "key": "3",
-            "value1": "theirs",
+            "value1": "ours",
           }]
         });
-        let ours = json!({
+        let theirs = json!({
           "array1": [{
             "key": "1",
             "value1": "value1",
           },
           {
             "key": "2",
-            "value1": "ours",
+            "value1": "theirs",
           }]
         });
         let solver = ObjectArrayConflictSolver {
@@ -414,7 +419,7 @@ mod object_array_merge_test {
               },
               {
                 "key": "3",
-                "value1": "theirs",
+                "value1": "ours",
               }]
             })
         );
@@ -436,14 +441,15 @@ mod object_array_merge_test {
             "value1": "base3",
           }]
         });
-        let theirs = json!({
+        let ours = json!({
           "array1": [
             {
               "key": "0",
-              "value1": "theirs0",
-            },{
+              "value1": "ours0",
+            },
+            {
               "key": "2",
-              "value1": "theirs1",
+              "value1": "ours1",
             },
             {
               "key": "3",
@@ -451,14 +457,14 @@ mod object_array_merge_test {
             },
             {
               "key": "5",
-              "value1": "theirs5",
+              "value1": "ours5",
             },
             {
               "key": "6",
-              "value1": "theirs6",
+              "value1": "ours6",
             }]
         });
-        let ours = json!({
+        let theirs = json!({
           "array1": [
             {
               "key": "1",
@@ -466,15 +472,15 @@ mod object_array_merge_test {
             },
             {
               "key": "2",
-              "value1": "ours2",
+              "value1": "theirs2",
             },
             {
               "key": "a",
-              "value1": "ours_a",
+              "value1": "theirs_a",
             },
             {
               "key": "b",
-              "value1": "ours_b",
+              "value1": "theirs_b",
             },
             {
               "key": "3",
@@ -500,19 +506,19 @@ mod object_array_merge_test {
               "array1": [
                 {
                   "key": "0",
-                  "value1": "theirs0",
+                  "value1": "ours0",
                 },
                 {
                   "key": "2",
-                  "value1": "ours2",
+                  "value1": "ours1",
                 },
                 {
                   "key": "a",
-                  "value1": "ours_a",
+                  "value1": "theirs_a",
                 },
                 {
                   "key": "b",
-                  "value1": "ours_b",
+                  "value1": "theirs_b",
                 },
                 {
                   "key": "3",
@@ -520,11 +526,11 @@ mod object_array_merge_test {
                 },
                 {
                   "key": "5",
-                  "value1": "theirs5",
+                  "value1": "ours5",
                 },
                 {
                   "key": "6",
-                  "value1": "theirs6",
+                  "value1": "ours6",
                 }
               ]
             })
