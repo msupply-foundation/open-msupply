@@ -52,6 +52,7 @@ pub fn insert_patients(
         data: patient_data,
         schema_id: input.schema_id,
     };
+    // Updating the document will trigger an update in the patient (names) table
     let service = DocumentService {};
     service
         .update_document(ctx, &store_id, doc)

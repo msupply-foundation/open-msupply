@@ -9,6 +9,7 @@ mod insert;
 pub mod patient_document_update;
 pub mod patient_schema;
 
+/// The default document type for a patient
 pub const PATIENT_TYPE: &str = "Patient";
 
 pub fn patient_doc_name(patient_id: &str) -> String {
