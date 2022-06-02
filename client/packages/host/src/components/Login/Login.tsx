@@ -10,7 +10,7 @@ import {
   useNavigate,
   ServerStatus,
   useElectronClient,
-  frontEndHostUrl,
+  frontEndHostDisplay,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useHost } from '../../api/hooks';
@@ -49,7 +49,7 @@ export const Login = () => {
 
   return (
     <LoginLayout
-      ServerInfo={connectedServer ? frontEndHostUrl(connectedServer) : ''}
+      ServerInfo={connectedServer ? frontEndHostDisplay(connectedServer) : ''}
       UsernameInput={
         <LoginTextInput
           fullWidth
