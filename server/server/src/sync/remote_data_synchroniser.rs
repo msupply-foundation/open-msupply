@@ -279,6 +279,7 @@ pub fn remote_sync_batch_records_to_buffer_rows(
     remote_sync_records
 }
 
+// This struct is only for updating values related to sync state, avoid using logic within associated methods
 pub struct RemoteSyncState<'a> {
     key_value_store: KeyValueStoreRepository<'a>,
 }
@@ -309,6 +310,7 @@ impl<'a> RemoteSyncState<'a> {
         Ok(value.unwrap_or(false))
     }
 
+    // This method should always be coupled with updating of RemoteSyncPushCursor to latest change log + 1
     pub fn set_initial_remote_data_synced(&self) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
