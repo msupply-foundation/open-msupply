@@ -49,6 +49,14 @@ const start = (): void => {
   // and load the index.html of the app.
   window.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
+  // allow the user to press Alt and force display of the server selection
+  window.webContents.on('before-input-event', (event, input) => {
+    if (input.alt) {
+      systemPreferences.setUserDefault('/mru/server', 'string', '');
+      event.preventDefault();
+    }
+  });
+
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
     isDiscovering = true;
   });
