@@ -33,7 +33,7 @@ pub struct LoginInputV4 {
     pub login_type: LoginUserTypeV4,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LoginUserV4 {
     #[serde(rename = "ID")]
     pub id: String,
@@ -78,7 +78,7 @@ pub struct LoginUserV4 {
     pub spare_1: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LoginUserStoresV4 {
     #[serde(rename = "ID")]
     pub id: String,
@@ -92,7 +92,7 @@ pub struct LoginUserStoresV4 {
     pub permissions: Vec<bool>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LoginUserInfoV4 {
     pub user: LoginUserV4,
     #[serde(rename = "userStores")]

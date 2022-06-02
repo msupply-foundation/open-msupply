@@ -39,6 +39,7 @@ declare module '@mui/material/styles/createMixins' {
     gradient: {
       primary: string;
       secondary: string;
+      tertiary: string;
     };
     icon: {
       medium: { width: number; height: number };
@@ -138,6 +139,7 @@ export const themeOptions = {
     gradient: {
       primary: 'linear-gradient(156deg, #f80 4%, #e63535 96%)',
       secondary: 'linear-gradient(156deg, #78a3fc 4%, #3e7bfa 96%)',
+      tertiary: 'linear-gradient(156deg, #e63535 4%, #78a3fc 96%)',
     },
     header: { backgroundColor: '#fafafc', borderBottom: '1px solid #cbced4' },
     icon: { medium: { height: 20, width: 20 } },

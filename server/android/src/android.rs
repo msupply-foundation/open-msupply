@@ -113,12 +113,9 @@ pub mod android {
             actix_web::rt::System::new().block_on(async move {
                 let settings = Settings {
                     server: ServerSettings {
-                        host: "127.0.0.1".to_string(),
                         port,
                         danger_allow_http: true,
-                        develop: false,
                         debug_no_access_control: false,
-                        debug_cors_permissive: false,
                         cors_origins: vec!["http://localhost".to_string()],
                         base_dir: Some(files_dir.to_str().unwrap().to_string()),
                     },
