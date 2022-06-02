@@ -7,6 +7,7 @@ pub mod apis;
 pub mod auth;
 pub mod auth_data;
 pub mod dashboard;
+pub mod document;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
@@ -172,6 +173,20 @@ impl<'a> BatchMutationsProcessor<'a> {
 }
 
 // Pagination helpers
+
+pub fn get_default_pagination_unlimited(
+    pagination_option: Option<PaginationOption>) -> Pagination {
+        match pagination_option {
+            Some(pagination) => Pagination {
+                offset: pagination.offset.unwrap_or(0),
+                limit:  pagination.limit.unwrap_or(DEFAULT_PAGINATION_LIMIT)
+            },
+            None => Pagination {
+                offset: 0,
+                limit: DEFAULT_PAGINATION_LIMIT,
+            },
+        }
+    }
 
 pub fn get_default_pagination(
     pagination_option: Option<PaginationOption>,

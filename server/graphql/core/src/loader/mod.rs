@@ -1,3 +1,4 @@
+mod document;
 mod invoice;
 mod invoice_line;
 mod item;
@@ -17,6 +18,7 @@ mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
+pub use document::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::ItemLoader;

@@ -314,9 +314,16 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::ViewReports => {
                 output.insert(Permission::Report);
             }
+            // patient
+            Permissions::EditPatientDetails => {
+                output.insert(Permission::PatientMutate);
+                output.insert(Permission::PatientQuery);
+            }
             _ => continue,
         }
     }
+    // TODO have a settings in mSupply:
+    output.insert(Permission::Document);
     output
 }
 
