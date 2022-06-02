@@ -106,14 +106,12 @@ impl<'a> UserAccountService<'a> {
         Ok(result)
     }
 
-    pub fn hash_password(password: &str) -> Result<String, CreateUserAccountError> {
-        match hash(password, DEFAULT_COST) {
-            Ok(pwd) => Ok(pwd),
-            Err(err) => {
-                error!("create_user: Failed to hash password");
-                return Err(CreateUserAccountError::PasswordHashError(err));
-            }
+    pub fn hash_password(password: &str) -> Result<String, BcryptError> {
+        let hashed_password = hash(password, DEFAULT_COST);
+        if let Err(err) = &hashed_password {
+            error!("create_user: Failed to hash password. {:#?}", err);
         }
+        hashed_password
     }
 
     pub fn create_user(
@@ -129,7 +127,10 @@ impl<'a> UserAccountService<'a> {
                 {
                     return Err(CreateUserAccountError::UserNameExist);
                 }
-                let hashed_password = UserAccountService::hash_password(&user.password)?;
+
+                let hashed_password = UserAccountService::hash_password(&user.password)
+                    .map_err(CreateUserAccountError::PasswordHashError)?;
+
                 let row = UserAccountRow {
                     id: uuid(),
                     username: user.username,

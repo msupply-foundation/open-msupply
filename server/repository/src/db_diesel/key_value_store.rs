@@ -16,6 +16,7 @@ table! {
     }
 }
 
+// Database:  https://github.com/openmsupply/open-msupply/blob/d6645711184c63593949c3e8b6dc96b5a5ded39f/server/repository/migrations/postgres/2022-02-11T15-00_create_key_value_store/up.sql#L2-L16
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyValueType {
@@ -34,6 +35,7 @@ pub enum KeyValueType {
     SettingsSyncCentralServerSiteId,
     SettingsSyncSiteId,
     SettingsSyncSiteHardwareId,
+    SettingsSyncIsDisabled,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

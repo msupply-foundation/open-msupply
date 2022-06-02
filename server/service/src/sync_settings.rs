@@ -1,4 +1,4 @@
-#[derive(serde::Deserialize, Clone, Debug, PartialEq)]
+#[derive(serde::Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct SyncSettings {
     pub url: String,
     pub username: String,

@@ -9,6 +9,8 @@ import {
   useHostContext,
   useNavigate,
   ServerStatus,
+  useElectronClient,
+  frontEndHostDisplay,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useHost } from '../../api/hooks';
@@ -18,6 +20,7 @@ import { LoginLayout } from './LoginLayout';
 
 export const Login = () => {
   const t = useTranslation('app');
+  const { connectedServer } = useElectronClient();
   const { setPageTitle } = useHostContext();
   const { data } = useHost.utils.settings();
   const navigate = useNavigate();
@@ -46,6 +49,17 @@ export const Login = () => {
 
   return (
     <LoginLayout
+      ServerInfo={
+        <Typography
+          sx={{
+            fontSize: '12px',
+            color: 'gray.main',
+            fontWeight: 600,
+          }}
+        >
+          {connectedServer && `Server: ${frontEndHostDisplay(connectedServer)}`}
+        </Typography>
+      }
       UsernameInput={
         <LoginTextInput
           fullWidth
