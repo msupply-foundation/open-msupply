@@ -12,8 +12,16 @@ use diesel::{
 use futures_util::Future;
 use log::error;
 
+// feature sqlite
+#[cfg(not(feature = "postgres"))]
+const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN IMMEDIATE;";
+// feature postgres
+#[cfg(feature = "postgres")]
+const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN";
+
 pub struct StorageConnection {
     pub connection: DBConnection,
+    // pub arc_connection: Arc<DBConnection>,
     /// Current level of nested transaction.
     /// For example:
     /// 0 => no transaction
@@ -93,13 +101,14 @@ impl StorageConnection {
 
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
-        transaction_manager.begin_transaction(con).map_err(|err| {
-            error!("Failed to begin tx: {:?}", err);
-            TransactionError::Transaction {
-                msg: format!("Failed to begin tx: {}", err),
-                level: current_level + 1,
-            }
-        })?;
+        if current_level == 0 {
+            // sqlite can only have 1 writer at a time, so to avoid concurrency issues,
+            // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
+            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
+        } else {
+            transaction_manager.begin_transaction(con)
+        }
+        .map_err(|e| map_begin_transaction_error(e, current_level))?;
 
         self.transaction_level.set(current_level + 1);
         let result = f(self).await;
@@ -160,14 +169,14 @@ impl StorageConnection {
         }
         let con = &self.connection;
         let transaction_manager = con.transaction_manager();
-
-        transaction_manager.begin_transaction(con).map_err(|err| {
-            error!("Failed to begin tx: {:?}", err);
-            TransactionError::Transaction {
-                msg: format!("Failed to begin tx: {}", err),
-                level: current_level + 1,
-            }
-        })?;
+        if current_level == 0 {
+            // sqlite can only have 1 writer, so to avoid concurrency issues,
+            // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
+            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
+        } else {
+            transaction_manager.begin_transaction(con)
+        }
+        .map_err(|e| map_begin_transaction_error(e, current_level))?;
 
         self.transaction_level.set(current_level + 1);
         let result = f(self);
@@ -197,6 +206,17 @@ impl StorageConnection {
                 Err(TransactionError::Inner(e))
             }
         }
+    }
+}
+
+fn map_begin_transaction_error<T>(
+    e: diesel::result::Error,
+    current_level: i32,
+) -> TransactionError<T> {
+    error!("Failed to begin tx: {:?}", e);
+    TransactionError::Transaction {
+        msg: format!("Failed to begin tx: {}", e),
+        level: current_level + 1,
     }
 }
 
