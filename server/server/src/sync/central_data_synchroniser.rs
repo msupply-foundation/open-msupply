@@ -30,6 +30,11 @@ pub enum CentralSyncError {
     DBConnectionError { source: RepositoryError },
 }
 
+impl CentralSyncError {
+    pub fn from_database_error(e: RepositoryError) -> Self {
+        CentralSyncError::DBConnectionError { source: e }
+    }
+}
 pub struct CentralDataSynchroniser {
     pub sync_api_v5: SyncApiV5,
 }
@@ -92,7 +97,7 @@ impl CentralDataSynchroniser {
     }
 
     /// insert row and update cursor in a single transaction
-    async fn insert_one_and_update_cursor(
+    pub async fn insert_one_and_update_cursor(
         connection: &StorageConnection,
         central_sync_buffer_row: &CentralSyncBufferRow,
     ) -> Result<(), RepositoryError> {
@@ -110,8 +115,7 @@ impl CentralDataSynchroniser {
         Ok(result?)
     }
 
-    async fn integrate_central_records(
-        &self,
+    pub async fn integrate_central_records(
         connection: &StorageConnection,
     ) -> Result<(), CentralSyncError> {
         let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
@@ -162,14 +166,14 @@ impl CentralDataSynchroniser {
         info!("Successfully synced central records");
 
         info!("Integrating central records...");
-        self.integrate_central_records(connection).await?;
+        CentralDataSynchroniser::integrate_central_records(connection).await?;
         info!("Successfully integrated central records");
 
         Ok(())
     }
 }
 
-fn central_sync_batch_records_to_buffer_rows(
+pub fn central_sync_batch_records_to_buffer_rows(
     records: Option<Vec<CentralSyncRecordV5>>,
 ) -> Result<Vec<CentralSyncBufferRow>, serde_json::Error> {
     let central_sync_records: Result<Vec<CentralSyncBufferRow>, serde_json::Error> = records
@@ -215,27 +219,22 @@ impl<'a> CentralSyncPullCursor<'a> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        sync::{
-            translation_central::test_data::{
-                check_records_against_database, extract_sync_buffer_rows,
-                item::get_test_item_records, master_list::get_test_master_list_records,
-                master_list_line::get_test_master_list_line_records,
-                master_list_name_join::get_test_master_list_name_join_records,
-                name::get_test_name_records, store::get_test_store_records,
-            },
-            SyncApiV5, SyncCredentials,
+        sync::translation_central::test_data::{
+            check_records_against_database, extract_sync_buffer_rows, item::get_test_item_records,
+            master_list::get_test_master_list_records,
+            master_list_line::get_test_master_list_line_records,
+            master_list_name_join::get_test_master_list_name_join_records,
+            name::get_test_name_records, store::get_test_store_records,
         },
         test_utils::get_test_settings,
     };
     use repository::{test_db, CentralSyncBufferRepository, CentralSyncBufferRow};
-    use reqwest::{Client, Url};
 
     use super::CentralDataSynchroniser;
 
     #[actix_rt::test]
     async fn test_integrate_central_records() {
         let settings = get_test_settings("omsupply-database-integrate_central_records");
-        let sync_settings = settings.sync.unwrap();
         let connection_manager = test_db::setup(&settings.database).await;
 
         // use test records with cursors that are out of order
@@ -255,16 +254,7 @@ mod tests {
             .insert_many(&central_records)
             .expect("Failed to insert central sync records into sync buffer");
 
-        let client = Client::new();
-        let url = Url::parse(&sync_settings.url).unwrap();
-        let credentials = SyncCredentials {
-            username: sync_settings.username,
-            password_sha256: sync_settings.password_sha256,
-        };
-        let sync_api_v5 = SyncApiV5::new(url, credentials, client);
-
-        let sync = CentralDataSynchroniser { sync_api_v5 };
-        sync.integrate_central_records(&connection)
+        CentralDataSynchroniser::integrate_central_records(&connection)
             .await
             .expect("Failed to integrate central records");
 
