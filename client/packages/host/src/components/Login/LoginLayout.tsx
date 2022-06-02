@@ -93,7 +93,6 @@ export const LoginLayout = ({
           overflowY: 'scroll',
         }}
       >
-        {ServerInfo}
         <Box
           display="flex"
           flexGrow="1"
@@ -118,6 +117,24 @@ export const LoginLayout = ({
           </Box>
         </Box>
       </Box>
+      <Typography
+        component="div"
+        sx={{
+          fontSize: {
+            xs: '12px',
+            sm: '12px',
+            md: '12px',
+            lg: '14px',
+            xl: '14px',
+          },
+          color: 'gray.main',
+          position: 'absolute',
+          bottom: '10px',
+          right: '30px',
+        }}
+      >
+        {ServerInfo}
+      </Typography>
     </Box>
   );
 };

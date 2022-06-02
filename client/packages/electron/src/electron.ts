@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, systemPreferences } from 'electron';
 import startDiscovery from 'multicast-dns';
 import { IPC_MESSAGES } from './shared';
 import ip from 'ip';
@@ -28,11 +28,20 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
+  isDiscovering = false;
+  const url = frontEndHostUrl(server);
+  // Can change 'frontEndHostUrl(server)' to http://localhost:3003 if you want client to display front end served by webpack
+  window.loadURL(url);
+  connectedServer = server;
+  systemPreferences.setUserDefault('/mru/server', 'string', url);
+};
+
 const start = (): void => {
   // Create the browser window.
   const window = new BrowserWindow({
-    height: 600,
-    width: 800,
+    height: 768,
+    width: 1024,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -44,12 +53,9 @@ const start = (): void => {
     isDiscovering = true;
   });
 
-  ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) => {
-    isDiscovering = false;
-    // Can change 'frontEndHostUrl(server)' to http://localhost:3003 if you want client to display front end served by webpack
-    window.loadURL(frontEndHostUrl(server));
-    connectedServer = server;
-  });
+  ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) =>
+    connectToServer(window, server)
+  );
 
   ipcMain.handle(
     IPC_MESSAGES.CONNECTED_SERVER,
@@ -62,10 +68,15 @@ const start = (): void => {
     if (answer.name !== SERVICE_NAME) return;
     if (answer.type !== SERVICE_TYPE) return;
 
-    let server: FrontEndHost = JSON.parse(answer.data.toString());
+    const server: FrontEndHost = JSON.parse(answer.data.toString());
     server.isLocal = server.ip === ip.address();
 
     window.webContents.send(IPC_MESSAGES.SERVER_DISCOVERED, server);
+
+    const mruServer = systemPreferences.getUserDefault('/mru/server', 'string');
+    if (mruServer && mruServer === frontEndHostUrl(server)) {
+      connectToServer(window, server);
+    }
   });
 
   setInterval(() => {
