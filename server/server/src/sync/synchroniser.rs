@@ -149,14 +149,13 @@ impl Synchroniser {
 #[cfg(test)]
 mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
-    use service::settings_service::{SettingsService, SettingsServiceTrait};
     use util::inline_init;
 
     use super::*;
 
     #[actix_rt::test]
     async fn test_disabled_sync() {
-        let (_, connection, connection_manager, _) =
+        let (_, _, connection_manager, _) =
             setup_all("test_disabled_sync", MockDataInserts::none()).await;
 
         // 0.0.0.0:0 should hopefully be always unreachable and valid url

@@ -72,8 +72,14 @@ impl RemoteDataSynchroniser {
         self.pull(connection).await?;
         RemoteDataSynchroniser::integrate_records(connection).await?;
 
-        // Update change log (push) cursor after initial sync, i.e. set it to the end of the just received data
-        // so we only push new data to the central server, and set RemoteSyncInitilisationFinished to true
+        // Update push cursor after initial sync, i.e. set it to the end of the just received data
+        // so we only push new data to the central server
+        let cursor = ChangelogRowRepository::new(connection)
+            .latest_changelog()?
+            .map(|row| row.id)
+            .unwrap_or(0) as u32;
+        state.update_push_cursor(cursor + 1)?;
+
         state.set_initial_remote_data_synced()?;
         Ok(())
     }
@@ -275,14 +281,12 @@ pub fn remote_sync_batch_records_to_buffer_rows(
 
 pub struct RemoteSyncState<'a> {
     key_value_store: KeyValueStoreRepository<'a>,
-    changelog_row_repository: ChangelogRowRepository<'a>,
 }
 
 impl<'a> RemoteSyncState<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         RemoteSyncState {
             key_value_store: KeyValueStoreRepository::new(connection),
-            changelog_row_repository: ChangelogRowRepository::new(connection),
         }
     }
 
@@ -306,13 +310,6 @@ impl<'a> RemoteSyncState<'a> {
     }
 
     pub fn set_initial_remote_data_synced(&self) -> Result<(), RepositoryError> {
-        let cursor = self
-            .changelog_row_repository
-            .latest_changelog()?
-            .map(|row| row.id)
-            .unwrap_or(0) as u32;
-        self.update_push_cursor(cursor + 1)?;
-
         self.key_value_store
             .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
     }

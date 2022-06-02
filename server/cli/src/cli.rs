@@ -14,7 +14,7 @@ use server::{
             central_sync_batch_records_to_buffer_rows, CentralDataSynchroniser,
         },
         remote_data_synchroniser::{
-            remote_sync_batch_records_to_buffer_rows, RemoteDataSynchroniser, RemoteSyncState,
+            remote_sync_batch_records_to_buffer_rows, RemoteDataSynchroniser,
         },
         sync_api_v5::{CentralSyncBatchV5, RemoteSyncBatchV5},
         SyncApiV5, SyncCredentials, Synchroniser,
@@ -75,7 +75,7 @@ enum Action {
         #[clap(long, parse(from_flag))]
         pretty: bool,
     },
-    /// Initialise database from exported data), drops existing database, creates new database with latest schema and initialises (syncs) from exported file, also disabling sync
+    /// Initialise database from exported data), drops existing database, creates new database with latest schema and initialises (syncs) from exported file, also disabling sync to avoid initialised data syncing to any server
     InitialiseFromExport {
         /// Name for import of initialisation data (from `data` folder)
         #[clap(short, long)]
@@ -84,7 +84,7 @@ enum Action {
         #[clap(short, long, parse(from_flag))]
         refresh: bool,
     },
-    /// Make data current, base on latest date difference to now (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference). Also make sure refresh dates update does not sync back to central server
+    /// Make data current, base on latest date difference to now (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference), also disabling sync to avoid refreshed data syncing
     RefreshDates,
 }
 
@@ -273,16 +273,9 @@ async fn main() {
                 info!("Refresh data result: {:#?}", result);
             }
 
-            info!("Updating change log cursor for sync operations");
-            RemoteSyncState::new(&ctx.connection)
-                .set_initial_remote_data_synced()
-                .unwrap();
-
             info!("Disabling sync");
             // Need to store SyncSettings in db to avoid bootstrap mode
-
             let service = &service_provider.settings;
-
             service
                 .update_sync_settings(
                     &ctx,
@@ -309,10 +302,11 @@ async fn main() {
                 .refresh_dates(Utc::now().naive_local())
                 .unwrap();
 
-            info!("Updating change log cursor for sync operations");
-            RemoteSyncState::new(&connection)
-                .set_initial_remote_data_synced()
-                .unwrap();
+            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+            let ctx = service_provider.context().unwrap();
+            let service = &service_provider.settings;
+            info!("Disabling sync");
+            service.disable_sync(&ctx).unwrap();
 
             info!("Refresh data result: {:#?}", result);
         }
