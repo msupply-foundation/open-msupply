@@ -33,7 +33,7 @@ pub enum DocumentInsertError {
 #[derive(Debug)]
 pub enum DocumentHistoryError {
     DatabaseError(RepositoryError),
-    GraphError(String),
+    InternalError(String),
 }
 
 impl From<RepositoryError> for DocumentHistoryError {
@@ -80,9 +80,9 @@ pub trait DocumentServiceTrait: Sync + Send {
         let docs = repo.document_history(name)?;
 
         // We might have Documents from different stores in our repo; extract our tree:
-        let graph =
-            extract_tree(head.head, docs).map_err(|err| DocumentHistoryError::GraphError(err))?;
-        let sorted = topo_sort(graph).map_err(|err| DocumentHistoryError::GraphError(err))?;
+        let graph = extract_tree(head.head, docs)
+            .map_err(|err| DocumentHistoryError::InternalError(err))?;
+        let sorted = topo_sort(graph).map_err(|err| DocumentHistoryError::InternalError(err))?;
         Ok(sorted)
     }
 

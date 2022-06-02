@@ -39,7 +39,7 @@ pub fn document_history(
             let formated_err = format! {"{:?}", err};
             let error = match err {
                 DocumentHistoryError::DatabaseError(err) => err.into(),
-                DocumentHistoryError::GraphError(_) => {
+                DocumentHistoryError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formated_err)
                 }
             };
