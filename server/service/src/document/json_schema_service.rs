@@ -1,5 +1,5 @@
 use repository::{JSONSchema, JsonSchemaRepository, RepositoryError};
-use util::{canonical_json::CanonicalJsonValue, hash::sha256};
+use util::{canonical_json::canonical_json, hash::sha256};
 
 use crate::service_provider::ServiceContext;
 
@@ -19,8 +19,7 @@ pub trait JsonSchemaServiceTrait: Sync + Send {
     ) -> Result<String, InsertSchemaError> {
         let schema: serde_json::Value = serde_json::from_str(&schema)
             .map_err(|e| InsertSchemaError::SerializationError(format!("{}", e)))?;
-        let canonical_value = CanonicalJsonValue::from(schema.clone());
-        let str = canonical_value.to_string();
+        let str = canonical_json(&schema);
         let id = sha256(&str);
 
         let repo = JsonSchemaRepository::new(&ctx.connection);
