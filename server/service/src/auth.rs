@@ -215,7 +215,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // TODO add permissions from central
     map.insert(Resource::QueryDocument, PermissionDSL::NoPermissionRequired);
     map.insert(
-        Resource::MutateJsonSchema,
+        Resource::MutateDocument,
         PermissionDSL::NoPermissionRequired,
     );
     map.insert(
