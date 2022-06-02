@@ -186,26 +186,28 @@ fn json_validator(
     connection: &StorageConnection,
     doc: &RawDocument,
 ) -> Result<Option<JSONSchema>, DocumentInsertError> {
-    if let Some(schema_id) = &doc.schema_id {
-        let schema_repo = JsonSchemaRepository::new(connection);
-        let schema = schema_repo.find_one_by_id(schema_id)?;
-        let compiled = match JSONSchema::compile(&schema.schema) {
-            Ok(v) => Ok(v),
-            Err(err) => Err(DocumentInsertError::InternalError(format!(
-                "Invalid json schema: {}",
-                err
-            ))),
-        }?;
-        return Ok(Some(compiled));
-    }
-    Ok(None)
+    let schema_id = match &doc.schema_id {
+        Some(schema_id) => schema_id,
+        None => return Ok(None),
+    };
+
+    let schema_repo = JsonSchemaRepository::new(connection);
+    let schema = schema_repo.find_one_by_id(&schema_id)?;
+    let compiled = match JSONSchema::compile(&schema.schema) {
+        Ok(v) => Ok(v),
+        Err(err) => Err(DocumentInsertError::InternalError(format!(
+            "Invalid json schema: {}",
+            err
+        ))),
+    }?;
+    Ok(Some(compiled))
 }
 
 fn validate_json(validator: &JSONSchema, data: &serde_json::Value) -> Result<(), Vec<String>> {
-    Ok(validator.validate(data).map_err(|errors| {
-        let errors: Vec<String> = errors.into_iter().map(|err| format!("{}", err)).collect();
+    validator.validate(data).map_err(|errors| {
+        let errors: Vec<String> = errors.map(|err| format!("{}", err)).collect();
         errors
-    })?)
+    })
 }
 
 /// Does a raw insert without schema validation
