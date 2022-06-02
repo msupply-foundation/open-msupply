@@ -33,8 +33,8 @@ pub enum KeyValueType {
     SettingsSyncPasswordSha256,
     SettingsSyncIntervalSec,
     SettingsSyncCentralServerSiteId,
-    SettingsSyncSideId,
-    SettingsSyncSideHardwareId,
+    SettingsSyncSiteId,
+    SettingsSyncSiteHardwareId,
     SettingsSyncIsDisabled,
 }
 
