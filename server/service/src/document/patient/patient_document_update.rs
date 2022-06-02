@@ -206,5 +206,30 @@ mod test {
         assert_eq!(found_patient.name_row.address1, address.address_1);
         assert_eq!(found_patient.name_row.address2, address.address_2);
         assert_eq!(found_patient.name_row.country, address.country);
+
+        // test additional fields (custom schemas are allowed to have additional fields)
+        let mut patient = serde_json::to_value(patient.clone()).unwrap();
+        let obj = patient.as_object_mut().unwrap();
+        obj.insert(
+            "customData".to_string(),
+            serde_json::Value::String("additionalValue".to_string()),
+        );
+        assert!(patient.get("customData").is_some());
+        service
+            .update_document(
+                &ctx,
+                "store_a",
+                RawDocument {
+                    name: "test/doc2".to_string(),
+                    parents: vec![],
+                    author: "some_user".to_string(),
+                    timestamp: Utc::now(),
+                    r#type: PATIENT_TYPE.to_string(),
+                    data: patient,
+                    // TODO add and use patient id schema
+                    schema_id: None,
+                },
+            )
+            .unwrap();
     }
 }
