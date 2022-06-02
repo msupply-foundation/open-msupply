@@ -70,7 +70,7 @@ impl RemoteDataSynchroniser {
         }
 
         self.pull(connection).await?;
-        self.integrate_records(connection).await?;
+        RemoteDataSynchroniser::integrate_records(connection).await?;
 
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
@@ -99,16 +99,14 @@ impl RemoteDataSynchroniser {
     }
 
     /// Integrate previously pulled records
-    pub async fn integrate_records(
-        &self,
-        connection: &StorageConnection,
-    ) -> Result<(), RemoteSyncError> {
+    pub async fn integrate_records(connection: &StorageConnection) -> Result<(), RemoteSyncError> {
         info!("Integrate remote records...");
-        self.do_integrate_records(connection)
-            .map_err(|error| RemoteSyncError {
+        RemoteDataSynchroniser::do_integrate_records(connection).map_err(|error| {
+            RemoteSyncError {
                 msg: "Failed to integrate remote records",
                 source: error,
-            })?;
+            }
+        })?;
         info!("Successfully integrate remote records");
 
         Ok(())
@@ -116,9 +114,12 @@ impl RemoteDataSynchroniser {
 
     /// Pulls all records and stores them in the RemoteSyncBufferRepository
     async fn pull_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Arbitrary batch size TODO: should come from settings
+        const BATCH_SIZE: u32 = 500;
+
         loop {
             info!("Pulling remote sync records...");
-            let sync_batch = self.sync_api_v5.get_queued_records().await?;
+            let sync_batch = self.sync_api_v5.get_queued_records(BATCH_SIZE).await?;
             let number_of_pulled_records = sync_batch
                 .data
                 .as_deref()
@@ -150,7 +151,7 @@ impl RemoteDataSynchroniser {
         Ok(())
     }
 
-    fn do_integrate_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    pub fn do_integrate_records(connection: &StorageConnection) -> anyhow::Result<()> {
         let remote_sync_buffer_repository = RemoteSyncBufferRepository::new(&connection);
 
         let mut records: Vec<RemoteSyncBufferRow> = Vec::new();
@@ -260,7 +261,7 @@ impl RemoteSyncActionV5 {
     }
 }
 
-fn remote_sync_batch_records_to_buffer_rows(
+pub fn remote_sync_batch_records_to_buffer_rows(
     records: Vec<RemoteSyncRecordV5>,
 ) -> Result<Vec<RemoteSyncBufferRow>, serde_json::Error> {
     let remote_sync_records: Result<Vec<RemoteSyncBufferRow>, serde_json::Error> = records
@@ -278,7 +279,8 @@ fn remote_sync_batch_records_to_buffer_rows(
     remote_sync_records
 }
 
-struct RemoteSyncState<'a> {
+// This struct is only for updating values related to sync state, avoid using logic within associated methods
+pub struct RemoteSyncState<'a> {
     key_value_store: KeyValueStoreRepository<'a>,
 }
 
@@ -308,6 +310,7 @@ impl<'a> RemoteSyncState<'a> {
         Ok(value.unwrap_or(false))
     }
 
+    // This method should always be coupled with updating of RemoteSyncPushCursor to latest change log + 1
     pub fn set_initial_remote_data_synced(&self) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
@@ -329,19 +332,14 @@ impl<'a> RemoteSyncState<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        sync_api_v3::SyncApiV3,
-        translation_remote::{
-            table_name_to_central,
-            test_data::{
-                check_records_against_database, extract_sync_buffer_rows,
-                get_all_remote_pull_test_records, get_all_remote_push_test_records,
-            },
+    use crate::sync::translation_remote::{
+        table_name_to_central,
+        test_data::{
+            check_records_against_database, extract_sync_buffer_rows,
+            get_all_remote_pull_test_records, get_all_remote_push_test_records,
         },
-        SyncApiV5, SyncCredentials,
     };
     use repository::{mock::MockDataInserts, test_db, RemoteSyncBufferRepository};
-    use reqwest::{Client, Url};
 
     use super::{translate_changelogs_to_push_records, RemoteDataSynchroniser};
 
@@ -361,19 +359,7 @@ mod tests {
             .upsert_many(&buffer_rows)
             .expect("Failed to insert remote sync records into sync buffer");
 
-        let url = Url::parse("http://localhost").unwrap();
-        let credentials = SyncCredentials::from_plain("username", "password");
-        let client = Client::new();
-
-        let site_id = 1;
-        let central_server_site_id = 2;
-        let sync = RemoteDataSynchroniser {
-            sync_api_v5: SyncApiV5::new(url.clone(), credentials.clone(), client.clone()),
-            sync_api_v3: SyncApiV3::new(url, credentials, client, "").unwrap(),
-            site_id,
-            central_server_site_id,
-        };
-        sync.do_integrate_records(&connection)
+        RemoteDataSynchroniser::do_integrate_records(&connection)
             .expect("Failed to integrate remote records");
 
         check_records_against_database(&connection, test_records);

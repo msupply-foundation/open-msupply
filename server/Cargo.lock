@@ -1063,6 +1063,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "chrono",
+ "clap",
+ "diesel",
+ "env_logger 0.8.4",
+ "graphql",
+ "log 0.4.16",
+ "repository",
+ "reqwest",
+ "serde 1.0.137",
+ "serde_json",
+ "server",
+ "service",
+ "tokio",
+ "util",
+]
+
+[[package]]
 name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1308,20 +1330,6 @@ dependencies = [
  "darling_core 0.13.1",
  "quote 1.0.10",
  "syn 1.0.93",
-]
-
-[[package]]
-name = "demo"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "chrono",
- "clap",
- "diesel",
- "repository",
- "server",
- "service",
- "util",
 ]
 
 [[package]]
