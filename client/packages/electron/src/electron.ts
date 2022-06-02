@@ -78,7 +78,8 @@ const start = (): void => {
     if (answer.type !== SERVICE_TYPE) return;
 
     const server: FrontEndHost = JSON.parse(answer.data.toString());
-    server.isLocal = server.ip === ip.address();
+    // the IP is showing as 127.0.0.1 for local servers when running on windows
+    server.isLocal = server.ip === ip.address() || server.ip === '127.0.0.1';
 
     window.webContents.send(IPC_MESSAGES.SERVER_DISCOVERED, server);
 

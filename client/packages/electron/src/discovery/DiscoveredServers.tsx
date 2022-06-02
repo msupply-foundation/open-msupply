@@ -11,7 +11,7 @@ import {
   Typography,
   useElectronClient,
   useTranslation,
-  frontEndHostUrl,
+  frontEndHostDisplay,
   CheckboxEmptyIcon,
 } from '@openmsupply-client/common';
 
@@ -82,7 +82,7 @@ export const DiscoveredServers = () => {
               <CheckboxEmptyIcon fontSize="small" color="inherit" />
             </ListItemIcon>
             <ListItemText primaryTypographyProps={{ sx: { color: 'inherit' } }}>
-              {frontEndHostUrl(server)}
+              {frontEndHostDisplay(server)}
             </ListItemText>
             {server.isLocal && <HomeIcon fontSize="small" color="inherit" />}
           </MenuItem>
