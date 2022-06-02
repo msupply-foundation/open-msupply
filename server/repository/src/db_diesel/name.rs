@@ -6,9 +6,11 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{
+        apply_date_filter, apply_equal_filter, apply_simple_string_filter, apply_sort_no_case,
+    },
     repository_error::RepositoryError,
-    EqualFilter, Pagination, SimpleStringFilter, Sort,
+    DateFilter, EqualFilter, Gender, NameType, Pagination, SimpleStringFilter, Sort,
 };
 
 use diesel::{
@@ -36,12 +38,32 @@ pub struct NameFilter {
     pub store_code: Option<SimpleStringFilter>,
     pub is_visible: Option<bool>,
     pub is_system_name: Option<bool>,
+    pub r#type: Option<EqualFilter<NameType>>,
+
+    pub first_name: Option<SimpleStringFilter>,
+    pub last_name: Option<SimpleStringFilter>,
+    pub gender: Option<EqualFilter<Gender>>,
+    pub date_of_birth: Option<DateFilter>,
+    pub phone: Option<SimpleStringFilter>,
+    pub address1: Option<SimpleStringFilter>,
+    pub address2: Option<SimpleStringFilter>,
+    pub country: Option<SimpleStringFilter>,
+    pub email: Option<SimpleStringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum NameSortField {
     Name,
     Code,
+    FirstName,
+    LastName,
+    Gender,
+    DateOfBirth,
+    Phone,
+    Address1,
+    Address2,
+    Country,
+    Email,
 }
 
 pub type NameSort = Sort<NameSortField>;
@@ -102,6 +124,17 @@ impl<'a> NameRepository<'a> {
                 NameSortField::Code => {
                     apply_sort_no_case!(query, sort, name_dsl::code);
                 }
+                NameSortField::FirstName => apply_sort_no_case!(query, sort, name_dsl::first_name),
+                NameSortField::LastName => apply_sort_no_case!(query, sort, name_dsl::last_name),
+                NameSortField::Gender => apply_sort_no_case!(query, sort, name_dsl::gender),
+                NameSortField::DateOfBirth => {
+                    apply_sort_no_case!(query, sort, name_dsl::date_of_birth)
+                }
+                NameSortField::Phone => apply_sort_no_case!(query, sort, name_dsl::phone),
+                NameSortField::Address1 => apply_sort_no_case!(query, sort, name_dsl::address1),
+                NameSortField::Address2 => apply_sort_no_case!(query, sort, name_dsl::address2),
+                NameSortField::Country => apply_sort_no_case!(query, sort, name_dsl::country),
+                NameSortField::Email => apply_sort_no_case!(query, sort, name_dsl::email),
             }
         } else {
             query = query.order(name_dsl::id.asc())
@@ -166,12 +199,33 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
             store_code,
             is_visible,
             is_system_name,
+            r#type,
+            first_name,
+            last_name,
+            gender,
+            date_of_birth,
+            phone,
+            address1,
+            address2,
+            country,
+            email,
         } = f;
 
         apply_equal_filter!(query, id, name_dsl::id);
         apply_simple_string_filter!(query, code, name_dsl::code);
         apply_simple_string_filter!(query, name, name_dsl::name_);
         apply_simple_string_filter!(query, store_code, store_dsl::code);
+        apply_equal_filter!(query, r#type, name_dsl::type_);
+
+        apply_simple_string_filter!(query, first_name, name_dsl::first_name);
+        apply_simple_string_filter!(query, last_name, name_dsl::last_name);
+        apply_equal_filter!(query, gender, name_dsl::gender);
+        apply_date_filter!(query, date_of_birth, name_dsl::date_of_birth);
+        apply_simple_string_filter!(query, phone, name_dsl::phone);
+        apply_simple_string_filter!(query, address1, name_dsl::address1);
+        apply_simple_string_filter!(query, address2, name_dsl::address2);
+        apply_simple_string_filter!(query, country, name_dsl::country);
+        apply_simple_string_filter!(query, email, name_dsl::email);
 
         if let Some(is_customer) = is_customer {
             query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
@@ -283,6 +337,17 @@ impl Name {
         self.store_row
             .as_ref()
             .map(|store_row| store_row.id.as_str())
+    }
+}
+
+impl NameType {
+    pub fn equal_to(&self) -> EqualFilter<NameType> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
     }
 }
 
