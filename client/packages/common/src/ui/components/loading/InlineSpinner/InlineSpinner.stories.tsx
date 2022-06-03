@@ -3,13 +3,16 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { InlineSpinner } from './InlineSpinner';
 import { Box } from '@mui/material';
 
-const Template: ComponentStory<typeof InlineSpinner> = ({ color }) => (
+const Template: ComponentStory<typeof InlineSpinner> = ({
+  color,
+  messageKey,
+}) => (
   <Box>
     <Box style={{ width: 250, height: 100, border: '1px solid green' }}>
       Showing three boxes, all 100 x 250px, with default flex alignment.
     </Box>
     <Box style={{ width: 250, height: 100, border: '1px solid orange' }}>
-      <InlineSpinner color={color} messageKey="loading" />
+      <InlineSpinner color={color} messageKey={messageKey} />
     </Box>
     <Box style={{ width: 250, height: 100, border: '1px solid red' }}>
       Center box has the spinner in it showing how the spinner aligns itself
@@ -29,6 +32,6 @@ export default {
 } as ComponentMeta<typeof InlineSpinner>;
 
 Primary.args = { color: 'primary' };
-PrimaryWithText.args = { color: 'primary' };
+PrimaryWithText.args = { color: 'primary', messageKey: 'loading' };
 Secondary.args = { color: 'secondary' };
-SecondaryWithText.args = { color: 'secondary' };
+SecondaryWithText.args = { color: 'secondary', messageKey: 'loading' };

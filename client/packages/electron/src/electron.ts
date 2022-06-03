@@ -81,11 +81,13 @@ const start = (): void => {
     // the IP is showing as 127.0.0.1 for local servers when running on windows
     server.isLocal = server.ip === ip.address() || server.ip === '127.0.0.1';
 
-    window.webContents.send(IPC_MESSAGES.SERVER_DISCOVERED, server);
-
     const mruServer = storage.get('/mru/server');
+    // if there is a recent server.. and we have found it - no need to display the server selection
+    // simply connect to it. Otherwise.. the server should be displayed.
     if (mruServer && mruServer === frontEndHostUrl(server)) {
       connectToServer(window, server);
+    } else {
+      window.webContents.send(IPC_MESSAGES.SERVER_DISCOVERED, server);
     }
   });
 
