@@ -409,7 +409,7 @@ mod document_service_test {
               "conflict": "our change wins because we are more recent"
             })
         );
-        assert_eq!(result.parents, vec![v0.id.to_owned(), v1.id.to_owned()]);
+        assert_eq!(result.parent_ids, vec![v0.id.to_owned(), v1.id.to_owned()]);
 
         // add new doc with a merge as parent
         let mut next_doc = template.clone();

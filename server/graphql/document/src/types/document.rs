@@ -25,11 +25,11 @@ impl DocumentNode {
     }
 
     pub async fn parents(&self) -> &[String] {
-        &self.document.parents
+        &self.document.parent_ids
     }
 
     pub async fn author(&self) -> &str {
-        &self.document.author
+        &self.document.user_id
     }
 
     pub async fn timestamp(&self) -> &DateTime<Utc> {

@@ -40,8 +40,8 @@ impl RawDocument {
         Ok(Document {
             id,
             name,
-            parents,
-            author,
+            parent_ids: parents,
+            user_id: author,
             timestamp,
             r#type,
             data,
