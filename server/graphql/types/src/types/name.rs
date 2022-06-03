@@ -286,7 +286,7 @@ mod test {
                 "address1": "address1",
                 "address2": "address2",
                 "createdDatetime": "2022-05-18T12:07:12+00:00",
-                "dateOfBirth": "1995-05-15T00:00:00+00:00",
+                "dateOfBirth": "1995-05-15",
             }
         }
         );
