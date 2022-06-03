@@ -13,7 +13,7 @@ impl TopoSortable for Document {
     }
 
     fn parents(&self) -> &Vec<String> {
-        &self.parents
+        &self.parent_ids
     }
 }
 
