@@ -4,7 +4,6 @@ const DISCOVERY_TIMEOUT = 5000;
 
 // Should match server/server/src/discovery.rs (FrontEndHost)
 export type FrontEndHost = {
-  id: string;
   protocol: 'http' | 'https';
   port: number;
   ip: string;
@@ -72,19 +71,19 @@ export const useElectronClient = (discover = false) => {
     setTimeout(() => setTimedOut(true), DISCOVERY_TIMEOUT);
 
     if (serverDiscovered) {
-      serverDiscovered((_event, server) => {
-        const id = frontEndHostUrl(server);
-
+      serverDiscovered((_event, server) =>
         setState(state =>
-          state.servers.some(server => server.id === id)
+          state.servers.some(
+            s => frontEndHostUrl(s) === frontEndHostUrl(server)
+          )
             ? state
             : {
                 ...state,
-                servers: [...state.servers, { ...server, id }],
+                servers: [...state.servers, server],
                 discoveryTimedOut: false,
               }
-        );
-      });
+        )
+      );
     }
   }, []);
 
