@@ -12,10 +12,6 @@ path = "src/lib.rs"
 path = "src/main.rs"
 name = "remote_server"
 
-[[bin]]
-path = "src/cli.rs"
-name = "remote_server_cli"
-
 [dependencies]
 
 graphql = { path = "../graphql" }
@@ -38,7 +34,7 @@ config = "0.11.0"
 chrono = { version = "0.4", features = ["serde"] }
 env_logger = "0.8.3"
 log = "0.4.14"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11.10", features = ["json"] }
 rustls = "0.20.4"
 rustls-pemfile = "1.0.0"
 serde = "1.0.137"

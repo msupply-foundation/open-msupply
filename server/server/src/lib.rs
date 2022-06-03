@@ -20,7 +20,6 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
-    settings_service::{SettingsService, SettingsServiceTrait},
     token_bucket::TokenBucket,
 };
 
@@ -132,7 +131,6 @@ async fn run_stage0(
 /// Return true if restart has been requested
 async fn run_server(
     config_settings: Settings,
-    prefer_config_settings: bool,
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
@@ -140,15 +138,11 @@ async fn run_server(
     certificates: &Certificates,
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(connection_manager.clone());
-
-    let service = SettingsService {};
     let service_context = service_provider.context().unwrap();
+    let service = &service_provider.settings;
+
     let db_settings = service.sync_settings(&service_context).unwrap();
-    let sync_settings = if prefer_config_settings {
-        config_settings.sync.clone().or(db_settings)
-    } else {
-        db_settings.or(config_settings.sync.clone())
-    };
+    let sync_settings = db_settings.or(config_settings.sync.clone());
     let sync_settings = match sync_settings {
         Some(sync_settings) => sync_settings,
         // No sync settings found, start in stage0 mode
@@ -188,7 +182,7 @@ async fn run_server(
 
     let restart_switch = Data::new(restart_switch);
 
-    let mut synchroniser = Synchroniser::new(sync_settings, connection_manager.clone()).unwrap();
+    let mut synchroniser = Synchroniser::new(sync_settings, service_provider_data.clone()).unwrap();
     // Do the initial pull before doing anything else
     match synchroniser.initial_pull().await {
         Ok(_) => {}
@@ -287,13 +281,12 @@ pub async fn start_server(
 
     // allow the off_switch to be passed around during multiple server stages
     let off_switch = Arc::new(Mutex::new(off_switch));
-    let mut prefer_config_settings = true;
+
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = uuid();
     loop {
         match run_server(
             config_settings.clone(),
-            prefer_config_settings,
             off_switch.clone(),
             token_bucket.clone(),
             token_secret.clone(),
@@ -309,8 +302,6 @@ pub async fn start_server(
 
                 // restart the server in next loop
                 info!("Restart server");
-                // use DB settings in next restart
-                prefer_config_settings = false;
             }
             Err(err) => return Err(err),
         }
