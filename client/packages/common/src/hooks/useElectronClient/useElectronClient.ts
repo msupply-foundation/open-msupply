@@ -62,7 +62,7 @@ export const useElectronClient = (discover = false) => {
       );
     }
 
-    if (!discover || timedOut) return;
+    if (!discover) return;
 
     if (startServerDiscovery) {
       startServerDiscovery();
