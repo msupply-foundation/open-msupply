@@ -13,6 +13,7 @@ import {
   useTranslation,
   frontEndHostDisplay,
   CheckboxEmptyIcon,
+  frontEndHostUrl,
 } from '@openmsupply-client/common';
 
 export const DiscoveredServers = () => {
@@ -72,7 +73,7 @@ export const DiscoveredServers = () => {
       <MenuList style={{ overflowY: 'auto', maxHeight: '200px' }}>
         {servers.map(server => (
           <MenuItem
-            key={server.id}
+            key={frontEndHostUrl(server)}
             onClick={() => {
               window.electronAPI.connectToServer(server);
             }}
