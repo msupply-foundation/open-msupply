@@ -1,4 +1,10 @@
-import { FilterBy, SortBy } from '@openmsupply-client/common';
+import {
+  EnvUtils,
+  FilterBy,
+  Platform,
+  PrintFormat,
+  SortBy,
+} from '@openmsupply-client/common';
 import { ReportRowFragment, Sdk } from './operations.generated';
 
 export type ReportListParams = {
@@ -26,10 +32,15 @@ export const getReportQueries = (sdk: Sdk, storeId: string) => ({
       dataId: string;
       reportId: string;
     }) => {
+      const format =
+        EnvUtils.platform === Platform.Android
+          ? PrintFormat.Html
+          : PrintFormat.Pdf;
       const result = await sdk.printReport({
         dataId,
         reportId,
         storeId,
+        format,
       });
       if (result?.printReport.__typename === 'PrintReportNode') {
         return result.printReport.fileId;

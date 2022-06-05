@@ -20,6 +20,7 @@ export type PrintReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   dataId: Types.Scalars['String'];
   reportId: Types.Scalars['String'];
+  format?: Types.InputMaybe<Types.PrintFormat>;
 }>;
 
 
@@ -46,8 +47,13 @@ export const ReportsDocument = gql`
 }
     ${ReportRowFragmentDoc}`;
 export const PrintReportDocument = gql`
-    query printReport($storeId: String!, $dataId: String!, $reportId: String!) {
-  printReport(dataId: $dataId, reportId: $reportId, storeId: $storeId) {
+    query printReport($storeId: String!, $dataId: String!, $reportId: String!, $format: PrintFormat) {
+  printReport(
+    dataId: $dataId
+    reportId: $reportId
+    storeId: $storeId
+    format: $format
+  ) {
     ... on PrintReportNode {
       __typename
       fileId
@@ -106,7 +112,7 @@ export const mockReportsQuery = (resolver: ResponseResolver<GraphQLRequest<Repor
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockPrintReportQuery((req, res, ctx) => {
- *   const { storeId, dataId, reportId } = req.variables;
+ *   const { storeId, dataId, reportId, format } = req.variables;
  *   return res(
  *     ctx.data({ printReport })
  *   )
