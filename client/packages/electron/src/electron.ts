@@ -2,7 +2,11 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import startDiscovery from 'multicast-dns';
 import { IPC_MESSAGES } from './shared';
 import ip from 'ip';
-import { FrontEndHost, frontEndHostUrl } from '@openmsupply-client/common/src/hooks/useElectronClient';
+import {
+  FrontEndHost,
+  frontEndHostUrl,
+} from '@openmsupply-client/common/src/hooks/useElectronClient';
+import storage from 'electron-data-storage';
 
 const SERVICE_NAME = '_omsupply._tcp.local';
 const SERVICE_TYPE = 'TXT';
@@ -25,11 +29,20 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
+  isDiscovering = false;
+  const url = frontEndHostUrl(server);
+  // Can change 'frontEndHostUrl(server)' to http://localhost:3003 if you want client to display front end served by webpack
+  window.loadURL(url);
+  connectedServer = server;
+  storage.set('/mru/server', url);
+};
+
 const start = (): void => {
   // Create the browser window.
   const window = new BrowserWindow({
-    height: 600,
-    width: 800,
+    height: 768,
+    width: 1024,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -37,16 +50,21 @@ const start = (): void => {
   // and load the index.html of the app.
   window.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
+  // allow the user to press Alt and force display of the server selection
+  window.webContents.on('before-input-event', (event, input) => {
+    if (input.alt) {
+      storage.remove('/mru/server');
+      event.preventDefault();
+    }
+  });
+
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
     isDiscovering = true;
   });
 
-  ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) => {
-    isDiscovering = false;
-    // Can change 'frontEndHostUrl(server)' to http://localhost:3003 if you want client to display front end served by webpack
-    window.loadURL(frontEndHostUrl(server));
-    connectedServer = server;
-  });
+  ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) =>
+    connectToServer(window, server)
+  );
 
   ipcMain.handle(
     IPC_MESSAGES.CONNECTED_SERVER,
@@ -59,10 +77,18 @@ const start = (): void => {
     if (answer.name !== SERVICE_NAME) return;
     if (answer.type !== SERVICE_TYPE) return;
 
-    let server: FrontEndHost = JSON.parse(answer.data.toString());
-    server.isLocal = server.ip === ip.address();
+    const server: FrontEndHost = JSON.parse(answer.data.toString());
+    // the IP is showing as 127.0.0.1 for local servers when running on windows
+    server.isLocal = server.ip === ip.address() || server.ip === '127.0.0.1';
 
-    window.webContents.send(IPC_MESSAGES.SERVER_DISCOVERED, server);
+    const mruServer = storage.get('/mru/server');
+    // if there is a recent server.. and we have found it - no need to display the server selection
+    // simply connect to it. Otherwise.. the server should be displayed.
+    if (mruServer && mruServer === frontEndHostUrl(server)) {
+      connectToServer(window, server);
+    } else {
+      window.webContents.send(IPC_MESSAGES.SERVER_DISCOVERED, server);
+    }
   });
 
   setInterval(() => {
