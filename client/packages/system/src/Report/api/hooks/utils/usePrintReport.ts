@@ -1,4 +1,9 @@
-import { useMutation, useNotification } from '@openmsupply-client/common';
+import {
+  EnvUtils,
+  Platform,
+  useMutation,
+  useNotification,
+} from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { useReportApi } from './useReportApi';
 
@@ -21,8 +26,11 @@ export const usePrintReport = () => {
       const url = `${Environment.FILE_URL}${fileId}`;
       const win = window.open(url, '_blank');
       if (win) {
-        win.focus();
-        // win.print(); // crashes chrome if the file is a PDF :shrug:
+        if (EnvUtils.platform === Platform.Android) {
+          win.print(); // crashes chrome if the file is a PDF :shrug:
+        } else {
+          win.focus();
+        }
       }
     },
     onError: e => {

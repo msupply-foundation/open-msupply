@@ -1,5 +1,10 @@
 import { LocaleKey } from '@common/intl';
 
+export enum Platform {
+  Android,
+  Desktop,
+  Web,
+}
 interface RouteMapping {
   title?: LocaleKey;
   docs: string;
@@ -53,9 +58,23 @@ const mapRoute = (route: string): RouteMapping => {
   }
 };
 
+const getPlatform = () => {
+  // 'Mozilla/5.0 (Linux; Android 8.1.0; Lenovo TB-X304L Build/OPM1.171019.026; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/102.0.5005.78 Safari/537.36'
+  const userAgent = navigator.userAgent.toLowerCase();
+  switch (true) {
+    case / android/i.test(userAgent):
+      return Platform.Android;
+    case / electron/i.test(userAgent):
+      return Platform.Desktop;
+    default:
+      return Platform.Web;
+  }
+};
+
 export const EnvUtils = {
   // Using isProduction rather than isDevelopment, as we also use a testing
   // environment while running jest, so easier to check !isProduction, generally.
   isProduction: (): boolean => process.env['NODE_ENV'] === 'production',
   mapRoute,
+  platform: getPlatform(),
 };

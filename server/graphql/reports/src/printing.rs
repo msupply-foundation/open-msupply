@@ -3,7 +3,7 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::definition::{GraphQlQuery, ReportDefinition};
-use service::report::report_service::ReportError;
+use service::report::report_service::{PrintFormat, ReportError};
 
 pub struct FailedToFetchReportData {
     errors: serde_json::Value,
@@ -55,7 +55,7 @@ pub async fn print_report(
     store_id: String,
     report_id: String,
     data_id: String,
-    format: &str,
+    format: Option<PrintFormat>,
 ) -> Result<PrintReportResponse> {
     validate_auth(
         ctx,
@@ -170,7 +170,7 @@ pub async fn print_report_definition(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
-        "pdf",
+        None,
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
