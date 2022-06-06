@@ -46,9 +46,11 @@ impl ReportQueries {
         data_id: String,
         format: Option<PrintFormat>,
     ) -> Result<PrintReportResponse> {
-        let report_format = match format.unwrap_or(PrintFormat::Pdf) {
-            PrintFormat::Html => "html",
-            PrintFormat::Pdf => "pdf",
+        let report_format = match format {
+            Some(PrintFormat::Html) => Some(service::report::report_service::PrintFormat::Html),
+            Some(PrintFormat::Pdf) | None => {
+                Some(service::report::report_service::PrintFormat::Html)
+            }
         };
         print_report(ctx, store_id, report_id, data_id, report_format).await
     }

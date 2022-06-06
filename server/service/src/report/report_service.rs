@@ -21,6 +21,11 @@ use super::{
     html_printing::html_to_pdf,
 };
 
+pub enum PrintFormat {
+    Pdf,
+    Html,
+}
+
 #[derive(Debug)]
 pub enum ReportError {
     RepositoryError(RepositoryError),
@@ -108,13 +113,17 @@ pub trait ReportServiceTrait: Sync + Send {
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
-        format: &str,
+        format: Option<PrintFormat>,
     ) -> Result<String, ReportError> {
         let document = self.generate_report(report, report_data)?;
 
         match format {
-            "html" => self.print_html_report(base_dir, document, report.name.clone()),
-            &_ => self.print_pdf_report(base_dir, document, report.name.clone()),
+            Some(PrintFormat::Html) => {
+                self.print_html_report(base_dir, document, report.name.clone())
+            }
+            Some(PrintFormat::Pdf) | None => {
+                self.print_pdf_report(base_dir, document, report.name.clone())
+            }
         }
     }
 
