@@ -1,3 +1,4 @@
+use mac_address::get_mac_address;
 use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
 use reqwest::Url;
 
@@ -39,8 +40,9 @@ pub trait SettingsServiceTrait: Sync + Send {
         let central_server_site_id =
             key_value_store.get_i32(KeyValueType::SettingsSyncCentralServerSiteId)?;
         let site_id = key_value_store.get_i32(KeyValueType::SettingsSyncSiteId)?;
-        let site_hardware_id =
-            key_value_store.get_string(KeyValueType::SettingsSyncSiteHardwareId)?;
+        let site_hardware_id = key_value_store
+            .get_string(KeyValueType::SettingsSyncSiteHardwareId)
+            .unwrap_or(get_mac_address()?.to_string());
 
         let make_settings = || {
             Some(SyncSettings {
