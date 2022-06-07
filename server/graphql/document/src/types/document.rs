@@ -2,11 +2,10 @@ use async_graphql::*;
 use async_graphql::{dataloader::DataLoader, Context};
 use chrono::{DateTime, Utc};
 
+use graphql_core::loader::JsonSchemaLoader;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::Document;
 use service::document::raw_document::RawDocument;
-
-use crate::json_schema_loader::JsonSchemaLoader;
 
 use super::json_schema::JSONSchemaNode;
 
@@ -47,12 +46,7 @@ impl DocumentNode {
     pub async fn schema(&self, ctx: &Context<'_>) -> Result<Option<JSONSchemaNode>> {
         Ok(match &self.document.schema_id {
             Some(schema_id) => {
-                let loader = DataLoader::new(
-                    JsonSchemaLoader {
-                        connection_manager: ctx.get_connection_manager().clone(),
-                    },
-                    async_std::task::spawn,
-                );
+                let loader = ctx.get_loader::<DataLoader<JsonSchemaLoader>>();
                 let schema = loader.load_one(schema_id.clone()).await?.ok_or(
                     StandardGraphqlError::InternalError(format!(
                         "Cannot find schema {}",
