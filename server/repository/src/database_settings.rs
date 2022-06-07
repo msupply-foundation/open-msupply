@@ -102,21 +102,39 @@ impl diesel::r2d2::CustomizeConnection<SqliteConnection, diesel::r2d2::Error>
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
-    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
+    let result = Pool::new(connection_manager);
+    let pool = match result {
+        Ok(pool) => pool,
+        Err(err) => panic!(
+            "Failed to connect to postgres database {} - {}",
+            &settings.database_name, err
+        ),
+    };
     StorageConnectionManager::new(pool)
 }
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
+    use core::panic;
+
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
-    let pool = Pool::builder()
+    let result = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             enable_wal: true,
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
         }))
-        .build(connection_manager)
-        .expect("Failed to connect to database");
+        .build(connection_manager);
+
+    let pool = match result {
+        Ok(pool) => pool,
+        Err(err) => panic!(
+            "Failed to connect to sqlite database {} - {}",
+            &settings.connection_string(),
+            err
+        ),
+    };
+
     StorageConnectionManager::new(pool)
 }
