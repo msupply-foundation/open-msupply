@@ -323,7 +323,7 @@ mod document_service_test {
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
 
-        let service = DocumentService {};
+        let service = service_provider.document_service;
         let store = "test_store";
         let template = RawDocument {
             name: "test/doc".to_string(),
