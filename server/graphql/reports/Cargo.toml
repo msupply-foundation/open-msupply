@@ -30,7 +30,7 @@ anyhow = "1.0.56"
 actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 
-
 [features]
-default = ["repository/sqlite"]
+default = ["sqlite"]
+sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
