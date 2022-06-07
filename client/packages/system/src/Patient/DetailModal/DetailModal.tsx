@@ -6,50 +6,48 @@ import {
 } from '@jsonforms/material-renderers';
 import {
   useTranslation,
-  useBreadcrumbs,
+  // useBreadcrumbs,
   DetailContainer,
   DetailInputWithLabelRow,
   DetailSection,
-  Checkbox,
+  // Checkbox,
   Grid,
-  useFormatDateTime,
+  // useFormatDateTime,
   Typography,
   Box,
   BasicSpinner,
-  MuiLink,
+  // MuiLink,
 } from '@openmsupply-client/common';
 // import { usePatient } from '../api';5
-import schema from './json/schema.json';
-import uiSchema from './json/ui-schema.json';
-import patient from './json/patient_1.json';
+import { useJsonForms } from '@openmsupply-client/common';
 
 interface DetailModalProps {
-  nameId: string;
+  docId: string;
 }
 
-export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
+export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
   // const { data, isLoading } = usePatient.document.get(nameId);
   const t = useTranslation('common');
   // const { setSuffix } = useBreadcrumbs();
   const isDisabled = true;
-  // const [data, setData] = useState(patient1);
-  const { localisedDate } = useFormatDateTime();
+  // const [data, setData] = useState(patient);
+  // const { localisedDate } = useFormatDateTime();
+  const { JsonForm, loading, error, saveData } = useJsonForms(docId);
 
-  const [data, setData] = useState<any>(patient);
-  console.log('data', data);
+  // const [data, setData] = useState<any>(patient);
 
   // useEffect(() => {
   //   setSuffix(data?.name ?? '');
   // }, [data]);
 
-  // if (isLoading) return <BasicSpinner />;
+  if (loading) return <BasicSpinner />;
 
-  return !!data ? (
+  return !error ? (
     <DetailContainer>
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
+        {/* <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
           {data.name}
-        </Typography>
+        </Typography> */}
         <Grid
           container
           flex={1}
@@ -57,20 +55,17 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
           gap={4}
           style={{ maxWidth: 600 }}
         >
-          <JsonForms
-            schema={schema}
-            uischema={uiSchema}
-            data={data}
-            renderers={materialRenderers}
-            cells={materialCells}
-            onChange={({ errors, data }) => setData(data)}
-          />
-          {/* <DetailSection title="">
+          <JsonForm />
+          {/* <DetailSection title=""> */}
+          {/* <DetailInputWithLabelRow
+              label={t('label.address')}
+              inputProps={{ value: 'Demo data', disabled: isDisabled }}
+            />
             <DetailInputWithLabelRow
               label={t('label.address')}
               inputProps={{ value: data?.address1, disabled: isDisabled }}
-            />
-            <DetailInputWithLabelRow
+            /> */}
+          {/* <DetailInputWithLabelRow
               label={t('label.code')}
               inputProps={{ value: data?.code, disabled: isDisabled }}
             />
@@ -134,8 +129,8 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               Input={
                 <Checkbox disabled={isDisabled} checked={data?.isOnHold} />
               }
-            />
-          </DetailSection> */}
+            /> */}
+          {/* </DetailSection> */}
         </Grid>
       </Box>
     </DetailContainer>
