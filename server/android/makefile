@@ -31,4 +31,4 @@ android: $(ARCHS_ANDROID)
 
 .PHONY: $(ARCHS_ANDROID)
 $(ARCHS_ANDROID): %:
-	$(CARGO_LINKER_ENV_$@)="$(CC_$@)" CC="$(CC_$@)" AR="$(AR_$@)" cargo build --features android --target $@ --release
+	$(CARGO_LINKER_ENV_$@)="$(CC_$@)" CC="$(CC_$@)" AR="$(AR_$@)" cargo build --target $@ --release

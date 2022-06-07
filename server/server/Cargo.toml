@@ -55,8 +55,8 @@ httpmock = "0.6"
 rand = "0.8.5"
 
 [features]
-default = ["sqlite"]
-sqlite = ["repository/sqlite", "dep:local-ip-address"]
-postgres = ["repository/postgres", "dep:local-ip-address"]
+default = ["sqlite", "dep:local-ip-address"]
+sqlite = ["repository/sqlite"]
+postgres = ["repository/postgres"]
 # See openssl comment regarding the "openssl/vendored" feature
 android = ["repository/sqlite", "openssl/vendored"]
