@@ -109,7 +109,8 @@ pub mod android {
         if !cert_path.join(PRIVATE_CERT_FILE).exists() {
             generate_certs(&cert_path);
         }
-        info!("Android starts.. {}", android_id);
+        let hardware_id: String = env.get_string(android_id).unwrap().into();
+        info!("Android starts.. {}", hardware_id);
 
         // run server in background thread
         let thread = thread::spawn(move || {
