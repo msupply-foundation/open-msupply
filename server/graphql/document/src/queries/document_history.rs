@@ -4,9 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use service::auth::{Resource, ResourceAccessRequest};
-use service::document::document_service::{
-    DocumentHistoryError, DocumentService, DocumentServiceTrait,
-};
+use service::document::document_service::DocumentHistoryError;
 use service::usize_to_u32;
 
 use crate::types::document::{DocumentConnector, DocumentNode};
@@ -31,9 +29,9 @@ pub fn document_history(
 
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
-    let service = DocumentService {};
 
-    let documents = service
+    let documents = service_provider
+        .document_service
         .get_document_history(&context, &store_id, &document_name)
         .map_err(|err| {
             let formated_err = format! {"{:?}", err};

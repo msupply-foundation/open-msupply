@@ -3,7 +3,6 @@ use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use repository::{DocumentFilter, EqualFilter};
 use service::auth::{Resource, ResourceAccessRequest};
-use service::document::document_service::{DocumentService, DocumentServiceTrait};
 use service::usize_to_u32;
 
 use crate::types::document::{DocumentConnector, DocumentNode};
@@ -40,9 +39,9 @@ pub fn documents(
 
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
-    let service = DocumentService {};
 
-    let nodes: Vec<DocumentNode> = service
+    let nodes: Vec<DocumentNode> = service_provider
+        .document_service
         .get_documents(&context, &store_id, filter.map(to_domain_filter))?
         .into_iter()
         .map(|document| DocumentNode { document })

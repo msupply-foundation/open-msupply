@@ -2,10 +2,7 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::{
-        document_service::{DocumentInsertError, DocumentService, DocumentServiceTrait},
-        raw_document::RawDocument,
-    },
+    document::{document_service::DocumentInsertError, raw_document::RawDocument},
 };
 
 use graphql_core::{
@@ -72,9 +69,12 @@ pub fn update_document(
 
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
-    let service = DocumentService {};
 
-    let response = match service.update_document(&context, store_id, input_to_raw_document(input)) {
+    let response = match service_provider.document_service.update_document(
+        &context,
+        store_id,
+        input_to_raw_document(input),
+    ) {
         Ok(document) => UpdateDocumentResponse::Response(DocumentNode { document }),
         Err(error) => UpdateDocumentResponse::Error(UpdateDocumentError {
             error: map_error(error)?,
