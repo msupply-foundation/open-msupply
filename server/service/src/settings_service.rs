@@ -40,9 +40,16 @@ pub trait SettingsServiceTrait: Sync + Send {
         let central_server_site_id =
             key_value_store.get_i32(KeyValueType::SettingsSyncCentralServerSiteId)?;
         let site_id = key_value_store.get_i32(KeyValueType::SettingsSyncSiteId)?;
-        let site_hardware_id = key_value_store
-            .get_string(KeyValueType::SettingsSyncSiteHardwareId)
-            .unwrap_or(get_mac_address()?.to_string());
+        let mac_address = match get_mac_address() {
+            Ok(Some(mac)) => mac.to_string(),
+            _ => "".to_string(),
+        };
+        let site_hardware_id =
+            match key_value_store.get_string(KeyValueType::SettingsSyncSiteHardwareId) {
+                Ok(Some(hardware_id)) if hardware_id.is_empty() => mac_address,
+                Ok(Some(hardware_id)) => hardware_id,
+                _ => mac_address,
+            };
 
         let make_settings = || {
             Some(SyncSettings {
@@ -52,7 +59,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 interval_sec: interval_sec? as u64,
                 central_server_site_id: central_server_site_id? as u32,
                 site_id: site_id? as u32,
-                site_hardware_id: site_hardware_id?,
+                site_hardware_id,
             })
         };
 
