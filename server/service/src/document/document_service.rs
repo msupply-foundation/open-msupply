@@ -193,7 +193,7 @@ fn json_validator(
 
     let schema_repo = JsonSchemaRepository::new(connection);
     let schema = schema_repo.find_one_by_id(&schema_id)?;
-    let compiled = match JSONSchema::compile(&schema.schema) {
+    let compiled = match JSONSchema::compile(&schema.json_schema) {
         Ok(v) => Ok(v),
         Err(err) => Err(DocumentInsertError::InternalError(format!(
             "Invalid json schema: {}",

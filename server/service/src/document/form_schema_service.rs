@@ -15,17 +15,23 @@ pub trait JsonSchemaServiceTrait: Sync + Send {
     fn insert_schema(
         &self,
         ctx: &ServiceContext,
-        schema: String,
+        r#type: String,
+        json_schema: String,
+        ui_schema: String,
     ) -> Result<String, InsertSchemaError> {
-        let schema: serde_json::Value = serde_json::from_str(&schema)
+        let json_schema: serde_json::Value = serde_json::from_str(&json_schema)
             .map_err(|e| InsertSchemaError::SerializationError(format!("{}", e)))?;
-        let str = canonical_json(&schema);
+        let str = canonical_json(&json_schema);
         let id = sha256(&str);
+        let ui_schema: serde_json::Value = serde_json::from_str(&ui_schema)
+            .map_err(|e| InsertSchemaError::SerializationError(format!("{}", e)))?;
 
         let repo = JsonSchemaRepository::new(&ctx.connection);
         repo.upsert_one(&JSONSchema {
             id: id.to_owned(),
-            schema,
+            r#type: r#type.to_owned(),
+            json_schema,
+            ui_schema,
         })
         .map_err(|e| InsertSchemaError::DatabaseError(e))?;
         Ok(id)
