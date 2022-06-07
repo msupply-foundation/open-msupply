@@ -1,7 +1,7 @@
 use crate::sync::SyncCredentials;
 
 use reqwest::{
-    header::{HeaderMap, CONTENT_LENGTH},
+    header::{HeaderMap, HeaderName, CONTENT_LENGTH},
     Client, Url,
 };
 use serde::{Deserialize, Serialize};
@@ -69,14 +69,32 @@ pub struct SyncApiV5 {
     server_url: Url,
     credentials: SyncCredentials,
     client: Client,
+    headers: HeaderMap,
+}
+
+fn generate_headers(hardware_id: &str) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        HeaderName::from_static("msupply-site-uuid"),
+        format!("{}", hardware_id).parse().unwrap(),
+    );
+    // Server rejects initialization request if no `content-length` header included.
+    headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
+    headers
 }
 
 impl SyncApiV5 {
-    pub fn new(server_url: Url, credentials: SyncCredentials, client: Client) -> SyncApiV5 {
+    pub fn new(
+        server_url: Url,
+        credentials: SyncCredentials,
+        client: Client,
+        hardware_id: &str,
+    ) -> SyncApiV5 {
         SyncApiV5 {
             server_url,
             credentials,
             client,
+            headers: generate_headers(hardware_id),
         }
     }
 
@@ -85,11 +103,6 @@ impl SyncApiV5 {
     // Should only be called on initial sync or when re-initializing an existing data file.
     pub async fn post_initialise(&self) -> Result<RemoteSyncBatchV5, SyncConnectionError> {
         let url = self.server_url.join("/sync/v5/initialise")?;
-
-        // Server rejects initialization request if no `content-length` header included.
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
-
         let request = self
             .client
             .post(url)
@@ -97,7 +110,7 @@ impl SyncApiV5 {
                 &self.credentials.username,
                 Some(&self.credentials.password_sha256),
             )
-            .headers(headers);
+            .headers(self.headers.clone());
 
         let response = request.send().await?.error_for_status()?;
 
@@ -114,11 +127,6 @@ impl SyncApiV5 {
         let url = self.server_url.join("/sync/v5/queued_records")?;
 
         let query = [("limit", &batch_size.to_string())];
-
-        // Server rejects initialization request if no `content-length` header is included.
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
-
         let request = self
             .client
             .get(url)
@@ -127,7 +135,7 @@ impl SyncApiV5 {
                 Some(&self.credentials.password_sha256),
             )
             .query(&query)
-            .headers(headers);
+            .headers(self.headers.clone());
 
         let response = request.send().await?.error_for_status()?;
 
@@ -170,11 +178,6 @@ impl SyncApiV5 {
             ("cursor", &cursor.to_string()),
             ("limit", &limit.to_string()),
         ];
-
-        // Server rejects initialization request if no `content-length` header is included.
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
-
         let response = self
             .client
             .get(url)
@@ -183,7 +186,7 @@ impl SyncApiV5 {
                 Some(&self.credentials.password_sha256),
             )
             .query(&query)
-            .headers(headers)
+            .headers(self.headers.clone())
             .send()
             .await?
             .error_for_status()?;
@@ -215,7 +218,7 @@ mod tests {
         let url = Url::parse(url).unwrap();
         let credentials = SyncCredentials::from_plain(username, password);
         let client = Client::new();
-        SyncApiV5::new(url, credentials, client)
+        SyncApiV5::new(url, credentials, client, "hardware_id")
     }
 
     #[actix_rt::test]
