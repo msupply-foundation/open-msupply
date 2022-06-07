@@ -34,5 +34,5 @@ actix-rt = "2.6.0"
 
 [features]
 default = ["sqlite"]
-sqlite = ["repository/sqlite", "diesel/sqlite"]
-postgres = ["repository/postgres", "diesel/postgres"]
+sqlite = ["server/sqlite"]
+postgres = ["server/postgres"]
