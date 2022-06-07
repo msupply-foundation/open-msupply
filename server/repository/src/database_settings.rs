@@ -1,8 +1,7 @@
-use diesel::{
-    connection::SimpleConnection,
-    r2d2::{ConnectionManager, Pool},
-    SqliteConnection,
-};
+use diesel::r2d2::{ConnectionManager, Pool};
+// feature sqlite
+#[cfg(not(feature = "postgres"))]
+use diesel::{connection::SimpleConnection, SqliteConnection};
 use serde;
 
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
