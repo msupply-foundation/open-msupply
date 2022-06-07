@@ -1,8 +1,5 @@
 use crate::{
-    cors::cors_policy,
-    discovery::{Discovery, ServerInfo},
-    self_signed_certs::Certificates,
-    serve_frontend::config_server_frontend,
+    cors::cors_policy, self_signed_certs::Certificates, serve_frontend::config_server_frontend,
     static_files::config_static_files,
 };
 
@@ -33,7 +30,6 @@ use util::uuid::uuid;
 
 pub mod configuration;
 pub mod cors;
-pub mod discovery;
 pub mod environment;
 pub mod middleware;
 pub mod self_signed_certs;
@@ -41,6 +37,10 @@ mod serve_frontend;
 pub mod static_files;
 pub mod sync;
 pub mod test_utils;
+
+// Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
+#[cfg(not(feature = "android"))]
+mod discovery;
 
 fn auth_data(
     server_settings: &ServerSettings,
@@ -275,9 +275,13 @@ pub async fn start_server(
     };
 
     let certificates = Certificates::load(&config_settings.server)?;
-    let server_info = ServerInfo::new(certificates.protocol(), &config_settings.server);
 
-    let _ = Discovery::start(&server_info);
+    // Don't do discovery in android
+    #[cfg(not(feature = "android"))]
+    let _ = discovery::Discovery::start(discovery::ServerInfo::new(
+        certificates.protocol(),
+        &config_settings.server,
+    ));
 
     // allow the off_switch to be passed around during multiple server stages
     let off_switch = Arc::new(Mutex::new(off_switch));
