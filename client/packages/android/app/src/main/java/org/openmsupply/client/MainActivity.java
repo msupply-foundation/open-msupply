@@ -1,6 +1,7 @@
 package org.openmsupply.client;
 
 import android.os.Bundle;
+import android.provider.Settings;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -16,7 +17,9 @@ public class MainActivity extends BridgeActivity {
 
         String path = getFilesDir().getAbsolutePath();
         String cache = getCacheDir().getAbsolutePath();
-        server.start(8000, path, cache);
+        String androidId = Settings.Secure.getString(getContentResolver(),
+                Settings.Secure.ANDROID_ID);
+        server.start(8000, path, cache, androidId);
     }
 
     @Override
