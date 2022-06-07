@@ -93,6 +93,7 @@ pub mod android {
         port: jchar,
         files_dir: JString,
         cache_dir: JString,
+        android_id: JString,
     ) -> jlong {
         android_logger::init_once(Config::default().with_min_level(Level::Trace));
 
@@ -107,6 +108,7 @@ pub mod android {
         if !cert_path.join(PRIVATE_CERT_FILE).exists() {
             generate_certs(&cert_path);
         }
+        info!("Android starts.. {}", android_id);
 
         // run server in background thread
         let thread = thread::spawn(move || {

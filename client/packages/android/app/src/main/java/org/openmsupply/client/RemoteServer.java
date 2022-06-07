@@ -1,6 +1,5 @@
 package org.openmsupply.client;
 
-
 public class RemoteServer {
     private long handle = -1;
 
@@ -12,14 +11,15 @@ public class RemoteServer {
         return "RemoteServer";
     }
 
-    public RemoteServer() {}
+    public RemoteServer() {
+    }
 
     public String sayHelloWorld(String name) {
         return rustHelloWorld(name);
     }
 
-    public void start(int port, String filesDir, String cacheDir) {
-        handle = startServer(port, filesDir, cacheDir);
+    public void start(int port, String filesDir, String cacheDir, String androidId) {
+        handle = startServer(port, filesDir, cacheDir, androidId);
     }
 
     public void stop() {
@@ -31,6 +31,7 @@ public class RemoteServer {
 
     private static native String rustHelloWorld(String seed);
 
-    private static native long startServer(int port, String filesDir, String cacheDir);
+    private static native long startServer(int port, String filesDir, String cacheDir, String androidId);
+
     private static native int stopServer(long handle);
 }
