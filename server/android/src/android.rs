@@ -3,6 +3,7 @@
 pub mod android {
     extern crate jni;
 
+    use log::info;
     use std::io::Write;
     use std::path::PathBuf;
     use std::thread::{self, JoinHandle};
