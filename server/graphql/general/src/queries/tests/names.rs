@@ -1,6 +1,7 @@
 mod graphql {
 
     use async_graphql::EmptyMutation;
+    use chrono::NaiveDate;
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
@@ -9,8 +10,8 @@ mod graphql {
             mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
             mock_store_linked_to_name, MockDataInserts,
         },
-        EqualFilter, Name, NameFilter, NameSort, NameSortField, PaginationOption,
-        SimpleStringFilter, StorageConnectionManager,
+        DateFilter, EqualFilter, Gender, Name, NameFilter, NameSort, NameSortField, NameType,
+        PaginationOption, SimpleStringFilter, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -121,7 +122,37 @@ mod graphql {
               "like": "store code like"
             },
             "isVisible": false,
-            "isSystemName": true
+            "isSystemName": true,
+            "type": {
+              "equalTo": "PATIENT"
+            },
+            "firstName": {
+              "equalTo": "first"
+            },
+            "lastName": {
+              "equalTo": "last"
+            },
+            "gender": {
+              "equalTo": "FEMALE"
+            },
+            "dateOfBirth": {
+              "equalTo": "2000-02-28"
+            },
+            "phone": {
+              "equalTo": "01234"
+            },
+            "address1": {
+              "equalTo": "address1"
+            },
+            "address2": {
+              "equalTo": "address2"
+            },
+            "country": {
+              "equalTo": "country"
+            },
+            "email": {
+              "equalTo": "email"
+            }
           }
         });
 
@@ -130,7 +161,7 @@ mod graphql {
                   "nodes": [{
                       "id": mock_name_a().id,
                   }],
-                  "totalCount": 1
+                  "totalCount": 1 as i32
               }
           }
         );
@@ -161,6 +192,16 @@ mod graphql {
                 store_code,
                 is_visible,
                 is_system_name,
+                r#type,
+                first_name,
+                last_name,
+                gender,
+                date_of_birth,
+                phone,
+                address1,
+                address2,
+                country,
+                email,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
@@ -175,6 +216,20 @@ mod graphql {
             );
             assert_eq!(is_visible, Some(false));
             assert_eq!(is_system_name, Some(true));
+            assert_eq!(r#type, Some(NameType::Patient.equal_to()));
+
+            assert_eq!(first_name, Some(SimpleStringFilter::equal_to("first")));
+            assert_eq!(last_name, Some(SimpleStringFilter::equal_to("last")));
+            assert_eq!(gender, Some(Gender::Female.equal_to()));
+            assert_eq!(
+                date_of_birth,
+                Some(DateFilter::equal_to(NaiveDate::from_ymd(2000, 02, 28)))
+            );
+            assert_eq!(phone, Some(SimpleStringFilter::equal_to("01234")));
+            assert_eq!(address1, Some(SimpleStringFilter::equal_to("address1")));
+            assert_eq!(address2, Some(SimpleStringFilter::equal_to("address2")));
+            assert_eq!(country, Some(SimpleStringFilter::equal_to("country")));
+            assert_eq!(email, Some(SimpleStringFilter::equal_to("email")));
 
             Ok(ListResult {
                 rows: vec![Name {
