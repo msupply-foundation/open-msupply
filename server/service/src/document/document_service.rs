@@ -223,7 +223,7 @@ fn insert_document(
         let doc = raw_doc
             .finalise()
             .map_err(|err| DocumentInsertError::InternalError(err))?;
-        repo.insert_document(&doc)?;
+        repo.insert(&doc)?;
         repo.update_document_head(store_id, &doc)?;
         Ok(doc)
     };
