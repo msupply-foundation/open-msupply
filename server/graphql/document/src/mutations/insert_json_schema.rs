@@ -1,7 +1,7 @@
 use async_graphql::*;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::json_schema_service::InsertSchemaError,
+    document::form_schema_service::InsertSchemaError,
 };
 
 use graphql_core::{
@@ -11,7 +11,9 @@ use graphql_core::{
 
 #[derive(InputObject)]
 pub struct InsertJsonSchemaInput {
-    pub schema: String,
+    pub r#type: String,
+    pub json_schema: String,
+    pub ui_schema: String,
 }
 
 #[derive(SimpleObject)]
@@ -39,10 +41,12 @@ pub fn insert_json_schema(
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
 
-    match service_provider
-        .schema_service
-        .insert_schema(&context, input.schema)
-    {
+    match service_provider.schema_service.insert_schema(
+        &context,
+        input.r#type,
+        input.json_schema,
+        input.ui_schema,
+    ) {
         Ok(id) => Ok(InsertJsonSchemaResponse::Response(InsertJsonSchemaNode {
             id,
         })),

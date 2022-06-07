@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{db_diesel::json_schema::json_schema, diesel_macros::apply_equal_filter};
+use crate::{db_diesel::form_schema::form_schema, diesel_macros::apply_equal_filter};
 use crate::{EqualFilter, RepositoryError};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -19,9 +19,9 @@ table! {
     }
 }
 
-joinable!(document -> json_schema (schema_id));
+joinable!(document -> form_schema (schema_id));
 
-allow_tables_to_appear_in_same_query!(document, json_schema);
+allow_tables_to_appear_in_same_query!(document, form_schema);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[table_name = "document"]

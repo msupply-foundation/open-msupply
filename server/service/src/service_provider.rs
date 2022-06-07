@@ -11,7 +11,7 @@ use crate::{
     },
     document::{
         document_service::{DocumentService, DocumentServiceTrait},
-        json_schema_service::{JsonSchemaService, JsonSchemaServiceTrait},
+        form_schema_service::{JsonSchemaService, JsonSchemaServiceTrait},
         patient::{PatientService, PatientServiceTrait},
     },
     invoice::{InvoiceService, InvoiceServiceTrait},
