@@ -69,30 +69,25 @@ fn do_translation(
         Box::new(MasterListNameJoinTranslation {}),
     ];
     for translation in translations {
-        match translation.try_translate(sync_record) {
-            Ok(Some(result)) => {
-                records.upserts.push(result);
-                return Ok(());
-            }
-            Err(error) => warn!(
-                "Failed to translate ({}): {:?}",
-                SyncTranslationError {
+        let result =
+            translation
+                .try_translate(sync_record)
+                .map_err(|error| SyncTranslationError {
                     table_name: sync_record.table_name.clone(),
                     source: error,
                     record: format!("{:?}", sync_record.data),
-                },
-                sync_record
-            ),
-            _ => {
-                log::info!(
-                    "Ignore central record: table: \"{}\", record id: {}",
-                    sync_record.table_name,
-                    sync_record.record_id
-                );
-            }
-        };
-    }
+                })?;
 
+        if let Some(translated_record) = result {
+            records.upserts.push(translated_record);
+            return Ok(());
+        }
+    }
+    log::info!(
+        "Ignore central record: table: \"{}\", record id: {}",
+        sync_record.table_name,
+        sync_record.record_id
+    );
     Ok(())
 }
 
@@ -131,7 +126,9 @@ pub async fn import_sync_records(
         records.len()
     );
     for record in records {
-        do_translation(&record, &mut integration_records)?;
+        if let Err(error) = do_translation(&record, &mut integration_records) {
+            warn!("Failed to translate ({}): {:?}", error, record)
+        }
     }
     info!("Succesfully translated central sync buffer records");
 
