@@ -1,6 +1,6 @@
 use super::{name_row::name::dsl::*, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, EqualFilter};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -52,6 +52,17 @@ pub enum Gender {
     TransgenderFemaleSurgical,
     Unknown,
     NonBinary,
+}
+
+impl Gender {
+    pub fn equal_to(&self) -> EqualFilter<Gender> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
