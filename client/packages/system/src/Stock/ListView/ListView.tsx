@@ -16,7 +16,7 @@ import { useStock } from '../api';
 import { StockRow } from '../types';
 
 const StockListComponent: FC = () => {
-  const { urlQuery, updateQuery } = useUrlQuery();
+  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['filter'] });
   const {
     updatePaginationQuery,
     updateSortQuery,

@@ -1,0 +1,73 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "attach",
+      "name": "Attach to 'remote_server'",
+      "program": "${workspaceFolder}/server/target/debug/remote_server",
+      "cwd": "${workspaceFolder}/server"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Launch 'remote_server'",
+      "program": "${workspaceFolder}/server/target/debug/remote_server",
+      //   "cargo": {
+      //     "args": ["build", "--bin=remote_server", "--package=server"],
+      //     "filter": {
+      //       "name": "remote_server",
+      //       "kind": "bin"
+      //     }
+      //   },
+      "args": [],
+      "cwd": "${workspaceFolder}/server"
+      //   "preLaunchTask": "cargo"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'remote_server'",
+      "cargo": {
+        "args": ["test", "--no-run", "--bin=remote_server", "--package=server"],
+        "filter": {
+          "name": "remote_server",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/server"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'report_builder'",
+      "cargo": {
+        "args": ["build", "--bin=report_builder", "--package=report_builder"],
+        "filter": {
+          "name": "report_builder",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/server"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'report_builder'",
+      "cargo": {
+        "args": ["test", "--no-run", "--bin=report_builder", "--package=report_builder"],
+        "filter": {
+          "name": "report_builder",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/server"
+    }
+  ]
+}

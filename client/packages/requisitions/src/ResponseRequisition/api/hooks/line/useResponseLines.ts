@@ -20,7 +20,7 @@ interface UseResponseLinesController
 }
 
 const useItemFilter = () => {
-  const { urlQuery, updateQuery } = useUrlQuery();
+  const { urlQuery, updateQuery } = useUrlQuery({});
   return {
     itemFilter: urlQuery.itemName ?? '',
     setItemFilter: (itemFilter: string) =>
