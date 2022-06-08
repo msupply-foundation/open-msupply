@@ -1,5 +1,6 @@
 use crate::sync::SyncCredentials;
 
+use log::info;
 use reqwest::{
     header::{HeaderMap, HeaderName, CONTENT_LENGTH},
     Client, Url,
@@ -22,13 +23,15 @@ pub enum RemoteSyncActionV5 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RemoteSyncRecordV5 {
-    #[serde(rename = "syncId")]
+    #[serde(rename = "syncOutId")]
     pub sync_id: String,
+    #[serde(rename = "tableName")]
     pub table: String,
     #[serde(rename = "recordId")]
     pub record_id: String,
     pub action: RemoteSyncActionV5,
     /// Not set when record is deleted
+    #[serde(rename = "recordData")]
     pub data: Option<serde_json::Value>,
 }
 
@@ -78,8 +81,14 @@ fn generate_headers(hardware_id: &str) -> HeaderMap {
         HeaderName::from_static("msupply-site-uuid"),
         format!("{}", hardware_id).parse().unwrap(),
     );
-    // Server rejects initialization request if no `content-length` header included.
-    headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
+    headers.insert(
+        HeaderName::from_static("app-version"),
+        "1.0".parse().unwrap(),
+    );
+    headers.insert(
+        HeaderName::from_static("app-name"),
+        "remote_server".parse().unwrap(),
+    );
     headers
 }
 
@@ -103,6 +112,10 @@ impl SyncApiV5 {
     // Should only be called on initial sync or when re-initializing an existing data file.
     pub async fn post_initialise(&self) -> Result<RemoteSyncBatchV5, SyncConnectionError> {
         let url = self.server_url.join("/sync/v5/initialise")?;
+        // Server rejects initialization request if no `content-length` header included.
+        let mut headers = self.headers.clone();
+        headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
+
         let request = self
             .client
             .post(url)
@@ -110,7 +123,7 @@ impl SyncApiV5 {
                 &self.credentials.username,
                 Some(&self.credentials.password_sha256),
             )
-            .headers(self.headers.clone());
+            .headers(headers);
 
         let response = request.send().await?.error_for_status()?;
 
@@ -149,6 +162,7 @@ impl SyncApiV5 {
         &self,
         sync_ids: Vec<String>,
     ) -> Result<(), SyncConnectionError> {
+        info!("Acknowledging {} records", sync_ids.len());
         let url = self.server_url.join("/sync/v5/acknowledged_records")?;
         let body: RemoteSyncAckV5 = RemoteSyncAckV5 { sync_ids };
         self.client
@@ -158,6 +172,7 @@ impl SyncApiV5 {
                 Some(&self.credentials.password_sha256),
             )
             .body(serde_json::to_string(&body).unwrap_or_default())
+            .headers(self.headers.clone())
             .send()
             .await?
             .error_for_status()?;
