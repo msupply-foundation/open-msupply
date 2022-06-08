@@ -9,7 +9,7 @@ import patient from './jsonTemp/patient_1.json';
 import schema from './jsonTemp/schema.json';
 import uiSchema from './jsonTemp/ui-schema.json';
 
-export const useJsonForms = (docId: string) => {
+export const useJsonForms = (docName: string) => {
   const [data, setData] = useState(patient);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
