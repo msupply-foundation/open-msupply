@@ -5,9 +5,7 @@ import {
   DetailContainer,
   DetailInputWithLabelRow,
   DetailSection,
-  Checkbox,
   Grid,
-  useFormatDateTime,
   Typography,
   Box,
   BasicSpinner,
@@ -24,7 +22,6 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
   const t = useTranslation('common');
   const { setSuffix } = useBreadcrumbs();
   const isDisabled = true;
-  const { localisedDate } = useFormatDateTime();
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
@@ -49,16 +46,8 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               inputProps={{ value: data?.code, disabled: isDisabled }}
             />
             <DetailInputWithLabelRow
-              label={t('label.chargeCode')}
-              inputProps={{ value: data?.chargeCode, disabled: isDisabled }}
-            />
-            <DetailInputWithLabelRow
               label={t('label.country')}
               inputProps={{ value: data?.country, disabled: isDisabled }}
-            />
-            <DetailInputWithLabelRow
-              label={t('label.comment')}
-              inputProps={{ value: data?.comment, disabled: isDisabled }}
             />
             <DetailInputWithLabelRow
               label={t('label.phone')}
@@ -77,36 +66,6 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
                     {data.website}
                   </MuiLink>
                 </>
-              }
-            />
-          </DetailSection>
-          <DetailSection title="">
-            <DetailInputWithLabelRow
-              label={t('label.date-created')}
-              inputProps={{
-                value: data?.createdDatetime
-                  ? localisedDate(data?.createdDatetime)
-                  : '',
-                disabled: isDisabled,
-              }}
-            />
-            <DetailInputWithLabelRow
-              label={t('label.manufacturer')}
-              Input={
-                <Checkbox
-                  disabled={isDisabled}
-                  checked={data?.isManufacturer}
-                />
-              }
-            />
-            <DetailInputWithLabelRow
-              label={t('label.donor')}
-              Input={<Checkbox disabled={isDisabled} checked={data?.isDonor} />}
-            />
-            <DetailInputWithLabelRow
-              label={t('label.on-hold')}
-              Input={
-                <Checkbox disabled={isDisabled} checked={data?.isOnHold} />
               }
             />
           </DetailSection>

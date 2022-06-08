@@ -543,10 +543,43 @@ export type DeleteStocktakeResponseWithId = {
   response: DeleteStocktakeResponse;
 };
 
+export type DocumentConnector = {
+  __typename: 'DocumentConnector';
+  nodes: Array<DocumentNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type DocumentFilterInput = {
+  name?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type DocumentHistoryResponse = DocumentConnector;
+
+export type DocumentNode = {
+  __typename: 'DocumentNode';
+  author: Scalars['String'];
+  data: Scalars['JSON'];
+  id: Scalars['String'];
+  name: Scalars['String'];
+  parents: Array<Scalars['String']>;
+  schema?: Maybe<JsonschemaNode>;
+  timestamp: Scalars['DateTime'];
+  type: Scalars['String'];
+};
+
+export type DocumentResponse = DocumentConnector;
+
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
   equalTo?: InputMaybe<Scalars['Int']>;
   notEqualTo?: InputMaybe<Scalars['Int']>;
+};
+
+export type EqualFilterGenderInput = {
+  equalAny?: InputMaybe<Array<GenderInput>>;
+  equalTo?: InputMaybe<GenderInput>;
+  notEqualTo?: InputMaybe<GenderInput>;
 };
 
 export type EqualFilterInvoiceStatusInput = {
@@ -565,6 +598,12 @@ export type EqualFilterItemTypeInput = {
   equalAny?: InputMaybe<Array<ItemNodeType>>;
   equalTo?: InputMaybe<ItemNodeType>;
   notEqualTo?: InputMaybe<ItemNodeType>;
+};
+
+export type EqualFilterNameTypeInput = {
+  equalAny?: InputMaybe<Array<NameNodeType>>;
+  equalTo?: InputMaybe<NameNodeType>;
+  notEqualTo?: InputMaybe<NameNodeType>;
 };
 
 export type EqualFilterNumberInput = {
@@ -655,6 +694,7 @@ export type FullMutation = {
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
+  insertJsonSchema: InsertJsonSchemaResponse;
   insertLocation: InsertLocationResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
@@ -666,6 +706,7 @@ export type FullMutation = {
   insertStocktakeLine: InsertStocktakeLineResponse;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
+  updateDocument: UpdateDocumentResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -818,6 +859,11 @@ export type FullMutationInsertInboundShipmentServiceLineArgs = {
 };
 
 
+export type FullMutationInsertJsonSchemaArgs = {
+  input: InsertJsonSchemaInput;
+};
+
+
 export type FullMutationInsertLocationArgs = {
   input: InsertLocationInput;
   storeId: Scalars['String'];
@@ -874,6 +920,12 @@ export type FullMutationInsertStocktakeLineArgs = {
 
 export type FullMutationSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationUpdateDocumentArgs = {
+  input: UpdateDocumentInput;
   storeId: Scalars['String'];
 };
 
@@ -980,12 +1032,16 @@ export type FullQuery = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  documentHistory: DocumentHistoryResponse;
+  documents: DocumentResponse;
+  insertPatient: InsertPatientResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
+  jsonSchema: JsonschemaResponse;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logout: LogoutResponse;
@@ -994,6 +1050,7 @@ export type FullQuery = {
   me: UserResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
+  patients: PatientResponse;
   /**
    * Creates a printed report.
    *
@@ -1036,6 +1093,24 @@ export type FullQueryAuthTokenArgs = {
 };
 
 
+export type FullQueryDocumentHistoryArgs = {
+  name: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryDocumentsArgs = {
+  filter?: InputMaybe<DocumentFilterInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryInsertPatientArgs = {
+  input: InsertPatientInput;
+  storeId: Scalars['String'];
+};
+
+
 export type FullQueryInvoiceArgs = {
   id: Scalars['String'];
   storeId: Scalars['String'];
@@ -1071,6 +1146,11 @@ export type FullQueryItemsArgs = {
 };
 
 
+export type FullQueryJsonSchemaArgs = {
+  id: Scalars['String'];
+};
+
+
 export type FullQueryLocationsArgs = {
   filter?: InputMaybe<LocationFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -1091,6 +1171,14 @@ export type FullQueryNamesArgs = {
   filter?: InputMaybe<NameFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<NameSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryPatientsArgs = {
+  filter?: InputMaybe<PatientFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PatientSortInput>>;
   storeId: Scalars['String'];
 };
 
@@ -1184,6 +1272,19 @@ export type FullQueryStoresArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StoreSortInput>>;
 };
+
+export enum GenderInput {
+  Female = 'FEMALE',
+  Male = 'MALE',
+  NonBinary = 'NON_BINARY',
+  TransgenderFemale = 'TRANSGENDER_FEMALE',
+  TransgenderFemaleHormone = 'TRANSGENDER_FEMALE_HORMONE',
+  TransgenderFemaleSurgical = 'TRANSGENDER_FEMALE_SURGICAL',
+  TransgenderMale = 'TRANSGENDER_MALE',
+  TransgenderMaleHormone = 'TRANSGENDER_MALE_HORMONE',
+  TransgenderMaleSurgical = 'TRANSGENDER_MALE_SURGICAL',
+  Unknown = 'UNKNOWN'
+}
 
 export enum GenderType {
   Female = 'FEMALE',
@@ -1293,6 +1394,17 @@ export type InsertInboundShipmentServiceLineResponseWithId = {
   id: Scalars['String'];
   response: InsertInboundShipmentServiceLineResponse;
 };
+
+export type InsertJsonSchemaInput = {
+  schema: Scalars['String'];
+};
+
+export type InsertJsonSchemaNode = {
+  __typename: 'InsertJsonSchemaNode';
+  id: Scalars['String'];
+};
+
+export type InsertJsonSchemaResponse = InsertJsonSchemaNode;
 
 export type InsertLocationError = {
   __typename: 'InsertLocationError';
@@ -1415,6 +1527,15 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   id: Scalars['String'];
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
+
+export type InsertPatientInput = {
+  /** Patient document data */
+  data: Scalars['JSON'];
+  /** The schema id used for the patient data */
+  schemaId?: InputMaybe<Scalars['String']>;
+};
+
+export type InsertPatientResponse = PatientNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -1836,6 +1957,14 @@ export type ItemStatsNode = {
 
 export type ItemsResponse = ItemConnector;
 
+export type JsonschemaNode = {
+  __typename: 'JsonschemaNode';
+  id: Scalars['String'];
+  schema: Scalars['JSON'];
+};
+
+export type JsonschemaResponse = JsonschemaNode;
+
 export type LocationConnector = {
   __typename: 'LocationConnector';
   nodes: Array<LocationNode>;
@@ -1961,6 +2090,12 @@ export type MasterListSortInput = {
 
 export type MasterListsResponse = MasterListConnector;
 
+export type MergeRequiredError = UpdateDocumentErrorInterface & {
+  __typename: 'MergeRequiredError';
+  autoMerge?: Maybe<RawDocumentNode>;
+  description: Scalars['String'];
+};
+
 export type NameConnector = {
   __typename: 'NameConnector';
   nodes: Array<NameNode>;
@@ -1968,8 +2103,15 @@ export type NameConnector = {
 };
 
 export type NameFilterInput = {
+  address1?: InputMaybe<SimpleStringFilterInput>;
+  address2?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by code */
   code?: InputMaybe<SimpleStringFilterInput>;
+  country?: InputMaybe<SimpleStringFilterInput>;
+  dateOfBirth?: InputMaybe<DateFilterInput>;
+  email?: InputMaybe<SimpleStringFilterInput>;
+  firstName?: InputMaybe<SimpleStringFilterInput>;
+  gender?: InputMaybe<EqualFilterGenderInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
@@ -1983,12 +2125,16 @@ export type NameFilterInput = {
    * if is_visible is set to true and is_system_name is also true no system names will be returned
    */
   isSystemName?: InputMaybe<Scalars['Boolean']>;
-  /** Visibility in current store (based on store_id parameter and existance of name_store_join record) */
+  /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
   isVisible?: InputMaybe<Scalars['Boolean']>;
+  lastName?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
+  phone?: InputMaybe<SimpleStringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<SimpleStringFilterInput>;
+  /** Filter by name type */
+  type?: InputMaybe<EqualFilterNameTypeInput>;
 };
 
 export type NameNode = {
@@ -2123,6 +2269,69 @@ export type PaginationInput = {
   offset?: InputMaybe<Scalars['Int']>;
 };
 
+export type PatientConnector = {
+  __typename: 'PatientConnector';
+  nodes: Array<PatientNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type PatientFilterInput = {
+  address1?: InputMaybe<SimpleStringFilterInput>;
+  address2?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
+  country?: InputMaybe<SimpleStringFilterInput>;
+  dateOfBirth?: InputMaybe<DateFilterInput>;
+  email?: InputMaybe<SimpleStringFilterInput>;
+  firstName?: InputMaybe<SimpleStringFilterInput>;
+  gender?: InputMaybe<EqualFilterGenderInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  lastName?: InputMaybe<SimpleStringFilterInput>;
+  phone?: InputMaybe<SimpleStringFilterInput>;
+};
+
+export type PatientNode = {
+  __typename: 'PatientNode';
+  address1?: Maybe<Scalars['String']>;
+  address2?: Maybe<Scalars['String']>;
+  code: Scalars['String'];
+  country?: Maybe<Scalars['String']>;
+  dateOfBirth?: Maybe<Scalars['NaiveDate']>;
+  document: DocumentNode;
+  email?: Maybe<Scalars['String']>;
+  firstName?: Maybe<Scalars['String']>;
+  gender?: Maybe<GenderType>;
+  id: Scalars['String'];
+  lastName?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
+  phone?: Maybe<Scalars['String']>;
+  website?: Maybe<Scalars['String']>;
+};
+
+export type PatientResponse = PatientConnector;
+
+export enum PatientSortFieldInput {
+  Address1 = 'address1',
+  Address2 = 'address2',
+  Country = 'country',
+  DateOfBirth = 'dateOfBirth',
+  Email = 'email',
+  FirstName = 'firstName',
+  Gender = 'gender',
+  LastName = 'lastName',
+  Name = 'name',
+  Phone = 'phone'
+}
+
+export type PatientSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: PatientSortFieldInput;
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   serviceTotalAfterTax: Scalars['Float'];
@@ -2153,6 +2362,17 @@ export type PrintReportNode = {
 };
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
+
+export type RawDocumentNode = {
+  __typename: 'RawDocumentNode';
+  author: Scalars['String'];
+  data: Scalars['String'];
+  name: Scalars['String'];
+  parents: Array<Scalars['String']>;
+  schemaId?: Maybe<Scalars['String']>;
+  timestamp: Scalars['DateTime'];
+  type: Scalars['String'];
+};
 
 export type RecordAlreadyExist = InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
@@ -2727,6 +2947,27 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   description: Scalars['String'];
   field: UniqueValueKey;
 };
+
+export type UpdateDocumentError = {
+  __typename: 'UpdateDocumentError';
+  error: UpdateDocumentErrorInterface;
+};
+
+export type UpdateDocumentErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type UpdateDocumentInput = {
+  author: Scalars['String'];
+  data: Scalars['JSON'];
+  name: Scalars['String'];
+  parents: Array<Scalars['String']>;
+  schemaId?: InputMaybe<Scalars['String']>;
+  timestamp: Scalars['DateTime'];
+  type: Scalars['String'];
+};
+
+export type UpdateDocumentResponse = DocumentNode | UpdateDocumentError;
 
 export type UpdateErrorInterface = {
   description: Scalars['String'];

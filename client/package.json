@@ -10,6 +10,7 @@
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD",
+    "compile-full": "lerna run --scope @openmsupply-client/* --parallel tsc",
     "prepare": "cd .. && husky install client/.husky",
     "pre-commit-lint": "yarn compile && yarn lint-staged",
     "test": "jest --config ./jest.config.js --maxWorkers=50%",
