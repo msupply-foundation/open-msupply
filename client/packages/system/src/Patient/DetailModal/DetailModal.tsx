@@ -70,16 +70,8 @@ export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
               inputProps={{ value: data?.code, disabled: isDisabled }}
             />
             <DetailInputWithLabelRow
-              label={t('label.chargeCode')}
-              inputProps={{ value: data?.chargeCode, disabled: isDisabled }}
-            />
-            <DetailInputWithLabelRow
               label={t('label.country')}
               inputProps={{ value: data?.country, disabled: isDisabled }}
-            />
-            <DetailInputWithLabelRow
-              label={t('label.comment')}
-              inputProps={{ value: data?.comment, disabled: isDisabled }}
             />
             <DetailInputWithLabelRow
               label={t('label.phone')}

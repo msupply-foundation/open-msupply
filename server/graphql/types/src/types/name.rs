@@ -242,6 +242,7 @@ mod test {
                     name: Name {
                         name_row: inline_init(|r: &mut NameRow| {
                             r.r#type = NameType::Patient;
+                            r.code = "some code".to_string();
                             r.first_name = Some("first_name".to_string());
                             r.last_name = Some("last_name".to_string());
                             r.gender = Some(Gender::Female);
@@ -271,6 +272,7 @@ mod test {
             "testQuery": {
                 "__typename": "NameNode",
                 "type": "PATIENT",
+                "code": "some code",
                 "firstName": "first_name",
                 "lastName": "last_name",
                 "gender": "FEMALE",
@@ -286,7 +288,7 @@ mod test {
                 "address1": "address1",
                 "address2": "address2",
                 "createdDatetime": "2022-05-18T12:07:12+00:00",
-                "dateOfBirth": "1995-05-15T00:00:00+00:00",
+                "dateOfBirth": "1995-05-15",
             }
         }
         );
@@ -294,8 +296,9 @@ mod test {
         let query = r#"
         query {
             testQuery {
-                __typename
-            type
+               __typename
+               type
+               code
                firstName
                lastName
                gender
