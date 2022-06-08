@@ -3,7 +3,6 @@
 pub mod android {
     extern crate jni;
 
-    use log::info;
     use std::io::Write;
     use std::path::PathBuf;
     use std::thread::{self, JoinHandle};
@@ -109,8 +108,6 @@ pub mod android {
         if !cert_path.join(PRIVATE_CERT_FILE).exists() {
             generate_certs(&cert_path);
         }
-        let hardware_id: String = env.get_string(android_id).unwrap().into();
-        info!("Android starts.. {}", hardware_id);
 
         // run server in background thread
         let thread = thread::spawn(move || {
