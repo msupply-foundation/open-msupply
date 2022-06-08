@@ -35,6 +35,10 @@ impl PatientNode {
         &self.patient.name_row.name
     }
 
+    pub async fn code(&self) -> &str {
+        &self.patient.name_row.code
+    }
+
     pub async fn first_name(&self) -> Option<String> {
         self.patient.name_row.first_name.clone()
     }
@@ -122,6 +126,7 @@ pub enum PatientResponse {
 #[derive(InputObject, Clone)]
 pub struct PatientFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub code: Option<SimpleStringFilterInput>,
     pub first_name: Option<SimpleStringFilterInput>,
     pub last_name: Option<SimpleStringFilterInput>,
     pub gender: Option<EqualFilterGenderInput>,
@@ -137,6 +142,7 @@ impl PatientFilterInput {
     fn to_domain(self) -> PatientFilter {
         let PatientFilterInput {
             id,
+            code,
             first_name,
             last_name,
             gender,
@@ -149,6 +155,7 @@ impl PatientFilterInput {
         } = self;
         PatientFilter {
             id: id.map(EqualFilter::from),
+            code: code.map(SimpleStringFilter::from),
             first_name: first_name.map(SimpleStringFilter::from),
             last_name: last_name.map(SimpleStringFilter::from),
             gender: gender.map(|t| map_filter!(t, GenderInput::to_domain)),
