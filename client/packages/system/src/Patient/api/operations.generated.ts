@@ -4,21 +4,21 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type PatientRowFragment = { __typename: 'NameNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null };
+export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null };
 
-export type PatientFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, firstName?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone?: string | null, type: Types.NameNodeType, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null };
+export type PatientFragment = { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document: { __typename: 'DocumentNode', id: string, name: string, type: string } };
 
 export type PatientsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  key: Types.NameSortFieldInput;
+  key: Types.PatientSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
-  filter?: Types.InputMaybe<Types.NameFilterInput>;
+  filter?: Types.InputMaybe<Types.PatientFilterInput>;
 }>;
 
 
-export type PatientsQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null }> } };
+export type PatientsQuery = { __typename: 'FullQuery', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null }> } };
 
 export type PatientByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -26,10 +26,10 @@ export type PatientByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientByIdQuery = { __typename: 'FullQuery', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, firstName?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, isVisible: boolean, name: string, phone?: string | null, type: Types.NameNodeType, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+export type PatientByIdQuery = { __typename: 'FullQuery', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document: { __typename: 'DocumentNode', id: string, name: string, type: string } }> } };
 
 export const PatientRowFragmentDoc = gql`
-    fragment PatientRow on NameNode {
+    fragment PatientRow on PatientNode {
   id
   code
   firstName
@@ -39,43 +39,36 @@ export const PatientRowFragmentDoc = gql`
 }
     `;
 export const PatientFragmentDoc = gql`
-    fragment Patient on NameNode {
+    fragment Patient on PatientNode {
   address1
   address2
-  chargeCode
   code
-  comment
   country
-  createdDatetime
+  dateOfBirth
+  document {
+    id
+    name
+    type
+  }
   email
   firstName
+  lastName
+  gender
   id
-  isCustomer
-  isDonor
-  isManufacturer
-  isOnHold
-  isSupplier
-  isSystemName
-  isVisible
   name
   phone
-  type
   website
-  store {
-    id
-    code
-  }
 }
     `;
 export const PatientsDocument = gql`
-    query patients($storeId: String!, $key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
-  names(
+    query patients($storeId: String!, $key: PatientSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: PatientFilterInput) {
+  patients(
     storeId: $storeId
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
   ) {
-    ... on NameConnector {
+    ... on PatientConnector {
       __typename
       nodes {
         ...PatientRow
@@ -87,8 +80,8 @@ export const PatientsDocument = gql`
     ${PatientRowFragmentDoc}`;
 export const PatientByIdDocument = gql`
     query patientById($storeId: String!, $nameId: String!) {
-  names(storeId: $storeId, filter: {id: {equalTo: $nameId}}) {
-    ... on NameConnector {
+  patients(storeId: $storeId, filter: {id: {equalTo: $nameId}}) {
+    ... on PatientConnector {
       __typename
       nodes {
         ...Patient
@@ -123,7 +116,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * mockPatientsQuery((req, res, ctx) => {
  *   const { storeId, key, desc, first, offset, filter } = req.variables;
  *   return res(
- *     ctx.data({ names })
+ *     ctx.data({ patients })
  *   )
  * })
  */
@@ -140,7 +133,7 @@ export const mockPatientsQuery = (resolver: ResponseResolver<GraphQLRequest<Pati
  * mockPatientByIdQuery((req, res, ctx) => {
  *   const { storeId, nameId } = req.variables;
  *   return res(
- *     ctx.data({ names })
+ *     ctx.data({ patients })
  *   )
  * })
  */

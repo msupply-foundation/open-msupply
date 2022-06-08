@@ -9,33 +9,22 @@ fragment PatientRow on PatientNode {
 fragment Patient on PatientNode {
   address1
   address2
-  chargeCode
-  comment
+  code
   country
-  createdDatetime
   dateOfBirth
   document {
     id
     name
+    type
   }
   email
   firstName
+  lastName
+  gender
   id
-  isCustomer
-  isDonor
-  isManufacturer
-  isOnHold
-  isSupplier
-  isSystemName
-  isVisible
   name
   phone
-  type
   website
-  store {
-    id
-    code
-  }
 }
 
 query patients(
@@ -46,7 +35,7 @@ query patients(
   $offset: Int
   $filter: PatientFilterInput
 ) {
-  names(
+  patients(
     storeId: $storeId
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
@@ -63,7 +52,7 @@ query patients(
 }
 
 query patientById($storeId: String!, $nameId: String!) {
-  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+  patients(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
     ... on PatientConnector {
       __typename
       nodes {

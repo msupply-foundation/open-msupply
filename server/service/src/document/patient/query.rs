@@ -8,6 +8,7 @@ use crate::{get_default_pagination_unlimited, service_provider::ServiceContext};
 #[derive(Clone, Default)]
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
+    pub code: Option<SimpleStringFilter>,
     pub first_name: Option<SimpleStringFilter>,
     pub last_name: Option<SimpleStringFilter>,
     pub gender: Option<EqualFilter<Gender>>,
@@ -82,6 +83,7 @@ impl PatientFilter {
     pub fn to_name_filter(self) -> NameFilter {
         let PatientFilter {
             id,
+            code,
             first_name,
             last_name,
             gender,
@@ -96,7 +98,7 @@ impl PatientFilter {
         NameFilter {
             id: id.map(EqualFilter::from),
             name: None,
-            code: None,
+            code,
             is_customer: None,
             is_supplier: None,
             is_store: None,

@@ -2278,6 +2278,7 @@ export type PatientConnector = {
 export type PatientFilterInput = {
   address1?: InputMaybe<SimpleStringFilterInput>;
   address2?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
   country?: InputMaybe<SimpleStringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
   email?: InputMaybe<SimpleStringFilterInput>;
@@ -2292,6 +2293,7 @@ export type PatientNode = {
   __typename: 'PatientNode';
   address1?: Maybe<Scalars['String']>;
   address2?: Maybe<Scalars['String']>;
+  code: Scalars['String'];
   country?: Maybe<Scalars['String']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']>;
   document: DocumentNode;
