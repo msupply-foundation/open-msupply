@@ -26,7 +26,7 @@ pub enum CentralSyncError {
     ImportCentralSyncRecordsError { source: SyncImportError },
     #[error("Failed to remove central sync buffer records")]
     RemoveCentralSyncBufferRecordsError { source: RepositoryError },
-    #[error("Failed to connect to DB")]
+    #[error("Failed to connect to DB - {source:?}")]
     DBConnectionError { source: RepositoryError },
 }
 
