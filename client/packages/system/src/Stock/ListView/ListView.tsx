@@ -24,7 +24,7 @@ const StockListComponent: FC = () => {
   } = useUrlQueryParams({ initialSortKey: 'itemName' });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const filterString = urlQuery.filter ?? '';
+  const filterString = String(urlQuery.filter ?? '');
 
   const { data, isLoading, isError } = useStock.document.list();
 
