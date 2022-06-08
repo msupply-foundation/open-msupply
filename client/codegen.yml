@@ -1,5 +1,9 @@
 overwrite: true
-schema: ["https://demo-open.msupply.org/graphql", "./packages/common/src/additions.schema.graphql"]
+schema:
+  [
+    'http://localhost:8000/graphql',
+    './packages/common/src/additions.schema.graphql',
+  ]
 generates:
   ./packages/common/src/types/schema.ts:
     plugins:
@@ -11,7 +15,7 @@ generates:
         NaiveDate: string
         NaiveDateTime: string
   packages/:
-    documents: 
+    documents:
       - ./**/*.graphql
     preset: near-operation-file
     presetConfig:
