@@ -14,17 +14,17 @@ use super::{sync_api_v5::CentralSyncRecordV5, SyncImportError};
 
 #[derive(Error, Debug)]
 pub enum CentralSyncError {
-    #[error("Failed to pull central sync records")]
+    #[error("Failed to pull central sync records - {source:?}")]
     PullCentralSyncRecordsError { source: SyncConnectionError },
-    #[error("Failed to update central sync buffer records")]
+    #[error("Failed to update central sync buffer records - {source:?}")]
     UpdateCentralSyncBufferRecordsError { source: RepositoryError },
-    #[error("Failed to get central sync cursor record")]
+    #[error("Failed to get central sync cursor record - {source:?}")]
     GetCentralSyncCursorRecordError { source: RepositoryError },
-    #[error("Failed to get central sync buffer records")]
+    #[error("Failed to get central sync buffer records - {source:?}")]
     GetCentralSyncBufferRecordsError { source: RepositoryError },
-    #[error("Failed to import central sync buffer records")]
+    #[error("Failed to import central sync buffer records - {source:?}")]
     ImportCentralSyncRecordsError { source: SyncImportError },
-    #[error("Failed to remove central sync buffer records")]
+    #[error("Failed to remove central sync buffer records - {source:?}")]
     RemoveCentralSyncBufferRecordsError { source: RepositoryError },
     #[error("Failed to connect to DB - {source:?}")]
     DBConnectionError { source: RepositoryError },
