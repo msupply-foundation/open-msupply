@@ -1,4 +1,4 @@
-import { SortBy, NameSortFieldInput } from '@openmsupply-client/common';
+import { SortBy, PatientSortFieldInput } from '@openmsupply-client/common';
 import { Sdk, PatientRowFragment } from './operations.generated';
 
 export type ListParams = {
@@ -11,10 +11,10 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     byId: async (nameId: string) => {
       const result = await sdk.patientById({ storeId, nameId });
-      const { names } = result;
-      if (names.__typename === 'NameConnector') {
-        if (names.nodes.length) {
-          return names.nodes[0];
+      const { patients } = result;
+      if (patients.__typename === 'PatientConnector') {
+        if (patients.nodes.length) {
+          return patients.nodes[0];
         }
       }
 
@@ -30,8 +30,8 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const key =
         sortBy?.key === 'code'
-          ? NameSortFieldInput.Code
-          : NameSortFieldInput.Name;
+          ? PatientSortFieldInput.Code
+          : PatientSortFieldInput.Name;
 
       const result = await sdk.patients({
         first,
@@ -39,13 +39,9 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
         key,
         desc: !!sortBy?.isDesc,
         storeId,
-        filter: {
-          isStore: false,
-          isSystemName: false,
-        },
       });
 
-      return result?.names;
+      return result?.patients;
     },
     listAll: async ({
       sortBy,
@@ -55,19 +51,16 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const key =
         sortBy?.key === 'name'
-          ? NameSortFieldInput.Name
-          : NameSortFieldInput.Code;
+          ? PatientSortFieldInput.Name
+          : PatientSortFieldInput.Code;
 
       const result = await sdk.patients({
         key,
         desc: !!sortBy?.isDesc,
         storeId,
-        filter: {
-          isCustomer: true,
-        },
       });
 
-      return result?.names;
+      return result?.patients;
     },
   },
 });
