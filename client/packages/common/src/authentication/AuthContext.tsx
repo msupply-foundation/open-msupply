@@ -22,6 +22,7 @@ export enum AuthError {
   NoStoreAssigned = 'NoStoreAssigned',
   PermissionDenied = 'Forbidden',
   Unauthenticated = 'Unauthenticated',
+  Timeout = 'Timeout',
 }
 
 type User = {
@@ -266,7 +267,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       );
 
       if (!token && !isInitScreen) {
-        setError(AuthError.Unauthenticated);
+        setError(AuthError.Timeout);
         window.clearInterval(timer);
       }
     }, TOKEN_CHECK_INTERVAL);
