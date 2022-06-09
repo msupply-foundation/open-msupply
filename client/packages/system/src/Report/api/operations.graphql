@@ -25,8 +25,18 @@ query reports(
   }
 }
 
-query printReport($storeId: String!, $dataId: String!, $reportId: String!) {
-  printReport(dataId: $dataId, reportId: $reportId, storeId: $storeId) {
+query printReport(
+  $storeId: String!
+  $dataId: String!
+  $reportId: String!
+  $format: PrintFormat
+) {
+  printReport(
+    dataId: $dataId
+    reportId: $reportId
+    storeId: $storeId
+    format: $format
+  ) {
     ... on PrintReportNode {
       __typename
       fileId

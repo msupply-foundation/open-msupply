@@ -1097,6 +1097,7 @@ export type FullQueryNamesArgs = {
 
 export type FullQueryPrintReportArgs = {
   dataId: Scalars['String'];
+  format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String'];
   storeId: Scalars['String'];
 };
@@ -2132,6 +2133,11 @@ export type PricingNode = {
   totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
+
+export enum PrintFormat {
+  Html = 'HTML',
+  Pdf = 'PDF'
+}
 
 export type PrintReportError = {
   __typename: 'PrintReportError';
