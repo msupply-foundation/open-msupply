@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { isA } from './../../../../utils';
 import { InboundFragment } from '../../operations.generated';
-import { useQuery } from 'packages/common/src';
+import { useQuery } from '@openmsupply-client/common';
 import { useInboundNumber } from '../document/useInbound';
 import { useInboundApi } from '../utils/useInboundApi';
 
