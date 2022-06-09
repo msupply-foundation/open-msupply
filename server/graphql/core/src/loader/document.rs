@@ -3,7 +3,6 @@ use repository::{Document, DocumentFilter, EqualFilter, RepositoryError};
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use service::document::document_service::{DocumentService, DocumentServiceTrait};
 use service::service_provider::ServiceProvider;
 use std::collections::{HashMap, HashSet};
 
@@ -37,11 +36,10 @@ impl Loader<DocumentLoaderInput> for DocumentLoader {
         names: &[DocumentLoaderInput],
     ) -> Result<HashMap<DocumentLoaderInput, Self::Value>, Self::Error> {
         let ctx = self.service_provider.context()?;
-        let service = DocumentService {};
         let jobs = doc_names_by_store(names);
         let mut out = HashMap::new();
         for (store_id, doc_names) in jobs {
-            let result = service.get_documents(
+            let result = self.service_provider.document_service.get_documents(
                 &ctx,
                 &store_id,
                 Some(DocumentFilter::new().name(Some(EqualFilter::equal_any(
