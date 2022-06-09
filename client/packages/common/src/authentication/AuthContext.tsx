@@ -180,7 +180,14 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
 
     if (documentNode.definitions.some(isAuthRequest)) return false;
 
-    return LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned;
+    switch (LocalStorage.getItem('/auth/error')) {
+      case AuthError.NoStoreAssigned:
+      case AuthError.Unauthenticated:
+      case AuthError.Timeout:
+        return true;
+      default:
+        return false;
+    }
   };
 
   const login = async (username: string, password: string) => {
