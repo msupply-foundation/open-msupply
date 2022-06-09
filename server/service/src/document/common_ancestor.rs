@@ -55,7 +55,7 @@ pub fn common_ancestors<T: AncestorDB>(
         let detail = db
             .get_details(&candidate)
             .ok_or(CommonAncestorError::InvalidAncestorData)?;
-        for parent in detail.parents {
+        for parent in detail.parent_ids {
             v1_queue.push(parent);
         }
     }
@@ -78,7 +78,7 @@ pub fn common_ancestors<T: AncestorDB>(
             continue;
         }
 
-        for parent in candidate.parents {
+        for parent in candidate.parent_ids {
             let detail = db
                 .get_details(&parent)
                 .ok_or(CommonAncestorError::InvalidAncestorData)?;
@@ -103,29 +103,29 @@ mod common_ancestor_test {
         let local = vec![
             AncestorDetail {
                 id: "a0".to_owned(),
-                parents: vec![],
+                parent_ids: vec![],
                 timestamp: NaiveDateTime::from_timestamp(1, 0),
             },
             AncestorDetail {
                 id: "a1".to_owned(),
-                parents: vec!["a0".to_owned()],
+                parent_ids: vec!["a0".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(2, 0),
             },
         ];
         let remote = vec![
             AncestorDetail {
                 id: "a0".to_owned(),
-                parents: vec![],
+                parent_ids: vec![],
                 timestamp: NaiveDateTime::from_timestamp(1, 0),
             },
             AncestorDetail {
                 id: "b0".to_owned(),
-                parents: vec!["a0".to_owned()],
+                parent_ids: vec!["a0".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(3, 0),
             },
             AncestorDetail {
                 id: "b1".to_owned(),
-                parents: vec!["b0".to_owned()],
+                parent_ids: vec!["b0".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(3, 0),
             },
         ];
@@ -143,52 +143,52 @@ mod common_ancestor_test {
         let local = vec![
             AncestorDetail {
                 id: "a00".to_owned(),
-                parents: vec![],
+                parent_ids: vec![],
                 timestamp: NaiveDateTime::from_timestamp(1, 0),
             },
             AncestorDetail {
                 id: "a0".to_owned(),
-                parents: vec!["a00".to_owned()],
+                parent_ids: vec!["a00".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(2, 0),
             },
             AncestorDetail {
                 id: "a1".to_owned(),
-                parents: vec!["a0".to_owned()],
+                parent_ids: vec!["a0".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(3, 0),
             },
             AncestorDetail {
                 id: "a2".to_owned(),
-                parents: vec!["a1".to_owned()],
+                parent_ids: vec!["a1".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(4, 0),
             },
             AncestorDetail {
                 id: "a3".to_owned(),
-                parents: vec!["a2".to_owned()],
+                parent_ids: vec!["a2".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(5, 0),
             },
             AncestorDetail {
                 id: "a4".to_owned(),
-                parents: vec!["a3".to_owned()],
+                parent_ids: vec!["a3".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(6, 0),
             },
             AncestorDetail {
                 id: "b0".to_owned(),
-                parents: vec!["a1".to_owned()],
+                parent_ids: vec!["a1".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(30, 0),
             },
             AncestorDetail {
                 id: "b1".to_owned(),
-                parents: vec!["b0".to_owned()],
+                parent_ids: vec!["b0".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(31, 0),
             },
             AncestorDetail {
                 id: "b2".to_owned(),
-                parents: vec!["b1".to_owned()],
+                parent_ids: vec!["b1".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(32, 0),
             },
             AncestorDetail {
                 id: "b3".to_owned(),
-                parents: vec!["a4".to_owned(), "b2".to_owned()],
+                parent_ids: vec!["a4".to_owned(), "b2".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(33, 0),
             },
         ];
@@ -196,47 +196,47 @@ mod common_ancestor_test {
         let remote = vec![
             AncestorDetail {
                 id: "a00".to_owned(),
-                parents: vec![],
+                parent_ids: vec![],
                 timestamp: NaiveDateTime::from_timestamp(1, 0),
             },
             AncestorDetail {
                 id: "a0".to_owned(),
-                parents: vec!["a00".to_owned()],
+                parent_ids: vec!["a00".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(2, 0),
             },
             AncestorDetail {
                 id: "a1".to_owned(),
-                parents: vec!["a0".to_owned()],
+                parent_ids: vec!["a0".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(3, 0),
             },
             AncestorDetail {
                 id: "a2".to_owned(),
-                parents: vec!["a1".to_owned()],
+                parent_ids: vec!["a1".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(4, 0),
             },
             AncestorDetail {
                 id: "a3".to_owned(),
-                parents: vec!["a2".to_owned()],
+                parent_ids: vec!["a2".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(5, 0),
             },
             AncestorDetail {
                 id: "a4".to_owned(),
-                parents: vec!["a3".to_owned()],
+                parent_ids: vec!["a3".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(6, 0),
             },
             AncestorDetail {
                 id: "a5".to_owned(),
-                parents: vec!["a4".to_owned()],
+                parent_ids: vec!["a4".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(7, 0),
             },
             AncestorDetail {
                 id: "a6".to_owned(),
-                parents: vec!["a4".to_owned()],
+                parent_ids: vec!["a4".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(8, 0),
             },
             AncestorDetail {
                 id: "a7".to_owned(),
-                parents: vec!["a5".to_owned(), "a6".to_owned()],
+                parent_ids: vec!["a5".to_owned(), "a6".to_owned()],
                 timestamp: NaiveDateTime::from_timestamp(9, 0),
             },
         ];

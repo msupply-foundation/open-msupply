@@ -5,7 +5,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::patient::{InsertPatient, InsertPatientError, PatientService, PatientServiceTrait},
+    document::patient::{InsertPatient, InsertPatientError},
 };
 
 use crate::queries::PatientNode;
@@ -39,9 +39,9 @@ pub fn insert_patient(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let patient_service = PatientService {};
-    match patient_service.insert_patients(
+    match service_provider.patient_service.insert_patients(
         &service_context,
+        service_provider,
         store_id,
         &user.user_id,
         InsertPatient {

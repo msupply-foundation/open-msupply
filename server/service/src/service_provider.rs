@@ -9,6 +9,11 @@ use crate::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
+    document::{
+        document_service::{DocumentService, DocumentServiceTrait},
+        json_schema_service::{JsonSchemaService, JsonSchemaServiceTrait},
+        patient::{PatientService, PatientServiceTrait},
+    },
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
@@ -45,6 +50,11 @@ pub struct ServiceProvider {
 
     // Reports
     pub report_service: Box<dyn ReportServiceTrait>,
+
+    // Document
+    pub document_service: Box<dyn DocumentServiceTrait>,
+    pub schema_service: Box<dyn JsonSchemaServiceTrait>,
+    pub patient_service: Box<dyn PatientServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -69,6 +79,9 @@ impl ServiceProvider {
             item_stats_service: Box::new(ItemStatsService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
+            document_service: Box::new(DocumentService {}),
+            schema_service: Box::new(JsonSchemaService {}),
+            patient_service: Box::new(PatientService {}),
         }
     }
 
