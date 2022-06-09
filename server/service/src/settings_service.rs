@@ -39,6 +39,7 @@ pub trait SettingsServiceTrait: Sync + Send {
         let central_server_site_id =
             key_value_store.get_i32(KeyValueType::SettingsSyncCentralServerSiteId)?;
         let site_id = key_value_store.get_i32(KeyValueType::SettingsSyncSiteId)?;
+
         let site_hardware_id =
             key_value_store.get_string(KeyValueType::SettingsSyncSiteHardwareId)?;
 
