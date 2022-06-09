@@ -41,7 +41,7 @@ export const AuthenticationAlert = () => {
   }
   const onOk = () => {
     const state = {} as { from?: Location };
-    if (error === AuthError.Unauthenticated) {
+    if (error === AuthError.Unauthenticated || error === AuthError.Timeout) {
       state.from = location;
     }
 
