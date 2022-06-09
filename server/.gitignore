@@ -13,9 +13,18 @@
 # test databases
 *.sqlite
 *.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 
 # directories used by the server at runtime
 plugins
 certs
 static_files
+
+# default local sqlite database
 omsupply-database
+omsupply-database-wal
+omsupply-database-shm
+
+# local configuration file (generated from example.yaml)
+configuration/local.yaml

@@ -12,10 +12,6 @@ path = "src/lib.rs"
 path = "src/main.rs"
 name = "remote_server"
 
-[[bin]]
-path = "src/cli.rs"
-name = "remote_server_cli"
-
 [dependencies]
 
 graphql = { path = "../graphql" }
@@ -38,7 +34,7 @@ config = "0.11.0"
 chrono = { version = "0.4", features = ["serde"] }
 env_logger = "0.8.3"
 log = "0.4.14"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11.10", features = ["json"] }
 rustls = "0.20.4"
 rustls-pemfile = "1.0.0"
 serde = "1.0.137"
@@ -46,6 +42,11 @@ serde_json = "1.0.66"
 tokio = { version = "1.17.0", features = ["macros" ] }
 thiserror = "1"
 clap = { version = "3.1.8", features = ["derive"] }
+rust-embed = "6.4.0"
+mime_guess = "2.0.4"
+local-ip-address = { version = "0.4.4",  optional = true }
+simple-dns = "0.4.6"
+simple-mdns = "0.3.9"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
@@ -54,7 +55,8 @@ httpmock = "0.6"
 rand = "0.8.5"
 
 [features]
-default = ["repository/sqlite"]
+default = ["sqlite", "dep:local-ip-address"]
+sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
 # See openssl comment regarding the "openssl/vendored" feature
 android = ["repository/sqlite", "openssl/vendored"]

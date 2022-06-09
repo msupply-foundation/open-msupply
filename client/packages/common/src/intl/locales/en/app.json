@@ -26,6 +26,7 @@
   "replenishment": "Replenishment",
   "reports": "Reports",
   "saving": "Saving...",
+  "searching": "Searching...",
   "stock": "View Stock",
   "internal-order": "Internal Orders",
   "suppliers": "Suppliers",
@@ -51,6 +52,10 @@
   "cmdk.placeholder": "Type a command or search",
   "initialise.heading": "Welcome!",
   "initialise.body": "To get started, we'll need to configure the settings to synchronise with mSupply. Please enter the values and click Save.\n\nIf you're not sure what to enter, contact support@msupply.foundation.",
+  "discovery.heading": "Welcome",
+  "discovery.sub-heading": "to open mSupply!",
+  "discovery.body": "To get started, please select the server that you want to connect to.\nOnce selected, we'll reconnect automatically if that server is available, so you won't need to do this again.\nThe 🏠 icon beside a server shows you that this is your local computer.",
+  "discovery.select-server": "Available servers",
   "login.heading": "Simple.\nPowerful.\nPharmaceutical\nManagement.",
   "login.body": "Whether you run a pharmaceutical distribution warehouse, or are a manufacturer needing dozens of connected users, or a small dispensary, mSupply is a valuable partner.",
   "login.store-changed": "Welcome to the {{store}} store",
@@ -59,5 +64,6 @@
   "button.login": "Log in",
   "error.login": "Invalid username or password",
   "select-store": "Select store",
-  "select-report": "Select Template"
+  "select-report": "Select Template",
+  "error.server-not-found": "Problem finding local omSupply server"
 }
