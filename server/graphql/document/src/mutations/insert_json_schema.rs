@@ -1,7 +1,7 @@
 use async_graphql::*;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::json_schema_service::{InsertSchemaError, JsonSchemaService, JsonSchemaServiceTrait},
+    document::json_schema_service::InsertSchemaError,
 };
 
 use graphql_core::{
@@ -38,9 +38,11 @@ pub fn insert_json_schema(
 
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
-    let service = JsonSchemaService {};
 
-    match service.insert_schema(&context, input.schema) {
+    match service_provider
+        .schema_service
+        .insert_schema(&context, input.schema)
+    {
         Ok(id) => Ok(InsertJsonSchemaResponse::Response(InsertJsonSchemaNode {
             id,
         })),

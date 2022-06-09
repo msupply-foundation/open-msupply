@@ -14,8 +14,7 @@ use graphql_types::types::GenderType;
 use repository::{DateFilter, EqualFilter, PaginationOption, SimpleStringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::document::patient::{
-    patient_doc_name, Patient, PatientFilter, PatientService, PatientServiceTrait, PatientSort,
-    PatientSortField,
+    patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
 };
 use service::usize_to_u32;
 
@@ -230,9 +229,9 @@ pub fn patients(
 
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
-    let service = PatientService {};
 
-    let nodes: Vec<PatientNode> = service
+    let nodes: Vec<PatientNode> = service_provider
+        .patient_service
         .get_patients(
             &context,
             &store_id,

@@ -17,8 +17,6 @@ use self::queries::*;
 
 mod types;
 
-mod json_schema_loader;
-
 #[derive(Default, Clone)]
 pub struct DocumentQueries;
 

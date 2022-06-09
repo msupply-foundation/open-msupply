@@ -1,6 +1,7 @@
 use repository::{PaginationOption, RepositoryError};
 
 use crate::service_provider::ServiceContext;
+use crate::service_provider::ServiceProvider;
 
 pub use self::query::*;
 mod query;
@@ -31,11 +32,12 @@ pub trait PatientServiceTrait: Sync + Send {
     fn insert_patients(
         &self,
         ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
         store_id: String,
         user_id: &str,
         input: InsertPatient,
     ) -> Result<Patient, InsertPatientError> {
-        insert_patients(ctx, store_id, user_id, input)
+        insert_patients(ctx, service_provider, store_id, user_id, input)
     }
 }
 
