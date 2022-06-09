@@ -10,7 +10,7 @@ interface useUrlQueryProps {
   // and to boolean if 'true' or 'false'. Specify keys here if you wish to opt out of this
   skipParse?: string[];
 }
-export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps) => {
+export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const updateQuery = (values: UrlQueryObject, overwrite = false) => {
