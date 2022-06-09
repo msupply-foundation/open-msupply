@@ -7,6 +7,7 @@ import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { PropsWithChildrenOnly } from '@common/types';
 import { browserLanguageDetector } from './browserLanguageDetector';
+import { EnvUtils, Platform } from '@common/utils';
 
 const defaultNS = 'common';
 export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
@@ -25,9 +26,9 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     // backend path for loading locale files
     // electron app: requires a relative path
     // browser: requires an absolute path
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isElectron = userAgent.indexOf(' electron/') > -1;
-    const loadPath = `${isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
+    const loadPath = `${
+      EnvUtils.platform === Platform.Desktop ? '.' : ''
+    }/locales/{{lng}}/{{ns}}.json`;
 
     i18next
       .use(initReactI18next) // passes i18n down to react-i18next

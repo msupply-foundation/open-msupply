@@ -166,6 +166,7 @@ async fn main() {
                 username,
                 password_sha256,
                 url,
+                site_hardware_id,
                 ..
             } = settings.sync.unwrap();
 
@@ -194,7 +195,12 @@ async fn main() {
 
             let client = Client::new();
             let url = Url::parse(&url).unwrap();
-            let sync_api_v5 = SyncApiV5::new(url.clone(), credentials.clone(), client.clone());
+            let sync_api_v5 = SyncApiV5::new(
+                url.clone(),
+                credentials.clone(),
+                client.clone(),
+                &site_hardware_id,
+            );
 
             info!("Requesting initialisation");
             sync_api_v5.post_initialise().await.unwrap();

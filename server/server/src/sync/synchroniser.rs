@@ -59,7 +59,12 @@ impl Synchroniser {
             username: settings.username.clone(),
             password_sha256: settings.password_sha256.clone(),
         };
-        let sync_api_v5 = SyncApiV5::new(url.clone(), credentials.clone(), client.clone());
+        let sync_api_v5 = SyncApiV5::new(
+            url.clone(),
+            credentials.clone(),
+            client.clone(),
+            &settings.site_hardware_id,
+        );
         let sync_api_v3 = SyncApiV3::new(url, credentials, client, &settings.site_hardware_id)?;
         Ok(Synchroniser {
             remote_data: RemoteDataSynchroniser {

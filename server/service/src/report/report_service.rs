@@ -1,10 +1,9 @@
-use std::{collections::HashMap, time::SystemTime};
-
 use chrono::{DateTime, Utc};
 use repository::{
     PaginationOption, ReportFilter, ReportRepository, ReportRow, ReportRowRepository, ReportSort,
     ReportType, RepositoryError,
 };
+use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
@@ -21,6 +20,11 @@ use super::{
     dummy_reports::insert_dummy_reports,
     html_printing::html_to_pdf,
 };
+
+pub enum PrintFormat {
+    Pdf,
+    Html,
+}
 
 #[derive(Debug)]
 pub enum ReportError {
@@ -109,8 +113,26 @@ pub trait ReportServiceTrait: Sync + Send {
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
+        format: Option<PrintFormat>,
     ) -> Result<String, ReportError> {
         let document = self.generate_report(report, report_data)?;
+
+        match format {
+            Some(PrintFormat::Html) => {
+                self.print_html_report(base_dir, document, report.name.clone())
+            }
+            Some(PrintFormat::Pdf) | None => {
+                self.print_pdf_report(base_dir, document, report.name.clone())
+            }
+        }
+    }
+
+    fn print_pdf_report(
+        &self,
+        base_dir: &Option<String>,
+        document: GeneratedReport,
+        report_name: String,
+    ) -> Result<String, ReportError> {
         let id = uuid();
         // TODO use a proper tmp dir here instead of base_dir?
         let pdf = html_to_pdf(base_dir, &document, &id)
@@ -121,8 +143,32 @@ pub trait ReportServiceTrait: Sync + Send {
         let now: DateTime<Utc> = SystemTime::now().into();
         let file = file_service
             .store_file(
-                &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report.name),
+                &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report_name),
                 &pdf,
+            )
+            .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        Ok(file.id)
+    }
+
+    fn print_html_report(
+        &self,
+        base_dir: &Option<String>,
+        document: GeneratedReport,
+        report_name: String,
+    ) -> Result<String, ReportError> {
+        let file_service = StaticFileService::new(base_dir)
+            .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        let now: DateTime<Utc> = SystemTime::now().into();
+        let file = file_service
+            .store_file(
+                &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
+                format!(
+                    "{}{}{}",
+                    document.header.unwrap_or("".to_string()),
+                    document.document,
+                    document.footer.unwrap_or("".to_string())
+                )
+                .as_bytes(),
             )
             .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
         Ok(file.id)
