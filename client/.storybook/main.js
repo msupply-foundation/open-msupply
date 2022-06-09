@@ -27,13 +27,10 @@ module.exports = {
         enableSwcLoader: true,
         swcLoaderOptions: {
           jsc: {
-            parser: {
-              dynamicImport: true,
-              syntax: 'typescript',
-              tsx: true,
-              sourceMap: true,
-              exportDefaultFrom: true,
-              decoratorsBeforeExport: true,
+            transform: {
+              react: {
+                runtime: 'automatic',
+              },
             },
             target: 'es2015',
           },
