@@ -1,4 +1,5 @@
 export * from './routes';
+import config from './config';
 
 interface EnvironmentConfig {
   API_HOST: string;
@@ -6,13 +7,7 @@ interface EnvironmentConfig {
   GRAPHQL_URL: string;
 }
 
-declare global {
-  interface Window {
-    env: EnvironmentConfig;
-  }
-}
-
-const { API_HOST = 'http://localhost:4000' } = window.env ?? {};
+const { API_HOST } = config;
 
 export const Environment: EnvironmentConfig = {
   API_HOST,

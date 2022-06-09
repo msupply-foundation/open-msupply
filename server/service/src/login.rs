@@ -3,16 +3,20 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+use bcrypt::BcryptError;
 use log::info;
 use repository::{
     Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
+use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
 
 use crate::{
     apis::{
-        login_v4::{LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserTypeV4, LoginV4Error},
+        login_v4::{
+            LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
+        },
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
@@ -29,6 +33,11 @@ pub enum FetchUserError {
     ConnectionError(String),
     InternalError(String),
 }
+#[derive(Debug)]
+pub enum UpdateUserError {
+    PasswordHashError(BcryptError),
+    DatabaseError(RepositoryError),
+}
 
 pub struct LoginService {}
 
@@ -37,11 +46,13 @@ pub enum LoginError {
     /// Either user does not exit or wrong password
     LoginFailure,
     FailedToGenerateToken(JWTIssuingError),
+    FetchUserError(FetchUserError),
+    UpdateUserError(UpdateUserError),
     InternalError(String),
     DatabaseError(RepositoryError),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LoginInput {
     pub username: String,
     pub password: String,
@@ -89,9 +100,15 @@ impl LoginService {
         input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
         match LoginService::fetch_user_from_central(&input).await {
-            Ok((user, store_permissions)) => {
+            Ok(user_info) => {
                 let service_ctx = service_provider.context()?;
-                LoginService::update_user(&service_ctx, user, store_permissions)?;
+                LoginService::update_user(
+                    &service_ctx,
+                    &input.username,
+                    &input.password,
+                    user_info,
+                )
+                .map_err(|e| LoginError::UpdateUserError(e))?;
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
@@ -128,9 +145,10 @@ impl LoginService {
         Ok(pair)
     }
 
-    async fn fetch_user_from_central(
+    pub async fn fetch_user_from_central(
         input: &LoginInput,
-    ) -> Result<(UserAccountRow, Vec<StorePermissions>), FetchUserError> {
+    ) -> Result<LoginUserInfoV4, FetchUserError> {
+        // Prepare central login query
         let central_server_url = Url::parse(&input.central_server_url).map_err(|err| {
             FetchUserError::InternalError(format!("Failed to parse central server url: {}", err))
         })?;
@@ -141,14 +159,17 @@ impl LoginService {
         let login_api = LoginApiV4::new(client, central_server_url.clone());
         let username = &input.username;
         let password = &input.password;
-        let user_data = match login_api
+
+        // Try login with central
+        let login_result = login_api
             .login(LoginInputV4 {
                 username: username.clone(),
                 password: password.clone(),
                 login_type: LoginUserTypeV4::User,
             })
-            .await
-        {
+            .await;
+
+        let user_data = match login_result {
             Ok(user_data) => user_data,
             Err(err) => match err {
                 LoginV4Error::Unauthorised => {
@@ -184,12 +205,21 @@ impl LoginService {
             }
         };
 
+        Ok(user_info)
+    }
+
+    pub fn update_user(
+        service_ctx: &ServiceContext,
+        username: &str,
+        password: &str,
+        user_info: LoginUserInfoV4,
+    ) -> Result<(), UpdateUserError> {
         // convert user_info to internal format
         let user = UserAccountRow {
             id: user_info.user.id,
             username: username.to_string(),
             hashed_password: UserAccountService::hash_password(&password)
-                .map_err(|err| FetchUserError::InternalError(format!("{:?}", err)))?,
+                .map_err(UpdateUserError::PasswordHashError)?,
             email: match user_info.user.e_mail.as_str() {
                 // TODO do this using serde
                 "" => None,
@@ -227,16 +257,11 @@ impl LoginService {
                 }
             })
             .collect();
-        Ok((user, stores_permissions))
-    }
 
-    fn update_user(
-        service_ctx: &ServiceContext,
-        user: UserAccountRow,
-        store_permissions: Vec<StorePermissions>,
-    ) -> Result<(), RepositoryError> {
         let service = UserAccountService::new(&service_ctx.connection);
-        service.upsert_user(user, store_permissions)?;
+        service
+            .upsert_user(user, stores_permissions)
+            .map_err(|e| UpdateUserError::DatabaseError(e))?;
         Ok(())
     }
 }

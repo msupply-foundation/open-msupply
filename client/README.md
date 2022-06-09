@@ -2,7 +2,7 @@
 
 Welcome! This is the front end application for open mSupply.
 
-This is a multi-lingual, responsive web application making use of the open mSupply [remote-server API](https://github.com/openmsupply/remote-server).
+This is a multi-lingual, responsive web application making use of the open mSupply [remote-server API](https://github.com/open-msupply/server/README.md).
 
 It is built using React, with typescript, and a heavy reliance on hooks. The component framework is material-ui and we're using [storybook](https://storybook.js.org/) to demonstrate the usage and functionality of custom components.
 
@@ -16,13 +16,15 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 - Install dependencies (Using node v16+ and using yarn):
 
-Make sure that the URL for the `remote-server` is set properly here `packages/host/public/config.js`
-
 `yarn install`
 
 - Run on development mode:
 
-`yarn start`
+`yarn start` (using demo server as API)
+
+`yarn start-local` (using localhost:8000 as API)
+
+`cd packages/host && yarn start -- --env API_HOST='http://localhost:8001'` (using custom API url)
 
 - Bundle for production:
 
@@ -99,6 +101,7 @@ You can also specify multiple namespaces when using the hook:
 ```
 
 ## Android App
+
 Short version to build an Android apk (if everything is already set up correctly):
 
 ```bash
@@ -141,7 +144,7 @@ yarn android:build-remote_server
 
 #### MacOS
 
-Have been unable to build the aarch64-linux-android target of remote-server on macOS running on apple silicon. Configuration when using an x86 based macOS is also difficult and we recommend building on a linux host if at all possible. 
+Have been unable to build the aarch64-linux-android target of remote-server on macOS running on apple silicon. Configuration when using an x86 based macOS is also difficult and we recommend building on a linux host if at all possible.
 
 Here are some issues encountered when building on macOS:
 
@@ -149,8 +152,7 @@ Here are some issues encountered when building on macOS:
 
 2. If the `C_INCLUDE_PATH` env var is set, that may cause compilation issues, as it will include the macOS headers and give you `warning: #error architecture not supported` and `warning: fatal error: too many errors emitted, stopping now [-ferror-limit=]`. In which case `unset C_INCLUDE_PATH`
 
-
-3. `thread 'rustc' panicked at 'called `Option::unwrap()` on a `None` value', compiler/rustc_codegen_llvm/src/back/archive.rs:358:67`: Install openssl (`brew install openssl`) and set the env var for `OPENSSL_DIR` e.g. `export OPENSSL_DIR=/usr/local/opt/openssl@3`
+3. `thread 'rustc' panicked at 'called `Option::unwrap()`on a`None` value', compiler/rustc_codegen_llvm/src/back/archive.rs:358:67`: Install openssl (`brew install openssl`) and set the env var for `OPENSSL_DIR` e.g. `export OPENSSL_DIR=/usr/local/opt/openssl@3`
 
 #### Unsolved issue that will hopefully be fixed at some point:
 
@@ -160,11 +162,13 @@ Here are some issues encountered when building on macOS:
 ### Run the Android app
 
 Run:
+
 ```
 yarn android:build:debug
 ```
 
 This will:
+
 - build the react app
 - copy the built files for capacitor
 - build the apk
@@ -172,16 +176,15 @@ This will:
 The steps, if you need to run them manually are:
 
 ```
-yarn build-local
+yarn build
 npx cap copy
 ```
 
 Open the `android` folder in Android Studio and start the app.
-Note that the `build-local` script will set the `API_HOST` to `API_HOST: 'https://localhost:8000'` in  `packages/host/public/config.js` which is required when running the remote server running on Android.
-
 
 
 ### Release build
+
 Make sure you have an Android keystore for signing the release apk.
 Create a file `packages/android/local.properties` and add the required key store parameters:
 
@@ -205,3 +208,7 @@ The apk will be located in `packages/android/app/build/outputs/apk/release`.
 The remote server is started and stopped in: `android/app/src/main/java/org/openmsupply/client/MainActivity.java`
 
 The cert plugin (`packages/android/app/src/main/java/org/openmsupply/client/certplugin/CertPlugin.java`) allows the web client to make https request to the remote-server using a self signed certificate.
+
+## Desktop App
+
+The client application can be bundled as a desktop app. Currently we're using [Electron](https://www.electronjs.org/) for this. For more details about how this is done, and development, see the [electron README](packages/electron/README.md)

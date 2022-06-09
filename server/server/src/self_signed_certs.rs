@@ -1,7 +1,12 @@
-use std::{io::BufReader, path::PathBuf};
+use std::{
+    fmt::Display,
+    io::{BufReader, ErrorKind},
+    path::PathBuf,
+};
 
+use log::{error, warn};
 use rustls::ServerConfig;
-use service::settings::ServerSettings;
+use service::settings::{is_develop, ServerSettings};
 
 #[derive(Debug)]
 pub struct SelfSignedCertFiles {
@@ -66,4 +71,69 @@ fn load_private_key_rusttls(filename: &str) -> Result<rustls::PrivateKey, anyhow
     }
 
     Err(anyhow::Error::msg("No private key found"))
+}
+
+pub struct Certificates {
+    config: Option<ServerConfig>,
+}
+
+impl Certificates {
+    pub fn load(settings: &ServerSettings) -> std::io::Result<Self> {
+        let cert = find_self_signed_certs(settings);
+
+        let config = match cert {
+            Some(cert_files) => Some(
+                load_self_signed_certs_rustls(cert_files)
+                    .expect("Invalid self signed certificates"),
+            ),
+            None => {
+                if !is_develop() && !settings.danger_allow_http {
+                    error!("No certificates found");
+                    return Err(std::io::Error::new(
+                        ErrorKind::Other,
+                        "Certificate required",
+                    ));
+                }
+
+                warn!("No certificates found: Run in HTTP development mode");
+                None
+            }
+        };
+
+        Ok(Certificates { config })
+    }
+
+    pub fn config(&self) -> Option<ServerConfig> {
+        self.config.clone()
+    }
+
+    pub fn is_https(&self) -> bool {
+        self.config.is_some()
+    }
+
+    pub fn protocol(&self) -> Protocol {
+        match self.config {
+            Some(_) => Protocol::Https,
+            None => Protocol::Http,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum Protocol {
+    Http,
+    Https,
+}
+
+impl Display for Protocol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Protocol::Http => "http",
+                Protocol::Https => "https",
+            }
+        )
+    }
 }
