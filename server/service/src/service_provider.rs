@@ -23,6 +23,7 @@ use crate::{
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    settings_service::{SettingsService, SettingsServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
@@ -45,6 +46,7 @@ pub struct ServiceProvider {
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
+
     // Stock stats
     pub item_stats_service: Box<dyn ItemStatsServiceTrait>,
 
@@ -55,6 +57,9 @@ pub struct ServiceProvider {
     pub document_service: Box<dyn DocumentServiceTrait>,
     pub schema_service: Box<dyn JsonSchemaServiceTrait>,
     pub patient_service: Box<dyn PatientServiceTrait>,
+
+    // Settings
+    pub settings: Box<dyn SettingsServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -82,6 +87,7 @@ impl ServiceProvider {
             document_service: Box::new(DocumentService {}),
             schema_service: Box::new(JsonSchemaService {}),
             patient_service: Box::new(PatientService {}),
+            settings: Box::new(SettingsService {}),
         }
     }
 

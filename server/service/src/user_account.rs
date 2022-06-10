@@ -1,7 +1,8 @@
 use repository::{
-    EqualFilter, RepositoryError, StorageConnection, TransactionError, User, UserAccountRow,
-    UserAccountRowRepository, UserFilter, UserPermissionRow, UserPermissionRowRepository,
-    UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    EqualFilter, KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection,
+    TransactionError, User, UserAccountRow, UserAccountRowRepository, UserFilter,
+    UserPermissionRow, UserPermissionRowRepository, UserRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -105,14 +106,12 @@ impl<'a> UserAccountService<'a> {
         Ok(result)
     }
 
-    pub fn hash_password(password: &str) -> Result<String, CreateUserAccountError> {
-        match hash(password, DEFAULT_COST) {
-            Ok(pwd) => Ok(pwd),
-            Err(err) => {
-                error!("create_user: Failed to hash password");
-                return Err(CreateUserAccountError::PasswordHashError(err));
-            }
+    pub fn hash_password(password: &str) -> Result<String, BcryptError> {
+        let hashed_password = hash(password, DEFAULT_COST);
+        if let Err(err) = &hashed_password {
+            error!("create_user: Failed to hash password. {:#?}", err);
         }
+        hashed_password
     }
 
     pub fn create_user(
@@ -128,7 +127,10 @@ impl<'a> UserAccountService<'a> {
                 {
                     return Err(CreateUserAccountError::UserNameExist);
                 }
-                let hashed_password = UserAccountService::hash_password(&user.password)?;
+
+                let hashed_password = UserAccountService::hash_password(&user.password)
+                    .map_err(CreateUserAccountError::PasswordHashError)?;
+
                 let row = UserAccountRow {
                     id: uuid(),
                     username: user.username,
@@ -149,8 +151,17 @@ impl<'a> UserAccountService<'a> {
     }
 
     pub fn find_user(&self, user_id: &str) -> Result<Option<User>, RepositoryError> {
+        let key_value_store = KeyValueStoreRepository::new(self.connection);
+        let site_id = key_value_store
+            .get_i32(KeyValueType::SettingsSyncSiteId)?
+            .unwrap(); //TODO relocate to service service
+
         let repo = UserRepository::new(self.connection);
-        repo.query_one(UserFilter::new().id(EqualFilter::equal_to(user_id)))
+        repo.query_one(
+            UserFilter::new()
+                .id(EqualFilter::equal_to(user_id))
+                .site_id(EqualFilter::equal_to_i32(site_id)),
+        )
     }
 
     /// Finds a user account and verifies that the password is ok

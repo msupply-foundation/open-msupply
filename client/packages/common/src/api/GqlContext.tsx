@@ -1,12 +1,12 @@
 import React, {
   FC,
+  createContext,
   useMemo,
   useEffect,
   useState,
   useCallback,
   PropsWithChildren,
 } from 'react';
-import { createContext } from 'react';
 import {
   GraphQLClient,
   RequestDocument,
@@ -16,6 +16,7 @@ import {
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DocumentNode } from 'graphql';
+import { RequestInit } from 'graphql-request/dist/types.dom';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
@@ -59,7 +60,11 @@ class GQLClient extends GraphQLClient {
   private emptyData: object;
   private skipRequest: SkipRequest;
 
-  constructor(url: string, options?: RequestInit, skipRequest?: SkipRequest) {
+  constructor(
+    url: string,
+    options?: RequestInit | undefined,
+    skipRequest?: SkipRequest
+  ) {
     super(url, options);
     this.client = new GraphQLClient(url, options);
     this.emptyData = {};

@@ -17,4 +17,5 @@ module.exports = {
     }),
     '.+\\.(gif)$': 'jest-transform-stub',
   },
+  transformIgnorePatterns: ['/node_modules/(?!uuid)'],
 };

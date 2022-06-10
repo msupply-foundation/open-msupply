@@ -8,6 +8,7 @@ const path = require('path');
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const PluginTransformImport = require('swc-plugin-transform-import').default;
 
 module.exports = env => {
   const isProduction = !!env.production;
@@ -63,6 +64,7 @@ module.exports = env => {
                 tsx: true,
               },
               target: 'es2015',
+              plugin: m => new PluginTransformImport().visitProgram(m),
             },
           },
         },
@@ -71,8 +73,11 @@ module.exports = env => {
           use: ['style-loader', 'css-loader'],
         },
         {
-          test: /\.(woff|woff2|ttf|eot)$/,
-          use: 'file-loader?name=fonts/[name].[ext]',
+          test: /\.(woff(2)?|ttf|eot)$/,
+          type: 'asset/resource',
+          generator: {
+            filename: './fonts/[name][ext]',
+          },
         },
         {
           test: /\.(png|svg|jpg|jpeg|gif)$/i,

@@ -9,6 +9,12 @@ mod reports;
 #[derive(Default, Clone)]
 pub struct ReportQueries;
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum PrintFormat {
+    Pdf,
+    Html,
+}
+
 #[Object]
 impl ReportQueries {
     /// Queries a list of available reports
@@ -38,8 +44,15 @@ impl ReportQueries {
             desc = "The data id that should be used for the report, e.g. the invoice id when printing an invoice"
         )]
         data_id: String,
+        format: Option<PrintFormat>,
     ) -> Result<PrintReportResponse> {
-        print_report(ctx, store_id, report_id, data_id).await
+        let report_format = match format {
+            Some(PrintFormat::Html) => Some(service::report::report_service::PrintFormat::Html),
+            Some(PrintFormat::Pdf) | None => {
+                Some(service::report::report_service::PrintFormat::Html)
+            }
+        };
+        print_report(ctx, store_id, report_id, data_id, report_format).await
     }
 
     pub async fn print_report_definition(

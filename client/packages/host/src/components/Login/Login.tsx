@@ -49,17 +49,7 @@ export const Login = () => {
 
   return (
     <LoginLayout
-      ServerInfo={
-        <Typography
-          sx={{
-            fontSize: '12px',
-            color: 'gray.main',
-            fontWeight: 600,
-          }}
-        >
-          {connectedServer && `Server: ${frontEndHostDisplay(connectedServer)}`}
-        </Typography>
-      }
+      ServerInfo={connectedServer ? frontEndHostDisplay(connectedServer) : ''}
       UsernameInput={
         <LoginTextInput
           fullWidth
