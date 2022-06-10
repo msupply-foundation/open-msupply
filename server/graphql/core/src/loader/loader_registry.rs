@@ -1,4 +1,4 @@
-use super::*;
+use super::{json_schema::JsonSchemaLoader, *};
 use crate::loader::{ItemLoader, StoreByIdLoader, UserLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
@@ -188,6 +188,12 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     );
+    let schema_loader = DataLoader::new(
+        JsonSchemaLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
 
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
@@ -212,6 +218,7 @@ pub async fn get_loaders(
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);
     loaders.insert(document_loader);
+    loaders.insert(schema_loader);
 
     loaders
 }
