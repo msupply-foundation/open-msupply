@@ -16,7 +16,7 @@ table! {
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[table_name = "form_schema"]
-pub struct JSONSchemaRow {
+pub struct FormSchemaRow {
     /// The json schema id
     pub id: String,
     #[column_name = "type_"]
@@ -37,7 +37,7 @@ pub struct JsonSchemaRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-fn schema_from_row(schema_row: JSONSchemaRow) -> Result<JSONSchema, RepositoryError> {
+fn schema_from_row(schema_row: FormSchemaRow) -> Result<JSONSchema, RepositoryError> {
     let json_schema: serde_json::Value =
         serde_json::from_str(&schema_row.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't deserialize json schema".to_string(),
@@ -56,7 +56,7 @@ fn schema_from_row(schema_row: JSONSchemaRow) -> Result<JSONSchema, RepositoryEr
     })
 }
 
-fn row_from_schema(schema: &JSONSchema) -> Result<JSONSchemaRow, RepositoryError> {
+fn row_from_schema(schema: &JSONSchema) -> Result<FormSchemaRow, RepositoryError> {
     let json_schema =
         serde_json::to_string(&schema.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't serialize json schema".to_string(),
@@ -67,7 +67,7 @@ fn row_from_schema(schema: &JSONSchema) -> Result<JSONSchemaRow, RepositoryError
             msg: "Can't serialize ui schema".to_string(),
             extra: format!("{}", err),
         })?;
-    Ok(JSONSchemaRow {
+    Ok(FormSchemaRow {
         id: schema.id.to_owned(),
         r#type: schema.r#type.to_owned(),
         json_schema,
@@ -110,7 +110,7 @@ impl<'a> JsonSchemaRepository<'a> {
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<JSONSchema>, RepositoryError> {
-        let rows: Vec<JSONSchemaRow> = form_schema::dsl::form_schema
+        let rows: Vec<FormSchemaRow> = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq_any(ids))
             .load(&self.connection.connection)?;
         let mut result = Vec::<JSONSchema>::new();
