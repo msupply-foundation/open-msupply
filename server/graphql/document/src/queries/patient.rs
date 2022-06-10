@@ -7,7 +7,6 @@ use graphql_core::generic_filters::{
 use graphql_core::loader::{DocumentLoader, DocumentLoaderInput};
 use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::GenderType;
@@ -83,32 +82,23 @@ impl PatientNode {
         self.patient.name_row.website.clone()
     }
 
-    pub async fn document(&self, ctx: &Context<'_>) -> Result<DocumentNode> {
+    pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
-        let document = loader
+        let store_id = match self.patient.name_row.supplying_store_id.clone() {
+            Some(store_id) => store_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
             .load_one(DocumentLoaderInput {
-                store_id: self
-                    .patient
-                    .name_row
-                    .supplying_store_id
-                    .as_ref()
-                    .ok_or(StandardGraphqlError::InternalError(
-                        "Patient has no store".to_string(),
-                    ))?
-                    .clone(),
+                store_id,
                 document_name: patient_doc_name(&self.patient.name_row.id),
             })
             .await?
-            .ok_or(
-                StandardGraphqlError::InternalError(format!(
-                    "Cannot find document for patient ({})",
-                    self.patient.name_row.id
-                ))
-                .extend(),
-            )?;
+            .map(|document| DocumentNode { document });
 
-        Ok(DocumentNode { document })
+        Ok(result)
     }
 }
 
