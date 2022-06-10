@@ -3,16 +3,12 @@ use repository::{EqualFilter, RepositoryError};
 use util::uuid::uuid;
 
 use crate::{
-    document::{
-        document_service::{DocumentInsertError, DocumentService, DocumentServiceTrait},
-        raw_document::RawDocument,
-    },
-    service_provider::ServiceContext,
+    document::{document_service::DocumentInsertError, raw_document::RawDocument},
+    service_provider::{ServiceContext, ServiceProvider},
 };
 
 use super::{
-    patient_doc_name, patient_schema::SchemaPatient, Patient, PatientFilter, PatientService,
-    PatientServiceTrait, PATIENT_TYPE,
+    patient_doc_name, patient_schema::SchemaPatient, Patient, PatientFilter, PATIENT_TYPE,
 };
 
 #[derive(PartialEq, Debug)]
@@ -29,6 +25,7 @@ pub struct InsertPatient {
 
 pub fn insert_patients(
     ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
     store_id: String,
     user_id: &str,
     input: InsertPatient,
@@ -53,8 +50,9 @@ pub fn insert_patients(
         schema_id: input.schema_id,
     };
     // Updating the document will trigger an update in the patient (names) table
-    let service = DocumentService {};
-    service
+
+    service_provider
+        .document_service
         .update_document(ctx, &store_id, doc)
         .map_err(|err| match err {
             DocumentInsertError::InvalidDataSchema(err) => {
@@ -65,8 +63,8 @@ pub fn insert_patients(
             _ => InsertPatientError::InternalError(format!("{:?}", err)),
         })?;
 
-    let patient_service = PatientService {};
-    let patient = patient_service
+    let patient = service_provider
+        .patient_service
         .get_patients(
             ctx,
             &store_id,

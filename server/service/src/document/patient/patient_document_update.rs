@@ -103,10 +103,9 @@ mod test {
 
     use crate::{
         document::{
-            document_service::{DocumentService, DocumentServiceTrait},
             patient::{
                 patient_schema::{Address, ContactDetails, Gender, Patient, SocioEconomics},
-                PatientFilter, PatientService, PatientServiceTrait, PATIENT_TYPE,
+                PatientFilter, PATIENT_TYPE,
             },
             raw_document::RawDocument,
         },
@@ -124,7 +123,7 @@ mod test {
         let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider.context().unwrap();
 
-        let service = DocumentService {};
+        let service = service_provider.document_service;
         let address = Address {
             address_1: Some("firstaddressline".to_string()),
             address_2: Some("secondaddressline".to_string()),
@@ -179,8 +178,8 @@ mod test {
             )
             .unwrap();
 
-        let patient_service = PatientService {};
-        let found_patient = patient_service
+        let found_patient = service_provider
+            .patient_service
             .get_patients(
                 &ctx,
                 "store_a",

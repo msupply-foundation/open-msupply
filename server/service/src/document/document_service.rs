@@ -223,7 +223,7 @@ fn insert_document(
         let doc = raw_doc
             .finalise()
             .map_err(|err| DocumentInsertError::InternalError(err))?;
-        repo.insert_document(&doc)?;
+        repo.insert(&doc)?;
         repo.update_document_head(store_id, &doc)?;
         Ok(doc)
     };
@@ -323,7 +323,7 @@ mod document_service_test {
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.context().unwrap();
 
-        let service = DocumentService {};
+        let service = service_provider.document_service;
         let store = "test_store";
         let template = RawDocument {
             name: "test/doc".to_string(),
@@ -409,7 +409,7 @@ mod document_service_test {
               "conflict": "our change wins because we are more recent"
             })
         );
-        assert_eq!(result.parents, vec![v0.id.to_owned(), v1.id.to_owned()]);
+        assert_eq!(result.parent_ids, vec![v0.id.to_owned(), v1.id.to_owned()]);
 
         // add new doc with a merge as parent
         let mut next_doc = template.clone();

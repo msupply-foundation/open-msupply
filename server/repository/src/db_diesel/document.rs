@@ -10,8 +10,8 @@ table! {
     document (id) {
         id -> Text,
         name -> Text,
-        parents -> Text,
-        author -> Text,
+        parent_ids -> Text,
+        user_id -> Text,
         timestamp -> Timestamp,
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
@@ -31,9 +31,9 @@ pub struct DocumentRow {
     /// Document path and name
     pub name: String,
     /// Stringified array of parents
-    pub parents: String,
+    pub parent_ids: String,
     /// Id of the author who edited this document version
-    pub author: String,
+    pub user_id: String,
     /// The timestamp of this document version
     pub timestamp: NaiveDateTime,
     /// Type of the containing data
@@ -76,9 +76,9 @@ pub struct Document {
     /// Document path and name
     pub name: String,
     /// Document parents
-    pub parents: Vec<String>,
+    pub parent_ids: Vec<String>,
     /// Id of the author who edited this document version
-    pub author: String,
+    pub user_id: String,
     /// The timestamp of this document version
     pub timestamp: DateTime<Utc>,
     /// Type of the containing data
@@ -91,7 +91,7 @@ pub struct Document {
 #[derive(Clone)]
 pub struct AncestorDetail {
     pub id: String,
-    pub parents: Vec<String>,
+    pub parent_ids: Vec<String>,
     pub timestamp: NaiveDateTime,
 }
 
@@ -131,7 +131,7 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    pub fn insert_document(&self, doc: &Document) -> Result<(), RepositoryError> {
+    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(row_from_document(doc)?)
             .execute(&self.connection.connection)?;
@@ -267,7 +267,7 @@ impl<'a> DocumentRepository<'a> {
             .filter(document::dsl::name.eq(document_name))
             .select((
                 document::dsl::id,
-                document::dsl::parents,
+                document::dsl::parent_ids,
                 document::dsl::timestamp,
             ))
             .load(&self.connection.connection)?;
@@ -280,7 +280,7 @@ impl<'a> DocumentRepository<'a> {
                 })?;
             ancestors.push(AncestorDetail {
                 id: row.0,
-                parents,
+                parent_ids: parents,
                 timestamp: row.2,
             })
         }
@@ -290,7 +290,7 @@ impl<'a> DocumentRepository<'a> {
 
 fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
     let parents: Vec<String> =
-        serde_json::from_str(&row.parents).map_err(|err| RepositoryError::DBError {
+        serde_json::from_str(&row.parent_ids).map_err(|err| RepositoryError::DBError {
             msg: "Invalid parents data".to_string(),
             extra: format!("{}", err),
         })?;
@@ -303,8 +303,8 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
     let document = Document {
         id: row.id,
         name: row.name,
-        parents,
-        author: row.author,
+        parent_ids: parents,
+        user_id: row.user_id,
         timestamp: DateTime::<Utc>::from_utc(row.timestamp, Utc),
         r#type: row.r#type,
         data,
@@ -315,10 +315,11 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
 }
 
 fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
-    let parents = serde_json::to_string(&doc.parents).map_err(|err| RepositoryError::DBError {
-        msg: "Can't serialize parents".to_string(),
-        extra: format!("{}", err),
-    })?;
+    let parents =
+        serde_json::to_string(&doc.parent_ids).map_err(|err| RepositoryError::DBError {
+            msg: "Can't serialize parents".to_string(),
+            extra: format!("{}", err),
+        })?;
     let data = serde_json::to_string(&doc.data).map_err(|err| RepositoryError::DBError {
         msg: "Can't serialize data".to_string(),
         extra: format!("{}", err),
@@ -326,8 +327,8 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
     Ok(DocumentRow {
         id: doc.id.to_owned(),
         name: doc.name.to_owned(),
-        parents,
-        author: doc.author.to_owned(),
+        parent_ids: parents,
+        user_id: doc.user_id.to_owned(),
         timestamp: doc.timestamp.naive_utc(),
         r#type: doc.r#type.to_owned(),
         data,

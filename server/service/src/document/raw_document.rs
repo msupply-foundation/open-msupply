@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use repository::Document;
 use serde::{Deserialize, Serialize};
-use util::{canonical_json::CanonicalJsonValue, hash::sha256};
+use util::{canonical_json::canonical_json, hash::sha256};
 
 /// Like Document but without id
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -21,8 +21,7 @@ impl RawDocument {
     /// Calculates the document id
     pub fn document_id(&self) -> Result<String, String> {
         let value = serde_json::to_value(self).map_err(|err| format!("{:?}", err))?;
-        let canonical_value = CanonicalJsonValue::from(value);
-        let str = canonical_value.to_string();
+        let str = canonical_json(&value);
         Ok(sha256(&str))
     }
 
@@ -41,8 +40,8 @@ impl RawDocument {
         Ok(Document {
             id,
             name,
-            parents,
-            author,
+            parent_ids: parents,
+            user_id: author,
             timestamp,
             r#type,
             data,
