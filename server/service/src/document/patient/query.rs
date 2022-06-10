@@ -23,6 +23,7 @@ pub struct PatientFilter {
 #[derive(PartialEq, Debug)]
 pub enum PatientSortField {
     Name,
+    Code,
     FirstName,
     LastName,
     Gender,
@@ -53,11 +54,16 @@ pub fn get_patients(
     let result = repository.query(
         store_id,
         pagination,
-        filter.map(|f| f.to_name_filter()),
+        filter
+            .map(|f| f.to_name_filter())
+            .or(Some(NameFilter::new()))
+            // always filter by patient:
+            .map(|f| f.r#type(NameType::Patient)),
         sort.map(|v| NameSort {
             desc: v.desc,
             key: match v.key {
                 PatientSortField::Name => NameSortField::Name,
+                PatientSortField::Code => NameSortField::Code,
                 PatientSortField::FirstName => NameSortField::FirstName,
                 PatientSortField::LastName => NameSortField::LastName,
                 PatientSortField::Gender => NameSortField::Gender,
@@ -105,12 +111,7 @@ impl PatientFilter {
             store_code: None,
             is_visible: None,
             is_system_name: None,
-            r#type: Some(EqualFilter {
-                equal_to: Some(NameType::Patient),
-                not_equal_to: None,
-                equal_any: None,
-                not_equal_all: None,
-            }),
+            r#type: None,
             first_name,
             last_name,
             gender,

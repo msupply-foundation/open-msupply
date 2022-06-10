@@ -145,7 +145,7 @@ impl<'a> DocumentRepository<'a> {
         doc: &Document,
     ) -> Result<(), RepositoryError> {
         let row = DocumentHeadRow {
-            id: make_head_id(&doc.name, store),
+            id: make_head_id(store_id, &doc.name),
             store_id: store_id.to_owned(),
             name: doc.name.to_owned(),
             head: doc.id.to_owned(),
