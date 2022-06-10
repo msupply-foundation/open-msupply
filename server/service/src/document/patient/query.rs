@@ -23,6 +23,7 @@ pub struct PatientFilter {
 #[derive(PartialEq, Debug)]
 pub enum PatientSortField {
     Name,
+    Code,
     FirstName,
     LastName,
     Gender,
@@ -62,6 +63,7 @@ pub fn get_patients(
             desc: v.desc,
             key: match v.key {
                 PatientSortField::Name => NameSortField::Name,
+                PatientSortField::Code => NameSortField::Code,
                 PatientSortField::FirstName => NameSortField::FirstName,
                 PatientSortField::LastName => NameSortField::LastName,
                 PatientSortField::Gender => NameSortField::Gender,

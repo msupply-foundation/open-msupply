@@ -163,6 +163,7 @@ impl PatientFilterInput {
 #[graphql(rename_items = "camelCase")]
 pub enum PatientSortFieldInput {
     Name,
+    Code,
     FirstName,
     LastName,
     Gender,
@@ -188,6 +189,7 @@ impl PatientSortInput {
         PatientSort {
             key: match self.key {
                 PatientSortFieldInput::Name => PatientSortField::Name,
+                PatientSortFieldInput::Code => PatientSortField::Code,
                 PatientSortFieldInput::FirstName => PatientSortField::FirstName,
                 PatientSortFieldInput::LastName => PatientSortField::LastName,
                 PatientSortFieldInput::Gender => PatientSortField::Gender,
