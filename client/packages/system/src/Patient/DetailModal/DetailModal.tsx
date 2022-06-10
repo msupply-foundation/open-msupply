@@ -1,9 +1,4 @@
 import React, { FC, useState } from 'react';
-import { JsonForms } from '@jsonforms/react';
-import {
-  materialRenderers,
-  materialCells,
-} from '@jsonforms/material-renderers';
 import {
   useTranslation,
   // useBreadcrumbs,
@@ -29,7 +24,7 @@ export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
   // const { data, isLoading } = usePatient.document.get(nameId);
   const t = useTranslation('common');
   // const { setSuffix } = useBreadcrumbs();
-  const isDisabled = true;
+  // const isDisabled = true;
   // const [data, setData] = useState(patient);
   // const { localisedDate } = useFormatDateTime();
   const { JsonForm, loading, error, saveData } = useJsonForms(docId);

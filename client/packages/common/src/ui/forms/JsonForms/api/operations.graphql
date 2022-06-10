@@ -1,11 +1,3 @@
-fragment LocationRow on LocationNode {
-  __typename
-  id
-  name
-  onHold
-  code
-}
-
 query locations($storeId: String!, $sort: [LocationSortInput!]) {
   locations(storeId: $storeId, sort: $sort) {
     __typename
