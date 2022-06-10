@@ -266,6 +266,11 @@ impl NameFilter {
         self
     }
 
+    pub fn r#type(mut self, value: NameType) -> Self {
+        self.r#type = Some(value.equal_to());
+        self
+    }
+
     pub fn code(mut self, filter: SimpleStringFilter) -> Self {
         self.code = Some(filter);
         self
