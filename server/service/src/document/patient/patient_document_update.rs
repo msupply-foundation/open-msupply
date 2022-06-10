@@ -87,13 +87,13 @@ pub fn patient_document_updated(
 
 fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
     let mut out = vec![];
-    if let Some(first) = first {
-        out.push(first.clone());
-    }
     if let Some(last) = last {
         out.push(last.clone());
     }
-    out.join(",")
+    if let Some(first) = first {
+        out.push(first.clone());
+    }
+    out.join(", ")
 }
 
 #[cfg(test)]
