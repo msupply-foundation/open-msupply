@@ -73,7 +73,7 @@ export const DataRow = <T extends RecordWithId>({
           {columns.map((column, columnIndex) => {
             return (
               <TableCell
-                key={`${rowKey}${column.key}`}
+                key={`${rowKey}${String(column.key)}`}
                 align={column.align}
                 sx={{
                   borderBottom: 'none',

@@ -9,7 +9,7 @@ import { act } from 'react-dom/test-utils';
 // eslint-disable-next-line @typescript-eslint/ban-types
 const stores = new Set<Function>();
 
-const create: typeof actualCreate = createState => {
+const create: typeof actualCreate = (createState: any) => {
   const store = actualCreate(createState);
   const initialState = store.getState();
   stores.add(() => act(() => store.setState(initialState, true)));

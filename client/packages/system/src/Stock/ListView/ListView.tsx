@@ -16,7 +16,7 @@ import { useStock } from '../api';
 import { StockRow } from '../types';
 
 const StockListComponent: FC = () => {
-  const { urlQuery, updateQuery } = useUrlQuery();
+  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['filter'] });
   const {
     updatePaginationQuery,
     updateSortQuery,
@@ -24,7 +24,7 @@ const StockListComponent: FC = () => {
   } = useUrlQueryParams({ initialSortKey: 'itemName' });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const filterString = urlQuery.filter ?? '';
+  const filterString = String(urlQuery.filter ?? '');
 
   const { data, isLoading, isError } = useStock.document.list();
 
