@@ -62,9 +62,9 @@ impl<'a> JsonSchemaRepository<'a> {
     #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, schema: &JSONSchema) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
-        diesel::insert_into(json_schema_dsl::json_schema)
+        diesel::insert_into(json_schema::dsl::json_schema)
             .values(&row)
-            .on_conflict(json_schema_dsl::id)
+            .on_conflict(json_schema::dsl::id)
             .do_update()
             .set(&row)
             .execute(&self.connection.connection)?;
