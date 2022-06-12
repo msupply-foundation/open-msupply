@@ -106,6 +106,9 @@ fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface>
         DocumentInsertError::InternalError(_) => {
             StandardGraphqlError::InternalError(formatted_error)
         }
+        DocumentInsertError::SchemaDoesNotExist => {
+            StandardGraphqlError::BadUserInput(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
