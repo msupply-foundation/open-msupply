@@ -51,7 +51,7 @@ jobs:
       
       - name: Test
         working-directory: client
-        run: yarn test
+        run: yarn test-fast
 
   test-electron:
     # Wouldn't run by default, when not running from workflow_dispatch dont' run
@@ -67,7 +67,12 @@ jobs:
         with:
           node-version: 14
           cache: 'yarn'
-    
+          cache-dependency-path: client/yarn.lock
+
+      - name: Install
+        working-directory: client
+        run: yarn install
+
       - name: Compile
         working-directory: cient
         run: yarn electron:compile
