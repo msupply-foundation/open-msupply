@@ -41,9 +41,12 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: client/yarn.lock
 
-      - name: Compile
+      - name: Install
         working-directory: client
         run: yarn install
+
+      - name: Compile
+        working-directory: client
         run: yarn compile
       
       - name: Test
