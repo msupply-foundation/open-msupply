@@ -65,5 +65,5 @@
   "error.login": "Invalid username or password",
   "select-store": "Select store",
   "select-report": "Select Template",
-  "error.server-not-found": "Problem finding local omSupply server"
+  "error.server-not-found": "Problem finding local omSupply server (check)"
 }
