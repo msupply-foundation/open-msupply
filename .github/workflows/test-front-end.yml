@@ -1,0 +1,69 @@
+name: test-front-end
+
+on:
+  pull_request:
+    # Not on edit (as it maybe too much to test on every commit, push below will deal with on merge)
+    types: [opened, reopened]
+    paths: ["client/**"]
+  push:
+    # When PR is merged (or any other commits directly to master or develop)
+    branches: [master, develop]
+    paths: ["client/**"]
+  # For manually triggered workflow, can specify what to test
+  workflow_dispatch:
+    inputs:
+      front-end:
+        description: 'Test Front End'
+        required: true
+        default: true
+        type: boolean
+      electron:
+        description: 'Test Electron Client'
+        required: true
+        # Should only be tested manually
+        default: false
+        type: boolean
+
+jobs:
+  test-front-end:
+    # When not running from workflow_dispath (!github.events.input), alway do front end compilation and test
+    if: inputs.front-end || !github.events.input 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache
+        # Uses actions/cache, easier to set up
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+          cache: 'yarn'
+    
+      - name: Compile
+        working-directory: './client'
+        run: yarn compile
+      
+      - name: Test
+        working-directory: './client'
+        run: yarn test
+
+  test-electron:
+    # Wouldn't run by default, when not running from workflow_dispatch dont' run
+    if: inputs.electron
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache
+        # Uses actions/cache, easier to set up
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+          cache: 'yarn'
+    
+      - name: Compile
+        working-directory: './client'
+        run: yarn electron:compile
+    
