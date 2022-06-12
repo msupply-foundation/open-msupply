@@ -35,7 +35,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: '**/node_modules'
-          key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          # If yarn lock has changed, use the latest node_module hash
+          restore-keys: ${{ runner.os }}-yarn-
 
       - name: Install
         working-directory: client
