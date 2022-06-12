@@ -3,7 +3,7 @@ use chrono::Utc;
 use jsonschema::JSONSchema;
 use repository::{
     AncestorDetail, Document, DocumentFilter, DocumentRepository, EqualFilter,
-    JsonSchemaRepository, RepositoryError, StorageConnection,
+    FormSchemaRowRepository, RepositoryError, StorageConnection,
 };
 
 use crate::service_provider::ServiceContext;

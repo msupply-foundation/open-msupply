@@ -2,7 +2,7 @@ use super::{
     document_registry_row::document_registry::dsl as document_registry_dsl, StorageConnection,
 };
 
-use crate::{db_diesel::form_schema::form_schema, RepositoryError};
+use crate::{db_diesel::form_schema_row::form_schema, RepositoryError};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;

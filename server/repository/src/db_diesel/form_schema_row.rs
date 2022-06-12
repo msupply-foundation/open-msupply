@@ -33,7 +33,7 @@ pub struct JSONSchema {
     pub ui_schema: serde_json::Value,
 }
 
-pub struct JsonSchemaRepository<'a> {
+pub struct FormSchemaRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
@@ -75,9 +75,9 @@ fn row_from_schema(schema: &JSONSchema) -> Result<FormSchemaRow, RepositoryError
     })
 }
 
-impl<'a> JsonSchemaRepository<'a> {
+impl<'a> FormSchemaRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        JsonSchemaRepository { connection }
+        FormSchemaRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
@@ -101,12 +101,15 @@ impl<'a> JsonSchemaRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, schema_id: &str) -> Result<JSONSchema, RepositoryError> {
+    pub fn find_one_by_id(&self, schema_id: &str) -> Result<Option<JSONSchema>, RepositoryError> {
         let row = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq(schema_id))
-            .first(&self.connection.connection)?;
-
-        schema_from_row(row)
+            .first(&self.connection.connection)
+            .optional()?;
+        match row {
+            Some(row) => Ok(Some(schema_from_row(row)?)),
+            None => Ok(None),
+        }
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<JSONSchema>, RepositoryError> {

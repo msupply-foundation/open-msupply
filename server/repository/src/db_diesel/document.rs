@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{db_diesel::form_schema::form_schema, diesel_macros::apply_equal_filter};
+use crate::{db_diesel::form_schema_row::form_schema, diesel_macros::apply_equal_filter};
 use crate::{EqualFilter, RepositoryError};
 
 use chrono::{DateTime, NaiveDateTime, Utc};

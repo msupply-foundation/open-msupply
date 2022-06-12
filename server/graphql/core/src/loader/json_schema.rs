@@ -1,4 +1,4 @@
-use repository::{JSONSchema, JsonSchemaRepository, RepositoryError, StorageConnectionManager};
+use repository::{FormSchemaRowRepository, JSONSchema, RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -15,7 +15,7 @@ impl Loader<String> for JsonSchemaLoader {
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
-        let repo = JsonSchemaRepository::new(&connection);
+        let repo = FormSchemaRowRepository::new(&connection);
         let result = repo.find_many_by_ids(ids)?;
         Ok(result
             .into_iter()

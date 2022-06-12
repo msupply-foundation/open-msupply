@@ -1,4 +1,4 @@
-use repository::{JSONSchema, JsonSchemaRepository, RepositoryError};
+use repository::{FormSchemaRowRepository, JSONSchema, RepositoryError};
 use util::{canonical_json::canonical_json, hash::sha256};
 
 use crate::service_provider::ServiceContext;
@@ -8,8 +8,12 @@ pub enum InsertSchemaError {
     SerializationError(String),
 }
 pub trait JsonSchemaServiceTrait: Sync + Send {
-    fn get_schema(&self, ctx: &ServiceContext, id: &str) -> Result<JSONSchema, RepositoryError> {
-        JsonSchemaRepository::new(&ctx.connection).find_one_by_id(id)
+    fn get_schema(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+    ) -> Result<Option<JSONSchema>, RepositoryError> {
+        FormSchemaRowRepository::new(&ctx.connection).find_one_by_id(id)
     }
 
     fn insert_schema(
@@ -26,7 +30,7 @@ pub trait JsonSchemaServiceTrait: Sync + Send {
         let ui_schema: serde_json::Value = serde_json::from_str(&ui_schema)
             .map_err(|e| InsertSchemaError::SerializationError(format!("{}", e)))?;
 
-        let repo = JsonSchemaRepository::new(&ctx.connection);
+        let repo = FormSchemaRowRepository::new(&ctx.connection);
         repo.upsert_one(&JSONSchema {
             id: id.to_owned(),
             r#type: r#type.to_owned(),
