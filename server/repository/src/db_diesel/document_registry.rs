@@ -176,3 +176,14 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
         ui_schema,
     })
 }
+
+impl DocumentContext {
+    pub fn equal_to(&self) -> EqualFilter<DocumentContext> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+}
