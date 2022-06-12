@@ -39,13 +39,14 @@ jobs:
         with:
           node-version: 14
           cache: 'yarn'
-    
+          cache-dependency-path: client/yarn-lock.json
+
       - name: Compile
-        working-directory: './client'
+        working-directory: client
         run: yarn compile
       
       - name: Test
-        working-directory: './client'
+        working-directory: client
         run: yarn test
 
   test-electron:
@@ -64,6 +65,6 @@ jobs:
           cache: 'yarn'
     
       - name: Compile
-        working-directory: './client'
+        working-directory: cient
         run: yarn electron:compile
     
