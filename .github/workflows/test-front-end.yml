@@ -42,18 +42,19 @@ jobs:
         run: yarn install
 
       - name: Compile
-         # When not running from workflow_dispath (!github.events.input), alway do front end compilation and test
-        if: inputs.front-end || !github.events.input 
+         # When not running from workflow_dispath (!github.event_name == 'workflow_dispath'), alway do front end compilation and test
+        if: inputs.front-end || !github.event_name == 'workflow_dispath'
         working-directory: client
         run: yarn compile
       
       - name: Test
-        # When not running from workflow_dispath (!github.events.input), alway do front end compilation and test
-        if: inputs.front-end || !github.events.input 
+        # When not running from workflow_dispath (!github.event_name == 'workflow_dispath'), alway do front end compilation and test
+        if: inputs.front-end || !github.event_name == 'workflow_dispath'
         working-directory: client
         run: yarn test-full-speed
       
       - name: Compile Electron
         # Wouldn't run by default, when not running from workflow_dispatch dont' run
         if: inputs.electron
+        working-directory: client
         run: yarn electron:compile
