@@ -24,7 +24,7 @@
     "start-local": "webpack-cli serve --env API_HOST='http://localhost:8000'",
     "build": "webpack --env production",
     "serve": "serve dist -p 3003",
-    "compile": "tsc --build"
+    "tsc": "tsc --build"
   },
   "dependencies": {
     "@fontsource/inter": "^4.5.0",

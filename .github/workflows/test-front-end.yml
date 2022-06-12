@@ -26,54 +26,34 @@ on:
 
 jobs:
   test-front-end:
-    # When not running from workflow_dispath (!github.events.input), alway do front end compilation and test
-    if: inputs.front-end || !github.events.input 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Cache
-        # Uses actions/cache, easier to set up
-        uses: actions/setup-node@v3
+        uses: actions/cache@v3
         with:
-          node-version: 14
-          cache: 'yarn'
-          cache-dependency-path: client/yarn.lock
+          path: '**/node_modules'
+          key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
 
       - name: Install
         working-directory: client
         run: yarn install
 
       - name: Compile
+         # When not running from workflow_dispath (!github.events.input), alway do front end compilation and test
+        if: inputs.front-end || !github.events.input 
         working-directory: client
         run: yarn compile
       
       - name: Test
+        # When not running from workflow_dispath (!github.events.input), alway do front end compilation and test
+        if: inputs.front-end || !github.events.input 
         working-directory: client
-        run: yarn test-fast
-
-  test-electron:
-    # Wouldn't run by default, when not running from workflow_dispatch dont' run
-    if: inputs.electron
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Cache
-        # Uses actions/cache, easier to set up
-        uses: actions/setup-node@v3
-        with:
-          node-version: 14
-          cache: 'yarn'
-          cache-dependency-path: client/yarn.lock
-
-      - name: Install
-        working-directory: client
-        run: yarn install
-
-      - name: Compile
-        working-directory: cient
+        run: yarn test-full-speed
+      
+      - name: Compile Electron
+        # Wouldn't run by default, when not running from workflow_dispatch dont' run
+        if: inputs.electron
         run: yarn electron:compile
-    
