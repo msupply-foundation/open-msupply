@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: 14
           cache: 'yarn'
-          cache-dependency-path: client/yarn-lock.json
+          cache-dependency-path: client/yarn.lock
 
       - name: Compile
         working-directory: client
