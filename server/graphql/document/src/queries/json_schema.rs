@@ -6,12 +6,7 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 
 use crate::types::json_schema::JSONSchemaNode;
 
-#[derive(Union)]
-pub enum JSONSchemaResponse {
-    Response(JSONSchemaNode),
-}
-
-pub fn json_schema(ctx: &Context<'_>, id: String) -> Result<JSONSchemaResponse> {
+pub fn json_schema(ctx: &Context<'_>, id: String) -> Result<Option<JSONSchemaNode>> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -24,5 +19,5 @@ pub fn json_schema(ctx: &Context<'_>, id: String) -> Result<JSONSchemaResponse> 
     let context = service_provider.context()?;
 
     let schema = service_provider.schema_service.get_schema(&context, &id)?;
-    Ok(JSONSchemaResponse::Response(JSONSchemaNode { schema }))
+    Ok(schema.map(|schema| JSONSchemaNode { schema }))
 }

@@ -11,7 +11,7 @@ impl JSONSchemaNode {
         &self.schema.id
     }
 
-    pub async fn schema(&self) -> &serde_json::Value {
+    pub async fn json_schema(&self) -> &serde_json::Value {
         &self.schema.json_schema
     }
 }

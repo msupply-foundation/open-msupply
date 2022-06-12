@@ -9,6 +9,7 @@ use mutations::patient::insert::InsertPatientResponse;
 use mutations::update_document::update_document;
 use mutations::update_document::UpdateDocumentInput;
 use mutations::update_document::UpdateDocumentResponse;
+use types::json_schema::JSONSchemaNode;
 
 mod mutations;
 
@@ -40,7 +41,11 @@ impl DocumentQueries {
         document_history(ctx, store_id, name)
     }
 
-    pub async fn json_schema(&self, ctx: &Context<'_>, id: String) -> Result<JSONSchemaResponse> {
+    pub async fn json_schema(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> Result<Option<JSONSchemaNode>> {
         json_schema(ctx, id)
     }
 

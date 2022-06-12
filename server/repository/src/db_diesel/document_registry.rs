@@ -1,6 +1,6 @@
 use super::{
     document_registry_row::{document_registry, document_registry::dsl as document_registry_dsl},
-    form_schema::{form_schema, form_schema::dsl as form_schema_dsl},
+    form_schema_row::{form_schema, form_schema::dsl as form_schema_dsl},
     StorageConnection,
 };
 
