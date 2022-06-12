@@ -7,7 +7,7 @@ on:
     paths: ["client/**"]
   push:
     # When PR is merged (or any other commits directly to master or develop)
-    branches: [master, develop]
+    branches: [main, develop]
     paths: ["client/**"]
   # For manually triggered workflow, can specify what to test
   workflow_dispatch:
