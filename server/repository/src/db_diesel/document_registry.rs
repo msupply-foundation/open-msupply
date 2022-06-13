@@ -41,6 +41,7 @@ pub struct DocumentRegistry {
     pub document_type: String,
     pub context: DocumentContext,
     pub name: Option<String>,
+    pub form_schema_id: String,
     pub json_schema: serde_json::Value,
     pub ui_schema_type: String,
     pub ui_schema: serde_json::Value,
@@ -154,14 +155,14 @@ impl DocumentRegistryFilter {
 }
 
 fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, RepositoryError> {
-    let (row, schema) = data;
+    let (row, form_schema) = data;
     let json_schema =
-        serde_json::from_str(&schema.json_schema).map_err(|err| RepositoryError::DBError {
+        serde_json::from_str(&form_schema.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Invalid json schema".to_string(),
             extra: format!("{}", err),
         })?;
     let ui_schema =
-        serde_json::from_str(&schema.ui_schema).map_err(|err| RepositoryError::DBError {
+        serde_json::from_str(&form_schema.ui_schema).map_err(|err| RepositoryError::DBError {
             msg: "Invalid ui schema".to_string(),
             extra: format!("{}", err),
         })?;
@@ -171,8 +172,9 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
         document_type: row.document_type,
         context: row.context,
         name: row.name,
+        form_schema_id: form_schema.id,
         json_schema,
-        ui_schema_type: schema.r#type,
+        ui_schema_type: form_schema.r#type,
         ui_schema,
     })
 }

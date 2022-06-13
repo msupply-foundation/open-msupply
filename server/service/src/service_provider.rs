@@ -11,7 +11,7 @@ use crate::{
     },
     document::{
         document_service::{DocumentService, DocumentServiceTrait},
-        form_schema_service::{JsonSchemaService, JsonSchemaServiceTrait},
+        form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
         patient::{PatientService, PatientServiceTrait},
     },
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -55,7 +55,8 @@ pub struct ServiceProvider {
 
     // Document
     pub document_service: Box<dyn DocumentServiceTrait>,
-    pub schema_service: Box<dyn JsonSchemaServiceTrait>,
+    pub document_registry_service: Box<dyn DocumentRegistryServiceTrait>,
+    pub form_schema_service: Box<dyn FormSchemaServiceTrait>,
     pub patient_service: Box<dyn PatientServiceTrait>,
 
     // Settings
@@ -85,7 +86,8 @@ impl ServiceProvider {
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
             document_service: Box::new(DocumentService {}),
-            schema_service: Box::new(JsonSchemaService {}),
+            document_registry_service: Box::new(DocumentRegistryService {}),
+            form_schema_service: Box::new(FormSchemaService {}),
             patient_service: Box::new(PatientService {}),
             settings: Box::new(SettingsService {}),
         }

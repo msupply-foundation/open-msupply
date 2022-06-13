@@ -1,46 +1,31 @@
-use repository::{FormSchemaRowRepository, JSONSchema, RepositoryError};
-use util::{canonical_json::canonical_json, hash::sha256};
+use repository::{FormSchema, FormSchemaRowRepository, RepositoryError};
 
 use crate::service_provider::ServiceContext;
 
-pub enum InsertSchemaError {
+pub enum InsertFormSchemaError {
     DatabaseError(RepositoryError),
     SerializationError(String),
 }
-pub trait JsonSchemaServiceTrait: Sync + Send {
+pub trait FormSchemaServiceTrait: Sync + Send {
     fn get_schema(
         &self,
         ctx: &ServiceContext,
         id: &str,
-    ) -> Result<Option<JSONSchema>, RepositoryError> {
+    ) -> Result<Option<FormSchema>, RepositoryError> {
         FormSchemaRowRepository::new(&ctx.connection).find_one_by_id(id)
     }
 
-    fn insert_schema(
+    fn insert(
         &self,
         ctx: &ServiceContext,
-        r#type: String,
-        json_schema: String,
-        ui_schema: String,
-    ) -> Result<String, InsertSchemaError> {
-        let json_schema: serde_json::Value = serde_json::from_str(&json_schema)
-            .map_err(|e| InsertSchemaError::SerializationError(format!("{}", e)))?;
-        let str = canonical_json(&json_schema);
-        let id = sha256(&str);
-        let ui_schema: serde_json::Value = serde_json::from_str(&ui_schema)
-            .map_err(|e| InsertSchemaError::SerializationError(format!("{}", e)))?;
-
+        schema: FormSchema,
+    ) -> Result<FormSchema, InsertFormSchemaError> {
         let repo = FormSchemaRowRepository::new(&ctx.connection);
-        repo.upsert_one(&JSONSchema {
-            id: id.to_owned(),
-            r#type: r#type.to_owned(),
-            json_schema,
-            ui_schema,
-        })
-        .map_err(|e| InsertSchemaError::DatabaseError(e))?;
-        Ok(id)
+        repo.upsert_one(&schema)
+            .map_err(|e| InsertFormSchemaError::DatabaseError(e))?;
+        Ok(schema)
     }
 }
 
-pub struct JsonSchemaService {}
-impl JsonSchemaServiceTrait for JsonSchemaService {}
+pub struct FormSchemaService {}
+impl FormSchemaServiceTrait for FormSchemaService {}

@@ -1,15 +1,18 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use mutations::insert_json_schema::insert_json_schema;
-use mutations::insert_json_schema::InsertJsonSchemaInput;
-use mutations::insert_json_schema::InsertJsonSchemaResponse;
+use mutations::insert_document_registry::insert_document_registry;
+use mutations::insert_document_registry::InsertDocumentRegistryInput;
+use mutations::insert_document_registry::InsertDocumentResponse;
+use mutations::insert_form_schema::insert_form_schema;
+use mutations::insert_form_schema::InsertFormSchemaInput;
+use mutations::insert_form_schema::InsertFormSchemaResponse;
 use mutations::patient::insert::insert_patient;
 use mutations::patient::insert::InsertPatientInput;
 use mutations::patient::insert::InsertPatientResponse;
 use mutations::update_document::update_document;
 use mutations::update_document::UpdateDocumentInput;
 use mutations::update_document::UpdateDocumentResponse;
-use types::json_schema::JSONSchemaNode;
+use types::json_schema::FormSchemaNode;
 
 mod mutations;
 
@@ -41,12 +44,16 @@ impl DocumentQueries {
         document_history(ctx, store_id, name)
     }
 
-    pub async fn json_schema(
+    pub async fn document_registry(&self, ctx: &Context<'_>) -> Result<DocumentRegistryResponse> {
+        document_registry(ctx)
+    }
+
+    pub async fn form_schema(
         &self,
         ctx: &Context<'_>,
         id: String,
-    ) -> Result<Option<JSONSchemaNode>> {
-        json_schema(ctx, id)
+    ) -> Result<Option<FormSchemaNode>> {
+        form_schema(ctx, id)
     }
 
     pub async fn patients(
@@ -84,11 +91,20 @@ impl DocumentMutations {
         update_document(ctx, &store_id, input)
     }
 
-    async fn insert_json_schema(
+    async fn insert_document_registry(
         &self,
         ctx: &Context<'_>,
-        input: InsertJsonSchemaInput,
-    ) -> Result<InsertJsonSchemaResponse> {
-        insert_json_schema(ctx, input)
+        input: InsertDocumentRegistryInput,
+    ) -> Result<InsertDocumentResponse> {
+        insert_document_registry(ctx, input)
+    }
+
+    async fn insert_form_schema(
+        &self,
+        ctx: &Context<'_>,
+
+        input: InsertFormSchemaInput,
+    ) -> Result<InsertFormSchemaResponse> {
+        insert_form_schema(ctx, input)
     }
 }
