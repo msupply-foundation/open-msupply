@@ -2,10 +2,11 @@ use repository::{DocumentRegistry, DocumentRegistryRepository, Pagination, Repos
 
 use crate::service_provider::ServiceContext;
 
-use self::insert::{insert, InsertDocRegistryError, InsertDocumentRegistry};
+pub use self::insert::*;
 
 mod insert;
 
+#[derive(Debug)]
 pub enum DocumentRegistryError {
     InternalError(String),
     RepositoryError(RepositoryError),
@@ -24,7 +25,7 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: InsertDocumentRegistry,
-    ) -> Result<(), InsertDocRegistryError> {
+    ) -> Result<DocumentRegistry, InsertDocRegistryError> {
         insert(ctx, input)
     }
 }

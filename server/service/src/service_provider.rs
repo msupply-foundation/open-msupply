@@ -10,6 +10,7 @@ use crate::{
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
     document::{
+        document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
         patient::{PatientService, PatientServiceTrait},
