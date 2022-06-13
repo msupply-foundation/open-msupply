@@ -1,10 +1,12 @@
 import { LocaleKey } from '@common/intl';
+import { PrintFormat } from '@common/types';
 
 export enum Platform {
   Android,
   Desktop,
   Web,
 }
+
 interface RouteMapping {
   title?: LocaleKey;
   docs: string;
@@ -71,10 +73,14 @@ const getPlatform = () => {
   }
 };
 
+const platform = getPlatform();
+
 export const EnvUtils = {
   // Using isProduction rather than isDevelopment, as we also use a testing
   // environment while running jest, so easier to check !isProduction, generally.
   isProduction: (): boolean => process.env['NODE_ENV'] === 'production',
   mapRoute,
-  platform: getPlatform(),
+  platform,
+  printFormat:
+    platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };
