@@ -109,7 +109,7 @@ fn validate_parent_entry(
 
     let repo = DocumentRegistryRepository::new(&ctx.connection);
     let result = repo.count(Some(
-        DocumentRegistryFilter::new().parent_id(EqualFilter::equal_to(parent)),
+        DocumentRegistryFilter::new().id(EqualFilter::equal_to(parent)),
     ))?;
     Ok(result == 1)
 }
