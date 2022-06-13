@@ -6,6 +6,9 @@ pub use self::insert::*;
 
 mod insert;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug)]
 pub enum DocumentRegistryError {
     InternalError(String),
