@@ -23,7 +23,7 @@ table! {
         context -> crate::DocumentContextMapping,
         name -> Nullable<Text>,
         parent_id -> Nullable<Text>,
-        schema_id -> Nullable<Text>,
+        form_schema_id -> Nullable<Text>,
     }
 }
 
@@ -35,10 +35,10 @@ pub struct DocumentRegistryRow {
     pub context: DocumentContext,
     pub name: Option<String>,
     pub parent_id: Option<String>,
-    pub schema_id: Option<String>,
+    pub form_schema_id: Option<String>,
 }
 
-joinable!(document_registry -> form_schema (schema_id));
+joinable!(document_registry -> form_schema (form_schema_id));
 
 allow_tables_to_appear_in_same_query!(document_registry, form_schema);
 
