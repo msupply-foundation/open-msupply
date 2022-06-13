@@ -11,5 +11,5 @@ CREATE TABLE document_registry (
     context document_context NOT NULL,
     name TEXT,
     parent_id TEXT REFERENCES document_registry(id),
-    schema_id TEXT REFERENCES form_schema(id)
+    form_schema_id TEXT REFERENCES form_schema(id)
 )

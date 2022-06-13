@@ -1,6 +1,7 @@
 use repository::{
-    DocumentContext, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryRow,
-    DocumentRegistryRowRepository, EqualFilter, FormSchemaRowRepository, RepositoryError,
+    DocumentContext, DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository,
+    DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchemaRowRepository,
+    Pagination, RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;
@@ -10,6 +11,7 @@ pub enum InsertDocRegistryError {
     OnlyOnePatientEntryAllowed,
     InvalidParent,
     SchemaDoesNotExist,
+    InternalError(String),
     RepositoryError(RepositoryError),
 }
 
@@ -19,21 +21,35 @@ pub struct InsertDocumentRegistry {
     pub document_type: String,
     pub context: DocumentContext,
     pub name: Option<String>,
-    pub schema_id: String,
+    pub form_schema_id: String,
 }
 
 pub fn insert(
     ctx: &ServiceContext,
     input: InsertDocumentRegistry,
-) -> Result<(), InsertDocRegistryError> {
+) -> Result<DocumentRegistry, InsertDocRegistryError> {
     let result = ctx
         .connection
-        .transaction_sync(|connection| -> Result<(), InsertDocRegistryError> {
-            validate(ctx, &input)?;
-            let data = generate(input);
-            DocumentRegistryRowRepository::new(&connection).upsert_one(&data)?;
-            Ok(())
-        })
+        .transaction_sync(
+            |connection| -> Result<DocumentRegistry, InsertDocRegistryError> {
+                validate(ctx, &input)?;
+                let id = input.id.clone();
+                let data = generate(input);
+                DocumentRegistryRowRepository::new(&connection).upsert_one(&data)?;
+
+                let result = DocumentRegistryRepository::new(&connection)
+                    .query(
+                        Pagination::one(),
+                        Some(DocumentRegistryFilter::new().id(EqualFilter::equal_to(&id))),
+                        None,
+                    )?
+                    .pop()
+                    .ok_or(InsertDocRegistryError::InternalError(
+                        "Just inserted document registry not found".to_string(),
+                    ))?;
+                Ok(result)
+            },
+        )
         .map_err(|error| error.to_inner_error())?;
     Ok(result)
 }
@@ -45,7 +61,7 @@ fn generate(input: InsertDocumentRegistry) -> DocumentRegistryRow {
         context: input.context,
         name: input.name,
         parent_id: input.parent_id,
-        schema_id: Some(input.schema_id),
+        form_schema_id: Some(input.form_schema_id),
     }
 }
 
@@ -103,7 +119,7 @@ fn validate_schema_exits(
     input: &InsertDocumentRegistry,
 ) -> Result<bool, RepositoryError> {
     let repo = FormSchemaRowRepository::new(&ctx.connection);
-    let result = repo.find_one_by_id(&input.schema_id)?;
+    let result = repo.find_one_by_id(&input.form_schema_id)?;
     Ok(result.is_some())
 }
 

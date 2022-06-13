@@ -63,6 +63,8 @@ pub enum Resource {
     // document
     QueryDocument,
     MutateDocument,
+    QueryDocumentRegistry,
+    MutateDocumentRegistry,
     QueryJsonSchema,
     MutateJsonSchema,
     // patient
@@ -216,6 +218,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::QueryDocument, PermissionDSL::NoPermissionRequired);
     map.insert(
         Resource::MutateDocument,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::QueryDocumentRegistry,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateDocumentRegistry,
         PermissionDSL::NoPermissionRequired,
     );
     map.insert(
