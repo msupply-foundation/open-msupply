@@ -24,6 +24,32 @@ fn to_domain_filter(f: DocumentFilterInput) -> DocumentFilter {
     }
 }
 
+pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Option<DocumentNode>> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryDocument,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let context = service_provider.context()?;
+
+    let node = service_provider
+        .document_service
+        .get_documents(
+            &context,
+            &store_id,
+            Some(DocumentFilter::new().name(EqualFilter::equal_to(&name))),
+        )?
+        .into_iter()
+        .map(|document| DocumentNode { document })
+        .next();
+
+    Ok(node)
+}
+
 pub fn documents(
     ctx: &Context<'_>,
     store_id: String,
