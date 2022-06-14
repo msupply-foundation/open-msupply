@@ -41,7 +41,7 @@ export const AuthenticationAlert = () => {
   }
   const onOk = () => {
     const state = {} as { from?: Location };
-    if (error === AuthError.Unauthenticated) {
+    if (error === AuthError.Unauthenticated || error === AuthError.Timeout) {
       state.from = location;
     }
 
@@ -77,8 +77,13 @@ const translateErrorMessage = (
   switch (error) {
     case AuthError.Unauthenticated:
       return {
+        title: t('auth.alert-title'),
+        message: t('auth.unauthenticated-message'),
+      };
+    case AuthError.Timeout:
+      return {
         title: t('auth.timeout-title'),
-        message: t('auth.logged-out-message'),
+        message: t('auth.timeout-message'),
       };
     case AuthError.NoStoreAssigned:
       return {
