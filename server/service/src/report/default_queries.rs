@@ -278,6 +278,27 @@ const REQUISITION_QUERY: &str = r#"query RequisitionQuery($storeId: String, $dat
           totalCount
         }
       }
+      lines {
+        nodes {
+          comment
+          id
+          item {
+            code
+            name
+          }
+          remainingQuantityToSupply
+          suggestedQuantity
+          requestedQuantity
+          supplyQuantity
+          itemStats {
+            availableStockOnHand
+            availableMonthsOfStockOnHand
+            averageMonthlyConsumption
+          }
+        }
+        totalCount
+      }
+      maxMonthsOfStock
     }
     ... on RecordNotFound {
       __typename
