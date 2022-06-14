@@ -9,6 +9,7 @@ use mutations::patient::insert::InsertPatientResponse;
 use mutations::update_document::update_document;
 use mutations::update_document::UpdateDocumentInput;
 use mutations::update_document::UpdateDocumentResponse;
+use types::document::DocumentNode;
 
 mod mutations;
 
@@ -29,6 +30,15 @@ impl DocumentQueries {
         #[graphql(desc = "The document filter")] filter: Option<DocumentFilterInput>,
     ) -> Result<DocumentResponse> {
         documents(ctx, store_id, filter)
+    }
+
+    pub async fn document(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Store id")] store_id: String,
+        #[graphql(desc = "The document name")] name: String,
+    ) -> Result<Option<DocumentNode>> {
+        document(ctx, store_id, name)
     }
 
     pub async fn document_history(
