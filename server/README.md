@@ -122,7 +122,7 @@ You can manually create and migrate database with the following
 # postgres
 cargo run --bin remote_server_cli --features postgres -- initialise-database
 # sqlite
-cargo run --bin remote_server_cli --features postgres -- initialise-database
+cargo run --bin remote_server_cli -- initialise-database
 ```
 
 ## Configs
