@@ -11,6 +11,7 @@ import {
   Typography,
   Box,
   BasicSpinner,
+  TextField,
   // MuiLink,
 } from '@openmsupply-client/common';
 // import { usePatient } from '../api';5
@@ -29,8 +30,6 @@ export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
   // const { localisedDate } = useFormatDateTime();
   const { JsonForm, loading, error, saveData } = useJsonForms(docId);
 
-  // const [data, setData] = useState<any>(patient);
-
   // useEffect(() => {
   //   setSuffix(data?.name ?? '');
   // }, [data]);
@@ -43,16 +42,16 @@ export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
         {/* <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
           {data.name}
         </Typography> */}
-        <Grid
+        {/* <Grid
           container
           flex={1}
           flexDirection="row"
           gap={4}
           style={{ maxWidth: 600 }}
-        >
-          <JsonForm />
-          {/* <DetailSection title=""> */}
-          {/* <DetailInputWithLabelRow
+        > */}
+        {JsonForm}
+        {/* <DetailSection title=""> */}
+        {/* <DetailInputWithLabelRow
               label={t('label.address')}
               inputProps={{ value: 'Demo data', disabled: isDisabled }}
             />
@@ -60,7 +59,7 @@ export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
               label={t('label.address')}
               inputProps={{ value: data?.address1, disabled: isDisabled }}
             /> */}
-          {/* <DetailInputWithLabelRow
+        {/* <DetailInputWithLabelRow
               label={t('label.code')}
               inputProps={{ value: data?.code, disabled: isDisabled }}
             />
@@ -117,8 +116,8 @@ export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
                 <Checkbox disabled={isDisabled} checked={data?.isOnHold} />
               }
             /> */}
-          {/* </DetailSection> */}
-        </Grid>
+        {/* </DetailSection> */}
+        {/* </Grid> */}
       </Box>
     </DetailContainer>
   ) : null;

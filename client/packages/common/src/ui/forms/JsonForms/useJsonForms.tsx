@@ -4,10 +4,38 @@ import {
   materialRenderers,
   materialCells,
 } from '@jsonforms/material-renderers';
+import {
+  stringTester,
+  TextField,
+  selectTester,
+  Selector,
+  groupTester,
+  Group,
+  labelTester,
+  Label,
+  dateTester,
+  Date,
+} from './components';
+import customTester from './testers/testers';
 
 import patient from './jsonTemp/patient_1.json';
 import schema from './jsonTemp/schema.json';
 import uiSchema from './jsonTemp/ui-schema.json';
+
+const FormComponent = ({ data, setData, renderers }: any) => {
+  return (
+    <JsonForms
+      schema={schema}
+      uischema={uiSchema}
+      data={data}
+      renderers={renderers}
+      // cells={materialCells}
+      onChange={({ errors, data }) => {
+        setData(data);
+      }}
+    />
+  );
+};
 
 export const useJsonForms = (docName: string) => {
   const [data, setData] = useState(patient);
@@ -22,16 +50,18 @@ export const useJsonForms = (docName: string) => {
     setLoading(false);
   };
 
+  const renderers = [
+    ...materialRenderers,
+    { tester: stringTester, renderer: TextField },
+    { tester: selectTester, renderer: Selector },
+    { tester: groupTester, renderer: Group },
+    { tester: labelTester, renderer: Label },
+    { tester: dateTester, renderer: Date },
+  ];
+
   return {
-    JsonForm: () => (
-      <JsonForms
-        schema={schema}
-        uischema={uiSchema}
-        data={data}
-        renderers={materialRenderers}
-        cells={materialCells}
-        onChange={({ errors, data }) => setData(data)}
-      />
+    JsonForm: (
+      <FormComponent data={data} setData={setData} renderers={renderers} />
     ),
     saveData,
     loading,

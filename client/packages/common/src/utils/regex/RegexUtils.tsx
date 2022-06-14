@@ -1,5 +1,6 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
+import { get as extractProperty } from 'lodash';
 
 export const RegexUtils = {
   extractSvg: (
@@ -46,4 +47,17 @@ export const RegexUtils = {
   },
   escapeChars: (regexString: string) =>
     regexString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+  // Takes a string formatted in template-literal style (i.e. using ${ }) and
+  // replaces contents of the matching parameters with values from provided
+  // data object.
+  // Eg. "My name is ${user.name}" with object {user: {name: "Carl"}}
+  // returns "My name is Carl"
+  stringSubstitution: (
+    parameterisedString: string,
+    data: { [key: string]: any },
+    fallback = 'Not found'
+  ) =>
+    parameterisedString.replace(/\${(.*?)}/gm, (_: string, match: string) =>
+      extractProperty(data, match, fallback)
+    ),
 };

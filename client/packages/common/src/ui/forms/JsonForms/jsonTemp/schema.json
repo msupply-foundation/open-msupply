@@ -135,7 +135,7 @@
         },
         "dateOfBirth": {
           "description": "184099003 Date of birth",
-          "format": "\"date\"",
+          "format": "date",
           "type": "string"
         },
         "dateOfBirthIsEstimated": {
