@@ -1,11 +1,11 @@
 {
   "Patient": {
     "id": "123",
-    "gender": "Female",
+    "gender": "Male",
     "firstName": "Carl",
     "lastName": "Smith",
     "healthCenter": {
-      "id": "healthCenterId",
+      "id": "999",
       "name": "My Health Center"
     },
     "addresses": [
@@ -14,11 +14,24 @@
         "address1": "address1",
         "address2": "address2",
         "country": "NZ"
+      },
+      {
+        "key": "secondary",
+        "address1": "address1",
+        "address2": "address2",
+        "country": "NZ"
       }
     ],
     "contactDetails": [
       {
         "key": "primary",
+        "phone": "012345",
+        "mobile": "+023456",
+        "email": "me@myplace.com",
+        "website": "website.com"
+      },
+      {
+        "key": "secondary",
         "phone": "012345",
         "mobile": "+023456",
         "email": "email",

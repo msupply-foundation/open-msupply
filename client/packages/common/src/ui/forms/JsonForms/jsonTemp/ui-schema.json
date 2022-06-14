@@ -3,45 +3,106 @@
   "elements": [
     {
       "type": "Label",
-      "text": "Extra text can go here!"
-    },
-    {
-      "type": "Control",
-      "scope": "#/definitions/Patient/properties/firstName",
-      "label": "First Name"
-    },
-    {
-      "type": "Control",
-      "scope": "#/definitions/Patient/properties/lastName"
-    },
-    {
-      "type": "Control",
-      "scope": "#/definitions/Patient/properties/gender"
-    },
-    {
-      "type": "Control",
-      "scope": "#/definitions/Patient/properties/socioEconomics/properties/education"
-    },
-    {
-      "type": "Control",
-      "scope": "#/definitions/Patient/properties/family/properties/mother/properties/firstName",
-      "label": "Mother's first name"
+      "text": "${Patient.firstName} ${Patient.lastName}",
+      "variant": "h1"
     },
     {
       "type": "HorizontalLayout",
       "elements": [
         {
-          "type": "Control",
-          "scope": "#/definitions/Patient/properties/family/properties/mother/properties/lastName",
-          "label": "Mother's last name"
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Group",
+              "label": "Patient",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/id"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/firstName",
+                  "label": "First Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/lastName",
+                  "label": "Last Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/gender"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/dateOfBirth"
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "label": "Contact",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/contactDetails",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/addresses",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
+                }
+              ]
+            }
+          ]
         },
         {
-          "type": "Control",
-          "scope": "#/definitions/Patient/properties/family/properties/mother/properties/contactDetails/items/properties/phone",
-          "rule": {
-            "effect": "HIDE",
-            "condition": false
-          }
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Group",
+              "label": "Family",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/maritalStatus"
+                },
+                {
+                  "type": "Label",
+                  "text": "Next of kin:",
+                  "variant": "h3"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/id"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/firstName"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/lastName"
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "label": "Other",
+              "elements": [
+                {
+                  "type": "Label",
+                  "text": "Note: we need to consider how we would edit data that links to other entities in database, e.g. Next of Kin"
+                }
+              ]
+            }
+          ]
         }
       ]
     }
