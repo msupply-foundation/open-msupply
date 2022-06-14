@@ -28,3 +28,4 @@ omsupply-database-shm
 
 # local configuration file (generated from example.yaml)
 configuration/local.yaml
+/settings_app_data.yaml
