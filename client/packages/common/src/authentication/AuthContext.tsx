@@ -279,7 +279,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       }
     }, TOKEN_CHECK_INTERVAL);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [cookie?.token]);
 
   return <Provider value={val}>{children}</Provider>;
 };
