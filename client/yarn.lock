@@ -10,6 +10,13 @@
     "@jridgewell/gen-mapping" "^0.1.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
+"@awesome-cordova-plugins/printer@^5.43.0":
+  version "5.43.0"
+  resolved "https://registry.yarnpkg.com/@awesome-cordova-plugins/printer/-/printer-5.43.0.tgz#44f955c521db4211780bf5eae6ea7377d282b619"
+  integrity sha512-lz/NRSbTPi1TfV6iMiuDGJC8Y+Et/eZjm4sklGHgkd1CApix5jmJUUMajZejmxICnBBTeRv2cWWPZKIk3QDJMA==
+  dependencies:
+    "@types/cordova" latest
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.7", "@babel/code-frame@^7.5.5", "@babel/code-frame@^7.8.3":
   version "7.16.7"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.16.7.tgz#44416b6bd7624b998f5b1af5d470856c40138789"
@@ -5184,6 +5191,11 @@
   resolved "https://registry.yarnpkg.com/@types/cookie/-/cookie-0.4.1.tgz#bfd02c1f2224567676c1545199f87c3a861d878d"
   integrity sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q==
 
+"@types/cordova@latest":
+  version "0.0.34"
+  resolved "https://registry.yarnpkg.com/@types/cordova/-/cordova-0.0.34.tgz#ea7addf74ecec3d7629827a0c39e2c9addc73d04"
+  integrity sha512-rkiiTuf/z2wTd4RxFOb+clE7PF4AEJU0hsczbUdkHHBtkUmpWQpEddynNfJYKYtZFJKbq4F+brfekt1kx85IZA==
+
 "@types/css-mediaquery@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@types/css-mediaquery/-/css-mediaquery-0.1.1.tgz#0902ee5849b89a45390c2c9dccbb536a75a88511"
@@ -8474,6 +8486,11 @@ cordova-common@^4.0.2:
     strip-bom "^4.0.0"
     underscore "^1.9.2"
 
+cordova-plugin-printer@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/cordova-plugin-printer/-/cordova-plugin-printer-0.8.0.tgz#9ae2e9e85dc1adfcce9d37a42d273e20b0914d0e"
+  integrity sha512-Olu2SuCedztO6PtXoHwA4J/emOxZlj64Ya9aZhcxoXJITG+RDF6Nb3oThcpYPTa73+py+gPF7r19lv3Q8RR/Nw==
+
 core-js-compat@^3.21.0, core-js-compat@^3.22.1, core-js-compat@^3.8.1:
   version "3.22.7"
   resolved "https://registry.yarnpkg.com/core-js-compat/-/core-js-compat-3.22.7.tgz#8359eb66ecbf726dd0cfced8e48d5e73f3224239"
@@ -9644,7 +9661,7 @@ enhanced-resolve@^4.5.0:
     memory-fs "^0.5.0"
     tapable "^1.0.0"
 
-enhanced-resolve@^5.0.0, enhanced-resolve@^5.7.0, enhanced-resolve@^5.9.3:
+enhanced-resolve@^5.0.0, enhanced-resolve@^5.7.0, enhanced-resolve@^5.9.2, enhanced-resolve@^5.9.3:
   version "5.9.3"
   resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-5.9.3.tgz#44a342c012cbc473254af5cc6ae20ebd0aae5d88"
   integrity sha512-Bq9VSor+kjvW3f9/MiiR4eE3XYgOl7/rS8lnSxbRbF3kS0B2r+Y9w5krBWxZgDxASVZbdYrn5wT4j/Wb0J9qow==
