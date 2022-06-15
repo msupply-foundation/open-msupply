@@ -1,17 +1,9 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use mutations::insert_document_registry::insert_document_registry;
-use mutations::insert_document_registry::InsertDocumentRegistryInput;
-use mutations::insert_document_registry::InsertDocumentResponse;
-use mutations::insert_form_schema::insert_form_schema;
-use mutations::insert_form_schema::InsertFormSchemaInput;
-use mutations::insert_form_schema::InsertFormSchemaResponse;
-use mutations::patient::insert::insert_patient;
-use mutations::patient::insert::InsertPatientInput;
-use mutations::patient::insert::InsertPatientResponse;
-use mutations::update_document::update_document;
-use mutations::update_document::UpdateDocumentInput;
-use mutations::update_document::UpdateDocumentResponse;
+use mutations::insert_document_registry::*;
+use mutations::insert_form_schema::*;
+use mutations::patient::insert::*;
+use mutations::update_document::*;
 use types::json_schema::FormSchemaNode;
 
 mod mutations;
