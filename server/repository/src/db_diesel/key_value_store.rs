@@ -34,7 +34,6 @@ pub enum KeyValueType {
     SettingsSyncIntervalSec,
     SettingsSyncCentralServerSiteId,
     SettingsSyncSiteId,
-    SettingsSyncSiteHardwareId,
     SettingsSyncIsDisabled,
 }
 

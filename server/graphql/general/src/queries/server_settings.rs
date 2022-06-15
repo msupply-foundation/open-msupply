@@ -47,10 +47,6 @@ impl SyncSettingsNode {
     pub async fn site_id(&self) -> u32 {
         self.settings.site_id
     }
-
-    pub async fn site_hardware_id(&self) -> String {
-        self.settings.site_hardware_id.clone()
-    }
 }
 
 #[derive(Debug)]
