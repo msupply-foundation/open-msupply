@@ -81,6 +81,5 @@ export const EnvUtils = {
   isProduction: (): boolean => process.env['NODE_ENV'] === 'production',
   mapRoute,
   platform,
-  printFormat:
-    platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
+  printFormat: PrintFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };
