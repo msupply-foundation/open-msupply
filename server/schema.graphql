@@ -8,7 +8,9 @@ input AddFromMasterListInput {
   requestRequisitionId: String!
   masterListId: String!
 }
-union AddFromMasterListResponse = AddFromMasterListError | RequisitionLineConnector
+union AddFromMasterListResponse =
+    AddFromMasterListError
+  | RequisitionLineConnector
 type AllocateOutboundShipmentUnallocatedLineError {
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface!
 }
@@ -190,7 +192,9 @@ interface CreateRequisitionShipmentErrorInterface {
 input CreateRequisitionShipmentInput {
   responseRequisitionId: String!
 }
-union CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode
+union CreateRequisitionShipmentResponse =
+    CreateRequisitionShipmentError
+  | InvoiceNode
 type DatabaseError implements DeleteLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & InsertLocationErrorInterface & UpdateLocationErrorInterface {
   description: String!
   fullError: String!
@@ -228,12 +232,16 @@ input DeleteInboundShipmentLineInput {
   id: String!
   invoiceId: String!
 }
-union DeleteInboundShipmentLineResponse = DeleteInboundShipmentLineError | DeleteResponse
+union DeleteInboundShipmentLineResponse =
+    DeleteInboundShipmentLineError
+  | DeleteResponse
 type DeleteInboundShipmentLineResponseWithId {
   id: String!
   response: DeleteInboundShipmentLineResponse!
 }
-union DeleteInboundShipmentResponse = DeleteInboundShipmentError | DeleteResponse
+union DeleteInboundShipmentResponse =
+    DeleteInboundShipmentError
+  | DeleteResponse
 type DeleteInboundShipmentResponseWithId {
   id: String!
   response: DeleteInboundShipmentResponse!
@@ -278,12 +286,16 @@ input DeleteOutboundShipmentLineInput {
   id: String!
   invoiceId: String!
 }
-union DeleteOutboundShipmentLineResponse = DeleteOutboundShipmentLineError | DeleteResponse
+union DeleteOutboundShipmentLineResponse =
+    DeleteOutboundShipmentLineError
+  | DeleteResponse
 type DeleteOutboundShipmentLineResponseWithId {
   id: String!
   response: DeleteOutboundShipmentLineResponse!
 }
-union DeleteOutboundShipmentResponse = DeleteOutboundShipmentError | DeleteResponse
+union DeleteOutboundShipmentResponse =
+    DeleteOutboundShipmentError
+  | DeleteResponse
 type DeleteOutboundShipmentResponseWithId {
   id: String!
   response: DeleteOutboundShipmentResponse!
@@ -339,12 +351,16 @@ interface DeleteRequestRequisitionLineErrorInterface {
 input DeleteRequestRequisitionLineInput {
   id: String!
 }
-union DeleteRequestRequisitionLineResponse = DeleteRequestRequisitionLineError | DeleteResponse
+union DeleteRequestRequisitionLineResponse =
+    DeleteRequestRequisitionLineError
+  | DeleteResponse
 type DeleteRequestRequisitionLineResponseWithId {
   id: String!
   response: DeleteRequestRequisitionLineResponse!
 }
-union DeleteRequestRequisitionResponse = DeleteRequestRequisitionError | DeleteResponse
+union DeleteRequestRequisitionResponse =
+    DeleteRequestRequisitionError
+  | DeleteResponse
 type DeleteRequestRequisitionResponseWithId {
   id: String!
   response: DeleteRequestRequisitionResponse!
@@ -455,7 +471,10 @@ type FullMutation {
     storeId: String!
     input: UpdateOutboundShipmentInput!
   ): UpdateOutboundShipmentResponse!
-  deleteOutboundShipment(storeId: String!, id: String!): DeleteOutboundShipmentResponse!
+  deleteOutboundShipment(
+    storeId: String!
+    id: String!
+  ): DeleteOutboundShipmentResponse!
   insertInboundShipment(
     storeId: String!
     input: InsertInboundShipmentInput!
@@ -532,12 +551,30 @@ type FullMutation {
     storeId: String!
     input: DeleteInboundShipmentServiceLineInput!
   ): DeleteInboundShipmentServiceLineResponse!
-  insertLocation(storeId: String!, input: InsertLocationInput!): InsertLocationResponse!
-  updateLocation(storeId: String!, input: UpdateLocationInput!): UpdateLocationResponse!
-  deleteLocation(storeId: String!, input: DeleteLocationInput!): DeleteLocationResponse!
-  insertStocktake(storeId: String!, input: InsertStocktakeInput!): InsertStocktakeResponse!
-  updateStocktake(storeId: String!, input: UpdateStocktakeInput!): UpdateStocktakeResponse!
-  deleteStocktake(storeId: String!, input: DeleteStocktakeInput!): DeleteStocktakeResponse!
+  insertLocation(
+    storeId: String!
+    input: InsertLocationInput!
+  ): InsertLocationResponse!
+  updateLocation(
+    storeId: String!
+    input: UpdateLocationInput!
+  ): UpdateLocationResponse!
+  deleteLocation(
+    storeId: String!
+    input: DeleteLocationInput!
+  ): DeleteLocationResponse!
+  insertStocktake(
+    storeId: String!
+    input: InsertStocktakeInput!
+  ): InsertStocktakeResponse!
+  updateStocktake(
+    storeId: String!
+    input: UpdateStocktakeInput!
+  ): UpdateStocktakeResponse!
+  deleteStocktake(
+    storeId: String!
+    input: DeleteStocktakeInput!
+  ): DeleteStocktakeResponse!
   insertStocktakeLine(
     storeId: String!
     input: InsertStocktakeLineInput!
@@ -562,7 +599,10 @@ type FullMutation {
     storeId: String!
     input: BatchRequestRequisitionInput!
   ): BatchRequestRequisitionResponse!
-  batchStocktake(storeId: String!, input: BatchStocktakeInput!): BatchStocktakeResponse!
+  batchStocktake(
+    storeId: String!
+    input: BatchStocktakeInput!
+  ): BatchStocktakeResponse!
   insertRequestRequisition(
     storeId: String!
     input: InsertRequestRequisitionInput!
@@ -585,7 +625,10 @@ type FullMutation {
   """
   Add requisition lines from master item master list
   """
-  addFromMasterList(storeId: String!, input: AddFromMasterListInput!): AddFromMasterListResponse!
+  addFromMasterList(
+    storeId: String!
+    input: AddFromMasterListInput!
+  ): AddFromMasterListResponse!
   updateResponseRequisition(
     storeId: String!
     input: UpdateResponseRequisitionInput!
@@ -623,7 +666,9 @@ type FullMutation {
     storeId: String!
     input: UpdateResponseRequisitionLineInput!
   ): UpdateResponseRequisitionLineResponse!
-  updateServerSettings(input: UpdateServerSettingsInput!): UpdateServerSettingsResponse!
+  updateServerSettings(
+    input: UpdateServerSettingsInput!
+  ): UpdateServerSettingsResponse!
 }
 enum PrintFormat {
   HTML
@@ -631,7 +676,11 @@ enum PrintFormat {
 }
 type FullQuery {
   invoice(storeId: String!, id: String!): InvoiceResponse!
-  invoiceByNumber(storeId: String!, invoiceNumber: Int!, type: InvoiceNodeType!): InvoiceResponse!
+  invoiceByNumber(
+    storeId: String!
+    invoiceNumber: Int!
+    type: InvoiceNodeType!
+  ): InvoiceResponse!
   invoices(
     storeId: String!
     page: PaginationInput
@@ -677,7 +726,11 @@ type FullQuery {
     filter: NameFilterInput
     sort: [NameSortInput!]
   ): NamesResponse!
-  stores(page: PaginationInput, filter: StoreFilterInput, sort: [StoreSortInput!]): StoresResponse!
+  stores(
+    page: PaginationInput
+    filter: StoreFilterInput
+    sort: [StoreSortInput!]
+  ): StoresResponse!
   """
   Query omSupply "master_lists" entries
   """
@@ -697,7 +750,11 @@ type FullQuery {
     sort: [ItemSortInput!]
   ): ItemsResponse!
   invoiceCounts(storeId: String!, timezoneOffset: Int): InvoiceCounts!
-  stockCounts(storeId: String!, timezoneOffset: Int, daysTillExpired: Int): StockCounts!
+  stockCounts(
+    storeId: String!
+    timezoneOffset: Int
+    daysTillExpired: Int
+  ): StockCounts!
   requisitionLineChart(
     storeId: String!
     requestRequisitionLineId: String!
@@ -795,7 +852,9 @@ input InsertInboundShipmentLineInput {
   totalAfterTax: Float!
   tax: TaxUpdate
 }
-union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
+union InsertInboundShipmentLineResponse =
+    InsertInboundShipmentLineError
+  | InvoiceLineNode
 type InsertInboundShipmentLineResponseWithId {
   id: String!
   response: InsertInboundShipmentLineResponse!
@@ -874,12 +933,17 @@ input InsertOutboundShipmentLineInput {
   totalAfterTax: Float!
   tax: TaxUpdate
 }
-union InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode
+union InsertOutboundShipmentLineResponse =
+    InsertOutboundShipmentLineError
+  | InvoiceLineNode
 type InsertOutboundShipmentLineResponseWithId {
   id: String!
   response: InsertOutboundShipmentLineResponse!
 }
-union InsertOutboundShipmentResponse = InsertOutboundShipmentError | NodeError | InvoiceNode
+union InsertOutboundShipmentResponse =
+    InsertOutboundShipmentError
+  | NodeError
+  | InvoiceNode
 type InsertOutboundShipmentResponseWithId {
   id: String!
   response: InsertOutboundShipmentResponse!
@@ -958,12 +1022,16 @@ input InsertRequestRequisitionLineInput {
   requestedQuantity: Int
   comment: String
 }
-union InsertRequestRequisitionLineResponse = InsertRequestRequisitionLineError | RequisitionLineNode
+union InsertRequestRequisitionLineResponse =
+    InsertRequestRequisitionLineError
+  | RequisitionLineNode
 type InsertRequestRequisitionLineResponseWithId {
   id: String!
   response: InsertRequestRequisitionLineResponse!
 }
-union InsertRequestRequisitionResponse = InsertRequestRequisitionError | RequisitionNode
+union InsertRequestRequisitionResponse =
+    InsertRequestRequisitionError
+  | RequisitionNode
 type InsertRequestRequisitionResponseWithId {
   id: String!
   response: InsertRequestRequisitionResponse!
@@ -1933,7 +2001,9 @@ interface SupplyRequestedQuantityErrorInterface {
 input SupplyRequestedQuantityInput {
   responseRequisitionId: String!
 }
-union SupplyRequestedQuantityResponse = SupplyRequestedQuantityError | RequisitionLineConnector
+union SupplyRequestedQuantityResponse =
+    SupplyRequestedQuantityError
+  | RequisitionLineConnector
 type SyncSettingsNode {
   """
   Central server url
@@ -1949,7 +2019,6 @@ type SyncSettingsNode {
   intervalSec: Int!
   centralServerSiteId: Int!
   siteId: Int!
-  siteHardwareId: String!
 }
 input TaxUpdate {
   """
@@ -2009,7 +2078,9 @@ input UpdateInboundShipmentLineInput {
   expiryDate: NaiveDate
   numberOfPacks: Int
 }
-union UpdateInboundShipmentLineResponse = UpdateInboundShipmentLineError | InvoiceLineNode
+union UpdateInboundShipmentLineResponse =
+    UpdateInboundShipmentLineError
+  | InvoiceLineNode
 type UpdateInboundShipmentLineResponseWithId {
   id: String!
   response: UpdateInboundShipmentLineResponse!
@@ -2102,12 +2173,17 @@ input UpdateOutboundShipmentLineInput {
   totalAfterTax: Float
   tax: TaxUpdate
 }
-union UpdateOutboundShipmentLineResponse = UpdateOutboundShipmentLineError | InvoiceLineNode
+union UpdateOutboundShipmentLineResponse =
+    UpdateOutboundShipmentLineError
+  | InvoiceLineNode
 type UpdateOutboundShipmentLineResponseWithId {
   id: String!
   response: UpdateOutboundShipmentLineResponse!
 }
-union UpdateOutboundShipmentResponse = UpdateOutboundShipmentError | NodeError | InvoiceNode
+union UpdateOutboundShipmentResponse =
+    UpdateOutboundShipmentError
+  | NodeError
+  | InvoiceNode
 type UpdateOutboundShipmentResponseWithId {
   id: String!
   response: UpdateOutboundShipmentResponse!
@@ -2185,12 +2261,16 @@ input UpdateRequestRequisitionLineInput {
   requestedQuantity: Int
   comment: String
 }
-union UpdateRequestRequisitionLineResponse = UpdateRequestRequisitionLineError | RequisitionLineNode
+union UpdateRequestRequisitionLineResponse =
+    UpdateRequestRequisitionLineError
+  | RequisitionLineNode
 type UpdateRequestRequisitionLineResponseWithId {
   id: String!
   response: UpdateRequestRequisitionLineResponse!
 }
-union UpdateRequestRequisitionResponse = UpdateRequestRequisitionError | RequisitionNode
+union UpdateRequestRequisitionResponse =
+    UpdateRequestRequisitionError
+  | RequisitionNode
 type UpdateRequestRequisitionResponseWithId {
   id: String!
   response: UpdateRequestRequisitionResponse!
@@ -2225,7 +2305,9 @@ input UpdateResponseRequisitionLineInput {
 union UpdateResponseRequisitionLineResponse =
     UpdateResponseRequisitionLineError
   | RequisitionLineNode
-union UpdateResponseRequisitionResponse = UpdateResponseRequisitionError | RequisitionNode
+union UpdateResponseRequisitionResponse =
+    UpdateResponseRequisitionError
+  | RequisitionNode
 enum UpdateResponseRequisitionStatusInput {
   FINALISED
 }
@@ -2289,7 +2371,6 @@ input UpdateSyncSettingsInput {
   intervalSec: Int!
   centralServerSiteId: Int!
   siteId: Int!
-  siteHardwareId: String!
 }
 type UseSuggestedQuantityError {
   error: UseSuggestedQuantityErrorInterface!
@@ -2300,7 +2381,9 @@ interface UseSuggestedQuantityErrorInterface {
 input UseSuggestedQuantityInput {
   requestRequisitionId: String!
 }
-union UseSuggestedQuantityResponse = UseSuggestedQuantityError | RequisitionLineConnector
+union UseSuggestedQuantityResponse =
+    UseSuggestedQuantityError
+  | RequisitionLineConnector
 type UserNode {
   """
   Internal user id
