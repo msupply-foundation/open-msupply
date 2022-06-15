@@ -18,7 +18,7 @@ async fn main() -> std::io::Result<()> {
 
     let app_data_directory = env::current_dir()?;
     let app_data_file = app_data_directory.join("settings_app_data.yaml");
-    let hardware_id = uuid();
+    let hardware_id = uuid().to_ascii_uppercase();
     let app_data = AppData::write_to_file(&app_data_file, hardware_id)
         .expect("Failed to save hardware id to file");
 
