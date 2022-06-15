@@ -39,10 +39,7 @@ impl DatabaseSettings {
     }
 
     pub fn full_init_sql(&self) -> Option<String> {
-        if let Some(sql_statement) = &self.init_sql {
-            return Some(format!("{}", sql_statement));
-        }
-        None
+        self.init_sql.clone()
     }
 }
 
@@ -59,13 +56,10 @@ impl DatabaseSettings {
 
     pub fn full_init_sql(&self) -> Option<String> {
         //For SQLite we want to enable the Write Head Log on server startup
-        if let Some(sql_statement) = &self.init_sql {
-            if sql_statement.ends_with(';') {
-                return Some(format!("{}{}", sql_statement, SQLITE_WAL_PRAGMA));
-            }
-            return Some(format!("{};{}", sql_statement, SQLITE_WAL_PRAGMA));
+        match &self.init_sql {
+            Some(sql_statement) => Some(format!("{};{}", sql_statement, SQLITE_WAL_PRAGMA)),
+            None => Some(SQLITE_WAL_PRAGMA.to_string()),
         }
-        Some(SQLITE_WAL_PRAGMA.to_string())
     }
 }
 
@@ -159,7 +153,7 @@ mod database_setting_test {
         );
         //Ensure sqlite WAL is enabled if no init_sql is provided
         let init_sql = "PRAGMA temp_store_directory = '{}';";
-        let expected_init_sql = format!("{}{}", init_sql, SQLITE_WAL_PRAGMA);
+        let expected_init_sql = format!("{};{}", init_sql, SQLITE_WAL_PRAGMA);
         assert_eq!(
             empty_db_settings_with_init_sql(Some(init_sql.to_string())).full_init_sql(),
             Some(expected_init_sql)
