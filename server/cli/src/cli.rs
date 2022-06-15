@@ -22,6 +22,7 @@ use server::{
 };
 use service::{
     apis::login_v4::LoginUserInfoV4,
+    app_data::AppData,
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     service_provider::ServiceProvider,
@@ -104,6 +105,7 @@ async fn main() {
 
     let settings: Settings =
         configuration::get_configuration().expect("Failed to parse configuration settings");
+    let app_data = AppData::load_from_file().expect("Failed to load app data");
 
     match args.action {
         Action::ExportGraphqlSchema => {
@@ -136,7 +138,7 @@ async fn main() {
             };
 
             info!("Initialising from central");
-            Synchroniser::new(sync_settings, service_provider.clone())
+            Synchroniser::new(sync_settings, app_data, service_provider.clone())
                 .unwrap()
                 .initial_pull()
                 .await
@@ -166,7 +168,6 @@ async fn main() {
                 username,
                 password_sha256,
                 url,
-                site_hardware_id,
                 ..
             } = settings.sync.unwrap();
 
@@ -199,7 +200,7 @@ async fn main() {
                 url.clone(),
                 credentials.clone(),
                 client.clone(),
-                &site_hardware_id,
+                app_data.clone(),
             );
 
             info!("Requesting initialisation");

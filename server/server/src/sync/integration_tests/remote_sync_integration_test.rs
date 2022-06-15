@@ -25,7 +25,9 @@ mod remote_sync_integration_tests {
         mock::MockDataInserts, test_db::setup_all, EqualFilter, StorageConnection, StoreFilter,
         StoreRepository,
     };
-    use service::{service_provider::ServiceProvider, sync_settings::SyncSettings};
+    use service::{
+        app_data::AppData, service_provider::ServiceProvider, sync_settings::SyncSettings,
+    };
 
     use crate::sync::{
         integration_tests::{
@@ -42,6 +44,7 @@ mod remote_sync_integration_tests {
     #[allow(dead_code)]
     async fn init_db(
         sync_settings: &SyncSettings,
+        app_data: &AppData,
         step: &str,
     ) -> (StorageConnection, Synchroniser) {
         let (_, connection, connection_manager, _) = setup_all(
@@ -51,7 +54,8 @@ mod remote_sync_integration_tests {
         .await;
 
         let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
-        let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider).unwrap();
+        let synchroniser =
+            Synchroniser::new(sync_settings.clone(), app_data.clone(), service_provider).unwrap();
         synchroniser
             .central_data
             .pull_and_integrate_records(&connection)
@@ -67,8 +71,12 @@ mod remote_sync_integration_tests {
     /// 3) Mutate the previously inserted data and push the changes
     /// 4) Reset, pull and validate as in step 2)
     #[allow(dead_code)]
-    async fn test_sync_record<T>(sync_settings: &SyncSettings, tester: &dyn SyncRecordTester<T>) {
-        let (connection, synchroniser) = init_db(sync_settings, "step0").await;
+    async fn test_sync_record<T>(
+        sync_settings: &SyncSettings,
+        app_data: &AppData,
+        tester: &dyn SyncRecordTester<T>,
+    ) {
+        let (connection, synchroniser) = init_db(sync_settings, app_data, "step0").await;
         synchroniser
             .remote_data
             .initial_pull(&connection)
@@ -92,7 +100,7 @@ mod remote_sync_integration_tests {
             .unwrap();
 
         // reset local DB and pull changes
-        let (connection, synchroniser) = init_db(sync_settings, "step1").await;
+        let (connection, synchroniser) = init_db(sync_settings, app_data, "step1").await;
         synchroniser
             .remote_data
             .initial_pull(&connection)
@@ -109,7 +117,7 @@ mod remote_sync_integration_tests {
             .await
             .unwrap();
         // reset local DB and pull changes
-        let (connection, synchroniser) = init_db(sync_settings, "step2").await;
+        let (connection, synchroniser) = init_db(sync_settings, app_data, "step2").await;
         synchroniser
             .remote_data
             .initial_pull(&connection)
@@ -140,32 +148,36 @@ mod remote_sync_integration_tests {
             site_hardware_id: "49149896-E713-4535-9DA8-C30AB06F9D5E".to_string(),
         };
 
+        let app_data = AppData {
+            site_hardware_id: "49149896-E713-4535-9DA8-C30AB06F9D5E".to_string(),
+        };
+
         println!("number...");
         let number_tester = NumberSyncRecordTester {};
-        test_sync_record(&sync_settings, &number_tester).await;
+        test_sync_record(&sync_settings, &app_data, &number_tester).await;
 
         println!("name...");
         let name_tester = NameSyncRecordTester {};
-        test_sync_record(&sync_settings, &name_tester).await;
+        test_sync_record(&sync_settings, &app_data, &name_tester).await;
 
         println!("Location...");
         let location_tester = LocationSyncRecordTester {};
-        test_sync_record(&sync_settings, &location_tester).await;
+        test_sync_record(&sync_settings, &app_data, &location_tester).await;
 
         println!("stock line...");
         let stock_line_tester = StockLineRecordTester {};
-        test_sync_record(&sync_settings, &stock_line_tester).await;
+        test_sync_record(&sync_settings, &app_data, &stock_line_tester).await;
 
         println!("stocktake...");
         let stocktake_tester = StocktakeRecordTester {};
-        test_sync_record(&sync_settings, &stocktake_tester).await;
+        test_sync_record(&sync_settings, &app_data, &stocktake_tester).await;
 
         println!("invoice...");
         let invoice_tester = InvoiceRecordTester {};
-        test_sync_record(&sync_settings, &invoice_tester).await;
+        test_sync_record(&sync_settings, &app_data, &invoice_tester).await;
 
         println!("requisition...");
         let requisition_tester = RequisitionRecordTester {};
-        test_sync_record(&sync_settings, &requisition_tester).await;
+        test_sync_record(&sync_settings, &app_data, &requisition_tester).await;
     }
 }

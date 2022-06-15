@@ -19,17 +19,11 @@ async fn main() -> std::io::Result<()> {
     let app_data_directory = env::current_dir()?;
     let app_data_file = app_data_directory.join("settings_app_data.yaml");
     let hardware_id = uuid();
-    let app_data =
-        AppData::load_from_file(&app_data_file, hardware_id).expect("Failed to load app data");
-    if app_data.is_empty() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Failed to load app data",
-        ));
-    }
+    let app_data = AppData::write_to_file(&app_data_file, hardware_id)
+        .expect("Failed to save hardware id to file");
 
     let (off_switch, off_switch_receiver) = oneshot::channel();
-    let result = start_server(settings, off_switch_receiver).await;
+    let result = start_server(settings, app_data, off_switch_receiver).await;
     // off_switch is not needed but we need to keep it alive to prevent it from firing
     let _ = off_switch;
     result

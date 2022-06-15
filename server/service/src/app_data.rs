@@ -12,11 +12,19 @@ pub struct AppData {
 }
 
 impl AppData {
+    pub fn load_from_file() -> Result<AppData, Error> {
+        let mut file = File::open("settings_app_data.yaml")?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        let app_data: AppData = serde_yaml::from_str(&contents).expect("Failed to parse app data");
+        Ok(app_data)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.site_hardware_id.is_empty()
     }
 
-    pub fn load_from_file(path: &PathBuf, hardware_id: String) -> Result<Self, Error> {
+    pub fn write_to_file(path: &PathBuf, hardware_id: String) -> Result<Self, Error> {
         let mut file = File::open(path)?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;

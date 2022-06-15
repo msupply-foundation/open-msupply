@@ -14,6 +14,7 @@ pub mod android {
 
     use server::self_signed_certs::{PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
     use server::start_server;
+    use service::app_data::AppData;
     use service::settings::{ServerSettings, Settings};
     use tokio::sync::oneshot;
 
@@ -132,7 +133,8 @@ pub mod android {
                     // sync settings need to be configured at runtime
                     sync: None,
                 };
-                let _ = start_server(settings, off_switch_receiver).await;
+                let app_data = AppData::load_from_file().expect("Failed to load app data");
+                let _ = start_server(settings, app_data, off_switch_receiver).await;
             });
         });
 
