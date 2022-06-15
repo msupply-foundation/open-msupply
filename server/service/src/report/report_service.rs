@@ -162,16 +162,80 @@ pub trait ReportServiceTrait: Sync + Send {
         let file = file_service
             .store_file(
                 &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
-                format!(
-                    "{}{}{}",
-                    document.header.unwrap_or("".to_string()),
-                    document.document,
-                    document.footer.unwrap_or("".to_string())
-                )
-                .as_bytes(),
+                self.format_html_document(document).as_bytes(),
             )
             .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
         Ok(file.id)
+    }
+
+    fn format_html_document(&self, document: GeneratedReport) -> String {
+        format!(
+            "<html>
+  <head>
+    <style>
+      @page {{
+        size: A4;
+        margin: 1.5cm;
+      }}
+
+      @media print {{
+        table.paging thead td,
+        table.paging tfoot td {{
+          height: 1.5cm;
+        }}
+      }}
+
+      header,
+      footer {{
+        width: 100%;
+        height: 1.5cm;
+      }}
+
+      header {{
+        position: absolute;
+        top: 0;
+      }}
+
+      @media print {{
+        header,
+        footer {{
+          position: fixed;
+        }}
+
+        footer {{
+          bottom: 0;
+        }}
+      }}
+    </style>
+  </head>
+  <body>
+    <header>{}</header>
+
+    <table class=\"paging\">
+      <thead>
+        <tr>
+          <td>&nbsp;</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>&nbsp;</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <footer>{}</footer>
+  </body>
+</html>",
+            document.header.unwrap_or("".to_string()),
+            document.document,
+            document.footer.unwrap_or("".to_string())
+        )
     }
 }
 
