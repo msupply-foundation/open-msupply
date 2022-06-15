@@ -4,7 +4,7 @@ use actix_web::web::Data;
 use log::warn;
 
 use reqwest::{Client, Url};
-use service::{service_provider::ServiceProvider, sync_settings::SyncSettings};
+use service::{app_data::AppData, service_provider::ServiceProvider, sync_settings::SyncSettings};
 
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
@@ -51,6 +51,7 @@ pub struct Synchroniser {
 impl Synchroniser {
     pub fn new(
         settings: SyncSettings,
+        app_data: AppData,
         service_provider: Data<ServiceProvider>,
     ) -> anyhow::Result<Self> {
         let client = Client::new();
@@ -63,9 +64,10 @@ impl Synchroniser {
             url.clone(),
             credentials.clone(),
             client.clone(),
-            &settings.site_hardware_id,
+            app_data.clone(),
         );
-        let sync_api_v3 = SyncApiV3::new(url, credentials, client, &settings.site_hardware_id)?;
+
+        let sync_api_v3 = SyncApiV3::new(url, credentials, client, &app_data.site_hardware_id)?;
         Ok(Synchroniser {
             remote_data: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
@@ -170,6 +172,7 @@ mod tests {
         let service = &service_provider.settings;
         let s = Synchroniser::new(
             inline_init(|r: &mut SyncSettings| r.url = "http://0.0.0.0:0".to_string()),
+            inline_init(|r: &mut AppData| r.site_hardware_id = "hardware_id".to_string()),
             service_provider.clone(),
         )
         .unwrap();

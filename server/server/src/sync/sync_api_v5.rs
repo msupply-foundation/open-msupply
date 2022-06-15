@@ -6,6 +6,7 @@ use reqwest::{
     Client, Url,
 };
 use serde::{Deserialize, Serialize};
+use service::app_data::AppData;
 
 pub type SyncConnectionError = anyhow::Error;
 
@@ -97,13 +98,13 @@ impl SyncApiV5 {
         server_url: Url,
         credentials: SyncCredentials,
         client: Client,
-        hardware_id: &str,
+        hardware_id: AppData,
     ) -> SyncApiV5 {
         SyncApiV5 {
             server_url,
             credentials,
             client,
-            headers: generate_headers(hardware_id),
+            headers: generate_headers(&hardware_id.site_hardware_id),
         }
     }
 
@@ -220,6 +221,7 @@ mod tests {
     };
     use reqwest::{header::AUTHORIZATION, Client, Url};
     use serde_json::{self, json};
+    use service::app_data::AppData;
 
     use crate::sync::{
         sync_api_v5::{
@@ -233,7 +235,14 @@ mod tests {
         let url = Url::parse(url).unwrap();
         let credentials = SyncCredentials::from_plain(username, password);
         let client = Client::new();
-        SyncApiV5::new(url, credentials, client, "hardware_id")
+        SyncApiV5::new(
+            url,
+            credentials,
+            client,
+            AppData {
+                site_hardware_id: "test".to_string(),
+            },
+        )
     }
 
     #[actix_rt::test]

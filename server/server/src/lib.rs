@@ -14,6 +14,7 @@ use log::{error, info, warn};
 use repository::{get_storage_connection_manager, run_db_migrations, StorageConnectionManager};
 
 use service::{
+    app_data::AppData,
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
@@ -131,6 +132,7 @@ async fn run_stage0(
 /// Return true if restart has been requested
 async fn run_server(
     config_settings: Settings,
+    app_data: AppData,
     off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
@@ -182,7 +184,8 @@ async fn run_server(
 
     let restart_switch = Data::new(restart_switch);
 
-    let mut synchroniser = Synchroniser::new(sync_settings, service_provider_data.clone()).unwrap();
+    let mut synchroniser =
+        Synchroniser::new(sync_settings, app_data, service_provider_data.clone()).unwrap();
     // Do the initial pull before doing anything else
     match synchroniser.initial_pull().await {
         Ok(_) => {}
@@ -256,6 +259,7 @@ async fn run_server(
 /// This method doesn't return until a message is send to the off_switch.
 pub async fn start_server(
     config_settings: Settings,
+    app_data: AppData,
     off_switch: oneshot::Receiver<()>,
 ) -> std::io::Result<()> {
     let connection_manager = get_storage_connection_manager(&config_settings.database);
@@ -291,6 +295,7 @@ pub async fn start_server(
     loop {
         match run_server(
             config_settings.clone(),
+            app_data.clone(),
             off_switch.clone(),
             token_bucket.clone(),
             token_secret.clone(),
