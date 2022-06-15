@@ -15,6 +15,8 @@ import {
   Label,
   dateTester,
   Date,
+  arrayTester,
+  Array,
 } from './components';
 import customTester from './testers/testers';
 
@@ -57,6 +59,7 @@ export const useJsonForms = (docName: string) => {
     { tester: groupTester, renderer: Group },
     { tester: labelTester, renderer: Label },
     { tester: dateTester, renderer: Date },
+    { tester: arrayTester, renderer: Array },
   ];
 
   return {

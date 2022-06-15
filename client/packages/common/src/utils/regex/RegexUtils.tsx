@@ -47,6 +47,7 @@ export const RegexUtils = {
   },
   escapeChars: (regexString: string) =>
     regexString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+
   // Takes a string formatted in template-literal style (i.e. using ${ }) and
   // replaces contents of the matching parameters with values from provided
   // data object.
