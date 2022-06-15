@@ -260,7 +260,7 @@ pub async fn start_server(
 ) -> std::io::Result<()> {
     let connection_manager = get_storage_connection_manager(&config_settings.database);
 
-    if let Some(init_sql) = &config_settings.database.init_sql {
+    if let Some(init_sql) = &config_settings.database.full_init_sql() {
         connection_manager.execute(init_sql).unwrap();
     }
 
