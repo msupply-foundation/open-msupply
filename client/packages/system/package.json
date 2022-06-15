@@ -4,6 +4,7 @@
   "main": "./src/index.ts",
   "private": true,
   "devDependencies": {
+    "@awesome-cordova-plugins/core": "^5.43.0",
     "@awesome-cordova-plugins/printer": "^5.43.0",
     "eslint-config-prettier": "^8.3.0",
     "husky": "^8.0.1",

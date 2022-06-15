@@ -10,6 +10,13 @@
     "@jridgewell/gen-mapping" "^0.1.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
+"@awesome-cordova-plugins/core@^5.43.0":
+  version "5.43.0"
+  resolved "https://registry.yarnpkg.com/@awesome-cordova-plugins/core/-/core-5.43.0.tgz#3878c474df0c693b99e8da8dc509260d6bd55b2a"
+  integrity sha512-DDLzEYtP6fDqyVORwuzXH64VFYTcW5qoaXAvghWtc5O+wciqeX1hFO7WY7l+1Ytkf6J4IbyMhrsOgZb3bC1eMQ==
+  dependencies:
+    "@types/cordova" latest
+
 "@awesome-cordova-plugins/printer@^5.43.0":
   version "5.43.0"
   resolved "https://registry.yarnpkg.com/@awesome-cordova-plugins/printer/-/printer-5.43.0.tgz#44f955c521db4211780bf5eae6ea7377d282b619"
