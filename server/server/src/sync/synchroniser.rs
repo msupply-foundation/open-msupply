@@ -66,7 +66,6 @@ impl Synchroniser {
             client.clone(),
             app_data.clone(),
         );
-
         let sync_api_v3 = SyncApiV3::new(url, credentials, client, &app_data.site_hardware_id)?;
         Ok(Synchroniser {
             remote_data: RemoteDataSynchroniser {

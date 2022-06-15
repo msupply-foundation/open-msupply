@@ -16,11 +16,8 @@ async fn main() -> std::io::Result<()> {
     let settings: Settings =
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
-    let app_data_directory = env::current_dir()?;
-    let app_data_file = app_data_directory.join("settings_app_data.yaml");
     let hardware_id = uuid().to_ascii_uppercase();
-    let app_data = AppData::write_to_file(&app_data_file, hardware_id)
-        .expect("Failed to save hardware id to file");
+    let app_data = AppData::write_to_file(hardware_id).expect("Failed to save hardware id to file");
 
     let (off_switch, off_switch_receiver) = oneshot::channel();
     let result = start_server(settings, app_data, off_switch_receiver).await;
