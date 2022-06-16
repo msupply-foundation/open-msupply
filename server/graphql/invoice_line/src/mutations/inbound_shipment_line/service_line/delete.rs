@@ -177,7 +177,6 @@ mod test {
             "storeId": "store_a",
             "input": {
                 "id": "n/a",
-                "invoiceId": "n/a"
             }
         }));
 
@@ -303,7 +302,6 @@ mod test {
         let variables = json!({
           "input": {
             "id": "delete line id input",
-            "invoiceId": "invoice_id",
           },
           "storeId": "store_a"
         });
