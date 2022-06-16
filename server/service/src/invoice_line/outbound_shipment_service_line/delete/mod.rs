@@ -59,9 +59,8 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_draft_inbound_service_line, mock_draft_inbound_shipment_with_service_lines,
-            mock_draft_outbound_service_line, mock_draft_outbound_shipped_service_line,
-            mock_draft_outbound_shipped_with_service_lines, mock_draft_outbound_with_service_lines,
+            mock_draft_inbound_service_line, mock_draft_outbound_service_line,
+            mock_draft_outbound_shipped_service_line, mock_draft_outbound_with_service_lines,
             mock_full_draft_outbound_shipment_a, MockDataInserts,
         },
         test_db::setup_all,
@@ -111,7 +110,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = mock_draft_outbound_service_line().id;
-                    r.invoice_id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::InvoiceDoesNotExist)
@@ -123,7 +121,6 @@ mod test {
                 &context,
                 "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.id = mock_draft_inbound_service_line().id;
                 }),
             ),
@@ -137,7 +134,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = mock_draft_outbound_service_line().id;
-                    r.invoice_id = draft_shipment.invoice.id.clone();
                 }),
             ),
             Err(ServiceError::NotThisInvoiceLine(
@@ -152,7 +148,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = mock_draft_outbound_shipped_service_line().id;
-                    r.invoice_id = mock_draft_outbound_shipped_with_service_lines().id;
                 }),
             ),
             Err(ServiceError::CannotEditInvoice)
@@ -177,7 +172,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = mock_draft_outbound_service_line().id;
-                    r.invoice_id = mock_draft_outbound_with_service_lines().id;
                 }),
             )
             .unwrap();

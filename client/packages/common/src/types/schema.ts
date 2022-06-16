@@ -320,7 +320,6 @@ export type DeleteInboundShipmentLineErrorInterface = {
 
 export type DeleteInboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteInboundShipmentLineResponse = DeleteInboundShipmentLineError | DeleteResponse;
@@ -350,7 +349,6 @@ export type DeleteInboundShipmentServiceLineErrorInterface = {
 
 export type DeleteInboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteInboundShipmentServiceLineResponse = DeleteInboundShipmentServiceLineError | DeleteResponse;
@@ -392,7 +390,6 @@ export type DeleteOutboundShipmentLineErrorInterface = {
 
 export type DeleteOutboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteOutboundShipmentLineResponse = DeleteOutboundShipmentLineError | DeleteResponse;
@@ -422,7 +419,6 @@ export type DeleteOutboundShipmentServiceLineErrorInterface = {
 
 export type DeleteOutboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteOutboundShipmentServiceLineResponse = DeleteOutboundShipmentServiceLineError | DeleteResponse;
