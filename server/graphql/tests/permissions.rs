@@ -534,7 +534,7 @@ mod permission_tests {
             TestData {
                 name: "deleteInboundShipmentLine",
                 query: r#"mutation Mutation {
-                deleteInboundShipmentLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                deleteInboundShipmentLine(input: {id: ""}, storeId: "") {
                   ... on DeleteResponse {
                     id
                   }
@@ -548,7 +548,7 @@ mod permission_tests {
             TestData {
                 name: "deleteInboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                deleteInboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                deleteInboundShipmentServiceLine(input: {id: ""}, storeId: "") {
                   ... on DeleteResponse {
                     id
                   }
@@ -590,7 +590,7 @@ mod permission_tests {
             TestData {
                 name: "deleteOutboundShipmentLine",
                 query: r#"mutation Mutation {
-                deleteOutboundShipmentLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                deleteOutboundShipmentLine(input: {id: ""}, storeId: "") {
                   ... on DeleteResponse {
                     id
                   }
@@ -604,7 +604,7 @@ mod permission_tests {
             TestData {
                 name: "deleteOutboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                  deleteOutboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                  deleteOutboundShipmentServiceLine(input: {id: ""}, storeId: "") {
                     ... on DeleteResponse {
                       id
                     }
