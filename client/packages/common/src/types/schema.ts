@@ -2766,7 +2766,6 @@ export type UpdateInboundShipmentLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   locationId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Int']>;
@@ -2801,7 +2800,6 @@ export type UpdateInboundShipmentServiceLineErrorInterface = {
 
 export type UpdateInboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;

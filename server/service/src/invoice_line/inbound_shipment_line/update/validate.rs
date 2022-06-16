@@ -6,8 +6,8 @@ use crate::{
     invoice_line::{
         check_batch, check_location_exists, check_pack_size,
         validate::{
-            check_item, check_line_belongs_to_invoice, check_line_exists, check_number_of_packs,
-            ItemNotFound, LineDoesNotExist, NotInvoiceLine, NumberOfPacksBelowOne,
+            check_item, check_line_exists, check_number_of_packs, ItemNotFound, LineDoesNotExist,
+            NotInvoiceLine, NumberOfPacksBelowOne,
         },
         BatchIsReserved, LocationDoesNotExist, PackSizeBelowOne,
     },
@@ -26,8 +26,7 @@ pub fn validate(
 
     let item = check_item_option(&input.item_id, connection)?;
 
-    let invoice = check_invoice_exists(&input.invoice_id, connection)?;
-    check_line_belongs_to_invoice(&line, &invoice)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?;
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 

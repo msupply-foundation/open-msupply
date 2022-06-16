@@ -887,7 +887,7 @@ mod permission_tests {
             TestData {
                 name: "updateInboundShipment",
                 query: r#"mutation Mutation {
-                updateInboundShipmentLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                updateInboundShipmentLine(input: {id: ""}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -901,7 +901,7 @@ mod permission_tests {
             TestData {
                 name: "updateInboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                updateInboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                updateInboundShipmentServiceLine(input: {id: ""}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }

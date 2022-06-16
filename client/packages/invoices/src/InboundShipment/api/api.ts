@@ -104,7 +104,6 @@ const inboundParsers = {
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
-    invoiceId: line.invoiceId,
     locationId: line.location?.id,
   }),
   toDeleteLine: (line: {
