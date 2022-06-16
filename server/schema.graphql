@@ -1995,7 +1995,6 @@ interface UpdateInboundShipmentLineErrorInterface {
 }
 input UpdateInboundShipmentLineInput {
   id: String!
-  invoiceId: String!
   itemId: String
   locationId: String
   packSize: Int
@@ -2023,7 +2022,6 @@ interface UpdateInboundShipmentServiceLineErrorInterface {
 }
 input UpdateInboundShipmentServiceLineInput {
   id: String!
-  invoiceId: String!
   itemId: String
   name: String
   totalBeforeTax: Float

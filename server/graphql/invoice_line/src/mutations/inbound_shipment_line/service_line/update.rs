@@ -22,7 +22,6 @@ use service::invoice_line::{
 #[graphql(name = "UpdateInboundShipmentServiceLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    invoice_id: String,
     item_id: Option<String>,
     name: Option<String>,
     total_before_tax: Option<f64>,
@@ -87,7 +86,6 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            invoice_id,
             item_id,
             name,
             total_before_tax,
@@ -98,7 +96,6 @@ impl UpdateInput {
 
         ServiceInput {
             id,
-            invoice_id,
             item_id,
             name,
             total_before_tax,
@@ -217,7 +214,6 @@ mod test {
             "storeId": "store_a",
             "input": {
                 "id": "n/a",
-                "invoiceId": "n/a"
             }
         }));
 
@@ -371,7 +367,6 @@ mod test {
                 input,
                 ServiceInput {
                     id: "update line id input".to_string(),
-                    invoice_id: "invoice_id".to_string(),
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: Some(0.1),
@@ -390,7 +385,6 @@ mod test {
         let variables = json!({
           "input": {
             "id": "update line id input",
-            "invoiceId": "invoice_id",
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
