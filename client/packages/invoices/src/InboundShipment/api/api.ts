@@ -109,9 +109,8 @@ const inboundParsers = {
   }),
   toDeleteLine: (line: {
     id: string;
-    invoiceId: string;
   }): DeleteInboundShipmentLineInput => {
-    return { id: line.id, invoiceId: line.invoiceId };
+    return { id: line.id };
   },
   toInsertServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
@@ -232,7 +231,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       input: inboundParsers.toUpdate(patch),
       storeId,
     }),
-  deleteLines: async (lines: { id: string; invoiceId: string }[]) => {
+  deleteLines: async (lines: { id: string }[]) => {
     return sdk.deleteInboundShipmentLines({
       storeId,
       input: {

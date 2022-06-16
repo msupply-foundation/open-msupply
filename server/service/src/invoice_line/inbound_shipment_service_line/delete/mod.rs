@@ -60,9 +60,8 @@ mod test {
     use repository::{
         mock::{
             mock_draft_inbound_service_line, mock_draft_inbound_shipment_with_service_lines,
-            mock_draft_inbound_verified_service_line,
-            mock_draft_inbound_verified_with_service_lines, mock_draft_outbound_service_line,
-            mock_draft_outbound_with_service_lines, mock_outbound_shipment_c, MockDataInserts,
+            mock_draft_inbound_verified_service_line, mock_draft_outbound_service_line,
+            mock_outbound_shipment_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -111,7 +110,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::InvoiceDoesNotExist)
@@ -123,7 +121,6 @@ mod test {
                 &context,
                 "store_a",
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
-                    r.invoice_id = mock_draft_outbound_with_service_lines().id;
                     r.id = mock_draft_outbound_service_line().id;
                 }),
             ),
@@ -137,7 +134,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = draft_shipment.id.clone();
                 }),
             ),
             Err(ServiceError::NotThisInvoiceLine(
@@ -152,7 +148,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = mock_draft_inbound_verified_service_line().id;
-                    r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
                 }),
             ),
             Err(ServiceError::CannotEditInvoice)
@@ -177,7 +172,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                 }),
             )
             .unwrap();
