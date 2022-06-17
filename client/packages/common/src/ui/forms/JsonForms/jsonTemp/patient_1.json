@@ -11,13 +11,13 @@
     "addresses": [
       {
         "key": "primary",
-        "address1": "address1",
-        "address2": "address2",
+        "address1": "111 Address Street",
+        "address2": "Auckland",
         "country": "NZ"
       },
       {
         "key": "secondary",
-        "address1": "address1",
+        "address1": "222 Address",
         "address2": "address2",
         "country": "NZ"
       }
@@ -25,14 +25,13 @@
     "contactDetails": [
       {
         "key": "primary",
-        "phone": "012345",
-        "mobile": "+023456",
-        "email": "me@myplace.com",
-        "website": "website.com"
+        "address1": "111 Contact Street",
+        "address2": "Auckland",
+        "country": "NZ"
       },
       {
         "key": "secondary",
-        "phone": "012345",
+        "address1": "222 Contact",
         "mobile": "+023456",
         "email": "email",
         "website": "website"
@@ -50,7 +49,14 @@
         "firstName": "namekin",
         "lastName": "lastNameKin",
         "addresses": [],
-        "contactDetails": [],
+        "contactDetails": [
+          {
+            "key": "primary",
+            "address1": "NOK contact",
+            "address2": "Auckland",
+            "country": "New Zealand"
+          }
+        ],
         "socioEconomics": {}
       },
       "caregiver": {

@@ -12,7 +12,7 @@ const UIComponent = (props: ControlProps) => {
       label={label}
       inputProps={{
         value: data,
-        sx: { margin: 0.5 },
+        sx: { margin: 0.5, width: '100%' },
         disabled: false,
         onChange: e => handleChange(path, e.target.value),
       }}

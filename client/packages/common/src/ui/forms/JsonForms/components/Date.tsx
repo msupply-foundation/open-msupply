@@ -1,25 +1,13 @@
 import React from 'react';
-import {
-  rankWith,
-  isEnumControl,
-  ControlProps,
-  isDateControl,
-} from '@jsonforms/core';
+import { rankWith, ControlProps, isDateControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
-import { Select, BaseDatePickerInput } from '@openmsupply-client/common';
+import { BaseDatePickerInput } from '@openmsupply-client/common';
 
 export const dateTester = rankWith(5, isDateControl);
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, schema, path } = props;
-
-  const options = schema.enum
-    ? schema.enum.map((option: string) => ({
-        label: option,
-        value: option,
-      }))
-    : [];
+  const { data, handleChange, label, path } = props;
 
   return (
     <Box

@@ -47,16 +47,11 @@
                 {
                   "type": "Control",
                   "scope": "#/definitions/Patient/properties/contactDetails",
-                  "options": {
-                    "detail": "GENERATED"
-                  }
+                  "keyField": "key"
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/addresses",
-                  "options": {
-                    "detail": "GENERATED"
-                  }
+                  "scope": "#/definitions/Patient/properties/addresses"
                 }
               ]
             }
@@ -80,15 +75,20 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/id"
-                },
-                {
-                  "type": "Control",
                   "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/firstName"
                 },
                 {
                   "type": "Control",
                   "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/lastName"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/contactDetails",
+                  "label": "Contact"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/addresses"
                 }
               ]
             },

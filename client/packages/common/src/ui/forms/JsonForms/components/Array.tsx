@@ -1,54 +1,85 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { rankWith, schemaTypeIs, ControlProps } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
-// import { MaterialRe } from '@jsonforms/material-renderers';
-import ExpandPanelRenderer from '@jsonforms/material-renderers/src/layouts/ExpandPanelRenderer';
-import { FormLabel, Box } from '@mui/material';
+import {
+  JsonFormsInitStateProps,
+  withJsonFormsControlProps,
+} from '@jsonforms/react';
+import { JsonForms } from '@jsonforms/react';
+import {
+  Box,
+  Typography,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { IconButton, PlusCircleIcon } from '@openmsupply-client/common';
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
 const UIComponent = (props: ControlProps) => {
   const {
     data,
-    uischema,
-    uischemas,
     handleChange,
     label,
-    schema,
     path,
     renderers,
-    rootSchema,
-    cells,
-    config,
+    // schema,
+    // uischema,
+    // rootSchema,
   } = props;
 
-  console.log('uischema', uischema);
-  console.log('data', data);
+  const addItem = () => {
+    console.log('Current data', data);
+    const newData = [...data, data[0]];
+    console.log('New data', newData);
+    handleChange(path, [...data, data[0]]);
+  };
+
+  const formObjects = useMemo(
+    () =>
+      data.map(
+        (value: any, index: number) =>
+          ({
+            data: value,
+            renderers,
+            onChange: ({ data }: { data: any }) => {
+              handleChange(`${path}[${index}]`, data);
+            },
+          } as JsonFormsInitStateProps)
+      ),
+    [data]
+  );
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      marginTop={0.5}
-    >
-      <Box flex={1} style={{ textAlign: 'end' }} flexBasis="40%">
-        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
+    <Box display="flex" flexDirection="column" gap={0.5}>
+      <Box display="flex" width="100%" gap={2} alignItems="center">
+        <Box width="40%">
+          <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
+            {label}:
+          </Typography>
+        </Box>
+        <Box width="60%" textAlign="right">
+          <IconButton
+            icon={<PlusCircleIcon />}
+            label="Add another"
+            color="primary"
+            onClick={addItem}
+          />
+        </Box>
       </Box>
-      <p>This is an array</p>
-      {data.map((item, index) => (
-        <p>Testing</p>
-      ))}
-      {/* <Box flex={1} flexBasis="60%">
-        <Select
-          sx={{ minWidth: 100 }}
-          options={options}
-          value={data}
-          onChange={e => handleChange(path, e.target.value)}
-        />
-      </Box> */}
+      {formObjects.map((formObject: any, index: number) => {
+        return (
+          <Accordion key={index}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>{label}</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <JsonForms {...formObject} />
+            </AccordionDetails>
+          </Accordion>
+        );
+      })}
     </Box>
   );
 };
