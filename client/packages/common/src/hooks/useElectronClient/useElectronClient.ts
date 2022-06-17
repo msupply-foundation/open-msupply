@@ -88,7 +88,7 @@ export const useElectronClient = (discover = false) => {
   }, []);
 
   useEffect(() => {
-    if (timedOut && state.servers.length == 0) {
+    if (timedOut && !state.discoveryTimedOut && state.servers.length == 0) {
       setState(state => ({ ...state, ...{ discoveryTimedOut: true } }));
     }
   }, [timedOut, state]);
