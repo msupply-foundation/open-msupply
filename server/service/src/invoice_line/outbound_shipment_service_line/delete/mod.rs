@@ -100,18 +100,6 @@ mod test {
             Err(ServiceError::LineDoesNotExist)
         );
 
-        // InvoiceDoesNotExist
-        // assert_eq!(
-        //     service.delete_outbound_shipment_service_line(
-        //         &context,
-        //         "store_a",
-        //         inline_init(|r: &mut DeleteOutboundShipmentLine| {
-        //             r.id = mock_draft_outbound_service_line().id;
-        //         }),
-        //     ),
-        //     Err(ServiceError::InvoiceDoesNotExist)
-        // );
-
         // NotAnOutboundShipment
         assert_eq!(
             service.delete_outbound_shipment_service_line(
@@ -123,20 +111,6 @@ mod test {
             ),
             Err(ServiceError::NotAnOutboundShipment)
         );
-
-        // NotThisInvoiceLine
-        // assert_eq!(
-        //     service.delete_outbound_shipment_service_line(
-        //         &context,
-        //         "store_a",
-        //         inline_init(|r: &mut DeleteOutboundShipmentLine| {
-        //             r.id = mock_draft_outbound_service_line().id;
-        //         }),
-        //     ),
-        //     Err(ServiceError::NotThisInvoiceLine(
-        //         mock_draft_outbound_with_service_lines().id
-        //     ))
-        // );
 
         // CannotEditInvoice
         assert_eq!(
