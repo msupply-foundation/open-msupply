@@ -145,7 +145,7 @@ mod database_setting_test {
     }
 
     // feature sqlite
-    #[cfg(not(feature = "postgres"))]
+    #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
     #[test]
     fn test_database_settings_full_init_sql() {
         use super::SQLITE_WAL_PRAGMA;

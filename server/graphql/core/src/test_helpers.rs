@@ -50,7 +50,7 @@ pub async fn run_test_gql_query<
         auth_token_secret: "n/a".to_string(),
         token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
         // TODO: configure ssl
-        danger_no_ssl: true,
+        no_ssl: true,
         debug_no_access_control: true,
     });
 
