@@ -5,6 +5,7 @@ use mutations::insert_form_schema::*;
 use mutations::patient::insert::*;
 use mutations::update_document::*;
 use types::json_schema::FormSchemaNode;
+use types::document::DocumentNode;
 
 mod mutations;
 
@@ -25,6 +26,15 @@ impl DocumentQueries {
         #[graphql(desc = "The document filter")] filter: Option<DocumentFilterInput>,
     ) -> Result<DocumentResponse> {
         documents(ctx, store_id, filter)
+    }
+
+    pub async fn document(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Store id")] store_id: String,
+        #[graphql(desc = "The document name")] name: String,
+    ) -> Result<Option<DocumentNode>> {
+        document(ctx, store_id, name)
     }
 
     pub async fn document_history(
