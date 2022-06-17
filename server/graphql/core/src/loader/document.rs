@@ -42,9 +42,10 @@ impl Loader<DocumentLoaderInput> for DocumentLoader {
             let result = self.service_provider.document_service.get_documents(
                 &ctx,
                 &store_id,
-                Some(DocumentFilter::new().name(Some(EqualFilter::equal_any(
-                    doc_names.into_iter().collect(),
-                )))),
+                Some(
+                    DocumentFilter::new()
+                        .name(EqualFilter::equal_any(doc_names.into_iter().collect())),
+                ),
             )?;
             for doc in result {
                 out.insert(
