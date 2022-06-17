@@ -73,6 +73,10 @@ impl DatabaseSettings {
     pub fn connection_string_without_db(&self) -> String {
         self.connection_string()
     }
+
+    pub fn full_init_sql(&self) -> Option<String> {
+        self.init_sql.clone()
+    }
 }
 
 // feature sqlite
