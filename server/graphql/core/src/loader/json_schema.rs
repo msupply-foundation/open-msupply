@@ -1,4 +1,4 @@
-use repository::{JSONSchema, JsonSchemaRepository, RepositoryError, StorageConnectionManager};
+use repository::{FormSchema, FormSchemaRowRepository, RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -10,12 +10,12 @@ pub struct JsonSchemaLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for JsonSchemaLoader {
-    type Value = JSONSchema;
+    type Value = FormSchema;
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
-        let repo = JsonSchemaRepository::new(&connection);
+        let repo = FormSchemaRowRepository::new(&connection);
         let result = repo.find_many_by_ids(ids)?;
         Ok(result
             .into_iter()
