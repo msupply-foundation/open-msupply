@@ -4,9 +4,6 @@ use graphql_core::generic_filters::{
     SimpleStringFilterInput,
 };
 use graphql_core::pagination::PaginationInput;
-use graphql_core::simple_generic_errors::{
-    ErrorWrapper, NodeError, NodeErrorInterface, RecordNotFound,
-};
 use graphql_core::standard_graphql_error::{
     list_error_to_gql_err, validate_auth, StandardGraphqlError,
 };
@@ -121,13 +118,7 @@ pub fn stocktakes(
     }
 }
 
-#[derive(Union)]
-pub enum StocktakeResponse {
-    Response(StocktakeNode),
-    Error(NodeError),
-}
-
-pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<StocktakeResponse> {
+pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<StocktakeNode> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -149,10 +140,14 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
     ) {
         Ok(mut stocktakes) => {
             let result = match stocktakes.rows.pop() {
-                Some(stocktake) => StocktakeResponse::Response(StocktakeNode { stocktake }),
-                None => StocktakeResponse::Error(ErrorWrapper {
-                    error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
-                }),
+                Some(stocktake) => StocktakeNode { stocktake },
+                None => {
+                    return Err(StandardGraphqlError::NotFound(format!(
+                        "Stocktake not found: {}",
+                        id
+                    ))
+                    .extend())
+                }
             };
             Ok(result)
         }
@@ -165,7 +160,7 @@ pub fn stocktake_by_number(
     ctx: &Context<'_>,
     store_id: &str,
     stocktake_number: i64,
-) -> Result<StocktakeResponse> {
+) -> Result<StocktakeNode> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -187,10 +182,14 @@ pub fn stocktake_by_number(
     ) {
         Ok(mut stocktakes) => {
             let result = match stocktakes.rows.pop() {
-                Some(stocktake) => StocktakeResponse::Response(StocktakeNode { stocktake }),
-                None => StocktakeResponse::Error(ErrorWrapper {
-                    error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
-                }),
+                Some(stocktake) => StocktakeNode { stocktake },
+                None => {
+                    return Err(StandardGraphqlError::NotFound(format!(
+                        "Stocktake not found by number: {}",
+                        stocktake_number
+                    ))
+                    .extend())
+                }
             };
             Ok(result)
         }

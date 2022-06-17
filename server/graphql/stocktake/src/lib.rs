@@ -3,6 +3,7 @@ mod stocktake_queries;
 use self::stocktake_queries::*;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use graphql_types::types::StocktakeNode;
 
 #[derive(Default, Clone)]
 pub struct StocktakeQueries;
@@ -14,7 +15,7 @@ impl StocktakeQueries {
         ctx: &Context<'_>,
         store_id: String,
         id: String,
-    ) -> Result<StocktakeResponse> {
+    ) -> Result<StocktakeNode> {
         stocktake(ctx, &store_id, &id)
     }
 
@@ -23,7 +24,7 @@ impl StocktakeQueries {
         ctx: &Context<'_>,
         store_id: String,
         stocktake_number: i64,
-    ) -> Result<StocktakeResponse> {
+    ) -> Result<StocktakeNode> {
         stocktake_by_number(ctx, &store_id, stocktake_number)
     }
 

@@ -21,6 +21,9 @@ pub enum StandardGraphqlError {
 
     #[error("Forbidden")]
     Forbidden(String),
+
+    #[error("Not found")]
+    NotFound(String),
 }
 
 impl ErrorExtensions for StandardGraphqlError {
@@ -31,6 +34,7 @@ impl ErrorExtensions for StandardGraphqlError {
             StandardGraphqlError::BadUserInput(details) => e.set("details", details.clone()),
             StandardGraphqlError::Unauthenticated(details) => e.set("details", details.clone()),
             StandardGraphqlError::Forbidden(details) => e.set("details", details.clone()),
+            StandardGraphqlError::NotFound(details) => e.set("details", details.clone()),
         })
     }
 }
