@@ -2876,7 +2876,6 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Int']>;
   stockLineId?: InputMaybe<Scalars['String']>;
@@ -2912,7 +2911,6 @@ export type UpdateOutboundShipmentServiceLineErrorInterface = {
 
 export type UpdateOutboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;

@@ -2088,7 +2088,6 @@ interface UpdateOutboundShipmentLineErrorInterface {
 }
 input UpdateOutboundShipmentLineInput {
   id: String!
-  invoiceId: String!
   itemId: String
   stockLineId: String
   numberOfPacks: Int
@@ -2114,7 +2113,6 @@ interface UpdateOutboundShipmentServiceLineErrorInterface {
 }
 input UpdateOutboundShipmentServiceLineInput {
   id: String!
-  invoiceId: String!
   itemId: String
   name: String
   totalBeforeTax: Float
