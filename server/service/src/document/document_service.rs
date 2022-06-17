@@ -59,7 +59,7 @@ pub trait DocumentServiceTrait: Sync + Send {
         store_id: &str,
         filter: Option<DocumentFilter>,
     ) -> Result<Vec<Document>, RepositoryError> {
-        let filter = filter.map(|mut f| {
+        let filter = filter.or(Some(DocumentFilter::new())).map(|mut f| {
             f.store_id = Some(EqualFilter::equal_to(store_id));
             f
         });

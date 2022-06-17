@@ -109,8 +109,8 @@ impl DocumentFilter {
         }
     }
 
-    pub fn name(mut self, name: Option<EqualFilter<String>>) -> Self {
-        self.name = name;
+    pub fn name(mut self, name: EqualFilter<String>) -> Self {
+        self.name = Some(name);
         self
     }
 }
