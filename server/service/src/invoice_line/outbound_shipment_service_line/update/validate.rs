@@ -20,7 +20,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, InvoiceRow, ItemRow), UpdateOutboundShipmentServiceLineError> {
     let line = check_line_exists(&input.id, connection)?;
-    let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?;
 
     let item = if let Some(item_id) = &input.item_id {
         check_item(item_id, connection)?

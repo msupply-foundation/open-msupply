@@ -99,7 +99,6 @@ const outboundParsers = {
   toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
     return {
       id: line.id,
-      invoiceId: line.invoiceId,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       tax: { percentage: line.taxPercentage },
