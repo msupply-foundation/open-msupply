@@ -39,7 +39,7 @@ pub mod sync;
 pub mod test_utils;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
-#[cfg(not(feature = "android"))]
+#[cfg(not(target_os = "android"))]
 mod discovery;
 
 fn auth_data(
@@ -277,7 +277,7 @@ pub async fn start_server(
     let certificates = Certificates::load(&config_settings.server)?;
 
     // Don't do discovery in android
-    #[cfg(not(feature = "android"))]
+    #[cfg(not(target_os = "android"))]
     let _ = discovery::Discovery::start(discovery::ServerInfo::new(
         certificates.protocol(),
         &config_settings.server,
