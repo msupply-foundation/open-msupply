@@ -9,13 +9,14 @@ use diesel_derive_enum::DbEnum;
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReportType {
-    OmReport,
+    OmSupply,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ReportCategory {
-    Invoice,
+pub enum ReportContext {
+    InboundShipment,
+    OutboundShipment,
     Requisition,
     Stocktake,
     /// Not an actual report but a resource entry used by other reports, e.g. to provide footers or
@@ -28,8 +29,9 @@ table! {
       id -> Text,
       name -> Text,
       #[sql_name = "type"] type_ -> crate::db_diesel::report_row::ReportTypeMapping,
-      data -> Text,
-      context ->  crate::db_diesel::report_row::ReportCategoryMapping,
+      template -> Text,
+      context -> crate::db_diesel::report_row::ReportContextMapping,
+      comment -> Nullable<Text>,
   }
 }
 
@@ -40,9 +42,10 @@ pub struct ReportRow {
     pub name: String,
     #[column_name = "type_"]
     pub r#type: ReportType,
-    pub data: String,
+    pub template: String,
     /// Used to store the report category
-    pub context: ReportCategory,
+    pub context: ReportContext,
+    pub comment: Option<String>,
 }
 
 pub struct ReportRowRepository<'a> {

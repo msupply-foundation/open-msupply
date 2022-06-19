@@ -1,6 +1,6 @@
 use super::{
     report_row::{report, report::dsl as report_dsl},
-    ReportCategory, ReportRow, ReportType, StorageConnection,
+    ReportContext, ReportRow, ReportType, StorageConnection,
 };
 
 use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
@@ -17,7 +17,7 @@ pub struct ReportFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<SimpleStringFilter>,
     pub r#type: Option<EqualFilter<ReportType>>,
-    pub category: Option<EqualFilter<ReportCategory>>,
+    pub category: Option<EqualFilter<ReportContext>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -48,7 +48,7 @@ impl ReportFilter {
         self
     }
 
-    pub fn category(mut self, filter: EqualFilter<ReportCategory>) -> Self {
+    pub fn category(mut self, filter: EqualFilter<ReportContext>) -> Self {
         self.category = Some(filter);
         self
     }

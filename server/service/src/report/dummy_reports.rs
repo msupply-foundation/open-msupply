@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use repository::{
-    ReportCategory, ReportRow, ReportType,
+    ReportContext, ReportRow, ReportType,
     ReportRowRepository, RepositoryError, StorageConnection,
 };
 
@@ -13,7 +13,7 @@ pub struct DummyReport {
     id: String,
     name: String,
     report: ReportDefinition,
-    category: ReportCategory,
+    category: ReportContext,
 }
 
 pub fn invoice_report() -> DummyReport {
@@ -57,7 +57,7 @@ pub fn invoice_report() -> DummyReport {
         id: "dummy_report_invoice".to_string(),
         name: "Dummy invoice report".to_string(),
         report,
-        category: ReportCategory::Invoice,
+        category: ReportContext::InboundShipment,
     }
 }
 
@@ -102,7 +102,7 @@ pub fn stocktake_report() -> DummyReport {
         id: "dummy_report_stocktake".to_string(),
         name: "Dummy stocktake report".to_string(),
         report,
-        category: ReportCategory::Stocktake,
+        category: ReportContext::Stocktake,
     }
 }
 
@@ -147,7 +147,7 @@ pub fn requisition_report() -> DummyReport {
         id: "dummy_report_requisition".to_string(),
         name: "Dummy requisition report".to_string(),
         report,
-        category: ReportCategory::Requisition,
+        category: ReportContext::Requisition,
     }
 }
 
@@ -157,9 +157,10 @@ pub fn insert_dummy_reports(connection: &StorageConnection) -> Result<(), Reposi
         let row = ReportRow {
             id: report.id,
             name: report.name,
-            r#type: ReportType::OmReport,
-            data: serde_json::to_string(&report.report).unwrap(),
+            r#type: ReportType::OmSupply,
+            template: serde_json::to_string(&report.report).unwrap(),
             context: report.category,
+            comment: None,
         };
         ReportRowRepository::new(connection).upsert_one(&row)?;
     }
