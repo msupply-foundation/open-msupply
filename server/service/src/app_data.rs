@@ -48,6 +48,11 @@ impl AppDataServiceTrait for AppDataService {
     fn load_from_file(&self) -> Result<AppData, Error> {
         let file_path = self.get_app_data_file()?;
 
+        if !file_path.exists() {
+            let mut file = File::create(&file_path)?;
+            file.write_all(b"site_hardware_id: \"\"")?;
+        }
+
         let mut file = File::open(file_path)?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
