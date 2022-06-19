@@ -3,14 +3,16 @@ pub mod master_list;
 pub mod master_list_line;
 pub mod master_list_name_join;
 pub mod name;
+pub mod report;
 pub mod store;
 pub mod unit;
 
 use repository::{
     CentralSyncBufferRow, ItemRow, ItemRowRepository, MasterListLineRow,
     MasterListLineRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
-    MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, RepositoryError,
-    StorageConnection, StoreRow, StoreRowRepository, UnitRow, UnitRowRepository,
+    MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, ReportRow,
+    ReportRowRepository, RepositoryError, StorageConnection, StoreRow, StoreRowRepository, UnitRow,
+    UnitRowRepository,
 };
 
 #[allow(dead_code)]
@@ -23,6 +25,7 @@ pub enum TestSyncDataRecord {
     MasterList(Option<MasterListRow>),
     MasterListLine(Option<MasterListLineRow>),
     MasterListNameJoin(Option<MasterListNameJoinRow>),
+    Report(Option<ReportRow>),
 }
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -123,6 +126,12 @@ pub async fn check_records_against_database(
                     from_option_to_db_result(comparison_record)
                 )
             }
+            TestSyncDataRecord::Report(comparison_record) => assert_eq!(
+                ReportRowRepository::new(&connection)
+                    .find_one_by_id(&record.central_sync_buffer_row.record_id)
+                    .and_then(|v| Ok(v.unwrap())),
+                from_option_to_db_result(comparison_record)
+            ),
         }
     }
 }

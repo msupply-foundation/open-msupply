@@ -8,7 +8,7 @@ use graphql_core::{
 };
 use graphql_core::{map_filter, ContextExt};
 use repository::{
-    EqualFilter, PaginationOption, ReportCategory as ReportCategoryDomain, ReportFilter, ReportRow,
+    EqualFilter, PaginationOption, ReportContext as ReportContextDomain, ReportFilter, ReportRow,
     ReportSort, ReportSortField, SimpleStringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
@@ -31,8 +31,9 @@ pub struct ReportSortInput {
 
 #[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum ReportCategory {
-    Invoice,
+pub enum ReportContext {
+    InboundShipment,
+    OutboundShipment,
     Requisition,
     Stocktake,
     Resource,
@@ -40,9 +41,9 @@ pub enum ReportCategory {
 
 #[derive(InputObject, Clone)]
 pub struct EqualFilterReportCategoryInput {
-    pub equal_to: Option<ReportCategory>,
-    pub equal_any: Option<Vec<ReportCategory>>,
-    pub not_equal_to: Option<ReportCategory>,
+    pub equal_to: Option<ReportContext>,
+    pub equal_any: Option<Vec<ReportContext>>,
+    pub not_equal_to: Option<ReportContext>,
 }
 
 #[derive(InputObject, Clone)]
@@ -78,12 +79,13 @@ impl ReportNode {
     pub async fn name(&self) -> &str {
         &self.row.name
     }
-    pub async fn category(&self) -> ReportCategory {
+    pub async fn context(&self) -> ReportContext {
         match self.row.context {
-            ReportCategoryDomain::Invoice => ReportCategory::Invoice,
-            ReportCategoryDomain::Requisition => ReportCategory::Requisition,
-            ReportCategoryDomain::Stocktake => ReportCategory::Stocktake,
-            ReportCategoryDomain::Resource => ReportCategory::Resource,
+            ReportContextDomain::InboundShipment => ReportContext::InboundShipment,
+            ReportContextDomain::OutboundShipment => ReportContext::OutboundShipment,
+            ReportContextDomain::Requisition => ReportContext::Requisition,
+            ReportContextDomain::Stocktake => ReportContext::Stocktake,
+            ReportContextDomain::Resource => ReportContext::Resource,
         }
     }
 }
@@ -130,7 +132,7 @@ impl ReportFilterInput {
             r#type: None,
             category: self
                 .category
-                .map(|t| map_filter!(t, ReportCategory::to_domain)),
+                .map(|t| map_filter!(t, ReportContext::to_domain)),
         }
     }
 }
@@ -148,13 +150,14 @@ impl ReportSortInput {
     }
 }
 
-impl ReportCategory {
-    pub fn to_domain(self) -> ReportCategoryDomain {
+impl ReportContext {
+    pub fn to_domain(self) -> ReportContextDomain {
         match self {
-            ReportCategory::Invoice => ReportCategoryDomain::Invoice,
-            ReportCategory::Requisition => ReportCategoryDomain::Requisition,
-            ReportCategory::Stocktake => ReportCategoryDomain::Stocktake,
-            ReportCategory::Resource => ReportCategoryDomain::Resource,
+            ReportContext::InboundShipment => ReportContextDomain::InboundShipment,
+            ReportContext::OutboundShipment => ReportContextDomain::OutboundShipment,
+            ReportContext::Requisition => ReportContextDomain::Requisition,
+            ReportContext::Stocktake => ReportContextDomain::Stocktake,
+            ReportContext::Resource => ReportContextDomain::Resource,
         }
     }
 }
