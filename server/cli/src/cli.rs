@@ -22,7 +22,6 @@ use server::{
 };
 use service::{
     apis::login_v4::LoginUserInfoV4,
-    app_data::AppData,
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     service_provider::ServiceProvider,
@@ -105,7 +104,6 @@ async fn main() {
 
     let settings: Settings =
         configuration::get_configuration().expect("Failed to parse configuration settings");
-    let app_data = AppData::load_from_file().expect("Failed to load app data");
 
     match args.action {
         Action::ExportGraphqlSchema => {
@@ -125,7 +123,8 @@ async fn main() {
             info!("Finished database reset");
 
             let connection_manager = get_storage_connection_manager(&settings.database);
-            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+            let service_provider =
+                Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
 
             let sync_settings = settings.sync.unwrap();
             let central_server_url = sync_settings.url.clone();
@@ -138,7 +137,7 @@ async fn main() {
             };
 
             info!("Initialising from central");
-            Synchroniser::new(sync_settings, app_data, service_provider.clone())
+            Synchroniser::new(sync_settings, service_provider.clone())
                 .unwrap()
                 .initial_pull()
                 .await
@@ -196,11 +195,15 @@ async fn main() {
 
             let client = Client::new();
             let url = Url::parse(&url).unwrap();
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let service_provider =
+                Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
+            let hardware_id = service_provider.app_data_service.get_hardware_id().unwrap();
             let sync_api_v5 = SyncApiV5::new(
                 url.clone(),
                 credentials.clone(),
                 client.clone(),
-                app_data.clone(),
+                &hardware_id,
             );
 
             info!("Requesting initialisation");
@@ -233,7 +236,8 @@ async fn main() {
             test_db::setup(&settings.database).await;
 
             let connection_manager = get_storage_connection_manager(&settings.database);
-            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+            let service_provider =
+                Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
             let ctx = service_provider.context().unwrap();
 
             let (_, import_file, users_file) = export_paths(&name);
@@ -309,7 +313,8 @@ async fn main() {
                 .refresh_dates(Utc::now().naive_local())
                 .unwrap();
 
-            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+            let service_provider =
+                Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
             let ctx = service_provider.context().unwrap();
             let service = &service_provider.settings;
             info!("Disabling sync");
