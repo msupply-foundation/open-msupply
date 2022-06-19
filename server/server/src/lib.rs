@@ -79,7 +79,7 @@ async fn run_stage0(
 
     let service_provider = ServiceProvider::new(
         connection_manager.clone(),
-        "app_data", // &config_settings.server.base_dir.clone().unwrap(),
+        &config_settings.server.base_dir.clone().unwrap(),
     );
 
     if service_provider
@@ -153,7 +153,7 @@ async fn run_server(
 ) -> std::io::Result<bool> {
     let service_provider = ServiceProvider::new(
         connection_manager.clone(),
-        "app_data", // &config_settings.server.base_dir.clone().unwrap(),
+        &config_settings.server.base_dir.clone().unwrap(),
     );
     let service_context = service_provider.context().unwrap();
     let service = &service_provider.settings;
