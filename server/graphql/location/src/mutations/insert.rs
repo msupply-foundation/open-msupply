@@ -142,7 +142,7 @@ mod test {
         location_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         service_provider.location_service = Box::new(location_service);
         service_provider
     }

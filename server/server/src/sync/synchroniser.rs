@@ -4,7 +4,7 @@ use actix_web::web::Data;
 use log::warn;
 
 use reqwest::{Client, Url};
-use service::{app_data::AppData, service_provider::ServiceProvider, sync_settings::SyncSettings};
+use service::{service_provider::ServiceProvider, sync_settings::SyncSettings};
 
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
@@ -51,11 +51,11 @@ pub struct Synchroniser {
 impl Synchroniser {
     pub fn new(
         settings: SyncSettings,
-        app_data: AppData,
         service_provider: Data<ServiceProvider>,
     ) -> anyhow::Result<Self> {
         let client = Client::new();
         let url = Url::parse(&settings.url)?;
+        let hardware_id = service_provider.app_data_service.get_hardware_id()?;
         let credentials = SyncCredentials {
             username: settings.username.clone(),
             password_sha256: settings.password_sha256.clone(),
@@ -64,9 +64,9 @@ impl Synchroniser {
             url.clone(),
             credentials.clone(),
             client.clone(),
-            app_data.clone(),
+            &hardware_id,
         );
-        let sync_api_v3 = SyncApiV3::new(url, credentials, client, &app_data.site_hardware_id)?;
+        let sync_api_v3 = SyncApiV3::new(url, credentials, client, &hardware_id)?;
         Ok(Synchroniser {
             remote_data: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
@@ -166,12 +166,12 @@ mod tests {
 
         // 0.0.0.0:0 should hopefully be always unreachable and valid url
 
-        let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+        let service_provider =
+            Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
         let ctx = service_provider.context().unwrap();
         let service = &service_provider.settings;
         let s = Synchroniser::new(
             inline_init(|r: &mut SyncSettings| r.url = "http://0.0.0.0:0".to_string()),
-            inline_init(|r: &mut AppData| r.site_hardware_id = "hardware_id".to_string()),
             service_provider.clone(),
         )
         .unwrap();
