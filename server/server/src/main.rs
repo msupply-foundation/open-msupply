@@ -8,7 +8,10 @@ use tokio::sync::oneshot;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env::set_var("RUST_LOG", "info");
+    if env::var("RUST_LOG").is_err() {
+        //Default rust log level to info
+        env::set_var("RUST_LOG", "info");
+    }
     env_logger::init();
 
     let settings: Settings =
