@@ -2696,7 +2696,6 @@ export type SyncSettingsNode = {
   centralServerSiteId: Scalars['Int'];
   /** How frequently central data is synced */
   intervalSec: Scalars['Int'];
-  siteHardwareId: Scalars['String'];
   siteId: Scalars['Int'];
   /** Central server url */
   url: Scalars['String'];
@@ -3129,7 +3128,6 @@ export type UpdateSyncSettingsInput = {
   intervalSec: Scalars['Int'];
   /** Plain text password */
   password: Scalars['String'];
-  siteHardwareId: Scalars['String'];
   siteId: Scalars['Int'];
   url: Scalars['String'];
   username: Scalars['String'];

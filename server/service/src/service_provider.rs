@@ -4,6 +4,7 @@ use repository::{
 };
 
 use crate::{
+    app_data::{AppDataService, AppDataServiceTrait},
     auth::{AuthService, AuthServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -47,6 +48,8 @@ pub struct ServiceProvider {
     pub report_service: Box<dyn ReportServiceTrait>,
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
+    // App Data Service
+    pub app_data_service: Box<dyn AppDataServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -54,7 +57,7 @@ pub struct ServiceContext {
 }
 
 impl ServiceProvider {
-    pub fn new(connection_manager: StorageConnectionManager) -> Self {
+    pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -72,6 +75,7 @@ impl ServiceProvider {
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService {}),
+            app_data_service: Box::new(AppDataService::new(app_data_folder)),
         }
     }
 

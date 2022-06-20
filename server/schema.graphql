@@ -1949,8 +1949,7 @@ type SyncSettingsNode {
   intervalSec: Int!
   centralServerSiteId: Int!
   siteId: Int!
-  siteHardwareId: String!
-}
+=}
 input TaxUpdate {
   """
   Set or unset the tax value (in percentage)
@@ -2289,7 +2288,6 @@ input UpdateSyncSettingsInput {
   intervalSec: Int!
   centralServerSiteId: Int!
   siteId: Int!
-  siteHardwareId: String!
 }
 type UseSuggestedQuantityError {
   error: UseSuggestedQuantityErrorInterface!

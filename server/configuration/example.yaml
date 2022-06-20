@@ -1,12 +1,17 @@
 # To use custom server settings for a local or a production environment create a copy
 # of this example file and name it local.yaml or production.yaml, respectively.
-server:
-  host: 127.0.0.1
-  develop: true
+# server:
+#   host: 127.0.0.1
+#   develop: true
 #   port: 8000
 #   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
 #   # danger_allow_http: true # allow http in production mode
-#   cors_origins: [http://localhost:3003, https://demo-open.msupply.org, http://localhost:8000] # Used to set the allowed Origin in Cross Origin Requst Security
+#   cors_origins: [
+#       http://localhost:3003,
+#       https://demo-open.msupply.org,
+#       http://localhost:8000,
+#     ] # Used to set the allowed Origin in Cross Origin Requst Security
+#   base_dir: "app_data"
 # sync:
 #   url: "http://localhost:2048"
 #   username: "demo"
@@ -15,7 +20,6 @@ server:
 #   interval_sec: 300
 #   central_server_site_id: 1
 #   site_id: 2
-#   site_hardware_id: ""
 # database:
 #   host: "localhost"
 #   port: 5432

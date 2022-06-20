@@ -6,10 +6,7 @@ mod permission_tests {
     use graphql_core::test_helpers::setup_graphl_test;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use service::{
-        auth::{
-            AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser,
-            AuthError,
-        },
+        auth::{AuthError, AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser},
         auth_data::AuthData,
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -1042,7 +1039,7 @@ mod permission_tests {
             TestData {
                 name: "updateServerSettings",
                 query: r#"mutation Mutation {
-                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10, centralServerSiteId: 10, siteId: 10, siteHardwareId: ""}}) {
+                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10, centralServerSiteId: 10, siteId: 10}}) {
                   ... on ServerSettingsNode {
                     __typename
                     status
@@ -1150,7 +1147,7 @@ mod permission_tests {
         test_service: &TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         service_provider.validation_service = Box::new(test_service.clone());
         service_provider
     }
