@@ -35,8 +35,12 @@ impl AppDataService {
 impl AppDataServiceTrait for AppDataService {
     fn get_app_data_directory(&self) -> Result<PathBuf, Error> {
         let root = Path::new("./");
+        let app_data_folder = root.join(self.app_data_folder.clone());
+        if !app_data_folder.exists() {
+            std::fs::create_dir_all(app_data_folder.clone())?;
+        }
 
-        Ok(root.join(&self.app_data_folder))
+        Ok(app_data_folder)
     }
 
     fn get_app_data_file(&self) -> Result<PathBuf, Error> {
