@@ -6,7 +6,9 @@ import { DetailInputWithLabelRow } from '@openmsupply-client/common';
 export const stringTester = rankWith(3, schemaTypeIs('string'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path } = props;
+  const { data, handleChange, label, path, schema, rootSchema, uischema } =
+    props;
+
   return (
     <DetailInputWithLabelRow
       label={label}

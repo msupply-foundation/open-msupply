@@ -1,81 +1,10 @@
 {
-  "Patient": {
-    "id": "123",
-    "gender": "Male",
-    "firstName": "Carl",
-    "lastName": "Smith",
-    "healthCenter": {
-      "id": "999",
-      "name": "My Health Center"
+  "comments": [
+    {
+      "date": "2001-09-10"
     },
-    "addresses": [
-      {
-        "key": "primary",
-        "address1": "111 Address Street",
-        "address2": "Auckland",
-        "country": "NZ"
-      },
-      {
-        "key": "secondary",
-        "address1": "222 Address",
-        "address2": "address2",
-        "country": "NZ"
-      }
-    ],
-    "contactDetails": [
-      {
-        "key": "primary",
-        "address1": "111 Contact Street",
-        "address2": "Auckland",
-        "country": "NZ"
-      },
-      {
-        "key": "secondary",
-        "address1": "222 Contact",
-        "mobile": "+023456",
-        "email": "email",
-        "website": "website"
-      }
-    ],
-    "socioEconomics": {
-      "education": "education",
-      "occupation": "occupation",
-      "literate": "literate"
-    },
-    "testingArray": [{ "field1": "ONE", "field2": "TWO" }],
-    "family": {
-      "maritalStatus": "single",
-      "nextOfKin": {
-        "id": "nextOfKinId",
-        "firstName": "namekin",
-        "lastName": "lastNameKin",
-        "addresses": [],
-        "contactDetails": [
-          {
-            "key": "primary",
-            "address1": "NOK contact",
-            "address2": "Auckland",
-            "country": "New Zealand"
-          }
-        ],
-        "socioEconomics": {}
-      },
-      "caregiver": {
-        "id": "cargiverId",
-        "firstName": "caregiver",
-        "lastName": "caregiverLastName",
-        "addresses": [],
-        "contactDetails": [],
-        "socioEconomics": {}
-      },
-      "mother": {
-        "id": "motherId",
-        "firstName": "Jenny",
-        "lastName": "Shaw",
-        "addresses": [],
-        "contactDetails": [],
-        "socioEconomics": {}
-      }
+    {
+      "date": "2022-06-20"
     }
-  }
+  ]
 }
