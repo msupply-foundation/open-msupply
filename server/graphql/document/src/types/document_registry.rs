@@ -1,4 +1,5 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
+use graphql_core::{loader::DocumentRegistryChildrenLoader, ContextExt};
 use repository::{DocumentContext, DocumentRegistry};
 use serde::Serialize;
 
@@ -58,6 +59,18 @@ impl DocumentRegistryNode {
 
     pub async fn ui_schema(&self) -> &serde_json::Value {
         &self.document_registry.ui_schema
+    }
+
+    pub async fn children(&self, ctx: &Context<'_>) -> Result<Vec<DocumentRegistryNode>> {
+        let loader = ctx.get_loader::<DataLoader<DocumentRegistryChildrenLoader>>();
+        let children = loader
+            .load_one(self.document_registry.id.clone())
+            .await?
+            .unwrap_or(vec![]);
+        Ok(children
+            .into_iter()
+            .map(|document_registry| DocumentRegistryNode { document_registry })
+            .collect())
     }
 }
 
