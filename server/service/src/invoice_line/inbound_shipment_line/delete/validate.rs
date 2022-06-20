@@ -5,9 +5,7 @@ use crate::{
     },
     invoice_line::{
         inbound_shipment_line::check_batch,
-        validate::{
-            check_line_belongs_to_invoice, check_line_exists, LineDoesNotExist, NotInvoiceLine,
-        },
+        validate::{check_line_exists, LineDoesNotExist, NotInvoiceLine},
         BatchIsReserved,
     },
 };
@@ -21,9 +19,8 @@ pub fn validate(
 ) -> Result<(InvoiceRow, InvoiceLineRow), DeleteInboundShipmentLineError> {
     let line = check_line_exists(&input.id, connection)?;
 
-    let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?;
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-    check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
     check_batch(&line, connection)?;

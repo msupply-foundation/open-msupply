@@ -10,7 +10,6 @@ use validate::validate;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteOutboundShipmentLine {
     pub id: String,
-    pub invoice_id: String,
 }
 
 type OutError = DeleteOutboundShipmentLineError;

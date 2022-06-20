@@ -7,8 +7,8 @@ use crate::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
         check_unique_stock_line,
         validate::{
-            check_item, check_line_belongs_to_invoice, check_line_exists, check_number_of_packs,
-            ItemNotFound, LineDoesNotExist, NotInvoiceLine, NumberOfPacksBelowOne,
+            check_item, check_line_exists, check_number_of_packs, ItemNotFound, LineDoesNotExist,
+            NotInvoiceLine, NumberOfPacksBelowOne,
         },
         BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHoldError,
         StockLineAlreadyExistsInInvoice, StockLineNotFound,
@@ -23,7 +23,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateOutboundShipmentLineError> {
     let line = check_line_exists(&input.id, connection)?;
-    let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?;
     check_unique_stock_line(
         &line.id,
         &invoice.id,
@@ -34,7 +34,6 @@ pub fn validate(
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     // check batch belongs to store
 
-    check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
