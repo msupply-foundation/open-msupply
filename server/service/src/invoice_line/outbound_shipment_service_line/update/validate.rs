@@ -8,8 +8,7 @@ use crate::{
         InvoiceIsNotEditable, WrongInvoiceRowType,
     },
     invoice_line::validate::{
-        check_item, check_line_belongs_to_invoice, check_line_exists, ItemNotFound,
-        LineDoesNotExist, NotInvoiceLine,
+        check_item, check_line_exists, ItemNotFound, LineDoesNotExist, NotInvoiceLine,
     },
 };
 
@@ -32,8 +31,6 @@ pub fn validate(
     }
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-
-    check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 

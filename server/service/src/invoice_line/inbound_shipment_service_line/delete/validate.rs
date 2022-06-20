@@ -19,7 +19,6 @@ pub fn validate(
     let line = check_line_exists(&input.id, connection)?;
     let invoice = check_invoice_exists(&line.invoice_id, connection)?;
 
-    // check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
