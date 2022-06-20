@@ -58,7 +58,7 @@ impl CentralPushTranslation for ReportTranslation {
 
         let data = serde_json::from_str::<LegacyReportRow>(&sync_record.data)?;
 
-        let t = match data.editor {
+        let r#type = match data.editor {
             LegacyReportEditor::OmSupply => ReportType::OmSupply,
             LegacyReportEditor::Others => return Ok(None),
         };
@@ -72,7 +72,7 @@ impl CentralPushTranslation for ReportTranslation {
         Ok(Some(IntegrationUpsertRecord::Report(ReportRow {
             id: data.id.to_string(),
             name: data.report_name.to_string(),
-            r#type: t,
+            r#type,
             template: data.template,
             context,
             comment: data.comment,
