@@ -109,16 +109,21 @@ pub struct TokenPair {
 pub struct TokenService<'a> {
     token_bucket: &'a RwLock<TokenBucket>,
     jwt_token_secret: &'a [u8],
+    validate_token_bucket: bool,
 }
 
 impl<'a> TokenService<'a> {
-    pub fn new(token_bucket: &'a RwLock<TokenBucket>, jwt_token_secret: &'a [u8]) -> Self {
+    pub fn new(
+        token_bucket: &'a RwLock<TokenBucket>,
+        jwt_token_secret: &'a [u8],
+        validate_token_bucket: bool,
+    ) -> Self {
         TokenService {
             token_bucket,
             jwt_token_secret,
+            validate_token_bucket,
         }
     }
-
     /// Creates new json web token for a given user
     ///
     /// # Arguments
@@ -197,7 +202,7 @@ impl<'a> TokenService<'a> {
             error!("{}", e);
             JWTRefreshError::ConcurrencyLockError(anyhow!("refresh_token: {}", e))
         })?;
-        if !token_bucket.contains(&user_id, refresh_token) {
+        if self.validate_token_bucket && !token_bucket.contains(&user_id, refresh_token) {
             return Err(JWTRefreshError::TokenInvalided);
         }
 
@@ -248,7 +253,7 @@ impl<'a> TokenService<'a> {
             error!("verify_token: {}", e);
             JWTValidationError::ConcurrencyLockError(anyhow!("verify_token: {}", e))
         })?;
-        if !token_bucket.contains(&decoded.claims.sub, token) {
+        if self.validate_token_bucket && !token_bucket.contains(&decoded.claims.sub, token) {
             return Err(JWTValidationError::TokenInvalidated);
         }
         Ok(decoded.claims)
@@ -323,45 +328,58 @@ mod user_account_test {
         let bucket = RwLock::new(TokenBucket::new());
         const JWT_TOKEN_SECRET: &[u8] = "some secret".as_bytes();
         let user_id = "test_user_id";
-        let mut service = TokenService::new(&bucket, JWT_TOKEN_SECRET);
+        let mut bucket_validating_service = TokenService::new(&bucket, JWT_TOKEN_SECRET, true);
+        let bucket_not_validating_service = TokenService::new(&bucket, JWT_TOKEN_SECRET, false);
 
         // should be able to create a new token
-        let token_pair = service.jwt_token(user_id, 60, 120).unwrap();
+        let token_pair = bucket_validating_service
+            .jwt_token(user_id, 60, 120)
+            .unwrap();
 
         // should be able to verify token
-        let claims = service.verify_token(&token_pair.token, Some(0)).unwrap();
+        let claims = bucket_validating_service
+            .verify_token(&token_pair.token, Some(0))
+            .unwrap();
         assert_eq!(user_id, claims.sub);
 
         // should fail to verify with refresh token
-        let err = service
+        let err = bucket_validating_service
             .verify_token(&token_pair.refresh, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTValidationError::NotAnApiToken));
 
         // should fail to refresh token refresh with api token
-        let err = service
+        let err = bucket_validating_service
             .refresh_token(&token_pair.token, 60, 120, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTRefreshError::NotARefreshToken));
 
         // should succeed to refresh token
-        let token_pair = service
+        let token_pair = bucket_validating_service
             .refresh_token(&token_pair.refresh, 60, 120, Some(0))
             .unwrap();
-        let claims = service.verify_token(&token_pair.token, Some(0)).unwrap();
+        let claims = bucket_validating_service
+            .verify_token(&token_pair.token, Some(0))
+            .unwrap();
         // important: sub must still match the user id:
         assert_eq!(user_id, claims.sub);
 
         // should fail to verify and refresh when logged out
-        service.logout(&user_id).unwrap();
-        let err = service
+        bucket_validating_service.logout(&user_id).unwrap();
+        let err = bucket_validating_service
             .verify_token(&token_pair.token, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTValidationError::TokenInvalidated));
-        let err = service
+        let err = bucket_validating_service
             .refresh_token(&token_pair.refresh, 60, 120, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTRefreshError::TokenInvalided));
+
+        //Check that tokens are still considered valid without them being in the bucket when validate_token_bucket=false
+        let claims = bucket_not_validating_service
+            .verify_token(&token_pair.token, Some(0))
+            .unwrap();
+        assert_eq!(user_id, claims.sub);
     }
 
     #[actix_rt::test]
@@ -369,21 +387,23 @@ mod user_account_test {
         let bucket = RwLock::new(TokenBucket::new());
         const JWT_TOKEN_SECRET: &[u8] = "some secret".as_bytes();
         let user_id = "test_user_id";
-        let mut service = TokenService::new(&bucket, JWT_TOKEN_SECRET);
+        let mut bucket_validating_service = TokenService::new(&bucket, JWT_TOKEN_SECRET, true);
 
         // should be able to create a new token
-        let token_pair = service.jwt_token(user_id, 1, 1).unwrap();
+        let token_pair = bucket_validating_service.jwt_token(user_id, 1, 1).unwrap();
         // should be able to verify token
-        let claims = service.verify_token(&token_pair.token, Some(2)).unwrap();
+        let claims = bucket_validating_service
+            .verify_token(&token_pair.token, Some(2))
+            .unwrap();
         assert_eq!(user_id, claims.sub);
 
         // granularity is 1 sec so need to wait 2 sec
         std::thread::sleep(std::time::Duration::from_millis(2000));
-        let err = service
+        let err = bucket_validating_service
             .verify_token(&token_pair.token, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTValidationError::ExpiredSignature));
-        let err = service
+        let err = bucket_validating_service
             .refresh_token(&token_pair.refresh, 1, 1, Some(0))
             .unwrap_err();
         assert!(matches!(err, JWTRefreshError::ExpiredSignature));
