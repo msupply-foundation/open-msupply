@@ -569,10 +569,10 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
-export type EqualFilterReportCategoryInput = {
-  equalAny?: InputMaybe<Array<ReportCategory>>;
-  equalTo?: InputMaybe<ReportCategory>;
-  notEqualTo?: InputMaybe<ReportCategory>;
+export type EqualFilterReportContextInput = {
+  equalAny?: InputMaybe<Array<ReportContext>>;
+  equalTo?: InputMaybe<ReportContext>;
+  notEqualTo?: InputMaybe<ReportContext>;
 };
 
 export type EqualFilterRequisitionStatusInput = {
@@ -2187,28 +2187,29 @@ export type RefreshTokenErrorInterface = {
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
-export enum ReportCategory {
-  Invoice = 'INVOICE',
-  Requisition = 'REQUISITION',
-  Resource = 'RESOURCE',
-  Stocktake = 'STOCKTAKE'
-}
-
 export type ReportConnector = {
   __typename: 'ReportConnector';
   nodes: Array<ReportNode>;
   totalCount: Scalars['Int'];
 };
 
+export enum ReportContext {
+  InboundShipment = 'INBOUND_SHIPMENT',
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Requisition = 'REQUISITION',
+  Resource = 'RESOURCE',
+  Stocktake = 'STOCKTAKE'
+}
+
 export type ReportFilterInput = {
-  category?: InputMaybe<EqualFilterReportCategoryInput>;
+  context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type ReportNode = {
   __typename: 'ReportNode';
-  category: ReportCategory;
+  context: ReportContext;
   id: Scalars['String'];
   /** Human readable name of the report */
   name: Scalars['String'];

@@ -36,6 +36,7 @@ pub enum KeyValueType {
     SettingsSyncSiteId,
     SettingsSyncSiteHardwareId,
     SettingsSyncIsDisabled,
+    SettingsTokenSecret,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

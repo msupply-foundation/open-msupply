@@ -63,7 +63,6 @@ pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     let pool = Pool::builder()
         .min_idle(Some(1))
         .connection_customizer(Box::new(SqliteConnectionOptions {
-            enable_wal: true,
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
         }))
         .build(connection_manager)
