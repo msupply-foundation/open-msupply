@@ -45,14 +45,13 @@ const resources = {
   },
 };
 
-export const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
+const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
   children,
   locale,
 }) => {
   useEffect(() => {
     i18next.changeLanguage(locale);
   }, [locale]);
-
   if (!i18next.isInitialized) {
     i18next.use(initReactI18next).init({
       resources,
@@ -126,12 +125,7 @@ export const StoryProvider: FC<PropsWithChildrenOnly> = ({ children }) => (
       <GqlProvider url={Environment.GRAPHQL_URL}>
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale="en">
-            <TableProvider
-              createStore={createTableStore}
-              queryParamsStore={createQueryParamsStore({
-                initialSortBy: { key: 'id' },
-              })}
-            >
+            <TableProvider createStore={createTableStore}>
               <AppThemeProvider>
                 <ConfirmationModalProvider>
                   {children}

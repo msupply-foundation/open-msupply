@@ -9,6 +9,7 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'google',
     'prettier',
+    'plugin:storybook/recommended',
   ],
   overrides: [
     {

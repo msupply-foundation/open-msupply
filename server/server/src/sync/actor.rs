@@ -1,9 +1,9 @@
 use crate::sync::Synchroniser;
 
-use log::info;
+use log::{error, info};
 use tokio::{
     sync::mpsc::{self, error as mpsc_error, Receiver as MpscReceiver, Sender as MpscSender},
-    time::{self, Duration, Interval},
+    time::Duration,
 };
 
 pub fn get_sync_actors() -> (SyncSenderActor, SyncReceiverActor) {
@@ -26,25 +26,25 @@ pub struct SyncSenderActor {
 
 impl SyncSenderActor {
     pub fn send(&mut self) {
+        use mpsc_error::*;
         match self.sender.try_send(()) {
-            Ok(()) => info!("Successfully sent sync message"),
-            Err(mpsc_error::TrySendError::Full(())) => {
-                info!("Failed to send sync message as another sync is currently in progress")
+            Err(TrySendError::Full(_)) => {
+                info!("Failed to trigger sync: Another sync is currently in progress")
             }
-            Err(mpsc_error::TrySendError::Closed(())) => {
-                unreachable!("Sync channel has closed. Is the receiver dead!?")
+            Err(TrySendError::Closed(_)) => {
+                unreachable!("Failed to trigger sync: Sync channel has closed")
             }
-        }
+            Ok(_) => {}
+        };
     }
 
     pub async fn schedule_send(&mut self, interval_duration: Duration) {
-        let mut interval: Interval = time::interval(interval_duration);
         loop {
             // This implementation is purely tick-based, not taking into account how long sync
             // takes, whether manual sync has been triggered and so the schedule should be
             // adjusted, whether it failed and should be tried again sooner, &c. If you want to
             // take any of these into account, create another channel from sync scheduler.
-            interval.tick().await;
+            tokio::time::sleep(interval_duration).await;
             self.send();
         }
     }
@@ -58,17 +58,14 @@ impl SyncReceiverActor {
     // Listen for incoming sync messages.
     pub async fn listen(&mut self, synchroniser: &Synchroniser) {
         while let Some(()) = self.receiver.recv().await {
-            info!("Received sync message");
             info!("Starting sync...");
             if let Err(error) = synchroniser.sync().await {
-                info!("Sync encountered an error!");
-                info!("{:?}", error);
+                error!("Sync encountered an error!");
+                error!("{:?}", error);
             } else {
                 info!("Finished sync!");
             }
         }
-        unreachable!(
-            "Sync receiver has stopped listening as channel has closed. Are the senders dead!?"
-        );
+        unreachable!("Sync receiver has stopped listening as channel has closed");
     }
 }

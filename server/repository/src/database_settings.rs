@@ -1,8 +1,4 @@
-use diesel::{
-    connection::SimpleConnection,
-    r2d2::{ConnectionManager, Pool},
-    SqliteConnection,
-};
+use diesel::r2d2::{ConnectionManager, Pool};
 use serde;
 
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
@@ -73,11 +69,12 @@ pub struct SqliteConnectionOptions {
 }
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
-impl diesel::r2d2::CustomizeConnection<SqliteConnection, diesel::r2d2::Error>
+impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::Error>
     for SqliteConnectionOptions
 {
     //TODO: make relevant sqlite customisation settings configurable at runtime.
-    fn on_acquire(&self, conn: &mut SqliteConnection) -> Result<(), diesel::r2d2::Error> {
+    fn on_acquire(&self, conn: &mut diesel::SqliteConnection) -> Result<(), diesel::r2d2::Error> {
+        use diesel::connection::SimpleConnection;
         //Set busy_timeout first as setting WAL can generate busy during a write
         if let Some(d) = self.busy_timeout_ms {
             conn.batch_execute(&format!("PRAGMA busy_timeout = {};", d))

@@ -4,14 +4,9 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 
-use crate::types::json_schema::JSONSchemaNode;
+use crate::types::json_schema::FormSchemaNode;
 
-#[derive(Union)]
-pub enum JSONSchemaResponse {
-    Response(JSONSchemaNode),
-}
-
-pub fn json_schema(ctx: &Context<'_>, id: String) -> Result<JSONSchemaResponse> {
+pub fn form_schema(ctx: &Context<'_>, id: String) -> Result<Option<FormSchemaNode>> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -23,6 +18,8 @@ pub fn json_schema(ctx: &Context<'_>, id: String) -> Result<JSONSchemaResponse> 
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
 
-    let schema = service_provider.schema_service.get_schema(&context, &id)?;
-    Ok(JSONSchemaResponse::Response(JSONSchemaNode { schema }))
+    let schema = service_provider
+        .form_schema_service
+        .get_schema(&context, &id)?;
+    Ok(schema.map(|schema| FormSchemaNode { schema }))
 }

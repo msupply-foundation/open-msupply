@@ -4,6 +4,8 @@ import { Divider } from './divider/Divider';
 import GlobalStyles from '@mui/material/GlobalStyles';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import ListItemIcon from '@mui/material/ListItemIcon';
 import Typography from '@mui/material/Typography';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -43,9 +45,11 @@ export {
   InputLabel,
   Divider,
   GlobalStyles,
+  ListItemIcon,
   Menu,
   MenuItem,
   MuiLink,
+  MenuList,
   Typography,
   TextField,
   Tooltip,

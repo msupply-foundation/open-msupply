@@ -1,0 +1,73 @@
+use async_graphql::*;
+use repository::{DocumentContext, DocumentRegistry};
+use serde::Serialize;
+
+#[derive(SimpleObject)]
+pub struct DocumentRegistryConnector {
+    pub total_count: u32,
+    pub nodes: Vec<DocumentRegistryNode>,
+}
+
+pub struct DocumentRegistryNode {
+    pub document_registry: DocumentRegistry,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum DocumentRegistryNodeContext {
+    Patient,
+    Program,
+    Encounter,
+    Custom,
+}
+
+#[Object]
+impl DocumentRegistryNode {
+    pub async fn id(&self) -> &str {
+        &self.document_registry.id
+    }
+
+    pub async fn document_type(&self) -> &str {
+        &self.document_registry.document_type
+    }
+
+    pub async fn context(&self) -> DocumentRegistryNodeContext {
+        match self.document_registry.context {
+            DocumentContext::Patient => DocumentRegistryNodeContext::Patient,
+            DocumentContext::Program => DocumentRegistryNodeContext::Program,
+            DocumentContext::Encounter => DocumentRegistryNodeContext::Encounter,
+            DocumentContext::Custom => DocumentRegistryNodeContext::Custom,
+        }
+    }
+
+    pub async fn name(&self) -> &Option<String> {
+        &self.document_registry.name
+    }
+
+    pub async fn parent_id(&self) -> &Option<String> {
+        &self.document_registry.parent_id
+    }
+
+    pub async fn json_schema(&self) -> &serde_json::Value {
+        &self.document_registry.json_schema
+    }
+
+    pub async fn ui_schema_type(&self) -> &str {
+        &self.document_registry.ui_schema_type
+    }
+
+    pub async fn ui_schema(&self) -> &serde_json::Value {
+        &self.document_registry.ui_schema
+    }
+}
+
+impl DocumentRegistryNodeContext {
+    pub fn to_domain(self) -> DocumentContext {
+        match self {
+            DocumentRegistryNodeContext::Patient => DocumentContext::Patient,
+            DocumentRegistryNodeContext::Program => DocumentContext::Program,
+            DocumentRegistryNodeContext::Encounter => DocumentContext::Encounter,
+            DocumentRegistryNodeContext::Custom => DocumentContext::Custom,
+        }
+    }
+}

@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     io::{BufReader, ErrorKind},
     path::PathBuf,
 };
@@ -6,8 +7,6 @@ use std::{
 use log::{error, warn};
 use rustls::ServerConfig;
 use service::settings::{is_develop, ServerSettings};
-
-use crate::discovery::Protocol;
 
 #[derive(Debug)]
 pub struct SelfSignedCertFiles {
@@ -117,5 +116,24 @@ impl Certificates {
             Some(_) => Protocol::Https,
             None => Protocol::Http,
         }
+    }
+}
+
+#[derive(Clone)]
+pub enum Protocol {
+    Http,
+    Https,
+}
+
+impl Display for Protocol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Protocol::Http => "http",
+                Protocol::Https => "https",
+            }
+        )
     }
 }

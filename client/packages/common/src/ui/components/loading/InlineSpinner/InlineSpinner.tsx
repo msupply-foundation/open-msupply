@@ -1,16 +1,16 @@
 import React, { FC } from 'react';
 import { CircularProgress, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import { useTranslation } from '@common/intl';
+import { LocaleKey, useTranslation } from '@common/intl';
 
 interface InlineSpinnerProps {
   color?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-  showText?: boolean;
+  messageKey?: LocaleKey;
 }
 
 export const InlineSpinner: FC<InlineSpinnerProps> = ({
   color = 'primary',
-  showText = false,
+  messageKey,
 }) => {
   const t = useTranslation('app');
 
@@ -25,7 +25,7 @@ export const InlineSpinner: FC<InlineSpinnerProps> = ({
     >
       <CircularProgress size={20} color={color} />
       <Typography sx={{ margin: theme => theme.spacing(1), fontSize: '12px' }}>
-        {showText && t('loading')}
+        {!!messageKey && t(messageKey)}
       </Typography>
     </Box>
   );
