@@ -21,8 +21,6 @@ export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
 
   if (loading) return <BasicSpinner />;
 
-  saveData(); // Not implemented -- should be on button click
-
   return !error ? (
     <DetailContainer>
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
