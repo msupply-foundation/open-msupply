@@ -43,7 +43,7 @@ pub struct ReportRow {
     #[column_name = "type_"]
     pub r#type: ReportType,
     pub template: String,
-    /// Used to store the report category
+    /// Used to store the report context
     pub context: ReportContext,
     pub comment: Option<String>,
 }

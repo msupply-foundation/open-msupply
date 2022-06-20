@@ -13,7 +13,7 @@ pub struct DummyReport {
     id: String,
     name: String,
     report: ReportDefinition,
-    category: ReportContext,
+    context: ReportContext,
 }
 
 pub fn invoice_report() -> DummyReport {
@@ -57,7 +57,7 @@ pub fn invoice_report() -> DummyReport {
         id: "dummy_report_invoice".to_string(),
         name: "Dummy invoice report".to_string(),
         report,
-        category: ReportContext::InboundShipment,
+        context: ReportContext::InboundShipment,
     }
 }
 
@@ -102,7 +102,7 @@ pub fn stocktake_report() -> DummyReport {
         id: "dummy_report_stocktake".to_string(),
         name: "Dummy stocktake report".to_string(),
         report,
-        category: ReportContext::Stocktake,
+        context: ReportContext::Stocktake,
     }
 }
 
@@ -147,7 +147,7 @@ pub fn requisition_report() -> DummyReport {
         id: "dummy_report_requisition".to_string(),
         name: "Dummy requisition report".to_string(),
         report,
-        category: ReportContext::Requisition,
+        context: ReportContext::Requisition,
     }
 }
 
@@ -159,7 +159,7 @@ pub fn insert_dummy_reports(connection: &StorageConnection) -> Result<(), Reposi
             name: report.name,
             r#type: ReportType::OmSupply,
             template: serde_json::to_string(&report.report).unwrap(),
-            context: report.category,
+            context: report.context,
             comment: None,
         };
         ReportRowRepository::new(connection).upsert_one(&row)?;

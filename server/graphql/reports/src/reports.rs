@@ -40,7 +40,7 @@ pub enum ReportContext {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterReportCategoryInput {
+pub struct EqualFilterReportContextInput {
     pub equal_to: Option<ReportContext>,
     pub equal_any: Option<Vec<ReportContext>>,
     pub not_equal_to: Option<ReportContext>,
@@ -50,7 +50,7 @@ pub struct EqualFilterReportCategoryInput {
 pub struct ReportFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<SimpleStringFilterInput>,
-    pub category: Option<EqualFilterReportCategoryInput>,
+    pub context: Option<EqualFilterReportContextInput>,
 }
 
 #[derive(Union)]
@@ -130,8 +130,8 @@ impl ReportFilterInput {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(SimpleStringFilter::from),
             r#type: None,
-            category: self
-                .category
+            context: self
+                .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
         }
     }
