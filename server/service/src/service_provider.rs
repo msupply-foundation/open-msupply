@@ -10,8 +10,9 @@ use crate::{
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
     document::{
+        document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
-        json_schema_service::{JsonSchemaService, JsonSchemaServiceTrait},
+        form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
         patient::{PatientService, PatientServiceTrait},
     },
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -23,6 +24,7 @@ use crate::{
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    settings_service::{SettingsService, SettingsServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
@@ -45,6 +47,7 @@ pub struct ServiceProvider {
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
+
     // Stock stats
     pub item_stats_service: Box<dyn ItemStatsServiceTrait>,
 
@@ -53,8 +56,12 @@ pub struct ServiceProvider {
 
     // Document
     pub document_service: Box<dyn DocumentServiceTrait>,
-    pub schema_service: Box<dyn JsonSchemaServiceTrait>,
+    pub document_registry_service: Box<dyn DocumentRegistryServiceTrait>,
+    pub form_schema_service: Box<dyn FormSchemaServiceTrait>,
     pub patient_service: Box<dyn PatientServiceTrait>,
+
+    // Settings
+    pub settings: Box<dyn SettingsServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -80,8 +87,10 @@ impl ServiceProvider {
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
             document_service: Box::new(DocumentService {}),
-            schema_service: Box::new(JsonSchemaService {}),
+            document_registry_service: Box::new(DocumentRegistryService {}),
+            form_schema_service: Box::new(FormSchemaService {}),
             patient_service: Box::new(PatientService {}),
+            settings: Box::new(SettingsService {}),
         }
     }
 

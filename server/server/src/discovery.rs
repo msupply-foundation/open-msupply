@@ -1,3 +1,4 @@
+use crate::self_signed_certs::Protocol;
 use local_ip_address::list_afinet_netifas;
 use serde::Serialize;
 use service::settings::ServerSettings;
@@ -6,10 +7,7 @@ use simple_dns::{
     Name, ResourceRecord, CLASS,
 };
 use simple_mdns::SimpleMdnsResponder;
-use std::{
-    fmt::Display,
-    net::{IpAddr, Ipv4Addr},
-};
+use std::net::{IpAddr, Ipv4Addr};
 
 const SERVICE_NAME: &'static str = "_omsupply._tcp.local";
 
@@ -20,7 +18,7 @@ pub(crate) struct Discovery {
 }
 
 impl Discovery {
-    pub fn start(server_info: &ServerInfo) -> Self {
+    pub fn start(server_info: ServerInfo) -> Self {
         let response = FrontEndHost::new(server_info);
 
         let mut responder = SimpleMdnsResponder::new(10);
@@ -38,25 +36,6 @@ impl Discovery {
 }
 
 #[derive(Clone)]
-pub enum Protocol {
-    Http,
-    Https,
-}
-
-impl Display for Protocol {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Protocol::Http => "http",
-                Protocol::Https => "https",
-            }
-        )
-    }
-}
-
-#[derive(Clone)]
 pub struct ServerInfo {
     protocol: Protocol,
     port: u16,
@@ -70,10 +49,6 @@ impl ServerInfo {
             port: settings.port,
             ip: get_local_ip(),
         }
-    }
-
-    pub fn as_url(&self) -> String {
-        format!("{}://{}:{}", self.protocol, self.ip, self.port)
     }
 }
 
@@ -110,7 +85,7 @@ pub struct FrontEndHost {
 }
 
 impl FrontEndHost {
-    fn new(server_info: &ServerInfo) -> Self {
+    fn new(server_info: ServerInfo) -> Self {
         FrontEndHost {
             port: server_info.port,
             ip: server_info.ip.to_string(),

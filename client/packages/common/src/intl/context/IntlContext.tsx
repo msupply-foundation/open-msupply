@@ -7,6 +7,7 @@ import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { PropsWithChildrenOnly } from '@common/types';
 import { browserLanguageDetector } from './browserLanguageDetector';
+import { EnvUtils, Platform } from '@common/utils';
 
 const defaultNS = 'common';
 export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
@@ -21,6 +22,13 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       ? 0
       : // TODO: change back to a week when things are stable
         60 * minuteInMilliseconds; // 7 * 24 * 60 * minuteInMilliseconds;
+
+    // backend path for loading locale files
+    // electron app: requires a relative path
+    // browser: requires an absolute path
+    const loadPath = `${
+      EnvUtils.platform === Platform.Desktop ? '.' : ''
+    }/locales/{{lng}}/{{ns}}.json`;
 
     i18next
       .use(initReactI18next) // passes i18n down to react-i18next
@@ -39,7 +47,7 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
             },
             {
               /* options for secondary backend */
-              loadPath: './locales/{{lng}}/{{ns}}.json',
+              loadPath,
             },
           ],
         },

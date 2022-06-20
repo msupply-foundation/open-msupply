@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{db_diesel::json_schema::json_schema, diesel_macros::apply_equal_filter};
+use crate::{db_diesel::form_schema_row::form_schema, diesel_macros::apply_equal_filter};
 use crate::{EqualFilter, RepositoryError};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -19,9 +19,9 @@ table! {
     }
 }
 
-joinable!(document -> json_schema (schema_id));
+joinable!(document -> form_schema (schema_id));
 
-allow_tables_to_appear_in_same_query!(document, json_schema);
+allow_tables_to_appear_in_same_query!(document, form_schema);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[table_name = "document"]
@@ -109,8 +109,8 @@ impl DocumentFilter {
         }
     }
 
-    pub fn name(mut self, name: Option<EqualFilter<String>>) -> Self {
-        self.name = name;
+    pub fn name(mut self, name: EqualFilter<String>) -> Self {
+        self.name = Some(name);
         self
     }
 }
@@ -150,9 +150,9 @@ impl<'a> DocumentRepository<'a> {
             name: doc.name.to_owned(),
             head: doc.id.to_owned(),
         };
-        diesel::insert_into(document_head_dsl::document_head)
+        diesel::insert_into(document_head::dsl::document_head)
             .values(&row)
-            .on_conflict(document_head_dsl::id)
+            .on_conflict(document_head::dsl::id)
             .do_update()
             .set(&row)
             .execute(&self.connection.connection)?;

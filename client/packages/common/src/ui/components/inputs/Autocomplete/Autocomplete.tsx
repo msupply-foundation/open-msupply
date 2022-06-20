@@ -18,7 +18,7 @@ import {
 import { BasicTextInput } from '../TextInput';
 export interface AutocompleteProps<T>
   extends Omit<
-    MuiAutocompleteProps<T, undefined, undefined, undefined>,
+    MuiAutocompleteProps<T, undefined, boolean, undefined>,
     'renderInput'
   > {
   defaultValue?: AutocompleteOption<T> | null;

@@ -3,7 +3,7 @@ use chrono::Utc;
 use jsonschema::JSONSchema;
 use repository::{
     AncestorDetail, Document, DocumentFilter, DocumentRepository, EqualFilter,
-    JsonSchemaRepository, RepositoryError, StorageConnection,
+    FormSchemaRowRepository, RepositoryError, StorageConnection,
 };
 
 use crate::service_provider::ServiceContext;
@@ -18,6 +18,7 @@ use super::{
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
+    SchemaDoesNotExist,
     /// Input document doesn't match the provided json schema
     InvalidDataSchema(Vec<String>),
     /// Document version needs to be merged first. Contains an automerged document which can be
@@ -58,7 +59,7 @@ pub trait DocumentServiceTrait: Sync + Send {
         store_id: &str,
         filter: Option<DocumentFilter>,
     ) -> Result<Vec<Document>, RepositoryError> {
-        let filter = filter.map(|mut f| {
+        let filter = filter.or(Some(DocumentFilter::new())).map(|mut f| {
             f.store_id = Some(EqualFilter::equal_to(store_id));
             f
         });
@@ -191,9 +192,11 @@ fn json_validator(
         None => return Ok(None),
     };
 
-    let schema_repo = JsonSchemaRepository::new(connection);
-    let schema = schema_repo.find_one_by_id(&schema_id)?;
-    let compiled = match JSONSchema::compile(&schema.schema) {
+    let schema_repo = FormSchemaRowRepository::new(connection);
+    let schema = schema_repo
+        .find_one_by_id(&schema_id)?
+        .ok_or(DocumentInsertError::SchemaDoesNotExist)?;
+    let compiled = match JSONSchema::compile(&schema.json_schema) {
         Ok(v) => Ok(v),
         Err(err) => Err(DocumentInsertError::InternalError(format!(
             "Invalid json schema: {}",
