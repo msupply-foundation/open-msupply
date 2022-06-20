@@ -42,6 +42,7 @@ pub struct ReportRow {
     pub name: String,
     #[column_name = "type_"]
     pub r#type: ReportType,
+    /// The template format depends on the report type
     pub template: String,
     /// Used to store the report context
     pub context: ReportContext,
