@@ -21,6 +21,7 @@ use crate::{
     },
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
+    settings::is_develop,
     token::{JWTIssuingError, TokenPair, TokenService},
     user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
@@ -135,6 +136,7 @@ impl LoginService {
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
             auth_data.auth_token_secret.as_bytes(),
+            !is_develop(),
         );
         let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
         let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
@@ -376,7 +378,7 @@ mod test {
         let auth_data = AuthData {
             auth_token_secret: "secret".to_string(),
             token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
-            danger_no_ssl: true,
+            no_ssl: true,
             debug_no_access_control: false,
         };
 

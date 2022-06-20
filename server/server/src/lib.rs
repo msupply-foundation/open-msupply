@@ -1,6 +1,6 @@
 use crate::{
-    cors::cors_policy, self_signed_certs::Certificates, serve_frontend::config_server_frontend,
-    static_files::config_static_files,
+    certs::Certificates, configuration::get_or_create_token_secret, cors::cors_policy,
+    serve_frontend::config_server_frontend, static_files::config_static_files,
 };
 
 use self::{
@@ -26,13 +26,12 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
-use util::uuid::uuid;
 
+pub mod certs;
 pub mod configuration;
 pub mod cors;
 pub mod environment;
 pub mod middleware;
-pub mod self_signed_certs;
 mod serve_frontend;
 pub mod static_files;
 pub mod sync;
@@ -51,8 +50,7 @@ fn auth_data(
     Data::new(AuthData {
         auth_token_secret: token_secret,
         token_bucket,
-        danger_no_ssl: (is_develop() || server_settings.danger_allow_http)
-            && certificates.is_https(),
+        no_ssl: !certificates.is_https(),
         debug_no_access_control: is_develop() && server_settings.debug_no_access_control,
     })
 }
@@ -278,9 +276,18 @@ pub async fn start_server(
     config_settings: Settings,
     off_switch: oneshot::Receiver<()>,
 ) -> std::io::Result<()> {
+    info!(
+        "Server starting in {} mode",
+        if is_develop() {
+            "Development"
+        } else {
+            "Production"
+        }
+    );
+
     let connection_manager = get_storage_connection_manager(&config_settings.database);
 
-    if let Some(init_sql) = &config_settings.database.init_sql {
+    if let Some(init_sql) = &config_settings.database.full_init_sql() {
         connection_manager.execute(init_sql).unwrap();
     }
 
@@ -294,7 +301,7 @@ pub async fn start_server(
         }
     };
 
-    let certificates = Certificates::load(&config_settings.server)?;
+    let certificates = Certificates::try_load(&config_settings.server)?;
 
     // Don't do discovery in android
     #[cfg(not(feature = "android"))]
@@ -307,7 +314,7 @@ pub async fn start_server(
     let off_switch = Arc::new(Mutex::new(off_switch));
 
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
-    let token_secret = uuid();
+    let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
     loop {
         match run_server(
             config_settings.clone(),
