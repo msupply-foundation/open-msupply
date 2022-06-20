@@ -1,6 +1,6 @@
 use super::{
     report_row::{report, report::dsl as report_dsl},
-    ReportCategory, ReportRow, ReportType, StorageConnection,
+    ReportContext, ReportRow, ReportType, StorageConnection,
 };
 
 use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
@@ -17,7 +17,7 @@ pub struct ReportFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<SimpleStringFilter>,
     pub r#type: Option<EqualFilter<ReportType>>,
-    pub category: Option<EqualFilter<ReportCategory>>,
+    pub context: Option<EqualFilter<ReportContext>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -48,8 +48,8 @@ impl ReportFilter {
         self
     }
 
-    pub fn category(mut self, filter: EqualFilter<ReportCategory>) -> Self {
-        self.category = Some(filter);
+    pub fn context(mut self, filter: EqualFilter<ReportContext>) -> Self {
+        self.context = Some(filter);
         self
     }
 }
@@ -137,13 +137,13 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
             id,
             name,
             r#type,
-            category,
+            context,
         } = f;
 
         apply_equal_filter!(query, id, report_dsl::id);
         apply_simple_string_filter!(query, name, report_dsl::name);
         apply_equal_filter!(query, r#type, report_dsl::type_);
-        apply_equal_filter!(query, category, report_dsl::context);
+        apply_equal_filter!(query, context, report_dsl::context);
     }
 
     query
