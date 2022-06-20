@@ -26,6 +26,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
+use util::uuid::uuid;
 
 pub mod certs;
 pub mod configuration;
