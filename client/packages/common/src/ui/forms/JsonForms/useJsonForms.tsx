@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { JsonForms } from '@jsonforms/react';
-import { materialRenderers } from '@jsonforms/material-renderers';
+import {
+  materialRenderers,
+  materialCells,
+} from '@jsonforms/material-renderers';
 import {
   stringTester,
   TextField,
@@ -12,8 +15,8 @@ import {
   Label,
   dateTester,
   Date,
-  // arrayTester,
-  // Array,
+  arrayTester,
+  Array,
 } from './components';
 
 // Temporarily hard-coded examples until we connect to database
@@ -43,10 +46,10 @@ const FormComponent = ({
       uischema={uiSchema}
       data={data}
       renderers={renderers}
-      // cells={materialCells}
+      cells={materialCells}
       onChange={({ errors, data }) => {
         setData(data);
-        console.log(errors);
+        // console.log(errors);
       }}
     />
   );
@@ -74,7 +77,7 @@ export const useJsonForms = (docName: string) => {
     { tester: groupTester, renderer: Group },
     { tester: labelTester, renderer: Label },
     { tester: dateTester, renderer: Date },
-    // { tester: arrayTester, renderer: Array },
+    { tester: arrayTester, renderer: Array },
   ];
 
   return {

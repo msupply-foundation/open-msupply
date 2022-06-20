@@ -2,128 +2,21 @@
   "type": "VerticalLayout",
   "elements": [
     {
-      "type": "Label",
-      "text": "${Patient.firstName} ${Patient.lastName}",
-      "variant": "h1"
-    },
-    {
-      "type": "HorizontalLayout",
-      "elements": [
-        {
+      "type": "Control",
+      "scope": "#/properties/comments",
+      "options": {
+        "detail": {
           "type": "VerticalLayout",
           "elements": [
             {
-              "type": "Group",
-              "label": "Patient",
-              "elements": [
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/id"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/firstName",
-                  "label": "First Name"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/lastName",
-                  "label": "Last Name"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/gender"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/dateOfBirth"
-                }
-              ]
+              "type": "Control",
+              "scope:": "properties/date"
             },
-            {
-              "type": "Group",
-              "label": "Contact",
-              "elements": [
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/contactDetails",
-                  "keyField": "key",
-                  "options": {
-                    "detail": "GENERATED"
-                  }
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/addresses",
-                  "options": {
-                    "detail": "GENERATED"
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "VerticalLayout",
-          "elements": [
-            {
-              "type": "Group",
-              "label": "Family",
-              "elements": [
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/maritalStatus"
-                },
-                {
-                  "type": "Label",
-                  "text": "Next of kin:",
-                  "variant": "h3"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/firstName"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/lastName"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/contactDetails",
-                  "label": "Contact",
-                  "options": {
-                    "detail": "GENERATED"
-                  }
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/addresses",
-                  "options": {
-                    "detail": "GENERATED"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "Group",
-              "label": "Other",
-              "elements": [
-                {
-                  "type": "Label",
-                  "text": "Note: we need to consider how we would edit data that links to other entities in database, e.g. Next of Kin"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/testingArray",
-                  "options": {
-                    "detail": "GENERATED"
-                  }
-                }
-              ]
-            }
+            { "type": "Control", "scope:": "#/properties/message" },
+            { "type": "Control", "scope:": "#/properties/enum" }
           ]
         }
-      ]
+      }
     }
   ]
 }
