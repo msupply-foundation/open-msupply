@@ -133,6 +133,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 mod database_setting_test {
     use super::DatabaseSettings;
 
+    #[allow(dead_code)]
     pub fn empty_db_settings_with_init_sql(init_sql: Option<String>) -> DatabaseSettings {
         DatabaseSettings {
             username: "".to_string(),
