@@ -26,7 +26,6 @@ use super::{
 #[graphql(name = "UpdateOutboundShipmentLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    invoice_id: String,
     item_id: Option<String>,
     stock_line_id: Option<String>,
     number_of_packs: Option<u32>,
@@ -96,7 +95,6 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            invoice_id,
             item_id,
             stock_line_id,
             number_of_packs,
@@ -107,7 +105,6 @@ impl UpdateInput {
 
         ServiceInput {
             id,
-            invoice_id,
             item_id,
             stock_line_id,
             number_of_packs,
