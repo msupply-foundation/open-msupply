@@ -42,6 +42,7 @@
       "occupation": "occupation",
       "literate": "literate"
     },
+    "testingArray": [{ "field1": "ONE", "field2": "TWO" }],
     "family": {
       "maritalStatus": "single",
       "nextOfKin": {

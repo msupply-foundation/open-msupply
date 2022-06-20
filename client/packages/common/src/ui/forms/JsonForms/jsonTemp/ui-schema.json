@@ -47,11 +47,17 @@
                 {
                   "type": "Control",
                   "scope": "#/definitions/Patient/properties/contactDetails",
-                  "keyField": "key"
+                  "keyField": "key",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/addresses"
+                  "scope": "#/definitions/Patient/properties/addresses",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
                 }
               ]
             }
@@ -84,11 +90,17 @@
                 {
                   "type": "Control",
                   "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/contactDetails",
-                  "label": "Contact"
+                  "label": "Contact",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/addresses"
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/addresses",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
                 }
               ]
             },
@@ -99,6 +111,13 @@
                 {
                   "type": "Label",
                   "text": "Note: we need to consider how we would edit data that links to other entities in database, e.g. Next of Kin"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/testingArray",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
                 }
               ]
             }

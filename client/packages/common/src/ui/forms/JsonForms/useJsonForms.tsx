@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { JsonForms } from '@jsonforms/react';
-import {
-  materialRenderers,
-  materialCells,
-} from '@jsonforms/material-renderers';
+import { materialRenderers } from '@jsonforms/material-renderers';
 import {
   stringTester,
   TextField,
@@ -15,16 +12,31 @@ import {
   Label,
   dateTester,
   Date,
-  arrayTester,
-  Array,
+  // arrayTester,
+  // Array,
 } from './components';
-import customTester from './testers/testers';
 
+// Temporarily hard-coded examples until we connect to database
 import patient from './jsonTemp/patient_1.json';
 import schema from './jsonTemp/schema.json';
 import uiSchema from './jsonTemp/ui-schema.json';
+import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 
-const FormComponent = ({ data, setData, renderers }: any) => {
+type JsonData = {
+  [key: string]: string | number | boolean | null | unknown | JsonData;
+};
+
+interface JsonFormsComponentProps {
+  data: JsonData;
+  setData: (data: JsonData) => void;
+  renderers: JsonFormsRendererRegistryEntry[];
+}
+
+const FormComponent = ({
+  data,
+  setData,
+  renderers,
+}: JsonFormsComponentProps) => {
   return (
     <JsonForms
       schema={schema}
@@ -34,20 +46,23 @@ const FormComponent = ({ data, setData, renderers }: any) => {
       // cells={materialCells}
       onChange={({ errors, data }) => {
         setData(data);
+        console.log(errors);
       }}
     />
   );
 };
 
 export const useJsonForms = (docName: string) => {
-  const [data, setData] = useState(patient);
+  const [data, setData] = useState<JsonData>(patient);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
+
+  console.log('TO-DO: Look up document: ' + docName);
 
   const saveData = () => {
     setLoading(true);
-    // Run mutation
-    // Update data
+    // Run mutation...
+    // setData...
     console.log('Saving data...');
     setLoading(false);
   };
@@ -59,12 +74,17 @@ export const useJsonForms = (docName: string) => {
     { tester: groupTester, renderer: Group },
     { tester: labelTester, renderer: Label },
     { tester: dateTester, renderer: Date },
-    { tester: arrayTester, renderer: Array },
+    // { tester: arrayTester, renderer: Array },
   ];
 
   return {
     JsonForm: (
-      <FormComponent data={data} setData={setData} renderers={renderers} />
+      <FormComponent
+        data={data}
+        setData={setData}
+        // setError={setError}
+        renderers={renderers}
+      />
     ),
     saveData,
     loading,

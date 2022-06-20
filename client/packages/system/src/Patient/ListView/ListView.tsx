@@ -9,8 +9,8 @@ import {
   Fade,
   NothingHere,
   createQueryParamsStore,
-  useFormatDateTime,
-  ColumnAlign,
+  // useFormatDateTime,
+  // ColumnAlign,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -80,11 +80,11 @@ const PatientListComponent: FC = () => {
       <Modal
         title=""
         sx={{ maxWidth: '90%' }}
-        okButton={<DialogButton variant="ok" onClick={hideDialog} />}
+        okButton={<DialogButton variant="ok" onClick={() => {}} />}
         slideAnimation={false}
         Transition={Transition}
       >
-        <DetailModal nameId={selectedId} />
+        <DetailModal docId={selectedId} />
       </Modal>
     </>
   );

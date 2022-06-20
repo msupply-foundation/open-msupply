@@ -51,8 +51,8 @@ export const RegexUtils = {
   // Takes a string formatted in template-literal style (i.e. using ${ }) and
   // replaces contents of the matching parameters with values from provided
   // data object.
-  // Eg. "My name is ${user.name}" with object {user: {name: "Carl"}}
-  // returns "My name is Carl"
+  // Eg. "My name is ${user.name}" with object {user: {name: "Frodo"}}
+  // returns "My name is Frodo"
   stringSubstitution: (
     parameterisedString: string,
     data: { [key: string]: any },
