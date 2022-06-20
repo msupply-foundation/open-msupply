@@ -106,4 +106,14 @@ impl InvoiceMutations {
     ) -> Result<inbound_shipment::DeleteResponse> {
         inbound_shipment::delete(ctx, &store_id, input)
     }
+
+    /// Add invoice lines from master item master list
+    async fn add_from_master_list(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_shipment::AddToOSFromMasterListInput,
+    ) -> Result<outbound_shipment::AddFromMasterListResponse> {
+        outbound_shipment::add_from_master_list(ctx, &store_id, input)
+    }
 }
