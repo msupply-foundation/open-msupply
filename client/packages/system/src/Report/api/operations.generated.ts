@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ReportRowFragment = { __typename: 'ReportNode', category: Types.ReportCategory, id: string, name: string };
+export type ReportRowFragment = { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string };
 
 export type ReportsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -14,7 +14,7 @@ export type ReportsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ReportsQuery = { __typename: 'FullQuery', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', category: Types.ReportCategory, id: string, name: string }> } };
+export type ReportsQuery = { __typename: 'FullQuery', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string }> } };
 
 export type PrintReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -28,7 +28,7 @@ export type PrintReportQuery = { __typename: 'FullQuery', printReport: { __typen
 
 export const ReportRowFragmentDoc = gql`
     fragment ReportRow on ReportNode {
-  category
+  context
   id
   name
 }

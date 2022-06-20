@@ -162,16 +162,80 @@ pub trait ReportServiceTrait: Sync + Send {
         let file = file_service
             .store_file(
                 &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
-                format!(
-                    "{}{}{}",
-                    document.header.unwrap_or("".to_string()),
-                    document.document,
-                    document.footer.unwrap_or("".to_string())
-                )
-                .as_bytes(),
+                self.format_html_document(document).as_bytes(),
             )
             .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
         Ok(file.id)
+    }
+
+    fn format_html_document(&self, document: GeneratedReport) -> String {
+        format!(
+            "<html>
+  <head>
+    <style>
+      @page {{
+        size: A4;
+        margin: 1.5cm;
+      }}
+
+      @media print {{
+        table.paging thead td,
+        table.paging tfoot td {{
+          height: 1.5cm;
+        }}
+      }}
+
+      header,
+      footer {{
+        width: 100%;
+        height: 1.5cm;
+      }}
+
+      header {{
+        position: absolute;
+        top: 0;
+      }}
+
+      @media print {{
+        header,
+        footer {{
+          position: fixed;
+        }}
+
+        footer {{
+          bottom: 0;
+        }}
+      }}
+    </style>
+  </head>
+  <body>
+    <header>{}</header>
+
+    <table class=\"paging\">
+      <thead>
+        <tr>
+          <td>&nbsp;</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>&nbsp;</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <footer>{}</footer>
+  </body>
+</html>",
+            document.header.unwrap_or("".to_string()),
+            document.document,
+            document.footer.unwrap_or("".to_string())
+        )
     }
 }
 
@@ -197,7 +261,7 @@ fn query_reports(
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
         .unwrap_or(ReportFilter::new())
-        .r#type(ReportType::OmReport.equal_to());
+        .r#type(ReportType::OmSupply.equal_to());
     Ok(repo.query(pagination, Some(filter.clone()), sort)?)
 }
 
@@ -407,7 +471,7 @@ fn load_report_definition(
             })
         }
     };
-    let def = serde_json::from_str::<ReportDefinition>(&row.data).map_err(|err| {
+    let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
         ReportError::InvalidReportDefinition(format!("Can't parse report: {}", err))
     })?;
     Ok((row.name, def))
@@ -469,7 +533,7 @@ mod report_service_test {
     use std::collections::HashMap;
 
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ReportCategory, ReportRow, ReportRowRepository,
+        mock::MockDataInserts, test_db::setup_all, ReportContext, ReportRow, ReportRowRepository,
         ReportType,
     };
 
@@ -534,17 +598,19 @@ mod report_service_test {
         repo.upsert_one(&ReportRow {
             id: "report_1".to_string(),
             name: "Report 1".to_string(),
-            r#type: ReportType::OmReport,
-            data: serde_json::to_string(&report_1).unwrap(),
-            context: ReportCategory::Invoice,
+            r#type: ReportType::OmSupply,
+            template: serde_json::to_string(&report_1).unwrap(),
+            context: ReportContext::InboundShipment,
+            comment: None,
         })
         .unwrap();
         repo.upsert_one(&ReportRow {
             id: "report_base_1".to_string(),
             name: "Report base 1".to_string(),
-            r#type: ReportType::OmReport,
-            data: serde_json::to_string(&report_base_1).unwrap(),
-            context: ReportCategory::Resource,
+            r#type: ReportType::OmSupply,
+            template: serde_json::to_string(&report_base_1).unwrap(),
+            context: ReportContext::Resource,
+            comment: None,
         })
         .unwrap();
 
