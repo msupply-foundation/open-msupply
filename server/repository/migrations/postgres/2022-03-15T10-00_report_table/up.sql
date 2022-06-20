@@ -2,7 +2,7 @@ CREATE TYPE report_type AS ENUM (
     'OM_SUPPLY'
 );
 
-CREATE TYPE category_type AS ENUM (
+CREATE TYPE context_type AS ENUM (
     'INBOUND_SHIPMENT',
     'OUTBOUND_SHIPMENT',
     'REQUISITION',
@@ -16,6 +16,6 @@ CREATE TABLE report (
     name TEXT NOT NULL,
     type report_type NOT NULL,
     template TEXT NOT NULL,
-    context category_type NOT NULL,
+    context context_type NOT NULL,
     comment TEXT
 )
