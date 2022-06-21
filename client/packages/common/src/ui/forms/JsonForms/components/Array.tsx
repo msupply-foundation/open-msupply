@@ -5,11 +5,17 @@ import {
   ControlProps,
   uiTypeIs,
   LayoutProps,
+  ArrayLayoutProps,
+  ArrayControlProps,
+  findUISchema,
+  findMatchingUISchema,
 } from '@jsonforms/core';
 import {
   JsonFormsInitStateProps,
   withJsonFormsControlProps,
+  withJsonFormsArrayLayoutProps,
   withJsonFormsLayoutProps,
+  withJsonFormsArrayControlProps,
   JsonFormsDispatch,
 } from '@jsonforms/react';
 import { JsonForms } from '@jsonforms/react';
@@ -22,28 +28,46 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { IconButton, PlusCircleIcon } from '@openmsupply-client/common';
+import { RegexUtils } from '@common/utils';
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
-const UIComponent = (props: LayoutProps) => {
-  const { uischema, schema, path, enabled } = props;
+const UIComponent = (props: ArrayControlProps) => {
+  const {
+    uischema,
+    uischemas,
+    schema,
+    path,
+    data,
+    errors,
+    addItem,
+    childErrors,
+    enabled,
+    label,
+    rootSchema,
+  } = props;
 
-  const addItem = () => {
-    // To do: update data
-  };
+  const foundUISchema = useMemo(() =>
+    findUISchema(
+      uischemas,
+      schema,
+      uischema.scope,
+      path,
+      undefined,
+      uischema,
+      rootSchema
+    )
+  );
 
-  // console.log('Data', data);
-  // console.log('schema', schema);
-  // console.log('UiSchema', uischema);
-  // console.log('path', path);
-  // console.log('All props', props);
+  console.log('keyField', uischema.keyField);
+  console.log('data', data);
 
   return (
     <Box display="flex" flexDirection="column" gap={0.5}>
       <Box display="flex" width="100%" gap={2} alignItems="center">
         <Box width="40%">
           <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
-            TEMP:
+            {label}:
           </Typography>
         </Box>
         <Box width="60%" textAlign="right">
@@ -51,26 +75,37 @@ const UIComponent = (props: LayoutProps) => {
             icon={<PlusCircleIcon />}
             label="Add another"
             color="primary"
-            onClick={addItem}
+            onClick={() => addItem(path, null)}
           />
-          {uischema.options.detail.elements.map((child, index) => {
-            console.log('child', child);
-            console.log('schema', schema);
-            return (
+        </Box>
+      </Box>
+      {data.map((child, index) => {
+        return (
+          <Accordion key={index} defaultExpanded={index === 0} sx={{ mb: 1 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography
+                width="40%"
+                sx={{ fontWeight: 'bold', textAlign: 'end' }}
+              >
+                {child?.[uischema?.keyField]
+                  ? RegexUtils.stringSubstitution(child?.[uischema?.keyField])
+                  : index + 1}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
               <JsonFormsDispatch
                 key={index}
                 schema={schema}
-                uischema={child}
-                enabled
-                path={path}
+                uischema={foundUISchema}
+                enabled={enabled}
+                path={`${path}.${index}`}
               />
-            );
-          })}
-        </Box>
-      </Box>
-      <p>Hang on</p>
+            </AccordionDetails>
+          </Accordion>
+        );
+      })}
     </Box>
   );
 };
 
-export const Array = withJsonFormsLayoutProps(UIComponent);
+export const Array = withJsonFormsArrayControlProps(UIComponent);
