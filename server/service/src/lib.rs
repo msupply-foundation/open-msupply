@@ -7,6 +7,7 @@ pub mod apis;
 pub mod auth;
 pub mod auth_data;
 pub mod dashboard;
+pub mod errors;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;

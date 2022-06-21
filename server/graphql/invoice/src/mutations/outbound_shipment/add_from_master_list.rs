@@ -5,12 +5,11 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::InvoiceLineConnector;
+use graphql_types::{generic_errors::MasterListNotFoundForThisStore, types::InvoiceLineConnector};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    invoice::outbound_shipment::{
-        AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
-    },
+    errors::AddFromMasterListError as ServiceError,
+    invoice::outbound_shipment::AddFromMasterList as ServiceInput,
 };
 
 #[derive(InputObject)]
@@ -20,7 +19,7 @@ pub struct AddToOSFromMasterListInput {
 }
 
 #[derive(Interface)]
-#[graphql(name = "OSAddFromMasterListErrorInterface")]
+#[graphql(name = "AddToShipmentFromMasterListErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
@@ -29,13 +28,13 @@ pub enum DeleteErrorInterface {
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "OSAddFromMasterListError")]
+#[graphql(name = "AddToShipmentFromMasterListError")]
 pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "OSAddFromMasterListResponse")]
+#[graphql(name = "AddToShipmentFromMasterListResponse")]
 pub enum AddFromMasterListResponse {
     Error(DeleteError),
     Response(InvoiceLineConnector),
@@ -92,10 +91,10 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::InvoiceDoesNotExist => {
+        ServiceError::RecordDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditInvoice => {
+        ServiceError::CannotEditRecord => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
@@ -106,21 +105,21 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NotAnOutboundShipmentInvoice => BadUserInput(formatted_error),
+        ServiceError::NotThisStore => BadUserInput(formatted_error),
+        ServiceError::RecordIsIncorrectType => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
 }
 
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &'static str {
-        "Master list for this store is not found (might not be visible in this store)"
-    }
-}
+// pub struct MasterListNotFoundForThisStore;
+// #[Object]
+// impl MasterListNotFoundForThisStore {
+//     pub async fn description(&self) -> &'static str {
+//         "Master list for this store is not found (might not be visible in this store)"
+//     }
+// }
 
 #[cfg(test)]
 mod test {
@@ -203,7 +202,7 @@ mod test {
         "#;
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RecordDoesNotExist)));
 
         let expected = json!({
             "addFromMasterList": {
@@ -223,7 +222,7 @@ mod test {
         );
 
         // CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditInvoice)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRecord)));
 
         let expected = json!({
             "addFromMasterList": {
@@ -265,7 +264,7 @@ mod test {
         );
 
         // NotThisStoreInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreInvoice)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStore)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -277,7 +276,7 @@ mod test {
         );
 
         // NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnOutboundShipment)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RecordIsIncorrectType)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

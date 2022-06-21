@@ -5,12 +5,13 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::RequisitionLineConnector;
+use graphql_types::{
+    generic_errors::MasterListNotFoundForThisStore, types::RequisitionLineConnector,
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    requisition::request_requisition::{
-        AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
-    },
+    errors::AddFromMasterListError as ServiceError,
+    requisition::request_requisition::AddFromMasterList as ServiceInput,
 };
 
 #[derive(InputObject)]
@@ -92,10 +93,10 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::RequisitionDoesNotExist => {
+        ServiceError::RecordDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditRequisition => {
+        ServiceError::CannotEditRecord => {
             return Ok(DeleteErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
             ))
@@ -106,20 +107,12 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
-        ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
+        ServiceError::NotThisStore => BadUserInput(formatted_error),
+        ServiceError::RecordIsIncorrectType => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
-}
-
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &'static str {
-        "Master list for this store is not found (might not be visible in this store)"
-    }
 }
 
 #[cfg(test)]
@@ -266,8 +259,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        // NotThisStore
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStore)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -278,8 +271,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotARequestRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
+        // RecordIsIncorrectType
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RecordIsIncorrectType)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
