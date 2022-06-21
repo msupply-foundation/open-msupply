@@ -3,6 +3,10 @@ import { rankWith, isEnumControl, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
 import { Select } from '@openmsupply-client/common';
+import {
+  FORM_LABEL_COLUMN_WIDTH,
+  FORM_INPUT_COLUMN_WIDTH,
+} from '../styleConstants';
 
 export const selectTester = rankWith(4, isEnumControl);
 
@@ -25,10 +29,14 @@ const UIComponent = (props: ControlProps) => {
       style={{ minWidth: 300 }}
       marginTop={0.5}
     >
-      <Box flex={1} style={{ textAlign: 'end' }} flexBasis="40%">
+      <Box
+        flex={1}
+        style={{ textAlign: 'end' }}
+        flexBasis={FORM_LABEL_COLUMN_WIDTH}
+      >
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
-      <Box flex={1} flexBasis="60%">
+      <Box flex={1} flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         <Select
           sx={{ minWidth: 100 }}
           options={options}

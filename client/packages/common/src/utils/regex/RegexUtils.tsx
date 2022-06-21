@@ -53,7 +53,7 @@ export const RegexUtils = {
   // data object.
   // Eg. "My name is ${user.name}" with object {user: {name: "Frodo"}}
   // returns "My name is Frodo"
-  stringSubstitution: (
+  formatTemplateString: (
     parameterisedString: string,
     data: { [key: string]: any },
     fallback = 'Not found'

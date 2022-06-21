@@ -17,7 +17,7 @@ interface DetailModalProps {
 }
 
 export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
-  const { JsonForm, loading, error, saveData } = useJsonForms(docId);
+  const { JsonForm, loading, error } = useJsonForms(docId);
 
   if (loading) return <BasicSpinner />;
 
