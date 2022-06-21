@@ -5,7 +5,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::patient::{InsertPatient, InsertPatientError},
+    document::patient::{UpdatePatient, UpdatePatientError},
 };
 
 use crate::queries::PatientNode;
@@ -39,28 +39,38 @@ pub fn insert_patient(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    match service_provider.patient_service.insert_patients(
+    match service_provider.patient_service.update_patient(
         &service_context,
         service_provider,
         store_id,
         &user.user_id,
-        InsertPatient {
+        UpdatePatient {
             data: input.data,
             schema_id: input.schema_id,
+            parent: None,
         },
     ) {
         Ok(patient) => Ok(InsertPatientResponse::Response(PatientNode { patient })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                InsertPatientError::InvalidDataSchema(_) => {
+                UpdatePatientError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                InsertPatientError::InternalError(_) => {
+                UpdatePatientError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                InsertPatientError::DatabaseError(_) => {
+                UpdatePatientError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
+                }
+                UpdatePatientError::InvalidPatientId => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpdatePatientError::PatientExists => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpdatePatientError::InvalidParentId => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
                 }
             };
             Err(std_err.extend())
