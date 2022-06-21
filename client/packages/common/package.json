@@ -17,7 +17,6 @@
     "@jsonforms/core": "^3.0.0-beta.3",
     "@jsonforms/material-renderers": "^3.0.0-beta.3",
     "@jsonforms/react": "^3.0.0-beta.3",
-    "@material-ui/icons": "^4.11.3",
     "@mui/icons-material": "^5.8.0",
     "@mui/lab": "^5.0.0-alpha.59",
     "@mui/material": "^5.2.3",
