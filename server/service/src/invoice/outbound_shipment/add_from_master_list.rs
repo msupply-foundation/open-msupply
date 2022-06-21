@@ -64,8 +64,8 @@ fn validate(
         return Err(OutError::NotThisStore);
     }
 
-    if invoice_row.status != InvoiceRowStatus::New {
-        return Err(OutError::CannotEditRecord);
+    if invoice_row.status == InvoiceRowStatus::Shipped || invoice_row.status == InvoiceRowStatus::Delivered || invoice_row.status == InvoiceRowStatus::Verified {
+            return Err(OutError::CannotEditRecord);
     }
 
     if invoice_row.r#type != InvoiceRowType::OutboundShipment {
@@ -147,7 +147,7 @@ mod test {
         let (_, _, connection_manager, _) =
             setup_all("add_from_master_list_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_service;
 
@@ -273,7 +273,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_service;
 
