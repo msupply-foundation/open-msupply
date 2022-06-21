@@ -568,6 +568,33 @@ export type DocumentNode = {
   type: Scalars['String'];
 };
 
+export type DocumentRegistryConnector = {
+  __typename: 'DocumentRegistryConnector';
+  nodes: Array<DocumentRegistryNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type DocumentRegistryNode = {
+  __typename: 'DocumentRegistryNode';
+  context: DocumentRegistryNodeContext;
+  documentType: Scalars['String'];
+  id: Scalars['String'];
+  jsonSchema: Scalars['JSON'];
+  name?: Maybe<Scalars['String']>;
+  parentId?: Maybe<Scalars['String']>;
+  uiSchema: Scalars['JSON'];
+  uiSchemaType: Scalars['String'];
+};
+
+export enum DocumentRegistryNodeContext {
+  Custom = 'CUSTOM',
+  Encounter = 'ENCOUNTER',
+  Patient = 'PATIENT',
+  Program = 'PROGRAM'
+}
+
+export type DocumentRegistryResponse = DocumentRegistryConnector;
+
 export type DocumentResponse = DocumentConnector;
 
 export type EqualFilterBigNumberInput = {
@@ -663,6 +690,14 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteIn
   key: ForeignKey;
 };
 
+export type FormSchemaNode = {
+  __typename: 'FormSchemaNode';
+  id: Scalars['String'];
+  jsonSchema: Scalars['JSON'];
+  type: Scalars['String'];
+  uiSchema: Scalars['JSON'];
+};
+
 export type FullMutation = {
   __typename: 'FullMutation';
   /** Add requisition lines from master item master list */
@@ -691,10 +726,11 @@ export type FullMutation = {
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
+  insertDocumentRegistry: InsertDocumentResponse;
+  insertFormSchema: InsertFormSchemaResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
-  insertJsonSchema: InsertJsonSchemaResponse;
   insertLocation: InsertLocationResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
@@ -841,6 +877,16 @@ export type FullMutationDeleteStocktakeLineArgs = {
 };
 
 
+export type FullMutationInsertDocumentRegistryArgs = {
+  input: InsertDocumentRegistryInput;
+};
+
+
+export type FullMutationInsertFormSchemaArgs = {
+  input: InsertFormSchemaInput;
+};
+
+
 export type FullMutationInsertInboundShipmentArgs = {
   input: InsertInboundShipmentInput;
   storeId: Scalars['String'];
@@ -856,11 +902,6 @@ export type FullMutationInsertInboundShipmentLineArgs = {
 export type FullMutationInsertInboundShipmentServiceLineArgs = {
   input: InsertInboundShipmentServiceLineInput;
   storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertJsonSchemaArgs = {
-  input: InsertJsonSchemaInput;
 };
 
 
@@ -1032,8 +1073,11 @@ export type FullQuery = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
+  documentRegistry: DocumentRegistryResponse;
   documents: DocumentResponse;
+  formSchema?: Maybe<FormSchemaNode>;
   insertPatient: InsertPatientResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -1041,7 +1085,6 @@ export type FullQuery = {
   invoices: InvoicesResponse;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
-  jsonSchema: JsonschemaResponse;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logout: LogoutResponse;
@@ -1093,6 +1136,12 @@ export type FullQueryAuthTokenArgs = {
 };
 
 
+export type FullQueryDocumentArgs = {
+  name: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
 export type FullQueryDocumentHistoryArgs = {
   name: Scalars['String'];
   storeId: Scalars['String'];
@@ -1102,6 +1151,11 @@ export type FullQueryDocumentHistoryArgs = {
 export type FullQueryDocumentsArgs = {
   filter?: InputMaybe<DocumentFilterInput>;
   storeId: Scalars['String'];
+};
+
+
+export type FullQueryFormSchemaArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -1143,11 +1197,6 @@ export type FullQueryItemsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String'];
-};
-
-
-export type FullQueryJsonSchemaArgs = {
-  id: Scalars['String'];
 };
 
 
@@ -1305,9 +1354,29 @@ export type InboundInvoiceCounts = {
   created: InvoiceCountsSummary;
 };
 
+export type InsertDocumentRegistryInput = {
+  context: DocumentRegistryNodeContext;
+  documentType: Scalars['String'];
+  formSchemaId: Scalars['String'];
+  id: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
+  parentId?: InputMaybe<Scalars['String']>;
+};
+
+export type InsertDocumentResponse = DocumentRegistryNode;
+
 export type InsertErrorInterface = {
   description: Scalars['String'];
 };
+
+export type InsertFormSchemaInput = {
+  id: Scalars['String'];
+  jsonSchema: Scalars['JSON'];
+  type: Scalars['String'];
+  uiSchema: Scalars['JSON'];
+};
+
+export type InsertFormSchemaResponse = FormSchemaNode;
 
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
@@ -1395,17 +1464,6 @@ export type InsertInboundShipmentServiceLineResponseWithId = {
   id: Scalars['String'];
   response: InsertInboundShipmentServiceLineResponse;
 };
-
-export type InsertJsonSchemaInput = {
-  schema: Scalars['String'];
-};
-
-export type InsertJsonSchemaNode = {
-  __typename: 'InsertJsonSchemaNode';
-  id: Scalars['String'];
-};
-
-export type InsertJsonSchemaResponse = InsertJsonSchemaNode;
 
 export type InsertLocationError = {
   __typename: 'InsertLocationError';
@@ -1924,10 +1982,8 @@ export type ItemsResponse = ItemConnector;
 export type JsonschemaNode = {
   __typename: 'JsonschemaNode';
   id: Scalars['String'];
-  schema: Scalars['JSON'];
+  jsonSchema: Scalars['JSON'];
 };
-
-export type JsonschemaResponse = JsonschemaNode;
 
 export type LocationConnector = {
   __typename: 'LocationConnector';
