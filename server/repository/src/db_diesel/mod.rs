@@ -14,6 +14,7 @@ mod item_row;
 mod key_value_store;
 mod location;
 mod location_row;
+mod log;
 mod log_row;
 mod master_list;
 mod master_list_line;
@@ -47,6 +48,7 @@ mod user_permission_row;
 mod user_row;
 mod user_store_join_row;
 
+pub use self::log::*;
 pub use central_sync_buffer::*;
 pub use changelog_row::*;
 pub use consumption::*;

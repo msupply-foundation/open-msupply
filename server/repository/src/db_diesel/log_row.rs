@@ -54,15 +54,6 @@ impl<'a> LogRowRepository<'a> {
         Ok(())
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &LogRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(log_dsl::log)
-            .values(row)
-            .execute(&self.connection.connection)?;
-
-        Ok(())
-    }
-
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LogRow>, RepositoryError> {
         match log_dsl::log
             .filter(log_dsl::id.eq(id))
