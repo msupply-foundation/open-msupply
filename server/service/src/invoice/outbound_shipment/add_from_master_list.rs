@@ -291,10 +291,6 @@ mod test {
             .map(|line| line.invoice_line_row)
             .collect();
 
-        // let lines = get_lines_for_invoice(&connection, &mock_outbound_shipment_c().id).unwrap();
-
-        // assert_eq!(result, lines);
-
         let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()

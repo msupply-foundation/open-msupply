@@ -225,19 +225,13 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
         r.item_id = String::from("item_a");
         r.item_name = String::from("Item A");
         r.item_code = String::from("a");
-        // pub stock_line_id: Option<String>,
-        // pub location_id: Option<String>,
-        // pub batch: Option<String>,
-        // pub expiry_date: Option<NaiveDate>,
         r.pack_size = 1;
         r.cost_price_per_pack = 0.0;
         r.sell_price_per_pack = 0.0;
         r.total_before_tax = 0.0;
         r.total_after_tax = 0.0;
-        // pub tax: Option<f64>,
         r.r#type = InvoiceLineRowType::StockOut;
         r.number_of_packs = 0;
-        // pub note: Option<String>,
     })
 }
 
