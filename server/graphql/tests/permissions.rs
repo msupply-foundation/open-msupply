@@ -6,10 +6,7 @@ mod permission_tests {
     use graphql_core::test_helpers::setup_graphl_test;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use service::{
-        auth::{
-            AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser,
-            AuthError,
-        },
+        auth::{AuthError, AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser},
         auth_data::AuthData,
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -534,7 +531,7 @@ mod permission_tests {
             TestData {
                 name: "deleteInboundShipmentLine",
                 query: r#"mutation Mutation {
-                deleteInboundShipmentLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                deleteInboundShipmentLine(input: {id: ""}, storeId: "") {
                   ... on DeleteResponse {
                     id
                   }
@@ -548,7 +545,7 @@ mod permission_tests {
             TestData {
                 name: "deleteInboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                deleteInboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                deleteInboundShipmentServiceLine(input: {id: ""}, storeId: "") {
                   ... on DeleteResponse {
                     id
                   }
@@ -590,7 +587,7 @@ mod permission_tests {
             TestData {
                 name: "deleteOutboundShipmentLine",
                 query: r#"mutation Mutation {
-                deleteOutboundShipmentLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                deleteOutboundShipmentLine(input: {id: ""}, storeId: "") {
                   ... on DeleteResponse {
                     id
                   }
@@ -604,7 +601,7 @@ mod permission_tests {
             TestData {
                 name: "deleteOutboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                  deleteOutboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                  deleteOutboundShipmentServiceLine(input: {id: ""}, storeId: "") {
                     ... on DeleteResponse {
                       id
                     }
@@ -887,7 +884,7 @@ mod permission_tests {
             TestData {
                 name: "updateInboundShipment",
                 query: r#"mutation Mutation {
-                updateInboundShipmentLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                updateInboundShipmentLine(input: {id: ""}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -901,7 +898,7 @@ mod permission_tests {
             TestData {
                 name: "updateInboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                updateInboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                updateInboundShipmentServiceLine(input: {id: ""}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -944,7 +941,7 @@ mod permission_tests {
             TestData {
                 name: "updateOutboundShipmentLine",
                 query: r#"mutation Mutation {
-                updateOutboundShipmentLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                updateOutboundShipmentLine(input: {id: ""}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -958,7 +955,7 @@ mod permission_tests {
             TestData {
                 name: "updateOutboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                updateOutboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                updateOutboundShipmentServiceLine(input: {id: ""}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -1042,7 +1039,7 @@ mod permission_tests {
             TestData {
                 name: "updateServerSettings",
                 query: r#"mutation Mutation {
-                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10, centralServerSiteId: 10, siteId: 10, siteHardwareId: ""}}) {
+                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10, centralServerSiteId: 10, siteId: 10}}) {
                   ... on ServerSettingsNode {
                     __typename
                     status
@@ -1150,7 +1147,7 @@ mod permission_tests {
         test_service: &TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         service_provider.validation_service = Box::new(test_service.clone());
         service_provider
     }

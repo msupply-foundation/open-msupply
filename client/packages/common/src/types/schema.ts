@@ -320,7 +320,6 @@ export type DeleteInboundShipmentLineErrorInterface = {
 
 export type DeleteInboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteInboundShipmentLineResponse = DeleteInboundShipmentLineError | DeleteResponse;
@@ -350,7 +349,6 @@ export type DeleteInboundShipmentServiceLineErrorInterface = {
 
 export type DeleteInboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteInboundShipmentServiceLineResponse = DeleteInboundShipmentServiceLineError | DeleteResponse;
@@ -392,7 +390,6 @@ export type DeleteOutboundShipmentLineErrorInterface = {
 
 export type DeleteOutboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteOutboundShipmentLineResponse = DeleteOutboundShipmentLineError | DeleteResponse;
@@ -422,7 +419,6 @@ export type DeleteOutboundShipmentServiceLineErrorInterface = {
 
 export type DeleteOutboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteOutboundShipmentServiceLineResponse = DeleteOutboundShipmentServiceLineError | DeleteResponse;
@@ -2696,7 +2692,6 @@ export type SyncSettingsNode = {
   centralServerSiteId: Scalars['Int'];
   /** How frequently central data is synced */
   intervalSec: Scalars['Int'];
-  siteHardwareId: Scalars['String'];
   siteId: Scalars['Int'];
   /** Central server url */
   url: Scalars['String'];
@@ -2771,7 +2766,6 @@ export type UpdateInboundShipmentLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   locationId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Int']>;
@@ -2806,7 +2800,6 @@ export type UpdateInboundShipmentServiceLineErrorInterface = {
 
 export type UpdateInboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
@@ -2883,7 +2876,6 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Int']>;
   stockLineId?: InputMaybe<Scalars['String']>;
@@ -2919,7 +2911,6 @@ export type UpdateOutboundShipmentServiceLineErrorInterface = {
 
 export type UpdateOutboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
@@ -3129,7 +3120,6 @@ export type UpdateSyncSettingsInput = {
   intervalSec: Scalars['Int'];
   /** Plain text password */
   password: Scalars['String'];
-  siteHardwareId: Scalars['String'];
   siteId: Scalars['Int'];
   url: Scalars['String'];
   username: Scalars['String'];

@@ -123,7 +123,11 @@ async fn main() {
             info!("Finished database reset");
 
             let connection_manager = get_storage_connection_manager(&settings.database);
-            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+            let app_data_folder = settings.server.base_dir.unwrap();
+            let service_provider = Data::new(ServiceProvider::new(
+                connection_manager.clone(),
+                &app_data_folder,
+            ));
 
             let sync_settings = settings.sync.unwrap();
             let central_server_url = sync_settings.url.clone();
@@ -166,7 +170,6 @@ async fn main() {
                 username,
                 password_sha256,
                 url,
-                site_hardware_id,
                 ..
             } = settings.sync.unwrap();
 
@@ -195,11 +198,18 @@ async fn main() {
 
             let client = Client::new();
             let url = Url::parse(&url).unwrap();
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let app_data_folder = settings.server.base_dir.unwrap();
+            let service_provider = Data::new(ServiceProvider::new(
+                connection_manager.clone(),
+                &app_data_folder,
+            ));
+            let hardware_id = service_provider.app_data_service.get_hardware_id().unwrap();
             let sync_api_v5 = SyncApiV5::new(
                 url.clone(),
                 credentials.clone(),
                 client.clone(),
-                &site_hardware_id,
+                &hardware_id,
             );
 
             info!("Requesting initialisation");
@@ -232,7 +242,11 @@ async fn main() {
             test_db::setup(&settings.database).await;
 
             let connection_manager = get_storage_connection_manager(&settings.database);
-            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+            let hardware_id = settings.server.base_dir.unwrap();
+            let service_provider = Data::new(ServiceProvider::new(
+                connection_manager.clone(),
+                &hardware_id,
+            ));
             let ctx = service_provider.context().unwrap();
 
             let (_, import_file, users_file) = export_paths(&name);
@@ -302,13 +316,17 @@ async fn main() {
         Action::RefreshDates => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let connection = connection_manager.connection().unwrap();
+            let app_data_folder = settings.server.base_dir.unwrap();
 
             info!("Refreshing dates");
             let result = RefreshDatesRepository::new(&connection)
                 .refresh_dates(Utc::now().naive_local())
                 .unwrap();
 
-            let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+            let service_provider = Data::new(ServiceProvider::new(
+                connection_manager.clone(),
+                &app_data_folder,
+            ));
             let ctx = service_provider.context().unwrap();
             let service = &service_provider.settings;
             info!("Disabling sync");

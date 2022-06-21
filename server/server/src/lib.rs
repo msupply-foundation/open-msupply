@@ -26,6 +26,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
+use util::uuid::uuid;
 
 pub mod certs;
 pub mod configuration;
@@ -75,7 +76,21 @@ async fn run_stage0(
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
 
-    let service_provider = ServiceProvider::new(connection_manager.clone());
+    let service_provider = ServiceProvider::new(
+        connection_manager.clone(),
+        &config_settings.server.base_dir.clone().unwrap(),
+    );
+
+    if service_provider
+        .app_data_service
+        .get_hardware_id()?
+        .is_empty()
+    {
+        service_provider
+            .app_data_service
+            .set_hardware_id(uuid().to_ascii_uppercase())?;
+    }
+
     let service_provider_data = Data::new(service_provider);
 
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
@@ -135,7 +150,10 @@ async fn run_server(
     connection_manager: StorageConnectionManager,
     certificates: &Certificates,
 ) -> std::io::Result<bool> {
-    let service_provider = ServiceProvider::new(connection_manager.clone());
+    let service_provider = ServiceProvider::new(
+        connection_manager.clone(),
+        &config_settings.server.base_dir.clone().unwrap(),
+    );
     let service_context = service_provider.context().unwrap();
     let service = &service_provider.settings;
 
@@ -170,7 +188,10 @@ async fn run_server(
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
 
-    let service_provider = ServiceProvider::new(connection_manager.clone());
+    let service_provider = ServiceProvider::new(
+        connection_manager.clone(),
+        &settings.server.base_dir.clone().unwrap(),
+    );
     let service_provider_data = Data::new(service_provider);
 
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;

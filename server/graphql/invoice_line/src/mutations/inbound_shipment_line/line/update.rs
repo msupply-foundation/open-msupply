@@ -19,7 +19,6 @@ use super::BatchIsReserved;
 #[graphql(name = "UpdateInboundShipmentLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub invoice_id: String,
     pub item_id: Option<String>,
     pub location_id: Option<String>,
     pub pack_size: Option<u32>,
@@ -83,7 +82,6 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            invoice_id,
             item_id,
             location_id,
             pack_size,
@@ -96,7 +94,6 @@ impl UpdateInput {
 
         ServiceInput {
             id,
-            invoice_id,
             item_id,
             location_id,
             pack_size,

@@ -4,6 +4,7 @@ use service_provider::ServiceContext;
 use std::convert::TryInto;
 
 pub mod apis;
+pub mod app_data;
 pub mod auth;
 pub mod auth_data;
 pub mod dashboard;
