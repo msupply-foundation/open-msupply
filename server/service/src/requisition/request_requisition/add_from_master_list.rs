@@ -141,10 +141,8 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        requisition::{
-            common::get_lines_for_requisition,
-            request_requisition::{AddFromMasterList, AddFromMasterListError as ServiceError},
-        },
+        errors::AddFromMasterListError as ServiceError,
+        requisition::{common::get_lines_for_requisition, request_requisition::AddFromMasterList},
         service_provider::ServiceProvider,
     };
 

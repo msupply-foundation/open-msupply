@@ -112,7 +112,7 @@ impl InvoiceMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: outbound_shipment::AddToOSFromMasterListInput,
+        input: outbound_shipment::AddToShipmentFromMasterListInput,
     ) -> Result<outbound_shipment::AddFromMasterListResponse> {
         outbound_shipment::add_from_master_list(ctx, &store_id, input)
     }
