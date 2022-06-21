@@ -46,7 +46,7 @@ const FormComponent = ({
       // cells={materialCells}
       onChange={({ errors, data }) => {
         setData(data);
-        console.log(errors);
+        if (errors && errors.length) console.warn('Errors: ', errors);
       }}
     />
   );
