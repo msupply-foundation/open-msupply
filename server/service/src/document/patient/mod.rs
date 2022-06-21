@@ -29,15 +29,15 @@ pub trait PatientServiceTrait: Sync + Send {
         get_patients(ctx, store_id, pagination, filter, sort)
     }
 
-    fn insert_patients(
+    fn update_patient(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
         store_id: String,
         user_id: &str,
-        input: InsertPatient,
-    ) -> Result<Patient, InsertPatientError> {
-        insert_patients(ctx, service_provider, store_id, user_id, input)
+        input: UpdatePatient,
+    ) -> Result<Patient, UpdatePatientError> {
+        update_patient(ctx, service_provider, store_id, user_id, input)
     }
 }
 
