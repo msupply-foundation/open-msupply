@@ -1,5 +1,6 @@
 fragment PatientRow on PatientNode {
   id
+  code
   firstName
   lastName
   name

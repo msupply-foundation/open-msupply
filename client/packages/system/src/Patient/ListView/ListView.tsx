@@ -9,8 +9,8 @@ import {
   Fade,
   NothingHere,
   createQueryParamsStore,
-  // useFormatDateTime,
-  // ColumnAlign,
+  useFormatDateTime,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -23,7 +23,7 @@ const PatientListComponent: FC = () => {
     usePatient.document.list();
   const { sortBy, onChangeSortBy } = sort;
   const { Modal, showDialog, hideDialog } = useDialog();
-  // const { localisedDate } = useFormatDateTime();
+  const { localisedDate } = useFormatDateTime();
 
   const columns = useColumns<PatientRowFragment>(
     [
@@ -36,14 +36,14 @@ const PatientListComponent: FC = () => {
         key: 'lastName',
         label: 'label.last-name',
       },
-      // {
-      //   key: 'dateOfBirth',
-      //   label: 'label.date-of-birth',
-      //   align: ColumnAlign.Right,
-      //   width: 160,
-      //   formatter: dateString =>
-      //     dateString ? localisedDate((dateString as string) || '') : '',
-      // },
+      {
+        key: 'dateOfBirth',
+        label: 'label.date-of-birth',
+        align: ColumnAlign.Right,
+        width: 160,
+        formatter: dateString =>
+          dateString ? localisedDate((dateString as string) || '') : '',
+      },
     ],
     {
       sortBy,

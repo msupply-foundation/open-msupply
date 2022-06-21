@@ -17,15 +17,15 @@ interface DetailModalProps {
 }
 
 export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
-  const { JsonForm, loading, error, saveData } = useJsonForms(docId);
+  const { JsonForm, loading, error } = useJsonForms(docId);
 
   if (loading) return <BasicSpinner />;
 
-  return !error ? (
+  return error ? null : (
     <DetailContainer>
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
         {JsonForm}
       </Box>
     </DetailContainer>
-  ) : null;
+  );
 };

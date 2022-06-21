@@ -197,13 +197,15 @@ export const themeOptions = {
     },
     body2: { color: '#555770', fontSize: 12, fontWeight: 500 },
     fontFamily: 'InterVariable',
-    login: { color: '#fafafa' },
     th: { color: '#1c1c28', fontSize: 14, fontWeight: 700 },
     h6: {
       fontFamily: 'InterVariable',
       fontSize: 16,
       color: '#555770',
     },
+    subtitle1: { fontSize: '1.2em' },
+    // Custom text variants
+    login: { color: '#fafafa' },
   },
 };
 export const createTheme = (themeOptions: ThemeOptions) => {

@@ -19,7 +19,6 @@ const UIComponent = (props: ControlProps) => {
       inputProps={{
         value: data,
         sx: { margin: 0.5, width: '100%' },
-        disabled: false,
         onChange: e => handleChange(path, e.target.value),
       }}
     />
