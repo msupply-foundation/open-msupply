@@ -75,7 +75,6 @@ export const useInitialiseForm = () => {
       centralServerSiteId: 1,
       intervalSec: 300,
       password,
-      siteHardwareId: '',
       siteId: siteId || 2,
       url,
       username,
