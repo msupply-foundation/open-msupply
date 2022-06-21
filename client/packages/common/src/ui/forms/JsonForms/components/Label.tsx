@@ -8,6 +8,7 @@ import {
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { SxProps, Typography } from '@mui/material';
 import { RegexUtils } from '@common/utils';
+import { FORM_LABEL_COLUMN_WIDTH } from '../styleConstants';
 
 export const labelTester = rankWith(3, uiTypeIs('Label'));
 
@@ -27,7 +28,7 @@ const variants: { [key in LabelVariant]: SxProps } = {
   h3: {
     fontWeight: 'bold',
     textAlign: 'right',
-    width: '40%',
+    width: FORM_LABEL_COLUMN_WIDTH,
     height: '1.5em', // This shouldn't be necessary 🤷‍♂️
     marginTop: '1em',
   },
@@ -45,7 +46,7 @@ const UIComponent = (props: LayoutPropsExtended) => {
   const variantStyles = variants[variant];
   return (
     <Typography sx={{ ...variantStyles, ...sx } as SxProps}>
-      {RegexUtils.stringSubstitution(text ?? '', data)}
+      {RegexUtils.formatTemplateString(text ?? '', data)}
     </Typography>
   );
 };
