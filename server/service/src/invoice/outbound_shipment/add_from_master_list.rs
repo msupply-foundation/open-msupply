@@ -126,13 +126,11 @@ pub fn check_master_list_for_store(
 mod test {
     use repository::{
         mock::{
-            common::FullMockMasterList,
-            mock_draft_request_invoice_for_update_test,
-            mock_draft_response_invoice_for_update_test, mock_item_a, mock_item_b, mock_item_c,
-            mock_item_d, mock_name_store_a, mock_request_draft_invoice_calculation_test,
-            mock_sent_request_invoice, mock_test_not_store_a_master_list,
-            test_item_stats::{self},
-            MockData, MockDataInserts,
+            common::FullMockMasterList, mock_inbound_shipment_c, mock_item_a, mock_item_b,
+            mock_item_c, mock_item_d, mock_name_store_c, mock_new_outbound_shipment_no_lines,
+            mock_outbound_shipment_c, mock_outbound_shipment_no_lines,
+            mock_outbound_shipment_shipped, mock_test_not_store_a_master_list, MockData,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         MasterListLineRow, MasterListNameJoinRow, MasterListRow,
@@ -140,11 +138,8 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        invoice::{
-            common::get_lines_for_invoice,
-            request_invoice::{AddFromMasterList, AddFromMasterListError as ServiceError},
-        },
-        service_provider::ServiceProvider,
+        errors::AddFromMasterListError as ServiceError,
+        invoice::outbound_shipment::AddFromMasterList, service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
@@ -156,7 +151,7 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_service;
 
-        // InvoiceDoesNotExist
+        // RecordDoesNotExist
         assert_eq!(
             service.add_from_master_list(
                 &context,
@@ -166,55 +161,55 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::InvoiceDoesNotExist)
+            Err(ServiceError::RecordDoesNotExist)
         );
 
-        // NotThisStoreInvoice
+        // NotThisStore
         assert_eq!(
             service.add_from_master_list(
                 &context,
                 "store_b",
                 AddFromMasterList {
-                    outbound_shipment_id: mock_draft_request_invoice_for_update_test().id,
+                    outbound_shipment_id: mock_outbound_shipment_no_lines().id,
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::NotThisStoreInvoice)
+            Err(ServiceError::NotThisStore)
         );
 
-        // CannotEditInvoice
+        // CannotEditRecord
+        assert_eq!(
+            service.add_from_master_list(
+                &context,
+                "store_c",
+                AddFromMasterList {
+                    outbound_shipment_id: mock_outbound_shipment_shipped().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::CannotEditRecord)
+        );
+
+        // RecordIsIncorrectType
         assert_eq!(
             service.add_from_master_list(
                 &context,
                 "store_a",
                 AddFromMasterList {
-                    outbound_shipment_id: mock_sent_request_invoice().id,
+                    outbound_shipment_id: mock_inbound_shipment_c().id,
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::CannotEditInvoice)
-        );
-
-        // NotARequestInvoice
-        assert_eq!(
-            service.add_from_master_list(
-                &context,
-                "store_a",
-                AddFromMasterList {
-                    outbound_shipment_id: mock_draft_response_invoice_for_update_test().id,
-                    master_list_id: "n/a".to_owned()
-                },
-            ),
-            Err(ServiceError::NotARequestInvoice)
+            Err(ServiceError::RecordIsIncorrectType)
         );
 
         // MasterListNotFoundForThisStore
         assert_eq!(
             service.add_from_master_list(
                 &context,
-                "store_a",
+                "store_c",
                 AddFromMasterList {
-                    outbound_shipment_id: mock_draft_request_invoice_for_update_test().id,
+                    outbound_shipment_id: mock_outbound_shipment_c().id,
                     master_list_id: mock_test_not_store_a_master_list().master_list.id
                 },
             ),
@@ -230,6 +225,7 @@ mod test {
             let line1 = format!("{}1", id);
             let line2 = format!("{}2", id);
             let line3 = format!("{}3", id);
+            let line4 = format!("{}4", id);
 
             FullMockMasterList {
                 master_list: MasterListRow {
@@ -241,7 +237,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_name_store_a().id,
+                    name_id: mock_name_store_c().id,
                 }],
                 lines: vec![
                     MasterListLineRow {
@@ -251,24 +247,29 @@ mod test {
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_id: test_item_stats::item().id,
+                        item_id: mock_item_b().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_id: test_item_stats::item2().id,
+                        item_id: mock_item_c().id,
+                        master_list_id: id.clone(),
+                    },
+                    MasterListLineRow {
+                        id: line4.clone(),
+                        item_id: mock_item_d().id,
                         master_list_id: id.clone(),
                     },
                 ],
             }
         }
 
-        let (_, connection, connection_manager, _) = setup_all_with_data(
+        let (_, _, connection_manager, _) = setup_all_with_data(
             "add_from_master_list_success",
             MockDataInserts::all(),
-            test_item_stats::mock_item_stats().join(inline_init(|r: &mut MockData| {
+            inline_init(|r: &mut MockData| {
                 r.full_master_lists = vec![master_list()];
-            })),
+            }),
         )
         .await;
 
@@ -276,29 +277,28 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_service;
 
-        let result = service
+        let result: Vec<repository::InvoiceLineRow> = service
             .add_from_master_list(
                 &context,
-                "store_a",
+                "store_c",
                 AddFromMasterList {
-                    outbound_shipment_id: mock_request_draft_invoice_calculation_test().invoice.id,
+                    outbound_shipment_id: mock_new_outbound_shipment_no_lines().id,
                     master_list_id: master_list().master_list.id,
                 },
             )
-            .unwrap();
+            .unwrap()
+            .into_iter()
+            .map(|line| line.invoice_line_row)
+            .collect();
 
-        let lines = get_lines_for_invoice(
-            &connection,
-            &mock_request_draft_invoice_calculation_test().invoice.id,
-        )
-        .unwrap();
+        // let lines = get_lines_for_invoice(&connection, &mock_outbound_shipment_c().id).unwrap();
 
-        assert_eq!(result, lines);
+        // assert_eq!(result, lines);
 
-        let mut item_ids: Vec<String> = lines
+        let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()
-            .map(|invoice_line| invoice_line.invoice_line_row.item_id)
+            .map(|invoice_line| invoice_line.item_id)
             .collect();
         item_ids.sort_by(|a, b| a.cmp(&b));
 
@@ -307,50 +307,26 @@ mod test {
             mock_item_b().id,
             mock_item_c().id,
             mock_item_d().id,
-            test_item_stats::item().id,
-            test_item_stats::item2().id,
         ];
         test_item_ids.sort_by(|a, b| a.cmp(&b));
 
         assert_eq!(item_ids, test_item_ids);
-        let line = lines
+        let line = result
             .iter()
-            .find(|line| line.invoice_line_row.item_id == test_item_stats::item().id)
+            .find(|line| line.item_id == mock_item_a().id)
             .unwrap();
 
-        assert_eq!(
-            line.invoice_line_row.available_stock_on_hand,
-            test_item_stats::item_1_soh() as i32
-        );
-        assert_eq!(
-            line.invoice_line_row.average_monthly_consumption,
-            test_item_stats::item1_amc_3_months() as i32
-        );
-        assert_eq!(
-            line.invoice_line_row.suggested_quantity,
-            // 10 = invoice max_mos
-            test_item_stats::item1_amc_3_months() as i32 * 10
-                - test_item_stats::item_1_soh() as i32
-        );
+        assert_eq!(line.number_of_packs, 0);
+        assert_eq!(line.item_name, mock_item_a().name);
+        assert_eq!(line.item_code, mock_item_a().code);
 
-        let line = lines
+        let line = result
             .iter()
-            .find(|line| line.invoice_line_row.item_id == test_item_stats::item2().id)
+            .find(|line| line.item_id == mock_item_b().id)
             .unwrap();
 
-        assert_eq!(
-            line.invoice_line_row.available_stock_on_hand,
-            test_item_stats::item_2_soh() as i32
-        );
-        assert_eq!(
-            line.invoice_line_row.average_monthly_consumption,
-            test_item_stats::item2_amc_3_months() as i32
-        );
-        assert_eq!(
-            line.invoice_line_row.suggested_quantity,
-            // 10 = invoice max_mos
-            test_item_stats::item2_amc_3_months() as i32 * 10
-                - test_item_stats::item_2_soh() as i32
-        );
+        assert_eq!(line.number_of_packs, 0);
+        assert_eq!(line.item_name, mock_item_b().name);
+        assert_eq!(line.item_code, mock_item_b().code);
     }
 }

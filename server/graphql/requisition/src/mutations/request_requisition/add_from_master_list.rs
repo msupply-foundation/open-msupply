@@ -130,12 +130,10 @@ mod test {
     use serde_json::json;
     use service::{
         requisition::{
-            request_requisition::{
-                AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
-            },
-            RequisitionServiceTrait,
+            request_requisition::AddFromMasterList as ServiceInput, RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
+        errors::AddFromMasterListError as ServiceError,
     };
 
     use crate::RequisitionMutations;
@@ -197,8 +195,8 @@ mod test {
           }
         "#;
 
-        // RequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        // RecordDoesNotExist
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RecordDoesNotExist)));
 
         let expected = json!({
             "addFromMasterList": {
@@ -217,8 +215,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // CannotEditRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        // CannotEditRecord
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRecord)));
 
         let expected = json!({
             "addFromMasterList": {
