@@ -1,3 +1,4 @@
+use crate::errors::AddFromMasterListError;
 use crate::{
     invoice::check_invoice_exists, service_provider::ServiceContext,
     sync_processor::invoice::common::get_lines_for_invoice,
@@ -18,18 +19,7 @@ pub struct AddFromMasterList {
     pub master_list_id: String,
 }
 
-#[derive(Debug, PartialEq)]
-
-pub enum AddToOSFromMasterListError {
-    InvoiceDoesNotExist,
-    NotThisStoreInvoice,
-    CannotEditInvoice,
-    MasterListNotFoundForThisStore,
-    NotAnOutboundShipmentInvoice,
-    DatabaseError(RepositoryError),
-}
-
-type OutError = AddToOSFromMasterListError;
+type OutError = AddFromMasterListError;
 
 pub fn add_from_master_list(
     ctx: &ServiceContext,
@@ -67,19 +57,19 @@ fn validate(
 ) -> Result<InvoiceRow, OutError> {
     let invoice_row = match check_invoice_exists(&input.outbound_shipment_id, connection) {
         Ok(row) => row,
-        Err(_error) => return Err(OutError::InvoiceDoesNotExist),
+        Err(_error) => return Err(OutError::RecordDoesNotExist),
     };
 
     if invoice_row.store_id != store_id {
-        return Err(OutError::NotThisStoreInvoice);
+        return Err(OutError::NotThisStore);
     }
 
     if invoice_row.status != InvoiceRowStatus::New {
-        return Err(OutError::CannotEditInvoice);
+        return Err(OutError::CannotEditRecord);
     }
 
     if invoice_row.r#type != InvoiceRowType::OutboundShipment {
-        return Err(OutError::NotAnOutboundShipmentInvoice);
+        return Err(OutError::RecordIsIncorrectType);
     }
 
     check_master_list_for_store(connection, store_id, &input.master_list_id)?
@@ -130,12 +120,6 @@ pub fn check_master_list_for_store(
             .exists_for_store_id(EqualFilter::equal_to(store_id)),
     )?;
     Ok(rows.pop())
-}
-
-impl From<RepositoryError> for AddFromMasterListError {
-    fn from(error: RepositoryError) -> Self {
-        AddFromMasterListError::DatabaseError(error)
-    }
 }
 
 #[cfg(test)]

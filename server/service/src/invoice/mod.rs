@@ -6,10 +6,10 @@ use repository::InvoiceSort;
 use repository::PaginationOption;
 use repository::RepositoryError;
 
+use crate::errors::AddFromMasterListError;
 use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
-
 pub mod query;
 use self::query::*;
 
