@@ -108,7 +108,7 @@ impl InvoiceMutations {
     }
 
     /// Add invoice lines from master item master list
-    async fn add_from_master_list(
+    async fn add_to_shipment_from_master_list(
         &self,
         ctx: &Context<'_>,
         store_id: String,
