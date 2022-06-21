@@ -73,7 +73,7 @@
   "messages.changing-min-mos": "This will change the minimum months of stock threshold.",
   "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",
   "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list",
-  "messages.confirm-status-as": "Confirm status as {{status}}?",
+  "messages.confirm-status-as": "Confirm status as $t({{status}})?",
   "messages.could-not-save": "Could not Save",
   "messages.deleted-lines_one": "Deleted {{count}} line",
   "messages.deleted-lines_other": "Deleted {{count}} lines",
