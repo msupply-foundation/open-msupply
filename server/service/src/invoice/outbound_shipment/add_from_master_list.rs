@@ -65,7 +65,7 @@ fn validate(
     }
 
     if invoice_row.status == InvoiceRowStatus::Shipped || invoice_row.status == InvoiceRowStatus::Delivered || invoice_row.status == InvoiceRowStatus::Verified {
-            return Err(OutError::CannotEditRecord);
+        return Err(OutError::CannotEditRecord);
     }
 
     if invoice_row.r#type != InvoiceRowType::OutboundShipment {

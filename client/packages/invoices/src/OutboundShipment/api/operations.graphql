@@ -739,3 +739,40 @@ mutation deleteOutboundShipmentLines(
     }
   }
 }
+
+mutation addFromMasterList(
+  $storeId: String!
+  $outboundShipmentId: String!
+  $masterListId: String!
+) {
+  addToShipmentFromMasterList(
+    input: {
+      outboundShipmentId: $outboundShipmentId
+      masterListId: $masterListId
+    }
+    storeId: $storeId
+  ) {
+    ... on AddToShipmentFromMasterListError {
+      __typename
+      error {
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+        ... on CannotEditInvoice {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}
