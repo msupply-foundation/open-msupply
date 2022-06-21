@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { JsonForms } from '@jsonforms/react';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
@@ -52,12 +52,14 @@ const FormComponent = ({
   );
 };
 
-export const useJsonForms = (docName: string) => {
+export const useJsonForms = (docName: string | undefined) => {
   const [data, setData] = useState<JsonData>(patient);
   const [loading, setLoading] = useState(false);
-  const [error] = useState(null);
+  const [error, setError] = useState<string | false>(false);
 
-  console.log('TO-DO: Look up document: ' + docName);
+  useEffect(() => {
+    if (!docName) setError('No document associated with this record');
+  }, []);
 
   const saveData = () => {
     setLoading(true);

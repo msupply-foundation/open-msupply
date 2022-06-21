@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null };
+export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null };
 
 export type PatientFragment = { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null };
 
@@ -18,7 +18,7 @@ export type PatientsQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientsQuery = { __typename: 'FullQuery', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null }> } };
+export type PatientsQuery = { __typename: 'FullQuery', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null }> } };
 
 export type PatientByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -36,6 +36,11 @@ export const PatientRowFragmentDoc = gql`
   lastName
   name
   dateOfBirth
+  document {
+    id
+    name
+    type
+  }
 }
     `;
 export const PatientFragmentDoc = gql`

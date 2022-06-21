@@ -18,7 +18,7 @@ import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 
 const PatientListComponent: FC = () => {
-  const [selectedId, setSelectedId] = useState<string>('');
+  const [selectedId, setSelectedId] = useState<string | undefined>();
   const { data, isError, isLoading, pagination, sort } =
     usePatient.document.list();
   const { sortBy, onChangeSortBy } = sort;
@@ -72,7 +72,8 @@ const PatientListComponent: FC = () => {
         isLoading={isLoading}
         isError={isError}
         onRowClick={row => {
-          setSelectedId(row.id);
+          console.log('Row', row);
+          setSelectedId(row.document?.name);
           showDialog();
         }}
         noDataElement={<NothingHere />}

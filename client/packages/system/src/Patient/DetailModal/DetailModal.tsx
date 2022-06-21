@@ -13,7 +13,7 @@ import {
 import { useJsonForms } from '@openmsupply-client/common';
 
 interface DetailModalProps {
-  docId: string;
+  docId: string | undefined;
 }
 
 export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
@@ -24,7 +24,7 @@ export const DetailModal: FC<DetailModalProps> = ({ docId }) => {
   return error ? null : (
     <DetailContainer>
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        {JsonForm}
+        {!error ? JsonForm : error}
       </Box>
     </DetailContainer>
   );
