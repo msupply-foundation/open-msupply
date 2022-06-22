@@ -1,5 +1,5 @@
 fragment ReportRow on ReportNode {
-  category
+  context
   id
   name
 }

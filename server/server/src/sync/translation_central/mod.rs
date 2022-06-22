@@ -3,19 +3,21 @@ mod list_master;
 mod list_master_line;
 mod list_master_name_join;
 mod name;
+mod report;
 mod store;
 pub mod test_data;
 mod unit;
 
 use crate::sync::translation_central::{
     item::ItemTranslation, list_master_line::MasterListLineTranslation,
-    list_master_name_join::MasterListNameJoinTranslation,
+    list_master_name_join::MasterListNameJoinTranslation, report::ReportTranslation,
 };
 use repository::{
     CentralSyncBufferRow, ItemRow, ItemRowRepository, MasterListLineRow,
     MasterListLineRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
-    MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, RepositoryError,
-    StorageConnection, StoreRow, StoreRowRepository, TransactionError, UnitRow, UnitRowRepository,
+    MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, ReportRow,
+    ReportRowRepository, RepositoryError, StorageConnection, StoreRow, StoreRowRepository,
+    TransactionError, UnitRow, UnitRowRepository,
 };
 
 use log::{info, warn};
@@ -39,6 +41,7 @@ pub enum IntegrationUpsertRecord {
     MasterList(MasterListRow),
     MasterListLine(MasterListLineRow),
     MasterListNameJoin(MasterListNameJoinRow),
+    Report(ReportRow),
 }
 
 #[derive(Debug)]
@@ -67,32 +70,28 @@ fn do_translation(
         Box::new(MasterListTranslation {}),
         Box::new(MasterListLineTranslation {}),
         Box::new(MasterListNameJoinTranslation {}),
+        Box::new(ReportTranslation {}),
     ];
     for translation in translations {
-        match translation.try_translate(sync_record) {
-            Ok(Some(result)) => {
-                records.upserts.push(result);
-                return Ok(());
-            }
-            Err(error) => warn!(
-                "Failed to translate ({}): {:?}",
-                SyncTranslationError {
+        let result =
+            translation
+                .try_translate(sync_record)
+                .map_err(|error| SyncTranslationError {
                     table_name: sync_record.table_name.clone(),
                     source: error,
                     record: format!("{:?}", sync_record.data),
-                },
-                sync_record
-            ),
-            _ => {
-                log::info!(
-                    "Ignore central record: table: \"{}\", record id: {}",
-                    sync_record.table_name,
-                    sync_record.record_id
-                );
-            }
-        };
-    }
+                })?;
 
+        if let Some(translated_record) = result {
+            records.upserts.push(translated_record);
+            return Ok(());
+        }
+    }
+    log::info!(
+        "Ignore central record: table: \"{}\", record id: {}",
+        sync_record.table_name,
+        sync_record.record_id
+    );
     Ok(())
 }
 
@@ -103,6 +102,7 @@ pub const TRANSLATION_RECORD_STORE: &str = "store";
 pub const TRANSLATION_RECORD_LIST_MASTER: &str = "list_master";
 pub const TRANSLATION_RECORD_LIST_MASTER_LINE: &str = "list_master_line";
 pub const TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN: &str = "list_master_name_join";
+pub const TRANSLATION_RECORD_REPORT: &str = "report";
 
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
@@ -114,6 +114,7 @@ pub const TRANSLATION_RECORDS: &[&str] = &[
     TRANSLATION_RECORD_LIST_MASTER,
     TRANSLATION_RECORD_LIST_MASTER_LINE,
     TRANSLATION_RECORD_LIST_MASTER_NAME_JOIN,
+    TRANSLATION_RECORD_REPORT,
 ];
 
 /// Imports sync records and writes them to the DB
@@ -131,7 +132,9 @@ pub async fn import_sync_records(
         records.len()
     );
     for record in records {
-        do_translation(&record, &mut integration_records)?;
+        if let Err(error) = do_translation(&record, &mut integration_records) {
+            warn!("Failed to translate ({}): {:?}", error, record)
+        }
     }
     info!("Succesfully translated central sync buffer records");
 
@@ -160,6 +163,7 @@ fn integrate_record(
         IntegrationUpsertRecord::MasterListNameJoin(record) => {
             MasterListNameJoinRepository::new(con).upsert_one(record)
         }
+        IntegrationUpsertRecord::Report(record) => ReportRowRepository::new(con).upsert_one(record),
     }
 }
 
@@ -211,6 +215,7 @@ mod tests {
         master_list_line::get_test_master_list_line_records,
         master_list_name_join::get_test_master_list_name_join_records,
         name::{get_test_name_records, get_test_name_upsert_records},
+        report::get_test_report_records,
         unit::{get_test_unit_records, get_test_unit_upsert_records},
     };
 
@@ -229,6 +234,7 @@ mod tests {
         records.append(&mut get_test_master_list_records());
         records.append(&mut get_test_master_list_line_records());
         records.append(&mut get_test_master_list_name_join_records());
+        records.append(&mut get_test_report_records());
 
         import_sync_records(&connection, &extract_sync_buffer_rows(&records))
             .await

@@ -1,9 +1,9 @@
-import { useQuery, ReportCategory } from '@openmsupply-client/common';
+import { useQuery, ReportContext } from '@openmsupply-client/common';
 import { useReportApi } from '../utils/useReportApi';
 
-export const useReports = (category?: ReportCategory) => {
+export const useReports = (context?: ReportContext) => {
   const api = useReportApi();
-  const filterBy = category ? { category: { equalTo: category } } : null;
+  const filterBy = context ? { context: { equalTo: context } } : null;
   const queryParams = {
     filterBy,
     sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },

@@ -192,7 +192,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         service_provider.stocktake_line_service = Box::new(test_service);
         service_provider
     }
