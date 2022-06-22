@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { JsonForms } from '@jsonforms/react';
-import {
-  materialRenderers,
-  materialCells,
-} from '@jsonforms/material-renderers';
+import { materialRenderers } from '@jsonforms/material-renderers';
 import {
   stringTester,
   TextField,
@@ -46,7 +43,7 @@ const FormComponent = ({
       uischema={uiSchema}
       data={data}
       renderers={renderers}
-      cells={materialCells}
+      // cells={materialCells}
       onChange={({ errors, data }) => {
         setData(data);
         if (errors && errors.length) console.warn('Errors: ', errors);
