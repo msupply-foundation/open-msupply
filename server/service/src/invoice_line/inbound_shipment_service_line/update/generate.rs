@@ -5,7 +5,6 @@ use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineEr
 pub fn generate(
     UpdateInboundShipmentServiceLine {
         id: _,
-        invoice_id: _,
         item_id: input_item_id,
         name: input_name,
         total_before_tax: input_total_before_tax,
@@ -84,7 +83,6 @@ mod inbound_shipment_service_line_update_test {
         let result = generate(
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
-                invoice_id: "".to_string(),
                 item_id: None,
                 name: None,
                 total_before_tax: None,
@@ -102,7 +100,6 @@ mod inbound_shipment_service_line_update_test {
         let result = generate(
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
-                invoice_id: "".to_string(),
                 item_id: None,
                 name: Some("input name".to_string()),
                 total_before_tax: None,
@@ -120,7 +117,6 @@ mod inbound_shipment_service_line_update_test {
         let result = generate(
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
-                invoice_id: "".to_string(),
                 item_id: Some(item2.id.to_owned()),
                 name: Some("input name 2".to_string()),
                 total_before_tax: None,
@@ -138,7 +134,6 @@ mod inbound_shipment_service_line_update_test {
         let result = generate(
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
-                invoice_id: "".to_string(),
                 item_id: Some(item2.id.to_owned()),
                 name: None,
                 total_before_tax: None,

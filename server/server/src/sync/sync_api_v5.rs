@@ -103,7 +103,7 @@ impl SyncApiV5 {
             server_url,
             credentials,
             client,
-            headers: generate_headers(hardware_id),
+            headers: generate_headers(&hardware_id),
         }
     }
 

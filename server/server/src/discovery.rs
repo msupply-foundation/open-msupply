@@ -1,4 +1,4 @@
-use crate::self_signed_certs::Protocol;
+use crate::certs::Protocol;
 use local_ip_address::list_afinet_netifas;
 use serde::Serialize;
 use service::settings::ServerSettings;

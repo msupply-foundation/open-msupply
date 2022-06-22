@@ -8,8 +8,7 @@ use crate::{
         InvoiceIsNotEditable, WrongInvoiceRowType,
     },
     invoice_line::validate::{
-        check_item, check_line_belongs_to_invoice, check_line_exists, ItemNotFound,
-        LineDoesNotExist, NotInvoiceLine,
+        check_item, check_line_exists, ItemNotFound, LineDoesNotExist, NotInvoiceLine,
     },
 };
 
@@ -20,7 +19,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, InvoiceRow, ItemRow), UpdateInboundShipmentServiceLineError> {
     let line = check_line_exists(&input.id, connection)?;
-    let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?;
 
     let item = if let Some(item_id) = &input.item_id {
         check_item(item_id, connection)?
@@ -32,8 +31,6 @@ pub fn validate(
     }
 
     // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
-
-    check_line_belongs_to_invoice(&line, &invoice)?;
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 

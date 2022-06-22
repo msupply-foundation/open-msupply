@@ -40,7 +40,7 @@ pub async fn run_test_gql_query<
 
     let service_provider_data = Data::new(match service_provider_override {
         Some(service_provider) => service_provider,
-        None => ServiceProvider::new(connection_manager.clone()),
+        None => ServiceProvider::new(connection_manager.clone(), "app_data"),
     });
 
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
@@ -50,7 +50,7 @@ pub async fn run_test_gql_query<
         auth_token_secret: "n/a".to_string(),
         token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
         // TODO: configure ssl
-        danger_no_ssl: true,
+        no_ssl: true,
         debug_no_access_control: true,
     });
 

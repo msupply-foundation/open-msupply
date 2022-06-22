@@ -50,7 +50,8 @@ mod remote_sync_integration_tests {
         )
         .await;
 
-        let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+        let service_provider =
+            Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
         let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider).unwrap();
         synchroniser
             .central_data
@@ -137,7 +138,6 @@ mod remote_sync_integration_tests {
             interval_sec: 60 * 60,
             central_server_site_id: 1,
             site_id: 7,
-            site_hardware_id: "49149896-E713-4535-9DA8-C30AB06F9D5E".to_string(),
         };
 
         println!("number...");

@@ -101,7 +101,24 @@ For example, to print a report for a stocktake with id "d734fd45-064e-4ddd-9886-
 ```
 
 
-## References to other template definitions (not supported in the report builder yet) 
+## References to other template definitions
 It's possible to refer to other template resources that already exist on the server, e.g. to refer to a common headers or icons.
 
-Please request if needed...
+To refer to a resource from an existing report add a reference file like `icon1.ref.json` to the project with the content:
+```json
+{
+  "source": "existing_report_id"
+}
+```
+The existing report must contain an entry of name `icon1`.
+The template entry `icon1` can then be used in the Tera templates the same as any other entry.
+
+If there is a name conflict it is possible to rename referred template entries.
+For example, instead of `icon1` an alternative name can be used by using a reference file like `my_icon_name.ref.json`:
+```json
+{
+  "source": "existing_report_id",
+  "sourceName": "icon1"
+}
+```
+The entry `icon1` from the existing report can then be used under the name `my_icon_name`.
