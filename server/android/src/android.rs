@@ -12,7 +12,7 @@ pub mod android {
     use rcgen::generate_simple_self_signed;
     use repository::database_settings::DatabaseSettings;
 
-    use server::self_signed_certs::{PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
+    use server::certs::{PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
     use server::start_server;
     use service::settings::{ServerSettings, Settings};
     use tokio::sync::oneshot;
@@ -93,7 +93,7 @@ pub mod android {
         port: jchar,
         files_dir: JString,
         cache_dir: JString,
-        android_id: JString,
+        _android_id: JString,
     ) -> jlong {
         android_logger::init_once(Config::default().with_min_level(Level::Trace));
 

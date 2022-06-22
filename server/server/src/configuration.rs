@@ -1,4 +1,5 @@
 use config::{Config, ConfigError, Environment, File, FileSourceFile};
+use repository::{KeyValueStoreRepository, KeyValueType, StorageConnection};
 use service::settings::Settings;
 use std::{
     env::{self, VarError},
@@ -7,6 +8,7 @@ use std::{
     io::Error as IoError,
     path::PathBuf,
 };
+use util::uuid::uuid;
 
 use crate::environment::{AppEnvironment, EnvironmentVariable};
 
@@ -165,4 +167,29 @@ impl From<VarError> for SettingsError {
     fn from(err: VarError) -> SettingsError {
         SettingsError::Environment(err)
     }
+}
+
+pub fn get_or_create_token_secret(connection: &StorageConnection) -> String {
+    //Get Token Secret from DB if available
+    let kv_repo = KeyValueStoreRepository::new(connection);
+    let token_secret_option = kv_repo
+        .get_string(KeyValueType::SettingsTokenSecret)
+        .unwrap();
+    if let Some(token_secret) = token_secret_option {
+        log::debug!("Using token_secret from DB");
+        return token_secret;
+    }
+    log::debug!("Generating new token_secret");
+    let token_secret = uuid();
+    if let Err(err) = kv_repo.set_string(
+        KeyValueType::SettingsTokenSecret,
+        Some(token_secret.clone()),
+    ) {
+        log::error!(
+            "Unable to save token secret to key value store, it will not be persisted across restarts : {}",
+            err
+        )
+    }
+
+    token_secret
 }

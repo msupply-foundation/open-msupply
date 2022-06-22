@@ -6,7 +6,7 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
-  ReportCategory,
+  ReportContext,
   LoadingButton,
   PrinterIcon,
 } from '@openmsupply-client/common';
@@ -45,7 +45,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onClick={() => onAddItem(true)}
         />
         <ReportSelector
-          category={ReportCategory.Stocktake}
+          context={ReportContext.Stocktake}
           onClick={printReport}
         >
           <LoadingButton

@@ -18,7 +18,7 @@ mod query {
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.location_service;
 
@@ -62,7 +62,7 @@ mod query {
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.location_service;
 

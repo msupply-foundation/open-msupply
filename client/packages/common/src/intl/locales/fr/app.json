@@ -16,7 +16,7 @@
     "docs": "Aide",
     "loading": "Chargement...",
     "messages": "Messages",
-    "stock": "Stock",
+    "stock": "Afficher le stock",
     "sync": "Synchronisation",
     "stocktake": "Inventaire",
     "replenishment": "Approvisionnement",
@@ -28,7 +28,7 @@
     "auth.logged-out-message": "Vous avez été déconnecté pour cause d'inactivité. Cliquez sur OK pour être redirigé vers l'écran de connexion.",
     "cmdk.goto-outbound": "Aller à : Expéditions",
     "cmdk.goto-items": "Aller à : Articles",
-    "login.heading": "Simple. Puissant. Gestion Pharmaceutique.",
+    "login.heading": "Simple. \nPuissant. \nGestion \nPharmaceutique.",
     "saving": "Sauvegarde...",
     "internal-order": "Commandes Internes",
     "stocktakes": "Inventaires",
@@ -53,5 +53,10 @@
     "button.login": "Connexion",
     "error.login": "Nom d'utilisateur ou mot de passe invalide",
     "select-store": "Sélectionner un dépôt",
-    "select-report": "Sélectionner un rapport"
+    "select-report": "Sélectionner un modèle",
+    "login.store-changed": "Bienvenu dans le dépôt {{store}}",
+    "app": "mSupply",
+    "cmdk.placeholder": "Saisir une commande ou rechercher",
+    "login.body": "Que vous dirigiez un entrepôt de distribution pharmaceutique, ou que vous soyez un fabricant ayant besoin de dizaines d'utilisateurs connectés, ou un petit dispensaire, mSupply est un partenaire précieux.",
+    "cmdk.drawer-toggle": "Menu Déroulant"
 }

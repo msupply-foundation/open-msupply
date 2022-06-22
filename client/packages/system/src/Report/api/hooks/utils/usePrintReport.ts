@@ -1,15 +1,52 @@
 import {
   EnvUtils,
   Platform,
+  PrintFormat,
   useMutation,
   useNotification,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { useReportApi } from './useReportApi';
+import { Printer } from '@awesome-cordova-plugins/printer';
 
 type PrintReportParams = {
   reportId: string;
   dataId: string;
+};
+
+const setClose = (frame: HTMLIFrameElement) => () => {
+  document.body.removeChild(frame);
+};
+
+const setPrint = (frame: HTMLIFrameElement) => () => {
+  const { contentWindow } = frame;
+  if (contentWindow) {
+    contentWindow.onbeforeunload = setClose(frame);
+    contentWindow.onafterprint = setClose(frame);
+    contentWindow.focus(); // Required for IE
+    contentWindow.print();
+  }
+};
+
+const printPage = (url: string) => {
+  fetch(url).then(async response => {
+    const html = await response.text();
+
+    if (EnvUtils.platform === Platform.Android) {
+      Printer.print(html);
+    } else {
+      const frame = document.createElement('iframe');
+      frame.style.position = 'fixed';
+      frame.style.right = '0';
+      frame.style.bottom = '0';
+      frame.style.width = '0';
+      frame.style.height = '0';
+      frame.style.border = '0';
+      frame.onload = setPrint(frame);
+      frame.srcdoc = html;
+      document.body.appendChild(frame);
+    }
+  });
 };
 
 export const usePrintReport = () => {
@@ -24,13 +61,11 @@ export const usePrintReport = () => {
     onSuccess: fileId => {
       if (!fileId) throw new Error('Error printing report');
       const url = `${Environment.FILE_URL}${fileId}`;
-      const win = window.open(url, '_blank');
-      if (win) {
-        if (EnvUtils.platform === Platform.Android) {
-          win.print(); // crashes chrome if the file is a PDF :shrug:
-        } else {
-          win.focus();
-        }
+      if (EnvUtils.printFormat === PrintFormat.Html) {
+        printPage(url);
+      } else {
+        const win = window.open(url, '_blank');
+        win?.focus();
       }
     },
     onError: e => {
