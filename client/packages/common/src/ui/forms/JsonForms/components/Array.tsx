@@ -24,6 +24,7 @@ import {
   PlusCircleIcon,
   MinusCircleIcon,
   ChevronDownIcon,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import {
@@ -50,6 +51,7 @@ interface FoundUiSchema extends Layout {
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
 const UIComponent = (props: ArrayControlCustomProps) => {
+  const t = useTranslation('common');
   const {
     uischema,
     uischemas,
@@ -88,7 +90,7 @@ const UIComponent = (props: ArrayControlCustomProps) => {
         <Box width={FORM_INPUT_COLUMN_WIDTH} textAlign="right">
           <IconButton
             icon={<PlusCircleIcon />}
-            label="Add another"
+            label={t('label.add-another')}
             color="primary"
             onClick={addItem(
               path,
@@ -123,13 +125,13 @@ const UIComponent = (props: ArrayControlCustomProps) => {
             >
               <Box
                 display="flex"
-                width="40%"
+                width={FORM_LABEL_COLUMN_WIDTH}
                 justifyContent="space-between"
                 alignItems="center"
               >
                 <IconButton
                   icon={<MinusCircleIcon />}
-                  label="Remove"
+                  label={t('label.remove')}
                   color="primary"
                   className="array-remove-icon"
                   sx={{ visibility: 'hidden' }}

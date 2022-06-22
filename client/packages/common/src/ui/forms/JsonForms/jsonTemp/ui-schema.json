@@ -48,7 +48,11 @@
                   "type": "Control",
                   "scope": "#/definitions/Patient/properties/contactDetails",
                   "label": "Contacts",
-                  "itemLabel": "${index}: ${key}"
+                  "itemLabel": "${index}: ${key}",
+                  "defaultNewItem": {
+                    "key": "Default data",
+                    "description": "New item defaults can be provided!"
+                  }
                 },
                 {
                   "type": "Label",
