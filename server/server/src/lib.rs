@@ -88,7 +88,7 @@ async fn run_stage0(
     {
         service_provider
             .app_data_service
-            .set_hardware_id(machine_uid::get().expect("Failed to generate hardware UID"))?;
+            .set_hardware_id(machine_uid::get().expect("Failed to query OS for hardware id"))?;
     }
 
     let service_provider_data = Data::new(service_provider);
