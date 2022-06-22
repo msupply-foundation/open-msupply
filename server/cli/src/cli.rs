@@ -281,8 +281,7 @@ async fn main() {
 
             info!("Initialising users");
             for (input, user_info) in data.users {
-                LoginService::update_user(&ctx, &input.username, &input.password, user_info)
-                    .unwrap();
+                LoginService::update_user(&ctx, &input.password, user_info).unwrap();
             }
 
             if refresh {
