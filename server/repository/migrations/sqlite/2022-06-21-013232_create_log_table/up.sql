@@ -5,7 +5,7 @@ CREATE TABLE log (
         'INVOICE_CREATED',
         'INVOICE_STATUS_SHIPPED'
     )) NOT NULL,
-    user_id TEXT NOT NULL,
-    record_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES user_account(id),
+    record_id TEXT REFERENCES invoice(id),
     created_datetime TIMESTAMP NOT NULL
 )

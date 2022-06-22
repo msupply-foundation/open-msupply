@@ -5,7 +5,7 @@ use super::{
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
     DatetimeFilter, LogType,
 };
@@ -23,7 +23,6 @@ pub struct LogFilter {
     pub log_type: Option<EqualFilter<LogType>>,
     pub user_id: Option<EqualFilter<String>>,
     pub record_id: Option<EqualFilter<String>>,
-    pub created_datetime: Option<EqualFilter<DatetimeFilter>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -36,13 +35,13 @@ pub enum LogSortField {
 
 pub type LogSort = Sort<LogSortField>;
 
-pub struct LogReposititory<'a> {
+pub struct LogRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> LogReposititory<'a> {
+impl<'a> LogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        LogReposititory { connection }
+        LogRepository { connection }
     }
 
     pub fn count(&self, filter: Option<LogFilter>) -> Result<i64, RepositoryError> {
@@ -115,7 +114,6 @@ impl LogFilter {
             log_type: None,
             user_id: None,
             record_id: None,
-            created_datetime: None,
         }
     }
 
@@ -136,11 +134,6 @@ impl LogFilter {
 
     pub fn record_id(mut self, filter: EqualFilter<String>) -> Self {
         self.record_id = Some(filter);
-        self
-    }
-
-    pub fn created_datetime(mut self, filter: EqualFilter<DatetimeFilter>) -> Self {
-        self.created_datetime = Some(filter);
         self
     }
 }
