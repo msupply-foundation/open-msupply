@@ -44,7 +44,6 @@ pub fn delete_inbound_shipment(
                     user_id,
                     DeleteInboundShipmentLine {
                         id: line.invoice_line_row.id.clone(),
-                        invoice_id: input.id.clone(),
                     },
                 )
                 .map_err(|error| DeleteInboundShipmentError::LineDeleteError {

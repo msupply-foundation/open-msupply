@@ -42,7 +42,7 @@ export const useOutboundDeleteLines = () => {
       // hell breaks loose.
       const context = ctx as {
         previous: OutboundFragment;
-        lines: { id: string; invoiceId: string }[];
+        lines: { id: string }[];
       };
       queryClient.setQueryData(queryKey, context?.previous);
     },

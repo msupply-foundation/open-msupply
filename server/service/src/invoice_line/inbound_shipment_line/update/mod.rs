@@ -14,7 +14,6 @@ use validate::validate;
 #[derive(Clone, Debug, Default)]
 pub struct UpdateInboundShipmentLine {
     pub id: String,
-    pub invoice_id: String,
     pub item_id: Option<String>,
     pub location_id: Option<String>,
     pub pack_size: Option<u32>,

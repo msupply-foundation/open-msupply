@@ -99,7 +99,6 @@ const outboundParsers = {
   toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
     return {
       id: line.id,
-      invoiceId: line.invoiceId,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       tax: { percentage: line.taxPercentage },
@@ -109,10 +108,8 @@ const outboundParsers = {
   },
   toDeleteLine: (line: {
     id: string;
-    invoiceId: string;
   }): DeleteOutboundShipmentLineInput => ({
     id: line.id,
-    invoiceId: line.invoiceId,
   }),
   toInsertPlaceholder: (
     line: DraftOutboundLine
@@ -371,7 +368,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to allocate lines');
   },
-  deleteLines: async (lines: { id: string; invoiceId: string }[]) => {
+  deleteLines: async (lines: { id: string }[]) => {
     return sdk.deleteOutboundShipmentLines({
       storeId,
       deleteOutboundShipmentLines: lines.map(outboundParsers.toDeleteLine),

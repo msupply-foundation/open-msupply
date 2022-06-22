@@ -42,21 +42,48 @@
             },
             {
               "type": "Group",
-              "label": "Contact",
+              "label": "Contact Information",
               "elements": [
                 {
                   "type": "Control",
                   "scope": "#/definitions/Patient/properties/contactDetails",
-                  "keyField": "key",
-                  "options": {
-                    "detail": "GENERATED"
+                  "label": "Contacts",
+                  "itemLabel": "${index}: ${key}",
+                  "defaultNewItem": {
+                    "key": "Default data",
+                    "description": "New item defaults can be provided!"
                   }
+                },
+                {
+                  "type": "Label",
+                  "text": "Notice the Addresses show only a subset of available fields, compared with Contacts which show all. That's because we have specified UI schema for the elements, as opposed to letting it be auto-generated"
                 },
                 {
                   "type": "Control",
                   "scope": "#/definitions/Patient/properties/addresses",
+                  "itemLabel": "Address ${index}",
                   "options": {
-                    "detail": "GENERATED"
+                    "detail": {
+                      "type": "VerticalLayout",
+                      "elements": [
+                        {
+                          "type": "Control",
+                          "scope": "/properties/key"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/description"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/address1"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/address2"
+                        }
+                      ]
+                    }
                   }
                 }
               ]
@@ -101,23 +128,33 @@
                   "options": {
                     "detail": "GENERATED"
                   }
-                }
-              ]
-            },
-            {
-              "type": "Group",
-              "label": "Other",
-              "elements": [
-                {
-                  "type": "Label",
-                  "text": "Note: we need to consider how we would edit data that links to other entities in database, e.g. Next of Kin"
                 },
                 {
-                  "type": "Control",
-                  "scope": "#/definitions/Patient/properties/testingArray",
-                  "options": {
-                    "detail": "GENERATED"
-                  }
+                  "type": "Group",
+                  "label": "Other",
+                  "elements": [
+                    {
+                      "type": "Label",
+                      "text": "Plain text label"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/definitions/Patient/properties/testingArray",
+                      "options": {
+                        "detail": {
+                          "type": "VerticalLayout",
+                          "elements": [
+                            {
+                              "type": "Control",
+                              "scope": "/properties/field1"
+                            }
+                          ]
+                        }
+                      },
+                      "itemLabel": "Item ${index}",
+                      "defaultNewItem": { "field1": "New data" }
+                    }
+                  ]
                 }
               ]
             }

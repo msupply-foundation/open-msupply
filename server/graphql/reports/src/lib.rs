@@ -49,7 +49,7 @@ impl ReportQueries {
         let report_format = match format {
             Some(PrintFormat::Html) => Some(service::report::report_service::PrintFormat::Html),
             Some(PrintFormat::Pdf) | None => {
-                Some(service::report::report_service::PrintFormat::Html)
+                Some(service::report::report_service::PrintFormat::Pdf)
             }
         };
         print_report(ctx, store_id, report_id, data_id, report_format).await
