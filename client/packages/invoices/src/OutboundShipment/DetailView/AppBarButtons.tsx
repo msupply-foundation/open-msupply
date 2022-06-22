@@ -7,7 +7,7 @@ import {
   useDetailPanel,
   useTranslation,
   LoadingButton,
-  ReportCategory,
+  ReportContext,
   PrinterIcon,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
@@ -44,7 +44,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem()}
         />
-        <ReportSelector category={ReportCategory.Invoice} onClick={printReport}>
+        <ReportSelector context={ReportContext.OutboundShipment} onClick={printReport}>
           <LoadingButton
             variant="outlined"
             startIcon={<PrinterIcon />}

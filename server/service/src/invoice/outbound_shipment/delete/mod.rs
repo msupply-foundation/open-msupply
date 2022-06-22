@@ -36,7 +36,6 @@ pub fn delete_outbound_shipment(
                     store_id,
                     DeleteOutboundShipmentLine {
                         id: line.invoice_line_row.id.clone(),
-                        invoice_id: id.clone(),
                     },
                 )
                 .map_err(|error| DeleteOutboundShipmentError::LineDeleteError {

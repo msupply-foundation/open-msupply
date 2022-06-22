@@ -155,7 +155,7 @@ mod test {
         let (_, connection, connection_manager, _) =
             setup_all("batch_request_requisition_service", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 

@@ -320,7 +320,6 @@ export type DeleteInboundShipmentLineErrorInterface = {
 
 export type DeleteInboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteInboundShipmentLineResponse = DeleteInboundShipmentLineError | DeleteResponse;
@@ -350,7 +349,6 @@ export type DeleteInboundShipmentServiceLineErrorInterface = {
 
 export type DeleteInboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteInboundShipmentServiceLineResponse = DeleteInboundShipmentServiceLineError | DeleteResponse;
@@ -392,7 +390,6 @@ export type DeleteOutboundShipmentLineErrorInterface = {
 
 export type DeleteOutboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteOutboundShipmentLineResponse = DeleteOutboundShipmentLineError | DeleteResponse;
@@ -422,7 +419,6 @@ export type DeleteOutboundShipmentServiceLineErrorInterface = {
 
 export type DeleteOutboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
 };
 
 export type DeleteOutboundShipmentServiceLineResponse = DeleteOutboundShipmentServiceLineError | DeleteResponse;
@@ -612,10 +608,10 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
-export type EqualFilterReportCategoryInput = {
-  equalAny?: InputMaybe<Array<ReportCategory>>;
-  equalTo?: InputMaybe<ReportCategory>;
-  notEqualTo?: InputMaybe<ReportCategory>;
+export type EqualFilterReportContextInput = {
+  equalAny?: InputMaybe<Array<ReportContext>>;
+  equalTo?: InputMaybe<ReportContext>;
+  notEqualTo?: InputMaybe<ReportContext>;
 };
 
 export type EqualFilterRequisitionStatusInput = {
@@ -2376,28 +2372,29 @@ export type RefreshTokenErrorInterface = {
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
-export enum ReportCategory {
-  Invoice = 'INVOICE',
-  Requisition = 'REQUISITION',
-  Resource = 'RESOURCE',
-  Stocktake = 'STOCKTAKE'
-}
-
 export type ReportConnector = {
   __typename: 'ReportConnector';
   nodes: Array<ReportNode>;
   totalCount: Scalars['Int'];
 };
 
+export enum ReportContext {
+  InboundShipment = 'INBOUND_SHIPMENT',
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Requisition = 'REQUISITION',
+  Resource = 'RESOURCE',
+  Stocktake = 'STOCKTAKE'
+}
+
 export type ReportFilterInput = {
-  category?: InputMaybe<EqualFilterReportCategoryInput>;
+  context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type ReportNode = {
   __typename: 'ReportNode';
-  category: ReportCategory;
+  context: ReportContext;
   id: Scalars['String'];
   /** Human readable name of the report */
   name: Scalars['String'];
@@ -2870,7 +2867,6 @@ export type SyncSettingsNode = {
   centralServerSiteId: Scalars['Int'];
   /** How frequently central data is synced */
   intervalSec: Scalars['Int'];
-  siteHardwareId: Scalars['String'];
   siteId: Scalars['Int'];
   /** Central server url */
   url: Scalars['String'];
@@ -2966,7 +2962,6 @@ export type UpdateInboundShipmentLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   locationId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Int']>;
@@ -3001,7 +2996,6 @@ export type UpdateInboundShipmentServiceLineErrorInterface = {
 
 export type UpdateInboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
@@ -3078,7 +3072,6 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Int']>;
   stockLineId?: InputMaybe<Scalars['String']>;
@@ -3114,7 +3107,6 @@ export type UpdateOutboundShipmentServiceLineErrorInterface = {
 
 export type UpdateOutboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
@@ -3324,7 +3316,6 @@ export type UpdateSyncSettingsInput = {
   intervalSec: Scalars['Int'];
   /** Plain text password */
   password: Scalars['String'];
-  siteHardwareId: Scalars['String'];
   siteId: Scalars['Int'];
   url: Scalars['String'];
   username: Scalars['String'];

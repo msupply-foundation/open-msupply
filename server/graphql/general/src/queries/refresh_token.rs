@@ -4,7 +4,10 @@ use graphql_core::{
     ContextExt, RequestUserData,
 };
 
-use service::token::{JWTRefreshError, TokenPair, TokenService};
+use service::{
+    settings::is_develop,
+    token::{JWTRefreshError, TokenPair, TokenService},
+};
 
 use crate::set_refresh_token_cookie;
 
@@ -79,6 +82,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
     let mut service = TokenService::new(
         &auth_data.token_bucket,
         auth_data.auth_token_secret.as_bytes(),
+        !is_develop(),
     );
 
     let refresh_token = match ctx
@@ -126,7 +130,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
         }
     };
 
-    set_refresh_token_cookie(ctx, &pair.refresh, max_age_refresh, auth_data.danger_no_ssl);
+    set_refresh_token_cookie(ctx, &pair.refresh, max_age_refresh, auth_data.no_ssl);
 
     RefreshTokenResponse::Response(RefreshToken { pair })
 }

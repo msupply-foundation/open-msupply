@@ -226,7 +226,6 @@ interface DeleteInboundShipmentLineErrorInterface {
 }
 input DeleteInboundShipmentLineInput {
   id: String!
-  invoiceId: String!
 }
 union DeleteInboundShipmentLineResponse = DeleteInboundShipmentLineError | DeleteResponse
 type DeleteInboundShipmentLineResponseWithId {
@@ -246,7 +245,6 @@ interface DeleteInboundShipmentServiceLineErrorInterface {
 }
 input DeleteInboundShipmentServiceLineInput {
   id: String!
-  invoiceId: String!
 }
 union DeleteInboundShipmentServiceLineResponse =
     DeleteInboundShipmentServiceLineError
@@ -276,7 +274,6 @@ interface DeleteOutboundShipmentLineErrorInterface {
 }
 input DeleteOutboundShipmentLineInput {
   id: String!
-  invoiceId: String!
 }
 union DeleteOutboundShipmentLineResponse = DeleteOutboundShipmentLineError | DeleteResponse
 type DeleteOutboundShipmentLineResponseWithId {
@@ -296,7 +293,6 @@ interface DeleteOutboundShipmentServiceLineErrorInterface {
 }
 input DeleteOutboundShipmentServiceLineInput {
   id: String!
-  invoiceId: String!
 }
 union DeleteOutboundShipmentServiceLineResponse =
     DeleteOutboundShipmentServiceLineError
@@ -1949,8 +1945,7 @@ type SyncSettingsNode {
   intervalSec: Int!
   centralServerSiteId: Int!
   siteId: Int!
-  siteHardwareId: String!
-}
+=}
 input TaxUpdate {
   """
   Set or unset the tax value (in percentage)
@@ -1999,7 +1994,6 @@ interface UpdateInboundShipmentLineErrorInterface {
 }
 input UpdateInboundShipmentLineInput {
   id: String!
-  invoiceId: String!
   itemId: String
   locationId: String
   packSize: Int
@@ -2027,7 +2021,6 @@ interface UpdateInboundShipmentServiceLineErrorInterface {
 }
 input UpdateInboundShipmentServiceLineInput {
   id: String!
-  invoiceId: String!
   itemId: String
   name: String
   totalBeforeTax: Float
@@ -2094,7 +2087,6 @@ interface UpdateOutboundShipmentLineErrorInterface {
 }
 input UpdateOutboundShipmentLineInput {
   id: String!
-  invoiceId: String!
   itemId: String
   stockLineId: String
   numberOfPacks: Int
@@ -2120,7 +2112,6 @@ interface UpdateOutboundShipmentServiceLineErrorInterface {
 }
 input UpdateOutboundShipmentServiceLineInput {
   id: String!
-  invoiceId: String!
   itemId: String
   name: String
   totalBeforeTax: Float
@@ -2289,7 +2280,6 @@ input UpdateSyncSettingsInput {
   intervalSec: Int!
   centralServerSiteId: Int!
   siteId: Int!
-  siteHardwareId: String!
 }
 type UseSuggestedQuantityError {
   error: UseSuggestedQuantityErrorInterface!

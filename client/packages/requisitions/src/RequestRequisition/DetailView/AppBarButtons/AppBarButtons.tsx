@@ -8,7 +8,7 @@ import {
   useTranslation,
   PrinterIcon,
   LoadingButton,
-  ReportCategory,
+  ReportContext,
 } from '@openmsupply-client/common';
 import {
   ReportRowFragment,
@@ -52,7 +52,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <UseSuggestedQuantityButton />
 
         <ReportSelector
-          category={ReportCategory.Requisition}
+          context={ReportContext.Requisition}
           onClick={printReport}
         >
           <LoadingButton

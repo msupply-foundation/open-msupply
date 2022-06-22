@@ -29,7 +29,6 @@ pub struct UpdateSyncSettingsInput {
     pub interval_sec: u64,
     pub central_server_site_id: u32,
     pub site_id: u32,
-    pub site_hardware_id: String,
 }
 
 #[derive(InputObject)]
@@ -102,7 +101,6 @@ impl UpdateSyncSettingsInput {
             interval_sec: self.interval_sec,
             central_server_site_id: self.central_server_site_id,
             site_id: self.site_id,
-            site_hardware_id: self.site_hardware_id,
         }
     }
 }

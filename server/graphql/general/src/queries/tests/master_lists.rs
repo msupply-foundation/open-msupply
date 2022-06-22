@@ -43,7 +43,7 @@ mod graphql {
         masterlist_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         service_provider.master_list_service = Box::new(masterlist_service);
         service_provider
     }

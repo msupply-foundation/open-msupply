@@ -252,7 +252,7 @@ mod user_account_test {
                 .user_permissions(),
         )
         .await;
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
 
         let user_repo = UserRepository::new(&context.connection);

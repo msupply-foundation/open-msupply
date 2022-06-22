@@ -59,10 +59,8 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_draft_inbound_service_line, mock_draft_inbound_shipment_with_service_lines,
-            mock_draft_inbound_verified_service_line,
-            mock_draft_inbound_verified_with_service_lines, mock_draft_outbound_service_line,
-            mock_draft_outbound_with_service_lines, mock_outbound_shipment_c, MockDataInserts,
+            mock_draft_inbound_service_line, mock_draft_inbound_verified_service_line,
+            mock_draft_outbound_service_line, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -86,11 +84,9 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_line_service;
-
-        let draft_shipment = mock_outbound_shipment_c();
 
         // LineDoesNotExist
         assert_eq!(
@@ -104,45 +100,16 @@ mod test {
             Err(ServiceError::LineDoesNotExist)
         );
 
-        // InvoiceDoesNotExist
-        assert_eq!(
-            service.delete_inbound_shipment_service_line(
-                &context,
-                "store_a",
-                inline_init(|r: &mut DeleteInboundShipmentLine| {
-                    r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = "invalid".to_string();
-                }),
-            ),
-            Err(ServiceError::InvoiceDoesNotExist)
-        );
-
         // NotAnInboundShipment
         assert_eq!(
             service.delete_inbound_shipment_service_line(
                 &context,
                 "store_a",
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
-                    r.invoice_id = mock_draft_outbound_with_service_lines().id;
                     r.id = mock_draft_outbound_service_line().id;
                 }),
             ),
             Err(ServiceError::NotAnInboundShipment)
-        );
-
-        // NotThisInvoiceLine
-        assert_eq!(
-            service.delete_inbound_shipment_service_line(
-                &context,
-                "store_a",
-                inline_init(|r: &mut DeleteInboundShipmentLine| {
-                    r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = draft_shipment.id.clone();
-                }),
-            ),
-            Err(ServiceError::NotThisInvoiceLine(
-                mock_draft_inbound_shipment_with_service_lines().id
-            ))
         );
 
         // CannotEditInvoice
@@ -152,7 +119,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = mock_draft_inbound_verified_service_line().id;
-                    r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
                 }),
             ),
             Err(ServiceError::CannotEditInvoice)
@@ -167,7 +133,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -177,7 +143,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                 }),
             )
             .unwrap();

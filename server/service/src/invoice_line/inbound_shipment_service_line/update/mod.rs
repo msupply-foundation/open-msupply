@@ -13,7 +13,6 @@ use crate::{
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdateInboundShipmentServiceLine {
     pub id: String,
-    pub invoice_id: String,
     pub item_id: Option<String>,
     pub name: Option<String>,
     pub total_before_tax: Option<f64>,
@@ -84,11 +83,8 @@ mod test {
     use repository::{
         mock::{
             mock_default_service_item, mock_draft_inbound_service_line,
-            mock_draft_inbound_shipment_no_lines, mock_draft_inbound_shipment_with_service_lines,
-            mock_draft_inbound_verified_service_line,
-            mock_draft_inbound_verified_with_service_lines, mock_draft_outbound_service_line,
-            mock_draft_outbound_with_service_lines, mock_item_a, mock_item_service_item,
-            MockDataInserts,
+            mock_draft_inbound_verified_service_line, mock_draft_outbound_service_line,
+            mock_item_a, mock_item_service_item, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -114,7 +110,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -130,45 +126,16 @@ mod test {
             Err(ServiceError::LineDoesNotExist)
         );
 
-        // InvoiceDoesNotExist
-        assert_eq!(
-            service.update_inbound_shipment_service_line(
-                &context,
-                "store_a",
-                inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
-                    r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = "invalid".to_string();
-                }),
-            ),
-            Err(ServiceError::InvoiceDoesNotExist)
-        );
-
         // NotAnInboundShipment
         assert_eq!(
             service.update_inbound_shipment_service_line(
                 &context,
                 "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
-                    r.invoice_id = mock_draft_outbound_with_service_lines().id;
                     r.id = mock_draft_outbound_service_line().id;
                 }),
             ),
             Err(ServiceError::NotAnInboundShipment)
-        );
-
-        // NotThisInvoiceLine
-        assert_eq!(
-            service.update_inbound_shipment_service_line(
-                &context,
-                "store_a",
-                inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
-                    r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = mock_draft_inbound_shipment_no_lines().id;
-                }),
-            ),
-            Err(ServiceError::NotThisInvoiceLine(
-                mock_draft_inbound_shipment_with_service_lines().id
-            ))
         );
 
         // CannotEditInvoice
@@ -178,7 +145,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_verified_service_line().id;
-                    r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
                 }),
             ),
             Err(ServiceError::CannotEditInvoice)
@@ -191,7 +157,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some("invalid".to_string())
                 }),
             ),
@@ -205,7 +170,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some(mock_item_a().id)
                 }),
             ),
@@ -221,7 +185,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -232,7 +196,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some(mock_item_service_item().id);
                 }),
             )
@@ -252,7 +215,6 @@ mod test {
                 "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id;
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some(mock_default_service_item().id);
                     r.name = Some("name".to_string());
                 }),
@@ -274,7 +236,6 @@ mod test {
                 "store_a",
                 UpdateInboundShipmentServiceLine {
                     id: mock_draft_inbound_service_line().id,
-                    invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: Some(1.0),
@@ -295,7 +256,6 @@ mod test {
         assert_eq!(
             line,
             inline_edit(&line, |mut u| {
-                u.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                 u.item_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 1.0;

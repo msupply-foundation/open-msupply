@@ -42,8 +42,8 @@ module.exports = env => {
       filename: '[name].[contenthash].js',
       chunkFilename: '[contenthash].js',
       clean: {
-        keep: '.gitignore' // see dist/.gitignore for comments
-      }
+        keep: asset => asset.includes('.gitignore'), // see dist/.gitignore for comments
+      },
     },
     optimization: {
       splitChunks: {
@@ -87,7 +87,7 @@ module.exports = env => {
     },
     plugins: [
       new ReactRefreshWebpackPlugin(),
-      new webpack.DefinePlugin({ 'API_HOST': JSON.stringify(env.API_HOST) }),
+      new webpack.DefinePlugin({ API_HOST: JSON.stringify(env.API_HOST) }),
       new BundleAnalyzerPlugin({
         /**
          * In "server" mode analyzer will start HTTP server to show bundle report.
