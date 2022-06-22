@@ -128,7 +128,7 @@ mod remote_sync_integration_tests {
     ///
     /// Note: the sub tests can't be parallelized since every sync test need exclusive access to the
     /// central server
-    #[actix_rt::test]
+    // #[actix_rt::test]
     #[allow(dead_code)]
     async fn test_remote_syncing() {
         let sync_settings = SyncSettings {
@@ -144,6 +144,8 @@ mod remote_sync_integration_tests {
         println!("number...");
         let number_tester = NumberSyncRecordTester {};
         test_sync_record(&sync_settings, &number_tester).await;
+
+        // Name test was removed here: 0a457c43c2e3ce472b337a2ac401e31ec0548e00
 
         println!("Location...");
         let location_tester = LocationSyncRecordTester {};
