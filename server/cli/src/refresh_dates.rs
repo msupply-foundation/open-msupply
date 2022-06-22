@@ -31,7 +31,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("requisition_line", "snapshot_datetime"),
         ("stocktake", "created_datetime"),
         ("stocktake", "finalised_datetime"),
-        ("document", "timestamp"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
