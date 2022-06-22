@@ -25,7 +25,7 @@ import schema from './jsonTemp/schema.json';
 import uiSchema from './jsonTemp/ui-schema.json';
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 
-type JsonData = {
+export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
 };
 

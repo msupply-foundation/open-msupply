@@ -34,7 +34,8 @@
                       ]
                     }
                   },
-                  "keyField": "Item name: ${field1}"
+                  "itemLabel": "Item ${index}",
+                  "defaultNewItem": { "field1": "New data" }
                 }
               ]
             },

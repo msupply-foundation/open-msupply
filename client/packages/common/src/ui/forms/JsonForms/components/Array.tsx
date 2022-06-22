@@ -1,24 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { ComponentType, useMemo } from 'react';
 import {
   rankWith,
   schemaTypeIs,
-  ControlProps,
-  uiTypeIs,
-  LayoutProps,
-  ArrayLayoutProps,
   ArrayControlProps,
   findUISchema,
-  findMatchingUISchema,
+  JsonFormsUISchemaRegistryEntry,
+  ControlElement,
+  Layout,
 } from '@jsonforms/core';
 import {
-  JsonFormsInitStateProps,
-  withJsonFormsControlProps,
-  withJsonFormsArrayLayoutProps,
-  withJsonFormsLayoutProps,
   withJsonFormsArrayControlProps,
   JsonFormsDispatch,
 } from '@jsonforms/react';
-import { JsonForms } from '@jsonforms/react';
 import {
   Box,
   Typography,
@@ -26,71 +19,131 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { IconButton, PlusCircleIcon } from '@openmsupply-client/common';
+import {
+  IconButton,
+  PlusCircleIcon,
+  MinusCircleIcon,
+  ChevronDownIcon,
+} from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
+import {
+  FORM_LABEL_COLUMN_WIDTH,
+  FORM_INPUT_COLUMN_WIDTH,
+} from '../styleConstants';
+import { JsonData } from '../useJsonForms';
+
+interface UISchemaWithCustomProps extends ControlElement {
+  defaultNewItem?: JsonData;
+  itemLabel?: string;
+}
+
+interface ArrayControlCustomProps extends ArrayControlProps {
+  uischema: UISchemaWithCustomProps;
+  removeItems: (path: string, toDelete: number[]) => () => void;
+  data: JsonData[];
+}
+
+interface FoundUiSchema extends Layout {
+  elements: ControlElement[];
+}
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
-const UIComponent = (props: ArrayControlProps) => {
+const UIComponent = (props: ArrayControlCustomProps) => {
   const {
     uischema,
     uischemas,
     schema,
     path,
     data,
-    errors,
     addItem,
-    childErrors,
+    removeItems,
     enabled,
     label,
     rootSchema,
   } = props;
 
-  const foundUISchema = useMemo(() =>
-    findUISchema(
-      uischemas,
-      schema,
-      uischema.scope,
-      path,
-      undefined,
-      uischema,
-      rootSchema
-    )
-  );
-
-  console.log('keyField', uischema.keyField);
-  console.log('data', data);
+  const foundUISchema = useMemo(
+    () =>
+      findUISchema(
+        uischemas as JsonFormsUISchemaRegistryEntry[],
+        schema,
+        uischema.scope,
+        path,
+        undefined,
+        uischema,
+        rootSchema
+      ),
+    []
+  ) as FoundUiSchema;
 
   return (
-    <Box display="flex" flexDirection="column" gap={0.5}>
+    <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
       <Box display="flex" width="100%" gap={2} alignItems="center">
-        <Box width="40%">
+        <Box width={FORM_LABEL_COLUMN_WIDTH}>
           <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
             {label}:
           </Typography>
         </Box>
-        <Box width="60%" textAlign="right">
+        <Box width={FORM_INPUT_COLUMN_WIDTH} textAlign="right">
           <IconButton
             icon={<PlusCircleIcon />}
             label="Add another"
             color="primary"
-            onClick={() => addItem(path, null)}
+            onClick={addItem(
+              path,
+              uischema.defaultNewItem ?? createNewItem(foundUISchema)
+            )}
           />
         </Box>
       </Box>
       {data.map((child, index) => {
         return (
-          <Accordion key={index} defaultExpanded={index === 0} sx={{ mb: 1 }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography
+          <Accordion
+            key={index}
+            defaultExpanded={index === data.length - 1}
+            sx={{
+              mt: '0 !important',
+              mb: 1,
+            }}
+          >
+            <AccordionSummary
+              expandIcon={<ChevronDownIcon />}
+              sx={{
+                '&:hover .array-remove-icon': { visibility: 'visible' },
+                margin: '0 !important',
+                minHeight: '0 !important',
+                '.MuiAccordionSummary-content': {
+                  margin: '5px !important',
+                },
+                '.Mui-expanded': {
+                  marginBottom: '0 !important',
+                },
+              }}
+            >
+              <Box
+                display="flex"
                 width="40%"
-                sx={{ fontWeight: 'bold', textAlign: 'end' }}
+                justifyContent="space-between"
+                alignItems="center"
               >
-                {child?.[uischema?.keyField]
-                  ? RegexUtils.stringSubstitution(child?.[uischema?.keyField])
-                  : index + 1}
-              </Typography>
+                <IconButton
+                  icon={<MinusCircleIcon />}
+                  label="Remove"
+                  color="primary"
+                  className="array-remove-icon"
+                  sx={{ visibility: 'hidden' }}
+                  onClick={removeItems(path, [index])}
+                />
+                <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
+                  {uischema?.itemLabel
+                    ? RegexUtils.formatTemplateString(uischema?.itemLabel, {
+                        ...child,
+                        index: index + 1,
+                      })
+                    : index + 1}
+                </Typography>
+              </Box>
             </AccordionSummary>
             <AccordionDetails>
               <JsonFormsDispatch
@@ -108,4 +161,21 @@ const UIComponent = (props: ArrayControlProps) => {
   );
 };
 
-export const Array = withJsonFormsArrayControlProps(UIComponent);
+const withJsonFormsArrayCustomProps = (
+  component: ComponentType<ArrayControlCustomProps>
+) =>
+  withJsonFormsArrayControlProps(component as ComponentType<ArrayControlProps>);
+
+export const Array = withJsonFormsArrayCustomProps(UIComponent);
+
+const createNewItem = (foundUISchema: FoundUiSchema) => {
+  try {
+    const fields = foundUISchema.elements.map(e => [
+      e.scope.split('/').pop(),
+      undefined,
+    ]);
+    return Object.fromEntries(fields);
+  } catch {
+    return null;
+  }
+};
