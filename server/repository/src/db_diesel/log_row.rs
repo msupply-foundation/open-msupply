@@ -20,7 +20,7 @@ joinable!(log -> user_account (user_id));
 joinable!(log -> invoice (record_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
-#[DbValueStyle = "snake_case"]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum LogType {
     UserLoggedIn,
     InvoiceCreated,

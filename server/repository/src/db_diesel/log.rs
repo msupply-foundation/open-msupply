@@ -7,7 +7,7 @@ use diesel::prelude::*;
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    DatetimeFilter, LogType,
+    LogType,
 };
 
 use crate::{EqualFilter, Pagination, Sort};
