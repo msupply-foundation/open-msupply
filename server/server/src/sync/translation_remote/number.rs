@@ -1,6 +1,6 @@
 use repository::{
-    RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, NumberRow, NumberRowRepository,
-    NumberRowType, StorageConnection,
+    ChangelogRow, ChangelogTableName, NumberRow, NumberRowRepository, NumberRowType,
+    RemoteSyncBufferRow, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};
@@ -17,6 +17,8 @@ pub struct LegacyNumberRow {
     pub ID: String,
     pub name: String,
     pub value: i64,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
 }
 
 pub struct NumberTranslation {}
@@ -77,6 +79,7 @@ impl RemotePushUpsertTranslation for NumberTranslation {
             ID: id.clone(),
             name,
             value,
+            store_id: store_id.clone(),
         };
 
         Ok(Some(vec![PushUpsertRecord {
@@ -118,4 +121,28 @@ fn to_number_name(number_type: &NumberRowType, store_id: &str) -> Option<String>
         NumberRowType::ResponseRequisition => "response_requisition",
     };
     Some(format!("{}_for_store_{}", number_str, store_id))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sync::translation_remote::{
+        pull::RemotePullTranslation, test_data::number::get_test_number_records,
+    };
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_number_translation() {
+        let (_, connection, _, _) =
+            setup_all("test_number_translation", MockDataInserts::all()).await;
+
+        let translator = NumberTranslation {};
+        for record in get_test_number_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.remote_sync_buffer_row)
+                .expect(&format!("{:#?}", &record.remote_sync_buffer_row));
+
+            assert_eq!(translation_result, record.translated_record,);
+        }
+    }
 }
