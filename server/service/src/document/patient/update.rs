@@ -86,7 +86,7 @@ impl From<RepositoryError> for UpdatePatientError {
 fn generate(user_id: &str, patient: &SchemaPatient, input: UpdatePatient) -> RawDocument {
     RawDocument {
         name: patient_doc_name(&patient.id),
-        parents: vec![],
+        parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
         timestamp: Utc::now(),
         r#type: PATIENT_TYPE.to_string(),
@@ -153,4 +153,157 @@ fn validate(
     }
 
     Ok(patient)
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{mock::MockDataInserts, test_db::setup_all, DocumentRepository};
+    use serde_json::json;
+
+    use crate::{
+        document::patient::patient_schema::{
+            Address, ContactDetails, Gender, Patient, SocioEconomics,
+        },
+        service_provider::ServiceProvider,
+    };
+
+    use super::UpdatePatientError;
+
+    #[actix_rt::test]
+    async fn test_patient_update() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_patient_update",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.context().unwrap();
+
+        let address = Address {
+            address_1: Some("firstaddressline".to_string()),
+            address_2: Some("secondaddressline".to_string()),
+            city: None,
+            country: Some("mycountry".to_string()),
+            description: None,
+            district: None,
+            key: "key".to_string(),
+            region: None,
+            zip_code: None,
+        };
+        let contact_details = ContactDetails {
+            description: None,
+            email: Some("myemail".to_string()),
+            key: "key".to_string(),
+            mobile: Some("45678".to_string()),
+            phone: None,
+            website: Some("mywebsite".to_string()),
+        };
+        let patient = Patient {
+            id: "testid".to_string(),
+            addresses: vec![address.clone()],
+            contact_details: vec![contact_details.clone()],
+            date_of_birth: Some("2000-03-04".to_string()),
+            date_of_birth_is_estimated: None,
+            family: None,
+            first_name: Some("firstname".to_string()),
+            last_name: Some("lastname".to_string()),
+            gender: Some(Gender::TransgenderFemale),
+            health_center: None,
+            passport_number: None,
+            socio_economics: SocioEconomics {
+                education: None,
+                literate: None,
+                occupation: None,
+            },
+        };
+
+        let service = &service_provider.patient_service;
+        let err = service
+            .update_patient(
+                &ctx,
+                &service_provider,
+                "store_a".to_string(),
+                "user",
+                super::UpdatePatient {
+                    data: json!({"invalid": true}),
+                    // TODO use a valid patient schema id
+                    schema_id: None,
+                    parent: None,
+                },
+            )
+            .err()
+            .unwrap();
+        matches!(err, UpdatePatientError::InvalidDataSchema(_));
+
+        // success insert
+        service
+            .update_patient(
+                &ctx,
+                &service_provider,
+                "store_a".to_string(),
+                "user",
+                super::UpdatePatient {
+                    data: serde_json::to_value(patient.clone()).unwrap(),
+                    schema_id: None,
+                    parent: None,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            service
+                .update_patient(
+                    &ctx,
+                    &service_provider,
+                    "store_a".to_string(),
+                    "user",
+                    super::UpdatePatient {
+                        data: serde_json::to_value(patient.clone()).unwrap(),
+                        schema_id: None,
+                        parent: None,
+                    },
+                )
+                .err()
+                .unwrap(),
+            UpdatePatientError::PatientExists,
+        );
+
+        assert_eq!(
+            service
+                .update_patient(
+                    &ctx,
+                    &service_provider,
+                    "store_a".to_string(),
+                    "user",
+                    super::UpdatePatient {
+                        data: serde_json::to_value(patient.clone()).unwrap(),
+                        schema_id: None,
+                        parent: Some("invalid".to_string()),
+                    },
+                )
+                .err()
+                .unwrap(),
+            UpdatePatientError::InvalidParentId
+        );
+
+        // success update
+        let v0 = DocumentRepository::new(&ctx.connection)
+            .find_one_by_name("store_a", "patients/testid")
+            .unwrap()
+            .unwrap();
+        service
+            .update_patient(
+                &ctx,
+                &service_provider,
+                "store_a".to_string(),
+                "user",
+                super::UpdatePatient {
+                    data: serde_json::to_value(patient.clone()).unwrap(),
+                    schema_id: None,
+                    parent: Some(v0.id),
+                },
+            )
+            .unwrap();
+    }
 }

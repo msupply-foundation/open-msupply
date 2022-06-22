@@ -5,10 +5,10 @@ use crate::service_provider::ServiceProvider;
 
 pub use self::query::*;
 mod query;
-pub use self::insert::*;
-mod insert;
+pub use self::update::*;
 pub mod patient_document_update;
 pub mod patient_schema;
+mod update;
 
 /// The default document type for a patient
 pub const PATIENT_TYPE: &str = "Patient";
