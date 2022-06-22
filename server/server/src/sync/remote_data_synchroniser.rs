@@ -338,6 +338,8 @@ impl<'a> RemoteSyncState<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
     use crate::sync::translation_remote::{
         table_name_to_central,
         test_data::{
@@ -351,9 +353,15 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_integrate_remote_records() {
+        if env::var("RUST_LOG").is_err() {
+            // Default rust log level to info
+            env::set_var("RUST_LOG", "warn");
+        }
+
+        env_logger::init();
+
         let (_, connection, _, _) = test_db::setup_all(
             "omsupply-database-integrate_remote_records",
-            // can't use all mocks because there will b
             MockDataInserts::all(),
         )
         .await;
