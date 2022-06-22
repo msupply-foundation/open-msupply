@@ -16,7 +16,6 @@ use service::invoice_line::inbound_shipment_line::{
 #[graphql(name = "DeleteInboundShipmentLineInput")]
 pub struct DeleteInput {
     pub id: String,
-    pub invoice_id: String,
 }
 
 #[derive(SimpleObject)]
@@ -68,8 +67,8 @@ pub enum DeleteErrorInterface {
 
 impl DeleteInput {
     pub fn to_domain(self) -> ServiceInput {
-        let DeleteInput { id, invoice_id } = self;
-        ServiceInput { id, invoice_id }
+        let DeleteInput { id } = self;
+        ServiceInput { id }
     }
 }
 

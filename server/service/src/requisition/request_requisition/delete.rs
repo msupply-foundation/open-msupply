@@ -133,7 +133,7 @@ mod test_delete {
         let (_, _, connection_manager, _) =
             setup_all("delete_request_requisition_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 
@@ -205,7 +205,7 @@ mod test_delete {
         let (_, connection, connection_manager, _) =
             setup_all("delete_request_requisition_success", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.requisition_service;
 

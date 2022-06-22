@@ -8,6 +8,7 @@ use repository::{
 use crate::{
     auth_data::AuthData,
     service_provider::ServiceContext,
+    settings::is_develop,
     token::{JWTValidationError, OmSupplyClaim, TokenService},
 };
 
@@ -310,6 +311,7 @@ pub fn validate_auth(
     let service = TokenService::new(
         &auth_data.token_bucket,
         auth_data.auth_token_secret.as_bytes(),
+        !is_develop(),
     );
     let claims = match service.verify_token(auth_token, None) {
         Ok(claims) => claims,
@@ -521,13 +523,14 @@ mod permission_validation_test {
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),
             token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
-            danger_no_ssl: true,
+            no_ssl: true,
             debug_no_access_control: false,
         };
         let user_id = "test_user_id";
         let mut service = TokenService::new(
             &auth_data.token_bucket,
             auth_data.auth_token_secret.as_bytes(),
+            true,
         );
         let token_pair = service.jwt_token(user_id, 60, 120).unwrap();
 
@@ -537,7 +540,7 @@ mod permission_validation_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         let context = service_provider.context().unwrap();
         let permission_repo = UserPermissionRowRepository::new(&context.connection);
 
@@ -697,19 +700,20 @@ mod permission_validation_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
 
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),
             token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
-            danger_no_ssl: true,
+            no_ssl: true,
             debug_no_access_control: false,
         };
 
         let token = TokenService::new(
             &auth_data.token_bucket,
             auth_data.auth_token_secret.as_bytes(),
+            true,
         )
         .jwt_token(&user().id, 60, 120)
         .unwrap()
@@ -731,6 +735,7 @@ mod permission_validation_test {
         let token = TokenService::new(
             &auth_data.token_bucket,
             auth_data.auth_token_secret.as_bytes(),
+            true,
         )
         .jwt_token(&user_without_permission().id, 60, 120)
         .unwrap()

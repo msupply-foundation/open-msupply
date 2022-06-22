@@ -1,5 +1,5 @@
 import React, { FC, PropsWithChildren } from 'react';
-import { Box, ReportCategory, Typography } from '@openmsupply-client/common';
+import { Box, ReportContext, Typography } from '@openmsupply-client/common';
 import { AlertIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import {
@@ -11,7 +11,7 @@ import {
 import { ReportRowFragment, useReport } from '../api';
 
 interface ReportSelectorProps {
-  category?: ReportCategory;
+  context?: ReportContext;
   onClick: (report: ReportRowFragment) => void;
 }
 
@@ -34,12 +34,12 @@ const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
 };
 
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
-  category,
+  context,
   children,
   onClick,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReport.document.list(category);
+  const { data, isLoading } = useReport.document.list(context);
   const t = useTranslation('app');
 
   const reportButtons = data?.nodes?.map(report => (

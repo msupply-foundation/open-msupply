@@ -14,7 +14,7 @@ mod tests {
         let (_, _, connection_manager, _) =
             setup_all("insert_document_registry_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = ServiceProvider::new(connection_manager, "");
         let context = service_provider.context().unwrap();
         let service = service_provider.document_registry_service;
 
