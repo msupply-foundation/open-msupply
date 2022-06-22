@@ -131,7 +131,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     // resources: try to use remaining files as resources
     for (name, path) in files {
         if name.ends_with(".graphql") {
-            // ignore graphql files
+            // ignore graphql files (they are included using the query argument)
             continue;
         }
         let data = match fs::read_to_string(&path) {
@@ -141,20 +141,28 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
                 continue;
             }
         };
-        let (name, value) = if name.ends_with(".json") {
+        let (name, value) = if name.ends_with(".ref.json") {
+            // add reference
+            let data = serde_json::from_str(&data).map_err(|err| {
+                anyhow::Error::msg(format!("Failed to parse reference {}: {}", name, err))
+            })?;
+            let name = name.strip_suffix(".ref.json").unwrap();
+            (name.to_string(), ReportDefinitionEntry::Ref(data))
+        } else if name.ends_with(".json") {
             // add data as json
+            let data = serde_json::from_str(&data).map_err(|err| {
+                anyhow::Error::msg(format!("Failed to parse json resource {}: {}", name, err))
+            })?;
             let name = name.strip_suffix(".json").unwrap();
-            (
-                name.to_string(),
-                serde_json::from_str(&data).map_err(|err| {
-                    anyhow::Error::msg(format!("Failed to parse json resource {}: {}", name, err))
-                })?,
-            )
+            (name.to_string(), ReportDefinitionEntry::Resource(data))
         } else {
-            (name, serde_json::Value::String(data))
+            (
+                name,
+                ReportDefinitionEntry::Resource(serde_json::Value::String(data)),
+            )
         };
 
-        entries.insert(name, ReportDefinitionEntry::Resource(value));
+        entries.insert(name, value);
     }
 
     Ok(ReportDefinition { index, entries })

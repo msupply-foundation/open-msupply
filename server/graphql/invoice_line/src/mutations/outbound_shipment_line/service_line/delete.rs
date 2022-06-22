@@ -15,7 +15,6 @@ use service::invoice_line::outbound_shipment_line::DeleteOutboundShipmentLine as
 #[graphql(name = "DeleteOutboundShipmentServiceLineInput")]
 pub struct DeleteInput {
     pub id: String,
-    pub invoice_id: String,
 }
 
 #[derive(SimpleObject)]
@@ -72,8 +71,8 @@ pub enum DeleteErrorInterface {
 
 impl DeleteInput {
     pub fn to_domain(self) -> ServiceInput {
-        let DeleteInput { id, invoice_id } = self;
-        ServiceInput { id, invoice_id }
+        let DeleteInput { id } = self;
+        ServiceInput { id }
     }
 }
 
@@ -147,7 +146,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone());
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         service_provider.invoice_line_service = Box::new(test_service);
         service_provider
     }
@@ -178,7 +177,6 @@ mod test {
             "storeId": "store_a",
             "input": {
                 "id": "n/a",
-                "invoiceId": "n/a"
             }
         }));
 
@@ -296,7 +294,6 @@ mod test {
                 input,
                 ServiceInput {
                     id: "delete line id input".to_string(),
-                    invoice_id: "invoice_id".to_string(),
                 }
             );
             Ok("delete line id input".to_string())
@@ -305,7 +302,6 @@ mod test {
         let variables = json!({
           "input": {
             "id": "delete line id input",
-            "invoiceId": "invoice_id",
           },
           "storeId": "store_a"
         });

@@ -64,7 +64,6 @@ fn generate_line(
         number_of_packs,
         location_id,
         id: _,
-        invoice_id: _,
         item_id: _,
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,

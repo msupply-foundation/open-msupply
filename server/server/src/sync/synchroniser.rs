@@ -55,6 +55,7 @@ impl Synchroniser {
     ) -> anyhow::Result<Self> {
         let client = Client::new();
         let url = Url::parse(&settings.url)?;
+        let hardware_id = service_provider.app_data_service.get_hardware_id()?;
         let credentials = SyncCredentials {
             username: settings.username.clone(),
             password_sha256: settings.password_sha256.clone(),
@@ -63,9 +64,9 @@ impl Synchroniser {
             url.clone(),
             credentials.clone(),
             client.clone(),
-            &settings.site_hardware_id,
+            &hardware_id,
         );
-        let sync_api_v3 = SyncApiV3::new(url, credentials, client, &settings.site_hardware_id)?;
+        let sync_api_v3 = SyncApiV3::new(url, credentials, client, &hardware_id)?;
         Ok(Synchroniser {
             remote_data: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
@@ -165,7 +166,8 @@ mod tests {
 
         // 0.0.0.0:0 should hopefully be always unreachable and valid url
 
-        let service_provider = Data::new(ServiceProvider::new(connection_manager.clone()));
+        let service_provider =
+            Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
         let ctx = service_provider.context().unwrap();
         let service = &service_provider.settings;
         let s = Synchroniser::new(

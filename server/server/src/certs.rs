@@ -9,7 +9,7 @@ use rustls::ServerConfig;
 use service::settings::{is_develop, ServerSettings};
 
 #[derive(Debug)]
-pub struct SelfSignedCertFiles {
+pub struct CertFiles {
     pub private_cert_file: String,
     pub public_cert_file: String,
 }
@@ -19,7 +19,7 @@ const CERTS_PATH: &str = "certs";
 pub const PRIVATE_CERT_FILE: &str = "key.pem";
 pub const PUBLIC_CERT_FILE: &str = "cert.pem";
 
-pub fn find_self_signed_certs(server_settings: &ServerSettings) -> Option<SelfSignedCertFiles> {
+pub fn find_certs(server_settings: &ServerSettings) -> Option<CertFiles> {
     let cert_dir = PathBuf::new()
         .join(&server_settings.base_dir.clone().unwrap_or(".".to_string()))
         .join(CERTS_PATH);
@@ -29,16 +29,14 @@ pub fn find_self_signed_certs(server_settings: &ServerSettings) -> Option<SelfSi
     if !key_file.exists() || !cert_file.exists() {
         return None;
     }
-    Some(SelfSignedCertFiles {
+    Some(CertFiles {
         private_cert_file: key_file.to_string_lossy().to_string(),
         public_cert_file: cert_file.to_string_lossy().to_string(),
     })
 }
 
 /// Load rustls server config
-pub fn load_self_signed_certs_rustls(
-    cert_files: SelfSignedCertFiles,
-) -> Result<ServerConfig, anyhow::Error> {
+pub fn load_certs_rustls(cert_files: CertFiles) -> Result<ServerConfig, anyhow::Error> {
     let certfile = std::fs::File::open(&cert_files.public_cert_file)?;
     let mut reader = BufReader::new(certfile);
     let certs = rustls_pemfile::certs(&mut reader)?
@@ -78,14 +76,14 @@ pub struct Certificates {
 }
 
 impl Certificates {
-    pub fn load(settings: &ServerSettings) -> std::io::Result<Self> {
-        let cert = find_self_signed_certs(settings);
+    ///Try to load ssl certificate, in production mode certificates are required unless danger_allow_http is set in the config
+    pub fn try_load(settings: &ServerSettings) -> std::io::Result<Self> {
+        let cert = find_certs(settings);
 
         let config = match cert {
-            Some(cert_files) => Some(
-                load_self_signed_certs_rustls(cert_files)
-                    .expect("Invalid self signed certificates"),
-            ),
+            Some(cert_files) => {
+                Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))
+            }
             None => {
                 if !is_develop() && !settings.danger_allow_http {
                     error!("No certificates found");
