@@ -197,7 +197,6 @@ export const SyncSettings = ({}) => {
     centralServerSiteId: data?.syncSettings?.centralServerSiteId || 1,
     intervalSec: data?.syncSettings?.intervalSec || 10,
     password: '',
-    siteHardwareId: data?.syncSettings?.siteHardwareId || '',
     siteId: data?.syncSettings?.siteId || 2,
     url: data?.syncSettings?.url || '',
     username: data?.syncSettings?.username || '',

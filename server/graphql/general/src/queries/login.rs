@@ -104,7 +104,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         &ctx,
         &pair.refresh,
         pair.refresh_expiry_date - now,
-        auth_data.danger_no_ssl,
+        auth_data.no_ssl,
     );
 
     Ok(AuthTokenResponse::Response(AuthToken { pair }))

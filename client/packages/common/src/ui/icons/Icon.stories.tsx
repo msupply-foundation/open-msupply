@@ -32,6 +32,7 @@ import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 import { MenuDotsIcon } from './MenuDots';
 import { MessagesIcon } from './Messages';
 import { MessageSquareIcon } from './MessageSquare';
+import { MinusCircleIcon } from './MinusCircle';
 import { PlusCircleIcon } from './PlusCircle';
 import { PowerIcon } from './Power';
 import { PrinterIcon } from './Printer';
@@ -113,6 +114,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <MessagesIcon {...args} />, name: 'Messages' },
     { icon: <MessageSquareIcon {...args} />, name: 'MessageSquare' },
     { icon: <PlusCircleIcon {...args} />, name: 'PlusCircle' },
+    { icon: <MinusCircleIcon {...args} />, name: 'MinusCircle' },
     { icon: <PowerIcon {...args} />, name: 'Power' },
     { icon: <PrinterIcon {...args} />, name: 'Printer' },
     { icon: <RadioIcon {...args} />, name: 'Radio' },
