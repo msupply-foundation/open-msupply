@@ -84,7 +84,7 @@ const PatientListComponent: FC = () => {
         slideAnimation={false}
         Transition={Transition}
       >
-        <DetailModal nameId={selectedId} />
+        <DetailModal docId={selectedId} />
       </Modal>
     </>
   );

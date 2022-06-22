@@ -1,7 +1,7 @@
 overwrite: true
-schema:
-  [
+schema: [
     'http://localhost:8000/graphql',
+    # '../server/schema.graphql',
     './packages/common/src/additions.schema.graphql',
   ]
 generates:
