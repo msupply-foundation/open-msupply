@@ -104,7 +104,7 @@ const UIComponent = (props: ArrayControlCustomProps) => {
             defaultExpanded={index === data.length - 1}
             sx={{
               mt: '0 !important',
-              mb: 1,
+              mb: index === data.length - 1 ? '20px !important' : 1,
             }}
           >
             <AccordionSummary
@@ -135,7 +135,13 @@ const UIComponent = (props: ArrayControlCustomProps) => {
                   sx={{ visibility: 'hidden' }}
                   onClick={removeItems(path, [index])}
                 />
-                <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
+                <Typography
+                  sx={{
+                    fontWeight: 'bold',
+                    textAlign: 'end',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {uischema?.itemLabel
                     ? RegexUtils.formatTemplateString(uischema?.itemLabel, {
                         ...child,
@@ -176,6 +182,6 @@ const createNewItem = (foundUISchema: FoundUiSchema) => {
     ]);
     return Object.fromEntries(fields);
   } catch {
-    return null;
+    return {};
   }
 };

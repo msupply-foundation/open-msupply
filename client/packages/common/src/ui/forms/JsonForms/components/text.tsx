@@ -7,7 +7,6 @@ export const stringTester = rankWith(3, schemaTypeIs('string'));
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
-
   return (
     <DetailInputWithLabelRow
       label={label}
