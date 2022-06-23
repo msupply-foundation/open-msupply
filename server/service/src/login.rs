@@ -4,9 +4,11 @@ use std::{
 };
 
 use bcrypt::BcryptError;
+use chrono::Utc;
 use log::info;
 use repository::{
-    Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
+    LogRow, LogRowRepository, LogType, Permission, RepositoryError, UserAccountRow,
+    UserPermissionRow, UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
@@ -132,6 +134,24 @@ impl LoginService {
                 });
             }
         };
+
+        let log_service = LogRowRepository::new(&service_ctx.connection);
+        let log = LogRow {
+            id: uuid(),
+            log_type: LogType::UserLoggedIn,
+            user_id: Some(user_account.id.clone()),
+            record_id: None,
+            created_datetime: Utc::now().naive_utc(),
+        };
+        match log_service.upsert_one(&log) {
+            Ok(_) => (),
+            Err(e) => {
+                return Err(LoginError::InternalError(format!(
+                    "Couldn't log login for {}: {:?}",
+                    user_account.username, e
+                )));
+            }
+        }
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
