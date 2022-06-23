@@ -44,7 +44,7 @@ interface ArrayControlCustomProps extends ArrayControlProps {
   data: JsonData[];
 }
 
-interface FoundUiSchema extends Layout {
+interface ArrayUiSchema extends Layout {
   elements: ControlElement[];
 }
 
@@ -77,7 +77,7 @@ const UIComponent = (props: ArrayControlCustomProps) => {
         rootSchema
       ),
     []
-  ) as FoundUiSchema;
+  ) as ArrayUiSchema;
 
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
@@ -113,8 +113,6 @@ const UIComponent = (props: ArrayControlCustomProps) => {
               expandIcon={<ChevronDownIcon />}
               sx={{
                 '&:hover .array-remove-icon': { visibility: 'visible' },
-                margin: '0 !important',
-                minHeight: '0 !important',
                 '.MuiAccordionSummary-content': {
                   margin: '5px !important',
                 },
@@ -122,6 +120,7 @@ const UIComponent = (props: ArrayControlCustomProps) => {
                   marginBottom: '0 !important',
                 },
               }}
+              style={{ margin: 0, minHeight: 0 }}
             >
               <Box
                 display="flex"
@@ -173,7 +172,7 @@ export const Array = withJsonFormsArrayControlProps(
   UIComponent as ComponentType<ArrayControlProps>
 );
 
-const createNewItem = (foundUISchema: FoundUiSchema) => {
+const createNewItem = (foundUISchema: ArrayUiSchema) => {
   try {
     const fields = foundUISchema.elements.map(e => [
       e.scope.split('/').pop(),
