@@ -1,7 +1,10 @@
-use async_graphql::{Enum, Object, SimpleObject};
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDateTime;
-use repository::{Log, LogRow, LogType};
+use graphql_core::{loader::UserLoader, ContextExt};
+use repository::{unknown_user, Log, LogRow, LogType};
 use service::ListResult;
+
+use super::UserNode;
 
 #[derive(PartialEq, Debug)]
 pub struct LogNode {
@@ -31,16 +34,28 @@ impl LogNode {
         LogNodeType::from_domain(&self.row().log_type)
     }
 
-    pub async fn user_id(&self) -> &str {
-        &self.row().user_id
-    }
-
     pub async fn record_id(&self) -> &Option<String> {
         &self.row().record_id
     }
 
     pub async fn created_datetime(&self) -> &NaiveDateTime {
         &self.row().created_datetime
+    }
+
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+
+        let user_id = match &self.row().user_id {
+            Some(user_id) => user_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(user_id.clone())
+            .await?
+            .unwrap_or(unknown_user());
+
+        Ok(Some(UserNode::from_domain(result)))
     }
 }
 

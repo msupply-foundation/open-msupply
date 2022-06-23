@@ -7,7 +7,7 @@ CREATE TYPE log_type AS ENUM (
 CREATE TABLE log (
     id TEXT NOT NULL PRIMARY KEY,
     type log_type, 
-    user_id TEXT NOT NULL REFERENCES user_account(id),
+    user_id TEXT,
     record_id TEXT REFERENCES invoice(id),
     created_datetime TIMESTAMP NOT NULL
 )

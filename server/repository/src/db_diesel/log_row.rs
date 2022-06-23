@@ -10,7 +10,7 @@ table! {
     log (id) {
         id -> Text,
         log_type -> crate::db_diesel::log_row::LogTypeMapping,
-        user_id -> Text,
+        user_id -> Nullable<Text>,
         record_id -> Nullable<Text>,
         created_datetime -> Timestamp,
     }
@@ -33,7 +33,7 @@ pub enum LogType {
 pub struct LogRow {
     pub id: String,
     pub log_type: LogType,
-    pub user_id: String,
+    pub user_id: Option<String>,
     pub record_id: Option<String>,
     pub created_datetime: NaiveDateTime,
 }
@@ -54,6 +54,14 @@ impl<'a> LogRowRepository<'a> {
             .on_conflict(log_dsl::id)
             .do_update()
             .set(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn upsert_one(&self, row: &LogRow) -> Result<(), RepositoryError> {
+        diesel::replace_into(log_dsl::log)
+            .values(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
