@@ -90,7 +90,7 @@ fn validate(
         return Err(OutError::NotAnOutboundShipment);
     }
 
-    check_master_list_for_name(connection, store_id, &input.master_list_id)?
+    check_master_list_for_name(connection, &invoice_row.name_id, &input.master_list_id)?
         .ok_or(OutError::MasterListNotFoundForThisName)?;
 
     Ok(invoice_row)
@@ -129,13 +129,13 @@ fn generate(
 
 pub fn check_master_list_for_name(
     connection: &StorageConnection,
-    store_id: &str,
+    name_id: &str,
     master_list_id: &str,
 ) -> Result<Option<MasterList>, RepositoryError> {
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
             .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to(store_id)),
+            .exists_for_name_id(EqualFilter::equal_to(name_id)),
     )?;
     Ok(rows.pop())
 }
