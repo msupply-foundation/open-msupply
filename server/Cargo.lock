@@ -2740,6 +2740,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "machine-uid"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f1595709b0a7386bcd56ba34d250d626e5503917d05d32cdccddcd68603e212"
+dependencies = [
+ "winreg 0.6.2",
+]
+
+[[package]]
 name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4069,6 +4078,7 @@ dependencies = [
  "httpmock",
  "local-ip-address",
  "log 0.4.16",
+ "machine-uid",
  "mime_guess",
  "openssl",
  "rand 0.8.5",
