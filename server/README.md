@@ -193,7 +193,7 @@ Uncomment test attribute, and read description in method comment
 
 https://github.com/openmsupply/open-msupply/blob/e6dc29f1ace2fd22abc5e9a17e368a9d871a6f45/server/server/src/sync/integration_tests/remote_sync_integration_test.rs#L130-L131
 
-See test_remote_syncing in remote_sy
+See test_remote_syncing in remote_sync_integration_test
 
 ## Building docs
 
