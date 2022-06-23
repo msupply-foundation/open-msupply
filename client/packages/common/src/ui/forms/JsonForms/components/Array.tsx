@@ -169,11 +169,6 @@ const UIComponent = (props: ArrayControlCustomProps) => {
   );
 };
 
-// const withJsonFormsArrayCustomProps = (
-//   component: ComponentType<ArrayControlCustomProps>
-// ) =>
-//   withJsonFormsArrayControlProps(component as ComponentType<ArrayControlProps>);
-
 export const Array = withJsonFormsArrayControlProps(
   UIComponent as ComponentType<ArrayControlProps>
 );
