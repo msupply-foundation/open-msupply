@@ -324,6 +324,11 @@ fn validate_resource_permissions(
             return Ok(());
         }
         PermissionDSL::HasStoreAccess => {
+            // The user_permissions are already filtered by store_id if resource_request.store_id
+            // is specified. What remains to be checked is:
+            // 1) that store_id is set, i.e. validate_auth() is used correctly with the required
+            // parameters
+            // 2) the filtered user_permissions contain StoreAccess
             let store_id = match &resource_request.store_id {
                 Some(id) => id,
                 None => return Err("Store id not specified in request".to_string()),
