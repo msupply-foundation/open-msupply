@@ -6,7 +6,6 @@ use repository::InvoiceSort;
 use repository::PaginationOption;
 use repository::RepositoryError;
 
-use crate::errors::AddFromMasterListError;
 use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
@@ -138,7 +137,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         input: AddFromMasterList,
-    ) -> Result<Vec<InvoiceLine>, AddFromMasterListError> {
+    ) -> Result<Vec<InvoiceLine>, AddToShipmentFromMasterListError> {
         add_from_master_list(ctx, store_id, input)
     }
 }

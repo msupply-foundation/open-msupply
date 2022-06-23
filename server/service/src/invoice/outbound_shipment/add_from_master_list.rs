@@ -1,4 +1,3 @@
-use crate::errors::AddFromMasterListError;
 use crate::{
     invoice::check_invoice_exists, service_provider::ServiceContext,
     sync_processor::invoice::common::get_lines_for_invoice,
@@ -19,7 +18,23 @@ pub struct AddFromMasterList {
     pub master_list_id: String,
 }
 
-type OutError = AddFromMasterListError;
+#[derive(Debug, PartialEq)]
+pub enum AddToShipmentFromMasterListError {
+    ShipmentDoesNotExist,
+    NotThisStoreShipment,
+    CannotEditShipment,
+    MasterListNotFoundForThisName,
+    NotAnOutboundShipment,
+    DatabaseError(RepositoryError),
+}
+
+type OutError = AddToShipmentFromMasterListError;
+
+impl From<RepositoryError> for AddToShipmentFromMasterListError {
+    fn from(error: RepositoryError) -> Self {
+        AddToShipmentFromMasterListError::DatabaseError(error)
+    }
+}
 
 pub fn add_from_master_list(
     ctx: &ServiceContext,
@@ -57,23 +72,26 @@ fn validate(
 ) -> Result<InvoiceRow, OutError> {
     let invoice_row = match check_invoice_exists(&input.outbound_shipment_id, connection) {
         Ok(row) => row,
-        Err(_error) => return Err(OutError::RecordDoesNotExist),
+        Err(_error) => return Err(OutError::ShipmentDoesNotExist),
     };
 
     if invoice_row.store_id != store_id {
-        return Err(OutError::NotThisStore);
+        return Err(OutError::NotThisStoreShipment);
     }
 
-    if invoice_row.status == InvoiceRowStatus::Shipped || invoice_row.status == InvoiceRowStatus::Delivered || invoice_row.status == InvoiceRowStatus::Verified {
-            return Err(OutError::CannotEditRecord);
+    if invoice_row.status == InvoiceRowStatus::Shipped
+        || invoice_row.status == InvoiceRowStatus::Delivered
+        || invoice_row.status == InvoiceRowStatus::Verified
+    {
+        return Err(OutError::CannotEditShipment);
     }
 
     if invoice_row.r#type != InvoiceRowType::OutboundShipment {
-        return Err(OutError::RecordIsIncorrectType);
+        return Err(OutError::NotAnOutboundShipment);
     }
 
-    check_master_list_for_store(connection, store_id, &input.master_list_id)?
-        .ok_or(OutError::MasterListNotFoundForThisStore)?;
+    check_master_list_for_name(connection, store_id, &input.master_list_id)?
+        .ok_or(OutError::MasterListNotFoundForThisName)?;
 
     Ok(invoice_row)
 }
@@ -109,7 +127,7 @@ fn generate(
     )?)
 }
 
-pub fn check_master_list_for_store(
+pub fn check_master_list_for_name(
     connection: &StorageConnection,
     store_id: &str,
     master_list_id: &str,
@@ -138,8 +156,10 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        errors::AddFromMasterListError as ServiceError,
-        invoice::outbound_shipment::AddFromMasterList, service_provider::ServiceProvider,
+        invoice::outbound_shipment::{
+            AddFromMasterList, AddToShipmentFromMasterListError as ServiceError,
+        },
+        service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
@@ -161,7 +181,7 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::RecordDoesNotExist)
+            Err(ServiceError::ShipmentDoesNotExist)
         );
 
         // NotThisStore
@@ -174,7 +194,7 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::NotThisStore)
+            Err(ServiceError::NotThisStoreShipment)
         );
 
         // CannotEditRecord
@@ -187,7 +207,7 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::CannotEditRecord)
+            Err(ServiceError::CannotEditShipment)
         );
 
         // RecordIsIncorrectType
@@ -200,10 +220,10 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::RecordIsIncorrectType)
+            Err(ServiceError::NotAnOutboundShipment)
         );
 
-        // MasterListNotFoundForThisStore
+        // MasterListNotFoundForThisName
         assert_eq!(
             service.add_from_master_list(
                 &context,
@@ -213,7 +233,7 @@ mod test {
                     master_list_id: mock_test_not_store_a_master_list().master_list.id
                 },
             ),
-            Err(ServiceError::MasterListNotFoundForThisStore)
+            Err(ServiceError::MasterListNotFoundForThisName)
         );
     }
 

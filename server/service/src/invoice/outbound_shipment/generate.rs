@@ -30,7 +30,7 @@ pub fn generate_invoice_lines(
                     total_before_tax: 0.0,
                     total_after_tax: 0.0,
                     tax: None,
-                    r#type: InvoiceLineRowType::StockOut,
+                    r#type: InvoiceLineRowType::UnallocatedStock,
                     number_of_packs: 0,
                     note: None,
                 });

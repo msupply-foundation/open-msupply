@@ -121,12 +121,8 @@ pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
         r.id = String::from("new_outbound_shipment_no_lines");
         r.name_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
-        r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
-        r.comment = Some("Sort comment test ac".to_owned());
-        r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0);
     })
 }
 
