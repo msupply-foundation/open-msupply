@@ -1,4 +1,5 @@
 import React, { FC, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   TableProvider,
   DataTable,
@@ -11,6 +12,8 @@ import {
   createQueryParamsStore,
   useFormatDateTime,
   ColumnAlign,
+  useAlertModal,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -21,9 +24,15 @@ const PatientListComponent: FC = () => {
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const { data, isError, isLoading, pagination, sort } =
     usePatient.document.list();
+  const t = useTranslation('common');
   const { sortBy, onChangeSortBy } = sort;
   const { Modal, showDialog, hideDialog } = useDialog();
   const { localisedDate } = useFormatDateTime();
+  const navigate = useNavigate();
+  const alert = useAlertModal({
+    title: t('heading.no-patient-record'),
+    message: t('messages.no-patient-record'),
+  });
 
   const columns = useColumns<PatientRowFragment>(
     [
@@ -73,8 +82,9 @@ const PatientListComponent: FC = () => {
         isError={isError}
         onRowClick={row => {
           console.log('Row', row);
-          setSelectedId(row.document?.name);
-          showDialog();
+          // setSelectedId(row.document?.name);
+          if (!row.id || !row.document?.name || !row.document?.type) alert();
+          else navigate(`/patients/${row.id}/${row.document.type}`);
         }}
         noDataElement={<NothingHere />}
       />
