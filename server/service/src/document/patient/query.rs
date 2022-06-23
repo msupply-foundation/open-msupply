@@ -1,9 +1,12 @@
 use repository::{
-    DateFilter, EqualFilter, Gender, NameFilter, NameRepository, NameRow, NameSort, NameSortField,
-    NameType, PaginationOption, RepositoryError, SimpleStringFilter, Sort,
+    DateFilter, Document, DocumentFilter, DocumentRepository, EqualFilter, Gender, NameFilter,
+    NameRepository, NameRow, NameSort, NameSortField, NameType, PaginationOption, RepositoryError,
+    SimpleStringFilter, Sort, StringFilter,
 };
 
 use crate::{get_default_pagination_unlimited, service_provider::ServiceContext};
+
+use super::{patient_program_doc_name, patient_program_encounter_doc_name};
 
 #[derive(Clone, Default)]
 pub struct PatientFilter {
@@ -83,6 +86,35 @@ pub fn get_patients(
             name_row: v.name_row,
         })
         .collect())
+}
+
+pub fn get_patient_programs(
+    ctx: &ServiceContext,
+    store_id: &str,
+    patient_id: &str,
+) -> Result<Vec<Document>, RepositoryError> {
+    DocumentRepository::new(&ctx.connection).query(Some(
+        DocumentFilter::new()
+            .name(StringFilter::starts_with(&patient_program_doc_name(
+                patient_id, "",
+            )))
+            .store_id(EqualFilter::equal_to(store_id)),
+    ))
+}
+
+pub fn get_patient_program_encounters(
+    ctx: &ServiceContext,
+    store_id: &str,
+    patient_id: &str,
+    program: &str,
+) -> Result<Vec<Document>, RepositoryError> {
+    DocumentRepository::new(&ctx.connection).query(Some(
+        DocumentFilter::new()
+            .name(StringFilter::starts_with(
+                &patient_program_encounter_doc_name(patient_id, program, ""),
+            ))
+            .store_id(EqualFilter::equal_to(store_id)),
+    ))
 }
 
 impl PatientFilter {
