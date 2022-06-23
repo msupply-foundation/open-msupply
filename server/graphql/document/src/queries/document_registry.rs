@@ -3,11 +3,8 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use service::auth::{Resource, ResourceAccessRequest};
 use service::usize_to_u32;
-use service::{
-    auth::{Resource, ResourceAccessRequest},
-    document::document_registry::DocumentRegistryError,
-};
 
 use crate::types::document_registry::{DocumentRegistryConnector, DocumentRegistryNode};
 
@@ -32,16 +29,8 @@ pub fn document_registry(ctx: &Context<'_>) -> Result<DocumentRegistryResponse> 
         .document_registry_service
         .get_entries(&context)
         .map_err(|err| {
-            let formated_err = format! {"{:?}", err};
-            let error = match err {
-                DocumentRegistryError::InternalError(_) => {
-                    StandardGraphqlError::InternalError(formated_err)
-                }
-                DocumentRegistryError::RepositoryError(_) => {
-                    StandardGraphqlError::InternalError(formated_err)
-                }
-            };
-            error.extend()
+            let formatted_err = format! {"{:?}", err};
+            StandardGraphqlError::InternalError(formatted_err).extend()
         })?;
     Ok(DocumentRegistryResponse::Response(
         DocumentRegistryConnector {

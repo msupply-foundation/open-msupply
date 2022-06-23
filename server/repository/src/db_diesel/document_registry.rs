@@ -35,7 +35,7 @@ pub struct DocumentRegistryRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct DocumentRegistry {
     pub id: String,
     pub parent_id: Option<String>,
