@@ -9,13 +9,6 @@ use serde::{Deserialize, Serialize};
 
 pub type SyncConnectionError = anyhow::Error;
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct ResponseError {
-    pub code: String,
-    pub message: String,
-    pub status: i32,
-}
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum RemoteSyncActionV5 {
     #[serde(alias = "insert")]
@@ -101,11 +94,8 @@ fn generate_headers(hardware_id: &str) -> HeaderMap {
 
 async fn check_status(response: Response) -> Result<Response, anyhow::Error> {
     if response.status().is_client_error() || response.status().is_server_error() {
-        let err = response.json::<ResponseError>().await?;
-        return Err(anyhow::Error::msg(format!(
-            "status: {}, code: {}, message: {}",
-            err.status, err.code, err.message
-        )));
+        let err = response.text().await?;
+        return Err(anyhow::Error::msg(err));
     }
     Ok(response)
 }
