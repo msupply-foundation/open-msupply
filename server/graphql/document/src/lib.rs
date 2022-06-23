@@ -3,9 +3,12 @@ use graphql_core::pagination::PaginationInput;
 use mutations::insert_document_registry::*;
 use mutations::insert_form_schema::*;
 use mutations::patient::insert::*;
+use mutations::patient::update::update_patient;
+use mutations::patient::update::UpdatePatientInput;
+use mutations::patient::update::UpdatePatientResponse;
 use mutations::update_document::*;
-use types::json_schema::FormSchemaNode;
 use types::document::DocumentNode;
+use types::json_schema::FormSchemaNode;
 
 mod mutations;
 
@@ -76,6 +79,15 @@ impl DocumentQueries {
         input: InsertPatientInput,
     ) -> Result<InsertPatientResponse> {
         insert_patient(ctx, store_id, input)
+    }
+
+    pub async fn update_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdatePatientInput,
+    ) -> Result<UpdatePatientResponse> {
+        update_patient(ctx, store_id, input)
     }
 }
 
