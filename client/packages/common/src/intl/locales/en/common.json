@@ -170,6 +170,8 @@
   "label.units": "Units",
   "label.verified": "Verified",
   "label.website": "Website",
+  "label.add-another": "Add another",
+  "label.remove": "Remove",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "messages.cant-delete-generic": "You cannot delete one or more of the selected items",
   "messages.confirm-delete-generic": "This will permanently remove data",
