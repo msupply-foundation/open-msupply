@@ -1,3 +1,4 @@
+use repository::Document;
 use repository::{PaginationOption, RepositoryError};
 
 use crate::service_provider::ServiceContext;
@@ -17,6 +18,21 @@ pub fn patient_doc_name(patient_id: &str) -> String {
     format!("patients/{}", patient_id)
 }
 
+pub fn patient_program_doc_name(patient_id: &str, program: &str) -> String {
+    format!("patients/{}/programs/{}", patient_id, program)
+}
+
+pub fn patient_program_encounter_doc_name(
+    patient_id: &str,
+    program: &str,
+    encounter_id: &str,
+) -> String {
+    format!(
+        "patients/{}/programs/{}/encounters/{}",
+        patient_id, program, encounter_id
+    )
+}
+
 pub trait PatientServiceTrait: Sync + Send {
     fn get_patients(
         &self,
@@ -27,6 +43,25 @@ pub trait PatientServiceTrait: Sync + Send {
         sort: Option<PatientSort>,
     ) -> Result<Vec<Patient>, RepositoryError> {
         get_patients(ctx, store_id, pagination, filter, sort)
+    }
+
+    fn get_patient_programs(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        patient_id: &str,
+    ) -> Result<Vec<Document>, RepositoryError> {
+        get_patient_programs(ctx, store_id, patient_id)
+    }
+
+    fn get_patient_program_encounters(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        patient_id: &str,
+        program: &str,
+    ) -> Result<Vec<Document>, RepositoryError> {
+        get_patient_program_encounters(ctx, store_id, patient_id, program)
     }
 
     fn update_patient(

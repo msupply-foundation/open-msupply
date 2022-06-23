@@ -6,6 +6,32 @@ use async_graphql::*;
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
+pub struct DocumentRegistryLoader {
+    pub service_provider: Data<ServiceProvider>,
+}
+
+#[async_trait::async_trait]
+impl Loader<String> for DocumentRegistryLoader {
+    type Value = DocumentRegistry;
+    type Error = RepositoryError;
+
+    async fn load(&self, entries: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let ctx = self.service_provider.context()?;
+
+        let entries = self
+            .service_provider
+            .document_registry_service
+            .get_entries_by_doc_type(&ctx, entries.to_vec())?;
+
+        let mut out = HashMap::new();
+        for entry in entries {
+            out.insert(entry.id.clone(), entry);
+        }
+
+        Ok(out)
+    }
+}
+
 pub struct DocumentRegistryChildrenLoader {
     pub service_provider: Data<ServiceProvider>,
 }

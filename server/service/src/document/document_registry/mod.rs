@@ -18,6 +18,19 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         Ok(repo.query(Pagination::new(), None, None)?)
     }
 
+    fn get_entries_by_doc_type(
+        &self,
+        ctx: &ServiceContext,
+        types: Vec<String>,
+    ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
+        let repo = DocumentRegistryRepository::new(&ctx.connection);
+        Ok(repo.query(
+            Pagination::new(),
+            Some(DocumentRegistryFilter::new().document_type(EqualFilter::equal_any(types))),
+            None,
+        )?)
+    }
+
     fn get_children(
         &self,
         ctx: &ServiceContext,
