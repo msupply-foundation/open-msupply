@@ -169,12 +169,14 @@ const UIComponent = (props: ArrayControlCustomProps) => {
   );
 };
 
-const withJsonFormsArrayCustomProps = (
-  component: ComponentType<ArrayControlCustomProps>
-) =>
-  withJsonFormsArrayControlProps(component as ComponentType<ArrayControlProps>);
+// const withJsonFormsArrayCustomProps = (
+//   component: ComponentType<ArrayControlCustomProps>
+// ) =>
+//   withJsonFormsArrayControlProps(component as ComponentType<ArrayControlProps>);
 
-export const Array = withJsonFormsArrayCustomProps(UIComponent);
+export const Array = withJsonFormsArrayControlProps(
+  UIComponent as ComponentType<ArrayControlProps>
+);
 
 const createNewItem = (foundUISchema: FoundUiSchema) => {
   try {

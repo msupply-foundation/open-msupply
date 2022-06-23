@@ -66,6 +66,7 @@
   "heading.settings-display": "Display settings",
   "heading.settings-sync": "Synchronisation",
   "heading.shipments-to-be-picked": "Shipments to be picked",
+  "heading.no-patient-record": "Patient not available",
   "info.server-restarting": "Server restarting...",
   "label.actions": "Actions",
   "label.address": "Address",
@@ -184,5 +185,6 @@
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code",
   "success": "Success!",
-  "success.sync-settings": "Sync settings updated successfully!"
+  "success.sync-settings": "Sync settings updated successfully!",
+  "messages.no-patient-record": "We don't have a detail record for this patient"
 }
