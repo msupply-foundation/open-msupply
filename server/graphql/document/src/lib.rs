@@ -71,24 +71,6 @@ impl DocumentQueries {
     ) -> Result<PatientResponse> {
         patients(ctx, store_id, page, filter, sort)
     }
-
-    pub async fn insert_patient(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertPatientInput,
-    ) -> Result<InsertPatientResponse> {
-        insert_patient(ctx, store_id, input)
-    }
-
-    pub async fn update_patient(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdatePatientInput,
-    ) -> Result<UpdatePatientResponse> {
-        update_patient(ctx, store_id, input)
-    }
 }
 
 #[derive(Default, Clone)]
@@ -120,5 +102,23 @@ impl DocumentMutations {
         input: InsertFormSchemaInput,
     ) -> Result<InsertFormSchemaResponse> {
         insert_form_schema(ctx, input)
+    }
+
+    pub async fn insert_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertPatientInput,
+    ) -> Result<InsertPatientResponse> {
+        insert_patient(ctx, store_id, input)
+    }
+
+    pub async fn update_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdatePatientInput,
+    ) -> Result<UpdatePatientResponse> {
+        update_patient(ctx, store_id, input)
     }
 }
