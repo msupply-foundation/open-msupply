@@ -1,4 +1,7 @@
-use repository::{DocumentRegistry, DocumentRegistryRepository, Pagination, RepositoryError};
+use repository::{
+    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter, Pagination,
+    RepositoryError,
+};
 
 use crate::service_provider::ServiceContext;
 
@@ -9,19 +12,26 @@ mod insert;
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug)]
-pub enum DocumentRegistryError {
-    InternalError(String),
-    RepositoryError(RepositoryError),
-}
-
 pub trait DocumentRegistryServiceTrait: Sync + Send {
-    fn get_entries(
-        &self,
-        ctx: &ServiceContext,
-    ) -> Result<Vec<DocumentRegistry>, DocumentRegistryError> {
+    fn get_entries(&self, ctx: &ServiceContext) -> Result<Vec<DocumentRegistry>, RepositoryError> {
         let repo = DocumentRegistryRepository::new(&ctx.connection);
         Ok(repo.query(Pagination::new(), None, None)?)
+    }
+
+    fn get_children(
+        &self,
+        ctx: &ServiceContext,
+        parent_ids: &[String],
+    ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
+        let repo = DocumentRegistryRepository::new(&ctx.connection);
+        Ok(repo.query(
+            Pagination::new(),
+            Some(
+                DocumentRegistryFilter::new()
+                    .parent_id(EqualFilter::equal_any(parent_ids.to_vec())),
+            ),
+            None,
+        )?)
     }
 
     fn insert(
@@ -35,9 +45,3 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
 
 pub struct DocumentRegistryService {}
 impl DocumentRegistryServiceTrait for DocumentRegistryService {}
-
-impl From<RepositoryError> for DocumentRegistryError {
-    fn from(err: RepositoryError) -> Self {
-        DocumentRegistryError::RepositoryError(err)
-    }
-}
