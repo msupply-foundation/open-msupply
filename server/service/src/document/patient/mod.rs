@@ -5,10 +5,10 @@ use crate::service_provider::ServiceProvider;
 
 pub use self::query::*;
 mod query;
-pub use self::insert::*;
-mod insert;
+pub use self::update::*;
 pub mod patient_document_update;
 pub mod patient_schema;
+mod update;
 
 /// The default document type for a patient
 pub const PATIENT_TYPE: &str = "Patient";
@@ -29,15 +29,15 @@ pub trait PatientServiceTrait: Sync + Send {
         get_patients(ctx, store_id, pagination, filter, sort)
     }
 
-    fn insert_patients(
+    fn update_patient(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
         store_id: String,
         user_id: &str,
-        input: InsertPatient,
-    ) -> Result<Patient, InsertPatientError> {
-        insert_patients(ctx, service_provider, store_id, user_id, input)
+        input: UpdatePatient,
+    ) -> Result<Patient, UpdatePatientError> {
+        update_patient(ctx, service_provider, store_id, user_id, input)
     }
 }
 
