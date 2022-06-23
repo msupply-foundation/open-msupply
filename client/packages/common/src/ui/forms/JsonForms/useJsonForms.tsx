@@ -12,8 +12,8 @@ import {
   Label,
   dateTester,
   Date,
-  // arrayTester,
-  // Array,
+  arrayTester,
+  Array,
 } from './components';
 
 // Temporarily hard-coded examples until we connect to database
@@ -22,7 +22,7 @@ import schema from './jsonTemp/schema.json';
 import uiSchema from './jsonTemp/ui-schema.json';
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 
-type JsonData = {
+export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
 };
 
@@ -74,7 +74,7 @@ export const useJsonForms = (docName: string) => {
     { tester: groupTester, renderer: Group },
     { tester: labelTester, renderer: Label },
     { tester: dateTester, renderer: Date },
-    // { tester: arrayTester, renderer: Array },
+    { tester: arrayTester, renderer: Array },
   ];
 
   return {

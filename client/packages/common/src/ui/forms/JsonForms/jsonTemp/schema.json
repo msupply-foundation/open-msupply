@@ -45,16 +45,16 @@
     "ContactDetails": {
       "additionalProperties": false,
       "properties": {
+        "key": {
+          "description": "Unique contact detail identifier",
+          "type": "string"
+        },
         "description": {
           "description": "Clemens e.g. home, work, etc",
           "type": "string"
         },
         "email": {
           "description": "424966008 Patient - email address",
-          "type": "string"
-        },
-        "key": {
-          "description": "Unique contact detail identifier",
           "type": "string"
         },
         "mobile": {
