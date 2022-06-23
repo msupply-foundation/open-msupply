@@ -113,8 +113,6 @@ const UIComponent = (props: ArrayControlCustomProps) => {
               expandIcon={<ChevronDownIcon />}
               sx={{
                 '&:hover .array-remove-icon': { visibility: 'visible' },
-                margin: '0 !important',
-                minHeight: '0 !important',
                 '.MuiAccordionSummary-content': {
                   margin: '5px !important',
                 },
@@ -122,6 +120,7 @@ const UIComponent = (props: ArrayControlCustomProps) => {
                   marginBottom: '0 !important',
                 },
               }}
+              style={{ margin: 0, minHeight: 0 }}
             >
               <Box
                 display="flex"
