@@ -1,1 +1,1 @@
-export { DetailView } from './DetailView';
+export { PatientDetailView } from './DetailView';

@@ -10,8 +10,6 @@ const fullPatientsPath = RouteBuilder.create(AppRoute.Patients)
   .addWildCard()
   .build();
 
-console.log('fullPatientsPath', fullPatientsPath);
-
 export const PatientRouter: FC = () => {
   const gotoPatients = useMatch(fullPatientsPath);
 

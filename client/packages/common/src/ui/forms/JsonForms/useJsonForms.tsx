@@ -1,4 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from '@openmsupply-client/common';
+import {
+  Box,
+  DialogButton,
+  LoadingButton,
+  useConfirmationModal,
+  useTranslation,
+  useNotification,
+} from '@openmsupply-client/common';
 import { JsonForms } from '@jsonforms/react';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
@@ -52,24 +61,49 @@ const FormComponent = ({
   );
 };
 
-export const useJsonForms = (docName: string | undefined) => {
-  const [data, setData] = useState<JsonData>(patient);
-  const [loading, setLoading] = useState(false);
+interface JsonFormOptions {
+  showButtonPanel?: boolean;
+  onCancel?: () => void;
+}
+
+export const useJsonForms = (
+  docName: string | undefined,
+  options: JsonFormOptions = {}
+) => {
+  const [data, setData] = useState<JsonData>(patient); // Replace with DB query hook
+  const [loading] = useState(false); // Replace with DB query hook
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | false>(false);
+  const t = useTranslation('common');
+  const { success, error: errorNotification } = useNotification();
+  const navigate = useNavigate();
+
+  const { showButtonPanel = true, onCancel = () => navigate(-1) } = options;
 
   useEffect(() => {
     if (!docName) setError('No document associated with this record');
   }, []);
 
-  const saveData = () => {
-    setLoading(true);
+  const saveData = async () => {
+    setSaving(true);
     // Run mutation...
-    // setData...
     console.log('Saving data...');
-    setLoading(false);
+    // Temporary for UI demonstration
+    setTimeout(() => {
+      try {
+        setSaving(false);
+        const successSnack = success(t('success.data-saved'));
+        successSnack();
+        setSaving(false);
+      } catch {
+        const errorSnack = errorNotification(t('error.problem-saving'));
+        errorSnack();
+      }
+    }, 1000);
   };
 
   const renderers = [
+    // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
     ...materialRenderers,
     { tester: stringTester, renderer: TextField },
     { tester: selectTester, renderer: Selector },
@@ -79,14 +113,50 @@ export const useJsonForms = (docName: string | undefined) => {
     { tester: arrayTester, renderer: Array },
   ];
 
+  const showSaveConfirmation = useConfirmationModal({
+    onConfirm: saveData,
+    message: t('messages.confirm-save-generic'),
+    title: t('heading.are-you-sure'),
+  });
+
+  const showCancelConfirmation = useConfirmationModal({
+    onConfirm: onCancel,
+    message: t('messages.confirm-cancel-generic'),
+    title: t('heading.are-you-sure'),
+  });
+
+  const ButtonPanel = () => (
+    <Box id="button-panel" paddingBottom={5} display="flex" gap={5}>
+      <LoadingButton
+        onClick={() => showSaveConfirmation()}
+        isLoading={saving}
+        color="secondary"
+      >
+        {t('button.save')}
+      </LoadingButton>
+      <DialogButton variant="cancel" onClick={() => showCancelConfirmation()} />
+    </Box>
+  );
+
   return {
     JsonForm: (
-      <FormComponent
-        data={data}
-        setData={setData}
-        // setError={setError}
-        renderers={renderers}
-      />
+      <Box
+        id="document-display"
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        width="100%"
+        gap={2}
+        paddingX={10}
+      >
+        <FormComponent
+          data={data}
+          setData={setData}
+          // setError={setError}
+          renderers={renderers}
+        />
+        {showButtonPanel && <ButtonPanel />}
+      </Box>
     ),
     saveData,
     loading,
