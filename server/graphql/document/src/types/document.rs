@@ -2,11 +2,12 @@ use async_graphql::*;
 use async_graphql::{dataloader::DataLoader, Context};
 use chrono::{DateTime, Utc};
 
-use graphql_core::loader::JsonSchemaLoader;
+use graphql_core::loader::{DocumentRegistryLoader, JsonSchemaLoader};
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::Document;
 use service::document::raw_document::RawDocument;
 
+use super::document_registry::DocumentRegistryNode;
 use super::json_schema::JSONSchemaNode;
 
 pub struct DocumentNode {
@@ -55,6 +56,26 @@ impl DocumentNode {
                     .extend(),
                 )?;
                 Some(JSONSchemaNode { schema })
+            }
+            None => None,
+        })
+    }
+
+    pub async fn document_registry(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<DocumentRegistryNode>> {
+        Ok(match &self.document.schema_id {
+            Some(schema_id) => {
+                let loader = ctx.get_loader::<DataLoader<DocumentRegistryLoader>>();
+                let document_registry = loader.load_one(schema_id.clone()).await?.ok_or(
+                    StandardGraphqlError::InternalError(format!(
+                        "Cannot find registry entry {}",
+                        schema_id
+                    ))
+                    .extend(),
+                )?;
+                Some(DocumentRegistryNode { document_registry })
             }
             None => None,
         })
