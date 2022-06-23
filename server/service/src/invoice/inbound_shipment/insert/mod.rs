@@ -1,13 +1,15 @@
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
-use repository::Invoice;
+use chrono::Utc;
+use repository::{Invoice, LogRow, LogRowRepository, LogType};
 use repository::{InvoiceRowRepository, RepositoryError};
 
 mod generate;
 mod validate;
 
 use generate::generate;
+use util::uuid::uuid;
 use validate::validate;
 
 #[derive(Clone, Debug, Default)]
@@ -39,6 +41,16 @@ pub fn insert_inbound_shipment(
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
+
+    let new_invoice_log = LogRow {
+        id: uuid(),
+        log_type: LogType::InvoiceCreated,
+        user_id: Some(user_id.to_string()),
+        record_id: Some(invoice.invoice_row.id.clone()),
+        created_datetime: Utc::now().naive_utc(),
+    };
+    LogRowRepository::new(&ctx.connection).upsert_one(&new_invoice_log)?;
+
     Ok(invoice)
 }
 
