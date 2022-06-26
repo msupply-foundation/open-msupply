@@ -10,7 +10,7 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use super::generate_invoice_lines;
+use super::generate_unallocated_invoice_lines;
 
 #[derive(Debug, PartialEq)]
 pub struct AddFromMasterList {
@@ -120,7 +120,7 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    Ok(generate_invoice_lines(
+    Ok(generate_unallocated_invoice_lines(
         ctx,
         &invoice_row,
         items_ids_not_in_invoice,

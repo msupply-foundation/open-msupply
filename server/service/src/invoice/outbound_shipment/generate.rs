@@ -4,7 +4,7 @@ use util::uuid::uuid;
 
 use crate::service_provider::ServiceContext;
 
-pub fn generate_invoice_lines(
+pub fn generate_unallocated_invoice_lines(
     ctx: &ServiceContext,
     invoice_row: &InvoiceRow,
     item_ids: Vec<String>,
