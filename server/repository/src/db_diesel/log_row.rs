@@ -24,7 +24,11 @@ joinable!(log -> invoice (record_id));
 pub enum LogType {
     UserLoggedIn,
     InvoiceCreated,
+    InvoiceStatusAllocated,
+    InvoiceStatusPicked,
     InvoiceStatusShipped,
+    InvoiceStatusDelivered,
+    InvoiceStatusVerified,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

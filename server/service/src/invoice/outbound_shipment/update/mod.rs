@@ -1,12 +1,14 @@
+use chrono::Utc;
 use repository::{
-    Invoice, InvoiceLine, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
-    StockLineRowRepository, TransactionError,
+    Invoice, InvoiceLine, InvoiceRowRepository, InvoiceRowStatus, LogRow, LogRowRepository,
+    LogType, RepositoryError, StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
 pub mod validate;
 
 use generate::generate;
+use util::uuid::uuid;
 use validate::validate;
 
 use crate::invoice::query::get_invoice;
@@ -61,7 +63,7 @@ pub fn update_outbound_shipment(
         .transaction_sync(|connection| {
             let (invoice, other_party_option) = validate(connection, store_id, &patch)?;
             let (stock_lines_option, update_invoice) =
-                generate(invoice, other_party_option, patch, connection)?;
+                generate(invoice, other_party_option, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
             if let Some(stock_lines) = stock_lines_option {
@@ -85,6 +87,20 @@ pub fn update_outbound_shipment(
             vec![Record::InvoiceRow(invoice.invoice_row.clone())],
         )
     );
+
+    let status = &patch.status.expect("Could not get invoice status.");
+    let invoice_status_log = LogRow {
+        id: uuid(),
+        log_type: match status {
+            UpdateOutboundShipmentStatus::Allocated => LogType::InvoiceStatusAllocated,
+            UpdateOutboundShipmentStatus::Picked => LogType::InvoiceStatusPicked,
+            UpdateOutboundShipmentStatus::Shipped => LogType::InvoiceStatusShipped,
+        },
+        user_id: invoice.invoice_row.user_id.clone(),
+        record_id: Some(invoice.invoice_row.id.clone()),
+        created_datetime: Utc::now().naive_utc(),
+    };
+    LogRowRepository::new(&ctx.connection).upsert_one(&invoice_status_log)?;
 
     Ok(invoice)
 }
