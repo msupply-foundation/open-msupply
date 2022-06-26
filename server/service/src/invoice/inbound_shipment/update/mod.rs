@@ -4,7 +4,7 @@ use crate::{
     sync_processor::{process_records, Record},
     WithDBError,
 };
-use repository::Invoice;
+use repository::{Invoice, LogRow, LogRowRepository, LogType};
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
@@ -14,6 +14,7 @@ mod generate;
 mod validate;
 
 use generate::generate;
+use util::uuid::uuid;
 use validate::validate;
 
 use self::generate::LineAndStockLine;
@@ -48,7 +49,7 @@ pub fn update_inbound_shipment(
         .transaction_sync(|connection| {
             let (invoice, other_party) = validate(connection, store_id, &patch)?;
             let (lines_and_invoice_lines_option, update_invoice) =
-                generate(connection, user_id, invoice, other_party, patch)?;
+                generate(connection, user_id, invoice, other_party, patch.clone())?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
 
@@ -76,6 +77,19 @@ pub fn update_inbound_shipment(
             vec![Record::InvoiceRow(invoice.invoice_row.clone())],
         )
     );
+
+    let status = &patch.status.expect("Could not get invoice status.");
+    let invoice_status_log = LogRow {
+        id: uuid(),
+        log_type: match status {
+            UpdateInboundShipmentStatus::Delivered => LogType::InvoiceStatusDelivered,
+            UpdateInboundShipmentStatus::Verified => LogType::InvoiceStatusVerified,
+        },
+        user_id: invoice.invoice_row.user_id.clone(),
+        record_id: Some(invoice.invoice_row.id.clone()),
+        created_datetime: chrono::Utc::now().naive_utc(),
+    };
+    LogRowRepository::new(&ctx.connection).upsert_one(&invoice_status_log)?;
 
     Ok(invoice)
 }
