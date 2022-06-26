@@ -96,7 +96,7 @@ export type AddToShipmentFromMasterListMutationVariables = Types.Exact<{
 }>;
 
 
-export type AddToShipmentFromMasterListMutation = { __typename: 'FullMutation', addToShipmentFromMasterList: { __typename: 'AddToShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
+export type AddToShipmentFromMasterListMutation = { __typename: 'FullMutation', addToShipmentFromMasterList: { __typename: 'AddToShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisName', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
 
 export const PartialStockLineFragmentDoc = gql`
     fragment PartialStockLine on StockLineNode {
@@ -830,7 +830,7 @@ export const AddToShipmentFromMasterListDocument = gql`
     ... on AddToShipmentFromMasterListError {
       __typename
       error {
-        ... on MasterListNotFoundForThisStore {
+        ... on MasterListNotFoundForThisName {
           __typename
           description
         }

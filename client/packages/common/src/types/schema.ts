@@ -1959,7 +1959,12 @@ export type MasterListNode = {
   name: Scalars['String'];
 };
 
-export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & AddToShipmentFromMasterListErrorInterface & {
+export type MasterListNotFoundForThisName = AddToShipmentFromMasterListErrorInterface & {
+  __typename: 'MasterListNotFoundForThisName';
+  description: Scalars['String'];
+};
+
+export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & {
   __typename: 'MasterListNotFoundForThisStore';
   description: Scalars['String'];
 };

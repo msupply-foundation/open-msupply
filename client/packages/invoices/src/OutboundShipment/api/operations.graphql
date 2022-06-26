@@ -755,7 +755,7 @@ mutation addToShipmentFromMasterList(
     ... on AddToShipmentFromMasterListError {
       __typename
       error {
-        ... on MasterListNotFoundForThisStore {
+        ... on MasterListNotFoundForThisName {
           __typename
           description
         }
