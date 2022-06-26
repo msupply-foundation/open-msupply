@@ -1,55 +1,63 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
+    simple_generic_errors::{CannotEditInvoice, RecordNotFound},
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::RequisitionLineConnector;
+use graphql_types::types::InvoiceLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    requisition::request_requisition::{
-        AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
+    invoice::outbound_shipment::{
+        AddFromMasterList as ServiceInput, AddToShipmentFromMasterListError as ServiceError,
     },
 };
 
 #[derive(InputObject)]
-pub struct AddFromMasterListInput {
-    pub request_requisition_id: String,
+pub struct AddToShipmentFromMasterListInput {
+    pub outbound_shipment_id: String,
     pub master_list_id: String,
 }
 
+pub struct MasterListNotFoundForThisName;
+#[Object]
+impl MasterListNotFoundForThisName {
+    pub async fn description(&self) -> &'static str {
+        "Master list not found (might not be visible to this name)"
+    }
+}
+
 #[derive(Interface)]
-#[graphql(name = "AddFromMasterListErrorInterface")]
+#[graphql(name = "AddToShipmentFromMasterListErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
-    MasterListNotFoundForThisStore(MasterListNotFoundForThisStore),
-    CannotEditRequisition(CannotEditRequisition),
+    MasterListNotFoundForThisName(MasterListNotFoundForThisName),
+    CannotEditInvoice(CannotEditInvoice),
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "AddFromMasterListError")]
+#[graphql(name = "AddToShipmentFromMasterListError")]
 pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "AddFromMasterListResponse")]
+#[graphql(name = "AddToShipmentFromMasterListResponse")]
 pub enum AddFromMasterListResponse {
     Error(DeleteError),
-    Response(RequisitionLineConnector),
+    Response(InvoiceLineConnector),
 }
 
 pub fn add_from_master_list(
     ctx: &Context<'_>,
     store_id: &str,
-    input: AddFromMasterListInput,
+    input: AddToShipmentFromMasterListInput,
 ) -> Result<AddFromMasterListResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateRequisition,
+            resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -57,14 +65,14 @@ pub fn add_from_master_list(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider.requisition_service.add_from_master_list(
+    let response = match service_provider.invoice_service.add_from_master_list(
         &service_context,
         store_id,
         input.to_domain(),
     ) {
-        Ok(requisition_lines) => AddFromMasterListResponse::Response(
-            RequisitionLineConnector::from_vec(requisition_lines),
-        ),
+        Ok(invoice_lines) => {
+            AddFromMasterListResponse::Response(InvoiceLineConnector::from_vec(invoice_lines))
+        }
         Err(error) => AddFromMasterListResponse::Error(DeleteError {
             error: map_error(error)?,
         }),
@@ -73,14 +81,14 @@ pub fn add_from_master_list(
     Ok(response)
 }
 
-impl AddFromMasterListInput {
+impl AddToShipmentFromMasterListInput {
     pub fn to_domain(self) -> ServiceInput {
-        let AddFromMasterListInput {
-            request_requisition_id,
+        let AddToShipmentFromMasterListInput {
+            outbound_shipment_id,
             master_list_id,
         } = self;
         ServiceInput {
-            request_requisition_id,
+            outbound_shipment_id,
             master_list_id,
         }
     }
@@ -92,34 +100,26 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::RequisitionDoesNotExist => {
+        ServiceError::ShipmentDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditRequisition => {
-            return Ok(DeleteErrorInterface::CannotEditRequisition(
-                CannotEditRequisition {},
+        ServiceError::CannotEditShipment => {
+            return Ok(DeleteErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
             ))
         }
-        ServiceError::MasterListNotFoundForThisStore => {
-            return Ok(DeleteErrorInterface::MasterListNotFoundForThisStore(
-                MasterListNotFoundForThisStore {},
+        ServiceError::MasterListNotFoundForThisName => {
+            return Ok(DeleteErrorInterface::MasterListNotFoundForThisName(
+                MasterListNotFoundForThisName {},
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
-        ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
+        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
-}
-
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &'static str {
-        "Master list for this store is not found (might not be visible in this store)"
-    }
 }
 
 #[cfg(test)]
@@ -130,35 +130,35 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_request_draft_requisition, mock_sent_request_requisition_line, MockDataInserts,
+            mock_new_outbound_shipment_no_lines, mock_outbound_shipment_line_a, MockDataInserts,
         },
-        RequisitionLine, StorageConnectionManager,
+        InvoiceLine, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
-        requisition::{
-            request_requisition::{
-                AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
+        invoice::{
+            outbound_shipment::{
+                AddFromMasterList as ServiceInput, AddToShipmentFromMasterListError as ServiceError,
             },
-            RequisitionServiceTrait,
+            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    use crate::RequisitionMutations;
+    use crate::InvoiceMutations;
 
     type DeleteLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Vec<RequisitionLine>, ServiceError> + Sync + Send;
+        dyn Fn(&str, ServiceInput) -> Result<Vec<InvoiceLine>, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DeleteLineMethod>);
 
-    impl RequisitionServiceTrait for TestService {
+    impl InvoiceServiceTrait for TestService {
         fn add_from_master_list(
             &self,
             _: &ServiceContext,
             store_id: &str,
             input: ServiceInput,
-        ) -> Result<Vec<RequisitionLine>, ServiceError> {
+        ) -> Result<Vec<InvoiceLine>, ServiceError> {
             self.0(store_id, input)
         }
     }
@@ -168,14 +168,14 @@ mod test {
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.requisition_service = Box::new(test_service);
+        service_provider.invoice_service = Box::new(test_service);
         service_provider
     }
 
     fn empty_variables() -> serde_json::Value {
         json!({
           "input": {
-            "requestRequisitionId": "n/a",
+            "outboundShipmentId": "n/a",
             "masterListId": "n/a",
           },
           "storeId": "n/a"
@@ -186,16 +186,16 @@ mod test {
     async fn test_graphql_add_from_master_list_errors() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
-            RequisitionMutations,
+            InvoiceMutations,
             "test_graphql_add_from_master_list_structured_errors",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: AddFromMasterListInput!, $storeId: String) {
-            addFromMasterList(storeId: $storeId, input: $input) {
-              ... on AddFromMasterListError {
+        mutation ($input: AddToShipmentFromMasterListInput!, $storeId: String) {
+            addToShipmentFromMasterList(storeId: $storeId, input: $input) {
+              ... on AddToShipmentFromMasterListError {
                 error {
                   __typename
                 }
@@ -204,11 +204,11 @@ mod test {
           }
         "#;
 
-        // RecordDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        // InvoiceDoesNotExist
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::ShipmentDoesNotExist)));
 
         let expected = json!({
-            "addFromMasterList": {
+            "addToShipmentFromMasterList": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -224,13 +224,13 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // CannotEditRecord
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        // CannotEditInvoice
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditShipment)));
 
         let expected = json!({
-            "addFromMasterList": {
+            "addToShipmentFromMasterList": {
               "error": {
-                "__typename": "CannotEditRequisition"
+                "__typename": "CannotEditInvoice"
               }
             }
           }
@@ -244,15 +244,15 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // MasterListNotFoundForThisStore
+        // MasterListNotFoundForThisName
         let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::MasterListNotFoundForThisStore)
+            Err(ServiceError::MasterListNotFoundForThisName)
         }));
 
         let expected = json!({
-            "addFromMasterList": {
+            "addToShipmentFromMasterList": {
               "error": {
-                "__typename": "MasterListNotFoundForThisStore"
+                "__typename": "MasterListNotFoundForThisName"
               }
             }
           }
@@ -266,8 +266,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        // NotThisStoreInvoice
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -278,8 +278,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotARequestRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
+        // NotAnOutboundShipment
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnOutboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -295,16 +295,16 @@ mod test {
     async fn test_graphql_add_from_master_list_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
-            RequisitionMutations,
+            InvoiceMutations,
             "test_graphql_add_from_master_list_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($storeId: String, $input: AddFromMasterListInput!) {
-            addFromMasterList(storeId: $storeId, input: $input) {
-                ... on RequisitionLineConnector{
+        mutation ($storeId: String, $input: AddToShipmentFromMasterListInput!) {
+            addToShipmentFromMasterList(storeId: $storeId, input: $input) {
+                ... on InvoiceLineConnector{
                   nodes {
                     id
                   }
@@ -319,29 +319,30 @@ mod test {
             assert_eq!(
                 input,
                 ServiceInput {
-                    request_requisition_id: "id input".to_string(),
+                    outbound_shipment_id: "id input".to_string(),
                     master_list_id: "master list id input".to_string(),
                 }
             );
-            Ok(vec![RequisitionLine {
-                requisition_line_row: mock_sent_request_requisition_line(),
-                requisition_row: mock_request_draft_requisition(),
+            Ok(vec![InvoiceLine {
+                invoice_line_row: mock_outbound_shipment_line_a(),
+                invoice_row: mock_new_outbound_shipment_no_lines(),
+                location_row_option: None,
             }])
         }));
 
         let variables = json!({
           "input": {
-            "requestRequisitionId": "id input",
+            "outboundShipmentId": "id input",
             "masterListId": "master list id input"
           },
           "storeId": "store_a"
         });
 
         let expected = json!({
-            "addFromMasterList": {
+            "addToShipmentFromMasterList": {
               "nodes": [
                 {
-                  "id": mock_sent_request_requisition_line().id
+                  "id": mock_outbound_shipment_line_a().id
                 }
               ]
             }
