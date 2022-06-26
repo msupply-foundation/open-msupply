@@ -138,7 +138,7 @@ impl GeneralQueries {
         )
     }
 
-    pub async fn log(
+    pub async fn logs(
         &self,
         ctx: &Context<'_>,
         store_id: String,
