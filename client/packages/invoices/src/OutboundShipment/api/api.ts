@@ -426,7 +426,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     outboundShipmentId: string;
     masterListId: string;
   }) => {
-    const result = await sdk.addFromMasterList({
+    const result = await sdk.addToShipmentFromMasterList({
       outboundShipmentId,
       masterListId,
       storeId,
