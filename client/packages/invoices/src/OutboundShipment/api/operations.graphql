@@ -740,7 +740,7 @@ mutation deleteOutboundShipmentLines(
   }
 }
 
-mutation addFromMasterList(
+mutation addToShipmentFromMasterList(
   $storeId: String!
   $outboundShipmentId: String!
   $masterListId: String!
