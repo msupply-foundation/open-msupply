@@ -63,7 +63,7 @@ pub fn logs(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryItems,
+            resource: Resource::QueryLog,
             store_id: Some(store_id),
         },
     )?;
