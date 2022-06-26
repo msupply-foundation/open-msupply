@@ -12,11 +12,3 @@ impl CannotDeleteInvoiceWithLines {
         &self.0
     }
 }
-
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &'static str {
-        "Master list for this store is not found (might not be visible in this store)"
-    }
-}

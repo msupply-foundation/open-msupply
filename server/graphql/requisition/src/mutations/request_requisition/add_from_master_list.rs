@@ -5,13 +5,12 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::{
-    generic_errors::MasterListNotFoundForThisStore, types::RequisitionLineConnector,
-};
+use graphql_types::types::RequisitionLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    errors::AddFromMasterListError as ServiceError,
-    requisition::request_requisition::AddFromMasterList as ServiceInput,
+    requisition::request_requisition::{
+        AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
+    },
 };
 
 #[derive(InputObject)]
@@ -93,10 +92,10 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::RecordDoesNotExist => {
+        ServiceError::RequisitionDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditRecord => {
+        ServiceError::CannotEditRequisition => {
             return Ok(DeleteErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
             ))
@@ -107,12 +106,20 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStore => BadUserInput(formatted_error),
-        ServiceError::RecordIsIncorrectType => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
+        ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
+}
+
+pub struct MasterListNotFoundForThisStore;
+#[Object]
+impl MasterListNotFoundForThisStore {
+    pub async fn description(&self) -> &'static str {
+        "Master list for this store is not found (might not be visible in this store)"
+    }
 }
 
 #[cfg(test)]
@@ -130,10 +137,12 @@ mod test {
     use serde_json::json;
     use service::{
         requisition::{
-            request_requisition::AddFromMasterList as ServiceInput, RequisitionServiceTrait,
+            request_requisition::{
+                AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
+            },
+            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        errors::AddFromMasterListError as ServiceError,
     };
 
     use crate::RequisitionMutations;
@@ -196,7 +205,7 @@ mod test {
         "#;
 
         // RecordDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RecordDoesNotExist)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
             "addFromMasterList": {
@@ -216,7 +225,7 @@ mod test {
         );
 
         // CannotEditRecord
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRecord)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "addFromMasterList": {
@@ -257,8 +266,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotThisStore
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStore)));
+        // NotThisStoreRequisition
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -269,8 +278,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // RecordIsIncorrectType
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RecordIsIncorrectType)));
+        // NotARequestRequisition
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

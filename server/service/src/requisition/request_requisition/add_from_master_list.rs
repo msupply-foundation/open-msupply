@@ -11,12 +11,21 @@ use repository::{
 };
 
 use super::generate_requisition_lines;
-use crate::errors::AddFromMasterListError;
 
 #[derive(Debug, PartialEq)]
 pub struct AddFromMasterList {
     pub request_requisition_id: String,
     pub master_list_id: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum AddFromMasterListError {
+    RequisitionDoesNotExist,
+    NotThisStoreRequisition,
+    CannotEditRequisition,
+    MasterListNotFoundForThisStore,
+    NotARequestRequisition,
+    DatabaseError(RepositoryError),
 }
 
 type OutError = AddFromMasterListError;
@@ -56,18 +65,18 @@ fn validate(
     input: &AddFromMasterList,
 ) -> Result<RequisitionRow, OutError> {
     let requisition_row = check_requisition_exists(connection, &input.request_requisition_id)?
-        .ok_or(OutError::RecordDoesNotExist)?;
+        .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
-        return Err(OutError::NotThisStore);
+        return Err(OutError::NotThisStoreRequisition);
     }
 
     if requisition_row.status != RequisitionRowStatus::Draft {
-        return Err(OutError::CannotEditRecord);
+        return Err(OutError::CannotEditRequisition);
     }
 
     if requisition_row.r#type != RequisitionRowType::Request {
-        return Err(OutError::RecordIsIncorrectType);
+        return Err(OutError::NotARequestRequisition);
     }
 
     check_master_list_for_store(connection, store_id, &input.master_list_id)?
@@ -123,6 +132,12 @@ pub fn check_master_list_for_store(
     Ok(rows.pop())
 }
 
+impl From<RepositoryError> for AddFromMasterListError {
+    fn from(error: RepositoryError) -> Self {
+        AddFromMasterListError::DatabaseError(error)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use repository::{
@@ -141,8 +156,10 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        errors::AddFromMasterListError as ServiceError,
-        requisition::{common::get_lines_for_requisition, request_requisition::AddFromMasterList},
+        requisition::{
+            common::get_lines_for_requisition,
+            request_requisition::{AddFromMasterList, AddFromMasterListError as ServiceError},
+        },
         service_provider::ServiceProvider,
     };
 
@@ -165,10 +182,10 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::RecordDoesNotExist)
+            Err(ServiceError::RequisitionDoesNotExist)
         );
 
-        // NotThisStore
+        // NotThisStoreRequisition
         assert_eq!(
             service.add_from_master_list(
                 &context,
@@ -178,10 +195,10 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::NotThisStore)
+            Err(ServiceError::NotThisStoreRequisition)
         );
 
-        // CannotEditRecord
+        // CannotEditRequisition
         assert_eq!(
             service.add_from_master_list(
                 &context,
@@ -191,10 +208,10 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::CannotEditRecord)
+            Err(ServiceError::CannotEditRequisition)
         );
 
-        // RecordIsIncorrectType
+        // NotARequestRequisition
         assert_eq!(
             service.add_from_master_list(
                 &context,
@@ -204,7 +221,7 @@ mod test {
                     master_list_id: "n/a".to_owned()
                 },
             ),
-            Err(ServiceError::RecordIsIncorrectType)
+            Err(ServiceError::NotARequestRequisition)
         );
 
         // MasterListNotFoundForThisStore

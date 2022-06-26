@@ -5,11 +5,12 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::{generic_errors::MasterListNotFoundForThisStore, types::InvoiceLineConnector};
+use graphql_types::types::InvoiceLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    errors::AddFromMasterListError as ServiceError,
-    invoice::outbound_shipment::AddFromMasterList as ServiceInput,
+    invoice::outbound_shipment::{
+        AddFromMasterList as ServiceInput, AddToShipmentFromMasterListError as ServiceError,
+    },
 };
 
 #[derive(InputObject)]
@@ -18,12 +19,20 @@ pub struct AddToShipmentFromMasterListInput {
     pub master_list_id: String,
 }
 
+pub struct MasterListNotFoundForThisName;
+#[Object]
+impl MasterListNotFoundForThisName {
+    pub async fn description(&self) -> &'static str {
+        "Master list not found (might not be visible to this name)"
+    }
+}
+
 #[derive(Interface)]
 #[graphql(name = "AddToShipmentFromMasterListErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
-    MasterListNotFoundForThisStore(MasterListNotFoundForThisStore),
+    MasterListNotFoundForThisName(MasterListNotFoundForThisName),
     CannotEditInvoice(CannotEditInvoice),
 }
 
@@ -91,22 +100,22 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::RecordDoesNotExist => {
+        ServiceError::ShipmentDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditRecord => {
+        ServiceError::CannotEditShipment => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
         }
-        ServiceError::MasterListNotFoundForThisStore => {
-            return Ok(DeleteErrorInterface::MasterListNotFoundForThisStore(
-                MasterListNotFoundForThisStore {},
+        ServiceError::MasterListNotFoundForThisName => {
+            return Ok(DeleteErrorInterface::MasterListNotFoundForThisName(
+                MasterListNotFoundForThisName {},
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStore => BadUserInput(formatted_error),
-        ServiceError::RecordIsIncorrectType => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
+        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -127,8 +136,12 @@ mod test {
     };
     use serde_json::json;
     use service::{
-        errors::AddFromMasterListError as ServiceError,
-        invoice::{outbound_shipment::AddFromMasterList as ServiceInput, InvoiceServiceTrait},
+        invoice::{
+            outbound_shipment::{
+                AddFromMasterList as ServiceInput, AddToShipmentFromMasterListError as ServiceError,
+            },
+            InvoiceServiceTrait,
+        },
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -192,7 +205,7 @@ mod test {
         "#;
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RecordDoesNotExist)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::ShipmentDoesNotExist)));
 
         let expected = json!({
             "addToShipmentFromMasterList": {
@@ -212,7 +225,7 @@ mod test {
         );
 
         // CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRecord)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditShipment)));
 
         let expected = json!({
             "addToShipmentFromMasterList": {
@@ -231,15 +244,15 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // MasterListNotFoundForThisStore
+        // MasterListNotFoundForThisName
         let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::MasterListNotFoundForThisStore)
+            Err(ServiceError::MasterListNotFoundForThisName)
         }));
 
         let expected = json!({
             "addToShipmentFromMasterList": {
               "error": {
-                "__typename": "MasterListNotFoundForThisStore"
+                "__typename": "MasterListNotFoundForThisName"
               }
             }
           }
@@ -254,7 +267,7 @@ mod test {
         );
 
         // NotThisStoreInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStore)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -266,7 +279,7 @@ mod test {
         );
 
         // NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RecordIsIncorrectType)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnOutboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
