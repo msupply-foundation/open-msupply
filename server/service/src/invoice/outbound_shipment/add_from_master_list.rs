@@ -78,7 +78,6 @@ fn validate(
     if invoice_row.store_id != store_id {
         return Err(OutError::NotThisStoreShipment);
     }
-
     if invoice_row.status == InvoiceRowStatus::Shipped
         || invoice_row.status == InvoiceRowStatus::Delivered
         || invoice_row.status == InvoiceRowStatus::Verified
