@@ -58,8 +58,13 @@ impl<'a> UserAccountRowRepository<'a> {
         &self,
         username: &str,
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
+        #[cfg(feature = "postgres")]
         let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
-            .filter(user_account_dsl::username.eq(username))
+            .filter(user_account_dsl::username.ilike(username))
+            .first(&self.connection.connection);
+        #[cfg(not(feature = "postgres"))]
+        let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
+            .filter(user_account_dsl::username.like(username))
             .first(&self.connection.connection);
         match result {
             Ok(row) => Ok(Some(row)),
