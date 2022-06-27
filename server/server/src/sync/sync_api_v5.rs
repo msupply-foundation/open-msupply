@@ -93,7 +93,7 @@ fn generate_headers(hardware_id: &str) -> HeaderMap {
 }
 
 async fn check_status(response: Response) -> Result<Response, anyhow::Error> {
-    if response.status().is_client_error() || response.status().is_server_error() {
+    if !response.status().is_success() {
         let err = response.text().await?;
         return Err(anyhow::Error::msg(err));
     }
