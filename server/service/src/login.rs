@@ -7,8 +7,8 @@ use bcrypt::BcryptError;
 use chrono::Utc;
 use log::info;
 use repository::{
-    LogRow, LogRowRepository, LogType, Permission, RepositoryError, UserAccountRow,
-    UserPermissionRow, UserStoreJoinRow,
+    LogRow, LogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
+    UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
@@ -22,6 +22,7 @@ use crate::{
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
+    log::log_entry,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
     token::{JWTIssuingError, TokenPair, TokenService},
@@ -135,23 +136,17 @@ impl LoginService {
             }
         };
 
-        let log_service = LogRowRepository::new(&service_ctx.connection);
-        let log = LogRow {
-            id: uuid(),
-            log_type: LogType::UserLoggedIn,
-            user_id: Some(user_account.id.clone()),
-            record_id: None,
-            created_datetime: Utc::now().naive_utc(),
-        };
-        match log_service.upsert_one(&log) {
-            Ok(_) => (),
-            Err(e) => {
-                return Err(LoginError::InternalError(format!(
-                    "Couldn't log login for {}: {:?}",
-                    user_account.username, e
-                )));
-            }
-        }
+        log_entry(
+            &service_ctx.connection,
+            &LogRow {
+                id: uuid(),
+                log_type: LogType::UserLoggedIn,
+                user_id: Some(user_account.id.clone()),
+                store_id: None,
+                record_id: None,
+                created_datetime: Utc::now().naive_utc(),
+            },
+        )?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,

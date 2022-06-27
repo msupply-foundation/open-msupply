@@ -22,6 +22,7 @@ pub struct LogFilter {
     pub id: Option<EqualFilter<String>>,
     pub log_type: Option<EqualFilter<LogType>>,
     pub user_id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
     pub record_id: Option<EqualFilter<String>>,
 }
 
@@ -97,6 +98,7 @@ fn create_filtered_query(filter: Option<LogFilter>) -> BoxedLogQuery {
         apply_equal_filter!(query, filter.id, log_dsl::id);
         apply_equal_filter!(query, filter.log_type, log_dsl::log_type);
         apply_equal_filter!(query, filter.user_id, log_dsl::user_id);
+        apply_equal_filter!(query, filter.store_id, log_dsl::store_id);
         apply_equal_filter!(query, filter.record_id, log_dsl::record_id);
     }
 
@@ -113,6 +115,7 @@ impl LogFilter {
             id: None,
             log_type: None,
             user_id: None,
+            store_id: None,
             record_id: None,
         }
     }
@@ -129,6 +132,11 @@ impl LogFilter {
 
     pub fn user_id(mut self, filter: EqualFilter<String>) -> Self {
         self.user_id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 

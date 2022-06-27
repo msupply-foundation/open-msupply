@@ -38,6 +38,10 @@ impl LogNode {
         LogNodeType::from_domain(&self.row().log_type)
     }
 
+    pub async fn store_id(&self) -> &Option<String> {
+        &self.row().store_id
+    }
+
     pub async fn record_id(&self) -> &Option<String> {
         &self.row().record_id
     }

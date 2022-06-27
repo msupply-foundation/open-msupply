@@ -1,14 +1,16 @@
-use repository::{Invoice, InvoiceRowRepository};
+use chrono::Utc;
+use repository::{Invoice, InvoiceRowRepository, LogRow, LogType};
 use repository::{RepositoryError, TransactionError};
 
 pub mod generate;
 pub mod validate;
 
 use generate::generate;
+use util::uuid::uuid;
 use validate::validate;
 
 use crate::invoice::query::get_invoice;
-use crate::log::log_invoice_created;
+use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -56,10 +58,16 @@ pub fn insert_outbound_shipment(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    log_invoice_created(
+    log_entry(
         &ctx.connection,
-        user_id.to_string(),
-        invoice.invoice_row.id.clone(),
+        &LogRow {
+            id: uuid(),
+            log_type: LogType::InvoiceCreated,
+            user_id: Some(user_id.to_string()),
+            store_id: Some(invoice.invoice_row.store_id.clone()),
+            record_id: Some(invoice.invoice_row.id.clone()),
+            created_datetime: Utc::now().naive_utc(),
+        },
     )?;
 
     Ok(invoice)

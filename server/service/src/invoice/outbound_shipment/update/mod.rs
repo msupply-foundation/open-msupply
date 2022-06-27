@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    Invoice, InvoiceLine, InvoiceRowRepository, InvoiceRowStatus, LogRow, LogRowRepository,
-    LogType, RepositoryError, StockLineRowRepository, TransactionError,
+    Invoice, InvoiceLine, InvoiceRowRepository, InvoiceRowStatus, LogRow, LogType, RepositoryError,
+    StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
@@ -12,6 +12,7 @@ use util::uuid::uuid;
 use validate::validate;
 
 use crate::invoice::query::get_invoice;
+use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
 use crate::sync_processor::{process_records, Record};
 #[derive(Clone, Debug, PartialEq)]
@@ -88,19 +89,23 @@ pub fn update_outbound_shipment(
         )
     );
 
-    let status = &patch.status.expect("Could not get invoice status.");
-    let invoice_status_log = LogRow {
-        id: uuid(),
-        log_type: match status {
-            UpdateOutboundShipmentStatus::Allocated => LogType::InvoiceStatusAllocated,
-            UpdateOutboundShipmentStatus::Picked => LogType::InvoiceStatusPicked,
-            UpdateOutboundShipmentStatus::Shipped => LogType::InvoiceStatusShipped,
-        },
-        user_id: invoice.invoice_row.user_id.clone(),
-        record_id: Some(invoice.invoice_row.id.clone()),
-        created_datetime: Utc::now().naive_utc(),
-    };
-    LogRowRepository::new(&ctx.connection).upsert_one(&invoice_status_log)?;
+    if let Some(status) = patch.status {
+        log_entry(
+            &ctx.connection,
+            &LogRow {
+                id: uuid(),
+                log_type: match status {
+                    UpdateOutboundShipmentStatus::Allocated => LogType::InvoiceStatusAllocated,
+                    UpdateOutboundShipmentStatus::Picked => LogType::InvoiceStatusPicked,
+                    UpdateOutboundShipmentStatus::Shipped => LogType::InvoiceStatusShipped,
+                },
+                user_id: invoice.invoice_row.user_id.clone(),
+                store_id: Some(invoice.invoice_row.store_id.clone()),
+                record_id: Some(invoice.invoice_row.id.clone()),
+                created_datetime: Utc::now().naive_utc(),
+            },
+        )?;
+    }
 
     Ok(invoice)
 }
