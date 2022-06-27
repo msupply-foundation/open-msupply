@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use util::inline_init;
 
-use crate::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use crate::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
 pub fn mock_outbound_shipment_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
@@ -116,6 +116,16 @@ pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
     })
 }
 
+pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("new_outbound_shipment_no_lines");
+        r.name_id = String::from("name_store_a");
+        r.store_id = String::from("store_c");
+        r.r#type = InvoiceRowType::OutboundShipment;
+        r.status = InvoiceRowStatus::New;
+    })
+}
+
 pub fn mock_inbound_shipment_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_a");
@@ -204,6 +214,23 @@ pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
     })
 }
 
+pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
+    inline_init(|r: &mut InvoiceLineRow| {
+        r.id = String::from("outbound_shipment_line_a");
+        r.invoice_id = String::from("outbound_shipment_c");
+        r.item_id = String::from("item_a");
+        r.item_name = String::from("Item A");
+        r.item_code = String::from("a");
+        r.pack_size = 1;
+        r.cost_price_per_pack = 0.0;
+        r.sell_price_per_pack = 0.0;
+        r.total_before_tax = 0.0;
+        r.total_after_tax = 0.0;
+        r.r#type = InvoiceLineRowType::StockOut;
+        r.number_of_packs = 0;
+    })
+}
+
 pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
     vec![
         mock_outbound_shipment_a(),
@@ -213,7 +240,12 @@ pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
         mock_outbound_shipment_shipped(),
         mock_outbound_shipment_picked(),
         mock_outbound_shipment_no_lines(),
+        mock_new_outbound_shipment_no_lines(),
     ]
+}
+
+pub fn mock_outbound_shipment_lines() -> Vec<InvoiceLineRow> {
+    vec![mock_outbound_shipment_line_a()]
 }
 
 pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {

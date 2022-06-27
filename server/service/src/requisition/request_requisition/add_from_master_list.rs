@@ -19,7 +19,6 @@ pub struct AddFromMasterList {
 }
 
 #[derive(Debug, PartialEq)]
-
 pub enum AddFromMasterListError {
     RequisitionDoesNotExist,
     NotThisStoreRequisition,

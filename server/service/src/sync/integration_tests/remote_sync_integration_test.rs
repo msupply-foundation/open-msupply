@@ -20,12 +20,13 @@ pub fn gen_i64() -> i64 {
 #[cfg(test)]
 mod remote_sync_integration_tests {
 
+    use crate::service_provider::ServiceProvider;
+    use crate::sync::settings::SyncSettings;
     use actix_web::web::Data;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, EqualFilter, StorageConnection, StoreFilter,
         StoreRepository,
     };
-    use service::{service_provider::ServiceProvider, sync_settings::SyncSettings};
 
     use crate::sync::{
         integration_tests::{
