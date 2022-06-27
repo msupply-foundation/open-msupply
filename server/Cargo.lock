@@ -4106,6 +4106,7 @@ dependencies = [
  "anymap",
  "bcrypt",
  "chrono",
+ "env_logger 0.8.4",
  "failure",
  "headless_chrome",
  "httpmock",
