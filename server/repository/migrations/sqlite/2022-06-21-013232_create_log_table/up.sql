@@ -3,6 +3,7 @@ CREATE TABLE log (
     log_type TEXT CHECK (log_type IN (
         'USER_LOGGED_IN',
         'INVOICE_CREATED',
+        'INVOICE_DELETED',
         'INVOICE_STATUS_ALLOCATED',
         'INVOICE_STATUS_PICKED',
         'INVOICE_STATUS_SHIPPED',

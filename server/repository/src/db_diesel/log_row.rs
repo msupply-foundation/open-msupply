@@ -25,6 +25,7 @@ joinable!(log -> store (store_id));
 pub enum LogType {
     UserLoggedIn,
     InvoiceCreated,
+    InvoiceDeleted,
     InvoiceStatusAllocated,
     InvoiceStatusPicked,
     InvoiceStatusShipped,
