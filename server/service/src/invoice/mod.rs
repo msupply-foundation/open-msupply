@@ -1,5 +1,6 @@
 use repository::Invoice;
 use repository::InvoiceFilter;
+use repository::InvoiceLine;
 use repository::InvoiceRowType;
 use repository::InvoiceSort;
 use repository::PaginationOption;
@@ -8,7 +9,6 @@ use repository::RepositoryError;
 use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
-
 pub mod query;
 use self::query::*;
 
@@ -130,6 +130,15 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: BatchOutboundShipment,
     ) -> Result<BatchOutboundShipmentResult, RepositoryError> {
         batch_outbound_shipment(ctx, store_id, user_id, input)
+    }
+
+    fn add_from_master_list(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: AddFromMasterList,
+    ) -> Result<Vec<InvoiceLine>, AddToShipmentFromMasterListError> {
+        add_from_master_list(ctx, store_id, input)
     }
 }
 

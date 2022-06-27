@@ -16,6 +16,7 @@ import {
   ReportRowFragment,
   ReportSelector,
 } from '@openmsupply-client/system';
+import { AddFromMasterListButton } from './AddFromMasterListButton';
 
 interface AppBarButtonProps {
   onAddItem: () => void;
@@ -44,7 +45,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem()}
         />
-        <ReportSelector context={ReportContext.OutboundShipment} onClick={printReport}>
+        <AddFromMasterListButton />
+        <ReportSelector
+          context={ReportContext.OutboundShipment}
+          onClick={printReport}
+        >
           <LoadingButton
             variant="outlined"
             startIcon={<PrinterIcon />}
