@@ -1,7 +1,7 @@
 use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
 use reqwest::Url;
 
-use crate::{service_provider::ServiceContext, sync_settings::SyncSettings};
+use crate::{service_provider::ServiceContext, sync::settings::SyncSettings};
 
 #[derive(Debug)]
 pub enum UpdateSettingsError {

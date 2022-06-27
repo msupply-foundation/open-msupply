@@ -6,7 +6,7 @@ use graphql_core::{
 use serde::Serialize;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync_settings::SyncSettings,
+    sync::settings::SyncSettings,
 };
 
 // TODO find a better place, e.g. merge with getApiVersion?

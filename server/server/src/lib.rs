@@ -4,10 +4,7 @@ use crate::{
     serve_frontend::config_server_frontend, static_files::config_static_files,
 };
 
-use self::{
-    middleware::{compress as compress_middleware, logger as logger_middleware},
-    sync::Synchroniser,
-};
+use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{config as graphql_config, config_stage0};
@@ -18,7 +15,7 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
-    token_bucket::TokenBucket,
+    token_bucket::TokenBucket, sync::Synchroniser,
 };
 
 use actix_web::{web::Data, App, HttpServer};
@@ -35,8 +32,6 @@ pub mod environment;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
-pub mod sync;
-pub mod test_utils;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
