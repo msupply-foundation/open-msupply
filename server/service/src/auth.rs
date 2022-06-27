@@ -310,6 +310,15 @@ fn validate_resource_permissions(
     resource_request: &ResourceAccessRequest,
     resource_permission: &PermissionDSL,
 ) -> Result<(), String> {
+    // When this code runs, user_permissions have already been filtered by store (if specified).
+    // It is possible to mis-configure an API call and not specify a store_id when it is required which could result in incorrect permssion evaluation.
+    // We use a StoreAccess permission to catch this case (As it checks both the permission and the store in the request)
+
+    // println!(
+    //     "validate_resource_permissions() user_permissions {:?} required {:?}",
+    //     user_permissions, resource_permission
+    // );
+
     Ok(match resource_permission {
         PermissionDSL::HasPermission(permission) => {
             if user_permissions
@@ -357,7 +366,7 @@ fn validate_resource_permissions(
                     resource_request,
                     child,
                 ) {
-                    ()
+                    return Ok(());
                 }
             }
             return Err(format!("No permissions for any of: {:?}", children));
@@ -448,6 +457,235 @@ impl AuthServiceTrait for AuthService {
 impl From<RepositoryError> for AuthError {
     fn from(error: RepositoryError) -> Self {
         AuthError::InternalError(format!("{:#?}", error))
+    }
+}
+
+#[cfg(test)]
+mod validate_resource_permissions_test {
+    use repository::{Permission, UserPermissionRow};
+
+    use super::{validate_resource_permissions, PermissionDSL, Resource, ResourceAccessRequest};
+
+    #[actix_rt::test]
+    async fn test_validate_resource_permissions() {
+        let user_id = "test_user_id";
+        let store_id = "test_store_id";
+
+        let user_permissions: Vec<UserPermissionRow> = vec![];
+        let resource_request = ResourceAccessRequest {
+            resource: Resource::MutateLocation,
+            store_id: Some(store_id.to_string()),
+        };
+        let required_permissions = PermissionDSL::HasPermission(Permission::ServerAdmin);
+
+        //Ensure validation fails if user has no permissions
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_err());
+
+        //Ensure validation succeeds if user has single required permission
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id".to_string(),
+            user_id: user_id.to_string(),
+            permission: Permission::ServerAdmin,
+            store_id: None,
+        }];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 1 out of any 1 permission - any(1 perm)
+        let required_permissions =
+            PermissionDSL::Any(vec![PermissionDSL::HasPermission(Permission::ServerAdmin)]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 1 out of any 2 permissions - any(2 perm)
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 0 out of any 1 permission - any(1 perm)
+        let required_permissions = PermissionDSL::Any(vec![PermissionDSL::HasPermission(
+            Permission::StocktakeMutate,
+        )]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_err());
+
+        //Test DSL user has 1 out of 2 required permission - And(2 perm)
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id2".to_string(),
+            user_id: user_id.to_string(),
+            permission: Permission::StocktakeMutate,
+            store_id: Some(store_id.to_string()),
+        }];
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_err());
+
+        //Test DSL user has 2 out of 2 required permission - And(2 perm)
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id1".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::ServerAdmin,
+                store_id: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+            },
+        ];
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has Any(1,And(1,2))
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+                PermissionDSL::HasStoreAccess,
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StoreAccess,
+                store_id: Some(store_id.to_string()),
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+                PermissionDSL::HasStoreAccess,
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id2".to_string(),
+            user_id: user_id.to_string(),
+            permission: Permission::ServerAdmin,
+            store_id: None,
+        }];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has And(1,Any(1,2))
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(Permission::ServerAdmin),
+                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StoreAccess,
+                store_id: Some(store_id.to_string()),
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::ServerAdmin,
+                store_id: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StoreAccess,
+                store_id: Some(store_id.to_string()),
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
     }
 }
 
