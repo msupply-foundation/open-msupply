@@ -7,6 +7,8 @@ import {
   useConfirmationModal,
   useTranslation,
   useNotification,
+  useDirtyCheck,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { JsonForms } from '@jsonforms/react';
 import { materialRenderers } from '@jsonforms/material-renderers';
@@ -77,12 +79,20 @@ export const useJsonForms = (
   const t = useTranslation('common');
   const { success, error: errorNotification } = useNotification();
   const navigate = useNavigate();
+  const { isDirty, setIsDirty } = useDirtyCheck();
 
   const { showButtonPanel = true, onCancel = () => navigate(-1) } = options;
+
+  useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
     if (!docName) setError('No document associated with this record');
   }, []);
+
+  const updateData = (newData: JsonData) => {
+    setIsDirty(true);
+    setData(newData);
+  };
 
   const saveData = async () => {
     setSaving(true);
@@ -95,6 +105,7 @@ export const useJsonForms = (
         const successSnack = success(t('success.data-saved'));
         successSnack();
         setSaving(false);
+        setIsDirty(false);
       } catch {
         const errorSnack = errorNotification(t('error.problem-saving'));
         errorSnack();
@@ -152,7 +163,7 @@ export const useJsonForms = (
       >
         <FormComponent
           data={data}
-          setData={setData}
+          setData={updateData}
           // setError={setError}
           renderers={renderers}
         />
