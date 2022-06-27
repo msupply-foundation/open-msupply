@@ -15,12 +15,13 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
-    token_bucket::TokenBucket, sync::Synchroniser,
+    sync::Synchroniser,
+    token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
 use std::{
-    ops::DerefMut,
+    ops::{DerefMut, Deref},
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
@@ -196,7 +197,8 @@ async fn run_server(
 
     let restart_switch = Data::new(restart_switch);
 
-    let mut synchroniser = Synchroniser::new(sync_settings, service_provider_data.clone()).unwrap();
+    let mut synchroniser =
+        Synchroniser::new(sync_settings, service_provider_data.deref().clone()).unwrap();
     // Do the initial pull before doing anything else
     match synchroniser.initial_pull().await {
         Ok(_) => {}

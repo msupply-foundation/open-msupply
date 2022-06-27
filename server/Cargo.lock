@@ -4101,7 +4101,6 @@ name = "service"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
- "actix-web",
  "anyhow",
  "anymap",
  "bcrypt",
