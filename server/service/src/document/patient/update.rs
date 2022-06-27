@@ -1,5 +1,8 @@
 use chrono::Utc;
-use repository::{DocumentRepository, EqualFilter, RepositoryError, TransactionError};
+use repository::{
+    DocumentContext, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRepository,
+    EqualFilter, RepositoryError, StorageConnection, TransactionError,
+};
 
 use crate::{
     document::{document_service::DocumentInsertError, raw_document::RawDocument},
@@ -38,7 +41,7 @@ pub fn update_patient(
         .connection
         .transaction_sync(|_| {
             let patient = validate(ctx, service_provider, &store_id, &input)?;
-            let doc = generate(user_id, &patient, input);
+            let doc = generate(&ctx.connection, user_id, &patient, input)?;
 
             // Updating the document will trigger an update in the patient (names) table
             service_provider
@@ -83,16 +86,30 @@ impl From<RepositoryError> for UpdatePatientError {
     }
 }
 
-fn generate(user_id: &str, patient: &SchemaPatient, input: UpdatePatient) -> RawDocument {
-    RawDocument {
+fn generate(
+    connection: &StorageConnection,
+    user_id: &str,
+    patient: &SchemaPatient,
+    input: UpdatePatient,
+) -> Result<RawDocument, RepositoryError> {
+    let form_schema_id = match input.schema_id {
+        Some(schema_id) => Some(schema_id),
+        None => DocumentRegistryRepository::new(connection)
+            .query_by_filter(
+                DocumentRegistryFilter::new().context(DocumentContext::Patient.equal_to()),
+            )?
+            .pop()
+            .map(|entry| entry.form_schema_id),
+    };
+    Ok(RawDocument {
         name: patient_doc_name(&patient.id),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
         timestamp: Utc::now(),
         r#type: PATIENT_TYPE.to_string(),
         data: input.data,
-        schema_id: input.schema_id,
-    }
+        schema_id: form_schema_id,
+    })
 }
 
 fn validate_patient_schema(input: &UpdatePatient) -> Result<SchemaPatient, UpdatePatientError> {
