@@ -12,6 +12,7 @@ CREATE TABLE log (
     id TEXT NOT NULL PRIMARY KEY,
     type log_type, 
     user_id TEXT,
+    store_id TEXT REFERENCES store(id),
     record_id TEXT REFERENCES invoice(id),
     created_datetime TIMESTAMP NOT NULL
 )

@@ -45,6 +45,7 @@ pub struct LogFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub log_type: Option<EqualFilterLogTypeInput>,
     pub user_id: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
     pub record_id: Option<EqualFilterStringInput>,
 }
 
@@ -55,7 +56,6 @@ pub enum LogResponse {
 
 pub fn logs(
     ctx: &Context<'_>,
-    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<LogFilterInput>,
     sort: Option<Vec<LogSortInput>>,
@@ -64,7 +64,7 @@ pub fn logs(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryLog,
-            store_id: Some(store_id),
+            store_id: None,
         },
     )?;
 
@@ -88,6 +88,7 @@ impl LogFilterInput {
             id,
             log_type,
             user_id,
+            store_id,
             record_id,
         } = self;
 
@@ -95,6 +96,7 @@ impl LogFilterInput {
             id: id.map(EqualFilter::from),
             log_type: log_type.map(|t| map_filter!(t, LogNodeType::to_domain)),
             user_id: user_id.map(EqualFilter::from),
+            store_id: store_id.map(EqualFilter::from),
             record_id: record_id.map(EqualFilter::from),
         }
     }

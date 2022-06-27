@@ -10,6 +10,7 @@ CREATE TABLE log (
         'INVOICE_STATUS_VERIFIED'
     )) NOT NULL,
     user_id TEXT,
+    store_id TEXT REFERENCES store(id),
     record_id TEXT REFERENCES invoice(id),
     created_datetime TIMESTAMP NOT NULL
 )

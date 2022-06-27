@@ -1,10 +1,12 @@
 use crate::{
     invoice::query::get_invoice,
+    log::log_entry,
     service_provider::ServiceContext,
     sync_processor::{process_records, Record},
     WithDBError,
 };
-use repository::{Invoice, LogRow, LogRowRepository, LogType};
+use chrono::Utc;
+use repository::{Invoice, LogRow, LogType};
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
@@ -78,18 +80,22 @@ pub fn update_inbound_shipment(
         )
     );
 
-    let status = &patch.status.expect("Could not get invoice status.");
-    let invoice_status_log = LogRow {
-        id: uuid(),
-        log_type: match status {
-            UpdateInboundShipmentStatus::Delivered => LogType::InvoiceStatusDelivered,
-            UpdateInboundShipmentStatus::Verified => LogType::InvoiceStatusVerified,
-        },
-        user_id: invoice.invoice_row.user_id.clone(),
-        record_id: Some(invoice.invoice_row.id.clone()),
-        created_datetime: chrono::Utc::now().naive_utc(),
-    };
-    LogRowRepository::new(&ctx.connection).upsert_one(&invoice_status_log)?;
+    if let Some(status) = patch.status {
+        log_entry(
+            &ctx.connection,
+            &LogRow {
+                id: uuid(),
+                log_type: match status {
+                    UpdateInboundShipmentStatus::Delivered => LogType::InvoiceStatusDelivered,
+                    UpdateInboundShipmentStatus::Verified => LogType::InvoiceStatusVerified,
+                },
+                user_id: invoice.invoice_row.user_id.clone(),
+                store_id: Some(invoice.invoice_row.store_id.clone()),
+                record_id: Some(invoice.invoice_row.id.clone()),
+                created_datetime: Utc::now().naive_utc(),
+            },
+        )?;
+    }
 
     Ok(invoice)
 }

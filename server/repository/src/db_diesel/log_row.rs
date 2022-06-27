@@ -1,6 +1,10 @@
 use super::{log_row::log::dsl as log_dsl, StorageConnection};
 
-use crate::{db_diesel::invoice_row::invoice, repository_error::RepositoryError, user_account};
+use crate::{
+    db_diesel::{invoice_row::invoice, store_row::store},
+    repository_error::RepositoryError,
+    user_account,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -11,12 +15,14 @@ table! {
         id -> Text,
         log_type -> crate::db_diesel::log_row::LogTypeMapping,
         user_id -> Nullable<Text>,
+        store_id -> Nullable<Text>,
         record_id -> Nullable<Text>,
         created_datetime -> Timestamp,
     }
 }
 
 joinable!(log -> user_account (user_id));
+joinable!(log -> store (store_id));
 joinable!(log -> invoice (record_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
@@ -38,6 +44,7 @@ pub struct LogRow {
     pub id: String,
     pub log_type: LogType,
     pub user_id: Option<String>,
+    pub store_id: Option<String>,
     pub record_id: Option<String>,
     pub created_datetime: NaiveDateTime,
 }

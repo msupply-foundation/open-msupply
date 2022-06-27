@@ -1,10 +1,8 @@
-use chrono::Utc;
 use repository::{
-    Log, LogFilter, LogRepository, LogRow, LogRowRepository, LogSort, LogType, StorageConnection,
+    Log, LogFilter, LogRepository, LogRow, LogRowRepository, LogSort, StorageConnection,
     StorageConnectionManager,
 };
 use repository::{PaginationOption, RepositoryError};
-use util::uuid::uuid;
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
@@ -27,18 +25,8 @@ pub fn get_logs(
     })
 }
 
-pub fn log_invoice_created(
-    connection: &StorageConnection,
-    user_id: String,
-    record_id: String,
-) -> Result<(), RepositoryError> {
+pub fn log_entry(connection: &StorageConnection, log: &LogRow) -> Result<(), RepositoryError> {
     let repository = LogRowRepository::new(&connection);
 
-    Ok(repository.upsert_one(&LogRow {
-        id: uuid(),
-        log_type: LogType::InvoiceCreated,
-        user_id: Some(user_id),
-        record_id: Some(record_id),
-        created_datetime: Utc::now().naive_utc(),
-    })?)
+    Ok(repository.upsert_one(log)?)
 }
