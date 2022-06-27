@@ -93,6 +93,7 @@ struct InitialisationData {
     central: CentralSyncBatchV5,
     remote: RemoteSyncBatchV5,
     users: Vec<(LoginInput, LoginUserInfoV4)>,
+    site_id: u32,
 }
 
 #[tokio::main]
@@ -140,7 +141,7 @@ async fn main() {
             };
 
             info!("Initialising from central");
-            Synchroniser::new(sync_settings, service_provider.clone())
+            Synchroniser::new(sync_settings.clone(), service_provider.clone())
                 .unwrap()
                 .initial_pull()
                 .await
@@ -158,6 +159,8 @@ async fn main() {
                     .await
                     .expect(&format!("Cannot login with user {:?}", input));
             }
+
+            bypass_initialisation(&service_provider, sync_settings.site_id);
             info!("Initialisation finished");
         }
         Action::ExportInitialisation {
@@ -170,6 +173,7 @@ async fn main() {
                 username,
                 password_sha256,
                 url,
+                site_id,
                 ..
             } = settings.sync.unwrap();
 
@@ -220,6 +224,7 @@ async fn main() {
                 // sync remote
                 remote: sync_api_v5.get_queued_records(1000000).await.unwrap(),
                 users: synced_user_info_rows,
+                site_id,
             };
 
             let data_string = if pretty {
@@ -292,20 +297,7 @@ async fn main() {
                 info!("Refresh data result: {:#?}", result);
             }
 
-            info!("Disabling sync");
-            // Need to store SyncSettings in db to avoid bootstrap mode
-            let service = &service_provider.settings;
-            service
-                .update_sync_settings(
-                    &ctx,
-                    &inline_init(|r: &mut SyncSettings| {
-                        r.url = "http://0.0.0.0:0".to_string();
-                        r.interval_sec = 100000000;
-                        r.username = "Sync is disabled (datafile initialise from file".to_string();
-                    }),
-                )
-                .unwrap();
-            service.disable_sync(&ctx).unwrap();
+            bypass_initialisation(&service_provider, data.site_id);
 
             info!(
                 "Initialisation done, available users: {}",
@@ -334,6 +326,26 @@ async fn main() {
             info!("Refresh data result: {:#?}", result);
         }
     }
+}
+
+// Need to store SyncSettings in db to avoid bootstrap mode
+fn bypass_initialisation(service_provider: &ServiceProvider, site_id: u32) {
+    let service = &service_provider.settings;
+    let ctx = service_provider.context().unwrap();
+    info!("Disabling sync");
+    service
+        .update_sync_settings(
+            &ctx,
+            &inline_init(|r: &mut SyncSettings| {
+                r.url = "http://0.0.0.0:0".to_string();
+                r.interval_sec = 100000000;
+                r.site_id = site_id;
+                r.username = "Sync is disabled (datafile initialise from file".to_string();
+            }),
+        )
+        .unwrap();
+
+    service.disable_sync(&ctx).unwrap();
 }
 
 fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
