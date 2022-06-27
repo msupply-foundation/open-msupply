@@ -23,12 +23,13 @@ use service::{
         },
         settings::SyncSettings,
         sync_api_v5::{CentralSyncBatchV5, RemoteSyncBatchV5},
-        SyncApiV5, Synchroniser, SyncCredentials,
+        SyncApiV5, SyncCredentials, Synchroniser,
     },
     token_bucket::TokenBucket,
 };
 use std::{
     env, fs,
+    ops::Deref,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
@@ -138,7 +139,7 @@ async fn main() {
             };
 
             info!("Initialising from central");
-            Synchroniser::new(sync_settings, service_provider.clone())
+            Synchroniser::new(sync_settings, service_provider.deref().clone())
                 .unwrap()
                 .initial_pull()
                 .await

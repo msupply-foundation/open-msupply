@@ -24,8 +24,7 @@ serde_yaml = "0.8.24"
 tera = "1"
 tokio = "1.17.0"
 headless_chrome = "0.9"
-failure = "0.1.8"
-actix-web = { version= "4.0.1" } 
+failure = "0.1.8" 
 
 [dev-dependencies]
 actix-rt = "2.6.0"

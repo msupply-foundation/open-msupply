@@ -20,9 +20,10 @@ pub fn gen_i64() -> i64 {
 #[cfg(test)]
 mod remote_sync_integration_tests {
 
+    use std::sync::Arc;
+
     use crate::service_provider::ServiceProvider;
     use crate::sync::settings::SyncSettings;
-    use actix_web::web::Data;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, EqualFilter, StorageConnection, StoreFilter,
         StoreRepository,
@@ -52,7 +53,7 @@ mod remote_sync_integration_tests {
         .await;
 
         let service_provider =
-            Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
+            Arc::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
         let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider).unwrap();
         synchroniser
             .central_data
