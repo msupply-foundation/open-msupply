@@ -65,20 +65,9 @@ impl DocumentNode {
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<DocumentRegistryNode>> {
-        Ok(match &self.document.schema_id {
-            Some(schema_id) => {
-                let loader = ctx.get_loader::<DataLoader<DocumentRegistryLoader>>();
-                let document_registry = loader.load_one(schema_id.clone()).await?.ok_or(
-                    StandardGraphqlError::InternalError(format!(
-                        "Cannot find registry entry {}",
-                        schema_id
-                    ))
-                    .extend(),
-                )?;
-                Some(DocumentRegistryNode { document_registry })
-            }
-            None => None,
-        })
+        let loader = ctx.get_loader::<DataLoader<DocumentRegistryLoader>>();
+        let document_registry = loader.load_one(self.document.r#type.clone()).await?;
+        Ok(document_registry.map(|document_registry| DocumentRegistryNode { document_registry }))
     }
 }
 
