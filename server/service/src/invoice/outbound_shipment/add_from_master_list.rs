@@ -144,7 +144,7 @@ mod test {
     use repository::{
         mock::{
             common::FullMockMasterList, mock_inbound_shipment_c, mock_item_a, mock_item_b,
-            mock_item_c, mock_item_d, mock_name_store_c, mock_new_outbound_shipment_no_lines,
+            mock_item_c, mock_item_d, mock_new_outbound_shipment_no_lines,
             mock_outbound_shipment_c, mock_outbound_shipment_no_lines,
             mock_outbound_shipment_shipped, mock_test_not_store_a_master_list, MockData,
             MockDataInserts,
@@ -256,7 +256,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_name_store_c().id,
+                    name_id: mock_new_outbound_shipment_no_lines().name_id,
                 }],
                 lines: vec![
                     MasterListLineRow {
