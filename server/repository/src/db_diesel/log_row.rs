@@ -17,7 +17,7 @@ table! {
         user_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         record_id -> Nullable<Text>,
-        created_datetime -> Timestamp,
+        datetime -> Timestamp,
     }
 }
 
@@ -46,7 +46,7 @@ pub struct LogRow {
     pub user_id: Option<String>,
     pub store_id: Option<String>,
     pub record_id: Option<String>,
-    pub created_datetime: NaiveDateTime,
+    pub datetime: NaiveDateTime,
 }
 
 pub struct LogRowRepository<'a> {

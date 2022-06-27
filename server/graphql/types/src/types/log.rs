@@ -46,8 +46,8 @@ impl LogNode {
         &self.row().record_id
     }
 
-    pub async fn created_datetime(&self) -> &NaiveDateTime {
-        &self.row().created_datetime
+    pub async fn datetime(&self) -> &NaiveDateTime {
+        &self.row().datetime
     }
 
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {

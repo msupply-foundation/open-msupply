@@ -144,7 +144,7 @@ impl LoginService {
                 user_id: Some(user_account.id.clone()),
                 store_id: None,
                 record_id: None,
-                created_datetime: Utc::now().naive_utc(),
+                datetime: Utc::now().naive_utc(),
             },
         )?;
 
