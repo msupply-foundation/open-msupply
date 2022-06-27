@@ -24,6 +24,7 @@ pub struct LogConnector {
 pub enum LogNodeType {
     UserLoggedIn,
     InvoiceCreated,
+    InvoiceDeleted,
     InvoiceStatusAllocated,
     InvoiceStatusPicked,
     InvoiceStatusShipped,
@@ -98,6 +99,7 @@ impl LogNodeType {
         match from {
             LogType::UserLoggedIn => LogNodeType::UserLoggedIn,
             LogType::InvoiceCreated => LogNodeType::InvoiceCreated,
+            LogType::InvoiceDeleted => LogNodeType::InvoiceDeleted,
             LogType::InvoiceStatusAllocated => LogNodeType::InvoiceStatusAllocated,
             LogType::InvoiceStatusPicked => LogNodeType::InvoiceStatusPicked,
             LogType::InvoiceStatusShipped => LogNodeType::InvoiceStatusShipped,
@@ -110,6 +112,7 @@ impl LogNodeType {
         match self {
             LogNodeType::UserLoggedIn => LogType::UserLoggedIn,
             LogNodeType::InvoiceCreated => LogType::InvoiceCreated,
+            LogNodeType::InvoiceDeleted => LogType::InvoiceDeleted,
             LogNodeType::InvoiceStatusAllocated => LogType::InvoiceStatusAllocated,
             LogNodeType::InvoiceStatusPicked => LogType::InvoiceStatusPicked,
             LogNodeType::InvoiceStatusShipped => LogType::InvoiceStatusShipped,
