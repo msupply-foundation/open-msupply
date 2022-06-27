@@ -25,6 +25,7 @@ const PatientListComponent: FC = () => {
   const alert = useAlertModal({
     title: t('heading.no-patient-record'),
     message: t('messages.no-patient-record'),
+    onOk: () => {},
   });
 
   const columns = useColumns<PatientRowFragment>(
