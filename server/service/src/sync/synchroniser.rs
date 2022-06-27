@@ -3,13 +3,14 @@ use std::time::Duration;
 use actix_web::web::Data;
 use log::warn;
 
+use crate::service_provider::ServiceProvider;
 use reqwest::{Client, Url};
-use service::{service_provider::ServiceProvider, sync_settings::SyncSettings};
 
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
     get_sync_actors,
     remote_data_synchroniser::RemoteDataSynchroniser,
+    settings::SyncSettings,
     sync_api_v3::SyncApiV3,
     SyncApiV5, SyncCredentials, SyncReceiverActor, SyncSenderActor,
 };
