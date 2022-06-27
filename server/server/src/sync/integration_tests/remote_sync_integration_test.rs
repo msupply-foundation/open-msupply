@@ -30,9 +30,8 @@ mod remote_sync_integration_tests {
     use crate::sync::{
         integration_tests::{
             invoice::InvoiceRecordTester, location::LocationSyncRecordTester,
-            name::NameSyncRecordTester, number::NumberSyncRecordTester,
-            requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
-            stocktake::StocktakeRecordTester,
+            number::NumberSyncRecordTester, requisition::RequisitionRecordTester,
+            stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
         },
         Synchroniser,
     };
@@ -125,9 +124,11 @@ mod remote_sync_integration_tests {
     /// For every test run new unique records are generated and it shouldn't be necessary to bring
     /// the central server into a clean state after each test.
     ///
+    /// Need to have at least one invoice in data file, need to have at least two stores in one data file (one active on site)
+    ///
     /// Note: the sub tests can't be parallelized since every sync test need exclusive access to the
     /// central server
-    //#[actix_rt::test]
+    // #[actix_rt::test]
     #[allow(dead_code)]
     async fn test_remote_syncing() {
         let sync_settings = SyncSettings {
@@ -144,9 +145,7 @@ mod remote_sync_integration_tests {
         let number_tester = NumberSyncRecordTester {};
         test_sync_record(&sync_settings, &number_tester).await;
 
-        println!("name...");
-        let name_tester = NameSyncRecordTester {};
-        test_sync_record(&sync_settings, &name_tester).await;
+        // Name test was removed here: 0a457c43c2e3ce472b337a2ac401e31ec0548e00
 
         println!("Location...");
         let location_tester = LocationSyncRecordTester {};
