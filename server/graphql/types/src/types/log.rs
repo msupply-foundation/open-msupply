@@ -1,10 +1,13 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDateTime;
-use graphql_core::{loader::UserLoader, ContextExt};
+use graphql_core::{
+    loader::{StoreByIdLoader, UserLoader},
+    ContextExt,
+};
 use repository::{unknown_user, Log, LogRow, LogType};
 use service::ListResult;
 
-use super::UserNode;
+use super::{StoreNode, UserNode};
 
 #[derive(PartialEq, Debug)]
 pub struct LogNode {
@@ -64,6 +67,19 @@ impl LogNode {
             .unwrap_or(unknown_user());
 
         Ok(Some(UserNode::from_domain(result)))
+    }
+
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+
+        let store_id = match &self.row().store_id {
+            Some(store_id) => store_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(store_id.clone()).await?.unwrap();
+
+        Ok(Some(StoreNode::from_domain(result)))
     }
 }
 
