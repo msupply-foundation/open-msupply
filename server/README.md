@@ -249,3 +249,34 @@ cargo run --bin remote_server_cli -- initialise-from-central -u 'user1:password1
 # attempt to refresh dates (advance them forward, see --help)
 cargo run --bin remote_server_cli -- refresh-dates
 ```
+
+
+# Making Mac Demo Binary with Data
+
+```bash
+# Buid and copy
+cd ../client && yarn install && yarn build
+cd ../server && cargo clean && cargo build --release --bin remote_server
+
+rm -rf m1_mac_sqlite && mkdir m1_mac_sqlite && mkdir m1_mac_sqlite/bin && mv target/release/remote_server m1_mac_sqlite/bin 
+# Copy configurations
+mkdir m1_mac_sqlite/configuration && cp configuration/base.yaml m1_mac_sqlite/configuration/
+touch  m1_mac_sqlite/configuration/local.yaml
+
+# Create script to start server
+echo '
+#!/bin/bash
+cd "$(dirname "$0")"
+chmod +x bin/remote_server
+xattr -cr bin/remote_server
+APP_SERVER__DANGER_ALLOW_HTTP=true ./bin/remote_server' > m1_mac_sqlite/open_msupply_server.sh
+
+# Create database, make sure you have data file running locally (with correct credentials)
+APP_SYNC__URL="http://localhost:2048" APP_SYNC__USERNAME="demo" APP_SYNC__PASSWORD_SHA256="d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1" APP_SYNC__SITE_ID=2  APP_SYNC__INTERVAL_SEC=10000000 APP_SYNC__CENTRAL_SERVER_SITE_ID=1 cargo run --bin remote_server_cli -- initialise-from-central -u 'Admin:pass'
+
+cp omsupply-database m1_mac_sqlite/
+```
+
+In finder, right click on open_msupply_server, get info and make it run in terminal then `chmod +x m1_mac_sqlite/open_msupply_server.sh`
+
+Should be able to share above as an archive (would need to grant permissions to run the app, after double clicking open_msupply_server go to security and privacy settings and allow app to run)
