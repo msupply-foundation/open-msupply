@@ -144,6 +144,7 @@ export const useJsonForms = (
         id="document-display"
         display="flex"
         flexDirection="column"
+        justifyContent="flex-start"
         alignItems="center"
         width="100%"
         gap={2}
