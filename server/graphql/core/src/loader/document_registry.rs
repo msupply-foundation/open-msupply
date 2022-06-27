@@ -25,7 +25,7 @@ impl Loader<String> for DocumentRegistryLoader {
 
         let mut out = HashMap::new();
         for entry in entries {
-            out.insert(entry.id.clone(), entry);
+            out.insert(entry.document_type.clone(), entry);
         }
 
         Ok(out)
