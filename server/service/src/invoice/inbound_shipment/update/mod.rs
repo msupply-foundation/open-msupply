@@ -92,7 +92,7 @@ pub fn update_inbound_shipment(
                 user_id: invoice.invoice_row.user_id.clone(),
                 store_id: Some(invoice.invoice_row.store_id.clone()),
                 record_id: Some(invoice.invoice_row.id.clone()),
-                created_datetime: Utc::now().naive_utc(),
+                datetime: Utc::now().naive_utc(),
             },
         )?;
     }

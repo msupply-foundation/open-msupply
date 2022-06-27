@@ -77,7 +77,7 @@ impl<'a> LogRepository<'a> {
                 }
             }
         } else {
-            query = query.order(log_dsl::created_datetime.asc())
+            query = query.order(log_dsl::datetime.asc())
         }
 
         let result = query

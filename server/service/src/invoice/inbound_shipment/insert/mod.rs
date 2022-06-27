@@ -2,7 +2,6 @@ use crate::invoice::query::get_invoice;
 use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
-use chrono::Utc;
 use repository::{Invoice, LogRow, LogType};
 use repository::{InvoiceRowRepository, RepositoryError};
 
@@ -51,7 +50,7 @@ pub fn insert_inbound_shipment(
             user_id: Some(user_id.to_string()),
             store_id: Some(invoice.invoice_row.store_id.clone()),
             record_id: Some(invoice.invoice_row.id.clone()),
-            created_datetime: Utc::now().naive_utc(),
+            datetime: invoice.invoice_row.created_datetime.clone(),
         },
     )?;
 

@@ -1,4 +1,3 @@
-use chrono::Utc;
 use repository::{Invoice, InvoiceRowRepository, LogRow, LogType};
 use repository::{RepositoryError, TransactionError};
 
@@ -66,7 +65,7 @@ pub fn insert_outbound_shipment(
             user_id: Some(user_id.to_string()),
             store_id: Some(invoice.invoice_row.store_id.clone()),
             record_id: Some(invoice.invoice_row.id.clone()),
-            created_datetime: Utc::now().naive_utc(),
+            datetime: invoice.invoice_row.created_datetime.clone(),
         },
     )?;
 
