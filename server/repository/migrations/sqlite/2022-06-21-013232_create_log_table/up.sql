@@ -11,6 +11,6 @@ CREATE TABLE log (
     )) NOT NULL,
     user_id TEXT,
     store_id TEXT REFERENCES store(id),
-    record_id TEXT REFERENCES invoice(id),
+    record_id TEXT,
     datetime TIMESTAMP NOT NULL
 )

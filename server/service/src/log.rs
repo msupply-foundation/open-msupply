@@ -26,7 +26,5 @@ pub fn get_logs(
 }
 
 pub fn log_entry(connection: &StorageConnection, log: &LogRow) -> Result<(), RepositoryError> {
-    let repository = LogRowRepository::new(&connection);
-
-    Ok(repository.upsert_one(log)?)
+    Ok(LogRowRepository::new(&connection).insert_one(log)?)
 }

@@ -1,10 +1,6 @@
 use super::{log_row::log::dsl as log_dsl, StorageConnection};
 
-use crate::{
-    db_diesel::{invoice_row::invoice, store_row::store},
-    repository_error::RepositoryError,
-    user_account,
-};
+use crate::{db_diesel::store_row::store, repository_error::RepositoryError, user_account};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -23,7 +19,6 @@ table! {
 
 joinable!(log -> user_account (user_id));
 joinable!(log -> store (store_id));
-joinable!(log -> invoice (record_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -58,33 +53,18 @@ impl<'a> LogRowRepository<'a> {
         LogRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &LogRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&self, row: &LogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(log_dsl::log)
             .values(row)
-            .on_conflict(log_dsl::id)
-            .do_update()
-            .set(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &LogRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(log_dsl::log)
-            .values(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<LogRow>, RepositoryError> {
-        match log_dsl::log
-            .filter(log_dsl::id.eq(id))
+    pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<LogRow>, RepositoryError> {
+        let result = log_dsl::log
+            .filter(log_dsl::id.eq(log_id))
             .first(&self.connection.connection)
-        {
-            Ok(row) => Ok(Some(row)),
-            Err(diesel::result::Error::NotFound) => Ok(None),
-            Err(error) => Err(RepositoryError::from(error)),
-        }
+            .optional()?;
+        Ok(result)
     }
 }
