@@ -23,7 +23,7 @@ const PatientListComponent: FC = () => {
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
   const alert = useAlertModal({
-    title: t('heading.no-patient-record'),
+    title: t('error.something-wrong'),
     message: t('messages.no-patient-record'),
     onOk: () => {},
   });

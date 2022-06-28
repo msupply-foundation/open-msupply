@@ -3,8 +3,8 @@ import { Routes, Route, RouteBuilder } from '@openmsupply-client/common';
 import { PatientListView } from '../ListView';
 import { PatientDetailView } from '../DetailView';
 
-const singlePatientRoute = RouteBuilder.create(':patientId')
-  .addPart(':docType')
+const singlePatientRoute =
+  RouteBuilder.create(':patientId')
   .build();
 
 export const Service: FC = () => {

@@ -66,6 +66,9 @@ const FormComponent = ({
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
+  saveConfirmationMessage?: string;
+  cancelConfirmationMessage?: string;
+  saveSuccessMessage?: string;
 }
 
 export const useJsonForms = (
@@ -81,7 +84,13 @@ export const useJsonForms = (
   const navigate = useNavigate();
   const { isDirty, setIsDirty } = useDirtyCheck();
 
-  const { showButtonPanel = true, onCancel = () => navigate(-1) } = options;
+  const {
+    showButtonPanel = true,
+    onCancel = () => navigate(-1),
+    saveConfirmationMessage = t('messages.confirm-save-generic'),
+    cancelConfirmationMessage = t('messages.confirm-cancel-generic'),
+    saveSuccessMessage = t('success.data-saved'),
+  } = options;
 
   useConfirmOnLeaving(isDirty);
 
@@ -102,7 +111,7 @@ export const useJsonForms = (
     setTimeout(() => {
       try {
         setSaving(false);
-        const successSnack = success(t('success.data-saved'));
+        const successSnack = success(saveSuccessMessage);
         successSnack();
         setSaving(false);
         setIsDirty(false);
@@ -126,13 +135,13 @@ export const useJsonForms = (
 
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: saveData,
-    message: t('messages.confirm-save-generic'),
+    message: saveConfirmationMessage,
     title: t('heading.are-you-sure'),
   });
 
   const showCancelConfirmation = useConfirmationModal({
     onConfirm: onCancel,
-    message: t('messages.confirm-cancel-generic'),
+    message: cancelConfirmationMessage,
     title: t('heading.are-you-sure'),
   });
 
