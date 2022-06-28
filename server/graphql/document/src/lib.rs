@@ -71,6 +71,15 @@ impl DocumentQueries {
     ) -> Result<PatientResponse> {
         patients(ctx, store_id, page, filter, sort)
     }
+    pub async fn patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        patient_id: String,
+    ) -> Result<Option<PatientNode>> {
+        patient(ctx, store_id, patient_id)
+    }
+
 }
 
 #[derive(Default, Clone)]

@@ -23,6 +23,103 @@ impl SimpleStringFilter {
 }
 
 #[derive(Clone, PartialEq, Debug)]
+pub struct StringFilter {
+    pub equal_to: Option<String>,
+    pub not_equal_to: Option<String>,
+    pub equal_any: Option<Vec<String>>,
+    pub not_equal_all: Option<Vec<String>>,
+    pub like: Option<String>,
+    pub starts_with: Option<String>,
+    pub ends_with: Option<String>,
+}
+
+impl StringFilter {
+    pub fn equal_to(value: &str) -> Self {
+        StringFilter {
+            equal_to: Some(value.to_owned()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            like: None,
+            starts_with: None,
+            ends_with: None,
+        }
+    }
+
+    pub fn not_equal_to(value: &str) -> Self {
+        StringFilter {
+            equal_to: None,
+            not_equal_to: Some(value.to_owned()),
+            equal_any: None,
+            not_equal_all: None,
+            like: None,
+            starts_with: None,
+            ends_with: None,
+        }
+    }
+
+    pub fn equal_any(value: Vec<String>) -> Self {
+        StringFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: Some(value.to_owned()),
+            not_equal_all: None,
+            like: None,
+            starts_with: None,
+            ends_with: None,
+        }
+    }
+
+    pub fn not_equal_all(value: Vec<String>) -> Self {
+        StringFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: Some(value.to_owned()),
+            like: None,
+            starts_with: None,
+            ends_with: None,
+        }
+    }
+
+    pub fn like(value: &str) -> Self {
+        StringFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            like: Some(value.to_owned()),
+            starts_with: None,
+            ends_with: None,
+        }
+    }
+
+    pub fn starts_with(value: &str) -> Self {
+        StringFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            like: None,
+            starts_with: Some(value.to_owned()),
+            ends_with: None,
+        }
+    }
+
+    pub fn ends_with(value: &str) -> Self {
+        StringFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            like: None,
+            starts_with: None,
+            ends_with: Some(value.to_owned()),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
 pub struct EqualFilter<T> {
     pub equal_to: Option<T>,
     pub not_equal_to: Option<T>,

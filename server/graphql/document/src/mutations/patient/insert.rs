@@ -42,7 +42,7 @@ pub fn insert_patient(
     match service_provider.patient_service.update_patient(
         &service_context,
         service_provider,
-        store_id,
+        store_id.clone(),
         &user.user_id,
         UpdatePatient {
             data: input.data,
@@ -50,7 +50,10 @@ pub fn insert_patient(
             parent: None,
         },
     ) {
-        Ok(patient) => Ok(InsertPatientResponse::Response(PatientNode { patient })),
+        Ok(patient) => Ok(InsertPatientResponse::Response(PatientNode {
+            store_id,
+            patient,
+        })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {

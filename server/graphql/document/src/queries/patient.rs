@@ -18,8 +18,10 @@ use service::document::patient::{
 use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
+use crate::types::program::ProgramNode;
 
 pub struct PatientNode {
+    pub store_id: String,
     pub patient: Patient,
 }
 
@@ -98,6 +100,23 @@ impl PatientNode {
             .map(|document| DocumentNode { document });
 
         Ok(result)
+    }
+
+    pub async fn programs(&self, ctx: &Context<'_>) -> Result<Vec<ProgramNode>> {
+        let context = ctx.service_provider().context()?;
+        let entries = ctx
+            .service_provider()
+            .patient_service
+            .get_patient_programs(&context, &self.store_id, &self.patient.name_row.id)?;
+        Ok(entries
+            .into_iter()
+            .map(|document| ProgramNode {
+                store_id: self.store_id.clone(),
+                patient_id: self.patient.name_row.id.clone(),
+                program: document.r#type.clone(),
+                document_node: DocumentNode { document },
+            })
+            .collect())
     }
 }
 
@@ -233,11 +252,48 @@ pub fn patients(
                 .map(|sort| sort.to_domain()),
         )?
         .into_iter()
-        .map(|patient| PatientNode { patient })
+        .map(|patient| PatientNode {
+            store_id: store_id.clone(),
+            patient,
+        })
         .collect();
 
     Ok(PatientResponse::Response(PatientConnector {
         total_count: usize_to_u32(nodes.len()),
         nodes,
     }))
+}
+
+pub fn patient(
+    ctx: &Context<'_>,
+    store_id: String,
+    patient_id: String,
+) -> Result<Option<PatientNode>> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryPatient,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let context = service_provider.context()?;
+
+    let node = service_provider
+        .patient_service
+        .get_patients(
+            &context,
+            &store_id,
+            None,
+            Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
+            None,
+        )?
+        .pop()
+        .map(|patient| PatientNode {
+            store_id: store_id.clone(),
+            patient,
+        });
+
+    Ok(node)
 }

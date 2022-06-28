@@ -1,7 +1,10 @@
 use super::StorageConnection;
 
-use crate::{db_diesel::form_schema_row::form_schema, diesel_macros::apply_equal_filter};
-use crate::{EqualFilter, RepositoryError};
+use crate::{
+    db_diesel::form_schema_row::form_schema,
+    diesel_macros::{apply_equal_filter, apply_string_filter},
+};
+use crate::{EqualFilter, RepositoryError, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
@@ -98,7 +101,7 @@ pub struct AncestorDetail {
 #[derive(Clone)]
 pub struct DocumentFilter {
     pub store_id: Option<EqualFilter<String>>,
-    pub name: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
 }
 
 impl DocumentFilter {
@@ -109,8 +112,13 @@ impl DocumentFilter {
         }
     }
 
-    pub fn name(mut self, name: EqualFilter<String>) -> Self {
-        self.name = Some(name);
+    pub fn store_id(mut self, value: EqualFilter<String>) -> Self {
+        self.store_id = Some(value);
+        self
+    }
+
+    pub fn name(mut self, value: StringFilter) -> Self {
+        self.name = Some(value);
         self
     }
 }
@@ -118,7 +126,7 @@ impl DocumentFilter {
 #[derive(Clone)]
 pub struct DocumentHeadFilter {
     pub store_id: Option<EqualFilter<String>>,
-    pub name: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
 }
 
 pub struct DocumentRepository<'a> {
@@ -251,7 +259,7 @@ impl<'a> DocumentRepository<'a> {
     ) -> Result<Vec<DocumentHeadRow>, RepositoryError> {
         let mut query = document_head::dsl::document_head.into_boxed();
         if let Some(f) = filter {
-            apply_equal_filter!(query, f.name, document_head::dsl::name);
+            apply_string_filter!(query, f.name, document_head::dsl::name);
             apply_equal_filter!(query, f.store_id, document_head::dsl::store_id);
         }
         let result = query.load(&self.connection.connection)?;

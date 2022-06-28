@@ -1,4 +1,4 @@
-use repository::{Document, DocumentFilter, EqualFilter, RepositoryError};
+use repository::{Document, DocumentFilter, RepositoryError, StringFilter};
 
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
@@ -44,7 +44,7 @@ impl Loader<DocumentLoaderInput> for DocumentLoader {
                 &store_id,
                 Some(
                     DocumentFilter::new()
-                        .name(EqualFilter::equal_any(doc_names.into_iter().collect())),
+                        .name(StringFilter::equal_any(doc_names.into_iter().collect())),
                 ),
             )?;
             for doc in result {
