@@ -103,16 +103,13 @@ impl LoginService {
         auth_data: &AuthData,
         input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
+        let mut username = input.username.clone();
         match LoginService::fetch_user_from_central(&input).await {
             Ok(user_info) => {
                 let service_ctx = service_provider.context()?;
-                LoginService::update_user(
-                    &service_ctx,
-                    &input.username,
-                    &input.password,
-                    user_info,
-                )
-                .map_err(|e| LoginError::UpdateUserError(e))?;
+                username = user_info.user.name.clone();
+                LoginService::update_user(&service_ctx, &input.password, user_info)
+                    .map_err(|e| LoginError::UpdateUserError(e))?;
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
@@ -122,7 +119,7 @@ impl LoginService {
         };
         let service_ctx = service_provider.context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
-        let user_account = match user_service.verify_password(&input.username, &input.password) {
+        let user_account = match user_service.verify_password(&username, &input.password) {
             Ok(user) => user,
             Err(err) => {
                 return Err(match err {
@@ -227,14 +224,13 @@ impl LoginService {
 
     pub fn update_user(
         service_ctx: &ServiceContext,
-        username: &str,
         password: &str,
         user_info: LoginUserInfoV4,
     ) -> Result<(), UpdateUserError> {
         // convert user_info to internal format
         let user = UserAccountRow {
             id: user_info.user.id,
-            username: username.to_string(),
+            username: user_info.user.name.to_string(),
             hashed_password: UserAccountService::hash_password(&password)
                 .map_err(UpdateUserError::PasswordHashError)?,
             email: match user_info.user.e_mail.as_str() {
