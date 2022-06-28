@@ -240,7 +240,7 @@ pub fn init_program_data(
             "no user",
             UpdatePatient {
                 data: serde_json::to_value(patient_1()).unwrap(),
-                schema_id: Some(patient_schema_id.clone()),
+                schema_id: patient_schema_id.clone(),
                 parent: None,
             },
         )
@@ -254,7 +254,7 @@ pub fn init_program_data(
             "no user",
             UpdatePatient {
                 data: serde_json::to_value(patient_2()).unwrap(),
-                schema_id: Some(patient_schema_id),
+                schema_id: patient_schema_id,
                 parent: None,
             },
         )
