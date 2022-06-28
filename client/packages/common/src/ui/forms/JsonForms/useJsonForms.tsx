@@ -63,6 +63,14 @@ const FormComponent = ({
   );
 };
 
+// Prevents Form window being loaded with the same scroll position as its parent
+const ScrollFix = () => {
+  useEffect(() => {
+    document.getElementById('document-display')?.scrollIntoView();
+  }, []);
+  return null;
+};
+
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
@@ -170,6 +178,7 @@ export const useJsonForms = (
         gap={2}
         paddingX={10}
       >
+        <ScrollFix />
         <FormComponent
           data={data}
           setData={updateData}
