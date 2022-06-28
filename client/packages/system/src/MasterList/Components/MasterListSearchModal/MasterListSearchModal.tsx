@@ -32,7 +32,7 @@ export const MasterListSearchModal: FC<MasterListSearchProps> = ({
   // Only query for data once the modal has been opened
   useEffect(() => {
     if (open && !data && !isLoading) mutate();
-  }, [open, data, mutate]);
+  }, [open, data, isLoading]);
 
   return (
     <ListSearch
