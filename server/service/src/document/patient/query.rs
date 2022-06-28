@@ -4,7 +4,9 @@ use repository::{
     SimpleStringFilter, Sort, StringFilter,
 };
 
-use crate::{get_default_pagination_unlimited, service_provider::ServiceContext};
+use crate::{
+    get_default_pagination_unlimited, i64_to_u32, service_provider::ServiceContext, ListResult,
+};
 
 use super::{patient_program_doc_name, patient_program_encounter_doc_name};
 
@@ -50,42 +52,43 @@ pub fn get_patients(
     pagination: Option<PaginationOption>,
     filter: Option<PatientFilter>,
     sort: Option<PatientSort>,
-) -> Result<Vec<Patient>, RepositoryError> {
+) -> Result<ListResult<Patient>, RepositoryError> {
     let pagination = get_default_pagination_unlimited(pagination);
     let repository = NameRepository::new(&ctx.connection);
 
-    let result = repository.query(
-        store_id,
-        pagination,
-        filter
-            .map(|f| f.to_name_filter())
-            .or(Some(NameFilter::new()))
-            // always filter by patient:
-            .map(|f| f.r#type(NameType::Patient)),
-        sort.map(|v| NameSort {
-            desc: v.desc,
-            key: match v.key {
-                PatientSortField::Name => NameSortField::Name,
-                PatientSortField::Code => NameSortField::Code,
-                PatientSortField::FirstName => NameSortField::FirstName,
-                PatientSortField::LastName => NameSortField::LastName,
-                PatientSortField::Gender => NameSortField::Gender,
-                PatientSortField::DateOfBirth => NameSortField::DateOfBirth,
-                PatientSortField::Phone => NameSortField::Phone,
-                PatientSortField::Address1 => NameSortField::Address1,
-                PatientSortField::Address2 => NameSortField::Address2,
-                PatientSortField::Country => NameSortField::Country,
-                PatientSortField::Email => NameSortField::Email,
-            },
-        }),
-    )?;
-
-    Ok(result
+    let filter = filter
+        .map(|f| f.to_name_filter())
+        .or(Some(NameFilter::new()))
+        // always filter by patient:
+        .map(|f| f.r#type(NameType::Patient));
+    let sort = sort.map(|v| NameSort {
+        desc: v.desc,
+        key: match v.key {
+            PatientSortField::Name => NameSortField::Name,
+            PatientSortField::Code => NameSortField::Code,
+            PatientSortField::FirstName => NameSortField::FirstName,
+            PatientSortField::LastName => NameSortField::LastName,
+            PatientSortField::Gender => NameSortField::Gender,
+            PatientSortField::DateOfBirth => NameSortField::DateOfBirth,
+            PatientSortField::Phone => NameSortField::Phone,
+            PatientSortField::Address1 => NameSortField::Address1,
+            PatientSortField::Address2 => NameSortField::Address2,
+            PatientSortField::Country => NameSortField::Country,
+            PatientSortField::Email => NameSortField::Email,
+        },
+    });
+    let rows = repository
+        .query(store_id, pagination, filter.clone(), sort)?
         .into_iter()
         .map(|v| Patient {
             name_row: v.name_row,
         })
-        .collect())
+        .collect();
+
+    Ok(ListResult {
+        rows,
+        count: i64_to_u32(repository.count(store_id, filter)?),
+    })
 }
 
 pub fn get_patient_programs(

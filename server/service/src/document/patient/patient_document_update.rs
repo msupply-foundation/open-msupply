@@ -188,6 +188,7 @@ mod test {
                 None,
             )
             .unwrap()
+            .rows
             .pop()
             .unwrap();
         assert_eq!(found_patient.name_row.first_name, patient.first_name);

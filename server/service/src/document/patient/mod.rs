@@ -3,6 +3,7 @@ use repository::{PaginationOption, RepositoryError};
 
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
+use crate::ListResult;
 
 pub use self::query::*;
 mod query;
@@ -41,7 +42,7 @@ pub trait PatientServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<PatientFilter>,
         sort: Option<PatientSort>,
-    ) -> Result<Vec<Patient>, RepositoryError> {
+    ) -> Result<ListResult<Patient>, RepositoryError> {
         get_patients(ctx, store_id, pagination, filter, sort)
     }
 
