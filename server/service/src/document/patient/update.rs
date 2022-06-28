@@ -67,6 +67,7 @@ pub fn update_patient(
                     None,
                 )
                 .map_err(|err| UpdatePatientError::DatabaseError(err))?
+                .rows
                 .pop()
                 .ok_or(UpdatePatientError::InternalError(
                     "Can't find the just inserted patient".to_string(),
