@@ -7,8 +7,13 @@ use log::info;
 use repository::{get_storage_connection_manager, test_db, RemoteSyncBufferRepository};
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
-use server::{
-    configuration,
+use server::configuration;
+use service::{
+    apis::login_v4::LoginUserInfoV4,
+    auth_data::AuthData,
+    login::{LoginInput, LoginService},
+    service_provider::ServiceProvider,
+    settings::Settings,
     sync::{
         central_data_synchroniser::{
             central_sync_batch_records_to_buffer_rows, CentralDataSynchroniser,
@@ -16,21 +21,15 @@ use server::{
         remote_data_synchroniser::{
             remote_sync_batch_records_to_buffer_rows, RemoteDataSynchroniser,
         },
+        settings::SyncSettings,
         sync_api_v5::{CentralSyncBatchV5, RemoteSyncBatchV5},
         SyncApiV5, SyncCredentials, Synchroniser,
     },
-};
-use service::{
-    apis::login_v4::LoginUserInfoV4,
-    auth_data::AuthData,
-    login::{LoginInput, LoginService},
-    service_provider::ServiceProvider,
-    settings::Settings,
-    sync_settings::SyncSettings,
     token_bucket::TokenBucket,
 };
 use std::{
     env, fs,
+    ops::Deref,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
@@ -140,7 +139,7 @@ async fn main() {
             };
 
             info!("Initialising from central");
-            Synchroniser::new(sync_settings, service_provider.clone())
+            Synchroniser::new(sync_settings, service_provider.deref().clone())
                 .unwrap()
                 .initial_pull()
                 .await

@@ -3,7 +3,7 @@ use crate::sync::SyncCredentials;
 use log::info;
 use reqwest::{
     header::{HeaderMap, HeaderName, CONTENT_LENGTH},
-    Client, Url,
+    Client, Response, Url,
 };
 use serde::{Deserialize, Serialize};
 
@@ -92,6 +92,14 @@ fn generate_headers(hardware_id: &str) -> HeaderMap {
     headers
 }
 
+async fn check_status(response: Response) -> Result<Response, anyhow::Error> {
+    if !response.status().is_success() {
+        let err = response.text().await?;
+        return Err(anyhow::Error::msg(err));
+    }
+    Ok(response)
+}
+
 impl SyncApiV5 {
     pub fn new(
         server_url: Url,
@@ -125,7 +133,8 @@ impl SyncApiV5 {
             )
             .headers(headers);
 
-        let response = request.send().await?.error_for_status()?;
+        let response = request.send().await?;
+        let response = check_status(response).await?;
 
         let sync_batch = response.json::<RemoteSyncBatchV5>().await?;
 
@@ -150,7 +159,8 @@ impl SyncApiV5 {
             .query(&query)
             .headers(self.headers.clone());
 
-        let response = request.send().await?.error_for_status()?;
+        let response = request.send().await?;
+        let response = check_status(response).await?;
 
         let sync_batch = response.json::<RemoteSyncBatchV5>().await?;
 
@@ -165,7 +175,8 @@ impl SyncApiV5 {
         info!("Acknowledging {} records", sync_ids.len());
         let url = self.server_url.join("/sync/v5/acknowledged_records")?;
         let body: RemoteSyncAckV5 = RemoteSyncAckV5 { sync_ids };
-        self.client
+        let response = self
+            .client
             .post(url)
             .basic_auth(
                 &self.credentials.username,
@@ -174,8 +185,8 @@ impl SyncApiV5 {
             .body(serde_json::to_string(&body).unwrap_or_default())
             .headers(self.headers.clone())
             .send()
-            .await?
-            .error_for_status()?;
+            .await?;
+        check_status(response).await?;
 
         Ok(())
     }
@@ -203,8 +214,8 @@ impl SyncApiV5 {
             .query(&query)
             .headers(self.headers.clone())
             .send()
-            .await?
-            .error_for_status()?;
+            .await?;
+        let response = check_status(response).await?;
 
         let sync_batch = response.json::<CentralSyncBatchV5>().await?;
 

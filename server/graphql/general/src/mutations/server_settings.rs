@@ -6,8 +6,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    settings_service::UpdateSettingsError,
-    sync_settings::SyncSettings,
+    settings_service::UpdateSettingsError, sync::settings::SyncSettings,
 };
 use util::hash::sha256;
 
