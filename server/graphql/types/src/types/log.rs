@@ -30,6 +30,9 @@ pub enum LogNodeType {
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
     InvoiceStatusVerified,
+    StocktakeCreated,
+    StocktakeDeleted,
+    StocktakeStatusFinalised,
 }
 
 #[Object]
@@ -105,6 +108,9 @@ impl LogNodeType {
             LogType::InvoiceStatusShipped => LogNodeType::InvoiceStatusShipped,
             LogType::InvoiceStatusDelivered => LogNodeType::InvoiceStatusDelivered,
             LogType::InvoiceStatusVerified => LogNodeType::InvoiceStatusVerified,
+            LogType::StocktakeCreated => LogNodeType::StocktakeCreated,
+            LogType::StocktakeDeleted => LogNodeType::StocktakeDeleted,
+            LogType::StocktakeStatusFinalised => LogNodeType::StocktakeStatusFinalised,
         }
     }
 
@@ -118,6 +124,9 @@ impl LogNodeType {
             LogNodeType::InvoiceStatusShipped => LogType::InvoiceStatusShipped,
             LogNodeType::InvoiceStatusDelivered => LogType::InvoiceStatusDelivered,
             LogNodeType::InvoiceStatusVerified => LogType::InvoiceStatusVerified,
+            LogNodeType::StocktakeCreated => LogType::StocktakeCreated,
+            LogNodeType::StocktakeDeleted => LogType::StocktakeDeleted,
+            LogNodeType::StocktakeStatusFinalised => LogType::StocktakeStatusFinalised,
         }
     }
 }

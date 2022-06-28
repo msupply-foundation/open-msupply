@@ -31,6 +31,9 @@ pub enum LogType {
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
     InvoiceStatusVerified,
+    StocktakeCreated,
+    StocktakeDeleted,
+    StocktakeStatusFinalised,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
