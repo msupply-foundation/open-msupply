@@ -195,6 +195,13 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let doc_registry_loader = DataLoader::new(
+        DocumentRegistryLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     let doc_registry_children_loader = DataLoader::new(
         DocumentRegistryChildrenLoader {
             service_provider: service_provider.clone(),
@@ -226,6 +233,7 @@ pub async fn get_loaders(
     loaders.insert(name_row_loader);
     loaders.insert(document_loader);
     loaders.insert(schema_loader);
+    loaders.insert(doc_registry_loader);
     loaders.insert(doc_registry_children_loader);
 
     loaders

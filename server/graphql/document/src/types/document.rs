@@ -2,11 +2,12 @@ use async_graphql::*;
 use async_graphql::{dataloader::DataLoader, Context};
 use chrono::{DateTime, Utc};
 
-use graphql_core::loader::JsonSchemaLoader;
+use graphql_core::loader::{DocumentRegistryLoader, JsonSchemaLoader};
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::Document;
 use service::document::raw_document::RawDocument;
 
+use super::document_registry::DocumentRegistryNode;
 use super::json_schema::JSONSchemaNode;
 
 pub struct DocumentNode {
@@ -58,6 +59,15 @@ impl DocumentNode {
             }
             None => None,
         })
+    }
+
+    pub async fn document_registry(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<DocumentRegistryNode>> {
+        let loader = ctx.get_loader::<DataLoader<DocumentRegistryLoader>>();
+        let document_registry = loader.load_one(self.document.r#type.clone()).await?;
+        Ok(document_registry.map(|document_registry| DocumentRegistryNode { document_registry }))
     }
 }
 

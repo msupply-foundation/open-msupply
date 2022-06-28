@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::{DocumentFilter, EqualFilter};
+use repository::{DocumentFilter, EqualFilter, StringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
@@ -20,7 +20,15 @@ pub struct DocumentFilterInput {
 fn to_domain_filter(f: DocumentFilterInput) -> DocumentFilter {
     DocumentFilter {
         store_id: f.store_id.map(EqualFilter::from),
-        name: f.name.map(EqualFilter::from),
+        name: f.name.map(|f| repository::StringFilter {
+            equal_to: f.equal_to,
+            not_equal_to: f.not_equal_to,
+            equal_any: f.equal_any,
+            not_equal_all: None,
+            like: None,
+            starts_with: None,
+            ends_with: None,
+        }),
     }
 }
 
@@ -41,7 +49,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
         .get_documents(
             &context,
             &store_id,
-            Some(DocumentFilter::new().name(EqualFilter::equal_to(&name))),
+            Some(DocumentFilter::new().name(StringFilter::equal_to(&name))),
         )?
         .into_iter()
         .map(|document| DocumentNode { document })
