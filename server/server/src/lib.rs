@@ -1,3 +1,4 @@
+extern crate machine_uid;
 use crate::{
     certs::Certificates, configuration::get_or_create_token_secret, cors::cors_policy,
     serve_frontend::config_server_frontend, static_files::config_static_files,
@@ -26,7 +27,6 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
-use util::uuid::uuid;
 
 pub mod certs;
 pub mod configuration;
@@ -88,7 +88,7 @@ async fn run_stage0(
     {
         service_provider
             .app_data_service
-            .set_hardware_id(uuid().to_ascii_uppercase())?;
+            .set_hardware_id(machine_uid::get().expect("Failed to query OS for hardware id"))?;
     }
 
     let service_provider_data = Data::new(service_provider);
