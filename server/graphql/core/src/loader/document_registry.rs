@@ -15,13 +15,16 @@ impl Loader<String> for DocumentRegistryLoader {
     type Value = DocumentRegistry;
     type Error = RepositoryError;
 
-    async fn load(&self, entries: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(
+        &self,
+        document_types: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let ctx = self.service_provider.context()?;
 
         let entries = self
             .service_provider
             .document_registry_service
-            .get_entries_by_doc_type(&ctx, entries.to_vec())?;
+            .get_entries_by_doc_type(&ctx, document_types.to_vec())?;
 
         let mut out = HashMap::new();
         for entry in entries {
@@ -41,13 +44,16 @@ impl Loader<String> for DocumentRegistryChildrenLoader {
     type Value = Vec<DocumentRegistry>;
     type Error = RepositoryError;
 
-    async fn load(&self, entries: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(
+        &self,
+        document_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let ctx = self.service_provider.context()?;
 
         let children = self
             .service_provider
             .document_registry_service
-            .get_children(&ctx, entries)?;
+            .get_children(&ctx, document_ids)?;
 
         let mut out = HashMap::new();
         for child in children {
