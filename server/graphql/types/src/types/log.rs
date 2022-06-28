@@ -33,6 +33,10 @@ pub enum LogNodeType {
     StocktakeCreated,
     StocktakeDeleted,
     StocktakeStatusFinalised,
+    RequisitionCreated,
+    RequisitionDeleted,
+    RequisitionStatusSent,
+    RequisitionStatusFinalised,
 }
 
 #[Object]
@@ -111,6 +115,10 @@ impl LogNodeType {
             LogType::StocktakeCreated => LogNodeType::StocktakeCreated,
             LogType::StocktakeDeleted => LogNodeType::StocktakeDeleted,
             LogType::StocktakeStatusFinalised => LogNodeType::StocktakeStatusFinalised,
+            LogType::RequisitionCreated => LogNodeType::RequisitionCreated,
+            LogType::RequisitionDeleted => LogNodeType::RequisitionDeleted,
+            LogType::RequisitionStatusSent => LogNodeType::RequisitionStatusSent,
+            LogType::RequisitionStatusFinalised => LogNodeType::RequisitionStatusFinalised,
         }
     }
 
@@ -127,6 +135,10 @@ impl LogNodeType {
             LogNodeType::StocktakeCreated => LogType::StocktakeCreated,
             LogNodeType::StocktakeDeleted => LogType::StocktakeDeleted,
             LogNodeType::StocktakeStatusFinalised => LogType::StocktakeStatusFinalised,
+            LogNodeType::RequisitionCreated => LogType::RequisitionCreated,
+            LogNodeType::RequisitionDeleted => LogType::RequisitionDeleted,
+            LogNodeType::RequisitionStatusSent => LogType::RequisitionStatusSent,
+            LogNodeType::RequisitionStatusFinalised => LogType::RequisitionStatusFinalised,
         }
     }
 }
