@@ -1,21 +1,38 @@
-import React, { FC } from 'react';
-import { ListSearch, useTranslation } from '@openmsupply-client/common';
+import React, { FC, useEffect } from 'react';
+import {
+  FilterBy,
+  ListSearch,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useMasterList, MasterListRowFragment } from '../../api';
 
 interface MasterListSearchProps {
+  filterBy?: FilterBy;
   open: boolean;
+  storeId?: string;
   onClose: () => void;
   onChange: (name: MasterListRowFragment) => void;
 }
 
 export const MasterListSearchModal: FC<MasterListSearchProps> = ({
+  filterBy,
   open,
+  storeId,
   onClose,
   onChange,
 }) => {
-  // Only query for data once the modal has been opened at least once
-  const { data, isLoading } = useMasterList.document.list({ enabled: open });
+  const sortBy = { key: 'name', direction: 'asc' as 'asc' | 'desc' };
+  const { mutate, data, isLoading } = useMasterList.document.listAll(
+    sortBy,
+    filterBy,
+    storeId
+  );
   const t = useTranslation(['app', 'common']);
+
+  // Only query for data once the modal has been opened
+  useEffect(() => {
+    if (open && !data && !isLoading) mutate();
+  }, [open, data, mutate]);
 
   return (
     <ListSearch
