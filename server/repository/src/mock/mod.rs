@@ -1,6 +1,7 @@
 use std::{collections::HashMap, ops::Index};
 
 pub mod common;
+mod form_schema;
 mod full_invoice;
 mod full_master_list;
 mod invoice;
@@ -36,6 +37,7 @@ mod unit;
 mod user_account;
 
 use common::*;
+pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
 pub use invoice::*;
@@ -68,11 +70,12 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow,
-    LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    FormSchema, FormSchemaRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    ItemRow, LocationRow, LocationRowRepository, NumberRow, NumberRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
+    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRow,
+    UserAccountRowRepository, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository,
 };
 
 use self::unit::mock_units;
@@ -105,6 +108,7 @@ pub struct MockData {
     pub requisition_lines: Vec<RequisitionLineRow>,
     pub stocktakes: Vec<StocktakeRow>,
     pub stocktake_lines: Vec<StocktakeLineRow>,
+    pub form_schemas: Vec<FormSchema>,
 }
 
 #[derive(Default)]
@@ -129,6 +133,7 @@ pub struct MockDataInserts {
     pub requisition_lines: bool,
     pub stocktakes: bool,
     pub stocktake_lines: bool,
+    pub form_schemas: bool,
 }
 
 impl MockDataInserts {
@@ -154,6 +159,7 @@ impl MockDataInserts {
             requisition_lines: true,
             stocktakes: true,
             stocktake_lines: true,
+            form_schemas: true,
         }
     }
 
@@ -240,6 +246,11 @@ impl MockDataInserts {
         self.stocktake_lines = true;
         self
     }
+
+    pub fn form_schemas(mut self) -> Self {
+        self.form_schemas = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -297,6 +308,7 @@ fn all_mock_data() -> MockDataCollection {
             stocktake_lines: mock_stocktake_line_data(),
             requisitions: vec![],
             requisition_lines: vec![],
+            form_schemas: mock_form_schemas(),
         },
     );
     data.insert(
@@ -488,6 +500,13 @@ pub async fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.form_schemas {
+            for row in &mock_data.form_schemas {
+                let repo = FormSchemaRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
 
     mock_data
@@ -516,6 +535,7 @@ impl MockData {
             mut stocktake_lines,
             user_store_joins: _,
             user_permissions: _,
+            mut form_schemas,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -536,6 +556,7 @@ impl MockData {
         self.stocktake_lines.append(&mut stocktake_lines);
         self.name_store_joins.append(&mut name_store_joins);
         self.stock_lines.append(&mut stock_lines);
+        self.form_schemas.append(&mut form_schemas);
 
         self
     }
