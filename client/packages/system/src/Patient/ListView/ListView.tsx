@@ -1,33 +1,42 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   TableProvider,
   DataTable,
   useColumns,
   createTableStore,
-  useDialog,
-  DialogButton,
-  Fade,
   NothingHere,
   createQueryParamsStore,
   useFormatDateTime,
   ColumnAlign,
+  useAlertModal,
+  useTranslation,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { TransitionProps } from '@mui/material/transitions';
-import { DetailModal } from '../DetailModal';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 
 const PatientListComponent: FC = () => {
-  const [selectedId, setSelectedId] = useState<string>('');
-  const { data, isError, isLoading, pagination, sort } =
-    usePatient.document.list();
-  const { sortBy, onChangeSortBy } = sort;
-  const { Modal, showDialog, hideDialog } = useDialog();
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    // filter,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams();
+  const { data, isError, isLoading } = usePatient.document.list();
+  const pagination = { page, first, offset };
+  const t = useTranslation('common');
   const { localisedDate } = useFormatDateTime();
+  const navigate = useNavigate();
+  const alert = useAlertModal({
+    title: t('error.something-wrong'),
+    message: t('messages.no-patient-record'),
+    onOk: () => {},
+  });
 
   const columns = useColumns<PatientRowFragment>(
     [
-      'code',
+      { key: 'code', label: 'label.code' },
       {
         key: 'firstName',
         label: 'label.first-name',
@@ -45,20 +54,8 @@ const PatientListComponent: FC = () => {
           dateString ? localisedDate((dateString as string) || '') : '',
       },
     ],
-    {
-      sortBy,
-      onChangeSortBy,
-    },
+    { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
-  );
-
-  const Transition = React.forwardRef(
-    (
-      props: TransitionProps & {
-        children: React.ReactElement;
-      },
-      ref: React.Ref<unknown>
-    ) => <Fade ref={ref} {...props} timeout={800}></Fade>
   );
 
   return (
@@ -66,26 +63,17 @@ const PatientListComponent: FC = () => {
       <AppBarButtons sortBy={sortBy} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={pagination.onChangePage}
+        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
         isError={isError}
         onRowClick={row => {
-          setSelectedId(row.id);
-          showDialog();
+          if (!row.id || !row.document?.name || !row.document?.type) alert();
+          else navigate(`/patients/${row.id}`);
         }}
         noDataElement={<NothingHere />}
       />
-      <Modal
-        title=""
-        sx={{ maxWidth: '90%' }}
-        okButton={<DialogButton variant="ok" onClick={hideDialog} />}
-        slideAnimation={false}
-        Transition={Transition}
-      >
-        <DetailModal docId={selectedId} />
-      </Modal>
     </>
   );
 };

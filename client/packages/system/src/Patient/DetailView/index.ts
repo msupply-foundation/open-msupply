@@ -1,0 +1,1 @@
+export { PatientDetailView } from './DetailView';

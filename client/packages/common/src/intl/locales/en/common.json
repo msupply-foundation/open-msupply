@@ -43,6 +43,7 @@
   "error.no-results": "Nothing here",
   "error.something-wrong": "Oops! Something's gone wrong.",
   "error.unable-to-load-data": "An error has occurred: there was a problem loading the data.",
+  "error.problem-saving": "An error occurred: there was a problem saving the data.",
   "filename.inbounds": "inbound-shipments",
   "filename.locations": "locations",
   "filename.master-lists": "master-lists",
@@ -175,6 +176,8 @@
   "link.copy-to-clipboard": "Copy to Clipboard",
   "messages.cant-delete-generic": "You cannot delete one or more of the selected items",
   "messages.confirm-delete-generic": "This will permanently remove data",
+  "messages.confirm-save-generic": "Are you ready to save changes?",
+  "messages.confirm-cancel-generic": "You will lose any changes you have made to this form",
   "messages.delete-this-line": "Delete this line",
   "messages.deleted-generic_one": "Deleted {{count}} record",
   "messages.deleted-generic_other": "Deleted {{count}} records",
@@ -184,5 +187,7 @@
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code",
   "success": "Success!",
-  "success.sync-settings": "Sync settings updated successfully!"
+  "success.sync-settings": "Sync settings updated successfully!",
+  "success.data-saved": "Saved successfully",
+  "messages.no-patient-record": "Can't access detailed information for this patient."
 }
