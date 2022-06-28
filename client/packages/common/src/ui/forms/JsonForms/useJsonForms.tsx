@@ -1,4 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from '@openmsupply-client/common';
+import {
+  Box,
+  DialogButton,
+  LoadingButton,
+  useConfirmationModal,
+  useTranslation,
+  useNotification,
+  useDirtyCheck,
+  useConfirmOnLeaving,
+} from '@openmsupply-client/common';
 import { JsonForms } from '@jsonforms/react';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
@@ -52,22 +63,75 @@ const FormComponent = ({
   );
 };
 
-export const useJsonForms = (docName: string) => {
-  const [data, setData] = useState<JsonData>(patient);
-  const [loading, setLoading] = useState(false);
-  const [error] = useState(null);
+// Prevents Form window being loaded with the same scroll position as its parent
+const ScrollFix = () => {
+  useEffect(() => {
+    document.getElementById('document-display')?.scrollIntoView();
+  }, []);
+  return null;
+};
 
-  console.log('TO-DO: Look up document: ' + docName);
+interface JsonFormOptions {
+  showButtonPanel?: boolean;
+  onCancel?: () => void;
+  saveConfirmationMessage?: string;
+  cancelConfirmationMessage?: string;
+  saveSuccessMessage?: string;
+}
 
-  const saveData = () => {
-    setLoading(true);
+export const useJsonForms = (
+  docName: string | undefined,
+  options: JsonFormOptions = {}
+) => {
+  const [data, setData] = useState<JsonData>(patient); // Replace with DB query hook
+  const [loading] = useState(false); // Replace with DB query hook
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | false>(false);
+  const t = useTranslation('common');
+  const { success, error: errorNotification } = useNotification();
+  const navigate = useNavigate();
+  const { isDirty, setIsDirty } = useDirtyCheck();
+
+  const {
+    showButtonPanel = true,
+    onCancel = () => navigate(-1),
+    saveConfirmationMessage = t('messages.confirm-save-generic'),
+    cancelConfirmationMessage = t('messages.confirm-cancel-generic'),
+    saveSuccessMessage = t('success.data-saved'),
+  } = options;
+
+  useConfirmOnLeaving(isDirty);
+
+  useEffect(() => {
+    if (!docName) setError('No document associated with this record');
+  }, []);
+
+  const updateData = (newData: JsonData) => {
+    setIsDirty(true);
+    setData(newData);
+  };
+
+  const saveData = async () => {
+    setSaving(true);
     // Run mutation...
-    // setData...
     console.log('Saving data...');
-    setLoading(false);
+    // Temporary for UI demonstration
+    setTimeout(() => {
+      try {
+        setSaving(false);
+        const successSnack = success(saveSuccessMessage);
+        successSnack();
+        setSaving(false);
+        setIsDirty(false);
+      } catch {
+        const errorSnack = errorNotification(t('error.problem-saving'));
+        errorSnack();
+      }
+    }, 1000);
   };
 
   const renderers = [
+    // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
     ...materialRenderers,
     { tester: stringTester, renderer: TextField },
     { tester: selectTester, renderer: Selector },
@@ -77,14 +141,52 @@ export const useJsonForms = (docName: string) => {
     { tester: arrayTester, renderer: Array },
   ];
 
+  const showSaveConfirmation = useConfirmationModal({
+    onConfirm: saveData,
+    message: saveConfirmationMessage,
+    title: t('heading.are-you-sure'),
+  });
+
+  const showCancelConfirmation = useConfirmationModal({
+    onConfirm: onCancel,
+    message: cancelConfirmationMessage,
+    title: t('heading.are-you-sure'),
+  });
+
+  const ButtonPanel = () => (
+    <Box id="button-panel" paddingBottom={5} display="flex" gap={5}>
+      <LoadingButton
+        onClick={() => showSaveConfirmation()}
+        isLoading={saving}
+        color="secondary"
+      >
+        {t('button.save')}
+      </LoadingButton>
+      <DialogButton variant="cancel" onClick={() => showCancelConfirmation()} />
+    </Box>
+  );
+
   return {
     JsonForm: (
-      <FormComponent
-        data={data}
-        setData={setData}
-        // setError={setError}
-        renderers={renderers}
-      />
+      <Box
+        id="document-display"
+        display="flex"
+        flexDirection="column"
+        justifyContent="flex-start"
+        alignItems="center"
+        width="100%"
+        gap={2}
+        paddingX={10}
+      >
+        <ScrollFix />
+        <FormComponent
+          data={data}
+          setData={updateData}
+          // setError={setError}
+          renderers={renderers}
+        />
+        {showButtonPanel && <ButtonPanel />}
+      </Box>
     ),
     saveData,
     loading,

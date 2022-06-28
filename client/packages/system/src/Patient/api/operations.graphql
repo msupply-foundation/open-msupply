@@ -5,6 +5,11 @@ fragment PatientRow on PatientNode {
   lastName
   name
   dateOfBirth
+  document {
+    id
+    name
+    type
+  }
 }
 
 fragment Patient on PatientNode {
