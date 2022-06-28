@@ -1,4 +1,7 @@
-use crate::service_provider::ServiceProvider;
+use crate::{
+    apis::{sync_api_credentials::SyncCredentials, sync_api_v3::SyncApiV3, sync_api_v5::SyncApiV5},
+    service_provider::ServiceProvider,
+};
 use log::warn;
 use reqwest::{Client, Url};
 use std::{sync::Arc, time::Duration};
@@ -8,8 +11,7 @@ use super::{
     get_sync_actors,
     remote_data_synchroniser::RemoteDataSynchroniser,
     settings::SyncSettings,
-    sync_api_v3::SyncApiV3,
-    SyncApiV5, SyncCredentials, SyncReceiverActor, SyncSenderActor,
+    SyncReceiverActor, SyncSenderActor,
 };
 
 pub struct Synchroniser {
