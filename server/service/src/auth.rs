@@ -59,6 +59,7 @@ pub enum Resource {
     // reporting
     Report,
     // view/edit server setting
+    QueryLog,
     ServerAdmin,
 }
 
@@ -202,6 +203,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::Report),
         ]),
+    );
+
+    map.insert(
+        Resource::QueryLog,
+        PermissionDSL::HasPermission(Permission::LogQuery),
     );
     map
 }

@@ -4,9 +4,11 @@ use std::{
 };
 
 use bcrypt::BcryptError;
+use chrono::Utc;
 use log::info;
 use repository::{
-    Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
+    LogRow, LogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
+    UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
@@ -20,6 +22,7 @@ use crate::{
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
+    log::log_entry,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
     token::{JWTIssuingError, TokenPair, TokenService},
@@ -129,6 +132,18 @@ impl LoginService {
                 });
             }
         };
+
+        log_entry(
+            &service_ctx.connection,
+            &LogRow {
+                id: uuid(),
+                log_type: LogType::UserLoggedIn,
+                user_id: Some(user_account.id.clone()),
+                store_id: None,
+                record_id: None,
+                datetime: Utc::now().naive_utc(),
+            },
+        )?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
@@ -336,6 +351,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // reports
             Permissions::ViewReports => {
                 output.insert(Permission::Report);
+            }
+            Permissions::ViewLog => {
+                output.insert(Permission::LogQuery);
             }
             _ => continue,
         }
