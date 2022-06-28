@@ -76,6 +76,10 @@ fragment Outbound on InvoiceNode {
   onHold
   otherPartyId
   otherPartyName
+  otherPartyStore {
+    id
+    code
+  }
   status
   theirReference
   transportReference
