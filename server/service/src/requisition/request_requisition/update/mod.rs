@@ -1,11 +1,13 @@
 use crate::{
+    log::log_entry,
     requisition::query::get_requisition,
     service_provider::ServiceContext,
     sync_processor::{process_records, Record},
 };
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc};
 use repository::{
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    LogRow, LogType, RepositoryError, Requisition, RequisitionLineRowRepository,
+    RequisitionRowRepository,
 };
 
 mod generate;
@@ -13,10 +15,11 @@ mod test;
 mod validate;
 
 use generate::generate;
+use util::uuid::uuid;
 use validate::validate;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum UpdateRequestRequstionStatus {
+pub enum UpdateRequestRequistionStatus {
     Sent,
 }
 
@@ -29,7 +32,7 @@ pub struct UpdateRequestRequisition {
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: Option<f64>,
-    pub status: Option<UpdateRequestRequstionStatus>,
+    pub status: Option<UpdateRequestRequistionStatus>,
     pub expected_delivery_date: Option<NaiveDate>,
 }
 
@@ -58,13 +61,14 @@ pub fn update_request_requisition(
     ctx: &ServiceContext,
     store_id: &str,
     input: UpdateRequestRequisition,
+    //TODO add user_id
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, store_id, &input)?;
             let (updated_requisition, update_requisition_line_rows) =
-                generate(connection, requisition_row, input)?;
+                generate(connection, requisition_row, input.clone())?;
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
@@ -87,6 +91,20 @@ pub fn update_request_requisition(
             vec![Record::RequisitionRow(requisition.requisition_row.clone())],
         )
     );
+
+    if input.status == Some(UpdateRequestRequistionStatus::Sent) {
+        log_entry(
+            &ctx.connection,
+            &LogRow {
+                id: uuid(),
+                log_type: LogType::RequisitionStatusSent,
+                user_id: None,
+                store_id: Some(store_id.to_string()),
+                record_id: Some(requisition.requisition_row.id.to_string()),
+                datetime: Utc::now().naive_utc(),
+            },
+        )?;
+    }
 
     Ok(requisition)
 }
