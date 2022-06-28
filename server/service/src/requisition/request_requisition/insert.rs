@@ -70,7 +70,7 @@ pub fn insert_request_requisition(
             user_id: Some(user_id.to_string()),
             store_id: Some(store_id.to_string()),
             record_id: Some(requisition.requisition_row.id.to_string()),
-            datetime: Utc::now().naive_utc(),
+            datetime: requisition.requisition_row.created_datetime,
         },
     )?;
 
