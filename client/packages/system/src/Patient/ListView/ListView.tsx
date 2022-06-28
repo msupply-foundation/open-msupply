@@ -67,7 +67,7 @@ const PatientListComponent: FC = () => {
         isError={isError}
         onRowClick={row => {
           if (!row.id || !row.document?.name || !row.document?.type) alert();
-          else navigate(`/patients/${row.id}/${row.document.type}`);
+          else navigate(`/patients/${row.id}`);
         }}
         noDataElement={<NothingHere />}
       />
