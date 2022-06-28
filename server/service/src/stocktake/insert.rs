@@ -1,10 +1,14 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    EqualFilter, NumberRowType, RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository,
-    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    EqualFilter, LogRow, LogType, NumberRowType, RepositoryError, Stocktake, StocktakeFilter,
+    StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
+use util::uuid::uuid;
 
-use crate::{number::next_number, service_provider::ServiceContext, validate::check_store_exists};
+use crate::{
+    log::log_entry, number::next_number, service_provider::ServiceContext,
+    validate::check_store_exists,
+};
 
 use super::query::get_stocktake;
 
@@ -98,6 +102,19 @@ pub fn insert_stocktake(
             ))
         })
         .map_err(|error| error.to_inner_error())?;
+
+    log_entry(
+        &ctx.connection,
+        &LogRow {
+            id: uuid(),
+            log_type: LogType::StocktakeCreated,
+            user_id: Some(user_id.to_string()),
+            store_id: Some(store_id.to_string()),
+            record_id: Some(result.id.clone()),
+            datetime: result.created_datetime,
+        },
+    )?;
+
     Ok(result)
 }
 
