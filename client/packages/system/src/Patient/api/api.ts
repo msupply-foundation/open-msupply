@@ -28,10 +28,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       nodes: PatientRowFragment[];
       totalCount: number;
     }> => {
-      const key =
-        sortBy?.key === 'code'
-          ? PatientSortFieldInput.Code
-          : PatientSortFieldInput.Name;
+      const key = sortBy?.key as PatientSortFieldInput;
 
       const result = await sdk.patients({
         first,

@@ -11,15 +11,21 @@ import {
   ColumnAlign,
   useAlertModal,
   useTranslation,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 
 const PatientListComponent: FC = () => {
-  const { data, isError, isLoading, pagination, sort } =
-    usePatient.document.list();
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    // filter,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams();
+  const { data, isError, isLoading } = usePatient.document.list();
+  const pagination = { page, first, offset };
   const t = useTranslation('common');
-  const { sortBy, onChangeSortBy } = sort;
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
   const alert = useAlertModal({
@@ -30,7 +36,7 @@ const PatientListComponent: FC = () => {
 
   const columns = useColumns<PatientRowFragment>(
     [
-      'code',
+      { key: 'code', label: 'label.code' },
       {
         key: 'firstName',
         label: 'label.first-name',
@@ -48,10 +54,7 @@ const PatientListComponent: FC = () => {
           dateString ? localisedDate((dateString as string) || '') : '',
       },
     ],
-    {
-      sortBy,
-      onChangeSortBy,
-    },
+    { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );
 
@@ -60,7 +63,7 @@ const PatientListComponent: FC = () => {
       <AppBarButtons sortBy={sortBy} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={pagination.onChangePage}
+        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
