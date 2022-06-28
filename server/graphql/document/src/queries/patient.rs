@@ -15,7 +15,6 @@ use service::auth::{Resource, ResourceAccessRequest};
 use service::document::patient::{
     patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
 };
-use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
 use crate::types::program::ProgramNode;
@@ -241,25 +240,24 @@ pub fn patients(
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
 
-    let nodes: Vec<PatientNode> = service_provider
-        .patient_service
-        .get_patients(
-            &context,
-            &store_id,
-            page.map(PaginationOption::from),
-            filter.map(PatientFilterInput::to_domain),
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
-        )?
+    let patients = service_provider.patient_service.get_patients(
+        &context,
+        &store_id,
+        page.map(PaginationOption::from),
+        filter.map(PatientFilterInput::to_domain),
+        sort.and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain()),
+    )?;
+    let nodes: Vec<PatientNode> = patients
+        .rows
         .into_iter()
         .map(|patient| PatientNode {
             store_id: store_id.clone(),
             patient,
         })
         .collect();
-
     Ok(PatientResponse::Response(PatientConnector {
-        total_count: usize_to_u32(nodes.len()),
+        total_count: patients.count,
         nodes,
     }))
 }
@@ -289,6 +287,7 @@ pub fn patient(
             Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
             None,
         )?
+        .rows
         .pop()
         .map(|patient| PatientNode {
             store_id: store_id.clone(),
