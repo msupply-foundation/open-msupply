@@ -66,7 +66,9 @@ pub fn update_response_requisition(
         )
     );
 
-    if input.status == Some(UpdateResponseRequstionStatus::Finalised) {
+    if input.status == Some(UpdateResponseRequstionStatus::Finalised)
+        && requisition.requisition_row.status != RequisitionRowStatus::Finalised
+    {
         log_entry(
             &ctx.connection,
             &LogRow {
