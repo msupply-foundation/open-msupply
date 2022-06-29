@@ -3,10 +3,12 @@ use crate::sync::{
     translation_central::{import_sync_records, TRANSLATION_RECORDS},
     SyncApiV5, SyncConnectionError,
 };
+use chrono::Utc;
 use log::info;
 use repository::{
-    CentralSyncBufferRepository, CentralSyncBufferRow, KeyValueStoreRepository, KeyValueType,
-    RepositoryError, StorageConnection, TransactionError,
+    EqualFilter, KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection,
+    SyncBufferAction, SyncBufferFilter, SyncBufferRepository, SyncBufferRow,
+    SyncBufferRowRepository,
 };
 use thiserror::Error;
 
@@ -35,6 +37,22 @@ impl CentralSyncError {
         CentralSyncError::DBConnectionError { source: e }
     }
 }
+
+impl CentralSyncRecordV5 {
+    pub fn to_sync_buffer(&self) -> Result<SyncBufferRow, serde_json::Error> {
+        let result = SyncBufferRow {
+            table_name: self.table_name.clone(),
+            record_id: self.record_id.clone(),
+            data: serde_json::to_string(&self.data)?,
+            received_datetime: Utc::now().naive_utc(),
+            integration_datetime: None,
+            integration_error: None,
+            action: SyncBufferAction::Upsert,
+        };
+
+        Ok(result)
+    }
+}
 pub struct CentralDataSynchroniser {
     pub sync_api_v5: SyncApiV5,
 }
@@ -45,7 +63,7 @@ impl CentralDataSynchroniser {
         connection: &StorageConnection,
     ) -> Result<(), CentralSyncError> {
         let central_sync_cursor = CentralSyncPullCursor::new(&connection);
-        let mut cursor: u32 = central_sync_cursor.get_cursor().unwrap_or_else(|_| {
+        let cursor: u32 = central_sync_cursor.get_cursor().unwrap_or_else(|_| {
             info!("Initialising new central sync cursor...");
             0
         });
@@ -60,36 +78,25 @@ impl CentralDataSynchroniser {
                 .get_central_records(cursor, BATCH_SIZE)
                 .await
                 .map_err(|source| CentralSyncError::PullCentralSyncRecordsError { source })?;
-            let central_sync_records = central_sync_batch_records_to_buffer_rows(sync_batch.data)
-                .map_err(|err| {
-                CentralSyncError::PullCentralSyncRecordsError { source: err.into() }
-            })?;
 
-            if central_sync_records.len() == 0 {
-                info!("Central sync buffer is up-to-date");
-                break;
-            }
-
+            let batch_length = sync_batch.data.len();
             info!(
                 "Inserting {} central sync records into central sync buffer",
-                central_sync_records.len()
+                batch_length
             );
 
-            for central_sync_record in central_sync_records {
-                Self::insert_one_and_update_cursor(&connection, &central_sync_record)
-                    .await
+            for sync_record in sync_batch.data {
+                let buffer_row = sync_record.to_sync_buffer().map_err(|e| {
+                    CentralSyncError::PullCentralSyncRecordsError { source: e.into() }
+                })?;
+                Self::insert_one_and_update_cursor(connection, &buffer_row, sync_record.id)
                     .map_err(
                         |source| CentralSyncError::UpdateCentralSyncBufferRecordsError { source },
                     )?;
             }
-            info!("Successfully inserted central sync records into central sync buffer");
 
-            cursor = central_sync_cursor
-                .get_cursor()
-                .map_err(|source| CentralSyncError::GetCentralSyncCursorRecordError { source })?;
-
-            if cursor >= sync_batch.max_cursor - 1 {
-                info!("All central sync records pulled successfully");
+            if batch_length == 0 {
+                info!("Central sync buffer is up-to-date");
                 break;
             }
         }
@@ -97,39 +104,34 @@ impl CentralDataSynchroniser {
     }
 
     /// insert row and update cursor in a single transaction
-    pub async fn insert_one_and_update_cursor(
+    pub fn insert_one_and_update_cursor(
         connection: &StorageConnection,
-        central_sync_buffer_row: &CentralSyncBufferRow,
+        row: &SyncBufferRow,
+        cursor: u32,
     ) -> Result<(), RepositoryError> {
-        let cursor = central_sync_buffer_row.id as u32;
         // note: if already in a transaction this creates a safepoint:
-        let result: Result<(), TransactionError<RepositoryError>> = connection
-            .transaction(|con| async move {
-                CentralSyncBufferRepository::new(con)
-                    .insert_one(central_sync_buffer_row)
-                    .await?;
-                CentralSyncPullCursor::new(con).update_cursor(cursor)?;
-                Ok(())
+        connection
+            .transaction_sync(|con| {
+                SyncBufferRowRepository::new(con).upsert_one(row)?;
+                CentralSyncPullCursor::new(con).update_cursor(cursor)
             })
-            .await;
-        Ok(result?)
+            .map_err(|e| e.to_inner_error())
     }
 
     pub async fn integrate_central_records(
         connection: &StorageConnection,
     ) -> Result<(), CentralSyncError> {
-        let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
-
-        let mut records: Vec<CentralSyncBufferRow> = Vec::new();
+        let mut records: Vec<SyncBufferRow> = Vec::new();
         for table_name in TRANSLATION_RECORDS {
             info!(
                 "Querying central sync buffer for \"{}\" records",
                 table_name
             );
 
-            let mut buffer_rows = central_sync_buffer_repository
-                .get_sync_entries(table_name)
-                .await
+            let mut buffer_rows = SyncBufferRepository::new(&connection)
+                .query_by_filter(
+                    SyncBufferFilter::new().table_name(EqualFilter::equal_to(table_name)),
+                )
                 .map_err(|source| CentralSyncError::GetCentralSyncBufferRecordsError { source })?;
 
             info!(
@@ -148,9 +150,8 @@ impl CentralDataSynchroniser {
         info!("Successfully Imported central sync buffer records",);
 
         info!("Clearing central sync buffer");
-        central_sync_buffer_repository
+        SyncBufferRowRepository::new(&connection)
             .remove_all()
-            .await
             .map_err(|source| CentralSyncError::RemoveCentralSyncBufferRecordsError { source })?;
         info!("Successfully cleared central sync buffer");
 
@@ -171,24 +172,6 @@ impl CentralDataSynchroniser {
 
         Ok(())
     }
-}
-
-pub fn central_sync_batch_records_to_buffer_rows(
-    records: Option<Vec<CentralSyncRecordV5>>,
-) -> Result<Vec<CentralSyncBufferRow>, serde_json::Error> {
-    let central_sync_records: Result<Vec<CentralSyncBufferRow>, serde_json::Error> = records
-        .unwrap_or(vec![])
-        .into_iter()
-        .map(|record| {
-            Ok(CentralSyncBufferRow {
-                id: record.id,
-                table_name: record.table_name,
-                record_id: record.record_id,
-                data: serde_json::to_string(&record.data)?,
-            })
-        })
-        .collect();
-    central_sync_records
 }
 
 struct CentralSyncPullCursor<'a> {
@@ -225,7 +208,7 @@ mod tests {
         master_list_name_join::get_test_master_list_name_join_records, name::get_test_name_records,
         store::get_test_store_records,
     };
-    use repository::{test_db, CentralSyncBufferRepository, CentralSyncBufferRow, mock::MockDataInserts};
+    use repository::{mock::MockDataInserts, test_db, SyncBufferRow, SyncBufferRowRepository};
 
     use super::CentralDataSynchroniser;
 
@@ -246,12 +229,10 @@ mod tests {
         test_records.append(&mut get_test_master_list_name_join_records());
         test_records.append(&mut get_test_master_list_line_records());
 
-        let central_records: Vec<CentralSyncBufferRow> = extract_sync_buffer_rows(&test_records);
+        let central_records: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
-        let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
-
-        central_sync_buffer_repository
-            .insert_many(&central_records)
+        SyncBufferRowRepository::new(&connection)
+            .upsert_many(&central_records)
             .expect("Failed to insert central sync records into sync buffer");
 
         CentralDataSynchroniser::integrate_central_records(&connection)
