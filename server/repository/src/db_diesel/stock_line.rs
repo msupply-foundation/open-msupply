@@ -5,7 +5,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort_asc_nulls_last},
+    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort_asc_nulls_last},
     repository_error::RepositoryError,
     DateFilter, EqualFilter, Pagination, Sort,
 };
@@ -114,7 +114,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, id, stock_line_dsl::id);
         apply_equal_filter!(query, item_id, stock_line_dsl::item_id);
         apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
-        apply_date_time_filter!(query, expiry_date, stock_line_dsl::expiry_date);
+        apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
 
         query = match is_available {

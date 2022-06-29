@@ -154,6 +154,7 @@ impl RequisitionRowStatus {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
+            is_null: None,
         }
     }
 }
@@ -165,6 +166,7 @@ impl RequisitionRowType {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
+            is_null: None,
         }
     }
 }
