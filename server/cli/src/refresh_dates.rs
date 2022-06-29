@@ -39,6 +39,20 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
     .collect()
 }
 
+#[cfg(feature = "postgres")]
+fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
+    vec![
+        ("sync_buffer", "received_datetime"),
+        ("sync_buffer", "integration_datetime"),
+    ]
+    .iter()
+    .map(|(table_name, field_name)| TableAndFieldName {
+        table_name,
+        field_name,
+    })
+    .collect()
+}
+
 fn get_date_fields() -> Vec<TableAndFieldName> {
     vec![
         ("name", "date_of_birth"),
@@ -518,7 +532,8 @@ mod tests {
             .load::<TableNameAndFieldRow>(&connection.connection)
             .unwrap();
 
-        let defined_table_and_fields = get_timestamp_fields();
+        let mut defined_table_and_fields = get_timestamp_fields();
+        defined_table_and_fields.append(&mut get_exclude_timestamp_fields());
 
         for schema_row in schema_table_and_fields.iter() {
             assert_eq!(
