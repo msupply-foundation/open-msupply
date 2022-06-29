@@ -9,7 +9,11 @@ use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use server::configuration;
 use service::{
-    apis::login_v4::LoginUserInfoV4,
+    apis::{
+        login_v4::LoginUserInfoV4,
+        sync_api_credentials::SyncCredentials,
+        sync_api_v5::{CentralSyncBatchV5, RemoteSyncBatchV5, SyncApiV5},
+    },
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     service_provider::ServiceProvider,
@@ -22,8 +26,7 @@ use service::{
             remote_sync_batch_records_to_buffer_rows, RemoteDataSynchroniser,
         },
         settings::SyncSettings,
-        sync_api_v5::{CentralSyncBatchV5, RemoteSyncBatchV5},
-        SyncApiV5, SyncCredentials, Synchroniser,
+        Synchroniser,
     },
     token_bucket::TokenBucket,
 };

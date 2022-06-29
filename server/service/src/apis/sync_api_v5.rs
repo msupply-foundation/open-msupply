@@ -1,11 +1,11 @@
-use crate::sync::SyncCredentials;
-
 use log::info;
 use reqwest::{
     header::{HeaderMap, HeaderName, CONTENT_LENGTH},
     Client, Response, Url,
 };
 use serde::{Deserialize, Serialize};
+
+use super::sync_api_credentials::SyncCredentials;
 
 pub type SyncConnectionError = anyhow::Error;
 
@@ -232,13 +232,15 @@ mod tests {
     use reqwest::{header::AUTHORIZATION, Client, Url};
     use serde_json::{self, json};
 
-    use crate::sync::{
+    use crate::apis::{
+        sync_api_credentials::SyncCredentials,
         sync_api_v5::{
             CentralSyncBatchV5, CentralSyncRecordV5, RemoteSyncAckV5, RemoteSyncActionV5,
             RemoteSyncBatchV5, RemoteSyncRecordV5,
         },
-        SyncApiV5, SyncCredentials,
     };
+
+    use super::SyncApiV5;
 
     fn create_api(url: &str, username: &str, password: &str) -> SyncApiV5 {
         let url = Url::parse(url).unwrap();
