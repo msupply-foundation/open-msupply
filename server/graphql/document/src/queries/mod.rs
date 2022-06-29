@@ -6,5 +6,7 @@ pub mod json_schema;
 pub use self::json_schema::*;
 pub mod patient;
 pub use self::patient::*;
+pub mod patient_search;
+pub use self::patient_search::*;
 pub mod document_registry;
 pub use self::document_registry::*;
