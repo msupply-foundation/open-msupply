@@ -414,7 +414,7 @@ pub fn update_stocktake(
                 connection,
                 user_id,
                 input.clone(),
-                existing,
+                existing.clone(),
                 stocktake_lines,
                 store_id,
             )?;
@@ -441,6 +441,22 @@ pub fn update_stocktake(
             }
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
 
+            if input.status == Some(StocktakeStatus::Finalised)
+                && existing.status != StocktakeStatus::Finalised
+            {
+                log_entry(
+                    &ctx.connection,
+                    &LogRow {
+                        id: uuid(),
+                        r#type: LogType::StocktakeStatusFinalised,
+                        user_id: Some(user_id.to_string()),
+                        store_id: Some(store_id.to_string()),
+                        record_id: Some(stocktake_id.to_string()),
+                        datetime: Utc::now().naive_utc(),
+                    },
+                )?;
+            }
+
             // return the updated stocktake
             let stocktake = get_stocktake(ctx, stocktake_id)?;
             stocktake.ok_or(UpdateStocktakeError::InternalError(
@@ -448,21 +464,6 @@ pub fn update_stocktake(
             ))
         })
         .map_err(|error| error.to_inner_error())?;
-
-    if input.status == Some(StocktakeStatus::Finalised) {
-        log_entry(
-            &ctx.connection,
-            &LogRow {
-                id: uuid(),
-                r#type: LogType::StocktakeStatusFinalised,
-                user_id: Some(user_id.to_string()),
-                store_id: Some(store_id.to_string()),
-                record_id: Some(result.id.clone()),
-                datetime: Utc::now().naive_utc(),
-            },
-        )?;
-    }
-
     Ok(result)
 }
 

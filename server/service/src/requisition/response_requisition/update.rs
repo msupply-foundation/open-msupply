@@ -48,8 +48,24 @@ pub fn update_response_requisition(
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, store_id, &input)?;
-            let updated_requisition = generate(user_id, requisition_row, input.clone());
+            let updated_requisition = generate(user_id, requisition_row.clone(), input.clone());
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
+
+            if input.status == Some(UpdateResponseRequstionStatus::Finalised)
+                && requisition_row.status != RequisitionRowStatus::Finalised
+            {
+                log_entry(
+                    &ctx.connection,
+                    &LogRow {
+                        id: uuid(),
+                        r#type: LogType::RequisitionStatusFinalised,
+                        user_id: Some(user_id.to_string()),
+                        store_id: Some(store_id.to_string()),
+                        record_id: Some(updated_requisition.id.to_string()),
+                        datetime: Utc::now().naive_utc(),
+                    },
+                )?;
+            }
 
             get_requisition(ctx, None, &updated_requisition.id)
                 .map_err(|error| OutError::DatabaseError(error))?
@@ -65,22 +81,6 @@ pub fn update_response_requisition(
             vec![Record::RequisitionRow(requisition.requisition_row.clone())],
         )
     );
-
-    if input.status == Some(UpdateResponseRequstionStatus::Finalised)
-        && requisition.requisition_row.status != RequisitionRowStatus::Finalised
-    {
-        log_entry(
-            &ctx.connection,
-            &LogRow {
-                id: uuid(),
-                r#type: LogType::RequisitionStatusFinalised,
-                user_id: Some(user_id.to_string()),
-                store_id: Some(store_id.to_string()),
-                record_id: Some(requisition.requisition_row.id.to_string()),
-                datetime: Utc::now().naive_utc(),
-            },
-        )?;
-    }
 
     Ok(requisition)
 }
