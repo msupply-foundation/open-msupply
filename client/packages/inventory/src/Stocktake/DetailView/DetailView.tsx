@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -28,6 +28,7 @@ export const DetailView: FC = () => {
   const { data, isLoading } = useStocktake.document.get();
   const navigate = useNavigate();
   const t = useTranslation('inventory');
+  const [hideAlert, setHideAlert] = useState(false);
 
   const onRowClick = useCallback(
     (item: StocktakeLineFragment | StocktakeSummaryItem) => {
@@ -35,6 +36,15 @@ export const DetailView: FC = () => {
     },
     [onOpen]
   );
+
+  useEffect(() => {
+    if (hideAlert)
+      navigate(
+        RouteBuilder.create(AppRoute.Inventory)
+          .addPart(AppRoute.Stocktakes)
+          .build()
+      );
+  }, [hideAlert]);
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -61,14 +71,8 @@ export const DetailView: FC = () => {
     </TableProvider>
   ) : (
     <AlertModal
-      open={true}
-      onOk={() =>
-        navigate(
-          RouteBuilder.create(AppRoute.Inventory)
-            .addPart(AppRoute.Stocktakes)
-            .build()
-        )
-      }
+      open={!hideAlert}
+      onOk={() => setHideAlert(true)}
       title={t('error.stocktake-not-found')}
       message={t('messages.click-to-return')}
     />
