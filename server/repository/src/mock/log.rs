@@ -5,7 +5,7 @@ use crate::{LogRow, LogType};
 pub fn log_a() -> LogRow {
     LogRow {
         id: String::from("log_a"),
-        log_type: LogType::UserLoggedIn,
+        r#type: LogType::UserLoggedIn,
         user_id: Some(String::from("user_account_a")),
         store_id: None,
         record_id: None,
@@ -16,7 +16,7 @@ pub fn log_a() -> LogRow {
 pub fn log_b() -> LogRow {
     LogRow {
         id: String::from("log_b"),
-        log_type: LogType::InvoiceCreated,
+        r#type: LogType::InvoiceCreated,
         user_id: Some(String::from("user_account_a")),
         store_id: Some(String::from("store_a")),
         record_id: Some(String::from("outbound_shipment_a")),
@@ -27,7 +27,7 @@ pub fn log_b() -> LogRow {
 pub fn log_c() -> LogRow {
     LogRow {
         id: String::from("log_c"),
-        log_type: LogType::InvoiceStatusAllocated,
+        r#type: LogType::InvoiceStatusAllocated,
         user_id: Some(String::from("user_account_a")),
         store_id: Some(String::from("store_b")),
         record_id: Some(String::from("inbound_shipment_a")),

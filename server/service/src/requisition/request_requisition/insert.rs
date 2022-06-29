@@ -66,7 +66,7 @@ pub fn insert_request_requisition(
         &ctx.connection,
         &LogRow {
             id: uuid(),
-            log_type: LogType::RequisitionCreated,
+            r#type: LogType::RequisitionCreated,
             user_id: Some(user_id.to_string()),
             store_id: Some(store_id.to_string()),
             record_id: Some(requisition.requisition_row.id.to_string()),

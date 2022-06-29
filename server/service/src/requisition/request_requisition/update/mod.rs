@@ -97,7 +97,7 @@ pub fn update_request_requisition(
             &ctx.connection,
             &LogRow {
                 id: uuid(),
-                log_type: LogType::RequisitionStatusSent,
+                r#type: LogType::RequisitionStatusSent,
                 user_id: None,
                 store_id: Some(store_id.to_string()),
                 record_id: Some(requisition.requisition_row.id.to_string()),

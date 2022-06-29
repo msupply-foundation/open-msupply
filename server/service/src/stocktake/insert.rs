@@ -107,7 +107,7 @@ pub fn insert_stocktake(
         &ctx.connection,
         &LogRow {
             id: uuid(),
-            log_type: LogType::StocktakeCreated,
+            r#type: LogType::StocktakeCreated,
             user_id: Some(user_id.to_string()),
             store_id: Some(store_id.to_string()),
             record_id: Some(result.id.clone()),
