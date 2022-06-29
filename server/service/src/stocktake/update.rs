@@ -449,7 +449,9 @@ pub fn update_stocktake(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    if input.status == Some(StocktakeStatus::Finalised) {
+    if input.status == Some(StocktakeStatus::Finalised)
+        && result.status != StocktakeStatus::Finalised
+    {
         log_entry(
             &ctx.connection,
             &LogRow {
