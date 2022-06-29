@@ -12,10 +12,7 @@ export const AddFromMasterListButtonComponent = () => {
   const t = useTranslation('distribution');
   const isDisabled = useOutbound.utils.isDisabled();
   const { addFromMasterList } = useOutbound.utils.addFromMasterList();
-  const { otherPartyId, otherPartyStore } = useOutbound.document.fields([
-    'otherPartyId',
-    'otherPartyStore',
-  ]);
+  const { otherPartyId } = useOutbound.document.fields(['otherPartyId']);
   const modalController = useToggle();
   const filterByName = { existsForNameId: { equalTo: otherPartyId } };
 
@@ -29,7 +26,6 @@ export const AddFromMasterListButtonComponent = () => {
           addFromMasterList(masterList);
         }}
         filterBy={filterByName}
-        storeId={otherPartyStore?.id}
       />
       <ButtonWithIcon
         disabled={isDisabled}

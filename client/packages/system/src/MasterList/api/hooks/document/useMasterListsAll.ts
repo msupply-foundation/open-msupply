@@ -4,10 +4,9 @@ import { useMasterListApi } from '../utils/useMasterListApi';
 
 export const useMasterListsAll = (
   sortBy: SortBy<MasterListRowFragment>,
-  filterBy?: FilterBy,
-  storeId?: string
+  filterBy?: FilterBy
 ) => {
-  const api = useMasterListApi(storeId);
+  const api = useMasterListApi();
 
   return {
     ...useMutation(api.keys.sortedList(sortBy, filterBy), () =>
