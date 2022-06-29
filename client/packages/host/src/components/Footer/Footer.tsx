@@ -3,14 +3,17 @@ import {
   Box,
   HomeIcon,
   styled,
+  Tooltip,
   Typography,
   useAuthContext,
   UserIcon,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
+  const t = useTranslation('app');
   const PaddedCell = styled(Box)({ display: 'flex' });
   const iconStyles = { color: 'gray.main', height: '16px', width: '16px' };
   const textStyles = {
@@ -24,7 +27,9 @@ export const Footer: React.FC = () => {
       <StoreSelector>
         <PaddedCell>
           <HomeIcon sx={iconStyles} />
-          <Typography sx={textStyles}>{store?.code}</Typography>
+          <Tooltip title={t('store-details', { ...store })}>
+            <Typography sx={textStyles}>{store?.name}</Typography>
+          </Tooltip>
         </PaddedCell>
       </StoreSelector>
       {user ? (
