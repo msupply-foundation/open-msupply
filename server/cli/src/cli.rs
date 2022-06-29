@@ -4,7 +4,7 @@ use clap::StructOpt;
 use cli::RefreshDatesRepository;
 use graphql::schema_builder;
 use log::info;
-use repository::{get_storage_connection_manager, test_db, RemoteSyncBufferRepository};
+use repository::{get_storage_connection_manager, test_db, SyncBufferRowRepository};
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use server::configuration;
@@ -15,15 +15,13 @@ use service::{
     service_provider::ServiceProvider,
     settings::Settings,
     sync::{
-        central_data_synchroniser::{
-            central_sync_batch_records_to_buffer_rows, CentralDataSynchroniser,
-        },
+        central_data_synchroniser::CentralDataSynchroniser,
         remote_data_synchroniser::{
             remote_sync_batch_records_to_buffer_rows, RemoteDataSynchroniser,
         },
         settings::SyncSettings,
         sync_api_v5::{CentralSyncBatchV5, RemoteSyncBatchV5},
-        SyncApiV5, Synchroniser, SyncCredentials,
+        SyncApiV5, SyncCredentials, Synchroniser,
     },
     token_bucket::TokenBucket,
 };
@@ -254,15 +252,27 @@ async fn main() {
             let data: InitialisationData =
                 serde_json::from_slice(&fs::read(import_file).unwrap()).unwrap();
 
+            let sync_buffer_repository = SyncBufferRowRepository::new(&ctx.connection);
             info!("Initialising central");
-            for central_sync_record in
-                central_sync_batch_records_to_buffer_rows(data.central.data).unwrap()
-            {
+
+            sync_buffer_repository
+                .upsert_many(
+                    &data
+                        .central
+                        .data
+                        .iter()
+                        .map(|r| r.to_sync_buffer().unwrap())
+                        .collect(),
+                )
+                .unwrap();
+
+            for v5_central_record in data.central.data {
+                let central_sync_record = v5_central_record.to_sync_buffer().unwrap();
                 CentralDataSynchroniser::insert_one_and_update_cursor(
                     &ctx.connection,
                     &central_sync_record,
+                    0,
                 )
-                .await
                 .unwrap()
             }
             CentralDataSynchroniser::integrate_central_records(&ctx.connection)
@@ -271,7 +281,7 @@ async fn main() {
 
             info!("Initialising remote");
             if let Some(data) = data.remote.data {
-                RemoteSyncBufferRepository::new(&ctx.connection)
+                sync_buffer_repository
                     .upsert_many(&remote_sync_batch_records_to_buffer_rows(data).unwrap())
                     .unwrap();
                 RemoteDataSynchroniser::do_integrate_records(&ctx.connection).unwrap()
