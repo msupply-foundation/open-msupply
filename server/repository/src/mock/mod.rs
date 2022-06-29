@@ -71,8 +71,9 @@ use crate::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow,
     LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, UserAccountRow,
+    UserAccountRowRepository, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository, SyncBufferRowRepository,
 };
 
 use self::unit::mock_units;
@@ -105,6 +106,7 @@ pub struct MockData {
     pub requisition_lines: Vec<RequisitionLineRow>,
     pub stocktakes: Vec<StocktakeRow>,
     pub stocktake_lines: Vec<StocktakeLineRow>,
+    pub sync_buffer_rows: Vec<SyncBufferRow>,
 }
 
 #[derive(Default)]
@@ -129,6 +131,7 @@ pub struct MockDataInserts {
     pub requisition_lines: bool,
     pub stocktakes: bool,
     pub stocktake_lines: bool,
+    pub sync_buffer_rows: bool,
 }
 
 impl MockDataInserts {
@@ -154,6 +157,7 @@ impl MockDataInserts {
             requisition_lines: true,
             stocktakes: true,
             stocktake_lines: true,
+            sync_buffer_rows: true,
         }
     }
 
@@ -297,6 +301,7 @@ fn all_mock_data() -> MockDataCollection {
             stocktake_lines: mock_stocktake_line_data(),
             requisitions: vec![],
             requisition_lines: vec![],
+            sync_buffer_rows: vec![],
         },
     );
     data.insert(
@@ -488,6 +493,13 @@ pub async fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.sync_buffer_rows {
+            for row in &mock_data.sync_buffer_rows {
+                let repo = SyncBufferRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
 
     mock_data
@@ -516,6 +528,7 @@ impl MockData {
             mut stocktake_lines,
             user_store_joins: _,
             user_permissions: _,
+            sync_buffer_rows: _,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
