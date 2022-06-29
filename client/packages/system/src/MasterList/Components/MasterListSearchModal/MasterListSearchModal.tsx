@@ -9,7 +9,6 @@ import { useMasterList, MasterListRowFragment } from '../../api';
 interface MasterListSearchProps {
   filterBy?: FilterBy;
   open: boolean;
-  storeId?: string;
   onClose: () => void;
   onChange: (name: MasterListRowFragment) => void;
 }
@@ -17,15 +16,13 @@ interface MasterListSearchProps {
 export const MasterListSearchModal: FC<MasterListSearchProps> = ({
   filterBy,
   open,
-  storeId,
   onClose,
   onChange,
 }) => {
   const sortBy = { key: 'name', direction: 'asc' as 'asc' | 'desc' };
   const { mutate, data, isLoading } = useMasterList.document.listAll(
     sortBy,
-    filterBy,
-    storeId
+    filterBy
   );
   const t = useTranslation(['app', 'common']);
 

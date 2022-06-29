@@ -47,7 +47,7 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.masterLists({
         key,
         desc,
-        filter: { ...filterBy, existsForStoreId: { equalTo: storeId } },
+        filter: filterBy ?? { existsForStoreId: { equalTo: storeId } },
         storeId,
       });
       return result?.masterLists;

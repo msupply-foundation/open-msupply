@@ -7,8 +7,8 @@ import {
 import { getSdk, MasterListRowFragment } from '../../operations.generated';
 import { getMasterListQueries, ListParams } from '../../api';
 
-export const useMasterListApi = (storeId?: string) => {
-  const { storeId: loggedInStore } = useAuthContext();
+export const useMasterListApi = () => {
+  const { storeId } = useAuthContext();
   const keys = {
     base: () => ['master-list'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
@@ -19,7 +19,7 @@ export const useMasterListApi = (storeId?: string) => {
   };
   const { client } = useGql();
   const sdk = getSdk(client);
-  const queries = getMasterListQueries(sdk, storeId || loggedInStore);
+  const queries = getMasterListQueries(sdk, storeId);
 
   return { ...queries, storeId, keys };
 };
