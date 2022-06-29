@@ -8,11 +8,10 @@ pub mod store;
 pub mod unit;
 
 use repository::{
-    CentralSyncBufferRow, ItemRow, ItemRowRepository, MasterListLineRow,
-    MasterListLineRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
-    MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, ReportRow,
-    ReportRowRepository, RepositoryError, StorageConnection, StoreRow, StoreRowRepository, UnitRow,
-    UnitRowRepository,
+    ItemRow, ItemRowRepository, MasterListLineRow, MasterListLineRowRepository,
+    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
+    NameRow, NameRowRepository, ReportRow, ReportRowRepository, RepositoryError, StorageConnection,
+    StoreRow, StoreRowRepository, SyncBufferRow, UnitRow, UnitRowRepository,
 };
 
 #[allow(dead_code)]
@@ -35,7 +34,7 @@ pub struct TestSyncRecord {
     /// Identifier for this record
     pub identifier: &'static str,
     /// Row as stored in the central sync buffer
-    pub central_sync_buffer_row: CentralSyncBufferRow,
+    pub central_sync_buffer_row: SyncBufferRow,
 }
 
 #[allow(dead_code)]
@@ -56,7 +55,7 @@ fn from_option_to_db_result<T>(option: Option<T>) -> Result<T, RepositoryError> 
 }
 
 #[allow(dead_code)]
-pub fn extract_sync_buffer_rows(records: &Vec<TestSyncRecord>) -> Vec<CentralSyncBufferRow> {
+pub fn extract_sync_buffer_rows(records: &Vec<TestSyncRecord>) -> Vec<SyncBufferRow> {
     records
         .into_iter()
         .map(|test_record| test_record.central_sync_buffer_row.clone())

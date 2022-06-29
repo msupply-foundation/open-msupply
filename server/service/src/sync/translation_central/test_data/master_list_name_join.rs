@@ -1,5 +1,6 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{CentralSyncBufferRow, MasterListNameJoinRow};
+use repository::{MasterListNameJoinRow, SyncBufferRow};
+use util::inline_init;
 
 const LIST_MASTER_NAME_JOIN_1: (&'static str, &'static str) = (
     "A7A06D78361041448B836857ED4330C4",
@@ -26,11 +27,10 @@ pub fn get_test_master_list_name_join_records() -> Vec<TestSyncRecord> {
             name_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
         })),
         identifier: "Master list",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 50,
-            table_name: RECORD_TYPE.to_owned(),
-            record_id: LIST_MASTER_NAME_JOIN_1.0.to_owned(),
-            data: LIST_MASTER_NAME_JOIN_1.1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = RECORD_TYPE.to_owned();
+            r.record_id = LIST_MASTER_NAME_JOIN_1.0.to_owned();
+            r.data = LIST_MASTER_NAME_JOIN_1.1.to_owned();
+        }),
     }]
 }

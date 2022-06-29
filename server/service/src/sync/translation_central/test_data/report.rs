@@ -2,7 +2,8 @@ use crate::sync::translation_central::{
     test_data::{TestSyncDataRecord, TestSyncRecord},
     TRANSLATION_RECORD_REPORT,
 };
-use repository::{CentralSyncBufferRow, ReportContext, ReportRow, ReportType};
+use repository::{ReportContext, ReportRow, ReportType, SyncBufferRow};
+use util::inline_init;
 
 const REPORT_1: (&'static str, &'static str) = (
     "76B6C424E1935C4DAF36A7A8F451FE72",
@@ -37,11 +38,10 @@ pub fn get_test_report_records() -> Vec<TestSyncRecord> {
             comment: Some("Test comment".to_string()),
         })),
         identifier: "REPORT_1",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 600,
-            table_name: TRANSLATION_RECORD_REPORT.to_owned(),
-            record_id: REPORT_1.0.to_owned(),
-            data: REPORT_1.1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_REPORT.to_owned();
+            r.record_id = REPORT_1.0.to_owned();
+            r.data = REPORT_1.1.to_owned();
+        }),
     }]
 }

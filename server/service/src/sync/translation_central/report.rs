@@ -1,7 +1,7 @@
 use crate::sync::{
     sync_serde::empty_str_as_option, translation_central::TRANSLATION_RECORD_REPORT,
 };
-use repository::{CentralSyncBufferRow, ReportContext, ReportRow, ReportType};
+use repository::{ReportContext, ReportRow, ReportType, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
@@ -49,7 +49,7 @@ pub struct ReportTranslation {}
 impl CentralPushTranslation for ReportTranslation {
     fn try_translate(
         &self,
-        sync_record: &CentralSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_REPORT;
         if sync_record.table_name != table_name {

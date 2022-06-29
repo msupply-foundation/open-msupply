@@ -1,5 +1,5 @@
 use crate::sync::translation_central::TRANSLATION_RECORD_LIST_MASTER;
-use repository::{CentralSyncBufferRow, MasterListRow};
+use repository::{MasterListRow, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -18,7 +18,7 @@ pub struct MasterListTranslation {}
 impl CentralPushTranslation for MasterListTranslation {
     fn try_translate(
         &self,
-        sync_record: &CentralSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_LIST_MASTER;
         if sync_record.table_name != table_name {

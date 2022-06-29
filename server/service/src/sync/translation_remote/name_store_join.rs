@@ -1,5 +1,5 @@
 use log::error;
-use repository::{NameRowRepository, NameStoreJoinRow, RemoteSyncBufferRow, StorageConnection};
+use repository::{NameRowRepository, NameStoreJoinRow, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +25,7 @@ impl RemotePullTranslation for NameStoreJoinTranslation {
     fn try_translate_pull(
         &self,
         connection: &StorageConnection,
-        sync_record: &RemoteSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<super::pull::IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_NAME_STORE_JOIN;
 

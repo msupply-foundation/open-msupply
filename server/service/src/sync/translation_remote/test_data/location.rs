@@ -1,8 +1,6 @@
-use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, LocationRow, RemoteSyncBufferAction,
-    RemoteSyncBufferRow,
-};
+use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, LocationRow, SyncBufferRow};
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     location::LegacyLocationRow,
@@ -46,13 +44,11 @@ fn location_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Location 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Location_10".to_string(),
-            table_name: TRANSLATION_RECORD_LOCATION.to_string(),
-            record_id: LOCATION_1.0.to_string(),
-            data: LOCATION_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_LOCATION.to_string();
+            r.record_id = LOCATION_1.0.to_string();
+            r.data = LOCATION_1.1.to_string();
+        }),
     }
 }
 fn location_push_record() -> TestSyncPushRecord {

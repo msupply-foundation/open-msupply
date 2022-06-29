@@ -1,8 +1,8 @@
 use repository::{
     ChangelogRow, InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository,
-    NameRowRepository, NameStoreJoinRepository, NumberRowRepository, RemoteSyncBufferRow,
-    RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
-    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
+    NameRowRepository, NameStoreJoinRepository, NumberRowRepository, RepositoryError,
+    RequisitionLineRowRepository, RequisitionRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use self::{
@@ -41,7 +41,7 @@ pub struct TestSyncRecord {
     /// Identifier for this record
     pub identifier: &'static str,
     /// Row as stored in the remote sync buffer
-    pub remote_sync_buffer_row: RemoteSyncBufferRow,
+    pub remote_sync_buffer_row: SyncBufferRow,
 }
 
 /// To be used in combination with TestSyncRecord.
@@ -74,7 +74,7 @@ fn from_option_to_db_result<T>(option: Option<T>) -> Result<T, RepositoryError> 
 }
 
 #[allow(dead_code)]
-pub fn extract_sync_buffer_rows(records: &Vec<TestSyncRecord>) -> Vec<RemoteSyncBufferRow> {
+pub fn extract_sync_buffer_rows(records: &Vec<TestSyncRecord>) -> Vec<SyncBufferRow> {
     records
         .into_iter()
         .map(|test_record| test_record.remote_sync_buffer_row.clone())

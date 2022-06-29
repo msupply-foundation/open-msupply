@@ -1,5 +1,6 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{CentralSyncBufferRow, MasterListLineRow};
+use repository::{MasterListLineRow, SyncBufferRow};
+use util::inline_init;
 
 const MASTER_LIST_LINE_1: &'static str = r#"{
     "ID": "9B02D0770B544BD1AC7DB99BB85FCDD5",
@@ -21,11 +22,10 @@ pub fn get_test_master_list_line_records() -> Vec<TestSyncRecord> {
             master_list_id: "87027C44835B48E6989376F42A58F7E3".to_owned(),
         })),
         identifier: "Master list line",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 20,
-            table_name: RECORD_TYPE.to_owned(),
-            record_id: "9B02D0770B544BD1AC7DB99BB85FCDD5".to_owned(),
-            data: MASTER_LIST_LINE_1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = RECORD_TYPE.to_owned();
+            r.record_id = "9B02D0770B544BD1AC7DB99BB85FCDD5".to_owned();
+            r.data = MASTER_LIST_LINE_1.to_owned();
+        }),
     }]
 }

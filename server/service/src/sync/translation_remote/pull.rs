@@ -2,10 +2,10 @@ use log::{info, warn};
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationRow,
     LocationRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    NumberRow, NumberRowRepository, RemoteSyncBufferRow, RepositoryError, RequisitionLineRow,
+    NumberRow, NumberRowRepository, RepositoryError, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRow,
     StockLineRowRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow,
-    StocktakeRowRepository, StorageConnection, TransactionError,
+    StocktakeRowRepository, StorageConnection, SyncBufferRow, TransactionError,
 };
 
 use crate::sync::{
@@ -51,7 +51,7 @@ pub trait RemotePullTranslation {
     fn try_translate_pull(
         &self,
         connection: &StorageConnection,
-        sync_record: &RemoteSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecord>, anyhow::Error>;
 }
 
@@ -59,7 +59,7 @@ pub trait RemotePullTranslation {
 /// If needed data records are translated to the local DB schema.
 pub fn import_sync_pull_records(
     connection: &StorageConnection,
-    records: &Vec<RemoteSyncBufferRow>,
+    records: &Vec<SyncBufferRow>,
 ) -> Result<(), SyncImportError> {
     let mut integration_records = IntegrationRecord {
         upserts: Vec::new(),
@@ -83,7 +83,7 @@ pub fn import_sync_pull_records(
 
 fn do_translation(
     connection: &StorageConnection,
-    sync_record: &RemoteSyncBufferRow,
+    sync_record: &SyncBufferRow,
     records: &mut IntegrationRecord,
 ) -> Result<(), SyncTranslationError> {
     let translations: Vec<Box<dyn RemotePullTranslation>> = vec![

@@ -1,5 +1,6 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{CentralSyncBufferRow, ItemRow, ItemRowType};
+use repository::{ItemRow, ItemRowType, SyncBufferRow};
+use util::inline_init;
 
 const ITEM_1: (&'static str, &'static str) = (
     "8F252B5884B74888AAB73A0D42C09E7F",
@@ -173,12 +174,11 @@ pub fn get_test_item_records() -> Vec<TestSyncRecord> {
             legacy_record: ITEM_1.1.to_owned(),
         })),
         identifier: "Non stock items",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 300,
-            table_name: RECORD_TYPE.to_owned(),
-            record_id: ITEM_1.0.to_owned(),
-            data: ITEM_1.1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = RECORD_TYPE.to_owned();
+            r.record_id = ITEM_1.0.to_owned();
+            r.data = ITEM_1.1.to_owned();
+        }),
     }]
 }
 #[allow(dead_code)]
@@ -193,11 +193,10 @@ pub fn get_test_item_upsert_records() -> Vec<TestSyncRecord> {
             legacy_record: ITEM_1_UPSERT.1.to_owned(),
         })),
         identifier: "Non stock items 2",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 301,
-            table_name: RECORD_TYPE.to_owned(),
-            record_id: ITEM_1_UPSERT.0.to_owned(),
-            data: ITEM_1_UPSERT.1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = RECORD_TYPE.to_owned();
+            r.record_id = ITEM_1_UPSERT.0.to_owned();
+            r.data = ITEM_1_UPSERT.1.to_owned();
+        }),
     }]
 }

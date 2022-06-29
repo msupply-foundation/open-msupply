@@ -1,9 +1,9 @@
 use chrono::{NaiveDate, NaiveTime};
 use repository::{
-    RemoteSyncBufferAction, RemoteSyncBufferRow,
-    ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeStatus,
+    ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeStatus, SyncBufferRow,
 };
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     pull::{IntegrationRecord, IntegrationUpsertRecord},
@@ -55,13 +55,11 @@ fn stocktake_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Stocktake 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Stocktake_10".to_string(),
-            table_name: TRANSLATION_RECORD_STOCKTAKE.to_string(),
-            record_id: STOCKTAKE_1.0.to_string(),
-            data: STOCKTAKE_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_STOCKTAKE.to_string();
+            r.record_id = STOCKTAKE_1.0.to_string();
+            r.data = STOCKTAKE_1.1.to_string();
+        }),
     }
 }
 fn stocktake_push_record() -> TestSyncPushRecord {
@@ -136,13 +134,11 @@ fn stocktake_om_field_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Stocktake om field",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Stocktake_20".to_string(),
-            table_name: TRANSLATION_RECORD_STOCKTAKE.to_string(),
-            record_id: STOCKTAKE_OM_FIELD.0.to_string(),
-            data: STOCKTAKE_OM_FIELD.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_STOCKTAKE.to_string();
+            r.record_id = STOCKTAKE_OM_FIELD.0.to_string();
+            r.data = STOCKTAKE_OM_FIELD.1.to_string();
+        }),
     }
 }
 fn stocktake_om_field_push_record() -> TestSyncPushRecord {

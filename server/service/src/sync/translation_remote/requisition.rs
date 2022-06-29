@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogRow, ChangelogTableName, RemoteSyncBufferRow, RequisitionRow,
-    RequisitionRowRepository, StorageConnection,
+    ChangelogRow, ChangelogTableName, RequisitionRow, RequisitionRowRepository, StorageConnection,
+    SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -126,7 +126,7 @@ impl RemotePullTranslation for RequisitionTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
-        sync_record: &RemoteSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_REQUISITION;
 

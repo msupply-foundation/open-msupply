@@ -1,8 +1,8 @@
 use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
-    StocktakeLineRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeLineRow, SyncBufferRow,
 };
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     pull::{IntegrationRecord, IntegrationUpsertRecord},
@@ -59,13 +59,11 @@ fn stocktake_line_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Stocktake 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Stocktake_line_10".to_string(),
-            table_name: TRANSLATION_RECORD_STOCKTAKE_LINE.to_string(),
-            record_id: STOCKTAKE_LINE_1.0.to_string(),
-            data: STOCKTAKE_LINE_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_STOCKTAKE_LINE.to_string();
+            r.record_id = STOCKTAKE_LINE_1.0.to_string();
+            r.data = STOCKTAKE_LINE_1.1.to_string();
+        }),
     }
 }
 fn stocktake_line_push_record() -> TestSyncPushRecord {
@@ -143,13 +141,11 @@ fn stocktake_line_om_field_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Stocktake om field",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Stocktake_line_20".to_string(),
-            table_name: TRANSLATION_RECORD_STOCKTAKE_LINE.to_string(),
-            record_id: STOCKTAKE_LINE_OM_FIELDS.0.to_string(),
-            data: STOCKTAKE_LINE_OM_FIELDS.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_STOCKTAKE_LINE.to_string();
+            r.record_id = STOCKTAKE_LINE_OM_FIELDS.0.to_string();
+            r.data = STOCKTAKE_LINE_OM_FIELDS.1.to_string();
+        }),
     }
 }
 fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {

@@ -3,7 +3,7 @@ use crate::sync::{
     translation_central::TRANSLATION_RECORD_NAME,
 };
 use chrono::NaiveDate;
-use repository::{CentralSyncBufferRow, Gender, NameRow, NameType};
+use repository::{Gender, NameRow, NameType, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
@@ -173,7 +173,7 @@ pub struct NameTranslation {}
 impl CentralPushTranslation for NameTranslation {
     fn try_translate(
         &self,
-        sync_record: &CentralSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_NAME;
         if sync_record.table_name != table_name {

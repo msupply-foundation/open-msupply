@@ -1,9 +1,7 @@
 use chrono::NaiveDate;
-use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
-    StockLineRow,
-};
+use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, StockLineRow, SyncBufferRow};
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     pull::{IntegrationRecord, IntegrationUpsertRecord},
@@ -77,13 +75,11 @@ fn item_line_1_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Stock line 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Stock_line_10".to_string(),
-            table_name: TRANSLATION_RECORD_ITEM_LINE.to_string(),
-            record_id: ITEM_LINE_1.0.to_string(),
-            data: ITEM_LINE_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_ITEM_LINE.to_string();
+            r.record_id = ITEM_LINE_1.0.to_string();
+            r.data = ITEM_LINE_1.1.to_string();
+        }),
     }
 }
 fn item_line_1_push_record() -> TestSyncPushRecord {
@@ -175,13 +171,11 @@ fn item_line_2_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Stock line 2",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Stock_line_20".to_string(),
-            table_name: TRANSLATION_RECORD_ITEM_LINE.to_string(),
-            record_id: ITEM_LINE_2.0.to_string(),
-            data: ITEM_LINE_2.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_ITEM_LINE.to_string();
+            r.record_id = ITEM_LINE_2.0.to_string();
+            r.data = ITEM_LINE_2.1.to_string();
+        }),
     }
 }
 fn item_line_2_push_record() -> TestSyncPushRecord {

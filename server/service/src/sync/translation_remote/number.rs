@@ -1,6 +1,6 @@
 use repository::{
     ChangelogRow, ChangelogTableName, NumberRow, NumberRowRepository, NumberRowType,
-    RemoteSyncBufferRow, StorageConnection,
+    StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -26,7 +26,7 @@ impl RemotePullTranslation for NumberTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
-        sync_record: &RemoteSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_NUMBER;
 
