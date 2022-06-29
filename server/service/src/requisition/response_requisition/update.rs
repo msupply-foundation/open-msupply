@@ -52,7 +52,7 @@ pub fn update_response_requisition(
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
             if input.status == Some(UpdateResponseRequstionStatus::Finalised)
-                && requisition_row.status != RequisitionRowStatus::Finalised
+                && requisition_row.status != updated_requisition.status
             {
                 log_entry(
                     &ctx.connection,
