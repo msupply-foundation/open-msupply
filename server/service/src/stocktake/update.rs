@@ -442,7 +442,7 @@ pub fn update_stocktake(
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
 
             if input.status == Some(StocktakeStatus::Finalised)
-                && existing.status != StocktakeStatus::Finalised
+                && existing.status != result.stocktake.status
             {
                 log_entry(
                     &ctx.connection,
