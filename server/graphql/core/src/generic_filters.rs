@@ -46,6 +46,7 @@ impl<I: InputType> EqualFilterInput<I> {
                 .equal_any
                 .map(|inputs| inputs.into_iter().map(&to_domain).collect()),
             not_equal_all: None,
+            is_null: None,
         }
     }
 }
@@ -66,6 +67,7 @@ where
             equal_any,
             not_equal_to,
             not_equal_all: None,
+            is_null: None,
         }
     }
 }
@@ -85,6 +87,7 @@ impl From<DatetimeFilterInput> for DatetimeFilter {
             equal_to: f.equal_to.map(|t| t.naive_utc()),
             before_or_equal_to: f.before_or_equal_to.map(|t| t.naive_utc()),
             after_or_equal_to: f.after_or_equal_to.map(|t| t.naive_utc()),
+            is_null: None,
         }
     }
 }

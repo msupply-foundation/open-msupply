@@ -33,6 +33,12 @@ macro_rules! apply_equal_filter {
             if let Some(value) = equal_filter.not_equal_all {
                 $query = $query.filter($dsl_field.ne_all(value));
             }
+
+            $query = match equal_filter.is_null {
+                Some(true) => $query.filter($dsl_field.is_null()),
+                Some(false) => $query.filter($dsl_field.is_not_null()),
+                None => $query,
+            }
         }
     }};
 }
@@ -119,6 +125,12 @@ macro_rules! apply_date_time_filter {
 
             if let Some(value) = date_time_filter.after_or_equal_to {
                 $query = $query.filter($dsl_field.ge(value));
+            }
+
+            $query = match date_time_filter.is_null {
+                Some(true) => $query.filter($dsl_field.is_null()),
+                Some(false) => $query.filter($dsl_field.is_not_null()),
+                None => $query,
             }
         }
     }};
