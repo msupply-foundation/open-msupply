@@ -52,7 +52,7 @@ pub struct RemoteSyncAckV5 {
 
 pub struct CentralSyncRecordV5 {
     #[serde(rename = "ID")]
-    pub id: i32,
+    pub id: u32,
     #[serde(rename = "tableName")]
     pub table_name: String,
     #[serde(rename = "recordId")]
@@ -64,7 +64,7 @@ pub struct CentralSyncRecordV5 {
 pub struct CentralSyncBatchV5 {
     #[serde(rename = "maxCursor")]
     pub max_cursor: u32,
-    pub data: Option<Vec<CentralSyncRecordV5>>,
+    pub data: Vec<CentralSyncRecordV5>,
 }
 
 #[derive(Debug, Clone)]
@@ -417,7 +417,7 @@ mod tests {
 
         let mock_central_records_body = CentralSyncBatchV5 {
             max_cursor: 2,
-            data: Some(mock_central_records_data),
+            data: mock_central_records_data,
         };
 
         mock_server.mock(|when, then| {
