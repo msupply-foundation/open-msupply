@@ -15,7 +15,7 @@ pub struct InsertPatientInput {
     /// Patient document data
     pub data: serde_json::Value,
     /// The schema id used for the patient data
-    pub schema_id: Option<String>,
+    pub schema_id: String,
 }
 
 #[derive(Union)]

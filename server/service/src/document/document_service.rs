@@ -308,7 +308,10 @@ fn insert_document(
 mod document_service_test {
     use assert_json_diff::assert_json_eq;
     use chrono::{DateTime, NaiveDateTime, Utc};
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_form_schema_empty, mock_form_schema_simple, MockDataInserts},
+        test_db::setup_all,
+    };
     use serde_json::json;
 
     use crate::{document::raw_document::RawDocument, service_provider::ServiceProvider};
@@ -443,5 +446,114 @@ mod document_service_test {
               "conflict": "our change wins because we are more recent"
             })
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_document_schema_validation() {
+        let (_, _, connection_manager, _) = setup_all(
+            "document_schema_validation",
+            MockDataInserts::none().form_schemas(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let context = service_provider.context().unwrap();
+
+        let service = service_provider.document_service;
+        let store = "test_store";
+
+        // empty schema accepts all data
+        let schema = mock_form_schema_empty();
+        service
+            .update_document(
+                &context,
+                store,
+                RawDocument {
+                    name: "test/doc1".to_string(),
+                    parents: vec![],
+                    author: "me".to_string(),
+                    timestamp: DateTime::<Utc>::from_utc(
+                        NaiveDateTime::from_timestamp(5000, 0),
+                        Utc,
+                    ),
+                    r#type: "test_data".to_string(),
+                    data: json!({
+                      "value1": "base",
+                      "map": {},
+                    }),
+                    schema_id: Some(schema.id),
+                },
+            )
+            .unwrap();
+
+        // fails with invalid schema
+        let schema = mock_form_schema_simple();
+        let result = service.update_document(
+            &context,
+            store,
+            RawDocument {
+                name: "test/doc2".to_string(),
+                parents: vec![],
+                author: "me".to_string(),
+                timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(5000, 0), Utc),
+                r#type: "test_data".to_string(),
+                data: json!({
+                  "value1": "base",
+                  "map": {},
+                }),
+                schema_id: Some(schema.id),
+            },
+        );
+        assert!(matches!(
+            result,
+            Err(DocumentInsertError::InvalidDataSchema(_))
+        ));
+
+        // fails with schema type mismatch
+        let schema = mock_form_schema_simple();
+        let result = service.update_document(
+            &context,
+            store,
+            RawDocument {
+                name: "test/doc3".to_string(),
+                parents: vec![],
+                author: "me".to_string(),
+                timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(5000, 0), Utc),
+                r#type: "test_data".to_string(),
+                data: json!({
+                  "intValue": "base",
+                  "strValue": 9,
+                }),
+                schema_id: Some(schema.id),
+            },
+        );
+        assert!(matches!(
+            result,
+            Err(DocumentInsertError::InvalidDataSchema(_))
+        ));
+
+        // succeeds with valid schema
+        let schema = mock_form_schema_simple();
+        service
+            .update_document(
+                &context,
+                store,
+                RawDocument {
+                    name: "test/doc4".to_string(),
+                    parents: vec![],
+                    author: "me".to_string(),
+                    timestamp: DateTime::<Utc>::from_utc(
+                        NaiveDateTime::from_timestamp(5000, 0),
+                        Utc,
+                    ),
+                    r#type: "test_data".to_string(),
+                    data: json!({
+                      "intValue": 3,
+                      "strValue": "str",
+                    }),
+                    schema_id: Some(schema.id),
+                },
+            )
+            .unwrap();
     }
 }
