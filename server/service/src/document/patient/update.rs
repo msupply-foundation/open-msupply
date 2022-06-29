@@ -22,7 +22,7 @@ pub enum UpdatePatientError {
 
 pub struct UpdatePatient {
     pub data: serde_json::Value,
-    pub schema_id: Option<String>,
+    pub schema_id: String,
     /// If the patient is new the parent is not set
     pub parent: Option<String>,
 }
@@ -38,7 +38,7 @@ pub fn update_patient(
         .connection
         .transaction_sync(|_| {
             let patient = validate(ctx, service_provider, &store_id, &input)?;
-            let doc = generate(user_id, &patient, input);
+            let doc = generate(user_id, &patient, input)?;
 
             // Updating the document will trigger an update in the patient (names) table
             service_provider
@@ -84,16 +84,20 @@ impl From<RepositoryError> for UpdatePatientError {
     }
 }
 
-fn generate(user_id: &str, patient: &SchemaPatient, input: UpdatePatient) -> RawDocument {
-    RawDocument {
+fn generate(
+    user_id: &str,
+    patient: &SchemaPatient,
+    input: UpdatePatient,
+) -> Result<RawDocument, RepositoryError> {
+    Ok(RawDocument {
         name: patient_doc_name(&patient.id),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
         timestamp: Utc::now(),
         r#type: PATIENT_TYPE.to_string(),
         data: input.data,
-        schema_id: input.schema_id,
-    }
+        schema_id: Some(input.schema_id),
+    })
 }
 
 fn validate_patient_schema(input: &UpdatePatient) -> Result<SchemaPatient, UpdatePatientError> {
@@ -158,7 +162,11 @@ fn validate(
 
 #[cfg(test)]
 mod test {
-    use repository::{mock::MockDataInserts, test_db::setup_all, DocumentRepository};
+    use repository::{
+        mock::{mock_form_schema_empty, MockDataInserts},
+        test_db::setup_all,
+        DocumentRepository, FormSchemaRowRepository,
+    };
     use serde_json::json;
 
     use crate::{
@@ -174,12 +182,18 @@ mod test {
     async fn test_patient_update() {
         let (_, _, connection_manager, _) = setup_all(
             "test_patient_update",
-            MockDataInserts::none().names().stores(),
+            MockDataInserts::none().names().stores().form_schemas(),
         )
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
         let ctx = service_provider.context().unwrap();
+
+        // dummy schema
+        let schema = mock_form_schema_empty();
+        FormSchemaRowRepository::new(&ctx.connection)
+            .upsert_one(&schema)
+            .unwrap();
 
         let address = Address {
             address_1: Some("firstaddressline".to_string()),
@@ -229,7 +243,7 @@ mod test {
                 super::UpdatePatient {
                     data: json!({"invalid": true}),
                     // TODO use a valid patient schema id
-                    schema_id: None,
+                    schema_id: schema.id.clone(),
                     parent: None,
                 },
             )
@@ -246,7 +260,7 @@ mod test {
                 "user",
                 super::UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
-                    schema_id: None,
+                    schema_id: schema.id.clone(),
                     parent: None,
                 },
             )
@@ -261,7 +275,7 @@ mod test {
                     "user",
                     super::UpdatePatient {
                         data: serde_json::to_value(patient.clone()).unwrap(),
-                        schema_id: None,
+                        schema_id: schema.id.clone(),
                         parent: None,
                     },
                 )
@@ -279,7 +293,7 @@ mod test {
                     "user",
                     super::UpdatePatient {
                         data: serde_json::to_value(patient.clone()).unwrap(),
-                        schema_id: None,
+                        schema_id: schema.id.clone(),
                         parent: Some("invalid".to_string()),
                     },
                 )
@@ -301,7 +315,7 @@ mod test {
                 "user",
                 super::UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
-                    schema_id: None,
+                    schema_id: schema.id.clone(),
                     parent: Some(v0.id),
                 },
             )

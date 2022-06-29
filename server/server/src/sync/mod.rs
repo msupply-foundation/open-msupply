@@ -1,5 +1,6 @@
 mod actor;
 pub mod central_data_synchroniser;
+mod init_programs_data;
 pub mod remote_data_synchroniser;
 mod sync_api_credentials;
 mod sync_api_v3;

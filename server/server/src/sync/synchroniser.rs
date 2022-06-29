@@ -9,7 +9,8 @@ use service::{service_provider::ServiceProvider, sync_settings::SyncSettings};
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
     get_sync_actors,
-    remote_data_synchroniser::RemoteDataSynchroniser,
+    init_programs_data::init_program_data,
+    remote_data_synchroniser::{RemoteDataSynchroniser, RemoteSyncState},
     sync_api_v3::SyncApiV3,
     SyncApiV5, SyncCredentials, SyncReceiverActor, SyncSenderActor,
 };
@@ -100,8 +101,14 @@ impl Synchroniser {
             .pull_and_integrate_records(&ctx.connection)
             .await?;
 
+        let initial_sync = !RemoteSyncState::new(&ctx.connection).initial_remote_data_synced()?;
+
         self.remote_data.initial_pull(&ctx.connection).await?;
 
+        // TODO remove:
+        if initial_sync {
+            init_program_data(&self.service_provider, self.remote_data.site_id)?;
+        }
         Ok(())
     }
 
