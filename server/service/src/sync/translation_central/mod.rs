@@ -13,11 +13,10 @@ use crate::sync::translation_central::{
     list_master_name_join::MasterListNameJoinTranslation, report::ReportTranslation,
 };
 use repository::{
-    CentralSyncBufferRow, ItemRow, ItemRowRepository, MasterListLineRow,
-    MasterListLineRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
-    MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, ReportRow,
-    ReportRowRepository, RepositoryError, StorageConnection, StoreRow, StoreRowRepository,
-    TransactionError, UnitRow, UnitRowRepository,
+    ItemRow, ItemRowRepository, MasterListLineRow, MasterListLineRowRepository,
+    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
+    NameRow, NameRowRepository, ReportRow, ReportRowRepository, RepositoryError, StorageConnection,
+    StoreRow, StoreRowRepository, SyncBufferRow, TransactionError, UnitRow, UnitRowRepository,
 };
 
 use log::{info, warn};
@@ -52,14 +51,14 @@ struct IntegrationRecord {
 pub trait CentralPushTranslation {
     fn try_translate(
         &self,
-        sync_record: &CentralSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error>;
 }
 
 /// Translates sync records into the local DB schema.
 /// Translated records are added to integration_records.
 fn do_translation(
-    sync_record: &CentralSyncBufferRow,
+    sync_record: &SyncBufferRow,
     records: &mut IntegrationRecord,
 ) -> Result<(), SyncTranslationError> {
     let translations: Vec<Box<dyn CentralPushTranslation>> = vec![
@@ -121,7 +120,7 @@ pub const TRANSLATION_RECORDS: &[&str] = &[
 /// If needed data records are translated to the local DB schema.
 pub async fn import_sync_records(
     connection: &StorageConnection,
-    records: &Vec<CentralSyncBufferRow>,
+    records: &Vec<SyncBufferRow>,
 ) -> Result<(), SyncImportError> {
     let mut integration_records = IntegrationRecord {
         upserts: Vec::new(),

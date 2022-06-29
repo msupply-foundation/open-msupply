@@ -1,5 +1,6 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{CentralSyncBufferRow, MasterListRow};
+use repository::{MasterListRow, SyncBufferRow};
+use util::inline_init;
 
 const MASTER_LIST_1: (&'static str, &'static str) = (
     "87027C44835B48E6989376F42A58F7E3",
@@ -51,12 +52,11 @@ pub fn get_test_master_list_records() -> Vec<TestSyncRecord> {
             description: "note 1".to_owned(),
         })),
         identifier: "Master list",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 400,
-            table_name: RECORD_TYPE.to_owned(),
-            record_id: MASTER_LIST_1.0.to_owned(),
-            data: MASTER_LIST_1.1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = RECORD_TYPE.to_owned();
+            r.record_id = MASTER_LIST_1.0.to_owned();
+            r.data = MASTER_LIST_1.1.to_owned();
+        }),
     }]
 }
 #[allow(dead_code)]
@@ -69,11 +69,10 @@ pub fn get_test_master_list_upsert_records() -> Vec<TestSyncRecord> {
             description: "note 2".to_owned(),
         })),
         identifier: "Master list upsert",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 500,
-            table_name: RECORD_TYPE.to_owned(),
-            record_id: MASTER_LIST_UPSERT_1.0.to_owned(),
-            data: MASTER_LIST_UPSERT_1.1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = RECORD_TYPE.to_owned();
+            r.record_id = MASTER_LIST_UPSERT_1.0.to_owned();
+            r.data = MASTER_LIST_UPSERT_1.1.to_owned();
+        }),
     }]
 }

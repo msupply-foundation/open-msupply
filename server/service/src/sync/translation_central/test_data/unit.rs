@@ -1,5 +1,6 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{CentralSyncBufferRow, UnitRow};
+use repository::{SyncBufferRow, UnitRow};
+use util::inline_init;
 
 const UNIT_1: (&'static str, &'static str) = (
     "A02C91EB6C77400BA783C4CD7C565F29",
@@ -44,12 +45,11 @@ pub fn get_test_unit_records() -> Vec<TestSyncRecord> {
                 index: 0,
             })),
             identifier: "Unit - units",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 447,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: UNIT_1.0.to_owned(),
-                data: UNIT_1.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = UNIT_1.0.to_owned();
+                r.data = UNIT_1.1.to_owned();
+            }),
         },
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Unit(Some(UnitRow {
@@ -59,12 +59,11 @@ pub fn get_test_unit_records() -> Vec<TestSyncRecord> {
                 index: 1,
             })),
             identifier: "Unit - tab",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 448,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: UNIT_2.0.to_owned(),
-                data: UNIT_2.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = UNIT_2.0.to_owned();
+                r.data = UNIT_2.1.to_owned();
+            }),
         },
     ]
 }
@@ -78,11 +77,10 @@ pub fn get_test_unit_upsert_records() -> Vec<TestSyncRecord> {
             index: 2,
         })),
         identifier: "Unit upsert 1",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 449,
-            table_name: RECORD_TYPE.to_owned(),
-            record_id: UNIT_1_UPSERT.0.to_owned(),
-            data: UNIT_1_UPSERT.1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = RECORD_TYPE.to_owned();
+            r.record_id = UNIT_1_UPSERT.0.to_owned();
+            r.data = UNIT_1_UPSERT.1.to_owned();
+        }),
     }]
 }

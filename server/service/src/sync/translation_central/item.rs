@@ -1,5 +1,5 @@
 use crate::sync::translation_central::TRANSLATION_RECORD_ITEM;
-use repository::{CentralSyncBufferRow, ItemRow, ItemRowType};
+use repository::{ItemRow, ItemRowType, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -35,7 +35,7 @@ pub struct ItemTranslation {}
 impl CentralPushTranslation for ItemTranslation {
     fn try_translate(
         &self,
-        sync_record: &CentralSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_ITEM;
 

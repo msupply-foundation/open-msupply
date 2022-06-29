@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
-    ItemRowRepository, RemoteSyncBufferRow, StorageConnection,
+    ItemRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -73,7 +73,7 @@ impl RemotePullTranslation for InvoiceLineTranslation {
     fn try_translate_pull(
         &self,
         connection: &StorageConnection,
-        sync_record: &RemoteSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
         let table_name = TRANSLATION_RECORD_TRANS_LINE;
         if sync_record.table_name != table_name {

@@ -1,6 +1,7 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
 use chrono::NaiveDate;
-use repository::{CentralSyncBufferRow, Gender, NameRow, NameType};
+use repository::{Gender, NameRow, NameType, SyncBufferRow};
+use util::inline_init;
 
 const NAME_1: (&'static str, &'static str) = (
     "1FB32324AF8049248D929CFB35F255BA",
@@ -411,12 +412,11 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 created_datetime: Some(NaiveDate::from_ymd(2022, 02, 10).and_hms(0, 0, 0)),
             })),
             identifier: "General",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 200,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: NAME_1.0.to_owned(),
-                data: NAME_1.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = NAME_1.0.to_owned();
+                r.data = NAME_1.1.to_owned();
+            }),
         },
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Name(Some(NameRow {
@@ -445,12 +445,11 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 created_datetime: None,
             })),
             identifier: "Birch Store",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 201,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: NAME_2.0.to_owned(),
-                data: NAME_2.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = NAME_2.0.to_owned();
+                r.data = NAME_2.1.to_owned();
+            }),
         },
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Name(Some(NameRow {
@@ -479,12 +478,11 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 created_datetime: None,
             })),
             identifier: "Birch Store 2",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 202,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: NAME_3.0.to_owned(),
-                data: NAME_3.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = NAME_3.0.to_owned();
+                r.data = NAME_3.1.to_owned();
+            }),
         },
     ]
 }
@@ -517,11 +515,10 @@ pub fn get_test_name_upsert_records() -> Vec<TestSyncRecord> {
             created_datetime: None,
         })),
         identifier: "General2",
-        central_sync_buffer_row: CentralSyncBufferRow {
-            id: 250,
-            table_name: RECORD_TYPE.to_owned(),
-            record_id: NAME_UPSERT_1.0.to_owned(),
-            data: NAME_UPSERT_1.1.to_owned(),
-        },
+        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = RECORD_TYPE.to_owned();
+            r.record_id = NAME_UPSERT_1.0.to_owned();
+            r.data = NAME_UPSERT_1.1.to_owned();
+        }),
     }]
 }

@@ -2,9 +2,10 @@ use chrono::NaiveDate;
 use repository::{
     mock::{mock_item_a, mock_stock_line_a},
     ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowType,
-    RemoteSyncBufferAction, RemoteSyncBufferRow,
+    SyncBufferRow,
 };
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     invoice_line::{LegacyTransLineRow, LegacyTransLineType},
@@ -97,13 +98,11 @@ fn trans_line_1_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Transact line 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Transact_line_10".to_string(),
-            table_name: TRANSLATION_RECORD_TRANS_LINE.to_string(),
-            record_id: TRANS_LINE_1.0.to_string(),
-            data: TRANS_LINE_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_TRANS_LINE.to_string();
+            r.record_id = TRANS_LINE_1.0.to_string();
+            r.data = TRANS_LINE_1.1.to_string();
+        }),
     }
 }
 fn trans_line_1_push_record() -> TestSyncPushRecord {
@@ -219,13 +218,11 @@ fn trans_line_2_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Transact line (Placeholder)",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Transact_line_20".to_string(),
-            table_name: TRANSLATION_RECORD_TRANS_LINE.to_string(),
-            record_id: TRANS_LINE_2.0.to_string(),
-            data: TRANS_LINE_2.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_TRANS_LINE.to_string();
+            r.record_id = TRANS_LINE_2.0.to_string();
+            r.data = TRANS_LINE_2.1.to_string();
+        }),
     }
 }
 fn trans_line_2_push_record() -> TestSyncPushRecord {
@@ -344,13 +341,11 @@ fn trans_line_om_fields_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Transact line (om fields))",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Transact_line_30".to_string(),
-            table_name: TRANSLATION_RECORD_TRANS_LINE.to_string(),
-            record_id: TRANS_LINE_OM_FIELDS.0.to_string(),
-            data: TRANS_LINE_OM_FIELDS.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_TRANS_LINE.to_string();
+            r.record_id = TRANS_LINE_OM_FIELDS.0.to_string();
+            r.data = TRANS_LINE_OM_FIELDS.1.to_string();
+        }),
     }
 }
 fn trans_line_om_fields_push_record() -> TestSyncPushRecord {
@@ -469,13 +464,11 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Transact line (om fields))",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Transact_line_40".to_string(),
-            table_name: TRANSLATION_RECORD_TRANS_LINE.to_string(),
-            record_id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
-            data: TRANS_LINE_OM_UNSET_TAX_FIELDS.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_TRANS_LINE.to_string();
+            r.record_id = TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string();
+            r.data = TRANS_LINE_OM_UNSET_TAX_FIELDS.1.to_string();
+        }),
     }
 }
 fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {

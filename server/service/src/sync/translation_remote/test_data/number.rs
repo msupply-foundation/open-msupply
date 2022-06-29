@@ -1,8 +1,8 @@
 use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, NumberRow, NumberRowType,
-    RemoteSyncBufferAction, RemoteSyncBufferRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, NumberRow, NumberRowType, SyncBufferRow,
 };
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     number::LegacyNumberRow,
@@ -33,13 +33,11 @@ fn number_stock_take_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Stocktake",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Number_10".to_string(),
-            table_name: TRANSLATION_RECORD_NUMBER.to_string(),
-            record_id: NUMBER_STOCK_TAKE.0.to_string(),
-            data: NUMBER_STOCK_TAKE.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
+            r.record_id = NUMBER_STOCK_TAKE.0.to_string();
+            r.data = NUMBER_STOCK_TAKE.1.to_string();
+        }),
     }
 }
 fn number_stock_take_push_record() -> TestSyncPushRecord {
@@ -79,13 +77,11 @@ fn number_inv_adjustment_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Inventory adjustment",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Number_20".to_string(),
-            table_name: TRANSLATION_RECORD_NUMBER.to_string(),
-            record_id: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
-            data: NUMBER_INVENTORY_ADJUSTMENT.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
+            r.record_id = NUMBER_INVENTORY_ADJUSTMENT.0.to_string();
+            r.data = NUMBER_INVENTORY_ADJUSTMENT.1.to_string();
+        }),
     }
 }
 fn number_inv_adjustment_push_record() -> TestSyncPushRecord {
@@ -125,13 +121,11 @@ fn number_customer_invoice_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Customer invoice",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Number_30".to_string(),
-            table_name: TRANSLATION_RECORD_NUMBER.to_string(),
-            record_id: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
-            data: CUSTOMER_INVOICE_ADJUSTMENT.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
+            r.record_id = CUSTOMER_INVOICE_ADJUSTMENT.0.to_string();
+            r.data = CUSTOMER_INVOICE_ADJUSTMENT.1.to_string();
+        }),
     }
 }
 fn number_customer_invoice_push_record() -> TestSyncPushRecord {
@@ -166,13 +160,11 @@ fn number_purchase_order_pull_record() -> TestSyncRecord {
         // None on translation record means this record is ignored (don't want to integrate purchase order numbers yet)
         translated_record: None,
         identifier: "Purchase order",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Number_50".to_string(),
-            table_name: TRANSLATION_RECORD_NUMBER.to_string(),
-            record_id: PURCHASE_ORDER.0.to_string(),
-            data: PURCHASE_ORDER.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
+            r.record_id = PURCHASE_ORDER.0.to_string();
+            r.data = PURCHASE_ORDER.1.to_string();
+        }),
     }
 }
 
@@ -196,13 +188,11 @@ fn number_supplier_invoice_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Supplier invoice",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Number_40".to_string(),
-            table_name: TRANSLATION_RECORD_NUMBER.to_string(),
-            record_id: SUPPLIER_INVOICE.0.to_string(),
-            data: SUPPLIER_INVOICE.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
+            r.record_id = SUPPLIER_INVOICE.0.to_string();
+            r.data = SUPPLIER_INVOICE.1.to_string();
+        }),
     }
 }
 fn number_supplier_invoice_push_record() -> TestSyncPushRecord {

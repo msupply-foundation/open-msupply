@@ -1,8 +1,8 @@
 use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, NameStoreJoinRow, RemoteSyncBufferAction,
-    RemoteSyncBufferRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, NameStoreJoinRow, SyncBufferRow,
 };
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     name_store_join::LegacyNameStoreJoinRow,
@@ -37,13 +37,11 @@ fn name_store_join_1_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Name store join 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "name_store_join_1".to_string(),
-            table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
-            record_id: NAME_STORE_JOIN_1.0.to_string(),
-            data: NAME_STORE_JOIN_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NAME_STORE_JOIN.to_string();
+            r.record_id = NAME_STORE_JOIN_1.0.to_string();
+            r.data = NAME_STORE_JOIN_1.1.to_string();
+        }),
     }
 }
 fn name_store_join_1_push_record() -> TestSyncPushRecord {
@@ -88,13 +86,11 @@ fn name_store_join_2_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Name store join 2",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "name_store_join_2".to_string(),
-            table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
-            record_id: NAME_STORE_JOIN_2.0.to_string(),
-            data: NAME_STORE_JOIN_2.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NAME_STORE_JOIN.to_string();
+            r.record_id = NAME_STORE_JOIN_2.0.to_string();
+            r.data = NAME_STORE_JOIN_2.1.to_string();
+        }),
     }
 }
 fn name_store_join_2_push_record() -> TestSyncPushRecord {
@@ -142,13 +138,11 @@ fn name_store_join_3_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Name store join 3",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "name_store_join_3".to_string(),
-            table_name: TRANSLATION_RECORD_NAME_STORE_JOIN.to_string(),
-            record_id: NAME_STORE_JOIN_3.0.to_string(),
-            data: NAME_STORE_JOIN_3.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NAME_STORE_JOIN.to_string();
+            r.record_id = NAME_STORE_JOIN_3.0.to_string();
+            r.data = NAME_STORE_JOIN_3.1.to_string();
+        }),
     }
 }
 fn name_store_join_3_push_record() -> TestSyncPushRecord {
