@@ -14,7 +14,7 @@
     "pre-commit-lint": "yarn compile && yarn lint-staged",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom",
     "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook ./packages/host/public ",
+    "build-storybook": "build-storybook",
     "generate": "graphql-codegen --config codegen.yml",
     "android:run": "npx cap run android",
     "android:build:server": "cd ./packages/android && ./build_remote_server_libs.sh",
