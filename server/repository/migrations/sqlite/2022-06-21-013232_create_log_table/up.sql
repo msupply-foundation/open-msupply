@@ -1,6 +1,6 @@
 CREATE TABLE log (
     id TEXT NOT NULL PRIMARY KEY,
-    log_type TEXT CHECK (log_type IN (
+    type TEXT CHECK (type IN (
         'USER_LOGGED_IN',
         'INVOICE_CREATED',
         'INVOICE_DELETED',

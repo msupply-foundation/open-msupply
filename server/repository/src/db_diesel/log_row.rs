@@ -9,7 +9,7 @@ use diesel_derive_enum::DbEnum;
 table! {
     log (id) {
         id -> Text,
-        log_type -> crate::db_diesel::log_row::LogTypeMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::log_row::LogTypeMapping,
         user_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         record_id -> Nullable<Text>,
@@ -45,7 +45,8 @@ pub enum LogType {
 #[table_name = "log"]
 pub struct LogRow {
     pub id: String,
-    pub log_type: LogType,
+    #[column_name = "type_"]
+    pub r#type: LogType,
     pub user_id: Option<String>,
     pub store_id: Option<String>,
     pub record_id: Option<String>,

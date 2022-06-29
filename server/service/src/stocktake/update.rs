@@ -454,7 +454,7 @@ pub fn update_stocktake(
             &ctx.connection,
             &LogRow {
                 id: uuid(),
-                log_type: LogType::StocktakeStatusFinalised,
+                r#type: LogType::StocktakeStatusFinalised,
                 user_id: Some(user_id.to_string()),
                 store_id: Some(store_id.to_string()),
                 record_id: Some(result.id.clone()),

@@ -45,8 +45,8 @@ impl LogNode {
         &self.row().id
     }
 
-    pub async fn log_type(&self) -> LogNodeType {
-        LogNodeType::from_domain(&self.row().log_type)
+    pub async fn r#type(&self) -> LogNodeType {
+        LogNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn store_id(&self) -> &Option<String> {
