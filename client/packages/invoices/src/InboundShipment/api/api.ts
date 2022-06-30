@@ -87,7 +87,6 @@ const inboundParsers = {
         : null,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
-      totalAfterTax: 0,
       totalBeforeTax: 0,
       invoiceId: line.invoiceId,
       locationId: line.location?.id,
@@ -116,14 +115,12 @@ const inboundParsers = {
     invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: line.totalBeforeTax,
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: line.totalBeforeTax,
     note: line.note,
   }),
   toDeleteServiceCharge: (line: DraftInboundLine) => ({
