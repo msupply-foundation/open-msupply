@@ -121,7 +121,6 @@ const inboundParsers = {
   }),
   toUpdateServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
     totalAfterTax: line.totalBeforeTax,
@@ -129,7 +128,6 @@ const inboundParsers = {
   }),
   toDeleteServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
   }),
 };
 
