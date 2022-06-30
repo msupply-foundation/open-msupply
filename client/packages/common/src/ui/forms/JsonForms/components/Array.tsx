@@ -50,7 +50,7 @@ interface ArrayUiSchema extends Layout {
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
-const UIComponent = (props: ArrayControlCustomProps) => {
+const ArrayComponent = (props: ArrayControlCustomProps) => {
   const t = useTranslation('common');
   const {
     uischema,
@@ -99,7 +99,7 @@ const UIComponent = (props: ArrayControlCustomProps) => {
           />
         </Box>
       </Box>
-      {data.map((child, index) => {
+      {(data ? data : []).map((child, index) => {
         return (
           <Accordion
             key={index}
@@ -169,7 +169,7 @@ const UIComponent = (props: ArrayControlCustomProps) => {
 };
 
 export const Array = withJsonFormsArrayControlProps(
-  UIComponent as ComponentType<ArrayControlProps>
+  ArrayComponent as ComponentType<ArrayControlProps>
 );
 
 const createNewItem = (foundUISchema: ArrayUiSchema) => {
