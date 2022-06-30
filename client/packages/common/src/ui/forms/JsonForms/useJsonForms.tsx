@@ -107,11 +107,9 @@ export const useJsonForms = (
   useEffect(() => {
     if (!databaseResponse) return;
 
-    const {
-      data,
-      // @ts-ignore
-      documentRegistry: { jsonSchema, uiSchema },
-    } = databaseResponse;
+    const { data, documentRegistry } = databaseResponse;
+    const { jsonSchema, uiSchema } = documentRegistry ?? {};
+
     if (!data) setError('No document data');
     if (!jsonSchema) setError('No Json Schema');
     if (!uiSchema) setError('No UI Schema');

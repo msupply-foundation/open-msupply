@@ -23,7 +23,7 @@ const useBreadcrumbState = create<BreadcrumbState>(set => ({
   urlParts: [],
 }));
 
-export const useBreadcrumbs = () => {
+export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = useBreadcrumbState();
@@ -37,7 +37,7 @@ export const useBreadcrumbs = () => {
       if (part === '') return '';
       const path = `${fullPath}/${part}`;
 
-      if (index > 1)
+      if (index > 1 || topLevelPaths.includes(part))
         urlParts.push({
           path,
           key: `${part}` as unknown as LocaleKey,
