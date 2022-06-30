@@ -3,7 +3,7 @@
   "elements": [
     {
       "type": "Label",
-      "text": "${Patient.firstName} ${Patient.lastName}",
+      "text": "${firstName} ${lastName}",
       "variant": "h1"
     },
     {
@@ -18,25 +18,28 @@
               "elements": [
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/id"
+                  "scope": "#/properties/id",
+                  "options": {
+                    "readonly": true
+                  }
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/firstName",
+                  "scope": "#/properties/firstName",
                   "label": "First Name"
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/lastName",
+                  "scope": "#/properties/lastName",
                   "label": "Last Name"
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/gender"
+                  "scope": "#/properties/gender"
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/dateOfBirth"
+                  "scope": "#/properties/dateOfBirth"
                 }
               ]
             },
@@ -46,7 +49,7 @@
               "elements": [
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/contactDetails",
+                  "scope": "#/properties/contactDetails",
                   "label": "Contacts",
                   "itemLabel": "${index}: ${key}",
                   "defaultNewItem": {
@@ -60,7 +63,7 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/addresses",
+                  "scope": "#/properties/addresses",
                   "itemLabel": "Address ${index}",
                   "options": {
                     "detail": {
@@ -99,7 +102,7 @@
               "elements": [
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/maritalStatus"
+                  "scope": "#/properties/family/properties/maritalStatus"
                 },
                 {
                   "type": "Label",
@@ -108,15 +111,15 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/firstName"
+                  "scope": "#/properties/family/properties/nextOfKin/properties/firstName"
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/lastName"
+                  "scope": "#/properties/family/properties/nextOfKin/properties/lastName"
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/contactDetails",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
                   "label": "Contact",
                   "options": {
                     "detail": "GENERATED"
@@ -124,7 +127,7 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/addresses",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/addresses",
                   "options": {
                     "detail": "GENERATED"
                   }
@@ -139,7 +142,7 @@
                     },
                     {
                       "type": "Control",
-                      "scope": "#/definitions/Patient/properties/testingArray",
+                      "scope": "#/properties/testingArray",
                       "options": {
                         "detail": {
                           "type": "VerticalLayout",
