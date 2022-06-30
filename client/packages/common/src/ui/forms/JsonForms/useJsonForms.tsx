@@ -110,6 +110,7 @@ export const useJsonForms = (
 
     const {
       data,
+      // @ts-ignore
       documentRegistry: { jsonSchema, uiSchema },
     } = databaseResponse;
     if (!data) setError('No document data');

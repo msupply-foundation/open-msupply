@@ -1609,7 +1609,7 @@ export type InsertPatientInput = {
   /** Patient document data */
   data: Scalars['JSON'];
   /** The schema id used for the patient data */
-  schemaId?: InputMaybe<Scalars['String']>;
+  schemaId: Scalars['String'];
 };
 
 export type InsertPatientResponse = PatientNode;
@@ -3290,7 +3290,7 @@ export type UpdatePatientInput = {
   data: Scalars['JSON'];
   parent: Scalars['String'];
   /** The schema id used for the patient data */
-  schemaId?: InputMaybe<Scalars['String']>;
+  schemaId: Scalars['String'];
 };
 
 export type UpdatePatientResponse = PatientNode;
