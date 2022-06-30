@@ -165,6 +165,23 @@
         },
         "socioEconomics": {
           "$ref": "#/definitions/SocioEconomics"
+        },
+        "testingArray": {
+          "description": "An array without referenced definitions",
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field1": {
+                "description": "First item",
+                "type": "string"
+              },
+              "field2": {
+                "description": "Second item",
+                "type": "string"
+              }
+            }
+          }
         }
       },
       "required": ["addresses", "contactDetails", "id", "socioEconomics"],

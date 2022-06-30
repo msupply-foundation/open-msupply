@@ -15,11 +15,10 @@ use service::{
 };
 use util::uuid::uuid;
 
-const PATIENT_SCHEMA: &'static str =
-    std::include_str!("../../../service/src/document/schemas/patient.json");
+const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patient.json");
 
 const PATIENT_UI_SCHEMA: &'static str =
-    std::include_str!("../../../service/src/document/schemas/patient_uiSchema.json");
+    std::include_str!("./program_schemas//patient_uiSchema.json");
 
 fn person_1() -> Person {
     Person {
