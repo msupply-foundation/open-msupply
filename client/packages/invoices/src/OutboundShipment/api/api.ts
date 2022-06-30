@@ -137,7 +137,6 @@ const outboundParsers = {
   }),
   toUpdateServiceCharge: (line: DraftOutboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
     itemId: line.item.id,
     tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
@@ -146,7 +145,6 @@ const outboundParsers = {
   }),
   toDeleteServiceCharge: (line: DraftOutboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
   }),
 };
 

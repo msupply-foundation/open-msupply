@@ -1298,7 +1298,6 @@ export type InsertInboundShipmentServiceLineErrorInterface = {
 
 export type InsertInboundShipmentServiceLineInput = {
   id: Scalars['String'];
-  invoiceId: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
