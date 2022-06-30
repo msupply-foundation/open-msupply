@@ -97,13 +97,12 @@ export const useJsonForms = (
   const [data, setData] = useState<JsonData | undefined>();
   const [jsonSchema, setJsonSchema] = useState<JsonSchema | undefined>();
   const [uiSchema, setUiSchema] = useState<UISchemaElement | undefined>();
-  const [loading] = useState(false); // Replace with DB query hook
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | false>(false);
+  const [isDirty, setIsDirty] = useState<boolean>();
   const t = useTranslation('common');
   const { success, error: errorNotification } = useNotification();
   const navigate = useNavigate();
-  const [isDirty, setIsDirty] = useState<boolean>();
 
   useEffect(() => {
     if (!databaseResponse) return;
@@ -230,7 +229,7 @@ export const useJsonForms = (
       </Box>
     ),
     saveData,
-    loading,
+    loading: isLoading,
     error,
   };
 };
