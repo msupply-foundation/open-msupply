@@ -18,6 +18,9 @@ use util::uuid::uuid;
 const PATIENT_SCHEMA: &'static str =
     std::include_str!("../../../service/src/document/schemas/patient.json");
 
+const PATIENT_UI_SCHEMA: &'static str =
+    std::include_str!("../../../service/src/document/schemas/patient_uiSchema.json");
+
 fn person_1() -> Person {
     Person {
         id: Some("person1".to_string()),
@@ -178,7 +181,7 @@ pub fn init_program_data(
         id: patient_schema_id.clone(),
         r#type: "JsonForms".to_string(),
         json_schema: serde_json::from_str(PATIENT_SCHEMA).unwrap(),
-        ui_schema: json!({}),
+        ui_schema: serde_json::from_str(PATIENT_UI_SCHEMA).unwrap(),
     })?;
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: uuid(),

@@ -1,0 +1,166 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Label",
+      "text": "${Patient.firstName} ${Patient.lastName}",
+      "variant": "h1"
+    },
+    {
+      "type": "HorizontalLayout",
+      "elements": [
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Group",
+              "label": "Patient",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/id"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/firstName",
+                  "label": "First Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/lastName",
+                  "label": "Last Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/gender"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/dateOfBirth"
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "label": "Contact Information",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/contactDetails",
+                  "label": "Contacts",
+                  "itemLabel": "${index}: ${key}",
+                  "defaultNewItem": {
+                    "key": "Default data",
+                    "description": "New item defaults can be provided!"
+                  }
+                },
+                {
+                  "type": "Label",
+                  "text": "Notice the Addresses show only a subset of available fields, compared with Contacts which show all. That's because we have specified UI schema for the elements, as opposed to letting it be auto-generated"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/addresses",
+                  "itemLabel": "Address ${index}",
+                  "options": {
+                    "detail": {
+                      "type": "VerticalLayout",
+                      "elements": [
+                        {
+                          "type": "Control",
+                          "scope": "/properties/key"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/description"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/address1"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/address2"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Group",
+              "label": "Family",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/maritalStatus"
+                },
+                {
+                  "type": "Label",
+                  "text": "Next of kin:",
+                  "variant": "h3"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/firstName"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/lastName"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/contactDetails",
+                  "label": "Contact",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/definitions/Patient/properties/family/properties/nextOfKin/properties/addresses",
+                  "options": {
+                    "detail": "GENERATED"
+                  }
+                },
+                {
+                  "type": "Group",
+                  "label": "Other",
+                  "elements": [
+                    {
+                      "type": "Label",
+                      "text": "Plain text label"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/definitions/Patient/properties/testingArray",
+                      "options": {
+                        "detail": {
+                          "type": "VerticalLayout",
+                          "elements": [
+                            {
+                              "type": "Control",
+                              "scope": "/properties/field1"
+                            }
+                          ]
+                        }
+                      },
+                      "itemLabel": "Item ${index}",
+                      "defaultNewItem": { "field1": "New data" }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

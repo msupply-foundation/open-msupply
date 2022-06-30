@@ -1,6 +1,6 @@
 {
-  "$ref": "#/definitions/Patient",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
   "definitions": {
     "Address": {
       "additionalProperties": false,
@@ -39,24 +39,22 @@
           "type": "string"
         }
       },
-      "required": [
-        "key"
-      ],
+      "required": ["key"],
       "type": "object"
     },
     "ContactDetails": {
       "additionalProperties": false,
       "properties": {
+        "key": {
+          "description": "Unique contact detail identifier",
+          "type": "string"
+        },
         "description": {
           "description": "Clemens e.g. home, work, etc",
           "type": "string"
         },
         "email": {
           "description": "424966008 Patient - email address",
-          "type": "string"
-        },
-        "key": {
-          "description": "Unique contact detail identifier",
           "type": "string"
         },
         "mobile": {
@@ -71,9 +69,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "key"
-      ],
+      "required": ["key"],
       "type": "object"
     },
     "Family": {
@@ -139,7 +135,7 @@
         },
         "dateOfBirth": {
           "description": "184099003 Date of birth",
-          "format": "\"date\"",
+          "format": "date",
           "type": "string"
         },
         "dateOfBirthIsEstimated": {
@@ -174,14 +170,26 @@
         },
         "socioEconomics": {
           "$ref": "#/definitions/SocioEconomics"
+        },
+        "testingArray": {
+          "description": "An array without referenced definitions",
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field1": {
+                "description": "First item",
+                "type": "string"
+              },
+              "field2": {
+                "description": "Second item",
+                "type": "string"
+              }
+            }
+          }
         }
       },
-      "required": [
-        "addresses",
-        "contactDetails",
-        "id",
-        "socioEconomics"
-      ],
+      "required": ["addresses", "contactDetails", "id", "socioEconomics"],
       "type": "object"
     },
     "Person": {
@@ -231,11 +239,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "addresses",
-        "contactDetails",
-        "socioEconomics"
-      ],
+      "required": ["addresses", "contactDetails", "socioEconomics"],
       "type": "object"
     },
     "SocioEconomics": {
