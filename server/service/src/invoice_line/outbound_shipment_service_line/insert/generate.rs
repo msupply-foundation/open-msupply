@@ -9,7 +9,6 @@ pub fn generate(
         item_id: _,
         name,
         total_before_tax,
-        total_after_tax,
         tax,
         note,
     }: InsertOutboundShipmentServiceLine,
@@ -19,7 +18,11 @@ pub fn generate(
         id,
         invoice_id,
         total_before_tax,
-        total_after_tax,
+        total_after_tax: if tax.is_some() {
+            total_before_tax * (f64::from(1) + tax.unwrap() / 100.0)
+        } else {
+            total_before_tax
+        },
         tax,
         note,
         item_code: item.code,

@@ -27,7 +27,6 @@ pub struct InsertInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: u32,
     pub total_before_tax: f64,
-    pub total_after_tax: f64,
     pub tax: Option<TaxUpdate>,
 }
 
@@ -90,7 +89,6 @@ impl InsertInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            total_after_tax,
             tax,
         } = self;
 
@@ -106,7 +104,6 @@ impl InsertInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            total_after_tax,
             tax: tax.and_then(|tax| tax.percentage),
         }
     }

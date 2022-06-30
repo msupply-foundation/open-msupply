@@ -90,7 +90,7 @@ fn generate_line(
     }
 
     update_line.total_after_tax =
-        update_line.cost_price_per_pack * update_line.number_of_packs as f64;
+        update_line.total_before_tax * (f64::from(1) + update_line.tax.unwrap() / 100.0);
 
     update_line
 }

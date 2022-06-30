@@ -24,7 +24,6 @@ pub struct InsertInboundShipmentLine {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: u32,
     pub total_before_tax: f64,
-    pub total_after_tax: f64,
     pub tax: Option<f64>,
 }
 
