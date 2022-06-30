@@ -226,7 +226,7 @@ export const useJsonForms = (
             renderers={renderers}
           />
         )}
-        {showButtonPanel && <ButtonPanel />}
+        {showButtonPanel && !isLoading && <ButtonPanel />}
       </Box>
     ),
     saveData,
