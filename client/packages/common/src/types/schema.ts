@@ -1267,7 +1267,6 @@ export type InsertInboundShipmentLineInput = {
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
 
@@ -1302,7 +1301,6 @@ export type InsertInboundShipmentServiceLineInput = {
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
   tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
 
@@ -1364,7 +1362,6 @@ export type InsertOutboundShipmentLineInput = {
   numberOfPacks: Scalars['Int'];
   stockLineId: Scalars['String'];
   tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
 
@@ -1400,7 +1397,6 @@ export type InsertOutboundShipmentServiceLineInput = {
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
   tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
   totalBeforeTax: Scalars['Float'];
 };
 
@@ -2832,7 +2828,6 @@ export type UpdateInboundShipmentServiceLineInput = {
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
   tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -2908,7 +2903,6 @@ export type UpdateOutboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Int']>;
   stockLineId?: InputMaybe<Scalars['String']>;
   tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -2943,7 +2937,6 @@ export type UpdateOutboundShipmentServiceLineInput = {
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
   tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
