@@ -25,7 +25,6 @@ pub struct UpdateInput {
     item_id: Option<String>,
     name: Option<String>,
     total_before_tax: Option<f64>,
-    total_after_tax: Option<f64>,
     tax: Option<TaxUpdate>,
     note: Option<String>,
 }
@@ -89,7 +88,6 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
             tax,
             note,
         } = self;
@@ -99,7 +97,6 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
             tax: tax.map(|tax| ShipmentTaxUpdate {
                 percentage: tax.percentage,
             }),
@@ -370,7 +367,6 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: Some(0.1),
-                    total_after_tax: Some(0.2),
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(10.0)
                     }),
@@ -388,7 +384,6 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "totalAfterTax": 0.2,
             "tax": {
                 "percentage": 10
             },

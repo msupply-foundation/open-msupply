@@ -43,7 +43,6 @@ fn generate_line(
         number_of_packs,
         location_id,
         total_before_tax,
-        total_after_tax,
         tax,
     }: InsertInboundShipmentLine,
     ItemRow {
@@ -68,7 +67,11 @@ fn generate_line(
         item_code,
         stock_line_id: None,
         total_before_tax,
-        total_after_tax,
+        total_after_tax: if tax.is_some() {
+            total_before_tax * (f64::from(1) + tax.unwrap() / 100.0)
+        } else {
+            total_before_tax
+        },
         tax,
         note: None,
     }
