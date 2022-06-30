@@ -101,6 +101,10 @@ fn generate(
 }
 
 fn validate_patient_schema(input: &UpdatePatient) -> Result<SchemaPatient, UpdatePatientError> {
+    // Check that we can parse the data into a default Patient object, i.e. that it's following the
+    // default patient JSON schema.
+    // If the patient data uses a derived patient schema, the derived schema is validated in the
+    // document service.
     let patient: SchemaPatient = serde_json::from_value(input.data.clone()).map_err(|err| {
         UpdatePatientError::InvalidDataSchema(vec![format!("Invalid patient data: {}", err)])
     })?;
