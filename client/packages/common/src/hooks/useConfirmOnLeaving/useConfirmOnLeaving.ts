@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 // then this hook won't catch the navigation action
 // you will need to use the `Prompt` component instead ( or usePrompt or useBlocker )
 // however, these weren't implemented in react-router-dom v6 at the time of implementation
-export const useConfirmOnLeaving = (isUnsaved: boolean) => {
+export const useConfirmOnLeaving = (isUnsaved: boolean | undefined) => {
   const promptUser = (e: BeforeUnloadEvent) => {
     // Cancel the event
     e.preventDefault(); // If you prevent default behavior in Mozilla Firefox prompt will always be shown

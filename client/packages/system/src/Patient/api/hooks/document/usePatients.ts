@@ -7,7 +7,6 @@ export const usePatients = () => {
     // filterKey: 'otherPartyName',
     initialSortKey: 'code',
   });
-  console.log('queryParams', queryParams);
   return {
     ...useQuery(api.keys.paramList(queryParams), () =>
       api.get.list(queryParams)

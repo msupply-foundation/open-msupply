@@ -7,10 +7,15 @@ import {
   useConfirmationModal,
   useTranslation,
   useNotification,
-  useDirtyCheck,
   useConfirmOnLeaving,
+  Pulse,
 } from '@openmsupply-client/common';
 import { JsonForms } from '@jsonforms/react';
+import {
+  JsonFormsRendererRegistryEntry,
+  JsonSchema,
+  UISchemaElement,
+} from '@jsonforms/core';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
   stringTester,
@@ -26,12 +31,7 @@ import {
   arrayTester,
   Array,
 } from './components';
-
-// Temporarily hard-coded examples until we connect to database
-import patient from './jsonTemp/patient_1.json';
-import schema from './jsonTemp/schema.json';
-import uiSchema from './jsonTemp/ui-schema.json';
-import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
+import { useDocument } from './api';
 
 export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
@@ -39,25 +39,34 @@ export type JsonData = {
 
 interface JsonFormsComponentProps {
   data: JsonData;
+  jsonSchema: JsonSchema;
+  uiSchema: UISchemaElement;
   setData: (data: JsonData) => void;
+  setError: (error: string | false) => void;
   renderers: JsonFormsRendererRegistryEntry[];
 }
 
 const FormComponent = ({
   data,
+  jsonSchema,
+  uiSchema,
   setData,
+  setError,
   renderers,
 }: JsonFormsComponentProps) => {
   return (
     <JsonForms
-      schema={schema}
+      schema={jsonSchema}
       uischema={uiSchema}
       data={data}
       renderers={renderers}
       // cells={materialCells}
       onChange={({ errors, data }) => {
         setData(data);
-        if (errors && errors.length) console.warn('Errors: ', errors);
+        if (errors && errors.length) {
+          setError(String(errors));
+          console.warn('Errors: ', errors);
+        }
       }}
     />
   );
@@ -80,17 +89,37 @@ interface JsonFormOptions {
 }
 
 export const useJsonForms = (
-  docName: string | undefined,
+  docName: string,
   options: JsonFormOptions = {}
 ) => {
-  const [data, setData] = useState<JsonData>(patient); // Replace with DB query hook
+  const { data: databaseResponse, isLoading } =
+    useDocument.document.get(docName);
+  const [data, setData] = useState<JsonData | undefined>();
+  const [jsonSchema, setJsonSchema] = useState<JsonSchema | undefined>();
+  const [uiSchema, setUiSchema] = useState<UISchemaElement | undefined>();
   const [loading] = useState(false); // Replace with DB query hook
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | false>(false);
   const t = useTranslation('common');
   const { success, error: errorNotification } = useNotification();
   const navigate = useNavigate();
-  const { isDirty, setIsDirty } = useDirtyCheck();
+  const [isDirty, setIsDirty] = useState<boolean>();
+
+  useEffect(() => {
+    if (!databaseResponse) return;
+
+    const {
+      data,
+      documentRegistry: { jsonSchema, uiSchema },
+    } = databaseResponse;
+    if (!data) setError('No document data');
+    if (!jsonSchema) setError('No Json Schema');
+    if (!uiSchema) setError('No UI Schema');
+
+    setData(data);
+    setJsonSchema(jsonSchema);
+    setUiSchema(uiSchema);
+  }, [databaseResponse]);
 
   const {
     showButtonPanel = true,
@@ -102,12 +131,8 @@ export const useJsonForms = (
 
   useConfirmOnLeaving(isDirty);
 
-  useEffect(() => {
-    if (!docName) setError('No document associated with this record');
-  }, []);
-
   const updateData = (newData: JsonData) => {
-    setIsDirty(true);
+    setIsDirty(isDirty === undefined ? false : true);
     setData(newData);
   };
 
@@ -156,13 +181,22 @@ export const useJsonForms = (
   const ButtonPanel = () => (
     <Box id="button-panel" paddingBottom={5} display="flex" gap={5}>
       <LoadingButton
-        onClick={() => showSaveConfirmation()}
+        onClick={() => {
+          if (isDirty) showSaveConfirmation();
+          else onCancel();
+        }}
         isLoading={saving}
         color="secondary"
       >
         {t('button.save')}
       </LoadingButton>
-      <DialogButton variant="cancel" onClick={() => showCancelConfirmation()} />
+      <DialogButton
+        variant="cancel"
+        onClick={() => {
+          if (isDirty) showCancelConfirmation();
+          else onCancel();
+        }}
+      />
     </Box>
   );
 
@@ -179,12 +213,18 @@ export const useJsonForms = (
         paddingX={10}
       >
         <ScrollFix />
-        <FormComponent
-          data={data}
-          setData={updateData}
-          // setError={setError}
-          renderers={renderers}
-        />
+        {isLoading || !data ? (
+          <Pulse />
+        ) : (
+          <FormComponent
+            data={data}
+            jsonSchema={jsonSchema as JsonSchema}
+            uiSchema={uiSchema as UISchemaElement}
+            setData={updateData}
+            setError={setError}
+            renderers={renderers}
+          />
+        )}
         {showButtonPanel && <ButtonPanel />}
       </Box>
     ),
