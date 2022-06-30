@@ -18,6 +18,7 @@ const UIComponent = (props: ControlProps) => {
           setLocalData(e.target.value);
         },
         onBlur: () => handleChange(path, localData),
+        disabled: !props.enabled,
       }}
     />
   );
