@@ -49,13 +49,8 @@ pub fn generate(
         update_line.tax = tax.percentage;
     }
 
-    if input_total_before_tax != Some(existing_line.total_before_tax) {
-        update_line.total_after_tax = if update_line.tax.is_some() {
-            update_line.total_before_tax * (f64::from(1) + update_line.tax.unwrap() / 100.0)
-        } else {
-            update_line.total_before_tax
-        }
-    } //TODO
+    update_line.total_after_tax =
+        update_line.total_before_tax * (f64::from(1) + update_line.tax.unwrap() / 100.0);
 
     if let Some(note) = input_note {
         update_line.note = Some(note);
