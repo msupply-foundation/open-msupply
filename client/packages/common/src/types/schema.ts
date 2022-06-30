@@ -556,6 +556,7 @@ export type DocumentNode = {
   __typename: 'DocumentNode';
   author: Scalars['String'];
   data: Scalars['JSON'];
+  documentRegistry?: Maybe<DocumentRegistryNode>;
   id: Scalars['String'];
   name: Scalars['String'];
   parents: Array<Scalars['String']>;
@@ -572,6 +573,7 @@ export type DocumentRegistryConnector = {
 
 export type DocumentRegistryNode = {
   __typename: 'DocumentRegistryNode';
+  children: Array<DocumentRegistryNode>;
   context: DocumentRegistryNodeContext;
   documentType: Scalars['String'];
   id: Scalars['String'];
@@ -592,6 +594,12 @@ export enum DocumentRegistryNodeContext {
 export type DocumentRegistryResponse = DocumentRegistryConnector;
 
 export type DocumentResponse = DocumentConnector;
+
+export type EncounterNode = {
+  __typename: 'EncounterNode';
+  /** The encounter document */
+  document: DocumentNode;
+};
 
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
@@ -732,6 +740,7 @@ export type FullMutation = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertPatient: InsertPatientResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -747,6 +756,7 @@ export type FullMutation = {
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
+  updatePatient: UpdatePatientResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -931,6 +941,12 @@ export type FullMutationInsertOutboundShipmentUnallocatedLineArgs = {
 };
 
 
+export type FullMutationInsertPatientArgs = {
+  input: InsertPatientInput;
+  storeId: Scalars['String'];
+};
+
+
 export type FullMutationInsertRequestRequisitionArgs = {
   input: InsertRequestRequisitionInput;
   storeId: Scalars['String'];
@@ -1015,6 +1031,12 @@ export type FullMutationUpdateOutboundShipmentUnallocatedLineArgs = {
 };
 
 
+export type FullMutationUpdatePatientArgs = {
+  input: UpdatePatientInput;
+  storeId: Scalars['String'];
+};
+
+
 export type FullMutationUpdateRequestRequisitionArgs = {
   input: UpdateRequestRequisitionInput;
   storeId: Scalars['String'];
@@ -1074,7 +1096,6 @@ export type FullQuery = {
   documentRegistry: DocumentRegistryResponse;
   documents: DocumentResponse;
   formSchema?: Maybe<FormSchemaNode>;
-  insertPatient: InsertPatientResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
@@ -1089,6 +1110,7 @@ export type FullQuery = {
   me: UserResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
+  patient?: Maybe<PatientNode>;
   patients: PatientResponse;
   /**
    * Creates a printed report.
@@ -1155,12 +1177,6 @@ export type FullQueryFormSchemaArgs = {
 };
 
 
-export type FullQueryInsertPatientArgs = {
-  input: InsertPatientInput;
-  storeId: Scalars['String'];
-};
-
-
 export type FullQueryInvoiceArgs = {
   id: Scalars['String'];
   storeId: Scalars['String'];
@@ -1216,6 +1232,12 @@ export type FullQueryNamesArgs = {
   filter?: InputMaybe<NameFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<NameSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryPatientArgs = {
+  patientId: Scalars['String'];
   storeId: Scalars['String'];
 };
 
@@ -1842,11 +1864,48 @@ export type InvoiceNodeOtherPartyArgs = {
 };
 
 export enum InvoiceNodeStatus {
+  /**
+   * General description: Outbound Shipment is ready for picking (all unallocated lines need to be fullfilled)
+   * Outbound Shipment: Invoice can only be turned to allocated status when
+   * all unallocated lines are fullfilled
+   * Inbound Shipment: not applicable
+   */
   Allocated = 'ALLOCATED',
+  /**
+   * General description: Inbound Shipment was received
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Stock is introduced and can be issued
+   */
   Delivered = 'DELIVERED',
+  /**
+   * Outbound Shipment: available_number_of_packs in a stock line gets
+   * updated when items are added to the invoice.
+   * Inbound Shipment: No stock changes in this status, only manually entered
+   * inbound Shipments have new status
+   */
   New = 'NEW',
+  /**
+   * General description: Outbound Shipment was picked from shelf and ready for Shipment
+   * Outbound Shipment: available_number_of_packs and
+   * total_number_of_packs get updated when items are added to the invoice
+   * Inbound Shipment: For inter store stock transfers an inbound Shipment
+   * is created when corresponding outbound Shipment is picked and ready for
+   * Shipment, inbound Shipment is not editable in this status
+   */
   Picked = 'PICKED',
+  /**
+   * General description: Outbound Shipment is sent out for delivery
+   * Outbound Shipment: Becomes not editable
+   * Inbound Shipment: For inter store stock transfers an inbound Shipment
+   * becomes editable when this status is set as a result of corresponding
+   * outbound Shipment being chagned to shipped (this is similar to New status)
+   */
   Shipped = 'SHIPPED',
+  /**
+   * General description: Received inbound Shipment was counted and verified
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Becomes not editable
+   */
   Verified = 'VERIFIED'
 }
 
@@ -1876,7 +1935,7 @@ export enum InvoiceSortFieldInput {
 
 export type InvoiceSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -1958,7 +2017,7 @@ export enum ItemSortFieldInput {
 
 export type ItemSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -2027,7 +2086,7 @@ export enum LocationSortFieldInput {
 
 export type LocationSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -2096,7 +2155,7 @@ export enum MasterListSortFieldInput {
 
 export type MasterListSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -2136,7 +2195,7 @@ export type NameFilterInput = {
   /** Filter by supplier property */
   isSupplier?: InputMaybe<Scalars['Boolean']>;
   /**
-   * 	Show system names (defaults to false)
+   * Show system names (defaults to false)
    * System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
    * if is_visible is set to true and is_system_name is also true no system names will be returned
    */
@@ -2199,7 +2258,7 @@ export enum NameSortFieldInput {
 
 export type NameSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -2320,6 +2379,7 @@ export type PatientNode = {
   lastName?: Maybe<Scalars['String']>;
   name: Scalars['String'];
   phone?: Maybe<Scalars['String']>;
+  programs: Array<ProgramNode>;
   website?: Maybe<Scalars['String']>;
 };
 
@@ -2341,7 +2401,7 @@ export enum PatientSortFieldInput {
 
 export type PatientSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -2384,6 +2444,14 @@ export type PrintReportNode = {
 };
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
+
+export type ProgramNode = {
+  __typename: 'ProgramNode';
+  /** The encounter document */
+  document: DocumentNode;
+  /** The program document */
+  encounters: Array<EncounterNode>;
+};
 
 export type RawDocumentNode = {
   __typename: 'RawDocumentNode';
@@ -2463,7 +2531,7 @@ export enum ReportSortFieldInput {
 
 export type ReportSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -2608,14 +2676,23 @@ export type RequisitionNodeOtherPartyArgs = {
 };
 
 export enum RequisitionNodeStatus {
+  /** New requisition when manually created */
   Draft = 'DRAFT',
+  /**
+   * Response requisition: When supplier finished fulfilling requisition, locked for future editing
+   * Request requisition: When response requisition is finalised
+   */
   Finalised = 'FINALISED',
+  /** New requisition when automatically created, only applicable to response requisition when it's duplicated in supplying store from request requisition */
   New = 'NEW',
+  /** Request requisition is sent and locked for future editing, only applicable to request requisition */
   Sent = 'SENT'
 }
 
 export enum RequisitionNodeType {
+  /** Requisition created by store that is ordering stock */
   Request = 'REQUEST',
+  /** Supplying store requisition in response to request requisition */
   Response = 'RESPONSE'
 }
 
@@ -2636,7 +2713,7 @@ export enum RequisitionSortFieldInput {
 
 export type RequisitionSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -2664,6 +2741,7 @@ export type ServerSettingsResponse = ServerSettingsNode;
 
 export enum ServerStatus {
   Running = 'RUNNING',
+  /** Server misses configuration to start up fully */
   Stage_0 = 'STAGE_0'
 }
 
@@ -2836,7 +2914,7 @@ export enum StocktakeSortFieldInput {
 
 export type StocktakeSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -2884,7 +2962,7 @@ export enum StoreSortFieldInput {
 
 export type StoreSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']>;
@@ -3103,12 +3181,12 @@ export type UpdateOutboundShipmentInput = {
   id: Scalars['String'];
   onHold?: InputMaybe<Scalars['Boolean']>;
   /**
-   * 	The other party must be a customer of the current store.
+   * The other party must be a customer of the current store.
    * This field can be used to change the other_party of an invoice
    */
   otherPartyId?: InputMaybe<Scalars['String']>;
   /**
-   * 	When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
+   * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.
    */
   status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
@@ -3206,6 +3284,16 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
   id: Scalars['String'];
   response: UpdateOutboundShipmentUnallocatedLineResponse;
 };
+
+export type UpdatePatientInput = {
+  /** Patient document data */
+  data: Scalars['JSON'];
+  parent: Scalars['String'];
+  /** The schema id used for the patient data */
+  schemaId?: InputMaybe<Scalars['String']>;
+};
+
+export type UpdatePatientResponse = PatientNode;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
