@@ -6,7 +6,6 @@ import {
 } from '@openmsupply-client/common';
 
 export const PatientDetailView: FC = () => {
-  // const { patientId } = useParams();
   const {
     urlQuery: { doc },
   } = useUrlQuery();
