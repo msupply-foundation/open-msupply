@@ -1,20 +1,17 @@
+use super::TestSyncPushRecord;
+use crate::sync::{
+    test::TestSyncPullRecord,
+    translations::{
+        invoice_line::{LegacyTransLineRow, LegacyTransLineType},
+        LegacyTableName, PullUpsertRecord,
+    },
+};
 use chrono::NaiveDate;
 use repository::{
     mock::{mock_item_a, mock_stock_line_a},
     ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowType,
-    SyncBufferRow,
 };
 use serde_json::json;
-use util::inline_init;
-
-use crate::sync::translation_remote::{
-    invoice_line::{LegacyTransLineRow, LegacyTransLineType},
-    pull::{IntegrationRecord, IntegrationUpsertRecord},
-    test_data::TestSyncRecord,
-    TRANSLATION_RECORD_TRANS_LINE,
-};
-
-use super::TestSyncPushRecord;
 
 const TRANS_LINE_1: (&'static str, &'static str) = (
     "12ee2f10f0d211eb8dddb54df6d741bc",
@@ -73,37 +70,31 @@ const TRANS_LINE_1: (&'static str, &'static str) = (
         }
     "#,
 );
-fn trans_line_1_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
-                id: TRANS_LINE_1.0.to_string(),
-                invoice_id: "outbound_shipment_a".to_string(),
-                item_id: mock_item_a().id,
-                item_name: mock_item_a().name,
-                item_code: mock_item_a().code,
-                stock_line_id: Some(mock_stock_line_a().id),
-                location_id: None,
-                batch: Some("stocktake_1".to_string()),
-                expiry_date: None,
-                pack_size: 1,
-                cost_price_per_pack: 10.0,
-                sell_price_per_pack: 0.0,
-                total_before_tax: 10.0 * 700.0,
-                total_after_tax: 10.0 * 700.0,
-                tax: None,
-                r#type: InvoiceLineRowType::StockIn,
-                number_of_packs: 700,
-                note: None,
-            }),
-        )),
-        identifier: "Transact line 1",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_TRANS_LINE.to_string();
-            r.record_id = TRANS_LINE_1.0.to_string();
-            r.data = TRANS_LINE_1.1.to_string();
+fn trans_line_1_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::TRANS_LINE,
+        TRANS_LINE_1,
+        PullUpsertRecord::InvoiceLine(InvoiceLineRow {
+            id: TRANS_LINE_1.0.to_string(),
+            invoice_id: "outbound_shipment_a".to_string(),
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            stock_line_id: Some(mock_stock_line_a().id),
+            location_id: None,
+            batch: Some("stocktake_1".to_string()),
+            expiry_date: None,
+            pack_size: 1,
+            cost_price_per_pack: 10.0,
+            sell_price_per_pack: 0.0,
+            total_before_tax: 10.0 * 700.0,
+            total_after_tax: 10.0 * 700.0,
+            tax: None,
+            r#type: InvoiceLineRowType::StockIn,
+            number_of_packs: 700,
+            note: None,
         }),
-    }
+    )
 }
 fn trans_line_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -193,37 +184,31 @@ const TRANS_LINE_2: (&'static str, &'static str) = (
         "volume_per_pack": 0
     }"#,
 );
-fn trans_line_2_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
-                id: TRANS_LINE_2.0.to_string(),
-                invoice_id: "outbound_shipment_a".to_string(),
-                item_id: mock_item_a().id,
-                item_name: mock_item_a().name,
-                item_code: mock_item_a().code,
-                stock_line_id: Some(mock_stock_line_a().id),
-                location_id: None,
-                batch: None,
-                expiry_date: Some(NaiveDate::from_ymd(2022, 02, 22)),
-                pack_size: 5,
-                cost_price_per_pack: 5.0,
-                sell_price_per_pack: 2.0,
-                total_before_tax: 2.0 * 1000.0,
-                total_after_tax: 2.0 * 1000.0,
-                tax: None,
-                r#type: InvoiceLineRowType::StockOut,
-                number_of_packs: 1000,
-                note: Some("every FOUR to SIX hours when necessary ".to_string()),
-            }),
-        )),
-        identifier: "Transact line (Placeholder)",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_TRANS_LINE.to_string();
-            r.record_id = TRANS_LINE_2.0.to_string();
-            r.data = TRANS_LINE_2.1.to_string();
+fn trans_line_2_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::TRANS_LINE,
+        TRANS_LINE_2,
+        PullUpsertRecord::InvoiceLine(InvoiceLineRow {
+            id: TRANS_LINE_2.0.to_string(),
+            invoice_id: "outbound_shipment_a".to_string(),
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            stock_line_id: Some(mock_stock_line_a().id),
+            location_id: None,
+            batch: None,
+            expiry_date: Some(NaiveDate::from_ymd(2022, 02, 22)),
+            pack_size: 5,
+            cost_price_per_pack: 5.0,
+            sell_price_per_pack: 2.0,
+            total_before_tax: 2.0 * 1000.0,
+            total_after_tax: 2.0 * 1000.0,
+            tax: None,
+            r#type: InvoiceLineRowType::StockOut,
+            number_of_packs: 1000,
+            note: Some("every FOUR to SIX hours when necessary ".to_string()),
         }),
-    }
+    )
 }
 fn trans_line_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -316,37 +301,31 @@ const TRANS_LINE_OM_FIELDS: (&'static str, &'static str) = (
         "om_total_after_tax": 130.5
     }"#,
 );
-fn trans_line_om_fields_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
-                id: TRANS_LINE_OM_FIELDS.0.to_string(),
-                invoice_id: "outbound_shipment_a".to_string(),
-                item_id: mock_item_a().id,
-                item_name: mock_item_a().name,
-                item_code: mock_item_a().code,
-                stock_line_id: Some(mock_stock_line_a().id),
-                location_id: None,
-                batch: None,
-                expiry_date: Some(NaiveDate::from_ymd(2022, 02, 22)),
-                pack_size: 5,
-                cost_price_per_pack: 5.0,
-                sell_price_per_pack: 2.0,
-                total_before_tax: 105.4,
-                total_after_tax: 130.5,
-                tax: Some(33.3),
-                r#type: InvoiceLineRowType::StockOut,
-                number_of_packs: 1000,
-                note: Some("every FOUR to SIX hours when necessary ".to_string()),
-            }),
-        )),
-        identifier: "Transact line (om fields))",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_TRANS_LINE.to_string();
-            r.record_id = TRANS_LINE_OM_FIELDS.0.to_string();
-            r.data = TRANS_LINE_OM_FIELDS.1.to_string();
+fn trans_line_om_fields_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::TRANS_LINE,
+        TRANS_LINE_OM_FIELDS,
+        PullUpsertRecord::InvoiceLine(InvoiceLineRow {
+            id: TRANS_LINE_OM_FIELDS.0.to_string(),
+            invoice_id: "outbound_shipment_a".to_string(),
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            stock_line_id: Some(mock_stock_line_a().id),
+            location_id: None,
+            batch: None,
+            expiry_date: Some(NaiveDate::from_ymd(2022, 02, 22)),
+            pack_size: 5,
+            cost_price_per_pack: 5.0,
+            sell_price_per_pack: 2.0,
+            total_before_tax: 105.4,
+            total_after_tax: 130.5,
+            tax: Some(33.3),
+            r#type: InvoiceLineRowType::StockOut,
+            number_of_packs: 1000,
+            note: Some("every FOUR to SIX hours when necessary ".to_string()),
         }),
-    }
+    )
 }
 fn trans_line_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -439,37 +418,31 @@ const TRANS_LINE_OM_UNSET_TAX_FIELDS: (&'static str, &'static str) = (
         "om_total_after_tax": 130.5
     }"#,
 );
-fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
-                id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
-                invoice_id: "outbound_shipment_a".to_string(),
-                item_id: mock_item_a().id,
-                item_name: mock_item_a().name,
-                item_code: mock_item_a().code,
-                stock_line_id: Some(mock_stock_line_a().id),
-                location_id: None,
-                batch: None,
-                expiry_date: Some(NaiveDate::from_ymd(2022, 02, 22)),
-                pack_size: 5,
-                cost_price_per_pack: 5.0,
-                sell_price_per_pack: 2.0,
-                total_before_tax: 105.4,
-                total_after_tax: 130.5,
-                tax: None,
-                r#type: InvoiceLineRowType::StockOut,
-                number_of_packs: 1000,
-                note: Some("every FOUR to SIX hours when necessary ".to_string()),
-            }),
-        )),
-        identifier: "Transact line (om fields))",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_TRANS_LINE.to_string();
-            r.record_id = TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string();
-            r.data = TRANS_LINE_OM_UNSET_TAX_FIELDS.1.to_string();
+fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::TRANS_LINE,
+        TRANS_LINE_OM_UNSET_TAX_FIELDS,
+        PullUpsertRecord::InvoiceLine(InvoiceLineRow {
+            id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
+            invoice_id: "outbound_shipment_a".to_string(),
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            stock_line_id: Some(mock_stock_line_a().id),
+            location_id: None,
+            batch: None,
+            expiry_date: Some(NaiveDate::from_ymd(2022, 02, 22)),
+            pack_size: 5,
+            cost_price_per_pack: 5.0,
+            sell_price_per_pack: 2.0,
+            total_before_tax: 105.4,
+            total_after_tax: 130.5,
+            tax: None,
+            r#type: InvoiceLineRowType::StockOut,
+            number_of_packs: 1000,
+            note: Some("every FOUR to SIX hours when necessary ".to_string()),
         }),
-    }
+    )
 }
 fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -502,8 +475,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
     }
 }
 
-#[allow(dead_code)]
-pub fn get_test_trans_line_records() -> Vec<TestSyncRecord> {
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
     vec![
         trans_line_1_pull_record(),
         trans_line_2_pull_record(),
@@ -512,8 +484,7 @@ pub fn get_test_trans_line_records() -> Vec<TestSyncRecord> {
     ]
 }
 
-#[allow(dead_code)]
-pub fn get_test_push_trans_line_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![
         trans_line_1_push_record(),
         trans_line_2_push_record(),

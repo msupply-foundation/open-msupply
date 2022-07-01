@@ -1,4 +1,7 @@
-use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
+use crate::sync::{
+    test::TestSyncPullRecord,
+    translations::{LegacyTableName, PullUpsertRecord},
+};
 use repository::{StoreRow, SyncBufferRow};
 use util::inline_init;
 
@@ -47,6 +50,19 @@ const STORE_1: (&'static str, &'static str) = (
 }"#,
 );
 
+fn store_1() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::STORE,
+        STORE_1,
+        PullUpsertRecord::Store(inline_init(|s: &mut StoreRow| {
+            s.id = STORE_1.0.to_owned();
+            s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
+            s.code = "GEN".to_string();
+            s.site_id = 1;
+        })),
+    )
+}
+
 const STORE_2: (&'static str, &'static str) = (
     "9EDD3F83C3D64C22A3CC9C98CF4967C5",
     r#"{
@@ -91,6 +107,18 @@ const STORE_2: (&'static str, &'static str) = (
     "created_date": "0000-00-00"
 }"#,
 );
+
+fn store_2() -> TestSyncPullRecord {
+    TestSyncPullRecord {
+        translated_record: None,
+        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = LegacyTableName::STORE.to_owned();
+            r.record_id = STORE_2.0.to_owned();
+            r.data = STORE_2.1.to_owned();
+        }),
+    }
+}
+
 const STORE_3: (&'static str, &'static str) = (
     "9A3F71AA4C6D48649ADBC4B2966C5B9D",
     r#"{
@@ -135,6 +163,17 @@ const STORE_3: (&'static str, &'static str) = (
     "created_date": "0000-00-00"
 }"#,
 );
+
+fn store_3() -> TestSyncPullRecord {
+    TestSyncPullRecord {
+        translated_record: None,
+        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = LegacyTableName::STORE.to_owned();
+            r.record_id = STORE_3.0.to_owned();
+            r.data = STORE_3.1.to_owned();
+        }),
+    }
+}
 
 const STORE_4: (&'static str, &'static str) = (
     "2CD38EF518764ED79258961101100C3D",
@@ -181,51 +220,17 @@ const STORE_4: (&'static str, &'static str) = (
 }"#,
 );
 
-#[allow(dead_code)]
-const RECORD_TYPE: &'static str = "store";
-#[allow(dead_code)]
-pub fn get_test_store_records() -> Vec<TestSyncRecord> {
-    vec![
-        TestSyncRecord {
-            translated_record: TestSyncDataRecord::Store(Some(inline_init(|s: &mut StoreRow| {
-                s.id = STORE_1.0.to_owned();
-                s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
-                s.code = "GEN".to_string();
-                s.site_id = 1;
-            }))),
-            identifier: "General",
-            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = RECORD_TYPE.to_owned();
-                r.record_id = STORE_1.0.to_owned();
-                r.data = STORE_1.1.to_owned();
-            }),
-        },
-        TestSyncRecord {
-            translated_record: TestSyncDataRecord::Store(None),
-            identifier: "Drug Registration",
-            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = RECORD_TYPE.to_owned();
-                r.record_id = STORE_2.0.to_owned();
-                r.data = STORE_2.1.to_owned();
-            }),
-        },
-        TestSyncRecord {
-            translated_record: TestSyncDataRecord::Store(None),
-            identifier: "Supervisor- All stores",
-            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = RECORD_TYPE.to_owned();
-                r.record_id = STORE_3.0.to_owned();
-                r.data = STORE_3.1.to_owned();
-            }),
-        },
-        TestSyncRecord {
-            translated_record: TestSyncDataRecord::Store(None),
-            identifier: "Hospital Info System",
-            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = RECORD_TYPE.to_owned();
-                r.record_id = STORE_4.0.to_owned();
-                r.data = STORE_4.1.to_owned();
-            }),
-        },
-    ]
+fn store_4() -> TestSyncPullRecord {
+    TestSyncPullRecord {
+        translated_record: None,
+        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = LegacyTableName::STORE.to_owned();
+            r.record_id = STORE_4.0.to_owned();
+            r.data = STORE_4.1.to_owned();
+        }),
+    }
+}
+
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+    vec![store_1(), store_2(), store_3(), store_4()]
 }

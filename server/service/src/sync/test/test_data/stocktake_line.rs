@@ -1,17 +1,10 @@
-use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeLineRow, SyncBufferRow,
-};
-use serde_json::json;
-use util::inline_init;
-
-use crate::sync::translation_remote::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord},
-    stocktake_line::LegacyStocktakeLineRow,
-    test_data::TestSyncRecord,
-    TRANSLATION_RECORD_STOCKTAKE_LINE,
-};
-
 use super::TestSyncPushRecord;
+use crate::sync::{
+    test::TestSyncPullRecord,
+    translations::{stocktake_line::LegacyStocktakeLineRow, LegacyTableName, PullUpsertRecord},
+};
+use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeLineRow};
+use serde_json::json;
 
 const STOCKTAKE_LINE_1: (&'static str, &'static str) = (
     "0a3de900f0d211eb8dddb54df6d741bc",
@@ -38,33 +31,27 @@ const STOCKTAKE_LINE_1: (&'static str, &'static str) = (
       "vaccine_vial_monitor_status_ID": ""
     }"#,
 );
-fn stocktake_line_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::StocktakeLine(StocktakeLineRow {
-                id: STOCKTAKE_LINE_1.0.to_string(),
-                stocktake_id: "stocktake_a".to_string(),
-                stock_line_id: Some("item_c_line_a".to_string()),
-                location_id: None,
-                comment: None,
-                snapshot_number_of_packs: 10,
-                counted_number_of_packs: Some(700),
-                item_id: "item_a".to_string(),
-                batch: Some("item_c_batch_a".to_string()),
-                expiry_date: None,
-                pack_size: Some(1),
-                cost_price_per_pack: Some(12.0),
-                sell_price_per_pack: Some(15.0),
-                note: None,
-            }),
-        )),
-        identifier: "Stocktake 1",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_STOCKTAKE_LINE.to_string();
-            r.record_id = STOCKTAKE_LINE_1.0.to_string();
-            r.data = STOCKTAKE_LINE_1.1.to_string();
+fn stocktake_line_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::STOCKTAKE_LINE,
+        STOCKTAKE_LINE_1,
+        PullUpsertRecord::StocktakeLine(StocktakeLineRow {
+            id: STOCKTAKE_LINE_1.0.to_string(),
+            stocktake_id: "stocktake_a".to_string(),
+            stock_line_id: Some("item_c_line_a".to_string()),
+            location_id: None,
+            comment: None,
+            snapshot_number_of_packs: 10,
+            counted_number_of_packs: Some(700),
+            item_id: "item_a".to_string(),
+            batch: Some("item_c_batch_a".to_string()),
+            expiry_date: None,
+            pack_size: Some(1),
+            cost_price_per_pack: Some(12.0),
+            sell_price_per_pack: Some(15.0),
+            note: None,
         }),
-    }
+    )
 }
 fn stocktake_line_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -120,33 +107,27 @@ const STOCKTAKE_LINE_OM_FIELDS: (&'static str, &'static str) = (
       "om_note": "om note"
     }"#,
 );
-fn stocktake_line_om_field_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::StocktakeLine(StocktakeLineRow {
-                id: STOCKTAKE_LINE_OM_FIELDS.0.to_string(),
-                stocktake_id: "stocktake_a".to_string(),
-                stock_line_id: Some("item_c_line_a".to_string()),
-                location_id: None,
-                comment: None,
-                snapshot_number_of_packs: 10,
-                counted_number_of_packs: Some(700),
-                item_id: "item_a".to_string(),
-                batch: Some("item_c_batch_a".to_string()),
-                expiry_date: None,
-                pack_size: Some(1),
-                cost_price_per_pack: Some(12.0),
-                sell_price_per_pack: Some(15.0),
-                note: Some("om note".to_string()),
-            }),
-        )),
-        identifier: "Stocktake om field",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_STOCKTAKE_LINE.to_string();
-            r.record_id = STOCKTAKE_LINE_OM_FIELDS.0.to_string();
-            r.data = STOCKTAKE_LINE_OM_FIELDS.1.to_string();
+fn stocktake_line_om_field_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::STOCKTAKE_LINE,
+        STOCKTAKE_LINE_OM_FIELDS,
+        PullUpsertRecord::StocktakeLine(StocktakeLineRow {
+            id: STOCKTAKE_LINE_OM_FIELDS.0.to_string(),
+            stocktake_id: "stocktake_a".to_string(),
+            stock_line_id: Some("item_c_line_a".to_string()),
+            location_id: None,
+            comment: None,
+            snapshot_number_of_packs: 10,
+            counted_number_of_packs: Some(700),
+            item_id: "item_a".to_string(),
+            batch: Some("item_c_batch_a".to_string()),
+            expiry_date: None,
+            pack_size: Some(1),
+            cost_price_per_pack: Some(12.0),
+            sell_price_per_pack: Some(15.0),
+            note: Some("om note".to_string()),
         }),
-    }
+    )
 }
 fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -176,16 +157,14 @@ fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {
     }
 }
 
-#[allow(dead_code)]
-pub fn get_test_stocktake_line_records() -> Vec<TestSyncRecord> {
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
     vec![
         stocktake_line_pull_record(),
         stocktake_line_om_field_pull_record(),
     ]
 }
 
-#[allow(dead_code)]
-pub fn get_test_push_stocktake_line_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![
         stocktake_line_push_record(),
         stocktake_line_om_field_push_record(),
