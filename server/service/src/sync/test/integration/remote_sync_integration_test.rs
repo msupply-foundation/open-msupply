@@ -29,7 +29,7 @@ mod remote_sync_integration_tests {
     };
 
     use crate::sync::{
-        integration_tests::{
+        integration::{
             invoice::InvoiceRecordTester, location::LocationSyncRecordTester,
             number::NumberSyncRecordTester, requisition::RequisitionRecordTester,
             stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
@@ -39,7 +39,6 @@ mod remote_sync_integration_tests {
 
     use super::SyncRecordTester;
 
-    #[allow(dead_code)]
     async fn init_db(
         sync_settings: &SyncSettings,
         step: &str,
@@ -67,7 +66,7 @@ mod remote_sync_integration_tests {
     /// 2) Reset local data and pull. Then validate that the pulled data is correct
     /// 3) Mutate the previously inserted data and push the changes
     /// 4) Reset, pull and validate as in step 2)
-    #[allow(dead_code)]
+
     async fn test_sync_record<T>(sync_settings: &SyncSettings, tester: &dyn SyncRecordTester<T>) {
         let (connection, synchroniser) = init_db(sync_settings, "step0").await;
         synchroniser
@@ -130,7 +129,7 @@ mod remote_sync_integration_tests {
     /// Note: the sub tests can't be parallelized since every sync test need exclusive access to the
     /// central server
     // #[actix_rt::test]
-    #[allow(dead_code)]
+
     async fn test_remote_syncing() {
         let sync_settings = SyncSettings {
             url: "http://192.168.178.77:8080".to_string(),
