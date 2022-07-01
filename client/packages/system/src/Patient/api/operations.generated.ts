@@ -28,6 +28,22 @@ export type PatientByIdQueryVariables = Types.Exact<{
 
 export type PatientByIdQuery = { __typename: 'FullQuery', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null }> } };
 
+export type InsertPatientMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.InsertPatientInput;
+}>;
+
+
+export type InsertPatientMutation = { __typename: 'FullMutation', insertPatient: { __typename: 'PatientNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } };
+
+export type UpdatePatientMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.UpdatePatientInput;
+}>;
+
+
+export type UpdatePatientMutation = { __typename: 'FullMutation', updatePatient: { __typename: 'PatientNode', id: string, code: string, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } };
+
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
   id
@@ -96,6 +112,26 @@ export const PatientByIdDocument = gql`
   }
 }
     ${PatientFragmentDoc}`;
+export const InsertPatientDocument = gql`
+    mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
+  insertPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
+    ${PatientRowFragmentDoc}`;
+export const UpdatePatientDocument = gql`
+    mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
+  updatePatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
+    ${PatientRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -109,6 +145,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     patientById(variables: PatientByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PatientByIdQuery>(PatientByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientById', 'query');
+    },
+    insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertPatientMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation');
+    },
+    updatePatient(variables: UpdatePatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdatePatientMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePatientMutation>(UpdatePatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePatient', 'mutation');
     }
   };
 }
@@ -145,5 +187,39 @@ export const mockPatientsQuery = (resolver: ResponseResolver<GraphQLRequest<Pati
 export const mockPatientByIdQuery = (resolver: ResponseResolver<GraphQLRequest<PatientByIdQueryVariables>, GraphQLContext<PatientByIdQuery>, any>) =>
   graphql.query<PatientByIdQuery, PatientByIdQueryVariables>(
     'patientById',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertPatientMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertPatient })
+ *   )
+ * })
+ */
+export const mockInsertPatientMutation = (resolver: ResponseResolver<GraphQLRequest<InsertPatientMutationVariables>, GraphQLContext<InsertPatientMutation>, any>) =>
+  graphql.mutation<InsertPatientMutation, InsertPatientMutationVariables>(
+    'insertPatient',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdatePatientMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updatePatient })
+ *   )
+ * })
+ */
+export const mockUpdatePatientMutation = (resolver: ResponseResolver<GraphQLRequest<UpdatePatientMutationVariables>, GraphQLContext<UpdatePatientMutation>, any>) =>
+  graphql.mutation<UpdatePatientMutation, UpdatePatientMutationVariables>(
+    'updatePatient',
     resolver
   )

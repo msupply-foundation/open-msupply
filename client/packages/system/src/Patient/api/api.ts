@@ -1,4 +1,9 @@
-import { SortBy, PatientSortFieldInput } from '@openmsupply-client/common';
+import {
+  SortBy,
+  PatientSortFieldInput,
+  InsertPatientInput,
+  UpdatePatientInput,
+} from '@openmsupply-client/common';
 import { Sdk, PatientRowFragment } from './operations.generated';
 
 export type ListParams = {
@@ -59,5 +64,34 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.patients;
     },
+  },
+  insertPatient: async (
+    input: InsertPatientInput
+  ): Promise<PatientRowFragment> => {
+    const result = await sdk.insertPatient({
+      storeId,
+      input,
+    });
+
+    if (result.insertPatient.__typename === 'PatientNode') {
+      return result.insertPatient;
+    }
+
+    throw new Error('Could not insert patient');
+  },
+
+  updatePatient: async (
+    input: UpdatePatientInput
+  ): Promise<PatientRowFragment> => {
+    const result = await sdk.updatePatient({
+      storeId,
+      input,
+    });
+
+    if (result.updatePatient.__typename === 'PatientNode') {
+      return result.updatePatient;
+    }
+
+    throw new Error('Could not update patient');
   },
 });
