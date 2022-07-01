@@ -1,18 +1,15 @@
+use crate::sync::sync_serde::{empty_date_time_as_option, empty_str_as_option};
 use chrono::NaiveDateTime;
 use repository::{
     ChangelogRow, ChangelogTableName, RequisitionLineRow, RequisitionLineRowRepository,
     StorageConnection, SyncBufferRow,
 };
-
 use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
 use super::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_REQUISITION_LINE,
+    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
 };
-use crate::sync::sync_serde::{empty_date_time_as_option, empty_str_as_option};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, PartialEq)]
@@ -40,38 +37,39 @@ pub struct LegacyRequisitionLineRow {
     pub snapshot_datetime: Option<NaiveDateTime>,
 }
 
-pub struct RequisitionLineTranslation {}
-impl RemotePullTranslation for RequisitionLineTranslation {
+pub(crate) struct RequisitionLineTranslation {}
+impl SyncTranslation for RequisitionLineTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_REQUISITION_LINE;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::REQUISITION_LINE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
         let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data)?;
-        Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::RequisitionLine(RequisitionLineRow {
-                id: data.ID.to_string(),
-                requisition_id: data.requisition_ID,
-                item_id: data.item_ID,
-                requested_quantity: data.Cust_stock_order,
-                suggested_quantity: data.suggested_quantity,
-                supply_quantity: data.actualQuan,
-                available_stock_on_hand: data.stock_on_hand,
-                average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH) as i32,
-                comment: data.comment,
-                snapshot_datetime: data.snapshot_datetime,
-            }),
+
+        let result = RequisitionLineRow {
+            id: data.ID.to_string(),
+            requisition_id: data.requisition_ID,
+            item_id: data.item_ID,
+            requested_quantity: data.Cust_stock_order,
+            suggested_quantity: data.suggested_quantity,
+            supply_quantity: data.actualQuan,
+            available_stock_on_hand: data.stock_on_hand,
+            average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH) as i32,
+            comment: data.comment,
+            snapshot_datetime: data.snapshot_datetime,
+        };
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::RequisitionLine(result),
         )))
     }
-}
 
-impl RemotePushUpsertTranslation for RequisitionLineTranslation {
     fn try_translate_push(
         &self,
         connection: &StorageConnection,
@@ -80,7 +78,7 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
         if changelog.table_name != ChangelogTableName::RequisitionLine {
             return Ok(None);
         }
-        let table_name = TRANSLATION_RECORD_REQUISITION_LINE;
+        let table_name = LegacyTableName::REQUISITION_LINE;
 
         let RequisitionLineRow {
             id,
@@ -121,5 +119,28 @@ impl RemotePushUpsertTranslation for RequisitionLineTranslation {
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
         }]))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_requisition_line_translation() {
+        use crate::sync::test::test_data::requisition_line as test_data;
+        let translator = RequisitionLineTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_requisition_line_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }

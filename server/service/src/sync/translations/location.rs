@@ -5,9 +5,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_LOCATION,
+    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize)]
@@ -23,14 +21,14 @@ pub struct LegacyLocationRow {
     pub store_id: String,
 }
 
-pub struct LocationTranslation {}
-impl RemotePullTranslation for LocationTranslation {
+pub(crate) struct LocationTranslation {}
+impl SyncTranslation for LocationTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_LOCATION;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::LOCATION;
         if sync_record.table_name != table_name {
             return Ok(None);
         }
@@ -43,19 +41,19 @@ impl RemotePullTranslation for LocationTranslation {
             store_id,
         } = serde_json::from_str::<LegacyLocationRow>(&sync_record.data)?;
 
-        Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Location(LocationRow {
-                id,
-                name,
-                code,
-                on_hold,
-                store_id,
-            }),
+        let result = LocationRow {
+            id,
+            name,
+            code,
+            on_hold,
+            store_id,
+        };
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::Location(result),
         )))
     }
-}
 
-impl RemotePushUpsertTranslation for LocationTranslation {
     fn try_translate_push(
         &self,
         connection: &StorageConnection,
@@ -64,7 +62,7 @@ impl RemotePushUpsertTranslation for LocationTranslation {
         if changelog.table_name != ChangelogTableName::Location {
             return Ok(None);
         }
-        let table_name = TRANSLATION_RECORD_LOCATION;
+        let table_name = LegacyTableName::LOCATION;
 
         let LocationRow {
             id,
@@ -94,5 +92,28 @@ impl RemotePushUpsertTranslation for LocationTranslation {
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
         }]))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_location_translation() {
+        use crate::sync::test::test_data::location as test_data;
+        let translator = LocationTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_location_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }

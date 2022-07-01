@@ -1,17 +1,14 @@
+use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
     ItemRowRepository, StorageConnection, SyncBufferRow,
 };
-
 use serde::{Deserialize, Serialize};
 
 use super::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_TRANS_LINE,
+    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
 };
-use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyTransLineType {
@@ -68,14 +65,14 @@ pub struct LegacyTransLineRow {
     pub total_after_tax: Option<f64>,
 }
 
-pub struct InvoiceLineTranslation {}
-impl RemotePullTranslation for InvoiceLineTranslation {
+pub(crate) struct InvoiceLineTranslation {}
+impl SyncTranslation for InvoiceLineTranslation {
     fn try_translate_pull(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_TRANS_LINE;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::TRANS_LINE;
         if sync_record.table_name != table_name {
             return Ok(None);
         }
@@ -112,51 +109,32 @@ impl RemotePullTranslation for InvoiceLineTranslation {
             }
         };
 
-        Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::InvoiceLine(InvoiceLineRow {
-                id: data.ID,
-                invoice_id: data.transaction_ID,
-                item_id: data.item_ID,
-                item_name: data.item_name,
-                item_code,
-                stock_line_id: data.item_line_ID,
-                location_id: data.location_ID,
-                batch: data.batch,
-                expiry_date: data.expiry_date,
-                pack_size: data.pack_size,
-                cost_price_per_pack: data.cost_price,
-                sell_price_per_pack: data.sell_price,
-                total_before_tax,
-                total_after_tax,
-                tax,
-                r#type: line_type,
-                number_of_packs: data.number_of_packs,
-                note: data.note,
-            }),
+        let result = InvoiceLineRow {
+            id: data.ID,
+            invoice_id: data.transaction_ID,
+            item_id: data.item_ID,
+            item_name: data.item_name,
+            item_code,
+            stock_line_id: data.item_line_ID,
+            location_id: data.location_ID,
+            batch: data.batch,
+            expiry_date: data.expiry_date,
+            pack_size: data.pack_size,
+            cost_price_per_pack: data.cost_price,
+            sell_price_per_pack: data.sell_price,
+            total_before_tax,
+            total_after_tax,
+            tax,
+            r#type: line_type,
+            number_of_packs: data.number_of_packs,
+            note: data.note,
+        };
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::InvoiceLine(result),
         )))
     }
-}
 
-fn total(data: &LegacyTransLineRow) -> f64 {
-    match data._type {
-        LegacyTransLineType::StockIn => data.cost_price * data.number_of_packs as f64,
-        LegacyTransLineType::StockOut => data.sell_price * data.number_of_packs as f64,
-        _ => 0.0,
-    }
-}
-
-fn to_invoice_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowType> {
-    let invoice_line_type = match _type {
-        LegacyTransLineType::StockIn => InvoiceLineRowType::StockIn,
-        LegacyTransLineType::StockOut => InvoiceLineRowType::StockOut,
-        LegacyTransLineType::Placeholder => InvoiceLineRowType::UnallocatedStock,
-        LegacyTransLineType::Service => InvoiceLineRowType::Service,
-        _ => return None,
-    };
-    Some(invoice_line_type)
-}
-
-impl RemotePushUpsertTranslation for InvoiceLineTranslation {
     fn try_translate_push(
         &self,
         connection: &StorageConnection,
@@ -165,7 +143,7 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
         if changelog.table_name != ChangelogTableName::InvoiceLine {
             return Ok(None);
         }
-        let table_name = TRANSLATION_RECORD_TRANS_LINE;
+        let table_name = LegacyTableName::TRANS_LINE;
 
         let InvoiceLineRow {
             id,
@@ -220,11 +198,56 @@ impl RemotePushUpsertTranslation for InvoiceLineTranslation {
     }
 }
 
+fn total(data: &LegacyTransLineRow) -> f64 {
+    match data._type {
+        LegacyTransLineType::StockIn => data.cost_price * data.number_of_packs as f64,
+        LegacyTransLineType::StockOut => data.sell_price * data.number_of_packs as f64,
+        _ => 0.0,
+    }
+}
+
+fn to_invoice_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowType> {
+    let invoice_line_type = match _type {
+        LegacyTransLineType::StockIn => InvoiceLineRowType::StockIn,
+        LegacyTransLineType::StockOut => InvoiceLineRowType::StockOut,
+        LegacyTransLineType::Placeholder => InvoiceLineRowType::UnallocatedStock,
+        LegacyTransLineType::Service => InvoiceLineRowType::Service,
+        _ => return None,
+    };
+    Some(invoice_line_type)
+}
+
 fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineType {
     match _type {
         InvoiceLineRowType::StockIn => LegacyTransLineType::StockIn,
         InvoiceLineRowType::StockOut => LegacyTransLineType::StockOut,
         InvoiceLineRowType::UnallocatedStock => LegacyTransLineType::Placeholder,
         InvoiceLineRowType::Service => LegacyTransLineType::Service,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_invoice_line_translation() {
+        use crate::sync::test::test_data::trans_line as test_data;
+        let translator = InvoiceLineTranslation {};
+
+        let (_, connection, _, _) = setup_all(
+            "test_invoice_line_translation",
+            MockDataInserts::none().units().items(),
+        )
+        .await;
+
+        for record in test_data::test_pull_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }

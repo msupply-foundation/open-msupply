@@ -1,3 +1,4 @@
+use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, StockLineRowRepository, StocktakeLineRow,
@@ -6,11 +7,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_STOCKTAKE_LINE,
+    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
 };
-use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -43,14 +41,14 @@ pub struct LegacyStocktakeLineRow {
     pub note: Option<String>,
 }
 
-pub struct StocktakeLineTranslation {}
-impl RemotePullTranslation for StocktakeLineTranslation {
+pub(crate) struct StocktakeLineTranslation {}
+impl SyncTranslation for StocktakeLineTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_STOCKTAKE_LINE;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::STOCKTAKE_LINE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
@@ -64,7 +62,7 @@ impl RemotePullTranslation for StocktakeLineTranslation {
         } else {
             None
         };
-        let row = StocktakeLineRow {
+        let result = StocktakeLineRow {
             id: data.ID,
             stocktake_id: data.stock_take_ID,
             stock_line_id: data.item_line_ID,
@@ -80,13 +78,12 @@ impl RemotePullTranslation for StocktakeLineTranslation {
             sell_price_per_pack: Some(data.sell_price),
             note: data.note,
         };
-        Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::StocktakeLine(row),
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::StocktakeLine(result),
         )))
     }
-}
 
-impl RemotePushUpsertTranslation for StocktakeLineTranslation {
     fn try_translate_push(
         &self,
         connection: &StorageConnection,
@@ -95,7 +92,7 @@ impl RemotePushUpsertTranslation for StocktakeLineTranslation {
         if changelog.table_name != ChangelogTableName::StocktakeLine {
             return Ok(None);
         }
-        let table_name = TRANSLATION_RECORD_STOCKTAKE_LINE;
+        let table_name = LegacyTableName::STOCKTAKE_LINE;
 
         let StocktakeLineRow {
             id,
@@ -148,5 +145,28 @@ impl RemotePushUpsertTranslation for StocktakeLineTranslation {
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
         }]))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_stock_take_line_translation() {
+        use crate::sync::test::test_data::stocktake_line as test_data;
+        let translator = StocktakeLineTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_stock_take_line_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }

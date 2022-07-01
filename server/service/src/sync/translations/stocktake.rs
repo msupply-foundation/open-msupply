@@ -1,3 +1,7 @@
+use crate::sync::sync_serde::{
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
+    empty_str_as_option, naive_time, zero_date_as_option,
+};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
@@ -6,13 +10,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_STOCKTAKE,
-};
-use crate::sync::sync_serde::{
-    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
-    empty_str_as_option, naive_time, zero_date_as_option,
+    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -70,14 +68,14 @@ pub struct LegacyStocktakeRow {
     pub finalised_datetime: Option<NaiveDateTime>,
 }
 
-pub struct StocktakeTranslation {}
-impl RemotePullTranslation for StocktakeTranslation {
+pub(crate) struct StocktakeTranslation {}
+impl SyncTranslation for StocktakeTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_STOCKTAKE;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::STOCKTAKE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
@@ -95,38 +93,29 @@ impl RemotePullTranslation for StocktakeTranslation {
             ),
         };
 
-        Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Stocktake(StocktakeRow {
-                id: data.ID,
-                user_id: data.user_id,
-                store_id: data.store_ID,
-                stocktake_number: data.serial_number,
-                comment: data.comment,
-                description: data.Description,
-                status: stocktake_status(&data.status).ok_or(anyhow::Error::msg(format!(
-                    "Unexpected stocktake status: {:?}",
-                    data.status
-                )))?,
-                created_datetime,
-                finalised_datetime,
-                inventory_adjustment_id: data.invad_additions_ID,
-                stocktake_date: data.stocktake_date,
-                is_locked: data.is_locked,
-            }),
+        let result = StocktakeRow {
+            id: data.ID,
+            user_id: data.user_id,
+            store_id: data.store_ID,
+            stocktake_number: data.serial_number,
+            comment: data.comment,
+            description: data.Description,
+            status: stocktake_status(&data.status).ok_or(anyhow::Error::msg(format!(
+                "Unexpected stocktake status: {:?}",
+                data.status
+            )))?,
+            created_datetime,
+            finalised_datetime,
+            inventory_adjustment_id: data.invad_additions_ID,
+            stocktake_date: data.stocktake_date,
+            is_locked: data.is_locked,
+        };
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::Stocktake(result),
         )))
     }
-}
 
-fn stocktake_status(status: &LegacyStocktakeStatus) -> Option<StocktakeStatus> {
-    let status = match status {
-        LegacyStocktakeStatus::Sg => StocktakeStatus::New,
-        LegacyStocktakeStatus::Fn => StocktakeStatus::Finalised,
-        _ => return None,
-    };
-    Some(status)
-}
-
-impl RemotePushUpsertTranslation for StocktakeTranslation {
     fn try_translate_push(
         &self,
         connection: &StorageConnection,
@@ -135,7 +124,7 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
         if changelog.table_name != ChangelogTableName::Stocktake {
             return Ok(None);
         }
-        let table_name = TRANSLATION_RECORD_STOCKTAKE;
+        let table_name = LegacyTableName::STOCKTAKE;
 
         let StocktakeRow {
             id,
@@ -181,9 +170,41 @@ impl RemotePushUpsertTranslation for StocktakeTranslation {
     }
 }
 
+fn stocktake_status(status: &LegacyStocktakeStatus) -> Option<StocktakeStatus> {
+    let status = match status {
+        LegacyStocktakeStatus::Sg => StocktakeStatus::New,
+        LegacyStocktakeStatus::Fn => StocktakeStatus::Finalised,
+        _ => return None,
+    };
+    Some(status)
+}
+
 fn legacy_stocktake_status(status: &StocktakeStatus) -> LegacyStocktakeStatus {
     match status {
         StocktakeStatus::New => LegacyStocktakeStatus::Sg,
         StocktakeStatus::Finalised => LegacyStocktakeStatus::Fn,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_stocktake_translation() {
+        use crate::sync::test::test_data::stocktake as test_data;
+        let translator = StocktakeTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_stocktake_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }

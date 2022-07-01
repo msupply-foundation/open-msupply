@@ -1,11 +1,9 @@
-use crate::sync::{
-    sync_serde::empty_str_as_option, translation_central::TRANSLATION_RECORD_REPORT,
-};
-use repository::{ReportContext, ReportRow, ReportType, SyncBufferRow};
+use crate::sync::sync_serde::empty_str_as_option;
+use repository::{ReportContext, ReportRow, ReportType, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
-use super::{CentralPushTranslation, IntegrationUpsertRecord};
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyReportEditor {
@@ -45,13 +43,14 @@ pub struct LegacyReportRow {
     pub comment: Option<String>,
 }
 
-pub struct ReportTranslation {}
-impl CentralPushTranslation for ReportTranslation {
-    fn try_translate(
+pub(crate) struct ReportTranslation {}
+impl SyncTranslation for ReportTranslation {
+    fn try_translate_pull(
         &self,
+        _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationUpsertRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_REPORT;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::REPORT;
         if sync_record.table_name != table_name {
             return Ok(None);
         }
@@ -69,41 +68,41 @@ impl CentralPushTranslation for ReportTranslation {
             LegacyReportContext::Stocktake => ReportContext::Stocktake,
             LegacyReportContext::Others => return Ok(None),
         };
-        Ok(Some(IntegrationUpsertRecord::Report(ReportRow {
+
+        let result = ReportRow {
             id: data.id.to_string(),
             name: data.report_name.to_string(),
             r#type,
             template: data.template,
             context,
             comment: data.comment,
-        })))
+        };
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::Report(result),
+        )))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{CentralPushTranslation, ReportTranslation};
-    use crate::sync::translation_central::{
-        test_data::{report::get_test_report_records, TestSyncDataRecord},
-        IntegrationUpsertRecord,
-    };
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
 
-    #[test]
-    fn test_report_translation() {
-        for record in get_test_report_records() {
-            match record.translated_record {
-                TestSyncDataRecord::Report(translated_record) => {
-                    assert_eq!(
-                        ReportTranslation {}
-                            .try_translate(&record.central_sync_buffer_row)
-                            .unwrap(),
-                        translated_record.map(|r| (IntegrationUpsertRecord::Report(r))),
-                        "{}",
-                        record.identifier
-                    )
-                }
-                _ => panic!("Testing wrong record type {:#?}", record.translated_record),
-            }
+    #[actix_rt::test]
+    async fn test_report_translation() {
+        use crate::sync::test::test_data::report as test_data;
+        let translator = ReportTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_report_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
         }
     }
 }

@@ -1,17 +1,14 @@
+use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, StockLineRow, StockLineRowRepository, StorageConnection,
     SyncBufferRow,
 };
-
 use serde::{Deserialize, Serialize};
 
 use super::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_ITEM_LINE,
+    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
 };
-use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -35,41 +32,42 @@ pub struct LegacyStockLineRow {
     pub note: Option<String>,
 }
 
-pub struct StockLineTranslation {}
-impl RemotePullTranslation for StockLineTranslation {
+pub(crate) struct StockLineTranslation {}
+impl SyncTranslation for StockLineTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_ITEM_LINE;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::ITEM_LINE;
 
         if sync_record.table_name != table_name {
             return Ok(None);
         }
 
         let data = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
-        Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::StockLine(StockLineRow {
-                id: data.ID,
-                store_id: data.store_ID,
-                item_id: data.item_ID,
-                location_id: data.location_ID,
-                batch: data.batch,
-                pack_size: data.pack_size,
-                cost_price_per_pack: data.cost_price,
-                sell_price_per_pack: data.sell_price,
-                available_number_of_packs: data.available,
-                total_number_of_packs: data.quantity,
-                expiry_date: data.expiry_date,
-                on_hold: data.hold,
-                note: data.note,
-            }),
+
+        let result = StockLineRow {
+            id: data.ID,
+            store_id: data.store_ID,
+            item_id: data.item_ID,
+            location_id: data.location_ID,
+            batch: data.batch,
+            pack_size: data.pack_size,
+            cost_price_per_pack: data.cost_price,
+            sell_price_per_pack: data.sell_price,
+            available_number_of_packs: data.available,
+            total_number_of_packs: data.quantity,
+            expiry_date: data.expiry_date,
+            on_hold: data.hold,
+            note: data.note,
+        };
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::StockLine(result),
         )))
     }
-}
 
-impl RemotePushUpsertTranslation for StockLineTranslation {
     fn try_translate_push(
         &self,
         connection: &StorageConnection,
@@ -78,7 +76,7 @@ impl RemotePushUpsertTranslation for StockLineTranslation {
         if changelog.table_name != ChangelogTableName::StockLine {
             return Ok(None);
         }
-        let table_name = TRANSLATION_RECORD_ITEM_LINE;
+        let table_name = LegacyTableName::ITEM_LINE;
 
         let StockLineRow {
             id,
@@ -119,5 +117,28 @@ impl RemotePushUpsertTranslation for StockLineTranslation {
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
         }]))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_stock_line_translation() {
+        use crate::sync::test::test_data::stock_line as test_data;
+        let translator = StockLineTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_stock_line_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }
