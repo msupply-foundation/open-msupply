@@ -1,24 +1,19 @@
 use chrono::Utc;
 use log::info;
 use repository::{
-    ChangelogRow, ChangelogRowRepository, EqualFilter, KeyValueStoreRepository, KeyValueType,
-    RepositoryError, StorageConnection, SyncBufferAction, SyncBufferFilter, SyncBufferRepository,
-    SyncBufferRow, SyncBufferRowRepository,
+    ChangelogRow, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType, RepositoryError,
+    StorageConnection, SyncBufferAction, SyncBufferRow, SyncBufferRowRepository,
 };
 use thiserror::Error;
 
 use crate::sync::{
     sync_api_v3::{RemotePostRecordV3, SyncTypeV3},
-    translation_remote::{
-        pull::import_sync_pull_records,
-        push::{translate_changelog, PushRecord},
-        REMOTE_TRANSLATION_RECORDS,
-    },
+    translations::{translate_changelog, PushRecord},
 };
 
 use super::{
     sync_api_v3::SyncApiV3,
-    sync_api_v5::{RemoteSyncActionV5, RemoteSyncRecordV5},
+    sync_api_v5::{RemoteSyncActionV5, RemoteSyncBatchV5},
     SyncApiV5,
 };
 
@@ -47,105 +42,68 @@ pub struct RemoteDataSynchroniser {
 
 #[allow(unused_assignments)]
 impl RemoteDataSynchroniser {
-    /// Performs the initial remote data sync (pull) from the central server
-    pub async fn initial_pull(
-        &self,
-        connection: &StorageConnection,
-    ) -> Result<(), RemoteSyncError> {
-        let state = RemoteSyncState::new(connection);
-        if state.initial_remote_data_synced()? {
-            return Ok(());
-        }
+    /// Request initialisation
+    pub async fn request_initialisation(&self) -> Result<(), RemoteSyncError> {
+        info!("Initialising remote sync records...");
+        self.sync_api_v5
+            .post_initialise()
+            .await
+            .map_err(|error| RemoteSyncError {
+                msg: "Failed to post sync queue initialisation request to the central server",
+                source: anyhow::Error::from(error),
+            })?;
 
-        if !state.sync_queue_initalised()? {
-            info!("Initialising remote sync records...");
-            self.sync_api_v5
-                .post_initialise()
-                .await
-                .map_err(|error| RemoteSyncError {
-                    msg: "Failed to post sync queue initialisation request to the central server",
-                    source: anyhow::Error::from(error),
-                })?;
-            state.set_sync_queue_initalised()?;
-            info!("Initialised remote sync records");
-        }
+        info!("Initialised remote sync records");
 
-        self.pull(connection).await?;
-        RemoteDataSynchroniser::integrate_records(connection).await?;
+        Ok(())
+    }
 
+    /// Request initialisation
+    pub fn set_initialised(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+        let remote_sync_state = RemoteSyncState::new(&connection);
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
         let cursor = ChangelogRowRepository::new(connection)
             .latest_changelog()?
             .map(|row| row.id)
             .unwrap_or(0) as u32;
-        state.update_push_cursor(cursor + 1)?;
+        remote_sync_state.update_push_cursor(cursor + 1)?;
 
-        state.set_site_id(self.site_id as i32)?;
-        state.set_initial_remote_data_synced()?;
+        remote_sync_state.set_site_id(self.site_id as i32)?;
+        remote_sync_state.set_initial_remote_data_synced()?;
         Ok(())
     }
 
     /// Pull all records from the central server
-    pub async fn pull(&self, connection: &StorageConnection) -> Result<(), RemoteSyncError> {
-        info!("Pull remote records...");
-        self.pull_records(connection)
-            .await
-            .map_err(|error| RemoteSyncError {
-                msg: "Failed to pull remote records",
-                source: error,
-            })?;
-        info!("Successfully pulled remote records");
-
-        Ok(())
-    }
-
-    /// Integrate previously pulled records
-    pub async fn integrate_records(connection: &StorageConnection) -> Result<(), RemoteSyncError> {
-        info!("Integrate remote records...");
-        RemoteDataSynchroniser::do_integrate_records(connection).map_err(|error| {
-            RemoteSyncError {
-                msg: "Failed to integrate remote records",
-                source: error,
-            }
-        })?;
-        info!("Successfully integrate remote records");
-
-        Ok(())
-    }
-
-    /// Pulls all records and stores them in the RemoteSyncBufferRepository
-    async fn pull_records(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    pub(crate) async fn pull(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
         // Arbitrary batch size TODO: should come from settings
         const BATCH_SIZE: u32 = 500;
+        let sync_buffer_repository = SyncBufferRowRepository::new(connection);
 
         loop {
             info!("Pulling remote sync records...");
+
             let sync_batch = self.sync_api_v5.get_queued_records(BATCH_SIZE).await?;
-            let number_of_pulled_records = sync_batch
-                .data
-                .as_deref()
-                .map(|ref it| it.len())
-                .unwrap_or(0) as u32;
-            let remaining = sync_batch.queue_length - number_of_pulled_records;
+
+            let total_queue_length = sync_batch.queue_length;
+            let sync_ids = sync_batch.extract_sync_ids();
+            let sync_buffer_rows = sync_batch.to_sync_buffer_rows()?;
+
+            let number_of_pulled_records = sync_buffer_rows.len() as u32;
+
             info!(
                 "Pulled {} remote sync records ({} remaining)",
-                number_of_pulled_records, remaining
+                number_of_pulled_records,
+                total_queue_length - number_of_pulled_records
             );
 
-            if let Some(data) = sync_batch.data {
-                let sync_ids: Vec<String> =
-                    data.iter().map(|record| record.sync_id.clone()).collect();
-
-                let _ = SyncBufferRowRepository::new(connection)
-                    .upsert_many(&remote_sync_batch_records_to_buffer_rows(data)?);
+            if number_of_pulled_records > 0 {
+                sync_buffer_repository.upsert_many(&sync_buffer_rows)?;
 
                 info!("Acknowledging remote sync records...");
                 self.sync_api_v5.post_acknowledge_records(sync_ids).await?;
                 info!("Acknowledged remote sync records");
-            }
-
-            if remaining <= 0 {
+            } else {
                 break;
             }
         }
@@ -153,38 +111,8 @@ impl RemoteDataSynchroniser {
         Ok(())
     }
 
-    pub fn do_integrate_records(connection: &StorageConnection) -> anyhow::Result<()> {
-        let mut records: Vec<SyncBufferRow> = Vec::new();
-        for table_name in REMOTE_TRANSLATION_RECORDS {
-            info!("Querying remote sync buffer for {} records", table_name);
-
-            let mut buffer_rows = SyncBufferRepository::new(&connection).query_by_filter(
-                SyncBufferFilter::new().table_name(EqualFilter::equal_to(table_name)),
-            )?;
-
-            info!(
-                "Found {} {} records in remote sync buffer",
-                buffer_rows.len(),
-                table_name
-            );
-
-            records.append(&mut buffer_rows);
-        }
-
-        info!("Importing {} remote sync buffer records...", records.len());
-        import_sync_pull_records(connection, &records)?;
-        info!("Successfully Imported remote sync buffer records",);
-
-        info!("Clearing remote sync buffer");
-        SyncBufferRowRepository::new(&connection).remove_all()?;
-        info!("Successfully cleared remote sync buffer");
-
-        Ok(())
-    }
-
-    // push
-
-    pub async fn push_changes(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
+    // Push all records in change log to central server
+    pub async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
         let changelog = ChangelogRowRepository::new(connection);
 
         const BATCH_SIZE: u32 = 1000;
@@ -263,24 +191,27 @@ impl RemoteSyncActionV5 {
     }
 }
 
-pub fn remote_sync_batch_records_to_buffer_rows(
-    records: Vec<RemoteSyncRecordV5>,
-) -> Result<Vec<SyncBufferRow>, serde_json::Error> {
-    let remote_sync_records: Result<Vec<SyncBufferRow>, serde_json::Error> = records
-        .into_iter()
-        .map(|record| {
-            Ok(SyncBufferRow {
-                table_name: record.table,
-                record_id: record.record_id,
-                action: record.action.to_row_action(),
-                data: serde_json::to_string(&record.data)?,
-                received_datetime: Utc::now().naive_utc(),
-                integration_datetime: None,
-                integration_error: None,
+impl RemoteSyncBatchV5 {
+    fn extract_sync_ids(&self) -> Vec<String> {
+        self.data.iter().map(|r| r.sync_id.clone()).collect()
+    }
+
+    fn to_sync_buffer_rows(self) -> Result<Vec<SyncBufferRow>, serde_json::Error> {
+        self.data
+            .into_iter()
+            .map(|record| {
+                Ok(SyncBufferRow {
+                    table_name: record.table,
+                    record_id: record.record_id,
+                    action: record.action.to_row_action(),
+                    data: serde_json::to_string(&record.data)?,
+                    received_datetime: Utc::now().naive_utc(),
+                    integration_datetime: None,
+                    integration_error: None,
+                })
             })
-        })
-        .collect();
-    remote_sync_records
+            .collect()
+    }
 }
 
 // This struct is only for updating values related to sync state, avoid using logic within associated methods
@@ -336,63 +267,5 @@ impl<'a> RemoteSyncState<'a> {
     pub fn update_push_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_i32(KeyValueType::RemoteSyncPushCursor, Some(cursor as i32))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::sync::translation_remote::{
-        table_name_to_central,
-        test_data::{
-            check_records_against_database, extract_sync_buffer_rows,
-            get_all_remote_pull_test_records, get_all_remote_push_test_records,
-        },
-    };
-    use repository::{mock::MockDataInserts, test_db, SyncBufferRowRepository};
-
-    use super::{translate_changelogs_to_push_records, RemoteDataSynchroniser};
-
-    #[actix_rt::test]
-    async fn test_integrate_remote_records() {
-        // if std::env::var("RUST_LOG").is_err() {
-        //     // Default rust log level to info
-        //     std::env::set_var("RUST_LOG", "warn");
-        // }
-        // std::env_logger::init();
-
-        let (_, connection, _, _) = test_db::setup_all(
-            "omsupply-database-integrate_remote_records",
-            MockDataInserts::all(),
-        )
-        .await;
-
-        // use test records with cursors that are out of order
-        let test_records = get_all_remote_pull_test_records();
-        let buffer_rows = extract_sync_buffer_rows(&test_records);
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&buffer_rows)
-            .expect("Failed to insert remote sync records into sync buffer");
-
-        RemoteDataSynchroniser::do_integrate_records(&connection)
-            .expect("Failed to integrate remote records");
-
-        check_records_against_database(&connection, test_records);
-
-        // test push
-        let test_records = get_all_remote_push_test_records();
-        for record in test_records {
-            let expected_row_id = record.change_log.row_id.to_string();
-            let expected_table_name = table_name_to_central(&record.change_log.table_name);
-            let mut result =
-                translate_changelogs_to_push_records(&connection, vec![record.change_log]).unwrap();
-            // we currently only have one entry in the data_list
-            let result = result.pop().unwrap();
-            // tests only do upsert right now, so there must be Some data:
-            let data = result.data.unwrap();
-
-            assert_eq!(result.record_id, expected_row_id);
-            assert_eq!(result.record_type, expected_table_name);
-            assert_eq!(data, record.push_data);
-        }
     }
 }
