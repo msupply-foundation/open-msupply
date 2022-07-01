@@ -1,5 +1,4 @@
-use crate::sync::Synchroniser;
-
+use super::synchroniser::Synchroniser;
 use log::{error, info};
 use tokio::{
     sync::mpsc::{self, error as mpsc_error, Receiver as MpscReceiver, Sender as MpscSender},

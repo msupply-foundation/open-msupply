@@ -71,9 +71,9 @@ use crate::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow,
     LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, UserAccountRow,
-    UserAccountRowRepository, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
-    UserStoreJoinRowRepository, SyncBufferRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
+    UserAccountRow, UserAccountRowRepository, UserPermissionRow, UserPermissionRowRepository,
+    UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::unit::mock_units;
@@ -212,6 +212,11 @@ impl MockDataInserts {
 
     pub fn invoices(mut self) -> Self {
         self.invoices = true;
+        self
+    }
+
+    pub fn full_requisitions(mut self) -> Self {
+        self.full_requisitions = true;
         self
     }
 
