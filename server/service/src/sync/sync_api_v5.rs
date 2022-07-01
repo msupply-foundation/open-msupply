@@ -39,7 +39,7 @@ pub struct RemoteSyncRecordV5 {
 pub struct RemoteSyncBatchV5 {
     #[serde(rename = "queueLength")]
     pub queue_length: u32,
-    pub data: Option<Vec<RemoteSyncRecordV5>>,
+    pub data: Vec<RemoteSyncRecordV5>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -249,7 +249,7 @@ mod tests {
 
         let mock_initialise_body = RemoteSyncBatchV5 {
             queue_length: 0,
-            data: None,
+            data: Vec::new(),
         };
 
         mock_server.mock(|when, then| {
@@ -316,7 +316,7 @@ mod tests {
 
         let mock_remote_records_body = RemoteSyncBatchV5 {
             queue_length: mock_remote_records_count,
-            data: Some(mock_remote_records_data),
+            data: mock_remote_records_data,
         };
 
         mock_server.mock(|when, then| {
