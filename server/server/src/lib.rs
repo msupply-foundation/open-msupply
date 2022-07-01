@@ -15,7 +15,8 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
-    token_bucket::TokenBucket, sync::Synchroniser,
+    sync::synchroniser::Synchroniser,
+    token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
@@ -198,7 +199,7 @@ async fn run_server(
 
     let mut synchroniser = Synchroniser::new(sync_settings, service_provider_data.clone()).unwrap();
     // Do the initial pull before doing anything else
-    match synchroniser.initial_pull().await {
+    match synchroniser.sync().await {
         Ok(_) => {}
         Err(err) => {
             error!("Failed to perform the initial sync: {}", err);
