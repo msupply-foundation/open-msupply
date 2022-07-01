@@ -7,5 +7,7 @@ export const usePatient = {
     get: Document.usePatient,
     list: Document.usePatients,
     listAll: Document.usePatientsAll,
+    insert: Document.useInsertPatient,
+    update: Document.useUpdatePatient,
   },
 };

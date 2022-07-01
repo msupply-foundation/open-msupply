@@ -1,12 +1,16 @@
 fragment Document on DocumentNode {
   id
   name
+  parents
+  author
+  timestamp
   type
   data
   documentRegistry {
     uiSchemaType
     documentType
     context
+    formSchemaId
     jsonSchema
     uiSchema
   }
