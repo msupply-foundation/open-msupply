@@ -8,7 +8,7 @@ use chrono::NaiveDateTime;
 use diesel::{dsl::IntoBoxed, prelude::*};
 use diesel_derive_enum::DbEnum;
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum SyncBufferAction {
     Upsert,
@@ -28,7 +28,9 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, AsChangeset, PartialEq, Eq)]
+#[derive(
+    Clone, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Eq,
+)]
 #[table_name = "sync_buffer"]
 pub struct SyncBufferRow {
     pub record_id: String,
@@ -58,6 +60,7 @@ pub struct SyncBufferRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+use serde::{Deserialize, Serialize};
 use sync_buffer::dsl as sync_buffer_dsl;
 use util::Defaults;
 
@@ -92,10 +95,19 @@ impl<'a> SyncBufferRowRepository<'a> {
         Ok(())
     }
 
-    // TODO remove (use integration_datetime/error)
-    pub fn remove_all(&self) -> Result<(), RepositoryError> {
-        diesel::delete(sync_buffer_dsl::sync_buffer).execute(&self.connection.connection)?;
-        Ok(())
+    pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+        Ok(sync_buffer_dsl::sync_buffer.load(&self.connection.connection)?)
+    }
+
+    pub fn find_one_by_record_id(
+        &self,
+        record_id: &str,
+    ) -> Result<Option<SyncBufferRow>, RepositoryError> {
+        let result = sync_buffer_dsl::sync_buffer
+            .filter(sync_buffer_dsl::record_id.eq(record_id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
     }
 }
 
