@@ -1,21 +1,18 @@
+use crate::sync::sync_serde::{
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
+    empty_str_as_option, naive_time, zero_date_as_option,
+};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
     InvoiceRowType, NameRow, NameRowRepository, StorageConnection, StoreRowRepository,
     SyncBufferRow,
 };
-
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_TRANSACT,
-};
-use crate::sync::sync_serde::{
-    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
-    empty_str_as_option, naive_time, zero_date_as_option,
+    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -152,14 +149,14 @@ pub struct LegacyTransactRow {
     pub om_colour: Option<String>,
 }
 
-pub struct InvoiceTranslation {}
-impl RemotePullTranslation for InvoiceTranslation {
+pub(crate) struct InvoiceTranslation {}
+impl SyncTranslation for InvoiceTranslation {
     fn try_translate_pull(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_TRANSACT;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::TRANSACT;
         if sync_record.table_name != table_name {
             return Ok(None);
         }
@@ -188,34 +185,122 @@ impl RemotePullTranslation for InvoiceTranslation {
         ))?;
         let mapping = map_legacy(&invoice_type, &data);
 
-        Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Invoice(InvoiceRow {
-                id: data.ID,
-                user_id: data.user_id,
-                store_id: data.store_ID,
-                name_id: data.name_ID,
-                name_store_id,
-                invoice_number: data.invoice_num,
-                r#type: data.om_type.unwrap_or(invoice_type),
-                status: data.om_status.unwrap_or(invoice_status),
-                on_hold: data.hold,
-                comment: data.comment,
-                their_reference: data.their_ref,
+        let result = InvoiceRow {
+            id: data.ID,
+            user_id: data.user_id,
+            store_id: data.store_ID,
+            name_id: data.name_ID,
+            name_store_id,
+            invoice_number: data.invoice_num,
+            r#type: data.om_type.unwrap_or(invoice_type),
+            status: data.om_status.unwrap_or(invoice_status),
+            on_hold: data.hold,
+            comment: data.comment,
+            their_reference: data.their_ref,
 
-                // new om field mappings
-                created_datetime: mapping.created_datetime,
-                allocated_datetime: mapping.allocated_datetime,
-                picked_datetime: mapping.picked_datetime,
-                shipped_datetime: mapping.shipped_datetime,
-                delivered_datetime: mapping.delivered_datetime,
-                verified_datetime: mapping.verified_datetime,
-                colour: mapping.colour,
+            // new om field mappings
+            created_datetime: mapping.created_datetime,
+            allocated_datetime: mapping.allocated_datetime,
+            picked_datetime: mapping.picked_datetime,
+            shipped_datetime: mapping.shipped_datetime,
+            delivered_datetime: mapping.delivered_datetime,
+            verified_datetime: mapping.verified_datetime,
+            colour: mapping.colour,
 
-                requisition_id: data.requisition_ID,
-                linked_invoice_id: data.linked_transaction_id,
-                transport_reference: data.transport_reference,
-            }),
+            requisition_id: data.requisition_ID,
+            linked_invoice_id: data.linked_transaction_id,
+            transport_reference: data.transport_reference,
+        };
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::Invoice(result),
         )))
+    }
+
+    fn try_translate_push(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
+        if changelog.table_name != ChangelogTableName::Invoice {
+            return Ok(None);
+        }
+        let table_name = LegacyTableName::TRANSACT;
+
+        let InvoiceRow {
+            id,
+            user_id,
+            name_id,
+            name_store_id: _,
+            store_id,
+            invoice_number,
+            r#type,
+            status,
+            on_hold,
+            comment,
+            their_reference,
+            created_datetime,
+            allocated_datetime,
+            picked_datetime,
+            shipped_datetime,
+            delivered_datetime,
+            verified_datetime,
+            colour,
+            requisition_id,
+            linked_invoice_id,
+            transport_reference,
+        } = InvoiceRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
+
+        let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
+            "Invalid invoice type: {:?}",
+            r#type
+        )))?;
+        let legacy_status = legacy_invoice_status(&r#type, &status).ok_or(anyhow::Error::msg(
+            format!("Invalid invoice status: {:?}", r#status),
+        ))?;
+        let confirm_datetime = to_legacy_confirm_time(&r#type, picked_datetime, delivered_datetime);
+        let legacy_row = LegacyTransactRow {
+            ID: id.clone(),
+            user_id,
+            name_ID: name_id,
+            store_ID: store_id.clone(),
+            invoice_num: invoice_number,
+            _type,
+            status: legacy_status,
+            hold: on_hold,
+            comment,
+            their_ref: their_reference,
+            requisition_ID: requisition_id,
+            linked_transaction_id: linked_invoice_id,
+            entry_date: created_datetime.date(),
+            entry_time: created_datetime.time(),
+            ship_date: shipped_datetime
+                .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
+            arrival_date_actual: delivered_datetime
+                .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
+            confirm_date: confirm_datetime.0,
+            confirm_time: confirm_datetime.1,
+
+            mode: TransactMode::Store,
+            transport_reference,
+            created_datetime: Some(created_datetime),
+            allocated_datetime,
+            picked_datetime,
+            shipped_datetime,
+            delivered_datetime,
+            verified_datetime,
+            om_status: Some(status),
+            om_type: Some(r#type),
+            om_colour: colour,
+        };
+
+        Ok(Some(vec![PushUpsertRecord {
+            sync_id: changelog.id,
+            store_id: Some(store_id),
+            table_name,
+            record_id: id,
+            data: serde_json::to_value(&legacy_row)?,
+        }]))
     }
 }
 
@@ -361,94 +446,6 @@ fn invoice_status(
     Some(status)
 }
 
-impl RemotePushUpsertTranslation for InvoiceTranslation {
-    fn try_translate_push(
-        &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
-        if changelog.table_name != ChangelogTableName::Invoice {
-            return Ok(None);
-        }
-        let table_name = TRANSLATION_RECORD_TRANSACT;
-
-        let InvoiceRow {
-            id,
-            user_id,
-            name_id,
-            name_store_id: _,
-            store_id,
-            invoice_number,
-            r#type,
-            status,
-            on_hold,
-            comment,
-            their_reference,
-            created_datetime,
-            allocated_datetime,
-            picked_datetime,
-            shipped_datetime,
-            delivered_datetime,
-            verified_datetime,
-            colour,
-            requisition_id,
-            linked_invoice_id,
-            transport_reference,
-        } = InvoiceRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
-
-        let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
-            "Invalid invoice type: {:?}",
-            r#type
-        )))?;
-        let legacy_status = legacy_invoice_status(&r#type, &status).ok_or(anyhow::Error::msg(
-            format!("Invalid invoice status: {:?}", r#status),
-        ))?;
-        let confirm_datetime = to_legacy_confirm_time(&r#type, picked_datetime, delivered_datetime);
-        let legacy_row = LegacyTransactRow {
-            ID: id.clone(),
-            user_id,
-            name_ID: name_id,
-            store_ID: store_id.clone(),
-            invoice_num: invoice_number,
-            _type,
-            status: legacy_status,
-            hold: on_hold,
-            comment,
-            their_ref: their_reference,
-            requisition_ID: requisition_id,
-            linked_transaction_id: linked_invoice_id,
-            entry_date: created_datetime.date(),
-            entry_time: created_datetime.time(),
-            ship_date: shipped_datetime
-                .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
-            arrival_date_actual: delivered_datetime
-                .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
-            confirm_date: confirm_datetime.0,
-            confirm_time: confirm_datetime.1,
-
-            mode: TransactMode::Store,
-            transport_reference,
-            created_datetime: Some(created_datetime),
-            allocated_datetime,
-            picked_datetime,
-            shipped_datetime,
-            delivered_datetime,
-            verified_datetime,
-            om_status: Some(status),
-            om_type: Some(r#type),
-            om_colour: colour,
-        };
-
-        Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
-            store_id: Some(store_id),
-            table_name,
-            record_id: id,
-            data: serde_json::to_value(&legacy_row)?,
-        }]))
-    }
-}
-
 fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
     let t = match _type {
         InvoiceRowType::OutboundShipment => LegacyTransactType::Ci,
@@ -495,22 +492,23 @@ fn legacy_invoice_status(
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use repository::{mock::MockDataInserts, test_db::setup_all};
-
-    use crate::sync::translation_remote::{
-        invoice::InvoiceTranslation, pull::RemotePullTranslation,
-        test_data::transact::get_test_transact_records,
-    };
 
     #[actix_rt::test]
     async fn test_invoice_translation() {
-        let (_, connection, _, _) =
-            setup_all("test_invoice_translation", MockDataInserts::all()).await;
-
+        use crate::sync::test::test_data::transact as test_data;
         let translator = InvoiceTranslation {};
-        for record in get_test_transact_records() {
+
+        let (_, connection, _, _) = setup_all(
+            "test_invoice_translation",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        for record in test_data::test_pull_records() {
             let translation_result = translator
-                .try_translate_pull(&connection, &record.remote_sync_buffer_row)
+                .try_translate_pull(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
