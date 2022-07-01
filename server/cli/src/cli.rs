@@ -4,8 +4,9 @@ use clap::StructOpt;
 use cli::RefreshDatesRepository;
 use graphql::schema_builder;
 use log::info;
-use repository::{get_storage_connection_manager, test_db, SyncBufferRowRepository};
-use reqwest::{Client, Url};
+use repository::{
+    get_storage_connection_manager, test_db, StorageConnectionManager, SyncBufferRowRepository,
+};
 use serde::{Deserialize, Serialize};
 use server::configuration;
 use service::{
@@ -15,13 +16,8 @@ use service::{
     service_provider::ServiceProvider,
     settings::Settings,
     sync::{
-        central_data_synchroniser::CentralDataSynchroniser,
-        remote_data_synchroniser::{
-            remote_sync_batch_records_to_buffer_rows, RemoteDataSynchroniser,
-        },
         settings::SyncSettings,
-        sync_api_v5::{CentralSyncBatchV5, RemoteSyncBatchV5},
-        SyncApiV5, SyncCredentials, Synchroniser,
+        synchroniser::{integrate_and_translate_sync_buffer, Synchroniser},
     },
     token_bucket::TokenBucket,
 };
@@ -30,7 +26,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
-use util::{hash, inline_init};
+use util::inline_init;
 
 const DATA_EXPORT_FOLDER: &'static str = "data";
 
@@ -64,9 +60,6 @@ enum Action {
         /// Users to sync in format "username:password,username2:password2"
         #[clap(short, long)]
         users: String,
-        /// Plain sync password, will overwrite sync.password_256 from configuration/.*yaml (or APP_SYNC__PASSWORD_256 from env var)
-        #[clap(short, long)]
-        password: Option<String>,
         /// Prettify json output
         #[clap(long, parse(from_flag))]
         pretty: bool,
@@ -86,9 +79,53 @@ enum Action {
 
 #[derive(Serialize, Deserialize)]
 struct InitialisationData {
-    central: CentralSyncBatchV5,
-    remote: RemoteSyncBatchV5,
+    sync_buffer_rows: Vec<repository::SyncBufferRow>,
     users: Vec<(LoginInput, LoginUserInfoV4)>,
+}
+
+async fn initialise_from_central(settings: Settings, users: &str) -> StorageConnectionManager {
+    info!("Reseting database");
+    test_db::setup(&settings.database).await;
+    info!("Finished database reset");
+
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let app_data_folder = settings.server.base_dir.unwrap();
+    let service_provider = Data::new(ServiceProvider::new(
+        connection_manager.clone(),
+        &app_data_folder,
+    ));
+
+    let sync_settings = settings.sync.unwrap();
+    let central_server_url = sync_settings.url.clone();
+
+    let auth_data = AuthData {
+        auth_token_secret: "secret".to_string(),
+        token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+        no_ssl: true,
+        debug_no_access_control: false,
+    };
+
+    info!("Initialising from central");
+    Synchroniser::new(sync_settings, service_provider.clone())
+        .unwrap()
+        .sync()
+        .await
+        .unwrap();
+
+    info!("Syncing users");
+    for user in users.split(",") {
+        let user = user.split(':').collect::<Vec<&str>>();
+        let input = LoginInput {
+            username: user[0].to_string(),
+            password: user[1].to_string(),
+            central_server_url: central_server_url.clone(),
+        };
+        LoginService::login(&service_provider, &auth_data, input.clone(), 0)
+            .await
+            .expect(&format!("Cannot login with user {:?}", input));
+    }
+    info!("Initialisation finished");
+    connection_manager
 }
 
 #[tokio::main]
@@ -114,68 +151,15 @@ async fn main() {
             info!("Finished database reset");
         }
         Action::InitialiseFromCentral { users } => {
-            info!("Reseting database");
-            test_db::setup(&settings.database).await;
-            info!("Finished database reset");
-
-            let connection_manager = get_storage_connection_manager(&settings.database);
-            let app_data_folder = settings.server.base_dir.unwrap();
-            let service_provider = Data::new(ServiceProvider::new(
-                connection_manager.clone(),
-                &app_data_folder,
-            ));
-
-            let sync_settings = settings.sync.unwrap();
-            let central_server_url = sync_settings.url.clone();
-
-            let auth_data = AuthData {
-                auth_token_secret: "secret".to_string(),
-                token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
-                no_ssl: true,
-                debug_no_access_control: false,
-            };
-
-            info!("Initialising from central");
-            Synchroniser::new(sync_settings, service_provider.clone())
-                .unwrap()
-                .initial_pull()
-                .await
-                .unwrap();
-
-            info!("Syncing users");
-            for user in users.split(",") {
-                let user = user.split(':').collect::<Vec<&str>>();
-                let input = LoginInput {
-                    username: user[0].to_string(),
-                    password: user[1].to_string(),
-                    central_server_url: central_server_url.clone(),
-                };
-                LoginService::login(&service_provider, &auth_data, input.clone(), 0)
-                    .await
-                    .expect(&format!("Cannot login with user {:?}", input));
-            }
-            info!("Initialisation finished");
+            initialise_from_central(settings, &users).await;
         }
         Action::ExportInitialisation {
             name,
             users,
-            password,
             pretty,
         } => {
-            let SyncSettings {
-                username,
-                password_sha256,
-                url,
-                ..
-            } = settings.sync.unwrap();
-
-            // Hash and use password if supplied in cli
-            let credentials = SyncCredentials {
-                username,
-                password_sha256: password
-                    .map(|p| hash::sha256(&p))
-                    .unwrap_or(password_sha256),
-            };
+            let url = settings.sync.clone().unwrap().url;
+            let connection_manager = initialise_from_central(settings, &users).await;
 
             info!("Syncing users");
             let mut synced_user_info_rows = Vec::new();
@@ -192,29 +176,11 @@ async fn main() {
                 ));
             }
 
-            let client = Client::new();
-            let url = Url::parse(&url).unwrap();
-            let connection_manager = get_storage_connection_manager(&settings.database);
-            let app_data_folder = settings.server.base_dir.unwrap();
-            let service_provider = Data::new(ServiceProvider::new(
-                connection_manager.clone(),
-                &app_data_folder,
-            ));
-            let hardware_id = service_provider.app_data_service.get_hardware_id().unwrap();
-            let sync_api_v5 = SyncApiV5::new(
-                url.clone(),
-                credentials.clone(),
-                client.clone(),
-                &hardware_id,
-            );
+            let connection = connection_manager.connection().unwrap();
 
-            info!("Requesting initialisation");
-            sync_api_v5.post_initialise().await.unwrap();
             let data = InitialisationData {
-                // sync central
-                central: sync_api_v5.get_central_records(0, 1000000).await.unwrap(),
-                // sync remote
-                remote: sync_api_v5.get_queued_records(1000000).await.unwrap(),
+                // Sync Buffer Rows
+                sync_buffer_rows: SyncBufferRowRepository::new(&connection).get_all().unwrap(),
                 users: synced_user_info_rows,
             };
 
@@ -252,40 +218,20 @@ async fn main() {
             let data: InitialisationData =
                 serde_json::from_slice(&fs::read(import_file).unwrap()).unwrap();
 
-            let sync_buffer_repository = SyncBufferRowRepository::new(&ctx.connection);
-            info!("Initialising central");
+            info!("Integrate sync buffer");
+            let buffer_repo = SyncBufferRowRepository::new(&ctx.connection);
+            let buffer_rows = data
+                .sync_buffer_rows
+                .into_iter()
+                .map(|mut r| {
+                    r.integration_datetime = None;
+                    r.integration_error = None;
+                    r
+                })
+                .collect();
+            buffer_repo.upsert_many(&buffer_rows).unwrap();
 
-            sync_buffer_repository
-                .upsert_many(
-                    &data
-                        .central
-                        .data
-                        .iter()
-                        .map(|r| r.to_sync_buffer().unwrap())
-                        .collect(),
-                )
-                .unwrap();
-
-            for v5_central_record in data.central.data {
-                let central_sync_record = v5_central_record.to_sync_buffer().unwrap();
-                CentralDataSynchroniser::insert_one_and_update_cursor(
-                    &ctx.connection,
-                    &central_sync_record,
-                    0,
-                )
-                .unwrap()
-            }
-            CentralDataSynchroniser::integrate_central_records(&ctx.connection)
-                .await
-                .unwrap();
-
-            info!("Initialising remote");
-            if let Some(data) = data.remote.data {
-                sync_buffer_repository
-                    .upsert_many(&remote_sync_batch_records_to_buffer_rows(data).unwrap())
-                    .unwrap();
-                RemoteDataSynchroniser::do_integrate_records(&ctx.connection).unwrap()
-            }
+            integrate_and_translate_sync_buffer(&ctx.connection).unwrap();
 
             info!("Initialising users");
             for (input, user_info) in data.users {
