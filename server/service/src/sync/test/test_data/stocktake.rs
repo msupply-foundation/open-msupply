@@ -1,16 +1,15 @@
+use crate::sync::{
+    test::TestSyncPullRecord,
+    translations::{
+        stocktake::{LegacyStocktakeRow, LegacyStocktakeStatus},
+        LegacyTableName, PullUpsertRecord,
+    },
+};
 use chrono::{NaiveDate, NaiveTime};
 use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeStatus, SyncBufferRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeStatus,
 };
 use serde_json::json;
-use util::inline_init;
-
-use crate::sync::translation_remote::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord},
-    stocktake::{LegacyStocktakeRow, LegacyStocktakeStatus},
-    test_data::TestSyncRecord,
-    TRANSLATION_RECORD_STOCKTAKE,
-};
 
 use super::TestSyncPushRecord;
 
@@ -35,32 +34,26 @@ const STOCKTAKE_1: (&'static str, &'static str) = (
       "type": ""
     }"#,
 );
-fn stocktake_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Stocktake(StocktakeRow {
-                id: STOCKTAKE_1.0.to_string(),
-                user_id: "".to_string(),
-                store_id: "store_a".to_string(),
-                stocktake_number: 3,
-                comment: None,
-                description: Some("Test".to_string()),
-                status: StocktakeStatus::Finalised,
-                created_datetime: NaiveDate::from_ymd(2021, 07, 30)
-                    .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap()),
-                finalised_datetime: None,
-                inventory_adjustment_id: Some("inbound_shipment_a".to_string()),
-                is_locked: false,
-                stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
-            }),
-        )),
-        identifier: "Stocktake 1",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_STOCKTAKE.to_string();
-            r.record_id = STOCKTAKE_1.0.to_string();
-            r.data = STOCKTAKE_1.1.to_string();
+fn stocktake_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::STOCKTAKE,
+        STOCKTAKE_1,
+        PullUpsertRecord::Stocktake(StocktakeRow {
+            id: STOCKTAKE_1.0.to_string(),
+            user_id: "".to_string(),
+            store_id: "store_a".to_string(),
+            stocktake_number: 3,
+            comment: None,
+            description: Some("Test".to_string()),
+            status: StocktakeStatus::Finalised,
+            created_datetime: NaiveDate::from_ymd(2021, 07, 30)
+                .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap()),
+            finalised_datetime: None,
+            inventory_adjustment_id: Some("inbound_shipment_a".to_string()),
+            is_locked: false,
+            stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
         }),
-    }
+    )
 }
 fn stocktake_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -115,31 +108,25 @@ const STOCKTAKE_OM_FIELD: (&'static str, &'static str) = (
       "om_finalised_datetime": "2021-07-31T15:15:15"
     }"#,
 );
-fn stocktake_om_field_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Stocktake(StocktakeRow {
-                id: STOCKTAKE_OM_FIELD.0.to_string(),
-                user_id: "".to_string(),
-                store_id: "store_a".to_string(),
-                stocktake_number: 3,
-                comment: None,
-                description: Some("Test".to_string()),
-                status: StocktakeStatus::Finalised,
-                created_datetime: NaiveDate::from_ymd(2021, 07, 30).and_hms(15, 15, 15),
-                finalised_datetime: Some(NaiveDate::from_ymd(2021, 07, 31).and_hms(15, 15, 15)),
-                inventory_adjustment_id: Some("inbound_shipment_a".to_string()),
-                is_locked: false,
-                stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
-            }),
-        )),
-        identifier: "Stocktake om field",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_STOCKTAKE.to_string();
-            r.record_id = STOCKTAKE_OM_FIELD.0.to_string();
-            r.data = STOCKTAKE_OM_FIELD.1.to_string();
+fn stocktake_om_field_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::STOCKTAKE,
+        STOCKTAKE_OM_FIELD,
+        PullUpsertRecord::Stocktake(StocktakeRow {
+            id: STOCKTAKE_OM_FIELD.0.to_string(),
+            user_id: "".to_string(),
+            store_id: "store_a".to_string(),
+            stocktake_number: 3,
+            comment: None,
+            description: Some("Test".to_string()),
+            status: StocktakeStatus::Finalised,
+            created_datetime: NaiveDate::from_ymd(2021, 07, 30).and_hms(15, 15, 15),
+            finalised_datetime: Some(NaiveDate::from_ymd(2021, 07, 31).and_hms(15, 15, 15)),
+            inventory_adjustment_id: Some("inbound_shipment_a".to_string()),
+            is_locked: false,
+            stocktake_date: Some(NaiveDate::from_ymd(2021, 07, 30)),
         }),
-    }
+    )
 }
 fn stocktake_om_field_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -168,12 +155,10 @@ fn stocktake_om_field_push_record() -> TestSyncPushRecord {
     }
 }
 
-#[allow(dead_code)]
-pub fn get_test_stocktake_records() -> Vec<TestSyncRecord> {
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
     vec![stocktake_pull_record(), stocktake_om_field_pull_record()]
 }
 
-#[allow(dead_code)]
-pub fn get_test_push_stocktake_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![stocktake_push_record(), stocktake_om_field_push_record()]
 }

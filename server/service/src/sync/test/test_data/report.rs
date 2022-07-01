@@ -1,9 +1,8 @@
-use crate::sync::translation_central::{
-    test_data::{TestSyncDataRecord, TestSyncRecord},
-    TRANSLATION_RECORD_REPORT,
+use crate::sync::{
+    test::TestSyncPullRecord,
+    translations::{LegacyTableName, PullUpsertRecord},
 };
-use repository::{ReportContext, ReportRow, ReportType, SyncBufferRow};
-use util::inline_init;
+use repository::{ReportContext, ReportRow, ReportType};
 
 const REPORT_1: (&'static str, &'static str) = (
     "76B6C424E1935C4DAF36A7A8F451FE72",
@@ -26,22 +25,17 @@ const REPORT_1: (&'static str, &'static str) = (
     }"#,
 );
 
-#[allow(dead_code)]
-pub fn get_test_report_records() -> Vec<TestSyncRecord> {
-    vec![TestSyncRecord {
-        translated_record: TestSyncDataRecord::Report(Some(ReportRow {
-            id: "76B6C424E1935C4DAF36A7A8F451FE72".to_string(),
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::REPORT,
+        REPORT_1,
+        PullUpsertRecord::Report(ReportRow {
+            id: REPORT_1.0.to_string(),
             name: "Test".to_string(),
             r#type: ReportType::OmSupply,
             template: "template data".to_string(),
             context: ReportContext::Stocktake,
             comment: Some("Test comment".to_string()),
-        })),
-        identifier: "REPORT_1",
-        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_REPORT.to_owned();
-            r.record_id = REPORT_1.0.to_owned();
-            r.data = REPORT_1.1.to_owned();
         }),
-    }]
+    )]
 }

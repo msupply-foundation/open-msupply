@@ -1,17 +1,15 @@
+use crate::sync::{
+    test::TestSyncPullRecord,
+    translations::{
+        invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode},
+        LegacyTableName, PullUpsertRecord,
+    },
+};
 use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus,
-    InvoiceRowType, SyncBufferRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
 };
 use serde_json::json;
-use util::inline_init;
-
-use crate::sync::translation_remote::{
-    invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode},
-    pull::{IntegrationRecord, IntegrationUpsertRecord},
-    test_data::TestSyncRecord,
-    TRANSLATION_RECORD_TRANSACT,
-};
 
 use super::TestSyncPushRecord;
 
@@ -91,43 +89,37 @@ const TRANSACT_1: (&'static str, &'static str) = (
       "waybill_number": ""
   }"#,
 );
-fn transact_1_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Invoice(InvoiceRow {
-                id: TRANSACT_1.0.to_string(),
-                user_id: None,
-                store_id: "store_a".to_string(),
-                name_id: "name_store_a".to_string(),
-                name_store_id: Some("store_a".to_string()),
-                invoice_number: 1,
-                r#type: InvoiceRowType::InboundShipment,
-                status: InvoiceRowStatus::Delivered,
-                on_hold: false,
-                comment: None,
-                their_reference: None,
-                transport_reference: None,
-                created_datetime: NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0)
-                    + Duration::seconds(47046),
-                allocated_datetime: None,
-                picked_datetime: None,
-                shipped_datetime: None,
-                delivered_datetime: Some(
-                    NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0) + Duration::seconds(47046),
-                ),
-                verified_datetime: None,
-                colour: None,
-                requisition_id: None,
-                linked_invoice_id: None,
-            }),
-        )),
-        identifier: "Transact 1",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_TRANSACT.to_string();
-            r.record_id = TRANSACT_1.0.to_string();
-            r.data = TRANSACT_1.1.to_string();
+fn transact_1_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::TRANSACT,
+        TRANSACT_1,
+        PullUpsertRecord::Invoice(InvoiceRow {
+            id: TRANSACT_1.0.to_string(),
+            user_id: None,
+            store_id: "store_a".to_string(),
+            name_id: "name_store_a".to_string(),
+            name_store_id: Some("store_a".to_string()),
+            invoice_number: 1,
+            r#type: InvoiceRowType::InboundShipment,
+            status: InvoiceRowStatus::Delivered,
+            on_hold: false,
+            comment: None,
+            their_reference: None,
+            transport_reference: None,
+            created_datetime: NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0)
+                + Duration::seconds(47046),
+            allocated_datetime: None,
+            picked_datetime: None,
+            shipped_datetime: None,
+            delivered_datetime: Some(
+                NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0) + Duration::seconds(47046),
+            ),
+            verified_datetime: None,
+            colour: None,
+            requisition_id: None,
+            linked_invoice_id: None,
         }),
-    }
+    )
 }
 fn transact_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -250,41 +242,35 @@ const TRANSACT_2: (&'static str, &'static str) = (
         "om_transport_reference": "transport reference"
     }"#,
 );
-fn transact_2_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Invoice(InvoiceRow {
-                id: TRANSACT_2.0.to_string(),
-                user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
-                store_id: "store_b".to_string(),
-                name_id: "name_store_b".to_string(),
-                name_store_id: Some("store_b".to_string()),
-                invoice_number: 4,
-                r#type: InvoiceRowType::OutboundShipment,
-                status: InvoiceRowStatus::Shipped,
-                on_hold: false,
-                comment: None,
-                their_reference: None,
-                transport_reference: Some("transport reference".to_string()),
-                created_datetime: NaiveDate::from_ymd(2021, 8, 3).and_hms(0, 0, 0)
-                    + Duration::seconds(44806),
-                allocated_datetime: None,
-                picked_datetime: None,
-                shipped_datetime: None,
-                delivered_datetime: None,
-                verified_datetime: None,
-                colour: None,
-                requisition_id: None,
-                linked_invoice_id: None,
-            }),
-        )),
-        identifier: "Transact 2",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_TRANSACT.to_string();
-            r.record_id = TRANSACT_2.0.to_string();
-            r.data = TRANSACT_2.1.to_string();
+fn transact_2_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::TRANSACT,
+        TRANSACT_2,
+        PullUpsertRecord::Invoice(InvoiceRow {
+            id: TRANSACT_2.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            store_id: "store_b".to_string(),
+            name_id: "name_store_b".to_string(),
+            name_store_id: Some("store_b".to_string()),
+            invoice_number: 4,
+            r#type: InvoiceRowType::OutboundShipment,
+            status: InvoiceRowStatus::Shipped,
+            on_hold: false,
+            comment: None,
+            their_reference: None,
+            transport_reference: Some("transport reference".to_string()),
+            created_datetime: NaiveDate::from_ymd(2021, 8, 3).and_hms(0, 0, 0)
+                + Duration::seconds(44806),
+            allocated_datetime: None,
+            picked_datetime: None,
+            shipped_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
+            colour: None,
+            requisition_id: None,
+            linked_invoice_id: None,
         }),
-    }
+    )
 }
 fn transact_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -417,40 +403,34 @@ const TRANSACT_OM_FIELDS: (&'static str, &'static str) = (
         "om_type": "INVENTORY_ADJUSTMENT"
     }"#,
 );
-fn transact_om_fields_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Invoice(InvoiceRow {
-                id: TRANSACT_OM_FIELDS.0.to_string(),
-                user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
-                store_id: "store_b".to_string(),
-                name_id: "name_store_b".to_string(),
-                name_store_id: Some("store_b".to_string()),
-                invoice_number: 4,
-                r#type: InvoiceRowType::InventoryAdjustment,
-                status: InvoiceRowStatus::Shipped,
-                on_hold: false,
-                comment: None,
-                their_reference: None,
-                transport_reference: Some("transport reference".to_string()),
-                created_datetime: NaiveDate::from_ymd(2022, 8, 24).and_hms(9, 33, 0),
-                allocated_datetime: Some(NaiveDate::from_ymd(2022, 8, 25).and_hms(10, 33, 0)),
-                picked_datetime: Some(NaiveDate::from_ymd(2022, 8, 26).and_hms(11, 33, 0)),
-                shipped_datetime: Some(NaiveDate::from_ymd(2022, 8, 27).and_hms(12, 33, 0)),
-                delivered_datetime: Some(NaiveDate::from_ymd(2022, 8, 28).and_hms(13, 33, 0)),
-                verified_datetime: Some(NaiveDate::from_ymd(2022, 8, 29).and_hms(14, 33, 0)),
-                colour: Some("SomeColour".to_string()),
-                requisition_id: None,
-                linked_invoice_id: None,
-            }),
-        )),
-        identifier: "Transact om fields",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_TRANSACT.to_string();
-            r.record_id = TRANSACT_OM_FIELDS.0.to_string();
-            r.data = TRANSACT_OM_FIELDS.1.to_string();
+fn transact_om_fields_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::TRANSACT,
+        TRANSACT_OM_FIELDS,
+        PullUpsertRecord::Invoice(InvoiceRow {
+            id: TRANSACT_OM_FIELDS.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            store_id: "store_b".to_string(),
+            name_id: "name_store_b".to_string(),
+            name_store_id: Some("store_b".to_string()),
+            invoice_number: 4,
+            r#type: InvoiceRowType::InventoryAdjustment,
+            status: InvoiceRowStatus::Shipped,
+            on_hold: false,
+            comment: None,
+            their_reference: None,
+            transport_reference: Some("transport reference".to_string()),
+            created_datetime: NaiveDate::from_ymd(2022, 8, 24).and_hms(9, 33, 0),
+            allocated_datetime: Some(NaiveDate::from_ymd(2022, 8, 25).and_hms(10, 33, 0)),
+            picked_datetime: Some(NaiveDate::from_ymd(2022, 8, 26).and_hms(11, 33, 0)),
+            shipped_datetime: Some(NaiveDate::from_ymd(2022, 8, 27).and_hms(12, 33, 0)),
+            delivered_datetime: Some(NaiveDate::from_ymd(2022, 8, 28).and_hms(13, 33, 0)),
+            verified_datetime: Some(NaiveDate::from_ymd(2022, 8, 29).and_hms(14, 33, 0)),
+            colour: Some("SomeColour".to_string()),
+            requisition_id: None,
+            linked_invoice_id: None,
         }),
-    }
+    )
 }
 fn transact_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -495,8 +475,7 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
     }
 }
 
-#[allow(dead_code)]
-pub fn get_test_transact_records() -> Vec<TestSyncRecord> {
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
     vec![
         transact_1_pull_record(),
         transact_2_pull_record(),
@@ -504,8 +483,7 @@ pub fn get_test_transact_records() -> Vec<TestSyncRecord> {
     ]
 }
 
-#[allow(dead_code)]
-pub fn get_test_push_transact_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![
         transact_1_push_record(),
         transact_2_push_record(),

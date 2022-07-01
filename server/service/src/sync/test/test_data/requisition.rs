@@ -1,18 +1,14 @@
+use super::{TestSyncPullRecord, TestSyncPushRecord};
+use crate::sync::translations::{
+    requisition::{LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType},
+    LegacyTableName, PullUpsertRecord,
+};
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionRow, SyncBufferRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionRow,
 };
 use serde_json::json;
-use util::inline_init;
-
-use crate::sync::translation_remote::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord},
-    requisition::{LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType},
-    TRANSLATION_RECORD_REQUISITION,
-};
-
-use super::{TestSyncPushRecord, TestSyncRecord};
 
 const REQUISITION_REQUEST: (&'static str, &'static str) = (
     "B3D3761753DB42A7B3286ACF89FBCA1C",
@@ -46,36 +42,30 @@ const REQUISITION_REQUEST: (&'static str, &'static str) = (
       "isRemoteOrder": false
     }"#,
 );
-fn requisition_request_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Requisition(RequisitionRow {
-                id: REQUISITION_REQUEST.0.to_string(),
-                user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
-                requisition_number: 8,
-                name_id: "name_store_a".to_string(),
-                store_id: "store_a".to_string(),
-                r#type: RequisitionRowType::Request,
-                status: RequisitionRowStatus::Sent,
-                created_datetime: NaiveDate::from_ymd(2020, 7, 10).and_hms(0, 0, 0),
-                sent_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(05, 36, 46)),
-                finalised_datetime: None,
-                colour: None,
-                comment: Some("comment 1".to_string()),
-                their_reference: None,
-                max_months_of_stock: 5.0,
-                min_months_of_stock: 3.0,
-                linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
-                expected_delivery_date: None,
-            }),
-        )),
-        identifier: "Requisition request",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_REQUISITION.to_string();
-            r.record_id = REQUISITION_REQUEST.0.to_string();
-            r.data = REQUISITION_REQUEST.1.to_string();
+fn requisition_request_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::REQUISITION,
+        REQUISITION_REQUEST,
+        PullUpsertRecord::Requisition(RequisitionRow {
+            id: REQUISITION_REQUEST.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            requisition_number: 8,
+            name_id: "name_store_a".to_string(),
+            store_id: "store_a".to_string(),
+            r#type: RequisitionRowType::Request,
+            status: RequisitionRowStatus::Sent,
+            created_datetime: NaiveDate::from_ymd(2020, 7, 10).and_hms(0, 0, 0),
+            sent_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(05, 36, 46)),
+            finalised_datetime: None,
+            colour: None,
+            comment: Some("comment 1".to_string()),
+            their_reference: None,
+            max_months_of_stock: 5.0,
+            min_months_of_stock: 3.0,
+            linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
+            expected_delivery_date: None,
         }),
-    }
+    )
 }
 fn requisition_request_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -143,36 +133,30 @@ const REQUISITION_RESPONSE: (&'static str, &'static str) = (
       "isRemoteOrder": false
     }"#,
 );
-fn requisition_response_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Requisition(RequisitionRow {
-                id: REQUISITION_RESPONSE.0.to_string(),
-                user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
-                requisition_number: 1,
-                name_id: "name_store_b".to_string(),
-                store_id: "store_b".to_string(),
-                r#type: RequisitionRowType::Response,
-                status: RequisitionRowStatus::Finalised,
-                created_datetime: NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0),
-                sent_datetime: None,
-                finalised_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(05, 06, 20)),
-                colour: None,
-                comment: Some("From request requisition 3".to_string()),
-                their_reference: Some("From request requisition 3".to_string()),
-                max_months_of_stock: 10.0,
-                min_months_of_stock: 3.0,
-                linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
-                expected_delivery_date: None,
-            }),
-        )),
-        identifier: "Requisition response",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_REQUISITION.to_string();
-            r.record_id = REQUISITION_RESPONSE.0.to_string();
-            r.data = REQUISITION_RESPONSE.1.to_string();
+fn requisition_response_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::REQUISITION,
+        REQUISITION_RESPONSE,
+        PullUpsertRecord::Requisition(RequisitionRow {
+            id: REQUISITION_RESPONSE.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            requisition_number: 1,
+            name_id: "name_store_b".to_string(),
+            store_id: "store_b".to_string(),
+            r#type: RequisitionRowType::Response,
+            status: RequisitionRowStatus::Finalised,
+            created_datetime: NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0),
+            sent_datetime: None,
+            finalised_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(05, 06, 20)),
+            colour: None,
+            comment: Some("From request requisition 3".to_string()),
+            their_reference: Some("From request requisition 3".to_string()),
+            max_months_of_stock: 10.0,
+            min_months_of_stock: 3.0,
+            linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
+            expected_delivery_date: None,
         }),
-    }
+    )
 }
 fn requisition_response_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -247,36 +231,30 @@ const REQUISITION_OM_FIELDS: (&'static str, &'static str) = (
       "om_colour": "Colour" 
     }"#,
 );
-fn requisition_om_fields_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Requisition(RequisitionRow {
-                id: REQUISITION_OM_FIELDS.0.to_string(),
-                user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
-                requisition_number: 1,
-                name_id: "name_store_b".to_string(),
-                store_id: "store_b".to_string(),
-                r#type: RequisitionRowType::Response,
-                status: RequisitionRowStatus::New,
-                created_datetime: NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0),
-                sent_datetime: Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(14, 48, 00)),
-                finalised_datetime: Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(14, 48, 00)),
-                expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26)),
-                colour: Some("Colour".to_string()),
-                comment: Some("From request requisition 3".to_string()),
-                their_reference: Some("From request requisition 3".to_string()),
-                max_months_of_stock: 10.0,
-                min_months_of_stock: 3.0,
-                linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
-            }),
-        )),
-        identifier: "Requisition om_fields",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_REQUISITION.to_string();
-            r.record_id = REQUISITION_OM_FIELDS.0.to_string();
-            r.data = REQUISITION_OM_FIELDS.1.to_string();
+fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::REQUISITION,
+        REQUISITION_OM_FIELDS,
+        PullUpsertRecord::Requisition(RequisitionRow {
+            id: REQUISITION_OM_FIELDS.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            requisition_number: 1,
+            name_id: "name_store_b".to_string(),
+            store_id: "store_b".to_string(),
+            r#type: RequisitionRowType::Response,
+            status: RequisitionRowStatus::New,
+            created_datetime: NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0),
+            sent_datetime: Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(14, 48, 00)),
+            finalised_datetime: Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(14, 48, 00)),
+            expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26)),
+            colour: Some("Colour".to_string()),
+            comment: Some("From request requisition 3".to_string()),
+            their_reference: Some("From request requisition 3".to_string()),
+            max_months_of_stock: 10.0,
+            min_months_of_stock: 3.0,
+            linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
         }),
-    }
+    )
 }
 fn requisition_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -312,7 +290,7 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub fn get_test_requisition_records() -> Vec<TestSyncRecord> {
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
     vec![
         requisition_request_pull_record(),
         requisition_response_pull_record(),
@@ -320,7 +298,7 @@ pub fn get_test_requisition_records() -> Vec<TestSyncRecord> {
     ]
 }
 
-pub fn get_test_push_requisition_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![
         requisition_request_push_record(),
         requisition_response_push_record(),

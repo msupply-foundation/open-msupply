@@ -1,17 +1,12 @@
+use crate::sync::translations::{
+    requisition_line::LegacyRequisitionLineRow, LegacyTableName, PullUpsertRecord,
+};
+
+use super::{TestSyncPullRecord, TestSyncPushRecord};
 use chrono::NaiveDate;
-use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionLineRow, SyncBufferRow,
-};
+use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionLineRow};
 use serde_json::json;
-use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, inline_init};
-
-use crate::sync::translation_remote::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord},
-    requisition_line::LegacyRequisitionLineRow,
-    TRANSLATION_RECORD_REQUISITION_LINE,
-};
-
-use super::{TestSyncPushRecord, TestSyncRecord};
+use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
 const REQUISITION_LINE_1: (&'static str, &'static str) = (
     "66FB0A41C95441ABBBC7905857466089",
@@ -48,29 +43,23 @@ const REQUISITION_LINE_1: (&'static str, &'static str) = (
         "authoriser_comment": ""
     }"#,
 );
-fn requisition_line_request_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::RequisitionLine(RequisitionLineRow {
-                id: REQUISITION_LINE_1.0.to_string(),
-                requisition_id: "mock_request_draft_requisition2".to_string(),
-                item_id: "item_a".to_string(),
-                requested_quantity: 102,
-                suggested_quantity: 101,
-                supply_quantity: 2,
-                available_stock_on_hand: 10,
-                average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
-                comment: None,
-                snapshot_datetime: None,
-            }),
-        )),
-        identifier: "Requisition line 1",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_REQUISITION_LINE.to_string();
-            r.record_id = REQUISITION_LINE_1.0.to_string();
-            r.data = REQUISITION_LINE_1.1.to_string();
+fn requisition_line_request_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::REQUISITION_LINE,
+        REQUISITION_LINE_1,
+        PullUpsertRecord::RequisitionLine(RequisitionLineRow {
+            id: REQUISITION_LINE_1.0.to_string(),
+            requisition_id: "mock_request_draft_requisition2".to_string(),
+            item_id: "item_a".to_string(),
+            requested_quantity: 102,
+            suggested_quantity: 101,
+            supply_quantity: 2,
+            available_stock_on_hand: 10,
+            average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
+            comment: None,
+            snapshot_datetime: None,
         }),
-    }
+    )
 }
 fn requisition_line_request_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -131,29 +120,23 @@ const REQUISITION_LINE_OM_FIELD: (&'static str, &'static str) = (
         "om_snapshot_datetime": "2022-04-04T14:48:11"
     }"#,
 );
-fn requisition_line_om_fields_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::RequisitionLine(RequisitionLineRow {
-                id: REQUISITION_LINE_OM_FIELD.0.to_string(),
-                requisition_id: "mock_request_draft_requisition2".to_string(),
-                item_id: "item_a".to_string(),
-                requested_quantity: 102,
-                suggested_quantity: 101,
-                supply_quantity: 2,
-                available_stock_on_hand: 10,
-                average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
-                comment: Some("Some comment".to_string()),
-                snapshot_datetime: Some(NaiveDate::from_ymd(2022, 04, 04).and_hms(14, 48, 11)),
-            }),
-        )),
-        identifier: "Requisition line om fields",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_REQUISITION_LINE.to_string();
-            r.record_id = REQUISITION_LINE_OM_FIELD.0.to_string();
-            r.data = REQUISITION_LINE_OM_FIELD.1.to_string();
+fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::REQUISITION_LINE,
+        REQUISITION_LINE_OM_FIELD,
+        PullUpsertRecord::RequisitionLine(RequisitionLineRow {
+            id: REQUISITION_LINE_OM_FIELD.0.to_string(),
+            requisition_id: "mock_request_draft_requisition2".to_string(),
+            item_id: "item_a".to_string(),
+            requested_quantity: 102,
+            suggested_quantity: 101,
+            supply_quantity: 2,
+            available_stock_on_hand: 10,
+            average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
+            comment: Some("Some comment".to_string()),
+            snapshot_datetime: Some(NaiveDate::from_ymd(2022, 04, 04).and_hms(14, 48, 11)),
         }),
-    }
+    )
 }
 fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -178,15 +161,14 @@ fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub fn get_test_requisition_line_records() -> Vec<TestSyncRecord> {
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
     vec![
         requisition_line_request_pull_record(),
         requisition_line_om_fields_pull_record(),
     ]
 }
 
-#[allow(dead_code)]
-pub fn get_test_push_requisition_line_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![
         requisition_line_request_push_record(),
         requisition_line_om_fields_push_record(),
