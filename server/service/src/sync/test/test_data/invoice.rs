@@ -2,7 +2,7 @@ use crate::sync::{
     test::TestSyncPullRecord,
     translations::{
         invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode},
-        LegacyTableName, PullUpsertRecord,
+        LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
@@ -481,6 +481,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         transact_2_pull_record(),
         transact_om_fields_pull_record(),
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::TRANSACT,
+        TRANSACT_OM_FIELDS.0,
+        PullDeleteRecordTable::Invoice,
+    )]
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {

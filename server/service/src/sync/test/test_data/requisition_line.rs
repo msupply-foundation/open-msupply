@@ -1,5 +1,5 @@
 use crate::sync::translations::{
-    requisition_line::LegacyRequisitionLineRow, LegacyTableName, PullUpsertRecord,
+    requisition_line::LegacyRequisitionLineRow, LegacyTableName, PullUpsertRecord, PullDeleteRecordTable,
 };
 
 use super::{TestSyncPullRecord, TestSyncPushRecord};
@@ -166,6 +166,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         requisition_line_request_pull_record(),
         requisition_line_om_fields_pull_record(),
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::REQUISITION_LINE,
+        REQUISITION_LINE_OM_FIELD.0,
+        PullDeleteRecordTable::RequisitionLine,
+    )]
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {

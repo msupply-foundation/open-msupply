@@ -1,6 +1,6 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
+    translations::{LegacyTableName, PullUpsertRecord, PullDeleteRecordTable},
 };
 use repository::NameStoreJoinRow;
 
@@ -92,4 +92,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         name_store_join_2_pull_record(),
         name_store_join_3_pull_record(),
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::NAME_STORE_JOIN,
+        NAME_STORE_JOIN_3.0,
+        PullDeleteRecordTable::NameStoreJoin,
+    )]
 }

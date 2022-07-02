@@ -1,7 +1,7 @@
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 use crate::sync::translations::{
     requisition::{LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType},
-    LegacyTableName, PullUpsertRecord,
+    LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -296,6 +296,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         requisition_response_pull_record(),
         requisition_om_fields_pull_record(),
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::REQUISITION,
+        REQUISITION_OM_FIELDS.0,
+        PullDeleteRecordTable::Requisition,
+    )]
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
