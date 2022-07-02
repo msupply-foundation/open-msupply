@@ -2,6 +2,7 @@ use super::{
     sync_buffer::SyncBuffer,
     translations::{all_translators, IntegrationRecords, PullUpsertRecord, SyncTanslators},
 };
+use log::warn;
 use repository::*;
 use std::collections::HashMap;
 pub(crate) struct TranslationAndIntegration<'a> {
@@ -9,17 +10,10 @@ pub(crate) struct TranslationAndIntegration<'a> {
     sync_buffer: &'a SyncBuffer<'a>,
 }
 
-type TranslationAndIntegrationError = (
-    Option<SyncBufferRow>,
-    Option<IntegrationRecords>,
-    anyhow::Error,
-);
-
 #[derive(Default, Debug)]
 pub(crate) struct TranslationAndIntegrationResult {
     pub(crate) integrated_count: u32,
     pub(crate) errors_count: u32,
-    pub(crate) errors: Vec<TranslationAndIntegrationError>,
 }
 type TableName = String;
 #[derive(Default, Debug)]
@@ -72,12 +66,8 @@ impl<'a> TranslationAndIntegration<'a> {
                 Err(translation_error) => {
                     self.sync_buffer
                         .record_integration_error(&sync_record, &translation_error)?;
-                    result.insert_error(
-                        &sync_record.table_name,
-                        Some(&sync_record),
-                        None,
-                        translation_error,
-                    );
+                    result.insert_error(&sync_record.table_name);
+                    warn!("{:?}", translation_error);
                     // Next sync_record
                     continue;
                 }
@@ -90,7 +80,8 @@ impl<'a> TranslationAndIntegration<'a> {
                     let error = anyhow::anyhow!("Translator for record not found");
                     self.sync_buffer
                         .record_integration_error(&sync_record, &error)?;
-                    result.insert_error(&sync_record.table_name, Some(&sync_record), None, error);
+                    result.insert_error(&sync_record.table_name);
+                    warn!("{:?}", error);
                     // Next sync_record
                     continue;
                 }
@@ -109,12 +100,8 @@ impl<'a> TranslationAndIntegration<'a> {
                     let error = anyhow::anyhow!("{:?}", database_error);
                     self.sync_buffer
                         .record_integration_error(&sync_record, &error)?;
-                    result.insert_error(
-                        &sync_record.table_name,
-                        Some(&sync_record),
-                        Some(&integration_records),
-                        error,
-                    );
+                    result.insert_error(&sync_record.table_name);
+                    warn!("{:?}", error);
                 }
             }
         }
@@ -125,7 +112,11 @@ impl<'a> TranslationAndIntegration<'a> {
 impl IntegrationRecords {
     pub(crate) fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
         for upsert in self.upserts.iter() {
-            upsert.upsert(connection)?
+            // Integrate every record in a sub transaction. This is mainly for Postgres where the
+            // whole transaction fails when there is a DB error (not a problem in sqlite).
+            connection
+                .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
+                .map_err(|e| e.to_inner_error())?;
         }
 
         Ok(())
@@ -163,23 +154,12 @@ impl TranslationAndIntegrationResults {
         Default::default()
     }
 
-    fn insert_error(
-        &mut self,
-        table_name: &str,
-        sync_record: Option<&SyncBufferRow>,
-        integration_records: Option<&IntegrationRecords>,
-        error: anyhow::Error,
-    ) {
+    fn insert_error(&mut self, table_name: &str) {
         let entry = self
             .0
             .entry(table_name.to_owned())
             .or_insert(Default::default());
         entry.errors_count += 1;
-        entry.errors.push((
-            sync_record.map(Clone::clone),
-            integration_records.map(Clone::clone),
-            error,
-        ));
     }
 
     fn insert_success(&mut self, table_name: &str) {
@@ -189,18 +169,64 @@ impl TranslationAndIntegrationResults {
             .or_insert(Default::default());
         entry.integrated_count += 1;
     }
+}
 
-    #[cfg(test)]
-    pub(crate) fn all_errors(&self) -> HashMap<String, &Vec<TranslationAndIntegrationError>> {
-        self.0
-            .iter()
-            .filter_map(|(table_name, value)| {
-                if value.errors_count == 0 {
-                    return None;
-                }
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::MockDataInserts, test_db, ItemRow, ItemRowRepository, UnitRow, UnitRowRepository,
+    };
+    use util::inline_init;
 
-                Some((table_name.to_owned(), &value.errors))
+    use crate::sync::translations::{IntegrationRecords, PullUpsertRecord};
+
+    #[actix_rt::test]
+    async fn test_fall_through_inner_transaction() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_fall_through_inner_transaction",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        connection
+            .transaction_sync(|connection| {
+                // Doesn't fail
+                let result = IntegrationRecords::from_upsert(PullUpsertRecord::Unit(inline_init(
+                    |r: &mut UnitRow| {
+                        r.id = "unit".to_string();
+                    },
+                )))
+                .integrate(connection);
+
+                assert_eq!(result, Ok(()));
+
+                // Fails due to referencial constraint
+                let result = IntegrationRecords::from_upsert(PullUpsertRecord::Item(inline_init(
+                    |r: &mut ItemRow| {
+                        r.id = "item".to_string();
+                        r.unit_id = Some("invalid".to_string());
+                    },
+                )))
+                .integrate(connection);
+
+                assert_ne!(result, Ok(()));
+
+                Ok(()) as Result<(), ()>
             })
-            .collect()
+            .unwrap();
+
+        // Record should exist
+        assert!(matches!(
+            UnitRowRepository::new(&connection)
+                .find_one_by_id("unit")
+                .await,
+            Ok(_)
+        ));
+
+        // Record should not exist
+        assert!(matches!(
+            ItemRowRepository::new(&connection).find_one_by_id("item"),
+            Ok(None)
+        ));
     }
 }
