@@ -97,18 +97,66 @@ pub(crate) enum PullUpsertRecord {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub(crate) struct PullDeleteRecord {
+    pub(crate) id: String,
+    pub(crate) table: PullDeleteRecordTable,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub(crate) enum PullDeleteRecordTable {
+    // Central
+    Unit,
+    Item,
+    Store,
+    MasterList,
+    MasterListLine,
+    MasterListNameJoin,
+    Report,
+    Name,
+    // Remote-Central (site specific)
+    NameStoreJoin,
+    // Remote (for other party of transfers)
+    Invoice,
+    InvoiceLine,
+    Requisition,
+    RequisitionLine,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub(crate) struct IntegrationRecords {
     pub(crate) upserts: Vec<PullUpsertRecord>,
+    pub(crate) deletes: Vec<PullDeleteRecord>,
 }
 
 impl IntegrationRecords {
     pub(crate) fn from_upsert(r: PullUpsertRecord) -> IntegrationRecords {
-        IntegrationRecords { upserts: vec![r] }
+        IntegrationRecords {
+            upserts: vec![r],
+            deletes: Vec::new(),
+        }
+    }
+
+    pub(crate) fn from_delete(id: &str, table: PullDeleteRecordTable) -> IntegrationRecords {
+        IntegrationRecords {
+            upserts: Vec::new(),
+            deletes: vec![PullDeleteRecord {
+                id: id.to_owned(),
+                table,
+            }],
+        }
     }
 }
 
 pub(crate) trait SyncTranslation {
-    fn try_translate_pull(
+    fn try_translate_pull_upsert(
+        &self,
+        _: &StorageConnection,
+        _: &SyncBufferRow,
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        Ok(None)
+    }
+
+    fn try_translate_pull_delete(
         &self,
         _: &StorageConnection,
         _: &SyncBufferRow,
