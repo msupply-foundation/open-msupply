@@ -86,7 +86,7 @@ fn name_store_join_3_pull_record() -> TestSyncPullRecord {
     )
 }
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         name_store_join_1_pull_record(),
         name_store_join_2_pull_record(),

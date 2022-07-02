@@ -475,7 +475,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         trans_line_1_pull_record(),
         trans_line_2_pull_record(),

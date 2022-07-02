@@ -157,7 +157,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         stocktake_line_pull_record(),
         stocktake_line_om_field_pull_record(),

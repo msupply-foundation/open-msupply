@@ -1,6 +1,6 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
+    translations::{LegacyTableName, PullUpsertRecord, PullDeleteRecordTable},
 };
 use repository::{ReportContext, ReportRow, ReportType};
 
@@ -25,7 +25,7 @@ const REPORT_1: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_upsert(
         LegacyTableName::REPORT,
         REPORT_1,
@@ -37,5 +37,13 @@ pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
             context: ReportContext::Stocktake,
             comment: Some("Test comment".to_string()),
         }),
+    )]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::REPORT,
+        REPORT_1.0,
+        PullDeleteRecordTable::Report,
     )]
 }

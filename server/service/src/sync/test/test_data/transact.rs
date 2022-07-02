@@ -475,7 +475,7 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         transact_1_pull_record(),
         transact_2_pull_record(),

@@ -26,7 +26,7 @@ const LOCATION_1: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_upsert(
         LegacyTableName::LOCATION,
         LOCATION_1,
