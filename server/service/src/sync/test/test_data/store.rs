@@ -116,6 +116,7 @@ fn store_2() -> TestSyncPullRecord {
             r.record_id = STORE_2.0.to_owned();
             r.data = STORE_2.1.to_owned();
         }),
+        extra_data: None,
     }
 }
 
@@ -172,6 +173,7 @@ fn store_3() -> TestSyncPullRecord {
             r.record_id = STORE_3.0.to_owned();
             r.data = STORE_3.1.to_owned();
         }),
+        extra_data: None,
     }
 }
 
@@ -228,6 +230,7 @@ fn store_4() -> TestSyncPullRecord {
             r.record_id = STORE_4.0.to_owned();
             r.data = STORE_4.1.to_owned();
         }),
+        extra_data: None,
     }
 }
 
