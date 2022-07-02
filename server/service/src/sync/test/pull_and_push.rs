@@ -3,12 +3,14 @@ use crate::sync::{
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_records_against_database, extract_sync_buffer_rows,
-        test_data::{get_all_pull_test_records, get_all_push_test_records},
+        test_data::{get_all_pull_upsert_test_records, get_all_push_test_records},
     },
     translations::table_name_to_central,
 };
 use repository::{mock::MockDataInserts, test_db, SyncBufferRow, SyncBufferRowRepository};
 use util::{init_logger, LogLevel};
+
+use super::test_data::get_all_pull_delete_test_records;
 
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
@@ -17,10 +19,22 @@ async fn test_sync_pull_and_push() {
     let (_, connection, _, _) =
         test_db::setup_all("test_sync_pull_and_push", MockDataInserts::all()).await;
 
-    let test_records = get_all_pull_test_records();
+    // Test Pull Upsert
+    let test_records = get_all_pull_upsert_test_records();
     let sync_reords: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
-    // Test Pull
+    SyncBufferRowRepository::new(&connection)
+        .upsert_many(&sync_reords)
+        .unwrap();
+
+    integrate_and_translate_sync_buffer(&connection).unwrap();
+
+    check_records_against_database(&connection, test_records).await;
+
+    // Test Pull Delete
+    let test_records = get_all_pull_delete_test_records();
+    let sync_reords: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
+
     SyncBufferRowRepository::new(&connection)
         .upsert_many(&sync_reords)
         .unwrap();
