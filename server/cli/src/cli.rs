@@ -26,7 +26,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
-use util::{init_logger, inline_init};
+use util::{init_logger, inline_init, LogLevel};
 
 const DATA_EXPORT_FOLDER: &'static str = "data";
 

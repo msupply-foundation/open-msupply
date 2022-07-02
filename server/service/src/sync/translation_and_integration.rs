@@ -67,7 +67,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(&sync_record, &translation_error)?;
                     result.insert_error(&sync_record.table_name);
-                    warn!("{:?}", translation_error);
+                    warn!("{:?} {:?}", translation_error, sync_record);
                     // Next sync_record
                     continue;
                 }
@@ -81,7 +81,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(&sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
-                    warn!("{:?}", error);
+                    warn!("{:?} {:?}", error, sync_record);
                     // Next sync_record
                     continue;
                 }
@@ -101,7 +101,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(&sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
-                    warn!("{:?}", error);
+                    warn!("{:?} {:?} {:?}", error, sync_record, integration_records);
                 }
             }
         }
