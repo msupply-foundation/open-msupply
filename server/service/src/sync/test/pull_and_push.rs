@@ -31,18 +31,6 @@ async fn test_sync_pull_and_push() {
 
     check_records_against_database(&connection, test_records).await;
 
-    // Test Pull Delete
-    let test_records = get_all_pull_delete_test_records();
-    let sync_reords: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
-
-    SyncBufferRowRepository::new(&connection)
-        .upsert_many(&sync_reords)
-        .unwrap();
-
-    integrate_and_translate_sync_buffer(&connection).unwrap();
-
-    check_records_against_database(&connection, test_records).await;
-
     // Test Push
     let test_records = get_all_push_test_records();
     for record in test_records {
@@ -62,4 +50,16 @@ async fn test_sync_pull_and_push() {
         assert_eq!(result.record_type, expected_table_name);
         assert_eq!(data, record.push_data);
     }
+
+    // Test Pull Delete
+    let test_records = get_all_pull_delete_test_records();
+    let sync_reords: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
+
+    SyncBufferRowRepository::new(&connection)
+        .upsert_many(&sync_reords)
+        .unwrap();
+
+    integrate_and_translate_sync_buffer(&connection).unwrap();
+
+    check_records_against_database(&connection, test_records).await;
 }
