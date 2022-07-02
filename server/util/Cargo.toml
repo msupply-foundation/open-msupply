@@ -10,3 +10,4 @@ path = "src/lib.rs"
 sha2 = "0.9.5"
 uuid = { version = "0.8", features = ["v4"] }
 chrono = "0.4.19"
+env_logger = "0.8.3"

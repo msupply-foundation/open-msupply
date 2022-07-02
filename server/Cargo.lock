@@ -1071,7 +1071,6 @@ dependencies = [
  "chrono",
  "clap",
  "diesel",
- "env_logger 0.8.4",
  "graphql",
  "log 0.4.16",
  "repository",
@@ -4071,7 +4070,6 @@ dependencies = [
  "chrono",
  "clap",
  "config",
- "env_logger 0.8.4",
  "graphql",
  "graphql_core",
  "graphql_types",
@@ -4106,7 +4104,6 @@ dependencies = [
  "anymap",
  "bcrypt",
  "chrono",
- "env_logger 0.8.4",
  "failure",
  "headless_chrome",
  "httpmock",
@@ -4832,6 +4829,7 @@ name = "util"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "env_logger 0.8.4",
  "sha2",
  "uuid",
 ]
