@@ -8,11 +8,11 @@ use crate::sync::{
     translations::table_name_to_central,
 };
 use repository::{mock::MockDataInserts, test_db, SyncBufferRow, SyncBufferRowRepository};
-use util::init_logger;
+use util::{init_logger, LogLevel};
 
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
-    init_logger();
+    init_logger(LogLevel::Warn);
 
     let (_, connection, _, _) =
         test_db::setup_all("test_sync_pull_and_push", MockDataInserts::all()).await;
