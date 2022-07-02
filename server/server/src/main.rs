@@ -1,18 +1,13 @@
 #![allow(where_clauses_object_safety)]
 
-use std::env;
-
 use server::{configuration, start_server};
 use service::settings::Settings;
 use tokio::sync::oneshot;
+use util::init_logger;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    if env::var("RUST_LOG").is_err() {
-        //Default rust log level to info
-        env::set_var("RUST_LOG", "info");
-    }
-    env_logger::init();
+    init_logger();
 
     let settings: Settings =
         configuration::get_configuration().expect("Failed to parse configuration settings");
