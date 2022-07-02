@@ -84,4 +84,10 @@ impl<'a> ReportRowRepository<'a> {
             .execute(&self.connection.connection)?;
         Ok(())
     }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(report_dsl::report.filter(report_dsl::id.eq(id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
 }
