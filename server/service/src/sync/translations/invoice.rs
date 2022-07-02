@@ -12,7 +12,8 @@ use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, PushUpsertRecord,
+    SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -149,6 +150,10 @@ pub struct LegacyTransactRow {
     pub om_colour: Option<String>,
 }
 
+fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
+    sync_record.table_name == LegacyTableName::TRANSACT
+}
+
 pub(crate) struct InvoiceTranslation {}
 impl SyncTranslation for InvoiceTranslation {
     fn try_translate_pull_upsert(
@@ -156,8 +161,7 @@ impl SyncTranslation for InvoiceTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let table_name = LegacyTableName::TRANSACT;
-        if sync_record.table_name != table_name {
+        if !match_pull_table(sync_record) {
             return Ok(None);
         }
 
@@ -215,6 +219,19 @@ impl SyncTranslation for InvoiceTranslation {
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Invoice(result),
         )))
+    }
+
+    fn try_translate_pull_delete(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        // TODO, check site ? (should never get delete records for this site, only transfer other half)
+        let result = match_pull_table(sync_record).then(|| {
+            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Invoice)
+        });
+
+        Ok(result)
     }
 
     fn try_translate_push(
@@ -497,7 +514,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_invoice_translation() {
-        use crate::sync::test::test_data::transact as test_data;
+        use crate::sync::test::test_data::invoice as test_data;
         let translator = InvoiceTranslation {};
 
         let (_, connection, _, _) = setup_all(
@@ -509,6 +526,14 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+
+        for record in test_data::test_pull_delete_records() {
+            let translation_result = translator
+                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
