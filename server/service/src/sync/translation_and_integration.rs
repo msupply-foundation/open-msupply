@@ -185,11 +185,11 @@ impl PullDeleteRecord {
             MasterListLine => MasterListLineRowRepository::new(con).delete(id),
             MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
             Report => ReportRowRepository::new(con).delete(id),
-            NameStoreJoin => todo!(),
-            Invoice => todo!(),
-            InvoiceLine => todo!(),
-            Requisition => todo!(),
-            RequisitionLine => todo!(),
+            NameStoreJoin => NameStoreJoinRepository::new(con).delete(id),
+            Invoice => InvoiceRowRepository::new(con).delete(id),
+            InvoiceLine => InvoiceLineRowRepository::new(con).delete(id),
+            Requisition => RequisitionRowRepository::new(con).delete(id),
+            RequisitionLine => RequisitionLineRowRepository::new(con).delete(id),
         }
     }
 }
