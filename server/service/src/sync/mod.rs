@@ -13,38 +13,14 @@ mod sync_serde;
 pub mod synchroniser;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
-use repository::RepositoryError;
 pub use sync_api_credentials::SyncCredentials;
 pub use sync_api_v5::{SyncApiV5, SyncConnectionError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 #[error("Failed to translate {table_name} sync record: {record}")]
-pub struct SyncTranslationError {
+pub(crate) struct SyncTranslationError {
     pub table_name: String,
     pub source: anyhow::Error,
     pub record: String,
-}
-
-#[derive(Error, Debug)]
-pub enum SyncImportError {
-    #[error("Failed to translate sync records")]
-    TranslationError {
-        #[from]
-        source: SyncTranslationError,
-    },
-    #[error("Failed to integrate sync records: {extra}, {source}")]
-    IntegrationError {
-        source: RepositoryError,
-        extra: String,
-    },
-}
-
-impl SyncImportError {
-    pub fn as_integration_error<T: std::fmt::Debug>(error: RepositoryError, extra: T) -> Self {
-        SyncImportError::IntegrationError {
-            source: error,
-            extra: format!("{:?}", extra),
-        }
-    }
 }
