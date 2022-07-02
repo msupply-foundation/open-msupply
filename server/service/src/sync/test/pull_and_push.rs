@@ -8,9 +8,12 @@ use crate::sync::{
     translations::table_name_to_central,
 };
 use repository::{mock::MockDataInserts, test_db, SyncBufferRow, SyncBufferRowRepository};
+use util::init_logger;
 
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
+    init_logger();
+
     let (_, connection, _, _) =
         test_db::setup_all("test_sync_pull_and_push", MockDataInserts::all()).await;
 
@@ -22,10 +25,7 @@ async fn test_sync_pull_and_push() {
         .upsert_many(&sync_reords)
         .unwrap();
 
-    let (upserts, deletes) = integrate_and_translate_sync_buffer(&connection).unwrap();
-
-    println!("Upsert translation result {:#?}", upserts.all_errors());
-    println!("Delete translation restul {:#?}", deletes.all_errors());
+    integrate_and_translate_sync_buffer(&connection).unwrap();
 
     check_records_against_database(&connection, test_records).await;
 
