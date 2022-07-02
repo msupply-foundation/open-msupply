@@ -31,6 +31,7 @@ table! {
 #[derive(
     Clone, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Eq,
 )]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "sync_buffer"]
 pub struct SyncBufferRow {
     pub record_id: String,
@@ -71,12 +72,16 @@ impl<'a> SyncBufferRowRepository<'a> {
 
     #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(sync_buffer_dsl::sync_buffer)
+        let statement = diesel::insert_into(sync_buffer_dsl::sync_buffer)
             .values(row)
             .on_conflict(sync_buffer_dsl::record_id)
             .do_update()
-            .set(row)
-            .execute(&self.connection.connection)?;
+            .set(row);
+
+        // //   Debug diesel query
+        // println!("{}", diesel::debug_query::<DBType, _>(&statement).to_string());
+
+        statement.execute(&self.connection.connection)?;
         Ok(())
     }
 
@@ -113,6 +118,7 @@ impl<'a> SyncBufferRowRepository<'a> {
 
 #[derive(Clone, Default)]
 pub struct SyncBufferFilter {
+    pub record_id: Option<EqualFilter<String>>,
     pub integration_datetime: Option<DatetimeFilter>,
     pub integration_error: Option<EqualFilter<String>>,
     pub action: Option<EqualFilter<SyncBufferAction>>,
@@ -126,6 +132,11 @@ impl SyncBufferFilter {
 
     pub fn integration_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.integration_datetime = Some(filter);
+        self
+    }
+
+    pub fn record_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.record_id = Some(filter);
         self
     }
 
@@ -198,8 +209,10 @@ fn create_filtered_query<'a>(filter: Option<SyncBufferFilter>) -> BoxedStocktake
             integration_error,
             action,
             table_name,
+            record_id,
         } = f;
 
+        apply_equal_filter!(query, record_id, sync_buffer_dsl::record_id);
         apply_date_time_filter!(
             query,
             integration_datetime,
@@ -215,12 +228,12 @@ fn create_filtered_query<'a>(filter: Option<SyncBufferFilter>) -> BoxedStocktake
 
 #[cfg(test)]
 mod test {
-    use util::{inline_init, Defaults};
+    use util::{inline_edit, inline_init, Defaults};
 
     use crate::{
         mock::{MockData, MockDataInserts},
         test_db, DatetimeFilter, EqualFilter, SyncBufferAction, SyncBufferFilter,
-        SyncBufferRepository, SyncBufferRow,
+        SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
     };
 
     pub fn row_a() -> SyncBufferRow {
@@ -285,6 +298,25 @@ mod test {
             )
             .unwrap(),
             vec![row_b()]
+        );
+        // Test upsert overwrites integration_datetime
+        let new_a = inline_edit(&row_a(), |mut r| {
+            r.integration_datetime = None;
+            r
+        });
+
+        SyncBufferRowRepository::new(&connection)
+            .upsert_one(&new_a)
+            .unwrap();
+
+        assert_eq!(
+            repo.query_by_filter(
+                SyncBufferFilter::new()
+                    .integration_datetime(DatetimeFilter::is_null(true))
+                    .record_id(EqualFilter::equal_to(&row_a().record_id))
+            )
+            .unwrap(),
+            vec![new_a]
         );
     }
 }
