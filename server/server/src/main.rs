@@ -3,7 +3,7 @@
 use server::{configuration, start_server};
 use service::settings::Settings;
 use tokio::sync::oneshot;
-use util::init_logger;
+use util::{init_logger, LogLevel};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
