@@ -11,20 +11,30 @@ use super::sync_api_v5::CentralSyncRecordV5;
 
 #[derive(Error, Debug)]
 pub(crate) enum CentralSyncError {
-    #[error("Failed to pull central sync records - {0:?}")]
-    PullCentralSyncRecordsError(SyncConnectionError),
-    #[error("Failed to translate pulled record to sync buffer - {0:?}")]
-    PullCentralTranslateToSyncBuffer(serde_json::Error),
-    #[error("Failed to update central sync buffer records - {0:?}")]
-    UpdateCentralSyncBufferRecordsError(RepositoryError),
+    #[error("Api error while pulling remote records: {0:?}")]
+    PullError(SyncConnectionError),
+    #[error("Failed to save sync buffer or cursor {0:?}")]
+    SaveSyncBufferOrCursorsError(RepositoryError),
+    #[error("Failed to save sync buffer or cursor {0:?}")]
+    ParsingV5RecordError(ParsingV5RecordError),
 }
 
+#[derive(Error, Debug)]
+#[error("{source:?} {record:?}")]
+pub(crate) struct ParsingV5RecordError {
+    source: serde_json::Error,
+    record: serde_json::Value,
+}
 impl CentralSyncRecordV5 {
-    pub(crate) fn to_sync_buffer_row(&self) -> Result<SyncBufferRow, serde_json::Error> {
+    pub(crate) fn to_sync_buffer_row(self) -> Result<SyncBufferRow, ParsingV5RecordError> {
+        let data = self.data;
         let result = SyncBufferRow {
-            table_name: self.table_name.clone(),
-            record_id: self.record_id.clone(),
-            data: serde_json::to_string(&self.data)?,
+            table_name: self.table_name,
+            record_id: self.record_id,
+            data: serde_json::to_string(&data).map_err(|e| ParsingV5RecordError {
+                source: e,
+                record: data.clone(),
+            })?,
             received_datetime: Utc::now().naive_utc(),
             integration_datetime: None,
             integration_error: None,
@@ -43,12 +53,9 @@ impl CentralDataSynchroniser {
         &self,
         connection: &StorageConnection,
     ) -> Result<(), CentralSyncError> {
-        use CentralSyncError as Error;
-        let central_sync_cursor = CentralSyncPullCursor::new(&connection);
-        let cursor: u32 = central_sync_cursor.get_cursor().unwrap_or_else(|_| {
-            info!("Initialising new central sync cursor...");
-            0
-        });
+        let cursor: u32 = CentralSyncPullCursor::new(&connection)
+            .get_cursor()
+            .unwrap_or(0);
 
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
@@ -59,7 +66,7 @@ impl CentralDataSynchroniser {
                 .sync_api_v5
                 .get_central_records(cursor, BATCH_SIZE)
                 .await
-                .map_err(Error::PullCentralSyncRecordsError)?;
+                .map_err(CentralSyncError::PullError)?;
 
             let batch_length = sync_batch.data.len();
             info!(
@@ -68,11 +75,13 @@ impl CentralDataSynchroniser {
             );
 
             for sync_record in sync_batch.data {
+                let cursor = sync_record.id.clone();
                 let buffer_row = sync_record
                     .to_sync_buffer_row()
-                    .map_err(Error::PullCentralTranslateToSyncBuffer)?;
-                insert_one_and_update_cursor(connection, &buffer_row, sync_record.id)
-                    .map_err(Error::UpdateCentralSyncBufferRecordsError)?;
+                    .map_err(CentralSyncError::ParsingV5RecordError)?;
+
+                insert_one_and_update_cursor(connection, &buffer_row, cursor)
+                    .map_err(CentralSyncError::SaveSyncBufferOrCursorsError)?;
             }
 
             if batch_length == 0 {
@@ -89,7 +98,6 @@ fn insert_one_and_update_cursor(
     row: &SyncBufferRow,
     cursor: u32,
 ) -> Result<(), RepositoryError> {
-    // note: if already in a transaction this creates a safepoint:
     connection
         .transaction_sync(|con| {
             SyncBufferRowRepository::new(con).upsert_one(row)?;
