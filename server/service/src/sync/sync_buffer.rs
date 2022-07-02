@@ -1,8 +1,8 @@
 use super::translations::LegacyTableName;
 use chrono::Utc;
 use repository::{
-    EqualFilter, RepositoryError, StorageConnection, SyncBufferAction, SyncBufferFilter,
-    SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository, DatetimeFilter,
+    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, SyncBufferAction,
+    SyncBufferFilter, SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
 };
 use util::inline_edit;
 
@@ -83,6 +83,7 @@ impl<'a> SyncBuffer<'a> {
             let mut rows = self.query_repository.query_by_filter(
                 SyncBufferFilter::new()
                     .table_name(EqualFilter::equal_to(legacy_table_name))
+                    .action(action.equal_to())
                     .integration_datetime(DatetimeFilter::is_null(true)),
             )?;
             result.append(&mut rows);
@@ -97,7 +98,7 @@ mod test {
     use repository::{
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        SyncBufferRow, SyncBufferRowRepository,
+        SyncBufferAction, SyncBufferRow, SyncBufferRowRepository,
     };
     use util::{inline_init, Defaults};
 
@@ -137,20 +138,38 @@ mod test {
         })
     }
 
+    fn row_5() -> SyncBufferRow {
+        inline_init(|r: &mut SyncBufferRow| {
+            r.record_id = "5".to_string();
+            r.table_name = LegacyTableName::LIST_MASTER.to_string();
+            r.received_datetime = Defaults::naive_date_time();
+            r.action = SyncBufferAction::Delete;
+        })
+    }
+
+    fn row_6() -> SyncBufferRow {
+        inline_init(|r: &mut SyncBufferRow| {
+            r.record_id = "6".to_string();
+            r.table_name = LegacyTableName::LIST_MASTER_LINE.to_string();
+            r.received_datetime = Defaults::naive_date_time();
+            r.action = SyncBufferAction::Delete;
+        })
+    }
+
     #[actix_rt::test]
     async fn test_sync_buffer_service() {
         let (_, connection, _, _) = setup_all_with_data(
             "test_sync_buffer_service",
             MockDataInserts::none(),
             inline_init(|r: &mut MockData| {
-                r.sync_buffer_rows = vec![row_1(), row_2(), row_3(), row_4()];
+                r.sync_buffer_rows = vec![row_1(), row_2(), row_3(), row_4(), row_5(), row_6()];
             }),
         )
         .await;
 
         let buffer = SyncBuffer::new(&connection);
 
-        // ORDER
+        // ORDER/ACTION
         let in_referencial_order = buffer
             .get_ordered_sync_buffer_records(repository::SyncBufferAction::Upsert)
             .unwrap();
@@ -164,10 +183,7 @@ mod test {
             .get_ordered_sync_buffer_records(repository::SyncBufferAction::Delete)
             .unwrap();
 
-        assert_eq!(
-            in_reverese_referencial_order,
-            vec![row_2(), row_1(), row_3(), row_4()]
-        );
+        assert_eq!(in_reverese_referencial_order, vec![row_6(), row_5()]);
 
         // ERROR
         buffer
