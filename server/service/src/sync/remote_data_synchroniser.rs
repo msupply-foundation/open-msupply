@@ -61,25 +61,24 @@ impl RemoteDataSynchroniser {
         &self,
         connection: &StorageConnection,
     ) -> Result<(), SetInitialisedError> {
-        use SetInitialisedError as Error;
         let remote_sync_state = RemoteSyncState::new(&connection);
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
         let cursor = ChangelogRowRepository::new(connection)
             .latest_changelog()
-            .map_err(Error)?
+            .map_err(SetInitialisedError)?
             .map(|row| row.id)
             .unwrap_or(0) as u32;
         remote_sync_state
             .update_push_cursor(cursor + 1)
-            .map_err(Error)?;
+            .map_err(SetInitialisedError)?;
 
         remote_sync_state
             .set_site_id(self.site_id as i32)
-            .map_err(Error)?;
+            .map_err(SetInitialisedError)?;
         remote_sync_state
             .set_initial_remote_data_synced()
-            .map_err(Error)?;
+            .map_err(SetInitialisedError)?;
         Ok(())
     }
 
