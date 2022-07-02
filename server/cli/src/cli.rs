@@ -130,7 +130,7 @@ async fn initialise_from_central(settings: Settings, users: &str) -> StorageConn
 
 #[tokio::main]
 async fn main() {
-    init_logger();
+    init_logger(LogLevel::Info);
 
     let args = Args::parse();
 

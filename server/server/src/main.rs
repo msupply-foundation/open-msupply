@@ -7,7 +7,7 @@ use util::init_logger;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    init_logger();
+    init_logger(LogLevel::Info);
 
     let settings: Settings =
         configuration::get_configuration().expect("Failed to parse configuration settings");
