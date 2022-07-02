@@ -290,7 +290,7 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         requisition_request_pull_record(),
         requisition_response_pull_record(),

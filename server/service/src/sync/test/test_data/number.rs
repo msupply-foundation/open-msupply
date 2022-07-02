@@ -185,7 +185,7 @@ fn number_supplier_invoice_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         number_stock_take_pull_record(),
         number_inv_adjustment_pull_record(),
