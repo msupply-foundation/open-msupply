@@ -1,6 +1,10 @@
+use crate::sync::translations::PullDeleteRecordTable;
+
 use super::{
     sync_buffer::SyncBuffer,
-    translations::{all_translators, IntegrationRecords, PullUpsertRecord, SyncTanslators},
+    translations::{
+        all_translators, IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTanslators,
+    },
 };
 use log::warn;
 use repository::*;
@@ -43,7 +47,17 @@ impl<'a> TranslationAndIntegration<'a> {
                 None => break None,
             };
 
-            if let Some(records) = translator.try_translate_pull(self.connection, &sync_record)? {
+            let translation_result = match sync_record.action {
+                SyncBufferAction::Upsert => {
+                    translator.try_translate_pull_upsert(self.connection, &sync_record)?
+                }
+                SyncBufferAction::Delete => {
+                    translator.try_translate_pull_delete(self.connection, &sync_record)?
+                }
+                SyncBufferAction::Merge => return Err(anyhow::anyhow!("Merge not implemented")),
+            };
+
+            if let Some(records) = translation_result {
                 break Some(records);
             }
         };
@@ -60,6 +74,7 @@ impl<'a> TranslationAndIntegration<'a> {
 
         for sync_record in sync_records {
             // Try translate
+
             let translation_result = match self.translate_sync_record(&sync_record, &translators) {
                 Ok(translation_result) => translation_result,
                 // Record error in sync buffer and in result, continue to next sync_record
@@ -119,6 +134,14 @@ impl IntegrationRecords {
                 .map_err(|e| e.to_inner_error())?;
         }
 
+        for delete in self.deletes.iter() {
+            // Integrate every record in a sub transaction. This is mainly for Postgres where the
+            // whole transaction fails when there is a DB error (not a problem in sqlite).
+            connection
+                .transaction_sync_etc(|sub_tx| delete.delete(sub_tx), false)
+                .map_err(|e| e.to_inner_error())?;
+        }
+
         Ok(())
     }
 }
@@ -145,6 +168,28 @@ impl PullUpsertRecord {
             StocktakeLine(record) => StocktakeLineRowRepository::new(con).upsert_one(record),
             Requisition(record) => RequisitionRowRepository::new(con).upsert_one(record),
             RequisitionLine(record) => RequisitionLineRowRepository::new(con).upsert_one(record),
+        }
+    }
+}
+
+impl PullDeleteRecord {
+    pub(crate) fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        use PullDeleteRecordTable::*;
+        let id = &self.id;
+        match self.table {
+            Name => NameRowRepository::new(con).delete(id),
+            Unit => UnitRowRepository::new(con).delete(id),
+            Item => ItemRowRepository::new(con).delete(id),
+            Store => StoreRowRepository::new(con).delete(id),
+            MasterList => MasterListRowRepository::new(con).delete(id),
+            MasterListLine => MasterListLineRowRepository::new(con).delete(id),
+            MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
+            Report => ReportRowRepository::new(con).delete(id),
+            NameStoreJoin => todo!(),
+            Invoice => todo!(),
+            InvoiceLine => todo!(),
+            Requisition => todo!(),
+            RequisitionLine => todo!(),
         }
     }
 }
@@ -217,10 +262,8 @@ mod test {
 
         // Record should exist
         assert!(matches!(
-            UnitRowRepository::new(&connection)
-                .find_one_by_id("unit")
-                .await,
-            Ok(_)
+            UnitRowRepository::new(&connection).find_one_by_id_option("unit"),
+            Ok(Some(_))
         ));
 
         // Record should not exist
