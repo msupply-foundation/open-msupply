@@ -10,7 +10,7 @@ use crate::sync::{
 use repository::{mock::MockDataInserts, test_db, SyncBufferRow, SyncBufferRowRepository};
 use util::{init_logger, LogLevel};
 
-use super::test_data::get_all_pull_delete_test_records;
+use super::{insert_all_extra_data, test_data::get_all_pull_delete_test_records};
 
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
@@ -21,6 +21,7 @@ async fn test_sync_pull_and_push() {
 
     // Test Pull Upsert
     let test_records = get_all_pull_upsert_test_records();
+    insert_all_extra_data(&test_records, &connection).await;
     let sync_reords: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
     SyncBufferRowRepository::new(&connection)
@@ -53,6 +54,7 @@ async fn test_sync_pull_and_push() {
 
     // Test Pull Delete
     let test_records = get_all_pull_delete_test_records();
+    insert_all_extra_data(&test_records, &connection).await;
     let sync_reords: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
     SyncBufferRowRepository::new(&connection)

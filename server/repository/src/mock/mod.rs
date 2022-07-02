@@ -109,6 +109,19 @@ pub struct MockData {
     pub sync_buffer_rows: Vec<SyncBufferRow>,
 }
 
+impl MockData {
+    pub async fn insert(&self, connection: &StorageConnection) {
+        insert_mock_data(
+            connection,
+            MockDataInserts::all(),
+            MockDataCollection {
+                data: vec![("".to_string(), self.clone())],
+            },
+        )
+        .await;
+    }
+}
+
 #[derive(Default)]
 pub struct MockDataInserts {
     pub user_accounts: bool,
