@@ -1,5 +1,7 @@
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 
+pub(crate) mod invoice;
+pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod location;
 pub(crate) mod master_list;
@@ -15,8 +17,6 @@ pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
-pub(crate) mod trans_line;
-pub(crate) mod transact;
 pub(crate) mod unit;
 
 pub(crate) fn get_all_pull_upsert_test_records() -> Vec<TestSyncPullRecord> {
@@ -36,8 +36,8 @@ pub(crate) fn get_all_pull_upsert_test_records() -> Vec<TestSyncPullRecord> {
     test_records.append(&mut stocktake_line::test_pull_upsert_records());
     test_records.append(&mut stocktake::test_pull_upsert_records());
     test_records.append(&mut store::test_pull_upsert_records());
-    test_records.append(&mut trans_line::test_pull_upsert_records());
-    test_records.append(&mut transact::test_pull_upsert_records());
+    test_records.append(&mut invoice_line::test_pull_upsert_records());
+    test_records.append(&mut invoice::test_pull_upsert_records());
     test_records.append(&mut unit::test_pull_upsert_records());
 
     test_records
@@ -54,6 +54,11 @@ pub(crate) fn get_all_pull_delete_test_records() -> Vec<TestSyncPullRecord> {
     test_records.append(&mut report::test_pull_delete_records());
     test_records.append(&mut store::test_pull_delete_records());
     test_records.append(&mut unit::test_pull_delete_records());
+    test_records.append(&mut name_store_join::test_pull_delete_records());
+    test_records.append(&mut requisition::test_pull_delete_records());
+    test_records.append(&mut requisition_line::test_pull_delete_records());
+    test_records.append(&mut invoice::test_pull_delete_records());
+    test_records.append(&mut invoice_line::test_pull_delete_records());
 
     test_records
 }
@@ -67,8 +72,8 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     test_records.append(&mut stock_line::test_push_records());
     test_records.append(&mut stocktake_line::test_push_records());
     test_records.append(&mut stocktake::test_push_records());
-    test_records.append(&mut trans_line::test_push_records());
-    test_records.append(&mut transact::test_push_records());
+    test_records.append(&mut invoice_line::test_push_records());
+    test_records.append(&mut invoice::test_push_records());
 
     test_records
 }

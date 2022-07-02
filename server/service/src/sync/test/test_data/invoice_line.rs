@@ -3,7 +3,7 @@ use crate::sync::{
     test::TestSyncPullRecord,
     translations::{
         invoice_line::{LegacyTransLineRow, LegacyTransLineType},
-        LegacyTableName, PullUpsertRecord,
+        LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
     },
 };
 use chrono::NaiveDate;
@@ -482,6 +482,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         trans_line_om_fields_pull_record(),
         trans_line_om_fields_unset_tax_pull_record(),
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::TRANS_LINE,
+        TRANS_LINE_OM_UNSET_TAX_FIELDS.0,
+        PullDeleteRecordTable::InvoiceLine,
+    )]
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
