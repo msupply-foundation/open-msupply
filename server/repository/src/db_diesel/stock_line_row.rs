@@ -96,4 +96,12 @@ impl<'a> StockLineRowRepository<'a> {
             .load::<StockLineRow>(&self.connection.connection)
             .map_err(RepositoryError::from)
     }
+
+    pub fn find_one_by_id_option(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
+        let result = stock_line_dsl::stock_line
+            .filter(stock_line_dsl::id.eq(id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
 }
