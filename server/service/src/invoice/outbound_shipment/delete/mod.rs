@@ -47,8 +47,6 @@ pub fn delete_outbound_shipment(
                     error,
                 })?;
             }
-
-            InvoiceRowRepository::new(&connection).delete(&id)?;
             // End TODO
 
             match InvoiceRowRepository::new(&connection).delete(&id) {
