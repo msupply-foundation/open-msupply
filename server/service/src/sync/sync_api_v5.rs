@@ -1,11 +1,13 @@
 use crate::sync::SyncCredentials;
 
+use anyhow::Context;
 use log::info;
 use reqwest::{
-    header::{HeaderMap, HeaderName, CONTENT_LENGTH},
-    Client, Url,
+    header::{HeaderMap, HeaderName},
+    Client, RequestBuilder, Response, Url,
 };
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::json;
 
 pub type SyncConnectionError = anyhow::Error;
 
@@ -39,6 +41,7 @@ pub struct RemoteSyncRecordV5 {
 pub struct RemoteSyncBatchV5 {
     #[serde(rename = "queueLength")]
     pub queue_length: u32,
+    #[serde(default)]
     pub data: Vec<RemoteSyncRecordV5>,
 }
 
@@ -64,6 +67,7 @@ pub struct CentralSyncRecordV5 {
 pub struct CentralSyncBatchV5 {
     #[serde(rename = "maxCursor")]
     pub max_cursor: u32,
+    #[serde(default)]
     pub data: Vec<CentralSyncRecordV5>,
 }
 
@@ -92,8 +96,24 @@ fn generate_headers(hardware_id: &str) -> HeaderMap {
     headers
 }
 
+async fn check_status(response: Response) -> anyhow::Result<Response> {
+    if !response.status().is_success() {
+        let err = response.text().await?;
+        return Err(anyhow::Error::msg(err));
+    }
+    Ok(response)
+}
+
+async fn to_json<T: DeserializeOwned>(response: Response) -> anyhow::Result<T> {
+    // TODO not owned
+    let response_text = response.text().await?;
+    let result = serde_json::from_str(&response_text)
+        .with_context(|| format!("response: {:?}", response_text))?;
+    Ok(result)
+}
+
 impl SyncApiV5 {
-    pub fn new(
+    pub(crate) fn new(
         server_url: Url,
         credentials: SyncCredentials,
         client: Client,
@@ -107,108 +127,116 @@ impl SyncApiV5 {
         }
     }
 
-    // Initialize remote sync queue.
-    //
-    // Should only be called on initial sync or when re-initializing an existing data file.
-    pub async fn post_initialise(&self) -> Result<RemoteSyncBatchV5, SyncConnectionError> {
-        let url = self.server_url.join("/sync/v5/initialise")?;
-        // Server rejects initialization request if no `content-length` header included.
-        let mut headers = self.headers.clone();
-        headers.insert(CONTENT_LENGTH, "0".parse().unwrap());
-
-        let request = self
+    pub(crate) fn create_post<T>(
+        &self,
+        route: &str,
+        body: &T,
+    ) -> Result<RequestBuilder, SyncConnectionError>
+    where
+        T: Serialize,
+    {
+        let url = self.server_url.join(route)?;
+        let result = self
             .client
             .post(url)
             .basic_auth(
                 &self.credentials.username,
                 Some(&self.credentials.password_sha256),
             )
-            .headers(headers);
+            .headers(self.headers.clone())
+            .body(serde_json::to_string(&body).unwrap());
 
-        let response = request.send().await?.error_for_status()?;
-
-        let sync_batch = response.json::<RemoteSyncBatchV5>().await?;
-
-        Ok(sync_batch)
+        Ok(result)
     }
 
-    // Get batch of records from remote sync queue.
-    pub async fn get_queued_records(
+    pub(crate) fn create_get<T>(
         &self,
-        batch_size: u32,
-    ) -> Result<RemoteSyncBatchV5, SyncConnectionError> {
-        let url = self.server_url.join("/sync/v5/queued_records")?;
-
-        let query = [("limit", &batch_size.to_string())];
-        let request = self
+        route: &str,
+        query: &T,
+    ) -> Result<RequestBuilder, SyncConnectionError>
+    where
+        T: Serialize + ?Sized,
+    {
+        let url = self.server_url.join(route)?;
+        let result = self
             .client
             .get(url)
             .basic_auth(
                 &self.credentials.username,
                 Some(&self.credentials.password_sha256),
             )
-            .query(&query)
-            .headers(self.headers.clone());
+            .headers(self.headers.clone())
+            .query(query);
 
-        let response = request.send().await?.error_for_status()?;
+        Ok(result)
+    }
 
-        let sync_batch = response.json::<RemoteSyncBatchV5>().await?;
+    // Initialize remote sync queue.
+    // Should only be called on initial sync or when re-initializing an existing data file.
+    pub(crate) async fn post_initialise(&self) -> Result<RemoteSyncBatchV5, SyncConnectionError> {
+        let response = self
+            .create_post("/sync/v5/initialise", &json!({}))?
+            .send()
+            .await?;
 
-        Ok(sync_batch)
+        let response = check_status(response).await?;
+
+        Ok(to_json(response).await?)
+    }
+
+    // Get batch of records from remote sync queue.
+    pub(crate) async fn get_queued_records(
+        &self,
+        batch_size: u32,
+    ) -> Result<RemoteSyncBatchV5, SyncConnectionError> {
+        let query = [("limit", &batch_size.to_string())];
+        let response = self
+            .create_get("/sync/v5/queued_records", &query)?
+            .send()
+            .await?;
+
+        let response = check_status(response).await?;
+        Ok(to_json(response).await?)
     }
 
     // Acknowledge successful integration of records from sync queue.
-    pub async fn post_acknowledge_records(
+    pub(crate) async fn post_acknowledge_records(
         &self,
         sync_ids: Vec<String>,
     ) -> Result<(), SyncConnectionError> {
         info!("Acknowledging {} records", sync_ids.len());
-        let url = self.server_url.join("/sync/v5/acknowledged_records")?;
-        let body: RemoteSyncAckV5 = RemoteSyncAckV5 { sync_ids };
-        self.client
-            .post(url)
-            .basic_auth(
-                &self.credentials.username,
-                Some(&self.credentials.password_sha256),
-            )
-            .body(serde_json::to_string(&body).unwrap_or_default())
-            .headers(self.headers.clone())
+
+        let response = self
+            .create_post(
+                "/sync/v5/acknowledged_records",
+                &RemoteSyncAckV5 { sync_ids },
+            )?
             .send()
-            .await?
-            .error_for_status()?;
+            .await?;
+
+        check_status(response).await?;
 
         Ok(())
     }
 
     // Pull batch of records from central sync log.
-    pub async fn get_central_records(
+    pub(crate) async fn get_central_records(
         &self,
         cursor: u32,
         limit: u32,
     ) -> Result<CentralSyncBatchV5, SyncConnectionError> {
-        let url = self.server_url.join("/sync/v5/central_records")?;
-
         // TODO: add constants for query parameters.
         let query = [
             ("cursor", &cursor.to_string()),
             ("limit", &limit.to_string()),
         ];
         let response = self
-            .client
-            .get(url)
-            .basic_auth(
-                &self.credentials.username,
-                Some(&self.credentials.password_sha256),
-            )
-            .query(&query)
-            .headers(self.headers.clone())
+            .create_get("/sync/v5/central_records", &query)?
             .send()
-            .await?
-            .error_for_status()?;
+            .await?;
 
-        let sync_batch = response.json::<CentralSyncBatchV5>().await?;
-
-        Ok(sync_batch)
+        let response = check_status(response).await?;
+        Ok(to_json(response).await?)
     }
 }
 
