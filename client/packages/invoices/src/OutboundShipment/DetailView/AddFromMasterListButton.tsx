@@ -9,10 +9,12 @@ import { MasterListSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 
 export const AddFromMasterListButtonComponent = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation('distribution');
   const isDisabled = useOutbound.utils.isDisabled();
   const { addFromMasterList } = useOutbound.utils.addFromMasterList();
+  const { otherPartyId } = useOutbound.document.fields(['otherPartyId']);
   const modalController = useToggle();
+  const filterByName = { existsForNameId: { equalTo: otherPartyId } };
 
   return (
     <>
@@ -23,6 +25,7 @@ export const AddFromMasterListButtonComponent = () => {
           modalController.toggleOff();
           addFromMasterList(masterList);
         }}
+        filterBy={filterByName}
       />
       <ButtonWithIcon
         disabled={isDisabled}

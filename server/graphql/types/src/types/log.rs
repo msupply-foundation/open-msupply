@@ -30,6 +30,13 @@ pub enum LogNodeType {
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
     InvoiceStatusVerified,
+    StocktakeCreated,
+    StocktakeDeleted,
+    StocktakeStatusFinalised,
+    RequisitionCreated,
+    RequisitionDeleted,
+    RequisitionStatusSent,
+    RequisitionStatusFinalised,
 }
 
 #[Object]
@@ -38,8 +45,8 @@ impl LogNode {
         &self.row().id
     }
 
-    pub async fn log_type(&self) -> LogNodeType {
-        LogNodeType::from_domain(&self.row().log_type)
+    pub async fn r#type(&self) -> LogNodeType {
+        LogNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn store_id(&self) -> &Option<String> {
@@ -105,6 +112,13 @@ impl LogNodeType {
             LogType::InvoiceStatusShipped => LogNodeType::InvoiceStatusShipped,
             LogType::InvoiceStatusDelivered => LogNodeType::InvoiceStatusDelivered,
             LogType::InvoiceStatusVerified => LogNodeType::InvoiceStatusVerified,
+            LogType::StocktakeCreated => LogNodeType::StocktakeCreated,
+            LogType::StocktakeDeleted => LogNodeType::StocktakeDeleted,
+            LogType::StocktakeStatusFinalised => LogNodeType::StocktakeStatusFinalised,
+            LogType::RequisitionCreated => LogNodeType::RequisitionCreated,
+            LogType::RequisitionDeleted => LogNodeType::RequisitionDeleted,
+            LogType::RequisitionStatusSent => LogNodeType::RequisitionStatusSent,
+            LogType::RequisitionStatusFinalised => LogNodeType::RequisitionStatusFinalised,
         }
     }
 
@@ -118,6 +132,13 @@ impl LogNodeType {
             LogNodeType::InvoiceStatusShipped => LogType::InvoiceStatusShipped,
             LogNodeType::InvoiceStatusDelivered => LogType::InvoiceStatusDelivered,
             LogNodeType::InvoiceStatusVerified => LogType::InvoiceStatusVerified,
+            LogNodeType::StocktakeCreated => LogType::StocktakeCreated,
+            LogNodeType::StocktakeDeleted => LogType::StocktakeDeleted,
+            LogNodeType::StocktakeStatusFinalised => LogType::StocktakeStatusFinalised,
+            LogNodeType::RequisitionCreated => LogType::RequisitionCreated,
+            LogNodeType::RequisitionDeleted => LogType::RequisitionDeleted,
+            LogNodeType::RequisitionStatusSent => LogType::RequisitionStatusSent,
+            LogNodeType::RequisitionStatusFinalised => LogType::RequisitionStatusFinalised,
         }
     }
 }

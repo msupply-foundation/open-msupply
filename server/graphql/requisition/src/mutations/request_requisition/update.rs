@@ -14,7 +14,7 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         UpdateRequestRequisition as ServiceInput, UpdateRequestRequisitionError as ServiceError,
-        UpdateRequestRequstionStatus,
+        UpdateRequestRequistionStatus,
     },
 };
 
@@ -155,10 +155,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 }
 
 impl UpdateRequestRequisitionStatusInput {
-    pub fn to_domain(self) -> UpdateRequestRequstionStatus {
+    pub fn to_domain(self) -> UpdateRequestRequistionStatus {
         use UpdateRequestRequisitionStatusInput::*;
         match self {
-            Sent => UpdateRequestRequstionStatus::Sent,
+            Sent => UpdateRequestRequistionStatus::Sent,
         }
     }
 }
@@ -179,7 +179,7 @@ mod test {
         requisition::{
             request_requisition::{
                 UpdateRequestRequisition as ServiceInput,
-                UpdateRequestRequisitionError as ServiceError, UpdateRequestRequstionStatus,
+                UpdateRequestRequisitionError as ServiceError, UpdateRequestRequistionStatus,
             },
             RequisitionServiceTrait,
         },
@@ -400,7 +400,7 @@ mod test {
                     max_months_of_stock: Some(1.0),
                     min_months_of_stock: Some(2.0),
                     other_party_id: Some("other_party_id".to_string()),
-                    status: Some(UpdateRequestRequstionStatus::Sent),
+                    status: Some(UpdateRequestRequistionStatus::Sent),
                     expected_delivery_date: Some(NaiveDate::from_ymd(2022, 01, 03))
                 }
             );

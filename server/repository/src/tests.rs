@@ -268,7 +268,7 @@ mod repository_test {
         pub fn log_1() -> LogRow {
             LogRow {
                 id: "log1".to_string(),
-                log_type: LogType::UserLoggedIn,
+                r#type: LogType::UserLoggedIn,
                 user_id: Some(user_account_1().id.to_string()),
                 store_id: None,
                 record_id: None,

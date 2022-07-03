@@ -20,7 +20,7 @@ pub struct Log {
 #[derive(Clone, PartialEq, Debug)]
 pub struct LogFilter {
     pub id: Option<EqualFilter<String>>,
-    pub log_type: Option<EqualFilter<LogType>>,
+    pub r#type: Option<EqualFilter<LogType>>,
     pub user_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub record_id: Option<EqualFilter<String>>,
@@ -67,7 +67,7 @@ impl<'a> LogRepository<'a> {
                     apply_sort_no_case!(query, sort, log_dsl::id)
                 }
                 LogSortField::LogType => {
-                    apply_sort_no_case!(query, sort, log_dsl::log_type)
+                    apply_sort_no_case!(query, sort, log_dsl::type_)
                 }
                 LogSortField::UserId => {
                     apply_sort_no_case!(query, sort, log_dsl::user_id)
@@ -96,7 +96,7 @@ fn create_filtered_query(filter: Option<LogFilter>) -> BoxedLogQuery {
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, log_dsl::id);
-        apply_equal_filter!(query, filter.log_type, log_dsl::log_type);
+        apply_equal_filter!(query, filter.r#type, log_dsl::type_);
         apply_equal_filter!(query, filter.user_id, log_dsl::user_id);
         apply_equal_filter!(query, filter.store_id, log_dsl::store_id);
         apply_equal_filter!(query, filter.record_id, log_dsl::record_id);
@@ -113,7 +113,7 @@ impl LogFilter {
     pub fn new() -> LogFilter {
         LogFilter {
             id: None,
-            log_type: None,
+            r#type: None,
             user_id: None,
             store_id: None,
             record_id: None,
@@ -125,8 +125,8 @@ impl LogFilter {
         self
     }
 
-    pub fn log_type(mut self, filter: EqualFilter<LogType>) -> Self {
-        self.log_type = Some(filter);
+    pub fn r#type(mut self, filter: EqualFilter<LogType>) -> Self {
+        self.r#type = Some(filter);
         self
     }
 
