@@ -131,7 +131,7 @@ fn generate_line(
         update_line.total_after_tax = total_after_tax;
     }
     if let Some(tax) = input.tax {
-        update_line.tax = tax.percentage;
+        update_line.tax = Some(tax);
     }
 
     update_line

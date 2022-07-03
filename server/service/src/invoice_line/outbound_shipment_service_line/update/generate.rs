@@ -51,7 +51,7 @@ pub fn generate(
     }
 
     if let Some(tax) = input_tax {
-        update_line.tax = tax.percentage;
+        update_line.tax = Some(tax);
     }
 
     if let Some(note) = input_note {

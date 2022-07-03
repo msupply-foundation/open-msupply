@@ -78,7 +78,11 @@ fn generate_line(
         item_name,
         item_code,
         stock_line_id: Some(stock_line_id),
-        total_before_tax,
+        total_before_tax: if total_before_tax.is_some() {
+            total_before_tax.unwrap()
+        } else {
+            sell_price_per_pack * number_of_packs as f64
+        },
         total_after_tax,
         tax,
         note,

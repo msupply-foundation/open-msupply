@@ -5,11 +5,7 @@ use generate::generate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
-    WithDBError,
-};
+use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdateOutboundShipmentServiceLine {
     pub id: String,
@@ -17,7 +13,7 @@ pub struct UpdateOutboundShipmentServiceLine {
     pub name: Option<String>,
     pub total_before_tax: Option<f64>,
     pub total_after_tax: Option<f64>,
-    pub tax: Option<ShipmentTaxUpdate>,
+    pub tax: Option<f64>,
     pub note: Option<String>,
 }
 

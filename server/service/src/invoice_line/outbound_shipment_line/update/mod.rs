@@ -1,7 +1,6 @@
 use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
-    u32_to_i32, WithDBError,
+    invoice_line::query::get_invoice_line, service_provider::ServiceContext, u32_to_i32,
+    WithDBError,
 };
 use repository::{
     InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLineRow,
@@ -21,7 +20,7 @@ pub struct UpdateOutboundShipmentLine {
     pub number_of_packs: Option<u32>,
     pub total_before_tax: Option<f64>,
     pub total_after_tax: Option<f64>,
-    pub tax: Option<ShipmentTaxUpdate>,
+    pub tax: Option<f64>,
 }
 
 type OutError = UpdateOutboundShipmentLineError;
