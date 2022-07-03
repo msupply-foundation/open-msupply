@@ -1,3 +1,4 @@
+mod central_server_configurations;
 mod invoice;
 mod location;
 mod number;
