@@ -53,15 +53,16 @@ impl CentralDataSynchroniser {
         &self,
         connection: &StorageConnection,
     ) -> Result<(), CentralSyncError> {
-        let cursor: u32 = CentralSyncPullCursor::new(&connection)
-            .get_cursor()
-            .unwrap_or(0);
-
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
 
+        // TODO protection fron infinite loop
         loop {
             info!("Pulling central sync records...");
+            let cursor: u32 = CentralSyncPullCursor::new(&connection)
+                .get_cursor()
+                .unwrap_or(0);
+
             let sync_batch: CentralSyncBatchV5 = self
                 .sync_api_v5
                 .get_central_records(cursor, BATCH_SIZE)
