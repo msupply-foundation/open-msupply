@@ -1,11 +1,19 @@
 use repository::{NumberRow, NumberRowRepository, NumberRowType, StorageConnection};
 use util::{inline_edit, uuid::uuid};
 
-use super::remote_sync_integration_test::{gen_i64, SyncRecordTester};
+use super::{
+    central_server_configurations::NewSiteProperties,
+    remote_sync_integration_test::{gen_i64, SyncRecordTester},
+};
 
 pub struct NumberSyncRecordTester {}
 impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
-    fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<NumberRow> {
+    fn insert(
+        &self,
+        connection: &StorageConnection,
+        new_site_properties: &NewSiteProperties,
+    ) -> Vec<NumberRow> {
+        let store_id = &new_site_properties.store_id;
         let number_repo = NumberRowRepository::new(&connection);
 
         let mut row_0 = number_repo
@@ -81,7 +89,12 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         rows
     }
 
-    fn mutate(&self, connection: &StorageConnection, rows: &Vec<NumberRow>) -> Vec<NumberRow> {
+    fn mutate(
+        &self,
+        connection: &StorageConnection,
+        _: &NewSiteProperties,
+        rows: &Vec<NumberRow>,
+    ) -> Vec<NumberRow> {
         let number_repo = NumberRowRepository::new(&connection);
         let rows = rows
             .iter()

@@ -1,22 +1,39 @@
 use chrono::NaiveDate;
 use repository::{
-    InvoiceFilter, InvoiceRepository, ItemFilter, ItemRepository, ItemRowRepository, LocationRow,
-    LocationRowRepository, StockLineFilter, StockLineRepository, StocktakeLineRow,
-    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
-    StorageConnection,
+    InvoiceRow, InvoiceRowRepository, LocationRow, LocationRowRepository, StockLineRow,
+    StockLineRowRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow,
+    StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
-use util::{inline_edit, uuid::uuid};
+use serde_json::json;
+use util::{inline_edit, inline_init, uuid::uuid};
 
-use super::remote_sync_integration_test::SyncRecordTester;
+use super::{
+    central_server_configurations::NewSiteProperties,
+    remote_sync_integration_test::SyncRecordTester,
+};
 
 #[derive(Debug)]
-pub struct FullStocktake {
+pub(crate) struct FullStocktake {
     row: StocktakeRow,
     lines: Vec<StocktakeLineRow>,
 }
-pub struct StocktakeRecordTester {}
+pub(crate) struct StocktakeRecordTester {
+    item_id: String,
+}
+
+impl StocktakeRecordTester {
+    pub(crate) fn new() -> StocktakeRecordTester {
+        StocktakeRecordTester { item_id: uuid() }
+    }
+}
+
 impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
-    fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<FullStocktake> {
+    fn insert(
+        &self,
+        connection: &StorageConnection,
+        new_site_properties: &NewSiteProperties,
+    ) -> Vec<FullStocktake> {
+        let store_id = &new_site_properties.store_id;
         // create test location
         let location = LocationRow {
             id: uuid(),
@@ -27,11 +44,6 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
         };
         LocationRowRepository::new(connection)
             .upsert_one(&location)
-            .unwrap();
-
-        let item = ItemRepository::new(connection)
-            .query_one(ItemFilter::new())
-            .unwrap()
             .unwrap();
 
         let row_id = uuid();
@@ -58,7 +70,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                 comment: None,
                 snapshot_number_of_packs: 100,
                 counted_number_of_packs: None,
-                item_id: item.item_row.id,
+                item_id: self.item_id.clone(),
                 batch: None,
                 expiry_date: None,
                 pack_size: Some(0),
@@ -78,14 +90,29 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
         rows
     }
 
+    fn extra_data(&self, _: &NewSiteProperties) -> serde_json::Value {
+        // TODO, use push translation ?
+        json!({
+            "item": [{
+                "ID": self.item_id,
+                "type_of": "general"
+            }]
+        })
+    }
+
     fn mutate(
         &self,
         connection: &StorageConnection,
+        new_site_properties: &NewSiteProperties,
         rows: &Vec<FullStocktake>,
     ) -> Vec<FullStocktake> {
-        let invoice = InvoiceRepository::new(connection)
-            .query_one(InvoiceFilter::new())
-            .unwrap()
+        let invoice = mock_invoice(new_site_properties);
+        let stock_line = mock_stock_line(new_site_properties, self.item_id.clone());
+        InvoiceRowRepository::new(connection)
+            .upsert_one(&invoice)
+            .unwrap();
+        StockLineRowRepository::new(connection)
+            .upsert_one(&stock_line)
             .unwrap();
         let repo = StocktakeRowRepository::new(connection);
         let line_repo = StocktakeLineRowRepository::new(connection);
@@ -100,7 +127,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                     d.stocktake_date = Some(NaiveDate::from_ymd(2022, 03, 23));
                     d.finalised_datetime =
                         Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(8, 15, 30));
-                    d.inventory_adjustment_id = Some(invoice.invoice_row.id.clone());
+                    d.inventory_adjustment_id = Some(invoice.id.clone());
                     d.is_locked = true;
                     d
                 });
@@ -108,24 +135,14 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                     .lines
                     .iter()
                     .map(|l| {
-                        let stock_line = StockLineRepository::new(connection)
-                            .query_by_filter(StockLineFilter::new())
-                            .unwrap()
-                            .pop()
-                            .unwrap()
-                            .stock_line_row;
-                        let item = ItemRowRepository::new(connection)
-                            .find_one_by_id(&stock_line.item_id)
-                            .unwrap()
-                            .unwrap();
                         inline_edit(l, |mut d| {
                             d.comment = Some("stocktake line comment".to_string());
                             d.location_id = None;
                             d.snapshot_number_of_packs = 110;
                             d.counted_number_of_packs = Some(90);
-                            d.item_id = item.id;
-                            d.stock_line_id = Some(stock_line.id);
-                            d.batch = stock_line.batch;
+                            d.item_id = self.item_id.clone();
+                            d.stock_line_id = Some(stock_line.id.clone());
+                            d.batch = stock_line.batch.clone();
                             d.expiry_date = Some(NaiveDate::from_ymd(2025, 03, 24));
                             d.pack_size = Some(stock_line.pack_size);
                             d.cost_price_per_pack = Some(stock_line.cost_price_per_pack);
@@ -177,4 +194,24 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
             assert_eq!(row_expected.row, stock_take_row);
         }
     }
+}
+
+fn mock_invoice(new_site_properties: &NewSiteProperties) -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = uuid();
+        r.name_id = new_site_properties.name_id.clone();
+        r.store_id = new_site_properties.store_id.clone();
+    })
+}
+
+fn mock_stock_line(new_site_properties: &NewSiteProperties, item_id: String) -> StockLineRow {
+    inline_init(|r: &mut StockLineRow| {
+        r.id = uuid();
+        r.item_id = item_id;
+        r.store_id = new_site_properties.store_id.clone();
+        r.batch = Some("some batch".to_string());
+        r.pack_size = 20;
+        r.cost_price_per_pack = 0.5;
+        r.sell_price_per_pack = 0.2;
+    })
 }
