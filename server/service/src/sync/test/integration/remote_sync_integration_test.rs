@@ -1,11 +1,30 @@
+use actix_web::web::Data;
 use rand::{thread_rng, Rng};
-use repository::StorageConnection;
+use repository::{mock::MockDataInserts, test_db::setup_all, StorageConnection};
+use serde_json::json;
 
-pub trait SyncRecordTester<T> {
+use crate::{
+    service_provider::ServiceProvider,
+    sync::{
+        settings::SyncSettings,
+        synchroniser::Synchroniser,
+        test::integration::central_server_configurations::{
+            ConfigureCentralServer, CreateSyncSiteResult,
+        },
+    },
+};
+
+use super::central_server_configurations::NewSiteProperties;
+
+pub(crate) trait SyncRecordTester<T> {
+    // Extra data that's needed for test to work, i.e. invoice for stocktake inventory adjustment
+    fn extra_data(&self, _: &NewSiteProperties) -> serde_json::Value {
+        json!({})
+    }
     /// inserts new row(s)
-    fn insert(&self, connection: &StorageConnection, store_id: &str) -> T;
+    fn insert(&self, connection: &StorageConnection, store_id: &NewSiteProperties) -> T;
     /// mutates existing row(s) locally
-    fn mutate(&self, connection: &StorageConnection, rows: &T) -> T;
+    fn mutate(&self, connection: &StorageConnection, store_id: &NewSiteProperties, rows: &T) -> T;
     /// validates that the expected row(s) are in the local DB
     fn validate(&self, connection: &StorageConnection, rows: &T);
 }
@@ -17,154 +36,117 @@ pub fn gen_i64() -> i64 {
     number
 }
 
+async fn init_db(sync_settings: &SyncSettings, step: &str) -> (StorageConnection, Synchroniser) {
+    let (_, connection, connection_manager, _) = setup_all(
+        &format!("remote_sync_integration_{}_tests", step),
+        MockDataInserts::none(),
+    )
+    .await;
+
+    let service_provider = Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
+    let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider).unwrap();
+    synchroniser.sync().await.unwrap();
+
+    (connection, synchroniser)
+}
+
+/// Does a simple test cycle:
+/// 1) Insert new data records and push them to the central server
+/// 2) Reset local data and pull. Then validate that the pulled data is correct
+/// 3) Mutate the previously inserted data and push the changes
+/// 4) Reset, pull and validate as in step 2)
+
+async fn test_sync_record<T>(identifier: &str, tester: &dyn SyncRecordTester<T>) {
+    let CreateSyncSiteResult {
+        new_site_properties,
+        sync_settings,
+    } = ConfigureCentralServer::from_env()
+        .create_sync_site_with_extra_data(|pre_site_creation_data| {
+            tester.extra_data(pre_site_creation_data)
+        })
+        .await
+        .expect("Problem creating sync site");
+
+    let test_step = format!("test_sync_record_{}_step1", identifier);
+    println!("{}", test_step);
+    let (connection, synchroniser) = init_db(&sync_settings, &test_step).await;
+    synchroniser.sync().await.unwrap();
+
+    // push some new changes
+    let data = tester.insert(&connection, &new_site_properties);
+    synchroniser.sync().await.unwrap();
+
+    // reset local DB and pull changes
+    let test_step = format!("test_sync_record_{}_step2", identifier);
+    println!("{}", test_step);
+    let (connection, synchroniser) = init_db(&sync_settings, &test_step).await;
+    synchroniser.sync().await.unwrap();
+    // validate we pulled the same data we inserted
+    tester.validate(&connection, &data);
+
+    // mutate changes
+    let data = tester.mutate(&connection, &new_site_properties, &data);
+    synchroniser.sync().await.unwrap();
+    // reset local DB and pull changes
+    let test_step = format!("test_sync_record_{}_step3", identifier);
+    println!("{}", test_step);
+    let (connection, synchroniser) = init_db(&sync_settings, &test_step).await;
+    synchroniser.sync().await.unwrap();
+    // validate we pulled the same data we inserted
+    tester.validate(&connection, &data);
+}
+
+// To run this test, you'll need to run central server with a data file with at least one sync site, credentials for which need to be
+// passed through with enviromental variable (TODO specify which branch)
+
+// SYNC_SITE_PASSWORD="pass" SYNC_SITE_ID="2" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" NEW_SITE_PASSWORD="pass" cargo test sync_integration_test  --features integration_test
+
+// OR in VSCODE settings if using rust analyzer (and Run Tests|Debug actions as inlay hints):
+// "rust-analyzer.runnableEnv": { "SYNC_URL": "http://localhost:2048", "SYNC_SITE_NAME": "demo","SYNC_SITE_PASSWORD": "pass", "NEW_SITE_PASSWORD": "pass"}
+// "rust-analyzer.cargo.features": ["integration_test"]
+
 #[cfg(test)]
-mod remote_sync_integration_tests {
-
-    use crate::service_provider::ServiceProvider;
-    use crate::sync::settings::SyncSettings;
-    use actix_web::web::Data;
-    use repository::{
-        mock::MockDataInserts, test_db::setup_all, EqualFilter, StorageConnection, StoreFilter,
-        StoreRepository,
+mod tests {
+    use crate::sync::test::integration::{
+        invoice::InvoiceRecordTester, location::LocationSyncRecordTester,
+        number::NumberSyncRecordTester, remote_sync_integration_test::test_sync_record,
+        requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
+        stocktake::StocktakeRecordTester,
     };
 
-    use crate::sync::{
-        integration::{
-            invoice::InvoiceRecordTester, location::LocationSyncRecordTester,
-            number::NumberSyncRecordTester, requisition::RequisitionRecordTester,
-            stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
-        },
-        Synchroniser,
-    };
-
-    use super::SyncRecordTester;
-
-    async fn init_db(
-        sync_settings: &SyncSettings,
-        step: &str,
-    ) -> (StorageConnection, Synchroniser) {
-        let (_, connection, connection_manager, _) = setup_all(
-            &format!("remote_sync_integration_{}_tests", step),
-            MockDataInserts::none(),
-        )
-        .await;
-
-        let service_provider =
-            Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
-        let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider).unwrap();
-        synchroniser
-            .central_data
-            .pull_and_integrate_records(&connection)
-            .await
-            .unwrap();
-
-        (connection, synchroniser)
-    }
-
-    /// Does a simple test cycle:
-    /// 1) Insert new data records and push them to the central server
-    /// 2) Reset local data and pull. Then validate that the pulled data is correct
-    /// 3) Mutate the previously inserted data and push the changes
-    /// 4) Reset, pull and validate as in step 2)
-
-    async fn test_sync_record<T>(sync_settings: &SyncSettings, tester: &dyn SyncRecordTester<T>) {
-        let (connection, synchroniser) = init_db(sync_settings, "step0").await;
-        synchroniser
-            .remote_data
-            .initial_pull(&connection)
-            .await
-            .unwrap();
-        let store_id = StoreRepository::new(&connection)
-            .query_one(
-                StoreFilter::new().site_id(EqualFilter::equal_to_i32(sync_settings.site_id as i32)),
-            )
-            .unwrap()
-            .unwrap()
-            .store_row
-            .id;
-
-        // push some new changes
-        let data = tester.insert(&connection, &store_id);
-        synchroniser
-            .remote_data
-            .push_changes(&connection)
-            .await
-            .unwrap();
-
-        // reset local DB and pull changes
-        let (connection, synchroniser) = init_db(sync_settings, "step1").await;
-        synchroniser
-            .remote_data
-            .initial_pull(&connection)
-            .await
-            .unwrap();
-        // validate we pulled the same data we inserted
-        tester.validate(&connection, &data);
-
-        // mutate changes
-        let data = tester.mutate(&connection, &data);
-        synchroniser
-            .remote_data
-            .push_changes(&connection)
-            .await
-            .unwrap();
-        // reset local DB and pull changes
-        let (connection, synchroniser) = init_db(sync_settings, "step2").await;
-        synchroniser
-            .remote_data
-            .initial_pull(&connection)
-            .await
-            .unwrap();
-        // validate we pulled the same data we inserted
-        tester.validate(&connection, &data);
-    }
-
-    /// This test assumes a running central server.
-    /// To run this test, enable the test macro and update the sync_settings.
-    /// For every test run new unique records are generated and it shouldn't be necessary to bring
-    /// the central server into a clean state after each test.
-    ///
-    /// Need to have at least one invoice in data file, need to have at least two stores in one data file (one active on site)
-    ///
-    /// Note: the sub tests can't be parallelized since every sync test need exclusive access to the
-    /// central server
-    // #[actix_rt::test]
-
-    async fn test_remote_syncing() {
-        let sync_settings = SyncSettings {
-            url: "http://192.168.178.77:8080".to_string(),
-            username: "mobiletest".to_string(),
-            password_sha256: "e2565cf07cd699f745b0e46c8d647f7174fc9446e01a1ffde672a4cf78bf45ac"
-                .to_string(),
-            interval_sec: 60 * 60,
-            central_server_site_id: 1,
-            site_id: 7,
-        };
-
-        println!("number...");
+    #[actix_rt::test]
+    async fn integration_test_remote_syncing_number() {
         let number_tester = NumberSyncRecordTester {};
-        test_sync_record(&sync_settings, &number_tester).await;
+        test_sync_record("number", &number_tester).await;
+    }
 
-        // Name test was removed here: 0a457c43c2e3ce472b337a2ac401e31ec0548e00
-
-        println!("Location...");
+    #[actix_rt::test]
+    async fn integration_test_remote_syncing_location() {
         let location_tester = LocationSyncRecordTester {};
-        test_sync_record(&sync_settings, &location_tester).await;
+        test_sync_record("location", &location_tester).await;
+    }
 
-        println!("stock line...");
+    #[actix_rt::test]
+    async fn integration_test_remote_syncing_stock_line() {
         let stock_line_tester = StockLineRecordTester {};
-        test_sync_record(&sync_settings, &stock_line_tester).await;
+        test_sync_record("stock_line", &stock_line_tester).await;
+    }
 
-        println!("stocktake...");
-        let stocktake_tester = StocktakeRecordTester {};
-        test_sync_record(&sync_settings, &stocktake_tester).await;
+    #[actix_rt::test]
+    async fn integration_test_remote_syncing_stocktake() {
+        let stocktake_tester = StocktakeRecordTester::new();
+        test_sync_record("stocktake", &stocktake_tester).await;
+    }
 
-        println!("invoice...");
-        let invoice_tester = InvoiceRecordTester {};
-        test_sync_record(&sync_settings, &invoice_tester).await;
+    #[actix_rt::test]
+    async fn integration_test_remote_syncing_invoice() {
+        let invoice_tester = InvoiceRecordTester::new();
+        test_sync_record("invoice", &invoice_tester).await;
+    }
 
-        println!("requisition...");
-        let requisition_tester = RequisitionRecordTester {};
-        test_sync_record(&sync_settings, &requisition_tester).await;
+    #[actix_rt::test]
+    async fn integration_test_remote_syncing_requisition() {
+        let requisition_tester = RequisitionRecordTester::new();
+        test_sync_record("requisition", &requisition_tester).await;
     }
 }
