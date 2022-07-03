@@ -51,8 +51,7 @@ pub fn update_response_requisition(
             let updated_requisition = generate(user_id, requisition_row.clone(), input.clone());
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
-            if input.status == Some(UpdateResponseRequstionStatus::Finalised)
-                && requisition_row.status != updated_requisition.status
+            if requisition_row.status != updated_requisition.status
             {
                 log_entry(
                     &ctx.connection,
