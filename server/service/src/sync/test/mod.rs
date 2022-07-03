@@ -1,4 +1,5 @@
-// mod integration;
+#[cfg(feature = "integration_test")]
+mod integration;
 mod pull_and_push;
 pub(crate) mod test_data;
 

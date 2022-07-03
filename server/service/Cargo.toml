@@ -34,5 +34,6 @@ rand = "0.8.5"
 
 [features]
 default = ["sqlite"]
+integration_test = []
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
