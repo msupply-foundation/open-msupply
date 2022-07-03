@@ -8,7 +8,7 @@ import {
   useTranslation,
   useNotification,
   useConfirmOnLeaving,
-  Pulse,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { JsonForms } from '@jsonforms/react';
 import {
@@ -64,7 +64,7 @@ const FormComponent = ({
       onChange={({ errors, data }) => {
         setData(data);
         if (errors && errors.length) {
-          setError(String(errors));
+          setError(errors?.map(({ message }) => message ?? '').join(', '));
           console.warn('Errors: ', errors);
         }
       }}
@@ -212,7 +212,7 @@ export const useJsonForms = (
       >
         <ScrollFix />
         {isLoading || !data ? (
-          <Pulse />
+          <BasicSpinner />
         ) : (
           <FormComponent
             data={data}

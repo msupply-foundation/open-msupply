@@ -8,9 +8,8 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
 
       if (document?.__typename === 'DocumentNode') {
         return document;
-      } else {
-        throw new Error('Error querying document');
       }
+      throw new Error('Error querying document');
     },
   },
 });
