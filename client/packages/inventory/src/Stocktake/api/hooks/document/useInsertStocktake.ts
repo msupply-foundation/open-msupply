@@ -3,6 +3,7 @@ import {
   useQueryClient,
   useMutation,
 } from '@openmsupply-client/common';
+import { StockLineFragment } from '@openmsupply-client/system';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 
 export const useInsertStocktake = () => {
@@ -12,11 +13,22 @@ export const useInsertStocktake = () => {
   return useMutation<
     { __typename: 'StocktakeNode'; id: string; stocktakeNumber: number },
     unknown,
-    { description: string; itemIds: string[] | undefined },
+    {
+      description: string;
+      items: { itemId: string; stockLines?: StockLineFragment[] }[] | undefined;
+    },
     unknown
   >(
-    ({ description, itemIds }: { description: string; itemIds?: string[] }) =>
-      api.insertStocktake(description, itemIds),
+    ({
+      description,
+      items,
+    }: {
+      description: string;
+      items?: {
+        itemId: string;
+        stockLines?: StockLineFragment[];
+      }[];
+    }) => api.insertStocktake(description, items),
     {
       onSuccess: ({ stocktakeNumber }) => {
         navigate(String(stocktakeNumber));
