@@ -43,7 +43,7 @@ pub struct EqualFilterLogTypeInput {
 #[derive(InputObject, Clone)]
 pub struct LogFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub log_type: Option<EqualFilterLogTypeInput>,
+    pub r#type: Option<EqualFilterLogTypeInput>,
     pub user_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub record_id: Option<EqualFilterStringInput>,
@@ -86,7 +86,7 @@ impl LogFilterInput {
     pub fn to_domain(self) -> LogFilter {
         let LogFilterInput {
             id,
-            log_type,
+            r#type,
             user_id,
             store_id,
             record_id,
@@ -94,7 +94,7 @@ impl LogFilterInput {
 
         LogFilter {
             id: id.map(EqualFilter::from),
-            log_type: log_type.map(|t| map_filter!(t, LogNodeType::to_domain)),
+            r#type: r#type.map(|t| map_filter!(t, LogNodeType::to_domain)),
             user_id: user_id.map(EqualFilter::from),
             store_id: store_id.map(EqualFilter::from),
             record_id: record_id.map(EqualFilter::from),
