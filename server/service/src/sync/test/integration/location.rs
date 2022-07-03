@@ -1,11 +1,19 @@
 use repository::{LocationRow, LocationRowRepository, StorageConnection};
 use util::{inline_edit, uuid::uuid};
 
-use super::remote_sync_integration_test::SyncRecordTester;
+use super::{
+    central_server_configurations::NewSiteProperties,
+    remote_sync_integration_test::SyncRecordTester,
+};
 
 pub struct LocationSyncRecordTester {}
 impl SyncRecordTester<Vec<LocationRow>> for LocationSyncRecordTester {
-    fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<LocationRow> {
+    fn insert(
+        &self,
+        connection: &StorageConnection,
+        new_site_properties: &NewSiteProperties,
+    ) -> Vec<LocationRow> {
+        let store_id = &new_site_properties.store_id;
         let rows = vec![LocationRow {
             id: uuid(),
             name: "LoationName".to_string(),
@@ -20,7 +28,12 @@ impl SyncRecordTester<Vec<LocationRow>> for LocationSyncRecordTester {
         rows
     }
 
-    fn mutate(&self, connection: &StorageConnection, rows: &Vec<LocationRow>) -> Vec<LocationRow> {
+    fn mutate(
+        &self,
+        connection: &StorageConnection,
+        _: &NewSiteProperties,
+        rows: &Vec<LocationRow>,
+    ) -> Vec<LocationRow> {
         let repo = LocationRowRepository::new(&connection);
         let rows = rows
             .iter()

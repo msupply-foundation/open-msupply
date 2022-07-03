@@ -2,37 +2,49 @@ use chrono::NaiveDate;
 use repository::{
     mock::mock_request_draft_requisition,
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    EqualFilter, ItemFilter, ItemRepository, NameFilter, NameRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorageConnection,
+    EqualFilter, NameFilter, NameRepository, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRow, RequisitionRowRepository, StorageConnection,
 };
+use serde_json::json;
 use util::{inline_edit, uuid::uuid};
 
-use super::remote_sync_integration_test::SyncRecordTester;
+use super::{
+    central_server_configurations::NewSiteProperties,
+    remote_sync_integration_test::SyncRecordTester,
+};
 
 #[derive(Debug)]
 pub struct FullRequisition {
     row: RequisitionRow,
     lines: Vec<RequisitionLineRow>,
 }
-pub struct RequisitionRecordTester {}
-impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
-    fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<FullRequisition> {
-        let name = NameRepository::new(connection)
-            .query_by_filter(store_id, NameFilter::new().is_store(true))
-            .unwrap()
-            .pop()
-            .unwrap();
-        let item = ItemRepository::new(connection)
-            .query_one(ItemFilter::new())
-            .unwrap()
-            .unwrap();
+pub(crate) struct RequisitionRecordTester {
+    item_id: String,
+    store_name_id: String,
+}
 
+impl RequisitionRecordTester {
+    pub(crate) fn new() -> RequisitionRecordTester {
+        RequisitionRecordTester {
+            item_id: uuid(),
+            store_name_id: uuid(),
+        }
+    }
+}
+
+impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
+    fn insert(
+        &self,
+        connection: &StorageConnection,
+        new_site_properties: &NewSiteProperties,
+    ) -> Vec<FullRequisition> {
+        let store_id = &new_site_properties.store_id;
         let row = RequisitionRow {
             id: uuid(),
             store_id: store_id.to_string(),
             user_id: None,
             requisition_number: 456,
-            name_id: name.name_row.id,
+            name_id: self.store_name_id.clone(),
             r#type: RequisitionRowType::Request,
             status: RequisitionRowStatus::Draft,
             created_datetime: NaiveDate::from_ymd(2022, 03, 23).and_hms(8, 53, 0),
@@ -76,7 +88,7 @@ impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
                 lines: vec![RequisitionLineRow {
                     id: uuid(),
                     requisition_id: row.id.clone(),
-                    item_id: item.item_row.id,
+                    item_id: self.item_id.clone(),
                     requested_quantity: 50,
                     suggested_quantity: 10,
                     supply_quantity: 5,
@@ -99,9 +111,28 @@ impl SyncRecordTester<Vec<FullRequisition>> for RequisitionRecordTester {
         rows
     }
 
+    fn extra_data(&self, _: &NewSiteProperties) -> serde_json::Value {
+        json!({
+            "item": [{
+                "ID": self.item_id,
+                "type_of": "general",
+                "code": uuid()
+            }],
+            "name": [{
+                "ID": self.store_name_id,
+                "type": "store"
+            }],
+            "store": [{
+                "ID": uuid(),
+                "name_ID": self.store_name_id,
+            }]
+        })
+    }
+
     fn mutate(
         &self,
         connection: &StorageConnection,
+        _: &NewSiteProperties,
         rows: &Vec<FullRequisition>,
     ) -> Vec<FullRequisition> {
         let repo = RequisitionRowRepository::new(connection);

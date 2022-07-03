@@ -4,20 +4,42 @@ use repository::{
     EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
     InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemFilter, ItemRepository,
     LocationRow, LocationRowRepository, NameFilter, NameRepository, RequisitionRowRepository,
-    StockLineFilter, StockLineRepository, StorageConnection, StoreFilter, StoreRepository,
+    StockLineRow, StockLineRowRepository, StorageConnection, StoreFilter, StoreRepository,
 };
-use util::{inline_edit, uuid::uuid};
+use serde_json::json;
+use util::{inline_edit, inline_init, uuid::uuid};
 
-use super::remote_sync_integration_test::SyncRecordTester;
+use super::{
+    central_server_configurations::NewSiteProperties,
+    remote_sync_integration_test::SyncRecordTester,
+};
 
 #[derive(Debug)]
 pub struct FullInvoice {
     row: InvoiceRow,
     lines: Vec<InvoiceLineRow>,
 }
-pub struct InvoiceRecordTester {}
+pub struct InvoiceRecordTester {
+    item_id: String,
+    other_store_id: String,
+}
+
+impl InvoiceRecordTester {
+    pub(crate) fn new() -> InvoiceRecordTester {
+        InvoiceRecordTester {
+            item_id: uuid(),
+            other_store_id: uuid(),
+        }
+    }
+}
+
 impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
-    fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<FullInvoice> {
+    fn insert(
+        &self,
+        connection: &StorageConnection,
+        new_site_properties: &NewSiteProperties,
+    ) -> Vec<FullInvoice> {
+        let store_id = &new_site_properties.store_id;
         // create test location
         let location = LocationRow {
             id: uuid(),
@@ -31,12 +53,12 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             .unwrap();
 
         let other_store = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().id(EqualFilter::not_equal_to(store_id)))
+            .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&self.other_store_id)))
             .unwrap()
             .pop()
             .unwrap();
         let item = ItemRepository::new(connection)
-            .query_one(ItemFilter::new())
+            .query_one(ItemFilter::new().id(EqualFilter::equal_to(&self.item_id)))
             .unwrap()
             .unwrap();
         let invoice_id = uuid();
@@ -165,7 +187,31 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
         rows
     }
 
-    fn mutate(&self, connection: &StorageConnection, rows: &Vec<FullInvoice>) -> Vec<FullInvoice> {
+    fn extra_data(&self, _: &NewSiteProperties) -> serde_json::Value {
+        let name_id = uuid();
+        json!({
+            "item": [{
+                "ID": self.item_id,
+                "type_of": "general",
+                "code": uuid()
+            }],
+            "name": [{
+                "ID": name_id,
+                "type": "store"
+            }],
+            "store": [{
+                "ID": self.other_store_id,
+                "name_ID": name_id,
+            }]
+        })
+    }
+
+    fn mutate(
+        &self,
+        connection: &StorageConnection,
+        new_site_properties: &NewSiteProperties,
+        rows: &Vec<FullInvoice>,
+    ) -> Vec<FullInvoice> {
         let repo = InvoiceRowRepository::new(connection);
         let line_repo = InvoiceLineRowRepository::new(connection);
         let rows = rows
@@ -221,15 +267,10 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
                     .lines
                     .iter()
                     .map(|l| {
-                        let stock_line = StockLineRepository::new(connection)
-                            .query_by_filter(
-                                StockLineFilter::new()
-                                    .store_id(EqualFilter::equal_to(&row_existing.row.store_id)),
-                            )
-                            .unwrap()
-                            .pop()
-                            .unwrap()
-                            .stock_line_row;
+                        let stock_line = mock_stock_line(new_site_properties, self.item_id.clone());
+                        StockLineRowRepository::new(connection)
+                            .upsert_one(&stock_line)
+                            .unwrap();
 
                         inline_edit(l, |mut d| {
                             d.r#type = InvoiceLineRowType::StockOut;
@@ -287,4 +328,16 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             assert_eq!(row_expected.row, row);
         }
     }
+}
+
+fn mock_stock_line(new_site_properties: &NewSiteProperties, item_id: String) -> StockLineRow {
+    inline_init(|r: &mut StockLineRow| {
+        r.id = uuid();
+        r.item_id = item_id;
+        r.store_id = new_site_properties.store_id.clone();
+        r.batch = Some("some batch".to_string());
+        r.pack_size = 20;
+        r.cost_price_per_pack = 0.5;
+        r.sell_price_per_pack = 0.2;
+    })
 }
