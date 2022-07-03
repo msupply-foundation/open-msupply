@@ -32,6 +32,7 @@ pub fn delete_outbound_shipment(
                 .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&id)))?;
             for line in lines {
                 delete_outbound_shipment_line(
+                    //TODO add user_id
                     ctx,
                     store_id,
                     DeleteOutboundShipmentLine {

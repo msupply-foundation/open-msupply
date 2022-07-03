@@ -85,7 +85,7 @@ pub fn update_inbound_shipment(
             &ctx.connection,
             &LogRow {
                 id: uuid(),
-                log_type: match status {
+                r#type: match status {
                     UpdateInboundShipmentStatus::Delivered => LogType::InvoiceStatusDelivered,
                     UpdateInboundShipmentStatus::Verified => LogType::InvoiceStatusVerified,
                 },

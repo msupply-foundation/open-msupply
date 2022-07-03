@@ -1,16 +1,17 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository, NameRowRepository,
-    NumberRowType, RepositoryError, StockLineRow, StockLineRowRepository, Stocktake, StocktakeLine,
-    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository,
-    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository, LogRow, LogType,
+    NameRowRepository, NumberRowType, RepositoryError, StockLineRow, StockLineRowRepository,
+    Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+    StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
-    number::next_number, service_provider::ServiceContext, stocktake::query::get_stocktake,
-    validate::check_store_id_matches,
+    log::log_entry, number::next_number, service_provider::ServiceContext,
+    stocktake::query::get_stocktake, validate::check_store_id_matches,
 };
 
 use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
@@ -382,7 +383,7 @@ fn generate(
 
     let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
         u.description = input_description.or(u.description);
-        u.status = input_status.unwrap_or(u.status);
+        u.status = input_status.unwrap_or(u.status).clone();
         u.comment = input_comment.or(u.comment);
         u.finalised_datetime = Some(now);
         u.inventory_adjustment_id = Some(shipment.id.clone());
@@ -412,8 +413,8 @@ pub fn update_stocktake(
             let result = generate(
                 connection,
                 user_id,
-                input,
-                existing,
+                input.clone(),
+                existing.clone(),
                 stocktake_lines,
                 store_id,
             )?;
@@ -439,6 +440,21 @@ pub fn update_stocktake(
                 shipment_line_repo.upsert_one(&line)?;
             }
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
+
+            if existing.status != result.stocktake.status
+            {
+                log_entry(
+                    &ctx.connection,
+                    &LogRow {
+                        id: uuid(),
+                        r#type: LogType::StocktakeStatusFinalised,
+                        user_id: Some(user_id.to_string()),
+                        store_id: Some(store_id.to_string()),
+                        record_id: Some(stocktake_id.to_string()),
+                        datetime: Utc::now().naive_utc(),
+                    },
+                )?;
+            }
 
             // return the updated stocktake
             let stocktake = get_stocktake(ctx, stocktake_id)?;
