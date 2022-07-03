@@ -122,62 +122,6 @@ impl SyncApiV3 {
         })
     }
 
-    pub async fn get_initial_dump(
-        &self,
-        from_site: u32,
-        to_site: u32,
-    ) -> anyhow::Result<serde_json::Value> {
-        let query = [("from_site", from_site), ("to_site", to_site)];
-
-        let response = self
-            .client
-            .get(self.server_url.join("/sync/v3/initial_dump")?)
-            .basic_auth(
-                &self.credentials.username,
-                Some(&self.credentials.password_sha256),
-            )
-            .query(&query)
-            .headers(self.extra_headers.clone())
-            .send()
-            .await?
-            .error_for_status()?;
-
-        let response = response.json().await?;
-        let response = validate_response(response)?;
-        Ok(response)
-    }
-
-    pub async fn get_queued_records(
-        &self,
-        from_site: u32,
-        to_site: u32,
-        limit: u32,
-    ) -> anyhow::Result<Vec<RemoteGetRecordV3>> {
-        let query = [
-            ("from_site", from_site),
-            ("to_site", to_site),
-            ("limit", limit),
-        ];
-
-        let response = self
-            .client
-            .get(self.server_url.join("/sync/v3/queued_records")?)
-            .basic_auth(
-                &self.credentials.username,
-                Some(&self.credentials.password_sha256),
-            )
-            .query(&query)
-            .headers(self.extra_headers.clone())
-            .send()
-            .await?
-            .error_for_status()?;
-
-        let response = response.json().await?;
-        let response = validate_response(response)?;
-        let response = serde_json::from_value(response)?;
-        Ok(response)
-    }
-
     pub async fn post_queued_records(
         &self,
         from_site: u32,
