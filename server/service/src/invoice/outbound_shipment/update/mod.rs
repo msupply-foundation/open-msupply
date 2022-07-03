@@ -94,7 +94,7 @@ pub fn update_outbound_shipment(
             &ctx.connection,
             &LogRow {
                 id: uuid(),
-                log_type: match status {
+                r#type: match status {
                     UpdateOutboundShipmentStatus::Allocated => LogType::InvoiceStatusAllocated,
                     UpdateOutboundShipmentStatus::Picked => LogType::InvoiceStatusPicked,
                     UpdateOutboundShipmentStatus::Shipped => LogType::InvoiceStatusShipped,

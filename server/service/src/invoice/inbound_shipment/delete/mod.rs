@@ -67,7 +67,7 @@ pub fn delete_inbound_shipment(
         &ctx.connection,
         &LogRow {
             id: uuid(),
-            log_type: LogType::InvoiceDeleted,
+            r#type: LogType::InvoiceDeleted,
             user_id: Some(user_id.to_string()),
             store_id: Some(store_id.to_string()),
             record_id: Some(input.id),

@@ -61,7 +61,7 @@ pub fn insert_outbound_shipment(
         &ctx.connection,
         &LogRow {
             id: uuid(),
-            log_type: LogType::InvoiceCreated,
+            r#type: LogType::InvoiceCreated,
             user_id: Some(user_id.to_string()),
             store_id: Some(invoice.invoice_row.store_id.clone()),
             record_id: Some(invoice.invoice_row.id.clone()),

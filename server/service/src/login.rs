@@ -137,7 +137,7 @@ impl LoginService {
             &service_ctx.connection,
             &LogRow {
                 id: uuid(),
-                log_type: LogType::UserLoggedIn,
+                r#type: LogType::UserLoggedIn,
                 user_id: Some(user_account.id.clone()),
                 store_id: None,
                 record_id: None,

@@ -1,4 +1,5 @@
 use crate::{
+    log::log_entry,
     number::next_number,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
@@ -7,8 +8,10 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    NumberRowType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    LogRow, LogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
+    StorageConnection,
 };
+use util::uuid::uuid;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisition {
@@ -58,6 +61,19 @@ pub fn insert_request_requisition(
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
+
+    log_entry(
+        &ctx.connection,
+        &LogRow {
+            id: uuid(),
+            r#type: LogType::RequisitionCreated,
+            user_id: Some(user_id.to_string()),
+            store_id: Some(store_id.to_string()),
+            record_id: Some(requisition.requisition_row.id.to_string()),
+            datetime: requisition.requisition_row.created_datetime,
+        },
+    )?;
+
     Ok(requisition)
 }
 
