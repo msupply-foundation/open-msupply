@@ -225,7 +225,8 @@ mod graphql {
             "code": {"equalTo": "code_filter" },
             "description": {"equalTo": "description_filter_1", "like": "description_filter_2" },
             "existsForName": {"like": "exists_for_name_filter" },
-            "existsForNameId": {"notEqualTo": "test_name_id_filter"}
+            "existsForNameId": {"notEqualTo": "test_name_id_filter"},
+            "existsForStoreId": {"equalTo": "store_a"},
           }
         });
 
