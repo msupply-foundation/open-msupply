@@ -90,7 +90,7 @@ fn generate_line(
     }
 
     update_line.total_after_tax =
-        update_line.total_before_tax * (f64::from(1) + update_line.tax.unwrap() / 100.0);
+        update_line.total_before_tax * (f64::from(1) + update_line.tax.unwrap_or_default() / 100.0);
 
     update_line
 }
