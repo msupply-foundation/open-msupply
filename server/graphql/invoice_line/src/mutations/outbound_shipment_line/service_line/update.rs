@@ -150,7 +150,7 @@ mod test {
             outbound_shipment_service_line::{
                 UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError,
             },
-            InvoiceLineServiceTrait, ShipmentTaxUpdate,
+            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
