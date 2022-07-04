@@ -17,7 +17,7 @@ pub struct UpdateInboundShipmentServiceLine {
     pub name: Option<String>,
     pub total_before_tax: Option<f64>,
     pub total_after_tax: Option<f64>,
-    pub tax: Option<ShipmentTaxUpdate>,
+    pub tax: Option<f64>,
     pub note: Option<String>,
 }
 
@@ -240,9 +240,7 @@ mod test {
                     name: Some("modified name".to_string()),
                     total_before_tax: Some(1.0),
                     total_after_tax: Some(1.1),
-                    tax: Some(ShipmentTaxUpdate {
-                        percentage: Some(10.0),
-                    }),
+                    tax: Some(10.0),
                     note: Some("note".to_string()),
                 },
             )

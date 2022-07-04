@@ -65,6 +65,8 @@ fn generate_line(
         location_id,
         id: _,
         item_id: _,
+        total_before_tax,
+        tax,
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,

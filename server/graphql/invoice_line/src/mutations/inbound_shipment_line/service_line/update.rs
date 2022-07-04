@@ -10,12 +10,9 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::{
-    inbound_shipment_service_line::{
-        UpdateInboundShipmentServiceLine as ServiceInput,
-        UpdateInboundShipmentServiceLineError as ServiceError,
-    },
-    ShipmentTaxUpdate,
+use service::invoice_line::inbound_shipment_service_line::{
+    UpdateInboundShipmentServiceLine as ServiceInput,
+    UpdateInboundShipmentServiceLineError as ServiceError,
 };
 
 #[derive(InputObject)]
@@ -24,7 +21,7 @@ pub struct UpdateInput {
     pub id: String,
     item_id: Option<String>,
     name: Option<String>,
-    total_before_tax: Option<f64>,
+    total_before_tax: Option<PriceInput>,
     total_after_tax: Option<f64>,
     tax: Option<PriceInput>,
     note: Option<String>,
@@ -98,11 +95,10 @@ impl UpdateInput {
             id,
             item_id,
             name,
-            total_before_tax,
+            total_before_tax: total_before_tax
+                .and_then(|total_before_tax| total_before_tax.total_before_tax),
             total_after_tax,
-            tax: tax.map(|tax| ShipmentTaxUpdate {
-                percentage: tax.percentage,
-            }),
+            tax: tax.and_then(|tax| tax.percentage),
             note,
         }
     }
@@ -371,9 +367,7 @@ mod test {
                     name: Some("some name".to_string()),
                     total_before_tax: Some(0.1),
                     total_after_tax: Some(0.2),
-                    tax: Some(ShipmentTaxUpdate {
-                        percentage: Some(10.0)
-                    }),
+                    tax: Some(10.0),
                     note: Some("note".to_string())
                 }
             );

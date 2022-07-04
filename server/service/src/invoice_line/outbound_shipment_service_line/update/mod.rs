@@ -236,9 +236,7 @@ mod test {
                     name: Some("modified name".to_string()),
                     total_before_tax: Some(1.0),
                     total_after_tax: Some(1.1),
-                    tax: Some(ShipmentTaxUpdate {
-                        percentage: Some(10.0),
-                    }),
+                    tax: Some(10.0),
                     note: Some("note".to_string()),
                 },
             )
