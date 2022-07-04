@@ -131,6 +131,10 @@ export const allocateQuantities =
 
       if (!placeholder) throw new Error('No placeholder within item editing');
 
+      // stock has been allocated, and the auto generated placeholder is no longer required
+      if (shouldUpdatePlaceholder(newValue, placeholder))
+        placeholder.isUpdated = true;
+
       newDraftOutboundLines[placeholderIdx] = {
         ...placeholder,
         numberOfPacks: placeholder.numberOfPacks + toAllocate,
@@ -253,3 +257,8 @@ const reduceBatchAllocation = ({
     });
   return Math.abs(toAllocate);
 };
+
+export const shouldUpdatePlaceholder = (
+  quantity: number,
+  placeholder: DraftOutboundLine
+) => quantity > 0 && placeholder.numberOfPacks === 0 && !placeholder.isCreated;
