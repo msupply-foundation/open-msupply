@@ -91,8 +91,19 @@ fn generate_line(
         update_line.item_name = item.name;
     }
 
+    if let Some(total_before_tax) = total_before_tax {
+        update_line.total_before_tax = total_before_tax;
+    } else {
+        update_line.total_before_tax =
+            cost_price_per_pack.unwrap() * number_of_packs.unwrap() as f64;
+    }
+
     update_line.total_after_tax =
         update_line.cost_price_per_pack * update_line.number_of_packs as f64;
+
+    if let Some(tax) = tax {
+        update_line.tax = Some(tax);
+    }
 
     update_line
 }
