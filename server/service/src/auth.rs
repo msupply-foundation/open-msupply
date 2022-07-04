@@ -59,6 +59,7 @@ pub enum Resource {
     // reporting
     Report,
     // view/edit server setting
+    QueryLog,
     ServerAdmin,
 }
 
@@ -203,6 +204,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::Report),
         ]),
     );
+
+    map.insert(
+        Resource::QueryLog,
+        PermissionDSL::HasPermission(Permission::LogQuery),
+    );
     map
 }
 
@@ -245,16 +251,15 @@ pub fn validate_auth(
     auth_data: &AuthData,
     auth_token: &Option<String>,
 ) -> Result<ValidatedUserAuth, AuthError> {
-    if auth_data.debug_no_access_control {
-        return Ok(dummy_user_auth());
-    }
-
     let auth_token = match auth_token {
         Some(token) => token,
         None => {
+            if auth_data.debug_no_access_control {
+                return Ok(dummy_user_auth());
+            }
             return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
                 "Missing auth token".to_string(),
-            )))
+            )));
         }
     };
     let service = TokenService::new(

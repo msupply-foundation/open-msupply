@@ -68,10 +68,12 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'expiryDate',
     label: 'label.expiry',
     width: 100,
-    formatter: dateString =>
-      dateString
+    formatter: dateString => {
+      if (dateString === '[multiple]') return '[multiple]';
+      return dateString
         ? Formatter.expiryDate(new Date(dateString as string)) || ''
-        : '',
+        : '';
+    },
   },
 
   itemCode: {

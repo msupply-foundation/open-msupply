@@ -7,11 +7,13 @@ import { StocktakeLineFragment } from '../../operations.generated';
 import { useTranslation } from '@common/intl';
 import { useStocktakeRows } from './useStocktakeRows';
 import { useStocktakeDeleteLines } from './useStocktakeDeleteLines';
+import { useStocktake } from '..';
 
 export const useStocktakeDeleteSelectedLines = (): (() => void) => {
   const { items, lines } = useStocktakeRows();
   const { mutateAsync } = useStocktakeDeleteLines();
   const t = useTranslation('inventory');
+  const isDisabled = useStocktake.utils.isDisabled();
 
   const { selectedRows } = useTableStore(state => {
     const { isGrouped } = state;
@@ -46,6 +48,7 @@ export const useStocktakeDeleteSelectedLines = (): (() => void) => {
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: onDelete,
+    canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-stocktake_lines', {
         count: selectedRows.length,
@@ -53,7 +56,7 @@ export const useStocktakeDeleteSelectedLines = (): (() => void) => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: t('label.cant-delete-disabled'),
+      cantDelete: t('messages.cant-delete-generic'),
     },
   });
 

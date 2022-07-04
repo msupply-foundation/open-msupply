@@ -11,6 +11,7 @@ CREATE TYPE permission_type AS ENUM (
     'INBOUND_SHIPMENT_QUERY',
     'INBOUND_SHIPMENT_MUTATE',
     'REPORT',
+    'LOG_QUERY',
     'SERVER_ADMIN'
 );
 

@@ -8,7 +8,7 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::SyncCredentials;
+use super::sync_api_credentials::SyncCredentials;
 
 pub struct SyncApiV3 {
     server_url: Url,

@@ -137,6 +137,17 @@ impl GeneralQueries {
             stock_evolution_options_input,
         )
     }
+
+    pub async fn logs(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<LogFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<LogSortInput>>,
+    ) -> Result<LogResponse> {
+        logs(ctx, page, filter, sort)
+    }
 }
 
 #[derive(Default, Clone)]
