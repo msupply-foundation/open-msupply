@@ -15,6 +15,7 @@ import {
   createTableStore,
   createQueryParamsStore,
   QueryParamsProvider,
+  useRowStyle,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -51,6 +52,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const t = useTranslation(['common', 'inventory']);
   const { draftLines, update, addLine, isLoading, save, nextItem } =
     useStocktakeLineEdit(currentItem);
+  const { setRowStyle } = useRowStyle();
 
   const onNext = async () => {
     await save(draftLines);
@@ -64,6 +66,13 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const onOk = async () => {
     try {
       await save(draftLines);
+      if (item) {
+        const highlight = {
+          animation: 'highlight 1.5s',
+        };
+        const rowIds = draftLines.map(line => line.id);
+        rowIds.forEach(id => setRowStyle(id, highlight));
+      }
       onClose();
     } catch (e) {
       error(t('error.cant-save'))();
