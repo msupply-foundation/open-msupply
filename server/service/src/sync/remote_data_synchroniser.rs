@@ -6,19 +6,16 @@ use repository::{
 };
 use thiserror::Error;
 
-use crate::sync::{
-    sync_api_v3::{RemotePostRecordV3, SyncTypeV3},
-    translation_remote::{
+use crate::{
+    apis::{
+        sync_api_v3::{RemotePostRecordV3, SyncApiV3, SyncTypeV3},
+        sync_api_v5::{RemoteSyncActionV5, RemoteSyncRecordV5, SyncApiV5},
+    },
+    sync::translation_remote::{
         pull::import_sync_pull_records,
         push::{translate_changelog, PushRecord},
         REMOTE_TRANSLATION_RECORDS,
     },
-};
-
-use super::{
-    sync_api_v3::SyncApiV3,
-    sync_api_v5::{RemoteSyncActionV5, RemoteSyncRecordV5},
-    SyncApiV5,
 };
 
 #[derive(Error, Debug)]

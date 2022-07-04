@@ -1,16 +1,19 @@
+use chrono::Utc;
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
-    RepositoryError,
+    LogRow, LogType, RepositoryError,
 };
 
 mod validate;
 
+use util::uuid::uuid;
 use validate::validate;
 
 use crate::{
     invoice_line::inbound_shipment_line::{
         delete_inbound_shipment_line, DeleteInboundShipmentLine, DeleteInboundShipmentLineError,
     },
+    log::log_entry,
     service_provider::ServiceContext,
     WithDBError,
 };
@@ -53,12 +56,24 @@ pub fn delete_inbound_shipment(
             }
             // End TODO
 
-            match InvoiceRowRepository::new(&connection).delete(&input.id) {
-                Ok(_) => Ok(input.id),
+            match InvoiceRowRepository::new(&connection).delete(&input.id.clone()) {
+                Ok(_) => Ok(input.id.clone()),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }
         })
         .map_err(|error| error.to_inner_error())?;
+
+    log_entry(
+        &ctx.connection,
+        &LogRow {
+            id: uuid(),
+            r#type: LogType::InvoiceDeleted,
+            user_id: Some(user_id.to_string()),
+            store_id: Some(store_id.to_string()),
+            record_id: Some(input.id),
+            datetime: Utc::now().naive_utc(),
+        },
+    )?;
 
     Ok(invoice_id)
 }
