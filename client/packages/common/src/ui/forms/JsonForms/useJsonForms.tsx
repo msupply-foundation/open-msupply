@@ -80,20 +80,16 @@ const ScrollFix = () => {
   return null;
 };
 
-export interface SaveAction {
-  mutate: (
-    jsonData: unknown,
-    formSchemaId: string,
-    parent?: DocumentFragment
-  ) => void;
-  isSaving: boolean;
-  isError: boolean;
-}
+export type SaveJob = (
+  jsonData: unknown,
+  formSchemaId: string,
+  parent?: DocumentFragment
+) => Promise<void>;
 
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
-  saveAction?: SaveAction;
+  saveJob?: SaveJob;
   saveConfirmationMessage?: string;
   cancelConfirmationMessage?: string;
   saveSuccessMessage?: string;
@@ -158,7 +154,7 @@ export const useJsonForms = (
     setData(newData);
   };
 
-  const saveData = () => {
+  const saveData = async () => {
     if (data === undefined) {
       return;
     }
@@ -166,24 +162,23 @@ export const useJsonForms = (
     console.log('Saving data...');
 
     // Run mutation...
-    options.saveAction?.mutate(
-      data,
-      documentRegistry.formSchemaId,
-      databaseResponse
-    );
-  };
+    try {
+      await options.saveJob?.(
+        data,
+        documentRegistry.formSchemaId,
+        databaseResponse
+      );
+      setIsDirty(false);
 
-  if (saving && options.saveAction?.isError) {
-    setSaving(false);
-    const errorSnack = errorNotification(t('error.problem-saving'));
-    errorSnack();
-  } else if (saving && !options.saveAction?.isSaving) {
-    setSaving(false);
-    const successSnack = success(saveSuccessMessage);
-    successSnack();
-    setSaving(false);
-    setIsDirty(false);
-  }
+      const successSnack = success(saveSuccessMessage);
+      successSnack();
+    } catch (err) {
+      const errorSnack = errorNotification(t('error.problem-saving'));
+      errorSnack();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const renderers = [
     // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
