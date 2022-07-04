@@ -93,7 +93,6 @@ const outboundParsers = {
       invoiceId: line.invoiceId,
       tax: { percentage: 0 },
       totalBeforeTax: get.stockLineSubtotal(line),
-      totalAfterTax: get.stockLineTotal(line),
     };
   },
   toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
@@ -103,7 +102,6 @@ const outboundParsers = {
       stockLineId: line.stockLine?.id ?? '',
       tax: { percentage: line.taxPercentage },
       totalBeforeTax: get.stockLineSubtotal(line),
-      totalAfterTax: get.stockLineTotal(line),
     };
   },
   toDeleteLine: (line: { id: string }): DeleteOutboundShipmentLineInput => ({
@@ -132,21 +130,17 @@ const outboundParsers = {
     itemId: line.item.id,
     tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: get.serviceChargeTotal(line),
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftOutboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
     itemId: line.item.id,
     tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: get.serviceChargeTotal(line),
     note: line.note,
   }),
   toDeleteServiceCharge: (line: DraftOutboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
   }),
 };
 

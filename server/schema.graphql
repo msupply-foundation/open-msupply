@@ -788,7 +788,6 @@ input InsertInboundShipmentLineInput {
   expiryDate: NaiveDate
   numberOfPacks: Int!
   totalBeforeTax: Float!
-  totalAfterTax: Float!
   tax: PriceInput
 }
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
@@ -813,7 +812,6 @@ input InsertInboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float!
-  totalAfterTax: Float!
   tax: PriceInput
   note: String
 }
@@ -867,7 +865,6 @@ input InsertOutboundShipmentLineInput {
   stockLineId: String!
   numberOfPacks: Int!
   totalBeforeTax: Float!
-  totalAfterTax: Float!
   tax: PriceInput
 }
 union InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode
@@ -892,7 +889,6 @@ input InsertOutboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float!
-  totalAfterTax: Float!
   tax: PriceInput
   note: String
 }
@@ -2022,7 +2018,6 @@ input UpdateInboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float
-  totalAfterTax: Float
   tax: PriceInput
   note: String
 }
@@ -2089,7 +2084,6 @@ input UpdateOutboundShipmentLineInput {
   stockLineId: String
   numberOfPacks: Int
   totalBeforeTax: Float
-  totalAfterTax: Float
   tax: PriceInput
 }
 union UpdateOutboundShipmentLineResponse = UpdateOutboundShipmentLineError | InvoiceLineNode
@@ -2113,7 +2107,6 @@ input UpdateOutboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float
-  totalAfterTax: Float
   tax: PriceInput
   note: String
 }

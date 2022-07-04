@@ -26,7 +26,6 @@ pub struct InsertInput {
     pub stock_line_id: String,
     pub number_of_packs: u32,
     pub total_before_tax: Option<PriceInput>,
-    pub total_after_tax: f64,
     pub tax: Option<PriceInput>,
 }
 
@@ -95,7 +94,6 @@ impl InsertInput {
             stock_line_id,
             number_of_packs,
             total_before_tax,
-            total_after_tax,
             tax,
         } = self;
 
@@ -107,7 +105,6 @@ impl InsertInput {
             number_of_packs,
             total_before_tax: total_before_tax
                 .and_then(|total_before_tax| total_before_tax.total_before_tax),
-            total_after_tax,
             tax: tax.and_then(|tax| tax.percentage),
         }
     }

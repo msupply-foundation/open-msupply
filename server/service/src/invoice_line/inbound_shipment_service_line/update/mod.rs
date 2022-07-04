@@ -12,7 +12,6 @@ pub struct UpdateInboundShipmentServiceLine {
     pub item_id: Option<String>,
     pub name: Option<String>,
     pub total_before_tax: Option<f64>,
-    pub total_after_tax: Option<f64>,
     pub tax: Option<f64>,
     pub note: Option<String>,
 }
@@ -233,7 +232,6 @@ mod test {
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: Some(1.0),
-                    total_after_tax: Some(1.1),
                     tax: Some(10.0),
                     note: Some("note".to_string()),
                 },
@@ -251,7 +249,6 @@ mod test {
                 u.item_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 1.0;
-                u.total_after_tax = 1.1;
                 u.tax = Some(10.0);
                 u.note = Some("note".to_string());
                 u
