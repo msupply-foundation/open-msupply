@@ -23,7 +23,6 @@ pub struct InsertInput {
     pub item_id: Option<String>,
     name: Option<String>,
     total_before_tax: f64,
-    total_after_tax: f64,
     tax: Option<PriceInput>,
     note: Option<String>,
 }
@@ -87,7 +86,6 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
             tax,
             note,
         } = self;
@@ -98,7 +96,6 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
             tax: tax.and_then(|tax| tax.percentage),
             note,
         }
@@ -211,7 +208,6 @@ mod test {
                 "id": "n/a",
                 "invoiceId": "n/a",
                 "totalBeforeTax": 0,
-                "totalAfterTax": 0,
             }
         }));
 
@@ -349,7 +345,6 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: 0.1,
-                    total_after_tax: 0.2,
                     // TODO why is this different from update ?
                     tax: Some(10.0),
                     note: Some("note".to_string())
@@ -367,7 +362,6 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "totalAfterTax": 0.2,
             "tax": {
                 "percentage": 10
             },

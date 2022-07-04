@@ -27,7 +27,6 @@ pub struct UpdateInput {
     stock_line_id: Option<String>,
     number_of_packs: Option<u32>,
     total_before_tax: Option<PriceInput>,
-    total_after_tax: Option<f64>,
     tax: Option<PriceInput>,
 }
 
@@ -96,7 +95,6 @@ impl UpdateInput {
             stock_line_id,
             number_of_packs,
             total_before_tax,
-            total_after_tax,
             tax,
         } = self;
 
@@ -107,7 +105,6 @@ impl UpdateInput {
             number_of_packs,
             total_before_tax: total_before_tax
                 .and_then(|total_before_tax| total_before_tax.total_before_tax),
-            total_after_tax,
             tax: tax.and_then(|tax| tax.percentage),
         }
     }

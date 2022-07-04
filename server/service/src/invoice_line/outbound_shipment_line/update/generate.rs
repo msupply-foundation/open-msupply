@@ -77,7 +77,6 @@ fn generate_line(
         invoice_id,
         number_of_packs,
         total_before_tax,
-        total_after_tax,
         tax,
         r#type,
         ..
@@ -115,7 +114,11 @@ fn generate_line(
         item_code,
         stock_line_id: Some(stock_line_id),
         total_before_tax,
-        total_after_tax,
+        total_after_tax: if tax.is_some() {
+            total_before_tax * (f64::from(1) + tax.unwrap() / 100.0)
+        } else {
+            total_before_tax
+        },
         tax,
         r#type,
         note,
@@ -128,9 +131,6 @@ fn generate_line(
         update_line.total_before_tax = total_before_tax;
     } else {
         update_line.total_before_tax = sell_price_per_pack * number_of_packs as f64;
-    }
-    if let Some(total_after_tax) = input.total_after_tax {
-        update_line.total_after_tax = total_after_tax;
     }
     if let Some(tax) = input.tax {
         update_line.tax = Some(tax);
