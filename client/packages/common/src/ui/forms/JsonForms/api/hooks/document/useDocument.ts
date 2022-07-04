@@ -1,7 +1,7 @@
 import { useQuery } from '@openmsupply-client/common';
 import { usePatientDocumentApi } from '../utils/useDocumentApi';
 
-export const useDocument = (name: string) => {
+export const useDocument = (name: string, enabled?: boolean) => {
   const api = usePatientDocumentApi();
 
   return useQuery(
@@ -13,6 +13,7 @@ export const useDocument = (name: string) => {
     {
       refetchOnMount: false,
       cacheTime: 0,
+      enabled,
     }
   );
 };

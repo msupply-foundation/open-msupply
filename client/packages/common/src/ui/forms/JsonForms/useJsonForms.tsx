@@ -31,7 +31,8 @@ import {
   arrayTester,
   Array,
 } from './components';
-import { DocumentFragment, useDocument } from './api';
+import { useDocument } from './api';
+import { DocumentRegistryFragment } from './api/operations.generated';
 
 export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
@@ -80,28 +81,50 @@ const ScrollFix = () => {
   return null;
 };
 
+export type SavedDocument = {
+  id: string;
+  name: string;
+  type: string;
+};
+
 export type SaveJob = (
   jsonData: unknown,
   formSchemaId: string,
-  parent?: DocumentFragment
-) => Promise<void>;
+  parent?: string
+) => Promise<SavedDocument>;
 
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
   saveJob?: SaveJob;
+  onJobSaved?: (document: SavedDocument) => void;
   saveConfirmationMessage?: string;
   cancelConfirmationMessage?: string;
   saveSuccessMessage?: string;
 }
 
+/**
+ * Information required to create a new document
+ */
+export interface CreateDocument {
+  data: any;
+  documentRegistry: DocumentRegistryFragment;
+}
+
 export const useJsonForms = (
-  docName: string,
-  options: JsonFormOptions = {}
+  docName: string | undefined,
+  options: JsonFormOptions = {},
+  createDoc?: CreateDocument
 ) => {
-  const { data: databaseResponse, isLoading } =
-    useDocument.document.get(docName);
   const [data, setData] = useState<JsonData | undefined>();
+  // the current document id (undefined if its a new document)
+  const [documentId, setDocumentId] = useState<string | undefined>();
+  // document name can change from the input parameter when creating a new document
+  const [documentName, setDocumentName] = useState<string | undefined>();
+  useEffect(() => {
+    setDocumentName(docName);
+  }, []);
+
   const [documentRegistry, setDocumentRegistry] = useState<{
     formSchemaId: string;
     jsonSchema: JsonSchema;
@@ -119,6 +142,11 @@ export const useJsonForms = (
   const { success, error: errorNotification } = useNotification();
   const navigate = useNavigate();
 
+  // fetch document (only if there is as document name)
+  const { data: databaseResponse, isLoading } = useDocument.document.get(
+    documentName ?? '',
+    documentName !== undefined
+  );
   useEffect(() => {
     if (!databaseResponse) return;
 
@@ -127,7 +155,9 @@ export const useJsonForms = (
       setError('No document data');
     } else {
       setData(data);
+      setDocumentId(databaseResponse.id);
     }
+
     if (!documentRegistry) {
       setError('No document registry entry');
     } else if (!documentRegistry.jsonSchema) {
@@ -138,6 +168,15 @@ export const useJsonForms = (
       setDocumentRegistry(documentRegistry);
     }
   }, [databaseResponse]);
+
+  // user createDoc if there is one
+  useEffect(() => {
+    if (createDoc !== undefined) {
+      setData(createDoc.data);
+      setDocumentRegistry(createDoc.documentRegistry);
+      setIsDirty(true);
+    }
+  }, [createDoc]);
 
   const {
     showButtonPanel = true,
@@ -163,11 +202,15 @@ export const useJsonForms = (
 
     // Run mutation...
     try {
-      await options.saveJob?.(
+      const result = await options.saveJob?.(
         data,
         documentRegistry.formSchemaId,
-        databaseResponse
+        documentId
       );
+      if (result) {
+        options.onJobSaved?.(result);
+      }
+      setDocumentName(result?.name);
       setIsDirty(false);
 
       const successSnack = success(saveSuccessMessage);
