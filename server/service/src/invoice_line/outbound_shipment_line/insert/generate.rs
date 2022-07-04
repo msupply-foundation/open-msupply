@@ -83,9 +83,9 @@ fn generate_line(
             sell_price_per_pack * number_of_packs as f64
         },
         total_after_tax: if tax.is_some() {
-            total_before_tax * (f64::from(1) + tax.unwrap() / 100.0)
+            total_before_tax.unwrap() * (f64::from(1) + tax.unwrap() / 100.0)
         } else {
-            total_before_tax
+            total_before_tax.unwrap_or(sell_price_per_pack * number_of_packs as f64)
         },
         tax,
         note,

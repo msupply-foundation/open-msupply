@@ -357,23 +357,16 @@ mod test {
         let test_service = TestService(Box::new(|store_id, input| {
             assert_eq!(store_id, "store_a");
             assert_eq!(
-                            input,
-                            ServiceInput {
-                                id: "update line id input".to_string(),
-                                item_id: Some("item_id".to_string()),
-                                name: Some("some name".to_string()),
-                                total_before_tax: Some(0.1),
-            <<<<<<< HEAD
-                                total_after_tax: Some(0.2),
-                                tax: Some(10.0),
-            =======
-                                tax: Some(ShipmentTaxUpdate {
-                                    percentage: Some(10.0)
-                                }),
-            >>>>>>> #217-Remove-total_after_tax-from-mutations
-                                note: Some("note".to_string())
-                            }
-                        );
+                input,
+                ServiceInput {
+                    id: "update line id input".to_string(),
+                    item_id: Some("item_id".to_string()),
+                    name: Some("some name".to_string()),
+                    total_before_tax: Some(0.1),
+                    tax: Some(10.0),
+                    note: Some("note".to_string())
+                }
+            );
             Ok(inline_init(|r: &mut InvoiceLine| {
                 r.invoice_line_row.id = "update line id input".to_string();
             }))
