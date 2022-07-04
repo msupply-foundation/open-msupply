@@ -176,10 +176,13 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     return result;
   },
 
-  insertStocktake: async (
-    description: string,
-    items?: { itemId: string; stockLines?: StockLineFragment[] }[]
-  ) => {
+  insertStocktake: async ({
+    description,
+    items,
+  }: {
+    description: string;
+    items?: { itemId: string; stockLines?: StockLineFragment[] }[];
+  }) => {
     const result =
       (await sdk.insertStocktake({
         input: {
@@ -228,9 +231,9 @@ const getInsertStocktakeLines = (
           stocktakeId,
           stockLineId: stockLine.id,
           batch: stockLine.batch,
-          countedNumberOfPacks: stockLine.availableNumberOfPacks,
-          packSize: stockLine.packSize,
           costPricePerPack: stockLine.costPricePerPack,
+          expiryDate: stockLine.expiryDate,
+          packSize: stockLine.packSize,
           sellPricePerPack: stockLine.sellPricePerPack,
         });
       });
