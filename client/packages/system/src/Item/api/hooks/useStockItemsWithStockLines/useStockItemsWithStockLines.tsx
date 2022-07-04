@@ -1,7 +1,7 @@
 import { ItemNodeType, useQuery } from '@openmsupply-client/common';
 import { useItemApi } from '../useItemApi';
 
-export const useStockItemsWithStats = () => {
+export const useStockItemsWithStockLines = () => {
   const queryParams = {
     sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
     offset: 0,
@@ -9,7 +9,8 @@ export const useStockItemsWithStats = () => {
     filterBy: { type: { equalTo: ItemNodeType.Stock } },
   };
   const api = useItemApi();
+
   return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.stockItemsWithStats(queryParams)
+    api.get.stockItemsWithStockLines(queryParams)
   );
 };
