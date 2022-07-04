@@ -1,6 +1,6 @@
 use repository::{
-    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter, Pagination,
-    RepositoryError,
+    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistrySort,
+    EqualFilter, Pagination, RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;
@@ -13,9 +13,14 @@ mod insert;
 mod tests;
 
 pub trait DocumentRegistryServiceTrait: Sync + Send {
-    fn get_entries(&self, ctx: &ServiceContext) -> Result<Vec<DocumentRegistry>, RepositoryError> {
+    fn get_entries(
+        &self,
+        ctx: &ServiceContext,
+        filter: Option<DocumentRegistryFilter>,
+        sort: Option<DocumentRegistrySort>,
+    ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
         let repo = DocumentRegistryRepository::new(&ctx.connection);
-        Ok(repo.query(Pagination::new(), None, None)?)
+        Ok(repo.query(Pagination::new(), filter, sort)?)
     }
 
     fn get_entries_by_doc_type(

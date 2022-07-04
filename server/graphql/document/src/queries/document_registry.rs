@@ -1,19 +1,61 @@
 use async_graphql::*;
 use graphql_core::{
+    generic_filters::EqualFilterStringInput,
+    map_filter,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+};
+use repository::{
+    DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField, EqualFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
-use crate::types::document_registry::{DocumentRegistryConnector, DocumentRegistryNode};
+use crate::types::document_registry::{
+    DocumentRegistryConnector, DocumentRegistryNode, DocumentRegistryNodeContext,
+};
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterDocumentRegistryContextInput {
+    pub equal_to: Option<DocumentRegistryNodeContext>,
+    pub equal_any: Option<Vec<DocumentRegistryNodeContext>>,
+    pub not_equal_to: Option<DocumentRegistryNodeContext>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct DocumentRegistryFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub document_type: Option<EqualFilterStringInput>,
+    pub context: Option<EqualFilterDocumentRegistryContextInput>,
+    pub parent_id: Option<EqualFilterStringInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum DocumentRegistrySortFieldInput {
+    DocumentType,
+    Context,
+}
+
+#[derive(InputObject)]
+pub struct DocumentRegistrySortInput {
+    /// Sort query result by `key`
+    key: DocumentRegistrySortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
 
 #[derive(Union)]
 pub enum DocumentRegistryResponse {
     Response(DocumentRegistryConnector),
 }
 
-pub fn document_registry(ctx: &Context<'_>) -> Result<DocumentRegistryResponse> {
+pub fn document_registries(
+    ctx: &Context<'_>,
+    filter: Option<DocumentRegistryFilterInput>,
+    sort: Option<Vec<DocumentRegistrySortInput>>,
+) -> Result<DocumentRegistryResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -27,7 +69,12 @@ pub fn document_registry(ctx: &Context<'_>) -> Result<DocumentRegistryResponse> 
 
     let entries = service_provider
         .document_registry_service
-        .get_entries(&context)
+        .get_entries(
+            &context,
+            filter.map(|filter| filter.to_domain()),
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+        )
         .map_err(|err| {
             let formatted_err = format! {"{:?}", err};
             StandardGraphqlError::InternalError(formatted_err).extend()
@@ -41,4 +88,31 @@ pub fn document_registry(ctx: &Context<'_>) -> Result<DocumentRegistryResponse> 
                 .collect(),
         },
     ))
+}
+
+impl DocumentRegistryFilterInput {
+    pub fn to_domain(self) -> DocumentRegistryFilter {
+        DocumentRegistryFilter {
+            id: self.id.map(EqualFilter::from),
+            document_type: self.document_type.map(EqualFilter::from),
+            context: self
+                .context
+                .map(|t| map_filter!(t, DocumentRegistryNodeContext::to_domain)),
+            parent_id: self.parent_id.map(EqualFilter::from),
+        }
+    }
+}
+
+impl DocumentRegistrySortInput {
+    pub fn to_domain(self) -> DocumentRegistrySort {
+        let key = match self.key {
+            DocumentRegistrySortFieldInput::Context => DocumentRegistrySortField::Context,
+            DocumentRegistrySortFieldInput::DocumentType => DocumentRegistrySortField::DocumentType,
+        };
+
+        DocumentRegistrySort {
+            key,
+            desc: self.desc,
+        }
+    }
 }
