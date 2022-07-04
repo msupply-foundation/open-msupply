@@ -89,7 +89,7 @@ mod test {
 
     use crate::{
         invoice_line::{
-            outbound_shipment_service_line::UpdateOutboundShipmentServiceLine, ShipmentTaxUpdate,
+            outbound_shipment_service_line::UpdateOutboundShipmentServiceLine,
         },
         service_provider::ServiceProvider,
     };
