@@ -12,6 +12,7 @@ util = { path = "../util" }
 
 anymap = "0.12"
 anyhow = "1.0.44"
+thiserror = "1"
 bcrypt = "0.12.0"
 chrono = { version = "0.4", features = ["serde"] }
 jsonwebtoken = "8.0.1"
@@ -23,11 +24,12 @@ serde_yaml = "0.8.24"
 tera = "1"
 tokio = "1.17.0"
 headless_chrome = "0.9"
-failure = "0.1.8"
+failure = "0.1.8" 
 
 [dev-dependencies]
 actix-rt = "2.6.0"
 httpmock = "0.6.6"
+rand = "0.8.5"
 
 [features]
 default = ["sqlite"]

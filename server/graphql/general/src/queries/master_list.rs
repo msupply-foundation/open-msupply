@@ -107,12 +107,10 @@ pub fn master_lists(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    // always filter by store_id
     let mut query_filter = MasterListFilter::new();
     if let Some(filter_input) = filter {
         query_filter = filter_input.to_domain()
     }
-    query_filter = query_filter.exists_for_store_id(EqualFilter::equal_to(&store_id));
 
     let master_lists = service_provider
         .master_list_service

@@ -17,6 +17,7 @@ import {
   StocktakeLineFragment,
 } from './operations.generated';
 import { DraftStocktakeLine } from './../DetailView/modal/StocktakeLineEdit';
+import { StockLineFragment } from 'packages/system/src';
 
 export type ListParams = {
   first: number;
@@ -174,7 +175,14 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.upsertStocktakeLines(input);
     return result;
   },
-  insertStocktake: async (description: string, itemIds?: string[]) => {
+
+  insertStocktake: async ({
+    description,
+    items,
+  }: {
+    description: string;
+    items?: { itemId: string; stockLines?: StockLineFragment[] }[];
+  }) => {
     const result =
       (await sdk.insertStocktake({
         input: {
@@ -185,12 +193,11 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     const { insertStocktake } = result;
 
     if (insertStocktake?.__typename === 'StocktakeNode') {
-      if (itemIds) {
-        const insertStocktakeLines = itemIds.map(itemId => ({
-          id: FnUtils.generateUUID(),
-          stocktakeId: insertStocktake.id,
-          itemId,
-        }));
+      if (items) {
+        const insertStocktakeLines = getInsertStocktakeLines(
+          insertStocktake.id,
+          items
+        );
         await sdk.upsertStocktakeLines({
           storeId,
           insertStocktakeLines,
@@ -207,3 +214,36 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not create stocktake');
   },
 });
+
+const getInsertStocktakeLines = (
+  stocktakeId: string,
+  items: { itemId: string; stockLines?: StockLineFragment[] | undefined }[]
+) => {
+  const insertStocktakeLines = [] as InsertStocktakeLineInput[];
+
+  items.forEach(item => {
+    const { itemId, stockLines } = item;
+
+    if (stockLines) {
+      stockLines.forEach(stockLine => {
+        insertStocktakeLines.push({
+          id: FnUtils.generateUUID(),
+          stocktakeId,
+          stockLineId: stockLine.id,
+          batch: stockLine.batch,
+          costPricePerPack: stockLine.costPricePerPack,
+          expiryDate: stockLine.expiryDate,
+          packSize: stockLine.packSize,
+          sellPricePerPack: stockLine.sellPricePerPack,
+        });
+      });
+    } else {
+      insertStocktakeLines.push({
+        id: FnUtils.generateUUID(),
+        stocktakeId,
+        itemId,
+      });
+    }
+  });
+  return insertStocktakeLines;
+};

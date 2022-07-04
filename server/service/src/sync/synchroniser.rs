@@ -1,22 +1,22 @@
-use std::time::Duration;
-
-use actix_web::web::Data;
+use crate::{
+    apis::{sync_api_credentials::SyncCredentials, sync_api_v3::SyncApiV3, sync_api_v5::SyncApiV5},
+    service_provider::ServiceProvider,
+};
 use log::warn;
-
 use reqwest::{Client, Url};
-use service::{service_provider::ServiceProvider, sync_settings::SyncSettings};
+use std::{sync::Arc, time::Duration};
 
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
     get_sync_actors,
     remote_data_synchroniser::RemoteDataSynchroniser,
-    sync_api_v3::SyncApiV3,
-    SyncApiV5, SyncCredentials, SyncReceiverActor, SyncSenderActor,
+    settings::SyncSettings,
+    SyncReceiverActor, SyncSenderActor,
 };
 
 pub struct Synchroniser {
     settings: SyncSettings,
-    service_provider: Data<ServiceProvider>,
+    service_provider: Arc<ServiceProvider>,
     pub(crate) central_data: CentralDataSynchroniser,
     pub(crate) remote_data: RemoteDataSynchroniser,
 }
@@ -51,7 +51,7 @@ pub struct Synchroniser {
 impl Synchroniser {
     pub fn new(
         settings: SyncSettings,
-        service_provider: Data<ServiceProvider>,
+        service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
         let client = Client::new();
         let url = Url::parse(&settings.url)?;
@@ -167,7 +167,7 @@ mod tests {
         // 0.0.0.0:0 should hopefully be always unreachable and valid url
 
         let service_provider =
-            Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
+            Arc::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
         let ctx = service_provider.context().unwrap();
         let service = &service_provider.settings;
         let s = Synchroniser::new(

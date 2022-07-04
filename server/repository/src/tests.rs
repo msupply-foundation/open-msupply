@@ -264,6 +264,17 @@ mod repository_test {
                 data: r#"{ "ID": "store_b" }"#.to_string(),
             }
         }
+
+        pub fn log_1() -> LogRow {
+            LogRow {
+                id: "log1".to_string(),
+                r#type: LogType::UserLoggedIn,
+                user_id: Some(user_account_1().id.to_string()),
+                store_id: None,
+                record_id: None,
+                datetime: NaiveDateTime::from_timestamp(2000, 0),
+            }
+        }
     }
 
     use std::{convert::TryInto, time::SystemTime};
@@ -283,13 +294,14 @@ mod repository_test {
         test_db, CentralSyncBufferRepository, ChangelogAction, ChangelogRow,
         ChangelogRowRepository, ChangelogTableName, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRowRepository, ItemRow, ItemRowRepository,
-        KeyValueStoreRepository, KeyValueType, MasterListFilter, MasterListLineFilter,
-        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListRepository, MasterListRowRepository, NameRowRepository, NumberRowRepository,
-        NumberRowType, OutboundShipmentRowRepository, RepositoryError, RequisitionFilter,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
-        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
-        StockLineRowRepository, StoreRowRepository, TransactionError, UserAccountRowRepository,
+        KeyValueStoreRepository, KeyValueType, LogRowRepository, MasterListFilter,
+        MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
+        NameRowRepository, NumberRowRepository, NumberRowType, OutboundShipmentRowRepository,
+        RepositoryError, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
+        StockLineFilter, StockLineRepository, StockLineRowRepository, StoreRowRepository,
+        TransactionError, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
@@ -1331,5 +1343,19 @@ mod repository_test {
             .unwrap()
             .expect("tx_deadlock_id2 record didn't get created!");
         assert!("name_a" == tx_deadlock_item2.name);
+    }
+
+    #[actix_rt::test]
+    async fn test_log_row_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        let repo = LogRowRepository::new(&connection);
+
+        let log1 = data::log_1();
+        repo.insert_one(&log1).unwrap();
+        let loaded_item = repo.find_one_by_id(log1.id.as_str()).unwrap().unwrap();
+        assert_eq!(log1, loaded_item);
     }
 }

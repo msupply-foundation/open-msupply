@@ -1,7 +1,6 @@
-use crate::sync::{
-    sync_api_v5::CentralSyncBatchV5,
-    translation_central::{import_sync_records, TRANSLATION_RECORDS},
-    SyncApiV5, SyncConnectionError,
+use crate::{
+    apis::sync_api_v5::{CentralSyncBatchV5, CentralSyncRecordV5, SyncApiV5, SyncConnectionError},
+    sync::translation_central::{import_sync_records, TRANSLATION_RECORDS},
 };
 use log::info;
 use repository::{
@@ -10,7 +9,7 @@ use repository::{
 };
 use thiserror::Error;
 
-use super::{sync_api_v5::CentralSyncRecordV5, SyncImportError};
+use super::SyncImportError;
 
 #[derive(Error, Debug)]
 pub enum CentralSyncError {
@@ -218,24 +217,26 @@ impl<'a> CentralSyncPullCursor<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        sync::translation_central::test_data::{
-            check_records_against_database, extract_sync_buffer_rows, item::get_test_item_records,
-            master_list::get_test_master_list_records,
-            master_list_line::get_test_master_list_line_records,
-            master_list_name_join::get_test_master_list_name_join_records,
-            name::get_test_name_records, store::get_test_store_records,
-        },
-        test_utils::get_test_settings,
+    use crate::sync::translation_central::test_data::{
+        check_records_against_database, extract_sync_buffer_rows, item::get_test_item_records,
+        master_list::get_test_master_list_records,
+        master_list_line::get_test_master_list_line_records,
+        master_list_name_join::get_test_master_list_name_join_records, name::get_test_name_records,
+        store::get_test_store_records,
     };
-    use repository::{test_db, CentralSyncBufferRepository, CentralSyncBufferRow};
+    use repository::{
+        mock::MockDataInserts, test_db, CentralSyncBufferRepository, CentralSyncBufferRow,
+    };
 
     use super::CentralDataSynchroniser;
 
     #[actix_rt::test]
     async fn test_integrate_central_records() {
-        let settings = get_test_settings("omsupply-database-integrate_central_records");
-        let connection_manager = test_db::setup(&settings.database).await;
+        let (_, connection, _, _) = test_db::setup_all(
+            "omsupply-database-integrate_central_recordse",
+            MockDataInserts::none(),
+        )
+        .await;
 
         // use test records with cursors that are out of order
         let mut test_records = Vec::new();
@@ -247,7 +248,7 @@ mod tests {
         test_records.append(&mut get_test_master_list_line_records());
 
         let central_records: Vec<CentralSyncBufferRow> = extract_sync_buffer_rows(&test_records);
-        let connection = connection_manager.connection().unwrap();
+
         let central_sync_buffer_repository = CentralSyncBufferRepository::new(&connection);
 
         central_sync_buffer_repository

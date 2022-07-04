@@ -1,9 +1,7 @@
 mod actor;
 pub mod central_data_synchroniser;
 pub mod remote_data_synchroniser;
-mod sync_api_credentials;
-mod sync_api_v3;
-pub mod sync_api_v5;
+pub mod settings;
 mod sync_serde;
 mod synchroniser;
 mod translation_central;
@@ -14,8 +12,6 @@ mod integration_tests;
 
 pub use actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor};
 use repository::RepositoryError;
-pub use sync_api_credentials::SyncCredentials;
-pub use sync_api_v5::{SyncApiV5, SyncConnectionError};
 pub use synchroniser::Synchroniser;
 
 use thiserror::Error;

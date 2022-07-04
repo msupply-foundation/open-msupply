@@ -108,7 +108,7 @@ fn create_filtered_query(
         apply_simple_string_filter!(query, f.description, master_list_dsl::description);
 
         // Result master list should be unique, which would need extra logic if we were to join
-        // name table through master_list_name_join, thus query seperatly and use resulting
+        // name table through master_list_name_join, thus query separately and use resulting
         // master_list_ids in 'any' filter
         if f.exists_for_name.is_some()
             || f.exists_for_name_id.is_some()
