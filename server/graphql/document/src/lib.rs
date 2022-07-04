@@ -49,8 +49,13 @@ impl DocumentQueries {
         document_history(ctx, store_id, name)
     }
 
-    pub async fn document_registry(&self, ctx: &Context<'_>) -> Result<DocumentRegistryResponse> {
-        document_registry(ctx)
+    pub async fn document_registries(
+        &self,
+        ctx: &Context<'_>,
+        filter: Option<DocumentRegistryFilterInput>,
+        sort: Option<Vec<DocumentRegistrySortInput>>,
+    ) -> Result<DocumentRegistryResponse> {
+        document_registries(ctx, filter, sort)
     }
 
     pub async fn form_schema(
@@ -79,7 +84,6 @@ impl DocumentQueries {
     ) -> Result<Option<PatientNode>> {
         patient(ctx, store_id, patient_id)
     }
-
 }
 
 #[derive(Default, Clone)]
