@@ -69,12 +69,12 @@ fn generate_line(
         total_before_tax: if total_before_tax.is_some() {
             total_before_tax.unwrap()
         } else {
-            cost_price_per_pack * pack_size as f64
+            cost_price_per_pack * number_of_packs as f64
         },
         total_after_tax: if tax.is_some() {
-            total_before_tax * (f64::from(1) + tax.unwrap() / 100.0)
+            total_before_tax.unwrap() * (f64::from(1) + tax.unwrap() / 100.0)
         } else {
-            total_before_tax
+            total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64)
         },
         tax,
         note: None,
