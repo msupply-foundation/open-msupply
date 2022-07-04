@@ -4,7 +4,6 @@ import {
   Box,
   FormLabelProps,
   StandardTextFieldProps,
-  Typography,
 } from '@mui/material';
 import { BasicTextInput } from '@common/components';
 
@@ -20,7 +19,7 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   label,
   inputProps,
   Input = <BasicTextInput {...inputProps} />,
-  DisabledInput = <Typography>{inputProps?.value as string}</Typography>,
+  DisabledInput = <BasicTextInput {...inputProps} />,
   labelProps,
 }) => {
   const { sx, ...labelPropsRest } = labelProps || {};

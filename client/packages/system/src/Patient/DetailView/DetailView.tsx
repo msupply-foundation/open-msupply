@@ -2,12 +2,14 @@ import React, { FC } from 'react';
 import {
   DetailViewSkeleton,
   useJsonForms,
-  useParams,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 
 export const PatientDetailView: FC = () => {
-  const { patientId } = useParams();
-  const { JsonForm, loading, error } = useJsonForms(patientId);
+  const {
+    urlQuery: { doc },
+  } = useUrlQuery();
+  const { JsonForm, loading, error } = useJsonForms(doc);
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 

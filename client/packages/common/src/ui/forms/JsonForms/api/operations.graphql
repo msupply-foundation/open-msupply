@@ -1,0 +1,22 @@
+fragment Document on DocumentNode {
+  id
+  name
+  type
+  data
+  documentRegistry {
+    uiSchemaType
+    documentType
+    context
+    jsonSchema
+    uiSchema
+  }
+}
+
+query documentByName($name: String!, $storeId: String!) {
+  document(name: $name, storeId: $storeId) {
+    __typename
+    ... on DocumentNode {
+      ...Document
+    }
+  }
+}

@@ -1,9 +1,8 @@
 {
-  "$ref": "#/definitions/Patient",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
   "definitions": {
     "Address": {
-      "additionalProperties": false,
       "properties": {
         "address1": {
           "description": "184097001 Patient Address",
@@ -39,13 +38,10 @@
           "type": "string"
         }
       },
-      "required": [
-        "key"
-      ],
+      "required": ["key"],
       "type": "object"
     },
     "ContactDetails": {
-      "additionalProperties": false,
       "properties": {
         "description": {
           "description": "Clemens e.g. home, work, etc",
@@ -71,13 +67,10 @@
           "type": "string"
         }
       },
-      "required": [
-        "key"
-      ],
+      "required": ["key"],
       "type": "object"
     },
     "Family": {
-      "additionalProperties": false,
       "properties": {
         "caregiver": {
           "$ref": "#/definitions/Person"
@@ -109,7 +102,6 @@
       "type": "string"
     },
     "HealthCenter": {
-      "additionalProperties": false,
       "properties": {
         "id": {
           "description": "Health Center Code",
@@ -123,7 +115,6 @@
       "type": "object"
     },
     "Patient": {
-      "additionalProperties": false,
       "properties": {
         "addresses": {
           "items": {
@@ -139,7 +130,7 @@
         },
         "dateOfBirth": {
           "description": "184099003 Date of birth",
-          "format": "\"date\"",
+          "format": "date",
           "type": "string"
         },
         "dateOfBirthIsEstimated": {
@@ -176,16 +167,10 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "addresses",
-        "contactDetails",
-        "id",
-        "socioEconomics"
-      ],
+      "required": ["addresses", "contactDetails", "id", "socioEconomics"],
       "type": "object"
     },
     "Person": {
-      "additionalProperties": false,
       "properties": {
         "addresses": {
           "items": {
@@ -201,7 +186,7 @@
         },
         "dateOfBirth": {
           "description": "184099003 Date of birth",
-          "format": "\"date\"",
+          "format": "date",
           "type": "string"
         },
         "dateOfBirthIsEstimated": {
@@ -231,15 +216,10 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "addresses",
-        "contactDetails",
-        "socioEconomics"
-      ],
+      "required": ["addresses", "contactDetails", "socioEconomics"],
       "type": "object"
     },
     "SocioEconomics": {
-      "additionalProperties": false,
       "properties": {
         "education": {
           "description": "224293004 Education received in the past",
@@ -255,5 +235,10 @@
       },
       "type": "object"
     }
-  }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/Patient"
+    }
+  ]
 }

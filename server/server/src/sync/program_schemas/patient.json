@@ -3,7 +3,6 @@
   "type": "object",
   "definitions": {
     "Address": {
-      "additionalProperties": false,
       "properties": {
         "address1": {
           "description": "184097001 Patient Address",
@@ -43,18 +42,17 @@
       "type": "object"
     },
     "ContactDetails": {
-      "additionalProperties": false,
       "properties": {
-        "key": {
-          "description": "Unique contact detail identifier",
-          "type": "string"
-        },
         "description": {
           "description": "Clemens e.g. home, work, etc",
           "type": "string"
         },
         "email": {
           "description": "424966008 Patient - email address",
+          "type": "string"
+        },
+        "key": {
+          "description": "Unique contact detail identifier",
           "type": "string"
         },
         "mobile": {
@@ -73,7 +71,6 @@
       "type": "object"
     },
     "Family": {
-      "additionalProperties": false,
       "properties": {
         "caregiver": {
           "$ref": "#/definitions/Person"
@@ -105,7 +102,6 @@
       "type": "string"
     },
     "HealthCenter": {
-      "additionalProperties": false,
       "properties": {
         "id": {
           "description": "Health Center Code",
@@ -119,7 +115,6 @@
       "type": "object"
     },
     "Patient": {
-      "additionalProperties": false,
       "properties": {
         "addresses": {
           "items": {
@@ -193,7 +188,6 @@
       "type": "object"
     },
     "Person": {
-      "additionalProperties": false,
       "properties": {
         "addresses": {
           "items": {
@@ -209,7 +203,7 @@
         },
         "dateOfBirth": {
           "description": "184099003 Date of birth",
-          "format": "\"date\"",
+          "format": "date",
           "type": "string"
         },
         "dateOfBirthIsEstimated": {
@@ -243,7 +237,6 @@
       "type": "object"
     },
     "SocioEconomics": {
-      "additionalProperties": false,
       "properties": {
         "education": {
           "description": "224293004 Education received in the past",
@@ -259,5 +252,10 @@
       },
       "type": "object"
     }
-  }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/Patient"
+    }
+  ]
 }
