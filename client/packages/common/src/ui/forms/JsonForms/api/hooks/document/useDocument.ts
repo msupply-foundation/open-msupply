@@ -1,8 +1,8 @@
 import { useQuery } from '@openmsupply-client/common';
-import { useDocumentApi } from '../utils/useDocumentApi';
+import { usePatientDocumentApi } from '../utils/useDocumentApi';
 
 export const useDocument = (name: string) => {
-  const api = useDocumentApi();
+  const api = usePatientDocumentApi();
 
   return useQuery(
     api.keys.detail(name),
