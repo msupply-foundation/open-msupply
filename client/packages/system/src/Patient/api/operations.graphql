@@ -69,6 +69,15 @@ query patientById($storeId: String!, $nameId: String!) {
   }
 }
 
+query patientSearch($input: PatientSearchInput!, $storeId: String!) {
+  patientSearch(input: $input, storeId: $storeId) {
+    score
+    patient {
+      ...Patient
+    }
+  }
+}
+
 mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
