@@ -3,6 +3,7 @@ import {
   PatientSortFieldInput,
   InsertPatientInput,
   UpdatePatientInput,
+  DocumentNode,
 } from '@openmsupply-client/common';
 import { Sdk, PatientRowFragment } from './operations.generated';
 
@@ -63,6 +64,13 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       });
 
       return result?.patients;
+    },
+    documentHistory: async (documentName: string): Promise<DocumentNode[]> => {
+      const result = await sdk.getDocumentHistory({
+        storeId,
+        name: documentName,
+      });
+      return result.documentHistory.nodes;
     },
   },
   insertPatient: async (

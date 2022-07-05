@@ -3,6 +3,7 @@ import { usePatients } from './usePatients';
 import { usePatientsAll } from './usePatientsAll';
 import { useInsertPatient } from './useInsertPatient';
 import { useUpdatePatient } from './useUpdatePatient';
+import { useDocumentHistory } from './useDocumentHistory';
 
 export const Document = {
   usePatient,
@@ -10,4 +11,5 @@ export const Document = {
   usePatientsAll,
   useInsertPatient,
   useUpdatePatient,
+  useDocumentHistory,
 };

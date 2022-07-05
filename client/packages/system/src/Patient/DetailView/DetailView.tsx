@@ -8,6 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { CreateNewPatient } from '../CreatePatientModal';
+import { AppBarButtons } from './AddBarButtons';
 
 const useUpsertPatient = (): SaveDocumentMuation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -67,7 +68,7 @@ export const PatientDetailView: FC = () => {
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
-      {/* <Toolbar /> */}
+      <AppBarButtons />
 
       {JsonForm}
     </React.Suspense>
