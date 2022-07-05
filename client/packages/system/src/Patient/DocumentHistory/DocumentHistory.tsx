@@ -37,7 +37,9 @@ export const DocumentHistory: FC<{ documentName: string }> = ({
     if (node === undefined) {
       return '';
     }
-    return JSON.stringify(node, undefined, 2);
+    const clone = JSON.parse(JSON.stringify(node));
+    delete clone['__typename'];
+    return JSON.stringify(clone, undefined, 2);
   };
 
   return (
