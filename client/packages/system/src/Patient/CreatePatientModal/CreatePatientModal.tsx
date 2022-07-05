@@ -2,17 +2,16 @@ import React, { FC, useEffect, useState } from 'react';
 import {
   DetailContainer,
   DetailSection,
-  Typography,
   Box,
   FnUtils,
   DocumentRegistryNodeContext,
   TabContext,
-  Tab,
-  TabList,
   useTabs,
   DialogButton,
   useNavigate,
   useDialog,
+  WizardStepper,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { CreateNewPatient, useCreatePatientStore } from '../hooks';
 import { useDocumentRegistryByContext } from 'packages/common/src/ui/forms/JsonForms/api/hooks/document/useDocumentRegistyrByContext';
@@ -54,6 +53,26 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
     onClose: () => setOpen(false),
   });
   const navigate = useNavigate();
+  const { patient, setNewPatient } = useCreatePatientStore();
+  const t = useTranslation('patients');
+
+  const patientSteps = [
+    {
+      description: '',
+      label: t('label.patient-details'),
+      tab: Tabs.Form,
+    },
+    {
+      description: '',
+      label: t('label.search-results'),
+      tab: Tabs.SearchResults,
+    },
+  ];
+
+  const getActiveStep = () => {
+    const step = patientSteps.find(step => step.tab === currentTab);
+    return step ? patientSteps.indexOf(step) : 0;
+  };
 
   useEffect(() => {
     if (documentRegistryResponse?.[0]) {
@@ -65,8 +84,6 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
     if (open) showDialog();
     else hideDialog();
   }, [open]);
-
-  const { patient, setNewPatient } = useCreatePatientStore();
 
   useEffect(() => {
     setNewPatient(documentRegistry ? newPatient(documentRegistry) : undefined);
@@ -104,32 +121,14 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
         ) : undefined
       }
       cancelButton={
-        <DialogButton
-          variant="cancel"
-          onClick={() => {
-            setNewPatient(undefined);
-            hideDialog();
-          }}
-        />
+        <DialogButton variant="cancel" onClick={() => setOpen(false)} />
       }
       slideAnimation={false}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-          <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-            Create New Patient
-          </Typography>
-
+          <WizardStepper activeStep={getActiveStep()} steps={patientSteps} />
           <TabContext value={currentTab}>
-            <TabList
-              value={currentTab}
-              centered
-              onChange={(_, v) => onChangeTab(v)}
-            >
-              <Tab value={Tabs.Form} label="Form" />
-              <Tab value={Tabs.SearchResults} label="Results" />
-            </TabList>
-
             <DetailSection title="">
               <PatientFormTab value={Tabs.Form} patient={patient} />
               <PatientResultsTab value={Tabs.SearchResults} patient={patient} />

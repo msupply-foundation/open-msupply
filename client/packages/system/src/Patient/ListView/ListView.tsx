@@ -26,7 +26,7 @@ const PatientListComponent: FC = () => {
   } = useUrlQueryParams();
   const { data, isError, isLoading } = usePatient.document.list();
   const pagination = { page, first, offset };
-  const t = useTranslation('common');
+  const t = useTranslation('patients');
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
   const alert = useAlertModal({
