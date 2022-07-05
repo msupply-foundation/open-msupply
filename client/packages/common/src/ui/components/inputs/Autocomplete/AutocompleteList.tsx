@@ -1,13 +1,11 @@
-import React, { useRef } from 'react';
+import React from 'react';
 
 import {
-  Paper,
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
   createFilterOptions,
   CreateFilterOptionsConfig,
   FilterOptionsState,
-  Fade,
 } from '@mui/material';
 import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 import { BasicTextInput } from '../TextInput';
@@ -60,7 +58,6 @@ export const AutocompleteList = <T,>({
   disableClearable,
   getOptionDisabled,
 }: AutocompleteListProps<T>): JSX.Element => {
-  const listboxRef = useRef<HTMLUListElement>(null);
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
   const optionRenderer = optionKey
     ? getDefaultOptionRenderer<T>(optionKey)
@@ -74,20 +71,6 @@ export const AutocompleteList = <T,>({
     mappedOptions = options;
   }
 
-  const handleChange: AutocompleteOnChange<T | T[]> = (
-    event,
-    value,
-    reason,
-    details
-  ) => {
-    onChange?.(event, value, reason, details);
-    const scrollPos = listboxRef.current?.scrollTop || 0;
-    window.setTimeout(
-      () => listboxRef.current?.scrollTo({ top: scrollPos }),
-      100
-    );
-  };
-
   return (
     <MuiAutocomplete
       disableClearable={disableClearable}
@@ -95,7 +78,7 @@ export const AutocompleteList = <T,>({
       loading={loading}
       loadingText={loadingText}
       noOptionsText={noOptionsText}
-      onChange={handleChange}
+      onChange={onChange}
       sx={{
         '& .MuiAutocomplete-listbox': {
           minHeight: height ? `${height}` : 'auto',
@@ -113,28 +96,14 @@ export const AutocompleteList = <T,>({
       forcePopupIcon={false}
       options={mappedOptions}
       renderOption={optionRenderer}
-      ListboxComponent={props => (
-        <Fade in={true}>
-          <ul
-            {...props}
-            ref={listboxRef}
-            style={{
-              height: height ? `${height}` : 'auto',
-              maxHeight: height ? `${height}` : 'auto',
-            }}
-          />
-        </Fade>
-      )}
-      PaperComponent={props => (
-        <Paper
-          sx={{
+      componentsProps={{
+        paper: {
+          sx: {
             backgroundColor: theme => theme.palette.background.toolbar,
             minHeight: height ? `${height}` : 'auto',
-          }}
-        >
-          {props.children}
-        </Paper>
-      )}
+          },
+        },
+      }}
       disableCloseOnSelect={disableCloseOnSelect}
       multiple={multiple}
       getOptionLabel={getOptionLabel}
