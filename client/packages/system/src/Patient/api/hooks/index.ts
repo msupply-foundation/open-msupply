@@ -12,5 +12,6 @@ export const usePatient = {
     listAll: Document.usePatientsAll,
     insert: Document.useInsertPatient,
     update: Document.useUpdatePatient,
+    history: Document.useDocumentHistory,
   },
 };

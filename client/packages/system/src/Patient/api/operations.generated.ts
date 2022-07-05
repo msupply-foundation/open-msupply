@@ -36,6 +36,14 @@ export type PatientSearchQueryVariables = Types.Exact<{
 
 export type PatientSearchQuery = { __typename: 'FullQuery', patientSearch: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } }> };
 
+export type GetDocumentHistoryQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  name: Types.Scalars['String'];
+}>;
+
+
+export type GetDocumentHistoryQuery = { __typename: 'FullQuery', documentHistory: { __typename: 'DocumentConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentNode', author: string, data: any, id: string, name: string, parents: Array<string>, timestamp: string, type: string }> } };
+
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.InsertPatientInput;
@@ -132,6 +140,26 @@ export const PatientSearchDocument = gql`
   }
 }
     ${PatientFragmentDoc}`;
+export const GetDocumentHistoryDocument = gql`
+    query getDocumentHistory($storeId: String!, $name: String!) {
+  documentHistory(storeId: $storeId, name: $name) {
+    __typename
+    ... on DocumentConnector {
+      totalCount
+      nodes {
+        __typename
+        author
+        data
+        id
+        name
+        parents
+        timestamp
+        type
+      }
+    }
+  }
+}
+    `;
 export const InsertPatientDocument = gql`
     mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
@@ -168,6 +196,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     patientSearch(variables: PatientSearchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientSearchQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PatientSearchQuery>(PatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientSearch', 'query');
+    },
+    getDocumentHistory(variables: GetDocumentHistoryQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetDocumentHistoryQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetDocumentHistoryQuery>(GetDocumentHistoryDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getDocumentHistory', 'query');
     },
     insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertPatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation');
@@ -227,6 +258,23 @@ export const mockPatientByIdQuery = (resolver: ResponseResolver<GraphQLRequest<P
 export const mockPatientSearchQuery = (resolver: ResponseResolver<GraphQLRequest<PatientSearchQueryVariables>, GraphQLContext<PatientSearchQuery>, any>) =>
   graphql.query<PatientSearchQuery, PatientSearchQueryVariables>(
     'patientSearch',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockGetDocumentHistoryQuery((req, res, ctx) => {
+ *   const { storeId, name } = req.variables;
+ *   return res(
+ *     ctx.data({ documentHistory })
+ *   )
+ * })
+ */
+export const mockGetDocumentHistoryQuery = (resolver: ResponseResolver<GraphQLRequest<GetDocumentHistoryQueryVariables>, GraphQLContext<GetDocumentHistoryQuery>, any>) =>
+  graphql.query<GetDocumentHistoryQuery, GetDocumentHistoryQueryVariables>(
+    'getDocumentHistory',
     resolver
   )
 

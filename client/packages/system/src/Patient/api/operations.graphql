@@ -80,6 +80,25 @@ query patientSearch($input: PatientSearchInput!, $storeId: String!) {
   }
 }
 
+query getDocumentHistory($storeId: String!, $name: String!) {
+  documentHistory(storeId: $storeId, name: $name) {
+    __typename
+    ... on DocumentConnector {
+      totalCount
+      nodes {
+        __typename
+        author
+        data
+        id
+        name
+        parents
+        timestamp
+        type
+      }
+    }
+  }
+}
+
 mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
