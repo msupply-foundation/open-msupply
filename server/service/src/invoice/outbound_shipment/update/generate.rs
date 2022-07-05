@@ -30,7 +30,7 @@ pub(crate) fn generate(
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
     let should_create_batches = should_update_batches(&existing_invoice, &input_status);
-    let mut update_invoice = existing_invoice;
+    let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &input_status);
 
@@ -61,7 +61,7 @@ pub(crate) fn generate(
         batches_to_update,
         unallocated_lines_to_trim: unallocated_lines_to_trim(
             connection,
-            &update_invoice,
+            &existing_invoice,
             &input_status,
         )?,
         update_invoice,
