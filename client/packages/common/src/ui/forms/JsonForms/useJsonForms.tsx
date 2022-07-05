@@ -80,7 +80,7 @@ const ScrollFix = () => {
   return null;
 };
 
-export type SaveJob = (
+export type SaveDocumentMuation = (
   jsonData: unknown,
   formSchemaId: string,
   parent?: DocumentFragment
@@ -89,7 +89,7 @@ export type SaveJob = (
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
-  saveJob?: SaveJob;
+  handleSave?: SaveDocumentMuation;
   saveConfirmationMessage?: string;
   cancelConfirmationMessage?: string;
   saveSuccessMessage?: string;
@@ -163,7 +163,7 @@ export const useJsonForms = (
 
     // Run mutation...
     try {
-      await options.saveJob?.(
+      await options.handleSave?.(
         data,
         documentRegistry.formSchemaId,
         databaseResponse
