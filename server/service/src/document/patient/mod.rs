@@ -11,6 +11,8 @@ pub use self::update::*;
 pub mod patient_document_update;
 pub mod patient_schema;
 mod update;
+pub use self::search::*;
+mod search;
 
 /// The default document type for a patient
 pub const PATIENT_TYPE: &str = "Patient";
@@ -74,6 +76,16 @@ pub trait PatientServiceTrait: Sync + Send {
         input: UpdatePatient,
     ) -> Result<Patient, UpdatePatientError> {
         update_patient(ctx, service_provider, store_id, user_id, input)
+    }
+
+    fn patient_search(
+        &self,
+        ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
+        store_id: String,
+        input: PatientSearch,
+    ) -> Result<Vec<PatientSearchResult>, RepositoryError> {
+        patient_search(ctx, service_provider, store_id, input)
     }
 }
 
