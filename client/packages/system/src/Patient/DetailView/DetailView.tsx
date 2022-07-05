@@ -67,7 +67,7 @@ export const PatientDetailView: FC = () => {
     }
   };
   const saveJob = useUpsertPatient();
-  const { JsonForm, loading, error } = useJsonForms(
+  const { JsonForm, loading } = useJsonForms(
     doc,
     { saveJob, onJobSaved },
     createDoc
@@ -81,7 +81,7 @@ export const PatientDetailView: FC = () => {
     >
       {/* <Toolbar /> */}
 
-      {!error ? JsonForm : error}
+      {JsonForm}
     </React.Suspense>
   );
 };
