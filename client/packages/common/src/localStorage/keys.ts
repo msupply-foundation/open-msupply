@@ -6,6 +6,7 @@ import { AuthError } from '../authentication/AuthContext';
 export type GroupByItem = {
   outboundShipment?: boolean;
   inboundShipment?: boolean;
+  stocktake?: boolean;
 };
 type AuthenticationCredentials = {
   store?: UserStoreNodeFragment | undefined;
