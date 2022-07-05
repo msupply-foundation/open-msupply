@@ -4,6 +4,7 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::patient::PatientSearch,
+    usize_to_u32,
 };
 
 use super::PatientNode;
@@ -21,6 +22,17 @@ pub struct PatientSearchNode {
     pub score: f64,
 }
 
+#[derive(SimpleObject)]
+pub struct PatientSearchConnector {
+    pub total_count: u32,
+    pub nodes: Vec<PatientSearchNode>,
+}
+
+#[derive(Union)]
+pub enum PatientSearchResponse {
+    Response(PatientSearchConnector),
+}
+
 #[Object]
 impl PatientSearchNode {
     async fn patient(&self) -> &PatientNode {
@@ -36,7 +48,7 @@ pub fn patient_search(
     ctx: &Context<'_>,
     store_id: String,
     input: PatientSearchInput,
-) -> Result<Vec<PatientSearchNode>> {
+) -> Result<PatientSearchResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -48,7 +60,7 @@ pub fn patient_search(
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
 
-    let result = service_provider
+    let result: Vec<PatientSearchNode> = service_provider
         .patient_service
         .patient_search(
             &context,
@@ -66,7 +78,10 @@ pub fn patient_search(
         })
         .collect();
 
-    Ok(result)
+    Ok(PatientSearchResponse::Response(PatientSearchConnector {
+        total_count: usize_to_u32(result.len()),
+        nodes: result,
+    }))
 }
 
 impl PatientSearchInput {

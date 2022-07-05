@@ -89,7 +89,7 @@ impl DocumentQueries {
         ctx: &Context<'_>,
         store_id: String,
         input: PatientSearchInput,
-    ) -> Result<Vec<PatientSearchNode>> {
+    ) -> Result<PatientSearchResponse> {
         patient_search(ctx, store_id, input)
     }
 }
