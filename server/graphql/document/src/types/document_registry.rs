@@ -49,6 +49,10 @@ impl DocumentRegistryNode {
         &self.document_registry.parent_id
     }
 
+    pub async fn form_schema_id(&self) -> &str {
+        &self.document_registry.form_schema_id
+    }
+
     pub async fn json_schema(&self) -> &serde_json::Value {
         &self.document_registry.json_schema
     }
