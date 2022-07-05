@@ -28,6 +28,14 @@ export type PatientByIdQueryVariables = Types.Exact<{
 
 export type PatientByIdQuery = { __typename: 'FullQuery', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null }> } };
 
+export type PatientSearchQueryVariables = Types.Exact<{
+  input: Types.PatientSearchInput;
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type PatientSearchQuery = { __typename: 'FullQuery', patientSearch: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } }> };
+
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.InsertPatientInput;
@@ -112,6 +120,16 @@ export const PatientByIdDocument = gql`
   }
 }
     ${PatientFragmentDoc}`;
+export const PatientSearchDocument = gql`
+    query patientSearch($input: PatientSearchInput!, $storeId: String!) {
+  patientSearch(input: $input, storeId: $storeId) {
+    score
+    patient {
+      ...Patient
+    }
+  }
+}
+    ${PatientFragmentDoc}`;
 export const InsertPatientDocument = gql`
     mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
@@ -145,6 +163,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     patientById(variables: PatientByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PatientByIdQuery>(PatientByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientById', 'query');
+    },
+    patientSearch(variables: PatientSearchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientSearchQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PatientSearchQuery>(PatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientSearch', 'query');
     },
     insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertPatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation');
@@ -187,6 +208,23 @@ export const mockPatientsQuery = (resolver: ResponseResolver<GraphQLRequest<Pati
 export const mockPatientByIdQuery = (resolver: ResponseResolver<GraphQLRequest<PatientByIdQueryVariables>, GraphQLContext<PatientByIdQuery>, any>) =>
   graphql.query<PatientByIdQuery, PatientByIdQueryVariables>(
     'patientById',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockPatientSearchQuery((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ patientSearch })
+ *   )
+ * })
+ */
+export const mockPatientSearchQuery = (resolver: ResponseResolver<GraphQLRequest<PatientSearchQueryVariables>, GraphQLContext<PatientSearchQuery>, any>) =>
+  graphql.query<PatientSearchQuery, PatientSearchQueryVariables>(
+    'patientSearch',
     resolver
   )
 

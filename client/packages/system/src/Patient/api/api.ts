@@ -4,8 +4,13 @@ import {
   InsertPatientInput,
   UpdatePatientInput,
   FilterBy,
+  PatientSearchInput,
 } from '@openmsupply-client/common';
-import { Sdk, PatientRowFragment } from './operations.generated';
+import {
+  Sdk,
+  PatientRowFragment,
+  PatientFragment,
+} from './operations.generated';
 
 export type ListParams = {
   first?: number;
@@ -67,6 +72,16 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       });
 
       return result?.patients;
+    },
+    search: async (
+      input: PatientSearchInput
+    ): Promise<{ score: number; patient: PatientFragment }[]> => {
+      const result = await sdk.patientSearch({
+        storeId,
+        input,
+      });
+
+      return result?.patientSearch;
     },
   },
   insertPatient: async (

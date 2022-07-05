@@ -1140,6 +1140,7 @@ export type FullQuery = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   patient?: Maybe<PatientNode>;
+  patientSearch: Array<PatientSearchNode>;
   patients: PatientResponse;
   /**
    * Creates a printed report.
@@ -1273,6 +1274,12 @@ export type FullQueryNamesArgs = {
 
 export type FullQueryPatientArgs = {
   patientId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryPatientSearchArgs = {
+  input: PatientSearchInput;
   storeId: Scalars['String'];
 };
 
@@ -2419,6 +2426,18 @@ export type PatientNode = {
 };
 
 export type PatientResponse = PatientConnector;
+
+export type PatientSearchInput = {
+  dateOfBirth?: InputMaybe<Scalars['NaiveDate']>;
+  firstName?: InputMaybe<Scalars['String']>;
+  lastName?: InputMaybe<Scalars['String']>;
+};
+
+export type PatientSearchNode = {
+  __typename: 'PatientSearchNode';
+  patient: PatientNode;
+  score: Scalars['Float'];
+};
 
 export enum PatientSortFieldInput {
   Address1 = 'address1',

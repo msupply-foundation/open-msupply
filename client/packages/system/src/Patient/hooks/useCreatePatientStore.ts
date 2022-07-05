@@ -11,8 +11,8 @@ export interface CreateNewPatient {
 
 interface CreateNewPatientState {
   patient?: CreateNewPatient;
-
   setNewPatient: (update: CreateNewPatient | undefined) => void;
+  updatePatient: (patch: Partial<CreateNewPatient>) => void;
 }
 
 /**
@@ -24,5 +24,9 @@ export const useCreatePatientStore = create<CreateNewPatientState>(set => ({
   setNewPatient: update =>
     set(() => ({
       patient: update,
+    })),
+  updatePatient: patch =>
+    set(state => ({
+      patient: { ...(state.patient as CreateNewPatient), patch },
     })),
 }));

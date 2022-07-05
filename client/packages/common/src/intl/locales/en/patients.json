@@ -1,1 +1,8 @@
-{ "placeholder.search-by-last-name": "Search by last name" }
+{
+  "button.new-patient": "New Patient",
+  "filename.patients": "patients",
+  "label.first-name": "First name",
+  "label.last-name": "Last name",
+  "messages.no-patient-record": "Can't access detailed information for this patient.",
+  "placeholder.search-by-last-name": "Search by last name"
+}
