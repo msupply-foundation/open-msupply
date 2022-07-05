@@ -37,6 +37,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: { isSupplier: true, isStore: true },
+        first: 1000,
       });
 
       return result?.names;
@@ -49,6 +50,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: { isSupplier: true },
+        first: 1000,
       });
 
       return result?.names;
@@ -61,6 +63,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: { isCustomer: true },
+        first: 1000,
       });
 
       return result?.names;
