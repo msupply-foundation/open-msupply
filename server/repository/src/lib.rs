@@ -14,8 +14,11 @@ pub mod test_db;
 pub use self::db_diesel::*;
 pub use self::repository_error::RepositoryError;
 pub use database_settings::get_storage_connection_manager;
+use diesel::sql_types::Text;
 
 mod tests;
+
+sql_function!(fn lower(x: Text) -> Text);
 
 #[cfg(feature = "postgres")]
 embed_migrations!("./migrations/postgres");
