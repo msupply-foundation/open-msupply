@@ -67,6 +67,8 @@ const FormComponent = ({
         if (errors && errors.length) {
           setError(errors?.map(({ message }) => message ?? '').join(', '));
           console.warn('Errors: ', errors);
+        } else {
+          setError(false);
         }
       }}
     />
@@ -254,6 +256,7 @@ export const useJsonForms = (
           else onCancel();
         }}
         isLoading={saving}
+        disabled={error !== false}
         color="secondary"
       >
         {t('button.save')}
