@@ -1,14 +1,14 @@
 import React, { FC } from 'react';
 import {
   DetailViewSkeleton,
-  SaveJob,
+  SaveDocumentMuation,
   useJsonForms,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { DocumentFragment } from 'packages/common/src/ui/forms/JsonForms/api';
 
-const useUpsertPatient = (): SaveJob => {
+const useUpsertPatient = (): SaveDocumentMuation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
   const { mutateAsync: updatePatient } = usePatient.document.update();
   return async (
@@ -36,9 +36,9 @@ export const PatientDetailView: FC = () => {
     urlQuery: { doc },
   } = useUrlQuery();
 
-  const saveJob = useUpsertPatient();
+  const handleSave = useUpsertPatient();
   const { JsonForm, loading, error } = useJsonForms(doc, {
-    saveJob,
+    handleSave,
   });
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
