@@ -84,6 +84,14 @@ impl DocumentQueries {
     ) -> Result<Option<PatientNode>> {
         patient(ctx, store_id, patient_id)
     }
+    pub async fn patient_search(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: PatientSearchInput,
+    ) -> Result<Vec<PatientSearchNode>> {
+        patient_search(ctx, store_id, input)
+    }
 }
 
 #[derive(Default, Clone)]
