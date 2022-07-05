@@ -576,6 +576,7 @@ export type DocumentRegistryNode = {
   children: Array<DocumentRegistryNode>;
   context: DocumentRegistryNodeContext;
   documentType: Scalars['String'];
+  formSchemaId: Scalars['String'];
   id: Scalars['String'];
   jsonSchema: Scalars['JSON'];
   name?: Maybe<Scalars['String']>;

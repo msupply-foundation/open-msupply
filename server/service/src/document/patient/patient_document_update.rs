@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    Document, Gender, NameFilter, NameRepository, NameRow, NameRowRepository,
-    NameStoreJoinRepository, NameStoreJoinRow, NameType, SimpleStringFilter, StorageConnection,
+    Document, EqualFilter, Gender, NameFilter, NameRepository, NameRow, NameRowRepository,
+    NameStoreJoinRepository, NameStoreJoinRow, NameType, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -69,7 +69,7 @@ pub fn patient_document_updated(
         store_id,
         NameFilter::new()
             .is_customer(true)
-            .name(SimpleStringFilter::equal_to(&patient.id)),
+            .id(EqualFilter::equal_to(&patient.id)),
     )?;
     if name.is_none() {
         // add name store join

@@ -31,7 +31,7 @@ import {
   arrayTester,
   Array,
 } from './components';
-import { useDocument } from './api';
+import { DocumentFragment, useDocument } from './api';
 
 export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
@@ -80,9 +80,16 @@ const ScrollFix = () => {
   return null;
 };
 
+export type SaveDocumentMuation = (
+  jsonData: unknown,
+  formSchemaId: string,
+  parent?: DocumentFragment
+) => Promise<void>;
+
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
+  handleSave?: SaveDocumentMuation;
   saveConfirmationMessage?: string;
   cancelConfirmationMessage?: string;
   saveSuccessMessage?: string;
@@ -95,8 +102,16 @@ export const useJsonForms = (
   const { data: databaseResponse, isLoading } =
     useDocument.document.get(docName);
   const [data, setData] = useState<JsonData | undefined>();
-  const [jsonSchema, setJsonSchema] = useState<JsonSchema | undefined>();
-  const [uiSchema, setUiSchema] = useState<UISchemaElement | undefined>();
+  const [documentRegistry, setDocumentRegistry] = useState<{
+    formSchemaId: string;
+    jsonSchema: JsonSchema;
+    uiSchema: UISchemaElement;
+  }>({
+    formSchemaId: '',
+    jsonSchema: {},
+    uiSchema: { type: 'VerticalLayout' },
+  });
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | false>(false);
   const [isDirty, setIsDirty] = useState<boolean>();
@@ -108,15 +123,20 @@ export const useJsonForms = (
     if (!databaseResponse) return;
 
     const { data, documentRegistry } = databaseResponse;
-    const { jsonSchema, uiSchema } = documentRegistry ?? {};
-
-    if (!data) setError('No document data');
-    if (!jsonSchema) setError('No Json Schema');
-    if (!uiSchema) setError('No UI Schema');
-
-    setData(data);
-    setJsonSchema(jsonSchema);
-    setUiSchema(uiSchema);
+    if (!data) {
+      setError('No document data');
+    } else {
+      setData(data);
+    }
+    if (!documentRegistry) {
+      setError('No document registry entry');
+    } else if (!documentRegistry.jsonSchema) {
+      setError('No Json Schema');
+    } else if (!documentRegistry.uiSchema) {
+      setError('No UI Schema');
+    } else {
+      setDocumentRegistry(documentRegistry);
+    }
   }, [databaseResponse]);
 
   const {
@@ -135,22 +155,29 @@ export const useJsonForms = (
   };
 
   const saveData = async () => {
+    if (data === undefined) {
+      return;
+    }
     setSaving(true);
-    // Run mutation...
     console.log('Saving data...');
-    // Temporary for UI demonstration
-    setTimeout(() => {
-      try {
-        setSaving(false);
-        const successSnack = success(saveSuccessMessage);
-        successSnack();
-        setSaving(false);
-        setIsDirty(false);
-      } catch {
-        const errorSnack = errorNotification(t('error.problem-saving'));
-        errorSnack();
-      }
-    }, 1000);
+
+    // Run mutation...
+    try {
+      await options.handleSave?.(
+        data,
+        documentRegistry.formSchemaId,
+        databaseResponse
+      );
+      setIsDirty(false);
+
+      const successSnack = success(saveSuccessMessage);
+      successSnack();
+    } catch (err) {
+      const errorSnack = errorNotification(t('error.problem-saving'));
+      errorSnack();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderers = [
@@ -216,8 +243,8 @@ export const useJsonForms = (
         ) : (
           <FormComponent
             data={data}
-            jsonSchema={jsonSchema as JsonSchema}
-            uiSchema={uiSchema as UISchemaElement}
+            jsonSchema={documentRegistry.jsonSchema}
+            uiSchema={documentRegistry.uiSchema}
             setData={updateData}
             setError={setError}
             renderers={renderers}

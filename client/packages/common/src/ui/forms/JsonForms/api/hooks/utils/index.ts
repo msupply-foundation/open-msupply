@@ -1,5 +1,5 @@
-import { useDocumentApi } from './useDocumentApi';
+import { usePatientDocumentApi } from './useDocumentApi';
 
 export const Utils = {
-  useDocumentApi,
+  useDocumentApi: usePatientDocumentApi,
 };
