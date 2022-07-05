@@ -319,6 +319,11 @@ mod test {
         let result = service.update_outbound_shipment(&context, &mock_store_a().id, update);
 
         assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        assert_eq!(
+            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            Ok(None)
+        );
     }
 
     #[actix_rt::test]
