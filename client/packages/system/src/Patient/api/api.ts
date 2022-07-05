@@ -3,6 +3,7 @@ import {
   PatientSortFieldInput,
   InsertPatientInput,
   UpdatePatientInput,
+  FilterBy,
 } from '@openmsupply-client/common';
 import { Sdk, PatientRowFragment } from './operations.generated';
 
@@ -10,6 +11,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<PatientRowFragment>;
+  filterBy?: FilterBy | null;
 };
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
@@ -29,6 +31,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
+      filterBy,
     }: ListParams): Promise<{
       nodes: PatientRowFragment[];
       totalCount: number;
@@ -41,6 +44,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
         key,
         desc: !!sortBy?.isDesc,
         storeId,
+        filter: filterBy,
       });
 
       return result?.patients;
