@@ -1,10 +1,13 @@
+use chrono::Utc;
 use repository::{
-    EqualFilter, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
+    EqualFilter, LogRow, LogType, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeRowRepository, StorageConnection, TransactionError,
 };
+use util::uuid::uuid;
 
 use crate::{
-    service_provider::ServiceContext, stocktake_line::*, validate::check_store_id_matches,
+    log::log_entry, service_provider::ServiceContext, stocktake_line::*,
+    validate::check_store_id_matches,
 };
 
 use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
@@ -83,6 +86,19 @@ pub fn delete_stocktake(
             Ok(())
         })
         .map_err(|error: TransactionError<DeleteStocktakeError>| error.to_inner_error())?;
+
+    log_entry(
+        &ctx.connection,
+        &LogRow {
+            id: uuid(),
+            r#type: LogType::StocktakeDeleted,
+            user_id: None, //TODO
+            store_id: Some(store_id.to_string()),
+            record_id: Some(stocktake_id.clone()),
+            datetime: Utc::now().naive_utc(),
+        },
+    )?;
+
     Ok(stocktake_id.to_string())
 }
 
