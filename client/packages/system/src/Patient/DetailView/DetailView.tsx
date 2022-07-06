@@ -4,14 +4,14 @@ import {
   SavedDocument,
   SaveJob,
   useJsonForms,
+  useLocation,
   useNavigate,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { useCreatePatientStore } from '../hooks/useCreatePatientStore';
+import { CreateNewPatient } from '../CreatePatientModal';
 
 const useUpsertPatient = (): SaveJob => {
-  const { setNewPatient } = useCreatePatientStore();
   const { mutateAsync: insertPatient } = usePatient.document.insert();
   const { mutateAsync: updatePatient } = usePatient.document.update();
   return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
@@ -21,8 +21,6 @@ const useUpsertPatient = (): SaveJob => {
         schemaId: formSchemaId,
       });
       if (!result.document) throw Error('Inserted document not set!');
-      // clean up the create patient store
-      setNewPatient(undefined);
       return result.document;
     } else {
       const result = await updatePatient({
@@ -41,7 +39,9 @@ export const PatientDetailView: FC = () => {
     urlQuery: { doc },
   } = useUrlQuery();
   // check if there is a "create patient" request, i.e. if patient is set in the store
-  const { patient } = useCreatePatientStore();
+  const location = useLocation();
+  const patient = location.state as CreateNewPatient | undefined;
+
   // we have to memo createDoc to avoid an infinite render loop
   const createDoc = useMemo(() => {
     if (patient) {

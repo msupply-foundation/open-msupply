@@ -122,7 +122,7 @@ export const useJsonForms = (
   // the current document id (undefined if its a new document)
   const [documentId, setDocumentId] = useState<string | undefined>();
   // document name can change from the input parameter when creating a new document
-   const [documentName, setDocumentName] = useState<string | undefined>(docName);
+  const [documentName, setDocumentName] = useState<string | undefined>(docName);
 
   const [documentRegistry, setDocumentRegistry] = useState<{
     formSchemaId: string;
