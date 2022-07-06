@@ -11,7 +11,6 @@
   "button.more": "More",
   "button.new-inbound-shipment": "New Inbound Shipment",
   "button.new-outbound-shipment": "New Outbound Shipment",
-  "button.new-patient": "New Patient",
   "button.ok": "OK",
   "button.ok-and-next": "OK & Next",
   "button.print": "Print",
@@ -49,7 +48,6 @@
   "filename.master-lists": "master-lists",
   "filename.outbounds": "outbound-shipments",
   "filename.requests": "internal-orders",
-  "filename.patients": "patients",
   "filename.responses": "requisitions",
   "filename.stocktakes": "stocktakes",
   "heading.404": "Feeling lost?",
@@ -110,6 +108,8 @@
   "label.expiry": "Expiry",
   "label.finalised": "Finalised",
   "label.first-name": "First name",
+  "label.last-name": "Last name",
+  "label.gender": "Gender",
   "label.forecast-quantity": "Suggested Quantity",
   "label.hold": "Hold",
   "label.in-store": "In store",
@@ -118,7 +118,6 @@
   "label.item": "Item",
   "label.items-selected_one": "{{count}} item selected",
   "label.items-selected_other": "{{count}} items selected",
-  "label.last-name": "Last name",
   "label.line": "Line {{line, number}}",
   "label.line-total": "Line total",
   "label.location": "Location",
@@ -188,6 +187,5 @@
   "placeholder.search-by-name-or-code": "Search by name or code",
   "success": "Success!",
   "success.sync-settings": "Sync settings updated successfully!",
-  "success.data-saved": "Saved successfully",
-  "messages.no-patient-record": "Can't access detailed information for this patient."
+  "success.data-saved": "Saved successfully"
 }

@@ -571,6 +571,13 @@ export type DocumentRegistryConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type DocumentRegistryFilterInput = {
+  context?: InputMaybe<EqualFilterDocumentRegistryContextInput>;
+  documentType?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  parentId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type DocumentRegistryNode = {
   __typename: 'DocumentRegistryNode';
   children: Array<DocumentRegistryNode>;
@@ -594,6 +601,21 @@ export enum DocumentRegistryNodeContext {
 
 export type DocumentRegistryResponse = DocumentRegistryConnector;
 
+export enum DocumentRegistrySortFieldInput {
+  Context = 'context',
+  DocumentType = 'documentType'
+}
+
+export type DocumentRegistrySortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: DocumentRegistrySortFieldInput;
+};
+
 export type DocumentResponse = DocumentConnector;
 
 export type EncounterNode = {
@@ -606,6 +628,12 @@ export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
   equalTo?: InputMaybe<Scalars['Int']>;
   notEqualTo?: InputMaybe<Scalars['Int']>;
+};
+
+export type EqualFilterDocumentRegistryContextInput = {
+  equalAny?: InputMaybe<Array<DocumentRegistryNodeContext>>;
+  equalTo?: InputMaybe<DocumentRegistryNodeContext>;
+  notEqualTo?: InputMaybe<DocumentRegistryNodeContext>;
 };
 
 export type EqualFilterGenderInput = {
@@ -1094,7 +1122,7 @@ export type FullQuery = {
   authToken: AuthTokenResponse;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
-  documentRegistry: DocumentRegistryResponse;
+  documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
   formSchema?: Maybe<FormSchemaNode>;
   invoice: InvoiceResponse;
@@ -1112,6 +1140,7 @@ export type FullQuery = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   patient?: Maybe<PatientNode>;
+  patientSearch: Array<PatientSearchNode>;
   patients: PatientResponse;
   /**
    * Creates a printed report.
@@ -1164,6 +1193,12 @@ export type FullQueryDocumentArgs = {
 export type FullQueryDocumentHistoryArgs = {
   name: Scalars['String'];
   storeId: Scalars['String'];
+};
+
+
+export type FullQueryDocumentRegistriesArgs = {
+  filter?: InputMaybe<DocumentRegistryFilterInput>;
+  sort?: InputMaybe<Array<DocumentRegistrySortInput>>;
 };
 
 
@@ -1239,6 +1274,12 @@ export type FullQueryNamesArgs = {
 
 export type FullQueryPatientArgs = {
   patientId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryPatientSearchArgs = {
+  input: PatientSearchInput;
   storeId: Scalars['String'];
 };
 
@@ -2385,6 +2426,18 @@ export type PatientNode = {
 };
 
 export type PatientResponse = PatientConnector;
+
+export type PatientSearchInput = {
+  dateOfBirth?: InputMaybe<Scalars['NaiveDate']>;
+  firstName?: InputMaybe<Scalars['String']>;
+  lastName?: InputMaybe<Scalars['String']>;
+};
+
+export type PatientSearchNode = {
+  __typename: 'PatientSearchNode';
+  patient: PatientNode;
+  score: Scalars['Float'];
+};
 
 export enum PatientSortFieldInput {
   Address1 = 'address1',

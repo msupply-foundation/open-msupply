@@ -24,3 +24,39 @@ query documentByName($name: String!, $storeId: String!) {
     }
   }
 }
+
+fragment DocumentRegistry on DocumentRegistryNode {
+  __typename
+  id
+  documentType
+  context
+  name
+  parentId
+  formSchemaId
+  jsonSchema
+  uiSchemaType
+  uiSchema
+}
+
+query documentRegistries(
+  $filter: DocumentRegistryFilterInput
+  $sort: DocumentRegistrySortInput
+) {
+  documentRegistries(filter: $filter, sort: $sort) {
+    ... on DocumentRegistryConnector {
+      __typename
+      nodes {
+        __typename
+        context
+        documentType
+        formSchemaId
+        id
+        jsonSchema
+        name
+        parentId
+        uiSchema
+        uiSchemaType
+      }
+    }
+  }
+}

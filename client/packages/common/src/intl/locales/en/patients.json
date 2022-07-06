@@ -1,0 +1,11 @@
+{
+  "button.new-patient": "New Patient",
+  "filename.patients": "patients",
+  "label.patient-details": "Patient Details",
+  "label.search-results": "Search results",
+  "messages.no-matching-patients": "No matching patients! 😁",
+  "messages.no-patient-record": "Can't access detailed information for this patient.",
+  "messages.patients-found_one": "1 patient found",
+  "messages.patients-found_other": "{{count}} patients found",
+  "placeholder.search-by-last-name": "Search by last name"
+}

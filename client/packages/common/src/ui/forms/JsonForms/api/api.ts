@@ -1,4 +1,9 @@
-import { DocumentFragment, Sdk } from './operations.generated';
+import { DocumentRegistryNodeContext } from '@common/types';
+import {
+  DocumentFragment,
+  DocumentRegistryFragment,
+  Sdk,
+} from './operations.generated';
 
 export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
   get: {
@@ -10,6 +15,35 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
         return document;
       }
       throw new Error('Error querying document');
+    },
+  },
+});
+
+export const getDocumentRegistryQueries = (sdk: Sdk) => ({
+  get: {
+    byDocType: async (type: string): Promise<DocumentRegistryFragment[]> => {
+      const result = await sdk.documentRegistries({
+        filter: { documentType: { equalTo: type } },
+      });
+      const entries = result?.documentRegistries;
+
+      if (entries?.__typename === 'DocumentRegistryConnector') {
+        return entries.nodes;
+      }
+      throw new Error('Error querying document registry by type');
+    },
+    byDocContext: async (
+      context: DocumentRegistryNodeContext
+    ): Promise<DocumentRegistryFragment[]> => {
+      const result = await sdk.documentRegistries({
+        filter: { context: { equalTo: context } },
+      });
+      const entries = result?.documentRegistries;
+
+      if (entries?.__typename === 'DocumentRegistryConnector') {
+        return entries.nodes;
+      }
+      throw new Error('Error querying document registry by context');
     },
   },
 });

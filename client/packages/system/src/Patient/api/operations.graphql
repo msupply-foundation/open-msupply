@@ -5,6 +5,8 @@ fragment PatientRow on PatientNode {
   lastName
   name
   dateOfBirth
+  gender
+  email
   document {
     id
     name
@@ -65,6 +67,15 @@ query patientById($storeId: String!, $nameId: String!) {
         ...Patient
       }
       totalCount
+    }
+  }
+}
+
+query patientSearch($input: PatientSearchInput!, $storeId: String!) {
+  patientSearch(input: $input, storeId: $storeId) {
+    score
+    patient {
+      ...Patient
     }
   }
 }

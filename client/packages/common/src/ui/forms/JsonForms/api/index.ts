@@ -1,2 +1,5 @@
-export { DocumentFragment } from './operations.generated';
+export {
+  DocumentFragment,
+  DocumentRegistryFragment,
+} from './operations.generated';
 export * from './hooks';

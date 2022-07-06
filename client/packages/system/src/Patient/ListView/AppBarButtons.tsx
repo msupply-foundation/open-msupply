@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -13,13 +13,15 @@ import {
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
+import { CreatePatientModal } from '../CreatePatientModal';
 
 export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   sortBy,
 }) => {
   const { success, error } = useNotification();
-  const t = useTranslation('common');
+  const t = useTranslation('patients');
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
+  const [open, setOpen] = useState(false);
 
   const csvExport = async () => {
     const data = await mutateAsync();
@@ -37,10 +39,9 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          disabled
           Icon={<PlusCircleIcon />}
           label={t('button.new-patient')}
-          onClick={() => {}}
+          onClick={() => setOpen(true)}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
@@ -51,6 +52,8 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
           {t('button.export', { ns: 'common' })}
         </LoadingButton>
       </Grid>
+
+      {open ? <CreatePatientModal onClose={() => setOpen(false)} /> : null}
     </AppBarButtonsPortal>
   );
 };
