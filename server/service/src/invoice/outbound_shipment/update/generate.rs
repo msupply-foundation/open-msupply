@@ -103,7 +103,7 @@ fn unallocated_lines_to_trim(
         return Ok(None);
     }
 
-    // If new invoice status in not new and previous invoice status is new
+    // If new invoice status is not new and previous invoice status is new
     // add all unallocated lines to be deleted
 
     let lines = InvoiceLineRepository::new(connection).query_by_filter(
