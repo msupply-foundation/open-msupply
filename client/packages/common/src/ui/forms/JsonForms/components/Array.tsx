@@ -4,9 +4,9 @@ import {
   schemaTypeIs,
   ArrayControlProps,
   findUISchema,
-  JsonFormsUISchemaRegistryEntry,
   ControlElement,
-  Layout,
+  composePaths,
+  createDefaultValue,
 } from '@jsonforms/core';
 import {
   withJsonFormsArrayControlProps,
@@ -44,10 +44,6 @@ interface ArrayControlCustomProps extends ArrayControlProps {
   data: JsonData[];
 }
 
-interface ArrayUiSchema extends Layout {
-  elements: ControlElement[];
-}
-
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
 const ArrayComponent = (props: ArrayControlCustomProps) => {
@@ -63,12 +59,13 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     enabled,
     label,
     rootSchema,
+    renderers,
   } = props;
 
-  const foundUISchema = useMemo(
+  const childUiSchema = useMemo(
     () =>
       findUISchema(
-        uischemas as JsonFormsUISchemaRegistryEntry[],
+        uischemas ?? [],
         schema,
         uischema.scope,
         path,
@@ -76,8 +73,8 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
         uischema,
         rootSchema
       ),
-    []
-  ) as ArrayUiSchema;
+    [uischemas, schema, uischema.scope, path, uischema, rootSchema]
+  );
 
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
@@ -94,12 +91,13 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
             color="primary"
             onClick={addItem(
               path,
-              uischema.defaultNewItem ?? createNewItem(foundUISchema)
+              uischema.defaultNewItem ?? createDefaultValue(schema)
             )}
           />
         </Box>
       </Box>
       {(data ? data : []).map((child, index) => {
+        const childPath = composePaths(path, `${index}`);
         return (
           <Accordion
             key={index}
@@ -154,11 +152,12 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
             </AccordionSummary>
             <AccordionDetails>
               <JsonFormsDispatch
-                key={index}
+                key={childPath}
                 schema={schema}
-                uischema={foundUISchema}
+                uischema={childUiSchema || uischema}
                 enabled={enabled}
-                path={`${path}.${index}`}
+                path={childPath}
+                renderers={renderers}
               />
             </AccordionDetails>
           </Accordion>
@@ -171,15 +170,3 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
 export const Array = withJsonFormsArrayControlProps(
   ArrayComponent as ComponentType<ArrayControlProps>
 );
-
-const createNewItem = (foundUISchema: ArrayUiSchema) => {
-  try {
-    const fields = foundUISchema.elements.map(e => [
-      e.scope.split('/').pop(),
-      undefined,
-    ]);
-    return Object.fromEntries(fields);
-  } catch {
-    return {};
-  }
-};

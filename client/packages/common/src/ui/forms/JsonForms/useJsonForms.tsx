@@ -67,6 +67,8 @@ const FormComponent = ({
         if (errors && errors.length) {
           setError(errors?.map(({ message }) => message ?? '').join(', '));
           console.warn('Errors: ', errors);
+        } else {
+          setError(false);
         }
       }}
     />
@@ -87,7 +89,7 @@ export type SavedDocument = {
   type: string;
 };
 
-export type SaveJob = (
+export type SaveDocumentMuation = (
   jsonData: unknown,
   formSchemaId: string,
   parent?: string
@@ -96,8 +98,7 @@ export type SaveJob = (
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
-  saveJob?: SaveJob;
-  onJobSaved?: (document: SavedDocument) => void;
+  handleSave?: SaveDocumentMuation;
   saveConfirmationMessage?: string;
   cancelConfirmationMessage?: string;
   saveSuccessMessage?: string;
@@ -120,10 +121,7 @@ export const useJsonForms = (
   // the current document id (undefined if its a new document)
   const [documentId, setDocumentId] = useState<string | undefined>();
   // document name can change from the input parameter when creating a new document
-  const [documentName, setDocumentName] = useState<string | undefined>();
-  useEffect(() => {
-    setDocumentName(docName);
-  }, []);
+  const [documentName, setDocumentName] = useState<string | undefined>(docName);
 
   const [documentRegistry, setDocumentRegistry] = useState<{
     formSchemaId: string;
@@ -202,14 +200,12 @@ export const useJsonForms = (
 
     // Run mutation...
     try {
-      const result = await options.saveJob?.(
+      const result = await options.handleSave?.(
         data,
         documentRegistry.formSchemaId,
         documentId
       );
-      if (result) {
-        options.onJobSaved?.(result);
-      }
+
       setDocumentName(result?.name);
       setIsDirty(false);
 
@@ -254,6 +250,7 @@ export const useJsonForms = (
           else onCancel();
         }}
         isLoading={saving}
+        disabled={error !== false}
         color="secondary"
       >
         {t('button.save')}

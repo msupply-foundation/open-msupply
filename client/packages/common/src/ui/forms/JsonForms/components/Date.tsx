@@ -2,7 +2,10 @@ import React from 'react';
 import { rankWith, ControlProps, isDateControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
-import { BaseDatePickerInput } from '@openmsupply-client/common';
+import {
+  BaseDatePickerInput,
+  useFormatDateTime,
+} from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
@@ -12,7 +15,7 @@ export const dateTester = rankWith(5, isDateControl);
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
-
+  const dateFormatter = useFormatDateTime().customDate;
   return (
     <Box
       display="flex"
@@ -32,7 +35,9 @@ const UIComponent = (props: ControlProps) => {
       <Box flex={1} flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         <BaseDatePickerInput
           value={data}
-          onChange={e => handleChange(path, e)}
+          onChange={e => {
+            if (e) handleChange(path, dateFormatter(e, 'yyyy-MM-dd'));
+          }}
           inputFormat="dd/MM/yyyy"
         />
       </Box>

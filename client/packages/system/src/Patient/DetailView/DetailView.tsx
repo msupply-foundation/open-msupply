@@ -1,17 +1,15 @@
 import React, { FC, useMemo } from 'react';
 import {
   DetailViewSkeleton,
-  SavedDocument,
-  SaveJob,
+  SaveDocumentMuation,
   useJsonForms,
-  useNavigate,
+  useLocation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { useCreatePatientStore } from '../hooks/useCreatePatientStore';
+import { CreateNewPatient } from '../CreatePatientModal';
 
-const useUpsertPatient = (): SaveJob => {
-  const { setNewPatient } = useCreatePatientStore();
+const useUpsertPatient = (): SaveDocumentMuation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
   const { mutateAsync: updatePatient } = usePatient.document.update();
   return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
@@ -21,8 +19,6 @@ const useUpsertPatient = (): SaveJob => {
         schemaId: formSchemaId,
       });
       if (!result.document) throw Error('Inserted document not set!');
-      // clean up the create patient store
-      setNewPatient(undefined);
       return result.document;
     } else {
       const result = await updatePatient({
@@ -41,7 +37,9 @@ export const PatientDetailView: FC = () => {
     urlQuery: { doc },
   } = useUrlQuery();
   // check if there is a "create patient" request, i.e. if patient is set in the store
-  const { patient } = useCreatePatientStore();
+  const location = useLocation();
+  const patient = location.state as CreateNewPatient | undefined;
+
   // we have to memo createDoc to avoid an infinite render loop
   const createDoc = useMemo(() => {
     if (patient) {
@@ -59,19 +57,9 @@ export const PatientDetailView: FC = () => {
     } else return undefined;
   }, [patient]);
 
-  const navigate = useNavigate();
-  const onJobSaved = (document: SavedDocument) => {
-    // if new document has created update the url:
-    if (document.name !== doc) {
-      navigate(`?doc=${document.name}`);
-    }
-  };
-  const saveJob = useUpsertPatient();
-  const { JsonForm, loading, error } = useJsonForms(
-    doc,
-    { saveJob, onJobSaved },
-    createDoc
-  );
+  const handleSave = useUpsertPatient();
+
+  const { JsonForm, loading } = useJsonForms(doc, { handleSave }, createDoc);
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -81,7 +69,7 @@ export const PatientDetailView: FC = () => {
     >
       {/* <Toolbar /> */}
 
-      {!error ? JsonForm : error}
+      {JsonForm}
     </React.Suspense>
   );
 };

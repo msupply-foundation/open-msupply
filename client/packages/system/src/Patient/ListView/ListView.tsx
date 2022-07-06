@@ -47,6 +47,10 @@ const PatientListComponent: FC = () => {
         label: 'label.last-name',
       },
       {
+        key: 'gender',
+        label: 'label.gender',
+      },
+      {
         key: 'dateOfBirth',
         label: 'label.date-of-birth',
         align: ColumnAlign.Right,

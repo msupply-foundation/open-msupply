@@ -19,6 +19,7 @@ const UIComponent = (props: ControlProps) => {
         },
         onBlur: () => handleChange(path, localData),
         disabled: !props.enabled,
+        error: !!props.errors,
       }}
     />
   );
