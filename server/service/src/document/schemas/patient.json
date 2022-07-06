@@ -1,6 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
   "definitions": {
     "Address": {
       "properties": {
@@ -76,8 +75,8 @@
           "$ref": "#/definitions/Person"
         },
         "maritalStatus": {
-          "description": "125680007 Marital Status",
-          "type": "string"
+          "$ref": "#/definitions/MaritalStatus",
+          "description": "125680007 Marital Status"
         },
         "mother": {
           "$ref": "#/definitions/Person",
@@ -113,6 +112,17 @@
         }
       },
       "type": "object"
+    },
+    "MaritalStatus": {
+      "enum": [
+        "Single",
+        "Married",
+        "Divorced",
+        "Widowed",
+        "Separated",
+        "RegisteredPartnership"
+      ],
+      "type": "string"
     },
     "Patient": {
       "properties": {
@@ -159,6 +169,10 @@
           "description": "184096005 Patient Surname",
           "type": "string"
         },
+        "nationalId": {
+          "description": "Patient id",
+          "type": "string"
+        },
         "passportNumber": {
           "description": "1601000122107 Passport Number",
           "type": "string"
@@ -201,11 +215,15 @@
           "description": "394744001 Gender unspecified"
         },
         "id": {
-          "description": "Patient Code",
+          "description": "mSupply Patient id",
           "type": "string"
         },
         "lastName": {
           "description": "184096005 Patient Surname",
+          "type": "string"
+        },
+        "nationalId": {
+          "description": "Patient id",
           "type": "string"
         },
         "passportNumber": {
@@ -236,6 +254,7 @@
       "type": "object"
     }
   },
+  "type": "object",
   "allOf": [
     {
       "$ref": "#/definitions/Patient"
