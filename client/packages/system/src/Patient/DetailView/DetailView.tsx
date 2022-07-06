@@ -1,17 +1,15 @@
 import React, { FC, useMemo } from 'react';
 import {
   DetailViewSkeleton,
-  SavedDocument,
-  SaveJob,
+  SaveDocumentMuation,
   useJsonForms,
   useLocation,
-  useNavigate,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { CreateNewPatient } from '../CreatePatientModal';
 
-const useUpsertPatient = (): SaveJob => {
+const useUpsertPatient = (): SaveDocumentMuation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
   const { mutateAsync: updatePatient } = usePatient.document.update();
   return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
@@ -59,19 +57,9 @@ export const PatientDetailView: FC = () => {
     } else return undefined;
   }, [patient]);
 
-  const navigate = useNavigate();
-  const onJobSaved = (document: SavedDocument) => {
-    // if new document has created update the url:
-    if (document.name !== doc) {
-      navigate(`?doc=${document.name}`);
-    }
-  };
-  const saveJob = useUpsertPatient();
-  const { JsonForm, loading } = useJsonForms(
-    doc,
-    { saveJob, onJobSaved },
-    createDoc
-  );
+  const handleSave = useUpsertPatient();
+
+  const { JsonForm, loading } = useJsonForms(doc, { handleSave }, createDoc);
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
