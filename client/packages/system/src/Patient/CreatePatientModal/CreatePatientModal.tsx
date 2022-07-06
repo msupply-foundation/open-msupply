@@ -17,7 +17,7 @@ import { useDocumentRegistryByContext } from 'packages/common/src/ui/forms/JsonF
 import { DocumentRegistryFragment } from 'packages/common/src/ui/forms/JsonForms/api/operations.generated';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
-import { CreateNewPatient } from '../hooks';
+import { CreateNewPatient, useCreatePatientStore } from '../hooks';
 
 enum Tabs {
   Form = 'Form',
@@ -94,11 +94,6 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
     // clear old patient
     return () => setNewPatient(undefined);
   }, [documentRegistry]);
-
-  // const [patient, setNewPatient] = useState<CreateNewPatient | undefined>();
-  // useEffect(() => {
-  //   onChange(patient);
-  // }, [patient]);
 
   if (documentRegistry === undefined) {
     return null;

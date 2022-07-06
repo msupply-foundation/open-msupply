@@ -7,7 +7,7 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { CreateNewPatient } from '../CreatePatientModal';
+import { CreateNewPatient } from '../hooks';
 
 const useUpsertPatient = (): SaveDocumentMuation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();

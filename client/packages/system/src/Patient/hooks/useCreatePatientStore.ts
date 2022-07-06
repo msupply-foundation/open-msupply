@@ -1,4 +1,4 @@
-import { DocumentRegistryFragment } from 'packages/common/src/ui/forms/JsonForms/api/operations.generated';
+import { DocumentRegistryFragment } from '@openmsupply-client/common';
 import create from 'zustand';
 
 export interface CreateNewPatient {
