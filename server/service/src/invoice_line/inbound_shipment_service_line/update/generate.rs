@@ -1,5 +1,7 @@
 use repository::{InvoiceLineRow, ItemRow};
 
+use crate::invoice::common::total_after_tax;
+
 use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError};
 
 pub fn generate(
@@ -49,8 +51,7 @@ pub fn generate(
         update_line.tax = tax.percentage;
     }
 
-    update_line.total_after_tax =
-        update_line.total_before_tax * (f64::from(1) + update_line.tax.unwrap_or_default() / 100.0);
+    update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
 
     if let Some(note) = input_note {
         update_line.note = Some(note);

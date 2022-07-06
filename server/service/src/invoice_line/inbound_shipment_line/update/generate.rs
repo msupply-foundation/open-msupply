@@ -1,6 +1,7 @@
 use crate::{
-    invoice::common::generate_invoice_user_id_update,
-    invoice_line::inbound_shipment_line::generate_batch, u32_to_i32,
+    invoice::common::{generate_invoice_user_id_update, total_after_tax},
+    invoice_line::inbound_shipment_line::generate_batch,
+    u32_to_i32,
 };
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
@@ -89,8 +90,7 @@ fn generate_line(
         update_line.item_name = item.name;
     }
 
-    update_line.total_after_tax =
-        update_line.total_before_tax * (f64::from(1) + update_line.tax.unwrap_or_default() / 100.0);
+    update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
 
     update_line
 }
