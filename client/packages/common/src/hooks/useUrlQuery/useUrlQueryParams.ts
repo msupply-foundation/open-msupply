@@ -26,11 +26,10 @@ export const useUrlQueryParams = ({
 
   useEffect(() => {
     if (!initialSortKey) return;
+    // Don't want to override existing sort
+    if (!!urlQuery['sort']) return;
 
-    updateSortQuery({
-      key: initialSortKey,
-      sortBy: { key: initialSortKey, direction: 'asc' },
-    } as Column<any>);
+    updateQuery({ sort: initialSortKey });
   }, [initialSortKey]);
 
   const updateSortQuery = (column: Column<any>) => {
