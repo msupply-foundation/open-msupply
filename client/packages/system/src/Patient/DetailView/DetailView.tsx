@@ -3,11 +3,10 @@ import {
   DetailViewSkeleton,
   SaveDocumentMuation,
   useJsonForms,
-  useLocation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { CreateNewPatient } from '../CreatePatientModal';
+import { useCreatePatientStore } from '../hooks';
 
 const useUpsertPatient = (): SaveDocumentMuation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -36,9 +35,8 @@ export const PatientDetailView: FC = () => {
   const {
     urlQuery: { doc },
   } = useUrlQuery();
-  // check if there is a "create patient" request, i.e. if patient is set in the store
-  const location = useLocation();
-  const patient = location.state as CreateNewPatient | undefined;
+
+  const { patient } = useCreatePatientStore();
 
   // we have to memo createDoc to avoid an infinite render loop
   const createDoc = useMemo(() => {

@@ -11,7 +11,6 @@
   "button.more": "More",
   "button.new-inbound-shipment": "New Inbound Shipment",
   "button.new-outbound-shipment": "New Outbound Shipment",
-  "button.new-patient": "New Patient",
   "button.ok": "OK",
   "button.ok-and-next": "OK & Next",
   "button.print": "Print",
@@ -49,7 +48,6 @@
   "filename.master-lists": "master-lists",
   "filename.outbounds": "outbound-shipments",
   "filename.requests": "internal-orders",
-  "filename.patients": "patients",
   "filename.responses": "requisitions",
   "filename.stocktakes": "stocktakes",
   "heading.404": "Feeling lost?",
@@ -189,6 +187,5 @@
   "placeholder.search-by-name-or-code": "Search by name or code",
   "success": "Success!",
   "success.sync-settings": "Sync settings updated successfully!",
-  "success.data-saved": "Saved successfully",
-  "messages.no-patient-record": "Can't access detailed information for this patient."
+  "success.data-saved": "Saved successfully"
 }

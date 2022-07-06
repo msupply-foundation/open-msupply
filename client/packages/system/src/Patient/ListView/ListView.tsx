@@ -15,17 +15,18 @@ import {
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 
 const PatientListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    // filter,
+    filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
   const { data, isError, isLoading } = usePatient.document.list();
   const pagination = { page, first, offset };
-  const t = useTranslation('common');
+  const t = useTranslation('patients');
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
   const alert = useAlertModal({
@@ -64,6 +65,7 @@ const PatientListComponent: FC = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <AppBarButtons sortBy={sortBy} />
       <DataTable
         pagination={{ ...pagination, total: data?.totalCount }}
