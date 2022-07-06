@@ -158,7 +158,8 @@ const useStatusChangePlaceholderCheck = () => {
   const hasPlaceholder = useMemo(
     () =>
       !!lines?.some(
-        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+        ({ type, numberOfPacks }) =>
+          type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks > 0
       ),
     [lines]
   );

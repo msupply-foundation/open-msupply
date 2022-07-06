@@ -8,6 +8,7 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
+  GlobalStyles,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -40,6 +41,14 @@ export const DetailView: FC = () => {
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
+      <GlobalStyles
+        styles={{
+          '@keyframes highlight': {
+            from: { backgroundColor: 'rgba(199, 201, 217, 1)' },
+            to: { backgroundColor: 'rgba(199, 201, 217, 0)' },
+          },
+        }}
+      />
       <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
 
