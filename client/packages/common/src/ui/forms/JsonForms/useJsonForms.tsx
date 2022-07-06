@@ -143,7 +143,7 @@ export const useJsonForms = (
   // fetch document (only if there is as document name)
   const { data: databaseResponse, isLoading } = useDocument.get.document(
     documentName ?? '',
-    documentName !== undefined
+    !!documentName
   );
   useEffect(() => {
     if (!databaseResponse) return;
