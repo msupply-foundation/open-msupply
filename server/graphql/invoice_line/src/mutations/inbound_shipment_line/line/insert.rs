@@ -156,384 +156,334 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     Err(graphql_error.extend())
 }
 
-// mod graphql {
-//     use crate::graphql::common::{
-//         assert_unwrap_enum, assert_unwrap_optional_key, get_invoice_inline,
-//     };
-//     use crate::graphql::{
-//         get_gql_result, insert_inbound_shipment_line_full as insert,
-//         InsertInboundShipmentLineFull as Insert,
-//     };
-//     use chrono::NaiveDate;
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
+    use chrono::NaiveDate;
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
+    use repository::{
+        mock::{
+            mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_location_1,
+            MockDataInserts,
+        },
+        InvoiceLine, RepositoryError, StorageConnectionManager,
+    };
+    use serde_json::json;
+    use service::{
+        invoice_line::{
+            inbound_shipment_line::{
+                InsertInboundShipmentLine as ServiceInput,
+                InsertInboundShipmentLineError as ServiceError,
+            },
+            InvoiceLineServiceTrait,
+        },
+        service_provider::{ServiceContext, ServiceProvider},
+    };
 
-//     use graphql_client::{GraphQLQuery, Response};
-//     use insert::InsertInboundShipmentLineErrorInterface::*;
-//     use repository::schema::{InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType};
-//     use repository::{
-//         mock::MockDataInserts,
-//         schema::{InvoiceLineRow, StockLineRow},
-//     };
-//     use repository::{InvoiceFilter, InvoiceLineRowRepository, StockLineRowRepository};
-//     use server::test_utils::setup_all;
-//     use util::uuid::uuid;
+    use crate::InvoiceLineMutations;
 
-//     macro_rules! assert_unwrap_response_variant {
-//         ($response:ident) => {
-//             assert_unwrap_optional_key!($response, data).insert_inbound_shipment_line
-//         };
-//     }
+    type InsertLineMethod = dyn Fn(ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
 
-//     macro_rules! assert_unwrap_line {
-//         ($response:ident) => {{
-//             let response_variant = assert_unwrap_response_variant!($response);
-//             assert_unwrap_enum!(
-//                 response_variant,
-//                 insert::InsertInboundShipmentLineResponse::InvoiceLineNode
-//             )
-//         }};
-//     }
+    pub struct TestService(pub Box<InsertLineMethod>);
 
-//     macro_rules! assert_unwrap_batch {
-//         ($line:ident) => {{
-//             let line_cloned = $line.clone();
-//             let batch = assert_unwrap_optional_key!(line_cloned, stock_line);
-//             batch
-//         }};
-//     }
+    impl InvoiceLineServiceTrait for TestService {
+        fn insert_inbound_shipment_line(
+            &self,
+            _: &ServiceContext,
+            _: &str,
+            _: &str,
+            input: ServiceInput,
+        ) -> Result<InvoiceLine, ServiceError> {
+            self.0(input)
+        }
+    }
 
-//     macro_rules! assert_unwrap_error {
-//         ($response:ident) => {{
-//             let response_variant = assert_unwrap_response_variant!($response);
-//             let error_wrapper = assert_unwrap_enum!(
-//                 response_variant,
-//                 insert::InsertInboundShipmentLineResponse::InsertInboundShipmentLineError
-//             );
-//             error_wrapper.error
-//         }};
-//     }
+    fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        service_provider.invoice_line_service = Box::new(test_service);
+        service_provider
+    }
 
-//     macro_rules! assert_error {
-//         ($response:ident, $error:expr) => {{
-//             let lhs = assert_unwrap_error!($response);
-//             let rhs = $error;
-//             assert_eq!(lhs, rhs);
-//         }};
-//     }
+    fn empty_variables() -> serde_json::Value {
+        json!({
+          "input": {
+            "id": "n/a",
+            "invoiceId": "n/a",
+            "costPricePerPack": 0,
+            "invoiceId": "n/a",
+            "itemId": "n/a",
+            "numberOfPacks": 0,
+            "packSize": 0,
+            "sellPricePerPack": 0,
+            "totalBeforeTax": 0,
+            "totalAfterTax": 0,
+          }
+        })
+    }
 
-//     #[actix_rt::test]
-//     async fn test_insert_inbound_shipment_line() {
-//         let (mut mock_data, connection, _, settings) = setup_all(
-//             "test_insert_inbound_shipment_line_query",
-//             MockDataInserts::all(),
-//         )
-//         .await;
-//         let mock_data = mock_data.get_mut("base");
-//         // Setup
+    #[actix_rt::test]
+    async fn test_graphql_insert_inbound_line_errors() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            EmptyMutation,
+            InvoiceLineMutations,
+            "test_graphql_insert_inbound_line_errors",
+            MockDataInserts::all(),
+        )
+        .await;
 
-//         let draft_inbound_shipment = get_invoice_inline!(
-//             InvoiceFilter::new()
-//                 .r#type(InvoiceRowType::InboundShipment.equal_to())
-//                 .status(InvoiceRowStatus::New.equal_to()),
-//             &connection
-//         );
-//         let delivered_inbound_shipment = get_invoice_inline!(
-//             InvoiceFilter::new()
-//                 .r#type(InvoiceRowType::InboundShipment.equal_to())
-//                 .status(InvoiceRowStatus::Delivered.equal_to()),
-//             &connection
-//         );
-//         let verified_inbound_shipment = get_invoice_inline!(
-//             InvoiceFilter::new()
-//                 .r#type(InvoiceRowType::InboundShipment.equal_to())
-//                 .status(InvoiceRowStatus::Verified.equal_to()),
-//             &connection
-//         );
-//         let outbound_shipment = get_invoice_inline!(
-//             InvoiceFilter::new().r#type(InvoiceRowType::OutboundShipment.equal_to()),
-//             &connection
-//         );
-//         let item = mock_data.items.pop().unwrap();
-//         let existing_line = mock_data.invoice_lines.pop().unwrap();
+        let mutation = r#"
+        mutation ($input: InsertInboundShipmentLineInput!) {
+            insertInboundShipmentLine(input: $input, storeId: \"store_a\") {
+                ... on InsertInboundShipmentLineError {
+                    error {
+                        __typename
+                    }
+                }
+            }
+        }
+        "#;
 
-//         let base_variables = insert::Variables {
-//             id: uuid(),
-//             invoice_id: draft_inbound_shipment.invoice_row.id.clone(),
-//             item_id: item.id.clone(),
-//             cost_price_per_pack: 5.5,
-//             sell_price_per_pack: 7.7,
-//             pack_size: 3,
-//             number_of_packs: 9,
-//             expiry_date_option: Some(NaiveDate::from_ymd(2020, 8, 3)),
-//             batch_option: Some("some batch name".to_string()),
-//             location_id_option: None,
-//             total_before_tax: 1.0,
-//             total_after_tax: 1.0,
-//         };
+        //InvoiceDoesNotExist
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
-//         // Test ForeingKeyError Item
+        let expected = json!({
+            "insertInboundShipmentLine": {
+              "error": {
+                "__typename": "ForeignKeyError"
+              }
+            }
+          }
+        );
 
-//         let mut variables = base_variables.clone();
-//         variables.item_id = "invalid".to_string();
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let query = Insert::build_query(variables);
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             ForeignKeyError(insert::ForeignKeyError {
-//                 description: "FK record doesn't exist".to_string(),
-//                 key: insert::ForeignKey::ItemId,
-//             })
-//         );
+        //CannotEditFinalised
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditFinalised)));
 
-//         // Test ForeingKeyError LocationId
+        let expected = json!({
+            "insertInboundShipmentLine": {
+              "error": {
+                "__typename": "CannotEditInvoice"
+              }
+            }
+          }
+        );
 
-//         let mut variables = base_variables.clone();
-//         variables.location_id_option = Some("invalid".to_owned());
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let query = Insert::build_query(variables);
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             ForeignKeyError(insert::ForeignKeyError {
-//                 description: "FK record doesn't exist".to_string(),
-//                 key: insert::ForeignKey::LocationId,
-//             })
-//         );
+        //NotThisStoreInvoice
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         // Test ForeingKeyError Invoice
+        //NotAnInboundShipment
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let mut variables = base_variables.clone();
-//         variables.invoice_id = "invalid".to_string();
+        //LineAlreadyExists
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LineAlreadyExists)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let query = Insert::build_query(variables);
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             ForeignKeyError(insert::ForeignKeyError {
-//                 description: "FK record doesn't exist".to_string(),
-//                 key: insert::ForeignKey::InvoiceId,
-//             })
-//         );
-//         // Test CannotEditInvoice
+        //NumberOfPacksBelowOne
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let mut variables = base_variables.clone();
-//         variables.invoice_id = verified_inbound_shipment.invoice_row.id.clone();
+        //PackSizeBelowOne
+        let test_service = TestService(Box::new(|_| Err(ServiceError::PackSizeBelowOne)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let query = Insert::build_query(variables);
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             CannotEditInvoice(insert::CannotEditInvoice {
-//                 description: "Cannot edit invoice".to_string(),
-//             },)
-//         );
+        //LocationDoesNotExist
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LocationDoesNotExist)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         // Test NotAnInboundShipment
+        //ItemNotFound
+        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let mut variables = base_variables.clone();
-//         variables.invoice_id = outbound_shipment.invoice_row.id.clone();
+        //DatabaseError
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::DatabaseError(RepositoryError::NotFound))
+        }));
+        let expected_message = "Internal error";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let query = Insert::build_query(variables);
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             NotAnInboundShipment(insert::NotAnInboundShipment {
-//                 description: "Invoice is not Inbound Shipment".to_string(),
-//             })
-//         );
-//         // Test RangeError NumberOfPacks
+        //NewlyCreatedLineDoesNotExist
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::NewlyCreatedLineDoesNotExist)
+        }));
+        let expected_message = "Internal error";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
 
-//         let mut variables = base_variables.clone();
-//         variables.number_of_packs = 0;
+    #[actix_rt::test]
+    async fn test_graphql_insert_inbound_line_success() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            EmptyMutation,
+            InvoiceLineMutations,
+            "test_graphql_insert_inbound_line_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
-//         let query = Insert::build_query(variables);
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             RangeError(insert::RangeError {
-//                 description: "Value is below minimum".to_string(),
-//                 field: insert::RangeField::NumberOfPacks,
-//                 max: None,
-//                 min: Some(1),
-//             })
-//         );
-//         // Test RangeError PackSize
+        let mutation = r#"
+        mutation ($input: InsertInboundShipmentLineInput!) {
+            insertInboundShipmentLine(input: $input, storeId: \"store_a\") {
+                ... on InvoiceLineNode {
+                    id
+                    invoiceId
+                    itemName
+                }
+            }
+          }
+        "#;
 
-//         let mut variables = base_variables.clone();
-//         variables.number_of_packs = 0;
+        // Success
+        let test_service = TestService(Box::new(|input| {
+            assert_eq!(
+                input,
+                ServiceInput {
+                    id: "new id".to_string(),
+                    invoice_id: "invoice input".to_string(),
+                    item_id: "item input".to_string(),
+                    location_id: Some("location input".to_string()),
+                    pack_size: 2,
+                    batch: Some("batch".to_string()),
+                    cost_price_per_pack: 1.1,
+                    sell_price_per_pack: 2.2,
+                    expiry_date: Some(NaiveDate::from_ymd(2022, 01, 01)),
+                    number_of_packs: 1,
+                    total_before_tax: 1.1,
+                    total_after_tax: 2.2,
+                    tax: Some(5.0)
+                }
+            );
+            Ok(InvoiceLine {
+                invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
+                invoice_row: mock_inbound_shipment_c(),
+                location_row_option: Some(mock_location_1()),
+            })
+        }));
 
-//         let query = Insert::build_query(variables);
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             RangeError(insert::RangeError {
-//                 description: "Value is below minimum".to_string(),
-//                 field: insert::RangeField::NumberOfPacks,
-//                 max: None,
-//                 min: Some(1),
-//             })
-//         );
-//         // Test RecordAlreadyExists
+        let variables = json!({
+            "input": {
+                "id": "new id",
+                "invoiceId": "invoice input",
+                "itemId": "item input",
+                "locationId": "location input",
+                "packSize": 2,
+                "batch": "batch",
+                "costPricePerPack": 1.1,
+                "sellPricePerPack": 2.2,
+                "expiryDate": "2022-01-01",
+                "numberOfPacks": 1,
+                "totalBeforeTax": 1.1,
+                "totalAfterTax": 2.2,
+                "tax": {
+                    "percentage": 5.0
+                }
+            },
+            "storeId": "store_a"
+        });
 
-//         let mut variables = base_variables.clone();
-//         variables.id = existing_line.id.clone();
+        let expected = json!({
+            "insertInboundShipmentLine": {
+                "id": mock_inbound_shipment_c_invoice_lines()[0].id
+            }
+          }
+        );
 
-//         let query = Insert::build_query(variables);
-
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             RecordAlreadyExist(insert::RecordAlreadyExist {
-//                 description: "Record already exists".to_string(),
-//             })
-//         );
-//         // Success Draft
-
-//         let variables = base_variables.clone();
-
-//         let query = Insert::build_query(variables.clone());
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         let line = assert_unwrap_line!(response);
-
-//         assert_eq!(line.id, variables.id);
-
-//         let new_line = InvoiceLineRowRepository::new(&connection)
-//             .find_one_by_id(&variables.id)
-//             .unwrap();
-
-//         assert_eq!(new_line.r#type, InvoiceLineRowType::StockIn);
-//         assert_eq!(new_line, variables);
-
-//         // Success Delivered
-
-//         let mut variables = base_variables.clone();
-//         variables.id = uuid();
-//         variables.invoice_id = delivered_inbound_shipment.invoice_row.id.clone();
-
-//         let query = Insert::build_query(variables.clone());
-
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         let line = assert_unwrap_line!(response);
-//         let batch = assert_unwrap_batch!(line);
-
-//         assert_eq!(line.id, variables.id);
-
-//         let new_line = InvoiceLineRowRepository::new(&connection)
-//             .find_one_by_id(&line.id)
-//             .unwrap();
-//         let new_stock_line = StockLineRowRepository::new(&connection)
-//             .find_one_by_id(&batch.id)
-//             .unwrap();
-
-//         assert_eq!(new_line.r#type, InvoiceLineRowType::StockIn);
-//         assert_eq!(new_line, variables);
-//         assert_eq!(new_stock_line, variables);
-
-//         // Success Delivered with optional fields
-
-//         let mut variables = base_variables.clone();
-//         variables.id = uuid();
-//         variables.expiry_date_option = None;
-//         variables.batch_option = None;
-//         variables.invoice_id = delivered_inbound_shipment.invoice_row.id.clone();
-
-//         let query = Insert::build_query(variables.clone());
-
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         let line = assert_unwrap_line!(response);
-//         let batch = assert_unwrap_batch!(line);
-
-//         assert_eq!(line.id, variables.id);
-
-//         let new_line = InvoiceLineRowRepository::new(&connection)
-//             .find_one_by_id(&line.id)
-//             .unwrap();
-//         let new_stock_line = StockLineRowRepository::new(&connection)
-//             .find_one_by_id(&batch.id)
-//             .unwrap();
-
-//         assert_eq!(new_line, variables);
-//         assert_eq!(new_stock_line, variables);
-
-//         // Success Delivered check Item
-
-//         let mut variables = base_variables.clone();
-//         variables.id = uuid();
-//         variables.invoice_id = delivered_inbound_shipment.invoice_row.id.clone();
-
-//         let query = Insert::build_query(variables.clone());
-
-//         let response: Response<insert::ResponseData> = get_gql_result(&settings, query).await;
-//         let line = assert_unwrap_line!(response);
-
-//         assert_eq!(line.id, variables.id);
-
-//         let new_line = InvoiceLineRowRepository::new(&connection)
-//             .find_one_by_id(&line.id)
-//             .unwrap();
-
-//         assert_eq!(new_line.item_code, item.code);
-//         assert_eq!(new_line.item_name, item.name);
-//     }
-
-//     impl PartialEq<insert::Variables> for InvoiceLineRow {
-//         fn eq(&self, other: &insert::Variables) -> bool {
-//             let insert::Variables {
-//                 batch_option,
-//                 cost_price_per_pack,
-//                 expiry_date_option,
-//                 id,
-//                 invoice_id,
-//                 item_id,
-//                 number_of_packs,
-//                 sell_price_per_pack,
-//                 pack_size,
-//                 location_id_option,
-//                 total_before_tax,
-//                 total_after_tax,
-//             } = other;
-
-//             *cost_price_per_pack == self.cost_price_per_pack
-//                 && *expiry_date_option == self.expiry_date
-//                 && *id == self.id
-//                 && *invoice_id == self.invoice_id
-//                 && *item_id == self.item_id
-//                 && *number_of_packs == self.number_of_packs as i64
-//                 && *sell_price_per_pack == self.sell_price_per_pack
-//                 && *batch_option == self.batch
-//                 && *pack_size == self.pack_size as i64
-//                 && *location_id_option == self.location_id
-//                 && *total_before_tax == self.total_before_tax
-//                 && *total_after_tax == self.total_after_tax
-//         }
-//     }
-
-//     impl PartialEq<insert::Variables> for StockLineRow {
-//         fn eq(&self, other: &insert::Variables) -> bool {
-//             let insert::Variables {
-//                 batch_option,
-//                 cost_price_per_pack,
-//                 expiry_date_option,
-//                 id: _,
-//                 invoice_id: _,
-//                 item_id,
-//                 number_of_packs,
-//                 sell_price_per_pack,
-//                 pack_size,
-//                 location_id_option,
-//                 total_before_tax: _,
-//                 total_after_tax: _,
-//             } = other;
-
-//             *cost_price_per_pack == self.cost_price_per_pack
-//                 && *expiry_date_option == self.expiry_date
-//                 && *item_id == self.item_id
-//                 && *number_of_packs == self.available_number_of_packs as i64
-//                 && *number_of_packs == self.total_number_of_packs as i64
-//                 && *sell_price_per_pack == self.sell_price_per_pack
-//                 && *batch_option == self.batch
-//                 && *pack_size == self.pack_size as i64
-//                 && *location_id_option == self.location_id
-//         }
-//     }
-// }
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(variables),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+}
