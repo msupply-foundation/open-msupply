@@ -4,7 +4,7 @@ import { useResponseApi } from '../utils/useResponseApi';
 export const useResponses = () => {
   const { queryParams } = useUrlQueryParams({
     filterKey: 'comment',
-    initialSortKey: 'otherPartyName',
+    initialSort: { sort: 'createdDatetime', dir: 'desc' },
   });
   const api = useResponseApi();
 
