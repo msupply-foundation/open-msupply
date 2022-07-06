@@ -11,7 +11,7 @@ import {
   DocumentRegistryNodeContext,
 } from '@openmsupply-client/common';
 import { CreateNewPatient, useCreatePatientStore } from '../hooks';
-import { useDocumentRegistryByContext } from 'packages/common/src/ui/forms/JsonForms/api/hooks/document/useDocumentRegistyrByContext';
+import { useDocumentRegistryByContext } from 'packages/common/src/ui/forms/JsonForms/api/hooks/document/useDocumentRegistryByContext';
 import { DocumentRegistryFragment } from 'packages/common/src/ui/forms/JsonForms/api/operations.generated';
 
 function newPatient(
