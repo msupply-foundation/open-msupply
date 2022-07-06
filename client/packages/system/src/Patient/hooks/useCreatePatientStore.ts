@@ -28,7 +28,15 @@ export const useCreatePatientStore = create<CreateNewPatientState>(set => ({
       patient: update,
     })),
   updatePatient: patch =>
-    set(state => ({
-      patient: { ...(state.patient as CreateNewPatient), ...patch },
-    })),
+    set(state => {
+      if (!state.patient) {
+        console.error(
+          'useCreatePatientStore: updatePatient() can only be used after a patient is set using setNewPatient()'
+        );
+        return state;
+      }
+      return {
+        patient: { ...state.patient, ...patch },
+      };
+    }),
 }));
