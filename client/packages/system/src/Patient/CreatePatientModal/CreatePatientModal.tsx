@@ -10,9 +10,16 @@ import {
   useTranslation,
   DocumentRegistryNodeContext,
 } from '@openmsupply-client/common';
-import { CreateNewPatient, useCreatePatientStore } from '../hooks';
 import { useDocumentRegistryByContext } from 'packages/common/src/ui/forms/JsonForms/api/hooks/document/useDocumentRegistryByContext';
 import { DocumentRegistryFragment } from 'packages/common/src/ui/forms/JsonForms/api/operations.generated';
+
+export interface CreateNewPatient {
+  documentRegistry: DocumentRegistryFragment;
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  dob?: Date;
+}
 
 function newPatient(
   documentRegistry: DocumentRegistryFragment
@@ -22,7 +29,9 @@ function newPatient(
     documentRegistry,
   };
 }
-export const CreatePatientView: FC = () => {
+export const CreatePatientView: FC<{
+  onChange: (patient?: CreateNewPatient) => void;
+}> = ({ onChange }) => {
   const { data: documentRegistryResponse } = useDocumentRegistryByContext(
     DocumentRegistryNodeContext.Patient
   );
@@ -36,11 +45,11 @@ export const CreatePatientView: FC = () => {
     }
   }, [documentRegistryResponse]);
 
-  const { patient, setNewPatient } = useCreatePatientStore();
+  const [patient, setNewPatient] = useState<CreateNewPatient | undefined>();
   useEffect(() => {
-    // clear old patient
-    setNewPatient(undefined);
-  }, []);
+    onChange(patient);
+  }, [patient]);
+
   const t = useTranslation('common');
 
   if (documentRegistry === undefined) {

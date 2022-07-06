@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -16,8 +16,7 @@ import {
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
-import { CreatePatientView } from '../CreatePatientModal';
-import { useCreatePatientStore } from '../hooks/useCreatePatientStore';
+import { CreateNewPatient, CreatePatientView } from '../CreatePatientModal';
 
 export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   sortBy,
@@ -39,7 +38,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
     success(t('success'))();
   };
 
-  const { patient, setNewPatient } = useCreatePatientStore();
+  const [patient, setNewPatient] = useState<CreateNewPatient | undefined>();
   const navigate = useNavigate();
 
   return (
@@ -71,7 +70,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
             onClick={() => {
               hideDialog();
               if (patient) {
-                navigate(patient.id);
+                navigate(patient.id, { state: patient });
               }
             }}
           />
@@ -87,7 +86,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
         }
         slideAnimation={false}
       >
-        <CreatePatientView />
+        <CreatePatientView onChange={patient => setNewPatient(patient)} />
       </Modal>
     </AppBarButtonsPortal>
   );
