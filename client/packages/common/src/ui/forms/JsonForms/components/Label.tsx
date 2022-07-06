@@ -46,7 +46,7 @@ const UIComponent = (props: LayoutPropsExtended) => {
   const variantStyles = variants[variant];
   return (
     <Typography sx={{ ...variantStyles, ...sx } as SxProps}>
-      {RegexUtils.formatTemplateString(text ?? '', data)}
+      {RegexUtils.formatTemplateString(text ?? '', data, '')}
     </Typography>
   );
 };

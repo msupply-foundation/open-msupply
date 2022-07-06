@@ -13,11 +13,11 @@ import {
   WizardStepper,
   useTranslation,
 } from '@openmsupply-client/common';
-import { CreateNewPatient, useCreatePatientStore } from '../hooks';
-import { useDocumentRegistryByContext } from 'packages/common/src/ui/forms/JsonForms/api/hooks/document/useDocumentRegistyrByContext';
+import { useDocumentRegistryByContext } from 'packages/common/src/ui/forms/JsonForms/api/hooks/document/useDocumentRegistryByContext';
 import { DocumentRegistryFragment } from 'packages/common/src/ui/forms/JsonForms/api/operations.generated';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
+import { CreateNewPatient } from '../hooks';
 
 enum Tabs {
   Form = 'Form',
@@ -94,6 +94,11 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
     // clear old patient
     return () => setNewPatient(undefined);
   }, [documentRegistry]);
+
+  // const [patient, setNewPatient] = useState<CreateNewPatient | undefined>();
+  // useEffect(() => {
+  //   onChange(patient);
+  // }, [patient]);
 
   if (documentRegistry === undefined) {
     return null;
