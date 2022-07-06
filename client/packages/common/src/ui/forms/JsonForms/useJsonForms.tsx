@@ -141,7 +141,7 @@ export const useJsonForms = (
   const navigate = useNavigate();
 
   // fetch document (only if there is as document name)
-  const { data: databaseResponse, isLoading } = useDocument.document.get(
+  const { data: databaseResponse, isLoading } = useDocument.get.document(
     documentName ?? '',
     documentName !== undefined
   );

@@ -12,9 +12,9 @@ import {
   useDialog,
   WizardStepper,
   useTranslation,
+  useDocument,
+  DocumentRegistryFragment,
 } from '@openmsupply-client/common';
-import { useDocumentRegistryByContext } from 'packages/common/src/ui/forms/JsonForms/api/hooks/document/useDocumentRegistryByContext';
-import { DocumentRegistryFragment } from 'packages/common/src/ui/forms/JsonForms/api/operations.generated';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import { CreateNewPatient, useCreatePatientStore } from '../hooks';
@@ -22,6 +22,11 @@ import { CreateNewPatient, useCreatePatientStore } from '../hooks';
 enum Tabs {
   Form = 'Form',
   SearchResults = 'SearchResults',
+}
+
+interface CreatePatientModal {
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
 const newPatient = (
@@ -33,16 +38,11 @@ const newPatient = (
   };
 };
 
-interface CreatePatientModal {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-}
-
 export const CreatePatientModal: FC<CreatePatientModal> = ({
   open,
   setOpen,
 }) => {
-  const { data: documentRegistryResponse } = useDocumentRegistryByContext(
+  const { data: documentRegistryResponse } = useDocument.get.documentRegistry(
     DocumentRegistryNodeContext.Patient
   );
   const [documentRegistry, setDocumentRegistry] = useState<
@@ -55,7 +55,32 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
   const navigate = useNavigate();
   const { patient, setNewPatient, updatePatient } = useCreatePatientStore();
   const t = useTranslation('patients');
-  console.log('patient', patient);
+
+  const onNext = () => {
+    updatePatient({ canSearch: true });
+    onChangeTab(Tabs.SearchResults);
+  };
+
+  const onOk = () => {
+    hideDialog();
+    if (patient) {
+      navigate(patient.id);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter') {
+      switch (currentTab) {
+        case Tabs.Form:
+          onNext();
+          break;
+        case Tabs.SearchResults:
+          onOk();
+          break;
+      }
+    }
+  };
+
   const patientSteps = [
     {
       description: '',
@@ -107,24 +132,13 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
           <DialogButton
             variant="ok"
             disabled={!patient?.canCreate}
-            onClick={() => {
-              hideDialog();
-              if (patient) {
-                navigate(patient.id);
-              }
-            }}
+            onClick={onOk}
           />
         ) : undefined
       }
       nextButton={
         currentTab !== Tabs.SearchResults ? (
-          <DialogButton
-            variant="next"
-            onClick={() => {
-              updatePatient({ canSearch: true });
-              onChangeTab(Tabs.SearchResults);
-            }}
-          />
+          <DialogButton variant="next" onClick={onNext} />
         ) : undefined
       }
       cancelButton={
@@ -133,7 +147,13 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
       slideAnimation={false}
     >
       <DetailContainer>
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          gap={2}
+          onKeyDown={handleKeyDown}
+        >
           <WizardStepper activeStep={getActiveStep()} steps={patientSteps} />
           <TabContext value={currentTab}>
             <DetailSection title="">

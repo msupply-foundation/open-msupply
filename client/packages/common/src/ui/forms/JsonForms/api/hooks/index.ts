@@ -1,7 +1,8 @@
 import { Document } from './document';
 
 export const useDocument = {
-  document: {
-    get: Document.useDocument,
+  get: {
+    document: Document.useDocument,
+    documentRegistry: Document.useDocumentRegistryByContext,
   },
 };
