@@ -89,7 +89,7 @@ export type SavedDocument = {
   type: string;
 };
 
-export type SaveJob = (
+export type SaveDocumentMuation = (
   jsonData: unknown,
   formSchemaId: string,
   parent?: string
@@ -98,8 +98,7 @@ export type SaveJob = (
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
-  saveJob?: SaveJob;
-  onJobSaved?: (document: SavedDocument) => void;
+  handleSave?: SaveDocumentMuation;
   saveConfirmationMessage?: string;
   cancelConfirmationMessage?: string;
   saveSuccessMessage?: string;
@@ -201,14 +200,12 @@ export const useJsonForms = (
 
     // Run mutation...
     try {
-      const result = await options.saveJob?.(
+      const result = await options.handleSave?.(
         data,
         documentRegistry.formSchemaId,
         documentId
       );
-      if (result) {
-        options.onJobSaved?.(result);
-      }
+
       setDocumentName(result?.name);
       setIsDirty(false);
 
