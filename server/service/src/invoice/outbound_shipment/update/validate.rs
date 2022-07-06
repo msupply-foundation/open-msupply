@@ -56,7 +56,7 @@ fn check_invoice_exists(
     Ok(result?)
 }
 
-// If status is beinged changed to allocated and above, return error if there are
+// If status is changed to allocated and above, return error if there are
 // unallocated lines with quantity above 0, zero quantity unallocated lines will be deleted
 fn check_can_change_status_to_allocated(
     connection: &StorageConnection,
